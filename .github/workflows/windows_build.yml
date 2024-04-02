@@ -1,0 +1,81 @@
+name: Windows Build
+
+on: [push, pull_request, workflow_dispatch]
+concurrency:
+  group: ci-${{github.workflow}}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: 'windows-latest'
+    strategy:
+      matrix:
+        python-version: ['3.10']
+        
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install -U wheel setuptools pip
+          python -m pip install -U pywin32 lxml pymavlink numpy matplotlib pyserial opencv-python PyYAML Pygame Pillow wxpython prompt-toolkit scipy
+          python -m pip install -U openai wave pyaudio
+          python -m pip install -U pyinstaller packaging 
+      - name: Download Inno Setup installer
+        run: curl -L -o installer.exe http://files.jrsoftware.org/is/6/innosetup-6.2.0.exe
+      - name: Install Inno Setup
+        run: ./installer.exe /verysilent /allusers /dir=inst
+      - name: Build MethodicConfigurator
+        run: |
+          python -m pip install . --user
+          python -m pip list
+      - name: Prepare installer
+        run: |
+          cd MethodicConfigurator
+          copy ..\\windows\\ardupilot_methodic_configurator.spec
+          pyinstaller --clean ardupilot_methodic_configurator.spec
+          del ardupilot_methodic_configurator.spec
+      - name: Download parameters
+        run: |          
+          mkdir Parameters
+          $wc = New-Object System.Net.WebClient
+          $wc.DownloadFile('https://autotest.ardupilot.org/Parameters/APMrover2/apm.pdef.xml', 'Parameters\Rover.xml')
+          $wc.DownloadFile('https://autotest.ardupilot.org/Parameters/ArduCopter/apm.pdef.xml', 'Parameters\ArduCopter.xml')
+          $wc.DownloadFile('https://autotest.ardupilot.org/Parameters/ArduPlane/apm.pdef.xml', 'Parameters\ArduPlane.xml')
+          $wc.DownloadFile('https://autotest.ardupilot.org/Parameters/ArduSub/apm.pdef.xml', 'Parameters\ArduSub.xml')
+          $wc.DownloadFile('https://autotest.ardupilot.org/Parameters/AntennaTracker/apm.pdef.xml', 'Parameters\AntennaTracker.xml')
+      - name: Build installer
+        run: |
+          cd  windows
+          $env:VERSION=$(python returnVersion.py)
+          python returnVersion.py > version.txt
+          ISCC.exe /dMyAppVersion=$env:VERSION ardupilot_methodic_configurator.iss
+          ls Output
+      - name: Archive build
+        uses: actions/upload-artifact@v3
+        with:
+           name: MethodicConfiguratorInstaller
+           path: windows/Output
+           retention-days: 7
+      - name: Pre Release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        if: github.ref == 'refs/heads/master'
+        with:
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: windows/Output/*.*
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          prerelease: false
+          files: windows/Output/*.*
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
