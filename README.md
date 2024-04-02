@@ -25,13 +25,7 @@ git clone https://github.com/ArduPilot/MethodicConfigurator.git
 cd MethodicConfigurator
 ```
 
-In the future it is planned to install ArduPilot methodic configurator, using pip:
-
-```bash
-pip install ardupilot_methodic_configurator
-```
-
-After installation, you can run the ArduPilot methodic configurator GUI by executing the following command:
+You can run the ArduPilot methodic configurator GUI by executing the following command:
 
 ```bash
 python3 ardupilot_methodic_configurator.py
