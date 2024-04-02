@@ -1,0 +1,825 @@
+# AHRS Trim Roll
+# Compensates for the roll angle difference between the control board and the frame. Positive values make
+# the vehicle roll right.
+# Units: rad (radians)
+# Range: -0.1745 +0.1745
+# Increment: 0.01
+# Default: 0
+AHRS_TRIM_X,-0.007751919
+
+# AHRS Trim Pitch
+# Compensates for the pitch angle difference between the control board and the frame. Positive values make
+# the vehicle pitch up/back.
+# Units: rad (radians)
+# Range: -0.1745 +0.1745
+# Increment: 0.01
+# Default: 0
+AHRS_TRIM_Y,0.01101564
+
+# Acceleration Max for Pitch
+# Maximum acceleration in pitch axis
+# Units: cdeg/s/s (centidegrees per square second)
+# Range: 0 180000
+# Increment: 1000
+# 0: Disabled
+# 30000: VerySlow
+# 72000: Slow
+# 108000: Medium
+# 162000: Fast
+# Default: 110000
+ATC_ACCEL_P_MAX,193500
+
+# Acceleration Max for Roll
+# Maximum acceleration in roll axis
+# Units: cdeg/s/s (centidegrees per square second)
+# Range: 0 180000
+# Increment: 1000
+# 0: Disabled
+# 30000: VerySlow
+# 72000: Slow
+# 108000: Medium
+# 162000: Fast
+# Default: 110000
+ATC_ACCEL_R_MAX,193500
+
+# Acceleration Max for Yaw
+# Maximum acceleration in yaw axis
+# Units: cdeg/s/s (centidegrees per square second)
+# Range: 0 72000
+# Increment: 1000
+# 0: Disabled
+# 9000: VerySlow
+# 18000: Slow
+# 36000: Medium
+# 54000: Fast
+# Default: 27000
+ATC_ACCEL_Y_MAX,33300
+
+# Pitch axis rate controller derivative frequency in Hz
+# Pitch axis rate controller derivative frequency in Hz
+# Range: 0 50
+# Increment: 1
+# Units: Hz (hertz)
+# Default: 20
+ATC_RAT_PIT_FLTD,57.5 # INS_GYRO_FILTER / 2
+
+# Pitch axis rate controller target frequency in Hz
+# Pitch axis rate controller target frequency in Hz
+# Range: 5 50
+# Increment: 1
+# Units: Hz (hertz)
+# Default: 20
+ATC_RAT_PIT_FLTT,57.5 # INS_GYRO_FILTER / 2
+
+# Roll axis rate controller derivative frequency in Hz
+# Roll axis rate controller derivative frequency in Hz
+# Range: 0 50
+# Increment: 1
+# Units: Hz (hertz)
+# Default: 20
+ATC_RAT_RLL_FLTD,57.5 # INS_GYRO_FILTER / 2
+
+# Roll axis rate controller target frequency in Hz
+# Roll axis rate controller target frequency in Hz
+# Range: 5 50
+# Increment: 1
+# Units: Hz (hertz)
+# Default: 20
+ATC_RAT_RLL_FLTT,57.5 # INS_GYRO_FILTER / 2
+
+# Yaw axis rate controller error frequency in Hz
+# Yaw axis rate controller error frequency in Hz
+# Range: 5 50
+# Increment: 1
+# Units: Hz (hertz)
+# Default: 2.5
+ATC_RAT_YAW_FLTE,2
+
+# Yaw axis rate controller target frequency in Hz
+# Yaw axis rate controller target frequency in Hz
+# Range: 5 50
+# Increment: 1
+# Units: Hz (hertz)
+# Default: 20
+ATC_RAT_YAW_FLTT,57.5 # INS_GYRO_FILTER / 2
+
+# Compass device id
+# Compass device id.  Automatically detected, do not set manually
+# ReadOnly: True
+# Default: 0
+COMPASS_DEV_ID,658953
+
+# Compass is attached via an external cable
+# Configure compass so it is attached externally. This is auto-detected on most boards. Set to 1 if the
+# compass is externally connected. When externally connected the COMPASS_ORIENT option operates
+# independently of the AHRS_ORIENTATION board orientation option. If set to 0 or 1 then auto-detection by
+# bus connection can override the value. If set to 2 then auto-detection will be disabled.
+# 0: Internal
+# 1: External
+# 2: ForcedExternal
+# Default: 0
+COMPASS_EXTERNAL,1
+
+# Compass orientation
+# The orientation of the first external compass relative to the vehicle frame. This value will be ignored
+# unless this compass is set as an external compass. When set correctly in the northern hemisphere,
+# pointing the nose and right side down should increase the MagX and MagY values respectively. Rolling the
+# vehicle upside down should decrease the MagZ value. For southern hemisphere, switch increase and
+# decrease. NOTE: For internal compasses, AHRS_ORIENT is used. The label for each option is specified in
+# the order of rotations for that orientation. Firmware versions 4.2 and prior can use a CUSTOM (100)
+# rotation to set the COMPASS_CUS_ROLL/PIT/YAW angles for Compass orientation. Later versions provide two
+# general custom rotations which can be used, Custom 1 and Custom 2, with CUST_1_ROLL/PIT/YAW or
+# CUST_2_ROLL/PIT/YAW angles.
+# 0: None                             16: Roll90                          32: Pitch180Roll270
+# 1: Yaw45                            17: Yaw45Roll90                     33: Pitch270Roll90
+# 2: Yaw90                            18: Yaw90Roll90                     34: Pitch270Roll180
+# 3: Yaw135                           19: Yaw135Roll90                    35: Pitch270Roll270
+# 4: Yaw180                           20: Roll270                         36: Yaw90Pitch180Roll90
+# 5: Yaw225                           21: Yaw45Roll270                    37: Yaw270Roll90
+# 6: Yaw270                           22: Yaw90Roll270                    38: Yaw293Pitch68Roll180
+# 7: Yaw315                           23: Yaw135Roll270                   39: Pitch315
+# 8: Roll180                          24: Pitch90                         40: Pitch315Roll90
+# 9: Yaw45Roll180                     25: Pitch270                        42: Roll45
+# 10: Yaw90Roll180                    26: Yaw90Pitch180                   43: Roll315
+# 11: Yaw135Roll180                   27: Yaw270Pitch180                  100: Custom 4.1 and older
+# 12: Pitch180                        28: Pitch90Roll90                   101: Custom 1
+# 13: Yaw225Roll180                   29: Pitch90Roll180                  102: Custom 2
+# 14: Yaw270Roll180                   30: Pitch90Roll270
+# 15: Yaw315Roll180                   31: Pitch180Roll90
+# Default: 0
+COMPASS_ORIENT,6
+
+# Compass device id with 1st order priority
+# Compass device id with 1st order priority, set automatically if 0. Reboot required after change.
+# RebootRequired: True
+# Default: 0
+COMPASS_PRIO1_ID,658953
+
+# Compass2 used for yaw
+# Enable or disable the secondary compass for determining heading.
+# 0: Disabled
+# 1: Enabled
+# Default: 1
+COMPASS_USE2,0
+
+# Compass3 used for yaw
+# Enable or disable the tertiary compass for determining heading.
+# 0: Disabled
+# 1: Enabled
+# Default: 1
+COMPASS_USE3,0
+
+# Fence Action
+# What action should be taken when fence is breached
+# 0: Report Only
+# 1: RTL or Land
+# 2: Always Land
+# 3: SmartRTL or RTL or Land
+# 4: Brake or Land
+# 5: SmartRTL or Land
+# Default: 1
+FENCE_ACTION,3
+
+# Fence Maximum Altitude
+# Maximum altitude allowed before geofence triggers
+# Units: m (meters)
+# Range: 10 1000
+# Increment: 1
+# Default: 100
+FENCE_ALT_MAX,80.0
+
+# Fence enable/disable
+# Allows you to enable (1) or disable (0) the fence functionality
+# 0: Disabled
+# 1: Enabled
+# Default: 0
+FENCE_ENABLE,1
+
+# Circular Fence Radius
+# Circle fence radius which when breached will cause an RTL
+# Units: m (meters)
+# Range: 30 10000
+# Default: 300
+FENCE_RADIUS,150.0
+
+# Flight Mode 1
+# Flight mode when pwm of Flightmode channel(FLTMODE_CH) is <= 1230
+# 0: Stabilize               7: Circle                  17: Brake                  24: ZigZag
+# 1: Acro                    9: Land                    18: Throw                  25: SystemID
+# 2: AltHold                 11: Drift                  19: Avoid_ADSB             26: Heli_Autorotate
+# 3: Auto                    13: Sport                  20: Guided_NoGPS           27: Auto RTL
+# 4: Guided                  14: Flip                   21: Smart_RTL
+# 5: Loiter                  15: AutoTune               22: FlowHold
+# 6: RTL                     16: PosHold                23: Follow
+# Default: 0
+FLTMODE1,0
+
+# Flight Mode 2
+# Flight mode when pwm of Flightmode channel(FLTMODE_CH) is >1230, <= 1360
+# 0: Stabilize               7: Circle                  17: Brake                  24: ZigZag
+# 1: Acro                    9: Land                    18: Throw                  25: SystemID
+# 2: AltHold                 11: Drift                  19: Avoid_ADSB             26: Heli_Autorotate
+# 3: Auto                    13: Sport                  20: Guided_NoGPS           27: Auto RTL
+# 4: Guided                  14: Flip                   21: Smart_RTL
+# 5: Loiter                  15: AutoTune               22: FlowHold
+# 6: RTL                     16: PosHold                23: Follow
+# Default: 0
+FLTMODE2,2
+
+# Flight Mode 3
+# Flight mode when pwm of Flightmode channel(FLTMODE_CH) is >1360, <= 1490
+# 0: Stabilize               7: Circle                  17: Brake                  24: ZigZag
+# 1: Acro                    9: Land                    18: Throw                  25: SystemID
+# 2: AltHold                 11: Drift                  19: Avoid_ADSB             26: Heli_Autorotate
+# 3: Auto                    13: Sport                  20: Guided_NoGPS           27: Auto RTL
+# 4: Guided                  14: Flip                   21: Smart_RTL
+# 5: Loiter                  15: AutoTune               22: FlowHold
+# 6: RTL                     16: PosHold                23: Follow
+# Default: 0
+FLTMODE3,5
+
+# Flight Mode 4
+# Flight mode when pwm of Flightmode channel(FLTMODE_CH) is >1490, <= 1620
+# 0: Stabilize               7: Circle                  17: Brake                  24: ZigZag
+# 1: Acro                    9: Land                    18: Throw                  25: SystemID
+# 2: AltHold                 11: Drift                  19: Avoid_ADSB             26: Heli_Autorotate
+# 3: Auto                    13: Sport                  20: Guided_NoGPS           27: Auto RTL
+# 4: Guided                  14: Flip                   21: Smart_RTL
+# 5: Loiter                  15: AutoTune               22: FlowHold
+# 6: RTL                     16: PosHold                23: Follow
+# Default: 0
+FLTMODE4,3
+
+# Flight Mode 5
+# Flight mode when pwm of Flightmode channel(FLTMODE_CH) is >1620, <= 1749
+# 0: Stabilize               7: Circle                  17: Brake                  24: ZigZag
+# 1: Acro                    9: Land                    18: Throw                  25: SystemID
+# 2: AltHold                 11: Drift                  19: Avoid_ADSB             26: Heli_Autorotate
+# 3: Auto                    13: Sport                  20: Guided_NoGPS           27: Auto RTL
+# 4: Guided                  14: Flip                   21: Smart_RTL
+# 5: Loiter                  15: AutoTune               22: FlowHold
+# 6: RTL                     16: PosHold                23: Follow
+# Default: 0
+FLTMODE5,6
+
+# Flight Mode 6
+# Flight mode when pwm of Flightmode channel(FLTMODE_CH) is >=1750
+# 0: Stabilize               7: Circle                  17: Brake                  24: ZigZag
+# 1: Acro                    9: Land                    18: Throw                  25: SystemID
+# 2: AltHold                 11: Drift                  19: Avoid_ADSB             26: Heli_Autorotate
+# 3: Auto                    13: Sport                  20: Guided_NoGPS           27: Auto RTL
+# 4: Guided                  14: Flip                   21: Smart_RTL
+# 5: Loiter                  15: AutoTune               22: FlowHold
+# 6: RTL                     16: PosHold                23: Follow
+# Default: 0
+FLTMODE6,15
+
+# Frame Class
+# Controls major frame class for multicopter component
+# RebootRequired: True
+# 0: Undefined                        6: Heli                             12: DodecaHexa
+# 1: Quad                             7: Tri                              13: HeliQuad
+# 2: Hexa                             8: SingleCopter                     14: Deca
+# 3: Octa                             9: CoaxCopter                       15: Scripting Matrix
+# 4: OctaQuad                         10: BiCopter                        16: 6DoF Scripting
+# 5: Y6                               11: Heli_Dual                       17: Dynamic Scripting Matrix
+# Default: 0
+FRAME_CLASS,1
+
+# Frame Type (+, X, V, etc)
+# Controls motor mixing for multicopters.  Not used for Tri or Traditional Helicopters.
+# RebootRequired: True
+# 0: Plus                                              11: Y6F
+# 1: X                                                 12: BetaFlightX
+# 2: V                                                 13: DJIX
+# 3: H                                                 14: ClockwiseX
+# 4: V-Tail                                            15: I
+# 5: A-Tail                                            18: BetaFlightXReversed
+# 10: Y6B                                              19: Y4
+# Default: 1
+FRAME_TYPE,1
+
+# Calibration temperature for 1st accelerometer
+# Temperature that the 1st accelerometer was calibrated at
+# Units: degC (degrees Celsius)
+# Calibration: 1
+# Default: -300
+INS_ACC1_CALTEMP,39.97585
+
+# Calibration temperature for 2nd accelerometer
+# Temperature that the 2nd accelerometer was calibrated at
+# Units: degC (degrees Celsius)
+# Calibration: 1
+# Default: -300
+INS_ACC2_CALTEMP,40.94203
+
+# Accelerometer2 scaling of X axis
+# Accelerometer2 scaling of X axis.  Calculated during acceleration calibration routine
+# Range: 0.8 1.2
+# Calibration: 1
+# Default: 1
+INS_ACC2SCAL_X,0.9974412
+
+# Accelerometer2 scaling of Y axis
+# Accelerometer2 scaling of Y axis  Calculated during acceleration calibration routine
+# Range: 0.8 1.2
+# Calibration: 1
+# Default: 1
+INS_ACC2SCAL_Y,0.9977408
+
+# Accelerometer2 scaling of Z axis
+# Accelerometer2 scaling of Z axis  Calculated during acceleration calibration routine
+# Range: 0.8 1.2
+# Calibration: 1
+# Default: 1
+INS_ACC2SCAL_Z,0.9998143
+
+# Accelerometer3 scaling of X axis
+# Accelerometer3 scaling of X axis.  Calculated during acceleration calibration routine
+# Range: 0.8 1.2
+# Calibration: 1
+# Default: 1
+INS_ACC3SCAL_X,0
+
+# Accelerometer3 scaling of Y axis
+# Accelerometer3 scaling of Y axis  Calculated during acceleration calibration routine
+# Range: 0.8 1.2
+# Calibration: 1
+# Default: 1
+INS_ACC3SCAL_Y,0
+
+# Accelerometer3 scaling of Z axis
+# Accelerometer3 scaling of Z axis  Calculated during acceleration calibration routine
+# Range: 0.8 1.2
+# Calibration: 1
+# Default: 1
+INS_ACC3SCAL_Z,0
+
+# Accelerometer scaling of X axis
+# Accelerometer scaling of X axis.  Calculated during acceleration calibration routine
+# Range: 0.8 1.2
+# Calibration: 1
+# Default: 1
+INS_ACCSCAL_X,0.9991518
+
+# Accelerometer scaling of Y axis
+# Accelerometer scaling of Y axis  Calculated during acceleration calibration routine
+# Range: 0.8 1.2
+# Calibration: 1
+# Default: 1
+INS_ACCSCAL_Y,0.9994594
+
+# Accelerometer scaling of Z axis
+# Accelerometer scaling of Z axis  Calculated during acceleration calibration routine
+# Range: 0.8 1.2
+# Calibration: 1
+# Default: 1
+INS_ACCSCAL_Z,0.998758
+
+# Gyro filter cutoff frequency
+# Filter cutoff frequency for gyroscopes. This can be set to a lower value to try to cope with very high
+# vibration levels in aircraft. A value of zero means no filtering (not recommended!)
+# Units: Hz (hertz)
+# Range: 0 256
+# Default: 20
+INS_GYRO_FILTER,115
+
+# Use third IMU for attitude, velocity and position estimates
+# Use third IMU for attitude, velocity and position estimates
+# 0: Disabled
+# 1: Enabled
+# Default: 1
+INS_USE3,0
+
+# Battery voltage compensation maximum voltage
+# Battery voltage compensation maximum voltage (voltage above this will have no additional scaling effect
+# on thrust).  Recommend 4.2 * cell count, 0 = Disabled
+# Range: 6 53
+# Units: V (volt)
+# Default: 0
+MOT_BAT_VOLT_MAX,16.8
+
+# Battery voltage compensation minimum voltage
+# Battery voltage compensation minimum voltage (voltage below this will have no additional scaling effect
+# on thrust).  Recommend 3.3 * cell count, 0 = Disabled
+# Range: 6 42
+# Units: V (volt)
+# Default: 0
+MOT_BAT_VOLT_MIN,13.2
+
+# Motor Spin armed
+# Point at which the motors start to spin expressed as a number from 0 to 1 in the entire output range.
+# Should be lower than MOT_SPIN_MIN.
+# 0.0: Low
+# 0.1: Default
+# 0.2: High
+# Default: 0.1
+MOT_SPIN_ARM,0.01
+
+# Motor Spin maximum
+# Point at which the thrust saturates expressed as a number from 0 to 1 in the entire output range
+# 0.9: Low
+# 0.95: Default
+# 1.0: High
+# Default: 0.95
+MOT_SPIN_MAX,0.95
+
+# Motor Spin minimum
+# Point at which the thrust starts expressed as a number from 0 to 1 in the entire output range.  Should be
+# higher than MOT_SPIN_ARM.
+# 0.0: Low
+# 0.15: Default
+# 0.25: High
+# Default: 0.15
+MOT_SPIN_MIN,0.04
+
+# Thrust Curve Expo
+# Motor thrust curve exponent (0.0 for linear to 1.0 for second order curve)
+# Range: -1.0 1.0
+# Default: 0.65
+MOT_THST_EXPO,0.48
+
+# Thrust Hover Value
+# Motor thrust needed to hover expressed as a number from 0 to 1
+# Range: 0.2 0.8
+# Default: 0.35
+MOT_THST_HOVER,0.2
+
+# RC max PWM
+# RC maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1900
+RC1_MAX,2011
+
+# RC min PWM
+# RC minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1100
+RC1_MIN,988
+
+# RC trim PWM
+# RC trim (neutral) PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and
+# 2000 is upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1500
+RC1_TRIM,1500
+
+# RC max PWM
+# RC maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1900
+RC2_MAX,2011
+
+# RC min PWM
+# RC minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1100
+RC2_MIN,988
+
+# RC trim PWM
+# RC trim (neutral) PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and
+# 2000 is upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1500
+RC2_TRIM,1500
+
+# RC max PWM
+# RC maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1900
+RC3_MAX,2011
+
+# RC min PWM
+# RC minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1100
+RC3_MIN,988
+
+# RC trim PWM
+# RC trim (neutral) PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and
+# 2000 is upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1500
+RC3_TRIM,1466
+
+# RC max PWM
+# RC maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1900
+RC4_MAX,2011
+
+# RC min PWM
+# RC minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1100
+RC4_MIN,988
+
+# RC trim PWM
+# RC trim (neutral) PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and
+# 2000 is upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1500
+RC4_TRIM,1500
+
+# RC max PWM
+# RC maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1900
+RC5_MAX,1856
+
+# RC min PWM
+# RC minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1100
+RC5_MIN,1143
+
+# RC trim PWM
+# RC trim (neutral) PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and
+# 2000 is upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1500
+RC5_TRIM,1143
+
+# RC max PWM
+# RC maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1900
+RC6_MAX,2011
+
+# RC min PWM
+# RC minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1100
+RC6_MIN,988
+
+# RC trim PWM
+# RC trim (neutral) PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and
+# 2000 is upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1500
+RC6_TRIM,988
+
+# RC max PWM
+# RC maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1900
+RC7_MAX,2011
+
+# RC min PWM
+# RC minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1100
+RC7_MIN,988
+
+# RC trim PWM
+# RC trim (neutral) PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and
+# 2000 is upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1500
+RC7_TRIM,988
+
+# RC max PWM
+# RC maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1900
+RC8_MAX,2011
+
+# RC min PWM
+# RC minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1100
+RC8_MIN,988
+
+# RC trim PWM
+# RC trim (neutral) PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and
+# 2000 is upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1500
+RC8_TRIM,988
+
+# RC max PWM
+# RC maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1900
+RC9_MAX,2011
+
+# RC min PWM
+# RC minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is
+# upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1100
+RC9_MIN,988
+
+# RC trim PWM
+# RC trim (neutral) PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and
+# 2000 is upper limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1500
+RC9_TRIM,988
+
+# Servo output function
+# Function assigned to this servo. Setting this to Disabled(0) will setup this output for control by auto
+# missions or MAVLink servo set commands. any other value will enable the corresponding function
+# RebootRequired: True
+# -1: GPIO                   40: Motor8                 90: CameraISO              127: RateYaw
+# 0: Disabled                51: RCIN1                  91: CameraAperture         129: ProfiLED1
+# 1: RCPassThru              52: RCIN2                  92: CameraFocus            130: ProfiLED2
+# 6: Mount1Yaw               53: RCIN3                  93: CameraShutterSpeed     131: ProfiLED3
+# 7: Mount1Pitch             54: RCIN4                  94: Script1                132: ProfiLEDClock
+# 8: Mount1Roll              55: RCIN5                  95: Script2                133: Winch Clutch
+# 9: Mount1Retract           56: RCIN6                  96: Script3                134: SERVOn_MIN
+# 10: CameraTrigger          57: RCIN7                  97: Script4                135: SERVOn_TRIM
+# 12: Mount2Yaw              58: RCIN8                  98: Script5                136: SERVOn_MAX
+# 13: Mount2Pitch            59: RCIN9                  99: Script6                138: Alarm
+# 14: Mount2Roll             60: RCIN10                 100: Script7               139: Alarm Inverted
+# 15: Mount2Retract          61: RCIN11                 101: Script8               140: RCIN1Scaled
+# 22: SprayerPump            62: RCIN12                 102: Script9               141: RCIN2Scaled
+# 23: SprayerSpinner         63: RCIN13                 103: Script10              142: RCIN3Scaled
+# 27: Parachute              64: RCIN14                 104: Script11              143: RCIN4Scaled
+# 28: Gripper                65: RCIN15                 105: Script12              144: RCIN5Scaled
+# 29: LandingGear            66: RCIN16                 106: Script13              145: RCIN6Scaled
+# 30: EngineRunEnable        73: ThrottleLeft           107: Script14              146: RCIN7Scaled
+# 31: HeliRSC                74: ThrottleRight          108: Script15              147: RCIN8Scaled
+# 32: HeliTailRSC            75: TiltMotorFrontLeft     109: Script16              148: RCIN9Scaled
+# 33: Motor1                 76: TiltMotorFrontRight    120: NeoPixel1             149: RCIN10Scaled
+# 34: Motor2                 81: BoostThrottle          121: NeoPixel2             150: RCIN11Scaled
+# 35: Motor3                 82: Motor9                 122: NeoPixel3             151: RCIN12Scaled
+# 36: Motor4                 83: Motor10                123: NeoPixel4             152: RCIN13Scaled
+# 37: Motor5                 84: Motor11                124: RateRoll              153: RCIN14Scaled
+# 38: Motor6                 85: Motor12                125: RatePitch             154: RCIN15Scaled
+# 39: Motor7                 88: Winch                  126: RateThrust            155: RCIN16Scaled
+# Default: 0
+SERVO1_FUNCTION,33
+
+# Servo output function
+# Function assigned to this servo. Setting this to Disabled(0) will setup this output for control by auto
+# missions or MAVLink servo set commands. any other value will enable the corresponding function
+# RebootRequired: True
+# -1: GPIO                   40: Motor8                 90: CameraISO              127: RateYaw
+# 0: Disabled                51: RCIN1                  91: CameraAperture         129: ProfiLED1
+# 1: RCPassThru              52: RCIN2                  92: CameraFocus            130: ProfiLED2
+# 6: Mount1Yaw               53: RCIN3                  93: CameraShutterSpeed     131: ProfiLED3
+# 7: Mount1Pitch             54: RCIN4                  94: Script1                132: ProfiLEDClock
+# 8: Mount1Roll              55: RCIN5                  95: Script2                133: Winch Clutch
+# 9: Mount1Retract           56: RCIN6                  96: Script3                134: SERVOn_MIN
+# 10: CameraTrigger          57: RCIN7                  97: Script4                135: SERVOn_TRIM
+# 12: Mount2Yaw              58: RCIN8                  98: Script5                136: SERVOn_MAX
+# 13: Mount2Pitch            59: RCIN9                  99: Script6                138: Alarm
+# 14: Mount2Roll             60: RCIN10                 100: Script7               139: Alarm Inverted
+# 15: Mount2Retract          61: RCIN11                 101: Script8               140: RCIN1Scaled
+# 22: SprayerPump            62: RCIN12                 102: Script9               141: RCIN2Scaled
+# 23: SprayerSpinner         63: RCIN13                 103: Script10              142: RCIN3Scaled
+# 27: Parachute              64: RCIN14                 104: Script11              143: RCIN4Scaled
+# 28: Gripper                65: RCIN15                 105: Script12              144: RCIN5Scaled
+# 29: LandingGear            66: RCIN16                 106: Script13              145: RCIN6Scaled
+# 30: EngineRunEnable        73: ThrottleLeft           107: Script14              146: RCIN7Scaled
+# 31: HeliRSC                74: ThrottleRight          108: Script15              147: RCIN8Scaled
+# 32: HeliTailRSC            75: TiltMotorFrontLeft     109: Script16              148: RCIN9Scaled
+# 33: Motor1                 76: TiltMotorFrontRight    120: NeoPixel1             149: RCIN10Scaled
+# 34: Motor2                 81: BoostThrottle          121: NeoPixel2             150: RCIN11Scaled
+# 35: Motor3                 82: Motor9                 122: NeoPixel3             151: RCIN12Scaled
+# 36: Motor4                 83: Motor10                123: NeoPixel4             152: RCIN13Scaled
+# 37: Motor5                 84: Motor11                124: RateRoll              153: RCIN14Scaled
+# 38: Motor6                 85: Motor12                125: RatePitch             154: RCIN15Scaled
+# 39: Motor7                 88: Winch                  126: RateThrust            155: RCIN16Scaled
+# Default: 0
+SERVO2_FUNCTION,34
+
+# Servo output function
+# Function assigned to this servo. Setting this to Disabled(0) will setup this output for control by auto
+# missions or MAVLink servo set commands. any other value will enable the corresponding function
+# RebootRequired: True
+# -1: GPIO                   40: Motor8                 90: CameraISO              127: RateYaw
+# 0: Disabled                51: RCIN1                  91: CameraAperture         129: ProfiLED1
+# 1: RCPassThru              52: RCIN2                  92: CameraFocus            130: ProfiLED2
+# 6: Mount1Yaw               53: RCIN3                  93: CameraShutterSpeed     131: ProfiLED3
+# 7: Mount1Pitch             54: RCIN4                  94: Script1                132: ProfiLEDClock
+# 8: Mount1Roll              55: RCIN5                  95: Script2                133: Winch Clutch
+# 9: Mount1Retract           56: RCIN6                  96: Script3                134: SERVOn_MIN
+# 10: CameraTrigger          57: RCIN7                  97: Script4                135: SERVOn_TRIM
+# 12: Mount2Yaw              58: RCIN8                  98: Script5                136: SERVOn_MAX
+# 13: Mount2Pitch            59: RCIN9                  99: Script6                138: Alarm
+# 14: Mount2Roll             60: RCIN10                 100: Script7               139: Alarm Inverted
+# 15: Mount2Retract          61: RCIN11                 101: Script8               140: RCIN1Scaled
+# 22: SprayerPump            62: RCIN12                 102: Script9               141: RCIN2Scaled
+# 23: SprayerSpinner         63: RCIN13                 103: Script10              142: RCIN3Scaled
+# 27: Parachute              64: RCIN14                 104: Script11              143: RCIN4Scaled
+# 28: Gripper                65: RCIN15                 105: Script12              144: RCIN5Scaled
+# 29: LandingGear            66: RCIN16                 106: Script13              145: RCIN6Scaled
+# 30: EngineRunEnable        73: ThrottleLeft           107: Script14              146: RCIN7Scaled
+# 31: HeliRSC                74: ThrottleRight          108: Script15              147: RCIN8Scaled
+# 32: HeliTailRSC            75: TiltMotorFrontLeft     109: Script16              148: RCIN9Scaled
+# 33: Motor1                 76: TiltMotorFrontRight    120: NeoPixel1             149: RCIN10Scaled
+# 34: Motor2                 81: BoostThrottle          121: NeoPixel2             150: RCIN11Scaled
+# 35: Motor3                 82: Motor9                 122: NeoPixel3             151: RCIN12Scaled
+# 36: Motor4                 83: Motor10                123: NeoPixel4             152: RCIN13Scaled
+# 37: Motor5                 84: Motor11                124: RateRoll              153: RCIN14Scaled
+# 38: Motor6                 85: Motor12                125: RatePitch             154: RCIN15Scaled
+# 39: Motor7                 88: Winch                  126: RateThrust            155: RCIN16Scaled
+# Default: 0
+SERVO3_FUNCTION,35
+
+# Servo output function
+# Function assigned to this servo. Setting this to Disabled(0) will setup this output for control by auto
+# missions or MAVLink servo set commands. any other value will enable the corresponding function
+# RebootRequired: True
+# -1: GPIO                   40: Motor8                 90: CameraISO              127: RateYaw
+# 0: Disabled                51: RCIN1                  91: CameraAperture         129: ProfiLED1
+# 1: RCPassThru              52: RCIN2                  92: CameraFocus            130: ProfiLED2
+# 6: Mount1Yaw               53: RCIN3                  93: CameraShutterSpeed     131: ProfiLED3
+# 7: Mount1Pitch             54: RCIN4                  94: Script1                132: ProfiLEDClock
+# 8: Mount1Roll              55: RCIN5                  95: Script2                133: Winch Clutch
+# 9: Mount1Retract           56: RCIN6                  96: Script3                134: SERVOn_MIN
+# 10: CameraTrigger          57: RCIN7                  97: Script4                135: SERVOn_TRIM
+# 12: Mount2Yaw              58: RCIN8                  98: Script5                136: SERVOn_MAX
+# 13: Mount2Pitch            59: RCIN9                  99: Script6                138: Alarm
+# 14: Mount2Roll             60: RCIN10                 100: Script7               139: Alarm Inverted
+# 15: Mount2Retract          61: RCIN11                 101: Script8               140: RCIN1Scaled
+# 22: SprayerPump            62: RCIN12                 102: Script9               141: RCIN2Scaled
+# 23: SprayerSpinner         63: RCIN13                 103: Script10              142: RCIN3Scaled
+# 27: Parachute              64: RCIN14                 104: Script11              143: RCIN4Scaled
+# 28: Gripper                65: RCIN15                 105: Script12              144: RCIN5Scaled
+# 29: LandingGear            66: RCIN16                 106: Script13              145: RCIN6Scaled
+# 30: EngineRunEnable        73: ThrottleLeft           107: Script14              146: RCIN7Scaled
+# 31: HeliRSC                74: ThrottleRight          108: Script15              147: RCIN8Scaled
+# 32: HeliTailRSC            75: TiltMotorFrontLeft     109: Script16              148: RCIN9Scaled
+# 33: Motor1                 76: TiltMotorFrontRight    120: NeoPixel1             149: RCIN10Scaled
+# 34: Motor2                 81: BoostThrottle          121: NeoPixel2             150: RCIN11Scaled
+# 35: Motor3                 82: Motor9                 122: NeoPixel3             151: RCIN12Scaled
+# 36: Motor4                 83: Motor10                123: NeoPixel4             152: RCIN13Scaled
+# 37: Motor5                 84: Motor11                124: RateRoll              153: RCIN14Scaled
+# 38: Motor6                 85: Motor12                125: RatePitch             154: RCIN15Scaled
+# 39: Motor7                 88: Winch                  126: RateThrust            155: RCIN16Scaled
+# Default: 0
+SERVO4_FUNCTION,36

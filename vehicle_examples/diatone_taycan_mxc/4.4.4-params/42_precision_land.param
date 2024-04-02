@@ -1,0 +1,300 @@
+# Range finder measurement noise (m)
+# This is the RMS value of noise in the range finder measurement. Increasing it reduces the weighting on
+# this measurement.
+# Range: 0.1 10.0
+# Increment: 0.1
+# Units: m (meters)
+# Default: 0.5
+EK3_RNG_M_NSE,0.1
+
+# Range finder switch height percentage
+# Range finder can be used as the primary height source when below this percentage of its maximum range
+# (see RNGFNDx_MAX_CM) and the primary height source is Baro or GPS (see EK3_SRCx_POSZ).  This feature
+# should not be used for terrain following as it is designed for vertical takeoff and landing with climb
+# above the range finder use height before commencing the mission, and with horizontal position changes
+# below that height being limited to a flat region around the takeoff and landing point.
+# Range: -1 70
+# Increment: 1
+# Units: % (percent)
+# Default: -1
+EK3_RNG_USE_HGT,70.0
+
+# Land alt low
+# Altitude during Landing at which vehicle slows to LAND_SPEED
+# Units: cm (centimeters)
+# Range: 100 10000
+# Increment: 10
+# Default: 1000
+LAND_ALT_LOW,800
+
+# Land speed
+# The descent speed for the final stage of landing in cm/s
+# Units: cm/s (centimeters per second)
+# Range: 30 200
+# Increment: 10
+# Default: 50
+LAND_SPEED,30.0
+
+# Kalman Filter Accelerometer Noise
+# Kalman Filter Accelerometer Noise, higher values weight the input from the camera more, accels less
+# Range: 0.5 5
+PLND_ACC_P_NSE,2.5
+
+# PrecLand maximum alt for retry
+# Vehicle will continue landing vertically until this height if target is not found. Below this height if
+# landing target is not found, landing retry/failsafe might be attempted. This needs a rangefinder to work.
+# Set to zero to disable this.
+# Range: 0 50
+# Units: m (meters)
+PLND_ALT_MAX,8.0
+
+# PrecLand minimum alt for retry
+# Vehicle will continue landing vertically even if target is lost below this height. This needs a
+# rangefinder to work. Set to zero to disable this.
+# Range: 0 5
+# Units: m (meters)
+PLND_ALT_MIN,0.75
+
+# Sensor Bus
+# Precland sensor bus for I2C sensors.
+# -1: DefaultBus
+# 0: InternalI2C
+# 1: ExternalI2C
+PLND_BUS,-1
+
+# Camera X position offset
+# X position of the camera in body frame. Positive X is forward of the origin.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+PLND_CAM_POS_X,0.14
+
+# Camera Y position offset
+# Y position of the camera in body frame. Positive Y is to the right of the origin.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+PLND_CAM_POS_Y,0.0
+
+# Camera Z position offset
+# Z position of the camera in body frame. Positive Z is down from the origin.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+PLND_CAM_POS_Z,0.05
+
+# Precision Land enabled/disabled
+# Precision Land enabled/disabled
+# 0: Disabled
+# 1: Enabled
+# Default: 0
+PLND_ENABLED,1
+
+# Precision Land Estimator Type
+# Specifies the estimation method to be used
+# 0: RawSensor
+# 1: KalmanFilter
+PLND_EST_TYPE,0
+
+# Precision Landing sensor lag
+# Precision Landing sensor lag, to cope with variable landing_target latency
+# Range: 0.02 0.250
+# Increment: 1
+# Units: s (seconds)
+# RebootRequired: True
+PLND_LAG,0.24
+
+# Land offset forward
+# Desired landing position of the camera forward of the target in vehicle body frame
+# Range: -20 20
+# Increment: 1
+# Units: cm (centimeters)
+PLND_LAND_OFS_X,0.0
+
+# Land offset right
+# desired landing position of the camera right of the target in vehicle body frame
+# Range: -20 20
+# Increment: 1
+# Units: cm (centimeters)
+PLND_LAND_OFS_Y,0.0
+
+# Precision Landing Extra Options
+# Precision Landing Extra Options
+# Bitmask: 0: Moving Landing Target, 1: Allow Precision Landing after manual reposition 
+PLND_OPTIONS,0
+
+# PrecLand retry behaviour
+# Prec Land will do the action selected by this parameter if a retry to a landing is needed
+# 0: Go to the last location where landing target was detected
+# 1: Go towards the approximate location of the detected landing target
+PLND_RET_BEHAVE,0
+
+# PrecLand Maximum number of retires for a failed landing
+# PrecLand Maximum number of retires for a failed landing. Set to zero to disable landing retry.
+# Range: 0 10
+# Increment: 1
+PLND_RET_MAX,4
+
+# PrecLand strictness
+# How strictly should the vehicle land on the target if target is lost
+# 0: Land Vertically (Not strict)
+# 1: Retry Landing(Normal Strictness)
+# 2: Do not land (just Hover) (Very Strict)
+PLND_STRICT,1
+
+# PrecLand retry timeout
+# Time for which vehicle continues descend even if target is lost. After this time period, vehicle will
+# attemp a landing retry depending on PLND_STRICT parameter.
+# Range: 0 20
+# Units: s (seconds)
+PLND_TIMEOUT,4.0
+
+# Precision Land Type
+# Precision Land Type
+# 0: None
+# 1: CompanionComputer
+# 2: IRLock
+# 3: SITL_Gazebo
+# 4: SITL
+PLND_TYPE,1
+
+# Precision Landing maximum distance to target before descending
+# The vehicle will not start descending if the landing target is detected and it is further than this many
+# meters away. Set 0 to always descend.
+# Range: 0 10
+# Units: m (meters)
+PLND_XY_DIST_MAX,0.0
+
+# Sensor yaw alignment
+# Yaw angle from body x-axis to sensor x-axis.
+# Range: 0 36000
+# Increment: 10
+# Units: cdeg (centidegrees)
+PLND_YAW_ALIGN,0.0
+
+# Position (horizontal) controller P gain
+# Position controller P gain.  Converts the distance (in the latitude direction) to the target location
+# into a desired speed which is then passed to the loiter latitude rate controller
+# Range: 0.500 2.000
+# Default: 1
+PSC_POSXY_P,1.5
+
+# RC input option
+# Function assigned to this RC channel
+# 0: Do Nothing                                        68: Stabilize
+# 2: Flip                                              69: PosHold
+# 3: Simple Mode                                       70: AltHold
+# 4: RTL                                               71: FlowHold
+# 5: Save Trim                                         72: Circle
+# 7: Save WP                                           73: Drift
+# 9: Camera Trigger                                    75: SurfaceTrackingUpDown
+# 10: RangeFinder                                      76: Standby Mode
+# 11: Fence                                            78: RunCam Control
+# 13: Super Simple Mode                                79: RunCam OSD Control
+# 14: Acro Trainer                                     80: VisOdom Align
+# 15: Sprayer                                          81: Disarm
+# 16: Auto                                             83: ZigZag Auto
+# 17: AutoTune                                         84: Air Mode
+# 18: Land                                             85: Generator
+# 19: Gripper                                          90: EKF Pos Source
+# 21: Parachute Enable                                 94: VTX Power
+# 22: Parachute Release                                99: AUTO RTL
+# 23: Parachute 3pos                                   100: KillIMU1
+# 24: Auto Mission Reset                               101: KillIMU2
+# 25: AttCon Feed Forward                              102: Camera Mode Toggle
+# 26: AttCon Accel Limits                              105: GPS Disable Yaw
+# 27: Retract Mount1                                   110: KillIMU3
+# 28: Relay On/Off                                     151: Turtle
+# 29: Landing Gear                                     152: simple heading reset
+# 30: Lost Copter Sound                                153: ArmDisarm (4.2 and higher)
+# 31: Motor Emergency Stop                             154: ArmDisarm with AirMode  (4.2 and higher)
+# 32: Motor Interlock                                  158: Optflow Calibration
+# 33: Brake                                            159: Force Flying
+# 34: Relay2 On/Off                                    161: Turbine Start(heli)
+# 35: Relay3 On/Off                                    162: FFT Tune
+# 36: Relay4 On/Off                                    163: Mount Lock
+# 37: Throw                                            164: Pause Stream Logging
+# 38: ADSB Avoidance En                                165: Arm/Emergency Motor Stop
+# 39: PrecLoiter                                       166: Camera Record Video
+# 40: Proximity Avoidance                              167: Camera Zoom
+# 41: ArmDisarm (4.1 and lower)                        168: Camera Manual Focus
+# 42: SmartRTL                                         169: Camera Auto Focus
+# 43: InvertedFlight                                   171: Calibrate Compasses
+# 44: Winch Enable                                     172: Battery MPPT Enable
+# 46: RC Override Enable                               212: Mount1 Roll
+# 47: User Function 1                                  213: Mount1 Pitch
+# 48: User Function 2                                  214: Mount1 Yaw
+# 49: User Function 3                                  215: Mount2 Roll
+# 52: Acro                                             216: Mount2 Pitch
+# 55: Guided                                           217: Mount2 Yaw
+# 56: Loiter                                           300: Scripting1
+# 57: Follow                                           301: Scripting2
+# 58: Clear Waypoints                                  302: Scripting3
+# 60: ZigZag                                           303: Scripting4
+# 61: ZigZag SaveWP                                    304: Scripting5
+# 62: Compass Learn                                    305: Scripting6
+# 65: GPS Disable                                      306: Scripting7
+# 66: Relay5 On/Off                                    307: Scripting8
+# 67: Relay6 On/Off
+# Default: 0
+RC10_OPTION,28  # Relay On/Off to activate precision landing light
+
+# RC input option
+# Function assigned to this RC channel
+# 0: Do Nothing                                        68: Stabilize
+# 2: Flip                                              69: PosHold
+# 3: Simple Mode                                       70: AltHold
+# 4: RTL                                               71: FlowHold
+# 5: Save Trim                                         72: Circle
+# 7: Save WP                                           73: Drift
+# 9: Camera Trigger                                    75: SurfaceTrackingUpDown
+# 10: RangeFinder                                      76: Standby Mode
+# 11: Fence                                            78: RunCam Control
+# 13: Super Simple Mode                                79: RunCam OSD Control
+# 14: Acro Trainer                                     80: VisOdom Align
+# 15: Sprayer                                          81: Disarm
+# 16: Auto                                             83: ZigZag Auto
+# 17: AutoTune                                         84: Air Mode
+# 18: Land                                             85: Generator
+# 19: Gripper                                          90: EKF Pos Source
+# 21: Parachute Enable                                 94: VTX Power
+# 22: Parachute Release                                99: AUTO RTL
+# 23: Parachute 3pos                                   100: KillIMU1
+# 24: Auto Mission Reset                               101: KillIMU2
+# 25: AttCon Feed Forward                              102: Camera Mode Toggle
+# 26: AttCon Accel Limits                              105: GPS Disable Yaw
+# 27: Retract Mount1                                   110: KillIMU3
+# 28: Relay On/Off                                     151: Turtle
+# 29: Landing Gear                                     152: simple heading reset
+# 30: Lost Copter Sound                                153: ArmDisarm (4.2 and higher)
+# 31: Motor Emergency Stop                             154: ArmDisarm with AirMode  (4.2 and higher)
+# 32: Motor Interlock                                  158: Optflow Calibration
+# 33: Brake                                            159: Force Flying
+# 34: Relay2 On/Off                                    161: Turbine Start(heli)
+# 35: Relay3 On/Off                                    162: FFT Tune
+# 36: Relay4 On/Off                                    163: Mount Lock
+# 37: Throw                                            164: Pause Stream Logging
+# 38: ADSB Avoidance En                                165: Arm/Emergency Motor Stop
+# 39: PrecLoiter                                       166: Camera Record Video
+# 40: Proximity Avoidance                              167: Camera Zoom
+# 41: ArmDisarm (4.1 and lower)                        168: Camera Manual Focus
+# 42: SmartRTL                                         169: Camera Auto Focus
+# 43: InvertedFlight                                   171: Calibrate Compasses
+# 44: Winch Enable                                     172: Battery MPPT Enable
+# 46: RC Override Enable                               212: Mount1 Roll
+# 47: User Function 1                                  213: Mount1 Pitch
+# 48: User Function 2                                  214: Mount1 Yaw
+# 49: User Function 3                                  215: Mount2 Roll
+# 52: Acro                                             216: Mount2 Pitch
+# 55: Guided                                           217: Mount2 Yaw
+# 56: Loiter                                           300: Scripting1
+# 57: Follow                                           301: Scripting2
+# 58: Clear Waypoints                                  302: Scripting3
+# 60: ZigZag                                           303: Scripting4
+# 61: ZigZag SaveWP                                    304: Scripting5
+# 62: Compass Learn                                    305: Scripting6
+# 65: GPS Disable                                      306: Scripting7
+# 66: Relay5 On/Off                                    307: Scripting8
+# 67: Relay6 On/Off
+# Default: 0
+RC11_OPTION,39  # Precision loiter

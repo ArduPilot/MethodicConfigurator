@@ -1,0 +1,113 @@
+# Timezone offset from UTC
+# Adds offset in +- minutes from UTC to calculate local time
+# Range: -720 +840
+# Default: 0
+BRD_RTC_TZ_MIN,60
+
+# Fence Type
+# Enabled fence types held as bitmask
+# Bitmask: 0:Max altitude,1:Circle Centered on Home,2:Inclusion/Exclusion Circles+Polygons,3:Min altitude
+# Default: 7
+FENCE_TYPE,11
+
+# Accel filter cutoff frequency
+# Filter cutoff frequency for accelerometers. This can be set to a lower value to try to cope with very
+# high vibration levels in aircraft. A value of zero means no filtering (not recommended!)
+# Units: Hz (hertz)
+# Range: 0 256
+# Default: 20
+INS_ACCEL_FILTER,10 # the default is 20 and that lets too much noise in
+
+# IMU accelerometer X position
+# X position of the first IMU Accelerometer in body frame. Positive X is forward of the origin. Attention:
+# The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter
+# is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and
+# IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU
+# can be used as the body frame origin.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+INS_POS1_X,0 # was -0.005
+
+# IMU accelerometer Y position
+# Y position of the first IMU accelerometer in body frame. Positive Y is to the right of the origin.
+# Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this
+# parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to
+# vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location
+# closer to the IMU can be used as the body frame origin.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+INS_POS1_Y,0 # was -0.011
+
+# IMU accelerometer X position
+# X position of the second IMU accelerometer in body frame. Positive X is forward of the origin. Attention:
+# The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter
+# is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and
+# IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU
+# can be used as the body frame origin.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+INS_POS2_X,0 # was -0.011
+
+# IMU accelerometer Y position
+# Y position of the second IMU accelerometer in body frame. Positive Y is to the right of the origin.
+# Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this
+# parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to
+# vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location
+# closer to the IMU can be used as the body frame origin.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+INS_POS2_Y,0 # was -0.01
+
+# Land alt low
+# Altitude during Landing at which vehicle slows to LAND_SPEED
+# Units: cm (centimeters)
+# Range: 100 10000
+# Increment: 10
+# Default: 1000
+LAND_ALT_LOW,200 # come down fast and only slow down close to the ground. We have a good GNSS receiver, so thrust it
+
+# RTL Altitude
+# The minimum alt above home the vehicle will climb to before returning.  If the vehicle is flying higher
+# than this value it will return at its current altitude.
+# Units: cm (centimeters)
+# Range: 30 300000
+# Increment: 1
+# Default: 1500
+RTL_ALT,300 # The default is too high for the kind of flights we do. This reduces the altitude for indoors
+
+# RTL loiter time
+# Time (in milliseconds) to loiter above home before beginning final descent
+# Units: ms (milliseconds)
+# Range: 0 60000
+# Increment: 1000
+# Default: 5000
+RTL_LOIT_TIME,1000 # The default is too long. This reduces the time
+
+# Scheduling main loop rate
+# This controls the rate of the main control loop in Hz. This should only be changed by developers. This
+# only takes effect on restart. Values over 400 are considered highly experimental.
+# RebootRequired: True
+# 50: 50Hz
+# 100: 100Hz
+# 200: 200Hz
+# 250: 250Hz
+# 300: 300Hz
+# 400: 400Hz
+# Default: 400
+SCHED_LOOP_RATE,800 # On our vehicle the propellers rotate at speeds higher than 400Hz and we have a powerful STM32 H7 family processor. So we increase this for added performance.
+
+# Enable Scripting
+# Controls if scripting is enabled
+# RebootRequired: True
+# 0: None
+# 1: Lua Scripts
+# Default: 0
+SCR_ENABLE,1  # For MagFit automation and Windspeed Estimation automation

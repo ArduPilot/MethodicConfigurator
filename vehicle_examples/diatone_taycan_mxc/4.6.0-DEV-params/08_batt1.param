@@ -1,0 +1,116 @@
+# Amps per volt
+# Number of amps that a 1V reading on the current sensor corresponds to. With a Pixhawk using the 3DR Power
+# brick this should be set to 17. For the Pixhawk with the 3DR 4in1 ESC this should be 17. For Synthetic
+# Current sensor monitors, this is the maximum, full throttle current draw.
+# Units: A/V (ampere per volt)
+# Default: 40
+BATT_AMP_PERVLT,57
+
+# Required arming voltage
+# Battery voltage level which is required to arm the aircraft. Set to 0 to allow arming at any voltage.
+# Units: V (volt)
+# Increment: 0.1
+# Default: 0
+BATT_ARM_VOLT,15
+
+# Battery capacity
+# Capacity of the battery in mAh when full
+# Units: mAh (milliampere hour)
+# Increment: 50
+# Default: 3300
+BATT_CAPACITY,1800
+
+# Battery critical capacity
+# Battery capacity at which the critical battery failsafe is triggered. Set to 0 to disable battery
+# remaining failsafe. If the battery capacity drops below this level the vehicle will perform the failsafe
+# specified by the BATT_FS_CRT_ACT parameter.
+# Units: mAh (milliampere hour)
+# Increment: 50
+# Default: 0
+BATT_CRT_MAH,450
+
+# Critical battery voltage
+# Battery voltage that triggers a critical battery failsafe. Set to 0 to disable. If the battery voltage
+# drops below this voltage continuously for more then the period specified by the BATT_LOW_TIMER parameter
+# then the vehicle will perform the failsafe specified by the BATT_FS_CRT_ACT parameter.
+# Units: V (volt)
+# Increment: 0.1
+# Default: 0
+BATT_CRT_VOLT,14
+
+# Critical battery failsafe action
+# What action the vehicle should perform if it hits a critical battery failsafe
+# 0: None
+# 1: Land
+# 2: RTL
+# 3: SmartRTL or RTL
+# 4: SmartRTL or Land
+# 5: Terminate
+# 6: Auto DO_LAND_START or RTL
+# Default: 0
+BATT_FS_CRT_ACT,1  # flying indoors, just land ASAP, no need to hit the celing while doing RTL
+
+# Low battery failsafe action
+# What action the vehicle should perform if it hits a low battery failsafe
+# 0: None
+# 1: Land
+# 2: RTL
+# 3: SmartRTL or RTL
+# 4: SmartRTL or Land
+# 5: Terminate
+# 6: Auto DO_LAND_START or RTL
+# Default: 0
+BATT_FS_LOW_ACT,1  # flying indoors, just land ASAP, no need to hit the celing while doing RTL
+
+# Failsafe voltage source
+# Voltage type used for detection of low voltage event
+# 0: Raw Voltage
+# 1: Sag Compensated Voltage
+# Default: 0
+BATT_FS_VOLTSRC,1
+
+# Low battery capacity
+# Battery capacity at which the low battery failsafe is triggered. Set to 0 to disable battery remaining
+# failsafe. If the battery capacity drops below this level the vehicle will perform the failsafe specified
+# by the BATT_FS_LOW_ACT parameter.
+# Units: mAh (milliampere hour)
+# Increment: 50
+# Default: 0
+BATT_LOW_MAH,600
+
+# Low battery voltage
+# Battery voltage that triggers a low battery failsafe. Set to 0 to disable. If the battery voltage drops
+# below this voltage continuously for more then the period specified by the BATT_LOW_TIMER parameter then
+# the vehicle will perform the failsafe specified by the BATT_FS_LOW_ACT parameter.
+# Units: V (volt)
+# Increment: 0.1
+# Default: 10.5
+BATT_LOW_VOLT,14.4
+
+# Battery monitoring
+# Controls enabling monitoring of the battery's voltage and current
+# RebootRequired: True
+# 0: Disabled                                          16: SMBus-Maxell
+# 3: Analog Voltage Only                               17: Generator-Elec
+# 4: Analog Voltage and Current                        18: Generator-Fuel
+# 5: Solo                                              19: Rotoye
+# 6: Bebop                                             20: MPPT
+# 7: SMBus-Generic                                     21: INA2XX
+# 8: DroneCAN-BatteryInfo                              22: LTC2946
+# 9: ESC                                               23: Torqeedo
+# 10: Sum Of Selected Monitors                         24: FuelLevelAnalog
+# 11: FuelFlow                                         25: Synthetic Current and Analog Voltage
+# 12: FuelLevelPWM                                     26: INA239_SPI
+# 13: SMBUS-SUI3                                       27: EFI
+# 14: SMBUS-SUI6                                       28: AD7091R5
+# 15: NeoDesign                                        29: Scripting
+# Default: 4
+BATT_MONITOR,4
+
+# Voltage Multiplier
+# Used to convert the voltage of the voltage sensing pin (BATT_VOLT_PIN) to the actual battery's voltage
+# (pin_voltage * VOLT_MULT). For the 3DR Power brick with a Pixhawk, this should be set to 10.1. For the
+# Pixhawk with the 3DR 4in1 ESC this should be 12.02. For the PX using the PX4IO power supply this should
+# be set to 1.
+# Default: 11
+BATT_VOLT_MULT,10.985 # Use a power source with a voltage close to BATT_LOW_VOLT measure with a calibrated voltimeter and adapt this parameter so that the telemetry voltage reading matches it

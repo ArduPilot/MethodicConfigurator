@@ -1,0 +1,342 @@
+# Arming with Rudder enable/disable
+# Allow arm/disarm by rudder input. When enabled arming can be done with right rudder, disarming with left
+# rudder. Rudder arming only works with throttle at zero +- deadzone (RCx_DZ). Depending on vehicle type,
+# arming in certain modes is prevented. See the wiki for each vehicle. Caution is recommended when arming
+# if it is allowed in an auto-throttle mode!
+# 0: Disabled
+# 1: ArmingOnly
+# 2: ArmOrDisarm
+# Default: 2
+ARMING_RUDDER,0  # We find it safer to use only a switch to arm instead of through rudder inputs
+
+# Alternative HW config
+# Select an alternative hardware configuration. A value of zero selects the default configuration for this
+# board. Other values are board specific. Please see the documentation for your board for details on any
+# alternative configuration values that may be available.
+# Range: 0 10
+# Increment: 1
+# RebootRequired: True
+# Default: 0
+BRD_ALT_CONFIG,1 # Matek H743-specific: Hardware-Pin Rx6 is Rx from UART 7
+
+# RC options
+# RC input options
+# Bitmask: 0:Ignore RC Receiver, 1:Ignore MAVLink Overrides, 2:Ignore Receiver Failsafe bit but allow other RC failsafes if setup, 3:FPort Pad, 4:Log RC input bytes, 5:Arming check throttle for 0 input, 6:Skip the arming check for neutral Roll/Pitch/Yaw sticks, 7:Allow Switch reverse, 8:Use passthrough for CRSF telemetry, 9:Suppress CRSF mode/rate message for ELRS systems,10:Enable multiple receiver support, 11:Use Link Quality for RSSI with CRSF, 12:Annotate CRSF flight mode with * on disarm, 13: Use 420kbaud for ELRS protocol
+# Default: 32
+RC_OPTIONS,288 # Enables Crossfire Telemetry
+
+# RC protocols enabled
+# Bitmask of enabled RC protocols. Allows narrowing the protocol detection to only specific types of RC
+# receivers which can avoid issues with incorrect detection. Set to 1 to enable all protocols.
+# Bitmask: 0:All,1:PPM,2:IBUS,3:SBUS,4:SBUS_NI,5:DSM,6:SUMD,7:SRXL,8:SRXL2,9:CRSF,10:ST24,11:FPORT,12:FPORT2,13:FastSBUS,14:DroneCAN,15:Ghost,16:MAVRadio
+# Default: 1
+RC_PROTOCOLS,512 # Deactivates all protocols except TBS Crossfire
+
+# RC input option
+# Function assigned to this RC channel
+# 0: Do Nothing                                        214: Mount1 Yaw
+# 52: ACRO Mode                                        216: Mount2 Pitch
+# 38: ADSB Avoidance Enable                            215: Mount2 Roll
+# 70: ALTHOLD Mode                                     217: Mount2 Yaw
+# 16: AUTO Mode                                        158: Optflow Calibration
+# 99: AUTO RTL                                         69: POSHOLD Mode
+# 17: AUTOTUNE Mode                                    23: Parachute 3pos
+# 14: Acro Trainer                                     21: Parachute Enable
+# 84: AirMode                                          22: Parachute Release
+# 165: Arm/Emergency Motor Stop                        164: Pause Stream Logging
+# 41: ArmDisarm (4.1 and lower)                        39: PrecLoiter Enable
+# 153: ArmDisarm (4.2 and higher)                      40: Proximity Avoidance Enable
+# 154: ArmDisarm with AirMode  (4.2 and higher)        46: RC Override Enable
+# 26: AttCon Accel Limits                              4: RTL
+# 25: AttCon Feed Forward                              10: RangeFinder Enable
+# 24: Auto Mission Reset                               28: Relay1 On/Off
+# 33: BRAKE Mode                                       34: Relay2 On/Off
+# 172: Battery MPPT Enable                             35: Relay3 On/Off
+# 72: CIRCLE Mode                                      36: Relay4 On/Off
+# 171: Calibrate Compasses                             66: Relay5 On/Off
+# 169: Camera Auto Focus                               67: Relay6 On/Off
+# 174: Camera Image Tracking                           27: Retract Mount1
+# 175: Camera Lens                                     78: RunCam Control
+# 168: Camera Manual Focus                             79: RunCam OSD Control
+# 102: Camera Mode Toggle                              152: SIMPLE heading reset
+# 166: Camera Record Video                             42: SMARTRTL Mode
+# 9: Camera Trigger                                    68: STABILIZE Mode
+# 167: Camera Zoom                                     76: STANDBY Mode
+# 58: Clear Waypoints                                  5: Save Trim
+# 62: Compass Learn                                    7: Save WP
+# 73: DRIFT Mode                                       300: Scripting1
+# 81: Disarm                                           301: Scripting2
+# 90: EKF Pos Source                                   302: Scripting3
+# 162: FFT Tune                                        303: Scripting4
+# 2: FLIP Mode                                         304: Scripting5
+# 71: FLOWHOLD Mode                                    305: Scripting6
+# 57: FOLLOW Mode                                      306: Scripting7
+# 11: Fence Enable                                     307: Scripting8
+# 159: Force IS_Flying                                 3: Simple Mode
+# 65: GPS Disable                                      15: Sprayer Enable
+# 105: GPS Disable Yaw                                 13: Super Simple Mode
+# 55: GUIDED Mode                                      75: SurfaceTrackingUpDown
+# 85: Generator                                        112: SwitchExternalAHRS
+# 19: Gripper Release                                  37: THROW Mode
+# 43: InvertedFlight Enable                            151: TURTLE Mode
+# 100: KillIMU1                                        161: Turbine Start(heli)
+# 101: KillIMU2                                        47: User Function 1
+# 110: KillIMU3                                        48: User Function 2
+# 18: LAND Mode                                        49: User Function 3
+# 56: LOITER Mode                                      94: VTX Power
+# 29: Landing Gear                                     80: VisOdom Align
+# 30: Lost Copter Sound                                45: Winch Control
+# 31: Motor Emergency Stop                             44: Winch Enable
+# 32: Motor Interlock                                  83: ZigZag Auto
+# 177: Mount LRF enable                                60: ZigZag Mode
+# 163: Mount Lock                                      61: ZigZag SaveWP
+# 213: Mount1 Pitch                                    109: use Custom Controller
+# 212: Mount1 Roll
+# Default: 0
+RC6_OPTION,153 # "Arm/Disarm", to use an arming switch (here Channel 6)
+
+# RC input option
+# Function assigned to this RC channel
+# 0: Do Nothing                                        214: Mount1 Yaw
+# 52: ACRO Mode                                        216: Mount2 Pitch
+# 38: ADSB Avoidance Enable                            215: Mount2 Roll
+# 70: ALTHOLD Mode                                     217: Mount2 Yaw
+# 16: AUTO Mode                                        158: Optflow Calibration
+# 99: AUTO RTL                                         69: POSHOLD Mode
+# 17: AUTOTUNE Mode                                    23: Parachute 3pos
+# 14: Acro Trainer                                     21: Parachute Enable
+# 84: AirMode                                          22: Parachute Release
+# 165: Arm/Emergency Motor Stop                        164: Pause Stream Logging
+# 41: ArmDisarm (4.1 and lower)                        39: PrecLoiter Enable
+# 153: ArmDisarm (4.2 and higher)                      40: Proximity Avoidance Enable
+# 154: ArmDisarm with AirMode  (4.2 and higher)        46: RC Override Enable
+# 26: AttCon Accel Limits                              4: RTL
+# 25: AttCon Feed Forward                              10: RangeFinder Enable
+# 24: Auto Mission Reset                               28: Relay1 On/Off
+# 33: BRAKE Mode                                       34: Relay2 On/Off
+# 172: Battery MPPT Enable                             35: Relay3 On/Off
+# 72: CIRCLE Mode                                      36: Relay4 On/Off
+# 171: Calibrate Compasses                             66: Relay5 On/Off
+# 169: Camera Auto Focus                               67: Relay6 On/Off
+# 174: Camera Image Tracking                           27: Retract Mount1
+# 175: Camera Lens                                     78: RunCam Control
+# 168: Camera Manual Focus                             79: RunCam OSD Control
+# 102: Camera Mode Toggle                              152: SIMPLE heading reset
+# 166: Camera Record Video                             42: SMARTRTL Mode
+# 9: Camera Trigger                                    68: STABILIZE Mode
+# 167: Camera Zoom                                     76: STANDBY Mode
+# 58: Clear Waypoints                                  5: Save Trim
+# 62: Compass Learn                                    7: Save WP
+# 73: DRIFT Mode                                       300: Scripting1
+# 81: Disarm                                           301: Scripting2
+# 90: EKF Pos Source                                   302: Scripting3
+# 162: FFT Tune                                        303: Scripting4
+# 2: FLIP Mode                                         304: Scripting5
+# 71: FLOWHOLD Mode                                    305: Scripting6
+# 57: FOLLOW Mode                                      306: Scripting7
+# 11: Fence Enable                                     307: Scripting8
+# 159: Force IS_Flying                                 3: Simple Mode
+# 65: GPS Disable                                      15: Sprayer Enable
+# 105: GPS Disable Yaw                                 13: Super Simple Mode
+# 55: GUIDED Mode                                      75: SurfaceTrackingUpDown
+# 85: Generator                                        112: SwitchExternalAHRS
+# 19: Gripper Release                                  37: THROW Mode
+# 43: InvertedFlight Enable                            151: TURTLE Mode
+# 100: KillIMU1                                        161: Turbine Start(heli)
+# 101: KillIMU2                                        47: User Function 1
+# 110: KillIMU3                                        48: User Function 2
+# 18: LAND Mode                                        49: User Function 3
+# 56: LOITER Mode                                      94: VTX Power
+# 29: Landing Gear                                     80: VisOdom Align
+# 30: Lost Copter Sound                                45: Winch Control
+# 31: Motor Emergency Stop                             44: Winch Enable
+# 32: Motor Interlock                                  83: ZigZag Auto
+# 177: Mount LRF enable                                60: ZigZag Mode
+# 163: Mount Lock                                      61: ZigZag SaveWP
+# 213: Mount1 Pitch                                    109: use Custom Controller
+# 212: Mount1 Roll
+# Default: 0
+RC7_OPTION,31  # "Motor Emergency Stop", stops all motors immediately at a high signal
+
+# RC input option
+# Function assigned to this RC channel
+# 0: Do Nothing                                        214: Mount1 Yaw
+# 52: ACRO Mode                                        216: Mount2 Pitch
+# 38: ADSB Avoidance Enable                            215: Mount2 Roll
+# 70: ALTHOLD Mode                                     217: Mount2 Yaw
+# 16: AUTO Mode                                        158: Optflow Calibration
+# 99: AUTO RTL                                         69: POSHOLD Mode
+# 17: AUTOTUNE Mode                                    23: Parachute 3pos
+# 14: Acro Trainer                                     21: Parachute Enable
+# 84: AirMode                                          22: Parachute Release
+# 165: Arm/Emergency Motor Stop                        164: Pause Stream Logging
+# 41: ArmDisarm (4.1 and lower)                        39: PrecLoiter Enable
+# 153: ArmDisarm (4.2 and higher)                      40: Proximity Avoidance Enable
+# 154: ArmDisarm with AirMode  (4.2 and higher)        46: RC Override Enable
+# 26: AttCon Accel Limits                              4: RTL
+# 25: AttCon Feed Forward                              10: RangeFinder Enable
+# 24: Auto Mission Reset                               28: Relay1 On/Off
+# 33: BRAKE Mode                                       34: Relay2 On/Off
+# 172: Battery MPPT Enable                             35: Relay3 On/Off
+# 72: CIRCLE Mode                                      36: Relay4 On/Off
+# 171: Calibrate Compasses                             66: Relay5 On/Off
+# 169: Camera Auto Focus                               67: Relay6 On/Off
+# 174: Camera Image Tracking                           27: Retract Mount1
+# 175: Camera Lens                                     78: RunCam Control
+# 168: Camera Manual Focus                             79: RunCam OSD Control
+# 102: Camera Mode Toggle                              152: SIMPLE heading reset
+# 166: Camera Record Video                             42: SMARTRTL Mode
+# 9: Camera Trigger                                    68: STABILIZE Mode
+# 167: Camera Zoom                                     76: STANDBY Mode
+# 58: Clear Waypoints                                  5: Save Trim
+# 62: Compass Learn                                    7: Save WP
+# 73: DRIFT Mode                                       300: Scripting1
+# 81: Disarm                                           301: Scripting2
+# 90: EKF Pos Source                                   302: Scripting3
+# 162: FFT Tune                                        303: Scripting4
+# 2: FLIP Mode                                         304: Scripting5
+# 71: FLOWHOLD Mode                                    305: Scripting6
+# 57: FOLLOW Mode                                      306: Scripting7
+# 11: Fence Enable                                     307: Scripting8
+# 159: Force IS_Flying                                 3: Simple Mode
+# 65: GPS Disable                                      15: Sprayer Enable
+# 105: GPS Disable Yaw                                 13: Super Simple Mode
+# 55: GUIDED Mode                                      75: SurfaceTrackingUpDown
+# 85: Generator                                        112: SwitchExternalAHRS
+# 19: Gripper Release                                  37: THROW Mode
+# 43: InvertedFlight Enable                            151: TURTLE Mode
+# 100: KillIMU1                                        161: Turbine Start(heli)
+# 101: KillIMU2                                        47: User Function 1
+# 110: KillIMU3                                        48: User Function 2
+# 18: LAND Mode                                        49: User Function 3
+# 56: LOITER Mode                                      94: VTX Power
+# 29: Landing Gear                                     80: VisOdom Align
+# 30: Lost Copter Sound                                45: Winch Control
+# 31: Motor Emergency Stop                             44: Winch Enable
+# 32: Motor Interlock                                  83: ZigZag Auto
+# 177: Mount LRF enable                                60: ZigZag Mode
+# 163: Mount Lock                                      61: ZigZag SaveWP
+# 213: Mount1 Pitch                                    109: use Custom Controller
+# 212: Mount1 Roll
+# Default: 0
+RC8_OPTION,30  # "Lost Copter Sound", generates a loud tone from the buzzer at a high signal to locate a lost multicopter
+
+# RC input option
+# Function assigned to this RC channel
+# 0: Do Nothing                                        214: Mount1 Yaw
+# 52: ACRO Mode                                        216: Mount2 Pitch
+# 38: ADSB Avoidance Enable                            215: Mount2 Roll
+# 70: ALTHOLD Mode                                     217: Mount2 Yaw
+# 16: AUTO Mode                                        158: Optflow Calibration
+# 99: AUTO RTL                                         69: POSHOLD Mode
+# 17: AUTOTUNE Mode                                    23: Parachute 3pos
+# 14: Acro Trainer                                     21: Parachute Enable
+# 84: AirMode                                          22: Parachute Release
+# 165: Arm/Emergency Motor Stop                        164: Pause Stream Logging
+# 41: ArmDisarm (4.1 and lower)                        39: PrecLoiter Enable
+# 153: ArmDisarm (4.2 and higher)                      40: Proximity Avoidance Enable
+# 154: ArmDisarm with AirMode  (4.2 and higher)        46: RC Override Enable
+# 26: AttCon Accel Limits                              4: RTL
+# 25: AttCon Feed Forward                              10: RangeFinder Enable
+# 24: Auto Mission Reset                               28: Relay1 On/Off
+# 33: BRAKE Mode                                       34: Relay2 On/Off
+# 172: Battery MPPT Enable                             35: Relay3 On/Off
+# 72: CIRCLE Mode                                      36: Relay4 On/Off
+# 171: Calibrate Compasses                             66: Relay5 On/Off
+# 169: Camera Auto Focus                               67: Relay6 On/Off
+# 174: Camera Image Tracking                           27: Retract Mount1
+# 175: Camera Lens                                     78: RunCam Control
+# 168: Camera Manual Focus                             79: RunCam OSD Control
+# 102: Camera Mode Toggle                              152: SIMPLE heading reset
+# 166: Camera Record Video                             42: SMARTRTL Mode
+# 9: Camera Trigger                                    68: STABILIZE Mode
+# 167: Camera Zoom                                     76: STANDBY Mode
+# 58: Clear Waypoints                                  5: Save Trim
+# 62: Compass Learn                                    7: Save WP
+# 73: DRIFT Mode                                       300: Scripting1
+# 81: Disarm                                           301: Scripting2
+# 90: EKF Pos Source                                   302: Scripting3
+# 162: FFT Tune                                        303: Scripting4
+# 2: FLIP Mode                                         304: Scripting5
+# 71: FLOWHOLD Mode                                    305: Scripting6
+# 57: FOLLOW Mode                                      306: Scripting7
+# 11: Fence Enable                                     307: Scripting8
+# 159: Force IS_Flying                                 3: Simple Mode
+# 65: GPS Disable                                      15: Sprayer Enable
+# 105: GPS Disable Yaw                                 13: Super Simple Mode
+# 55: GUIDED Mode                                      75: SurfaceTrackingUpDown
+# 85: Generator                                        112: SwitchExternalAHRS
+# 19: Gripper Release                                  37: THROW Mode
+# 43: InvertedFlight Enable                            151: TURTLE Mode
+# 100: KillIMU1                                        161: Turbine Start(heli)
+# 101: KillIMU2                                        47: User Function 1
+# 110: KillIMU3                                        48: User Function 2
+# 18: LAND Mode                                        49: User Function 3
+# 56: LOITER Mode                                      94: VTX Power
+# 29: Landing Gear                                     80: VisOdom Align
+# 30: Lost Copter Sound                                45: Winch Control
+# 31: Motor Emergency Stop                             44: Winch Enable
+# 32: Motor Interlock                                  83: ZigZag Auto
+# 177: Mount LRF enable                                60: ZigZag Mode
+# 163: Mount Lock                                      61: ZigZag SaveWP
+# 213: Mount1 Pitch                                    109: use Custom Controller
+# 212: Mount1 Roll
+# Default: 0
+RC9_OPTION,300 # Used to jump to the next waypoint
+
+# RSSI Type
+# Radio Receiver RSSI type. If your radio receiver supports RSSI of some kind, set it here, then set its
+# associated RSSI_XXXXX parameters, if any.
+# 0: Disabled
+# 1: AnalogPin
+# 2: RCChannelPwmValue
+# 3: ReceiverProtocol
+# 4: PWMInputPin
+# 5: TelemetryRadioRSSI
+# Default: 0
+RSSI_TYPE,3 # TBS Crossfire protocol provides RSSI
+
+# Telemetry 2 Baud Rate
+# The baud rate of the Telem2 port. Most stm32-based boards can support rates of up to 1500. If you setup a
+# rate you cannot support and then can't connect to your board you should load a firmware from a different
+# vehicle type. That will reset all your parameters to defaults.
+# 1: 1200                                              115: 115200
+# 2: 2400                                              230: 230400
+# 4: 4800                                              256: 256000
+# 9: 9600                                              460: 460800
+# 19: 19200                                            500: 500000
+# 38: 38400                                            921: 921600
+# 57: 57600                                            1500: 1500000
+# 111: 111100                                          2000: 2000000
+# Default: 57
+SERIAL2_BAUD,115 # For Mavlink over crossfire
+
+# Serial7 protocol selection
+# Control what protocol Serial7 port should be used for. Note that the Frsky options require external
+# converter hardware. See the wiki for details.
+# RebootRequired: True
+# -1: None                                             25: LTM
+# 1: MAVLink1                                          26: RunCam
+# 2: MAVLink2                                          27: HottTelem
+# 3: Frsky D                                           28: Scripting
+# 4: Frsky SPort                                       29: Crossfire VTX
+# 5: GPS                                               30: Generator
+# 7: Alexmos Gimbal Serial                             31: Winch
+# 8: Gimbal                                            32: MSP
+# 9: Rangefinder                                       33: DJI FPV
+# 10: FrSky SPort Passthrough (OpenTX)                 34: AirSpeed
+# 11: Lidar360                                         35: ADSB
+# 13: Beacon                                           36: AHRS
+# 14: Volz servo out                                   37: SmartAudio
+# 15: SBus servo out                                   38: FETtecOneWire
+# 16: ESC Telemetry                                    39: Torqeedo
+# 17: Devo Telemetry                                   40: AIS
+# 18: OpticalFlow                                      41: CoDevESC
+# 19: RobotisServo                                     42: DisplayPort
+# 20: NMEA Output                                      43: MAVLink High Latency
+# 21: WindVane                                         44: IRC Tramp
+# 22: SLCAN                                            45: DDS XRCE
+# 23: RCIN                                             46: IMUDATA
+# 24: EFI Serial
+# Default: 23
+SERIAL7_PROTOCOL,23 # Specifies the serial port 7 as RC-Input

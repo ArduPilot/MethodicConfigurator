@@ -1,0 +1,54 @@
+# Throttle Mix Maximum
+# Throttle vs attitude control prioritisation used during active flight (higher values mean we prioritise
+# attitude control over throttle)
+# Range: 0.5 0.9
+# Default: 0.5
+ATC_THR_MIX_MAX,0.7  # according to autotune documentation this should be raised up-to 0.9 after the tune
+
+# Low battery failsafe action
+# What action the vehicle should perform if it hits a low battery failsafe
+# 0: None
+# 1: Land
+# 2: RTL
+# 3: SmartRTL or RTL
+# 4: SmartRTL or Land
+# 5: Terminate
+# 6: Auto DO_LAND_START or RTL
+# Default: 0
+BATT_FS_LOW_ACT,2  # outdoors we want the drone to come back
+
+# Low battery failsafe action
+# What action the vehicle should perform if it hits a low battery failsafe
+# 0: None
+# 1: Land
+# 2: RTL
+# 3: SmartRTL or RTL
+# 4: SmartRTL or Land
+# 5: Terminate
+# 6: Auto DO_LAND_START or RTL
+# Default: 0
+BATT2_FS_LOW_ACT,2  # outdoors we want the drone to come back
+
+# Log bitmask
+# Bitmap of what on-board log types to enable. This value is made up of the sum of each of the log types
+# you want to be saved. It is usually best just to enable all basiclog types by setting this to 65535.
+# Bitmask: 0:Fast Attitude,1:Medium Attitude,2:GPS,3:System Performance,4:Control Tuning,5:Navigation Tuning,6:RC input,7:IMU,8:Mission Commands,9:Battery Monitor,10:RC output,11:Optical Flow,12:PID,13:Compass,15:Camera,17:Motors,18:Fast IMU,19:Raw IMU,20:Video Stabilization,21:Fast harmonic notch logging
+# Default: 176126
+LOG_BITMASK,2241500 # 2:GPS,3:System Performance,4:Control Tuning,6:RC input,7:IMU,8:Mission Commands,9:Battery Monitor,12:PID,13:Compass,17:Motors,21:Fast harmonic notch logging
+
+# RTL Altitude
+# The minimum alt above home the vehicle will climb to before returning.  If the vehicle is flying higher
+# than this value it will return at its current altitude.
+# Units: cm (centimeters)
+# Range: 200 300000
+# Increment: 1
+# Default: 1500
+RTL_ALT,500  # The default is too high for the kind of flights we do. This reduces the altitude for outdoors
+
+# RTL minimum climb
+# The vehicle will climb this many cm during the initial climb portion of the RTL
+# Units: cm (centimeters)
+# Range: 0 3000
+# Increment: 10
+# Default: 0
+RTL_CLIMB_MIN,100  # always rise at least 1 meter as a visual indicator

@@ -1,0 +1,100 @@
+# Sets default state of the safety switch
+# This controls the default state of the safety switch at startup. When set to 1 the safety switch will
+# start in the safe state (flashing) at boot. When set to zero the safety switch will start in the unsafe
+# state (solid) at startup. Note that if a safety switch is fitted the user can still control the safety
+# state after startup using the switch. The safety state can also be controlled in software using a MAVLink
+# message.
+# RebootRequired: True
+# 0: Disabled
+# 1: Enabled
+# Default: 0
+BRD_SAFETY_DEFLT,0  # Matek H743 Slim has no safety switch
+
+# GNSS system configuration
+# Bitmask for what GNSS system to use on the first GPS (all unchecked or zero to leave GPS as configured)
+# Bitmask: 0:GPS,1:SBAS,2:Galileo,3:Beidou,4:IMES,5:QZSS,6:GLONASS
+# Default: 0
+GPS_GNSS_MODE,7 # limit the constalations to ensure an update rate higher than 5Hz
+
+# Antenna X position offset
+# X position of the first GPS antenna in body frame. Positive X is forward of the origin. Use antenna phase
+# centroid location if provided by the manufacturer.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+GPS_POS1_X,0.056 # HX-CH7604A GNSS antenna pahse center location relative to CG
+
+# Antenna Y position offset
+# Y position of the first GPS antenna in body frame. Positive Y is to the right of the origin. Use antenna
+# phase centroid location if provided by the manufacturer.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+GPS_POS1_Y,0.0 # HX-CH7604A GNSS antenna pahse center location relative to CG
+
+# Antenna Z position offset
+# Z position of the first GPS antenna in body frame. Positive Z is down from the origin. Use antenna phase
+# centroid location if provided by the manufacturer.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+GPS_POS1_Z,-0.070 # HX-CH7604A GNSS antenna pahse center location relative to CG
+
+# 1st GPS type
+# GPS type of 1st GPS
+# RebootRequired: True
+# 0: None                                              15: NOVA
+# 1: AUTO                                              16: HemisphereNMEA
+# 2: uBlox                                             17: uBlox-MovingBaseline-Base
+# 5: NMEA                                              18: uBlox-MovingBaseline-Rover
+# 6: SiRF                                              19: MSP
+# 7: HIL                                               20: AllyStar
+# 8: SwiftNav                                          21: ExternalAHRS
+# 9: DroneCAN                                          22: DroneCAN-MovingBaseline-Base
+# 10: SBF                                              23: DroneCAN-MovingBaseline-Rover
+# 11: GSOF                                             24: UnicoreNMEA
+# 13: ERB                                              25: UnicoreMovingBaselineNMEA
+# 14: MAV                                              26: SBF-DualAntenna
+# Default: 1
+GPS_TYPE,2
+
+# Serial4 protocol selection
+# Control what protocol Serial4 port should be used for. Note that the Frsky options require external
+# converter hardware. See the wiki for details.
+# RebootRequired: True
+# -1: None                                             25: LTM
+# 1: MAVLink1                                          26: RunCam
+# 2: MAVLink2                                          27: HottTelem
+# 3: Frsky D                                           28: Scripting
+# 4: Frsky SPort                                       29: Crossfire VTX
+# 5: GPS                                               30: Generator
+# 7: Alexmos Gimbal Serial                             31: Winch
+# 8: Gimbal                                            32: MSP
+# 9: Rangefinder                                       33: DJI FPV
+# 10: FrSky SPort Passthrough (OpenTX)                 34: AirSpeed
+# 11: Lidar360                                         35: ADSB
+# 13: Beacon                                           36: AHRS
+# 14: Volz servo out                                   37: SmartAudio
+# 15: SBus servo out                                   38: FETtecOneWire
+# 16: ESC Telemetry                                    39: Torqeedo
+# 17: Devo Telemetry                                   40: AIS
+# 18: OpticalFlow                                      41: CoDevESC
+# 19: RobotisServo                                     42: DisplayPort
+# 20: NMEA Output                                      43: MAVLink High Latency
+# 21: WindVane                                         44: IRC Tramp
+# 22: SLCAN                                            45: DDS XRCE
+# 23: RCIN                                             46: IMUDATA
+# 24: EFI Serial
+# Default: 5
+SERIAL4_PROTOCOL,-1
+
+# Waypoint Radius
+# Defines the distance from a waypoint, that when crossed indicates the wp has been hit.
+# Units: cm (centimeters)
+# Range: 5 1000
+# Increment: 1
+# Default: 200
+WPNAV_RADIUS,100  # we have a good GNSS receiver so we can afford to fly precisely

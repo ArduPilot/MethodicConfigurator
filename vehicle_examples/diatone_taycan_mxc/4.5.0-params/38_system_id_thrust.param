@@ -1,0 +1,66 @@
+# Yaw axis rate controller I gain
+# Yaw axis rate controller I gain.  Corrects long-term difference in desired yaw rate vs actual yaw rate
+# Range: 0.01 0.2
+# Increment: 0.01
+# Default: 0.018
+ATC_RAT_YAW_I,0.1023194 # we are not performing system identification on the yaw axis, so restore it to the autotuned value
+
+# Rate Feedforward Enable
+# Controls whether body-frame rate feedforward is enabled or disabled
+# 0: Disabled
+# 1: Enabled
+# Default: 1
+ATC_RATE_FF_ENAB,0 # prevent the rate controllers from compensating too much of the frequency-sweep signal
+
+# Acceleration (vertical) controller I gain
+# Acceleration (vertical) controller I gain.  Corrects long-term difference in desired vertical
+# acceleration and actual acceleration
+# Range: 0.000 3.000
+# Default: 1
+PSC_ACCZ_I,0 # prevent the rate controllers from compensating too much of the frequency-sweep signal
+
+# System identification axis
+# Controls which axis are being excited.  Set to non-zero to see more parameters
+# 0: None                                              7: Rate Roll
+# 1: Input Roll Angle                                  8: Rate Pitch
+# 2: Input Pitch Angle                                 9: Rate Yaw
+# 3: Input Yaw Angle                                   10: Mixer Roll
+# 4: Recovery Roll Angle                               11: Mixer Pitch
+# 5: Recovery Pitch Angle                              12: Mixer Yaw
+# 6: Recovery Yaw Angle                                13: Mixer Thrust
+# Default: 0
+SID_AXIS,13
+
+# System identification Start Frequency
+# Frequency at the start of the sweep
+# Range: 0.01 100
+# Units: Hz (hertz)
+SID_F_START_HZ,0.2
+
+# System identification Stop Frequency
+# Frequency at the end of the sweep
+# Range: 0.01 100
+# Units: Hz (hertz)
+SID_F_STOP_HZ,10.0
+
+# System identification Chirp Magnitude
+# Magnitude of sweep in deg, deg/s and 0-1 for mixer outputs.
+SID_MAGNITUDE,0.12
+
+# System identification Fade in time
+# Time to reach maximum amplitude of sweep
+# Range: 0 20
+# Units: s (seconds)
+SID_T_FADE_IN,10.0
+
+# System identification Fade out time
+# Time to reach zero amplitude at the end of the sweep
+# Range: 0 5
+# Units: s (seconds)
+SID_T_FADE_OUT,5.0
+
+# System identification Total Sweep length
+# Time taken to complete the sweep
+# Range: 0 255
+# Units: s (seconds)
+SID_T_REC,100.0

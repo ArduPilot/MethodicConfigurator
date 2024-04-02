@@ -1,0 +1,6 @@
+# Rate Feedforward Enable
+# Controls whether body-frame rate feedfoward is enabled or disabled
+# 0: Disabled
+# 1: Enabled
+# Default: 1
+ATC_RATE_FF_ENAB,1 # re-enable normal operation, activate input shaping

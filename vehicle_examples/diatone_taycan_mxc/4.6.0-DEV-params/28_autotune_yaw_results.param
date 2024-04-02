@@ -1,0 +1,42 @@
+# Acceleration Max for Yaw
+# Maximum acceleration in yaw axis
+# Units: cdeg/s/s (centidegrees per square second)
+# Range: 0 72000
+# Increment: 1000
+# 0: Disabled
+# 9000: VerySlow
+# 18000: Slow
+# 36000: Medium
+# 54000: Fast
+# Default: 27000
+ATC_ACCEL_Y_MAX,57198.53
+
+# Yaw axis angle controller P gain
+# Yaw axis angle controller P gain.  Converts the error between the desired yaw angle and actual angle to a
+# desired yaw rate
+# Range: 3.000 12.000
+# Default: 4.5
+ATC_ANG_YAW_P,8.714352 # higher value mean a tighter tune
+
+# Yaw axis rate controller error frequency in Hz
+# Yaw axis rate controller error frequency in Hz
+# Range: 5 50
+# Increment: 1
+# Units: Hz (hertz)
+# Default: 2.5
+ATC_RAT_YAW_FLTE,2.316456
+
+# Yaw axis rate controller I gain
+# Yaw axis rate controller I gain.  Corrects long-term difference in desired yaw rate vs actual yaw rate
+# Range: 0.01 0.2
+# Increment: 0.01
+# Default: 0.018
+ATC_RAT_YAW_I,0.1023194
+
+# Yaw axis rate controller P gain
+# Yaw axis rate controller P gain.  Corrects in proportion to the difference between the desired yaw rate
+# vs actual yaw rate
+# Range: 0.180 0.60
+# Increment: 0.005
+# Default: 0.18
+ATC_RAT_YAW_P,1.023194

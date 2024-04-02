@@ -1,0 +1,141 @@
+# Amps per volt
+# Number of amps that a 1V reading on the current sensor corresponds to. With a Pixhawk using the 3DR Power
+# brick this should be set to 17. For the Pixhawk with the 3DR 4in1 ESC this should be 17. For Synthetic
+# Current sensor monitors, this is the maximum, full throttle current draw.
+# Units: A/V (ampere per volt)
+# Default: 40
+BATT2_AMP_PERVLT,17.5
+
+# Required arming voltage
+# Battery voltage level which is required to arm the aircraft. Set to 0 to allow arming at any voltage.
+# Units: V (volt)
+# Increment: 0.1
+# Default: 0
+BATT2_ARM_VOLT,15 # In our build this is a redundant monitor for batt1 so == BATT_ARM_VOLT
+
+# Battery capacity
+# Capacity of the battery in mAh when full
+# Units: mAh (milliampere hour)
+# Increment: 50
+# Default: 3300
+BATT2_CAPACITY,1800 # In our build this is a redundant monitor for batt1 so == BATT_CAPACITY
+
+# Battery critical capacity
+# Battery capacity at which the critical battery failsafe is triggered. Set to 0 to disable battery
+# remaining failsafe. If the battery capacity drops below this level the vehicle will perform the failsafe
+# specified by the BATT2__FS_CRT_ACT parameter.
+# Units: mAh (milliampere hour)
+# Increment: 50
+# Default: 0
+BATT2_CRT_MAH,450 # In our build this is a redundant monitor for batt1 so == BATT_CRT_MAH
+
+# Critical battery voltage
+# Battery voltage that triggers a critical battery failsafe. Set to 0 to disable. If the battery voltage
+# drops below this voltage continuously for more then the period specified by the BATT2_LOW_TIMER parameter
+# then the vehicle will perform the failsafe specified by the BATT2_FS_CRT_ACT parameter.
+# Units: V (volt)
+# Increment: 0.1
+# Default: 0
+BATT2_CRT_VOLT,14 # In our build this is a redundant monitor for batt1 so == BATT_CRT_VOLT
+
+# Battery Current sensing pin
+# Sets the analog input pin that should be used for current monitoring.
+# RebootRequired: True
+# -1: Disabled
+# 3: Pixhawk/Pixracer/Navio2/Pixhawk2_PM1
+# 4: CubeOrange_PM2/Navigator
+# 14: Pixhawk2_PM2
+# 15: CubeOrange
+# 17: Durandal
+# 101: PX4-v1
+# Default: 7
+BATT2_CURR_PIN,7
+
+# Critical battery failsafe action
+# What action the vehicle should perform if it hits a critical battery failsafe
+# 0: None
+# 1: Land
+# 2: RTL
+# 3: SmartRTL or RTL
+# 4: SmartRTL or Land
+# 5: Terminate
+# 6: Auto DO_LAND_START or RTL
+# Default: 0
+BATT2_FS_CRT_ACT,1  # flying indoors, just land ASAP, no need to hit the celing while doing RTL
+
+# Low battery failsafe action
+# What action the vehicle should perform if it hits a low battery failsafe
+# 0: None
+# 1: Land
+# 2: RTL
+# 3: SmartRTL or RTL
+# 4: SmartRTL or Land
+# 5: Terminate
+# 6: Auto DO_LAND_START or RTL
+# Default: 0
+BATT2_FS_LOW_ACT,1  # flying indoors, just land ASAP, no need to hit the celing while doing RTL
+
+# Failsafe voltage source
+# Voltage type used for detection of low voltage event
+# 0: Raw Voltage
+# 1: Sag Compensated Voltage
+# Default: 0
+BATT2_FS_VOLTSRC,1  # In our build this is a redundant monitor for batt1 so == BATT_FS_VOLTSRC
+
+# Low battery capacity
+# Battery capacity at which the low battery failsafe is triggered. Set to 0 to disable battery remaining
+# failsafe. If the battery capacity drops below this level the vehicle will perform the failsafe specified
+# by the BATT2_FS_LOW_ACT parameter.
+# Units: mAh (milliampere hour)
+# Increment: 50
+# Default: 0
+BATT2_LOW_MAH,600  # In our build this is a redundant monitor for batt1 so == BATT_LOW_MAH
+
+# Low battery voltage
+# Battery voltage that triggers a low battery failsafe. Set to 0 to disable. If the battery voltage drops
+# below this voltage continuously for more then the period specified by the BATT2_LOW_TIMER parameter then
+# the vehicle will perform the failsafe specified by the BATT2_FS_LOW_ACT parameter.
+# Units: V (volt)
+# Increment: 0.1
+# Default: 10.5
+BATT2_LOW_VOLT,14.4  # In our build this is a redundant monitor for batt1 so == BATT_LOW_VOLT
+
+# Battery monitoring
+# Controls enabling monitoring of the battery's voltage and current
+# RebootRequired: True
+# 0: Disabled                                          15: NeoDesign
+# 3: Analog Voltage Only                               16: SMBus-Maxell
+# 4: Analog Voltage and Current                        17: Generator-Elec
+# 5: Solo                                              18: Generator-Fuel
+# 6: Bebop                                             19: Rotoye
+# 7: SMBus-Generic                                     20: MPPT
+# 8: DroneCAN-BatteryInfo                              21: INA2XX
+# 9: ESC                                               22: LTC2946
+# 10: Sum Of Selected Monitors                         23: Torqeedo
+# 11: FuelFlow                                         24: FuelLevelAnalog
+# 12: FuelLevelPWM                                     25: Synthetic Current and Analog Voltage
+# 13: SMBUS-SUI3                                       26: INA239_SPI
+# 14: SMBUS-SUI6                                       27: EFI
+# Default: 0
+BATT2_MONITOR,4
+
+# Voltage Multiplier
+# Used to convert the voltage of the voltage sensing pin (BATT2_VOLT_PIN) to the actual battery's voltage
+# (pin_voltage * VOLT_MULT). For the 3DR Power brick with a Pixhawk, this should be set to 10.1. For the
+# Pixhawk with the 3DR 4in1 ESC this should be 12.02. For the PX using the PX4IO power supply this should
+# be set to 1.
+# Default: 11
+BATT2_VOLT_MULT,228.342 # Use a power source with a voltage close to BATT2_LOW_VOLT measure with a calibrated voltimeter and adapt this parameter so that the telemetry voltage reading matches it
+
+# Battery Voltage sensing pin
+# Sets the analog input pin that should be used for voltage monitoring.
+# RebootRequired: True
+# -1: Disabled
+# 2: Pixhawk/Pixracer/Navio2/Pixhawk2_PM1
+# 5: Navigator
+# 13: Pixhawk2_PM2/CubeOrange_PM2
+# 14: CubeOrange
+# 16: Durandal
+# 100: PX4-v1
+# Default: 18
+BATT2_VOLT_PIN,18

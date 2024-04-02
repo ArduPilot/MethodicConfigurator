@@ -1,0 +1,27 @@
+# Sensor Bitmask
+# Bitmap of which IMUs to log batch data for. This option takes effect on the next reboot.
+# Bitmask: 0:IMU1,1:IMU2,2:IMU3
+# RebootRequired: True
+# Default: 0
+INS_LOG_BAT_MASK,3  # The Matek H743 Slim flight controller only has two IMUs
+
+# Batch Logging Options Mask
+# Options for the BatchSampler.
+# Bitmask: 0:Sensor-Rate Logging (sample at full sensor rate seen by AP), 1: Sample post-filtering, 2: Sample pre- and post-filter
+# Default: 0
+INS_LOG_BAT_OPT,4  # Logs measured data both before and after the filters for Filter Review Webtool usage
+
+# Log bitmask
+# Bitmap of what on-board log types to enable. This value is made up of the sum of each of the log types
+# you want to be saved. It is usually best just to enable all basiclog types by setting this to 65535.
+# Bitmask: 0:Fast Attitude,1:Medium Attitude,2:GPS,3:System Performance,4:Control Tuning,5:Navigation Tuning,6:RC input,7:IMU,8:Mission Commands,9:Battery Monitor,10:RC output,11:Optical Flow,12:PID,13:Compass,15:Camera,17:Motors,18:Fast IMU,19:Raw IMU,20:Video Stabilization,21:Fast harmonic notch logging
+# Default: 176126
+LOG_BITMASK,145372  # Defines the logged signals
+
+# Stop logging to current file on disarm
+# When set, the current log file is closed when the vehicle is disarmed.  If LOG_DISARMED is set then a
+# fresh log will be opened. Applies to the File and Block logging backends.
+# 0: Disabled
+# 1: Enabled
+# Default: 0
+LOG_FILE_DSRMROT,1  # One .bin log file per flight, not per battery/reboot

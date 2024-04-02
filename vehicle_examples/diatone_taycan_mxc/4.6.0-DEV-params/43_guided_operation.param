@@ -1,0 +1,33 @@
+# Ground Station Failsafe Enable
+# Controls whether failsafe will be invoked (and what action to take) when connection with Ground station
+# is lost for at least 5 seconds. See FS_OPTIONS param for additional actions, or for cases allowing
+# Mission continuation, when GCS failsafe is enabled.
+# 0: Disabled/NoAction
+# 1: RTL
+# 2: RTL or Continue with Mission in Auto Mode (Removed in 4.0+-see FS_OPTIONS)
+# 3: SmartRTL or RTL
+# 4: SmartRTL or Land
+# 5: Land
+# 6: Auto DO_LAND_START or RTL
+# 7: Brake or Land
+# Default: 0
+FS_GCS_ENABLE,1
+
+# Rally Include Home
+# Controls if Home is included as a Rally point (i.e. as a safe landing place) for RTL
+# 0: DoNotIncludeHome
+# 1: IncludeHome
+# Default: 1
+RALLY_INCL_HOME,0
+
+# Rally Total
+# Number of rally points currently loaded
+# Default: 0
+RALLY_TOTAL,1
+
+# My ground station number
+# Allows restricting radio overrides to only come from my ground station
+# Range: 1 255
+# Increment: 1
+# Default: 255
+SYSID_MYGCS,1

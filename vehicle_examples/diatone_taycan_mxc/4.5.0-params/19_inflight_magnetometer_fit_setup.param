@@ -1,0 +1,56 @@
+# Altitude change
+# Altitude change to be commanded during the figure-8 pattern to capture mag field changes during throttle
+# changes. Starting altitude is based upon the entry waypoint’s altitude, and the Copter will climb this
+# amount ABOVE that starting altitude on occasion.
+# Units: m
+# Range: 0 100
+# Default: 10
+MAGH_ALT_DELTA,10 # Height difference between the highest and lowest point of the eight
+
+# Figure 8 Geometric factor
+# Geometric factor to adjust the width of the figure-8. Values of 1.2-1.5 should be more than adequate.
+# Range: 1.2 1.5
+# Default: 1.2
+MAGH_B,1.2 # Geometric factor for the width of the eight
+
+# SCRIPT_TIME command
+# The SCRIPT_TIME command value used to initiate the scripted pattern. Defaults to 117.
+# Range: 0 255
+# Default: 117
+MAGH_CMD,117 # Script_Time command value for identification of the script
+
+# Repeat count
+# Number of times to repeat the figure-8. If battery failsafes are properly configured, you can make this
+# number somewhat high so that the figure-8 will be repeated until failsafe.
+# Range: 1 20
+# Default: 6
+MAGH_COUNT,6 # Number of times the drone repeats the eight
+
+# Enable MAGH.Active logging
+# Enable a MAGH.Active value to be logged in dataflash for later consumption. Set 0 for no logging.
+# Range: 0 1
+# Default: 1
+MAGH_LOG_ENABLE,1 # Activates the logging of the MAGH.Active message
+
+# Minimum speed
+# Starting speed (m/s) for the figure-8. Speed will slowly increment to WPNAV_SPEED as the pattern is
+# repeated. Defaults to 1/2 of WPNAV_SPEED.
+# Units: m/s
+# Default: 1/2 of WPNAV_SPEED
+MAGH_MIN_SPEED,5 # Starting speed for the mission; slowly adjusts to the general speed in auto-missions
+
+# Number of waypoint in figure 8
+# The number of waypoints to be used in defining the figure-8. Use more points for a smoother path at the
+# cost of potentially slower speed during navigation. Defaults to 18. 16-24 should be adequate for most
+# cases.
+# Range: 16 24
+# Default: 18
+MAGH_NUM_WP,18 # Number of waypoints from which the eight is built
+
+# Use loiter
+# Insert a LOITER_UNLIMITED waypoint prior to the figure-8 so that the new waypoints can be downloaded and
+# verified prior to continuing. Set 0 to disable (not recommended). See the end of the writeup for a helper
+# script to advance waypoints via an RC switch.
+# Range: 0 1
+# Default: 1
+MAGH_USE_LOITER,0 # Sets a Loiter_unlimited command at the beginning of the mission to check the generated waypoints

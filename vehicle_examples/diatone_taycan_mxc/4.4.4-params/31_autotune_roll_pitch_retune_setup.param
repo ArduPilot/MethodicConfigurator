@@ -1,0 +1,11 @@
+# Autotune aggressiveness
+# Autotune aggressiveness. Defines the bounce back used to detect size of the D term.
+# Range: 0.05 0.10
+# Default: 0.1
+AUTOTUNE_AGGR,0.10 # Use the default for now
+
+# Autotune axis bitmask
+# 1-byte bitmap of axes to autotune
+# Bitmask: 0:Roll,1:Pitch,2:Yaw
+# Default: 7
+AUTOTUNE_AXES,3 # Autotune on roll and pitch axis
