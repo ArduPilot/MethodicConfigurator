@@ -64,17 +64,17 @@ It uses:
 
 | Software | License |
 |----------|---------|
-| [pymavlink](https://github.com/ArduPilot/pymavlink) | [GNU General Public License v3.0](https://github.com/ArduPilot/pymavlink/blob/master/LICENSE) |
+| [pymavlink](https://github.com/ArduPilot/pymavlink) | [GNU Lesser General Public License v3.0](https://github.com/ArduPilot/pymavlink/blob/master/COPYING) |
 | [tkinter](https://docs.python.org/3/library/tkinter.html) | [Python Software Foundation License](https://docs.python.org/3/license.html) |
 | [argparse](https://docs.python.org/3/library/argparse.html) | [Python Software Foundation License](https://docs.python.org/3/license.html) |
 | [logging](https://docs.python.org/3/library/logging.html) | [Python Software Foundation License](https://docs.python.org/3/license.html) |
 | [pyserial](https://pyserial.readthedocs.io/en/latest/pyserial.html) | [BSD License](https://github.com/pyserial/pyserial/blob/master/LICENSE.txt) |
-| [pyusb](https://github.com/pyusb/pyusb) | [GNU Lesser General Public License v2.1](https://github.com/pyusb/pyusb/blob/master/COPYING) |
+| [pyusb](https://github.com/pyusb/pyusb) | [BSD 3-Clause](https://github.com/pyusb/pyusb/blob/master/LICENSE) |
 | [typing](https://docs.python.org/3/library/typing.html) | [Python Software Foundation License](https://docs.python.org/3/license.html) |
 | [json](https://docs.python.org/3/library/json.html) | [Python Software Foundation License](https://docs.python.org/3/license.html) |
 | [os](https://docs.python.org/3/library/os.html) | [Python Software Foundation License](https://docs.python.org/3/license.html) |
 | [re](https://docs.python.org/3/library/re.html) | [Python Software Foundation License](https://docs.python.org/3/license.html) |
 | [webbrowser](https://docs.python.org/3/library/webbrowser.html) | [Python Software Foundation License](https://docs.python.org/3/license.html) |
 | [libusb](https://github.com/libusb/libusb) | [Lesser GNU General Public License v2.1](https://github.com/libusb/libusb/blob/master/COPYING) |
-| [Scrollable TK frame](https://gist.github.com/mp035/9f2027c3ef9172264532fcd6262f3b01) | [Mozilla Public License, v. 2.0](https://mozilla.org/MPL/2.0/) |
+| [Scrollable TK frame](https://gist.github.com/mp035/9f2027c3ef9172264532fcd6262f3b01) by Mark Pointing | [Mozilla Public License, v. 2.0](https://mozilla.org/MPL/2.0/) |
 | [Python Tkinter ComboBox](https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb) by geraldew | [Mozilla Public License, v. 2.0](https://mozilla.org/MPL/2.0/) |
