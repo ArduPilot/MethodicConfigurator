@@ -19,6 +19,7 @@ from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
+from logging import critical as logging_critical
 from PIL import Image
 from PIL import ImageTk
 from platform import system as platform_system
@@ -98,10 +99,10 @@ class PairTupleCombobox(ttk.Combobox):
                 default_key_index = self.list_keys.index(selected_element)
                 self.current(default_key_index)
             except IndexError:
-                logging_error("connection combobox selected string '%s' not in list %s", selected_element, self.list_keys)
-                pass
+                logging_critical("connection combobox selected string '%s' not in list %s", selected_element, self.list_keys)
+                exit(1)
             except ValueError:
-                logging_error("connection combobox selected string '%s' not in list %s", selected_element, self.list_keys)
+                logging_critical("connection combobox selected string '%s' not in list %s", selected_element, self.list_keys)
                 exit(1)
             gui.update_combobox_width(self)
         else:
@@ -637,7 +638,7 @@ class gui:
                     # Use sticky="ew" to make the widget stretch horizontally
                     widget.grid(row=i+1, column=j, sticky="w" if j == 0 else "ew" if j == 5 else "e")
         except KeyError as e:
-            logging_error("Parameter %s not found in the %s file: %s", param_name, self.current_file, e, exc_info=True)
+            logging_critical("Parameter %s not found in the %s file: %s", param_name, self.current_file, e, exc_info=True)
             exit(1)
 
         # Configure the table_frame to stretch columns
@@ -654,7 +655,7 @@ class gui:
         try:
             old_value = self.local_filesystem.file_parameters[current_file][param_name].value
         except KeyError as e:
-            logging_error("Parameter %s not found in the %s file: %s", param_name, current_file, e, exc_info=True)
+            logging_critical("Parameter %s not found in the %s file: %s", param_name, current_file, e, exc_info=True)
             exit(1)
         valid = True
         # Check if the input is a valid float
@@ -697,8 +698,8 @@ class gui:
             changed = new_value != self.local_filesystem.file_parameters[current_file][param_name].comment and \
                 not (new_value == "" and self.local_filesystem.file_parameters[current_file][param_name].comment is None)
         except KeyError as e:
-            logging_error("Parameter %s not found in the %s file %s: %s", param_name, self.current_file,
-                          new_value, e, exc_info=True)
+            logging_critical("Parameter %s not found in the %s file %s: %s", param_name, self.current_file,
+                             new_value, e, exc_info=True)
             exit(1)
         if changed and not self.at_least_one_param_edited:
             logging_debug("Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to "
