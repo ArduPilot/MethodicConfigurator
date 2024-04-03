@@ -234,6 +234,14 @@ class LocalFilesystem:
 
         return directory_name
 
+    def zip_file_path(self):
+        vehicle_name = self.get_vehicle_directory_name()
+        return os_path.join(self.vehicle_dir, f"{vehicle_name}.zip")
+
+    def zip_file_exists(self):
+        zip_file_path = self.zip_file_path()
+        return os_path.exists(zip_file_path) and os_path.isfile(zip_file_path)
+
     def zip_files(self, wrote_complete, filename_complete, wrote_read_only, filename_read_only,
                   wrote_calibrations, filename_calibrations, wrote_non_calibrations, filename_non_calibrations):
         """
@@ -252,10 +260,7 @@ class LocalFilesystem:
         wrote_non_calibrations (bool): True if non-calibration parameters were written to file, False otherwise.
         filename_non_calibrations (str): Name of  non-calibration file.
         """
-        vehicle_name = self.get_vehicle_directory_name()
-
-        # Create a ZIP file in the vehicle directory
-        zip_file_path = os_path.join(self.vehicle_dir, f"{vehicle_name}.zip")
+        zip_file_path = self.zip_file_path()
         with ZipFile(zip_file_path, 'w') as zipf:
             # Add all intermediate parameter files
             for file_name in self.file_parameters:

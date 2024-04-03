@@ -980,28 +980,61 @@ class gui:
 
 
     def write_summary_files(self):
-        annotated_fc_parameters = self.local_filesystem.annotate_intermediate_comments_to_param_dict(self.flight_controller.fc_parameters)
-        non_default__read_only_params, non_default__writable_calibrations, non_default__writable_non_calibrations = self.local_filesystem.categorize_parameters(annotated_fc_parameters)
+        annotated_fc_parameters = self.local_filesystem.annotate_intermediate_comments_to_param_dict(
+            self.flight_controller.fc_parameters)
+        non_default__read_only_params, non_default__writable_calibrations, non_default__writable_non_calibrations = \
+            self.local_filesystem.categorize_parameters(annotated_fc_parameters)
 
+        nr_unchanged_params = len(annotated_fc_parameters) - len(non_default__read_only_params) - \
+            len(non_default__writable_calibrations) - len(non_default__writable_non_calibrations)
         # If there are no more files, present a summary message box
-        _summary_message = messagebox.showinfo("Last parameter file processed", f"Methodic configuration of {len(annotated_fc_parameters)} parameters complete:\n{len(annotated_fc_parameters)-len(non_default__read_only_params)-len(non_default__writable_calibrations)-len(non_default__writable_non_calibrations)} kept their default value\n{len(non_default__read_only_params)} non-default read-only parameters - ignore these, you can not change them\n {len(non_default__writable_calibrations)} non-default writable sensor calibrations - non-reusable between vehicles\n {len(non_default__writable_non_calibrations)} non-default writable non-sensor-calibrations - these can be reused between similar vehicles")
-        wrote_complete = self.write_summary_file(annotated_fc_parameters, "complete.param", False)
-        wrote_read_only = self.write_summary_file(non_default__read_only_params, "non-default_read-only.param", False)
-        wrote_calibrations = self.write_summary_file(non_default__writable_calibrations, "non-default_writable_calibrations.param", False)
-        wrote_non_calibrations = self.write_summary_file(non_default__writable_non_calibrations, "non-default_writable_non-calibrations.param", False)
-        self.local_filesystem.zip_files(wrote_complete, "complete.param", wrote_read_only, "non-default_read-only.param", wrote_calibrations, "non-default_writable_calibrations.param", wrote_non_calibrations, "non-default_writable_non-calibrations.param")
+        _summary_message = messagebox.showinfo("Last parameter file processed",
+                                               f"Methodic configuration of {len(annotated_fc_parameters)} parameters complete:\n\n"
+                                               f"{nr_unchanged_params} kept their default value\n\n"
+                                               f"{len(non_default__read_only_params)} non-default read-only parameters - "
+                                               f"ignore these, you can not change them\n\n"
+                                               f"{len(non_default__writable_calibrations)} non-default writable sensor-"
+                                               f"calibrations - non-reusable between vehicles\n\n"
+                                               f"{len(non_default__writable_non_calibrations)} non-default writable non-sensor"
+                                               f"-calibrations - these can be reused between similar vehicles")
+        wrote_complete = self.write_summary_file(annotated_fc_parameters,
+                                                 "complete.param", False)
+        wrote_read_only = self.write_summary_file(non_default__read_only_params,
+                                                  "non-default_read-only.param", False)
+        wrote_calibrations = self.write_summary_file(non_default__writable_calibrations,
+                                                     "non-default_writable_calibrations.param", False)
+        wrote_non_calibrations = self.write_summary_file(non_default__writable_non_calibrations,
+                                                         "non-default_writable_non-calibrations.param", False)
+        self.write_zip_file(wrote_complete, wrote_read_only, wrote_calibrations, wrote_non_calibrations)
 
 
     def write_summary_file(self, param_dict: dict, filename: str, annotate_doc: bool):
         should_write_file = True
         if param_dict:
             if self.local_filesystem.intermediate_parameter_file_exists(filename):
-                should_write_file = messagebox.askyesno(f"{filename}", "File already exits\nDo you want to overwrite it?")
+                should_write_file = messagebox.askyesno("Overwrite existing file",
+                                                        f"{filename} file already exists.\nDo you want to overwrite it?")
             if should_write_file:
                 self.local_filesystem.export_to_param(param_dict, filename, annotate_doc)
                 logging_info("Summary file %s written", filename)
         return should_write_file
 
+    def write_zip_file(self, file1: bool, file2: bool, file3: bool, file4: bool):
+        should_write_file = True
+        if True or file1 or file2 or file3 or file4:
+            zip_file_path = self.local_filesystem.zip_file_path()
+            if self.local_filesystem.zip_file_exists():
+                should_write_file = messagebox.askyesno("Overwrite existing file",
+                                                        f"{zip_file_path} file already exists.\nDo you want to overwrite it?")
+            if should_write_file:
+                self.local_filesystem.zip_files(file1, "complete.param",
+                                                file2, "non-default_read-only.param",
+                                                file3, "non-default_writable_calibrations.param",
+                                                file4, "non-default_writable_non-calibrations.param")
+                messagebox.showinfo("Parameter files zipped", "All relevant files have been zipped into the \n"
+                                    f"{zip_file_path} file.\n\nYou can now upload this file to the ArduPilot Methodic\n"
+                                    "Configuration Blog post on discuss.ardupilot.org.")
+        return should_write_file
 
     def close_connection_and_quit(self):
         self.root.quit() # Then stop the Tkinter event loop
