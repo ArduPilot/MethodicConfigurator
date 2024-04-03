@@ -75,6 +75,20 @@ def show_tooltip(widget, text):
     widget.bind("<Leave>", leave)
 
 
+def show_about_message(version: str):
+    """
+    Show an "About" message box.
+    """
+    about_message = "ArduPilot Methodic Configurator\n\n" \
+        f"Version: {version}\n\n" \
+        "Designed to clarify the configuration sequence of ArduPilot drones.\n\n" \
+        "Developed by Amilcar do Carmo Lucas\n\n" \
+        "Copyright © 2024 IAV GmbH and ArduPilot.org\n\n" \
+        "Licensed under the GNU General Public License v3.0\n\n" \
+        "For more information, visit the ArduPilot Methodic Configurator GitHub repository."
+    messagebox.showinfo("About", about_message)
+
+
 # https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb
 class PairTupleCombobox(ttk.Combobox):
 
@@ -338,6 +352,7 @@ class gui:
         image_label = tk.Label(config_frame, image=photo)
         image_label.image = photo # Keep a reference to the image to prevent it from being garbage collected
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
+        image_label.bind("<Button-1>", lambda event: show_about_message(version))
 
         # Create a Frame for the Documentation Content
         documentation_frame = tk.LabelFrame(self.root, text="Documentation")
