@@ -3,7 +3,7 @@
 '''
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-AP_FLAKE8_CLEAN
+AP_FLAKE8_CLEA N
 
 (C) 2024 Amilcar do Carmo Lucas, IAV GmbH
 

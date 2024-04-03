@@ -3,7 +3,7 @@
 '''
 Extracts parameter default values from an ArduPilot .bin file. Unittests.
 
-AP_FLAKE8_CLEAN
+AP_FLAKE8_CLEA N
 
 Amilcar do Carmo Lucas, IAV GmbH
 '''
