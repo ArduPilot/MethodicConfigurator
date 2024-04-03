@@ -1,9 +1,14 @@
 [flake8]
+exclude =
+    # No need to traverse our git directory
+    .git,
+    # There's no value in checking cache directories
+    __pycache__,
 ignore =
     # H301: one import per line
-    H301,
+    #H301,
     # H306: imports not in alphabetical order (time, os)
-    H306,
+    #H306,
     # E226: missing whitespace around arithmetic operator
     E226,
     # E261 at least two spaces before inline comment
@@ -11,8 +16,8 @@ ignore =
     # W504 line break after binary operator
     W504,
     # E203 whitespace before ':'
-    E203,
+    #E203,
     # E221 multiple spaces before operator
-    E221
+    #E221
 
 max-line-length = 127

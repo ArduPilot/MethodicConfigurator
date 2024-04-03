@@ -23,7 +23,8 @@ import re
 
 PARAM_NAME_REGEX = r'^[A-Z][A-Z_0-9]*$'
 PARAM_NAME_MAX_LEN = 16
-VERSION='1.0'
+VERSION = '1.0'
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -182,7 +183,7 @@ def update_pid_adjustment_params(directory: str, optimized_param_file: str, adju
             param_value.value = 0  # if the default is zero, let it stay at zero, it is safer
         # explain how the new value relates to the default parameter value
         param_value.comment = f" = {format(coef, '.6f').rstrip('0').rstrip('.')} * (" \
-                            f"{format(default_params_dict[param_name].value, '.6f').rstrip('0').rstrip('.')} default)"
+                              f"{format(default_params_dict[param_name].value, '.6f').rstrip('0').rstrip('.')} default)"
 
     return pid_adjustment_params_dict, pid_adjustment_file_path, content[0:7]
 

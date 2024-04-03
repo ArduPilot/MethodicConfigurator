@@ -10,26 +10,24 @@ AP_FLAKE8_CLEAN
 SPDX-License-Identifier:    GPL-3
 '''
 
-#import glob
 from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
 
-#import sys
+# import sys
 from time import sleep as time_sleep
 from os import path as os_path
 from os import name as os_name
 from os import readlink as os_readlink
 from typing import Dict
-#import usb.core
-#import usb.util
+# import usb.core
+# import usb.util
 import serial.tools.list_ports
 import serial.tools.list_ports_common
 
-from annotate_params import Par
 from serial.serialutil import SerialException
-from pprint import pp as pprint_pp
+from annotate_params import Par
 
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules
@@ -39,10 +37,10 @@ except Exception:
     pass
 
 # Get the current directory
-#current_dir = os_path.dirname(os_path.abspath(__file__))
+# current_dir = os_path.dirname(os_path.abspath(__file__))
 
 # Add the current directory to the PATH environment variable
-#os.environ['PATH'] = os.environ['PATH'] + os.pathsep + current_dir
+# os.environ['PATH'] = os.environ['PATH'] + os.pathsep + current_dir
 
 preferred_ports = [
     '*FTDI*',
@@ -88,7 +86,6 @@ class FlightController:
         master (mavutil.mavlink_connection): The MAVLink connection object.
         fc_parameters (Dict[str, float]): A dictionary of flight controller parameters.
     """
-
     def __init__(self):
         """
         Initialize the FlightController communication object.
@@ -97,12 +94,12 @@ class FlightController:
         # warn people about ModemManager which interferes badly with ArduPilot
         if os_path.exists("/usr/sbin/ModemManager"):
             logging_warning("You should uninstall ModemManager as it conflicts with ArduPilot")
-        
+
         comports = FlightController.list_serial_ports()
-        #ubcports = FlightController.list_usb_devices()
+        # ubcports = FlightController.list_usb_devices()
         netports = FlightController.list_network_ports()
         # list of tuples with the first element being the port name and the second element being the port description
-        self.connection_tuples =  [(port.device, port.description) for port in comports] + [(port, port) for port in netports]
+        self.connection_tuples = [(port.device, port.description) for port in comports] + [(port, port) for port in netports]
         logging_info('Available connection ports are:')
         for port in self.connection_tuples:
             logging_info("%s - %s", port[0], port[1])
@@ -110,7 +107,6 @@ class FlightController:
         self.master = None
         self.comport = None
         self.fc_parameters = {}
-
 
     def add_connection(self, connection_string: str):
         """
@@ -126,7 +122,6 @@ class FlightController:
         else:
             logging_debug("Did not add empty connection")
         return False
-
 
     def connect(self, device: str, progress_callback=None):
         """
@@ -161,8 +156,8 @@ class FlightController:
             self.fc_parameters['COMPASS_DEV_ID'] = 1.0
         return error_message
 
-
-    def create_connection_with_retry(self, progress_callback, retries: int = 3, timeout: int = 5) -> mavutil.mavlink_connection:
+    def create_connection_with_retry(self, progress_callback, retries: int = 3,
+                                     timeout: int = 5) -> mavutil.mavlink_connection:
         """
         Attempt to create a connection to the flight controller with retries.
 
@@ -178,7 +173,8 @@ class FlightController:
         logging_info("Will connect to %s", self.comport.device)
         try:
             # Create the connection
-            self.master = mavutil.mavlink_connection(device=self.comport.device, timeout=timeout, retries=retries, progress_callback=progress_callback)
+            self.master = mavutil.mavlink_connection(device=self.comport.device, timeout=timeout,
+                                                     retries=retries, progress_callback=progress_callback)
             logging_debug("Waiting for heartbeat")
             self.master.wait_heartbeat(timeout=timeout)
             logging_debug("Connection established.")
@@ -187,7 +183,6 @@ class FlightController:
             logging_error("Failed to connect after %d attempts.", retries)
             return e
         return ""
-
 
     def read_params(self, progress_callback=None) -> Dict[str, float]:
         """
@@ -226,13 +221,13 @@ class FlightController:
                 if progress_callback:
                     progress_callback(len(parameters), m.param_count)
                 if m.param_count == len(parameters):
-                    logging_debug("Fetched %d parameter values from the %s flight controller", m.param_count, self.comport.device)
+                    logging_debug("Fetched %d parameter values from the %s flight controller",
+                                  m.param_count, self.comport.device)
                     break
             except Exception as error:
                 logging_error('Error: %s', error)
                 break
         return parameters
-
 
     def set_param(self, param_name: str, param_value: float):
         """
@@ -245,7 +240,6 @@ class FlightController:
         if self.master is None: # FIXME for testing only
             return None
         return self.master.param_set_send(param_name, param_value)
-
 
     def reset_and_reconnect(self, reset_progress_callback=None, connection_progress_callback=None, sleep_time: int = 7):
         """
@@ -264,7 +258,7 @@ class FlightController:
         logging_info("Reset command sent to ArduPilot.")
 
         self.close_connection()
-        
+
         current_step = 0
 
         while current_step != sleep_time:
@@ -283,7 +277,6 @@ class FlightController:
         # Reconnect to the flight controller
         self.create_connection_with_retry(connection_progress_callback)
 
-
     def close_connection(self):
         """
         Close the connection to the flight controller.
@@ -292,7 +285,6 @@ class FlightController:
             self.master.close()
             self.master = None
         self.fc_parameters = {}
-
 
     @staticmethod
     def list_usb_devices():
@@ -326,7 +318,6 @@ class FlightController:
         #                 product])
         # return ret
 
-
     @staticmethod
     def list_serial_ports():
         """
@@ -337,14 +328,12 @@ class FlightController:
         #     logging_debug("ComPort - %s, Description: %s", port.device, port.description)
         return comports
 
-
     @staticmethod
     def list_network_ports():
         """
         List all available network ports.
         """
         return ['tcp:127.0.0.1:5760', 'udp:127.0.0.1:14550']
-
 
     @staticmethod
     def auto_detect_serial():
@@ -358,30 +347,28 @@ class FlightController:
 
         return serial_list
 
-
     def get_connection_tuples(self):
         """
         Get all available connections.
         """
         return self.connection_tuples
 
-
     @staticmethod
     def list_ardupilot_supported_usb_pid_vid():
         """
         List all ArduPilot supported USB vendor ID (VID) and product ID (PID).
-        
+
         source: https://ardupilot.org/dev/docs/USB-IDs.html
         """
         return {
             0x0483: {'vendor': 'ST Microelectronics', 'PID': {0x5740: 'ChibiOS'}},
             0x1209: {'vendor': 'ArduPilot', 'PID': {0x5740: 'MAVLink',
                                                     0x5741: 'Bootloader',
-                                                   }},
+                                                    }
+                     },
             0x16D0: {'vendor': 'ArduPilot', 'PID': {0x0E65: 'MAVLink'}},
             0x26AC: {'vendor': '3D Robotics', 'PID': {}},
-            0x2DAE: {'vendor': 'Hex', 'PID': {
-                                              0x1101: 'CubeBlack+',
+            0x2DAE: {'vendor': 'Hex', 'PID': {0x1101: 'CubeBlack+',
                                               0x1001: 'CubeBlack bootloader',
                                               0x1011: 'CubeBlack',
                                               0x1016: 'CubeOrange',
@@ -399,13 +386,14 @@ class FlightController:
                                               0x1018: 'CubeOrange',
                                               0x1008: 'CubePurple bootloader',
                                               0x1019: 'CubePurple',
-                                              }},
+                                              }
+                     },
             0x3162: {'vendor': 'Holybro', 'PID': {0x004B: 'Durandal'}},
-            0x27AC: {'vendor': 'Laser Navigation', 'PID': {
-                                                        0x1151: 'VRBrain-v51',
-                                                        0x1152: 'VRBrain-v52',
-                                                        0x1154: 'VRBrain-v54',
-                                                        0x1910: 'VRCore-v10',
-                                                        0x1351: 'VRUBrain-v51',
-                                                          }},
+            0x27AC: {'vendor': 'Laser Navigation', 'PID': {0x1151: 'VRBrain-v51',
+                                                           0x1152: 'VRBrain-v52',
+                                                           0x1154: 'VRBrain-v54',
+                                                           0x1910: 'VRCore-v10',
+                                                           0x1351: 'VRUBrain-v51',
+                                                           }
+                     },
         }

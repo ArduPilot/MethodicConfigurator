@@ -102,11 +102,11 @@ def extract_parameter_values(logfile: str, type: str = 'defaults') -> Dict[str, 
         if pname in values:
             continue
         if type == 'defaults':
-             if hasattr(m, 'Default'):
+            if hasattr(m, 'Default'):
                 values[pname] = m.Default
         elif type == 'values':
             if hasattr(m, 'Value'):
-                values[pname] = m.Value    
+                values[pname] = m.Value
         elif type == 'non_default_values':
             if hasattr(m, 'Value') and hasattr(m, 'Default') and m.Value != m.Default:
                 values[pname] = m.Value

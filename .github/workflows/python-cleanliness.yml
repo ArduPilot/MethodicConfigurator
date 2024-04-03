@@ -22,4 +22,4 @@ jobs:
 
       - name: Check Python with Flake8
         run: |
-            scripts/run_flake8.py MethodicConfigurator
+            scripts/run_flake8.py .
