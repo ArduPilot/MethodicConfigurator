@@ -86,7 +86,7 @@ class FlightController:
         master (mavutil.mavlink_connection): The MAVLink connection object.
         fc_parameters (Dict[str, float]): A dictionary of flight controller parameters.
     """
-    def __init__(self):
+    def __init__(self, reboot_time: int):
         """
         Initialize the FlightController communication object.
 
@@ -95,6 +95,7 @@ class FlightController:
         if os_path.exists("/usr/sbin/ModemManager"):
             logging_warning("You should uninstall ModemManager as it conflicts with ArduPilot")
 
+        self.reboot_time = reboot_time
         comports = FlightController.list_serial_ports()
         # ubcports = FlightController.list_usb_devices()
         netports = FlightController.list_network_ports()
@@ -241,25 +242,26 @@ class FlightController:
             return None
         return self.master.param_set_send(param_name, param_value)
 
-    def reset_and_reconnect(self, reset_progress_callback=None, connection_progress_callback=None, sleep_time: int = 7):
+    def reset_and_reconnect(self, reset_progress_callback=None, connection_progress_callback=None, sleep_time: int = None):
         """
         Reset the flight controller and reconnect.
 
         Args:
-            sleep_time (int, optional): The time in seconds to wait before reconnecting. Defaults to 5.
+            sleep_time (int, optional): The time in seconds to wait before reconnecting.
         """
         if self.master is None: # FIXME for testing only
             return None
         # Issue a reset
-        self.master.mav.command_long_send(
-            self.master.target_system, self.master.target_component,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 0, 0, 0, 0, 0, 0, 0
-        )
+        self.master.reboot_autopilot()
         logging_info("Reset command sent to ArduPilot.")
+        time_sleep(0.3)
 
         self.close_connection()
 
         current_step = 0
+
+        if sleep_time is None or sleep_time <= 7:
+            sleep_time = self.reboot_time
 
         while current_step != sleep_time:
             # Call the progress callback with the current progress

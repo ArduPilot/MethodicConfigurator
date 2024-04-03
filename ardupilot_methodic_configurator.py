@@ -67,6 +67,11 @@ def argument_parser():
                         default='INFO',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                         help='Logging level (default is INFO).')
+    parser.add_argument('-r', '--reboot-time',
+                        type=int,
+                        default=7,
+                        help='Flight controller reboot time. '
+                        'Default is %(default)s')
     parser.add_argument('-t', '--vehicle-type',
                         choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
                                  'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
@@ -104,7 +109,7 @@ if __name__ == "__main__":
         start_file = None
 
     # Connect to the flight controller and read the parameters
-    flight_controller = FlightController()
+    flight_controller = FlightController(args.reboot_time)
 
     error_str = flight_controller.connect(args.device)
     if error_str:

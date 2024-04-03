@@ -72,10 +72,10 @@ The summary message box will also categorize the writable parameters into four g
 ```mermaid
 pie
     title Summary files example
-    "Unchanged parameters" : 60
-    "Non-default read-only parameters - non-default_read-only.param" : 5
-    "Non-default writable sensor calibrations - non-default_writable_calibrations.param" : 10
-    "Non-default writable non-sensor-calibrations - non-default_writable_non-calibrations.param" : 25
+    "Unchanged parameters" : 728
+    "Non-default read-only parameters - non-default_read-only.param" : 8
+    "Non-default writable sensor calibrations - non-default_writable_calibrations.param" : 71
+    "Non-default writable non-sensor-calibrations - non-default_writable_non-calibrations.param" : 217
 ```
 
 - **Unchanged parameters**: These parameters left unchanged.
