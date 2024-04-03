@@ -11,9 +11,10 @@ SPDX-License-Identifier:    GPL-3
 '''
 
 import unittest
-import os
+# import os
 from unittest.mock import patch, MagicMock
 from backend_filesystem import LocalFilesystem
+
 
 class TestLocalFilesystem(unittest.TestCase):
 
@@ -66,17 +67,19 @@ class TestLocalFilesystem(unittest.TestCase):
 
     def test_write_summary_files(self):
         # Initialize LocalFilesystem with the test directory
-     #   lfs = LocalFilesystem(self.test_dir, "vehicle_type")
+        # lfs = LocalFilesystem(self.test_dir, "vehicle_type")
 
         # Call the method under test
         # Assuming you have a method to write summary files
-     #   lfs.write_summary_files()
+        # lfs.write_summary_files()
 
         # Assertions
         # Check if the summary files were created in the test directory
-        summary_files = ["complete.param", "non-default_read-only.param", "non-default_writable_calibrations.param", "non-default_writable_non-calibrations.param"]
-     #   for file_name in summary_files:
-     #       self.assertTrue(os.path.exists(os.path.join(self.test_dir, file_name)))
+        # summary_files = ["complete.param", "non-default_read-only.param", "non-default_writable_calibrations.param",
+        # "non-default_writable_non-calibrations.param"]
+        # for file_name in summary_files:
+        #     self.assertTrue(os.path.exists(os.path.join(self.test_dir, file_name)))
+        pass
 
 
 if __name__ == '__main__':
