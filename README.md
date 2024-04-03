@@ -39,6 +39,10 @@ python3 ardupilot_methodic_configurator.py
 
 This will launch the GUI, where you can select a vehicle configuration directory where the intermediate parameter files are stored and adjust parameters as needed.
 
+## Support
+
+Support options are described in the [support section](CONTRIBUTING.md#support)
+
 ## Development requirements
 
 Software development requirements are on the [REQUIREMENTS.md](REQUIREMENTS.md) file
@@ -47,9 +51,13 @@ Software development requirements are on the [REQUIREMENTS.md](REQUIREMENTS.md) 
 
 To meet the [Software requirements](REQUIREMENTS.md) a [software architecture](REQUIREMENTS.md#software-architecture) was designed and implemented.
 
+## Code of conduct
+
+To use and develop this software you must obey the [ArduPilot Methodic Configurator Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## Contributing
 
-Contributions are welcome! Please feel free to submit [issues](https://github.com/ArduPilot/MethodicConfigurator/issues) or [pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls).
+Please feel free to submit [issues](https://github.com/ArduPilot/MethodicConfigurator/issues) or [pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls). More information is available on the [contributing](CONTRIBUTING.md) page.
 
 ## License
 
