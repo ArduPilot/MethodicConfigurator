@@ -78,8 +78,8 @@ def show_tooltip(widget, text):
 class PairTupleCombobox(ttk.Combobox):
 
     def _process_listPairTuple(self, ip_listPairTuple):
-        r_list_keys = [] 
-        r_list_shows = [] 
+        r_list_keys = []
+        r_list_shows = []
         for tpl in ip_listPairTuple:
             r_list_keys.append(tpl[0])
             r_list_shows.append(tpl[1])
@@ -114,13 +114,14 @@ class PairTupleCombobox(ttk.Combobox):
         except IndexError:
             return None
 
+
 class AutoResizeCombobox(ttk.Combobox):
 
     def __init__(self, container, values, selected_element, tooltip, *args, **kwargs):
         super().__init__(container, *args, **kwargs)
         self.set_entries_tupple(values, selected_element, tooltip)
 
-    def set_entries_tupple(self, values, selected_element, tooltip = None):
+    def set_entries_tupple(self, values, selected_element, tooltip=None):
         self['values'] = tuple(values)
         if selected_element:
             if selected_element in values:
@@ -139,62 +140,74 @@ class ScrollFrame(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent) # create a frame (self)
 
-        self.canvas = tk.Canvas(self, borderwidth=0)                                # place canvas on self
-        self.viewPort = tk.Frame(self.canvas)                                       # place a frame on the canvas, this frame will hold the child widgets
-        self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview) # place a scrollbar on self
-        self.canvas.configure(yscrollcommand=self.vsb.set)                          # attach scrollbar action to scroll of canvas
+        self.canvas = tk.Canvas(self, borderwidth=0)                                 # place canvas on self
 
-        self.vsb.pack(side="right", fill="y")                                       # pack scrollbar to right of self
-        self.canvas.pack(side="left", fill="both", expand=True)                     # pack canvas to left of self and expand to fil
-        self.canvas_window = self.canvas.create_window((4,4), window=self.viewPort, # add view port frame to canvas
+        # place a frame on the canvas, this frame will hold the child widgets
+        self.viewPort = tk.Frame(self.canvas)
+
+        self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)  # place a scrollbar on self
+        # attach scrollbar action to scroll of canvas
+        self.canvas.configure(yscrollcommand=self.vsb.set)
+
+        self.vsb.pack(side="right", fill="y")                                        # pack scrollbar to right of self
+        # pack canvas to left of self and expand to fill
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.canvas_window = self.canvas.create_window((4, 4), window=self.viewPort, # add view port frame to canvas
                                                        anchor="nw", tags="self.viewPort")
 
-        self.viewPort.bind("<Configure>", self.onFrameConfigure)                    # bind an event whenever the size of the viewPort frame changes.
-        self.canvas.bind("<Configure>", self.onCanvasConfigure)                     # bind an event whenever the size of the canvas frame changes.
-            
-        self.viewPort.bind('<Enter>', self.onEnter)                                 # bind wheel events when the cursor enters the control
-        self.viewPort.bind('<Leave>', self.onLeave)                                 # unbind wheel events when the cursor leaves the control
+        # bind an event whenever the size of the viewPort frame changes.
+        self.viewPort.bind("<Configure>", self.onFrameConfigure)
+        # bind an event whenever the size of the canvas frame changes.
+        self.canvas.bind("<Configure>", self.onCanvasConfigure)
 
-        self.onFrameConfigure(None)                                                 # perform an initial stretch on render, otherwise the scroll region has a tiny border until the first resize
+        # bind wheel events when the cursor enters the control
+        self.viewPort.bind('<Enter>', self.onEnter)
+        # unbind wheel events when the cursor leaves the control
+        self.viewPort.bind('<Leave>', self.onLeave)
+
+        # perform an initial stretch on render, otherwise the scroll region has a tiny border until the first resize
+        self.onFrameConfigure(None)
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))                 # whenever the size of the frame changes, alter the scroll region respectively.
+        # whenever the size of the frame changes, alter the scroll region respectively.
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         # Calculate the bounding box for the scroll region, starting from the second row
-       # bbox = self.canvas.bbox("all")
-       # if bbox:
-       #     # Adjust the bounding box to start from the second row
-       #     bbox = (bbox[0], bbox[1] + self.canvas.winfo_reqheight(), bbox[2], bbox[3])
-       #     self.canvas.configure(scrollregion=bbox)
+        # bbox = self.canvas.bbox("all")
+        # if bbox:
+        #     # Adjust the bounding box to start from the second row
+        #     bbox = (bbox[0], bbox[1] + self.canvas.winfo_reqheight(), bbox[2], bbox[3])
+        #     self.canvas.configure(scrollregion=bbox)
 
     def onCanvasConfigure(self, event):
         '''Reset the canvas window to encompass inner frame when required'''
         canvas_width = event.width
-        self.canvas.itemconfig(self.canvas_window, width = canvas_width)            # whenever the size of the canvas changes alter the window region respectively.
+        # whenever the size of the canvas changes alter the window region respectively.
+        self.canvas.itemconfig(self.canvas_window, width=canvas_width)
 
-    def onMouseWheel(self, event):                                                  # cross platform scroll wheel event
+    def onMouseWheel(self, event):                         # cross platform scroll wheel event
         canvas_height = self.canvas.winfo_height()
         rows_height = self.canvas.bbox("all")[3]
 
         if rows_height > canvas_height: # only scroll if the rows overflow the frame
             if platform_system() == 'Windows':
-                self.canvas.yview_scroll(int(-1* (event.delta/120)), "units")
+                self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
             elif platform_system() == 'Darwin':
                 self.canvas.yview_scroll(int(-1 * event.delta), "units")
             else:
                 if event.num == 4:
-                    self.canvas.yview_scroll( -1, "units" )
+                    self.canvas.yview_scroll(-1, "units")
                 elif event.num == 5:
-                    self.canvas.yview_scroll( 1, "units" )
-    
-    def onEnter(self, event):                                                       # bind wheel events when the cursor enters the control
+                    self.canvas.yview_scroll(1, "units")
+
+    def onEnter(self, event):                               # bind wheel events when the cursor enters the control
         if platform_system() == 'Linux':
             self.canvas.bind_all("<Button-4>", self.onMouseWheel)
             self.canvas.bind_all("<Button-5>", self.onMouseWheel)
         else:
             self.canvas.bind_all("<MouseWheel>", self.onMouseWheel)
 
-    def onLeave(self, event):                                                       # unbind wheel events when the cursor leaves the control
+    def onLeave(self, event):                               # unbind wheel events when the cursor leaves the control
         if platform_system() == 'Linux':
             self.canvas.unbind_all("<Button-4>")
             self.canvas.unbind_all("<Button-5>")
@@ -203,7 +216,8 @@ class ScrollFrame(tk.Frame):
 
 
 class gui:
-    def __init__(self, current_file: str, flight_controller: FlightController, local_filesystem: LocalFilesystem, version: str):
+    def __init__(self, current_file: str, flight_controller: FlightController,
+                 local_filesystem: LocalFilesystem, version: str):
         self.current_file = current_file
         self.flight_controller = flight_controller
         self.local_filesystem = local_filesystem
@@ -221,10 +235,10 @@ class gui:
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)
-        
+
         # Set the application icon for the window and all child windows
         # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
-        #self.root.iconbitmap(default='ArduPilot_32x32.ico')
+        # self.root.iconbitmap(default='ArduPilot_32x32.ico')
         self.root.iconphoto(True, tk.PhotoImage(file='ArduPilot_32x32.png'))
 
         config_frame = tk.Frame(self.root)
@@ -240,7 +254,8 @@ class gui:
         style.configure('TCheckbutton', background=self.default_background_color)
         style.configure('TCombobox', background=self.default_background_color)
 
-        # Create a new frame inside the config_subframe for the intermediate parameter file directory selection labels and directory selection button
+        # Create a new frame inside the config_subframe for the intermediate parameter file directory selection labels
+        # and directory selection button
         directory_selection_frame = tk.Frame(config_subframe)
         directory_selection_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(4, 6))
 
@@ -287,7 +302,7 @@ class gui:
                                                           "fight controller",
                                                           state='readonly', width=45)
         self.file_selection_combobox.bind("<<ComboboxSelected>>", self.on_param_file_combobox_change)
-        self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0)) # Add the combobox below the label in the file_selection_frame
+        self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
         # Create a new frame inside the config_subframe for the flight controller connection selection label and combobox
         conn_selection_frame = tk.Frame(config_subframe)
@@ -299,11 +314,11 @@ class gui:
 
         # Create a read-only combobox for flight controller connection selection
         self.conn_selection_combobox = PairTupleCombobox(conn_selection_frame, self.flight_controller.get_connection_tuples(),
-                                                         self.flight_controller.comport.device if \
-                                                            hasattr(self.flight_controller.comport, "device") else None,
-                                                            state='readonly')
+                                                         self.flight_controller.comport.device if
+                                                         hasattr(self.flight_controller.comport, "device") else None,
+                                                         state='readonly')
         self.conn_selection_combobox.bind("<<ComboboxSelected>>", self.on_select_connection_combobox_change)
-        self.conn_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0)) # Add the combobox below the label in the conn_selection_frame
+        self.conn_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
         show_tooltip(self.conn_selection_combobox, "Select the flight controller connection\nYou can add a custom connection "
                      "to the existing ones")
 
@@ -367,7 +382,7 @@ class gui:
 
         # Create a frame for the buttons
         buttons_frame = tk.Frame(self.root)
-        buttons_frame.pack(side="bottom", fill="x", expand= False, pady=(10, 10))
+        buttons_frame.pack(side="bottom", fill="x", expand=False, pady=(10, 10))
 
         # Create checkbox for toggling parameter display
         only_changed_checkbox = ttk.Checkbutton(buttons_frame, text="See only changed parameters",
@@ -394,7 +409,6 @@ class gui:
         self.root.after(50, self.read_flight_controller_parameters(reread=False)) # 50 milliseconds
         self.root.mainloop()
 
-
     @staticmethod
     def update_combobox_width(combobox):
         # Calculate the maximum width needed for the content
@@ -403,7 +417,6 @@ class gui:
         min_width = 4 # Adjust this value as needed
         # Set the width of the combobox to the maximum width, but not less than the minimum width
         combobox.config(width=max(min_width, max_width))
-
 
     def on_select_vehicle_directory(self):
         # Open the directory selection dialog
@@ -428,7 +441,6 @@ class gui:
                 # No files were found in the selected directory
                 show_no_param_files_error(selected_directory)
 
-
     def on_param_file_combobox_change(self, _event, forced: bool = False):
         if not self.file_selection_combobox['values']:
             return
@@ -442,7 +454,6 @@ class gui:
             self.update_documentation_labels()
             self.repopulate_parameter_table(selected_file)
 
-
     def on_select_connection_combobox_change(self, _event):
         selected_connection = self.conn_selection_combobox.getSelectedKey()
         logging_debug(f"Connection combobox changed to: {selected_connection}")
@@ -451,7 +462,6 @@ class gui:
                 self.on_add_connection(None)
                 return
             self.reconnect(selected_connection)
-
 
     def on_add_connection(self, _event):
         # Open the connection selection dialog
@@ -468,29 +478,26 @@ class gui:
         self.conn_selection_combobox.set_entries_tupple(connection_tuples, selected_connection)
         self.reconnect(selected_connection)
 
-
     def reconnect(self, selected_connection: str = None):
         if selected_connection:
             [self.connection_progress_window,
-            self.connection_progress_bar,
-            self.connection_progress_label] = self.create_progress_window("Connecting with the FC")
+             self.connection_progress_bar,
+             self.connection_progress_label] = self.create_progress_window("Connecting with the FC")
             error_message = self.flight_controller.connect(selected_connection, self.update_connection_progress_bar)
             if error_message:
                 show_no_connection_error(error_message)
                 return
             self.connection_progress_window.destroy()
 
-
     def read_flight_controller_parameters(self, reread: bool = False):
         [self.param_read_progress_window,
-        self.param_read_progress_bar,
-        self.param_read_progress_label] = self.create_progress_window(("Re-r" if reread else "R") + "eading FC parameters")
+         self.param_read_progress_bar,
+         self.param_read_progress_label] = self.create_progress_window(("Re-r" if reread else "R") + "eading FC parameters")
         # Download all parameters from the flight controller
         self.flight_controller.fc_parameters = self.flight_controller.read_params(self.update_param_download_progress_bar)
         self.param_read_progress_window.destroy()  # for the case that we are doing test and there is no real FC connected
         if not reread:
             self.on_param_file_combobox_change(None, True) # the initial param read will trigger a table update
-
 
     def get_documentation_text_and_url(self, documentation, text_key, url_key):
         if documentation:
@@ -503,8 +510,7 @@ class gui:
             url = None
         return text, url
 
-
-    def update_documentation_label(self, label, text, url, url_expected = True):
+    def update_documentation_label(self, label, text, url, url_expected=True):
         if url:
             label.config(text=text, fg="blue", cursor="hand2", underline=True)
             label.bind("<Button-1>", lambda event, url=url: webbrowser_open(url))
@@ -515,11 +521,10 @@ class gui:
             if url_expected:
                 show_tooltip(label, "Documentation URL not available")
 
-
     def update_documentation_labels(self):
         documentation = self.local_filesystem.file_documentation.get(self.current_file, None) if \
             self.local_filesystem.file_documentation else None
-        
+
         blog_text, blog_url = self.get_documentation_text_and_url(documentation, 'blog_text', 'blog_url')
         self.update_documentation_label(self.documentation_label_blog, blog_text, blog_url)
         wiki_text, wiki_url = self.get_documentation_text_and_url(documentation, 'wiki_text', 'wiki_url')
@@ -530,7 +535,6 @@ class gui:
         mandatory_text, mandatory_url = self.get_documentation_text_and_url(documentation, 'mandatory_text', 'mandatory_url')
         self.update_documentation_label(self.documentation_label_mandatory, mandatory_text, mandatory_url, False)
 
-
     def repopulate_parameter_table(self, selected_file):
         if not selected_file:
             return  # no file was yet selected, so skip it
@@ -538,12 +542,12 @@ class gui:
             return  # no file was yet selected, so skip it
         if not self.flight_controller.fc_parameters:
             return  # no file was yet selected, so skip it
-        # Different parameters based on the threshold
+        fc_parameters = self.flight_controller.fc_parameters
+        # Different parameters based on the thresholdfile_value
         different_params = {param_name: file_value for param_name, file_value in
                             self.local_filesystem.file_parameters[selected_file].items()
-                            if param_name in self.flight_controller.fc_parameters and \
-                                not is_within_tolerance(self.flight_controller.fc_parameters[param_name],
-                                                        float(file_value.value))}
+                            if param_name in fc_parameters and not is_within_tolerance(fc_parameters[param_name],
+                                                                                       float(file_value.value))}
         if not different_params and self.show_only_differences.get():
             logging_info("No different parameters found in %s. Skipping...", selected_file)
             messagebox.showinfo("ArduPilot methodic configurator",
@@ -561,8 +565,7 @@ class gui:
         # Scroll to the top of the parameter table
         self.scroll_frame.canvas.yview("moveto", 0)
 
-
-    def update_table(self, params):       
+    def update_table(self, params):
         # Create labels for table headers
         headers = ["Parameter", "Current Value", "New Value", "Unit", "Write", "Change Reason"]
         tooltips = ["Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long",
@@ -585,14 +588,14 @@ class gui:
                 is_calibration = param_metadata.get('Calibration', False) if param_metadata else False
                 is_readonly = param_metadata.get('ReadOnly', False) if param_metadata else False
                 parameter_label = tk.Label(self.scroll_frame.viewPort, text=param_name + (" " * (16 - len(param_name))),
-                                           background="red" if is_readonly else "yellow" if is_calibration else \
-                                            self.default_background_color)
+                                           background="red" if is_readonly else "yellow" if is_calibration else
+                                           self.default_background_color)
                 if param_name in self.flight_controller.fc_parameters:
                     flightcontroller_value = tk.Label(self.scroll_frame.viewPort, text=format(
                         self.flight_controller.fc_parameters[param_name], '.6f'))
                 else:
                     flightcontroller_value = tk.Label(self.scroll_frame.viewPort, text="N/A", background="blue")
-                
+
                 new_value_entry = tk.Entry(self.scroll_frame.viewPort, width=10, justify=tk.RIGHT, background="white")
                 new_value_entry.insert(0, param_value.value)
                 new_value_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
@@ -621,7 +624,7 @@ class gui:
                     show_tooltip(unit_label, unit_tooltip)
                 show_tooltip(write_write_checkbutton, f'When selected write {param_name} new value to the flight controller')
                 show_tooltip(change_reason_entry, f'Reason why {param_name} should change to {new_value_entry.get()}')
-                
+
                 row = [
                     parameter_label,
                     flightcontroller_value,
@@ -631,7 +634,8 @@ class gui:
                     change_reason_entry,
                 ]
                 for j, widget in enumerate(row):
-                    widget.grid(row=i+1, column=j, sticky="w" if j == 0 else "ew" if j == 5 else "e") # Use sticky="ew" to make the widget stretch horizontally
+                    # Use sticky="ew" to make the widget stretch horizontally
+                    widget.grid(row=i+1, column=j, sticky="w" if j == 0 else "ew" if j == 5 else "e")
         except KeyError as e:
             logging_error("Parameter %s not found in the %s file: %s", param_name, self.current_file, e, exc_info=True)
             exit(1)
@@ -643,7 +647,6 @@ class gui:
         self.scroll_frame.viewPort.columnconfigure(3, weight=0) # Units
         self.scroll_frame.viewPort.columnconfigure(4, weight=0) # write to FC
         self.scroll_frame.viewPort.columnconfigure(5, weight=1) # Change reason
-
 
     def on_parameter_value_change(self, event, current_file, param_name):
         # Get the new value from the Entry widget
@@ -687,7 +690,6 @@ class gui:
             event.widget.delete(0, tk.END)
             event.widget.insert(0, old_value)
 
-
     def on_parameter_change_reason_change(self, event, current_file, param_name):
         # Get the new value from the Entry widget
         new_value = event.widget.get()
@@ -699,12 +701,12 @@ class gui:
                           new_value, e, exc_info=True)
             exit(1)
         if changed and not self.at_least_one_param_edited:
-            logging_debug("Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to file.",
+            logging_debug("Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to "
+                          "file.",
                           param_name, self.local_filesystem.file_parameters[current_file][param_name].comment, new_value)
         self.at_least_one_param_edited = changed or self.at_least_one_param_edited
         # Update the params dictionary with the new value
         self.local_filesystem.file_parameters[current_file][param_name].comment = new_value
-
 
     def get_write_selected_params(self):
         selected_params = {}
@@ -713,10 +715,8 @@ class gui:
                 selected_params[param_name] = self.local_filesystem.file_parameters[self.current_file][param_name]
         return selected_params
 
-
     def on_show_only_changed_checkbox_change(self):
         self.repopulate_parameter_table(self.current_file)
-
 
     def create_progress_window(self, title: str):
         # Create a new window for the param_read progress bar
@@ -737,7 +737,6 @@ class gui:
 
         return progress_window, progress_bar, progress_label
 
-
     def center_window(self, window, parent):
         """
         Center a window on its parent window.
@@ -754,7 +753,6 @@ class gui:
         x = parent.winfo_x() + (parent_width // 2) - (window_width // 2)
         y = parent.winfo_y() + (parent_height // 2) - (window_height // 2)
         window.geometry(f"+{x}+{y}")
-
 
     def update_connection_progress_bar(self, current_value: int, max_value: int):
         """
@@ -777,7 +775,6 @@ class gui:
         if current_value == max_value:
             self.connection_progress_window.destroy()
 
-
     def update_reset_progress_bar(self, current_value: int, max_value: int):
         """
         Update the FC reset progress bar and the progress message with the current progress.
@@ -798,7 +795,6 @@ class gui:
         # Close the reset progress window when the process is complete
         if current_value == max_value:
             self.reset_progress_window.destroy()
-
 
     def update_param_download_progress_bar(self, current_value: int, max_value: int):
         """
@@ -821,13 +817,11 @@ class gui:
         if current_value == max_value:
             self.param_read_progress_window.destroy()
 
-
     def param_edit_widgets_event_generate_focus_out(self):
         # Trigger the <FocusOut> event for all entry widgets to ensure all changes are processed
         for widget in self.scroll_frame.viewPort.winfo_children():
             if isinstance(widget, tk.Entry):
                 widget.event_generate("<FocusOut>", when="now")
-
 
     def write_params_that_require_reset(self, selected_params: dict):
         """
@@ -839,35 +833,35 @@ class gui:
         fc_reset_unsure = []
 
         # Write each selected parameter to the flight controller
-        for param_name, param_value in selected_params.items():
+        for param_name, param in selected_params.items():
             try:
-                logging_info("Parameter %s set to %f", param_name, param_value.value)
+                logging_info("Parameter %s set to %f", param_name, param.value)
                 if param_name not in self.flight_controller.fc_parameters or \
-                    not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param_value.value):
+                   not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param.value):
                     param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
                     if param_metadata and param_metadata.get('RebootRequired', False):
-                        self.flight_controller.set_param(param_name, float(param_value.value))
+                        self.flight_controller.set_param(param_name, float(param.value))
                         self.at_least_one_changed_parameter_written = True
                         if param_name in self.flight_controller.fc_parameters:
                             logging_info("Parameter %s changed from %f to %f, reset required", param_name,
-                                         self.flight_controller.fc_parameters[param_name], param_value.value)
+                                         self.flight_controller.fc_parameters[param_name], param.value)
                         else:
-                            logging_info("Parameter %s changed to %f, reset required", param_name, param_value.value)
+                            logging_info("Parameter %s changed to %f, reset required", param_name, param.value)
                         fc_reset_required = True
                     # Check if any of the selected parameters have a _TYPE, _EN, or _ENABLE suffix
                     elif param_name.endswith(('_TYPE', '_EN', '_ENABLE')):
-                        self.flight_controller.set_param(param_name, float(param_value.value))
+                        self.flight_controller.set_param(param_name, float(param.value))
                         self.at_least_one_changed_parameter_written = True
                         if param_name in self.flight_controller.fc_parameters:
                             logging_info("Parameter %s changed from %f to %f, possible reset required", param_name,
-                                         self.flight_controller.fc_parameters[param_name], param_value.value)
+                                         self.flight_controller.fc_parameters[param_name], param.value)
                         else:
-                            logging_info("Parameter %s changed to %f, possible reset required", param_name, param_value.value)
+                            logging_info("Parameter %s changed to %f, possible reset required", param_name, param.value)
                         fc_reset_unsure.append(param_name)
             except ValueError as e:
                 logging_error("Failed to set parameter %s: %s", param_name, e)
                 messagebox.showerror("ArduPilot methodic configurator", f"Failed to set parameter {param_name}: {e}")
-        
+
         if not fc_reset_required:
             if fc_reset_unsure:
                 # Ask the user if they want to reset the ArduPilot
@@ -876,12 +870,11 @@ class gui:
 
         if fc_reset_required:
             [self.reset_progress_window,
-            self.reset_progress_bar,
-            self.reset_progress_label] = self.create_progress_window("Resetting Flight Controller")
+             self.reset_progress_bar,
+             self.reset_progress_label] = self.create_progress_window("Resetting Flight Controller")
             # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
             self.flight_controller.reset_and_reconnect(self.update_reset_progress_bar)
             self.reset_progress_window.destroy()  # for the case that we are doing test and there is no real FC connected
-
 
     def on_write_selected_click(self):
         self.param_edit_widgets_event_generate_focus_out()
@@ -900,12 +893,12 @@ class gui:
             self.write_params_that_require_reset(selected_params)
 
             # Write each selected parameter to the flight controller
-            for param_name, param_value in selected_params.items():
+            for param_name, param in selected_params.items():
                 try:
-                    self.flight_controller.set_param(param_name, param_value.value)
-                    logging_info("Parameter %s set to %f", param_name, param_value.value)
+                    self.flight_controller.set_param(param_name, param.value)
+                    logging_info("Parameter %s set to %f", param_name, param.value)
                     if param_name not in self.flight_controller.fc_parameters or \
-                        not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param_value.value):
+                       not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param.value):
                         self.at_least_one_changed_parameter_written = True
                 except ValueError as e:
                     logging_error("Failed to set parameter %s: %s", param_name, e)
@@ -922,15 +915,15 @@ class gui:
 
             # Validate that the read parameters are the same as the ones in the current_file
             param_write_error = []
-            for param_name, param_value in selected_params.items():
+            for param_name, param in selected_params.items():
                 if param_name in self.flight_controller.fc_parameters and \
-                    not is_within_tolerance(self.flight_controller.fc_parameters[param_name], float(param_value.value)):
+                   not is_within_tolerance(self.flight_controller.fc_parameters[param_name], float(param.value)):
                     logging_error("Parameter %s write to the flight controller failed. Expected: %f, Actual: %f",
-                                    param_name, param_value.value, self.flight_controller.fc_parameters[param_name])
+                                  param_name, param.value, self.flight_controller.fc_parameters[param_name])
                     param_write_error.append(param_name)
                 if param_name not in self.flight_controller.fc_parameters:
                     logging_error("Parameter %s write to the flight controller failed. Expected: %f, Actual: N/A",
-                                    param_name, param_value.value)
+                                  param_name, param.value)
                     param_write_error.append(param_name)
 
             if param_write_error:
@@ -940,8 +933,6 @@ class gui:
                     self.write_selected_params(selected_params)
             else:
                 logging_info("All parameters written to the flight controller successfully")
-
-
 
     def on_skip_click(self, _event=None, force_focus_out_event=True):
         if force_focus_out_event:
@@ -969,7 +960,6 @@ class gui:
             # Close the application and the connection
             self.close_connection_and_quit()
 
-
     def write_changes_to_intermediate_parameter_file(self):
         if self.at_least_one_param_edited:
             if messagebox.askyesno("One or more parameters have been edited",
@@ -977,7 +967,6 @@ class gui:
                 self.local_filesystem.export_to_param(self.local_filesystem.file_parameters[self.current_file],
                                                       self.current_file)
         self.at_least_one_param_edited = False
-
 
     def write_summary_files(self):
         annotated_fc_parameters = self.local_filesystem.annotate_intermediate_comments_to_param_dict(
@@ -988,15 +977,15 @@ class gui:
         nr_unchanged_params = len(annotated_fc_parameters) - len(non_default__read_only_params) - \
             len(non_default__writable_calibrations) - len(non_default__writable_non_calibrations)
         # If there are no more files, present a summary message box
-        _summary_message = messagebox.showinfo("Last parameter file processed",
-                                               f"Methodic configuration of {len(annotated_fc_parameters)} parameters complete:\n\n"
-                                               f"{nr_unchanged_params} kept their default value\n\n"
-                                               f"{len(non_default__read_only_params)} non-default read-only parameters - "
-                                               f"ignore these, you can not change them\n\n"
-                                               f"{len(non_default__writable_calibrations)} non-default writable sensor-"
-                                               f"calibrations - non-reusable between vehicles\n\n"
-                                               f"{len(non_default__writable_non_calibrations)} non-default writable non-sensor"
-                                               f"-calibrations - these can be reused between similar vehicles")
+        summary_message = f"Methodic configuration of {len(annotated_fc_parameters)} parameters complete:\n\n" \
+            f"{nr_unchanged_params} kept their default value\n\n" \
+            f"{len(non_default__read_only_params)} non-default read-only parameters - " \
+            "ignore these, you can not change them\n\n" \
+            f"{len(non_default__writable_calibrations)} non-default writable sensor-calibrations - " \
+            "non-reusable between vehicles\n\n" \
+            f"{len(non_default__writable_non_calibrations)} non-default writable non-sensor-calibrations - " \
+            "these can be reused between similar vehicles"
+        messagebox.showinfo("Last parameter file processed", summary_message)
         wrote_complete = self.write_summary_file(annotated_fc_parameters,
                                                  "complete.param", False)
         wrote_read_only = self.write_summary_file(non_default__read_only_params,
@@ -1006,7 +995,6 @@ class gui:
         wrote_non_calibrations = self.write_summary_file(non_default__writable_non_calibrations,
                                                          "non-default_writable_non-calibrations.param", False)
         self.write_zip_file(wrote_complete, wrote_read_only, wrote_calibrations, wrote_non_calibrations)
-
 
     def write_summary_file(self, param_dict: dict, filename: str, annotate_doc: bool):
         should_write_file = True
