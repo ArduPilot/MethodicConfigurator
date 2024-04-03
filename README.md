@@ -29,6 +29,7 @@ Install [git](https://git-scm.com/), it is needed until we get [pypi](https://py
 ```bash
 git clone https://github.com/ArduPilot/MethodicConfigurator.git
 cd MethodicConfigurator
+python3 -m pip install  pymavlink tkinter argparse logging pyserial pyusb typing json os re webbrowser
 ```
 
 You can run the ArduPilot methodic configurator GUI by executing the following command:
