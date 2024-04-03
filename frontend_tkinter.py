@@ -887,7 +887,13 @@ class gui:
         self.param_edit_widgets_event_generate_focus_out()
 
         self.write_changes_to_intermediate_parameter_file()
-        selected_params = self.on_write_check_button_click()
+        selected_params = self.get_write_selected_params()
+        self.write_selected_params(selected_params)
+        # Delete the parameter table and create a new one with the next file if available
+        self.on_skip_click(force_focus_out_event=False)
+
+    # This function can recurse multiple time if there is a write error
+    def write_selected_params(self, selected_params):
         if selected_params:
             logging_info("Writing %d selected %s parameters to flight controller...", len(selected_params), self.current_file)
 
@@ -898,14 +904,43 @@ class gui:
                 try:
                     self.flight_controller.set_param(param_name, param_value.value)
                     logging_info("Parameter %s set to %f", param_name, param_value.value)
-                    if param_name not in self.flight_controller.fc_parameters or not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param_value.value):
+                    if param_name not in self.flight_controller.fc_parameters or \
+                        not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param_value.value):
                         self.at_least_one_changed_parameter_written = True
                 except ValueError as e:
                     logging_error("Failed to set parameter %s: %s", param_name, e)
                     messagebox.showerror("ArduPilot methodic configurator", f"Failed to set parameter {param_name}: {e}")
 
-            # Delete the parameter table and create a new one with the next file if available
-            self.on_skip_click(force_focus_out_event=False)
+        else:
+            logging_warning("No parameter was selected for write, will not write any parameter")
+            messagebox.showwarning("No parameter was selected for write", "Will not write any parameter")
+
+        if self.at_least_one_changed_parameter_written:
+            # Re-Download all parameters, in case one of them changed, and to validate that all writes where successful
+            self.read_flight_controller_parameters(True)
+            logging_info("Re-read all parameters from the flight controller")
+
+            # Validate that the read parameters are the same as the ones in the current_file
+            param_write_error = []
+            for param_name, param_value in selected_params.items():
+                if param_name in self.flight_controller.fc_parameters and \
+                    not is_within_tolerance(self.flight_controller.fc_parameters[param_name], float(param_value.value)):
+                    logging_error("Parameter %s write to the flight controller failed. Expected: %f, Actual: %f",
+                                    param_name, param_value.value, self.flight_controller.fc_parameters[param_name])
+                    param_write_error.append(param_name)
+                if param_name not in self.flight_controller.fc_parameters:
+                    logging_error("Parameter %s write to the flight controller failed. Expected: %f, Actual: N/A",
+                                    param_name, param_value.value)
+                    param_write_error.append(param_name)
+
+            if param_write_error:
+                if messagebox.askretrycancel("Parameter write error",
+                                             "Failed to write the following parameters to the flight controller:\n"
+                                             f"{(', ').join(param_write_error)}"):
+                    self.write_selected_params(selected_params)
+            else:
+                logging_info("All parameters written to the flight controller successfully")
+
 
 
     def on_skip_click(self, _event=None, force_focus_out_event=True):
@@ -918,34 +953,16 @@ class gui:
             return
         try:
             next_file_index = files.index(self.current_file) + 1
-            if next_file_index < len(files):
-                next_file = files[next_file_index]
-                if self.at_least_one_changed_parameter_written:
-                    # Re-Download all parameters, in case one of them changed, and to validate that all writes where successful
-                    self.read_flight_controller_parameters(True)
-                    logging_info("Re-read all parameters from the flight controller")
-                    # Validate that the read parameters are the same as the ones in the current_file
-                    current_file_params = self.local_filesystem.file_parameters[self.current_file]
-                    param_write_error = []
-                    for param_name, param_value in current_file_params.items():
-                        if param_name in self.flight_controller.fc_parameters and not is_within_tolerance(self.flight_controller.fc_parameters[param_name], float(param_value.value)):
-                            logging_error("Parameter %s write to the flight controller failed. Expected: %f, Actual: %f", param_name, param_value.value, self.flight_controller.fc_parameters[param_name])
-                            param_write_error.append(param_name)
-                        if param_name not in self.flight_controller.fc_parameters:
-                            logging_error("Parameter %s write to the flight controller failed. Expected: %f, Actual: N/A", param_name, param_value.value)
-                            param_write_error.append(param_name)
-                    if param_write_error:
-                        messagebox.showerror("Parameter write error", f"Failed to write the following parameters to the flight controller:\n{(', ').join(param_write_error)}")
-                    else:
-                        logging_info("All parameters written to the flight controller successfully")
-                # Update the combobox selection to the next file
-                self.file_selection_combobox.set(next_file)
-                # Trigger the combobox change event to update the table
-                self.on_param_file_combobox_change(None)
-            else:
+            if next_file_index >= len(files):
                 self.write_summary_files()
                 # Close the application and the connection
                 self.close_connection_and_quit()
+                return
+            next_file = files[next_file_index]
+            # Update the combobox selection to the next file
+            self.file_selection_combobox.set(next_file)
+            # Trigger the combobox change event to update the table
+            self.on_param_file_combobox_change(None)
         except ValueError:
             # If the current file is not found in the list, present a message box
             messagebox.showerror("ArduPilot methodic configurator", "Current file not found in the list of files")
@@ -955,8 +972,10 @@ class gui:
 
     def write_changes_to_intermediate_parameter_file(self):
         if self.at_least_one_param_edited:
-            if messagebox.askyesno("One or more parameters have been edited", f"Do you want to write the changes to the {self.current_file} file?"):
-                self.local_filesystem.export_to_param(self.local_filesystem.file_parameters[self.current_file], self.current_file)
+            if messagebox.askyesno("One or more parameters have been edited",
+                                   f"Do you want to write the changes to the {self.current_file} file?"):
+                self.local_filesystem.export_to_param(self.local_filesystem.file_parameters[self.current_file],
+                                                      self.current_file)
         self.at_least_one_param_edited = False
 
 
