@@ -140,14 +140,20 @@ class FlightController:
                 # Resolve the soft link if it's a Linux system
                 if os_name == 'posix':
                     try:
+                        dev = autodetect_serial[0].device
+                        logging_debug("Auto-detected device %s", dev)
                         # Get the directory part of the soft link
-                        softlink_dir = os_path.dirname(autodetect_serial[0].device)
+                        softlink_dir = os_path.dirname(dev)
                         # Resolve the soft link and join it with the directory part
-                        resolved_path = os_path.abspath(os_path.join(softlink_dir, os_readlink(autodetect_serial[0].device)))
+                        resolved_path = os_path.abspath(os_path.join(softlink_dir, os_readlink(dev)))
                         autodetect_serial[0].device = resolved_path
+                        logging_debug("Resolved soft link %s to %s", dev, resolved_path)
                     except OSError:
                         pass # Not a soft link, proceed with the original device path
                     self.comport = autodetect_serial[0]
+                    # Add the detected serial port to the list of available connections because it is not there
+                    if self.comport.device not in [t[0] for t in self.connection_tuples]:
+                        self.connection_tuples.insert(-1, (self.comport.device, self.comport.description))
             else:
                 return "No serial ports found. Please connect a flight controller and try again."
         error_message = self.create_connection_with_retry(progress_callback=progress_callback)
