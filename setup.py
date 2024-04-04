@@ -5,8 +5,8 @@ import os
 import platform
 import sys
 
-from ardupilot_methodic_configurator import VERSION
-
+#from ardupilot_methodic_configurator import VERSION
+VERSION = '0.1.2'
 
 def package_files(directory):
     paths = []
@@ -45,6 +45,8 @@ setup(
         'argparse',
         'pyserial',
         'typing',
+        'pillow',
+        'requests',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
