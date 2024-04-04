@@ -2,7 +2,7 @@
 
 ![GitHub Actions](https://github.com/ardupilot/MethodicConfigurator/actions/workflows/windows_build.yml/badge.svg) ![GitHub Actions](https://github.com/ardupilot/MethodicConfigurator/actions/workflows/python-cleanliness.yml/badge.svg)
 
-Amilcar Lucas's ArduPilot methodic configurator is a Python tool that implements a clear and proven configuration sequence of ArduPilot of drones.
+Amilcar Lucas's ArduPilot methodic configurator is a Python tool that implements a [clear and proven configuration sequence of ArduPilot of drones](https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/1).
 It provides a graphical user interface (GUI) for managing and visualizing ArduPilot parameters, parameter files and documentation.
 
 ![Application Screenshot](App_screenshot1.png)
@@ -31,7 +31,7 @@ Install [git](https://git-scm.com/), it is needed until we get [pypi](https://py
 ```bash
 git clone https://github.com/ArduPilot/MethodicConfigurator.git
 cd MethodicConfigurator
-python3 -m pip install  pymavlink tkinter argparse logging pyserial pyusb typing json os re webbrowser
+python3 -m pip install pymavlink argparse pyserial typing pillow
 ```
 
 You can run the ArduPilot methodic configurator GUI by executing the following command:
@@ -46,6 +46,10 @@ This will launch the GUI, where you can select a vehicle configuration directory
 
 Support options are described in the [support section](CONTRIBUTING.md#support)
 
+## Contributing
+
+Please feel free to submit [issues](https://github.com/ArduPilot/MethodicConfigurator/issues) or [pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls). More information is available on the [contributing](CONTRIBUTING.md) page.
+
 ## Development requirements
 
 The [Software development requirements](REQUIREMENTS.md) are defined and guide the development.
@@ -57,10 +61,6 @@ To meet the [Software requirements](REQUIREMENTS.md) a [software architecture](R
 ## Code of conduct
 
 To use and develop this software you must obey the [ArduPilot Methodic Configurator Code of Conduct](CODE_OF_CONDUCT.md).
-
-## Contributing
-
-Please feel free to submit [issues](https://github.com/ArduPilot/MethodicConfigurator/issues) or [pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls). More information is available on the [contributing](CONTRIBUTING.md) page.
 
 ## License
 
