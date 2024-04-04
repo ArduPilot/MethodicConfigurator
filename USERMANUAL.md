@@ -6,7 +6,7 @@ Amilcar Lucas's - ArduPilot Methodic Configurator is a Python tool designed to s
 It provides a graphical user interface (GUI) for managing, editing and visualizing drone parameter files, as well as writing parameters to the vehicle.
 It automates the tasks described in the [How to methodically tune (almost) any multicopter using ArduCopter forum Blog post](https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/1)
 
-![Application Screenshot](App_screenshot1.png)
+![Application Screenshot](App_screenshot2.png)
 
 ## Usage
 
@@ -51,21 +51,35 @@ It automates the tasks described in the [How to methodically tune (almost) any m
 - **Hover over the labels to see tooltips with additional information.**
 - The entire ArduPilot official parameter documentation is available on the tooltip, no need to use a browser to search it
 
-### 6. Skipping to the Next Parameter File
+### 6. Focus on the changed parameters (optional)
 
-- If you want to skip the current parameter file without writing any changes, click the `Skip parameter file` button.
+- You can focus on the changed parameters by ticking the "See only changed parameters" checkbox
+- Usually you want to see all parameters and look at their mouse-over tooltips to decide if and how you want to change them
 
 ### 7. Writing Parameters to the Flight Controller
 
 - You can also jump to a particular file using the combobox as explained in [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file)
 - **After editing parameters, click the `Write selected params to FC, and advance to next param file` button to write the (`Write` checkbox) selected parameters to the flight controller.**
 - All parameter's `New Value` and `Change Reason` will be written to the current intermediate parameter file, irrespective of the `Write` checkboxes
+- The application will them:
+  - write the selected and changed parameters to the flight controller
+  - reset the flight controller if necessary for the new parameter values to take effect
+  - write the parameters again, because before the reset some parameters might have been not visible/writeable
+  - read all the parameters from the flight controller, and validate their value
+    - if some parameters failed to write correctly it asks the user if he wants to retry
 - **The application will then advance to the next parameter file.**
 
-### 8. Completing the Configuration Process
+### 8. Skipping to the Next Parameter File (optional)
+
+- If you want to skip the current parameter file without writing any changes, click the `Skip parameter file` button.
+
+### 9. Completing the Configuration Process
 
 Once all the intermediate parameter files have been processed, the ArduPilot Methodic Configurator will display a summary message box.
+In other words when the last available intermediate parameter file is selected (see [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file)) and either  `Write selected params to FC, and advance to next param file` or `Skip parameter file` button is pressed.
 This message box provides a comprehensive overview of the configuration process, including the number of parameters that were kept at their default values, the number of non-default read-only parameters that were ignored, and the number of non-default writable parameters that were updated.
+
+![Configuration summary message box](Last_parameter_file_processed.png)
 
 The summary message box will also categorize the writable parameters into four groups:
 
@@ -95,6 +109,13 @@ After the summary message box is displayed, the application will write the summa
 
 
 The summary files provide a clear overview of the changes made.
+
+The files are also automatically zipped into a file with the same name as the vehicle directory, inside the vehicle directory.
+
+![Parameter files zipped message box](Parameter_files_zipped.png)
+
+You should upload this `.zip` file or the `non-default_writable_non-calibrations.param` file to the [ArduPilot Methodic configuration Blog post](https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842)
+
 Once the summary files are written, the application will close the connection to the flight controller and terminate.
 
 ## Configuring
@@ -137,6 +158,8 @@ Here is a list of command line options:
 - **`--n`**: Start directly on the nth intermediate parameter file (skips previous files). Default is 0.
 - **`--loglevel`**: The logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Default is INFO.
 - **`-t` or `--vehicle-type`**: The type of the vehicle. Choices are 'AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane', 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'. Defaults to 'ArduCopter'.
+- **`-r` or `--reboot-time`**: Flight controller reboot time. Default is 7.
+- **`-v` or `--version`**: Display version information and exit.
 
 Example usage:
 
