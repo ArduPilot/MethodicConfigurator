@@ -48,7 +48,7 @@ Support options are described in the [support section](CONTRIBUTING.md#support)
 
 ## Development requirements
 
-Software development requirements are on the [REQUIREMENTS.md](REQUIREMENTS.md) file
+The [Software development requirements](REQUIREMENTS.md) are defined and guide the development.
 
 ## Software architecture
 
