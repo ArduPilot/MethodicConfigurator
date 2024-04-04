@@ -1,6 +1,6 @@
 # ArduPilot methodic configurator
 
-![GitHub Actions](https://github.com/ardupilot/MethodicConfigurator/actions/workflows/windows_build.yml/badge.svg)
+![GitHub Actions](https://github.com/ardupilot/MethodicConfigurator/actions/workflows/windows_build.yml/badge.svg) ![GitHub Actions](https://github.com/ardupilot/MethodicConfigurator/actions/workflows/python-cleanliness.yml/badge.svg)
 
 Amilcar Lucas's ArduPilot methodic configurator is a Python tool that implements a clear and proven configuration sequence of ArduPilot of drones.
 It provides a graphical user interface (GUI) for managing and visualizing ArduPilot parameters, parameter files and documentation.
