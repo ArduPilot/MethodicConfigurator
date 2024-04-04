@@ -598,7 +598,7 @@ class gui:
         self.write_checkbutton_var = {}
         try:
             # Create the new table
-            for i, (param_name, param_value) in enumerate(params.items()):
+            for i, (param_name, param) in enumerate(params.items()):
                 param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
 
                 is_calibration = param_metadata.get('Calibration', False) if param_metadata else False
@@ -607,13 +607,13 @@ class gui:
                                            background="red" if is_readonly else "yellow" if is_calibration else
                                            self.default_background_color)
                 if param_name in self.flight_controller.fc_parameters:
-                    flightcontroller_value = tk.Label(self.scroll_frame.viewPort, text=format(
-                        self.flight_controller.fc_parameters[param_name], '.6f'))
+                    value_str = format(self.flight_controller.fc_parameters[param_name], '.6f').rstrip('0').rstrip('.')
+                    flightcontroller_value = tk.Label(self.scroll_frame.viewPort, text=value_str)
                 else:
                     flightcontroller_value = tk.Label(self.scroll_frame.viewPort, text="N/A", background="blue")
 
                 new_value_entry = tk.Entry(self.scroll_frame.viewPort, width=10, justify=tk.RIGHT, background="white")
-                new_value_entry.insert(0, param_value.value)
+                new_value_entry.insert(0, format(param.value, '.6f').rstrip('0').rstrip('.'))
                 new_value_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
                                      self.on_parameter_value_change(event, current_file, param_name))
 
@@ -624,7 +624,7 @@ class gui:
                                                           variable=self.write_checkbutton_var[param_name])
 
                 change_reason_entry = tk.Entry(self.scroll_frame.viewPort, background="white")
-                change_reason_entry.insert(0, "" if param_value.comment is None else param_value.comment)
+                change_reason_entry.insert(0, "" if param.comment is None else param.comment)
                 change_reason_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
                                          self.on_parameter_change_reason_change(event, current_file, param_name))
 
