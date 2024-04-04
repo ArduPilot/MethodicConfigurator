@@ -5,7 +5,7 @@ These are the unit tests for the python script that fetches online ArduPilot
 parameter documentation (if not cached) and adds it to the specified file or
 to all *.param and *.parm files in the specified directory.
 
-AP_FLAKE8_CLEA N
+AP_FLAKE8_CLEAN
 
 Author: Amilcar do Carmo Lucas, IAV GmbH
 '''
@@ -17,9 +17,16 @@ import unittest
 import xml.etree.ElementTree as ET
 import requests
 import mock
-from annotate_params import get_xml_data, remove_prefix, split_into_lines, create_doc_dict, \
-                            format_columns, update_parameter_documentation, print_read_only_params, \
-                            BASE_URL, PARAM_DEFINITION_XML_FILE
+
+from annotate_params import get_xml_data
+from annotate_params import remove_prefix
+from annotate_params import split_into_lines
+from annotate_params import create_doc_dict
+from annotate_params import format_columns
+from annotate_params import update_parameter_documentation
+from annotate_params import print_read_only_params
+from annotate_params import BASE_URL
+from annotate_params import PARAM_DEFINITION_XML_FILE
 
 
 class TestParamDocsUpdate(unittest.TestCase):
@@ -214,7 +221,7 @@ class TestParamDocsUpdate(unittest.TestCase):
         # Test case 1: Normal operation
         string_to_split = "This is a test string. It should be split into several lines."
         maximum_line_length = 12
-        expected_output = ["This is a", "test string.", "It should be", "split into", "several",  "lines."]
+        expected_output = ["This is a", "test string.", "It should be", "split into", "several", "lines."]
         self.assertEqual(split_into_lines(string_to_split, maximum_line_length), expected_output)
 
         # Test case 2: String shorter than maximum line length

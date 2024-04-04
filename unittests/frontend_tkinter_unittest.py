@@ -16,6 +16,7 @@ import tkinter as tk
 from frontend_tkinter import show_error_message
 from frontend_tkinter import show_tooltip
 
+
 class TestShowErrorMessage(unittest.TestCase):
     @patch('tkinter.messagebox.showwarning')
     @patch('tkinter.Tk')

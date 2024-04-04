@@ -8,7 +8,7 @@ Usage:
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-AP_FLAKE8_CLEA N
+AP_FLAKE8_CLEAN
 
 (C) 2024 Amilcar do Carmo Lucas, IAV GmbH
 
@@ -19,7 +19,10 @@ import unittest
 import argparse
 import os
 import shutil
-from param_pid_adjustment_update import ranged_type, Par, update_pid_adjustment_params
+
+from param_pid_adjustment_update import ranged_type
+from param_pid_adjustment_update import Par
+from param_pid_adjustment_update import update_pid_adjustment_params
 
 
 class TestRangedType(unittest.TestCase):
@@ -67,7 +70,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
 
     def test_empty_file(self):
         # Create an empty temporary file
-        with open('temp.param', 'w', encoding='utf-8') as f:
+        with open('temp.param', 'w', encoding='utf-8') as f:  # noqa F841
             pass
 
         # Call the function and check the result
@@ -256,13 +259,14 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             f.write('PARAM1,1.5\nPARAM3,3.5\n')
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        self.assertEqual(cm.exception.args[0], "Parameter PARAM2 is not present in test_directory/optimized_parameter_file.param")
+        self.assertEqual(cm.exception.args[0],
+                         "Parameter PARAM2 is not present in test_directory/optimized_parameter_file.param")
 
     def test_empty_files(self):
         # Both the default and optimized parameter files are empty
-        with open(self.default_param_file, 'w', encoding='utf-8') as f:
+        with open(self.default_param_file, 'w', encoding='utf-8') as f:  # noqa F841
             pass
-        with open(self.optimized_param_file, 'w', encoding='utf-8') as f:
+        with open(self.optimized_param_file, 'w', encoding='utf-8') as f:  # noqa F841
             pass
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
@@ -270,7 +274,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
 
     def test_empty_default_file(self):
         # Create an empty default parameter file
-        with open(self.default_param_file, 'w', encoding='utf-8') as f:
+        with open(self.default_param_file, 'w', encoding='utf-8') as f:  # noqa F841
             pass
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
@@ -278,19 +282,21 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
 
     def test_empty_optimized_file(self):
         # Create an empty optimized parameter file
-        with open(self.optimized_param_file, 'w', encoding='utf-8') as f:
+        with open(self.optimized_param_file, 'w', encoding='utf-8') as f:  # noqa F841
             pass
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        self.assertEqual(cm.exception.args[0], "Failed to load optimized parameters from test_directory/optimized_parameter_file.param")
+        self.assertEqual(cm.exception.args[0],
+                         "Failed to load optimized parameters from test_directory/optimized_parameter_file.param")
 
     def test_empty_adjustment_file(self):
         # Create an empty adjustment parameter file
-        with open(self.adjustment_param_file, 'w', encoding='utf-8') as f:
+        with open(self.adjustment_param_file, 'w', encoding='utf-8') as f:  # noqa F841
             pass
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        self.assertEqual(cm.exception.args[0], "Failed to load PID adjustment parameters from test_directory/14_pid_adjustment.param")
+        self.assertEqual(cm.exception.args[0],
+                         "Failed to load PID adjustment parameters from test_directory/14_pid_adjustment.param")
 
     def test_zero_default_value(self):
         # Set a parameter in the default parameter file to zero
@@ -298,7 +304,8 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             f.write('PARAM1,0.0\nPARAM2,2.0\nPARAM3,3.0\n')
 
         # Call the function
-        pid_adjustment_params_dict, _pid_adjustment_file_path, _content_header = update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
+        pid_adjustment_params_dict, _pid_adjustment_file_path, _content_header = \
+            update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
 
         # Assert that the PID adjustment parameter value is zero
         self.assertEqual(pid_adjustment_params_dict['PARAM1'].value, 0)
@@ -309,7 +316,8 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             f.write('PARAM1,1.0\nPARAM2,2.0\nPARAM3,3.0\n')
 
         # Call the function
-        pid_adjustment_params_dict, _, _ = update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
+        pid_adjustment_params_dict, _, _ = \
+            update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
 
         # Assert that the comment is updated correctly
         self.assertEqual(pid_adjustment_params_dict['PARAM1'].comment, " = 0.75 * (1 default)")

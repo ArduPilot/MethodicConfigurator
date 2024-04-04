@@ -31,7 +31,7 @@ class Flake8Checker(object):
         for path in self.files_to_check:
             self.progress(f"Checking ({path})")
         ret = subprocess.run(["flake8", "--show-source"] + self.files_to_check,
-                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=True)
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
         if ret.returncode != 0:
             self.progress(f"Flake8 check failed: ({ret.stdout})")
             self.retcode = 1
