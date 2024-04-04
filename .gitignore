@@ -1,2 +1,7 @@
 __pycache__/
+__target__/
 4.4.4-test-params/
+ArduPilot_methodic_configurator.egg-info/
+bef/
+build/
+dist/
