@@ -26,7 +26,7 @@ from frontend_tkinter import show_no_param_files_error
 from frontend_tkinter import show_no_connection_error
 from frontend_tkinter import gui
 
-VERSION = '0.1.2'
+from version import VERSION
 
 
 def argument_parser():

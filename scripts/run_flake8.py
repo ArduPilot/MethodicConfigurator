@@ -29,21 +29,21 @@ class Flake8Checker(object):
         if len(self.files_to_check) == 0:
             return
         for path in self.files_to_check:
-            self.progress("Checking (%s)" % path)
+            self.progress(f"Checking ({path})")
         ret = subprocess.run(["flake8", "--show-source"] + self.files_to_check,
-                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=True)
         if ret.returncode != 0:
-            self.progress("Flake8 check failed: (%s)" % (ret.stdout))
+            self.progress(f"Flake8 check failed: ({ret.stdout})")
             self.retcode = 1
 
     def run(self):
         for basedir in self.basedirs:
-            for (dirpath, dirnames, filenames) in os.walk(basedir):
+            for (dirpath, _dirnames, filenames) in os.walk(basedir):
                 for filename in filenames:
                     if os.path.splitext(filename)[1] != ".py":
                         continue
                     filepath = os.path.join(dirpath, filename)
-                    content = open(filepath).read()
+                    content = open(filepath, encoding='utf-8').read()
                     if "AP_FLAKE8_CLEAN" not in content:
                         continue
                     self.files_to_check.append(filepath)

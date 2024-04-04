@@ -3,7 +3,10 @@ exclude =
     # No need to traverse our git directory
     .git,
     # There's no value in checking cache directories
-    __pycache__
+    __pycache__,
+    __target__,
+    unittests,
+    dist,
 ignore =
     # E226: missing whitespace around arithmetic operator
     E226,

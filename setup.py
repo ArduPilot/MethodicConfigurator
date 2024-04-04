@@ -2,28 +2,34 @@ from setuptools import setup
 from setuptools import find_packages
 
 import os
-import platform
-import sys
 
-#from ardupilot_methodic_configurator import VERSION
-VERSION = '0.1.2'
+from version import VERSION
+
 
 def package_files(directory):
     paths = []
-    for (path, directories, filenames) in os.walk(directory):
+    for (path, _directories, filenames) in os.walk(directory):
         for filename in filenames:
             paths.append(os.path.join('..', path, filename))
     return paths
 
-package_data = ['vehcle_examples/diatone_taycan_mxc/*', 
+
+package_data = [
+    'vehcle_examples/diatone_taycan_mxc/*',
+    # Add any other package_data requirements here
 ]
 
 # note that we do not include all the real dependencies here (like lxml etc)
 # as that breaks the pip install. It seems that pip is not smart enough to
 # use the system versions of these dependencies, so it tries to download and install
 # large numbers of modules like tkinter etc which may be already installed
-requirements=['pymavlink>=2.4.14',
-              'pyserial>=3.0']
+requirements = ['pymavlink>=2.4.14',
+                'pyserial>=3.0']
+
+dev_requirements = [
+    'flake8',
+    # Add any other development requirements here
+]
 
 # Read the long description from the README file
 with open('README.md', 'r', encoding='utf-8') as f:
@@ -48,6 +54,9 @@ setup(
         'pillow',
         'requests',
     ],
+    extras_require={
+        'dev': dev_requirements,
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
@@ -65,14 +74,14 @@ setup(
     license='GPLv3',
     python_requires='>=3.6',
     # Include package data
-    #package_data={
+    # package_data={
     #    # If you have data files
     #    '': ['*.md', '*.txt', '*.xml', '*.json'],
     #    '4.3.8-params': ['*.param'],
     #    '4.4.4-params': ['*.param'],
     #    '4.5.0-beta2-params': ['*.param'],
     #    '4.6.0-DEV-params': ['*.param'],
-    #},
+    # },
     # Specify entry points for command-line scripts
     entry_points={
         'console_scripts': [

@@ -399,7 +399,8 @@ class FlightController:
             return {k: v.value for k, v in par_dict_with_comments.items()}
 
         # Check if MAVFTP is supported
-        if self.capabilities and not (self.capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP):  # FIXME remove the "not" once it works
+        # FIXME remove the "not" once it works
+        if self.capabilities and not (self.capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP):
             logging_info("MAVFTP is supported by the %s flight controller", self.comport.device)
             parameters, _defaults = self.read_params_via_mavftp(progress_callback)
             return parameters
@@ -621,8 +622,7 @@ class FlightController:
         '''handle a mavlink packet'''
         mtype = m.get_type()
         if mtype == "FILE_TRANSFER_PROTOCOL":
-            if (m.target_system != self.target_system or
-                m.target_component != self.target_component):
+            if m.target_system != self.target_system or m.target_component != self.target_component:
                 if m.target_system == self.target_component and not self.warned_component:
                     self.warned_component = True
                     logging_info("FTP reply for mavlink component %u", m.target_component)
@@ -635,7 +635,7 @@ class FlightController:
                 logging_info("< %s dt=%.2f", op, dt)
             self.last_op_time = now
             if self.ftp_settings_pkt_loss_rx > 0:
-                if random_uniform(0,100) < self.ftp_settings_pkt_loss_rx:
+                if random_uniform(0, 100) < self.ftp_settings_pkt_loss_rx:
                     if self.ftp_settings_debug > 1:
                         logging_info("FTP: dropping packet RX")
                     return
@@ -743,7 +743,7 @@ class FlightController:
     def handle_burst_read(self, op, m):
         '''handle OP_BurstReadFile reply'''
         if self.ftp_settings_pkt_loss_tx > 0:
-            if random_uniform(0,100) < self.ftp_settings_pkt_loss_tx:
+            if random_uniform(0, 100) < self.ftp_settings_pkt_loss_tx:
                 if self.ftp_settings_debug > 0:
                     logging_info("FTP: dropping TX")
                 return
@@ -801,7 +801,8 @@ class FlightController:
                     # a burst complete with non-zero size and less than burst packet size
                     # means EOF
                     if not self.reached_eof and self.ftp_settings_debug > 0:
-                        logging_info("EOF at %u with %u gaps t=%.2f", self.fh.tell(), len(self.read_gaps), time_time() - self.op_start)
+                        logging_info("EOF at %u with %u gaps t=%.2f", self.fh.tell(),
+                                     len(self.read_gaps), time_time() - self.op_start)
                     self.reached_eof = True
                     if self.check_read_finished():
                         return
@@ -823,7 +824,8 @@ class FlightController:
                         logging_info("burst lost EOF %u %u", self.fh.tell(), op.offset)
                     return
                 if not self.reached_eof and self.ftp_settings_debug > 0:
-                    logging_info("EOF at %u with %u gaps t=%.2f", self.fh.tell(), len(self.read_gaps), time_time() - self.op_start)
+                    logging_info("EOF at %u with %u gaps t=%.2f", self.fh.tell(),
+                                 len(self.read_gaps), time_time() - self.op_start)
                 self.reached_eof = True
                 if self.check_read_finished():
                     return
