@@ -17,10 +17,12 @@ from logging import error as logging_error
 
 # import sys
 from time import sleep as time_sleep
+from time import time as time_time
 from os import path as os_path
 from os import name as os_name
 from os import readlink as os_readlink
 from typing import Dict
+import struct
 # import usb.core
 # import usb.util
 import serial.tools.list_ports
@@ -29,10 +31,14 @@ import serial.tools.list_ports_common
 from serial.serialutil import SerialException
 from annotate_params import Par
 
+# from param_ftp import ParamData
+from param_ftp import ftp_param_decode
+
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules
 try:
     from pymavlink import mavutil
+    from pymavlink import mavparm
 except Exception:
     pass
 
@@ -77,6 +83,109 @@ class FakeSerialForUnitTests():
         pass
 
 
+def decode_flight_sw_version(flight_sw_version):
+    '''decode 32 bit flight_sw_version mavlink parameter
+    corresponds to ArduPilot encoding in  GCS_MAVLINK::send_autopilot_version'''
+    fw_type_id = (flight_sw_version >>  0) % 256  # noqa E221, E222
+    patch      = (flight_sw_version >>  8) % 256  # noqa E221, E222
+    minor      = (flight_sw_version >> 16) % 256  # noqa E221
+    major      = (flight_sw_version >> 24) % 256  # noqa E221
+    if fw_type_id == 0:
+        fw_type = "dev"
+    elif fw_type_id == 64:
+        fw_type = "alpha"
+    elif fw_type_id == 128:
+        fw_type = "beta"
+    elif fw_type_id == 192:
+        fw_type = "rc"
+    elif fw_type_id == 255:
+        fw_type = "official"
+    else:
+        fw_type = "undefined"
+    return major, minor, patch, fw_type
+
+
+# opcodes
+OP_None = 0
+OP_TerminateSession = 1
+OP_ResetSessions = 2
+OP_ListDirectory = 3
+OP_OpenFileRO = 4
+OP_ReadFile = 5
+OP_CreateFile = 6
+OP_WriteFile = 7
+OP_RemoveFile = 8
+OP_CreateDirectory = 9
+OP_RemoveDirectory = 10
+OP_OpenFileWO = 11
+OP_TruncateFile = 12
+OP_Rename = 13
+OP_CalcFileCRC32 = 14
+OP_BurstReadFile = 15
+OP_Ack = 128
+OP_Nack = 129
+
+# error codes
+ERR_None = 0
+ERR_Fail = 1
+ERR_FailErrno = 2
+ERR_InvalidDataSize = 3
+ERR_InvalidSession = 4
+ERR_NoSessionsAvailable = 5
+ERR_EndOfFile = 6
+ERR_UnknownCommand = 7
+ERR_FileExists = 8
+ERR_FileProtected = 9
+ERR_FileNotFound = 10
+
+HDR_Len = 12
+MAX_Payload = 239
+
+
+class FTP_OP:
+    def __init__(self, seq, session, opcode, size, req_opcode, burst_complete, offset, payload):
+        self.seq = seq
+        self.session = session
+        self.opcode = opcode
+        self.size = size
+        self.req_opcode = req_opcode
+        self.burst_complete = burst_complete
+        self.offset = offset
+        self.payload = payload
+
+    def pack(self):
+        '''pack message'''
+        ret = struct.pack("<HBBBBBBI", self.seq, self.session, self.opcode, self.size, self.req_opcode, self.burst_complete,
+                          0, self.offset)
+        if self.payload is not None:
+            ret += self.payload
+        ret = bytearray(ret)
+        return ret
+
+    def __str__(self):
+        plen = 0
+        if self.payload is not None:
+            plen = len(self.payload)
+        ret = "OP seq:%u sess:%u opcode:%d req_opcode:%u size:%u bc:%u ofs:%u plen=%u" % (self.seq,
+                                                                                          self.session,
+                                                                                          self.opcode,
+                                                                                          self.req_opcode,
+                                                                                          self.size,
+                                                                                          self.burst_complete,
+                                                                                          self.offset,
+                                                                                          plen)
+        if plen > 0:
+            ret += " [%u]" % self.payload[0]
+        return ret
+
+
+class WriteQueue:
+    def __init__(self, ofs, size):
+        self.ofs = ofs
+        self.size = size
+        self.last_send = 0
+
+
 class FlightController:
     """
     A class to manage the connection and parameters of a flight controller.
@@ -107,7 +216,57 @@ class FlightController:
         self.connection_tuples += [tuple(['Add another', 'Add another'])]  # now that is is logged, add the 'Add another' tuple
         self.master = None
         self.comport = None
+        self.ftp_settings_debug = 2
+        self.ftp_settings_burst_read_size = 80
+        self.close_connection() # initialize the connection variables,'and prevent code duplication
+        self.seq = 0
+        self.session = 0
+        self.network = 0
+        self.last_op = None
+        self.fh = None
+        self.filename = None
+        self.callback = None
+        self.callback_progress = None
+        self.put_callback = None
+        self.put_callback_progress = None
+        self.last_op_time = time_time()
+        self.write_list = None
+        self.read_gaps = []
+        self.read_gap_times = {}
+        self.read_total = 0
+        self.duplicates = 0
+        self.last_read = None
+        self.last_burst_read = None
+        self.op_start = None
+        self.reached_eof = False
+        self.backlog = 0
+        self.read_retries = 0
+        self.burst_size = self.ftp_settings_burst_read_size
+        self.open_retries = 0
+
+        self.ftp_count = None
+        self.ftp_started = False
+        self.ftp_failed = False
+        self.mav_param_set = set()
+        self.param_types = {}
+        self.fetch_one = dict()
+        self.fetch_set = None
+        self.mav_param = mavparm.MAVParmDict()
+        self.mav_param_count = 0
+        self.default_params = None
+
+    def close_connection(self):
+        """
+        Close the connection to the flight controller.
+        """
+        if self.master is not None:
+            self.master.close()
+            self.master = None
         self.fc_parameters = {}
+        self.target_system = None
+        self.target_component = None
+        self.capabilities = None
+        self.version = None
 
     def add_connection(self, connection_string: str):
         """
@@ -163,6 +322,18 @@ class FlightController:
             self.fc_parameters['COMPASS_DEV_ID'] = 1.0
         return error_message
 
+    def request_message(self, message_id: int):
+        self.master.mav.command_long_send(
+            self.target_system,
+            self.target_component,
+            mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
+            0, # confirmation
+            message_id, 0, 0, 0, 0, 0, 0)
+
+    def cmd_version(self):
+        '''show version'''
+        self.request_message(mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION)
+
     def create_connection_with_retry(self, progress_callback, retries: int = 3,
                                      timeout: int = 5) -> mavutil.mavlink_connection:
         """
@@ -183,8 +354,23 @@ class FlightController:
             self.master = mavutil.mavlink_connection(device=self.comport.device, timeout=timeout,
                                                      retries=retries, progress_callback=progress_callback)
             logging_debug("Waiting for heartbeat")
-            self.master.wait_heartbeat(timeout=timeout)
-            logging_debug("Connection established.")
+            m = self.master.wait_heartbeat(timeout=timeout)
+            if m is None:
+                logging_error("No heartbeat received, connection failed.")
+                return "No heartbeat received, connection failed."
+            self.target_system = m.get_srcSystem()
+            self.target_component = m.get_srcComponent()
+            logging_debug("Connection established with systemID %d, componentID %d.", self.target_system,
+                          self.target_component)
+            self.cmd_version()
+            m = self.master.recv_match(type='AUTOPILOT_VERSION', blocking=True, timeout=timeout)
+            if m is None:
+                logging_error("No AUTOPILOT_VERSION message received, connection failed.")
+                return "No AUTOPILOT_VERSION message received, connection failed."
+            self.capabilities = m.capabilities
+            vMajor, vMinor, vPatch, vFwType = decode_flight_sw_version(m.flight_sw_version)
+            self.version = "{0}.{1}.{2}".format(vMajor, vMinor, vPatch)
+            logging_info("Capabilities: %d, Version: %s %s", self.capabilities, self.version, vFwType)
         except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
             logging_warning("Connection failed: %s", e)
             logging_error("Failed to connect after %d attempts.", retries)
@@ -204,6 +390,17 @@ class FlightController:
             par_dict_with_comments = Par.load_param_file_into_dict(filename)
             return {k: v.value for k, v in par_dict_with_comments.items()}
 
+        # Check if MAVFTP is supported
+        if not self.capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP:  # FIXME remove the "not" once it works
+            logging_info("MAVFTP is supported by the %s flight controller", self.comport.device)
+            parameters, _defaults = self.read_params_via_mavftp(progress_callback)
+            return parameters
+
+        logging_info("MAVFTP is not supported by the %s flight controller, fallback to MAVLink", self.comport.device)
+        # MAVFTP is not supported, fall back to MAVLink
+        return self.read_params_via_mavlink(progress_callback)
+
+    def read_params_via_mavlink(self, progress_callback=None) -> Dict[str, float]:
         logging_debug("Will fetch all parameters from the %s flight controller", self.comport.device)
         # Request all parameters
         self.master.mav.param_request_list_send(
@@ -235,6 +432,172 @@ class FlightController:
                 logging_error('Error: %s', error)
                 break
         return parameters
+
+    def send(self, op):
+        '''send a request'''
+        op.seq = self.seq
+        payload = op.pack()
+        plen = len(payload)
+        if plen < MAX_Payload + HDR_Len:
+            payload.extend(bytearray([0]*((HDR_Len+MAX_Payload)-plen)))
+        self.master.mav.file_transfer_protocol_send(self.network, self.target_system, self.target_component, payload)
+        self.seq = (self.seq + 1) % 256
+        self.last_op = op
+        now = time_time()
+        if self.ftp_settings_debug > 1:
+            logging_info("> %s dt=%.2f" % (op, now - self.last_op_time))
+        self.last_op_time = time_time()
+
+    def terminate_session(self):
+        '''terminate current session'''
+        self.send(FTP_OP(self.seq, self.session, OP_TerminateSession, 0, 0, 0, 0, None))
+        self.fh = None
+        self.filename = None
+        self.write_list = None
+        if self.callback is not None:
+            # tell caller that the transfer failed
+            self.callback(None)
+            self.callback = None
+        if self.put_callback is not None:
+            # tell caller that the transfer failed
+            self.put_callback(None)
+            self.put_callback = None
+        if self.put_callback_progress is not None:
+            self.put_callback_progress(None)
+            self.put_callback_progress = None
+        self.read_gaps = []
+        self.read_total = 0
+        self.read_gap_times = {}
+        self.last_read = None
+        self.last_burst_read = None
+        self.session = (self.session + 1) % 256
+        self.reached_eof = False
+        self.backlog = 0
+        self.duplicates = 0
+        if self.ftp_settings_debug > 0:
+            logging_info("Terminated session")
+
+    def cmd_get(self, args, callback=None, callback_progress=None):
+        '''get file'''
+        self.terminate_session()
+        fname = args[0]
+        if len(args) > 1:
+            self.filename = args[1]
+        else:
+            self.filename = os_path.basename(fname)
+        if callback is None or self.ftp_settings_debug > 1:
+            print("Getting %s as %s" % (fname, self.filename))
+        self.op_start = time_time()
+        self.callback = callback
+        self.callback_progress = callback_progress
+        self.read_retries = 0
+        self.duplicates = 0
+        self.reached_eof = False
+        self.burst_size = self.ftp_settings_burst_read_size
+        if self.burst_size < 1:
+            self.burst_size = 239
+        elif self.burst_size > 239:
+            self.burst_size = 239
+        enc_fname = bytearray(fname, 'ascii')
+        self.open_retries = 0
+        op = FTP_OP(self.seq, self.session, OP_OpenFileRO, len(enc_fname), 0, 0, 0, enc_fname)
+        self.send(op)
+
+    def read_params_via_mavftp(self, progress_callback=None) -> Dict[str, float]:
+        """
+        Reads parameters from the flight controller using MAVFTP.
+
+        Args:
+            progress_callback (function, optional): A callback function to report progress.
+
+        Returns:
+            Dict[str, float]: A dictionary of flight controller parameters.
+        """
+        # Assuming you have a method to start an FTP session
+        self.ftp_started = True
+        self.ftp_count = None
+        self.cmd_get(["@PARAM/param.pck?withdefaults=1"], callback=self.ftp_callback,
+                     callback_progress=self.ftp_callback_progress)
+
+        # Placeholder for the FTP session object
+        # ftp_session = None
+
+        # Placeholder for the parameters dictionary
+        # parameters = {}
+
+        # Assuming you have a method to initiate the FTP download
+        # This method should accept the callback functions as arguments
+        # ftp_download(ftp_session, ftp_callback, ftp_progress_callback)
+
+        return self.mav_param, self.default_params
+
+    def ftp_callback_progress(self, fh, total_size):
+        '''callback as read progresses'''
+        if self.ftp_count is None and total_size >= 6:
+            ofs = fh.tell()
+            fh.seek(0)
+            buf = fh.read(6)
+            fh.seek(ofs)
+            magic2, _num_params, total_params = struct.unpack("<HHH", buf)
+            if magic2 == 0x671b or magic2 == 0x671c:
+                self.ftp_count = total_params
+        # approximate count
+        if self.ftp_count is not None:
+            # each entry takes 11 bytes on average
+            per_entry_size = 11
+            done = min(int(total_size / per_entry_size), self.ftp_count-1)
+            # self.mpstate.console.set_status('Params', 'Param %u/%u' % (done, self.ftp_count))
+            logging_info("Received %u/%u parameters (ftp)", done, self.ftp_count)
+
+    def ftp_callback(self, fh):
+        '''callback from ftp fetch of parameters'''
+        self.ftp_started = False
+        if fh is None:
+            # the fetch failed
+            self.ftp_failed = True
+            return
+
+        # magic = 0x671b
+        # magic_defaults = 0x671c
+        data = fh.read()
+        pdata = ftp_param_decode(data)
+        if pdata is None or len(pdata.params) == 0:
+            return
+        with_defaults = pdata.defaults is not None
+
+        self.param_types = {}
+        self.mav_param_set = set()
+        self.fetch_one = dict()
+        self.fetch_set = None
+        self.mav_param.clear()
+        total_params = len(pdata.params)
+        self.mav_param_count = total_params
+
+        idx = 0
+        for (name, v, _ptype) in pdata.params:
+            # we need to set it to REAL32 to ensure we use write value for param_set
+            name = str(name.decode('utf-8'))
+            self.param_types[name] = mavutil.mavlink.MAV_PARAM_TYPE_REAL32
+            self.mav_param_set.add(idx)
+            self.mav_param[name] = v
+            idx += 1
+
+        self.ftp_failed = False
+        # self.mpstate.console.set_status('Params', 'Param %u/%u' % (total_params, total_params))
+        logging_info("Received %u parameters (ftp)" % total_params)
+        # if self.logdir is not None:
+        #    self.mav_param.save(os.path.join(self.logdir, self.parm_file), '*', verbose=True)
+        # self.log_params(pdata.params)
+
+        if with_defaults:
+            self.default_params = mavparm.MAVParmDict()
+            for (name, v, ptype) in pdata.defaults:
+                name = str(name.decode('utf-8'))
+                self.default_params[name] = v
+        #    if self.logdir:
+        #        defaults_path = os.path.join(self.logdir, "defaults.parm")
+        #        self.default_params.save(defaults_path, '*', verbose=False)
+        #        logging_info("Saved %u defaults to %s" % (len(pdata.defaults), defaults_path))
 
     def set_param(self, param_name: str, param_value: float):
         """
@@ -284,15 +647,6 @@ class FlightController:
 
         # Reconnect to the flight controller
         self.create_connection_with_retry(connection_progress_callback)
-
-    def close_connection(self):
-        """
-        Close the connection to the flight controller.
-        """
-        if self.master is not None:
-            self.master.close()
-            self.master = None
-        self.fc_parameters = {}
 
     @staticmethod
     def list_usb_devices():
