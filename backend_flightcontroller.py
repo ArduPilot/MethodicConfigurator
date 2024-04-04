@@ -399,7 +399,7 @@ class FlightController:
             return {k: v.value for k, v in par_dict_with_comments.items()}
 
         # Check if MAVFTP is supported
-        if not self.capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP:  # FIXME remove the "not" once it works
+        if self.capabilities and not (self.capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP):  # FIXME remove the "not" once it works
             logging_info("MAVFTP is supported by the %s flight controller", self.comport.device)
             parameters, _defaults = self.read_params_via_mavftp(progress_callback)
             return parameters
