@@ -37,21 +37,13 @@ cd MethodicConfigurator
 ./install_linux.sh
 ```
 
-## Support
+## Support and Contributing
 
-Support options are described in the [support section](CONTRIBUTING.md#support)
-
-## Contributing
-
-Please feel free to submit [issues](https://github.com/ArduPilot/MethodicConfigurator/issues) or [pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls). More information is available on the [contributing](CONTRIBUTING.md) page.
-
-## Development requirements
-
-The [Software development requirements](REQUIREMENTS.md) are defined and guide the development.
+Please feel free to submit [issues](https://github.com/ArduPilot/MethodicConfigurator/issues) or [pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls). More information is available on the [contributing and support](CONTRIBUTING.md) page.
 
 ## Software architecture
 
-To meet the [Software requirements](REQUIREMENTS.md) a [software architecture](REQUIREMENTS.md#software-architecture) was designed and implemented.
+To meet the [Software requirements](ARCHITECTURE.md#software-requirements) a [software architecture](ARCHITECTURE.md#the-software-architecture) was designed and implemented.
 
 ## Code of conduct
 
@@ -82,9 +74,9 @@ It indirectly uses:
 
 | Software | License |
 |----------|---------|
-| [future](https://github.com/PythonCharmers/python-future) | [MIT License](https://github.com/PythonCharmers/python-future/blob/master/LICENSE.txt) |
-| [lxml](https://github.com/lxml/lxml) | [BSD License](https://github.com/lxml/lxml/blob/master/LICENSE.txt) |
 | [certifi](https://github.com/certifi/python-certifi) | [Mozilla Public License 2.0](https://github.com/certifi/python-certifi/blob/master/LICENSE) |
 | [charset-normalizer](https://github.com/Ousret/charset_normalizer) | [MIT License](https://github.com/Ousret/charset_normalizer/blob/master/LICENSE) |
-| [idna](https://github.com/kjd/idna) | [BSD License](https://github.com/kjd/idna/blob/master/LICENSE.md) |
+| [future](https://github.com/PythonCharmers/python-future) | [MIT License](https://github.com/PythonCharmers/python-future/blob/master/LICENSE.txt) |
 | [urllib3](https://github.com/urllib3/urllib3) | [MIT License](https://github.com/urllib3/urllib3/blob/main/LICENSE.txt) |
+| [lxml](https://github.com/lxml/lxml) | [BSD License](https://github.com/lxml/lxml/blob/master/LICENSE.txt) |
+| [idna](https://github.com/kjd/idna) | [BSD License](https://github.com/kjd/idna/blob/master/LICENSE.md) |
