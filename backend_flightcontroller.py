@@ -317,10 +317,10 @@ class FlightController:
                         logging_debug("Resolved soft link %s to %s", dev, resolved_path)
                     except OSError:
                         pass # Not a soft link, proceed with the original device path
-                    self.comport = autodetect_serial[0]
-                    # Add the detected serial port to the list of available connections because it is not there
-                    if self.comport.device not in [t[0] for t in self.connection_tuples]:
-                        self.connection_tuples.insert(-1, (self.comport.device, self.comport.description))
+                self.comport = autodetect_serial[0]
+                # Add the detected serial port to the list of available connections because it is not there
+                if self.comport.device not in [t[0] for t in self.connection_tuples]:
+                    self.connection_tuples.insert(-1, (self.comport.device, self.comport.description))
             else:
                 return "No serial ports found. Please connect a flight controller and try again."
         error_message = self.create_connection_with_retry(progress_callback=progress_callback)
