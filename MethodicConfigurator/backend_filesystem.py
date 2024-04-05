@@ -61,10 +61,16 @@ class LocalFilesystem:
     def re_init(self, vehicle_dir: str, vehicle_type: str):
         self.vehicle_dir = vehicle_dir
         self.vehicle_type = vehicle_type
+        self.file_documentation_filename = "file_documentation.json"
+        self.file_documentation = {}
+        self.param_default_dict = {}
+        self.doc_dict = {}
+
         # Read intermediate parameters from files
         self.file_parameters = self.read_params_from_files()
+        if not self.file_parameters:
+            return
 
-        self.file_documentation_filename = "file_documentation.json"
         try:
             with open(os_path.join(self.vehicle_dir, self.file_documentation_filename), 'r', encoding='utf-8') as file:
                 self.file_documentation = json_load(file)
@@ -75,7 +81,6 @@ class LocalFilesystem:
                 with open(self.file_documentation_filename, 'r', encoding='utf-8') as file:
                     self.file_documentation = json_load(file)
             except FileNotFoundError:
-                self.file_documentation = {}
                 logging_warning("File '%s' not found the current application directory", self.file_documentation_filename)
                 logging_warning("No file documentation will be available.")
 
