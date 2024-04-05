@@ -6,7 +6,7 @@ Amilcar Lucas's - ArduPilot Methodic Configurator is a Python tool designed to s
 It provides a graphical user interface (GUI) for managing, editing and visualizing drone parameter files, as well as writing parameters to the vehicle.
 It automates the tasks described in the [How to methodically tune (almost) any multicopter using ArduCopter forum Blog post](https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/1)
 
-![Application Screenshot](App_screenshot2.png)
+![Application Screenshot](images/App_screenshot2.png)
 
 ## Usage
 
@@ -79,7 +79,7 @@ Once all the intermediate parameter files have been processed, the ArduPilot Met
 In other words when the last available intermediate parameter file is selected (see [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file)) and either  `Write selected params to FC, and advance to next param file` or `Skip parameter file` button is pressed.
 This message box provides a comprehensive overview of the configuration process, including the number of parameters that were kept at their default values, the number of non-default read-only parameters that were ignored, and the number of non-default writable parameters that were updated.
 
-![Configuration summary message box](Last_parameter_file_processed.png)
+![Configuration summary message box](images/Last_parameter_file_processed.png)
 
 The summary message box will also categorize the writable parameters into four groups:
 
@@ -112,7 +112,7 @@ The summary files provide a clear overview of the changes made.
 
 The files are also automatically zipped into a file with the same name as the vehicle directory, inside the vehicle directory.
 
-![Parameter files zipped message box](Parameter_files_zipped.png)
+![Parameter files zipped message box](images/Parameter_files_zipped.png)
 
 You should upload this `.zip` file or the `non-default_writable_non-calibrations.param` file to the [ArduPilot Methodic configuration Blog post](https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842)
 

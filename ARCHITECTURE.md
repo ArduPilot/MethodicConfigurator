@@ -81,7 +81,7 @@ It consists of four main components:
 3. the flight controller backend, does communication with the flight controller
 4. the tkinter frontend, this is the GUI the user interacts with
 
-![Software Architecture diagram](Architecture.drawio.png)
+![Software Architecture diagram](images/Architecture.drawio.png)
 
 The parts can be individually tested, and do have unit tests.
 They can also be exchanged, for instance tkinter-frontend can be replaced with vxwidgets or pyQt.
