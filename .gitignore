@@ -5,3 +5,4 @@ ArduPilot_methodic_configurator.egg-info/
 bef/
 build/
 dist/
+windows/version.txt

@@ -5,11 +5,11 @@
 # It assumes there is a line like this:
 # VERSION = "12344"
 
-# from ..version import VERSION
+# from ..MethodicConfigurator.version import VERSION
 # print(VERSION)
 
 # glob supports Unix style pathname extensions
-with open("../version.py", encoding='utf-8') as f:
+with open("../MethodicConfigurator/version.py", encoding='utf-8') as f:
     searchlines = f.readlines()
     for i, line in enumerate(searchlines):
         if "VERSION = " in line:
