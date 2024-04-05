@@ -48,9 +48,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pymavlink',
-        'argparse',
         'pyserial',
-        'typing',
         'pillow',
         'requests',
     ],
