@@ -307,9 +307,13 @@ def get_xml_data(base_url: str, directory: str, filename: str) -> ET.Element:
             raise SystemExit("unable to fetch online XML documentation")  # pylint: disable=W0707
         # Get the text content of the response
         xml_data = response.text
-        # Write the content to a file
-        with open(os_path.join(directory, filename), "w", encoding="utf-8") as file:
-            file.write(xml_data)
+        try:
+            # Write the content to a file
+            with open(os_path.join(directory, filename), "w", encoding="utf-8") as file:
+                file.write(xml_data)
+        except PermissionError as e:
+            logging.critical("Permission denied to write XML data to file: %s", e)
+            raise SystemExit("permission denied to write online XML documentation to file")
 
     # Parse the XML data
     root = ET.fromstring(xml_data)
