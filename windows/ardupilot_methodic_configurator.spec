@@ -14,8 +14,7 @@ MethodicConfiguratorAny = Analysis(['ardupilot_methodic_configurator.py'],
                             collect_submodules('pymavlink'),
              datas= [],
              hookspath=None,
-             runtime_hooks=None,
-             excludes= ['FixTk', 'tcl', 'tk', '_tkinter', 'tkinter', 'Tkinter'])
+             runtime_hooks=None)
 
 MethodicConfigurator_pyz = PYZ(MethodicConfiguratorAny.pure)
 
