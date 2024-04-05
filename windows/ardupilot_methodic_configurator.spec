@@ -37,4 +37,4 @@ MethodicConfigurator_coll = COLLECT(MethodicConfigurator_exe,
                name='ardupilot_methodic_configurator')
 
 # Additional directories to include
-MethodicConfiguratorAny.datas += collect_data_files('vehicle_examples', destdir='vehicle_examples')
+MethodicConfiguratorAny.datas += collect_data_files('vehicle_examples')
