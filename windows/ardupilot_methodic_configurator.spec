@@ -9,8 +9,8 @@ MethodicConfiguratorAny = Analysis(['ardupilot_methodic_configurator.py'],
              pathex=[os.path.abspath('.')],
              # for some unknown reason these hidden imports don't pull in
              # all the needed pieces, so we also import them in ardupilot_methodic_configurator.py
-             hiddenimports=['packaging', 'packaging.version', 'packaging.specifiers',
-                            'pkg_resources.py2_warn'] + collect_submodules('MethodicConfigurator.modules') + 
+             hiddenimports=['packaging', 'packaging.version', 'packaging.specifiers'] +
+                            collect_submodules('MethodicConfigurator.modules') +
                             collect_submodules('pymavlink'),
              datas= [],
              hookspath=None,
@@ -37,4 +37,4 @@ MethodicConfigurator_coll = COLLECT(MethodicConfigurator_exe,
                name='ardupilot_methodic_configurator')
 
 # Additional directories to include
-MethodicConfigurator_coll.datas += collect_data_files('vehicle_examples', destdir='vehicle_examples')
+MethodicConfiguratorAny.datas += collect_data_files('vehicle_examples', destdir='vehicle_examples')
