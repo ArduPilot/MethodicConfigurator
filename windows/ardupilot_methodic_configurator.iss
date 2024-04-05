@@ -6,8 +6,8 @@
 ; Note MyAppVersion is defined in MethodicConfiguratorWinBuild.bat
 ; #define MyAppVersion {code:GetVersion}
 #define MyAppPublisher "Amilcar do Carmo Lucas"
-#define MyAppURL "https://ardupilot.org/MethodicConfigurator/index.html"
-#define MyAppExeName "MethodicConfigurator.exe"
+#define MyAppURL "https://github.com/ArduPilot/MethodicConfigurator"
+#define MyAppExeName "ardupilot_methodic_configurator.exe"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.

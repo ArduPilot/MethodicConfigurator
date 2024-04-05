@@ -5,7 +5,7 @@ from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 import os
 
 
-MethodicConfiguratorAny = Analysis(['MethodicConfigurator\\ardupilot_methodic_configurator.py'],
+MethodicConfiguratorAny = Analysis(['ardupilot_methodic_configurator.py'],
              pathex=[os.path.abspath('.')],
              # for some unknown reason these hidden imports don't pull in
              # all the needed pieces, so we also import them in ardupilot_methodic_configurator.py
@@ -26,7 +26,7 @@ MethodicConfigurator_exe = EXE(MethodicConfigurator_pyz,
           debug=False,
           strip=None,
           upx=True,
-          console=True )
+          console=True)
 
 MethodicConfigurator_coll = COLLECT(MethodicConfigurator_exe,
                MethodicConfiguratorAny.binaries,
