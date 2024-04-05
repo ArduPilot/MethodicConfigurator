@@ -39,11 +39,13 @@ echo Hard links creation complete
 echo.
 echo To run the ArduPilot methodic configurator GUI, execute the following command:
 echo.
+echo cd MethodicConfigurator
 echo python3 ardupilot_methodic_configurator.py
 echo.
 echo If you encounter issues with auto-connecting to the wrong device on MS Windows,
 echo you can explicitly set the device with the --device command line option:
 echo.
+echo cd MethodicConfigurator
 echo python3 ardupilot_methodic_configurator.py --device COMX
 echo.
 echo Replace COMX with the correct COM port for your device.

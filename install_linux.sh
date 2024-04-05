@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Check if the script is run as root
-if [ "$EUID" -ne 0 ]
- then echo "Please run as root"
- exit
-fi
-
 # Update package lists
 echo "Updating package lists..."
 sudo apt-get update
@@ -25,6 +19,7 @@ python3 -m pip install .
 echo "Installation complete."
 echo ""
 echo "You can run the ArduPilot methodic configurator GUI by executing:"
+echo "cd MethodicConfigurator"
 echo "python3 ardupilot_methodic_configurator.py"
 echo ""
 echo "For more detailed usage instructions, please refer to the USERMANUAL.md file."

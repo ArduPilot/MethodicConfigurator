@@ -6,6 +6,7 @@ decode ftp parameter protocol data
 import struct
 import sys
 
+
 class ParamData(object):
     def __init__(self):
         # params as (name, value, ptype)
@@ -14,13 +15,14 @@ class ParamData(object):
         self.defaults = None
 
     def add_param(self, name, value, ptype):
-        self.params.append((name,value,ptype))
+        self.params.append((name, value, ptype))
 
     def add_default(self, name, value, ptype):
         if self.defaults is None:
             self.defaults = []
-        self.defaults.append((name,value,ptype))
-        
+        self.defaults.append((name, value, ptype))
+
+
 def ftp_param_decode(data):
     '''decode parameter data, returning ParamData'''
     pdata = ParamData()
@@ -29,9 +31,9 @@ def ftp_param_decode(data):
     magic_defaults = 0x671c
     if len(data) < 6:
         return None
-    magic2,num_params,total_params = struct.unpack("<HHH", data[0:6])
+    magic2, _num_params, total_params = struct.unpack("<HHH", data[0:6])
     if magic != magic2 and magic_defaults != magic2:
-        print("paramftp: bad magic 0x%x expected 0x%x" % (magic2, magic))
+        print("paramftp: bad magic 0x%x expected 0x%x", magic2, magic)
         return None
     with_defaults = magic2 == magic_defaults
     data = data[6:]
@@ -62,18 +64,18 @@ def ftp_param_decode(data):
             break
 
         ptype, plen = struct.unpack("<BB", data[0:2])
-        flags = (ptype>>4) & 0x0F
-        has_default = with_defaults and (flags&1) != 0
+        flags = (ptype >> 4) & 0x0F
+        has_default = with_defaults and (flags & 1) != 0
         ptype &= 0x0F
 
-        if not ptype in data_types:
-            print("paramftp: bad type 0x%x" % ptype)
+        if ptype not in data_types:
+            print("paramftp: bad type 0x%x", ptype)
             return None
 
         (type_len, type_format) = data_types[ptype]
         default_len = type_len if has_default else 0
 
-        name_len = ((plen>>4) & 0x0F) + 1
+        name_len = ((plen >> 4) & 0x0F) + 1
         common_len = (plen & 0x0F)
         name = last_name[0:common_len] + data[2:2+name_len]
         vdata = data[2+name_len:2+name_len+type_len+default_len]
@@ -81,7 +83,7 @@ def ftp_param_decode(data):
         data = data[2+name_len+type_len+default_len:]
         if with_defaults:
             if has_default:
-                v1,v2, = struct.unpack("<" + type_format + type_format, vdata)
+                v1, v2, = struct.unpack("<" + type_format + type_format, vdata)
                 pdata.add_param(name, v1, ptype)
                 pdata.add_default(name, v2, ptype)
             else:
@@ -94,19 +96,19 @@ def ftp_param_decode(data):
         count += 1
 
     if count != total_params:
-        print("paramftp: bad count %u should be %u" % (count, total_params))
+        print("paramftp: bad count %u should be %u", count, total_params)
         return None
 
     return pdata
 
+
 if __name__ == "__main__":
-    import sys
     fname = sys.argv[1]
-    data = open(fname,'rb').read()
+    data = open(fname, 'rb').read()
     print("Decoding file of length %u" % len(data))
     pdata = ftp_param_decode(data)
     if pdata is None:
         print("Decode failed")
         sys.exit(1)
-    for (name,value,ptype) in pdata.params:
+    for (name, value, ptype) in pdata.params:
         print(name.decode('utf-8'), value)

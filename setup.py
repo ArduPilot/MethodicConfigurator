@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 import os
 
-from version import VERSION
+from MethodicConfigurator.version import VERSION
 
 
 def package_files(directory):
@@ -85,7 +85,7 @@ setup(
     # Specify entry points for command-line scripts
     entry_points={
         'console_scripts': [
-            'ardupilot_methodic_configurator=ardupilot_methodic_configurator:main',
+            'ardupilot_methodic_configurator=MethodicConfigurator.ardupilot_methodic_configurator:main',
         ],
     },
 )
