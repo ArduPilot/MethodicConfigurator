@@ -392,11 +392,14 @@ class FlightController:
         Returns:
             Dict[str, float]: A dictionary of flight controller parameters.
         """
-        if self.master is None: # FIXME for testing only
+        if self.master is None and self.comport is not None and self.comport.device == 'test': # FIXME for testing only
             filename = os_path.join('4.4.4-test-params', '00_default.param')
             logging_warning("Testing active, will load all parameters from the %s file", filename)
             par_dict_with_comments = Par.load_param_file_into_dict(filename)
             return {k: v.value for k, v in par_dict_with_comments.items()}
+
+        if self.master is None:
+            return None
 
         # Check if MAVFTP is supported
         # FIXME remove the "not" once it works
