@@ -34,15 +34,20 @@ TOOLTIP_MAX_LENGTH = 105
 
 def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1e-03) -> bool:
     """
-    Checks if the absolute difference between x and y is within a certain tolerance.
+    Determines if the absolute difference between two numbers is within a specified tolerance.
+
+    This function checks if the absolute difference between `x` and `y` is less than or equal to
+    the sum of the absolute tolerance (`atol`) and the product of the relative tolerance (`rtol`)
+    and the absolute value of `y`.
 
     Parameters:
-    x, y (float): The two numbers to compare.
-    atol (float): The absolute tolerance.
-    rtol (float): The relative tolerance.
+    - x (float): The first number to compare.
+    - y (float): The second number to compare.
+    - atol (float, optional): The absolute tolerance. Defaults to 1e-08.
+    - rtol (float, optional): The relative tolerance. Defaults to 1e-03.
 
     Returns:
-    bool: True if the difference is within the tolerance, False otherwise.
+    - bool: True if the difference is within the tolerance, False otherwise.
     """
     return abs(x - y) <= atol + (rtol * abs(y))
 
@@ -114,10 +119,15 @@ class LocalFilesystem:
 
     def read_params_from_files(self):
         """
-        Reads intermediate parameter files from a directory and stores their contents in a dictionary of dictionaries.
+        Reads intermediate parameter files from a directory and stores their contents in a dictionary.
+
+        This function scans the specified directory for files matching a specific pattern,
+        reads each file, and stores the parameter names and values in a dictionary.
+        Files named '00_default.param' and '01_ignore_readonly.param' are ignored.
 
         Returns:
-        dict: A dictionary with filenames as keys and as values a dictionary with (parameter names, values) pairs.
+        - Dict[str, Dict[str, 'Par']]: A dictionary with filenames as keys and as values
+                                       a dictionary with (parameter names, values) pairs.
         """
         parameters = {}
         if os_path.isdir(self.vehicle_dir):
@@ -135,6 +145,18 @@ class LocalFilesystem:
 
     @staticmethod
     def str_to_bool(s):
+        """
+        Converts a string representation of a boolean value to a boolean.
+
+        This function interprets the string 'true', 'yes', '1' as True, and 'false', 'no', '0' as False.
+        Any other input will return None.
+
+        Parameters:
+        - s (str): The string to convert.
+
+        Returns:
+        - Optional[bool]: True, False, or None if the string does not match any known boolean representation.
+        """
         if s.lower() == "true" or s.lower() == "yes" or s.lower() == "1":
             return True
         elif s.lower() == "false" or s.lower() == "no" or s.lower() == "0":
@@ -143,6 +165,17 @@ class LocalFilesystem:
             return None
 
     def export_to_param(self, params: Dict[str, 'Par'], filename_out: str, annotate_doc: bool = True) -> None:
+        """
+        Exports a dictionary of parameters to a .param file and optionally annotates the documentation.
+
+        This function formats the provided parameters into a string suitable for a .param file,
+        writes the string to the specified output file, and optionally updates the parameter documentation.
+
+        Parameters:
+        - params (Dict[str, 'Par']): A dictionary of parameters to export.
+        - filename_out (str): The name of the output file.
+        - annotate_doc (bool, optional): Whether to update the parameter documentation. Defaults to True.
+        """
         Par.export_to_param(Par.format_params(params), os_path.join(self.vehicle_dir, filename_out))
         if annotate_doc:
             update_parameter_documentation(self.doc_dict,
@@ -151,6 +184,15 @@ class LocalFilesystem:
                                            self.param_default_dict)
 
     def intermediate_parameter_file_exists(self, filename: str) -> bool:
+        """
+        Checks if an intermediate parameter file exists in the vehicle directory.
+
+        Parameters:
+        - filename (str): The name of the file to check.
+
+        Returns:
+        - bool: True if the file exists and is a file (not a directory), False otherwise.
+        """
         return os_path.exists(os_path.join(self.vehicle_dir, filename)) and \
             os_path.isfile(os_path.join(self.vehicle_dir, filename))
 
@@ -158,13 +200,12 @@ class LocalFilesystem:
         """
         Retrieves all comments associated with parameters from intermediate parameter files.
 
-        This method iterates through all intermediate parameter files and collects comments for each parameter.
-        Comments from the same parameter in different files are not merged.
-        If a parameter has a comment in multiple files, only the comment from the last file is returned.
-        The comments are then returned as a dictionary where the keys are parameter names and the values are the comments.
+        This method iterates through all intermediate parameter files, collects comments for each parameter,
+        and returns them as a dictionary where the keys are parameter names and the values are the comments.
+        Comments from the same parameter in different files are not merged; only the comment from the last file is returned.
 
         Returns:
-            Dict[str, str]: A dictionary mapping parameter names to their comments.
+        - Dict[str, str]: A dictionary mapping parameter names to their comments.
         """
         ret = {}
         for _filename, params in self.file_parameters.items():
@@ -175,13 +216,17 @@ class LocalFilesystem:
 
     def annotate_intermediate_comments_to_param_dict(self, param_dict: Dict[str, float]) -> Dict[str, 'Par']:
         """
-        Annotates comments from intermediate parameter files to a parameter value only dictionary.
+        Annotates comments from intermediate parameter files to a parameter value-only dictionary.
 
-        Args:
-            param_dict (Dict[str, float]): A dictionary of parameters.
+        This function takes a dictionary of parameters with only values and adds comments from
+        intermediate parameter files to create a new dictionary where each parameter is represented
+        by a 'Par' object containing both the value and the comment.
+
+        Parameters:
+        - param_dict (Dict[str, float]): A dictionary of parameters with only values.
 
         Returns:
-            Par: A dictionary of parameters with intermediate parameter file comments.
+        - Dict[str, 'Par']: A dictionary of parameters with intermediate parameter file comments.
         """
         ret = {}
         ip_comments = self.all_intermediate_parameter_file_comments()
@@ -199,11 +244,11 @@ class LocalFilesystem:
         - Non-default, writable non-calibrations
 
         Parameters:
-            param (Dict[str, 'Par']): A dictionary mapping parameter names to their 'Par' objects.
+        - param (Dict[str, 'Par']): A dictionary mapping parameter names to their 'Par' objects.
 
         Returns:
-            List[Dict[str, 'Par']]: A list containing three dictionaries.
-                                    Each dictionary represents one of the categories mentioned above.
+        - List[Dict[str, 'Par']]: A list containing three dictionaries.
+                                  Each dictionary represents one of the categories mentioned above.
         """
         non_default__read_only_params = {}
         non_default__writable_calibrations = {}
@@ -245,20 +290,24 @@ class LocalFilesystem:
     def zip_files(self, wrote_complete, filename_complete, wrote_read_only, filename_read_only,
                   wrote_calibrations, filename_calibrations, wrote_non_calibrations, filename_non_calibrations):
         """
-        Zips the intermediate parameter files that were written to.
+        Zips the intermediate parameter files that were written to, including specific summary files.
 
-        This method zips the intermediate parameter files that were written to the fight controller.
-        The zip file are saved in the same directory as the intermediate parameter files.
+        This method creates a zip archive containing all intermediate parameter files, along with
+        specific summary files if they were written. The zip file is saved in the same directory as the
+        intermediate parameter files. The method checks for the existence of each file before
+        attempting to add it to the zip archive.
 
         Parameters:
-        wrote_complete (bool): True if complete parameter written to file, False otherwise.
-        filename_complete (str): Name of complete file.
-        wrote_read_only (bool): True if read-only parameters were written to file, False otherwise.
-        filename_read_only (str): Name of  read-only file.
-        wrote_calibrations (bool): True if calibration parameters were written to file, False otherwise.
-        filename_calibrations (str): Name of calibration file.
-        wrote_non_calibrations (bool): True if non-calibration parameters were written to file, False otherwise.
-        filename_non_calibrations (str): Name of  non-calibration file.
+        - wrote_complete (bool): Indicates if the complete parameter file was written.
+        - filename_complete (str): The name of the complete parameter file.
+        - wrote_read_only (bool): Indicates if the read-only parameter file was written.
+        - filename_read_only (str): The name of the read-only parameter file.
+        - wrote_calibrations (bool): Indicates if the calibration parameter file was written.
+        - filename_calibrations (str): The name of the calibration parameter file.
+        - wrote_non_calibrations (bool): Indicates if the non-calibration parameter file was written.
+        - filename_non_calibrations (str): The name of the non-calibration parameter file.
+
+        The method does not return any value. Instead, it logs the path of the created zip file upon completion.
         """
         zip_file_path = self.zip_file_path()
         with ZipFile(zip_file_path, 'w') as zipf:
