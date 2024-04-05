@@ -150,7 +150,7 @@ class Par:
                 except IOError as exc:
                     _exc_type, exc_value, exc_traceback = sys_exc_info()
                     fname = os_path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
-                    print(f"ERROR: in line {exc_traceback.tb_lineno} of file {fname}: {exc_value}")
+                    logging.critical(f"in line {exc_traceback.tb_lineno} of file {fname}: {exc_value}")
                     raise SystemExit(f"Caused by line {i} of file {param_file}: {original_line}") from exc
         return parameter_dict
 
@@ -296,14 +296,14 @@ def get_xml_data(base_url: str, directory: str, filename: str) -> ET.Element:
             from requests import get as requests_get  # pylint: disable=C0415
             from requests import exceptions as requests_exceptions  # pylint: disable=C0415
         except ImportError:
-            logging.error("The requests package was not found")
-            logging.error("Please install it by running 'pip install requests' in your terminal.")
+            logging.critical("The requests package was not found")
+            logging.critical("Please install it by running 'pip install requests' in your terminal.")
             raise SystemExit("requests package is not installed")  # pylint: disable=W0707
         try:
             # Send a GET request to the URL
             response = requests_get(base_url + filename, timeout=5)
         except requests_exceptions.RequestException as e:
-            logging.error("Unable to fetch XML data: %s", e)
+            logging.critical("Unable to fetch XML data: %s", e)
             raise SystemExit("unable to fetch online XML documentation")  # pylint: disable=W0707
         # Get the text content of the response
         xml_data = response.text
@@ -492,16 +492,16 @@ def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) 
     if match:
         param_name = match.group(0)
     else:
-        logging.error("Invalid line %d in file %s: %s", line_nr, filename, line)
+        logging.critical("Invalid line %d in file %s: %s", line_nr, filename, line)
         raise SystemExit("Invalid line in input file")
     param_len = len(param_name)
     param_sep = line[param_len] # the character following the parameter name must be a separator
     if param_sep not in {',', ' ', '\t'}:
-        logging.error("Invalid parameter name %s on line %d in file %s", param_name, line_nr,
+        logging.critical("Invalid parameter name %s on line %d in file %s", param_name, line_nr,
                       filename)
         raise SystemExit("Invalid parameter name")
     if param_len > PARAM_NAME_MAX_LEN:
-        logging.error("Too long parameter name on line %d in file %s", line_nr, filename)
+        logging.critical("Too long parameter name on line %d in file %s", line_nr, filename)
         raise SystemExit("Too long parameter name")
     return param_name
 
