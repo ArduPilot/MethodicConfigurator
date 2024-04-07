@@ -42,17 +42,20 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "..\MethodicConfigurator\dist\ardupilot_methodic_configurator\ardupilot_methodic_configurator.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\dist\ardupilot_methodic_configurator\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-Source: "..\Parameters\*"; DestDir: "{localappdata}\.ardupilot_methodic_configurator"; Flags: ignoreversion
+Source: "..\vehicle_examples\*"; DestDir: "{localappdata}\.ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\windows\version.txt"; DestDir: "{localappdata}\.ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\windows\MethodicConfigurator.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\MethodicConfigurator\ArduPilot_32x32.png"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\MethodicConfigurator\ArduPilot.png"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\MethodicConfigurator\file_documentation.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\{#MyAppName} (No GUI)"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{commondocs}"; IconFilename: "{app}\MethodicConfigurator.ico"
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--map --console --load-module=graph"; WorkingDir: "{commondocs}"; Tasks: desktopicon; IconFilename: "{app}\MethodicConfigurator.ico"
+Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{commondocs}"; Tasks: desktopicon; IconFilename: "{app}\MethodicConfigurator.ico"
 Name: "{group}\Documentation"; Filename: "https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"
-Name: "{group}\Startup Examples"; Filename: "{app}\Examples"
+Name: "{group}\Vehicle Examples"; Filename: "{localappdata}\.ardupilot_methodic_configurator\vehicle_examples"
 Name: "{group}\ArduPilot MethodicConfigurator Forum"; Filename: "https://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/"
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--map --console --load-module=graph"; WorkingDir: "{commondocs}"; IconFilename: "{app}\MethodicConfigurator.ico"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{commondocs}"; IconFilename: "{app}\MethodicConfigurator.ico"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
