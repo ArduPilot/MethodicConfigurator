@@ -69,20 +69,22 @@ class LocalFilesystem:
         # Read intermediate parameters from files
         self.file_parameters = self.read_params_from_files()
         if not self.file_parameters:
-            return
+            return # No files intermediate parameters files found, no need to continue, the rest needs them
 
-        try:
-            with open(os_path.join(self.vehicle_dir, self.file_documentation_filename), 'r', encoding='utf-8') as file:
-                self.file_documentation = json_load(file)
-        except FileNotFoundError:
-            logging_warning("File '%s' not found in %s.", self.file_documentation_filename, self.vehicle_dir)
-            logging_warning("Will now try to find it in the current application directory")
+        # Define a list of directories to search for the file_documentation_filename file
+        search_directories = [self.vehicle_dir, os_path.dirname(os_path.abspath(__file__))]
+        file_found = False
+        for directory in search_directories:
             try:
-                with open(self.file_documentation_filename, 'r', encoding='utf-8') as file:
+                with open(os_path.join(directory, self.file_documentation_filename), 'r', encoding='utf-8') as file:
                     self.file_documentation = json_load(file)
+                    file_found = True
+                    break
             except FileNotFoundError:
-                logging_warning("File '%s' not found the current application directory", self.file_documentation_filename)
-                logging_warning("No file documentation will be available.")
+                # Log a warning if the file is not found in the current directory
+                logging_warning("File '%s' not found in %s.", self.file_documentation_filename, directory)
+        if not file_found:
+            logging_warning("No file documentation will be available.")
 
         # Read ArduPilot parameter documentation
         xml_dir = vehicle_dir if os_path.isdir(vehicle_dir) else os_path.dirname(os_path.realpath(vehicle_dir))
