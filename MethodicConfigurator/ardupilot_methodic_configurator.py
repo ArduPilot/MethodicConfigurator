@@ -18,6 +18,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
 from logging import error as logging_error
 from os import path as os_path
+from os import getcwd as os_getcwd
 from sys import exit as sys_exit
 
 from backend_filesystem import LocalFilesystem
@@ -54,7 +55,7 @@ def argument_parser():
                         help='MAVLink connection string to the flight controller. Defaults to autodetection')
     parser.add_argument('--vehicle-dir',
                         type=str,
-                        default=os_path.get_cwd(),
+                        default=os_getcwd(),
                         help='Directory containing vehicle-specific intermediate parameter files. '
                         'Defaults to the current working directory')
     parser.add_argument('--n',
