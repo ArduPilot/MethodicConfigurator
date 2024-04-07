@@ -12,7 +12,14 @@ MethodicConfiguratorAny = Analysis(['ardupilot_methodic_configurator.py'],
              hiddenimports=['packaging', 'packaging.version', 'packaging.specifiers'] +
                             collect_submodules('MethodicConfigurator.modules') +
                             collect_submodules('pymavlink'),
-             datas= [],
+             datas= [('MethodicConfigurator\\ArduPilot_32x32.png', '.'),
+                     ('MethodicConfigurator\\ArduPilot.png', '.'),
+                     ('vehicle_examples\\diatone_taycan_mxc\\4.3.8-params\\*.*', 'vehicle_examples\\diatone_taycan_mxc\\4.3.8-params'),
+                     ('vehicle_examples\\diatone_taycan_mxc\\4.4.4-params\\*.*', 'vehicle_examples\\diatone_taycan_mxc\\4.4.4-params'),
+                     ('vehicle_examples\\diatone_taycan_mxc\\4.5.0-params\\*.*', 'vehicle_examples\\diatone_taycan_mxc\\4.5.0-params'),
+                     ('vehicle_examples\\diatone_taycan_mxc\\4.6.0-DEV-params\\*.*', 'vehicle_examples\\diatone_taycan_mxc\\4.6.0-DEV-params'),
+                     ('credits\\*.*', 'credits'),
+             ],
              hookspath=None,
              runtime_hooks=None)
 
@@ -34,6 +41,3 @@ MethodicConfigurator_coll = COLLECT(MethodicConfigurator_exe,
                strip=None,
                upx=True,
                name='ardupilot_methodic_configurator')
-
-# Additional directories to include
-MethodicConfiguratorAny.datas += collect_data_files('vehicle_examples')
