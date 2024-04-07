@@ -253,8 +253,7 @@ class gui:
 
         # Set the application icon for the window and all child windows
         # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
-        # self.root.iconbitmap(default='ArduPilot_32x32.ico')
-        self.root.iconphoto(True, tk.PhotoImage(file='ArduPilot_32x32.png'))
+        self.root.iconphoto(True, tk.PhotoImage(file=LocalFilesystem.application_icon_filepath()))
 
         config_frame = tk.Frame(self.root)
         config_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0)) # Pack the frame at the top of the window
@@ -339,7 +338,7 @@ class gui:
 
         # Load the ArduPilot logo and scale it down to image_height pixels in height
         image_height = 40
-        image = Image.open('ArduPilot.png')
+        image = Image.open(LocalFilesystem.application_logo_filepath())
         width, height = image.size
         aspect_ratio = width / height
         new_width = int(image_height * aspect_ratio)

@@ -338,3 +338,13 @@ class LocalFilesystem:
                 zipf.write(os_path.join(self.vehicle_dir, filename_non_calibrations), arcname=filename_non_calibrations)
 
         logging_info("Intermediate parameter files and summary files zipped to %s", zip_file_path)
+
+    @staticmethod
+    def application_icon_filepath():
+        script_dir = os_path.dirname(os_path.abspath(__file__))
+        return os_path.join(script_dir, 'ArduPilot_icon.png')
+
+    @staticmethod
+    def application_logo_filepath():
+        script_dir = os_path.dirname(os_path.abspath(__file__))
+        return os_path.join(script_dir, 'ArduPilot_logo.png')
