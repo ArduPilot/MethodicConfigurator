@@ -498,7 +498,7 @@ def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) 
     param_sep = line[param_len] # the character following the parameter name must be a separator
     if param_sep not in {',', ' ', '\t'}:
         logging.critical("Invalid parameter name %s on line %d in file %s", param_name, line_nr,
-                      filename)
+                         filename)
         raise SystemExit("Invalid parameter name")
     if param_len > PARAM_NAME_MAX_LEN:
         logging.critical("Too long parameter name on line %d in file %s", line_nr, filename)
