@@ -154,7 +154,7 @@ To use the command line interface, navigate to the directory where the `ardupilo
 Here is a list of command line options:
 
 - **`--device`**: The MAVLink connection string to the flight controller. It defaults to autoconnection to the first available flight controller.
-- **`--vehicle-dir`**: The directory containing intermediate parameter files. Defaults to the script directory.
+- **`--vehicle-dir`**: The directory containing intermediate parameter files. Defaults to the current working directory directory.
 - **`--n`**: Start directly on the nth intermediate parameter file (skips previous files). Default is 0.
 - **`--loglevel`**: The logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Default is INFO.
 - **`-t` or `--vehicle-type`**: The type of the vehicle. Choices are 'AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane', 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'. Defaults to 'ArduCopter'.

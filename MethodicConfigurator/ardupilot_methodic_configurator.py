@@ -54,9 +54,9 @@ def argument_parser():
                         help='MAVLink connection string to the flight controller. Defaults to autodetection')
     parser.add_argument('--vehicle-dir',
                         type=str,
-                        default=os_path.dirname(os_path.realpath(__file__)),
+                        default=os_path.get_cwd(),
                         help='Directory containing vehicle-specific intermediate parameter files. '
-                        'Defaults to the script directory')
+                        'Defaults to the current working directory')
     parser.add_argument('--n',
                         type=int,
                         default=0,
