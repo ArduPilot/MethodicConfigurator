@@ -21,7 +21,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={pf}\{#MyAppName}
+DefaultDirName={commonpf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 LicenseFile=..\LICENSE.md
 OutputBaseFilename=MethodicConfiguratorSetup-{#MyAppVersion}
@@ -30,7 +30,7 @@ SolidCompression=yes
 ChangesEnvironment=yes
 
 [InstallDelete]
-Type: filesandordirs; Name: {pf}\{#MyAppName}
+Type: filesandordirs; Name: {commonpf}\{#MyAppName}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
