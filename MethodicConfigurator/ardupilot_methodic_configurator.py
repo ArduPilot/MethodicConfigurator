@@ -17,7 +17,6 @@ from logging import getLevelName as logging_getLevelName
 # from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
-from os import path as os_path
 from os import getcwd as os_getcwd
 from sys import exit as sys_exit
 
