@@ -15,7 +15,7 @@ Please do not change the original vehicle example files of the application, so t
 
 For example if you are using `ArduCopter 4.5.1` on MS Windows do:
 
-1. copy `C:\AppData\.ardupilot_methodic_configurator\vehicle_examples\4.5.1-params` to `C:\AppData\.ardupilot_methodic_configurator\my_cool_vehicle`
+1. copy `C:\ProgramData\.ardupilot_methodic_configurator\vehicle_examples\4.5.1-params` to `C:\ProgramData\.ardupilot_methodic_configurator\my_cool_vehicle`
 2. connect a flight controller to your PC and wait 5 seconds
 3. start the application using the Desktop Icon
 
