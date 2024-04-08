@@ -12,6 +12,7 @@ It automates the tasks described in the [How to methodically tune (almost) any m
 
 Before you start you must copy one of the `vehicle_example` directories, and rename the copy to the name of your vehicle.
 Please do not change the original vehicle example files of the application, so that you can compare changes if you want to.
+
 For example if you are using `ArduCopter 4.5.0` on MS Windows do:
 
 1. copy `C:\AppData\.ardupilot_methodic_configurator\vehicle_examples\4.5.0-params` to `C:\AppData\.ardupilot_methodic_configurator\my_cool_vehicle`
@@ -58,10 +59,14 @@ For example if you are using `ArduCopter 4.4.4` on Linux do:
 ### 5. Editing Parameters
 
 - The parameter table presents the parameters in the current intermediate parameter file
+- The first colum is the ArduPilot parameter name used in that row.
+  - ReadOnly parameters are presented on a read background, they should not be present in a intermediate configuration file because under normal conditions they can not be changed
+  - Sensor calibration parameters are presented on a yellow background, they are vehicle-instance dependent and can NOT be reused between similar vehicles
+- The current parameter value read from your FC is on the `Current Value` column.
+  - Not available parameter values are presented on a blue background
+- The new value is the value in the intermediate file and will be written to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `example_vehicle` directory are just examples.
 - **In the parameter table, you can edit the `New Value` and `Change Reason` entries for each parameter.**
 - **You MUST edit the `Change Reason` so that other users understand why you changed the parameter to that particular `new value`**
-- ReadOnly parameters are presented on a read background, they should not be present in a intermediate configuration file because under normal conditions they can not be changed
-- Sensor calibration parameters are presented on a yellow background, they are vehicle-instance dependent and can NOT be reused between similar vehicles
 - Check the `Write` checkbox to select parameters to be written to the flight controller
 - **Hover over the labels to see tooltips with additional information.**
 - The entire ArduPilot official parameter documentation is available on the tooltip, no need to use a browser to search it
@@ -98,7 +103,7 @@ This message box provides a comprehensive overview of the configuration process,
 
 The summary message box will also categorize the writable parameters into four groups:
 
-```mermaid
+```mermaid!
 pie
     title Summary files example
     "Unchanged parameters" : 728
