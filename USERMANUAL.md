@@ -60,10 +60,10 @@ For example if you are using `ArduCopter 4.4.4` on Linux do:
 
 - The parameter table presents the parameters in the current intermediate parameter file
 - The first colum is the ArduPilot parameter name used in that row.
-  - ReadOnly parameters are presented on a read background, they should not be present in a intermediate configuration file because under normal conditions they can not be changed
-  - Sensor calibration parameters are presented on a yellow background, they are vehicle-instance dependent and can NOT be reused between similar vehicles
+  - ReadOnly parameters are presented on a *red background*, they should not be present in a intermediate configuration file because under normal conditions they can not be changed
+  - Sensor calibration parameters are presented on a *yellow background*, they are vehicle-instance dependent and can NOT be reused between similar vehicles
 - The current parameter value read from your FC is on the `Current Value` column.
-  - Not available parameter values are presented on a blue background
+  - Not available parameter values are presented as `N/A` on a *blue background*
 - The new value is the value in the intermediate file and will be written to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `example_vehicle` directory are just examples.
 - **In the parameter table, you can edit the `New Value` and `Change Reason` entries for each parameter.**
 - **You MUST edit the `Change Reason` so that other users understand why you changed the parameter to that particular `new value`**
