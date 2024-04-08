@@ -946,7 +946,7 @@ class gui:
                 self.flight_controller.set_param(param_name, param.value)
                 logging_info("Parameter %s set to %f", param_name, param.value)
                 if param_name not in self.flight_controller.fc_parameters or \
-                    not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param.value):
+                   not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param.value):
                     self.at_least_one_changed_parameter_written = True
             except ValueError as e:
                 logging_error("Failed to set parameter %s: %s", param_name, e)
