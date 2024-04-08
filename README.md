@@ -13,7 +13,9 @@ Usage is detailed in the [USERMANUAL.md](USERMANUAL.md) file
 
 ## MS Windows Installation
 
-Install [git](https://git-scm.com/) and [python](https://www.python.org/downloads/). Then do:
+If you have a github.com account log in to it and you should be able to [download the latest Windows installer `.zip` file](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/latest). Just install it and you do not need any other steps.
+
+Otherwise, install [git](https://git-scm.com/) and [python](https://www.python.org/downloads/). Then do:
 
 ```bash
 git clone https://github.com/ArduPilot/MethodicConfigurator.git
