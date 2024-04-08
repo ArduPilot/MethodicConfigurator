@@ -922,32 +922,35 @@ class gui:
 
         self.write_changes_to_intermediate_parameter_file()
         selected_params = self.get_write_selected_params()
-        self.write_selected_params(selected_params)
+        if selected_params:
+            if hasattr(self.flight_controller, 'fc_parameters') and self.flight_controller.fc_parameters:
+                self.write_selected_params(selected_params)
+            else:
+                logging_warning("No parameters were yet read from the flight controller, will not write any parameter")
+                messagebox.showwarning("Will not write any parameter", "No flight controller connection")
+        else:
+            logging_warning("No parameter was selected for write, will not write any parameter")
+            messagebox.showwarning("Will not write any parameter", "No parameter was selected for write")
         # Delete the parameter table and create a new one with the next file if available
         self.on_skip_click(force_focus_out_event=False)
 
     # This function can recurse multiple time if there is a write error
     def write_selected_params(self, selected_params):
-        if selected_params:
-            logging_info("Writing %d selected %s parameters to flight controller...", len(selected_params), self.current_file)
+        logging_info("Writing %d selected %s parameters to flight controller...", len(selected_params), self.current_file)
 
-            self.write_params_that_require_reset(selected_params)
+        self.write_params_that_require_reset(selected_params)
 
-            # Write each selected parameter to the flight controller
-            for param_name, param in selected_params.items():
-                try:
-                    self.flight_controller.set_param(param_name, param.value)
-                    logging_info("Parameter %s set to %f", param_name, param.value)
-                    if param_name not in self.flight_controller.fc_parameters or \
-                       not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param.value):
-                        self.at_least_one_changed_parameter_written = True
-                except ValueError as e:
-                    logging_error("Failed to set parameter %s: %s", param_name, e)
-                    messagebox.showerror("ArduPilot methodic configurator", f"Failed to set parameter {param_name}: {e}")
-
-        else:
-            logging_warning("No parameter was selected for write, will not write any parameter")
-            messagebox.showwarning("No parameter was selected for write", "Will not write any parameter")
+        # Write each selected parameter to the flight controller
+        for param_name, param in selected_params.items():
+            try:
+                self.flight_controller.set_param(param_name, param.value)
+                logging_info("Parameter %s set to %f", param_name, param.value)
+                if param_name not in self.flight_controller.fc_parameters or \
+                    not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param.value):
+                    self.at_least_one_changed_parameter_written = True
+            except ValueError as e:
+                logging_error("Failed to set parameter %s: %s", param_name, e)
+                messagebox.showerror("ArduPilot methodic configurator", f"Failed to set parameter {param_name}: {e}")
 
         if self.at_least_one_changed_parameter_written:
             # Re-Download all parameters, in case one of them changed, and to validate that all writes where successful
