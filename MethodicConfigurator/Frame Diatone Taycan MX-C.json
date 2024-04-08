@@ -1,82 +1,148 @@
 {
     "Flight Controller": {
-        "Manufacturer": "Matek",
-        "Model": "H743 SLIM",
-        "Version": "V3",
+        "Product": {
+            "Manufacturer": "Matek",
+            "Model": "H743 SLIM",
+            "URL": "https://www.mateksys.com/?portfolio=h743-slim",
+            "Version": "V3"
+        },
         "Firmware": {
             "Type": "ArduCopter",
             "Version": "4.5.0"
-        }
+        },
+        "Notes": "This is a custom build with a Matek H743 SLIM flight controller. The board is a 20x20mm stackable board with a 400Mhz processor, 1Mb flash, 512kb RAM, and a 32-bit STM32H743 processor. The board has a built-in barometer, 6 UARTs, 8 PWM outputs, and 8 ADC inputs."
     },
     "Frame": {
-        "Manufacturer": "Diatone",
-        "Model": "Taycan MX-C",
-        "Version": ""
+        "Product": {
+            "Manufacturer": "Diatone",
+            "Model": "Taycan MX-C",
+            "URL": "",
+            "Version": ""
+        },
+        "Notes": "A small 3'' ducted frame"
     },
-    "RC Transmitter": {
-        "Manufacturer": "Radiomaster",
-        "Model": "TX16S",
-        "Version": "",
+    "RC Controller": {
+        "Product": {
+            "Manufacturer": "Radiomaster",
+            "Model": "TX16S",
+            "URL": "",
+            "Version": ""
+        },
         "Firmware": {
             "Type": "EdgeTx",
-            "Version": "5"
-        }
+            "Version": "2.9.2-providence"
+        },
+        "Notes": "Yaapu telem included, this is just the controller with the sticks. Some controllers include the RC transmitter, this one does not."
+    },
+    "RC Transmitter": {
+        "Product": {
+            "Manufacturer": "TBS",
+            "Model": "Crossfire TX se",
+            "URL": "",
+            "Version": ""
+        },
+        "Firmware": {
+            "Type": "Crossfire TX",
+            "Version": "4.0.0"
+        },
+        "Notes": "This RC transmitter piggie-backs on the back of the Radiomaster TX16S"
     },
     "RC Receiver": {
-        "Manufacturer": "TBS",
-        "Model": "Crossfire Nano RX se",
-        "Version": "",
+        "Product": {
+            "Manufacturer": "TBS",
+            "Model": "Crossfire Nano RX se",
+            "URL": "",
+            "Version": ""
+        },
         "Firmware": {
             "Type": "Crossfire",
             "Version": "7"
-        }
+        },
+        "Notes": "Thi one is on the vehicle"
     },
     "Telemetry": {
-        "Manufacturer": "ESP",
-        "Model": "ESP32 WROOM",
-        "Version": "",
+        "Product": {
+            "Manufacturer": "ESP",
+            "Model": "ESP32 WROOM",
+            "URL": "",
+            "Version": ""
+        },
         "Firmware": {
             "Type": "Drone Gateway",
-            "Version": "2.1"
-        }
+            "Version": "2.18878"
+        },
+        "Notes": "A cheap WiFi alternative to the more commonly used 3DR and RFDesigns telemetry modems"
+    },
+    "Battery Monitor": {
+        "Product": {
+            "Manufacturer": "Matek",
+            "Model": "H743 SLIM",
+            "URL": "",
+            "Version": "3"
+        },
+        "Firmware": {
+            "Type": "ArduCopter",
+            "Version": "4.5.0"
+        },
+        "Notes": "Voltage is done via the flight controller. Current is done via the ESC."
     },
     "Battery": {
-        "Manufacturer": "SLS",
-        "Model": "X-Cube",
-        "Version": "",
+        "Product": {
+            "Manufacturer": "SLS",
+            "Model": "X-Cube",
+            "URL": "",
+            "Version": ""
+        },
         "Volt per cell max": "4.2",
         "Volt per cell low": "3.8",
         "Volt per cell crit": "3.6",
-        "Number of cells": "4"
+        "Number of cells": "4",
+        "Notes": "A normal battery"
     },
     "ESC": {
-        "Manufacturer": "T-Motor",
-        "Model": "F45 4in1 ESC",
-        "Version": "2",
+        "Product": {
+            "Manufacturer": "T-Motor",
+            "Model": "F45 4in1 ESC",
+            "URL": "",
+            "Version": "2"
+        },
         "Firmware": {
             "Type": "BLHeli32",
             "Version": "2.0"
-        }
+        },
+        "Notes": "Runs BDshot600"
     },
     "Motors": {
-        "Manufacturer": "Diatone",
-        "Model": "Mamba 1404 5000kv",
-        "Version": "",
-        "Poles": "12"
+        "Product": {
+            "Manufacturer": "Diatone",
+            "Model": "Mamba 1404 5000kv",
+            "URL": "",
+            "Version": ""
+        },
+        "Poles": "12",
+        "Notes": ""
     },
-    "Propeller": {
-        "Manufacturer": "HQProp",
-        "Model": "3018, 3-Blade",
-        "Version": "",
-        "Diameter_inches": "3"
+    "Propellers": {
+        "Product": {
+            "Manufacturer": "HQProp",
+            "Model": "3018, 3-Blade",
+            "URL": "",
+            "Version": ""
+        },
+        "Diameter_inches": "3",
+        "Notes": ""
     },
     "GNSS receiver": {
-        "Manufacturer": "Holybro",
-        "Model": "H-RTK F9P Helical",
-        "Version": "",
+        "Product": {
+            "Manufacturer": "Holybro",
+            "Model": "H-RTK F9P Helical",
+            "URL": "",
+            "Version": ""
+        },
         "Firmware": {
             "Type": "UBlox",
             "Version": "3.0"
-        }
+        },
+        "Notes": "A very good receiver with an excelent antenna"
     }
 }
