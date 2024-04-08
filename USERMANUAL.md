@@ -29,7 +29,7 @@ For example if you are using `ArduCopter 4.4.4` on Linux do:
 ### 1. Select a Vehicle Directory
 
 - **Click the `...` button next to the `Vehicle directory:` label to open a directory selection dialog.**
-- **Navigate to the directory containing the vehicle-specific intermediate parameter files and click `OK`.**
+- **Navigate to the directory containing the vehicle-specific intermediate parameter files (if you are running it for the first time use the one you just created) and click `OK`.**
 - vehicle-specific intermediate parameter filenames start with two digits followed by an underscore and end in `.param`
 
 ### 2. Select an Intermediate Parameter File
