@@ -13,9 +13,9 @@ It automates the tasks described in the [How to methodically tune (almost) any m
 Before you start you must copy one of the `vehicle_example` directories, and rename the copy to the name of your vehicle.
 Please do not change the original vehicle example files of the application, so that you can compare changes if you want to.
 
-For example if you are using `ArduCopter 4.5.0` on MS Windows do:
+For example if you are using `ArduCopter 4.5.1` on MS Windows do:
 
-1. copy `C:\AppData\.ardupilot_methodic_configurator\vehicle_examples\4.5.0-params` to `C:\AppData\.ardupilot_methodic_configurator\my_cool_vehicle`
+1. copy `C:\AppData\.ardupilot_methodic_configurator\vehicle_examples\4.5.1-params` to `C:\AppData\.ardupilot_methodic_configurator\my_cool_vehicle`
 2. connect a flight controller to your PC and wait 5 seconds
 3. start the application using the Desktop Icon
 
@@ -104,8 +104,7 @@ This message box provides a comprehensive overview of the configuration process,
 The summary message box will also categorize the writable parameters into four groups:
 
 ```mermaid!
-pie
-    title Summary files example
+pie title Summary files example
     "Unchanged parameters" : 728
     "Non-default read-only parameters - non-default_read-only.param" : 8
     "Non-default writable sensor calibrations - non-default_writable_calibrations.param" : 71

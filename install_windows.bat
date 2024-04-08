@@ -22,7 +22,7 @@ setlocal enabledelayedexpansion
 for %%f in (
     4.3.8-params
     4.4.4-params
-    4.5.0-params
+    4.5.1-params
     4.6.0-DEV-params
 ) do (
     set "src=apm.pdef.%%f.xml"

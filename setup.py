@@ -77,7 +77,7 @@ setup(
     #    '': ['*.md', '*.txt', '*.xml', '*.json'],
     #    '4.3.8-params': ['*.param'],
     #    '4.4.4-params': ['*.param'],
-    #    '4.5.0-beta2-params': ['*.param'],
+    #    '4.5.1-params': ['*.param'],
     #    '4.6.0-DEV-params': ['*.param'],
     # },
     # Specify entry points for command-line scripts
