@@ -10,6 +10,21 @@ It automates the tasks described in the [How to methodically tune (almost) any m
 
 ## Usage
 
+Before you start you must copy one of the `vehicle_example` directories, and rename the copy to the name of your vehicle.
+Please do not change the original vehicle example files of the application, so that you can compare changes if you want to.
+For example if you are using `ArduCopter 4.5.0` on MS Windows do:
+
+1. copy `C:\AppData\.ardupilot_methodic_configurator\vehicle_examples\4.5.0-params` to `C:\AppData\.ardupilot_methodic_configurator\my_cool_vehicle`
+2. connect a flight controller to your PC and wait 5 seconds
+3. start the application using the Desktop Icon
+
+For example if you are using `ArduCopter 4.4.4` on Linux do:
+
+1. copy `MethodicConfigurator/vehicle_examples/4.4.4-params` to `MethodicConfigurator/my_cool_vehicle`
+2. connect a flight controller to your PC and wait 5 seconds
+3. start the application using the Desktop Icon
+
+
 ### 1. Select a Vehicle Directory
 
 - **Click the `...` button next to the `Vehicle directory:` label to open a directory selection dialog.**
@@ -132,6 +147,7 @@ The ArduPilot Methodic Configurator uses several configuration files to manage a
 
 - **Default Parameter Values File**: The `00_defaults.param` file is located in the vehicle-specific directory.
 If the file does not exist, or is invalid, use this command to regenerate it
+
 ```bash
 ./extract_param_defaults.py bin_log_file.bin > 00_default.param
 ```
@@ -141,7 +157,7 @@ The file is first searched in the selected vehicle-specific directory, and if no
 The only version available in the internet ist the latest 4.6.0-DEV.
 So until that changes you need to genet´rate this file yourself for the firmware version that you want to use.
 
-The tool uses these files to manage the configuration process, allowing users to select and edit parameters, and to write the changes back to the flight controller. The intermediate parameter files are the primary focus of the user interface, as they contain the parameters that the user can modify. The documentation files provide context and guidance for each parameter. 
+The tool uses these files to manage the configuration process, allowing users to select and edit parameters, and to write the changes back to the flight controller. The intermediate parameter files are the primary focus of the user interface, as they contain the parameters that the user can modify. The documentation files provide context and guidance for each parameter.
 
 
 ## Command Line Usage
