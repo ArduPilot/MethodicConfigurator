@@ -16,7 +16,10 @@ from logging import basicConfig as logging_basicConfig
 # from logging import debug as logging_debug
 # from logging import info as logging_info
 
+from backend_filesystem import LocalFilesystem
 from frontend_tkinter import ScrollFrame
+
+from version import VERSION
 
 
 def load_json_data(file_path):
@@ -31,7 +34,7 @@ def save_json_data(file_path, data):
 
 
 class JsonEditorApp(tk.Tk):
-    def __init__(self, json_file_path):
+    def __init__(self, json_file_path, version):
         """
         Initializes the JsonEditorApp with a given JSON file path.
 
@@ -39,7 +42,17 @@ class JsonEditorApp(tk.Tk):
         json_file_path (str): The path to the JSON file to be edited.
         """
         super().__init__()
-        self.title("Vehicle Component Editor")
+        self.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version + " - Vehicle Component Editor")
+        self.geometry("880x900") # Set the window width
+
+        # Set the theme to 'alt'
+        style = ttk.Style()
+        style.theme_use('alt')
+
+        # Set the application icon for the window and all child windows
+        # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
+        self.iconphoto(True, tk.PhotoImage(file=LocalFilesystem.application_icon_filepath()))
+
         self.json_file_path = json_file_path
         self.data = load_json_data(self.json_file_path)
         self.entry_widgets = {} # Dictionary for entry widgets
@@ -135,5 +148,5 @@ class JsonEditorApp(tk.Tk):
 if __name__ == "__main__":
     json_file_path = "Frame Diatone Taycan MX-C.json" # Adjust the path as necessary
     logging_basicConfig(level=0)
-    app = JsonEditorApp(json_file_path)
+    app = JsonEditorApp(json_file_path, VERSION)
     app.mainloop()
