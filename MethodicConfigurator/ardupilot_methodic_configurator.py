@@ -91,6 +91,14 @@ if __name__ == "__main__":
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
 
+    # Connect to the flight controller and read the parameters
+    flight_controller = FlightController(args.reboot_time)
+
+    error_str = flight_controller.connect(args.device)
+    if error_str:
+        logging_error(error_str)
+        show_no_connection_error(error_str)
+
     local_filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type)
 
     # Get the list of intermediate parameter files files that will be processed sequentially
@@ -107,14 +115,6 @@ if __name__ == "__main__":
         logging_error("No intermediate parameter files found in %s.", args.vehicle_dir)
         show_no_param_files_error(args.vehicle_dir)
         start_file = None
-
-    # Connect to the flight controller and read the parameters
-    flight_controller = FlightController(args.reboot_time)
-
-    error_str = flight_controller.connect(args.device)
-    if error_str:
-        logging_error(error_str)
-        show_no_connection_error(error_str)
 
     # Call the GUI function with the starting intermediate parameter file
     gui(start_file, flight_controller, local_filesystem, VERSION)
