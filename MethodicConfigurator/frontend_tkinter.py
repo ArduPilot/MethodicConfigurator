@@ -553,11 +553,10 @@ class gui:
     def repopulate_parameter_table(self, selected_file):
         if not selected_file:
             return  # no file was yet selected, so skip it
-        if not hasattr(self.flight_controller, 'fc_parameters'):
-            return  # no file was yet selected, so skip it
-        if not self.flight_controller.fc_parameters:
-            return  # no file was yet selected, so skip it
-        fc_parameters = self.flight_controller.fc_parameters
+        if hasattr(self.flight_controller, 'fc_parameters') and self.flight_controller.fc_parameters:
+            fc_parameters = self.flight_controller.fc_parameters
+        else:
+            fc_parameters = {}
         # Different parameters based on the thresholdfile_value
         different_params = {param_name: file_value for param_name, file_value in
                             self.local_filesystem.file_parameters[selected_file].items()
@@ -574,13 +573,13 @@ class gui:
             widget.destroy()
         # Repopulate the table with the new parameters
         if self.show_only_differences.get():
-            self.update_table(different_params)
+            self.update_table(different_params, fc_parameters)
         else:
-            self.update_table(self.local_filesystem.file_parameters[selected_file])
+            self.update_table(self.local_filesystem.file_parameters[selected_file], fc_parameters)
         # Scroll to the top of the parameter table
         self.scroll_frame.canvas.yview("moveto", 0)
 
-    def update_table(self, params):
+    def update_table(self, params, fc_parameters):
         # Create labels for table headers
         headers = ["Parameter", "Current Value", "New Value", "Unit", "Write", "Change Reason"]
         tooltips = ["Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long",
@@ -605,8 +604,8 @@ class gui:
                 parameter_label = tk.Label(self.scroll_frame.viewPort, text=param_name + (" " * (16 - len(param_name))),
                                            background="red" if is_readonly else "yellow" if is_calibration else
                                            self.default_background_color)
-                if param_name in self.flight_controller.fc_parameters:
-                    value_str = format(self.flight_controller.fc_parameters[param_name], '.6f').rstrip('0').rstrip('.')
+                if param_name in fc_parameters:
+                    value_str = format(fc_parameters[param_name], '.6f').rstrip('0').rstrip('.')
                     flightcontroller_value = tk.Label(self.scroll_frame.viewPort, text=value_str)
                 else:
                     flightcontroller_value = tk.Label(self.scroll_frame.viewPort, text="N/A", background="blue")
