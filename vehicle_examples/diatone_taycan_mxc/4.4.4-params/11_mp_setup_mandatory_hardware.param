@@ -103,12 +103,6 @@ ATC_RAT_YAW_FLTE,2
 # Default: 20
 ATC_RAT_YAW_FLTT,57.5 # INS_GYRO_FILTER / 2
 
-# Compass device id
-# Compass device id.  Automatically detected, do not set manually
-# ReadOnly: True
-# Default: 0
-COMPASS_DEV_ID,658953
-
 # Compass is attached via an external cable
 # Configure compass so it is attached externally. This is auto-detected on most boards. Set to 1 if the
 # compass is externally connected. When externally connected the COMPASS_ORIENT option operates
