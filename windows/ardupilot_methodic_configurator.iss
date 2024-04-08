@@ -43,7 +43,7 @@ Source: "..\MethodicConfigurator\dist\ardupilot_methodic_configurator\ardupilot_
 Source: "..\MethodicConfigurator\dist\ardupilot_methodic_configurator\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 Source: "..\vehicle_examples\diatone_taycan_mxc\4.3.8-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_examples\diatone_taycan_mxc\4.3.8-params"; Flags: ignoreversion
-Source: "..\vehicle_examples\diatone_taycan_mxc\4.4.4-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_examples\diatone_taycan_mxc\4.4.5-params"; Flags: ignoreversion
+Source: "..\vehicle_examples\diatone_taycan_mxc\4.4.4-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_examples\diatone_taycan_mxc\4.4.4-params"; Flags: ignoreversion
 Source: "..\vehicle_examples\diatone_taycan_mxc\4.5.1-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_examples\diatone_taycan_mxc\4.5.1-params"; Flags: ignoreversion
 Source: "..\vehicle_examples\diatone_taycan_mxc\4.6.0-DEV-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_examples\diatone_taycan_mxc\4.6.0-DEV-params"; Flags: ignoreversion
 Source: "..\windows\version.txt"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator"; Flags: ignoreversion
