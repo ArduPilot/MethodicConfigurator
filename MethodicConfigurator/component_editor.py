@@ -1,3 +1,13 @@
+#!/usr/bin/env python3
+
+'''
+This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+
+(C) 2024 Amilcar do Carmo Lucas, IAV GmbH
+
+SPDX-License-Identifier:    GPL-3
+'''
+
 import tkinter as tk
 from tkinter import ttk
 import json
@@ -16,6 +26,12 @@ def save_json_data(file_path, data):
 
 class JsonEditorApp(tk.Tk):
     def __init__(self, json_file_path):
+        """
+        Initializes the JsonEditorApp with a given JSON file path.
+
+        Parameters:
+        json_file_path (str): The path to the JSON file to be edited.
+        """
         super().__init__()
         self.title("Vehicle Component Editor")
         self.json_file_path = json_file_path
@@ -31,10 +47,22 @@ class JsonEditorApp(tk.Tk):
         self.save_button.pack(pady=10)
 
     def populate_frames(self):
+        """
+        Populates the frames with widgets based on the JSON data.
+        """
         for key, value in self.data.items():
             self.add_frame(self.main_frame, key, value, [])
 
     def add_frame(self, parent, key, value, path):
+        """
+        Adds a frame to the parent widget with the given key and value.
+
+        Parameters:
+        parent (tkinter.Widget): The parent widget to which the frame will be added.
+        key (str): The key for the frame.
+        value (dict): The value associated with the key.
+        path (list): The path to the current key in the JSON data.
+        """
         # Only create a frame if the value is a dictionary or if it's a top-level key
         if isinstance(value, dict) or parent == self.main_frame:
             frame = ttk.LabelFrame(parent, text=key)
@@ -51,10 +79,22 @@ class JsonEditorApp(tk.Tk):
             self.add_entry(parent_for_entries, key, value, path)
 
     def add_entry(self, parent, key, value, path):
-        label = ttk.Label(parent, text=key)
+        """
+        Adds an entry widget to the parent widget with the given key and value.
+
+        Parameters:
+        parent (tkinter.Widget): The parent widget to which the entry widget will be added.
+        key (str): The key for the entry widget.
+        value (str): The value associated with the key.
+        path (list): The path to the current key in the JSON data.
+        """
+        entry_frame = ttk.Frame(parent)
+        entry_frame.pack(side=tk.LEFT, fill=tk.X)
+
+        label = ttk.Label(entry_frame, text=key)
         label.pack(side=tk.LEFT)
 
-        entry = ttk.Entry(parent)
+        entry = ttk.Entry(entry_frame)
         entry.insert(0, str(value))
         entry.pack(side=tk.LEFT, expand=True, fill=tk.X)
 
@@ -62,9 +102,10 @@ class JsonEditorApp(tk.Tk):
         self.entry_widgets[tuple(path+[key])] = entry
 
     def save_data(self):
-        # Iterate over the entry_widgets dictionary
+        """
+        Saves the edited JSON data back to the file.
+        """
         for path, entry in self.entry_widgets.items():
-            # Get the value from the entry widget
             value = entry.get()
 
             # Navigate through the nested dictionaries using the elements of path
