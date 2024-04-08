@@ -16,7 +16,7 @@
         "Product": {
             "Manufacturer": "Diatone",
             "Model": "Taycan MX-C",
-            "URL": "",
+            "URL": "https://www.diatone.us/products/diatone-mxc-taycan-duct-3-inch-cinewhoop-fpv-drone",
             "Version": ""
         },
         "Notes": "A small 3'' ducted frame"
@@ -25,7 +25,7 @@
         "Product": {
             "Manufacturer": "Radiomaster",
             "Model": "TX16S",
-            "URL": "",
+            "URL": "https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller",
             "Version": ""
         },
         "Firmware": {
@@ -51,7 +51,7 @@
         "Product": {
             "Manufacturer": "TBS",
             "Model": "Crossfire Nano RX se",
-            "URL": "",
+            "URL": "https://www.team-blacksheep.com/products/prod:crossfire_nano_se",
             "Version": ""
         },
         "Firmware": {
@@ -90,7 +90,7 @@
         "Product": {
             "Manufacturer": "SLS",
             "Model": "X-Cube",
-            "URL": "",
+            "URL": "https://www.stefansliposhop.de/akkus/sls-x-cube/sls-x-cube-40c/sls-x-cube-1800mah-4s1p-14-8v-40c-80c::1568.html",
             "Version": ""
         },
         "Volt per cell max": "4.2",
@@ -103,7 +103,7 @@
         "Product": {
             "Manufacturer": "T-Motor",
             "Model": "F45 4in1 ESC",
-            "URL": "",
+            "URL": "https://store.tmotor.com/goods-899-F45A+6S+4IN1+V2+.html",
             "Version": "2"
         },
         "Firmware": {
@@ -116,7 +116,7 @@
         "Product": {
             "Manufacturer": "Diatone",
             "Model": "Mamba 1404 5000kv",
-            "URL": "",
+            "URL": "https://www.diatone.us/products/mamba-toka-1404-3000kv-4000kv-racing-motor-green",
             "Version": ""
         },
         "Poles": "12",
@@ -126,7 +126,7 @@
         "Product": {
             "Manufacturer": "HQProp",
             "Model": "3018, 3-Blade",
-            "URL": "",
+            "URL": "https://shop.rc-hangar15.de/HQProp-3018-Durable-3-3-Blatt-Propeller-TMount",
             "Version": ""
         },
         "Diameter_inches": "3",
@@ -136,7 +136,7 @@
         "Product": {
             "Manufacturer": "Holybro",
             "Model": "H-RTK F9P Helical",
-            "URL": "",
+            "URL": "https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445",
             "Version": ""
         },
         "Firmware": {
