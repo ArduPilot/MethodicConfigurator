@@ -1,0 +1,82 @@
+{
+    "Flight Controller": {
+        "Manufacturer": "Matek",
+        "Model": "H743 SLIM",
+        "Version": "V3",
+        "Firmware": {
+            "Type": "ArduCopter",
+            "Version": "4.5.0"
+        }
+    },
+    "Frame": {
+        "Manufacturer": "Diatone",
+        "Model": "Taycan MX-C",
+        "Version": ""
+    },
+    "RC Transmitter": {
+        "Manufacturer": "Radiomaster",
+        "Model": "TX16S",
+        "Version": "",
+        "Firmware": {
+            "Type": "EdgeTx",
+            "Version": "5"
+        }
+    },
+    "RC Receiver": {
+        "Manufacturer": "TBS",
+        "Model": "Crossfire Nano RX se",
+        "Version": "",
+        "Firmware": {
+            "Type": "Crossfire",
+            "Version": "7"
+        }
+    },
+    "Telemetry": {
+        "Manufacturer": "ESP",
+        "Model": "ESP32 WROOM",
+        "Version": "",
+        "Firmware": {
+            "Type": "Drone Gateway",
+            "Version": "2.1"
+        }
+    },
+    "Battery": {
+        "Manufacturer": "SLS",
+        "Model": "X-Cube",
+        "Version": "",
+        "Volt per cell max": "4.2",
+        "Volt per cell low": "3.8",
+        "Volt per cell crit": "3.6",
+        "Number of cells": "4"
+    },
+    "ESC": {
+        "Manufacturer": "T-Motor",
+        "Model": "F45 4in1 ESC",
+        "Version": "2",
+        "Firmware": {
+            "Type": "BLHeli32",
+            "Version": "2.0"
+        }
+    },
+    "Motors": {
+        "Manufacturer": "Diatone",
+        "Model": "Mamba 1404 5000kv",
+        "Version": "",
+        "Poles": "12"
+    },
+    "Propeller": {
+        "Manufacturer": "HQProp",
+        "Model": "3018, 3-Blade",
+        "Version": "",
+        "Diameter_inches": "3"
+    },
+    "GNSS receiver": {
+        "Manufacturer": "Holybro",
+        "Model": "H-RTK F9P Helical",
+        "Version": "",
+        "Firmware": {
+            "Type": "UBlox",
+            "Version": "3.0"
+        }
+    }
+}
