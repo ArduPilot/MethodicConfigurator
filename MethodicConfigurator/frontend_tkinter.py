@@ -75,18 +75,43 @@ def show_tooltip(widget, text):
     widget.bind("<Leave>", leave)
 
 
-def show_about_message(version: str):
-    """
-    Show an "About" message box.
-    """
-    about_message = "ArduPilot Methodic Configurator\n\n" \
-        f"Version: {version}\n\n" \
-        "Designed to clarify the configuration sequence of ArduPilot drones.\n\n" \
-        "Developed by Amilcar do Carmo Lucas\n\n" \
-        "Copyright © 2024 IAV GmbH and ArduPilot.org\n\n" \
-        "Licensed under the GNU General Public License v3.0\n\n" \
-        "For more information, visit the ArduPilot Methodic Configurator GitHub repository."
-    messagebox.showinfo("About", about_message)
+def show_about_window(root, version: str):
+    # Create a new window for the custom "About" message
+    about_window = tk.Toplevel(root)
+    about_window.title("About")
+    about_window.geometry("650x220")
+
+    # Add the "About" message
+    about_message = f"ArduPilot Methodic Configurator Version: {version}\n\n" \
+                    "A clear configuration sequence for ArduPilot vehicles.\n\n" \
+                    "Copyright © 2024 Amilcar do Carmo Lucas and ArduPilot.org\n\n" \
+                    "Licensed under the GNU General Public License v3.0"
+    about_label = tk.Label(about_window, text=about_message, wraplength=450)
+    about_label.pack(padx=10, pady=10)
+
+    # Create buttons for each action
+    user_manual_button = tk.Button(about_window, text="User Manual",
+                                   command=lambda: webbrowser_open(
+                                       "https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"))
+    support_forum_button = tk.Button(about_window, text="Support Forum",
+                                     command=lambda: webbrowser_open(
+                                         "http://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/1"))
+    report_bug_button = tk.Button(about_window, text="Report a Bug",
+                                  command=lambda: webbrowser_open(
+                                      "https://github.com/ArduPilot/MethodicConfigurator/issues/new"))
+    credits_button = tk.Button(about_window, text="Credits",
+                               command=lambda: webbrowser_open(
+                                   "https://github.com/ArduPilot/MethodicConfigurator/blob/master/credits/CREDITS.md"))
+    source_button = tk.Button(about_window, text="Source Code",
+                              command=lambda: webbrowser_open(
+                                  "https://github.com/ArduPilot/MethodicConfigurator"))
+
+    # Pack the buttons
+    user_manual_button.pack(side=tk.LEFT, padx=10, pady=10)
+    support_forum_button.pack(side=tk.LEFT, padx=10, pady=10)
+    report_bug_button.pack(side=tk.LEFT, padx=10, pady=10)
+    credits_button.pack(side=tk.LEFT, padx=10, pady=10)
+    source_button.pack(side=tk.LEFT, padx=10, pady=10)
 
 
 # https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb
@@ -144,7 +169,8 @@ class AutoResizeCombobox(ttk.Combobox):
             else:
                 logging_error("param_file combobox selected string '%s' not in list %s", selected_element, values)
         else:
-            logging_warning("No param_file combobox element selected")
+            if values:
+                logging_warning("No param_file combobox element selected")
         if values:
             gui.update_combobox_width(self)
         if tooltip:
@@ -351,7 +377,8 @@ class gui:
         image_label = tk.Label(config_frame, image=photo)
         image_label.image = photo # Keep a reference to the image to prevent it from being garbage collected
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
-        image_label.bind("<Button-1>", lambda event: show_about_message(version))
+        image_label.bind("<Button-1>", lambda event: show_about_window(self.root, version))
+        show_tooltip(image_label, "User Manual, Support Forum, Report a Bug, Credits, Source Code")
 
         # Create a Frame for the Documentation Content
         documentation_frame = tk.LabelFrame(self.root, text="Documentation")
