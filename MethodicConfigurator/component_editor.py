@@ -13,10 +13,11 @@ from tkinter import ttk
 from json import load as json_load
 from json import dump as json_dump
 from logging import basicConfig as logging_basicConfig
-from logging import debug as logging_debug
-from logging import info as logging_info
+# from logging import debug as logging_debug
+# from logging import info as logging_info
 
 from frontend_tkinter import ScrollFrame
+
 
 def load_json_data(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
