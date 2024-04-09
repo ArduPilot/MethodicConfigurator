@@ -43,7 +43,8 @@ with open('README.md', 'r', encoding='utf-8') as f:
     long_description = long_description.replace("(CODE_OF_CONDUCT.md", f"({prj_url}/blob/master/CODE_OF_CONDUCT.md")
     long_description = long_description.replace("(LICENSE.md", f"({prj_url}/blob/master/LICENSE.md")
     long_description = long_description.replace("(credits/CREDITS.md", f"({prj_url}/blob/master/credits/CREDITS.md")
-    long_description = long_description.replace("images/App_screenshot1.png", f"{prj_url}/raw/master/images/App_screenshot1.png")
+    long_description = long_description.replace("images/App_screenshot1.png",
+                                                f"{prj_url}/raw/master/images/App_screenshot1.png")
 
 setup(
     name='MethodicConfigurator',

@@ -23,6 +23,8 @@ from logging import critical as logging_critical
 from PIL import Image
 from PIL import ImageTk
 from platform import system as platform_system
+from typing import List
+from typing import Tuple
 
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
@@ -1038,7 +1040,12 @@ class gui:
                                                      "non-default_writable_calibrations.param", False)
         wrote_non_calibrations = self.write_summary_file(non_default__writable_non_calibrations,
                                                          "non-default_writable_non-calibrations.param", False)
-        self.write_zip_file(wrote_complete, wrote_read_only, wrote_calibrations, wrote_non_calibrations)
+        files_to_zip = [
+            (wrote_complete, "complete.param"),
+            (wrote_read_only, "non-default_read-only.param"),
+            (wrote_calibrations, "non-default_writable_calibrations.param"),
+            (wrote_non_calibrations, "non-default_writable_non-calibrations.param")]
+        self.write_zip_file(files_to_zip)
 
     def write_summary_file(self, param_dict: dict, filename: str, annotate_doc: bool):
         should_write_file = True
@@ -1051,21 +1058,17 @@ class gui:
                 logging_info("Summary file %s written", filename)
         return should_write_file
 
-    def write_zip_file(self, file1: bool, file2: bool, file3: bool, file4: bool):
+    def write_zip_file(self, files_to_zip: List[Tuple[bool, str]]):
         should_write_file = True
-        if True or file1 or file2 or file3 or file4:
-            zip_file_path = self.local_filesystem.zip_file_path()
-            if self.local_filesystem.zip_file_exists():
-                should_write_file = messagebox.askyesno("Overwrite existing file",
-                                                        f"{zip_file_path} file already exists.\nDo you want to overwrite it?")
-            if should_write_file:
-                self.local_filesystem.zip_files(file1, "complete.param",
-                                                file2, "non-default_read-only.param",
-                                                file3, "non-default_writable_calibrations.param",
-                                                file4, "non-default_writable_non-calibrations.param")
-                messagebox.showinfo("Parameter files zipped", "All relevant files have been zipped into the \n"
-                                    f"{zip_file_path} file.\n\nYou can now upload this file to the ArduPilot Methodic\n"
-                                    "Configuration Blog post on discuss.ardupilot.org.")
+        zip_file_path = self.local_filesystem.zip_file_path()
+        if self.local_filesystem.zip_file_exists():
+            should_write_file = messagebox.askyesno("Overwrite existing file",
+                                                    f"{zip_file_path} file already exists.\nDo you want to overwrite it?")
+        if should_write_file:
+            self.local_filesystem.zip_files(files_to_zip)
+            messagebox.showinfo("Parameter files zipped", "All relevant files have been zipped into the \n"
+                                f"{zip_file_path} file.\n\nYou can now upload this file to the ArduPilot Methodic\n"
+                                "Configuration Blog post on discuss.ardupilot.org.")
         return should_write_file
 
     def close_connection_and_quit(self):

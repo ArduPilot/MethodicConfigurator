@@ -19,7 +19,9 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
 from json import load as json_load
-from typing import Dict, List
+from typing import Dict
+from typing import List
+from typing import Tuple
 from zipfile import ZipFile
 from annotate_params import BASE_URL, PARAM_DEFINITION_XML_FILE, Par
 from annotate_params import get_xml_data
@@ -309,8 +311,7 @@ class LocalFilesystem:
         zip_file_path = self.zip_file_path()
         return os_path.exists(zip_file_path) and os_path.isfile(zip_file_path)
 
-    def zip_files(self, wrote_complete, filename_complete, wrote_read_only, filename_read_only,
-                  wrote_calibrations, filename_calibrations, wrote_non_calibrations, filename_non_calibrations):  # pylint: disable=too-many-arguments
+    def zip_files(self, files_to_zip: List[Tuple[bool, str]]):
         """
         Zips the intermediate parameter files that were written to, including specific summary files.
 
@@ -320,16 +321,8 @@ class LocalFilesystem:
         attempting to add it to the zip archive.
 
         Parameters:
-        - wrote_complete (bool): Indicates if the complete parameter file was written.
-        - filename_complete (str): The name of the complete parameter file.
-        - wrote_read_only (bool): Indicates if the read-only parameter file was written.
-        - filename_read_only (str): The name of the read-only parameter file.
-        - wrote_calibrations (bool): Indicates if the calibration parameter file was written.
-        - filename_calibrations (str): The name of the calibration parameter file.
-        - wrote_non_calibrations (bool): Indicates if the non-calibration parameter file was written.
-        - filename_non_calibrations (str): The name of the non-calibration parameter file.
-
-        The method does not return any value. Instead, it logs the path of the created zip file upon completion.
+        - files_to_zip (List[Tuple[bool, str]]): A list of tuples, where each tuple contains a boolean
+                                            indicating if the file was written and a string for the filename.
         """
         zip_file_path = self.zip_file_path()
         with ZipFile(zip_file_path, 'w') as zipf:
@@ -344,15 +337,11 @@ class LocalFilesystem:
                 if os_path.exists(file_path):
                     zipf.write(file_path, arcname=file_name)
 
-            # Add the newly created summary files
-            if wrote_complete:
-                zipf.write(os_path.join(self.vehicle_dir, filename_complete), arcname=filename_complete)
-            if wrote_read_only:
-                zipf.write(os_path.join(self.vehicle_dir, filename_read_only), arcname=filename_read_only)
-            if wrote_calibrations:
-                zipf.write(os_path.join(self.vehicle_dir, filename_calibrations), arcname=filename_calibrations)
-            if wrote_non_calibrations:
-                zipf.write(os_path.join(self.vehicle_dir, filename_non_calibrations), arcname=filename_non_calibrations)
+            for wrote, filename in files_to_zip:
+                if wrote:
+                    file_path = os_path.join(self.vehicle_dir, filename)
+                    if os_path.exists(file_path):
+                        zipf.write(file_path, arcname=filename)
 
         logging_info("Intermediate parameter files and summary files zipped to %s", zip_file_path)
 
