@@ -92,6 +92,13 @@ def arg_parser():
 
 
 class Par:
+    """
+    Represents a parameter with a value and an optional comment.
+
+    Attributes:
+        value (float): The value of the parameter.
+        comment (Optional[str]): An optional comment associated with the parameter.
+    """
     def __init__(self, value: float, comment: Optional[str] = None):
         self.value = value
         self.comment = comment
@@ -134,23 +141,23 @@ class Par:
                 elif "\t" in line:
                     parameter, value = line.split("\t", 1)
                 else:
-                    raise SystemExit("Missing parameter-value separator: %s in %s line %u" % (line, param_file, i))
+                    raise SystemExit(f"Missing parameter-value separator: {line} in {param_file} line {i}")
                 parameter = parameter.strip()
                 if len(parameter) > PARAM_NAME_MAX_LEN:
-                    raise SystemExit("Too long parameter name: %s in %s line %u" % (parameter, param_file, i))
+                    raise SystemExit(f"Too long parameter name: {parameter} in {param_file} line {i}")
                 if not re.match(PARAM_NAME_REGEX, parameter):
-                    raise SystemExit("Invalid characters in parameter name %s in %s line %u" % (parameter, param_file, i))
+                    raise SystemExit(f"Invalid characters in parameter name {parameter} in {param_file} line {i}")
                 if parameter in parameter_dict:
-                    raise SystemExit("Duplicated parameter %s in %s line %u" % (parameter, param_file, i))
+                    raise SystemExit(f"Duplicated parameter {parameter} in {param_file} line {i}")
                 try:
                     fvalue = float(value.strip())
                     parameter_dict[parameter] = Par(fvalue, comment)
                 except ValueError as exc:
-                    raise SystemExit("Invalid parameter value %s in %s line %u" % (value, param_file, i)) from exc
+                    raise SystemExit(f"Invalid parameter value {value} in {param_file} line {i}") from exc
                 except IOError as exc:
                     _exc_type, exc_value, exc_traceback = sys_exc_info()
                     fname = os_path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
-                    logging.critical(f"in line {exc_traceback.tb_lineno} of file {fname}: {exc_value}")
+                    logging.critical("in line %s of file %s: %s", exc_traceback.tb_lineno, fname, exc_value)
                     raise SystemExit(f"Caused by line {i} of file {param_file}: {original_line}") from exc
         return parameter_dict
 
@@ -304,7 +311,7 @@ def get_xml_data(base_url: str, directory: str, filename: str) -> ET.Element:
             response = requests_get(base_url + filename, timeout=5)
         except requests_exceptions.RequestException as e:
             logging.critical("Unable to fetch XML data: %s", e)
-            raise SystemExit("unable to fetch online XML documentation")  # pylint: disable=W0707
+            raise SystemExit("unable to fetch online XML documentation") from e
         # Get the text content of the response
         xml_data = response.text
         try:
@@ -313,7 +320,7 @@ def get_xml_data(base_url: str, directory: str, filename: str) -> ET.Element:
                 file.write(xml_data)
         except PermissionError as e:
             logging.critical("Permission denied to write XML data to file: %s", e)
-            raise SystemExit("permission denied to write online XML documentation to file")
+            raise SystemExit("permission denied to write online XML documentation to file") from e
 
     # Parse the XML data
     root = ET.fromstring(xml_data)
@@ -507,7 +514,7 @@ def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) 
 
 
 def update_parameter_documentation(doc: Dict[str, Any], target: str = '.', sort_type: str = 'none',
-                                   param_default_dict: Optional[Dict] = None) -> None:
+                                   param_default_dict: Optional[Dict] = None) -> None:  # pylint: disable=R0912, R0914, R0915
     """
     Updates the parameter documentation in the target file or in all *.param,*.parm files of the target directory.
 

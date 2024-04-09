@@ -104,6 +104,7 @@ if __name__ == "__main__":
     # Get the list of intermediate parameter files files that will be processed sequentially
     files = list(local_filesystem.file_parameters.keys())
 
+    start_file = None  # pylint: disable=invalid-name
     if files:
         # Determine the starting file based on the --n command line argument
         start_file_index = min(args.n, len(files) - 1) # Ensure the index is within the range of available files
@@ -114,7 +115,6 @@ if __name__ == "__main__":
     else:
         logging_error("No intermediate parameter files found in %s.", args.vehicle_dir)
         show_no_param_files_error(args.vehicle_dir)
-        start_file = None
 
     # Call the GUI function with the starting intermediate parameter file
     gui(start_file, flight_controller, local_filesystem, VERSION)

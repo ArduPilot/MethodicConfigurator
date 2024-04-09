@@ -53,6 +53,22 @@ def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1
 
 
 class LocalFilesystem:
+    """
+    A class to manage local filesystem operations for the ArduPilot methodic configurator.
+
+    This class provides methods for initializing and re-initializing the filesystem context,
+    reading parameters from files, and handling file documentation. It is designed to simplify
+    the interaction with the local filesystem for managing ArduPilot configuration files.
+
+    Attributes:
+        vehicle_dir (str): The directory path where the vehicle configuration files are stored.
+        vehicle_type (str): The type of the vehicle (e.g., "copter", "rover").
+        file_documentation_filename (str): The name of the file containing documentation for the configuration files.
+        file_documentation (dict): A dictionary containing the file documentation.
+        file_parameters (dict): A dictionary of parameters read from intermediate parameter files.
+        param_default_dict (dict): A dictionary of default parameter values.
+        doc_dict (dict): A dictionary containing documentation for each parameter.
+    """
     def __init__(self, vehicle_dir: str, vehicle_type: str):
         self.vehicle_dir = vehicle_dir
         self.vehicle_type = vehicle_type
@@ -166,10 +182,9 @@ class LocalFilesystem:
         """
         if s.lower() == "true" or s.lower() == "yes" or s.lower() == "1":
             return True
-        elif s.lower() == "false" or s.lower() == "no" or s.lower() == "0":
+        if s.lower() == "false" or s.lower() == "no" or s.lower() == "0":
             return False
-        else:
-            return None
+        return None
 
     def export_to_param(self, params: Dict[str, 'Par'], filename_out: str, annotate_doc: bool = True) -> None:
         """
@@ -295,7 +310,7 @@ class LocalFilesystem:
         return os_path.exists(zip_file_path) and os_path.isfile(zip_file_path)
 
     def zip_files(self, wrote_complete, filename_complete, wrote_read_only, filename_read_only,
-                  wrote_calibrations, filename_calibrations, wrote_non_calibrations, filename_non_calibrations):
+                  wrote_calibrations, filename_calibrations, wrote_non_calibrations, filename_non_calibrations):  # pylint: disable=too-many-arguments
         """
         Zips the intermediate parameter files that were written to, including specific summary files.
 

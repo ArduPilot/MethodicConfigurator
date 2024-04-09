@@ -71,13 +71,13 @@ def parse_arguments(args=None):
     return args
 
 
-def extract_parameter_values(logfile: str, type: str = 'defaults') -> Dict[str, float]:
+def extract_parameter_values(logfile: str, param_type: str = 'defaults') -> Dict[str, float]:
     """
     Extracts the parameter values from an ArduPilot .bin log file.
 
     Args:
         logfile: The path to the ArduPilot .bin log file.
-        type: The type of parameter values to extract. Can be 'defaults', 'values' or 'non_default_values'.
+        param_type: The type of parameter values to extract. Can be 'defaults', 'values' or 'non_default_values'.
 
     Returns:
         A dictionary with parameter names as keys and their values as float.
@@ -85,7 +85,7 @@ def extract_parameter_values(logfile: str, type: str = 'defaults') -> Dict[str, 
     try:
         mlog = mavutil.mavlink_connection(logfile)
     except Exception as e:
-        raise SystemExit("Error opening the %s logfile: %s" % (logfile, str(e))) from e
+        raise SystemExit(f"Error opening the {logfile} logfile: {str(e)}") from e
     values = {}
     while True:
         m = mlog.recv_match(type=['PARM'])
@@ -95,23 +95,23 @@ def extract_parameter_values(logfile: str, type: str = 'defaults') -> Dict[str, 
             return values
         pname = m.Name
         if len(pname) > PARAM_NAME_MAX_LEN:
-            raise SystemExit("Too long parameter name: %s" % pname)
+            raise SystemExit(f"Too long parameter name: {pname}")
         if not re.match(PARAM_NAME_REGEX, pname):
-            raise SystemExit("Invalid parameter name %s" % pname)
+            raise SystemExit(f"Invalid parameter name {pname}")
         # parameter names are supposed to be unique
         if pname in values:
             continue
-        if type == 'defaults':
+        if param_type == 'defaults':
             if hasattr(m, 'Default'):
                 values[pname] = m.Default
-        elif type == 'values':
+        elif param_type == 'values':
             if hasattr(m, 'Value'):
                 values[pname] = m.Value
-        elif type == 'non_default_values':
+        elif param_type == 'non_default_values':
             if hasattr(m, 'Value') and hasattr(m, 'Default') and m.Value != m.Default:
                 values[pname] = m.Value
         else:
-            raise SystemExit("Invalid type %s" % type)
+            raise SystemExit(f"Invalid type {param_type}")
 
 
 def missionplanner_sort(item: str) -> Tuple[str, ...]:
