@@ -10,14 +10,22 @@ on:
 jobs:
   deploy:
 
+    name: Upload release to PyPI
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/MethodicConfigurator
+    permissions:
+      id-token: write
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.10'
+
     - name: Install dependencies
       run: |
         python -m pip install -U pip
@@ -25,10 +33,9 @@ jobs:
         python -m pip install -U pymavlink
         pip install build
         pip install -U .
+
     - name: Build package
       run: python -m build
-    - name: Publish package
+
+    - name: Publish package distribuitions tp PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
