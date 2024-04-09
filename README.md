@@ -57,5 +57,5 @@ To use and develop this software you must obey the [ArduPilot Methodic Configura
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE.md) file for details.
+This project is licensed under the [GNU General Public License v3.0](LICENSE.md).
 It builds upon other [opensource software packages](credits/CREDITS.md)
