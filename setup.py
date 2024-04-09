@@ -36,13 +36,13 @@ with open('README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='ArduPilot_methodic_configurator',
+    name='MethodicConfigurator',
     version=VERSION,
     zip_safe=True,
-    description='A tool to methodically configure ArduPilot drones',
+    description='A clear configuration sequence for ArduPilot vehicles',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/amilcarlucas/ArduPilot_methodic_configurator',
+    url='https://github.com/ArduPilot/MethodicConfigurator',
     author='Amilcar do Carmo Lucas',
     author_email='amilcar.lucas@iav.de',
     packages=find_packages(),
