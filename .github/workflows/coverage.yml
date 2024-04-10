@@ -29,7 +29,7 @@ jobs:
       - name: Test with unittest
         run: |
           coverage run -m pytest
-          coverage xml unittests/coverage.xml
+        # coverage xml unittests/coverage.xml
 
       - name: Get Cover 
         uses: andraghetti/coverage@v3.2
