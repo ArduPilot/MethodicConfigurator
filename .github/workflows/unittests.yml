@@ -1,4 +1,6 @@
-name: 'coverage'
+name: Pytest unittests
+
+# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#packaging-workflow-data-as-artifacts
 
 on: [push]
 
@@ -21,26 +23,25 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip wheel
           python -m pip install -U pymavlink pytest pytest-cov coverage==4.5.4
           pip install build
           pip install -U .
-  
+
       - name: Set PYTHONPATH
         run: |
           echo "$PYTHONPATH"
           echo "PYTHONPATH=/home/runner/work/MethodicConfigurator/MethodicConfigurator/MethodicConfigurator" >> $GITHUB_ENV
           echo "$PYTHONPATH"
 
-      - name: Test with unittest
+      - name: Test with pytest
         run: |
-          PYTHONPATH=MethodicConfigurator pytest --continue-on-collection-errors --cov-report xml:unittests/coverage.xml unittests/*.py
-          coverage xml unittests/coverage.xml
+          PYTHONPATH=MethodicConfigurator pytest --doctest-modules --junitxml=unittests/test-results-${{ matrix.python-version }}.xml unittests/*_unittest.py
 
-      - name: Get Cover 
-        uses: andraghetti/coverage@v3.2
+      - name: Upload pytest test results
+        uses: actions/upload-artifact@v4
         with:
-            coverageFile: unittests/coverage.xml
-            token: ${{ secrets.GITHUB_TOKEN }}
+            name: pytest-results-${{ matrix.python-version }}
+            path: unittests/test-results-${{ matrix.python-version }}.xml
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
