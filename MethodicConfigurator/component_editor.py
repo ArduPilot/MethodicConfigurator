@@ -70,60 +70,44 @@ class JsonEditorApp(tk.Tk):
 
     def populate_frames(self):
         """
-        Populates the frames with widgets based on the JSON data.
+        Populates the ScrollFrame with widgets based on the JSON data.
         """
         for key, value in self.data.items():
-            self.add_frame(self.scroll_frame.viewPort, key, value, [])
+            self.add_widget(self.scroll_frame.viewPort, key, value, [])
 
-    def add_frame(self, parent, key, value, path):
+    def add_widget(self, parent, key, value, path):
         """
-        Adds a frame to the parent widget with the given key and value.
+        Adds a widget to the parent widget with the given key and value.
 
         Parameters:
-        parent (tkinter.Widget): The parent widget to which the frame will be added.
-        key (str): The key for the frame.
+        parent (tkinter.Widget): The parent widget to which the LabelFrame/Entry will be added.
+        key (str): The key for the LabelFrame/Entry.
         value (dict): The value associated with the key.
         path (list): The path to the current key in the JSON data.
         """
-        # Only create a frame if the value is a dictionary or if it's a top-level key
-        if isinstance(value, dict) or parent == self.scroll_frame.viewPort:
+        if isinstance(value, dict):             # JSON non-leaf elements, add LabelFrame widget
             frame = ttk.LabelFrame(parent, text=key)
-            side = tk.TOP if parent == self.scroll_frame.viewPort else tk.LEFT
-            pady = 5 if parent == self.scroll_frame.viewPort else 0
-            anchor = tk.NW if parent == self.scroll_frame.viewPort else tk.N
-            frame.pack(fill=tk.X, side=side, pady=pady, anchor=anchor)
-            parent_for_entries = frame
-        else:
-            parent_for_entries = parent
-
-        if isinstance(value, dict):
+            is_toplevel = parent == self.scroll_frame.viewPort
+            side = tk.TOP if is_toplevel else tk.LEFT
+            pady = 5 if is_toplevel else 3
+            anchor = tk.NW if is_toplevel else tk.N
+            frame.pack(fill=tk.X, side=side, pady=pady, padx=5, anchor=anchor)
             for sub_key, sub_value in value.items():
-                self.add_frame(parent_for_entries, sub_key, sub_value, path + [key])
-        else:
-            self.add_entry(parent_for_entries, key, value, path)
+                # recursively add child elements
+                self.add_widget(frame, sub_key, sub_value, path + [key])
+        else:                                   # JSON leaf elements, add Entry widget
+            entry_frame = ttk.Frame(parent)
+            entry_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
 
-    def add_entry(self, parent, key, value, path):
-        """
-        Adds an entry widget to the parent widget with the given key and value.
+            label = ttk.Label(entry_frame, text=key)
+            label.pack(side=tk.LEFT)
 
-        Parameters:
-        parent (tkinter.Widget): The parent widget to which the entry widget will be added.
-        key (str): The key for the entry widget.
-        value (str): The value associated with the key.
-        path (list): The path to the current key in the JSON data.
-        """
-        entry_frame = ttk.Frame(parent)
-        entry_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
+            entry = ttk.Entry(entry_frame)
+            entry.insert(0, str(value))
+            entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 5))
 
-        label = ttk.Label(entry_frame, text=key)
-        label.pack(side=tk.LEFT)
-
-        entry = ttk.Entry(entry_frame)
-        entry.insert(0, str(value))
-        entry.pack(side=tk.LEFT, expand=True, fill=tk.X)
-
-        # Store the entry widget in the entry_widgets dictionary for later retrieval
-        self.entry_widgets[tuple(path+[key])] = entry
+            # Store the entry widget in the entry_widgets dictionary for later retrieval
+            self.entry_widgets[tuple(path+[key])] = entry
 
     def save_data(self):
         """
