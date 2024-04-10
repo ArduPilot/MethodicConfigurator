@@ -376,7 +376,7 @@ class FlightController:
             self.capabilities = m.capabilities
             vMajor, vMinor, vPatch, vFwType = decode_flight_sw_version(m.flight_sw_version)
             self.version = "{0}.{1}.{2}".format(vMajor, vMinor, vPatch)
-            logging_info("Capabilities: %d, Version: %s %s", self.capabilities, self.version, vFwType)
+            logging_info("Flight Controller Capabilities: %d, Version: %s %s", self.capabilities, self.version, vFwType)
         except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
             logging_warning("Connection failed: %s", e)
             logging_error("Failed to connect after %d attempts.", retries)
