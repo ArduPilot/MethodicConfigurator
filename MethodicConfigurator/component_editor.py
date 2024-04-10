@@ -8,33 +8,59 @@ This file is part of Ardupilot methodic configurator. https://github.com/ArduPil
 SPDX-License-Identifier:    GPL-3
 '''
 
+from argparse import ArgumentParser
+from logging import basicConfig as logging_basicConfig
+from logging import getLevelName as logging_getLevelName
 import tkinter as tk
 from tkinter import ttk
-from json import load as json_load
-from json import dump as json_dump
-from logging import basicConfig as logging_basicConfig
 # from logging import debug as logging_debug
 # from logging import info as logging_info
+from os import getcwd as os_getcwd
 
 from backend_filesystem import LocalFilesystem
 from frontend_tkinter import ScrollFrame
 
+from frontend_tkinter_base import BaseWindow
+
 from version import VERSION
 
 
-def load_json_data(file_path):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        data = json_load(file)
-    return data
+def argument_parser():
+    """
+    Parses command-line arguments for the script.
+
+    This function sets up an argument parser to handle the command-line arguments for the script.
+
+    Returns:
+    argparse.Namespace: An object containing the parsed arguments.
+    """
+    parser = ArgumentParser(description='')
+    parser.add_argument('--vehicle-dir',
+                        type=str,
+                        default=os_getcwd(),
+                        help='Directory containing vehicle-specific intermediate parameter files. '
+                        'Defaults to the current working directory')
+    parser.add_argument('--loglevel',
+                        type=str,
+                        default='INFO',
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                        help='Logging level (default is INFO).')
+    parser.add_argument('-t', '--vehicle-type',
+                        choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
+                                 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
+                        default='ArduCopter',
+                        help='The type of the vehicle. Defaults to ArduCopter',
+                        )
+    parser.add_argument('-v', '--version',
+                        action='version',
+                        version=f'%(prog)s {VERSION}',
+                        help='Display version information and exit.',
+                        )
+    return parser.parse_args()
 
 
-def save_json_data(file_path, data):
-    with open(file_path, 'w', encoding='utf-8') as file:
-        json_dump(data, file, indent=4)
-
-
-class JsonEditorApp(tk.Tk):
-    def __init__(self, json_file_path, version):
+class JsonEditorApp(BaseWindow):
+    def __init__(self, version, local_filesystem: LocalFilesystem=None):
         """
         Initializes the JsonEditorApp with a given JSON file path.
 
@@ -42,30 +68,23 @@ class JsonEditorApp(tk.Tk):
         json_file_path (str): The path to the JSON file to be edited.
         """
         super().__init__()
-        self.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version + " - Vehicle Component Editor")
-        self.geometry("880x900") # Set the window width
+        self.local_filesystem = local_filesystem
 
-        # Set the theme to 'alt'
-        style = ttk.Style()
-        style.theme_use('alt')
+        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version + " - Vehicle Component Editor")
+        self.root.geometry("880x900") # Set the window width
 
-        # Set the application icon for the window and all child windows
-        # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
-        self.iconphoto(True, tk.PhotoImage(file=LocalFilesystem.application_icon_filepath()))
-
-        self.json_file_path = json_file_path
-        self.data = load_json_data(self.json_file_path)
+        self.data = local_filesystem.load_vehicle_components_json_data()
         self.entry_widgets = {} # Dictionary for entry widgets
 
-        self.main_frame = ttk.Frame(self)
-        self.main_frame.pack(expand=True, fill=tk.BOTH, padx=0, pady=0)
+        self.main_frame = ttk.Frame(self.root)
+        self.main_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0)) # Pack the frame at the top of the window
 
-        self.scroll_frame = ScrollFrame(self.main_frame)
+        self.scroll_frame = ScrollFrame(self.root)
         self.scroll_frame.pack(side="top", fill="both", expand=True)
 
         self.populate_frames()
 
-        self.save_button = ttk.Button(self, text="Save", command=self.save_data)
+        self.save_button = ttk.Button(self.root, text="Save", command=self.save_data)
         self.save_button.pack(pady=7)
 
     def populate_frames(self):
@@ -125,12 +144,15 @@ class JsonEditorApp(tk.Tk):
             current_data[path[-1]] = value
 
         # Save the updated data back to the JSON file
-        save_json_data(self.json_file_path, self.data)
+        self.local_filesystem.save_vehicle_components_json_data(self.data)
         print("Data saved successfully.")
 
 
 if __name__ == "__main__":
-    json_file_path = "Frame Diatone Taycan MX-C.json" # Adjust the path as necessary
-    logging_basicConfig(level=0)
-    app = JsonEditorApp(json_file_path, VERSION)
-    app.mainloop()
+    args = argument_parser()
+
+    logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
+
+    local_filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type)
+    app = JsonEditorApp(VERSION, local_filesystem)
+    app.root.mainloop()

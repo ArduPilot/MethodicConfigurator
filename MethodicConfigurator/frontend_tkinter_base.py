@@ -175,8 +175,11 @@ class ScrollFrame(tk.Frame):
 
 
 class BaseWindow:
-    def __init__(self):
-        self.root = tk.Tk()
+    def __init__(self, root_tk: tk.Tk=None):
+        if root_tk:
+            self.root = root_tk
+        else:
+            self.root = tk.Tk()
 
         # Set the theme to 'alt'
         style = ttk.Style()
