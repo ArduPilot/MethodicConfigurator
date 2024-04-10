@@ -963,6 +963,7 @@ class gui:
             param_write_error = []
             for param_name, param in selected_params.items():
                 if param_name in self.flight_controller.fc_parameters and \
+                   param is not None and \
                    not is_within_tolerance(self.flight_controller.fc_parameters[param_name], float(param.value)):
                     logging_error("Parameter %s write to the flight controller failed. Expected: %f, Actual: %f",
                                   param_name, param.value, self.flight_controller.fc_parameters[param_name])
