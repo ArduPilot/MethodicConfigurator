@@ -28,7 +28,10 @@ jobs:
           pip install -U .
   
       - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=/Users/runner/work/MethodicConfigurator/MethodicConfigurator/MethodicConfigurator" >> $GITHUB_ENV
+        run: |
+          echo "$PYTHONPATH"
+          echo "PYTHONPATH=/home/runner/work/MethodicConfigurator/MethodicConfigurator/MethodicConfigurator" >> $GITHUB_ENV
+          echo "$PYTHONPATH"
 
       - name: Test with unittest
         run: |
