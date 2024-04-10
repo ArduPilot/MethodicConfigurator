@@ -1,6 +1,10 @@
 name: Windows Installer
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  release:
+     types: [published]
+  workflow_dispatch:
+
 concurrency:
   group: ci-${{github.workflow}}-${{ github.ref }}
   cancel-in-progress: true
