@@ -27,7 +27,11 @@ requirements = ['pymavlink>=2.4.14',
                 'pyserial>=3.0']
 
 dev_requirements = [
-    'flake8',
+    'ruff',
+    'pytest',
+    'pytest-cov',
+    'coverage',
+    'mock',
     # Add any other development requirements here
 ]
 
