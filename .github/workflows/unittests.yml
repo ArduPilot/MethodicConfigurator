@@ -28,15 +28,9 @@ jobs:
           pip install build
           pip install -U .
 
-      - name: Set PYTHONPATH
-        run: |
-          echo "$PYTHONPATH"
-          echo "PYTHONPATH=/home/runner/work/MethodicConfigurator/MethodicConfigurator/MethodicConfigurator" >> $GITHUB_ENV
-          echo "$PYTHONPATH"
-
       - name: Test with pytest
         run: |
-          PYTHONPATH=MethodicConfigurator pytest --doctest-modules --junitxml=unittests/test-results-${{ matrix.python-version }}.xml unittests/*_unittest.py
+          pytest --junitxml=unittests/test-results-${{ matrix.python-version }}.xml
 
       - name: Upload pytest test results
         uses: actions/upload-artifact@v4

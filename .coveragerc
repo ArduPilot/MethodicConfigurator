@@ -1,0 +1,5 @@
+[run]
+omit =
+    unittests/ardupilot_methodic_configurator_unittest.py
+    unittests/backend_filesystem_unittest.py
+    unittests/frontend_tkinter_unittest.py

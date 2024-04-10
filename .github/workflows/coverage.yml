@@ -26,15 +26,9 @@ jobs:
           pip install build
           pip install -U .
   
-      - name: Set PYTHONPATH
-        run: |
-          echo "$PYTHONPATH"
-          echo "PYTHONPATH=/home/runner/work/MethodicConfigurator/MethodicConfigurator/MethodicConfigurator" >> $GITHUB_ENV
-          echo "$PYTHONPATH"
-
       - name: Test with unittest
         run: |
-          PYTHONPATH=MethodicConfigurator pytest --continue-on-collection-errors --cov-report xml:unittests/coverage.xml unittests/*.py
+          coverage run -m pytest
           coverage xml unittests/coverage.xml
 
       - name: Get Cover 
