@@ -1,4 +1,5 @@
 # ArduPilot Methodic Configurator
+# Everyone should be able to configure ArduPilot for their vehicles
 
 | Lint | Build | Test | Deploy |
 | ---- | ----- | ---- | ------ |
