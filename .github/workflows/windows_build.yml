@@ -1,4 +1,4 @@
-name: Windows Build
+name: Windows Installer
 
 on: [push, pull_request, workflow_dispatch]
 concurrency:

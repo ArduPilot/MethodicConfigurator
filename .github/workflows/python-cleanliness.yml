@@ -1,10 +1,10 @@
-name: test Python cleanliness
+name: Python cleanliness
 
 on: [push, pull_request, workflow_dispatch]
 
-concurrency:
-  group: ci-${{github.workflow}}-${{ github.ref }}
-  cancel-in-progress: true
+#concurrency:
+#  group: ci-${{github.workflow}}-${{ github.ref }}
+#  cancel-in-progress: true
 
 jobs:
   build:
