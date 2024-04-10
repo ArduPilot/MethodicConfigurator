@@ -1,5 +1,6 @@
 __pycache__/
 __target__/
+.ruff_cache/
 4.4.4-test-params/
 ArduPilot_methodic_configurator.egg-info/
 MethodicConfigurator.egg-info/
