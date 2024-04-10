@@ -109,7 +109,7 @@ class Par:
         return False
 
     @staticmethod
-    def load_param_file_into_dict(param_file: str) -> Dict[str, 'Par']:
+    def load_param_file_into_dict(param_file: str) -> Dict[str, 'Par']:  # pylint: disable=R0912
         """
         Loads an ArduPilot parameter file into a dictionary with name, value pairs.
 
@@ -513,8 +513,8 @@ def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) 
     return param_name
 
 
-def update_parameter_documentation(doc: Dict[str, Any], target: str = '.', sort_type: str = 'none',
-                                   param_default_dict: Optional[Dict] = None) -> None:  # pylint: disable=R0912, R0914, R0915
+def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',  # pylint: disable=R0912, R0914, R0915
+                                   sort_type: str = 'none', param_default_dict: Optional[Dict] = None) -> None:
     """
     Updates the parameter documentation in the target file or in all *.param,*.parm files of the target directory.
 

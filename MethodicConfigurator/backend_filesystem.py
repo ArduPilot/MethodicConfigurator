@@ -54,7 +54,7 @@ def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1
     return abs(x - y) <= atol + (rtol * abs(y))
 
 
-class LocalFilesystem:
+class LocalFilesystem:  # pylint: disable=too-many-instance-attributes
     """
     A class to manage local filesystem operations for the ArduPilot methodic configurator.
 
