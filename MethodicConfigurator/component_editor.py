@@ -58,7 +58,7 @@ class JsonEditorApp(tk.Tk):
         self.entry_widgets = {} # Dictionary for entry widgets
 
         self.main_frame = ttk.Frame(self)
-        self.main_frame.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
+        self.main_frame.pack(expand=True, fill=tk.BOTH, padx=0, pady=0)
 
         self.scroll_frame = ScrollFrame(self.main_frame)
         self.scroll_frame.pack(side="top", fill="both", expand=True)
@@ -66,7 +66,7 @@ class JsonEditorApp(tk.Tk):
         self.populate_frames()
 
         self.save_button = ttk.Button(self, text="Save", command=self.save_data)
-        self.save_button.pack(pady=10)
+        self.save_button.pack(pady=7)
 
     def populate_frames(self):
         """
