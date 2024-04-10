@@ -15,7 +15,6 @@ from tkinter import ttk
 # from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
-from logging import critical as logging_critical
 from platform import system as platform_system
 
 from backend_filesystem import LocalFilesystem
@@ -72,47 +71,6 @@ def update_combobox_width(combobox):
     min_width = 4 # Adjust this value as needed
     # Set the width of the combobox to the maximum width, but not less than the minimum width
     combobox.config(width=max(min_width, max_width))
-
-
-# https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb
-class PairTupleCombobox(ttk.Combobox):
-
-    def _process_listPairTuple(self, ip_listPairTuple):
-        r_list_keys = []
-        r_list_shows = []
-        for tpl in ip_listPairTuple:
-            r_list_keys.append(tpl[0])
-            r_list_shows.append(tpl[1])
-        return r_list_keys, r_list_shows
-
-    def __init__(self, container, p_listPairTuple, selected_element, *args, **kwargs):
-        super().__init__(container, *args, **kwargs)
-        self.set_entries_tupple(p_listPairTuple, selected_element)
-
-    def set_entries_tupple(self, p_listPairTuple, selected_element):
-        self.list_keys, self.list_shows = self._process_listPairTuple(p_listPairTuple)
-        self['values'] = tuple(self.list_shows)
-        # still need to set the default value from the nominated key
-        if selected_element:
-            try:
-                default_key_index = self.list_keys.index(selected_element)
-                self.current(default_key_index)
-            except IndexError:
-                logging_critical("connection combobox selected string '%s' not in list %s", selected_element, self.list_keys)
-                exit(1)
-            except ValueError:
-                logging_critical("connection combobox selected string '%s' not in list %s", selected_element, self.list_keys)
-                exit(1)
-            update_combobox_width(self)
-        else:
-            logging_warning("No connection combobox element selected")
-
-    def getSelectedKey(self):
-        try:
-            i_index = self.current()
-            return self.list_keys[i_index]
-        except IndexError:
-            return None
 
 
 class AutoResizeCombobox(ttk.Combobox):
