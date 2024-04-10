@@ -17,7 +17,7 @@
             "Manufacturer": "Diatone",
             "Model": "Taycan MX-C",
             "URL": "https://www.diatone.us/products/diatone-mxc-taycan-duct-3-inch-cinewhoop-fpv-drone",
-            "Version": ""
+            "Version": "2022"
         },
         "Notes": "A small 3'' ducted frame"
     },
@@ -26,7 +26,7 @@
             "Manufacturer": "Radiomaster",
             "Model": "TX16S",
             "URL": "https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller",
-            "Version": ""
+            "Version": "MKI"
         },
         "Firmware": {
             "Type": "EdgeTx",
@@ -39,7 +39,7 @@
             "Manufacturer": "TBS",
             "Model": "TRACER Micro TX",
             "URL": "https://www.team-blacksheep.com/products/prod:tbs_tracer_mtx",
-            "Version": ""
+            "Version": "2"
         },
         "Firmware": {
             "Type": "Crossfire TX",
@@ -89,7 +89,7 @@
     "Battery": {
         "Product": {
             "Manufacturer": "SLS",
-            "Model": "X-Cube",
+            "Model": "X-Cube 1800mAh 4S1P 14,8V 40C/80C",
             "URL": "https://www.stefansliposhop.de/akkus/sls-x-cube/sls-x-cube-40c/sls-x-cube-1800mah-4s1p-14-8v-40c-80c::1568.html",
             "Version": ""
         },
@@ -137,12 +137,12 @@
             "Manufacturer": "Holybro",
             "Model": "H-RTK F9P Helical",
             "URL": "https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445",
-            "Version": ""
+            "Version": "1"
         },
         "Firmware": {
             "Type": "UBlox",
-            "Version": "3.0"
+            "Version": "1.13.2"
         },
-        "Notes": "A very good receiver with an excellent antenna"
+        "Notes": "A very good receiver with an excellent antenna https://docs.holybro.com/gps-and-rtk-system/gps-led-and-buzzer/status-led-changes"
     }
 }
