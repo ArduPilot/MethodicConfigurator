@@ -20,8 +20,8 @@ from sys import exit as sys_exit
 
 from backend_filesystem import LocalFilesystem
 from backend_flightcontroller import FlightController
-from frontend_tkinter import show_no_param_files_error
-from frontend_tkinter import show_no_connection_error
+from frontend_tkinter_base import show_no_param_files_error
+from frontend_tkinter_base import show_no_connection_error
 from frontend_tkinter import gui
 
 from version import VERSION
