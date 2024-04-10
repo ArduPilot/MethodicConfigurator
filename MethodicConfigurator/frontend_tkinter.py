@@ -678,7 +678,7 @@ class gui:
                 ]
                 for j, widget in enumerate(row):
                     # Use sticky="ew" to make the widget stretch horizontally
-                    widget.grid(row=i+1, column=j, sticky="w" if j == 0 else "ew" if j == 5 else "e")
+                    widget.grid(row=i+1, column=j, sticky="w" if j == 0 else "ew" if j == 5 else "e", padx=(0, 5) if j == 5 else 0)
         except KeyError as e:
             logging_critical("Parameter %s not found in the %s file: %s", param_name, self.current_file, e, exc_info=True)
             exit(1)
