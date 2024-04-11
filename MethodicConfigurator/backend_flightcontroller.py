@@ -31,6 +31,7 @@ from annotate_params import Par
 # note that using --hidden-import does not work for these modules
 try:
     from pymavlink import mavutil
+    import pymavlink.dialects.v20.ardupilotmega
 except Exception: # pylint: disable=broad-exception-caught
     pass
 
@@ -106,7 +107,7 @@ def decode_flight_sw_version(flight_sw_version):
 
 
 def decode_flight_capabilities(capabilities):
-    '''Decode 64 bit flight controller capabilities bitmask mavlink parameter.
+    '''Decode 32 bit flight controller capabilities bitmask mavlink parameter.
     Returns a list of concise English descriptions of each active capability.
     '''
     # Initialize an empty list to store the descriptions
@@ -123,6 +124,15 @@ def decode_flight_capabilities(capabilities):
             descriptions.append(capability.name)
 
     return descriptions
+
+
+# see for more info:
+def decode_mav_type(mav_type):
+    return mavutil.mavlink.enums["MAV_TYPE"].get(mav_type, pymavlink.dialects.v20.ardupilotmega.EnumEntry("None", "Unknown type")).description
+
+
+def decode_mav_autopilot(mav_autopilot):
+    return mavutil.mavlink.enums["MAV_AUTOPILOT"].get(mav_autopilot, pymavlink.dialects.v20.ardupilotmega.EnumEntry("None", "Unknown type")).description
 
 
 class FlightController:  # pylint: disable=too-many-instance-attributes
@@ -286,6 +296,8 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
                 return "No heartbeat received, connection failed."
             self.target_system = m.get_srcSystem()
             self.target_component = m.get_srcComponent()
+            logging_info(f"Vehicle type {decode_mav_type(m.type)}")
+            logging_info(f"Autopilot type {decode_mav_autopilot(m.autopilot)}")
             logging_debug("Connection established with systemID %d, componentID %d.", self.target_system,
                           self.target_component)
             self.cmd_version()
@@ -297,7 +309,20 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
             v_major, v_minor, v_patch, v_fw_type = decode_flight_sw_version(m.flight_sw_version)
             self.version = f"{v_major}.{v_minor}.{v_patch}"
             logging_info("Flight Controller Capabilities: %d, Version: %s %s", self.capabilities, self.version, v_fw_type)
-            logging_info("Flight Controller Capabilities: %s", (", ").join(decode_flight_capabilities(self.capabilities)))
+            logging_info(f"Flight Controller Middleware version number: {m.middleware_sw_version}")
+            logging_info(f"Flight Controller Operating system version number: {m.os_sw_version}")
+            logging_info(f"Flight Controller HW / board version: {m.board_version}")
+            # Convert each value in the array to hex and join them together
+            flight_custom_version_hex = ''.join(format(x, '02x') for x in m.flight_custom_version)
+            middleware_custom_version_hex = ''.join(format(x, '02x') for x in m.middleware_custom_version)
+            os_custom_version_hex = ''.join(format(x, '02x') for x in m.os_custom_version)
+            logging_info(f"Flight Controller first 8 bytes of the FC git hash: {flight_custom_version_hex}")
+            logging_info(f"Flight Controller first 8 bytes of the MW git hash: {middleware_custom_version_hex}")
+            logging_info(f"Flight Controller first 8 bytes of the git custom hash: {os_custom_version_hex}")
+            logging_info(f"Flight Controller ID of the board vendor: {m.vendor_id}")
+            logging_info(f"Flight Controller ID of the product: {m.product_id}")
+            logging_info(f"Flight Controller UID if provided by hardware: {m.uid}")
+            # logging_info("Flight Controller Capabilities: %s", (", ").join(decode_flight_capabilities(self.capabilities)))
         except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
             logging_warning("Connection failed: %s", e)
             logging_error("Failed to connect after %d attempts.", retries)
