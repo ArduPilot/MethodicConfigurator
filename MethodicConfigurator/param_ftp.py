@@ -3,6 +3,8 @@
 decode ftp parameter protocol data
 '''
 
+# pylint: skip-file
+
 import struct
 import sys
 

@@ -49,39 +49,38 @@ def argument_parser():
     parser.add_argument('--device',
                         type=str,
                         default="",
-                        help='MAVLink connection string to the flight controller. Defaults to autodetection')
+                        help='MAVLink connection string to the flight controller. Defaults to autodetection'
+                        )  # pylint: disable=R0801
     parser.add_argument('--vehicle-dir',
                         type=str,
                         default=os_getcwd(),
                         help='Directory containing vehicle-specific intermediate parameter files. '
-                        'Defaults to the current working directory')
+                        'Defaults to the current working directory')  # pylint: disable=R0801
     parser.add_argument('--n',
                         type=int,
                         default=0,
                         help='Start directly on the nth intermediate parameter file (skips previous files). '
-                        'Default is %(default)s')
+                        'Default is %(default)s')  # pylint: disable=R0801
     parser.add_argument('--loglevel',
                         type=str,
                         default='INFO',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        help='Logging level (default is INFO).')
+                        help='Logging level (default is INFO).')  # pylint: disable=R0801
     parser.add_argument('-r', '--reboot-time',
                         type=int,
                         default=7,
                         help='Flight controller reboot time. '
-                        'Default is %(default)s')
+                        'Default is %(default)s')  # pylint: disable=R0801
     parser.add_argument('-t', '--vehicle-type',
                         choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
                                  'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
                         default='ArduCopter',
-                        help='The type of the vehicle. Defaults to ArduCopter',
-                        )
+                        help='The type of the vehicle. Defaults to ArduCopter')  # pylint: disable=R0801
     parser.add_argument('-v', '--version',
                         action='version',
                         version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.',
-                        )
-    return parser.parse_args()
+                        help='Display version information and exit.')  # pylint: disable=R0801
+    return parser.parse_args()   # pylint: disable=R0801
 
 
 if __name__ == "__main__":
@@ -118,5 +117,5 @@ if __name__ == "__main__":
     gui(start_file, flight_controller, local_filesystem, VERSION)
 
     # Close the connection to the flight controller
-    flight_controller.close_connection()
+    flight_controller.disconnect()
     sys_exit(0)

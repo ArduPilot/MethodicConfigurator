@@ -3,6 +3,8 @@
 Create temperature calibration parameters for IMUs based on log data.
 '''
 
+# pylint: skip-file
+
 import sys
 import math
 import re

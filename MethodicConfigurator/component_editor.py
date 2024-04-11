@@ -39,34 +39,33 @@ def argument_parser():
                         type=str,
                         default=os_getcwd(),
                         help='Directory containing vehicle-specific intermediate parameter files. '
-                        'Defaults to the current working directory')
+                        'Defaults to the current working directory')  # pylint: disable=R0801
     parser.add_argument('--loglevel',
                         type=str,
                         default='INFO',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        help='Logging level (default is INFO).')
+                        help='Logging level (default is INFO).')  # pylint: disable=R0801
     parser.add_argument('-t', '--vehicle-type',
                         choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
                                  'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
                         default='ArduCopter',
-                        help='The type of the vehicle. Defaults to ArduCopter',
-                        )
+                        help='The type of the vehicle. Defaults to ArduCopter')  # pylint: disable=R0801
     parser.add_argument('-v', '--version',
                         action='version',
                         version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.',
-                        )
-    return parser.parse_args()
+                        help='Display version information and exit.')  # pylint: disable=R0801
+    return parser.parse_args()  # pylint: disable=R0801
 
 
 class JsonEditorApp(BaseWindow):
-    def __init__(self, version, local_filesystem: LocalFilesystem=None):
-        """
-        Initializes the JsonEditorApp with a given JSON file path.
+    """
+    A class for editing JSON files in the ArduPilot methodic configurator.
 
-        Parameters:
-        json_file_path (str): The path to the JSON file to be edited.
-        """
+    This class provides a graphical user interface for editing JSON files that
+    contain vehicle component configurations. It inherits from the BaseWindow
+    class, which provides basic window functionality.
+    """
+    def __init__(self, version, local_filesystem: LocalFilesystem=None):
         super().__init__()
         self.local_filesystem = local_filesystem
 
@@ -92,7 +91,7 @@ class JsonEditorApp(BaseWindow):
         Populates the ScrollFrame with widgets based on the JSON data.
         """
         for key, value in self.data.items():
-            self.add_widget(self.scroll_frame.viewPort, key, value, [])
+            self.add_widget(self.scroll_frame.view_port, key, value, [])
 
     def add_widget(self, parent, key, value, path):
         """
@@ -106,7 +105,7 @@ class JsonEditorApp(BaseWindow):
         """
         if isinstance(value, dict):             # JSON non-leaf elements, add LabelFrame widget
             frame = ttk.LabelFrame(parent, text=key)
-            is_toplevel = parent == self.scroll_frame.viewPort
+            is_toplevel = parent == self.scroll_frame.view_port
             side = tk.TOP if is_toplevel else tk.LEFT
             pady = 5 if is_toplevel else 3
             anchor = tk.NW if is_toplevel else tk.N
@@ -153,6 +152,6 @@ if __name__ == "__main__":
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
 
-    local_filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type)
-    app = JsonEditorApp(VERSION, local_filesystem)
+    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type)
+    app = JsonEditorApp(VERSION, filesystem)
     app.root.mainloop()

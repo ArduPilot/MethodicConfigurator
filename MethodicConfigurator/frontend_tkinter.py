@@ -344,7 +344,7 @@ class gui(BaseWindow):
             self.on_skip_click(force_focus_out_event=False)
             return
         # Clear the current table
-        for widget in self.scroll_frame.viewPort.winfo_children():
+        for widget in self.scroll_frame.view_port.winfo_children():
             widget.destroy()
         # Repopulate the table with the new parameters
         if self.show_only_differences.get():
@@ -364,7 +364,7 @@ class gui(BaseWindow):
                     "When selected, write new value to the flight controller",
                     "Reason why respective parameter changed"]
         for i, header in enumerate(headers):
-            label = tk.Label(self.scroll_frame.viewPort, text=header)
+            label = tk.Label(self.scroll_frame.view_port, text=header)
             label.grid(row=0, column=i, sticky="ew") # Use sticky="ew" to make the label stretch horizontally
             show_tooltip(label, tooltips[i])
 
@@ -376,27 +376,27 @@ class gui(BaseWindow):
 
                 is_calibration = param_metadata.get('Calibration', False) if param_metadata else False
                 is_readonly = param_metadata.get('ReadOnly', False) if param_metadata else False
-                parameter_label = tk.Label(self.scroll_frame.viewPort, text=param_name + (" " * (16 - len(param_name))),
+                parameter_label = tk.Label(self.scroll_frame.view_port, text=param_name + (" " * (16 - len(param_name))),
                                            background="red" if is_readonly else "yellow" if is_calibration else
                                            self.default_background_color)
                 if param_name in fc_parameters:
                     value_str = format(fc_parameters[param_name], '.6f').rstrip('0').rstrip('.')
-                    flightcontroller_value = tk.Label(self.scroll_frame.viewPort, text=value_str)
+                    flightcontroller_value = tk.Label(self.scroll_frame.view_port, text=value_str)
                 else:
-                    flightcontroller_value = tk.Label(self.scroll_frame.viewPort, text="N/A", background="blue")
+                    flightcontroller_value = tk.Label(self.scroll_frame.view_port, text="N/A", background="blue")
 
-                new_value_entry = tk.Entry(self.scroll_frame.viewPort, width=10, justify=tk.RIGHT, background="white")
+                new_value_entry = tk.Entry(self.scroll_frame.view_port, width=10, justify=tk.RIGHT, background="white")
                 new_value_entry.insert(0, format(param.value, '.6f').rstrip('0').rstrip('.'))
                 new_value_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
                                      self.on_parameter_value_change(event, current_file, param_name))
 
-                unit_label = tk.Label(self.scroll_frame.viewPort, text=param_metadata.get('unit') if param_metadata else "")
+                unit_label = tk.Label(self.scroll_frame.view_port, text=param_metadata.get('unit') if param_metadata else "")
 
                 self.write_checkbutton_var[param_name] = tk.BooleanVar(value=True) # Default to selected
-                write_write_checkbutton = ttk.Checkbutton(self.scroll_frame.viewPort,
+                write_write_checkbutton = ttk.Checkbutton(self.scroll_frame.view_port,
                                                           variable=self.write_checkbutton_var[param_name])
 
-                change_reason_entry = tk.Entry(self.scroll_frame.viewPort, background="white")
+                change_reason_entry = tk.Entry(self.scroll_frame.view_port, background="white")
                 change_reason_entry.insert(0, "" if param.comment is None else param.comment)
                 change_reason_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
                                          self.on_parameter_change_reason_change(event, current_file, param_name))
@@ -430,12 +430,12 @@ class gui(BaseWindow):
             exit(1)
 
         # Configure the table_frame to stretch columns
-        self.scroll_frame.viewPort.columnconfigure(0, weight=0, minsize=120) # Parameter name
-        self.scroll_frame.viewPort.columnconfigure(1, weight=0) # Current Value
-        self.scroll_frame.viewPort.columnconfigure(2, weight=0) # New Value
-        self.scroll_frame.viewPort.columnconfigure(3, weight=0) # Units
-        self.scroll_frame.viewPort.columnconfigure(4, weight=0) # write to FC
-        self.scroll_frame.viewPort.columnconfigure(5, weight=1) # Change reason
+        self.scroll_frame.view_port.columnconfigure(0, weight=0, minsize=120) # Parameter name
+        self.scroll_frame.view_port.columnconfigure(1, weight=0) # Current Value
+        self.scroll_frame.view_port.columnconfigure(2, weight=0) # New Value
+        self.scroll_frame.view_port.columnconfigure(3, weight=0) # Units
+        self.scroll_frame.view_port.columnconfigure(4, weight=0) # write to FC
+        self.scroll_frame.view_port.columnconfigure(5, weight=1) # Change reason
 
     def on_parameter_value_change(self, event, current_file, param_name):
         # Get the new value from the Entry widget
@@ -551,7 +551,7 @@ class gui(BaseWindow):
 
     def param_edit_widgets_event_generate_focus_out(self):
         # Trigger the <FocusOut> event for all entry widgets to ensure all changes are processed
-        for widget in self.scroll_frame.viewPort.winfo_children():
+        for widget in self.scroll_frame.view_port.winfo_children():
             if isinstance(widget, tk.Entry):
                 widget.event_generate("<FocusOut>", when="now")
 

@@ -72,15 +72,14 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes
         doc_dict (dict): A dictionary containing documentation for each parameter.
     """
     def __init__(self, vehicle_dir: str, vehicle_type: str):
-        self.vehicle_dir = vehicle_dir
-        self.vehicle_type = vehicle_type
-        self.re_init(vehicle_dir, vehicle_type)
+        self.file_documentation_filename = "file_documentation.json"
+        self.vehicle_components_json_filename = "vehicle_components.json"
+        if vehicle_dir is not None:
+            self.re_init(vehicle_dir, vehicle_type)
 
     def re_init(self, vehicle_dir: str, vehicle_type: str):
         self.vehicle_dir = vehicle_dir
         self.vehicle_type = vehicle_type
-        self.file_documentation_filename = "file_documentation.json"
-        self.vehicle_components_json_filename = "vehicle_components.json"
         self.file_documentation = {}
         self.param_default_dict = {}
         self.doc_dict = {}
@@ -117,11 +116,9 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes
             if 'fields' in param_info:
                 if 'Units' in param_info['fields']:
                     param_info['unit'] = param_info['fields']['Units'].split('(')[0].strip()
-                if 'Units' in param_info['fields']:
                     param_info['unit_tooltip'] = param_info['fields']['Units'].split('(')[1].strip(')')
                 if 'Range' in param_info['fields']:
                     param_info['min'] = float(param_info['fields']['Range'].split(' ')[0].strip())
-                if 'Range' in param_info['fields']:
                     param_info['max'] = float(param_info['fields']['Range'].split(' ')[1].strip())
                 if 'Calibration' in param_info['fields']:
                     param_info['Calibration'] = self.str_to_bool(param_info['fields']['Calibration'].strip())

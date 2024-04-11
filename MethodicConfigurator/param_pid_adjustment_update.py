@@ -78,6 +78,13 @@ def ranged_type(value_type, min_value, max_value):
 
 
 class Par:
+    """
+    A class representing a parameter with a value and an optional comment.
+
+    Attributes:
+        value (float): The value of the parameter.
+        comment (str): An optional comment describing the parameter.
+    """
     def __init__(self, value: float, comment: str = None):
         self.value = value
         self.comment = comment
@@ -103,22 +110,24 @@ class Par:
                 elif "\t" in line:
                     parameter, value = line.split("\t", 1)
                 else:
-                    raise SystemExit("Missing parameter-value separator: %s in %s line %u" % (line, param_file, n))
+                    raise SystemExit(f"Missing parameter-value separator: {line} in {param_file} line {n}")
                 if len(parameter) > PARAM_NAME_MAX_LEN:
-                    raise SystemExit("Too long parameter name: %s in %s line %u" % (parameter, param_file, n))
+                    raise SystemExit(f"Too long parameter name: {parameter} in {param_file} line {n}")
                 if not re.match(PARAM_NAME_REGEX, parameter):
-                    raise SystemExit("Invalid characters in parameter name %s in %s line %u" % (parameter, param_file, n))
+                    raise SystemExit(f"Invalid characters in parameter name {parameter} in {param_file} line {n}")
                 try:
                     fvalue = float(value)
                 except ValueError as exc:
-                    raise SystemExit("Invalid parameter value %s in %s line %u" % (value, param_file, n)) from exc
+                    raise SystemExit(f"Invalid parameter value {value} in {param_file} line {n}") from exc
                 if parameter in parameter_dict:
-                    raise SystemExit("Duplicated parameter %s in %s line %u" % (parameter, param_file, n))
+                    raise SystemExit(f"Duplicated parameter {parameter} in {param_file} line {n}")
                 parameter_dict[parameter] = Par(fvalue, comment)
         return parameter_dict, content
 
     @staticmethod
-    def export_to_param(param_dict: Dict[str, 'Par'], filename_out: str, content_header: List[str] = []) -> None:
+    def export_to_param(param_dict: Dict[str, 'Par'], filename_out: str, content_header: List[str] = None) -> None:
+        if content_header is None:
+            content_header = []
         with open(filename_out, "w", encoding="utf-8") as output_file:
             if content_header:
                 output_file.write('\n'.join(content_header) + '\n')

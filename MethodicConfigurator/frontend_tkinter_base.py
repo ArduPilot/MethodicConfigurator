@@ -73,8 +73,20 @@ def update_combobox_width(combobox):
     combobox.config(width=max(min_width, max_width))
 
 
-class AutoResizeCombobox(ttk.Combobox):
+class AutoResizeCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
+    """
+    A custom Combobox widget that automatically resizes based on its content.
 
+    This class extends the ttk.Combobox widget to include functionality for
+    automatically adjusting its width based on the longest entry in its list of
+    values. It also supports displaying a tooltip when hovering over the widget.
+
+    Attributes:
+        container: The parent container in which the Combobox is placed.
+        values: A tuple of strings representing the entries in the Combobox.
+        selected_element: The initially selected element in the Combobox.
+        tooltip: A string representing the tooltip text to display when hovering over the widget.
+    """
     def __init__(self, container, values, selected_element, tooltip, *args, **kwargs):
         super().__init__(container, *args, **kwargs)
         self.set_entries_tupple(values, selected_element, tooltip)
@@ -96,13 +108,20 @@ class AutoResizeCombobox(ttk.Combobox):
 
 
 class ScrollFrame(tk.Frame):
+    """
+    A custom Frame widget that supports scrolling.
+
+    This class extends the tk.Frame widget to include a canvas and a scrollbar,
+    allowing for scrolling content within the frame. It's useful for creating
+    scrollable areas within your application's GUI.
+    """
     def __init__(self, parent):
         super().__init__(parent) # create a frame (self)
 
         self.canvas = tk.Canvas(self, borderwidth=0)                                 # place canvas on self
 
         # place a frame on the canvas, this frame will hold the child widgets
-        self.viewPort = tk.Frame(self.canvas)
+        self.view_port = tk.Frame(self.canvas)
 
         self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)  # place a scrollbar on self
         # attach scrollbar action to scroll of canvas
@@ -111,23 +130,23 @@ class ScrollFrame(tk.Frame):
         self.vsb.pack(side="right", fill="y")                                        # pack scrollbar to right of self
         # pack canvas to left of self and expand to fill
         self.canvas.pack(side="left", fill="both", expand=True)
-        self.canvas_window = self.canvas.create_window((4, 4), window=self.viewPort, # add view port frame to canvas
-                                                       anchor="nw", tags="self.viewPort")
+        self.canvas_window = self.canvas.create_window((4, 4), window=self.view_port, # add view port frame to canvas
+                                                       anchor="nw", tags="self.view_port")
 
-        # bind an event whenever the size of the viewPort frame changes.
-        self.viewPort.bind("<Configure>", self.onFrameConfigure)
+        # bind an event whenever the size of the view_port frame changes.
+        self.view_port.bind("<Configure>", self.on_frame_configure)
         # bind an event whenever the size of the canvas frame changes.
-        self.canvas.bind("<Configure>", self.onCanvasConfigure)
+        self.canvas.bind("<Configure>", self.on_canvas_configure)
 
         # bind wheel events when the cursor enters the control
-        self.viewPort.bind('<Enter>', self.onEnter)
+        self.view_port.bind('<Enter>', self.on_enter)
         # unbind wheel events when the cursor leaves the control
-        self.viewPort.bind('<Leave>', self.onLeave)
+        self.view_port.bind('<Leave>', self.on_leave)
 
         # perform an initial stretch on render, otherwise the scroll region has a tiny border until the first resize
-        self.onFrameConfigure(None)
+        self.on_frame_configure(None)
 
-    def onFrameConfigure(self, event):
+    def on_frame_configure(self, _event):
         '''Reset the scroll region to encompass the inner frame'''
         # whenever the size of the frame changes, alter the scroll region respectively.
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
@@ -138,13 +157,13 @@ class ScrollFrame(tk.Frame):
         #     bbox = (bbox[0], bbox[1] + self.canvas.winfo_reqheight(), bbox[2], bbox[3])
         #     self.canvas.configure(scrollregion=bbox)
 
-    def onCanvasConfigure(self, event):
+    def on_canvas_configure(self, event):
         '''Reset the canvas window to encompass inner frame when required'''
         canvas_width = event.width
         # whenever the size of the canvas changes alter the window region respectively.
         self.canvas.itemconfig(self.canvas_window, width=canvas_width)
 
-    def onMouseWheel(self, event):                         # cross platform scroll wheel event
+    def on_mouse_wheel(self, event):                       # cross platform scroll wheel event
         canvas_height = self.canvas.winfo_height()
         rows_height = self.canvas.bbox("all")[3]
 
@@ -159,14 +178,14 @@ class ScrollFrame(tk.Frame):
                 elif event.num == 5:
                     self.canvas.yview_scroll(1, "units")
 
-    def onEnter(self, event):                               # bind wheel events when the cursor enters the control
+    def on_enter(self, _event):                             # bind wheel events when the cursor enters the control
         if platform_system() == 'Linux':
-            self.canvas.bind_all("<Button-4>", self.onMouseWheel)
-            self.canvas.bind_all("<Button-5>", self.onMouseWheel)
+            self.canvas.bind_all("<Button-4>", self.on_mouse_wheel)
+            self.canvas.bind_all("<Button-5>", self.on_mouse_wheel)
         else:
-            self.canvas.bind_all("<MouseWheel>", self.onMouseWheel)
+            self.canvas.bind_all("<MouseWheel>", self.on_mouse_wheel)
 
-    def onLeave(self, event):                               # unbind wheel events when the cursor leaves the control
+    def on_leave(self, _event):                             # unbind wheel events when the cursor leaves the control
         if platform_system() == 'Linux':
             self.canvas.unbind_all("<Button-4>")
             self.canvas.unbind_all("<Button-5>")
@@ -175,6 +194,13 @@ class ScrollFrame(tk.Frame):
 
 
 class BaseWindow:
+    """
+    A base class for creating windows in the ArduPilot Methodic Configurator application.
+
+    This class provides a foundation for creating windows in the application, including setting up the
+    root window, applying a theme, and configuring the application icon. It also includes methods for
+    creating a progress window and centering a window on its parent.
+    """
     def __init__(self, root_tk: tk.Tk=None):
         if root_tk:
             self.root = root_tk
