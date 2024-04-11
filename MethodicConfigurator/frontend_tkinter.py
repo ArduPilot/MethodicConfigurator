@@ -34,7 +34,7 @@ from frontend_tkinter_base import AutoResizeCombobox
 from frontend_tkinter_base import ScrollFrame
 from frontend_tkinter_base import BaseWindow
 
-from frontend_tkinter_connection_selection import ConnectionSelectionWindow
+from frontend_tkinter_connection_selection import ConnectionSelectionWidgets
 
 
 def show_about_window(root, version: str):
@@ -151,7 +151,8 @@ class gui(BaseWindow):
         self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
         # Create a new frame inside the config_subframe for the flight controller connection selection label and combobox
-        ConnectionSelectionWindow(self, config_subframe, self.flight_controller)
+        csw = ConnectionSelectionWidgets(self, config_subframe, self.flight_controller)
+        csw.container_frame.pack(side=tk.RIGHT, fill="x", expand=False, padx=(6, 4))
 
         # Load the ArduPilot logo and scale it down to image_height pixels in height
         image_height = 40
