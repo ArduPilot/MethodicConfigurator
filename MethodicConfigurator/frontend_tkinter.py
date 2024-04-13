@@ -151,7 +151,7 @@ class gui(BaseWindow):
         self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
         # Create a new frame inside the config_subframe for the flight controller connection selection label and combobox
-        csw = ConnectionSelectionWidgets(self, config_subframe, self.flight_controller)
+        csw = ConnectionSelectionWidgets(self, config_subframe, self.flight_controller, destroy_parent_on_connect=False)
         csw.container_frame.pack(side=tk.RIGHT, fill="x", expand=False, padx=(6, 4))
 
         # Load the ArduPilot logo and scale it down to image_height pixels in height

@@ -21,7 +21,9 @@ from sys import exit as sys_exit
 from backend_filesystem import LocalFilesystem
 from backend_flightcontroller import FlightController
 from frontend_tkinter_base import show_no_param_files_error
-from frontend_tkinter_base import show_no_connection_error
+
+from frontend_tkinter_connection_selection import ConnectionSelectionWindow
+
 from frontend_tkinter import gui
 
 from version import VERSION
@@ -94,7 +96,8 @@ if __name__ == "__main__":
     error_str = flight_controller.connect(args.device)
     if error_str:
         logging_error(error_str)
-        show_no_connection_error(error_str)
+        conn_sel_window = ConnectionSelectionWindow(flight_controller, error_str)
+        conn_sel_window.root.mainloop()
 
     local_filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type)
 
