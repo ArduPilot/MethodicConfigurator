@@ -31,7 +31,7 @@ from annotate_params import Par
 # note that using --hidden-import does not work for these modules
 try:
     from pymavlink import mavutil
-    import pymavlink.dialects.v20.ardupilotmega
+    # import pymavlink.dialects.v20.ardupilotmega
 except Exception: # pylint: disable=broad-exception-caught
     pass
 
@@ -127,12 +127,13 @@ def decode_flight_capabilities(capabilities):
 
 
 # see for more info:
+# pymavlink.dialects.v20.ardupilotmega
 def decode_mav_type(mav_type):
-    return mavutil.mavlink.enums["MAV_TYPE"].get(mav_type, pymavlink.dialects.v20.ardupilotmega.EnumEntry("None", "Unknown type")).description
+    return mavutil.mavlink.enums["MAV_TYPE"].get(mav_type, mavutil.mavlink.EnumEntry("None", "Unknown type")).description
 
 
 def decode_mav_autopilot(mav_autopilot):
-    return mavutil.mavlink.enums["MAV_AUTOPILOT"].get(mav_autopilot, pymavlink.dialects.v20.ardupilotmega.EnumEntry("None", "Unknown type")).description
+    return mavutil.mavlink.enums["MAV_AUTOPILOT"].get(mav_autopilot, mavutil.mavlink.EnumEntry("None", "Unknown type")).description
 
 
 class FlightController:  # pylint: disable=too-many-instance-attributes
@@ -238,7 +239,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
                     except OSError:
                         pass # Not a soft link, proceed with the original device path
                 self.comport = autodetect_serial[0]
-                # Add the detected serial port to the list of available connections because it is not there
+                # Add the detected serial port to the list of available connections if it is not there
                 if self.comport.device not in [t[0] for t in self.connection_tuples]:
                     self.connection_tuples.insert(-1, (self.comport.device, self.comport.description))
             else:
@@ -283,50 +284,67 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
                 indicating a successful connection.
         """
         if self.comport is None or self.comport.device == 'test': # FIXME for testing only pylint: disable=fixme
-            return None
+            return ""
         logging_info("Will connect to %s", self.comport.device)
         try:
             # Create the connection
             self.master = mavutil.mavlink_connection(device=self.comport.device, timeout=timeout,
                                                      retries=retries, progress_callback=progress_callback)
-            logging_debug("Waiting for heartbeat")
+            logging_debug("Waiting for MAVLink heartbeat")
             m = self.master.wait_heartbeat(timeout=timeout)
             if m is None:
-                logging_error("No heartbeat received, connection failed.")
-                return "No heartbeat received, connection failed."
+                logging_error("No MAVLink heartbeat received, connection failed.")
+                return "No MAVLink heartbeat received, connection failed."
             self.target_system = m.get_srcSystem()
             self.target_component = m.get_srcComponent()
             logging_info(f"Vehicle type {decode_mav_type(m.type)}")
             logging_info(f"Autopilot type {decode_mav_autopilot(m.autopilot)}")
             logging_debug("Connection established with systemID %d, componentID %d.", self.target_system,
                           self.target_component)
+            if m.autopilot != mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA:
+                logging_error("Unsupported autopilot type %s", decode_mav_autopilot(m.autopilot))
+                return f"Unsupported autopilot type {decode_mav_autopilot(m.autopilot)}"
+
             self.cmd_version()
             m = self.master.recv_match(type='AUTOPILOT_VERSION', blocking=True, timeout=timeout)
             if m is None:
-                logging_error("No AUTOPILOT_VERSION message received, connection failed.")
-                return "No AUTOPILOT_VERSION message received, connection failed."
+                logging_error("No AUTOPILOT_VERSION MAVLink message received, connection failed.")
+                return "No AUTOPILOT_VERSION MAVLink message received, connection failed."
             self.capabilities = m.capabilities
+            _cap_list = decode_flight_capabilities(self.capabilities)
+            # logging_info("Flight Controller Capabilities: %s", (", ").join(
+            #     [capability.removeprefix("MAV_PROTOCOL_CAPABILITY_")
+            #      for capability in _cap_list]))
             v_major, v_minor, v_patch, v_fw_type = decode_flight_sw_version(m.flight_sw_version)
             self.version = f"{v_major}.{v_minor}.{v_patch}"
-            logging_info("Flight Controller Capabilities: %d, Version: %s %s", self.capabilities, self.version, v_fw_type)
-            logging_info(f"Flight Controller Middleware version number: {m.middleware_sw_version}")
-            logging_info(f"Flight Controller Operating system version number: {m.os_sw_version}")
+            logging_info("Flight Controller Version: %s %s", self.version, v_fw_type)
+            # logging_info(f"Flight Controller Middleware version number: {m.middleware_sw_version}")
+            # logging_info(f"Flight Controller Operating system version number: {m.os_sw_version}")
             logging_info(f"Flight Controller HW / board version: {m.board_version}")
             # Convert each value in the array to hex and join them together
             flight_custom_version_hex = ''.join(format(x, '02x') for x in m.flight_custom_version)
-            middleware_custom_version_hex = ''.join(format(x, '02x') for x in m.middleware_custom_version)
+            # middleware_custom_version_hex = ''.join(format(x, '02x') for x in m.middleware_custom_version)
             os_custom_version_hex = ''.join(format(x, '02x') for x in m.os_custom_version)
-            logging_info(f"Flight Controller first 8 bytes of the FC git hash: {flight_custom_version_hex}")
-            logging_info(f"Flight Controller first 8 bytes of the MW git hash: {middleware_custom_version_hex}")
-            logging_info(f"Flight Controller first 8 bytes of the git custom hash: {os_custom_version_hex}")
-            logging_info(f"Flight Controller ID of the board vendor: {m.vendor_id}")
-            logging_info(f"Flight Controller ID of the product: {m.product_id}")
-            logging_info(f"Flight Controller UID if provided by hardware: {m.uid}")
-            # logging_info("Flight Controller Capabilities: %s", (", ").join(decode_flight_capabilities(self.capabilities)))
+            logging_info(f"Flight Controller first 8 hex bytes of the FC git hash: {flight_custom_version_hex}")
+            # logging_info(f"Flight Controller first 8 hex bytes of the MW git hash: {middleware_custom_version_hex}")
+            logging_info(f"Flight Controller first 8 hex bytes of the ChibiOS git hash: {os_custom_version_hex}")
+            if m.vendor_id == 0x1209 and m.product_id == 0x5740:
+                return ""  # these are just generic ArduPilot values, there is no value in printing them
+            pid_vid_dict = self.list_ardupilot_supported_usb_pid_vid()
+            if m.vendor_id in pid_vid_dict:
+                logging_info(f"Flight Controller board vendor: {pid_vid_dict[m.vendor_id]['vendor']}")
+                if m.product_id in pid_vid_dict[m.vendor_id]['PID']:
+                    logging_info(f"Flight Controller board product: {pid_vid_dict[m.vendor_id]['PID'][m.product_id]}")
+                else:
+                    logging_info(f"Flight Controller board product ID: 0x{hex(m.product_id)}")
+            else:
+                logging_info(f"Flight Controller board vendor ID: 0x{hex(m.vendor_id)}")
+                logging_info(f"Flight Controller product ID: 0x{hex(m.product_id)}")
+            # logging_info(f"Flight Controller UID if provided by hardware: {m.uid}")
         except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
             logging_warning("Connection failed: %s", e)
             logging_error("Failed to connect after %d attempts.", retries)
-            return e
+            return str(e)
         return ""
 
     def read_params(self, progress_callback=None) -> Dict[str, float]:
