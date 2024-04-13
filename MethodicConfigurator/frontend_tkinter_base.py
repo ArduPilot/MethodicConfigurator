@@ -37,8 +37,8 @@ def show_no_param_files_error(dirname: str):
 
 
 def show_no_connection_error(error_string: str):
-    error_message = f"{error_string}\n\nPlease connect a flight controller, wait a few seconds,\n" \
-        "restart the software and select its connection port."
+    error_message = f"{error_string}\n\nPlease connect a flight controller to the PC,\n" \
+        "wait at least 7 seconds and retry."
     show_error_message("No Connection to the Flight Controller", error_message)
 
 
