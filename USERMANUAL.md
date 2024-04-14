@@ -6,25 +6,56 @@ Amilcar Lucas's - ArduPilot Methodic Configurator is a Python tool designed to s
 It provides a graphical user interface (GUI) for managing, editing and visualizing drone parameter files, as well as writing parameters to the vehicle.
 It automates the tasks described in the [How to methodically tune (almost) any multicopter using ArduCopter forum Blog post](https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/1)
 
-![Application Screenshot](images/App_screenshot2.png)
-
 ## Usage
 
-Before you start you must copy one of the `vehicle_example` directories, and rename the copy to the name of your vehicle.
-Please do not change the original vehicle example files of the application, so that you can compare changes if you want to.
+Before starting the application on your PC you should connect a flight controller to the PC and wait at least seven seconds.
 
-For example if you are using `ArduCopter 4.5.1` on MS Windows do:
+### Flight Controller Connection Selection Interface
 
-1. copy `C:\ProgramData\.ardupilot_methodic_configurator\vehicle_examples\4.5.1-params` to `C:\ProgramData\.ardupilot_methodic_configurator\my_cool_vehicle`
-2. connect a flight controller to your PC and wait 5 seconds
-3. start the application using the Desktop Icon
+![Flight controller connaction selection window](images/App_screenshot_FC_connection.png)
 
-For example if you are using `ArduCopter 4.4.4` on Linux do:
+This interface allows users to select or add a connection to a flight controller **if one was not yet auto-detected**.
+It provides three main options for connecting to a flight controller:
 
-1. copy `MethodicConfigurator/vehicle_examples/4.4.4-params` to `MethodicConfigurator/my_cool_vehicle`
-2. connect a flight controller to your PC and wait 5 seconds
-3. start the application using the Desktop Icon
+#### Option 1: Auto-connect
 
+This option automatically attempts to connect to a flight controller that has been connected to the PC. The user must waits for at least 7 seconds for the flight controller to fully boot before attempting the connection.
+
+#### Option 2: Manually Select or Add a Connection
+
+This option allows users to manually select an existing flight controller connection or add a new one. It provides a dropdown menu listing all available connections, including an option to add a new connection.
+**Steps:**
+   - To select an existing connection, use the dropdown menu to choose the desired connection.
+   - To add a new connection, select "Add another" from the dropdown menu. A dialog box will prompt you to enter the connection string for the new flight controller.
+
+#### Option 3: Skip Flight Controller Connection
+
+This option allows users to skip the flight controller connection process. It proceeds with editing the intermediate `.param` files on disk without fetching parameter values nor parameter default parameter values from the flight controller.
+
+
+### Vehicle Directory Selection Interface
+
+![Vehicle Selection Window](images/App_screenshot_Vehicle_directory.png)
+
+This interface allows users to select a vehicle directory that contains intermediate parameter files for ArduPilot **if one was not specified with the `--vehicle-dir` command line parameter**.
+It provides two main options for selecting a vehicle directory:
+
+#### Option 1: Create a New Vehicle Configuration Directory Based on an Existing Template
+
+This option allows users to create a new vehicle configuration directory by copying files from an existing template directory. It's useful for setting up a new vehicle configuration quickly.
+**Steps:**
+   - Use the "Template directory" `...` button to select the existing vehicle template directory containing the intermediate parameter files to be copied.
+   - Use the "Base directory" `...` button to select the existing directory where the new vehicle directory will be created.
+   - Enter the name for the new vehicle directory in the "New vehicle name" field.
+   - Click the "Create vehicle directory from template" button to create the new vehicle directory on the base directory and copy the template files to it.
+
+#### Option 2: Use an Existing Vehicle Configuration Directory
+
+This option allows users to select an existing vehicle configuration directory that already contains intermediate parameter files. It's useful for editing an existing vehicle configuration.
+**Steps:**
+   - Use the "Vehicle directory" `...` button to select the existing vehicle directory containing the intermediate parameter files.
+
+![Application Screenshot](images/App_screenshot2.png)
 
 ### 1. Select a Vehicle Directory
 

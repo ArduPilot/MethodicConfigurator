@@ -32,7 +32,7 @@ def show_error_message(title: str, message: str):
 
 def show_no_param_files_error(dirname: str):
     error_message = f"No intermediate parameter files found in the selected '{dirname}' vehicle directory.\n" \
-        "Please select a vehicle directory containing valid ArduPilot methodic intermediate parameter files."
+        "Please select a vehicle directory containing valid ArduPilot intermediate parameter files."
     show_error_message("No Parameter Files Found", error_message)
 
 

@@ -20,9 +20,10 @@ from sys import exit as sys_exit
 
 from backend_filesystem import LocalFilesystem
 from backend_flightcontroller import FlightController
-from frontend_tkinter_base import show_no_param_files_error
 
 from frontend_tkinter_connection_selection import ConnectionSelectionWindow
+
+from frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
 
 from frontend_tkinter import gui
 
@@ -104,6 +105,14 @@ if __name__ == "__main__":
     # Get the list of intermediate parameter files files that will be processed sequentially
     files = list(local_filesystem.file_parameters.keys())
 
+    if not files:
+        logging_error("No intermediate parameter files found in %s.", args.vehicle_dir)
+        vehicle_dir_window = VehicleDirectorySelectionWindow(local_filesystem)
+        vehicle_dir_window.root.mainloop()
+
+   # Get the list of intermediate parameter files files that will be processed sequentially
+    files = list(local_filesystem.file_parameters.keys())
+
     start_file = None  # pylint: disable=invalid-name
     if files:
         # Determine the starting file based on the --n command line argument
@@ -112,9 +121,6 @@ if __name__ == "__main__":
             logging_warning("Starting file index %s is out of range. Starting with file %s instead.",
                             args.n, files[start_file_index])
         start_file = files[start_file_index]
-    else:
-        logging_error("No intermediate parameter files found in %s.", args.vehicle_dir)
-        show_no_param_files_error(args.vehicle_dir)
 
     # Call the GUI function with the starting intermediate parameter file
     gui(start_file, flight_controller, local_filesystem, VERSION)

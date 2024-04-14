@@ -9,7 +9,6 @@ SPDX-License-Identifier:    GPL-3
 '''
 
 import tkinter as tk
-from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import ttk
 from logging import debug as logging_debug
@@ -26,15 +25,17 @@ from webbrowser import open as webbrowser_open  # to open the blog post document
 
 from backend_filesystem import LocalFilesystem
 from backend_filesystem import is_within_tolerance
+
 from backend_flightcontroller import FlightController
 
-from frontend_tkinter_base import show_no_param_files_error
 from frontend_tkinter_base import show_tooltip
 from frontend_tkinter_base import AutoResizeCombobox
 from frontend_tkinter_base import ScrollFrame
 from frontend_tkinter_base import BaseWindow
 
 from frontend_tkinter_connection_selection import ConnectionSelectionWidgets
+
+from frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 
 
 def show_about_window(root, version: str):
@@ -102,33 +103,9 @@ class gui(BaseWindow):
 
         # Create a new frame inside the config_subframe for the intermediate parameter file directory selection labels
         # and directory selection button
-        directory_selection_frame = tk.Frame(config_subframe)
-        directory_selection_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(4, 6))
-
-        # Create a description label for the directory
-        directory_selection_label = tk.Label(directory_selection_frame, text="Vehicle directory:")
-        directory_selection_label.pack(side=tk.TOP, anchor=tk.NW) # Add the label to the top of the directory_selection_frame
-
-        # Create a new subframe for the directory selection
-        directory_selection_subframe = tk.Frame(directory_selection_frame)
-        directory_selection_subframe.pack(side=tk.TOP, fill="x", expand=False, anchor=tk.NW)
-
-        # Create a read-only entry for the directory
-        vehicle_directory_name = self.local_filesystem.get_vehicle_directory_name()
-        vehicle_dir_var = tk.StringVar(value=vehicle_directory_name)
-        self.directory_entry = tk.Entry(directory_selection_subframe, textvariable=vehicle_dir_var,
-                                        width=max(4, len(vehicle_directory_name)), state='readonly')
-        self.directory_entry.pack(side=tk.LEFT, fill="x", expand=True, anchor=tk.NW, pady=(4, 0))
-        show_tooltip(self.directory_entry,
-                     "Vehicle-specific directory containing the intermediate\nparameter files to be written to the flight "
-                     "controller")
-
-        # Create a button for directory selection
-        directory_selection_button = ttk.Button(directory_selection_subframe, text="...",
-                                                command=self.on_select_vehicle_directory, width=2)
-        directory_selection_button.pack(side=tk.RIGHT, anchor=tk.NW)
-        show_tooltip(directory_selection_button, "Select the vehicle-specific directory containing the\nintermediate "
-                     "parameter files to be written to the flight controller")
+        directory_selection_frame = VehicleDirectorySelectionWidgets(self, config_subframe, self.local_filesystem,
+                                                                     destroy_parent_on_open=False)
+        directory_selection_frame.container_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(4, 6))
 
         # Create a new frame inside the config_subframe for the intermediate parameter file selection label and combobox
         file_selection_frame = tk.Frame(config_subframe)
@@ -151,7 +128,8 @@ class gui(BaseWindow):
         self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
         # Create a new frame inside the config_subframe for the flight controller connection selection label and combobox
-        csw = ConnectionSelectionWidgets(self, config_subframe, self.flight_controller, destroy_parent_on_connect=False)
+        csw = ConnectionSelectionWidgets(self, config_subframe, self.flight_controller,
+                                         destroy_parent_on_connect=False, read_params_on_connect=True)
         csw.container_frame.pack(side=tk.RIGHT, fill="x", expand=False, padx=(6, 4))
 
         # Load the ArduPilot logo and scale it down to image_height pixels in height
@@ -242,29 +220,6 @@ class gui(BaseWindow):
 
         self.root.after(50, self.read_flight_controller_parameters(reread=False)) # 50 milliseconds
         self.root.mainloop()
-
-    def on_select_vehicle_directory(self):
-        # Open the directory selection dialog
-        selected_directory = filedialog.askdirectory(initialdir=self.local_filesystem.vehicle_dir)
-        if selected_directory:
-            self.local_filesystem.vehicle_dir = selected_directory
-            displayed_directory = self.local_filesystem.get_vehicle_directory_name()
-            # Set the width of the directory_entry to match the width of the displayed_directory text
-            self.directory_entry.config(width=max(4, len(displayed_directory)), state='normal')
-            self.directory_entry.delete(0, tk.END)
-            self.directory_entry.insert(0, displayed_directory)
-            self.directory_entry.config(state='readonly')
-            self.root.update_idletasks()
-            # Update the local_filesystem with the new directory
-            self.local_filesystem.re_init(selected_directory, self.local_filesystem.vehicle_type)
-            files = list(self.local_filesystem.file_parameters.keys())
-            if files:
-                self.file_selection_combobox.set_entries_tupple(files, files[0])
-                # Trigger the combobox change event to update the table
-                self.on_param_file_combobox_change(None, forced=True)
-            else:
-                # No files were found in the selected directory
-                show_no_param_files_error(selected_directory)
 
     def on_param_file_combobox_change(self, _event, forced: bool = False):
         if not self.file_selection_combobox['values']:

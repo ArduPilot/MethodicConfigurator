@@ -9,20 +9,34 @@ SPDX-License-Identifier:    GPL-3
 '''
 
 from os import path as os_path
+from os import getcwd as os_getcwd
 from os import listdir as os_listdir
+from os import makedirs as os_makedirs
+from os import sep as os_sep
+
+from shutil import copy2 as shutil_copy2
+from shutil import copytree as shutil_copytree
+
 from re import compile as re_compile
+from re import match as re_match
+from re import escape as re_escape
+
 # from sys import exit as sys_exit
 # from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
+
 from json import load as json_load
 from json import dump as json_dump
 from json import JSONDecodeError
+
 from typing import Dict
 from typing import List
 from typing import Tuple
+
 from zipfile import ZipFile
+
 from annotate_params import BASE_URL, PARAM_DEFINITION_XML_FILE, Par
 from annotate_params import get_xml_data
 from annotate_params import create_doc_dict
@@ -54,7 +68,7 @@ def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1
     return abs(x - y) <= atol + (rtol * abs(y))
 
 
-class LocalFilesystem:  # pylint: disable=too-many-instance-attributes
+class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many-public-methods
     """
     A class to manage local filesystem operations for the ArduPilot methodic configurator.
 
@@ -369,3 +383,53 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes
         filepath = os_path.join(self.vehicle_dir, self.vehicle_components_json_filename)
         with open(filepath, 'w', encoding='utf-8') as file:
             json_dump(data, file, indent=4)
+
+    def new_vehicle_dir(self, base_dir: str, new_dir: str):
+        return os_path.join(base_dir, new_dir)
+
+    def create_new_vehicle_dir(self, new_vehicle_dir: str):
+        # Check if the new vehicle directory already exists
+        if os_path.exists(new_vehicle_dir):
+            return "Directory already exists, choose a different one"
+
+        try:
+            # Create the new vehicle directory
+            os_makedirs(new_vehicle_dir, exist_ok=True)
+        except OSError as e:
+            logging_error("Error creating new vehicle directory: %s", e)
+            return str(e)
+        return ""
+
+    def copy_template_files_to_new_vehicle_dir(self, template_dir: str, new_vehicle_dir: str):
+        # Copy the template files to the new vehicle directory
+        for item in os_listdir(template_dir):
+            s = os_path.join(template_dir, item)
+            d = os_path.join(new_vehicle_dir, item)
+            if os_path.isdir(s):
+                shutil_copytree(s, d)
+            else:
+                shutil_copy2(s, d)
+
+    @staticmethod
+    def getcwd():
+        return os_getcwd()
+
+    @staticmethod
+    def valid_directory_name(dir_name: str):
+        """
+        Checks if a given directory name contains only alphanumeric characters, underscores, hyphens,
+        and the OS directory separator.
+
+        This function is designed to ensure that the directory name does not contain characters that are
+        invalid for directory names in many operating systems. It does not guarantee that the name
+        is valid in all contexts or operating systems, as directory name validity can vary.
+
+        Parameters:
+        - dir_name (str): The directory name to check.
+
+        Returns:
+        - bool: True if the directory name matches the allowed pattern, False otherwise.
+        """
+        # Include os.sep in the pattern
+        pattern = r'^[\w' + re_escape(os_sep) + '-]+$'
+        return re_match(pattern, dir_name) is not None
