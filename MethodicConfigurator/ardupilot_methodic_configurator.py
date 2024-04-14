@@ -25,6 +25,8 @@ from frontend_tkinter_connection_selection import ConnectionSelectionWindow
 
 from frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
 
+from component_editor import JsonEditorApp
+
 from frontend_tkinter import gui
 
 from version import VERSION
@@ -121,6 +123,9 @@ if __name__ == "__main__":
             logging_warning("Starting file index %s is out of range. Starting with file %s instead.",
                             args.n, files[start_file_index])
         start_file = files[start_file_index]
+
+    app = JsonEditorApp(VERSION, local_filesystem)
+    app.root.mainloop()
 
     # Call the GUI function with the starting intermediate parameter file
     gui(start_file, flight_controller, local_filesystem, VERSION)

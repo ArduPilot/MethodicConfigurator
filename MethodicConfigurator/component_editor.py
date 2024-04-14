@@ -23,8 +23,6 @@ from PIL import ImageTk
 
 from backend_filesystem import LocalFilesystem
 
-from backend_flightcontroller import FlightController
-
 from frontend_tkinter_base import show_tooltip
 from frontend_tkinter_base import ScrollFrame
 from frontend_tkinter_base import BaseWindow
@@ -81,7 +79,8 @@ class JsonEditorApp(BaseWindow):
 
         self.data = local_filesystem.load_vehicle_components_json_data()
         if len(self.data) < 1:
-            self.root.destroy()
+            # Schedule the window to be destroyed after the mainloop has started
+            self.root.after(100, self.root.destroy) # Adjust the delay as needed
             return
 
         self.entry_widgets = {} # Dictionary for entry widgets
