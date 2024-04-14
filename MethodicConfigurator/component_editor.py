@@ -9,17 +9,24 @@ SPDX-License-Identifier:    GPL-3
 '''
 
 from argparse import ArgumentParser
+
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
+# from logging import debug as logging_debug
+from logging import info as logging_info
+
 import tkinter as tk
 from tkinter import ttk
-# from logging import debug as logging_debug
-# from logging import info as logging_info
-from os import getcwd as os_getcwd
+
+from PIL import Image
+from PIL import ImageTk
 
 from backend_filesystem import LocalFilesystem
-from frontend_tkinter import ScrollFrame
 
+from backend_flightcontroller import FlightController
+
+from frontend_tkinter_base import show_tooltip
+from frontend_tkinter_base import ScrollFrame
 from frontend_tkinter_base import BaseWindow
 
 from version import VERSION
@@ -37,7 +44,7 @@ def argument_parser():
     parser = ArgumentParser(description='')
     parser.add_argument('--vehicle-dir',
                         type=str,
-                        default=os_getcwd(),
+                        default=LocalFilesystem.getcwd(),
                         help='Directory containing vehicle-specific intermediate parameter files. '
                         'Defaults to the current working directory')  # pylint: disable=R0801
     parser.add_argument('--loglevel',
@@ -70,28 +77,54 @@ class JsonEditorApp(BaseWindow):
         self.local_filesystem = local_filesystem
 
         self.root.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version + " - Vehicle Component Editor")
-        self.root.geometry("880x900") # Set the window width
+        self.root.geometry("880x600") # Set the window width
 
         self.data = local_filesystem.load_vehicle_components_json_data()
+        if len(self.data) < 1:
+            self.root.destroy()
+            return
+
         self.entry_widgets = {} # Dictionary for entry widgets
 
         self.main_frame = ttk.Frame(self.root)
         self.main_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0)) # Pack the frame at the top of the window
+
+        # Load the vehicle image and scale it down to image_height pixels in height
+        if local_filesystem.vehicle_image_exists():
+            image_height = 100
+            image = Image.open(local_filesystem.vehicle_image_filepath())
+            width, height = image.size
+            aspect_ratio = width / height
+            new_width = int(image_height * aspect_ratio)
+            resized_image = image.resize((new_width, image_height))
+
+            # Convert the image to a format that can be used by Tkinter
+            photo = ImageTk.PhotoImage(resized_image)
+
+            # Create a label with the resized image
+            image_label = tk.Label(self.main_frame, image=photo)
+            image_label.image = photo # Keep a reference to the image to prevent it from being garbage collected
+            image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
+            show_tooltip(image_label, "Replace the vehicle.jpg file in the vehicle directory to change the vehicle image.")
+        else:
+            image_label = tk.Label(self.main_frame, text="No vehicle.jpg image file found on the vehicle directory.")
+            image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
 
         self.scroll_frame = ScrollFrame(self.root)
         self.scroll_frame.pack(side="top", fill="both", expand=True)
 
         self.populate_frames()
 
-        self.save_button = ttk.Button(self.root, text="Save", command=self.save_data)
+        self.save_button = ttk.Button(self.root, text="Save data and start configuration", command=self.save_data)
         self.save_button.pack(pady=7)
 
     def populate_frames(self):
         """
         Populates the ScrollFrame with widgets based on the JSON data.
         """
-        for key, value in self.data.items():
-            self.add_widget(self.scroll_frame.view_port, key, value, [])
+        if "Components" in self.data:
+            for key, value in self.data["Components"].items():
+                self.add_widget(self.scroll_frame.view_port, key, value, [])
 
     def add_widget(self, parent, key, value, path):
         """
@@ -135,7 +168,7 @@ class JsonEditorApp(BaseWindow):
             value = entry.get()
 
             # Navigate through the nested dictionaries using the elements of path
-            current_data = self.data
+            current_data = self.data["Components"]
             for key in path[:-1]:
                 current_data = current_data[key]
 
@@ -144,7 +177,8 @@ class JsonEditorApp(BaseWindow):
 
         # Save the updated data back to the JSON file
         self.local_filesystem.save_vehicle_components_json_data(self.data)
-        print("Data saved successfully.")
+        logging_info("Data saved successfully.")
+        self.root.destroy()
 
 
 if __name__ == "__main__":

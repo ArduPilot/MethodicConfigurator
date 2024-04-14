@@ -367,6 +367,12 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
         script_dir = os_path.dirname(os_path.abspath(__file__))
         return os_path.join(script_dir, 'ArduPilot_logo.png')
 
+    def vehicle_image_filepath(self):
+        return os_path.join(self.vehicle_dir, 'vehicle.jpg')
+
+    def vehicle_image_exists(self):
+        return os_path.exists(self.vehicle_image_filepath())
+
     def load_vehicle_components_json_data(self):
         data = {}
         try:
