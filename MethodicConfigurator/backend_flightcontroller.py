@@ -129,11 +129,13 @@ def decode_flight_capabilities(capabilities):
 # see for more info:
 # pymavlink.dialects.v20.ardupilotmega
 def decode_mav_type(mav_type):
-    return mavutil.mavlink.enums["MAV_TYPE"].get(mav_type, mavutil.mavlink.EnumEntry("None", "Unknown type")).description
+    return mavutil.mavlink.enums["MAV_TYPE"].get(mav_type,
+                                                 mavutil.mavlink.EnumEntry("None", "Unknown type")).description
 
 
 def decode_mav_autopilot(mav_autopilot):
-    return mavutil.mavlink.enums["MAV_AUTOPILOT"].get(mav_autopilot, mavutil.mavlink.EnumEntry("None", "Unknown type")).description
+    return mavutil.mavlink.enums["MAV_AUTOPILOT"].get(mav_autopilot,
+                                                      mavutil.mavlink.EnumEntry("None", "Unknown type")).description
 
 
 class FlightController:  # pylint: disable=too-many-instance-attributes

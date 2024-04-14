@@ -61,10 +61,12 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
                 default_key_index = self.list_keys.index(selected_element)
                 self.current(default_key_index)
             except IndexError:
-                logging_critical("%s combobox selected string '%s' not in list %s", self.cb_name, selected_element, self.list_keys)
+                logging_critical("%s combobox selected string '%s' not in list %s",
+                                 self.cb_name, selected_element, self.list_keys)
                 sys_exit(1)
             except ValueError:
-                logging_critical("%s combobox selected string '%s' not in list %s", self.cb_name, selected_element, self.list_keys)
+                logging_critical("%s combobox selected string '%s' not in list %s",
+                                 self.cb_name, selected_element, self.list_keys)
                 sys_exit(1)
             update_combobox_width(self)
         else:
@@ -85,10 +87,12 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
     This class provides functionality for displaying available flight controller connections,
     allowing the user to select a connection, and handling the connection process.
     """
-    def __init__(self, parent, parent_frame, flight_controller: FlightController, destroy_parent_on_connect: bool):
+    def __init__(self, parent, parent_frame, flight_controller: FlightController,
+                 destroy_parent_on_connect: bool, read_params_on_connect: bool):
         self.parent = parent
         self.flight_controller = flight_controller
         self.destroy_parent_on_connect = destroy_parent_on_connect
+        self.read_params_on_connect = read_params_on_connect
         self.previous_selection = flight_controller.comport.device if hasattr(self.flight_controller.comport, "device") \
             else None
         self.connection_progress_window = None
@@ -155,6 +159,8 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
         self.previous_selection = self.flight_controller.comport.device
         if self.destroy_parent_on_connect:
             self.parent.root.destroy()
+        if self.read_params_on_connect and hasattr(self.parent, "read_flight_controller_parameters"):
+            self.parent.read_flight_controller_parameters(reread=False)
         return False
 
     def update_connection_progress_bar(self, current_value: int, max_value: int):
@@ -221,7 +227,8 @@ class ConnectionSelectionWindow(BaseWindow):
                                  "manually select the fight controller connection or add a new one")
         option2_label.pack(expand=False, fill=tk.X, padx=6)
         self.connection_selection_widgets = ConnectionSelectionWidgets(self, option2_label_frame, flight_controller,
-                                                                       destroy_parent_on_connect=True)
+                                                                       destroy_parent_on_connect=True,
+                                                                       read_params_on_connect=False)
         self.connection_selection_widgets.container_frame.pack(expand=True, fill=tk.X, padx=80, pady=6, anchor=tk.CENTER)
 
         # Option 3 - Skip FC connection, just edit the .param files on disk
@@ -233,15 +240,17 @@ class ConnectionSelectionWindow(BaseWindow):
                                  "(if '00_default.param' file is present)\n"
                                  "and just edit the intermediate '.param' files on disk")
         option3_label.pack(expand=False, fill=tk.X, padx=6)
-        skip_fc_connection_button = tk.Button(option3_label_frame, text="Skip FC connection, just edit the .param files on disk", command=self.skip_fc_connection)
+        skip_fc_connection_button = tk.Button(option3_label_frame,
+                                              text="Skip FC connection, just edit the .param files on disk",
+                                              command=self.skip_fc_connection)
         skip_fc_connection_button.pack(expand=False, fill=tk.X, padx=20, pady=6)
 
     def fc_autoconnect(self):
         self.connection_selection_widgets.reconnect()
 
     def skip_fc_connection(self):
-        logging_warning("Will proceed without FC connection. No FC parameters will be read nor written")
-        logging_warning("Only the PC intermediate .param files on disk will be edited")
+        logging_warning("Will proceed without FC connection. FC parameters will not be read nor written")
+        logging_warning("Only the intermediate '.param' files on the PC disk will be edited")
         self.root.destroy()
 
 
@@ -278,18 +287,22 @@ def argument_parser():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
-    argsp = argument_parser()
+def main():
+    args = argument_parser()
 
-    logging_basicConfig(level=logging_getLevelName(argsp.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
+    logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
 
     logging_warning("This main is for testing and development only, usually the ConnectionSelectionWindow is called from "
                     "another script")
 
-    fc = FlightController(argsp.reboot_time) # Initialize your FlightController instance
-    result = fc.connect(device=argsp.device) # Connect to the flight controller
+    flight_controller = FlightController(args.reboot_time) # Initialize your FlightController instance
+    result = flight_controller.connect(device=args.device) # Connect to the flight controller
     if result:
         logging_warning(result)
-        window = ConnectionSelectionWindow(fc, result)
+        window = ConnectionSelectionWindow(flight_controller, result)
         window.root.mainloop()
-    fc.disconnect() # Disconnect from the flight controller
+    flight_controller.disconnect() # Disconnect from the flight controller
+
+
+if __name__ == "__main__":
+    main()
