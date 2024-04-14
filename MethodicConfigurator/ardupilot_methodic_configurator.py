@@ -54,6 +54,16 @@ def argument_parser():
                         default="",
                         help='MAVLink connection string to the flight controller. Defaults to autodetection'
                         )  # pylint: disable=R0801
+    parser.add_argument('-r', '--reboot-time',
+                        type=int,
+                        default=7,
+                        help='Flight controller reboot time. '
+                        'Default is %(default)s')  # pylint: disable=R0801
+    parser.add_argument('-t', '--vehicle-type',
+                        choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
+                                 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
+                        default='ArduCopter',
+                        help='The type of the vehicle. Defaults to ArduCopter')  # pylint: disable=R0801
     parser.add_argument('--vehicle-dir',
                         type=str,
                         default=os_getcwd(),
@@ -69,16 +79,6 @@ def argument_parser():
                         default='INFO',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                         help='Logging level (default is INFO).')  # pylint: disable=R0801
-    parser.add_argument('-r', '--reboot-time',
-                        type=int,
-                        default=7,
-                        help='Flight controller reboot time. '
-                        'Default is %(default)s')  # pylint: disable=R0801
-    parser.add_argument('-t', '--vehicle-type',
-                        choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
-                                 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
-                        default='ArduCopter',
-                        help='The type of the vehicle. Defaults to ArduCopter')  # pylint: disable=R0801
     parser.add_argument('-v', '--version',
                         action='version',
                         version=f'%(prog)s {VERSION}',
