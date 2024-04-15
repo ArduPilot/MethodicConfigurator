@@ -660,6 +660,8 @@ class gui(BaseWindow):
         self.at_least_one_param_edited = False
 
     def write_summary_files(self):
+        if not hasattr(self.flight_controller, 'fc_parameters') or self.flight_controller.fc_parameters is None:
+            return
         annotated_fc_parameters = self.local_filesystem.annotate_intermediate_comments_to_param_dict(
             self.flight_controller.fc_parameters)
         non_default__read_only_params, non_default__writable_calibrations, non_default__writable_non_calibrations = \
