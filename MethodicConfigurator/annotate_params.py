@@ -384,10 +384,7 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
     for param in root.findall(".//param"):
         name = param.get("name")
         # Remove the <vehicle_type>: prefix from the name if it exists
-        if vehicle_type == "ArduRover":
-            name = remove_prefix(name, "Rover" + ":")
-        else:
-            name = remove_prefix(name, vehicle_type + ":")
+        name = remove_prefix(name, vehicle_type + ":")
 
         human_name = param.get("humanName")
         documentation = split_into_lines(param.get("documentation"), max_line_length)
