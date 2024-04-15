@@ -318,8 +318,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Different parameters based on the thresholdfile_value
         different_params = {param_name: file_value for param_name, file_value in
                             self.local_filesystem.file_parameters[selected_file].items()
-                            if param_name in fc_parameters and not is_within_tolerance(fc_parameters[param_name],
-                                                                                       float(file_value.value))}
+                            if param_name not in fc_parameters or (param_name in fc_parameters and \
+                                not is_within_tolerance(fc_parameters[param_name], float(file_value.value)))}
         if not different_params and self.show_only_differences.get():
             logging_info("No different parameters found in %s. Skipping...", selected_file)
             messagebox.showinfo("ArduPilot methodic configurator",
