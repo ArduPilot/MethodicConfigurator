@@ -16,8 +16,6 @@ Supports both Mission Planner and MAVProxy file formats
 Supports sorting the parameters
 Has unit tests with 88% coverage
 
-AP_FLAKE8_CLEAN
-
 Author: Amilcar do Carmo Lucas, IAV GmbH
 """
 

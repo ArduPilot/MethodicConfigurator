@@ -1,7 +1,19 @@
-from setuptools import setup
-from setuptools import find_packages
+#!/usr/bin/env python3
+
+'''
+This script downloads the licenses of the direct and indirect dependencies of the project
+
+This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+
+(C) 2024 Amilcar do Carmo Lucas, IAV GmbH
+
+SPDX-License-Identifier:    GPL-3
+'''
 
 import os
+
+from setuptools import setup
+from setuptools import find_packages
 
 from MethodicConfigurator.version import VERSION
 
@@ -35,20 +47,20 @@ dev_requirements = [
     # Add any other development requirements here
 ]
 
-prj_url = "https://github.com/ArduPilot/MethodicConfigurator"
+PRJ_URL = "https://github.com/ArduPilot/MethodicConfigurator"
 
 # Read the long description from the README file
 with open('README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
     # Use Absolute links so that the pyPI page renders correctly
-    long_description = long_description.replace("(USERMANUAL.md", f"({prj_url}/blob/master/USERMANUAL.md")
-    long_description = long_description.replace("(CONTRIBUTING.md", f"({prj_url}/blob/master/CONTRIBUTING.md")
-    long_description = long_description.replace("(ARCHITECTURE.md", f"({prj_url}/blob/master/ARCHITECTURE.md")
-    long_description = long_description.replace("(CODE_OF_CONDUCT.md", f"({prj_url}/blob/master/CODE_OF_CONDUCT.md")
-    long_description = long_description.replace("(LICENSE.md", f"({prj_url}/blob/master/LICENSE.md")
-    long_description = long_description.replace("(credits/CREDITS.md", f"({prj_url}/blob/master/credits/CREDITS.md")
+    long_description = long_description.replace("(USERMANUAL.md", f"({PRJ_URL}/blob/master/USERMANUAL.md")
+    long_description = long_description.replace("(CONTRIBUTING.md", f"({PRJ_URL}/blob/master/CONTRIBUTING.md")
+    long_description = long_description.replace("(ARCHITECTURE.md", f"({PRJ_URL}/blob/master/ARCHITECTURE.md")
+    long_description = long_description.replace("(CODE_OF_CONDUCT.md", f"({PRJ_URL}/blob/master/CODE_OF_CONDUCT.md")
+    long_description = long_description.replace("(LICENSE.md", f"({PRJ_URL}/blob/master/LICENSE.md")
+    long_description = long_description.replace("(credits/CREDITS.md", f"({PRJ_URL}/blob/master/credits/CREDITS.md")
     long_description = long_description.replace("images/App_screenshot1.png",
-                                                f"{prj_url}/raw/master/images/App_screenshot1.png")
+                                                f"{PRJ_URL}/raw/master/images/App_screenshot1.png")
 
 setup(
     name='MethodicConfigurator',
@@ -57,7 +69,7 @@ setup(
     description='A clear configuration sequence for ArduPilot vehicles',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url=prj_url,
+    url=PRJ_URL,
     author='Amilcar do Carmo Lucas',
     author_email='amilcar.lucas@iav.de',
     packages=find_packages(),

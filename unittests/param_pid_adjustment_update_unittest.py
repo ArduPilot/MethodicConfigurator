@@ -13,6 +13,8 @@ This file is part of Ardupilot methodic configurator. https://github.com/ArduPil
 SPDX-License-Identifier:    GPL-3
 '''
 
+# pylint: skip-file
+
 import unittest
 import argparse
 import os

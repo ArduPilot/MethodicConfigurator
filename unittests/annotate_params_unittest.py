@@ -5,10 +5,10 @@ These are the unit tests for the python script that fetches online ArduPilot
 parameter documentation (if not cached) and adds it to the specified file or
 to all *.param and *.parm files in the specified directory.
 
-AP_FLAKE8_CLEAN
-
 Author: Amilcar do Carmo Lucas, IAV GmbH
 '''
+
+# pylint: skip-file
 
 import tempfile
 from unittest.mock import patch, mock_open

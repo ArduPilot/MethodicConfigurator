@@ -7,8 +7,6 @@ Supports Mission Planner, MAVProxy and QGCS file format output
 
 Currently has 95% unit test coverage
 
-AP_FLAKE8_CLEAN
-
 Amilcar do Carmo Lucas, IAV GmbH
 '''
 
