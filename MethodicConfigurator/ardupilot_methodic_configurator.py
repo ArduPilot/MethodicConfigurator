@@ -90,7 +90,7 @@ def argument_parser():
 # pylint: enable=duplicate-code
 
 
-if __name__ == "__main__":
+def main():
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
@@ -154,3 +154,6 @@ if __name__ == "__main__":
     # Close the connection to the flight controller
     flight_controller.disconnect()
     sys_exit(0)
+
+if __name__ == "__main__":
+    main()

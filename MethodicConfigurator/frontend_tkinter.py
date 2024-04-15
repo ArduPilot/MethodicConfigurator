@@ -337,7 +337,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Scroll to the top of the parameter table
         self.scroll_frame.canvas.yview("moveto", 0)
 
-    def update_table(self, params, fc_parameters):  # pylint: disable=too-many-locals
+    def update_table(self, params, fc_parameters):  # pylint: disable=too-many-locals, too-many-statements
         # Create labels for table headers
         headers = ["Parameter", "Current Value", "New Value", "Unit", "Write", "Change Reason"]
         tooltips = ["Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long",
