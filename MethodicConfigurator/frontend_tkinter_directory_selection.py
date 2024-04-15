@@ -11,6 +11,8 @@ SPDX-License-Identifier:    GPL-3
 
 from argparse import ArgumentParser
 
+from sys import exit as sys_exit
+
 from copy import deepcopy
 
 from logging import basicConfig as logging_basicConfig
@@ -186,6 +188,12 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                                     local_filesystem.vehicle_dir,
                                     "MyVehicleName")
         self.create_option2_widgets()
+
+        # Bind the close_connection_and_quit function to the window close event
+        self.root.protocol("WM_DELETE_WINDOW", self.close_and_quit)
+
+    def close_and_quit(self):
+        sys_exit(0)
 
     def create_option1_widgets(self, initial_template_dir: str, initial_base_dir: str, initial_new_dir: str):
         # Option 1 - Create a new vehicle configuration directory based on a existing template

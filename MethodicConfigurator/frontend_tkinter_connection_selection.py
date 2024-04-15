@@ -196,7 +196,7 @@ class ConnectionSelectionWindow(BaseWindow):
     def __init__(self, flight_controller: FlightController, connection_result_string: str):
         super().__init__()
         self.root.title("Flight controller connection")
-        self.root.geometry("400x500") # Set the window size
+        self.root.geometry("400x510") # Set the window size
 
         # Explain why we are here
         if flight_controller.comport is None:
@@ -243,7 +243,13 @@ class ConnectionSelectionWindow(BaseWindow):
         skip_fc_connection_button = tk.Button(option3_label_frame,
                                               text="Skip FC connection, just edit the .param files on disk",
                                               command=self.skip_fc_connection)
-        skip_fc_connection_button.pack(expand=False, fill=tk.X, padx=20, pady=6)
+        skip_fc_connection_button.pack(expand=False, fill=tk.X, padx=15, pady=6)
+
+        # Bind the close_connection_and_quit function to the window close event
+        self.root.protocol("WM_DELETE_WINDOW", self.close_and_quit)
+
+    def close_and_quit(self):
+        sys_exit(0)
 
     def fc_autoconnect(self):
         self.connection_selection_widgets.reconnect()
