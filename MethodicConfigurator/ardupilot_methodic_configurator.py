@@ -138,8 +138,8 @@ def main():
                             args.n, files[start_file_index])
         start_file = files[start_file_index]
 
-    app = JsonEditorApp(VERSION, local_filesystem)
-    app.root.mainloop()
+    component_editor_window = JsonEditorApp(VERSION, local_filesystem)
+    component_editor_window.root.mainloop()
 
     # Call the GUI function with the starting intermediate parameter file
     ParameterEditorWindow(start_file, flight_controller, local_filesystem, VERSION)
