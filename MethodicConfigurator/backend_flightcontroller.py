@@ -324,9 +324,9 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
             # logging_info(f"Flight Controller Operating system version number: {m.os_sw_version}")
             logging_info(f"Flight Controller HW / board version: {m.board_version}")
             # Convert each value in the array to hex and join them together
-            flight_custom_version_hex = ''.join(format(x, '02x') for x in m.flight_custom_version)
-            # middleware_custom_version_hex = ''.join(format(x, '02x') for x in m.middleware_custom_version)
-            os_custom_version_hex = ''.join(format(x, '02x') for x in m.os_custom_version)
+            flight_custom_version_hex = ''.join(chr(c) for c in m.flight_custom_version)
+            # middleware_custom_version_hex = ''.join(chr(c) for c in m.middleware_custom_version)
+            os_custom_version_hex = ''.join(chr(c) for c in m.os_custom_version)
             logging_info(f"Flight Controller first 8 hex bytes of the FC git hash: {flight_custom_version_hex}")
             # logging_info(f"Flight Controller first 8 hex bytes of the MW git hash: {middleware_custom_version_hex}")
             logging_info(f"Flight Controller first 8 hex bytes of the ChibiOS git hash: {os_custom_version_hex}")
