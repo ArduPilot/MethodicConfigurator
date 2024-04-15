@@ -78,7 +78,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
 
     Attributes:
         vehicle_dir (str): The directory path where the vehicle configuration files are stored.
-        vehicle_type (str): The type of the vehicle (e.g., "copter", "rover").
+        vehicle_type (str): The type of the vehicle (e.g., "ArduCopter", "Rover").
         file_documentation_filename (str): The name of the file containing documentation for the configuration files.
         file_documentation (dict): A dictionary containing the file documentation.
         file_parameters (dict): A dictionary of parameters read from intermediate parameter files.
@@ -152,7 +152,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
             if param_name in self.param_default_dict:
                 default_value = format(self.param_default_dict[param_name].value, '.6f').rstrip('0').rstrip('.')
                 prefix_parts += [f"Default: {default_value}"]
-                param_info['doc_tooltip'] = ('\n').join(prefix_parts)
+            param_info['doc_tooltip'] = ('\n').join(prefix_parts)
 
     def read_params_from_files(self):
         """
