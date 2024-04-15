@@ -656,7 +656,7 @@ class gui(BaseWindow):
             if messagebox.askyesno("One or more parameters have been edited",
                                    f"Do you want to write the changes to the {self.current_file} file?"):
                 self.local_filesystem.export_to_param(self.local_filesystem.file_parameters[self.current_file],
-                                                      self.current_file)
+                                                      self.current_file, annotate_doc=False)
         self.at_least_one_param_edited = False
 
     def write_summary_files(self):
