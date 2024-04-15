@@ -8,20 +8,25 @@ This file is part of Ardupilot methodic configurator. https://github.com/ArduPil
 SPDX-License-Identifier:    GPL-3
 '''
 
+from sys import exit as sys_exit
+
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
+
 from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
 from logging import critical as logging_critical
-from PIL import Image
-from PIL import ImageTk
+
 from typing import List
 from typing import Tuple
 
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
+
+from PIL import Image
+from PIL import ImageTk
 
 from backend_filesystem import LocalFilesystem
 from backend_filesystem import is_within_tolerance
@@ -78,7 +83,13 @@ def show_about_window(root, version: str):
 
 
 
-class gui(BaseWindow):
+class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes, too-many-public-methods
+    """
+    This class is responsible for creating and managing the graphical user interface (GUI)
+    for the ArduPilot methodic configurator. It inherits from the BaseWindow class
+    and provides functionalities for displaying and interacting with drone
+    parameters, documentation, and flight controller connection settings.
+    """
     def __init__(self, current_file: str, flight_controller: FlightController,
                  local_filesystem: LocalFilesystem, version: str):
         super().__init__()
@@ -89,12 +100,29 @@ class gui(BaseWindow):
         self.at_least_one_param_edited = False
         self.at_least_one_changed_parameter_written = False
         self.write_checkbutton_var = {}
+        self.file_selection_combobox = None
+        self.documentation_label_blog = None
+        self.documentation_label_wiki = None
+        self.documentation_label_extra = None
+        self.documentation_label_mandatory = None
+        self.show_only_differences = None
+        self.scroll_frame = None
+        self.reset_progress_window = None
+        self.reset_progress_bar = None
+        self.reset_progress_label = None
+        self.param_read_progress_window = None
+        self.param_read_progress_bar = None
+        self.param_read_progress_label = None
+
         self.root.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version)
         self.root.geometry("880x500") # Set the window width
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)
 
+        self.__create_widgets(version)
+
+    def __create_widgets(self, version: str):  # pylint: disable=too-many-locals, too-many-statements
         config_frame = tk.Frame(self.root)
         config_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0)) # Pack the frame at the top of the window
 
@@ -117,8 +145,8 @@ class gui(BaseWindow):
 
         # Create combobox for intermediate parameter file selection
         self.file_selection_combobox = AutoResizeCombobox(file_selection_frame,
-                                                          list(local_filesystem.file_parameters.keys()),
-                                                          current_file,
+                                                          list(self.local_filesystem.file_parameters.keys()),
+                                                          self.current_file,
                                                           "Select the intermediate parameter file from the list of available "
                                                           "files in the selected vehicle directory\nIt will automatically "
                                                           "advance to the next file once the current file is written to the "
@@ -189,7 +217,7 @@ class gui(BaseWindow):
 
         # Create a Frame for the Scrollable Content
         self.scroll_frame = ScrollFrame(self.root)
-        self.repopulate_parameter_table(current_file)
+        self.repopulate_parameter_table(self.current_file)
         self.scroll_frame.pack(side="top", fill="both", expand=True)
 
         # Create a frame for the buttons
@@ -309,7 +337,7 @@ class gui(BaseWindow):
         # Scroll to the top of the parameter table
         self.scroll_frame.canvas.yview("moveto", 0)
 
-    def update_table(self, params, fc_parameters):
+    def update_table(self, params, fc_parameters):  # pylint: disable=too-many-locals
         # Create labels for table headers
         headers = ["Parameter", "Current Value", "New Value", "Unit", "Write", "Change Reason"]
         tooltips = ["Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long",
@@ -379,10 +407,11 @@ class gui(BaseWindow):
                 ]
                 for j, widget in enumerate(row):
                     # Use sticky="ew" to make the widget stretch horizontally
-                    widget.grid(row=i+1, column=j, sticky="w" if j == 0 else "ew" if j == 5 else "e", padx=(0, 5) if j == 5 else 0)
+                    widget.grid(row=i+1, column=j,
+                                sticky="w" if j == 0 else "ew" if j == 5 else "e", padx=(0, 5) if j == 5 else 0)
         except KeyError as e:
             logging_critical("Parameter %s not found in the %s file: %s", param_name, self.current_file, e, exc_info=True)
-            exit(1)
+            sys_exit(1)
 
         # Configure the table_frame to stretch columns
         self.scroll_frame.view_port.columnconfigure(0, weight=0, minsize=120) # Parameter name
@@ -399,24 +428,24 @@ class gui(BaseWindow):
             old_value = self.local_filesystem.file_parameters[current_file][param_name].value
         except KeyError as e:
             logging_critical("Parameter %s not found in the %s file: %s", param_name, current_file, e, exc_info=True)
-            exit(1)
+            sys_exit(1)
         valid = True
         # Check if the input is a valid float
         try:
-            P = float(new_value)
-            changed = not is_within_tolerance(old_value, P)
+            p = float(new_value)
+            changed = not is_within_tolerance(old_value, p)
             param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
             p_min = param_metadata.get('min', None) if param_metadata else None
             p_max = param_metadata.get('max', None) if param_metadata else None
             if changed:
-                if p_min and P < p_min:
+                if p_min and p < p_min:
                     if not messagebox.askyesno("Out-of-bounds Value",
-                                               f"The value for {param_name} {P} should be greater than {p_min}\n"
+                                               f"The value for {param_name} {p} should be greater than {p_min}\n"
                                                "Use out-of-bounds value?", icon='warning'):
                         valid = False
-                if p_max and P > p_max:
+                if p_max and p > p_max:
                     if not messagebox.askyesno("Out-of-bounds Value",
-                                               f"The value for {param_name} {P} should be smaller than {p_max}\n"
+                                               f"The value for {param_name} {p} should be smaller than {p_max}\n"
                                                "Use out-of-bounds value?", icon='warning'):
                         valid = False
         except ValueError:
@@ -428,7 +457,7 @@ class gui(BaseWindow):
                 logging_debug("Parameter %s changed, will later ask if change(s) should be saved to file.", param_name)
             self.at_least_one_param_edited = changed or self.at_least_one_param_edited
             # Update the params dictionary with the new value
-            self.local_filesystem.file_parameters[current_file][param_name].value = P
+            self.local_filesystem.file_parameters[current_file][param_name].value = p
         else:
             # Revert to the previous (valid) value
             event.widget.delete(0, tk.END)
@@ -443,7 +472,7 @@ class gui(BaseWindow):
         except KeyError as e:
             logging_critical("Parameter %s not found in the %s file %s: %s", param_name, self.current_file,
                              new_value, e, exc_info=True)
-            exit(1)
+            sys_exit(1)
         if changed and not self.at_least_one_param_edited:
             logging_debug("Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to "
                           "file.",

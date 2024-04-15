@@ -22,6 +22,7 @@ PARAM_NAME_REGEX = r'^[A-Z][A-Z_0-9]*$'
 PARAM_NAME_MAX_LEN = 16
 MAVLINK_SYSID_MAX = 2**24
 MAVLINK_COMPID_MAX = 2**8
+MAV_PARAM_TYPE_REAL32 = 9
 
 
 def parse_arguments(args=None):
@@ -71,7 +72,7 @@ def parse_arguments(args=None):
     return args
 
 
-def extract_parameter_values(logfile: str, param_type: str = 'defaults') -> Dict[str, float]:
+def extract_parameter_values(logfile: str, param_type: str = 'defaults') -> Dict[str, float]:  # pylint: disable=too-many-branches
     """
     Extracts the parameter values from an ArduPilot .bin log file.
 
@@ -162,7 +163,7 @@ def sort_params(params: Dict[str, float], sort_type: str = 'none') -> Dict[str, 
     return params
 
 
-def output_params(params: Dict[str, float], format_type: str = 'missionplanner',
+def output_params(params: Dict[str, float], format_type: str = 'missionplanner',  # pylint: disable=too-many-branches
                   sysid: int = -1, compid: int = -1) -> None:
     """
     Outputs parameters names and their values to the console
@@ -183,13 +184,13 @@ def output_params(params: Dict[str, float], format_type: str = 'missionplanner',
         if compid == -1:
             compid = 1  # if unspecified, default to 1
         if sysid < 0:
-            raise SystemExit("Invalid system ID parameter %i must not be negative" % sysid)
+            raise SystemExit(f"Invalid system ID parameter {sysid} must not be negative")
         if sysid > MAVLINK_SYSID_MAX-1:
-            raise SystemExit("Invalid system ID parameter %i must be smaller than %i" % (sysid, MAVLINK_SYSID_MAX))
+            raise SystemExit(f"Invalid system ID parameter {sysid} must be smaller than {MAVLINK_SYSID_MAX}")
         if compid < 0:
-            raise SystemExit("Invalid component ID parameter %i must not be negative" % compid)
+            raise SystemExit(f"Invalid component ID parameter {compid} must not be negative")
         if compid > MAVLINK_COMPID_MAX-1:
-            raise SystemExit("Invalid component ID parameter %i must be smaller than %i" % (compid, MAVLINK_COMPID_MAX))
+            raise SystemExit(f"Invalid component ID parameter {compid} must be smaller than {MAVLINK_COMPID_MAX}")
         # see https://dev.qgroundcontrol.com/master/en/file_formats/parameters.html
         print("""
 # # Vehicle-Id Component-Id Name Value Type
@@ -203,12 +204,9 @@ def output_params(params: Dict[str, float], format_type: str = 'missionplanner',
                 pass # preserve non-floating point strings, if present
             print(f"{param_name},{param_value}")
         elif format_type == "mavproxy":
-            print("%-15s %.6f" % (param_name, param_value))
+            print(f"{param_name:<15} {param_value:.6f}")
         elif format_type == "qgcs":
-            MAV_PARAM_TYPE_REAL32 = 9
-            print("%u %u %-15s %.6f %u" %
-                  (sysid, compid, param_name, param_value, MAV_PARAM_TYPE_REAL32))
-
+            print(f"{sysid} {compid} {param_name:<15} {param_value:.6f} {MAV_PARAM_TYPE_REAL32}")
 
 def main():
     args = parse_arguments()

@@ -265,7 +265,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         '''show version'''
         self.request_message(mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION)
 
-    def create_connection_with_retry(self, progress_callback, retries: int = 3,
+    def create_connection_with_retry(self, progress_callback, retries: int = 3,  # pylint: disable=too-many-return-statements
                                      timeout: int = 5) -> mavutil.mavlink_connection:
         """
         Attempts to create a connection to the flight controller with retries.
@@ -356,8 +356,8 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         Returns:
             Dict[str, float]: A dictionary of flight controller parameters.
         """
-        if self.master is None and self.comport is not None and \
-           self.comport.device == 'test':  # FIXME for testing only pylint: disable=fixme
+        # FIXME this entire is statement is for testing only, remove it later pylint: disable=fixme
+        if self.master is None and self.comport is not None and self.comport.device == 'test':
             filename = os_path.join('4.4.4-test-params', '00_default.param')
             logging_warning("Testing active, will load all parameters from the %s file", filename)
             par_dict_with_comments = Par.load_param_file_into_dict(filename)
@@ -368,11 +368,11 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
 
         # Check if MAVFTP is supported
         # FIXME remove the "not" once it works pylint: disable=fixme
-        if self.capabilities and \
-           not (self.capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP):  # pylint: disable=superfluous-parens
-            logging_info("MAVFTP is supported by the %s flight controller", self.comport.device)
-            # parameters, _defaults = self.read_params_via_mavftp(progress_callback)
-            return {}  # parameters
+        if self.capabilities:
+            if not (self.capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP):  # pylint: disable=superfluous-parens
+                logging_info("MAVFTP is supported by the %s flight controller", self.comport.device)
+                # parameters, _defaults = self.read_params_via_mavftp(progress_callback)
+                return {}  # parameters
 
         logging_info("MAVFTP is not supported by the %s flight controller, fallback to MAVLink", self.comport.device)
         # MAVFTP is not supported, fall back to MAVLink

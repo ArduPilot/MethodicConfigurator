@@ -87,7 +87,7 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
     This class provides functionality for displaying available flight controller connections,
     allowing the user to select a connection, and handling the connection process.
     """
-    def __init__(self, parent, parent_frame, flight_controller: FlightController,
+    def __init__(self, parent, parent_frame, flight_controller: FlightController,  # pylint: disable=too-many-arguments
                  destroy_parent_on_connect: bool, read_params_on_connect: bool):
         self.parent = parent
         self.flight_controller = flight_controller
@@ -260,6 +260,7 @@ class ConnectionSelectionWindow(BaseWindow):
         self.root.destroy()
 
 
+# pylint: disable=duplicate-code
 def argument_parser():
     """
     Parses command-line arguments for the script.
@@ -275,22 +276,23 @@ def argument_parser():
                         type=str,
                         default="",
                         help='MAVLink connection string to the flight controller. Defaults to autodetection'
-                        )  # pylint: disable=R0801
+                        )
     parser.add_argument('-r', '--reboot-time',
                         type=int,
                         default=7,
                         help='Flight controller reboot time. '
-                        'Default is %(default)s')  # pylint: disable=R0801
+                        'Default is %(default)s')
     parser.add_argument('--loglevel',
                         type=str,
                         default='INFO',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        help='Logging level (default is INFO).')  # pylint: disable=R0801
+                        help='Logging level (default is INFO).')
     parser.add_argument('-v', '--version',
                         action='version',
                         version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.')  # pylint: disable=R0801
+                        help='Display version information and exit.')
     return parser.parse_args()
+# pylint: enable=duplicate-code
 
 
 def main():

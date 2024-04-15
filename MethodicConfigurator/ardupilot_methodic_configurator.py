@@ -27,11 +27,12 @@ from frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
 
 from component_editor import JsonEditorApp
 
-from frontend_tkinter import gui
+from frontend_tkinter import ParameterEditorWindow
 
 from version import VERSION
 
 
+# pylint: disable=duplicate-code
 def argument_parser():
     """
     Parses command-line arguments for the script.
@@ -55,37 +56,38 @@ def argument_parser():
                         type=str,
                         default="",
                         help='MAVLink connection string to the flight controller. Defaults to autodetection'
-                        )  # pylint: disable=R0801
+                        )
     parser.add_argument('-r', '--reboot-time',
                         type=int,
                         default=7,
                         help='Flight controller reboot time. '
-                        'Default is %(default)s')  # pylint: disable=R0801
+                        'Default is %(default)s')
     parser.add_argument('-t', '--vehicle-type',
                         choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
                                  'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
                         default='ArduCopter',
-                        help='The type of the vehicle. Defaults to ArduCopter')  # pylint: disable=R0801
+                        help='The type of the vehicle. Defaults to ArduCopter')
     parser.add_argument('--vehicle-dir',
                         type=str,
                         default=os_getcwd(),
                         help='Directory containing vehicle-specific intermediate parameter files. '
-                        'Defaults to the current working directory')  # pylint: disable=R0801
+                        'Defaults to the current working directory')
     parser.add_argument('--n',
                         type=int,
                         default=0,
                         help='Start directly on the nth intermediate parameter file (skips previous files). '
-                        'Default is %(default)s')  # pylint: disable=R0801
+                        'Default is %(default)s')
     parser.add_argument('--loglevel',
                         type=str,
                         default='INFO',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        help='Logging level (default is INFO).')  # pylint: disable=R0801
+                        help='Logging level (default is INFO).')
     parser.add_argument('-v', '--version',
                         action='version',
                         version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.')  # pylint: disable=R0801
-    return parser.parse_args()   # pylint: disable=R0801
+                        help='Display version information and exit.')
+    return parser.parse_args()
+# pylint: enable=duplicate-code
 
 
 if __name__ == "__main__":
@@ -128,7 +130,7 @@ if __name__ == "__main__":
     app.root.mainloop()
 
     # Call the GUI function with the starting intermediate parameter file
-    gui(start_file, flight_controller, local_filesystem, VERSION)
+    ParameterEditorWindow(start_file, flight_controller, local_filesystem, VERSION)
 
     # Close the connection to the flight controller
     flight_controller.disconnect()

@@ -30,6 +30,7 @@ from frontend_tkinter_base import BaseWindow
 from version import VERSION
 
 
+# pylint: disable=duplicate-code
 def argument_parser():
     """
     Parses command-line arguments for the script.
@@ -44,22 +45,23 @@ def argument_parser():
                         type=str,
                         default=LocalFilesystem.getcwd(),
                         help='Directory containing vehicle-specific intermediate parameter files. '
-                        'Defaults to the current working directory')  # pylint: disable=R0801
+                        'Defaults to the current working directory')
     parser.add_argument('--loglevel',
                         type=str,
                         default='INFO',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        help='Logging level (default is INFO).')  # pylint: disable=R0801
+                        help='Logging level (default is INFO).')
     parser.add_argument('-t', '--vehicle-type',
                         choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
                                  'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
                         default='ArduCopter',
-                        help='The type of the vehicle. Defaults to ArduCopter')  # pylint: disable=R0801
+                        help='The type of the vehicle. Defaults to ArduCopter')
     parser.add_argument('-v', '--version',
                         action='version',
                         version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.')  # pylint: disable=R0801
-    return parser.parse_args()  # pylint: disable=R0801
+                        help='Display version information and exit.')
+    return parser.parse_args()
+# pylint: enable=duplicate-code
 
 
 class JsonEditorApp(BaseWindow):
@@ -92,6 +94,7 @@ class JsonEditorApp(BaseWindow):
         if local_filesystem.vehicle_image_exists():
             image_height = 100
             image = Image.open(local_filesystem.vehicle_image_filepath())
+            # pylint: disable=duplicate-code
             width, height = image.size
             aspect_ratio = width / height
             new_width = int(image_height * aspect_ratio)
@@ -104,6 +107,7 @@ class JsonEditorApp(BaseWindow):
             image_label = tk.Label(self.main_frame, image=photo)
             image_label.image = photo # Keep a reference to the image to prevent it from being garbage collected
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
+            # pylint: enable=duplicate-code
             show_tooltip(image_label, "Replace the vehicle.jpg file in the vehicle directory to change the vehicle image.")
         else:
             image_label = tk.Label(self.main_frame, text="No vehicle.jpg image file found on the vehicle directory.")

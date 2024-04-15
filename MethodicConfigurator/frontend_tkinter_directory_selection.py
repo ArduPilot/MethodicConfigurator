@@ -285,6 +285,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             show_error_message("No Parameter Files Found", error_message)
 
 
+# pylint: disable=duplicate-code
 def argument_parser():
     """
     Parses command-line arguments for the script.
@@ -300,27 +301,28 @@ def argument_parser():
                         choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
                                  'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
                         default='ArduCopter',
-                        help='The type of the vehicle. Defaults to ArduCopter')  # pylint: disable=R0801
+                        help='The type of the vehicle. Defaults to ArduCopter')
     parser.add_argument('--vehicle-dir',
                         type=str,
                         default=LocalFilesystem.getcwd(),
                         help='Directory containing vehicle-specific intermediate parameter files. '
-                        'Defaults to the current working directory')  # pylint: disable=R0801
+                        'Defaults to the current working directory')
     parser.add_argument('--n',
                         type=int,
                         default=0,
                         help='Start directly on the nth intermediate parameter file (skips previous files). '
-                        'Default is %(default)s')  # pylint: disable=R0801
+                        'Default is %(default)s')
     parser.add_argument('--loglevel',
                         type=str,
                         default='INFO',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        help='Logging level (default is INFO).')  # pylint: disable=R0801
+                        help='Logging level (default is INFO).')
     parser.add_argument('-v', '--version',
                         action='version',
                         version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.')  # pylint: disable=R0801
+                        help='Display version information and exit.')
     return parser.parse_args()
+# pylint: enable=duplicate-code
 
 
 def main():
@@ -336,6 +338,7 @@ def main():
     # Get the list of intermediate parameter files files that will be processed sequentially
     files = list(local_filesystem.file_parameters.keys())
 
+# pylint: disable=duplicate-code
     if files:
         # Determine the starting file based on the --n command line argument
         start_file_index = min(args.n, len(files) - 1) # Ensure the index is within the range of available files
@@ -347,6 +350,7 @@ def main():
         # show_no_param_files_error(args.vehicle_dir)
         window = VehicleDirectorySelectionWindow(local_filesystem)
         window.root.mainloop()
+# pylint: enable=duplicate-code
 
 
 if __name__ == "__main__":

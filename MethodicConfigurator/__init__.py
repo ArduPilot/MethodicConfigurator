@@ -1,1 +1,1 @@
-'''ArduPilot Methodic Configurator GUI application'''
+'''ArduPilot Methodic Configurator GUI application'''  # pylint: skip-file
