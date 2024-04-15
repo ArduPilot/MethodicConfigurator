@@ -12,7 +12,7 @@ import argparse
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 # from logging import debug as logging_debug
-# from logging import info as logging_info
+from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
 from os import getcwd as os_getcwd
@@ -65,7 +65,7 @@ def argument_parser():
     parser.add_argument('-t', '--vehicle-type',
                         choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
                                  'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
-                        default='ArduCopter',
+                        default='',
                         help='The type of the vehicle. Defaults to ArduCopter')
     parser.add_argument('--vehicle-dir',
                         type=str,
@@ -104,7 +104,26 @@ if __name__ == "__main__":
         conn_sel_window = ConnectionSelectionWindow(flight_controller, error_str)
         conn_sel_window.root.mainloop()
 
-    local_filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type)
+    vehicle_type = args.vehicle_type
+    if vehicle_type == "":  # not explicitly set, to try to guess it
+        if "MOT_OPTIONS" in flight_controller.fc_parameters:
+            vehicle_type = "ArduCopter"
+        if "TECS_OPTIONS" in flight_controller.fc_parameters:
+            vehicle_type = "ArduPlane"
+        if "WENC_TYPE" in flight_controller.fc_parameters:
+            vehicle_type = "ArduRover"
+        if "RCMAP_LATERAL" in flight_controller.fc_parameters:
+            vehicle_type = "ArduSub"
+        if vehicle_type:
+            logging_info("Vehicle type not set explicitly, auto-detected %s.", vehicle_type)
+    else:
+        logging_info("Vehicle type explicitly set to %s.", vehicle_type)
+
+    if vehicle_type == "": # did not guess it, default to ArduCopter
+        vehicle_type = "ArduCopter"
+        logging_warning("Could not detect vehicle type. Defaulting to ArduCopter.")
+
+    local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type)
 
     # Get the list of intermediate parameter files files that will be processed sequentially
     files = list(local_filesystem.file_parameters.keys())
