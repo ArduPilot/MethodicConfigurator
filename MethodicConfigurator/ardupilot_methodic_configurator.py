@@ -106,15 +106,8 @@ def main():
 
     vehicle_type = args.vehicle_type
     if vehicle_type == "":  # not explicitly set, to try to guess it
-        if "MOT_OPTIONS" in flight_controller.fc_parameters:
-            vehicle_type = "ArduCopter"
-        if "TECS_OPTIONS" in flight_controller.fc_parameters:
-            vehicle_type = "ArduPlane"
-        if "WENC_TYPE" in flight_controller.fc_parameters:
-            vehicle_type = "ArduRover"
-        if "RCMAP_LATERAL" in flight_controller.fc_parameters:
-            vehicle_type = "ArduSub"
-        if vehicle_type:
+        if flight_controller.vehicle_type is not None:
+            vehicle_type = flight_controller.vehicle_type
             logging_info("Vehicle type not set explicitly, auto-detected %s.", vehicle_type)
     else:
         logging_info("Vehicle type explicitly set to %s.", vehicle_type)
