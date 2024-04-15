@@ -356,6 +356,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Create the new table
             for i, (param_name, param) in enumerate(params.items()):
                 param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
+                param_default = self.local_filesystem.param_default_dict.get(param_name, None)
 
                 is_calibration = param_metadata.get('Calibration', False) if param_metadata else False
                 is_readonly = param_metadata.get('ReadOnly', False) if param_metadata else False
@@ -364,11 +365,20 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                                            self.default_background_color)
                 if param_name in fc_parameters:
                     value_str = format(fc_parameters[param_name], '.6f').rstrip('0').rstrip('.')
-                    flightcontroller_value = tk.Label(self.scroll_frame.view_port, text=value_str)
+                    if param_default is not None and is_within_tolerance(fc_parameters[param_name], param_default.value):
+                        # If it matches, set the background color to light blue
+                        flightcontroller_value = tk.Label(self.scroll_frame.view_port, text=value_str,
+                                                          background="light blue")
+                    else:
+                        # Otherwise, set the background color to the default color
+                        flightcontroller_value = tk.Label(self.scroll_frame.view_port, text=value_str)
                 else:
                     flightcontroller_value = tk.Label(self.scroll_frame.view_port, text="N/A", background="blue")
 
-                new_value_entry = tk.Entry(self.scroll_frame.view_port, width=10, justify=tk.RIGHT, background="white")
+                new_value_background = "light blue" if param_default is not None and \
+                    is_within_tolerance(param.value, param_default.value) else "white"
+                new_value_entry = tk.Entry(self.scroll_frame.view_port, width=10, justify=tk.RIGHT,
+                                           background=new_value_background)
                 new_value_entry.insert(0, format(param.value, '.6f').rstrip('0').rstrip('.'))
                 new_value_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
                                      self.on_parameter_value_change(event, current_file, param_name))
@@ -462,6 +472,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Revert to the previous (valid) value
             event.widget.delete(0, tk.END)
             event.widget.insert(0, old_value)
+        # Update the background color of the new value Entry widget to light blue if the new value is the default value
+        param_default = self.local_filesystem.param_default_dict.get(param_name, None)
+        new_value_background = "light blue" if param_default is not None and \
+            is_within_tolerance(p, param_default.value) else "white"
+        event.widget.config(background=new_value_background)
 
     def on_parameter_change_reason_change(self, event, current_file, param_name):
         # Get the new value from the Entry widget
