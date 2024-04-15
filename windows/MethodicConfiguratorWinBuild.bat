@@ -8,7 +8,7 @@ if "%INNOSETUP%" == "" (set "INNOSETUP=C:\Program Files (x86)\Inno Setup 6")
 
 rem get the version
 for /f "tokens=*" %%a in (
- 'python.exe returnVersion.py'
+ 'python.exe return_version.py'
  ) do (
  set VERSION=%%a
  )

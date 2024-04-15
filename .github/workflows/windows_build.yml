@@ -59,8 +59,8 @@ jobs:
       - name: Build installer
         run: |
           cd  windows
-          $env:VERSION=$(python returnVersion.py)
-          python returnVersion.py > version.txt
+          $env:VERSION=$(python return_version.py)
+          python return_version.py > version.txt
           ISCC.exe /dMyAppVersion=$env:VERSION ardupilot_methodic_configurator.iss
           ls Output
       - name: Archive build

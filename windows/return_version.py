@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 
-# This script returns the current version number
-# Used as part of building the WIndows setup file (MethodicConfiguratorWinBuild.bat)
+'''
+This script returns the current version number
+Used as part of building the Windows setup file (MethodicConfiguratorWinBuild.bat)
+
+This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+
+(C) 2024 Amilcar do Carmo Lucas, IAV GmbH
+
+SPDX-License-Identifier:    GPL-3
+'''
+
 # It assumes there is a line like this:
 # VERSION = "12344"
 
