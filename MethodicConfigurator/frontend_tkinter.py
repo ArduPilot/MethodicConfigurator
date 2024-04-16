@@ -43,6 +43,96 @@ from frontend_tkinter_connection_selection import ConnectionSelectionWidgets
 from frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 
 
+
+class DocumentationFrame:  # pylint: disable=too-few-public-methods
+    """
+    A class to manage and display documentation within the GUI.
+
+    This class is responsible for creating a frame that displays
+    documentation links related to the current file being edited. It updates
+    the documentation links based on the current file and provides
+    functionality to open these links in a web browser.
+    """
+    def __init__(self, root: tk.Tk, local_filesystem, current_file: str):
+        self.root = root
+        self.local_filesystem = local_filesystem
+        self.current_file = current_file
+        self.documentation_frame = None
+        self.documentation_labels = {}
+        self.__create_documentation_frame()
+
+    def __create_documentation_frame(self):
+        self.documentation_frame = tk.LabelFrame(self.root, text="Documentation")
+        self.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 4), padx=(4, 4))
+
+        # Create a grid structure within the documentation_frame
+        documentation_grid = tk.Frame(self.documentation_frame)
+        documentation_grid.pack(fill="both", expand=True)
+
+        descriptive_texts = ["Forum Blog:", "Wiki:", "External tool:", "Mandatory:"]
+        descriptive_tooltips = ["ArduPilot's forum Methodic configuration Blog post relevant for the current file",
+                                "ArduPilot's wiki page relevant for the current file",
+                                "External tool or documentation relevant for the current file",
+                                "Mandatory level of the current file,\n 100% you MUST use this file to configure the "
+                                "vehicle,\n 0% you can ignore this file if it does not apply to your vehicle"]
+        for i, text in enumerate(descriptive_texts):
+            # Create labels for the first column with static descriptive text
+            label = tk.Label(documentation_grid, text=text)
+            label.grid(row=i, column=0, sticky="w")
+            show_tooltip(label, descriptive_tooltips[i])
+
+            # Create labels for the second column with the documentation links
+            self.documentation_labels[text] = tk.Label(documentation_grid)
+            self.documentation_labels[text].grid(row=i, column=1, sticky="w")
+
+        # Dynamically update the documentation text and URL links
+        self.update_documentation_labels(self.current_file)
+
+    def update_documentation_labels(self, current_file: str):
+        self.current_file = current_file
+        if current_file:
+            frame_title = f"{current_file} Documentation"
+        else:
+            frame_title = "Documentation"
+        self.documentation_frame.config(text=frame_title)
+        documentation = self.local_filesystem.file_documentation.get(current_file, None) if \
+            self.local_filesystem.file_documentation else None
+
+        blog_text, blog_url = self.__get_documentation_text_and_url(documentation, 'blog_text', 'blog_url')
+        self.__update_documentation_label('Forum Blog:', blog_text, blog_url)
+        wiki_text, wiki_url = self.__get_documentation_text_and_url(documentation, 'wiki_text', 'wiki_url')
+        self.__update_documentation_label('Wiki:', wiki_text, wiki_url)
+        external_tool_text, external_tool_url = self.__get_documentation_text_and_url(documentation, 'external_tool_text',
+                                                                                    'external_tool_url')
+        self.__update_documentation_label('External tool:', external_tool_text, external_tool_url)
+        mandatory_text, mandatory_url = self.__get_documentation_text_and_url(documentation, 'mandatory_text',
+                                                                            'mandatory_url')
+        self.__update_documentation_label('Mandatory:', mandatory_text, mandatory_url, False)
+
+    def __get_documentation_text_and_url(self, documentation, text_key, url_key):
+        if documentation:
+            text = documentation.get(text_key, f"No documentation available for {self.current_file} in the "
+                                     f"{self.local_filesystem.file_documentation_filename} file")
+            url = documentation.get(url_key, None)
+        else:
+            text = f"File '{self.local_filesystem.file_documentation_filename}' not found. " \
+                "No intermediate parameter file documentation available"
+            url = None
+        return text, url
+
+    def __update_documentation_label(self, label_key, text, url, url_expected=True):
+        label = self.documentation_labels[label_key]
+        if url:
+            label.config(text=text, fg="blue", cursor="hand2", underline=True)
+            label.bind("<Button-1>", lambda event, url=url: webbrowser_open(url))
+            show_tooltip(label, url)
+        else:
+            label.config(text=text, fg="black", cursor="arrow", underline=False)
+            label.bind("<Button-1>", lambda event: None)
+            if url_expected:
+                show_tooltip(label, "Documentation URL not available")
+
+
 def show_about_window(root, version: str):
     # Create a new window for the custom "About" message
     about_window = tk.Toplevel(root)
@@ -83,7 +173,7 @@ def show_about_window(root, version: str):
 
 
 
-class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes, too-many-public-methods
+class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """
     This class is responsible for creating and managing the graphical user interface (GUI)
     for the ArduPilot methodic configurator. It inherits from the BaseWindow class
@@ -101,10 +191,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.at_least_one_changed_parameter_written = False
         self.write_checkbutton_var = {}
         self.file_selection_combobox = None
-        self.documentation_label_blog = None
-        self.documentation_label_wiki = None
-        self.documentation_label_extra = None
-        self.documentation_label_mandatory = None
+        self.documentation_frame = None
         self.show_only_differences = None
         self.scroll_frame = None
         self.reset_progress_window = None
@@ -178,40 +265,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         image_label.bind("<Button-1>", lambda event: show_about_window(self.root, version))
         show_tooltip(image_label, "User Manual, Support Forum, Report a Bug, Credits, Source Code")
 
-        # Create a Frame for the Documentation Content
-        documentation_frame = tk.LabelFrame(self.root, text="Documentation")
-        documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 4), padx=(4, 4))
-
-        # Create a grid structure within the documentation_frame
-        documentation_grid = tk.Frame(documentation_frame)
-        documentation_grid.pack(fill="both", expand=True)
-
-        # Create labels for the first column with static descriptive text
-        descriptive_texts = ["Forum Blog:", "Wiki:", "External tool:", "Mandatory:"]
-        descriptive_tooltips = ["ArduPilot's forum Methodic configuration Blog post relevant for the current file",
-                                "ArduPilot's wiki page relevant for the current file",
-                                "External tool or documentation relevant for the current file",
-                                "Mandatory level of the current file,\n 100% you MUST use this file to configure the "
-                                "vehicle,\n 0% you can ignore this file if it does not apply to your vehicle"]
-        for i, text in enumerate(descriptive_texts):
-            label = tk.Label(documentation_grid, text=text)
-            label.grid(row=i, column=0, sticky="w")
-            show_tooltip(label, descriptive_tooltips[i])
-
-        # Create labels for the second column with the documentation links
-        self.documentation_label_blog = tk.Label(documentation_grid)
-        self.documentation_label_wiki = tk.Label(documentation_grid)
-        self.documentation_label_extra = tk.Label(documentation_grid)
-        self.documentation_label_mandatory = tk.Label(documentation_grid)
-
-        # Grid the documentation labels in the second column
-        self.documentation_label_blog.grid(row=0, column=1, sticky="w")
-        self.documentation_label_wiki.grid(row=1, column=1, sticky="w")
-        self.documentation_label_extra.grid(row=2, column=1, sticky="w")
-        self.documentation_label_mandatory.grid(row=3, column=1, sticky="w")
-
-        # Dynamically update the documentation text and URL links
-        self.update_documentation_labels()
+        # Create a DocumentationFrame object for the Documentation Content
+        self.documentation_frame = DocumentationFrame(self.root, self.local_filesystem, self.current_file)
 
         self.show_only_differences = tk.BooleanVar(value=False)
 
@@ -259,7 +314,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Update the current_file attribute to the selected file
             self.current_file = selected_file
             self.at_least_one_changed_parameter_written = False
-            self.update_documentation_labels()
+            self.documentation_frame.update_documentation_labels(selected_file)
             self.repopulate_parameter_table(selected_file)
 
     def read_flight_controller_parameters(self, reread: bool = False):
@@ -271,42 +326,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.param_read_progress_window.destroy()  # for the case that we are doing test and there is no real FC connected
         if not reread:
             self.on_param_file_combobox_change(None, True) # the initial param read will trigger a table update
-
-    def get_documentation_text_and_url(self, documentation, text_key, url_key):
-        if documentation:
-            text = documentation.get(text_key, f"No documentation available for {self.current_file} in the "
-                                     f"{self.local_filesystem.file_documentation_filename} file")
-            url = documentation.get(url_key, None)
-        else:
-            text = f"File '{self.local_filesystem.file_documentation_filename}' not found. No intermediate parameter " \
-                "file documentation available"
-            url = None
-        return text, url
-
-    def update_documentation_label(self, label, text, url, url_expected=True):
-        if url:
-            label.config(text=text, fg="blue", cursor="hand2", underline=True)
-            label.bind("<Button-1>", lambda event, url=url: webbrowser_open(url))
-            show_tooltip(label, url)
-        else:
-            label.config(text=text, fg="black", cursor="arrow", underline=False)
-            label.bind("<Button-1>", lambda event: None)
-            if url_expected:
-                show_tooltip(label, "Documentation URL not available")
-
-    def update_documentation_labels(self):
-        documentation = self.local_filesystem.file_documentation.get(self.current_file, None) if \
-            self.local_filesystem.file_documentation else None
-
-        blog_text, blog_url = self.get_documentation_text_and_url(documentation, 'blog_text', 'blog_url')
-        self.update_documentation_label(self.documentation_label_blog, blog_text, blog_url)
-        wiki_text, wiki_url = self.get_documentation_text_and_url(documentation, 'wiki_text', 'wiki_url')
-        self.update_documentation_label(self.documentation_label_wiki, wiki_text, wiki_url)
-        external_tool_text, external_tool_url = self.get_documentation_text_and_url(documentation, 'external_tool_text',
-                                                                                    'external_tool_url')
-        self.update_documentation_label(self.documentation_label_extra, external_tool_text, external_tool_url)
-        mandatory_text, mandatory_url = self.get_documentation_text_and_url(documentation, 'mandatory_text', 'mandatory_url')
-        self.update_documentation_label(self.documentation_label_mandatory, mandatory_text, mandatory_url, False)
 
     def repopulate_parameter_table(self, selected_file):
         if not selected_file:
