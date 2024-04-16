@@ -104,10 +104,12 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
 
         self.reboot_time = reboot_time
         comports = FlightController.__list_serial_ports()
-        # ubcports = FlightController.list_usb_devices()
+        usbports = FlightController.__list_usb_devices()
         netports = FlightController.__list_network_ports()
         # list of tuples with the first element being the port name and the second element being the port description
-        self.connection_tuples = [(port.device, port.description) for port in comports] + [(port, port) for port in netports]
+        self.connection_tuples = [(port.device, port.description) for port in comports] + \
+            [(port, port) for port in usbports] + \
+            [(port, port) for port in netports]
         logging_info('Available connection ports are:')
         for port in self.connection_tuples:
             logging_info("%s - %s", port[0], port[1])
