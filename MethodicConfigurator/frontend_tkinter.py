@@ -373,7 +373,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                         # Otherwise, set the background color to the default color
                         flightcontroller_value = tk.Label(self.scroll_frame.view_port, text=value_str)
                 else:
-                    flightcontroller_value = tk.Label(self.scroll_frame.view_port, text="N/A", background="blue")
+                    flightcontroller_value = tk.Label(self.scroll_frame.view_port, text="N/A", background="orange")
 
                 new_value_background = "light blue" if param_default is not None and \
                     is_within_tolerance(param.value, param_default.value) else "white"

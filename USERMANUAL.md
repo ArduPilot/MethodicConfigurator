@@ -99,7 +99,7 @@ This option allows users to select an existing vehicle configuration directory t
   - ReadOnly parameters are presented on a *red background*🟥, they should not be present in a intermediate configuration file because under normal conditions they can not be changed
   - Sensor calibration parameters are presented on a *yellow background*🟨, they are vehicle-instance dependent and can NOT be reused between similar vehicles
 - The current parameter value read from your FC is on the `Current Value` column.
-  - Not available parameter values are presented as `N/A` on a *blue background*
+  - Not available parameter values are presented as `N/A` on a *orange background*🟧
   - Parameters that have the default parameter value are presented on a *light blue background* 🟦
 - The new value is the value in the intermediate file and will be written to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `example_vehicle` directory are just examples.
 - **In the parameter table, you can edit the `New Value` and `Change Reason` entries for each parameter.**
@@ -148,19 +148,19 @@ pie title Summary files example
     "Non-default writable non-sensor-calibrations - non-default_writable_non-calibrations.param" : 217
 ```
 
-- **Unchanged parameters**: These parameters left unchanged.
+- **Unchanged parameters**: These parameters left unchanged and are displayed on a light blue background 🟦.
 
-- **Non-default read-only parameters**: These parameters are read-only and cannot be changed. They are typically related to system configurations that can not be modified.
+- **Non-default read-only parameters**: These parameters are read-only and cannot be changed. They are typically related to system configurations that can not be modified and are displayed on a red background 🟥.
 
-- **Non-default writable sensor calibrations**: These parameters are vehicle-instance dependent and cannot be reused between similar vehicles. They are typically related to sensor calibration and should be adjusted for each individual vehicle.
+- **Non-default writable sensor calibrations**: These parameters are vehicle-instance dependent and cannot be reused between similar vehicles. They are typically related to sensor calibration and should be adjusted for each individual vehicle and are displayed on a yellow background 🟨.
 
 - **Non-default writable non-sensor-calibrations**: These parameters can be reused between similar vehicles. They are not related to sensor calibration and are generally applicable to a range of vehicles with the same configuration.
 
 After the summary message box is displayed, the application will write the summary information to separate files for easy reference and documentation. These files include:
 
 - `complete.param`: Contains all parameters contained in the flight controller.
-- `non-default_read-only.param`: Contains all non-default read-only parameters. You can ignore these.
-- `non-default_writable_calibrations.param`: Contains all non-default writable sensor calibration parameters. These are non-reusable.
+- `non-default_read-only.param`: Contains all non-default read-only 🟥 parameters. You can ignore these.
+- `non-default_writable_calibrations.param`: Contains all non-default writable sensor calibration 🟨 parameters. These are non-reusable.
 - `non-default_writable_non-calibrations.param`: Contains all non-default writable non-sensor-calibration parameters. These are reusable across similar vehicles.
 
 
