@@ -343,7 +343,8 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
                 zipf.write(os_path.join(self.vehicle_dir, file_name), arcname=file_name)
 
             # Check for and add specific files if they exist
-            specific_files = ["00_default.param", "apm.pdef.xml", "file_documentation.json"]
+            specific_files = ["00_default.param", "apm.pdef.xml", "file_documentation.json",
+                              "vehicle_components.json", "vehicle.jpg"]
             for file_name in specific_files:
                 file_path = os_path.join(self.vehicle_dir, file_name)
                 if os_path.exists(file_path):
