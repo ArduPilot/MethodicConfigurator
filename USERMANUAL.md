@@ -24,14 +24,15 @@ This option automatically attempts to connect to a flight controller that has be
 #### Option 2: Manually Select or Add a Connection
 
 This option allows users to manually select an existing flight controller connection or add a new one. It provides a dropdown menu listing all available connections, including an option to add a new connection.
+
 **Steps:**
+
    - To select an existing connection, use the dropdown menu to choose the desired connection.
    - To add a new connection, select "Add another" from the dropdown menu. A dialog box will prompt you to enter the connection string for the new flight controller.
 
 #### Option 3: Skip Flight Controller Connection
 
 This option allows users to skip the flight controller connection process. It proceeds with editing the intermediate `.param` files on disk without fetching parameter values nor parameter default parameter values from the flight controller.
-
 
 ### Vehicle Directory Selection Interface
 
@@ -43,7 +44,9 @@ It provides two main options for selecting a vehicle directory:
 #### Option 1: Create a New Vehicle Configuration Directory Based on an Existing Template
 
 This option allows users to create a new vehicle configuration directory by copying files from an existing template directory. It's useful for setting up a new vehicle configuration quickly.
+
 **Steps:**
+
    - Use the "Template directory" `...` button to select the existing vehicle template directory containing the intermediate parameter files to be copied.
    - Use the "Base directory" `...` button to select the existing directory where the new vehicle directory will be created.
    - Enter the name for the new vehicle directory in the "New vehicle name" field.
@@ -52,7 +55,9 @@ This option allows users to create a new vehicle configuration directory by copy
 #### Option 2: Use an Existing Vehicle Configuration Directory
 
 This option allows users to select an existing vehicle configuration directory that already contains intermediate parameter files. It's useful for editing an existing vehicle configuration.
+
 **Steps:**
+
    - Use the "Vehicle directory" `...` button to select the existing vehicle directory containing the intermediate parameter files.
 
 ![Application Screenshot](images/App_screenshot2.png)
@@ -91,10 +96,11 @@ This option allows users to select an existing vehicle configuration directory t
 
 - The parameter table presents the parameters in the current intermediate parameter file
 - The first colum is the ArduPilot parameter name used in that row.
-  - ReadOnly parameters are presented on a *red background*, they should not be present in a intermediate configuration file because under normal conditions they can not be changed
-  - Sensor calibration parameters are presented on a *yellow background*, they are vehicle-instance dependent and can NOT be reused between similar vehicles
+  - ReadOnly parameters are presented on a *red background*🟥, they should not be present in a intermediate configuration file because under normal conditions they can not be changed
+  - Sensor calibration parameters are presented on a *yellow background*🟨, they are vehicle-instance dependent and can NOT be reused between similar vehicles
 - The current parameter value read from your FC is on the `Current Value` column.
   - Not available parameter values are presented as `N/A` on a *blue background*
+  - Parameters that have the default parameter value are presented on a *light blue background* 🟦
 - The new value is the value in the intermediate file and will be written to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `example_vehicle` directory are just examples.
 - **In the parameter table, you can edit the `New Value` and `Change Reason` entries for each parameter.**
 - **You MUST edit the `Change Reason` so that other users understand why you changed the parameter to that particular `new value`**
@@ -134,7 +140,7 @@ This message box provides a comprehensive overview of the configuration process,
 
 The summary message box will also categorize the writable parameters into four groups:
 
-```mermaid!
+```mermaid
 pie title Summary files example
     "Unchanged parameters" : 728
     "Non-default read-only parameters - non-default_read-only.param" : 8
