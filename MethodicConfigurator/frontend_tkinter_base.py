@@ -224,25 +224,28 @@ class ProgressWindow:  # pylint: disable=too-few-public-methods
         self.progress_label = tk.Label(self.progress_window, text=message % (0, 0))
         self.progress_label.pack(side=tk.TOP, fill=tk.X, expand=False, pady=(10, 10))
 
-    def update_progress_bar(self, current_value: int, max_value: int):
+    def update_progress_bar(self, current_value: int, max_value: int=0):
         """
         Update progress bar and the progress message with the current progress.
 
         Args:
             current_value (int): The current progress value.
-            max_value (int): The maximum progress value.
+            max_value (int): The maximum progress value, if 0 uses percentage.
         """
         self.progress_window.lift()
 
         self.progress_bar['value'] = current_value
-        self.progress_bar['maximum'] = max_value
+        self.progress_bar['maximum'] = 100 if max_value == 0 else max_value
         self.progress_bar.update()
 
         # Update the progress message
-        self.progress_label.config(text=self.message % (current_value, max_value))
+        if max_value == 0:
+            self.progress_label.config(text=f"{current_value} percent complete")
+        else:
+            self.progress_label.config(text=self.message.format(current_value, max_value))
 
         # Close the progress window when the process is complete
-        if current_value == max_value:
+        if current_value == max_value and max_value != 0:
             self.progress_window.destroy()
 
     def destroy(self):

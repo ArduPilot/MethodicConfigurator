@@ -440,3 +440,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
         # Include os.sep in the pattern
         pattern = r'^[\w' + re_escape(os_sep) + '-]+$'
         return re_match(pattern, dir_name) is not None
+
+    def tempcal_imu_result_param_tuple(self):
+        tempcal_imu_result_param_filename = "03_imu_temperature_calibration_results.param"
+        return [tempcal_imu_result_param_filename, os_path.join(self.vehicle_dir, tempcal_imu_result_param_filename)]

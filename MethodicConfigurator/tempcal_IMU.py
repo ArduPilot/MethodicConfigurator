@@ -15,6 +15,7 @@ SPDX-License-Identifier:    GPL-3
 import math
 import re
 import sys
+import os
 from argparse import ArgumentParser
 
 import numpy as np
@@ -277,11 +278,13 @@ def constrain(value, minv, maxv):
     return value
 
 
-def IMUfit(logfile, outfile, no_graph, log_parm, online, tclr):  # pylint: disable=too-many-locals, too-many-branches,
-                                                                 # pylint: disable=too-many-statements, too-many-arguments
+def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments
+           no_graph, log_parm,
+           online, tclr, figpath,
+           progress_callback):
     '''find IMU calibration parameters from a log file'''
     print(f"Processing log {logfile}")
-    mlog = mavutil.mavlink_connection(logfile)
+    mlog = mavutil.mavlink_connection(logfile, progress_callback=progress_callback)
 
     data = IMUData()
 
@@ -508,6 +511,9 @@ def IMUfit(logfile, outfile, no_graph, log_parm, online, tclr):  # pylint: disab
         axs[imu].legend(loc='upper left')
         axs[imu].set_title(f'IMU[{imu}] Gyro (deg/s)')
 
+    if figpath:
+        _fig.savefig(os.path.join(figpath, 'tempcal_gyro.png'))
+
     _fig, axs = pyplot.subplots(num_imus, 1, sharex=True)
     if num_imus == 1:
         axs = [axs]
@@ -539,6 +545,9 @@ def IMUfit(logfile, outfile, no_graph, log_parm, online, tclr):  # pylint: disab
         axs[imu].legend(loc='upper left')
         axs[imu].set_title(f'IMU[{imu}] Accel (m/s^2)')
 
+    if figpath:
+        _fig.savefig(os.path.join(figpath, 'tempcal_acc.png'))
+
     pyplot.show()
 
 
@@ -558,7 +567,7 @@ def main():
 
     args = parser.parse_args()
 
-    IMUfit(args.log, args.outfile, args.no_graph, args.log_parm, args.online, args.tclr)
+    IMUfit(args.log, args.outfile, args.no_graph, args.log_parm, args.online, args.tclr, None, None)
 
 if __name__ == "__main__":
     main()
