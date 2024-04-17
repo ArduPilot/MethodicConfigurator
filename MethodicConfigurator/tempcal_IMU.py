@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
 '''
 Create temperature calibration parameters for IMUs based on log data.
+
+The original (python2) version of this file is part of the Ardupilot project.
+This version has been modified to work with >= python3.6 and to pass pylint and ruff checks.
+
+This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+
+(C) 2024 Amilcar do Carmo Lucas, IAV GmbH
+
+SPDX-License-Identifier:    GPL-3
 '''
 
-# pylint: skip-file
-
-import sys
 import math
 import re
-from pymavlink import mavutil
+import sys
+from argparse import ArgumentParser
+
 import numpy as np
-import matplotlib.pyplot as pyplot
-# from scipy import signal
+from matplotlib import pyplot
+from pymavlink import mavutil
 from pymavlink.rotmat import Vector3
-# from pymavlink.rotmat import Matrix3
 
 # fit an order 3 polynomial
 POLY_ORDER = 3
@@ -32,7 +39,7 @@ AXES = ['X', 'Y', 'Z']
 AXEST = ['X', 'Y', 'Z', 'T', 'time']
 
 
-class Coefficients:
+class Coefficients:  # pylint: disable=too-many-instance-attributes
     '''class representing a set of coefficients'''
     def __init__(self):
         self.acoef = {}
@@ -94,7 +101,7 @@ class Coefficients:
     def set_enable(self, imu, value):
         self.enable[imu] = value
 
-    def correction(self, coeff, imu, temperature, axis, cal_temp):
+    def correction(self, coeff, imu, temperature, axis, cal_temp):  # pylint: disable=too-many-arguments
         '''calculate correction from temperature calibration from log data using parameters'''
         if self.enable[imu] != 1.0:
             return 0.0
@@ -140,7 +147,9 @@ class Coefficients:
 class OnlineIMUfit:
     '''implement the online learning used in ArduPilot'''
     def __init__(self):
-        pass
+        self.porder = None
+        self.mat = None
+        self.vec = None
 
     def update(self, x, y):
         temp = 1.0
@@ -168,12 +177,19 @@ class OnlineIMUfit:
         self.porder = order + 1
         self.mat = np.zeros((self.porder, self.porder))
         self.vec = np.zeros(self.porder)
-        for i in range(len(x)):
-            self.update(x[i], y[i])
+        for i, value in enumerate(x):
+            self.update(value, y[i])
         return self.get_polynomial()
 
 
+# pylint: disable=invalid-name
 class IMUData:
+    """
+    A class to manage IMU data, including acceleration and gyroscope readings.
+
+    This class provides methods to add acceleration and gyroscope data, apply
+    moving average filters, and retrieve data for specific IMUs and temperatures.
+    """
     def __init__(self):
         self.accel = {}
         self.gyro = {}
@@ -234,7 +250,7 @@ class IMUData:
         if temperature < self.accel[imu]['T'][0]:
             return self.accel[imu][axis][0]
         for i in range(len(self.accel[imu]['T'])-1):
-            if temperature >= self.accel[imu]['T'][i] and temperature <= self.accel[imu]['T'][i+1]:
+            if self.accel[imu]['T'][i] <= temperature <= self.accel[imu]['T'][i+1]:
                 v1 = self.accel[imu][axis][i]
                 v2 = self.accel[imu][axis][i+1]
                 p = (temperature - self.accel[imu]['T'][i]) / (self.accel[imu]['T'][i+1]-self.accel[imu]['T'][i])
@@ -246,7 +262,7 @@ class IMUData:
         if temperature < self.gyro[imu]['T'][0]:
             return self.gyro[imu][axis][0]
         for i in range(len(self.gyro[imu]['T'])-1):
-            if temperature >= self.gyro[imu]['T'][i] and temperature <= self.gyro[imu]['T'][i+1]:
+            if self.gyro[imu]['T'][i] <= temperature <= self.gyro[imu]['T'][i+1]:
                 v1 = self.gyro[imu][axis][i]
                 v2 = self.gyro[imu][axis][i+1]
                 p = (temperature - self.gyro[imu]['T'][i]) / (self.gyro[imu]['T'][i+1]-self.gyro[imu]['T'][i])
@@ -256,16 +272,15 @@ class IMUData:
 
 def constrain(value, minv, maxv):
     """Constrain a value to a range."""
-    if value < minv:
-        value = minv
-    if value > maxv:
-        value = maxv
+    value = min(minv, value)
+    value = max(maxv, value)
     return value
 
 
-def IMUfit(logfile, args):
+def IMUfit(logfile, outfile, no_graph, log_parm, online, tclr):  # pylint: disable=too-many-locals, too-many-branches,
+                                                                 # pylint: disable=too-many-statements, too-many-arguments
     '''find IMU calibration parameters from a log file'''
-    print("Processing log %s" % logfile)
+    print(f"Processing log {logfile}")
     mlog = mavutil.mavlink_connection(logfile)
 
     data = IMUData()
@@ -275,7 +290,7 @@ def IMUfit(logfile, args):
 
     stop_capture = [False] * 3
 
-    if args.tclr:
+    if tclr:
         messages = ['PARM', 'TCLR']
     else:
         messages = ['PARM', 'IMU']
@@ -294,11 +309,11 @@ def IMUfit(logfile, args):
                 if stop_capture[imu]:
                     continue
                 if msg.Value == 1 and c.enable[imu] == 2:
-                    print("TCAL[%u] enabled" % imu)
+                    print(f"TCAL[{imu}] enabled")
                     stop_capture[imu] = True
                     continue
                 if msg.Value == 0 and c.enable[imu] == 1:
-                    print("TCAL[%u] disabled" % imu)
+                    print(f"TCAL[{imu}] disabled")
                     stop_capture[imu] = True
                     continue
                 c.set_enable(imu, msg.Value)
@@ -354,9 +369,9 @@ def IMUfit(logfile, args):
                     c.set_goffset(imu, axis, msg.Value)
             if msg.Name == 'AHRS_ORIENTATION':
                 orientation = int(msg.Value)
-                print("Using orientation %d" % orientation)
+                print(f"Using orientation {orientation}")
 
-        if msg.get_type() == 'TCLR' and args.tclr:
+        if msg.get_type() == 'TCLR' and tclr:
             imu = msg.I
 
             T = msg.Temp
@@ -371,7 +386,7 @@ def IMUfit(logfile, args):
                 time = msg.TimeUS*1.0e-6
                 data.add_gyro(imu, T, time, gyr)
 
-        if msg.get_type() == 'IMU' and not args.tclr:
+        if msg.get_type() == 'IMU' and not tclr:
             imu = msg.I
 
             if stop_capture[imu]:
@@ -386,7 +401,7 @@ def IMUfit(logfile, args):
                 acc = acc.rotate_by_inverse_id(orientation)
                 gyr = gyr.rotate_by_inverse_id(orientation)
             if acc is None or gyr is None:
-                print("Invalid AHRS_ORIENTATION %u" % orientation)
+                print(f"Invalid AHRS_ORIENTATION {orientation}")
                 sys.exit(1)
 
             if c.enable[imu] == 1:
@@ -401,50 +416,48 @@ def IMUfit(logfile, args):
         print("No data found")
         sys.exit(1)
 
-    print("Loaded %u accel and %u gyro samples" % (len(data.accel[0]['T']), len(data.gyro[0]['T'])))
+    print(f"Loaded {len(data.accel[0]['T'])} accel and {len(data.gyro[0]['T'])} gyro samples")
 
-    if not args.tclr:
+    if not tclr:
         # apply moving average filter with 2s width
         data.Filter(2)
 
     clog = c
     c = Coefficients()
 
-    calfile = open(args.outfile, "w")
+    with open(outfile, "w", encoding='utf-8') as calfile:
+        for imu in data.IMUs():
+            tmin = np.amin(data.accel[imu]['T'])
+            tmax = np.amax(data.accel[imu]['T'])
 
-    for imu in data.IMUs():
-        tmin = np.amin(data.accel[imu]['T'])
-        tmax = np.amax(data.accel[imu]['T'])
+            c.set_tmin(imu, tmin)
+            c.set_tmax(imu, tmax)
 
-        c.set_tmin(imu, tmin)
-        c.set_tmax(imu, tmax)
-
-        for axis in AXES:
-            if args.online:
-                fit = OnlineIMUfit()
-                trel = data.accel[imu]['T'] - TEMP_REF
-                ofs = data.accel_at_temp(imu, axis, clog.atcal[imu])
-                c.set_accel_poly(imu, axis, fit.polyfit(trel, data.accel[imu][axis] - ofs, POLY_ORDER))
-                trel = data.gyro[imu]['T'] - TEMP_REF
-                c.set_gyro_poly(imu, axis, fit.polyfit(trel, data.gyro[imu][axis], POLY_ORDER))
-            else:
-                trel = data.accel[imu]['T'] - TEMP_REF
-                if imu in clog.atcal:
+            for axis in AXES:
+                if online:
+                    fit = OnlineIMUfit()
+                    trel = data.accel[imu]['T'] - TEMP_REF
                     ofs = data.accel_at_temp(imu, axis, clog.atcal[imu])
+                    c.set_accel_poly(imu, axis, fit.polyfit(trel, data.accel[imu][axis] - ofs, POLY_ORDER))
+                    trel = data.gyro[imu]['T'] - TEMP_REF
+                    c.set_gyro_poly(imu, axis, fit.polyfit(trel, data.gyro[imu][axis], POLY_ORDER))
                 else:
-                    ofs = np.mean(data.accel[imu][axis])
-                c.set_accel_poly(imu, axis, np.polyfit(trel, data.accel[imu][axis] - ofs, POLY_ORDER))
-                trel = data.gyro[imu]['T'] - TEMP_REF
-                c.set_gyro_poly(imu, axis, np.polyfit(trel, data.gyro[imu][axis], POLY_ORDER))
+                    trel = data.accel[imu]['T'] - TEMP_REF
+                    if imu in clog.atcal:
+                        ofs = data.accel_at_temp(imu, axis, clog.atcal[imu])
+                    else:
+                        ofs = np.mean(data.accel[imu][axis])
+                    c.set_accel_poly(imu, axis, np.polyfit(trel, data.accel[imu][axis] - ofs, POLY_ORDER))
+                    trel = data.gyro[imu]['T'] - TEMP_REF
+                    c.set_gyro_poly(imu, axis, np.polyfit(trel, data.gyro[imu][axis], POLY_ORDER))
 
-        params = c.param_string(imu)
-        print(params)
-        calfile.write(params)
+            params = c.param_string(imu)
+            print(params)
+            calfile.write(params)
 
-    calfile.close()
-    print("Calibration written to %s" % args.outfile)
+    print(f"Calibration written to {outfile}")
 
-    if args.no_graph:
+    if no_graph:
         return
     _fig, axs = pyplot.subplots(len(data.IMUs()), 1, sharex=True)
 
@@ -455,16 +468,16 @@ def IMUfit(logfile, args):
     for imu in data.IMUs():
         scale = math.degrees(1)
         for axis in AXES:
-            axs[imu].plot(data.gyro[imu]['time'], data.gyro[imu][axis]*scale, label='Uncorrected %s' % axis)
+            axs[imu].plot(data.gyro[imu]['time'], data.gyro[imu][axis]*scale, label=f'Uncorrected {axis}')
         for axis in AXES:
             poly = np.poly1d(c.gcoef[imu][axis])
             trel = data.gyro[imu]['T'] - TEMP_REF
             correction = poly(trel)
-            axs[imu].plot(data.gyro[imu]['time'], (data.gyro[imu][axis] - correction)*scale, label='Corrected %s' % axis)
-        if args.log_parm:
+            axs[imu].plot(data.gyro[imu]['time'], (data.gyro[imu][axis] - correction)*scale, label=f'Corrected {axis}')
+        if log_parm:
             for axis in AXES:
                 if clog.enable[imu] == 0.0:
-                    print("IMU[%u] disabled in log parms" % imu)
+                    print(f"IMU[{imu}] disabled in log parms")
                     continue
                 poly = np.poly1d(clog.gcoef[imu][axis])
                 correction = poly(data.gyro[imu]['T'] - TEMP_REF) - poly(clog.gtcal[imu] - TEMP_REF) + clog.gofs[imu][axis]
@@ -474,7 +487,7 @@ def IMUfit(logfile, args):
         ax2.plot(data.gyro[imu]['time'], data.gyro[imu]['T'], label='Temperature(C)', color='black')
         ax2.legend(loc='upper right')
         axs[imu].legend(loc='upper left')
-        axs[imu].set_title('IMU[%u] Gyro (deg/s)' % imu)
+        axs[imu].set_title(f'IMU[{imu}] Gyro (deg/s)')
 
     _fig, axs = pyplot.subplots(num_imus, 1, sharex=True)
     if num_imus == 1:
@@ -483,35 +496,34 @@ def IMUfit(logfile, args):
     for imu in data.IMUs():
         for axis in AXES:
             ofs = data.accel_at_temp(imu, axis, clog.atcal.get(imu, TEMP_REF))
-            axs[imu].plot(data.accel[imu]['time'], data.accel[imu][axis] - ofs, label='Uncorrected %s' % axis)
+            axs[imu].plot(data.accel[imu]['time'], data.accel[imu][axis] - ofs, label=f'Uncorrected {axis}')
         for axis in AXES:
             poly = np.poly1d(c.acoef[imu][axis])
             trel = data.accel[imu]['T'] - TEMP_REF
             correction = poly(trel)
             ofs = data.accel_at_temp(imu, axis, clog.atcal.get(imu, TEMP_REF))
             axs[imu].plot(data.accel[imu]['time'], (data.accel[imu][axis] - ofs) - correction,
-                          label='Corrected %s' % axis)
-        if args.log_parm:
+                          label=f'Corrected {axis}')
+        if log_parm:
             for axis in AXES:
                 if clog.enable[imu] == 0.0:
-                    print("IMU[%u] disabled in log parms" % imu)
+                    print(f"IMU[{imu}] disabled in log parms")
                     continue
                 poly = np.poly1d(clog.acoef[imu][axis])
                 ofs = data.accel_at_temp(imu, axis, clog.atcal[imu])
                 correction = poly(data.accel[imu]['T'] - TEMP_REF) - poly(clog.atcal[imu] - TEMP_REF)
                 axs[imu].plot(data.accel[imu]['time'], (data.accel[imu][axis] - ofs) - correction,
-                              label='Corrected %s (log parm)' % axis)
+                              label=f'Corrected {axis} (log parm)')
         ax2 = axs[imu].twinx()
         ax2.plot(data.accel[imu]['time'], data.accel[imu]['T'], label='Temperature(C)', color='black')
         ax2.legend(loc='upper right')
         axs[imu].legend(loc='upper left')
-        axs[imu].set_title('IMU[%u] Accel (m/s^2)' % imu)
+        axs[imu].set_title(f'IMU[{imu}] Accel (m/s^2)')
 
     pyplot.show()
 
 
-if __name__ == "__main__":
-    from argparse import ArgumentParser
+def main():
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--outfile", default="tcal.parm",
                         help='set output file')
@@ -527,4 +539,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    IMUfit(args.log, args)
+    IMUfit(args.log, args.outfile, args.no_graph, args.log_parm, args.online, args.tclr)
+
+if __name__ == "__main__":
+    main()
