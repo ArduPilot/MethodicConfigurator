@@ -98,6 +98,7 @@ setup(
     # Add the license
     license='GPLv3',
     python_requires='>=3.6',
+    keywords=['ArduPilot', 'Configuration', 'SCM', 'Methodic', 'ArduCopter', 'ArduPlane', 'ArduRover', 'ArduSub'],
     # Include package data
     # package_data={
     #    # If you have data files
