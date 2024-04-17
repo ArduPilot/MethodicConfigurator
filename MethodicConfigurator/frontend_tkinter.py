@@ -13,6 +13,7 @@ from sys import exit as sys_exit
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
+from tkinter import filedialog
 
 from logging import debug as logging_debug
 from logging import info as logging_info
@@ -43,6 +44,7 @@ from frontend_tkinter_connection_selection import ConnectionSelectionWidgets
 
 from frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 
+from tempcal_IMU import IMUfit
 
 
 class DocumentationFrame:  # pylint: disable=too-few-public-methods
@@ -197,6 +199,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.scroll_frame = None
         self.reset_progress_window = None
         self.param_read_progress_window = None
+        self.tempcal_imu_progress_window = None
 
         self.root.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version)
         self.root.geometry("880x500") # Set the window width
@@ -301,6 +304,27 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.root.after(50, self.read_flight_controller_parameters(reread=False)) # 50 milliseconds
         self.root.mainloop()
 
+    def __do_tempcal_imu(self, selected_file:str):
+        tempcal_imu_result_param_filename, tempcal_imu_result_param_fullpath = \
+           self.local_filesystem.tempcal_imu_result_param_tuple()
+        if selected_file == tempcal_imu_result_param_filename:
+            if messagebox.askyesno("IMU temperature calibration",
+                                    f"If you proceed the {tempcal_imu_result_param_filename}\n"
+                                    "will be overwritten with the new calibration results.\n"
+                                    "Do you want to provide a .bin log file and\n"
+                                    "run the IMU temperature calibration using it?"):
+                # file selection dialog to select the *.bin file to be used in the IMUfit temperature calibration
+                filename = filedialog.askopenfilename(filetypes=[("ArduPilot binary log files", "*.bin")])
+                if filename:
+                    self.tempcal_imu_progress_window = ProgressWindow(self.root, "Reading IMU calibration messages",
+                                                                      "Please wait this can take a long time")
+                    # Pass the selected filename to the IMUfit class
+                    IMUfit(filename, tempcal_imu_result_param_fullpath, False, False, False, False,
+                            self.local_filesystem.vehicle_dir, self.tempcal_imu_progress_window.update_progress_bar)
+                    self.tempcal_imu_progress_window.destroy()
+                    self.local_filesystem.file_parameters = self.local_filesystem.read_params_from_files()
+                    self.at_least_one_param_edited = True  # force writing doc annotations to file
+
     def on_param_file_combobox_change(self, _event, forced: bool = False):
         if not self.file_selection_combobox['values']:
             return
@@ -308,6 +332,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         selected_file = self.file_selection_combobox.get()
         if self.current_file != selected_file or forced:
             self.write_changes_to_intermediate_parameter_file()
+            self.__do_tempcal_imu(selected_file)
+
             # Update the current_file attribute to the selected file
             self.current_file = selected_file
             self.at_least_one_changed_parameter_written = False
