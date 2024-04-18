@@ -193,7 +193,63 @@ class ScrollFrame(tk.Frame):
             self.canvas.unbind_all("<MouseWheel>")
 
 
-class BaseWindow:
+class ProgressWindow:  # pylint: disable=too-few-public-methods
+    """
+    A class for creating and managing a progress window in the application.
+
+    This class is responsible for creating a progress window that displays the progress of
+    a task. It includes a progress bar and a label to display the progress message.
+    """
+    def __init__(self, parent, title, message: str="", width:  int=300, height: int=80):  # pylint: disable=too-many-arguments
+        self.parent = parent
+        self.message = message
+        self.progress_window = None
+        self.progress_bar = None
+        self.progress_label = None
+        self.__create_progress_window(title, message, width, height)
+
+    def __create_progress_window(self, title: str, message, width, height):
+        self.progress_window = tk.Toplevel(self.parent)
+        self.progress_window.title(title)
+        self.progress_window.geometry(f"{width}x{height}")
+
+        # Center the progress window on the parent window
+        BaseWindow.center_window(self.progress_window, self.parent)
+
+        # Create a progress bar
+        self.progress_bar = ttk.Progressbar(self.progress_window, length=100, mode='determinate')
+        self.progress_bar.pack(side=tk.TOP, fill=tk.X, expand=False, padx=(5, 5), pady=(10, 10))
+
+        # Create a label to display the progress message
+        self.progress_label = tk.Label(self.progress_window, text=message % (0, 0))
+        self.progress_label.pack(side=tk.TOP, fill=tk.X, expand=False, pady=(10, 10))
+
+    def update_progress_bar(self, current_value: int, max_value: int):
+        """
+        Update progress bar and the progress message with the current progress.
+
+        Args:
+            current_value (int): The current progress value.
+            max_value (int): The maximum progress value.
+        """
+        self.progress_window.lift()
+
+        self.progress_bar['value'] = current_value
+        self.progress_bar['maximum'] = max_value
+        self.progress_bar.update()
+
+        # Update the progress message
+        self.progress_label.config(text=self.message % (current_value, max_value))
+
+        # Close the progress window when the process is complete
+        if current_value == max_value:
+            self.progress_window.destroy()
+
+    def destroy(self):
+        self.progress_window.destroy()
+
+
+class BaseWindow:  # pylint: disable=too-few-public-methods
     """
     A base class for creating windows in the ArduPilot Methodic Configurator application.
 
@@ -221,25 +277,6 @@ class BaseWindow:
         # Configure the background color for the checkbutton
         style.configure('TCheckbutton', background=self.default_background_color)
         style.configure('TCombobox', background=self.default_background_color)
-
-    def create_progress_window(self, title: str):
-        # Create a new window for the param_read progress bar
-        progress_window = tk.Toplevel(self.root)
-        progress_window.title(title)
-        progress_window.geometry("300x80")
-
-        # Center the param_read progress window on the main window
-        BaseWindow.center_window(progress_window, self.root)
-
-        # Create a param_read progress bar
-        progress_bar = ttk.Progressbar(progress_window, length=100, mode='determinate')
-        progress_bar.pack(side=tk.TOP, fill=tk.X, expand=False, padx=(5, 5), pady=(10, 10))
-
-        # Create a param_read label to display the progress message
-        progress_label = tk.Label(progress_window, text="")
-        progress_label.pack(side=tk.TOP, fill=tk.X, expand=False, pady=(10, 10))
-
-        return progress_window, progress_bar, progress_label
 
     @staticmethod
     def center_window(window, parent):

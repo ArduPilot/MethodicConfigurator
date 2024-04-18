@@ -27,6 +27,7 @@ from backend_flightcontroller import FlightController
 from frontend_tkinter_base import show_no_connection_error
 from frontend_tkinter_base import show_tooltip
 from frontend_tkinter_base import update_combobox_width
+from frontend_tkinter_base import ProgressWindow
 from frontend_tkinter_base import BaseWindow
 
 from version import VERSION
@@ -96,8 +97,6 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
         self.previous_selection = flight_controller.comport.device if hasattr(self.flight_controller.comport, "device") \
             else None
         self.connection_progress_window = None
-        self.connection_progress_bar = None
-        self.connection_progress_label = None
 
         # Create a new frame for the flight controller connection selection label and combobox
         self.container_frame = tk.Frame(parent_frame)
@@ -147,10 +146,10 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
         return selected_connection
 
     def reconnect(self, selected_connection: str = ""):  # defaults to auto-connect
-        [self.connection_progress_window,
-            self.connection_progress_bar,
-            self.connection_progress_label] = self.parent.create_progress_window("Connecting with the FC")
-        error_message = self.flight_controller.connect(selected_connection, self.update_connection_progress_bar)
+        self.connection_progress_window = ProgressWindow(self.parent.root, "Connecting with the FC",
+                                                         "Connection step %d of %d")
+        error_message = self.flight_controller.connect(selected_connection,
+                                                       self.connection_progress_window.update_progress_bar)
         if error_message:
             show_no_connection_error(error_message)
             return True
@@ -162,27 +161,6 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
         if self.read_params_on_connect and hasattr(self.parent, "read_flight_controller_parameters"):
             self.parent.read_flight_controller_parameters(reread=False)
         return False
-
-    def update_connection_progress_bar(self, current_value: int, max_value: int):
-        """
-        Update the FC connection progress bar and the progress message with the current progress.
-
-        Args:
-            current_value (int): The current progress value.
-            max_value (int): The maximum progress value.
-        """
-        self.connection_progress_window.lift()
-
-        self.connection_progress_bar['value'] = current_value
-        self.connection_progress_bar['maximum'] = max_value
-        self.connection_progress_bar.update()
-
-        # Update the reset progress message
-        self.connection_progress_label.config(text=f"waiting for {current_value} of {max_value} seconds")
-
-        # Close the reset progress window when the process is complete
-        if current_value == max_value:
-            self.connection_progress_window.destroy()
 
 
 class ConnectionSelectionWindow(BaseWindow):
