@@ -295,15 +295,25 @@ def IMUfit(logfile, outfile, no_graph, log_parm, online, tclr):  # pylint: disab
     else:
         messages = ['PARM', 'IMU']
 
+    # Pre-compile regular expressions used frequently inside the loop
+    enable_pattern = re.compile(r"^INS_TCAL(\d)_ENABLE$")
+    coeff_pattern = re.compile(r"^INS_TCAL(\d)_(ACC|GYR)([1-3])_([XYZ])$")
+    tmin_pattern = re.compile(r"^INS_TCAL(\d)_TMIN$")
+    tmax_pattern = re.compile(r"^INS_TCAL(\d)_TMAX$")
+    gyr_caltemp_pattern = re.compile(r"^INS_GYR(\d)_CALTEMP")
+    acc_caltemp_pattern = re.compile(r"^INS_ACC(\d)_CALTEMP")
+    offset_pattern = re.compile(r"^INS_(ACC|GYR)(\d?)OFFS_([XYZ])$")
+
     while True:
         msg = mlog.recv_match(type=messages)
         if msg is None:
             break
 
-        if msg.get_type() == 'PARM':
+        msg_type = msg.get_type()
+        if msg_type == 'PARM':
             # build up the old coefficients so we can remove the impact of
             # existing coefficients from the data
-            m = re.match(r"^INS_TCAL(\d)_ENABLE$", msg.Name)
+            m = enable_pattern.match(msg.Name)
             if m:
                 imu = int(m.group(1))-1
                 if stop_capture[imu]:
@@ -317,7 +327,8 @@ def IMUfit(logfile, outfile, no_graph, log_parm, online, tclr):  # pylint: disab
                     stop_capture[imu] = True
                     continue
                 c.set_enable(imu, msg.Value)
-            m = re.match(r"^INS_TCAL(\d)_(ACC|GYR)([1-3])_([XYZ])$", msg.Name)
+                continue
+            m = coeff_pattern.match(msg.Name)
             if m:
                 imu = int(m.group(1))-1
                 stype = m.group(2)
@@ -329,31 +340,36 @@ def IMUfit(logfile, outfile, no_graph, log_parm, online, tclr):  # pylint: disab
                     c.set_acoeff(imu, axis, p, msg.Value/SCALE_FACTOR)
                 if stype == 'GYR':
                     c.set_gcoeff(imu, axis, p, msg.Value/SCALE_FACTOR)
-            m = re.match(r"^INS_TCAL(\d)_TMIN$", msg.Name)
+                continue
+            m = tmin_pattern.match(msg.Name)
             if m:
                 imu = int(m.group(1))-1
                 if stop_capture[imu]:
                     continue
                 c.set_tmin(imu, msg.Value)
-            m = re.match(r"^INS_TCAL(\d)_TMAX", msg.Name)
+                continue
+            m = tmax_pattern.match(msg.Name)
             if m:
                 imu = int(m.group(1))-1
                 if stop_capture[imu]:
                     continue
                 c.set_tmax(imu, msg.Value)
-            m = re.match(r"^INS_GYR(\d)_CALTEMP", msg.Name)
+                continue
+            m = gyr_caltemp_pattern.match(msg.Name)
             if m:
                 imu = int(m.group(1))-1
                 if stop_capture[imu]:
                     continue
                 c.set_gyro_tcal(imu, msg.Value)
-            m = re.match(r"^INS_ACC(\d)_CALTEMP", msg.Name)
+                continue
+            m = acc_caltemp_pattern.match(msg.Name)
             if m:
                 imu = int(m.group(1))-1
                 if stop_capture[imu]:
                     continue
                 c.set_accel_tcal(imu, msg.Value)
-            m = re.match(r"^INS_(ACC|GYR)(\d?)OFFS_([XYZ])$", msg.Name)
+                continue
+            m = offset_pattern.match(msg.Name)
             if m:
                 stype = m.group(1)
                 if m.group(2) == "":
@@ -367,11 +383,13 @@ def IMUfit(logfile, outfile, no_graph, log_parm, online, tclr):  # pylint: disab
                     c.set_aoffset(imu, axis, msg.Value)
                 if stype == 'GYR':
                     c.set_goffset(imu, axis, msg.Value)
+                continue
             if msg.Name == 'AHRS_ORIENTATION':
                 orientation = int(msg.Value)
                 print(f"Using orientation {orientation}")
+                continue
 
-        if msg.get_type() == 'TCLR' and tclr:
+        if msg_type == 'TCLR' and tclr:
             imu = msg.I
 
             T = msg.Temp
@@ -385,8 +403,9 @@ def IMUfit(logfile, outfile, no_graph, log_parm, online, tclr):  # pylint: disab
                 gyr = Vector3(msg.X, msg.Y, msg.Z)
                 time = msg.TimeUS*1.0e-6
                 data.add_gyro(imu, T, time, gyr)
+            continue
 
-        if msg.get_type() == 'IMU' and not tclr:
+        if msg_type == 'IMU' and not tclr:
             imu = msg.I
 
             if stop_capture[imu]:
