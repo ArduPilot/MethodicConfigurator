@@ -194,7 +194,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.at_least_one_changed_parameter_written = False
         self.write_checkbutton_var = {}
         self.file_selection_combobox = None
-        self.documentation_frame = None
         self.show_only_differences = None
         self.scroll_frame = None
         self.reset_progress_window = None
@@ -207,9 +206,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)
 
-        self.__create_widgets(version)
+        self.__create_conf_widgets(version)
 
-    def __create_widgets(self, version: str):  # pylint: disable=too-many-locals, too-many-statements
+        # Create a DocumentationFrame object for the Documentation Content
+        self.documentation_frame = DocumentationFrame(self.root, self.local_filesystem, self.current_file)
+
+        self.__create_parameter_area_widgets()
+
+    def __create_conf_widgets(self, version: str):  # pylint: disable=too-many-locals
         config_frame = tk.Frame(self.root)
         config_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0)) # Pack the frame at the top of the window
 
@@ -265,9 +269,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         image_label.bind("<Button-1>", lambda event: show_about_window(self.root, version))
         show_tooltip(image_label, "User Manual, Support Forum, Report a Bug, Credits, Source Code")
 
-        # Create a DocumentationFrame object for the Documentation Content
-        self.documentation_frame = DocumentationFrame(self.root, self.local_filesystem, self.current_file)
-
+    def __create_parameter_area_widgets(self):
         self.show_only_differences = tk.BooleanVar(value=False)
 
         # Create a Frame for the Scrollable Content
@@ -314,13 +316,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                                     "Do you want to provide a .bin log file and\n"
                                     "run the IMU temperature calibration using it?"):
                 # file selection dialog to select the *.bin file to be used in the IMUfit temperature calibration
-                filename = filedialog.askopenfilename(filetypes=[("ArduPilot binary log files", "*.bin")])
+                filename = filedialog.askopenfilename(filetypes=[("ArduPilot binary log files", ["*.bin", "*.BIN"])])
                 if filename:
+                    messagebox.showwarning("IMU temperature calibration", "Please wait, this can take a really long time and\n"
+                                           "the GUI will be unresponsive until it finishes.")
                     self.tempcal_imu_progress_window = ProgressWindow(self.root, "Reading IMU calibration messages",
-                                                                      "Please wait this can take a long time")
+                                                                      "Please wait, this can take a long time")
                     # Pass the selected filename to the IMUfit class
                     IMUfit(filename, tempcal_imu_result_param_fullpath, False, False, False, False,
-                            self.local_filesystem.vehicle_dir, self.tempcal_imu_progress_window.update_progress_bar)
+                            self.local_filesystem.vehicle_dir, self.tempcal_imu_progress_window.update_progress_bar_300_pct)
                     self.tempcal_imu_progress_window.destroy()
                     self.local_filesystem.file_parameters = self.local_filesystem.read_params_from_files()
                     self.at_least_one_param_edited = True  # force writing doc annotations to file
@@ -342,7 +346,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def read_flight_controller_parameters(self, reread: bool = False):
         self.param_read_progress_window = ProgressWindow(self.root, ("Re-r" if reread else "R") + "eading FC parameters",
-                                                         "Read %d of %d parameters")
+                                                         "Read {} of {} parameters")
         # Download all parameters from the flight controller
         self.flight_controller.fc_parameters = self.flight_controller.read_params(
             self.param_read_progress_window.update_progress_bar)
@@ -357,7 +361,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             fc_parameters = self.flight_controller.fc_parameters
         else:
             fc_parameters = {}
-        # Different parameters based on the thresholdfile_value
+        # Different parameters based on the tolerance value
         different_params = {param_name: file_value for param_name, file_value in
                             self.local_filesystem.file_parameters[selected_file].items()
                             if param_name not in fc_parameters or (param_name in fc_parameters and \
@@ -601,7 +605,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         if fc_reset_required:
             self.reset_progress_window = ProgressWindow(self.root, "Resetting Flight Controller",
-                                                        "Waiting for %d of %d seconds")
+                                                        "Waiting for {} of {} seconds")
             # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
             self.flight_controller.reset_and_reconnect(self.reset_progress_window.update_progress_bar)
             self.reset_progress_window.destroy()  # for the case that we are doing test and there is no real FC connected

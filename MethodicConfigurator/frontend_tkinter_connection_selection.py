@@ -147,7 +147,7 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
 
     def reconnect(self, selected_connection: str = ""):  # defaults to auto-connect
         self.connection_progress_window = ProgressWindow(self.parent.root, "Connecting with the FC",
-                                                         "Connection step %d of %d")
+                                                         "Connection step {} of {}")
         error_message = self.flight_controller.connect(selected_connection,
                                                        self.connection_progress_window.update_progress_bar)
         if error_message:
