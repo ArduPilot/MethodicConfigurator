@@ -44,7 +44,7 @@ from frontend_tkinter_connection_selection import ConnectionSelectionWidgets
 
 from frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 
-from tempcal_IMU import IMUfit
+from tempcal_imu import IMUfit
 
 
 class DocumentationFrame:  # pylint: disable=too-few-public-methods
