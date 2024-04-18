@@ -307,10 +307,25 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
     acc_caltemp_pattern = re.compile(r"^INS_ACC(\d)_CALTEMP")
     offset_pattern = re.compile(r"^INS_(ACC|GYR)(\d?)OFFS_([XYZ])$")
 
+    total_msgs = 0
+    for mtype in messages:
+        total_msgs += mlog.counts[mlog.name_to_id[mtype]]
+
+    print(f"Found {total_msgs} messages")
+
+    pct = 0
+    msgcnt = 0
     while True:
         msg = mlog.recv_match(type=messages)
         if msg is None:
             break
+
+        if progress_callback is not None:
+            msgcnt += 1
+            new_pct = (100 * msgcnt) // total_msgs
+            if new_pct != pct:
+                progress_callback(100+new_pct)
+                pct = new_pct
 
         msg_type = msg.get_type()
         if msg_type == 'PARM':
@@ -440,6 +455,9 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
 
     print(f"Loaded {len(data.accel[0]['T'])} accel and {len(data.gyro[0]['T'])} gyro samples")
 
+    if progress_callback:
+        progress = 210
+        progress_callback(progress)
     if not tclr:
         # apply moving average filter with 2s width
         data.Filter(2)
@@ -447,6 +465,10 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
     clog = c
     c = Coefficients()
 
+    if progress_callback:
+        progress += 10
+        progress_callback(progress)
+        progress_delta = 60 / (len(data.IMUs()) * len(AXES))
     with open(outfile, "w", encoding='utf-8') as calfile:
         for imu in data.IMUs():
             tmin = np.amin(data.accel[imu]['T'])
@@ -472,6 +494,9 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
                     c.set_accel_poly(imu, axis, np.polyfit(trel, data.accel[imu][axis] - ofs, POLY_ORDER))
                     trel = data.gyro[imu]['T'] - TEMP_REF
                     c.set_gyro_poly(imu, axis, np.polyfit(trel, data.gyro[imu][axis], POLY_ORDER))
+                if progress_callback:
+                    progress += progress_delta
+                    progress_callback(progress)
 
             params = c.param_string(imu)
             print(params)
@@ -511,6 +536,9 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
         axs[imu].legend(loc='upper left')
         axs[imu].set_title(f'IMU[{imu}] Gyro (deg/s)')
 
+    if progress_callback:
+        progress_callback(290)
+
     if figpath:
         _fig.savefig(os.path.join(figpath, 'tempcal_gyro.png'))
 
@@ -547,6 +575,9 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
 
     if figpath:
         _fig.savefig(os.path.join(figpath, 'tempcal_acc.png'))
+
+    if progress_callback:
+        progress_callback(300)
 
     pyplot.show()
 
