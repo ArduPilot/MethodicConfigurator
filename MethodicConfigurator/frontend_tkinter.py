@@ -36,6 +36,7 @@ from backend_flightcontroller import FlightController
 from frontend_tkinter_base import show_tooltip
 from frontend_tkinter_base import AutoResizeCombobox
 from frontend_tkinter_base import ScrollFrame
+from frontend_tkinter_base import ProgressWindow
 from frontend_tkinter_base import BaseWindow
 
 from frontend_tkinter_connection_selection import ConnectionSelectionWidgets
@@ -195,11 +196,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.show_only_differences = None
         self.scroll_frame = None
         self.reset_progress_window = None
-        self.reset_progress_bar = None
-        self.reset_progress_label = None
         self.param_read_progress_window = None
-        self.param_read_progress_bar = None
-        self.param_read_progress_label = None
 
         self.root.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version)
         self.root.geometry("880x500") # Set the window width
@@ -318,11 +315,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.repopulate_parameter_table(selected_file)
 
     def read_flight_controller_parameters(self, reread: bool = False):
-        [self.param_read_progress_window,
-         self.param_read_progress_bar,
-         self.param_read_progress_label] = self.create_progress_window(("Re-r" if reread else "R") + "eading FC parameters")
+        self.param_read_progress_window = ProgressWindow(self.root, ("Re-r" if reread else "R") + "eading FC parameters",
+                                                         "Read %d of %d parameters")
         # Download all parameters from the flight controller
-        self.flight_controller.fc_parameters = self.flight_controller.read_params(self.update_param_download_progress_bar)
+        self.flight_controller.fc_parameters = self.flight_controller.read_params(
+            self.param_read_progress_window.update_progress_bar)
         self.param_read_progress_window.destroy()  # for the case that we are doing test and there is no real FC connected
         if not reread:
             self.on_param_file_combobox_change(None, True) # the initial param read will trigger a table update
@@ -525,48 +522,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def on_show_only_changed_checkbox_change(self):
         self.repopulate_parameter_table(self.current_file)
 
-    def update_reset_progress_bar(self, current_value: int, max_value: int):
-        """
-        Update the FC reset progress bar and the progress message with the current progress.
-
-        Args:
-            current_value (int): The current progress value.
-            max_value (int): The maximum progress value.
-        """
-        self.reset_progress_window.lift()
-
-        self.reset_progress_bar['value'] = current_value
-        self.reset_progress_bar['maximum'] = max_value
-        self.reset_progress_bar.update()
-
-        # Update the reset progress message
-        self.reset_progress_label.config(text=f"waiting for {current_value} of {max_value} seconds")
-
-        # Close the reset progress window when the process is complete
-        if current_value == max_value:
-            self.reset_progress_window.destroy()
-
-    def update_param_download_progress_bar(self, current_value: int, max_value: int):
-        """
-        Update the FC parameter read progress bar the progress message with the current progress.
-
-        Args:
-            current_value (int): The current progress value.
-            max_value (int): The maximum progress value.
-        """
-        self.param_read_progress_window.lift()
-
-        self.param_read_progress_bar['value'] = current_value
-        self.param_read_progress_bar['maximum'] = max_value
-        self.param_read_progress_bar.update()
-
-        # Update the param read progress message
-        self.param_read_progress_label.config(text=f"Reading parameter {current_value} of {max_value}")
-
-        # Close the param read progress window when the process is complete
-        if current_value == max_value:
-            self.param_read_progress_window.destroy()
-
     def param_edit_widgets_event_generate_focus_out(self):
         # Trigger the <FocusOut> event for all entry widgets to ensure all changes are processed
         for widget in self.scroll_frame.view_port.winfo_children():
@@ -619,11 +574,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                                                         "(s) potentially require a reset\nDo you want to reset the ArduPilot?")
 
         if fc_reset_required:
-            [self.reset_progress_window,
-             self.reset_progress_bar,
-             self.reset_progress_label] = self.create_progress_window("Resetting Flight Controller")
+            self.reset_progress_window = ProgressWindow(self.root, "Resetting Flight Controller",
+                                                        "Waiting for %d of %d seconds")
             # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
-            self.flight_controller.reset_and_reconnect(self.update_reset_progress_bar)
+            self.flight_controller.reset_and_reconnect(self.reset_progress_window.update_progress_bar)
             self.reset_progress_window.destroy()  # for the case that we are doing test and there is no real FC connected
 
     def on_write_selected_click(self):
