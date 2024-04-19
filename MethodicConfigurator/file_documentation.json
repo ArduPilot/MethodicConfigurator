@@ -6,7 +6,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-imutempcal.html",
         "external_tool_text": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/scripts/tempcal_IMU.py",
         "external_tool_url": "https://ardupilot.org/copter/docs/common-imutempcal.html#offline-calibration-tool",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": ""
     },
     "03_imu_temperature_calibration_results.param": {
         "blog_text": "Records the results of the IMU temperature calibration, providing data for analysis and adjustment.",
@@ -15,7 +16,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-imutempcal.html",
         "external_tool_text": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/scripts/tempcal_IMU.py",
         "external_tool_url": "https://ardupilot.org/copter/docs/common-imutempcal.html#offline-calibration-tool",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": ""
     },
     "04_board_orientation.param": {
         "blog_text": "Defines the orientation of the flight controller board relative to the vehicle's body frame, crucial for accurate navigation and stabilization.",
@@ -24,7 +26,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-mounting-the-flight-controller.html",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": ""
     },
     "05_remote_controller.param": {
         "blog_text": "Configures settings related to the remote controller, including channel mapping and control modes.",
@@ -33,7 +36,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-rc-systems.html",
         "external_tool_text": "EdgeTX Companion",
         "external_tool_url": "https://edgetx.org/getedgetx/",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": ""
     },
     "06_telemetry.param": {
         "blog_text": "Sets up telemetry parameters for data transmission, including GPS, altitude, and other flight metrics.",
@@ -42,7 +46,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-telemetry-landingpage.html",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": ""
     },
     "07_esc.param": {
         "blog_text": "Configures settings for the Electronic Speed Controllers (ESCs), including PWM range and failsafe behavior.",
@@ -51,7 +56,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-esc-guide.html",
         "external_tool_text": "BLHeliSuite32",
         "external_tool_url": "https://www.mediafire.com/file/fj1p9qlbzo5bl5g/BLHeliSuite32_32.9.0.6.zip/file",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": ""
     },
     "08_batt1.param": {
         "blog_text": "Contains parameters for the first battery, including voltage thresholds and failsafe behavior.",
@@ -60,7 +66,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-powermodule-landingpage.html",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": ""
     },
     "09_batt2.param": {
         "blog_text": "Contains parameters for the second battery, including voltage thresholds and failsafe behavior.",
@@ -69,7 +76,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-powermodule-landingpage.html",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "0% mandatory (100% optional)"
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": ""
     },
     "10_gnss.param": {
         "blog_text": "Configures settings for the Global Navigation Satellite System (GNSS), including positioning and velocity estimation.",
@@ -78,7 +86,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-positioning-landing-page.html",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": ""
     },
     "11_mp_setup_mandatory_hardware.param": {
         "blog_text": "Sets up mandatory hardware components, ensuring all necessary sensors and systems are correctly configured.",
@@ -87,7 +96,8 @@
         "wiki_url": "",
         "external_tool_text": "Mission Planner",
         "external_tool_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-210-configure-mandatory-hardware-parameters-12",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "Mission Planner"
     },
     "12_general_configuration.param": {
         "blog_text": "General configuration parameters for the vehicle, including flight modes and safety settings.",
@@ -96,7 +106,8 @@
         "wiki_url": "",
         "external_tool_text": "ArduPilot Hardware report",
         "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/HardwareReport/",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": ""
     },
     "13_logging.param": {
         "blog_text": "Configures logging parameters, including what data is logged and how it's stored.",
@@ -105,7 +116,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html",
         "external_tool_text": "Motor/Propeller order and direction test",
         "external_tool_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-214-motorpropeller-order-and-direction-test-28",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": ""
     },
     "14_pid_adjustment.param": {
         "blog_text": "Contains parameters for adjusting the Proportional-Integral-Derivative (PID) controllers, crucial for tuning the vehicle's flight characteristics.",
@@ -114,7 +126,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
         "external_tool_text": "param_pid_adjustment_update.py",
         "external_tool_url": "",
-        "mandatory_text": "20% mandatory (80% optional)"
+        "mandatory_text": "20% mandatory (80% optional)",
+        "auto_changed_by": ""
     },
     "15_remote_id.param": {
         "blog_text": "Sets the remote ID for the vehicle, allowing it to comply with local laws.",
@@ -123,7 +136,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-remoteid.html",
         "external_tool_text": "Dronetag BS user manual",
         "external_tool_url": "https://help.dronetag.cz/dronetag-bs",
-        "mandatory_text": "0% mandatory (100% optional)"
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": ""
     },
     "16_notch_filter_setup.param": {
         "blog_text": "Configures the notch filter settings, used to reduce noise in the signal from the gyroscope.",
@@ -132,7 +146,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-imu-notch-filtering.html",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": ""
     },
     "17_notch_filter_results.param": {
         "blog_text": "Records the results of the notch filter setup, providing data for analysis and adjustment.",
@@ -141,7 +156,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-imu-notch-filtering.html",
         "external_tool_text": "Ardupilot Filter Review tool 100",
         "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/FilterReview/",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": ""
     },
     "18_throttle_controller.param": {
         "blog_text": "Configures settings for the throttle controller, including throttle curve and failsafe behavior.",
@@ -150,7 +166,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/initial-tuning-flight.html#test-althold",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": ""
     },
     "19_inflight_magnetometer_fit_setup.param": {
         "blog_text": "Sets up parameters for the in-flight magnetometer calibration, ensuring accurate compass heading.",
@@ -159,7 +176,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-magnetic-interference.html",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": ""
     },
     "20_inflight_magnetometer_fit_results.param": {
         "blog_text": "Records the results of the in-flight magnetometer calibration, providing data for analysis and adjustment.",
@@ -168,7 +186,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/common-magnetic-interference.html",
         "external_tool_text": "ArduPilot MAGFit in flight compass calibration",
         "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/MAGFit/",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "MAGFit Webtool and YOU manually uploaded the result to the FC already"
     },
     "21_evaluate_the_aircraft_tune_ff_disable.param": {
         "blog_text": "Contains parameters for evaluating the aircraft's tuning with feedforward control disabled, useful for comparison.",
@@ -177,7 +196,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/evaluating-the-aircraft-tune.html#evaluating-the-aircraft-tune",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": ""
     },
     "22_evaluate_the_aircraft_tune_ff_enable.param": {
         "blog_text": "Contains parameters for evaluating the aircraft's tuning with feedforward control enabled, for optimal performance.",
@@ -186,7 +206,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/evaluating-the-aircraft-tune.html#evaluating-the-aircraft-tune",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": ""
     },
     "23_autotune_roll_setup.param": {
         "blog_text": "Sets up parameters for the roll axis autotuning process, aiming to optimize roll response.",
@@ -195,7 +216,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
         "external_tool_text": "VTOL Quiktune Lua script",
         "external_tool_url": "https://ardupilot.org/copter/docs/quiktune.html",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": ""
     },
     "24_autotune_roll_results.param": {
         "blog_text": "Records the results of the roll axis autotuning, providing data for analysis and adjustment.",
@@ -204,7 +226,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
         "external_tool_text": "VTOL Quiktune Lua script",
         "external_tool_url": "https://ardupilot.org/copter/docs/quiktune.html",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "ArduPilot autotune or quicktune lua script"
     },
     "25_autotune_pitch_setup.param": {
         "blog_text": "Sets up parameters for the pitch axis autotuning process, aiming to optimize pitch response.",
@@ -213,7 +236,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
         "external_tool_text": "VTOL Quiktune Lua script",
         "external_tool_url": "https://ardupilot.org/copter/docs/quiktune.html",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": ""
     },
     "26_autotune_pitch_results.param": {
         "blog_text": "Records the results of the pitch axis autotuning, providing data for analysis and adjustment.",
@@ -222,7 +246,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
         "external_tool_text": "VTOL Quiktune Lua script",
         "external_tool_url": "https://ardupilot.org/copter/docs/quiktune.html",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "ArduPilot autotune or quicktune lua script"
     },
     "27_autotune_yaw_setup.param": {
         "blog_text": "Sets up parameters for the yaw axis autotuning process, aiming to optimize yaw response.",
@@ -231,7 +256,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
         "external_tool_text": "VTOL Quiktune Lua script",
         "external_tool_url": "https://ardupilot.org/copter/docs/quiktune.html",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": ""
     },
     "28_autotune_yaw_results.param": {
         "blog_text": "Records the results of the yaw axis autotuning, providing data for analysis and adjustment.",
@@ -240,7 +266,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
         "external_tool_text": "VTOL Quiktune Lua script",
         "external_tool_url": "https://ardupilot.org/copter/docs/quiktune.html",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "ArduPilot autotune or quicktune lua script"
     },
     "29_autotune_yawd_setup.param": {
         "blog_text": "Sets up parameters for the yaw rate autotuning process, aiming to optimize yaw rate response.",
@@ -249,7 +276,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
         "external_tool_text": "VTOL Quiktune Lua script",
         "external_tool_url": "https://ardupilot.org/copter/docs/quiktune.html",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": ""
     },
     "30_autotune_yawd_results.param": {
         "blog_text": "Records the results of the yaw rate autotuning, providing data for analysis and adjustment.",
@@ -258,7 +286,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
         "external_tool_text": "VTOL Quiktune Lua script",
         "external_tool_url": "https://ardupilot.org/copter/docs/quiktune.html",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "ArduPilot autotune or quicktune lua script"
     },
     "31_autotune_roll_pitch_retune_setup.param": {
         "blog_text": "Sets up parameters for the roll and pitch axis retuning process, refining the vehicle's flight characteristics.",
@@ -267,7 +296,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
         "external_tool_text": "VTOL Quiktune Lua script",
         "external_tool_url": "https://ardupilot.org/copter/docs/quiktune.html",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": ""
     },
     "32_autotune_roll_pitch_retune_results.param": {
         "blog_text": "Records the results of the roll and pitch axis retuning, providing data for analysis and adjustment.",
@@ -276,7 +306,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
         "external_tool_text": "VTOL Quiktune Lua script",
         "external_tool_url": "https://ardupilot.org/copter/docs/quiktune.html",
-        "mandatory_text": "80% mandatory (20% optional)"
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "ArduPilot autotune or quicktune lua script"
     },
     "33_windspeed_estimation.param": {
         "blog_text": "Configures parameters for windspeed estimation, crucial for accurate navigation and stabilization in windy conditions.",
@@ -285,7 +316,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/airspeed-estimation.html",
         "external_tool_text": "free online tool to overlay a grid over an image",
         "external_tool_url": "https://yomotherboard.com/add-grid-to-image/",
-        "mandatory_text": "60% mandatory (40% optional)"
+        "mandatory_text": "60% mandatory (40% optional)",
+        "auto_changed_by": ""
     },
     "34_barometer_compensation.param": {
         "blog_text": "Sets up parameters for barometer compensation, ensuring accurate altitude estimation.",
@@ -294,7 +326,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/airspeed-estimation.html#barometer-position-error-compensation",
         "external_tool_text": "Lua script provided by Yuri",
         "external_tool_url": "https://discuss.ardupilot.org/t/scripting-copter-wind-estimation-baro-compensation-tuning/98470/1",
-        "mandatory_text": "60% mandatory (40% optional)"
+        "mandatory_text": "60% mandatory (40% optional)",
+        "auto_changed_by": ""
     },
     "35_system_id_roll.param": {
         "blog_text": "Configures parameters for the roll axis system identification, part of the tuning process.",
@@ -303,7 +336,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
         "external_tool_text": "ArduCopter Simulink Model",
         "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/simulink/arducopter/README.md",
-        "mandatory_text": "20% mandatory (80% optional)"
+        "mandatory_text": "20% mandatory (80% optional)",
+        "auto_changed_by": ""
     },
     "36_system_id_pitch.param": {
         "blog_text": "Configures parameters for the pitch axis system identification, part of the tuning process.",
@@ -312,7 +346,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
         "external_tool_text": "ArduCopter Simulink Model",
         "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/simulink/arducopter/README.md",
-        "mandatory_text": "20% mandatory (80% optional)"
+        "mandatory_text": "20% mandatory (80% optional)",
+        "auto_changed_by": ""
     },
     "37_system_id_yaw.param": {
         "blog_text": "Configures parameters for the yaw axis system identification, part of the tuning process.",
@@ -321,7 +356,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
         "external_tool_text": "ArduCopter Simulink Model",
         "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/simulink/arducopter/README.md",
-        "mandatory_text": "20% mandatory (80% optional)"
+        "mandatory_text": "20% mandatory (80% optional)",
+        "auto_changed_by": ""
     },
     "38_system_id_thrust.param": {
         "blog_text": "Configures parameters for the thrust axis system identification, part of the tuning process.",
@@ -330,7 +366,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
         "external_tool_text": "ArduCopter Simulink Model",
         "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/simulink/arducopter/README.md",
-        "mandatory_text": "20% mandatory (80% optional)"
+        "mandatory_text": "20% mandatory (80% optional)",
+        "auto_changed_by": ""
     },
     "39_analytical_pid_optimization.param": {
         "blog_text": "Contains parameters for analytical PID optimization, aiming to find the optimal PID values for the vehicle.",
@@ -339,7 +376,8 @@
         "wiki_url": "",
         "external_tool_text": "IAV analytical PID model optimization",
         "external_tool_url": "https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759",
-        "mandatory_text": "20% mandatory (80% optional)"
+        "mandatory_text": "20% mandatory (80% optional)",
+        "auto_changed_by": ""
     },
     "40_everyday_use.param": {
         "blog_text": "Configures parameters for everyday use, ensuring the vehicle is safe and stable for routine flying.",
@@ -348,7 +386,8 @@
         "wiki_url": "",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "100% mandatory (0% optional)"
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": ""
     },
     "41_position_controller.param": {
         "blog_text": "Sets up parameters for the position controller, crucial for waypoint navigation and precision flying.",
@@ -357,7 +396,8 @@
         "wiki_url": "",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "40% mandatory (60% optional)"
+        "mandatory_text": "40% mandatory (60% optional)",
+        "auto_changed_by": ""
     },
     "42_precision_land.param": {
         "blog_text": "Configures parameters for precision landing, ensuring accurate and safe landing of the vehicle.",
@@ -366,7 +406,8 @@
         "wiki_url": "https://ardupilot.org/copter/docs/precision-landing-with-irlock.html",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "0% mandatory (100% optional)"
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": ""
     },
     "43_guided_operation.param": {
         "blog_text": "Sets up parameters for guided operation, including waypoint navigation and obstacle avoidance.",
@@ -375,6 +416,7 @@
         "wiki_url": "https://ardupilot.org/copter/docs/ac2_guidedmode.html",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "0% mandatory (100% optional)"
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": ""
     }
 }

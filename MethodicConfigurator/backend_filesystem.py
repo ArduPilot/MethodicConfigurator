@@ -444,3 +444,19 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
     def tempcal_imu_result_param_tuple(self):
         tempcal_imu_result_param_filename = "03_imu_temperature_calibration_results.param"
         return [tempcal_imu_result_param_filename, os_path.join(self.vehicle_dir, tempcal_imu_result_param_filename)]
+
+    def auto_changed_by(self, selected_file: str):
+        if selected_file in self.file_documentation:
+            return self.file_documentation[selected_file].get('auto_changed_by', '')
+        return ''
+
+    def copy_fc_values_to_file(self, selected_file: str, params: Dict[str, float]):
+        ret = 0
+        if selected_file in self.file_parameters:
+            for param, v in self.file_parameters[selected_file].items():
+                if param in params:
+                    v.value = params[param]
+                    ret += 1
+                else:
+                    logging_warning("Parameter %s not found in the current parameter file", param)
+        return ret
