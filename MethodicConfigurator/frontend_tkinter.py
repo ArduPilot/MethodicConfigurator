@@ -26,9 +26,6 @@ from typing import Tuple
 
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
-from PIL import Image
-from PIL import ImageTk
-
 from backend_filesystem import LocalFilesystem
 from backend_filesystem import is_within_tolerance
 
@@ -213,7 +210,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.__create_parameter_area_widgets()
 
-    def __create_conf_widgets(self, version: str):  # pylint: disable=too-many-locals
+    def __create_conf_widgets(self, version: str):
         config_frame = tk.Frame(self.root)
         config_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0)) # Pack the frame at the top of the window
 
@@ -251,20 +248,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                                          destroy_parent_on_connect=False, read_params_on_connect=True)
         csw.container_frame.pack(side=tk.RIGHT, fill="x", expand=False, padx=(6, 4))
 
-        # Load the ArduPilot logo and scale it down to image_height pixels in height
-        image_height = 40
-        image = Image.open(LocalFilesystem.application_logo_filepath())
-        width, height = image.size
-        aspect_ratio = width / height
-        new_width = int(image_height * aspect_ratio)
-        resized_image = image.resize((new_width, image_height))
-
-        # Convert the image to a format that can be used by Tkinter
-        photo = ImageTk.PhotoImage(resized_image)
-
-        # Create a label with the resized image
-        image_label = tk.Label(config_frame, image=photo)
-        image_label.image = photo # Keep a reference to the image to prevent it from being garbage collected
+        image_label = BaseWindow.ardupilot_logo(config_frame)
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
         image_label.bind("<Button-1>", lambda event: show_about_window(self.root, version))
         show_tooltip(image_label, "User Manual, Support Forum, Report a Bug, Credits, Source Code")

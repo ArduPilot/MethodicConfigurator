@@ -11,11 +11,16 @@ SPDX-License-Identifier:    GPL-3
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
+
 # from logging import debug as logging_debug
 # from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
+
 from platform import system as platform_system
+
+from PIL import Image
+from PIL import ImageTk
 
 from backend_filesystem import LocalFilesystem
 
@@ -258,7 +263,7 @@ class ProgressWindow:
         self.progress_window.destroy()
 
 
-class BaseWindow:  # pylint: disable=too-few-public-methods
+class BaseWindow:
     """
     A base class for creating windows in the ArduPilot Methodic Configurator application.
 
@@ -304,3 +309,20 @@ class BaseWindow:  # pylint: disable=too-few-public-methods
         x = parent.winfo_x() + (parent_width // 2) - (window_width // 2)
         y = parent.winfo_y() + (parent_height // 2) - (window_height // 2)
         window.geometry(f"+{x}+{y}")
+
+    @staticmethod
+    def ardupilot_logo(parent: tk.Toplevel, image_height: int=40) -> tk.Label:
+        # Load the ArduPilot logo and scale it down to image_height pixels in height
+        image = Image.open(LocalFilesystem.application_logo_filepath())
+        width, height = image.size
+        aspect_ratio = width / height
+        new_width = int(image_height * aspect_ratio)
+        resized_image = image.resize((new_width, image_height))
+
+        # Convert the image to a format that can be used by Tkinter
+        photo = ImageTk.PhotoImage(resized_image)
+
+        # Create a label with the resized image
+        image_label = tk.Label(parent, image=photo)
+        image_label.image = photo # Keep a reference to the image to prevent it from being garbage collected
+        return image_label
