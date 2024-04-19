@@ -765,4 +765,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         return should_write_file
 
     def close_connection_and_quit(self):
+        self.param_edit_widgets_event_generate_focus_out()
+        self.write_changes_to_intermediate_parameter_file()
         self.root.quit() # Then stop the Tkinter event loop
