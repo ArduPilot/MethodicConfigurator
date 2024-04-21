@@ -42,7 +42,7 @@ class DirectorySelectionWidgets():
     including a label, an entry field for displaying the selected directory, and a button for opening a
     directory selection dialog.
     """
-    def __init__(self, parent, parent_frame, initialdir: str, label_text: str,  # pylint: disable=R0913
+    def __init__(self, parent, parent_frame, initialdir: str, label_text: str,  # pylint: disable=too-many-arguments
                  autoresize_width: bool, dir_tooltip: str, button_tooltip: str):
         self.parent = parent
         self.directory = deepcopy(initialdir)
@@ -96,7 +96,7 @@ class DirectorySelectionWidgets():
         return self.directory
 
 
-class DirectoryNameWidgets():  # pylint: disable=R0903
+class DirectoryNameWidgets():  # pylint: disable=too-few-public-methods
     """
     A class to manage directory name selection widgets in the GUI.
 
@@ -130,9 +130,11 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
     directory selections. It includes additional logic for updating the local filesystem with the
     selected vehicle directory and re-initializing the filesystem with the new directory.
     """
-    def __init__(self, parent, parent_frame, local_filesystem: LocalFilesystem, destroy_parent_on_open: bool):
+    def __init__(self, parent: tk, parent_frame: tk.Frame,  # pylint: disable=too-many-arguments
+                 local_filesystem: LocalFilesystem,
+                 initial_dir: str, destroy_parent_on_open: bool) -> None:
         # Call the parent constructor with the necessary arguments
-        super().__init__(parent, parent_frame, local_filesystem.vehicle_dir, "Vehicle directory:",
+        super().__init__(parent, parent_frame, initial_dir, "Vehicle directory:",
                          False,
                          "Vehicle-specific directory containing the intermediate\n"
                          "parameter files to be written to the flight controller",
@@ -186,7 +188,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         self.create_option1_widgets(local_filesystem.vehicle_dir,
                                     local_filesystem.vehicle_dir,
                                     "MyVehicleName")
-        self.create_option2_widgets()
+        self.create_option2_widgets(local_filesystem.vehicle_dir)
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_and_quit)
@@ -233,7 +235,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                      "copy the template files from the (source) template directory to it and\n"
                      "load the newly created files into the application")
 
-    def create_option2_widgets(self):
+    def create_option2_widgets(self, initial_dir: str):
         # Option 2 - Use an existing vehicle configuration directory
         option2_label_frame = tk.LabelFrame(self.root, text="Option 2")
         option2_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
@@ -244,6 +246,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         option2_label.pack(expand=False, fill=tk.X, padx=6)
         self.connection_selection_widgets = VehicleDirectorySelectionWidgets(self, option2_label_frame,
                                                                              self.local_filesystem,
+                                                                             initial_dir,
                                                                              destroy_parent_on_open=True)
         self.connection_selection_widgets.container_frame.pack(expand=True, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 

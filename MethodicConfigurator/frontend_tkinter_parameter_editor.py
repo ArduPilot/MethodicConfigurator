@@ -512,6 +512,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Create a new frame inside the config_subframe for the intermediate parameter file directory selection labels
         # and directory selection button
         directory_selection_frame = VehicleDirectorySelectionWidgets(self, config_subframe, self.local_filesystem,
+                                                                     self.local_filesystem.vehicle_dir,
                                                                      destroy_parent_on_open=False)
         directory_selection_frame.container_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(4, 6))
 
