@@ -191,14 +191,7 @@ class ParameterEditorTable(ScrollFrame):
         for widget in self.view_port.winfo_children():
             widget.destroy()
         self.current_file = selected_file
-        if show_only_differences:
-            self.__update_table(different_params, fc_parameters)
-        else:
-            self.__update_table(self.local_filesystem.file_parameters[selected_file], fc_parameters)
-        # Scroll to the top of the parameter table
-        self.canvas.yview("moveto", 0)
 
-    def __update_table(self, params, fc_parameters):  # pylint: disable=too-many-locals
         # Create labels for table headers
         headers = ["Parameter", "Current Value", "New Value", "Unit", "Write", "Change Reason"]
         tooltips = ["Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long",
@@ -213,6 +206,15 @@ class ParameterEditorTable(ScrollFrame):
             show_tooltip(label, tooltips[i])
 
         self.write_checkbutton_var = {}
+
+        if show_only_differences:
+            self.__update_table(different_params, fc_parameters)
+        else:
+            self.__update_table(self.local_filesystem.file_parameters[selected_file], fc_parameters)
+        # Scroll to the top of the parameter table
+        self.canvas.yview("moveto", 0)
+
+    def __update_table(self, params, fc_parameters):  # pylint: disable=too-many-locals
         try:
             for i, (param_name, param) in enumerate(params.items(), 1):
                 param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
