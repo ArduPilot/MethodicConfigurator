@@ -46,6 +46,7 @@ class DirectorySelectionWidgets():
                  autoresize_width: bool, dir_tooltip: str, button_tooltip: str):
         self.parent = parent
         self.directory = deepcopy(initialdir)
+        self.label_text = label_text
         self.autoresize_width = autoresize_width
 
         # Create a new frame for the directory selection label and button
@@ -62,11 +63,9 @@ class DirectorySelectionWidgets():
 
         # Create a read-only entry for the directory
         dir_var = tk.StringVar(value=self.directory)
+        self.directory_entry = tk.Entry(directory_selection_subframe, textvariable=dir_var, state='readonly')
         if autoresize_width:
-            self.directory_entry = tk.Entry(directory_selection_subframe, textvariable=dir_var,
-                                            width=max(4, len(self.directory)), state='readonly')
-        else:
-            self.directory_entry = tk.Entry(directory_selection_subframe, textvariable=dir_var, state='readonly')
+            self.directory_entry.config(width=max(4, len(self.directory)))
         self.directory_entry.pack(side=tk.LEFT, fill="x", expand=True, anchor=tk.NW, pady=(4, 0))
         show_tooltip(self.directory_entry, dir_tooltip)
 
@@ -78,7 +77,7 @@ class DirectorySelectionWidgets():
 
     def on_select_directory(self):
         # Open the directory selection dialog
-        selected_directory = filedialog.askdirectory(initialdir=self.directory)
+        selected_directory = filedialog.askdirectory(initialdir=self.directory, title=f"Select {self.label_text}")
         if selected_directory:
             if self.autoresize_width:
                 # Set the width of the directory_entry to match the width of the selected_directory text
