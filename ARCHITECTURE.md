@@ -80,6 +80,11 @@ It consists of four main components:
 2. the local filesystem backend, does file I/O on the local file system. Operates mostly on parameter files and metadata/documentation files
 3. the flight controller backend, does communication with the flight controller
 4. the tkinter frontend, this is the GUI the user interacts with
+  1. `frontend_tkinter_base.py`
+  2. `frontend_tkinter_connection_selection.py`
+  3. `frontend_tkinter_directory_selection.py`
+  4. `frontend_tkinter_component_editor.py`
+  5. `frontend_tkinter_parameter_editor.py`
 
 ![Software Architecture diagram](images/Architecture.drawio.png)
 

@@ -25,9 +25,9 @@ from frontend_tkinter_connection_selection import ConnectionSelectionWindow
 
 from frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
 
-from component_editor import JsonEditorApp
+from frontend_tkinter_component_editor import JsonEditorApp
 
-from frontend_tkinter import ParameterEditorWindow
+from frontend_tkinter_parameter_editor import ParameterEditorWindow
 
 from version import VERSION
 
