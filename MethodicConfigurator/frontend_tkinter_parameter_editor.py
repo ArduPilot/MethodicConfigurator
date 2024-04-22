@@ -172,6 +172,225 @@ def show_about_window(root, version: str):
     source_button.pack(side=tk.LEFT, padx=10, pady=10)
 
 
+class ParameterEditorTable(ScrollFrame):
+    """
+    A class to manage and display the parameter editor table within the GUI.
+
+    This class inherits from ScrollFrame and is responsible for creating,
+    managing, and updating the table that displays parameters for editing.
+    """
+    def __init__(self, root, local_filesystem):
+        super().__init__(root)
+        self.local_filesystem = local_filesystem
+        self.background_color = root.cget("background")
+        self.current_file = None
+        self.write_checkbutton_var = {}
+        self.at_least_one_param_edited = False
+
+    def repopulate(self, selected_file: str, different_params: dict, fc_parameters: dict, show_only_differences: bool):
+        for widget in self.view_port.winfo_children():
+            widget.destroy()
+        self.current_file = selected_file
+        if show_only_differences:
+            self.__update_table(different_params, fc_parameters)
+        else:
+            self.__update_table(self.local_filesystem.file_parameters[selected_file], fc_parameters)
+        # Scroll to the top of the parameter table
+        self.canvas.yview("moveto", 0)
+
+    def __update_table(self, params, fc_parameters):  # pylint: disable=too-many-locals
+        # Create labels for table headers
+        headers = ["Parameter", "Current Value", "New Value", "Unit", "Write", "Change Reason"]
+        tooltips = ["Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long",
+                    "Current value on the flight controller ",
+                    "New value from the above selected intermediate parameter file",
+                    "Parameter Unit",
+                    "When selected, write new value to the flight controller",
+                    "Reason why respective parameter changed"]
+        for i, header in enumerate(headers):
+            label = tk.Label(self.view_port, text=header)
+            label.grid(row=0, column=i, sticky="ew") # Use sticky="ew" to make the label stretch horizontally
+            show_tooltip(label, tooltips[i])
+
+        self.write_checkbutton_var = {}
+        try:
+            for i, (param_name, param) in enumerate(params.items(), 1):
+                param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
+                param_default = self.local_filesystem.param_default_dict.get(param_name, None)
+                doc_tooltip = param_metadata.get('doc_tooltip') if param_metadata else \
+                    "No documentation available in apm.pdef.xml for this parameter"
+
+                column_0 = self.__create_parameter_name(param_name, param_metadata, doc_tooltip)
+                column_1 = self.__create_flightcontroller_value(fc_parameters, param_name, param_default, doc_tooltip)
+                column_2 = self.__create_new_value_entry(param_name, param, param_default, doc_tooltip)
+                column_3 = self.__create_unit_label(param_metadata)
+                column_4 = self.__create_write_write_checkbutton(param_name)
+                column_5 = self.__create_change_reason_entry(param_name, param, column_2)
+
+                column_0.grid(row=i, column=0, sticky="w", padx=0)
+                column_1.grid(row=i, column=1, sticky="e", padx=0)
+                column_2.grid(row=i, column=2, sticky="e", padx=0)
+                column_3.grid(row=i, column=3, sticky="e", padx=0)
+                column_4.grid(row=i, column=4, sticky="e", padx=0)
+                column_5.grid(row=i, column=5, sticky="ew", padx=(0, 5))
+
+        except KeyError as e:
+            logging_critical("Parameter %s not found in the %s file: %s", param_name, self.current_file, e, exc_info=True)
+            sys_exit(1)
+
+        # Configure the table_frame to stretch columns
+        self.view_port.columnconfigure(0, weight=0, minsize=120) # Parameter name
+        self.view_port.columnconfigure(1, weight=0) # Current Value
+        self.view_port.columnconfigure(2, weight=0) # New Value
+        self.view_port.columnconfigure(3, weight=0) # Units
+        self.view_port.columnconfigure(4, weight=0) # write to FC
+        self.view_port.columnconfigure(5, weight=1) # Change Reason
+
+    def __create_parameter_name(self, param_name, param_metadata, doc_tooltip):
+        is_calibration = param_metadata.get('Calibration', False) if param_metadata else False
+        is_readonly = param_metadata.get('ReadOnly', False) if param_metadata else False
+        parameter_label = tk.Label(self.view_port, text=param_name + (" " * (16 - len(param_name))),
+                                           background="red" if is_readonly else "yellow" if is_calibration else
+                                           self.background_color)
+        if doc_tooltip:
+            show_tooltip(parameter_label, doc_tooltip)
+        return parameter_label
+
+    def __create_flightcontroller_value(self, fc_parameters, param_name, param_default, doc_tooltip):
+        if param_name in fc_parameters:
+            value_str = format(fc_parameters[param_name], '.6f').rstrip('0').rstrip('.')
+            if param_default is not None and is_within_tolerance(fc_parameters[param_name], param_default.value):
+                        # If it matches, set the background color to light blue
+                flightcontroller_value = tk.Label(self.view_port, text=value_str,
+                                                          background="light blue")
+            else:
+                        # Otherwise, set the background color to the default color
+                flightcontroller_value = tk.Label(self.view_port, text=value_str)
+        else:
+            flightcontroller_value = tk.Label(self.view_port, text="N/A", background="orange")
+        if doc_tooltip:
+            show_tooltip(flightcontroller_value, doc_tooltip)
+        return flightcontroller_value
+
+    def __create_new_value_entry(self, param_name, param, param_default, doc_tooltip):
+        new_value_background = "light blue" if param_default is not None and \
+                    is_within_tolerance(param.value, param_default.value) else "white"
+        new_value_entry = tk.Entry(self.view_port, width=10, justify=tk.RIGHT,
+                                           background=new_value_background)
+        new_value_entry.insert(0, format(param.value, '.6f').rstrip('0').rstrip('.'))
+        new_value_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
+                                     self.__on_parameter_value_change(event, current_file, param_name))
+        if doc_tooltip:
+            show_tooltip(new_value_entry, doc_tooltip)
+        return new_value_entry
+
+    def __create_unit_label(self, param_metadata):
+        unit_label = tk.Label(self.view_port, text=param_metadata.get('unit') if param_metadata else "")
+        unit_tooltip = param_metadata.get('unit_tooltip') if param_metadata else \
+            "No documentation available in apm.pdef.xml for this parameter"
+        if unit_tooltip:
+            show_tooltip(unit_label, unit_tooltip)
+        return unit_label
+
+    def __create_write_write_checkbutton(self, param_name):
+        self.write_checkbutton_var[param_name] = tk.BooleanVar(value=True) # Default to selected
+        write_write_checkbutton = ttk.Checkbutton(self.view_port,
+                                                          variable=self.write_checkbutton_var[param_name])
+        show_tooltip(write_write_checkbutton, f'When selected write {param_name} new value to the flight controller')
+        return write_write_checkbutton
+
+    def __create_change_reason_entry(self, param_name, param, new_value_entry):
+        change_reason_entry = tk.Entry(self.view_port, background="white")
+        change_reason_entry.insert(0, "" if param.comment is None else param.comment)
+        change_reason_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
+                                         self.__on_parameter_change_reason_change(event, current_file, param_name))
+        show_tooltip(change_reason_entry, f'Reason why {param_name} should change to {new_value_entry.get()}')
+        return change_reason_entry
+
+    def __on_parameter_value_change(self, event, current_file, param_name):
+        # Get the new value from the Entry widget
+        new_value = event.widget.get()
+        try:
+            old_value = self.local_filesystem.file_parameters[current_file][param_name].value
+        except KeyError as e:
+            logging_critical("Parameter %s not found in the %s file: %s", param_name, current_file, e, exc_info=True)
+            sys_exit(1)
+        valid = True
+        # Check if the input is a valid float
+        try:
+            p = float(new_value)
+            changed = not is_within_tolerance(old_value, p)
+            param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
+            p_min = param_metadata.get('min', None) if param_metadata else None
+            p_max = param_metadata.get('max', None) if param_metadata else None
+            if changed:
+                if p_min and p < p_min:
+                    if not messagebox.askyesno("Out-of-bounds Value",
+                                               f"The value for {param_name} {p} should be greater than {p_min}\n"
+                                               "Use out-of-bounds value?", icon='warning'):
+                        valid = False
+                if p_max and p > p_max:
+                    if not messagebox.askyesno("Out-of-bounds Value",
+                                               f"The value for {param_name} {p} should be smaller than {p_max}\n"
+                                               "Use out-of-bounds value?", icon='warning'):
+                        valid = False
+        except ValueError:
+            # Optionally, you can handle the invalid value here, for example, by showing an error message
+            messagebox.showerror("Invalid Value", f"The value for {param_name} must be a valid float.")
+            valid = False
+        if valid:
+            if changed and not self.at_least_one_param_edited:
+                logging_debug("Parameter %s changed, will later ask if change(s) should be saved to file.", param_name)
+            self.at_least_one_param_edited = changed or self.at_least_one_param_edited
+            # Update the params dictionary with the new value
+            self.local_filesystem.file_parameters[current_file][param_name].value = p
+        else:
+            # Revert to the previous (valid) value
+            event.widget.delete(0, tk.END)
+            event.widget.insert(0, old_value)
+        # Update the background color of the new value Entry widget to light blue if the new value is the default value
+        param_default = self.local_filesystem.param_default_dict.get(param_name, None)
+        new_value_background = "light blue" if param_default is not None and \
+            is_within_tolerance(p, param_default.value) else "white"
+        event.widget.config(background=new_value_background)
+
+    def __on_parameter_change_reason_change(self, event, current_file, param_name):
+        # Get the new value from the Entry widget
+        new_value = event.widget.get()
+        try:
+            changed = new_value != self.local_filesystem.file_parameters[current_file][param_name].comment and \
+                not (new_value == "" and self.local_filesystem.file_parameters[current_file][param_name].comment is None)
+        except KeyError as e:
+            logging_critical("Parameter %s not found in the %s file %s: %s", param_name, current_file,
+                             new_value, e, exc_info=True)
+            sys_exit(1)
+        if changed and not self.at_least_one_param_edited:
+            logging_debug("Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to "
+                          "file.",
+                          param_name, self.local_filesystem.file_parameters[current_file][param_name].comment, new_value)
+        self.at_least_one_param_edited = changed or self.at_least_one_param_edited
+        # Update the params dictionary with the new value
+        self.local_filesystem.file_parameters[current_file][param_name].comment = new_value
+
+    def get_write_selected_params(self, current_file: str):
+        selected_params = {}
+        for param_name, checkbutton_state in self.write_checkbutton_var.items():
+            if checkbutton_state.get():
+                selected_params[param_name] = self.local_filesystem.file_parameters[current_file][param_name]
+        return selected_params
+
+    def generate_edit_widgets_focus_out(self):
+        # Trigger the <FocusOut> event for all entry widgets to ensure all changes are processed
+        for widget in self.view_port.winfo_children():
+            if isinstance(widget, tk.Entry):
+                widget.event_generate("<FocusOut>", when="now")
+
+    def get_at_least_one_param_edited(self):
+        return self.at_least_one_param_edited
+
+    def set_at_least_one_param_edited(self, value):
+        self.at_least_one_param_edited = value
+
 
 class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """
@@ -187,12 +406,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.flight_controller = flight_controller
         self.local_filesystem = local_filesystem
 
-        self.at_least_one_param_edited = False
         self.at_least_one_changed_parameter_written = False
-        self.write_checkbutton_var = {}
         self.file_selection_combobox = None
         self.show_only_differences = None
-        self.scroll_frame = None
+        self.parameter_editor_table = None
         self.reset_progress_window = None
         self.param_read_progress_window = None
         self.tempcal_imu_progress_window = None
@@ -256,10 +473,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def __create_parameter_area_widgets(self):
         self.show_only_differences = tk.BooleanVar(value=False)
 
-        # Create a Frame for the Scrollable Content
-        self.scroll_frame = ScrollFrame(self.root)
+        # Create a Scrollable parameter editor table
+        self.parameter_editor_table = ParameterEditorTable(self.root, self.local_filesystem)
         self.repopulate_parameter_table(self.current_file)
-        self.scroll_frame.pack(side="top", fill="both", expand=True)
+        self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 
         # Create a frame for the buttons
         buttons_frame = tk.Frame(self.root)
@@ -311,7 +528,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                             self.local_filesystem.vehicle_dir, self.tempcal_imu_progress_window.update_progress_bar_300_pct)
                     self.tempcal_imu_progress_window.destroy()
                     self.local_filesystem.file_parameters = self.local_filesystem.read_params_from_files()
-                    self.at_least_one_param_edited = True  # force writing doc annotations to file
+                    self.parameter_editor_table.set_at_least_one_param_edited(True)  # force writing doc annotations to file
 
     def __should_copy_fc_values_to_file(self, selected_file):
         auto_changed_by = self.local_filesystem.auto_changed_by(selected_file)
@@ -325,12 +542,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                                       if key in self.local_filesystem.file_parameters[selected_file]}
                 params_copied = self.local_filesystem.copy_fc_values_to_file(selected_file, relevant_fc_params)
                 if params_copied:
-                    self.at_least_one_param_edited = True
+                    self.parameter_editor_table.set_at_least_one_param_edited(True)
 
     def on_param_file_combobox_change(self, _event, forced: bool = False):
         if not self.file_selection_combobox['values']:
             return
-        self.param_edit_widgets_event_generate_focus_out()
+        self.parameter_editor_table.generate_edit_widgets_focus_out()
         selected_file = self.file_selection_combobox.get()
         if self.current_file != selected_file or forced:
             self.write_changes_to_intermediate_parameter_file()
@@ -371,191 +588,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                                 f"No different parameters found in {selected_file}. Skipping...")
             self.on_skip_click(force_focus_out_event=False)
             return
-        # Clear the current table
-        for widget in self.scroll_frame.view_port.winfo_children():
-            widget.destroy()
-        # Repopulate the table with the new parameters
-        if self.show_only_differences.get():
-            self.update_table(different_params, fc_parameters)
-        else:
-            self.update_table(self.local_filesystem.file_parameters[selected_file], fc_parameters)
-        # Scroll to the top of the parameter table
-        self.scroll_frame.canvas.yview("moveto", 0)
-
-    def update_table(self, params, fc_parameters):  # pylint: disable=too-many-locals, too-many-statements
-        # Create labels for table headers
-        headers = ["Parameter", "Current Value", "New Value", "Unit", "Write", "Change Reason"]
-        tooltips = ["Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long",
-                    "Current value on the flight controller ",
-                    "New value from the above selected intermediate parameter file",
-                    "Parameter Unit",
-                    "When selected, write new value to the flight controller",
-                    "Reason why respective parameter changed"]
-        for i, header in enumerate(headers):
-            label = tk.Label(self.scroll_frame.view_port, text=header)
-            label.grid(row=0, column=i, sticky="ew") # Use sticky="ew" to make the label stretch horizontally
-            show_tooltip(label, tooltips[i])
-
-        self.write_checkbutton_var = {}
-        try:
-            # Create the new table
-            for i, (param_name, param) in enumerate(params.items()):
-                param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
-                param_default = self.local_filesystem.param_default_dict.get(param_name, None)
-
-                is_calibration = param_metadata.get('Calibration', False) if param_metadata else False
-                is_readonly = param_metadata.get('ReadOnly', False) if param_metadata else False
-                parameter_label = tk.Label(self.scroll_frame.view_port, text=param_name + (" " * (16 - len(param_name))),
-                                           background="red" if is_readonly else "yellow" if is_calibration else
-                                           self.default_background_color)
-                if param_name in fc_parameters:
-                    value_str = format(fc_parameters[param_name], '.6f').rstrip('0').rstrip('.')
-                    if param_default is not None and is_within_tolerance(fc_parameters[param_name], param_default.value):
-                        # If it matches, set the background color to light blue
-                        flightcontroller_value = tk.Label(self.scroll_frame.view_port, text=value_str,
-                                                          background="light blue")
-                    else:
-                        # Otherwise, set the background color to the default color
-                        flightcontroller_value = tk.Label(self.scroll_frame.view_port, text=value_str)
-                else:
-                    flightcontroller_value = tk.Label(self.scroll_frame.view_port, text="N/A", background="orange")
-
-                new_value_background = "light blue" if param_default is not None and \
-                    is_within_tolerance(param.value, param_default.value) else "white"
-                new_value_entry = tk.Entry(self.scroll_frame.view_port, width=10, justify=tk.RIGHT,
-                                           background=new_value_background)
-                new_value_entry.insert(0, format(param.value, '.6f').rstrip('0').rstrip('.'))
-                new_value_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
-                                     self.on_parameter_value_change(event, current_file, param_name))
-
-                unit_label = tk.Label(self.scroll_frame.view_port, text=param_metadata.get('unit') if param_metadata else "")
-
-                self.write_checkbutton_var[param_name] = tk.BooleanVar(value=True) # Default to selected
-                write_write_checkbutton = ttk.Checkbutton(self.scroll_frame.view_port,
-                                                          variable=self.write_checkbutton_var[param_name])
-
-                change_reason_entry = tk.Entry(self.scroll_frame.view_port, background="white")
-                change_reason_entry.insert(0, "" if param.comment is None else param.comment)
-                change_reason_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
-                                         self.on_parameter_change_reason_change(event, current_file, param_name))
-
-                doc_tooltip = param_metadata.get('doc_tooltip') if param_metadata else \
-                    "No documentation available in apm.pdef.xml for this parameter"
-                if doc_tooltip:
-                    show_tooltip(parameter_label, doc_tooltip)
-                    show_tooltip(flightcontroller_value, doc_tooltip)
-                    show_tooltip(new_value_entry, doc_tooltip)
-                unit_tooltip = param_metadata.get('unit_tooltip') if param_metadata else \
-                    "No documentation available in apm.pdef.xml for this parameter"
-                if unit_tooltip:
-                    show_tooltip(unit_label, unit_tooltip)
-                show_tooltip(write_write_checkbutton, f'When selected write {param_name} new value to the flight controller')
-                show_tooltip(change_reason_entry, f'Reason why {param_name} should change to {new_value_entry.get()}')
-
-                row = [
-                    parameter_label,
-                    flightcontroller_value,
-                    new_value_entry,
-                    unit_label,
-                    write_write_checkbutton,
-                    change_reason_entry,
-                ]
-                for j, widget in enumerate(row):
-                    # Use sticky="ew" to make the widget stretch horizontally
-                    widget.grid(row=i+1, column=j,
-                                sticky="w" if j == 0 else "ew" if j == 5 else "e", padx=(0, 5) if j == 5 else 0)
-        except KeyError as e:
-            logging_critical("Parameter %s not found in the %s file: %s", param_name, self.current_file, e, exc_info=True)
-            sys_exit(1)
-
-        # Configure the table_frame to stretch columns
-        self.scroll_frame.view_port.columnconfigure(0, weight=0, minsize=120) # Parameter name
-        self.scroll_frame.view_port.columnconfigure(1, weight=0) # Current Value
-        self.scroll_frame.view_port.columnconfigure(2, weight=0) # New Value
-        self.scroll_frame.view_port.columnconfigure(3, weight=0) # Units
-        self.scroll_frame.view_port.columnconfigure(4, weight=0) # write to FC
-        self.scroll_frame.view_port.columnconfigure(5, weight=1) # Change reason
-
-    def on_parameter_value_change(self, event, current_file, param_name):
-        # Get the new value from the Entry widget
-        new_value = event.widget.get()
-        try:
-            old_value = self.local_filesystem.file_parameters[current_file][param_name].value
-        except KeyError as e:
-            logging_critical("Parameter %s not found in the %s file: %s", param_name, current_file, e, exc_info=True)
-            sys_exit(1)
-        valid = True
-        # Check if the input is a valid float
-        try:
-            p = float(new_value)
-            changed = not is_within_tolerance(old_value, p)
-            param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
-            p_min = param_metadata.get('min', None) if param_metadata else None
-            p_max = param_metadata.get('max', None) if param_metadata else None
-            if changed:
-                if p_min and p < p_min:
-                    if not messagebox.askyesno("Out-of-bounds Value",
-                                               f"The value for {param_name} {p} should be greater than {p_min}\n"
-                                               "Use out-of-bounds value?", icon='warning'):
-                        valid = False
-                if p_max and p > p_max:
-                    if not messagebox.askyesno("Out-of-bounds Value",
-                                               f"The value for {param_name} {p} should be smaller than {p_max}\n"
-                                               "Use out-of-bounds value?", icon='warning'):
-                        valid = False
-        except ValueError:
-            # Optionally, you can handle the invalid value here, for example, by showing an error message
-            messagebox.showerror("Invalid Value", f"The value for {param_name} must be a valid float.")
-            valid = False
-        if valid:
-            if changed and not self.at_least_one_param_edited:
-                logging_debug("Parameter %s changed, will later ask if change(s) should be saved to file.", param_name)
-            self.at_least_one_param_edited = changed or self.at_least_one_param_edited
-            # Update the params dictionary with the new value
-            self.local_filesystem.file_parameters[current_file][param_name].value = p
-        else:
-            # Revert to the previous (valid) value
-            event.widget.delete(0, tk.END)
-            event.widget.insert(0, old_value)
-        # Update the background color of the new value Entry widget to light blue if the new value is the default value
-        param_default = self.local_filesystem.param_default_dict.get(param_name, None)
-        new_value_background = "light blue" if param_default is not None and \
-            is_within_tolerance(p, param_default.value) else "white"
-        event.widget.config(background=new_value_background)
-
-    def on_parameter_change_reason_change(self, event, current_file, param_name):
-        # Get the new value from the Entry widget
-        new_value = event.widget.get()
-        try:
-            changed = new_value != self.local_filesystem.file_parameters[current_file][param_name].comment and \
-                not (new_value == "" and self.local_filesystem.file_parameters[current_file][param_name].comment is None)
-        except KeyError as e:
-            logging_critical("Parameter %s not found in the %s file %s: %s", param_name, self.current_file,
-                             new_value, e, exc_info=True)
-            sys_exit(1)
-        if changed and not self.at_least_one_param_edited:
-            logging_debug("Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to "
-                          "file.",
-                          param_name, self.local_filesystem.file_parameters[current_file][param_name].comment, new_value)
-        self.at_least_one_param_edited = changed or self.at_least_one_param_edited
-        # Update the params dictionary with the new value
-        self.local_filesystem.file_parameters[current_file][param_name].comment = new_value
-
-    def get_write_selected_params(self):
-        selected_params = {}
-        for param_name, checkbutton_state in self.write_checkbutton_var.items():
-            if checkbutton_state.get():
-                selected_params[param_name] = self.local_filesystem.file_parameters[self.current_file][param_name]
-        return selected_params
+        # Re-populate the table with the new parameters
+        self.parameter_editor_table.repopulate(selected_file, different_params,
+                                               fc_parameters, self.show_only_differences.get())
 
     def on_show_only_changed_checkbox_change(self):
         self.repopulate_parameter_table(self.current_file)
-
-    def param_edit_widgets_event_generate_focus_out(self):
-        # Trigger the <FocusOut> event for all entry widgets to ensure all changes are processed
-        for widget in self.scroll_frame.view_port.winfo_children():
-            if isinstance(widget, tk.Entry):
-                widget.event_generate("<FocusOut>", when="now")
 
     def write_params_that_require_reset(self, selected_params: dict):
         """
@@ -610,10 +648,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.reset_progress_window.destroy()  # for the case that we are doing test and there is no real FC connected
 
     def on_write_selected_click(self):
-        self.param_edit_widgets_event_generate_focus_out()
+        self.parameter_editor_table.generate_edit_widgets_focus_out()
 
         self.write_changes_to_intermediate_parameter_file()
-        selected_params = self.get_write_selected_params()
+        selected_params = self.parameter_editor_table.get_write_selected_params(self.current_file)
         if selected_params:
             if hasattr(self.flight_controller, 'fc_parameters') and self.flight_controller.fc_parameters:
                 self.write_selected_params(selected_params)
@@ -673,7 +711,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def on_skip_click(self, _event=None, force_focus_out_event=True):
         if force_focus_out_event:
-            self.param_edit_widgets_event_generate_focus_out()
+            self.parameter_editor_table.generate_edit_widgets_focus_out()
         self.write_changes_to_intermediate_parameter_file()
         # Find the next filename in the file_parameters dictionary
         files = list(self.local_filesystem.file_parameters.keys())
@@ -698,12 +736,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.close_connection_and_quit()
 
     def write_changes_to_intermediate_parameter_file(self):
-        if self.at_least_one_param_edited:
+        if self.parameter_editor_table.get_at_least_one_param_edited():
             if messagebox.askyesno("One or more parameters have been edited",
                                    f"Do you want to write the changes to the {self.current_file} file?"):
                 self.local_filesystem.export_to_param(self.local_filesystem.file_parameters[self.current_file],
                                                       self.current_file, annotate_doc=False)
-        self.at_least_one_param_edited = False
+        self.parameter_editor_table.set_at_least_one_param_edited(False)
 
     def write_summary_files(self):
         if not hasattr(self.flight_controller, 'fc_parameters') or self.flight_controller.fc_parameters is None:
@@ -765,6 +803,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         return should_write_file
 
     def close_connection_and_quit(self):
-        self.param_edit_widgets_event_generate_focus_out()
+        self.parameter_editor_table.generate_edit_widgets_focus_out()
         self.write_changes_to_intermediate_parameter_file()
         self.root.quit() # Then stop the Tkinter event loop
