@@ -194,8 +194,8 @@ class ConnectionSelectionWindow(BaseWindow):
                                  "wait 7 seconds for it to fully boot and\n"
                                  "press the Auto-connect button below to connect to it")
         option1_label.pack(expand=False, fill=tk.X, padx=6)
-        skip_fc_connection_button = tk.Button(option1_label_frame, text="Auto-connect", command=self.fc_autoconnect)
-        skip_fc_connection_button.pack(expand=False, fill=tk.X, padx=100, pady=6)
+        autoconnect_button = tk.Button(option1_label_frame, text="Auto-connect", command=self.fc_autoconnect)
+        autoconnect_button.pack(expand=False, fill=tk.X, padx=100, pady=6)
 
         # Option 2 - Manually select the flight controller connection or add a new one
         option2_label_frame = tk.LabelFrame(self.root, text="Option 2")
@@ -220,7 +220,8 @@ class ConnectionSelectionWindow(BaseWindow):
         option3_label.pack(expand=False, fill=tk.X, padx=6)
         skip_fc_connection_button = tk.Button(option3_label_frame,
                                               text="Skip FC connection, just edit the .param files on disk",
-                                              command=self.skip_fc_connection)
+                                              command=lambda flight_controller=flight_controller:
+                                              self.skip_fc_connection(flight_controller))
         skip_fc_connection_button.pack(expand=False, fill=tk.X, padx=15, pady=6)
 
         # Bind the close_connection_and_quit function to the window close event
@@ -232,9 +233,10 @@ class ConnectionSelectionWindow(BaseWindow):
     def fc_autoconnect(self):
         self.connection_selection_widgets.reconnect()
 
-    def skip_fc_connection(self):
+    def skip_fc_connection(self, flight_controller: FlightController):
         logging_warning("Will proceed without FC connection. FC parameters will not be read nor written")
         logging_warning("Only the intermediate '.param' files on the PC disk will be edited")
+        flight_controller.disconnect()
         self.root.destroy()
 
 
