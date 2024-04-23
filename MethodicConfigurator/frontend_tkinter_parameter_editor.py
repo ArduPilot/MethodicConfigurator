@@ -181,6 +181,7 @@ class ParameterEditorTable(ScrollFrame):
     """
     def __init__(self, root, local_filesystem):
         super().__init__(root)
+        self.root = root
         self.local_filesystem = local_filesystem
         self.background_color = root.cget("background")
         self.current_file = None
@@ -224,7 +225,7 @@ class ParameterEditorTable(ScrollFrame):
 
                 column_0 = self.__create_parameter_name(param_name, param_metadata, doc_tooltip)
                 column_1 = self.__create_flightcontroller_value(fc_parameters, param_name, param_default, doc_tooltip)
-                column_2 = self.__create_new_value_entry(param_name, param, param_default, doc_tooltip)
+                column_2 = self.__create_new_value_entry(param_name, param, param_metadata, param_default, doc_tooltip)
                 column_3 = self.__create_unit_label(param_metadata)
                 column_4 = self.__create_write_write_checkbutton(param_name)
                 column_5 = self.__create_change_reason_entry(param_name, param, column_2)
@@ -274,17 +275,88 @@ class ParameterEditorTable(ScrollFrame):
             show_tooltip(flightcontroller_value, doc_tooltip)
         return flightcontroller_value
 
-    def __create_new_value_entry(self, param_name, param, param_default, doc_tooltip):
+    @staticmethod
+    def __update_new_value_entry_text(new_value_entry: tk.Entry, value: float, param_default):
+        new_value_entry.delete(0, tk.END)
+        text = format(value, '.6f').rstrip('0').rstrip('.')
+        new_value_entry.insert(0, text)
         new_value_background = "light blue" if param_default is not None and \
-                    is_within_tolerance(param.value, param_default.value) else "white"
-        new_value_entry = tk.Entry(self.view_port, width=10, justify=tk.RIGHT,
-                                           background=new_value_background)
-        new_value_entry.insert(0, format(param.value, '.6f').rstrip('0').rstrip('.'))
-        new_value_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
+            is_within_tolerance(value, param_default.value) else "white"
+        new_value_entry.config(background=new_value_background)
+
+    def __create_new_value_entry(self, param_name, param,  # pylint: disable=too-many-arguments
+                                 param_metadata, param_default, doc_tooltip):
+        new_value_entry = tk.Entry(self.view_port, width=10, justify=tk.RIGHT)
+        ParameterEditorTable.__update_new_value_entry_text(new_value_entry, param.value, param_default)
+        bitmask_dict = param_metadata.get('Bitmask', None) if param_metadata else None
+        try:
+            old_value = self.local_filesystem.file_parameters[self.current_file][param_name].value
+        except KeyError as e:
+            logging_critical("Parameter %s not found in the %s file: %s", param_name, self.current_file, e, exc_info=True)
+            sys_exit(1)
+        if bitmask_dict:
+            new_value_entry.bind("<FocusIn>", lambda event:
+                                 self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value))
+        else:
+            new_value_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
                                      self.__on_parameter_value_change(event, current_file, param_name))
         if doc_tooltip:
             show_tooltip(new_value_entry, doc_tooltip)
         return new_value_entry
+
+    def __open_bitmask_selection_window(self, event, param_name, bitmask_dict, old_value):  # pylint: disable=too-many-locals
+        def on_close():
+            checked_keys = [key for key, var in checkbox_vars.items() if var.get()]
+            # Convert checked keys back to decimal value
+            new_decimal_value = sum(1 << key for key in checked_keys)
+            # Update new_value_entry with the new decimal value
+            ParameterEditorTable.__update_new_value_entry_text(event.widget,
+                                                               new_decimal_value,
+                                                               self.local_filesystem.param_default_dict.get(param_name, None))
+            self.at_least_one_param_edited = (old_value != new_decimal_value) or self.at_least_one_param_edited
+            self.local_filesystem.file_parameters[self.current_file][param_name].value = new_decimal_value
+            # Destroy the window
+            window.destroy()
+            # Issue a FocusIn event on something else than new_value_entry to prevent endless looping
+            self.root.focus_set()
+            # Run the Tk event loop once to process the event
+            self.root.update_idletasks()
+            # Re-bind the FocusIn event to new_value_entry
+            event.widget.bind("<FocusIn>", lambda event:
+                                        self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value))
+
+        def update_label():
+            checked_keys = [key for key, var in checkbox_vars.items() if var.get()]
+            new_decimal_value = sum(1 << key for key in checked_keys)
+            close_label.config(text=f"{param_name} Value: {new_decimal_value}")
+
+        # Temporarily unbind the FocusIn event to prevent triggering the window again
+        event.widget.unbind("<FocusIn>")
+        window = tk.Toplevel(self.root)
+        window.title(f"Select {param_name} Bitmask Options")
+        checkbox_vars = {}
+
+        # Convert current_value to a set of checked keys
+        current_value = int(event.widget.get())
+        checked_keys = {i for i in range(len(bitmask_dict)) if (current_value >> i) & 1}
+
+        for i, (key, value) in enumerate(bitmask_dict.items()):
+            var = tk.BooleanVar(value=i in checked_keys)
+            checkbox_vars[key] = var
+            checkbox = tk.Checkbutton(window, text=value, variable=var, command=update_label)
+            checkbox.grid(row=i, column=0, sticky="w")
+
+        # Calculate new_decimal_value here to ensure it's accessible when creating the label
+        new_decimal_value = sum(1 << key for key in checked_keys)
+
+        # Replace the close button with a read-only label displaying the current new_decimal_value
+        close_label = tk.Label(window, text=f"{param_name} Value: {new_decimal_value}", state='disabled')
+        close_label.grid(row=len(bitmask_dict), column=0, pady=10)
+
+        # Bind the on_close function to the window's WM_DELETE_WINDOW protocol
+        window.protocol("WM_DELETE_WINDOW", on_close)
+
+        window.wait_window() # Wait for the window to be closed
 
     def __create_unit_label(self, param_metadata):
         unit_label = tk.Label(self.view_port, text=param_metadata.get('unit') if param_metadata else "")
@@ -348,13 +420,9 @@ class ParameterEditorTable(ScrollFrame):
             self.local_filesystem.file_parameters[current_file][param_name].value = p
         else:
             # Revert to the previous (valid) value
-            event.widget.delete(0, tk.END)
-            event.widget.insert(0, old_value)
-        # Update the background color of the new value Entry widget to light blue if the new value is the default value
-        param_default = self.local_filesystem.param_default_dict.get(param_name, None)
-        new_value_background = "light blue" if param_default is not None and \
-            is_within_tolerance(p, param_default.value) else "white"
-        event.widget.config(background=new_value_background)
+            p = old_value
+        ParameterEditorTable.__update_new_value_entry_text(event.widget, p,
+                                                           self.local_filesystem.param_default_dict.get(param_name, None))
 
     def __on_parameter_change_reason_change(self, event, current_file, param_name):
         # Get the new value from the Entry widget

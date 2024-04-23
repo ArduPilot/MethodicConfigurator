@@ -140,6 +140,12 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
                     param_info['ReadOnly'] = self.str_to_bool(param_info['fields']['ReadOnly'].strip())
                 if 'RebootRequired' in param_info['fields']:
                     param_info['RebootRequired'] = self.str_to_bool(param_info['fields']['RebootRequired'].strip())
+                if 'Bitmask' in param_info['fields']:
+                    bitmask_items = param_info['fields']['Bitmask'].split(',')
+                    param_info['Bitmask'] = {}
+                    for item in bitmask_items:
+                        key, value = item.split(':')
+                        param_info['Bitmask'][int(key.strip())] = value.strip()
 
             prefix_parts = [
                 f"{param_info['humanName']}",
