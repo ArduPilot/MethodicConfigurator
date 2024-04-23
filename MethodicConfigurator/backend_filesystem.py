@@ -106,15 +106,19 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
         # Define a list of directories to search for the file_documentation_filename file
         search_directories = [self.vehicle_dir, os_path.dirname(os_path.abspath(__file__))]
         file_found = False
-        for directory in search_directories:
+        for i, directory in enumerate(search_directories):
             try:
                 with open(os_path.join(directory, self.file_documentation_filename), 'r', encoding='utf-8') as file:
                     self.file_documentation = json_load(file)
                     file_found = True
+                    if i == 0:
+                        logging_warning("File documentation '%s' loaded from %s (overwriting default file documentation).",
+                                         self.file_documentation_filename, directory)
+                    if i == 1:
+                        logging_info("File documentation '%s' loaded from %s.", self.file_documentation_filename, directory)
                     break
             except FileNotFoundError:
-                # Log a warning if the file is not found in the current directory
-                logging_warning("File '%s' not found in %s.", self.file_documentation_filename, directory)
+                pass
         if not file_found:
             logging_warning("No file documentation will be available.")
 
