@@ -13,8 +13,8 @@ SPDX-License-Identifier:    GPL-3
 import unittest
 from unittest.mock import patch, MagicMock
 import tkinter as tk
-from frontend_tkinter_parameter_editor import show_error_message
-from frontend_tkinter_parameter_editor import show_tooltip
+from frontend_tkinter_base import show_error_message
+from frontend_tkinter_base import show_tooltip
 
 
 class TestShowErrorMessage(unittest.TestCase):
