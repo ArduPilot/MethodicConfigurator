@@ -65,7 +65,7 @@ def argument_parser():
 # pylint: enable=duplicate-code
 
 
-class JsonEditorApp(BaseWindow):
+class ComponentEditorWindow(BaseWindow):
     """
     A class for editing JSON files in the ArduPilot methodic configurator.
 
@@ -193,5 +193,5 @@ if __name__ == "__main__":
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
 
     filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type)
-    app = JsonEditorApp(VERSION, filesystem)
+    app = ComponentEditorWindow(VERSION, filesystem)
     app.root.mainloop()

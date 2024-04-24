@@ -25,7 +25,7 @@ from frontend_tkinter_connection_selection import ConnectionSelectionWindow
 
 from frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
 
-from frontend_tkinter_component_editor import JsonEditorApp
+from frontend_tkinter_component_editor import ComponentEditorWindow
 
 from frontend_tkinter_parameter_editor import ParameterEditorWindow
 
@@ -129,7 +129,7 @@ def main():
 
     start_file = local_filesystem.get_start_file(args.n)
 
-    component_editor_window = JsonEditorApp(VERSION, local_filesystem)
+    component_editor_window = ComponentEditorWindow(VERSION, local_filesystem)
     component_editor_window.root.mainloop()
 
     # Call the GUI function with the starting intermediate parameter file
