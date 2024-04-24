@@ -20,9 +20,9 @@ import argparse
 import os
 import shutil
 
-from param_pid_adjustment_update import ranged_type
-from param_pid_adjustment_update import Par
-from param_pid_adjustment_update import update_pid_adjustment_params
+from MethodicConfigurator.param_pid_adjustment_update import ranged_type
+from MethodicConfigurator.param_pid_adjustment_update import Par
+from MethodicConfigurator.param_pid_adjustment_update import update_pid_adjustment_params
 
 
 class TestRangedType(unittest.TestCase):

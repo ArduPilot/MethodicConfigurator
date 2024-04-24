@@ -9,17 +9,18 @@ Amilcar do Carmo Lucas, IAV GmbH
 # pylint: skip-file
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+from unittest.mock import MagicMock
 
-from extract_param_defaults import extract_parameter_values
-from extract_param_defaults import missionplanner_sort
-from extract_param_defaults import mavproxy_sort
-from extract_param_defaults import sort_params
-from extract_param_defaults import output_params
-from extract_param_defaults import parse_arguments
-from extract_param_defaults import NO_DEFAULT_VALUES_MESSAGE
-from extract_param_defaults import MAVLINK_SYSID_MAX
-from extract_param_defaults import MAVLINK_COMPID_MAX
+from MethodicConfigurator.extract_param_defaults import extract_parameter_values
+from MethodicConfigurator.extract_param_defaults import missionplanner_sort
+from MethodicConfigurator.extract_param_defaults import mavproxy_sort
+from MethodicConfigurator.extract_param_defaults import sort_params
+from MethodicConfigurator.extract_param_defaults import output_params
+from MethodicConfigurator.extract_param_defaults import parse_arguments
+from MethodicConfigurator.extract_param_defaults import NO_DEFAULT_VALUES_MESSAGE
+from MethodicConfigurator.extract_param_defaults import MAVLINK_SYSID_MAX
+from MethodicConfigurator.extract_param_defaults import MAVLINK_COMPID_MAX
 
 
 class TestArgParseParameters(unittest.TestCase):
@@ -181,7 +182,7 @@ class TestSortFunctions(unittest.TestCase):
 
 class TestOutputParams(unittest.TestCase):
 
-    @patch('extract_param_defaults.print')
+    @patch('builtins.print')
     def test_output_params(self, mock_print):
         # Prepare a dummy defaults dictionary
         defaults = {'PARAM2': 1.0, 'PARAM1': 2.0}
@@ -191,9 +192,11 @@ class TestOutputParams(unittest.TestCase):
 
         # Check if the print function was called with the correct parameters
         expected_calls = [unittest.mock.call('PARAM2,1'), unittest.mock.call('PARAM1,2')]
+        print(mock_print.mock_calls)
+        print(expected_calls)
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
-    @patch('extract_param_defaults.print')
+    @patch('builtins.print')
     def test_output_params_missionplanner_non_numeric(self, mock_print):
         # Prepare a dummy defaults dictionary
         defaults = {'PARAM1': 'non-numeric'}
@@ -205,7 +208,7 @@ class TestOutputParams(unittest.TestCase):
         expected_calls = [unittest.mock.call('PARAM1,non-numeric')]
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
-    @patch('extract_param_defaults.print')
+    @patch('builtins.print')
     def test_output_params_mavproxy(self, mock_print):
         # Prepare a dummy defaults dictionary
         defaults = {'PARAM2': 2.0, 'PARAM1': 1.0}
@@ -219,7 +222,7 @@ class TestOutputParams(unittest.TestCase):
                           unittest.mock.call("%-15s %.6f" % ('PARAM2', 2.0))]
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
-    @patch('extract_param_defaults.print')
+    @patch('builtins.print')
     def test_output_params_qgcs(self, mock_print):
         # Prepare a dummy defaults dictionary
         defaults = {'PARAM2': 2.0, 'PARAM1': 1.0}
@@ -234,7 +237,7 @@ class TestOutputParams(unittest.TestCase):
                           unittest.mock.call("%u %u %-15s %.6f %u" % (1, 1, 'PARAM2', 2.0, 9))]
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
-    @patch('extract_param_defaults.print')
+    @patch('builtins.print')
     def test_output_params_qgcs_2_4(self, mock_print):
         # Prepare a dummy defaults dictionary
         defaults = {'PARAM2': 2.0, 'PARAM1': 1.0}
@@ -249,7 +252,7 @@ class TestOutputParams(unittest.TestCase):
                           unittest.mock.call("%u %u %-15s %.6f %u" % (2, 4, 'PARAM2', 2.0, 9))]
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
-    @patch('extract_param_defaults.print')
+    @patch('builtins.print')
     def test_output_params_qgcs_SYSID_THISMAV(self, mock_print):
         # Prepare a dummy defaults dictionary
         defaults = {'PARAM2': 2.0, 'PARAM1': 1.0, 'SYSID_THISMAV': 3.0}
@@ -265,7 +268,7 @@ class TestOutputParams(unittest.TestCase):
                           unittest.mock.call("%u %u %-15s %.6f %u" % (3, 7, 'SYSID_THISMAV', 3.0, 9))]
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
-    @patch('extract_param_defaults.print')
+    @patch('builtins.print')
     def test_output_params_qgcs_SYSID_INVALID(self, mock_print):
         # Prepare a dummy defaults dictionary
         defaults = {'PARAM2': 2.0, 'PARAM1': 1.0, 'SYSID_THISMAV': -1.0}
@@ -282,7 +285,7 @@ class TestOutputParams(unittest.TestCase):
             output_params(defaults, 'qgcs', MAVLINK_SYSID_MAX+2, 7)
         self.assertEqual(str(cm.exception), f"Invalid system ID parameter 16777218 must be smaller than {MAVLINK_SYSID_MAX}")
 
-    @patch('extract_param_defaults.print')
+    @patch('builtins.print')
     def test_output_params_qgcs_COMPID_INVALID(self, mock_print):
         # Prepare a dummy defaults dictionary
         defaults = {'PARAM2': 2.0, 'PARAM1': 1.0}
@@ -299,7 +302,7 @@ class TestOutputParams(unittest.TestCase):
             output_params(defaults, 'qgcs', 1, MAVLINK_COMPID_MAX+3)
         self.assertEqual(str(cm.exception), f"Invalid component ID parameter 259 must be smaller than {MAVLINK_COMPID_MAX}")
 
-    @patch('extract_param_defaults.print')
+    @patch('builtins.print')
     def test_output_params_integer(self, mock_print):
         # Prepare a dummy defaults dictionary with an integer value
         defaults = {'PARAM1': 1.01, 'PARAM2': 2.00}
@@ -311,6 +314,7 @@ class TestOutputParams(unittest.TestCase):
         # Check if the print function was called with the correct parameters
         expected_calls = [unittest.mock.call('PARAM1,1.01'), unittest.mock.call('PARAM2,2')]
         mock_print.assert_has_calls(expected_calls, any_order=False)
+
 
 
 if __name__ == '__main__':

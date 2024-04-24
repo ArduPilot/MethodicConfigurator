@@ -176,7 +176,7 @@ def output_params(params: Dict[str, float], format_type: str = 'missionplanner',
     if format_type == "qgcs":
         if sysid == -1:
             if 'SYSID_THISMAV' in params:
-                sysid = params['SYSID_THISMAV']
+                sysid = int(params['SYSID_THISMAV'])
             else:
                 sysid = 1  # if unspecified, default to 1
         if compid == -1:

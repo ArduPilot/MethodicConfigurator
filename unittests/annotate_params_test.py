@@ -19,14 +19,14 @@ import requests
 import mock
 
 from annotate_params import get_xml_data
-from annotate_params import remove_prefix
-from annotate_params import split_into_lines
-from annotate_params import create_doc_dict
-from annotate_params import format_columns
-from annotate_params import update_parameter_documentation
-from annotate_params import print_read_only_params
-from annotate_params import BASE_URL
-from annotate_params import PARAM_DEFINITION_XML_FILE
+from MethodicConfigurator.annotate_params import remove_prefix
+from MethodicConfigurator.annotate_params import split_into_lines
+from MethodicConfigurator.annotate_params import create_doc_dict
+from MethodicConfigurator.annotate_params import format_columns
+from MethodicConfigurator.annotate_params import update_parameter_documentation
+from MethodicConfigurator.annotate_params import print_read_only_params
+from MethodicConfigurator.annotate_params import BASE_URL
+from MethodicConfigurator.annotate_params import PARAM_DEFINITION_XML_FILE
 
 
 class TestParamDocsUpdate(unittest.TestCase):

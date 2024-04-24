@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -U pymavlink
+          python -m pip install -U pymavlink mock coverage
           pip install build
           pip install -U .
   
@@ -34,15 +34,15 @@ jobs:
 
       - name: Test with unittest
         run: |
-          python -m unittest discover -s ./unittests -p '*_unittest.py'
+          python -m unittest discover -s ./unittests -p '*_test.py'
 
       - name: Unittest coverage report
         run: |
           cd unittests
-          python -m coverage run -m unittest annotate_params_unittest.py
-          python -m coverage run -m unittest ardupilot_methodic_configurator_unittest.py
-          python -m coverage run -m unittest backend_filesystem_unittest.py
-          python -m coverage run -m unittest extract_params_defaults_unittest.py
-          python -m coverage run -m unittest frontend_tkinter_unittest.py
-          python -m coverage run -m unittest param_pid_adjustment_update_unittest.py
+          python -m coverage run -m unittest annotate_params_test.py
+          python -m coverage run -m unittest ardupilot_methodic_configurator_test.py
+          python -m coverage run -m unittest backend_filesystem_test.py
+          python -m coverage run -m unittest extract_param_defaults_test.py
+          python -m coverage run -m unittest frontend_tkinter_test.py
+          python -m coverage run -m unittest param_pid_adjustment_update_test.py
           python -m coverage html

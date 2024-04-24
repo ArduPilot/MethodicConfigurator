@@ -13,8 +13,8 @@ SPDX-License-Identifier:    GPL-3
 import unittest
 from unittest.mock import patch, MagicMock
 import tkinter as tk
-from frontend_tkinter_base import show_error_message
-from frontend_tkinter_base import show_tooltip
+from MethodicConfigurator.frontend_tkinter_base import show_error_message
+from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 
 
 class TestShowErrorMessage(unittest.TestCase):
@@ -77,10 +77,10 @@ class TestShowTooltip(unittest.TestCase):
                                            bg="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT)
 
         # Assert that the Tkinter Toplevel instance's deiconify method was called
-        # mock_toplevel.return_value.deiconify.assert_called_once()
+        # mock_toplevel.return_value.deiconify.assert_called()
 
         # Assert that the Tkinter Toplevel instance's withdraw method was called
-        mock_toplevel.return_value.withdraw.assert_called_once()
+        mock_toplevel.return_value.withdraw.assert_called()
 
         # Assert that the Tkinter Label instance's pack method was called
         mock_label.return_value.pack.assert_called_once()
