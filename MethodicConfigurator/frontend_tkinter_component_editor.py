@@ -24,6 +24,7 @@ from PIL import ImageTk
 from backend_filesystem import LocalFilesystem
 
 from frontend_tkinter_base import show_tooltip
+from frontend_tkinter_base import show_error_message
 from frontend_tkinter_base import ScrollFrame
 from frontend_tkinter_base import BaseWindow
 
@@ -179,8 +180,10 @@ class JsonEditorApp(BaseWindow):
             current_data[path[-1]] = value
 
         # Save the updated data back to the JSON file
-        self.local_filesystem.save_vehicle_components_json_data(self.data)
-        logging_info("Data saved successfully.")
+        if self.local_filesystem.save_vehicle_components_json_data(self.data):
+            show_error_message("Error", "Failed to save data to file.")
+        else:
+            logging_info("Data saved successfully.")
         self.root.destroy()
 
 

@@ -396,10 +396,15 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
             logging_error("Error decoding JSON data from file '%s'.", filepath)
         return data
 
-    def save_vehicle_components_json_data(self, data):
+    def save_vehicle_components_json_data(self, data) -> bool:
         filepath = os_path.join(self.vehicle_dir, self.vehicle_components_json_filename)
-        with open(filepath, 'w', encoding='utf-8') as file:
-            json_dump(data, file, indent=4)
+        try:
+            with open(filepath, 'w', encoding='utf-8') as file:
+                json_dump(data, file, indent=4)
+        except Exception as e:  # pylint: disable=broad-except
+            logging_error("Error saving JSON data to file '%s': %s", filepath, e)
+            return True
+        return False
 
     def new_vehicle_dir(self, base_dir: str, new_dir: str):
         return os_path.join(base_dir, new_dir)
