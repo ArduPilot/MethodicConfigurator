@@ -97,7 +97,7 @@
         "external_tool_text": "Mission Planner",
         "external_tool_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-210-configure-mandatory-hardware-parameters-12",
         "mandatory_text": "100% mandatory (0% optional)",
-        "auto_changed_by": "Mission Planner"
+        "auto_changed_by": "Mission Planner. If you have not done this step in Mission Planner yet, close this application and use Mission Planner."
     },
     "12_general_configuration.param": {
         "blog_text": "General configuration parameters for the vehicle, including flight modes and safety settings.",
