@@ -4,8 +4,8 @@
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-21-configure-imu-temperature-calibrationhttpsardupilotorgcopterdocscommon-imutempcalhtml-using-the-offline-calibration-toolhttpsgithubcomardupilotardupilotblobmastertoolsscriptstempcal_imupy-3",
         "wiki_text": "IMU Temperature Calibration",
         "wiki_url": "https://ardupilot.org/copter/docs/common-imutempcal.html",
-        "external_tool_text": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/scripts/tempcal_IMU.py",
-        "external_tool_url": "https://ardupilot.org/copter/docs/common-imutempcal.html#offline-calibration-tool",
+        "external_tool_text": "",
+        "external_tool_url": "",
         "mandatory_text": "80% mandatory (20% optional)",
         "auto_changed_by": ""
     },
@@ -14,8 +14,8 @@
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-21-configure-imu-temperature-calibrationhttpsardupilotorgcopterdocscommon-imutempcalhtml-using-the-offline-calibration-toolhttpsgithubcomardupilotardupilotblobmastertoolsscriptstempcal_imupy-3",
         "wiki_text": "IMU Temperature Calibration",
         "wiki_url": "https://ardupilot.org/copter/docs/common-imutempcal.html",
-        "external_tool_text": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/scripts/tempcal_IMU.py",
-        "external_tool_url": "https://ardupilot.org/copter/docs/common-imutempcal.html#offline-calibration-tool",
+        "external_tool_text": "",
+        "external_tool_url": "",
         "mandatory_text": "80% mandatory (20% optional)",
         "auto_changed_by": ""
     },
