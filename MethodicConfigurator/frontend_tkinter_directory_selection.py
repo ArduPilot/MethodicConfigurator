@@ -337,19 +337,10 @@ def main():
     # Get the list of intermediate parameter files files that will be processed sequentially
     files = list(local_filesystem.file_parameters.keys())
 
-# pylint: disable=duplicate-code
-    if files:
-        # Determine the starting file based on the --n command line argument
-        start_file_index = min(args.n, len(files) - 1) # Ensure the index is within the range of available files
-        if start_file_index != args.n:
-            logging_warning("Starting file index %s is out of range. Starting with file %s instead.",
-                            args.n, files[start_file_index])
-    else:
+    if not files:
         logging_error("No intermediate parameter files found in %s.", args.vehicle_dir)
-        # show_no_param_files_error(args.vehicle_dir)
         window = VehicleDirectorySelectionWindow(local_filesystem)
         window.root.mainloop()
-# pylint: enable=duplicate-code
 
 
 if __name__ == "__main__":

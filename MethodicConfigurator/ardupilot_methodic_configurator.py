@@ -74,9 +74,10 @@ def argument_parser():
                         'Defaults to the current working directory')
     parser.add_argument('--n',
                         type=int,
-                        default=0,
+                        default=-1,
                         help='Start directly on the nth intermediate parameter file (skips previous files). '
-                        'Default is %(default)s')
+                        'Default is to start on the file next to the last that you wrote to the flight controller.'
+                        'If file does not exist, it will start on the first file.')
     parser.add_argument('--loglevel',
                         type=str,
                         default='INFO',
@@ -126,17 +127,7 @@ def main():
         vehicle_dir_window = VehicleDirectorySelectionWindow(local_filesystem)
         vehicle_dir_window.root.mainloop()
 
-   # Get the list of intermediate parameter files files that will be processed sequentially
-    files = list(local_filesystem.file_parameters.keys())
-
-    start_file = None  # pylint: disable=invalid-name
-    if files:
-        # Determine the starting file based on the --n command line argument
-        start_file_index = min(args.n, len(files) - 1) # Ensure the index is within the range of available files
-        if start_file_index != args.n:
-            logging_warning("Starting file index %s is out of range. Starting with file %s instead.",
-                            args.n, files[start_file_index])
-        start_file = files[start_file_index]
+    start_file = local_filesystem.get_start_file(args.n)
 
     component_editor_window = JsonEditorApp(VERSION, local_filesystem)
     component_editor_window.root.mainloop()

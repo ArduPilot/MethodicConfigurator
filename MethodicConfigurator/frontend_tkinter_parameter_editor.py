@@ -778,6 +778,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     self.write_selected_params(selected_params)
             else:
                 logging_info("All parameters written to the flight controller successfully")
+                self.local_filesystem.write_last_written_filename(self.current_file)
 
     def on_skip_click(self, _event=None, force_focus_out_event=True):
         if force_focus_out_event:

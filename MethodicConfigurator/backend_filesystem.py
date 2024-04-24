@@ -475,3 +475,56 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
                 else:
                     logging_warning("Parameter %s not found in the current parameter file", param)
         return ret
+
+    def write_last_written_filename(self, current_file: str):
+        try:
+            with open(os_path.join(self.vehicle_dir, 'last_written_filename.txt'), 'w', encoding='utf-8') as file:
+                file.write(current_file)
+        except Exception as e:  # pylint: disable=broad-except
+            logging_error("Error writing last written filename: %s", e)
+
+    def __read_last_written_filename(self) -> str:
+        try:
+            with open(os_path.join(self.vehicle_dir, 'last_written_filename.txt'), 'r', encoding='utf-8') as file:
+                return file.read().strip()
+        except Exception as e:  # pylint: disable=broad-except
+            logging_error("Error reading last written filename: %s", e)
+        return ""
+
+    def get_start_file(self, explicit_index: int):
+        # Get the list of intermediate parameter files files that will be processed sequentially
+        files = list(self.file_parameters.keys())
+
+        if explicit_index >= 0:
+            if not files:
+                return ""
+
+            # Determine the starting file based on the --n command line argument
+            start_file_index = explicit_index # Ensure the index is within the range of available files
+            if start_file_index >= len(files):
+                start_file_index = len(files) - 1
+                logging_warning("Starting file index %s is out of range. Starting with file %s instead.",
+                                explicit_index, files[start_file_index])
+            return files[start_file_index]
+
+        last_written_filename = self.__read_last_written_filename()
+        if last_written_filename:
+            logging_info("Last written file was %s.", last_written_filename)
+        else:
+            logging_info("No last written file found. Starting with the first file.")
+            return files[0]
+
+        if last_written_filename not in files:
+            # Handle the case where last_written_filename is not found in the list
+            logging_warning("Last written file not found in the list of files. Starting with the first file.")
+            return files[0]
+
+        # Find the index of last_written_filename in files
+        last_written_index = files.index(last_written_filename)
+        # Check if there is a file following last_written_filename
+        start_file_index = last_written_index + 1
+        if start_file_index >= len(files):
+            # Handle the case where last_written_filename is the last file in the list
+            logging_warning("Last written file is the last file in the list. Starting from there.")
+            start_file_index = len(files) - 1
+        return files[start_file_index]
