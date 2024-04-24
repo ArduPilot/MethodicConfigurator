@@ -459,8 +459,11 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         """
         return ['tcp:127.0.0.1:5760', 'udp:127.0.0.1:14550']
 
-    @staticmethod
-    def __auto_detect_serial():
+    def __auto_detect_serial(self):
+        for connection in self.connection_tuples:
+            if 'mavlink' in connection[1].lower():
+                return [connection[0]]
+
         serial_list = mavutil.auto_detect_serial(preferred_list=preferred_ports)
         serial_list.sort(key=lambda x: x.device)
 
