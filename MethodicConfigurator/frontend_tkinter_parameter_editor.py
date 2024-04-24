@@ -497,6 +497,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.__create_parameter_area_widgets()
 
+        self.root.after(50, self.read_flight_controller_parameters(reread=False)) # 50 milliseconds
+        self.root.after(50, self.__please_read_the_docs())
+        self.root.mainloop()
+
     def __create_conf_widgets(self, version: str):
         config_frame = tk.Frame(self.root)
         config_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0)) # Pack the frame at the top of the window
@@ -574,8 +578,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         show_tooltip(skip_button, "Skip to the next intermediate parameter file without writing any changes to the flight "
                      "controller\nIf changes have been made to the current file it will ask if you want to save them")
 
-        self.root.after(50, self.read_flight_controller_parameters(reread=False)) # 50 milliseconds
-        self.root.mainloop()
+    @staticmethod
+    def __please_read_the_docs():
+        messagebox.showinfo("Welcome to the ArduPilot Methodic Configurator",
+                            "Please read ALL the documentation on top of the parameter table"
+                            " before editing the parameters and the reason they changed")
 
     def __do_tempcal_imu(self, selected_file:str):
         tempcal_imu_result_param_filename, tempcal_imu_result_param_fullpath = \
