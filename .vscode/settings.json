@@ -1,0 +1,12 @@
+{
+    "python.testing.cwd": "${workspaceFolder}/MethodicConfigurator",
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "../unittests",
+        "-p",
+        "*_test.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
+}
