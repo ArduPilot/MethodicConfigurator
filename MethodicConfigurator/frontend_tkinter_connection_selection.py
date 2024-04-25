@@ -133,7 +133,7 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
                                                      "Examples are:\n\nCOM4 (on windows)\n"
                                                      "/dev/serial/by-id/usb-xxx (on linux)\n"
                                                      "tcp:127.0.0.1:5761\n"
-                                                     "udp:udp:127.0.0.1:14551")
+                                                     "udp:127.0.0.1:14551")
         if selected_connection:
             logging_debug(f"Will add new connection: {selected_connection} if not duplicated")
             self.flight_controller.add_connection(selected_connection)
