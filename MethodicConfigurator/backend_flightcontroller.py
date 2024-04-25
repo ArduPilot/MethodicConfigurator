@@ -462,7 +462,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
     def __auto_detect_serial(self):
         for connection in self.connection_tuples:
             if 'mavlink' in connection[1].lower():
-                return [connection[0]]
+                return [mavutil.SerialPort(device=connection[0], description=connection[1])]
 
         serial_list = mavutil.auto_detect_serial(preferred_list=preferred_ports)
         serial_list.sort(key=lambda x: x.device)
