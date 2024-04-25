@@ -103,6 +103,18 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
             logging_warning("You should uninstall ModemManager as it conflicts with ArduPilot")
 
         self.reboot_time = reboot_time
+        self.connection_tuples = []
+        self.discover_connections()
+        self.master = None
+        self.comport = None
+        self.fc_parameters = {}
+        self.target_system = None
+        self.target_component = None
+        self.capabilities = None
+        self.version = None
+        self.vehicle_type = None
+
+    def discover_connections(self):
         comports = FlightController.__list_serial_ports()
         usbports = FlightController.__list_usb_devices()
         netports = FlightController.__list_network_ports()
@@ -114,14 +126,6 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         for port in self.connection_tuples:
             logging_info("%s - %s", port[0], port[1])
         self.connection_tuples += [tuple(['Add another', 'Add another'])]  # now that it is logged, add the 'Add another' tuple
-        self.master = None
-        self.comport = None
-        self.fc_parameters = {}
-        self.target_system = None
-        self.target_component = None
-        self.capabilities = None
-        self.version = None
-        self.vehicle_type = None
 
     def disconnect(self):
         """
@@ -195,7 +199,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
                     self.connection_tuples.insert(-1, (self.comport.device, self.comport.description))
             else:
                 return "No serial ports found. Please connect a flight controller and try again."
-        error_message = self.create_connection_with_retry(progress_callback=progress_callback)
+        error_message = self.__create_connection_with_retry(progress_callback=progress_callback)
         if device == 'test': # FIXME for testing only pylint: disable=fixme
             self.fc_parameters['INS_LOG_BAT_MASK'] = 1.0
             self.fc_parameters['INS_TCAL1_TMAX'] = 1.0
@@ -214,8 +218,8 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         '''show version'''
         self.__request_message(mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION)
 
-    def create_connection_with_retry(self, progress_callback, retries: int = 3,  # pylint: disable=too-many-return-statements
-                                     timeout: int = 5) -> mavutil.mavlink_connection:
+    def __create_connection_with_retry(self, progress_callback, retries: int = 3, # pylint: disable=too-many-return-statements
+                                       timeout: int = 5) -> mavutil.mavlink_connection:
         """
         Attempts to create a connection to the flight controller with retries.
 
@@ -326,9 +330,9 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
 
         logging_info("MAVFTP is not supported by the %s flight controller, fallback to MAVLink", self.comport.device)
         # MAVFTP is not supported, fall back to MAVLink
-        return self.read_params_via_mavlink(progress_callback)
+        return self.__read_params_via_mavlink(progress_callback)
 
-    def read_params_via_mavlink(self, progress_callback=None) -> Dict[str, float]:
+    def __read_params_via_mavlink(self, progress_callback=None) -> Dict[str, float]:
         logging_debug("Will fetch all parameters from the %s flight controller", self.comport.device)
         # Request all parameters
         self.master.mav.param_request_list_send(
@@ -408,7 +412,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
             reset_progress_callback(current_step, sleep_time)
 
         # Reconnect to the flight controller
-        self.create_connection_with_retry(connection_progress_callback)
+        self.__create_connection_with_retry(connection_progress_callback)
 
     @staticmethod
     def __list_usb_devices():
