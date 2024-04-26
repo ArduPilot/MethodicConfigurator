@@ -95,7 +95,7 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         else:
             frame_title = "Documentation"
         self.documentation_frame.config(text=frame_title)
-        documentation = self.local_filesystem.file_documentation.get(current_file, None) if \
+        documentation = self.local_filesystem.file_documentation.get(current_file, {}) if \
             self.local_filesystem.file_documentation else None
 
         blog_text, blog_url = self.__get_documentation_text_and_url(documentation, 'blog_text', 'blog_url')
@@ -110,14 +110,14 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         self.__update_documentation_label('Mandatory:', mandatory_text, mandatory_url, False)
 
     def __get_documentation_text_and_url(self, documentation, text_key, url_key):
-        if documentation:
-            text = documentation.get(text_key, f"No documentation available for {self.current_file} in the "
-                                     f"{self.local_filesystem.file_documentation_filename} file")
-            url = documentation.get(url_key, None)
-        else:
+        if documentation is None:
             text = f"File '{self.local_filesystem.file_documentation_filename}' not found. " \
                 "No intermediate parameter file documentation available"
             url = None
+        else:
+            text = documentation.get(text_key, f"No documentation available for {self.current_file} in the "
+                                     f"{self.local_filesystem.file_documentation_filename} file")
+            url = documentation.get(url_key, None)
         return text, url
 
     def __update_documentation_label(self, label_key, text, url, url_expected=True):
