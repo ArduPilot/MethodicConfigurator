@@ -1,11 +1,7 @@
 name: Coverage
 # Make sure pull requests increase coverage monotonically
 
-on:
-  pull_request:
-  push:
-     branches:
-       - master
+on: [pull_request]
 
 jobs:
   build:
