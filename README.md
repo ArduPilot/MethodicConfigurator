@@ -18,7 +18,7 @@ Usage is detailed in the [USERMANUAL.md](USERMANUAL.md) file
 
 ## MS Windows Installation
 
-Download the [latest Windows installer `.zip` file](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/latest). Just install it and you do not need any other steps.
+Download the [latest MethodicConfiguratorSetup-x.x.x.exe installer file](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/latest). Just install it and you do not need any other steps.
 
 Otherwise, install [git](https://git-scm.com/) and [python](https://www.python.org/downloads/). Then do:
 
