@@ -1,7 +1,11 @@
 name: Coverage
 # Make sure pull requests increase coverage monotonically
 
-on: [pull_request]
+on:
+  pull_request:
+  push:
+     branches:
+       - master
 
 jobs:
   build:
@@ -31,9 +35,6 @@ jobs:
         run: |
           coverage run -m pytest
           coverage xml -o unittests/coverage.xml
-
-      - name: List unittests directory contents
-        run: ls -la unittests/
 
       - name: Get Cover 
         uses: andraghetti/coverage@v3.2
