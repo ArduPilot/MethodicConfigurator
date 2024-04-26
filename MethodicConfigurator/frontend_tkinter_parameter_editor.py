@@ -199,7 +199,7 @@ class ParameterEditorTable(ScrollFrame):
                     "Current value on the flight controller ",
                     "New value from the above selected intermediate parameter file",
                     "Parameter Unit",
-                    "When selected, write new value to the flight controller",
+                    "When selected, write the new value to the flight controller",
                     "Reason why respective parameter changed"]
         for i, header in enumerate(headers):
             label = tk.Label(self.view_port, text=header)
@@ -307,7 +307,7 @@ class ParameterEditorTable(ScrollFrame):
     def __open_bitmask_selection_window(self, event, param_name, bitmask_dict, old_value):  # pylint: disable=too-many-locals
         def on_close():
             checked_keys = [key for key, var in checkbox_vars.items() if var.get()]
-            # Convert checked keys back to decimal value
+            # Convert checked keys back to a decimal value
             new_decimal_value = sum(1 << key for key in checked_keys)
             # Update new_value_entry with the new decimal value
             ParameterEditorTable.__update_new_value_entry_text(event.widget,
@@ -518,11 +518,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         file_selection_frame = tk.Frame(config_subframe)
         file_selection_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(6, 6))
 
-        # Create a label for the combobox
+        # Create a label for the Combobox
         file_selection_label = tk.Label(file_selection_frame, text="Current intermediate parameter file:")
         file_selection_label.pack(side=tk.TOP, anchor=tk.NW) # Add the label to the top of the file_selection_frame
 
-        # Create combobox for intermediate parameter file selection
+        # Create Combobox for intermediate parameter file selection
         self.file_selection_combobox = AutoResizeCombobox(file_selection_frame,
                                                           list(self.local_filesystem.file_parameters.keys()),
                                                           self.current_file,
@@ -643,7 +643,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Download all parameters from the flight controller
         self.flight_controller.fc_parameters = self.flight_controller.read_params(
             self.param_read_progress_window.update_progress_bar)
-        self.param_read_progress_window.destroy()  # for the case that we are doing test and there is no real FC connected
+        self.param_read_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
         if not reread:
             self.on_param_file_combobox_change(None, True) # the initial param read will trigger a table update
 
@@ -676,7 +676,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         """
         Write the selected parameters to the flight controller that require a reset.
 
-        After the reset, the other parameters that do not require a reset, must still be written to the flight controller.
+        After the reset, the other parameters that do not require a reset must still be written to the flight controller.
         """
         fc_reset_required = False
         fc_reset_unsure = []
@@ -722,7 +722,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                                                         "Waiting for {} of {} seconds")
             # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
             self.flight_controller.reset_and_reconnect(self.reset_progress_window.update_progress_bar)
-            self.reset_progress_window.destroy()  # for the case that we are doing test and there is no real FC connected
+            self.reset_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
 
     def on_write_selected_click(self):
         self.parameter_editor_table.generate_edit_widgets_focus_out()
@@ -760,7 +760,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 messagebox.showerror("ArduPilot methodic configurator", f"Failed to set parameter {param_name}: {e}")
 
         if self.at_least_one_changed_parameter_written:
-            # Re-Download all parameters, in case one of them changed, and to validate that all writes where successful
+            # Re-download all parameters, in case one of them changed, and validate that all writes were successful
             self.read_flight_controller_parameters(True)
             logging_info("Re-read all parameters from the flight controller")
 
@@ -803,7 +803,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 self.close_connection_and_quit()
                 return
             next_file = files[next_file_index]
-            # Update the combobox selection to the next file
+            # Update the Combobox selection to the next file
             self.file_selection_combobox.set(next_file)
             # Trigger the combobox change event to update the table
             self.on_param_file_combobox_change(None)
