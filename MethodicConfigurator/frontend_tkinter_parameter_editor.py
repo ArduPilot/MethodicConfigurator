@@ -479,6 +479,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.at_least_one_changed_parameter_written = False
         self.file_selection_combobox = None
         self.show_only_differences = None
+        self.annotate_params_into_files = None
         self.parameter_editor_table = None
         self.reset_progress_window = None
         self.param_read_progress_window = None
@@ -546,6 +547,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def __create_parameter_area_widgets(self):
         self.show_only_differences = tk.BooleanVar(value=False)
+        self.annotate_params_into_files = tk.BooleanVar(value=False)
 
         # Create a Scrollable parameter editor table
         self.parameter_editor_table = ParameterEditorTable(self.root, self.local_filesystem)
@@ -556,13 +558,25 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         buttons_frame = tk.Frame(self.root)
         buttons_frame.pack(side="bottom", fill="x", expand=False, pady=(10, 10))
 
-        # Create checkbox for toggling parameter display
-        only_changed_checkbox = ttk.Checkbutton(buttons_frame, text="See only changed parameters",
+        # Create a frame for the checkboxes
+        checkboxes_frame = tk.Frame(buttons_frame)
+        checkboxes_frame.pack(side=tk.LEFT, padx=(8, 8))
+
+        # Create a checkbox for toggling parameter display
+        only_changed_checkbox = ttk.Checkbutton(checkboxes_frame, text="See only changed parameters",
                                                 variable=self.show_only_differences,
                                                 command=self.on_show_only_changed_checkbox_change)
-        only_changed_checkbox.pack(side=tk.LEFT, padx=(8, 8))
+        only_changed_checkbox.pack(side=tk.TOP, anchor=tk.NW)
         show_tooltip(only_changed_checkbox, "Toggle to show only parameters that will change if/when written to the flight "
                      "controller")
+
+        annotate_params_checkbox = ttk.Checkbutton(checkboxes_frame, text="Annotate docs into .param files",
+                                                   state='normal' if self.local_filesystem.doc_dict else 'disabled',
+                                                   variable=self.annotate_params_into_files)
+        annotate_params_checkbox.pack(side=tk.TOP, anchor=tk.NW)
+        show_tooltip(annotate_params_checkbox, "Annotate ArduPilot parameter documentation metadata into the intermediate "
+                     "parameter files\n"
+                     "The files will be bigger, but all the existing parameter documentation will be included inside")
 
         # Create write button
         write_selected_button = tk.Button(buttons_frame, text="Write selected params to FC, and advance to next param file",
@@ -818,7 +832,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if messagebox.askyesno("One or more parameters have been edited",
                                    f"Do you want to write the changes to the {self.current_file} file?"):
                 self.local_filesystem.export_to_param(self.local_filesystem.file_parameters[self.current_file],
-                                                      self.current_file, annotate_doc=False)
+                                                      self.current_file, annotate_doc=self.annotate_params_into_files.get())
         self.parameter_editor_table.set_at_least_one_param_edited(False)
 
     def write_summary_files(self):
