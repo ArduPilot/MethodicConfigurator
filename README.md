@@ -18,7 +18,7 @@ Usage is detailed in the [USERMANUAL.md](USERMANUAL.md) file
 
 ## MS Windows Installation
 
-If you have a github.com account log in to it and you should be able to [download the latest Windows installer `.zip` file](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/latest). Just install it and you do not need any other steps.
+Download the [latest Windows installer `.zip` file](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/latest). Just install it and you do not need any other steps.
 
 Otherwise, install [git](https://git-scm.com/) and [python](https://www.python.org/downloads/). Then do:
 
@@ -26,12 +26,6 @@ Otherwise, install [git](https://git-scm.com/) and [python](https://www.python.o
 git clone https://github.com/ArduPilot/MethodicConfigurator.git
 cd MethodicConfigurator
 .\install_windows.bat
-```
-
-On MS Windows it tends to auto-connect to the wrong device, you can explicitly set the device with the `--device` command line option to avoid that. Replace COMX with the correct COM port for your device.
-
-```bash
-python3 ardupilot_methodic_configurator.py --device COMX
 ```
 
 ## Linux Installation
