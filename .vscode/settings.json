@@ -1,4 +1,5 @@
 {
+    "grammarly.files.include": ["**/*.md", "**/*.txt", "**/*.json", "**/*.py"],
     "python.testing.cwd": "${workspaceFolder}/MethodicConfigurator",
     "python.testing.unittestArgs": [
         "-v",
@@ -8,5 +9,8 @@
         "*_test.py"
     ],
     "python.testing.pytestEnabled": false,
-    "python.testing.unittestEnabled": true
+    "python.testing.unittestEnabled": true,
+    "cSpell.words": [
+        "multicopter"
+    ]
 }

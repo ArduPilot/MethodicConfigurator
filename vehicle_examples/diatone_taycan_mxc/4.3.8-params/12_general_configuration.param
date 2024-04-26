@@ -8,7 +8,7 @@ BRD_RTC_TZ_MIN,60  # Berlin time zone
 # Enabled fence types held as bitmask
 # Bitmask: 0:Max altitude,1:Circle,2:Polygon,3:Min altitude
 # Default: 7
-FENCE_TYPE,11  # cylinder and min/max altitude, to obey local regulations and safety measures
+FENCE_TYPE,7  # cylinder and max altitude, to obey local regulations and safety measures
 
 # Accel filter cutoff frequency
 # Filter cutoff frequency for accelerometers. This can be set to a lower value to try to cope with very

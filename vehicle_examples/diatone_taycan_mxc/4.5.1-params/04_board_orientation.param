@@ -23,7 +23,7 @@
 # 14: Yaw270Roll180                   30: Pitch90Roll270
 # 15: Yaw315Roll180                   31: Pitch180Roll90
 # Default: 0
-AHRS_ORIENTATION,0
+AHRS_ORIENTATION,0  # Point forward in the direction of travel
 
 # Enable logging while disarmed
 # If LOG_DISARMED is set to 1 then logging will be enabled at all times including when disarmed. Logging
@@ -39,4 +39,4 @@ AHRS_ORIENTATION,0
 # 2: Disabled on USB connection
 # 3: Discard log on reboot if never armed
 # Default: 0
-LOG_DISARMED,0 # Log disarmed was only required for offline IMU temperature calibration
+LOG_DISARMED,0  # Log disarmed was only required for offline IMU temperature calibration

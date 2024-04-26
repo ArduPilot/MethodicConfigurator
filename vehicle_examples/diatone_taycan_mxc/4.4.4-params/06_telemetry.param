@@ -23,4 +23,4 @@ BRD_SER1_RTSCTS,0  # we have no RTS/CTS pins connected
 # 57: 57600                                            1500: 1500000
 # 111: 111100                                          2000: 2000000
 # Default: 57
-SERIAL1_BAUD,57  # The mavlink over CRSF telemetry
+SERIAL1_BAUD,460  # The MAVLink over ESP32 telemetry
