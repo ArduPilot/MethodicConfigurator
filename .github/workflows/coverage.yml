@@ -30,7 +30,10 @@ jobs:
       - name: Test with unittest
         run: |
           coverage run -m pytest
-        # coverage xml unittests/coverage.xml
+          coverage xml -o unittests/coverage.xml
+
+      - name: List unittests directory contents
+        run: ls -la unittests/
 
       - name: Get Cover 
         uses: andraghetti/coverage@v3.2
