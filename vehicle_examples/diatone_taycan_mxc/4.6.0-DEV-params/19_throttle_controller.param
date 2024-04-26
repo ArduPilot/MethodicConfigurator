@@ -1,0 +1,27 @@
+# Throttle Mix Manual
+# Throttle vs attitude control prioritisation used during manual flight (higher values mean we prioritise
+# attitude control over throttle)
+# Range: 0.1 0.9
+# Default: 0.1
+ATC_THR_MIX_MAN,0.5  # because we have learned the MOT_THST_HOVER value
+
+# Thrust Hover Value
+# Motor thrust needed to hover expressed as a number from 0 to 1
+# Range: 0.2 0.8
+# Default: 0.35
+MOT_THST_HOVER,0.2  # Automatically learned "hover throttle" in ALTHOLD flight mode and HOVER_LEARN == 2
+
+# Acceleration (vertical) controller I gain
+# Acceleration (vertical) controller I gain.  Corrects long-term difference in desired vertical
+# acceleration and actual acceleration
+# Range: 0.000 3.000
+# Default: 1
+PSC_ACCZ_I,0.4  # 2 • MOT_THST_HOVER
+
+# Acceleration (vertical) controller P gain
+# Acceleration (vertical) controller P gain.  Converts the difference between desired vertical acceleration
+# and actual acceleration into a motor output
+# Range: 0.200 1.500
+# Increment: 0.05
+# Default: 0.5
+PSC_ACCZ_P,0.2  # MOT_THST_HOVER

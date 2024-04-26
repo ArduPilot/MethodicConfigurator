@@ -19,7 +19,7 @@ It provides three main options for connecting to a flight controller:
 
 #### Option 1: Auto-connect
 
-This option automatically attempts to connect to a flight controller that has been connected to the PC. The user must waits for at least 7 seconds for the flight controller to fully boot before attempting the connection.
+This option automatically attempts to connect to a flight controller that has been connected to the PC. The user must wait for at least 7 seconds for the flight controller to fully boot before attempting the connection.
 
 #### Option 2: Manually Select or Add a Connection
 
@@ -77,16 +77,16 @@ This option allows users to select an existing vehicle configuration directory t
 ### 3. Select a Flight Controller Connection
 
 - **If a flight controller is detected and the `--device` command-line parameter was not explicitly set, it will connect to it.**
-- The `Flight controller connection:` combobox lists available connections.
+- The `Flight controller connection:` Combobox lists available connections.
 - Select a connection to establish communication with the flight controller.
 
 ### 4. Viewing Documentation
 
 - **Click on the documentation labels to open the corresponding documentation in a web browser.**
 - Documentation is split into four categories:
-  - **Blog Post - ArduPilot's forum Methodic configuration Blog post relevant for the current file**
-  - Wiki - ArduPilot's wiki page relevant for the current file
-  - External tool -External tool or documentation relevant for the current file
+  - **Blog Post - ArduPilot's forum Methodic configuration Blog post relevant to the current file**
+  - Wiki - ArduPilot's wiki page relevant to the current file
+  - External tool -External tool or documentation relevant to the current file
   - Mandatory - Mandatory level of the current file:
     - 100% you MUST use this file to configure the vehicle,
     - 0% you can ignore this file if it does not apply to your vehicle
@@ -96,34 +96,34 @@ This option allows users to select an existing vehicle configuration directory t
 
 - The parameter table presents the parameters in the current intermediate parameter file
 - The first colum is the ArduPilot parameter name used in that row.
-  - ReadOnly parameters are presented on a *red background*🟥, they should not be present in a intermediate configuration file because under normal conditions they can not be changed
+  - ReadOnly parameters are presented on a *red background*🟥, they should not be present in an intermediate configuration file because under normal conditions they can not be changed
   - Sensor calibration parameters are presented on a *yellow background*🟨, they are vehicle-instance dependent and can NOT be reused between similar vehicles
 - The current parameter value read from your FC is on the `Current Value` column.
-  - Not available parameter values are presented as `N/A` on a *orange background*🟧
+  - Not available parameter values are presented as `N/A` on an *orange background*🟧
   - Parameters that have the default parameter value are presented on a *light blue background* 🟦
 - The new value is the value in the intermediate file and will be written to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `example_vehicle` directory are just examples.
 - **In the parameter table, you can edit the `New Value` and `Change Reason` entries for each parameter.**
 - **You MUST edit the `Change Reason` so that other users understand why you changed the parameter to that particular `new value`**
 - Check the `Write` checkbox to select parameters to be written to the flight controller
 - **Hover over the labels to see tooltips with additional information.**
-- The entire ArduPilot official parameter documentation is available on the tooltip, no need to use a browser to search it
+- The entire ArduPilot official parameter documentation is available on the tooltip, no need to use a browser to search for it.
 
 ### 6. Focus on the changed parameters (optional)
 
 - You can focus on the changed parameters by ticking the "See only changed parameters" checkbox
-- Usually you want to see all parameters and look at their mouse-over tooltips to decide if and how you want to change them
+- Usually, you want to see all parameters and look at their mouse-over tooltips to decide if and how you want to change them
 
 ### 7. Writing Parameters to the Flight Controller
 
-- You can also jump to a particular file using the combobox as explained in [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file)
+- You can also jump to a particular file using the Combobox as explained in [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file)
 - **After editing parameters, click the `Write selected params to FC, and advance to next param file` button to write the (`Write` checkbox) selected parameters to the flight controller.**
 - All parameter's `New Value` and `Change Reason` will be written to the current intermediate parameter file, irrespective of the `Write` checkboxes
-- The application will them:
+- The application will then:
   - write the selected and changed parameters to the flight controller
   - reset the flight controller if necessary for the new parameter values to take effect
   - write the parameters again, because before the reset some parameters might have been not visible/writeable
   - read all the parameters from the flight controller, and validate their value
-    - if some parameters failed to write correctly it asks the user if he wants to retry
+    - if some parameters fail to write correctly it asks the user if he wants to retry
 - **The application will then advance to the next parameter file.**
 
 ### 8. Skipping to the Next Parameter File (optional)
@@ -148,15 +148,15 @@ pie title Summary files example
     "Non-default writable non-sensor-calibrations - non-default_writable_non-calibrations.param" : 217
 ```
 
-- **Unchanged parameters**: These parameters left unchanged and are displayed on a light blue background 🟦.
+- **Unchanged parameters**: These parameters are left unchanged and are displayed on a light blue background 🟦.
 
 - **Non-default read-only parameters**: These parameters are read-only and cannot be changed. They are typically related to system configurations that can not be modified and are displayed on a red background 🟥.
 
-- **Non-default writable sensor calibrations**: These parameters are vehicle-instance dependent and cannot be reused between similar vehicles. They are typically related to sensor calibration and should be adjusted for each individual vehicle and are displayed on a yellow background 🟨.
+- **Non-default writable sensor calibrations**: These parameters are vehicle-instance dependent and cannot be reused between similar vehicles. They are typically related to sensor calibration and should be adjusted for each vehicle and are displayed on a yellow background 🟨.
 
-- **Non-default writable non-sensor-calibrations**: These parameters can be reused between similar vehicles. They are not related to sensor calibration and are generally applicable to a range of vehicles with the same configuration.
+- **Non-default writable non-sensor calibrations**: These parameters can be reused between similar vehicles. They are not related to sensor calibration and are generally applicable to a range of vehicles with the same configuration.
 
-After the summary message box is displayed, the application will write the summary information to separate files for easy reference and documentation. These files include:
+After the summary message box is displayed, the application will write the summary information into separate files for easy reference and documentation. These files include:
 
 - `complete.param`: Contains all parameters contained in the flight controller.
 - `non-default_read-only.param`: Contains all non-default read-only 🟥 parameters. You can ignore these.
@@ -187,7 +187,7 @@ The ArduPilot Methodic Configurator uses several configuration files to manage a
 - **Documentation File**: This file provides documentation for each intermediate parameter file. It is used to display relevant information about the parameters and their configuration process. The `file_documentation.json` documentation file is first searched in the selected vehicle-specific directory, and if not found, in the directory where the script is located.
 
 - **Default Parameter Values File**: The `00_defaults.param` file is located in the vehicle-specific directory.
-If the file does not exist, or is invalid, use this command to regenerate it
+If the file does not exist or is invalid, use this command to regenerate it
 
 ```bash
 ./extract_param_defaults.py bin_log_file.bin > 00_default.param
@@ -195,11 +195,10 @@ If the file does not exist, or is invalid, use this command to regenerate it
 
 - **ArduPilot parameter documentation File**: The `apm.pdef.xml` contains documentation and metadata for each ArduPilot parameter in an XML format.
 The file is first searched in the selected vehicle-specific directory, and if not found, in the directory where the script is located, and if not found automatically downloaded from the internet.
-The only version available in the internet ist the latest 4.6.0-DEV.
-So until that changes you need to genet´rate this file yourself for the firmware version that you want to use.
+The only version available on the internet is the latest 4.6.0-DEV.
+So until that changes you need to generate this file yourself for the firmware version that you want to use.
 
 The tool uses these files to manage the configuration process, allowing users to select and edit parameters, and to write the changes back to the flight controller. The intermediate parameter files are the primary focus of the user interface, as they contain the parameters that the user can modify. The documentation files provide context and guidance for each parameter.
-
 
 ## Command Line Usage
 
@@ -212,10 +211,10 @@ Here is a list of command line options:
 
 - **`--device`**: The MAVLink connection string to the flight controller. It defaults to autoconnection to the first available flight controller.
 - **`--vehicle-dir`**: The directory containing intermediate parameter files. Defaults to the current working directory directory.
-- **`--n`**: Start directly on the nth intermediate parameter file (skips previous files). Default is 0.
-- **`--loglevel`**: The logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Default is INFO.
+- **`--n`**: Start directly on the nth intermediate parameter file (skip previous files). The default is 0.
+- **`--loglevel`**: The logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). The default is INFO.
 - **`-t` or `--vehicle-type`**: The type of the vehicle. Choices are 'AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane', 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'. Defaults to 'ArduCopter'.
-- **`-r` or `--reboot-time`**: Flight controller reboot time. Default is 7.
+- **`-r` or `--reboot-time`**: Flight controller reboot time. The default is 7.
 - **`-v` or `--version`**: Display version information and exit.
 
 Example usage:
@@ -234,11 +233,8 @@ python ardupilot_methodic_configurator.py --help
 
 This will show a list of all available command line options along with a brief description of each.
 
-
 ## Troubleshooting
 
 If you encounter any issues during the configuration process, refer to the error messages provided by the application.
 These messages can guide you to the specific problem and suggest possible solutions.
 If the issue persists, consider consulting Amilcar Lucas at ArduPilot community forums or re-read this documentation.
-
-

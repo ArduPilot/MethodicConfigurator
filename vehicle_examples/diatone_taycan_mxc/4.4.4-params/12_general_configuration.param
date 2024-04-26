@@ -16,7 +16,7 @@ FENCE_TYPE,11
 # Units: Hz (hertz)
 # Range: 0 256
 # Default: 20
-INS_ACCEL_FILTER,10 # the default is 20 and that lets too much noise in
+INS_ACCEL_FILTER,10  # the default is 20 and that lets too much noise in
 
 # IMU accelerometer X position
 # X position of the first IMU Accelerometer in body frame. Positive X is forward of the origin. Attention:
@@ -28,7 +28,7 @@ INS_ACCEL_FILTER,10 # the default is 20 and that lets too much noise in
 # Range: -5 5
 # Increment: 0.01
 # Default: 0
-INS_POS1_X,0 # was -0.005
+INS_POS1_X,0  # was -0.005
 
 # IMU accelerometer Y position
 # Y position of the first IMU accelerometer in body frame. Positive Y is to the right of the origin.
@@ -40,7 +40,7 @@ INS_POS1_X,0 # was -0.005
 # Range: -5 5
 # Increment: 0.01
 # Default: 0
-INS_POS1_Y,0 # was -0.011
+INS_POS1_Y,0  # was -0.011
 
 # IMU accelerometer X position
 # X position of the second IMU accelerometer in body frame. Positive X is forward of the origin. Attention:
@@ -52,7 +52,7 @@ INS_POS1_Y,0 # was -0.011
 # Range: -5 5
 # Increment: 0.01
 # Default: 0
-INS_POS2_X,0 # was -0.011
+INS_POS2_X,0  # was -0.011
 
 # IMU accelerometer Y position
 # Y position of the second IMU accelerometer in body frame. Positive Y is to the right of the origin.
@@ -64,7 +64,7 @@ INS_POS2_X,0 # was -0.011
 # Range: -5 5
 # Increment: 0.01
 # Default: 0
-INS_POS2_Y,0 # was -0.01
+INS_POS2_Y,0  # was -0.01
 
 # Land alt low
 # Altitude during Landing at which vehicle slows to LAND_SPEED
@@ -72,7 +72,7 @@ INS_POS2_Y,0 # was -0.01
 # Range: 100 10000
 # Increment: 10
 # Default: 1000
-LAND_ALT_LOW,200 # come down fast and only slow down close to the ground. We have a good GNSS receiver, so thrust it
+LAND_ALT_LOW,200  # come down fast and only slow down close to the ground. We have a good GNSS receiver, so thrust it
 
 # RTL Altitude
 # The minimum alt above home the vehicle will climb to before returning.  If the vehicle is flying higher
@@ -81,7 +81,7 @@ LAND_ALT_LOW,200 # come down fast and only slow down close to the ground. We hav
 # Range: 200 300000
 # Increment: 1
 # Default: 1500
-RTL_ALT,300 # The default is too high for the kind of flights we do. This reduces the altitude for indoors
+RTL_ALT,300  # The default is too high for the kind of flights we do. This reduces the altitude for indoors
 
 # RTL loiter time
 # Time (in milliseconds) to loiter above home before beginning final descent
@@ -89,7 +89,7 @@ RTL_ALT,300 # The default is too high for the kind of flights we do. This reduce
 # Range: 0 60000
 # Increment: 1000
 # Default: 5000
-RTL_LOIT_TIME,1000 # The default is too long. This reduces the time
+RTL_LOIT_TIME,1000  # The default is too long. This reduces the time
 
 # Scheduling main loop rate
 # This controls the rate of the main control loop in Hz. This should only be changed by developers. This
@@ -102,7 +102,7 @@ RTL_LOIT_TIME,1000 # The default is too long. This reduces the time
 # 300: 300Hz
 # 400: 400Hz
 # Default: 400
-SCHED_LOOP_RATE,800 # On our vehicle the propellers rotate at speeds higher than 400Hz and we have a powerful STM32 H7 family processor. So we increase this for added performance.
+SCHED_LOOP_RATE,800  # On our vehicle the propellers rotate at speeds higher than 400Hz and we have a powerful STM32 H7 family processor. So we increase this for added performance.
 
 # Enable Scripting
 # Controls if scripting is enabled

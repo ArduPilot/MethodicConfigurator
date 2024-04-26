@@ -139,7 +139,7 @@ SERVO_BLH_BDMASK,15  # All four of our ESC support bi-directional DShot
 # Range: 1 127
 # RebootRequired: True
 # Default: 14
-SERVO_BLH_POLES,12  # Number of Diatone Mamba 1404 5000kv motor's magnetic poles
+SERVO_BLH_POLES,14  # Number of T-Motor 1507 3800kv motor's magnetic poles
 
 # BLHeli telemetry rate
 # This sets the rate in Hz for requesting telemetry from ESCs. It is the rate per ESC. Setting to zero
@@ -315,4 +315,4 @@ SERVO4_TRIM,1000  # Use the full available 1000-2000 DShot range
 # Takeoff is not permitted until motors report at least this RPM.  Set to zero to disable check
 # Range: 0 10000
 # Default: 0
-TKOFF_RPM_MIN,3000  # Our motors should idle at around 3200 RPM, see https://ardupilot.org/copter/docs/tkoff-rpm-min.html
+TKOFF_RPM_MIN,1400  # Our motors should idle at around 1400 RPM, see https://ardupilot.org/copter/docs/tkoff-rpm-min.html

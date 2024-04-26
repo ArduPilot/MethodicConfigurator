@@ -181,7 +181,7 @@ class ComponentEditorWindow(BaseWindow):
 
         # Save the updated data back to the JSON file
         if self.local_filesystem.save_vehicle_components_json_data(self.data):
-            show_error_message("Error", "Failed to save data to file.")
+            show_error_message("Error", "Failed to save data to file. Is the destination write protected?")
         else:
             logging_info("Data saved successfully.")
         self.root.destroy()
