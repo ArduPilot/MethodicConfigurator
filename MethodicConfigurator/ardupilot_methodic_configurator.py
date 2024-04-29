@@ -105,8 +105,9 @@ def main():
 
     start_file = local_filesystem.get_start_file(args.n)
 
-    component_editor_window = ComponentEditorWindow(VERSION, local_filesystem)
-    component_editor_window.root.mainloop()
+    if not args.skip_component_editor:
+        component_editor_window = ComponentEditorWindow(VERSION, local_filesystem)
+        component_editor_window.root.mainloop()
 
     # Call the GUI function with the starting intermediate parameter file
     ParameterEditorWindow(start_file, flight_controller, local_filesystem, VERSION)
