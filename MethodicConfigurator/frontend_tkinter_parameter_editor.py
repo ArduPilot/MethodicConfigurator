@@ -342,7 +342,7 @@ class ParameterEditorTable(ScrollFrame):
 
         for i, (key, value) in enumerate(bitmask_dict.items()):
             var = tk.BooleanVar(value=key in checked_keys)
-            checkbox_vars[i] = var
+            checkbox_vars[key] = var
             checkbox = tk.Checkbutton(window, text=value, variable=var, command=update_label)
             checkbox.grid(row=i, column=0, sticky="w")
 
