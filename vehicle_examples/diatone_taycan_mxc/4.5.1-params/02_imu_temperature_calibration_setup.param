@@ -3,7 +3,7 @@
 # Bitmask: 0:IMU1,1:IMU2,2:IMU3
 # RebootRequired: True
 # Default: 0
-INS_LOG_BAT_MASK,3 # the Matek H743 fligth controller only has two IMUs
+INS_LOG_BAT_MASK,3  # the Matek H743 fligth controller only has two IMUs
 
 # Enable temperature calibration
 # Enable the use of temperature calibration parameters for this IMU. For automatic learning set to 2 and
@@ -13,7 +13,7 @@ INS_LOG_BAT_MASK,3 # the Matek H743 fligth controller only has two IMUs
 # 1: Enabled
 # 2: LearnCalibration
 # Default: 0
-INS_TCAL1_ENABLE,2 # Activates the temperature calibration for IMU 1 at the next start
+INS_TCAL1_ENABLE,2  # Activates the temperature calibration for IMU 1 at the next start
 
 # Temperature calibration max
 # The maximum temperature that the calibration is valid for. This must be at least 10 degrees above TMIN
@@ -22,7 +22,7 @@ INS_TCAL1_ENABLE,2 # Activates the temperature calibration for IMU 1 at the next
 # Units: degC (degrees Celsius)
 # Calibration: 1
 # Default: 70
-INS_TCAL1_TMAX,60 # our H7 processor acts as a heater and heats up the board to almost 60 deg
+INS_TCAL1_TMAX,60  # our H7 processor acts as a heater and heats up the board to almost 60 deg
 
 # Enable temperature calibration
 # Enable the use of temperature calibration parameters for this IMU. For automatic learning set to 2 and
@@ -32,7 +32,7 @@ INS_TCAL1_TMAX,60 # our H7 processor acts as a heater and heats up the board to 
 # 1: Enabled
 # 2: LearnCalibration
 # Default: 0
-INS_TCAL2_ENABLE,2 # Activates the temperature calibration for IMU 2 at the next start
+INS_TCAL2_ENABLE,2  # Activates the temperature calibration for IMU 2 at the next start
 
 # Temperature calibration max
 # The maximum temperature that the calibration is valid for. This must be at least 10 degrees above TMIN
@@ -41,14 +41,14 @@ INS_TCAL2_ENABLE,2 # Activates the temperature calibration for IMU 2 at the next
 # Units: degC (degrees Celsius)
 # Calibration: 1
 # Default: 70
-INS_TCAL2_TMAX,60 # our H7 processor acts as a heater and heats up the board to almost 60 deg
+INS_TCAL2_TMAX,60  # our H7 processor acts as a heater and heats up the board to almost 60 deg
 
 # Log bitmask
 # Bitmap of what on-board log types to enable. This value is made up of the sum of each of the log types
 # you want to be saved. It is usually best just to enable all basiclog types by setting this to 65535.
 # Bitmask: 0:Fast Attitude,1:Medium Attitude,2:GPS,3:System Performance,4:Control Tuning,5:Navigation Tuning,6:RC input,7:IMU,8:Mission Commands,9:Battery Monitor,10:RC output,11:Optical Flow,12:PID,13:Compass,15:Camera,17:Motors,18:Fast IMU,19:Raw IMU,20:Video Stabilization,21:Fast harmonic notch logging
 # Default: 176126
-LOG_BITMASK,524416 # Only for IMU and Raw-IMU
+LOG_BITMASK,524416  # Only for IMU and Raw-IMU
 
 # Enable logging while disarmed
 # If LOG_DISARMED is set to 1 then logging will be enabled at all times including when disarmed. Logging
@@ -64,4 +64,4 @@ LOG_BITMASK,524416 # Only for IMU and Raw-IMU
 # 2: Disabled on USB connection
 # 3: Discard log on reboot if never armed
 # Default: 0
-LOG_DISARMED,1 # to gather data for the offline IMU temperature compensation while the FC is disarmed
+LOG_DISARMED,1  # Gather data for the offline IMU temperature compensation while the FC is disarmed
