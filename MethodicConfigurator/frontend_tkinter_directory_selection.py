@@ -195,11 +195,11 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         sys_exit(0)
 
     def create_option1_widgets(self, initial_template_dir: str, initial_base_dir: str, initial_new_dir: str):
-        # Option 1 - Create a new vehicle configuration directory based on a existing template
+        # Option 1 - Create a new vehicle configuration directory based on an existing template
         option1_label_frame = tk.LabelFrame(self.root, text="Option 1")
         option1_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=5)
         option1_label = tk.Label(option1_label_frame, text="Create a new vehicle configuration directory\n"
-                                 "based on a existing template")
+                                 "based on an existing template")
         option1_label.pack(expand=True, fill=tk.X, padx=6)
         template_dir_edit_tooltip = "Existing vehicle template directory containing the\n" \
                                     "intermediate parameter files to be copied to the new vehicle directory"
