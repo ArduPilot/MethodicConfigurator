@@ -42,21 +42,13 @@ def argument_parser():
     argparse.Namespace: An object containing the parsed arguments.
     """
     parser = ArgumentParser(description='')
-    parser.add_argument('--vehicle-dir',
-                        type=str,
-                        default=LocalFilesystem.getcwd(),
-                        help='Directory containing vehicle-specific intermediate parameter files. '
-                        'Defaults to the current working directory')
+    parser = LocalFilesystem.add_argparse_arguments(parser)
+    parser = ComponentEditorWindow.add_argparse_arguments(parser)
     parser.add_argument('--loglevel',
                         type=str,
                         default='INFO',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                         help='Logging level (default is INFO).')
-    parser.add_argument('-t', '--vehicle-type',
-                        choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
-                                 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
-                        default='ArduCopter',
-                        help='The type of the vehicle. Defaults to ArduCopter')
     parser.add_argument('-v', '--version',
                         action='version',
                         version=f'%(prog)s {VERSION}',
@@ -185,6 +177,14 @@ class ComponentEditorWindow(BaseWindow):
         else:
             logging_info("Data saved successfully.")
         self.root.destroy()
+
+    @staticmethod
+    def add_argparse_arguments(parser):
+        parser.add_argument('--skip-component-editor',
+                            action='store_true',
+                            help='Skip the component editor window. Only use this if all components have been configured. '
+                            'Default to false')
+        return parser
 
 
 if __name__ == "__main__":

@@ -644,3 +644,18 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
 
         # Return the classified vehicle type based on the MAV_TYPE enum
         return mav_type_to_vehicle_type.get(mav_type_int, None)
+
+    @staticmethod
+    def add_argparse_arguments(parser):
+        parser.add_argument('--device',
+                            type=str,
+                            default="",
+                            help='MAVLink connection string to the flight controller. If set to "none" no connection is made.'
+                            ' Defaults to autodetection'
+                            )
+        parser.add_argument('-r', '--reboot-time',
+                            type=int,
+                            default=7,
+                            help='Flight controller reboot time. '
+                            'Default is %(default)s')
+        return parser

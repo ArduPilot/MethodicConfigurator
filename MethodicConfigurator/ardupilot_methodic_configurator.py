@@ -15,7 +15,6 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
-from os import getcwd as os_getcwd
 from sys import exit as sys_exit
 
 from backend_filesystem import LocalFilesystem
@@ -52,32 +51,9 @@ def argument_parser():
                                      'flight controller. '
                                      'When "Skip" is pressed, it skips to the next intermediate parameter file. '
                                      'The process gets repeated for each intermediate parameter file.')
-    parser.add_argument('--device',
-                        type=str,
-                        default="",
-                        help='MAVLink connection string to the flight controller. Defaults to autodetection'
-                        )
-    parser.add_argument('-r', '--reboot-time',
-                        type=int,
-                        default=7,
-                        help='Flight controller reboot time. '
-                        'Default is %(default)s')
-    parser.add_argument('-t', '--vehicle-type',
-                        choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
-                                 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
-                        default='',
-                        help='The type of the vehicle. Defaults to ArduCopter')
-    parser.add_argument('--vehicle-dir',
-                        type=str,
-                        default=os_getcwd(),
-                        help='Directory containing vehicle-specific intermediate parameter files. '
-                        'Defaults to the current working directory')
-    parser.add_argument('--n',
-                        type=int,
-                        default=-1,
-                        help='Start directly on the nth intermediate parameter file (skips previous files). '
-                        'Default is to start on the file next to the last that you wrote to the flight controller.'
-                        'If file does not exist, it will start on the first file.')
+    parser = FlightController.add_argparse_arguments(parser)
+    parser = LocalFilesystem.add_argparse_arguments(parser)
+    parser = ComponentEditorWindow.add_argparse_arguments(parser)
     parser.add_argument('--loglevel',
                         type=str,
                         default='INFO',

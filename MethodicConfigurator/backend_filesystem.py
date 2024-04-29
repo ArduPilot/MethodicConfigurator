@@ -528,3 +528,23 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
             logging_warning("Last written file is the last file in the list. Starting from there.")
             start_file_index = len(files) - 1
         return files[start_file_index]
+
+    @staticmethod
+    def add_argparse_arguments(parser):
+        parser.add_argument('-t', '--vehicle-type',
+                            choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
+                                    'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
+                            default='',
+                            help='The type of the vehicle. Defaults to ArduCopter')
+        parser.add_argument('--vehicle-dir',
+                            type=str,
+                            default=os_getcwd(),
+                            help='Directory containing vehicle-specific intermediate parameter files. '
+                            'Defaults to the current working directory')
+        parser.add_argument('--n',
+                            type=int,
+                            default=-1,
+                            help='Start directly on the nth intermediate parameter file (skips previous files). '
+                            'Default is to start on the file next to the last that you wrote to the flight controller.'
+                            'If the file does not exist, it will start on the first file.')
+        return parser

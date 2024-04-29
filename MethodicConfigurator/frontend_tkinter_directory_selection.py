@@ -299,21 +299,7 @@ def argument_parser():
     """
     parser = ArgumentParser(description='This main is for testing and development only, '
                             'usually the VehicleDirectorySelectionWindow is called from another script')
-    parser.add_argument('-t', '--vehicle-type',
-                        choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
-                                 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
-                        default='ArduCopter',
-                        help='The type of the vehicle. Defaults to ArduCopter')
-    parser.add_argument('--vehicle-dir',
-                        type=str,
-                        default=LocalFilesystem.getcwd(),
-                        help='Directory containing vehicle-specific intermediate parameter files. '
-                        'Defaults to the current working directory')
-    parser.add_argument('--n',
-                        type=int,
-                        default=0,
-                        help='Start directly on the nth intermediate parameter file (skips previous files). '
-                        'Default is %(default)s')
+    parser = LocalFilesystem.add_argparse_arguments(parser)
     parser.add_argument('--loglevel',
                         type=str,
                         default='INFO',

@@ -252,16 +252,7 @@ def argument_parser():
     """
     parser = ArgumentParser(description='This main is for testing and development only, '
                             'usually the ConnectionSelectionWidgets is called from another script')
-    parser.add_argument('--device',
-                        type=str,
-                        default="",
-                        help='MAVLink connection string to the flight controller. Defaults to autodetection'
-                        )
-    parser.add_argument('-r', '--reboot-time',
-                        type=int,
-                        default=7,
-                        help='Flight controller reboot time. '
-                        'Default is %(default)s')
+    parser = FlightController.add_argparse_arguments(parser)
     parser.add_argument('--loglevel',
                         type=str,
                         default='INFO',
