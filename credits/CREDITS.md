@@ -17,6 +17,7 @@ It directly uses:
 | [webbrowser](https://docs.python.org/3/library/webbrowser.html) | [Python Software Foundation License](https://docs.python.org/3/license.html) |
 | [pymavlink](https://github.com/ArduPilot/pymavlink) | [GNU Lesser General Public License v3.0](https://github.com/ArduPilot/pymavlink/blob/master/COPYING) |
 | [ArduPilot tempcal_IMU.py](https://github.com/ArduPilot/ardupilot/blob/master/Tools/scripts/tempcal_IMU.py) | [](https://github.com/ArduPilot/ardupilot/blob/master/COPYING.txt) |
+| [platformdirs](https://platformdirs.readthedocs.io/en/latest/index.html) | [MIT](https://github.com/platformdirs/platformdirs/blob/main/LICENSE) |
 | [pyserial](https://pyserial.readthedocs.io/en/latest/pyserial.html) | [BSD License](https://github.com/pyserial/pyserial/blob/master/LICENSE.txt) |
 | [Scrollable TK frame](https://gist.github.com/mp035/9f2027c3ef9172264532fcd6262f3b01) by Mark Pointing | [Mozilla Public License, v. 2.0](https://mozilla.org/MPL/2.0/) |
 | [Python Tkinter ComboBox](https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb) by geraldew | [Mozilla Public License, v. 2.0](https://mozilla.org/MPL/2.0/) |
