@@ -119,7 +119,9 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
                     break
             except FileNotFoundError:
                 pass
-        if not file_found:
+        if file_found:
+            self.validate_forced_parameters_in_file_documentation()
+        else:
             logging_warning("No file documentation will be available.")
 
         # Read ArduPilot parameter documentation
@@ -128,6 +130,23 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
         self.doc_dict = create_doc_dict(xml_root, vehicle_type, TOOLTIP_MAX_LENGTH)
 
         self.extend_and_reformat_parameter_documentation_metadata()
+
+    def validate_forced_parameters_in_file_documentation(self):
+        for filename, file_info in self.file_documentation.items():
+            if 'forced_parameters' in file_info and filename in self.file_parameters:
+                if not isinstance(file_info['forced_parameters'], dict):
+                    logging_error("Error in file '%s': '%s' forced parameter is not a dictionary",
+                                        self.file_documentation_filename, filename)
+                    continue
+                for parameter, parameter_info in file_info['forced_parameters'].items():
+                    if "New Value" not in parameter_info:
+                        logging_error("Error in file '%s': '%s' forced parameter '%s'"
+                                          " 'New Value' attribute not found.",
+                                          self.file_documentation_filename, filename, parameter)
+                    if "Change Reason" not in parameter_info:
+                        logging_error("Error in file '%s': '%s' forced parameter '%s'"
+                                          " 'Change Reason' attribute not found.",
+                                          self.file_documentation_filename, filename, parameter)
 
     def extend_and_reformat_parameter_documentation_metadata(self):
         for param_name, param_info in self.doc_dict.items():
