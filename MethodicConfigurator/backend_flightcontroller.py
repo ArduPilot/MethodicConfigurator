@@ -175,6 +175,8 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
                 a successful connection.
         """
         if device:
+            if device == 'none':
+                return ''
             self.add_connection(device)
             self.comport = mavutil.SerialPort(device=device, description=device)
         else:
@@ -306,7 +308,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         Returns:
             Dict[str, float]: A dictionary of flight controller parameters.
         """
-        # FIXME this entire is statement is for testing only, remove it later pylint: disable=fixme
+        # FIXME this entire if statement is for testing only, remove it later pylint: disable=fixme
         if self.master is None and self.comport is not None and self.comport.device == 'test':
             filename = 'params.param'
             logging_warning("Testing active, will load all parameters from the %s file", filename)
