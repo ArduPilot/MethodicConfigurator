@@ -26,6 +26,7 @@ direct_dependencies = [
     {"name": "pymavlink", "license_url": "https://raw.githubusercontent.com/ArduPilot/pymavlink/master/COPYING"},
     {"name": "ArduPilot tempcal_IMU.py",
      "license_url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/master/COPYING.txt"},
+    {"name": "platformdirs", "license_url": "https://raw.githubusercontent.com/platformdirs/platformdirs/main/LICENSE"},
     {"name": "pyserial", "license_url": "https://raw.githubusercontent.com/pyserial/pyserial/master/LICENSE.txt"},
     {"name": "Scrollable_TK_frame", "license_url": "https://mozilla.org/MPL/2.0/"},
     {"name": "Python_Tkinter_ComboBox", "license_url": "https://mozilla.org/MPL/2.0/"},

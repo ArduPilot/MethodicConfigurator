@@ -150,6 +150,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
             self.local_filesystem.re_init(self.directory, self.local_filesystem.vehicle_type)
             files = list(self.local_filesystem.file_parameters.keys())
             if files:
+                LocalFilesystem.store_recently_used_vehicle_dir(self.directory)
                 if hasattr(self.parent, 'file_selection_combobox'):
                     # Update the file selection combobox with the new files
                     self.parent.file_selection_combobox.set_entries_tupple(files, files[0])
@@ -185,10 +186,11 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         self.introduction_label = tk.Label(self.root, text=introduction_text + \
                                            "\nChoose one of the following two options:")
         self.introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)
-        self.create_option1_widgets(local_filesystem.vehicle_dir,
-                                    local_filesystem.vehicle_dir,
+        template_dir, new_base_dir, vehicle_dir = LocalFilesystem.get_recently_used_dirs()
+        self.create_option1_widgets(template_dir,
+                                    new_base_dir,
                                     "MyVehicleName")
-        self.create_option2_widgets(local_filesystem.vehicle_dir)
+        self.create_option2_widgets(vehicle_dir)
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_and_quit)
@@ -278,6 +280,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         self.local_filesystem.re_init(new_vehicle_dir, self.local_filesystem.vehicle_type)
         files = list(self.local_filesystem.file_parameters.keys())
         if files:
+            LocalFilesystem.store_recently_used_template_dirs(template_dir, new_base_dir)
             self.root.destroy()
         else:
             # No intermediate parameter files were found in the source template directory

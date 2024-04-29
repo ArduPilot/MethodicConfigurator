@@ -1,0 +1,8 @@
+{
+    "Format version": 1,
+    "directory_selection": {
+        "template_dir": "{PROGRAM_DATA}\\.ardupilot_methodic_configurator\\vehicle_templates\\ArduCopter\\diatone_taycan_mxc\\4.5.1-params",
+        "new_base_dir": "{USER_DATA}\\.ardupilot_methodic_configurator\\vehicles",
+        "vehicle_dir": "{USER_DATA}\\.ardupilot_methodic_configurator\\vehicles"
+    }
+}

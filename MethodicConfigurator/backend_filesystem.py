@@ -20,6 +20,7 @@ from shutil import copytree as shutil_copytree
 from re import compile as re_compile
 from re import match as re_match
 from re import escape as re_escape
+from re import sub as re_sub
 
 # from sys import exit as sys_exit
 # from logging import debug as logging_debug
@@ -36,6 +37,8 @@ from typing import List
 from typing import Tuple
 
 from zipfile import ZipFile
+
+from platformdirs import user_config_dir
 
 from annotate_params import BASE_URL, PARAM_DEFINITION_XML_FILE, Par
 from annotate_params import get_xml_data
@@ -517,6 +520,89 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
                 else:
                     logging_warning("Parameter %s not found in the current parameter file", param)
         return ret
+
+    @staticmethod
+    def __get_settings_directory():
+        settings_directory = user_config_dir(".ardupilot_methodic_configurator", False, roaming=True, ensure_exists=True)
+
+        if not os_path.exists(settings_directory):
+            raise FileNotFoundError(f"The settings directory '{settings_directory}' does not exist.")
+        if not os_path.isdir(settings_directory):
+            raise NotADirectoryError(f"The path '{settings_directory}' is not a directory.")
+
+        return settings_directory
+
+    @staticmethod
+    def __get_settings_as_dict():
+        settings_path = os_path.join(LocalFilesystem.__get_settings_directory(), "settings.json")
+
+        settings = {}
+
+        try:
+            with open(settings_path, "r", encoding='utf-8') as settings_file:
+                settings = json_load(settings_file)
+        except FileNotFoundError:
+            # If the file does not exist, it will be created later
+            pass
+
+        if "Format version" not in settings:
+            settings["Format version"] = 1
+
+        if "directory_selection" not in settings:
+            settings["directory_selection"] = {}
+        return settings
+
+    @staticmethod
+    def __set_settings_from_dict(settings):
+        settings_path = os_path.join(LocalFilesystem.__get_settings_directory(), "settings.json")
+
+        with open(settings_path, "w", encoding='utf-8') as settings_file:
+            json_dump(settings, settings_file, indent=4)
+
+    @staticmethod
+    def store_recently_used_template_dirs(template_dir: str, new_base_dir: str):
+        settings = LocalFilesystem.__get_settings_as_dict()
+
+        # Regular expression pattern to match single backslashes
+        pattern = r"(?<!\\)\\(?!\\)"
+
+        # Replacement string
+        replacement = r"\\"
+
+        # Update the settings with the new values
+        settings["directory_selection"].update({
+            "template_dir": re_sub(pattern, replacement, template_dir),
+            "new_base_dir": re_sub(pattern, replacement, new_base_dir)
+        })
+
+        LocalFilesystem.__set_settings_from_dict(settings)
+
+    @staticmethod
+    def store_recently_used_vehicle_dir(vehicle_dir: str):
+        settings = LocalFilesystem.__get_settings_as_dict()
+
+        # Regular expression pattern to match single backslashes
+        pattern = r"(?<!\\)\\(?!\\)"
+
+        # Replacement string
+        replacement = r"\\"
+
+        # Update the settings with the new values
+        settings["directory_selection"].update({
+            "vehicle_dir": re_sub(pattern, replacement, vehicle_dir)
+        })
+
+        LocalFilesystem.__set_settings_from_dict(settings)
+
+    @staticmethod
+    def get_recently_used_dirs():
+        settings = LocalFilesystem.__get_settings_as_dict()
+
+        template_dir = settings["directory_selection"].get("template_dir", "")
+        new_base_dir = settings["directory_selection"].get("new_base_dir", "")
+        vehicle_dir = settings["directory_selection"].get("vehicle_dir", "")
+
+        return template_dir, new_base_dir, vehicle_dir
 
     def write_last_written_filename(self, current_file: str):
         try:

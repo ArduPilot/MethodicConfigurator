@@ -76,6 +76,7 @@ setup(
     install_requires=[
         'matplotlib',
         'numpy',
+        'platformdirs',
         'pymavlink',
         'pyserial',
         'pillow',
