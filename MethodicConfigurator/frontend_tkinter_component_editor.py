@@ -41,7 +41,8 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = ArgumentParser(description='')
+    parser = ArgumentParser(description='A GUI for editing JSON files that contain vehicle component configurations. '
+                            'Not to be used directly, but through the main ArduPilot methodic configurator script.')
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindow.add_argparse_arguments(parser)
     parser.add_argument('--loglevel',
