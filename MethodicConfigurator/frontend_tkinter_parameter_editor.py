@@ -338,11 +338,11 @@ class ParameterEditorTable(ScrollFrame):
 
         # Convert current_value to a set of checked keys
         current_value = int(event.widget.get())
-        checked_keys = {i for i in range(len(bitmask_dict)) if (current_value >> i) & 1}
+        checked_keys = {key for key, _value in bitmask_dict.items() if (current_value >> key) & 1}
 
         for i, (key, value) in enumerate(bitmask_dict.items()):
-            var = tk.BooleanVar(value=i in checked_keys)
-            checkbox_vars[key] = var
+            var = tk.BooleanVar(value=key in checked_keys)
+            checkbox_vars[i] = var
             checkbox = tk.Checkbutton(window, text=value, variable=var, command=update_label)
             checkbox.grid(row=i, column=0, sticky="w")
 
