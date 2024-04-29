@@ -200,10 +200,6 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
             else:
                 return "No serial ports found. Please connect a flight controller and try again."
         error_message = self.__create_connection_with_retry(progress_callback=progress_callback)
-        if device == 'test': # FIXME for testing only pylint: disable=fixme
-            self.fc_parameters['INS_LOG_BAT_MASK'] = 1.0
-            self.fc_parameters['INS_TCAL1_TMAX'] = 1.0
-            self.fc_parameters['COMPASS_DEV_ID'] = 1.0
         return error_message
 
     def __request_message(self, message_id: int):
@@ -312,7 +308,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         """
         # FIXME this entire is statement is for testing only, remove it later pylint: disable=fixme
         if self.master is None and self.comport is not None and self.comport.device == 'test':
-            filename = os_path.join('4.4.4-test-params', '00_default.param')
+            filename = 'params.param'
             logging_warning("Testing active, will load all parameters from the %s file", filename)
             par_dict_with_comments = Par.load_param_file_into_dict(filename)
             return {k: v.value for k, v in par_dict_with_comments.items()}
