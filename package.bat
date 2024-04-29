@@ -9,11 +9,11 @@ copy apm.pdef.4.4.4-params.xml dist
 copy apm.pdef.4.5.1-params.xml dist
 copy apm.pdef.4.6.0-DEV-params.xml dist
 copy file_documentation.json dist
-xcopy /E /I /Y vehicle_examples\diatone_taycan_mxc\4.3.8-params dist\4.3.8-params
-xcopy /E /I /Y vehicle_examples\diatone_taycan_mxc\4.4.4-params dist\4.4.4-params
+xcopy /E /I /Y vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params dist\4.3.8-params
+xcopy /E /I /Y vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params dist\4.4.4-params
 xcopy /E /I /Y 4.4.4-test-params dist\4.4.4-test-params
-xcopy /E /I /Y vehicle_examples\diatone_taycan_mxc\4.5.1-params dist\4.5.1-params
-xcopy /E /I /Y vehicle_examples\diatone_taycan_mxc\4.6.0-DEV-params dist\4.6.0-DEV-params
+xcopy /E /I /Y vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.1-params dist\4.5.1-params
+xcopy /E /I /Y vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params dist\4.6.0-DEV-params
 xcopy /E /I /Y images dist\images
 copy *.md dist
 copy MethodicConfigurator\*.png dist

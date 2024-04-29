@@ -26,7 +26,7 @@ for %%f in (
     4.6.0-DEV-params
 ) do (
     set "src=apm.pdef.%%f.xml"
-    set "dest=vehicle_examples\diatone_taycan_mxc\%%f\apm.pdef.xml"
+    set "dest=vehicle_templates\ArduCopter\diatone_taycan_mxc\%%f\apm.pdef.xml"
     rem remove the old linux softlinks
     del !dest!
     rem echo Copying !src! to !dest!

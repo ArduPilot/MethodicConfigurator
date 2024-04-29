@@ -42,10 +42,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "..\MethodicConfigurator\dist\ardupilot_methodic_configurator\ardupilot_methodic_configurator.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\dist\ardupilot_methodic_configurator\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-Source: "..\vehicle_examples\diatone_taycan_mxc\4.3.8-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_examples\diatone_taycan_mxc\4.3.8-params"; Flags: ignoreversion
-Source: "..\vehicle_examples\diatone_taycan_mxc\4.4.4-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_examples\diatone_taycan_mxc\4.4.4-params"; Flags: ignoreversion
-Source: "..\vehicle_examples\diatone_taycan_mxc\4.5.1-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_examples\diatone_taycan_mxc\4.5.1-params"; Flags: ignoreversion
-Source: "..\vehicle_examples\diatone_taycan_mxc\4.6.0-DEV-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_examples\diatone_taycan_mxc\4.6.0-DEV-params"; Flags: ignoreversion
+Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params"; Flags: ignoreversion
+Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params"; Flags: ignoreversion
+Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.1-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.1-params"; Flags: ignoreversion
+Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params"; Flags: ignoreversion
 Source: "..\windows\version.txt"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\windows\MethodicConfigurator.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduPilot_icon.png"; DestDir: "{app}\_internal"; Flags: ignoreversion
@@ -53,12 +53,15 @@ Source: "..\MethodicConfigurator\ArduPilot_logo.png"; DestDir: "{app}\_internal"
 Source: "..\MethodicConfigurator\file_documentation.json"; DestDir: "{app}\_internal"; Flags: ignoreversion
 Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
 
+[Dirs]
+Name: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; Flags: uninsneveruninstall
+
 [Icons]
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_examples"; Tasks: desktopicon; IconFilename: "{app}\MethodicConfigurator.ico"
+Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; Tasks: desktopicon; IconFilename: "{app}\MethodicConfigurator.ico"
 Name: "{group}\Documentation"; Filename: "https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"
-Name: "{group}\Vehicle Examples"; Filename: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_examples"
+Name: "{group}\Vehicle Templates"; Filename: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter"
 Name: "{group}\ArduPilot MethodicConfigurator Forum"; Filename: "https://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/"
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_examples"; IconFilename: "{app}\MethodicConfigurator.ico"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; IconFilename: "{app}\MethodicConfigurator.ico"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
