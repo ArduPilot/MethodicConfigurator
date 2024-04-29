@@ -375,6 +375,11 @@ class ParameterEditorTable(ScrollFrame):
         # Bind the on_close function to the window's WM_DELETE_WINDOW protocol
         window.protocol("WM_DELETE_WINDOW", on_close)
 
+        # Make sure the window is visible before disabling the parent window
+        window.deiconify()
+        self.root.update_idletasks()
+        window.grab_set()
+
         window.wait_window() # Wait for the window to be closed
 
     def __create_unit_label(self, param_metadata):
