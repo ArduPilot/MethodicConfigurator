@@ -87,7 +87,9 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
     """
     def __init__(self, vehicle_dir: str, vehicle_type: str):
         self.file_documentation_filename = "file_documentation.json"
+        self.file_documentation = {}
         self.vehicle_components_json_filename = "vehicle_components.json"
+        self.vehicle_components = {}
         if vehicle_dir is not None:
             self.re_init(vehicle_dir, vehicle_type)
 
@@ -97,6 +99,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
         self.file_documentation = {}
         self.param_default_dict = {}
         self.doc_dict = {}
+        self.vehicle_components = {}
 
         # Read intermediate parameters from files
         self.file_parameters = self.read_params_from_files()
@@ -121,6 +124,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
                 pass
         if file_found:
             self.validate_forced_parameters_in_file_documentation()
+            self.validate_derived_parameters_in_file_documentation()
         else:
             logging_warning("No file documentation will be available.")
 
@@ -130,6 +134,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
         self.doc_dict = create_doc_dict(xml_root, vehicle_type, TOOLTIP_MAX_LENGTH)
 
         self.extend_and_reformat_parameter_documentation_metadata()
+        self.load_vehicle_components_json_data()
 
     def validate_forced_parameters_in_file_documentation(self):
         for filename, file_info in self.file_documentation.items():
@@ -145,6 +150,23 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
                                           self.file_documentation_filename, filename, parameter)
                     if "Change Reason" not in parameter_info:
                         logging_error("Error in file '%s': '%s' forced parameter '%s'"
+                                          " 'Change Reason' attribute not found.",
+                                          self.file_documentation_filename, filename, parameter)
+
+    def validate_derived_parameters_in_file_documentation(self):
+        for filename, file_info in self.file_documentation.items():
+            if 'derived_parameters' in file_info and filename in self.file_parameters:
+                if not isinstance(file_info['derived_parameters'], dict):
+                    logging_error("Error in file '%s': '%s' derived parameter is not a dictionary",
+                                        self.file_documentation_filename, filename)
+                    continue
+                for parameter, parameter_info in file_info['derived_parameters'].items():
+                    if "New Value" not in parameter_info:
+                        logging_error("Error in file '%s': '%s' derived parameter '%s'"
+                                          " 'New Value' attribute not found.",
+                                          self.file_documentation_filename, filename, parameter)
+                    if "Change Reason" not in parameter_info:
+                        logging_error("Error in file '%s': '%s' derived parameter '%s'"
                                           " 'Change Reason' attribute not found.",
                                           self.file_documentation_filename, filename, parameter)
 
@@ -413,6 +435,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
             logging_warning("File '%s' not found in %s.", self.vehicle_components_json_filename, self.vehicle_dir)
         except JSONDecodeError:
             logging_error("Error decoding JSON data from file '%s'.", filepath)
+        self.vehicle_components = data
         return data
 
     def save_vehicle_components_json_data(self, data) -> bool:
