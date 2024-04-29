@@ -31,10 +31,10 @@ from io import BytesIO as SIO
 try:
     from pymavlink import mavutil
     from pymavlink import mavparm
-except Exception:
+except ImportError:
     pass
 
-
+# pylint: disable=invalid-name
 # opcodes
 OP_None = 0
 OP_TerminateSession = 1
@@ -70,10 +70,11 @@ ERR_FileNotFound = 10
 
 HDR_Len = 12
 MAX_Payload = 239
+# pylint: enable=invalid-name
 
-
-class FTP_OP:
-    def __init__(self, seq, session, opcode, size, req_opcode, burst_complete, offset, payload):
+class FTP_OP:  # pylint: disable=missing-class-docstring, invalid-name, too-many-instance-attributes
+    def __init__(self, seq, session, opcode, size,  # pylint: disable=too-many-arguments
+                 req_opcode, burst_complete, offset, payload):
         self.seq = seq
         self.session = session
         self.opcode = opcode
@@ -96,27 +97,21 @@ class FTP_OP:
         plen = 0
         if self.payload is not None:
             plen = len(self.payload)
-        ret = "OP seq:%u sess:%u opcode:%d req_opcode:%u size:%u bc:%u ofs:%u plen=%u" % (self.seq,
-                                                                                          self.session,
-                                                                                          self.opcode,
-                                                                                          self.req_opcode,
-                                                                                          self.size,
-                                                                                          self.burst_complete,
-                                                                                          self.offset,
-                                                                                          plen)
+        ret = f"OP seq:{self.seq} sess:{self.session} opcode:{self.opcode} req_opcode:{self.req_opcode}" \
+              f" size:{self.size} bc:{self.burst_complete} ofs:{self.offset} plen={plen}"
         if plen > 0:
-            ret += " [%u]" % self.payload[0]
+            ret += f" [{self.payload[0]}]"
         return ret
 
 
-class WriteQueue:
+class WriteQueue:  # pylint: disable=missing-class-docstring, too-few-public-methods
     def __init__(self, ofs, size):
         self.ofs = ofs
         self.size = size
         self.last_send = 0
 
 
-class MAVFTP:
+class MAVFTP:  # pylint: disable=missing-class-docstring, too-many-instance-attributes
     def __init__(self):
         self.ftp_settings_debug = 2
         self.ftp_settings_pkt_loss_rx = 0
@@ -154,7 +149,7 @@ class MAVFTP:
         self.ftp_failed = False
         self.mav_param_set = set()
         self.param_types = {}
-        self.fetch_one = dict()
+        self.fetch_one = {}
         self.fetch_set = None
         self.mav_param = mavparm.MAVParmDict()
         self.mav_param_count = 0
@@ -173,7 +168,7 @@ class MAVFTP:
         self.last_op = op
         now = time_time()
         if self.ftp_settings_debug > 1:
-            logging_info("> %s dt=%.2f" % (op, now - self.last_op_time))
+            logging_info("> %s dt=%.2f", op, now - self.last_op_time)
         self.last_op_time = time_time()
 
     def terminate_session(self):
@@ -298,7 +293,7 @@ class MAVFTP:
 
         self.param_types = {}
         self.mav_param_set = set()
-        self.fetch_one = dict()
+        self.fetch_one = {}
         self.fetch_set = None
         self.mav_param.clear()
         total_params = len(pdata.params)
@@ -459,7 +454,7 @@ class MAVFTP:
             return True
         return False
 
-    def handle_burst_read(self, op, m):
+    def handle_burst_read(self, op, m):  # pylint: disable=too-many-branches, too-many-statements, too-many-return-statements
         '''handle OP_BurstReadFile reply'''
         if self.ftp_settings_pkt_loss_tx > 0:
             if random_uniform(0, 100) < self.ftp_settings_pkt_loss_tx:

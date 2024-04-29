@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 '''
 decode ftp parameter protocol data
-'''
+Original file was part of MAVProxy
 
-# pylint: skip-file
+This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+
+(C) 2024 Amilcar do Carmo Lucas, IAV GmbH
+
+SPDX-License-Identifier:    GPL-3
+'''
 
 import struct
 import sys
 
 
-class ParamData(object):
+class ParamData():
+    """
+    A class to manage parameter values and defaults for ArduPilot configuration.
+    """
     def __init__(self):
         # params as (name, value, ptype)
         self.params = []
@@ -25,7 +33,7 @@ class ParamData(object):
         self.defaults.append((name, value, ptype))
 
 
-def ftp_param_decode(data):
+def ftp_param_decode(data):  # pylint: disable=too-many-locals, too-many-branches
     '''decode parameter data, returning ParamData'''
     pdata = ParamData()
 
@@ -34,7 +42,7 @@ def ftp_param_decode(data):
     if len(data) < 6:
         return None
     magic2, _num_params, total_params = struct.unpack("<HHH", data[0:6])
-    if magic != magic2 and magic_defaults != magic2:
+    if magic2 not in (magic, magic_defaults):
         print("paramftp: bad magic 0x%x expected 0x%x", magic2, magic)
         return None
     with_defaults = magic2 == magic_defaults
@@ -78,7 +86,7 @@ def ftp_param_decode(data):
         default_len = type_len if has_default else 0
 
         name_len = ((plen >> 4) & 0x0F) + 1
-        common_len = (plen & 0x0F)
+        common_len = plen & 0x0F
         name = last_name[0:common_len] + data[2:2+name_len]
         vdata = data[2+name_len:2+name_len+type_len+default_len]
         last_name = name
@@ -104,13 +112,18 @@ def ftp_param_decode(data):
     return pdata
 
 
-if __name__ == "__main__":
+def main():
     fname = sys.argv[1]
-    data = open(fname, 'rb').read()
-    print("Decoding file of length %u" % len(data))
+    with open(fname, 'rb') as file:
+        data = file.read()
+    print(f"Decoding file of length {len(data)}")
     pdata = ftp_param_decode(data)
     if pdata is None:
         print("Decode failed")
         sys.exit(1)
-    for (name, value, ptype) in pdata.params:
+    for (name, value, _ptype) in pdata.params:
         print(name.decode('utf-8'), value)
+
+
+if __name__ == "__main__":
+    main()
