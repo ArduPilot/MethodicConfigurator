@@ -127,7 +127,11 @@
         "external_tool_text": "ArduPilot Hardware report",
         "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/HardwareReport/",
         "mandatory_text": "100% mandatory (0% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "ARMING_CHECK": { "New Value": 1, "Change Reason": "Perform all arming checks. If you have a problem fix its source. Do NOT change this" },
+            "SCR_ENABLE": { "New Value": 1, "Change Reason": "Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation" }
+        }
     },
     "13_logging.param": {
         "blog_text": "Configures logging parameters, including what data is logged and how it's stored.",
