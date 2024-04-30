@@ -32,6 +32,8 @@ from json import load as json_load
 from json import dump as json_dump
 from json import JSONDecodeError
 
+from platform import system as platform_system
+
 from typing import Dict
 from typing import List
 from typing import Tuple
@@ -560,14 +562,22 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
             json_dump(settings, settings_file, indent=4)
 
     @staticmethod
-    def store_recently_used_template_dirs(template_dir: str, new_base_dir: str):
+    def __get_settings_config():
         settings = LocalFilesystem.__get_settings_as_dict()
 
         # Regular expression pattern to match single backslashes
-        pattern = r"(?<!\\)\\(?!\\)"
+        pattern = r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)"
 
         # Replacement string
-        replacement = r"\\"
+        if platform_system() == 'Windows':
+            replacement = r"\\"
+        else:
+            replacement = r"/"
+        return settings, pattern, replacement
+
+    @staticmethod
+    def store_recently_used_template_dirs(template_dir: str, new_base_dir: str):
+        settings, pattern, replacement = LocalFilesystem.__get_settings_config()
 
         # Update the settings with the new values
         settings["directory_selection"].update({
@@ -579,13 +589,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
 
     @staticmethod
     def store_recently_used_vehicle_dir(vehicle_dir: str):
-        settings = LocalFilesystem.__get_settings_as_dict()
-
-        # Regular expression pattern to match single backslashes
-        pattern = r"(?<!\\)\\(?!\\)"
-
-        # Replacement string
-        replacement = r"\\"
+        settings, pattern, replacement = LocalFilesystem.__get_settings_config()
 
         # Update the settings with the new values
         settings["directory_selection"].update({
@@ -594,13 +598,26 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
 
         LocalFilesystem.__set_settings_from_dict(settings)
 
+
     @staticmethod
     def get_recently_used_dirs():
+        settings_directory = LocalFilesystem.__get_settings_directory()
         settings = LocalFilesystem.__get_settings_as_dict()
 
-        template_dir = settings["directory_selection"].get("template_dir", "")
-        new_base_dir = settings["directory_selection"].get("new_base_dir", "")
-        vehicle_dir = settings["directory_selection"].get("vehicle_dir", "")
+        current_dir = os_path.dirname(os_path.abspath(__file__))
+        if platform_system() == 'Windows':
+            current_dir = current_dir.replace("\\_internal", "")
+        else:
+            current_dir = current_dir.replace("/MethodicConfigurator", "")
+        template_default_dir = os_path.join(current_dir, "vehicle_templates", "ArduCopter",
+                                            "diatone_taycan_mxc", "4.5.1-params")
+        vehicles_default_dir = os_path.join(settings_directory, "vehicles")
+        if not os_path.exists(vehicles_default_dir):
+            os_makedirs(vehicles_default_dir, exist_ok=True)
+
+        template_dir = settings["directory_selection"].get("template_dir", template_default_dir)
+        new_base_dir = settings["directory_selection"].get("new_base_dir", vehicles_default_dir)
+        vehicle_dir = settings["directory_selection"].get("vehicle_dir", vehicles_default_dir)
 
         return template_dir, new_base_dir, vehicle_dir
 

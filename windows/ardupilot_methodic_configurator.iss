@@ -48,12 +48,10 @@ Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.1-params\*.*"; D
 Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params"; Flags: ignoreversion
 Source: "..\windows\version.txt"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\windows\MethodicConfigurator.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\windows\settings_template.json"; DestDir: "{app}\_internal"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduPilot_icon.png"; DestDir: "{app}\_internal"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduPilot_logo.png"; DestDir: "{app}\_internal"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\file_documentation.json"; DestDir: "{app}\_internal"; Flags: ignoreversion
 Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
-Source: "set_permissions.bat"; DestDir: "{app}\_internal"; Flags: ignoreversion
 
 [Dirs]
 Name: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; Flags: uninsneveruninstall
@@ -67,7 +65,6 @@ Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{u
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
-Filename: "{app}\_internal\set_permissions.bat"; WorkingDir: "{app}"; StatusMsg: "Setting file permissions..."; Flags: runhidden
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
@@ -172,35 +169,4 @@ begin
     RemovePath(ExpandConstant('{app}'));
     RefreshEnvironment();
   end;
-end;
-
-function ReplacePlaceholdersInFile(const FileName: string): Boolean;
-var
- FileContent: AnsiString;
- UnicodeFileContent: String;
- ProgData: String;
- UserData: String;
-begin
- if LoadStringFromFile(FileName, FileContent) then
- begin
-    UnicodeFileContent := String(FileContent)
-    ProgData := ExpandConstant('{commonappdata}')
-    UserData := ExpandConstant('{userappdata}')
-    StringChangeEx(ProgData, '\', '\\', True)
-    StringChangeEx(UserData, '\', '\\', True)
-    StringChangeEx(UnicodeFileContent, '{PROGRAM_DATA}', ProgData, True);
-    StringChangeEx(UnicodeFileContent, '{USER_DATA}', UserData, True);
-    Result := SaveStringToFile(FileName, AnsiString(UnicodeFileContent), False);
- end
- else
-    Result := False;
-end;
-
-procedure CurStepChanged(CurStep: TSetupStep);
-begin
- if CurStep = ssPostInstall then
- begin
-    ReplacePlaceholdersInFile(ExpandConstant('{app}\_internal\settings_template.json'));
-    RenameFile(ExpandConstant('{app}\_internal\settings_template.json'), ExpandConstant('{userappdata}\.ardupilot_methodic_configurator\settings.json'));
- end;
 end;

@@ -281,6 +281,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         files = list(self.local_filesystem.file_parameters.keys())
         if files:
             LocalFilesystem.store_recently_used_template_dirs(template_dir, new_base_dir)
+            LocalFilesystem.store_recently_used_vehicle_dir(new_vehicle_dir)
             self.root.destroy()
         else:
             # No intermediate parameter files were found in the source template directory
