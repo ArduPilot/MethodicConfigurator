@@ -40,6 +40,7 @@ from typing import Tuple
 
 from zipfile import ZipFile
 
+from platformdirs import site_config_dir
 from platformdirs import user_config_dir
 
 from annotate_params import BASE_URL, PARAM_DEFINITION_XML_FILE, Par
@@ -524,19 +525,31 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
         return ret
 
     @staticmethod
-    def __get_settings_directory():
-        settings_directory = user_config_dir(".ardupilot_methodic_configurator", False, roaming=True, ensure_exists=True)
+    def __user_config_dir():
+        user_config_directory = user_config_dir(".ardupilot_methodic_configurator", False, roaming=True, ensure_exists=True)
 
-        if not os_path.exists(settings_directory):
-            raise FileNotFoundError(f"The settings directory '{settings_directory}' does not exist.")
-        if not os_path.isdir(settings_directory):
-            raise NotADirectoryError(f"The path '{settings_directory}' is not a directory.")
+        if not os_path.exists(user_config_directory):
+            raise FileNotFoundError(f"The user configuration directory '{user_config_directory}' does not exist.")
+        if not os_path.isdir(user_config_directory):
+            raise NotADirectoryError(f"The path '{user_config_directory}' is not a directory.")
 
-        return settings_directory
+        return user_config_directory
+
+    @staticmethod
+    def __site_config_dir():
+        site_config_directory = site_config_dir(".ardupilot_methodic_configurator", False, version=None, multipath=False,
+                                                ensure_exists=True)
+
+        if not os_path.exists(site_config_directory):
+            raise FileNotFoundError(f"The site configuration directory '{site_config_directory}' does not exist.")
+        if not os_path.isdir(site_config_directory):
+            raise NotADirectoryError(f"The path '{site_config_directory}' is not a directory.")
+
+        return site_config_directory
 
     @staticmethod
     def __get_settings_as_dict():
-        settings_path = os_path.join(LocalFilesystem.__get_settings_directory(), "settings.json")
+        settings_path = os_path.join(LocalFilesystem.__user_config_dir(), "settings.json")
 
         settings = {}
 
@@ -556,7 +569,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
 
     @staticmethod
     def __set_settings_from_dict(settings):
-        settings_path = os_path.join(LocalFilesystem.__get_settings_directory(), "settings.json")
+        settings_path = os_path.join(LocalFilesystem.__user_config_dir(), "settings.json")
 
         with open(settings_path, "w", encoding='utf-8') as settings_file:
             json_dump(settings, settings_file, indent=4)
@@ -601,7 +614,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
 
     @staticmethod
     def get_recently_used_dirs():
-        settings_directory = LocalFilesystem.__get_settings_directory()
+        settings_directory = LocalFilesystem.__user_config_dir()
         settings = LocalFilesystem.__get_settings_as_dict()
 
         current_dir = os_path.dirname(os_path.abspath(__file__))
@@ -609,7 +622,13 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
             current_dir = current_dir.replace("\\_internal", "")
         else:
             current_dir = current_dir.replace("/MethodicConfigurator", "")
-        template_default_dir = os_path.join(current_dir, "vehicle_templates", "ArduCopter",
+        program_dir = current_dir
+
+        if platform_system() == 'Windows':
+            site_directory = LocalFilesystem.__site_config_dir()
+        else:
+            site_directory = program_dir
+        template_default_dir = os_path.join(site_directory, "vehicle_templates", "ArduCopter",
                                             "diatone_taycan_mxc", "4.5.1-params")
         vehicles_default_dir = os_path.join(settings_directory, "vehicles")
         if not os_path.exists(vehicles_default_dir):
