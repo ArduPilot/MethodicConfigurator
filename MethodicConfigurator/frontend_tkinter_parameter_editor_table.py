@@ -169,7 +169,8 @@ class ParameterEditorTable(ScrollFrame):
                     'fc_parameters': self.local_filesystem.file_parameters[self.current_file],
                     # Add any other variables you want to make accessible within the eval expression
                 }
-                eval_result = eval(file_info['derived_parameters'][param_name]["New Value"], {}, local_vars)
+                eval_result = eval(file_info['derived_parameters'][param_name]["New Value"],  # pylint: disable=eval-used
+                                   {}, local_vars)
                 if param.value != eval_result:
                     param.value = eval_result
                     self.at_least_one_param_edited = True
