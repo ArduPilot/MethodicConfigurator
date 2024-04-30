@@ -160,6 +160,19 @@ class ParameterEditorTable(ScrollFrame):
                param.value != file_info['forced_parameters'][param_name]["New Value"]:
                 param.value = file_info['forced_parameters'][param_name]["New Value"]
                 self.at_least_one_param_edited = True
+        if file_info and 'derived_parameters' in file_info and param_name in file_info['derived_parameters']:
+            present_as_forced = True
+            if "New Value" in file_info['derived_parameters'][param_name]:
+                # Prepare a dictionary that maps variable names to their values
+                local_vars = {
+                    'vehicle_components': self.local_filesystem.vehicle_components['Components'],
+                    'fc_parameters': self.local_filesystem.file_parameters[self.current_file],
+                    # Add any other variables you want to make accessible within the eval expression
+                }
+                eval_result = eval(file_info['derived_parameters'][param_name]["New Value"], {}, local_vars)
+                if param.value != eval_result:
+                    param.value = eval_result
+                    self.at_least_one_param_edited = True
 
         new_value_entry = tk.Entry(self.view_port, width=10, justify=tk.RIGHT)
         ParameterEditorTable.__update_new_value_entry_text(new_value_entry, param.value, param_default)
@@ -264,6 +277,12 @@ class ParameterEditorTable(ScrollFrame):
             if "Change Reason" in file_info['forced_parameters'][param_name] and \
                param.comment != file_info['forced_parameters'][param_name]["Change Reason"]:
                 param.comment = file_info['forced_parameters'][param_name]["Change Reason"]
+                self.at_least_one_param_edited = True
+        if file_info and 'derived_parameters' in file_info and param_name in file_info['derived_parameters']:
+            present_as_forced = True
+            if "Change Reason" in file_info['derived_parameters'][param_name] and \
+               param.comment != file_info['derived_parameters'][param_name]["Change Reason"]:
+                param.comment = file_info['derived_parameters'][param_name]["Change Reason"]
                 self.at_least_one_param_edited = True
 
         change_reason_entry = tk.Entry(self.view_port, background="white")
