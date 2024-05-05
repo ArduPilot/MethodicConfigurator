@@ -107,6 +107,7 @@ def main():
 
     if not args.skip_component_editor:
         component_editor_window = ComponentEditorWindow(VERSION, local_filesystem)
+        component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.version)
         component_editor_window.root.mainloop()
 
     # Call the GUI function with the starting intermediate parameter file

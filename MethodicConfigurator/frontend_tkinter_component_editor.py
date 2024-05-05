@@ -70,7 +70,7 @@ class ComponentEditorWindow(BaseWindow):
         self.root.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version + " - Vehicle Component Editor")
         self.root.geometry("880x600") # Set the window width
 
-        self.data = local_filesystem.load_vehicle_components_json_data()
+        self.data = local_filesystem.load_vehicle_components_json_data(local_filesystem.vehicle_dir)
         if len(self.data) < 1:
             # Schedule the window to be destroyed after the mainloop has started
             self.root.after(100, self.root.destroy) # Adjust the delay as needed
@@ -93,20 +93,20 @@ class ComponentEditorWindow(BaseWindow):
         self.scroll_frame = ScrollFrame(self.root)
         self.scroll_frame.pack(side="top", fill="both", expand=True)
 
-        self.populate_frames()
+        self.__populate_frames()
 
         self.save_button = ttk.Button(self.root, text="Save data and start configuration", command=self.save_data)
         self.save_button.pack(pady=7)
 
-    def populate_frames(self):
+    def __populate_frames(self):
         """
         Populates the ScrollFrame with widgets based on the JSON data.
         """
         if "Components" in self.data:
             for key, value in self.data["Components"].items():
-                self.add_widget(self.scroll_frame.view_port, key, value, [])
+                self.__add_widget(self.scroll_frame.view_port, key, value, [])
 
-    def add_widget(self, parent, key, value, path):
+    def __add_widget(self, parent, key, value, path):
         """
         Adds a widget to the parent widget with the given key and value.
 
@@ -125,7 +125,7 @@ class ComponentEditorWindow(BaseWindow):
             frame.pack(fill=tk.X, side=side, pady=pady, padx=5, anchor=anchor)
             for sub_key, sub_value in value.items():
                 # recursively add child elements
-                self.add_widget(frame, sub_key, sub_value, path + [key])
+                self.__add_widget(frame, sub_key, sub_value, path + [key])
         else:                                   # JSON leaf elements, add Entry widget
             entry_frame = ttk.Frame(parent)
             entry_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
@@ -147,7 +147,7 @@ class ComponentEditorWindow(BaseWindow):
         for path, entry in self.entry_widgets.items():
             value = entry.get()
 
-            # Navigate through the nested dictionaries using the elements of path
+            # Navigate through the nested dictionaries using the elements of the path
             current_data = self.data["Components"]
             for key in path[:-1]:
                 current_data = current_data[key]
@@ -156,7 +156,7 @@ class ComponentEditorWindow(BaseWindow):
             current_data[path[-1]] = value
 
         # Save the updated data back to the JSON file
-        if self.local_filesystem.save_vehicle_components_json_data(self.data):
+        if self.local_filesystem.save_vehicle_components_json_data(self.data, self.local_filesystem.vehicle_dir):
             show_error_message("Error", "Failed to save data to file. Is the destination write protected?")
         else:
             logging_info("Data saved successfully.")
@@ -169,6 +169,19 @@ class ComponentEditorWindow(BaseWindow):
                             help='Skip the component editor window. Only use this if all components have been configured. '
                             'Default to false')
         return parser
+
+    def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
+        self.data['Components']['Flight Controller']['Firmware']['Type'] = vehicle_type
+        entry = self.entry_widgets[('Flight Controller', 'Firmware', 'Type')]
+        entry.delete(0, tk.END)
+        entry.insert(0, vehicle_type)
+        entry.config(state="disabled")
+        if version:
+            self.data['Components']['Flight Controller']['Firmware']['Version'] = version
+            entry = self.entry_widgets[('Flight Controller', 'Firmware', 'Version')]
+            entry.delete(0, tk.END)
+            entry.insert(0, version)
+            entry.config(state="disabled")
 
 
 if __name__ == "__main__":
