@@ -95,10 +95,10 @@ This option allows users to select an existing vehicle configuration directory t
 ### 5. Editing Parameters
 
 - The parameter table presents the parameters in the current intermediate parameter file
-- The first colum is the ArduPilot parameter name used in that row.
+- The first column is the ArduPilot parameter name used in that row.
   - ReadOnly parameters are presented on a *red background*🟥, they should not be present in an intermediate configuration file because under normal conditions they can not be changed
   - Sensor calibration parameters are presented on a *yellow background*🟨, they are vehicle-instance dependent and can NOT be reused between similar vehicles
-- The current parameter value read from your FC is on the `Current Value` column.
+- The current parameter value read from your FC is in the `Current Value` column.
   - Not available parameter values are presented as `N/A` on an *orange background*🟧
   - Parameters that have the default parameter value are presented on a *light blue background* 🟦
 - The new value is the value in the intermediate file and will be written to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `example_vehicle` directory are just examples.
@@ -133,7 +133,7 @@ This option allows users to select an existing vehicle configuration directory t
 ### 9. Completing the Configuration Process
 
 Once all the intermediate parameter files have been processed, the ArduPilot Methodic Configurator will display a summary message box.
-In other words when the last available intermediate parameter file is selected (see [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file)) and either  `Write selected params to FC, and advance to next param file` or `Skip parameter file` button is pressed.
+In other words when the last available intermediate parameter file is selected (see [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file)) and either `Write selected params to FC, and advance to next param file` or `Skip parameter file` button is pressed.
 This message box provides a comprehensive overview of the configuration process, including the number of parameters that were kept at their default values, the number of non-default read-only parameters that were ignored, and the number of non-default writable parameters that were updated.
 
 ![Configuration summary message box](images/Last_parameter_file_processed.png)
@@ -184,7 +184,7 @@ The ArduPilot Methodic Configurator uses several configuration files to manage a
 
 - **Intermediate Parameter Files**: These files are located in the vehicle-specific directory and are named with two digits followed by an underscore, ending in `.param`. They contain the parameters that need to be configured for the drone. Each file corresponds to a specific configuration step or aspect of the drone's setup.
 
-- **Documentation File**: This file provides documentation for each intermediate parameter file. It is used to display relevant information about the parameters and their configuration process. The `file_documentation.json` documentation file is first searched in the selected vehicle-specific directory, and if not found, in the directory where the script is located.
+- **Documentation File**: This file provides documentation for each intermediate parameter file. It is used to display relevant information about the parameters and their configuration process. The `ArduCopter_configuration_steps.json` documentation file is first searched in the selected vehicle-specific directory, and if not found, in the directory where the script is located.
 
 - **Default Parameter Values File**: The `00_defaults.param` file is located in the vehicle-specific directory.
 If the file does not exist or is invalid, use this command to regenerate it

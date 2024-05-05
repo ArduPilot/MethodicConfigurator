@@ -30,7 +30,6 @@ from logging import error as logging_error
 
 from json import load as json_load
 from json import dump as json_dump
-from json import JSONDecodeError
 
 from platform import system as platform_system
 
@@ -49,6 +48,9 @@ from annotate_params import create_doc_dict
 from annotate_params import format_columns
 from annotate_params import split_into_lines
 from annotate_params import update_parameter_documentation
+
+from backend_filesystem_vehicle_components import VehicleComponents
+from backend_filesystem_configuration_steps import ConfigurationSteps
 
 
 TOOLTIP_MAX_LENGTH = 105
@@ -74,109 +76,49 @@ def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1
     return abs(x - y) <= atol + (rtol * abs(y))
 
 
-class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many-public-methods
+class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable=too-many-public-methods
     """
     A class to manage local filesystem operations for the ArduPilot methodic configurator.
 
     This class provides methods for initializing and re-initializing the filesystem context,
-    reading parameters from files, and handling file documentation. It is designed to simplify
+    reading parameters from files, and handling configuration steps. It is designed to simplify
     the interaction with the local filesystem for managing ArduPilot configuration files.
 
     Attributes:
         vehicle_dir (str): The directory path where the vehicle configuration files are stored.
         vehicle_type (str): The type of the vehicle (e.g., "ArduCopter", "Rover").
-        file_documentation_filename (str): The name of the file containing documentation for the configuration files.
-        file_documentation (dict): A dictionary containing the file documentation.
         file_parameters (dict): A dictionary of parameters read from intermediate parameter files.
         param_default_dict (dict): A dictionary of default parameter values.
         doc_dict (dict): A dictionary containing documentation for each parameter.
     """
     def __init__(self, vehicle_dir: str, vehicle_type: str):
-        self.file_documentation_filename = "file_documentation.json"
-        self.file_documentation = {}
-        self.vehicle_components_json_filename = "vehicle_components.json"
-        self.vehicle_components = {}
+        self.file_parameters = None
+        VehicleComponents.__init__(self)
+        ConfigurationSteps.__init__(self, vehicle_dir, vehicle_type)
         if vehicle_dir is not None:
             self.re_init(vehicle_dir, vehicle_type)
 
     def re_init(self, vehicle_dir: str, vehicle_type: str):
         self.vehicle_dir = vehicle_dir
         self.vehicle_type = vehicle_type
-        self.file_documentation = {}
         self.param_default_dict = {}
         self.doc_dict = {}
-        self.vehicle_components = {}
 
         # Read intermediate parameters from files
         self.file_parameters = self.read_params_from_files()
         if not self.file_parameters:
             return # No files intermediate parameters files found, no need to continue, the rest needs them
 
-        # Define a list of directories to search for the file_documentation_filename file
-        search_directories = [self.vehicle_dir, os_path.dirname(os_path.abspath(__file__))]
-        file_found = False
-        for i, directory in enumerate(search_directories):
-            try:
-                with open(os_path.join(directory, self.file_documentation_filename), 'r', encoding='utf-8') as file:
-                    self.file_documentation = json_load(file)
-                    file_found = True
-                    if i == 0:
-                        logging_warning("File documentation '%s' loaded from %s (overwriting default file documentation).",
-                                         self.file_documentation_filename, directory)
-                    if i == 1:
-                        logging_info("File documentation '%s' loaded from %s.", self.file_documentation_filename, directory)
-                    break
-            except FileNotFoundError:
-                pass
-        if file_found:
-            self.validate_forced_parameters_in_file_documentation()
-            self.validate_derived_parameters_in_file_documentation()
-        else:
-            logging_warning("No file documentation will be available.")
-
         # Read ArduPilot parameter documentation
         xml_dir = vehicle_dir if os_path.isdir(vehicle_dir) else os_path.dirname(os_path.realpath(vehicle_dir))
         xml_root, self.param_default_dict = get_xml_data(BASE_URL + vehicle_type + "/", xml_dir, PARAM_DEFINITION_XML_FILE)
         self.doc_dict = create_doc_dict(xml_root, vehicle_type, TOOLTIP_MAX_LENGTH)
 
-        self.extend_and_reformat_parameter_documentation_metadata()
-        self.load_vehicle_components_json_data()
+        self.__extend_and_reformat_parameter_documentation_metadata()
+        self.load_vehicle_components_json_data(vehicle_dir)
 
-    def validate_forced_parameters_in_file_documentation(self):
-        for filename, file_info in self.file_documentation.items():
-            if 'forced_parameters' in file_info and filename in self.file_parameters:
-                if not isinstance(file_info['forced_parameters'], dict):
-                    logging_error("Error in file '%s': '%s' forced parameter is not a dictionary",
-                                        self.file_documentation_filename, filename)
-                    continue
-                for parameter, parameter_info in file_info['forced_parameters'].items():
-                    if "New Value" not in parameter_info:
-                        logging_error("Error in file '%s': '%s' forced parameter '%s'"
-                                          " 'New Value' attribute not found.",
-                                          self.file_documentation_filename, filename, parameter)
-                    if "Change Reason" not in parameter_info:
-                        logging_error("Error in file '%s': '%s' forced parameter '%s'"
-                                          " 'Change Reason' attribute not found.",
-                                          self.file_documentation_filename, filename, parameter)
 
-    def validate_derived_parameters_in_file_documentation(self):
-        for filename, file_info in self.file_documentation.items():
-            if 'derived_parameters' in file_info and filename in self.file_parameters:
-                if not isinstance(file_info['derived_parameters'], dict):
-                    logging_error("Error in file '%s': '%s' derived parameter is not a dictionary",
-                                        self.file_documentation_filename, filename)
-                    continue
-                for parameter, parameter_info in file_info['derived_parameters'].items():
-                    if "New Value" not in parameter_info:
-                        logging_error("Error in file '%s': '%s' derived parameter '%s'"
-                                          " 'New Value' attribute not found.",
-                                          self.file_documentation_filename, filename, parameter)
-                    if "Change Reason" not in parameter_info:
-                        logging_error("Error in file '%s': '%s' derived parameter '%s'"
-                                          " 'Change Reason' attribute not found.",
-                                          self.file_documentation_filename, filename, parameter)
-
-    def extend_and_reformat_parameter_documentation_metadata(self):
+    def __extend_and_reformat_parameter_documentation_metadata(self):
         for param_name, param_info in self.doc_dict.items():
             if 'fields' in param_info:
                 if 'Units' in param_info['fields']:
@@ -278,7 +220,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
 
     def intermediate_parameter_file_exists(self, filename: str) -> bool:
         """
-        Checks if an intermediate parameter file exists in the vehicle directory.
+        Check if an intermediate parameter file exists in the vehicle directory.
 
         Parameters:
         - filename (str): The name of the file to check.
@@ -289,7 +231,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
         return os_path.exists(os_path.join(self.vehicle_dir, filename)) and \
             os_path.isfile(os_path.join(self.vehicle_dir, filename))
 
-    def all_intermediate_parameter_file_comments(self) -> Dict[str, str]:
+    def __all_intermediate_parameter_file_comments(self) -> Dict[str, str]:
         """
         Retrieves all comments associated with parameters from intermediate parameter files.
 
@@ -322,14 +264,14 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
         - Dict[str, 'Par']: A dictionary of parameters with intermediate parameter file comments.
         """
         ret = {}
-        ip_comments = self.all_intermediate_parameter_file_comments()
+        ip_comments = self.__all_intermediate_parameter_file_comments()
         for param, value in param_dict.items():
             ret[param] = Par(float(value), ip_comments.get(param, ''))
         return ret
 
     def categorize_parameters(self, param: Dict[str, 'Par']) -> List[Dict[str, 'Par']]:
         """
-        Categorizes parameters into three categories based on their default values and documentation attributes.
+        Categorize parameters into three categories based on their default values and documentation attributes.
 
         This method iterates through the provided dictionary of parameters and categorizes them into three groups:
         - Non-default, read-only parameters
@@ -349,7 +291,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
         for param_name, param_info in param.items():
             if param_name in self.param_default_dict and is_within_tolerance(param_info.value,
                                                                              self.param_default_dict[param_name].value):
-                continue     # parameter has default value, ignore it
+                continue     # parameter has a default value, ignore it
 
             if param_name in self.doc_dict and self.doc_dict[param_name].get('ReadOnly', False):
                 non_default__read_only_params[param_name] = param_info
@@ -400,7 +342,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
                 zipf.write(os_path.join(self.vehicle_dir, file_name), arcname=file_name)
 
             # Check for and add specific files if they exist
-            specific_files = ["00_default.param", "apm.pdef.xml", "file_documentation.json",
+            specific_files = ["00_default.param", "apm.pdef.xml", "ArduCopter_configuration_steps.json",
                               "vehicle_components.json", "vehicle.jpg"]
             for file_name in specific_files:
                 file_path = os_path.join(self.vehicle_dir, file_name)
@@ -430,29 +372,6 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
 
     def vehicle_image_exists(self):
         return os_path.exists(self.vehicle_image_filepath())
-
-    def load_vehicle_components_json_data(self):
-        data = {}
-        try:
-            filepath = os_path.join(self.vehicle_dir, self.vehicle_components_json_filename)
-            with open(filepath, 'r', encoding='utf-8') as file:
-                data = json_load(file)
-        except FileNotFoundError:
-            logging_warning("File '%s' not found in %s.", self.vehicle_components_json_filename, self.vehicle_dir)
-        except JSONDecodeError:
-            logging_error("Error decoding JSON data from file '%s'.", filepath)
-        self.vehicle_components = data
-        return data
-
-    def save_vehicle_components_json_data(self, data) -> bool:
-        filepath = os_path.join(self.vehicle_dir, self.vehicle_components_json_filename)
-        try:
-            with open(filepath, 'w', encoding='utf-8') as file:
-                json_dump(data, file, indent=4)
-        except Exception as e:  # pylint: disable=broad-except
-            logging_error("Error saving JSON data to file '%s': %s", filepath, e)
-            return True
-        return False
 
     def new_vehicle_dir(self, base_dir: str, new_dir: str):
         return os_path.join(base_dir, new_dir)
@@ -487,7 +406,7 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
     @staticmethod
     def valid_directory_name(dir_name: str):
         """
-        Checks if a given directory name contains only alphanumeric characters, underscores, hyphens,
+        Check if a given directory name contains only alphanumeric characters, underscores, hyphens,
         and the OS directory separator.
 
         This function is designed to ensure that the directory name does not contain characters that are
@@ -507,11 +426,6 @@ class LocalFilesystem:  # pylint: disable=too-many-instance-attributes, too-many
     def tempcal_imu_result_param_tuple(self):
         tempcal_imu_result_param_filename = "03_imu_temperature_calibration_results.param"
         return [tempcal_imu_result_param_filename, os_path.join(self.vehicle_dir, tempcal_imu_result_param_filename)]
-
-    def auto_changed_by(self, selected_file: str):
-        if selected_file in self.file_documentation:
-            return self.file_documentation[selected_file].get('auto_changed_by', '')
-        return ''
 
     def copy_fc_values_to_file(self, selected_file: str, params: Dict[str, float]):
         ret = 0

@@ -112,7 +112,7 @@ class DirectoryNameWidgets():  # pylint: disable=too-few-public-methods
         directory_selection_label.pack(side=tk.TOP, anchor=tk.NW)
         show_tooltip(directory_selection_label, dir_tooltip)
 
-        # Create a entry for the directory
+        # Create an entry for the directory
         self.dir_var = tk.StringVar(value=initial_dir)
         directory_entry = tk.Entry(self.container_frame, textvariable=self.dir_var,
                                         width=max(4, len(initial_dir)))
@@ -301,8 +301,8 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = ArgumentParser(description='This main is for testing and development only, '
-                            'usually the VehicleDirectorySelectionWindow is called from another script')
+    parser = ArgumentParser(description='This main is for testing and development only. '
+                            'Usually, the VehicleDirectorySelectionWindow is called from another script')
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser.add_argument('--loglevel',
                         type=str,

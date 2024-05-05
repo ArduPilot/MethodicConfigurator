@@ -67,9 +67,9 @@ class ParameterEditorTable(ScrollFrame):
 
         self.write_checkbutton_var = {}
 
-        file_documentation = self.local_filesystem.file_documentation
-        if file_documentation and selected_file in file_documentation:
-            file_info = file_documentation[selected_file]
+        configuration_steps = self.local_filesystem.configuration_steps
+        if configuration_steps and selected_file in configuration_steps:
+            file_info = configuration_steps[selected_file]
         else:
             file_info = None
 
