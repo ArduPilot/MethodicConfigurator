@@ -102,15 +102,15 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         if os_path.exists("/usr/sbin/ModemManager"):
             logging_warning("You should uninstall ModemManager as it conflicts with ArduPilot")
 
-        self.reboot_time = reboot_time
-        self.connection_tuples = []
+        self.__reboot_time = reboot_time
+        self.__connection_tuples = []
         self.discover_connections()
         self.master = None
         self.comport = None
         self.fc_parameters = {}
-        self.target_system = None
-        self.target_component = None
-        self.capabilities = None
+        self.__target_system = None
+        self.__target_component = None
+        self.__capabilities = None
         self.version = None
         self.vehicle_type = None
 
@@ -119,13 +119,14 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         usbports = FlightController.__list_usb_devices()
         netports = FlightController.__list_network_ports()
         # list of tuples with the first element being the port name and the second element being the port description
-        self.connection_tuples = [(port.device, port.description) for port in comports] + \
+        self.__connection_tuples = [(port.device, port.description) for port in comports] + \
             [(port, port) for port in usbports] + \
             [(port, port) for port in netports]
         logging_info('Available connection ports are:')
-        for port in self.connection_tuples:
+        for port in self.__connection_tuples:
             logging_info("%s - %s", port[0], port[1])
-        self.connection_tuples += [tuple(['Add another', 'Add another'])]  # now that it is logged, add the 'Add another' tuple
+        # now that it is logged, add the 'Add another' tuple
+        self.__connection_tuples += [tuple(['Add another', 'Add another'])]
 
     def disconnect(self):
         """
@@ -135,9 +136,9 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
             self.master.close()
             self.master = None
         self.fc_parameters = {}
-        self.target_system = None
-        self.target_component = None
-        self.capabilities = None
+        self.__target_system = None
+        self.__target_component = None
+        self.__capabilities = None
         self.version = None
 
     def add_connection(self, connection_string: str):
@@ -146,8 +147,8 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         """
         if connection_string:
             # Check if connection_string is not the first element of any tuple in self.other_connection_tuples
-            if all(connection_string != t[0] for t in self.connection_tuples):
-                self.connection_tuples.insert(-1, (connection_string, connection_string))
+            if all(connection_string != t[0] for t in self.__connection_tuples):
+                self.__connection_tuples.insert(-1, (connection_string, connection_string))
                 logging_debug("Added connection %s", connection_string)
                 return True
             logging_debug("Did not add duplicated connection %s", connection_string)
@@ -197,8 +198,8 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
                         pass # Not a soft link, proceed with the original device path
                 self.comport = autodetect_serial[0]
                 # Add the detected serial port to the list of available connections if it is not there
-                if self.comport.device not in [t[0] for t in self.connection_tuples]:
-                    self.connection_tuples.insert(-1, (self.comport.device, self.comport.description))
+                if self.comport.device not in [t[0] for t in self.__connection_tuples]:
+                    self.__connection_tuples.insert(-1, (self.comport.device, self.comport.description))
             else:
                 return "No serial ports found. Please connect a flight controller and try again."
         error_message = self.__create_connection_with_retry(progress_callback=progress_callback)
@@ -206,8 +207,8 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
 
     def __request_message(self, message_id: int):
         self.master.mav.command_long_send(
-            self.target_system,
-            self.target_component,
+            self.__target_system,
+            self.__target_component,
             mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
             0, # confirmation
             message_id, 0, 0, 0, 0, 0, 0)
@@ -248,10 +249,10 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
             if m is None:
                 logging_error("No MAVLink heartbeat received, connection failed.")
                 return "No MAVLink heartbeat received, connection failed."
-            self.target_system = m.get_srcSystem()
-            self.target_component = m.get_srcComponent()
-            logging_debug("Connection established with systemID %d, componentID %d.", self.target_system,
-                          self.target_component)
+            self.__target_system = m.get_srcSystem()
+            self.__target_component = m.get_srcComponent()
+            logging_debug("Connection established with systemID %d, componentID %d.", self.__target_system,
+                          self.__target_component)
             logging_info(f"Autopilot type {self.__decode_mav_autopilot(m.autopilot)}")
             if m.autopilot != mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA:
                 logging_error("Unsupported autopilot type %s", self.__decode_mav_autopilot(m.autopilot))
@@ -264,8 +265,8 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
             if m is None:
                 logging_error("No AUTOPILOT_VERSION MAVLink message received, connection failed.")
                 return "No AUTOPILOT_VERSION MAVLink message received, connection failed."
-            self.capabilities = m.capabilities
-            _cap_list = self.__decode_flight_capabilities(self.capabilities)
+            self.__capabilities = m.capabilities
+            _cap_list = self.__decode_flight_capabilities(self.__capabilities)
             # logging_info("Flight Controller Capabilities: %s", (", ").join(
             #     [capability.removeprefix("MAV_PROTOCOL_CAPABILITY_")
             #      for capability in _cap_list]))
@@ -320,8 +321,8 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
 
         # Check if MAVFTP is supported
         # FIXME remove the "not" once it works pylint: disable=fixme
-        if self.capabilities:
-            if not (self.capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP):  # pylint: disable=superfluous-parens
+        if self.__capabilities:
+            if not (self.__capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP):  # pylint: disable=superfluous-parens
                 logging_info("MAVFTP is supported by the %s flight controller", self.comport.device)
                 # parameters, _defaults = self.read_params_via_mavftp(progress_callback)
                 return {}  # parameters
@@ -394,7 +395,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         current_step = 0
 
         if sleep_time is None or sleep_time <= 7:
-            sleep_time = self.reboot_time
+            sleep_time = self.__reboot_time
 
         while current_step != sleep_time:
             # Call the progress callback with the current progress
@@ -462,7 +463,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         return ['tcp:127.0.0.1:5760', 'udp:127.0.0.1:14550']
 
     def __auto_detect_serial(self):
-        for connection in self.connection_tuples:
+        for connection in self.__connection_tuples:
             if 'mavlink' in connection[1].lower():
                 return [mavutil.SerialPort(device=connection[0], description=connection[1])]
 
@@ -480,7 +481,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         """
         Get all available connections.
         """
-        return self.connection_tuples
+        return self.__connection_tuples
 
     @staticmethod
     def __list_ardupilot_supported_usb_pid_vid():

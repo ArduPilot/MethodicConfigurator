@@ -50,7 +50,7 @@ Source: "..\windows\version.txt"; DestDir: "{commonappdata}\.ardupilot_methodic_
 Source: "..\windows\MethodicConfigurator.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduPilot_icon.png"; DestDir: "{app}\_internal"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduPilot_logo.png"; DestDir: "{app}\_internal"; Flags: ignoreversion
-Source: "..\MethodicConfigurator\file_documentation.json"; DestDir: "{app}\_internal"; Flags: ignoreversion
+Source: "..\MethodicConfigurator\ArduCopter_configuration_steps.json"; DestDir: "{app}\_internal"; Flags: ignoreversion
 Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
 
 [Dirs]
