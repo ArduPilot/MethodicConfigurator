@@ -311,9 +311,9 @@ class BaseWindow:
         window.geometry(f"+{x}+{y}")
 
     @staticmethod
-    def ardupilot_logo(parent: tk.Toplevel, image_height: int=40) -> tk.Label:
-        # Load the ArduPilot logo and scale it down to image_height pixels in height
-        image = Image.open(LocalFilesystem.application_logo_filepath())
+    def put_image_in_label(parent: tk.Toplevel, filepath: str, image_height: int=40) -> tk.Label:
+        # Load the image and scale it down to image_height pixels in height
+        image = Image.open(filepath)
         width, height = image.size
         aspect_ratio = width / height
         new_width = int(image_height * aspect_ratio)

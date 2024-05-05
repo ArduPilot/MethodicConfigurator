@@ -250,7 +250,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                                          destroy_parent_on_connect=False, read_params_on_connect=True)
         csw.container_frame.pack(side=tk.RIGHT, fill="x", expand=False, padx=(6, 4))
 
-        image_label = BaseWindow.ardupilot_logo(config_frame)
+        image_label = BaseWindow.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
         image_label.bind("<Button-1>", lambda event: show_about_window(self.root, version))
         show_tooltip(image_label, "User Manual, Support Forum, Report a Bug, Credits, Source Code")
