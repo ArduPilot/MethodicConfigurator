@@ -18,9 +18,6 @@ from logging import info as logging_info
 import tkinter as tk
 from tkinter import ttk
 
-from PIL import Image
-from PIL import ImageTk
-
 from backend_filesystem import LocalFilesystem
 
 from frontend_tkinter_base import show_tooltip
@@ -86,22 +83,8 @@ class ComponentEditorWindow(BaseWindow):
 
         # Load the vehicle image and scale it down to image_height pixels in height
         if local_filesystem.vehicle_image_exists():
-            image_height = 100
-            image = Image.open(local_filesystem.vehicle_image_filepath())
-            # pylint: disable=duplicate-code
-            width, height = image.size
-            aspect_ratio = width / height
-            new_width = int(image_height * aspect_ratio)
-            resized_image = image.resize((new_width, image_height))
-
-            # Convert the image to a format that can be used by Tkinter
-            photo = ImageTk.PhotoImage(resized_image)
-
-            # Create a label with the resized image
-            image_label = tk.Label(self.main_frame, image=photo)
-            image_label.image = photo # Keep a reference to the image to prevent it from being garbage collected
+            image_label = self.put_image_in_label(self.main_frame, local_filesystem.vehicle_image_filepath(), 100)
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
-            # pylint: enable=duplicate-code
             show_tooltip(image_label, "Replace the vehicle.jpg file in the vehicle directory to change the vehicle image.")
         else:
             image_label = tk.Label(self.main_frame, text="No vehicle.jpg image file found on the vehicle directory.")
