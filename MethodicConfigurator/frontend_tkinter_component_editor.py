@@ -81,6 +81,10 @@ class ComponentEditorWindow(BaseWindow):
             image_label = tk.Label(self.main_frame, text="No vehicle.jpg image file found on the vehicle directory.")
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
 
+        style = ttk.Style()
+        style.configure("comb_input_invalid.TCombobox", fieldbackground="red")
+        style.configure("comb_input_valid.TCombobox", fieldbackground="white")
+
         self.scroll_frame = ScrollFrame(self.root)
         self.scroll_frame.pack(side="top", fill="both", expand=True)
 
@@ -124,8 +128,7 @@ class ComponentEditorWindow(BaseWindow):
             label = ttk.Label(entry_frame, text=key)
             label.pack(side=tk.LEFT)
 
-            entry = ttk.Entry(entry_frame)
-            entry.insert(0, str(value))
+            entry = self.add_entry_or_combobox(value, entry_frame, tuple(path+[key]))
             entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 5))
 
             # Store the entry widget in the entry_widgets dictionary for later retrieval
@@ -135,8 +138,29 @@ class ComponentEditorWindow(BaseWindow):
         """
         Saves the edited JSON data back to the file.
         """
+        invalid_values = False
+        duplicated_connections = False
+        fc_connection_types = set()
+
         for path, entry in self.entry_widgets.items():
             value = entry.get()
+
+            if isinstance(entry, ttk.Combobox):
+                if value not in entry.cget("values"):
+                    show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                    f"Allowed values are: {', '.join(entry.cget('values'))}")
+                    entry.configure(style="comb_input_invalid.TCombobox")
+                    invalid_values = True
+                    continue
+                if 'FC Connection' in path and 'Type' in path:
+                    if value in fc_connection_types and value not in ["CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4"]:
+                        show_error_message("Error", f"Duplicate FC connection type '{value}' for {'>'.join(list(path))}")
+                        entry.configure(style="comb_input_invalid.TCombobox")
+                        duplicated_connections = True
+                        continue
+                    else:
+                        fc_connection_types.add(value)
+                entry.configure(style="comb_input_valid.TCombobox")
 
             # Navigate through the nested dictionaries using the elements of the path
             current_data = self.data["Components"]
@@ -145,6 +169,9 @@ class ComponentEditorWindow(BaseWindow):
 
             # Update the value in the data dictionary
             current_data[path[-1]] = value
+
+        if invalid_values or duplicated_connections:
+            return
 
         # Save the updated data back to the JSON file
         if self.local_filesystem.save_vehicle_components_json_data(self.data, self.local_filesystem.vehicle_dir):
@@ -173,6 +200,100 @@ class ComponentEditorWindow(BaseWindow):
             entry.delete(0, tk.END)
             entry.insert(0, version)
             entry.config(state="disabled")
+
+    def add_entry_or_combobox(self, value, entry_frame, path):  #pylint: disable=too-many-return-statements
+        serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
+        can_ports = ["CAN1", "CAN2"]
+        i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
+
+        if path == ('RC Receiver', 'FC Connection', 'Type'):
+            cb = ttk.Combobox(entry_frame, values=["RCin/SBUS"] + serial_ports + can_ports)
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
+            #cb.bind("<Key>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.set(value)
+            return cb
+        if path == ('RC Receiver', 'FC Connection', 'Protocol'):
+            # TODO get this list from RC_PROTOCOLS pdef metadata pylint: disable=fixme
+            cb = ttk.Combobox(entry_frame, values=["All", "PPM", "IBUS", "SBUS", "SBUS_NI", "DSM", "SUMD", "SRXL", "SRXL2",
+                                                   "CRSF", "ST24", "FPORT", "FPORT2", "FastSBUS", "DroneCAN", "Ghost",
+                                                   "MAVRadio"])
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.set(value)
+            return cb
+        if path == ('Telemetry', 'FC Connection', 'Type'):
+            cb = ttk.Combobox(entry_frame, values=serial_ports + can_ports)
+            cb.set(value)
+            return cb
+        if path == ('Telemetry', 'FC Connection', 'Protocol'):
+            # TODO get this list from SERIAL1_PROTOCOL pdef metadata pylint: disable=fixme
+            cb = ttk.Combobox(entry_frame, values=["MAVLink1", "MAVLink2", "MAVLink High Latency"])
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.set(value)
+            return cb
+        if path == ('Battery Monitor', 'FC Connection', 'Type'):
+            cb = ttk.Combobox(entry_frame, values=['Analog'] + i2c_ports + serial_ports + can_ports)
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.set(value)
+            return cb
+        if path == ('Battery Monitor', 'FC Connection', 'Protocol'):
+            # TODO get this list from BATT_MONITOR pdef metadata pylint: disable=fixme
+            cb = ttk.Combobox(entry_frame, values=['Analog Voltage Only', 'Analog Voltage and Current', 'Solo', 'Bebop',
+                                                   'SMBus-Generic', 'DroneCAN-BatteryInfo', 'ESC',
+                                                   'Sum Of Selected Monitors', 'FuelFlow', 'FuelLevelPWM', 'SMBUS-SUI3',
+                                                   'SMBUS-SUI6', 'NeoDesign', 'SMBus-Maxell', 'Generator-Elec',
+                                                   'Generator-Fuel', 'Rotoye', 'MPPT', 'INA2XX', 'LTC2946', 'Torqeedo',
+                                                   'FuelLevelAnalog', 'Synthetic Current and Analog Voltage', 'INA239_SPI',
+                                                   'EFI', 'AD7091R5', 'Scripting'])
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.set(value)
+            return cb
+        if path == ('ESC', 'FC Connection', 'Type'):
+            cb = ttk.Combobox(entry_frame, values=['Main Out'] + serial_ports + can_ports)
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.set(value)
+            return cb
+        if path == ('ESC', 'FC Connection', 'Protocol'):
+            # TODO get this list from MOT_PWM_TYPE pdef metadata pylint: disable=fixme
+            cb = ttk.Combobox(entry_frame, values=['Normal', 'OneShot', 'OneShot125', 'Brushed', 'DShot150', 'DShot300',
+                                                   'DShot600', 'DShot1200', 'PWMRange', 'PWMAngle'])
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.set(value)
+            return cb
+        if path == ('GNSS receiver', 'FC Connection', 'Type'):
+            cb = ttk.Combobox(entry_frame, values=serial_ports + can_ports)
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.set(value)
+            return cb
+        if path == ('GNSS receiver', 'FC Connection', 'Protocol'):
+            # TODO get this list from GPS_TYPE pdef metadata pylint: disable=fixme
+            cb = ttk.Combobox(entry_frame, values=['Auto', 'uBlox', 'NMEA', 'SiRF', 'HIL', 'SwiftNav', 'DroneCAN', 'SBF',
+                                                   'GSOF', 'ERB', 'MAV', 'NOVA', 'HemisphereNMEA',
+                                                   'uBlox-MovingBaseline-Base', 'uBlox-MovingBaseline-Rover',
+                                                   'MSP', 'AllyStar', 'ExternalAHRS', 'Unicore',
+                                                   'DroneCAN-MovingBaseline-Base', 'DroneCAN-MovingBaseline-Rover',
+                                                   'UnicoreNMEA', 'UnicoreMovingBaselineNMEA', 'SBF-DualAntenna'])
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.set(value)
+            return cb
+        entry = ttk.Entry(entry_frame)
+        entry.insert(0, str(value))
+        return entry
+
+    def validate_combobox(self, event, path):
+        """
+        Validates the value of a combobox.
+        """
+        combobox = event.widget # Get the combobox widget that triggered the event
+        value = combobox.get() # Get the current value of the combobox
+        allowed_values = combobox.cget("values") # Get the list of allowed values
+
+        if value not in allowed_values:
+            if event.type == 10:
+                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                   f"Allowed values are: {', '.join(allowed_values)}")
+            combobox.configure(style="comb_input_invalid.TCombobox")
+        else:
+            combobox.configure(style="comb_input_valid.TCombobox")
 
 
 if __name__ == "__main__":
