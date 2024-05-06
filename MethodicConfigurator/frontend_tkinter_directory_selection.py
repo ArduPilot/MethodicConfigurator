@@ -24,14 +24,14 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 
+from common_arguments import add_common_arguments_and_parse
+
 from backend_filesystem import LocalFilesystem
 
 from frontend_tkinter_base import show_error_message
 from frontend_tkinter_base import show_no_param_files_error
 from frontend_tkinter_base import show_tooltip
 from frontend_tkinter_base import BaseWindow
-
-from version import VERSION
 
 
 class DirectorySelectionWidgets():
@@ -291,7 +291,6 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             show_error_message("No Parameter Files Found", error_message)
 
 
-# pylint: disable=duplicate-code
 def argument_parser():
     """
     Parses command-line arguments for the script.
@@ -304,17 +303,7 @@ def argument_parser():
     parser = ArgumentParser(description='This main is for testing and development only. '
                             'Usually, the VehicleDirectorySelectionWindow is called from another script')
     parser = LocalFilesystem.add_argparse_arguments(parser)
-    parser.add_argument('--loglevel',
-                        type=str,
-                        default='INFO',
-                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        help='Logging level (default is INFO).')
-    parser.add_argument('-v', '--version',
-                        action='version',
-                        version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.')
-    return parser.parse_args()
-# pylint: enable=duplicate-code
+    return add_common_arguments_and_parse(parser)
 
 
 def main():

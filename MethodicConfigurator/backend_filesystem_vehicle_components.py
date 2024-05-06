@@ -23,6 +23,8 @@ from json import JSONDecodeError
 
 class VehicleComponents:
     """
+    This class provides methods to load and save
+    vehicle components configurations from a JSON file.
     """
     def __init__(self):
         self.__vehicle_components_json_filename = "vehicle_components.json"

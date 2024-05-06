@@ -22,6 +22,8 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import simpledialog
 
+from common_arguments import add_common_arguments_and_parse
+
 from backend_flightcontroller import FlightController
 
 from frontend_tkinter_base import show_no_connection_error
@@ -29,8 +31,6 @@ from frontend_tkinter_base import show_tooltip
 from frontend_tkinter_base import update_combobox_width
 from frontend_tkinter_base import ProgressWindow
 from frontend_tkinter_base import BaseWindow
-
-from version import VERSION
 
 
 # https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb
@@ -240,7 +240,6 @@ class ConnectionSelectionWindow(BaseWindow):
         self.root.destroy()
 
 
-# pylint: disable=duplicate-code
 def argument_parser():
     """
     Parses command-line arguments for the script.
@@ -250,20 +249,10 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = ArgumentParser(description='This main is for testing and development only, '
-                            'usually the ConnectionSelectionWidgets is called from another script')
+    parser = ArgumentParser(description='This main is for testing and development only. '
+                            'Usually, the ConnectionSelectionWidgets is called from another script')
     parser = FlightController.add_argparse_arguments(parser)
-    parser.add_argument('--loglevel',
-                        type=str,
-                        default='INFO',
-                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        help='Logging level (default is INFO).')
-    parser.add_argument('-v', '--version',
-                        action='version',
-                        version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.')
-    return parser.parse_args()
-# pylint: enable=duplicate-code
+    return add_common_arguments_and_parse(parser)
 
 
 def main():
