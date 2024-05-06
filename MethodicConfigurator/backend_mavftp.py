@@ -13,9 +13,15 @@ SPDX-License-Identifier:    GPL-3
 
 # pylint: skip-file
 
+from sys import exit as sys_exit
+
+from argparse import ArgumentParser
+
+from logging import basicConfig as logging_basicConfig
+from logging import getLevelName as logging_getLevelName
 from logging import debug as logging_debug
 from logging import info as logging_info
-# from logging import warning as logging_warning
+from logging import warning as logging_warning
 # from logging import error as logging_error
 
 import struct
@@ -29,8 +35,11 @@ from io import BytesIO as SIO
 # from param_ftp import ParamData
 from param_ftp import ftp_param_decode
 
+from common_arguments import add_common_arguments_and_parse
 
-# adding all this allows pyinstaller to build a working windows executable
+from backend_flightcontroller import FlightController
+
+# adding all this allows pyinstaller to build a working Windows executable
 # note that using --hidden-import does not work for these modules
 try:
     from pymavlink import mavutil
@@ -116,7 +125,7 @@ class WriteQueue:  # pylint: disable=missing-class-docstring, too-few-public-met
 
 
 class MAVFTP:  # pylint: disable=missing-class-docstring, too-many-instance-attributes
-    def __init__(self):
+    def __init__(self, master, target_system, target_component):
         self.ftp_settings_debug = 2
         self.ftp_settings_pkt_loss_rx = 0
         self.ftp_settings_pkt_loss_tx = 0
@@ -143,6 +152,7 @@ class MAVFTP:  # pylint: disable=missing-class-docstring, too-many-instance-attr
         self.last_burst_read = None
         self.op_start = None
         self.last_op_time = time_time()
+        self.rtt = 0.5
         self.reached_eof = False
         self.backlog = 0
         self.burst_size = self.ftp_settings_burst_read_size
@@ -160,6 +170,10 @@ class MAVFTP:  # pylint: disable=missing-class-docstring, too-many-instance-attr
         self.mav_param_count = 0
         self.default_params = None
         self.warned_component = False
+        self.master = master
+        self.target_system = target_system
+        self.target_component = target_component
+        master.message_hooks.append(self.mavlink_packet)
 
     def send(self, op):
         '''send a request'''
@@ -418,6 +432,7 @@ class MAVFTP:  # pylint: disable=missing-class-docstring, too-many-instance-attr
     def mavlink_packet(self, m):
         '''handle a mavlink packet'''
         mtype = m.get_type()
+        logging_info("Received MAVLink message: %s", mtype)
         if mtype == "FILE_TRANSFER_PROTOCOL":
             if m.target_system != self.target_system or m.target_component != self.target_component:
                 if m.target_system == self.target_component and not self.warned_component:
@@ -437,8 +452,8 @@ class MAVFTP:  # pylint: disable=missing-class-docstring, too-many-instance-attr
                         logging_info("FTP: dropping packet RX")
                     return
 
-            # if op.req_opcode == self.last_op.opcode and op.seq == (self.last_op.seq + 1) % 256:
-            #    self.rtt = max(min(self.rtt, dt), 0.01)
+            if op.req_opcode == self.last_op.opcode and op.seq == (self.last_op.seq + 1) % 256:
+                self.rtt = max(min(self.rtt, dt), 0.01)
             if op.req_opcode == OP_OpenFileRO:
                 self.handle_open_ro_reply(op, m)
             elif op.req_opcode == OP_BurstReadFile:
@@ -458,7 +473,7 @@ class MAVFTP:  # pylint: disable=missing-class-docstring, too-many-instance-attr
         '''send a read for a gap'''
         (offset, length) = g
         if self.ftp_settings_debug > 0:
-            print("Gap read of %u at %u rem=%u blog=%u", length, offset, len(self.read_gaps), self.backlog)
+            logging_info("Gap read of %u at %u rem=%u blog=%u", length, offset, len(self.read_gaps), self.backlog)
         read = FTP_OP(self.seq, self.session, OP_ReadFile, length, 0, 0, offset, None)
         self.send(read)
         self.read_gaps.remove(g)
@@ -496,31 +511,65 @@ class MAVFTP:  # pylint: disable=missing-class-docstring, too-many-instance-attr
             return
         self.send_gap_read(g)
 
+    def idle_task(self):
+        '''check for file gaps and lost requests'''
+        now = time_time()
+
+        # see if we lost an open reply
+        if self.op_start is not None and now - self.op_start > 1.0 and self.last_op.opcode == OP_OpenFileRO:
+            self.op_start = now
+            self.open_retries += 1
+            if self.open_retries > 2:
+                # fail the get
+                self.op_start = None
+                self.terminate_session()
+                return
+            if self.ftp_settings_debug > 0:
+                logging_info("FTP: retry open")
+            send_op = self.last_op
+            self.send(FTP_OP(self.seq, self.session, OP_TerminateSession, 0, 0, 0, 0, None))
+            self.session = (self.session + 1) % 256
+            send_op.session = self.session
+            self.send(send_op)
+
+        if len(self.read_gaps) == 0 and self.last_burst_read is None and self.write_list is None:
+            return
+
+        if self.fh is None:
+            return
+
+        # see if burst read has stalled
+        if not self.reached_eof and self.last_burst_read is not None and \
+           now - self.last_burst_read > self.ftp_settings_retry_time:
+            dt = now - self.last_burst_read
+            self.last_burst_read = now
+            if self.ftp_settings_debug > 0:
+                logging_info("Retry read at %u rtt=%.2f dt=%.2f", self.fh.tell(), self.rtt, dt)
+            self.send(FTP_OP(self.seq, self.session, OP_BurstReadFile, self.burst_size, 0, 0, self.fh.tell(), None))
+            self.read_retries += 1
+
+        # see if we can fill gaps
+        self.check_read_send()
+
+        #if self.write_list is not None:
+        #    self.send_more_writes()
+
     def read_params_via_mavftp(self, progress_callback=None) -> Dict[str, float]:
         """
-        Reads parameters from the flight controller using MAVFTP.
+        Reads parameter values and defaults from the flight controller using MAVFTP.
 
         Args:
             progress_callback (function, optional): A callback function to report progress.
-
-        Returns:
-            Dict[str, float]: A dictionary of flight controller parameters.
         """
-        # Assuming you have a method to start an FTP session
         self.ftp_started = True
         self.ftp_count = None
         self.cmd_get(["@PARAM/param.pck?withdefaults=1"], callback=self.ftp_callback,
                      callback_progress=self.ftp_callback_progress)
 
-        # Placeholder for the FTP session object
-        # ftp_session = None
-
-        # Placeholder for the parameters dictionary
-        # parameters = {}
-
-        # Assuming you have a method to initiate the FTP download
-        # This method should accept the callback functions as arguments
-        # ftp_download(ftp_session, ftp_callback, ftp_progress_callback)
+        while self.ftp_started:
+            self.idle_task()
+            if progress_callback:
+                progress_callback()
 
         return self.mav_param, self.default_params
 
@@ -579,7 +628,6 @@ class MAVFTP:  # pylint: disable=missing-class-docstring, too-many-instance-attr
             idx += 1
 
         self.ftp_failed = False
-        # self.mpstate.console.set_status('Params', 'Param %u/%u' % (total_params, total_params))
         logging_info("Received %u parameters (ftp)", total_params)
         # if self.logdir is not None:
         #    self.mav_param.save(os.path.join(self.logdir, self.parm_file), '*', verbose=True)
@@ -594,3 +642,48 @@ class MAVFTP:  # pylint: disable=missing-class-docstring, too-many-instance-attr
         #        defaults_path = os.path.join(self.logdir, "defaults.parm")
         #        self.default_params.save(defaults_path, '*', verbose=False)
         #        logging_info("Saved %u defaults to %s" % (len(pdata.defaults), defaults_path))
+
+def argument_parser():
+    """
+    Parses command-line arguments for the script.
+
+    This function sets up an argument parser to handle the command-line arguments for the script.
+
+    Returns:
+    argparse.Namespace: An object containing the parsed arguments.
+    """
+    parser = ArgumentParser(description='This main is for testing and development only. '
+                            'Usually, the backend_mavftp is called from another script')
+    parser = FlightController.add_argparse_arguments(parser)
+    return add_common_arguments_and_parse(parser)
+
+
+def main():
+    args = argument_parser()
+
+    logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
+
+    logging_warning("This main is for testing and development only. "
+                    "Usually the backend_mavftp is called from another script")
+
+    flight_controller = FlightController(args.reboot_time) # Initialize your FlightController instance
+    result = flight_controller.connect(device=args.device) # Connect to the flight controller
+    if result:
+        logging_warning(result)
+        sys_exit(1)
+
+    # pylint: disable=protected-access
+    mavftp = MAVFTP(flight_controller.master,
+                    flight_controller._FlightController__target_system,
+                    flight_controller._FlightController__target_component)
+    # pylint: enable=protected-access
+
+    mav_params, default_params = mavftp.read_params_via_mavftp() # Read parameters from the flight controller using MAVFTP
+    print(mav_params) # Print the parameters
+    print(default_params) # Print the default parameters
+
+    flight_controller.disconnect() # Disconnect from the flight controller
+
+
+if __name__ == "__main__":
+    main()
