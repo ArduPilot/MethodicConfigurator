@@ -18,6 +18,8 @@ from logging import info as logging_info
 import tkinter as tk
 from tkinter import ttk
 
+from common_arguments import add_common_arguments_and_parse
+
 from backend_filesystem import LocalFilesystem
 
 from frontend_tkinter_base import show_tooltip
@@ -28,7 +30,6 @@ from frontend_tkinter_base import BaseWindow
 from version import VERSION
 
 
-# pylint: disable=duplicate-code
 def argument_parser():
     """
     Parses command-line arguments for the script.
@@ -42,17 +43,7 @@ def argument_parser():
                             'Not to be used directly, but through the main ArduPilot methodic configurator script.')
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindow.add_argparse_arguments(parser)
-    parser.add_argument('--loglevel',
-                        type=str,
-                        default='INFO',
-                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        help='Logging level (default is INFO).')
-    parser.add_argument('-v', '--version',
-                        action='version',
-                        version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.')
-    return parser.parse_args()
-# pylint: enable=duplicate-code
+    return add_common_arguments_and_parse(parser)
 
 
 class ComponentEditorWindow(BaseWindow):

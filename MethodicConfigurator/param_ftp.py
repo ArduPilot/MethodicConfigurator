@@ -116,13 +116,13 @@ def main():
     fname = sys.argv[1]
     with open(fname, 'rb') as file:
         data = file.read()
-    print(f"Decoding file of length {len(data)}")
-    pdata = ftp_param_decode(data)
-    if pdata is None:
-        print("Decode failed")
-        sys.exit(1)
-    for (name, value, _ptype) in pdata.params:
-        print(name.decode('utf-8'), value)
+        print(f"Decoding file of length {len(data)}")
+        pdata = ftp_param_decode(data)
+        if pdata is None:
+            print("Decode failed")
+            sys.exit(1)
+        for (name, value, _ptype) in pdata.params:
+            print(name.decode('utf-8'), value)
 
 
 if __name__ == "__main__":
