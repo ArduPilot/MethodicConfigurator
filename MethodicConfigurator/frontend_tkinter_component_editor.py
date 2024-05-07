@@ -46,6 +46,14 @@ def argument_parser():
     return add_common_arguments_and_parse(parser)
 
 
+class VoltageTooLowError(Exception):
+    """Raised when the voltage is below the minimum limit."""
+
+
+class VoltageTooHighError(Exception):
+    """Raised when the voltage is above the maximum limit."""
+
+
 class ComponentEditorWindow(BaseWindow):
     """
     A class for editing JSON files in the ArduPilot methodic configurator.
@@ -84,6 +92,7 @@ class ComponentEditorWindow(BaseWindow):
         style = ttk.Style()
         style.configure("comb_input_invalid.TCombobox", fieldbackground="red")
         style.configure("comb_input_valid.TCombobox", fieldbackground="white")
+        self.chemistry = ""
 
         self.scroll_frame = ScrollFrame(self.root)
         self.scroll_frame.pack(side="top", fill="both", expand=True)
@@ -158,9 +167,12 @@ class ComponentEditorWindow(BaseWindow):
                         entry.configure(style="comb_input_invalid.TCombobox")
                         duplicated_connections = True
                         continue
-                    else:
-                        fc_connection_types.add(value)
+                    fc_connection_types.add(value)
                 entry.configure(style="comb_input_valid.TCombobox")
+
+            if path in [('Battery', 'Specifications', 'Volt per cell max'), ('Battery', 'Specifications', 'Volt per cell low'),
+                        ('Battery', 'Specifications', 'Volt per cell crit')]:
+                self.validate_battery_voltages(None, entry, path)
 
             # Navigate through the nested dictionaries using the elements of the path
             current_data = self.data["Components"]
@@ -201,7 +213,8 @@ class ComponentEditorWindow(BaseWindow):
             entry.insert(0, version)
             entry.config(state="disabled")
 
-    def add_entry_or_combobox(self, value, entry_frame, path):  #pylint: disable=too-many-return-statements
+    def add_entry_or_combobox(self, value, entry_frame, path):  # pylint: disable=too-many-return-statements
+                                                                # pylint: disable=too-many-statements
         serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
         can_ports = ["CAN1", "CAN2"]
         i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
@@ -275,7 +288,17 @@ class ComponentEditorWindow(BaseWindow):
             cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
             cb.set(value)
             return cb
+        if path == ('Battery', 'Specifications', 'Chemistry'):
+            cb = ttk.Combobox(entry_frame, values=['LiIon', 'LiIonSS', 'LiIonSSHV', 'Lipo', 'LipoHV', 'LipoHVSS'])
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.set(value)
+            self.chemistry = value
+            return cb
+
         entry = ttk.Entry(entry_frame)
+        if path in [('Battery', 'Specifications', 'Volt per cell max'), ('Battery', 'Specifications', 'Volt per cell low'),
+                    ('Battery', 'Specifications', 'Volt per cell crit')]:
+            entry.bind("<FocusOut>", lambda event, entry=entry, path=path: self.validate_battery_voltages(event, entry, path))
         entry.insert(0, str(value))
         return entry
 
@@ -295,6 +318,64 @@ class ComponentEditorWindow(BaseWindow):
         else:
             combobox.configure(style="comb_input_valid.TCombobox")
 
+        if path == ('Battery', 'Specifications', 'Chemistry'):
+            self.chemistry = value
+
+    def validate_battery_voltages(self, _event, entry, path):
+        """
+        Validates the value of a battery voltage entry.
+        """
+        value = entry.get()
+        try:
+            voltage = float(value)
+            if voltage < self.volt_limit_min:
+                entry.delete(0, tk.END)
+                entry.insert(0, self.volt_limit_min)
+                raise VoltageTooLowError(f"is below the {self.chemistry} minimum limit of {self.volt_limit_min}")
+            if voltage > self.volt_limit_max:
+                entry.delete(0, tk.END)
+                entry.insert(0, self.volt_limit_max)
+                raise VoltageTooHighError(f"is above the {self.chemistry} maximum limit of {self.volt_limit_max}")
+        except (VoltageTooLowError, VoltageTooHighError) as e:
+            show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                f"{e}")
+        except ValueError as e:
+            show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                            f"{e}")
+            entry.delete(0, tk.END)
+            entry.insert(0, "3.8")
+
+    @property
+    def volt_limit_min(self) -> float:  # pylint: disable=too-many-return-statements
+        if self.chemistry == 'LiIon':
+            return 2.5
+        if self.chemistry == 'LiIonSS':
+            return 2.4
+        if self.chemistry == 'LiIonSSHV':
+            return 2.4
+        if self.chemistry == 'Lipo':
+            return 3.0
+        if self.chemistry == 'LipoHV':
+            return 3.0
+        if self.chemistry == 'LipoHVSS':
+            return 2.9
+        return 2.4
+
+    @property
+    def volt_limit_max(self) -> float:  # pylint: disable=too-many-return-statements
+        if self.chemistry == 'LiIon':
+            return 4.1
+        if self.chemistry == 'LiIonSS':
+            return 4.2
+        if self.chemistry == 'LiIonSSHV':
+            return 4.45
+        if self.chemistry == 'Lipo':
+            return 4.2
+        if self.chemistry == 'LipoHV':
+            return 4.35
+        if self.chemistry == 'LipoHVSS':
+            return 4.2
+        return 4.45
 
 if __name__ == "__main__":
     args = argument_parser()
