@@ -64,7 +64,7 @@
                 "Type": "SERIAL7",
                 "Protocol": "CRSF"
             },
-            "Notes": "This one is on the vehicle"
+            "Notes": "This receiver is on the vehicle and is connected to the flight controller"
         },
         "Telemetry": {
             "Product": {
@@ -95,8 +95,8 @@
                 "Version": "4.5.1"
             },
             "FC Connection": {
-                "Type": "Analog Voltage and Current",
-                "Protocol": "Analog"
+                "Type": "Analog",
+                "Protocol": "Analog Voltage Only"
             },
             "Notes": "Voltage is done via the flight controller. Current is done via the ESC."
         },
@@ -108,9 +108,10 @@
                 "Version": ""
             },
             "Specifications": {
+                "Chemistry": "Lipo",
                 "Volt per cell max": "4.2",
-                "Volt per cell low": "3.8",
-                "Volt per cell crit": "3.6",
+                "Volt per cell low": "3.6",
+                "Volt per cell crit": "3.55",
                 "Number of cells": "4"
             },
             "Notes": "A normal battery"
@@ -128,7 +129,7 @@
             },
             "FC Connection": {
                 "Type": "SERIAL5",
-                "Protocol": "Dshot600"
+                "Protocol": "DShot600"
             },
             "Notes": "Runs BDshot600"
         },
@@ -168,7 +169,7 @@
                 "Version": "1.13.2"
             },
             "FC Connection": {
-                "Type": "SERIAL4",
+                "Type": "SERIAL3",
                 "Protocol": "uBlox"
             },
             "Notes": "A very good receiver with an excellent antenna https://docs.holybro.com/gps-and-rtk-system/gps-led-and-buzzer/status-led-changes"
