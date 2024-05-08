@@ -47,6 +47,24 @@ class ParameterEditorTable(ScrollFrame):
         self.write_checkbutton_var = {}
         self.at_least_one_param_edited = False
 
+        # Prepare a dictionary that maps variable names to their values
+        variables = {}
+        if hasattr(self.local_filesystem, 'vehicle_components') and self.local_filesystem.vehicle_components and \
+                'Components' in self.local_filesystem.vehicle_components:
+            variables['vehicle_components'] = self.local_filesystem.vehicle_components['Components']
+        if hasattr(self.local_filesystem, 'flight_controller') and self.local_filesystem.flight_controller and \
+                'parameters' in self.local_filesystem.flight_controller:
+            variables['fc_parameters'] = self.local_filesystem.flight_controller.parameters
+        if self.local_filesystem.configuration_steps:
+            for filename, file_info in self.local_filesystem.configuration_steps.items():
+                error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'forced', variables)
+                if error_msg:
+                    messagebox.showerror("Error in forced parameters", error_msg)
+                error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'derived', variables)
+                if error_msg:
+                    messagebox.showerror("Error in derived parameters", error_msg)
+
+
     def repopulate(self, selected_file: str, different_params: dict, fc_parameters: dict, show_only_differences: bool):
         for widget in self.view_port.winfo_children():
             widget.destroy()

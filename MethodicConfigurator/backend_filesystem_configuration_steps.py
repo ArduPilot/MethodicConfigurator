@@ -21,6 +21,8 @@ from json import JSONDecodeError
 
 from typing import Tuple
 
+from annotate_params import Par
+
 
 class ConfigurationSteps:
     """
@@ -36,6 +38,8 @@ class ConfigurationSteps:
     def __init__(self, vehicle_dir: str, vehicle_type: str):
         self.configuration_steps_filename = vehicle_type + "_configuration_steps.json"
         self.configuration_steps = {}
+        self.forced_parameters = {}
+        self.derived_parameters = {}
 
         # Define a list of directories to search for the configuration_steps_filename file
         search_directories = [vehicle_dir, os_path.dirname(os_path.abspath(__file__))]
@@ -85,6 +89,28 @@ class ConfigurationSteps:
                     logging_error("Error in file '%s': '%s' %s parameter '%s'"
                                         " 'Change Reason' attribute not found.",
                                         self.configuration_steps_filename, filename, parameter_type, parameter)
+
+    def compute_parameters(self, filename: str, file_info: dict, parameter_type: str, variables: dict) -> str:
+        """
+        Computes the forced or derived parameters for a given configuration file.
+
+        If the parameter is forced, it is added to the forced_parameters dictionary.
+        If the parameter is derived, it is added to the derived_parameters dictionary.
+        """
+        destination = self.forced_parameters if parameter_type == 'forced' else self.derived_parameters
+        if parameter_type + '_parameters' in file_info and variables:
+            for parameter, parameter_info in file_info[parameter_type + '_parameters'].items():
+                try:
+                    result = eval(str(parameter_info["New Value"]), {}, variables)  # pylint: disable=eval-used
+                    destination[parameter] = Par(float(result), parameter_info["Change Reason"])
+                except (SyntaxError, NameError) as e:
+                    if parameter_type == 'forced':
+                        error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
+                            f"parameter '{parameter}' could not be computed: {e}"
+                        logging_error(error_msg)
+                        return error_msg
+                    logging_warning(error_msg)
+        return ""
 
     def auto_changed_by(self, selected_file: str):
         if selected_file in self.configuration_steps:
