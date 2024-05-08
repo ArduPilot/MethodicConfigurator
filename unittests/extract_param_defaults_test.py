@@ -6,7 +6,6 @@ Extracts parameter default values from an ArduPilot .bin file. Unittests.
 Amilcar do Carmo Lucas, IAV GmbH
 '''
 
-# pylint: skip-file
 
 import unittest
 from unittest.mock import patch
