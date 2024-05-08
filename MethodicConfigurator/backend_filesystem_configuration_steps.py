@@ -57,57 +57,34 @@ class ConfigurationSteps:
                 logging_error("Error in file '%s': %s", self.configuration_steps_filename, e)
                 break
         if file_found:
-            self.__validate_forced_parameters_in_configuration_steps()
-            self.__validate_derived_parameters_in_configuration_steps()
+            for filename, file_info in self.configuration_steps.items():
+                self.__validate_parameters_in_configuration_steps(filename, file_info, 'forced')
+                self.__validate_parameters_in_configuration_steps(filename, file_info, 'derived')
         else:
             logging_warning("No configuration steps documentation and no forced and derived parameters will be available.")
 
 
-    def __validate_forced_parameters_in_configuration_steps(self):
+    def __validate_parameters_in_configuration_steps(self, filename: str, file_info: dict, parameter_type: str) -> None:
         """
-        Validates the forced parameters in the configuration steps.
+        Validates the parameters in the configuration steps.
 
-        This method checks if the forced parameters in the configuration steps are correctly formatted.
-        If a forced parameter is missing the 'New Value' or 'Change Reason' attribute, an error message is logged.
+        This method checks if the parameters in the configuration steps are correctly formatted.
+        If a parameter is missing the 'New Value' or 'Change Reason' attribute, an error message is logged.
         """
-        for filename, file_info in self.configuration_steps.items():
-            if 'forced_parameters' in file_info:
-                if not isinstance(file_info['forced_parameters'], dict):
-                    logging_error("Error in file '%s': '%s' forced parameter is not a dictionary",
-                                        self.configuration_steps_filename, filename)
-                    continue
-                for parameter, parameter_info in file_info['forced_parameters'].items():
-                    if "New Value" not in parameter_info:
-                        logging_error("Error in file '%s': '%s' forced parameter '%s'"
-                                          " 'New Value' attribute not found.",
-                                          self.configuration_steps_filename, filename, parameter)
-                    if "Change Reason" not in parameter_info:
-                        logging_error("Error in file '%s': '%s' forced parameter '%s'"
-                                          " 'Change Reason' attribute not found.",
-                                          self.configuration_steps_filename, filename, parameter)
-
-    def __validate_derived_parameters_in_configuration_steps(self):
-        """
-        Validates the derived parameters in the configuration steps.
-
-        This method checks if the derived parameters in the configuration steps are correctly formatted.
-        If a derived parameter is missing the 'New Value' or 'Change Reason' attribute, an error message is logged.
-        """
-        for filename, file_info in self.configuration_steps.items():
-            if 'derived_parameters' in file_info:
-                if not isinstance(file_info['derived_parameters'], dict):
-                    logging_error("Error in file '%s': '%s' derived parameter is not a dictionary",
-                                        self.configuration_steps_filename, filename)
-                    continue
-                for parameter, parameter_info in file_info['derived_parameters'].items():
-                    if "New Value" not in parameter_info:
-                        logging_error("Error in file '%s': '%s' derived parameter '%s'"
-                                          " 'New Value' attribute not found.",
-                                          self.configuration_steps_filename, filename, parameter)
-                    if "Change Reason" not in parameter_info:
-                        logging_error("Error in file '%s': '%s' derived parameter '%s'"
-                                          " 'Change Reason' attribute not found.",
-                                          self.configuration_steps_filename, filename, parameter)
+        if parameter_type + '_parameters' in file_info:
+            if not isinstance(file_info[parameter_type + '_parameters'], dict):
+                logging_error("Error in file '%s': '%s' %s parameter is not a dictionary",
+                             self.configuration_steps_filename, filename, parameter_type)
+                return
+            for parameter, parameter_info in file_info[parameter_type + '_parameters'].items():
+                if "New Value" not in parameter_info:
+                    logging_error("Error in file '%s': '%s' %s parameter '%s'"
+                                        " 'New Value' attribute not found.",
+                                        self.configuration_steps_filename, filename, parameter_type, parameter)
+                if "Change Reason" not in parameter_info:
+                    logging_error("Error in file '%s': '%s' %s parameter '%s'"
+                                        " 'Change Reason' attribute not found.",
+                                        self.configuration_steps_filename, filename, parameter_type, parameter)
 
     def auto_changed_by(self, selected_file: str):
         if selected_file in self.configuration_steps:
