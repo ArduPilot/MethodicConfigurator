@@ -94,30 +94,17 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         else:
             frame_title = "Documentation"
         self.documentation_frame.config(text=frame_title)
-        documentation = self.local_filesystem.configuration_steps.get(current_file, {}) if \
-            self.local_filesystem.configuration_steps else None
 
-        blog_text, blog_url = self.__get_documentation_text_and_url(documentation, 'blog_text', 'blog_url')
+        blog_text, blog_url = self.local_filesystem.get_documentation_text_and_url(current_file, 'blog')
         self.__update_documentation_label('Forum Blog:', blog_text, blog_url)
-        wiki_text, wiki_url = self.__get_documentation_text_and_url(documentation, 'wiki_text', 'wiki_url')
+        wiki_text, wiki_url = self.local_filesystem.get_documentation_text_and_url(current_file, 'wiki')
         self.__update_documentation_label('Wiki:', wiki_text, wiki_url)
-        external_tool_text, external_tool_url = self.__get_documentation_text_and_url(documentation, 'external_tool_text',
-                                                                                    'external_tool_url')
+        external_tool_text, external_tool_url = self.local_filesystem.get_documentation_text_and_url(current_file,
+                                                                                                     'external_tool')
         self.__update_documentation_label('External tool:', external_tool_text, external_tool_url)
-        mandatory_text, mandatory_url = self.__get_documentation_text_and_url(documentation, 'mandatory_text',
-                                                                            'mandatory_url')
+        mandatory_text, mandatory_url = self.local_filesystem.get_documentation_text_and_url(current_file,
+                                                                                             'mandatory')
         self.__update_documentation_label('Mandatory:', mandatory_text, mandatory_url, False)
-
-    def __get_documentation_text_and_url(self, documentation, text_key, url_key):
-        if documentation is None:
-            text = f"File '{self.local_filesystem.configuration_steps_filename}' not found. " \
-                "No intermediate parameter configuration steps available"
-            url = None
-        else:
-            text = documentation.get(text_key, f"No documentation available for {self.current_file} in the "
-                                     f"{self.local_filesystem.configuration_steps_filename} file")
-            url = documentation.get(url_key, None)
-        return text, url
 
     def __update_documentation_label(self, label_key, text, url, url_expected=True):
         label = self.documentation_labels[label_key]

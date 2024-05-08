@@ -19,6 +19,8 @@ from logging import error as logging_error
 from json import load as json_load
 from json import JSONDecodeError
 
+from typing import Tuple
+
 
 class ConfigurationSteps:
     """
@@ -112,7 +114,7 @@ class ConfigurationSteps:
             return self.configuration_steps[selected_file].get('auto_changed_by', '')
         return ''
 
-    def get_documentation_text_and_url(self, selected_file, text_key, url_key):
+    def get_documentation_text_and_url(self, selected_file: str, prefix_key: str) -> Tuple[str, str]:
         documentation = self.configuration_steps.get(selected_file, {}) if \
             self.configuration_steps else None
         if documentation is None:
@@ -120,7 +122,7 @@ class ConfigurationSteps:
                 "No intermediate parameter configuration steps available"
             url = None
         else:
-            text = documentation.get(text_key, f"No documentation available for {selected_file} in the "
+            text = documentation.get(prefix_key + "_text", f"No documentation available for {selected_file} in the "
                                      f"{self.configuration_steps_filename} file")
-            url = documentation.get(url_key, None)
+            url = documentation.get(prefix_key + "_url", None)
         return text, url
