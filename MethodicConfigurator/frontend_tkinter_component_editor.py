@@ -13,7 +13,7 @@ from argparse import ArgumentParser
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 # from logging import debug as logging_debug
-from logging import info as logging_info
+#from logging import info as logging_info
 
 import tkinter as tk
 from tkinter import ttk
@@ -22,10 +22,12 @@ from common_arguments import add_common_arguments_and_parse
 
 from backend_filesystem import LocalFilesystem
 
-from frontend_tkinter_base import show_tooltip
+from battery_cell_voltages import BatteryCell
+
+from frontend_tkinter_component_editor_base import ComponentEditorWindowBase
+
+#from frontend_tkinter_base import show_tooltip
 from frontend_tkinter_base import show_error_message
-from frontend_tkinter_base import ScrollFrame
-from frontend_tkinter_base import BaseWindow
 
 from version import VERSION
 
@@ -53,100 +55,246 @@ class VoltageTooLowError(Exception):
 class VoltageTooHighError(Exception):
     """Raised when the voltage is above the maximum limit."""
 
-
-class ComponentEditorWindow(BaseWindow):
+class ComponentEditorWindow(ComponentEditorWindowBase):
     """
-    A class for editing JSON files in the ArduPilot methodic configurator.
-
-    This class provides a graphical user interface for editing JSON files that
-    contain vehicle component configurations. It inherits from the BaseWindow
-    class, which provides basic window functionality.
+    This class validates the user input and handles user interactions
+    for editing component configurations in the ArduPilot Methodic Configurator.
     """
     def __init__(self, version, local_filesystem: LocalFilesystem=None):
-        super().__init__()
-        self.local_filesystem = local_filesystem
-
-        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version + " - Vehicle Component Editor")
-        self.root.geometry("880x600") # Set the window width
-
-        self.data = local_filesystem.load_vehicle_components_json_data(local_filesystem.vehicle_dir)
-        if len(self.data) < 1:
-            # Schedule the window to be destroyed after the mainloop has started
-            self.root.after(100, self.root.destroy) # Adjust the delay as needed
-            return
-
-        self.entry_widgets = {} # Dictionary for entry widgets
-
-        self.main_frame = ttk.Frame(self.root)
-        self.main_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0)) # Pack the frame at the top of the window
-
-        # Load the vehicle image and scale it down to image_height pixels in height
-        if local_filesystem.vehicle_image_exists():
-            image_label = self.put_image_in_label(self.main_frame, local_filesystem.vehicle_image_filepath(), 100)
-            image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
-            show_tooltip(image_label, "Replace the vehicle.jpg file in the vehicle directory to change the vehicle image.")
-        else:
-            image_label = tk.Label(self.main_frame, text="No vehicle.jpg image file found on the vehicle directory.")
-            image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
-
+        ComponentEditorWindowBase.__init__(self, version, local_filesystem)
         style = ttk.Style()
         style.configure("comb_input_invalid.TCombobox", fieldbackground="red")
         style.configure("comb_input_valid.TCombobox", fieldbackground="white")
-        self.chemistry = ""
+        style.configure("entry_input_invalid.TEntry", fieldbackground="red")
+        style.configure("entry_input_valid.TEntry", fieldbackground="white")
 
-        self.scroll_frame = ScrollFrame(self.root)
-        self.scroll_frame.pack(side="top", fill="both", expand=True)
+    def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
+        self.data['Components']['Flight Controller']['Firmware']['Type'] = vehicle_type
+        entry = self.entry_widgets[('Flight Controller', 'Firmware', 'Type')]
+        entry.delete(0, tk.END)
+        entry.insert(0, vehicle_type)
+        entry.config(state="disabled")
+        if version:
+            self.data['Components']['Flight Controller']['Firmware']['Version'] = version
+            entry = self.entry_widgets[('Flight Controller', 'Firmware', 'Version')]
+            entry.delete(0, tk.END)
+            entry.insert(0, version)
+            entry.config(state="disabled")
 
-        self.__populate_frames()
+    def add_entry_or_combobox(self, value, entry_frame, path):  # pylint: disable=too-many-statements
+        serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
+        can_ports = ["CAN1", "CAN2"]
+        i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
 
-        self.save_button = ttk.Button(self.root, text="Save data and start configuration", command=self.save_data)
-        self.save_button.pack(pady=7)
+        combobox_config = {
+            ('Flight Controller', 'Firmware', 'Type'): {
+                "values": LocalFilesystem.supported_vehicles(),
+            },
+            ('RC Receiver', 'FC Connection', 'Type'): {
+                "values": ["RCin/SBUS"] + serial_ports + can_ports,
+            },
+            ('RC Receiver', 'FC Connection', 'Protocol'): {
+                "values": ["All", "PPM", "IBUS", "SBUS", "SBUS_NI", "DSM", "SUMD", "SRXL", "SRXL2",
+                           "CRSF", "ST24", "FPORT", "FPORT2", "FastSBUS", "DroneCAN", "Ghost", "MAVRadio"],
+            },
+            ('Telemetry', 'FC Connection', 'Type'): {
+                "values": serial_ports + can_ports,
+            },
+            ('Telemetry', 'FC Connection', 'Protocol'): {
+                # TODO get this list from SERIAL1_PROTOCOL pdef metadata pylint: disable=fixme
+                "values": ["MAVLink1", "MAVLink2", "MAVLink High Latency"],
+            },
+            ('Battery Monitor', 'FC Connection', 'Type'): {
+                "values": ['Analog'] + i2c_ports + serial_ports + can_ports,
+            },
+            ('Battery Monitor', 'FC Connection', 'Protocol'): {
+                # TODO get this list from BATT_MONITOR pdef metadata pylint: disable=fixme
+                "values": ['Analog Voltage Only', 'Analog Voltage and Current', 'Solo', 'Bebop', 'SMBus-Generic',
+                           'DroneCAN-BatteryInfo', 'ESC', 'Sum Of Selected Monitors', 'FuelFlow', 'FuelLevelPWM',
+                           'SMBUS-SUI3', 'SMBUS-SUI6', 'NeoDesign', 'SMBus-Maxell', 'Generator-Elec', 'Generator-Fuel',
+                           'Rotoye', 'MPPT', 'INA2XX', 'LTC2946', 'Torqeedo', 'FuelLevelAnalog',
+                           'Synthetic Current and Analog Voltage', 'INA239_SPI', 'EFI', 'AD7091R5', 'Scripting'],
+            },
+            ('ESC', 'FC Connection', 'Type'): {
+                "values": ['Main Out'] + serial_ports + can_ports,
+            },
+            ('ESC', 'FC Connection', 'Protocol'): {
+                # TODO get this list from MOT_PWM_TYPE pdef metadata pylint: disable=fixme
+                "values": ['Normal', 'OneShot', 'OneShot125', 'Brushed', 'DShot150', 'DShot300', 'DShot600',
+                           'DShot1200', 'PWMRange', 'PWMAngle'],
+            },
+            ('GNSS receiver', 'FC Connection', 'Type'): {
+                "values": serial_ports + can_ports,
+            },
+            ('GNSS receiver', 'FC Connection', 'Protocol'): {
+                # TODO get this list from GPS_TYPE pdef metadata pylint: disable=fixme
+                "values": ['Auto', 'uBlox', 'NMEA', 'SiRF', 'HIL', 'SwiftNav', 'DroneCAN', 'SBF', 'GSOF', 'ERB',
+                           'MAV', 'NOVA', 'HemisphereNMEA', 'uBlox-MovingBaseline-Base', 'uBlox-MovingBaseline-Rover',
+                           'MSP', 'AllyStar', 'ExternalAHRS', 'Unicore', 'DroneCAN-MovingBaseline-Base',
+                           'DroneCAN-MovingBaseline-Rover', 'UnicoreNMEA', 'UnicoreMovingBaselineNMEA', 'SBF-DualAntenna'],
+            },
+            ('Battery', 'Specifications', 'Chemistry'): {
+                "values": BatteryCell.chemistries(),
+            },
+        }
+        config = combobox_config.get(path)
+        if config:
+            cb = ttk.Combobox(entry_frame, values=config["values"])
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.set(value)
+            return cb
 
-    def __populate_frames(self):
+        entry = ttk.Entry(entry_frame)
+        entry_config = {
+            ('Battery', 'Specifications', 'Volt per cell max'): {
+                "type": float,
+                "validate": lambda event, entry=entry, path=path: self.validate_cell_voltage(event, entry, path),
+            },
+            ('Battery', 'Specifications', 'Volt per cell low'): {
+                "type": float,
+                "validate": lambda event, entry=entry, path=path: self.validate_cell_voltage(event, entry, path),
+            },
+            ('Battery', 'Specifications', 'Volt per cell crit'): {
+                "type": float,
+                "validate": lambda event, entry=entry, path=path: self.validate_cell_voltage(event, entry, path),
+            },
+            ('Battery', 'Specifications', 'Number of cells'): {
+                "type": int,
+                "validate": lambda event, entry=entry, path=path: self.validate_nr_cells(event, entry, path),
+            },
+            ('Motors', 'Specifications', 'Poles'): {
+                "type": int,
+                "validate": lambda event, entry=entry, path=path: self.validate_motor_poles(event, entry, path),
+            },
+            ('Propellers', 'Specifications', 'Diameter_inches'): {
+                "type": int,
+                "validate": lambda event, entry=entry, path=path: self.validate_propeller(event, entry, path),
+            },
+        }
+        config = entry_config.get(path)
+        if config:
+            entry.bind("<FocusOut>", config["validate"])
+            entry.bind("<KeyRelease>", config["validate"])
+        entry.insert(0, str(value))
+        return entry
+
+    def validate_combobox(self, event, path) -> bool:
         """
-        Populates the ScrollFrame with widgets based on the JSON data.
+        Validates the value of a combobox.
         """
-        if "Components" in self.data:
-            for key, value in self.data["Components"].items():
-                self.__add_widget(self.scroll_frame.view_port, key, value, [])
+        combobox = event.widget # Get the combobox widget that triggered the event
+        value = combobox.get() # Get the current value of the combobox
+        allowed_values = combobox.cget("values") # Get the list of allowed values
 
-    def __add_widget(self, parent, key, value, path):
+        if value not in allowed_values:
+            if event.type == "10": # FocusOut events
+                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                   f"Allowed values are: {', '.join(allowed_values)}")
+            combobox.configure(style="comb_input_invalid.TCombobox")
+            return False
+        combobox.configure(style="comb_input_valid.TCombobox")
+        return True
+
+    def validate_cell_voltage(self, event, entry, path):  # pylint: disable=too-many-branches
         """
-        Adds a widget to the parent widget with the given key and value.
-
-        Parameters:
-        parent (tkinter.Widget): The parent widget to which the LabelFrame/Entry will be added.
-        key (str): The key for the LabelFrame/Entry.
-        value (dict): The value associated with the key.
-        path (list): The path to the current key in the JSON data.
+        Validates the value of a battery cell voltage entry.
         """
-        if isinstance(value, dict):             # JSON non-leaf elements, add LabelFrame widget
-            frame = ttk.LabelFrame(parent, text=key)
-            is_toplevel = parent == self.scroll_frame.view_port
-            side = tk.TOP if is_toplevel else tk.LEFT
-            pady = 5 if is_toplevel else 3
-            anchor = tk.NW if is_toplevel else tk.N
-            frame.pack(fill=tk.X, side=side, pady=pady, padx=5, anchor=anchor)
-            for sub_key, sub_value in value.items():
-                # recursively add child elements
-                self.__add_widget(frame, sub_key, sub_value, path + [key])
-        else:                                   # JSON leaf elements, add Entry widget
-            entry_frame = ttk.Frame(parent)
-            entry_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
+        chemistry_path = ('Battery', 'Specifications', 'Chemistry')
+        if chemistry_path not in self.entry_widgets:
+            show_error_message("Error", "Battery Chemistry not set. Will default to Lipo.")
+            chemistry = "Lipo"
+        else:
+            chemistry = self.entry_widgets[chemistry_path].get()
+        value = entry.get()
+        is_focusout_event = event and event.type == "10"
+        try:
+            voltage = float(value)
+            if voltage < BatteryCell.limit_min_voltage(chemistry):
+                if is_focusout_event:
+                    entry.delete(0, tk.END)
+                    entry.insert(0, BatteryCell.limit_min_voltage(chemistry))
+                raise VoltageTooLowError(f"is below the {chemistry} minimum limit of {
+                    BatteryCell.limit_min_voltage(chemistry)}")
+            if voltage > BatteryCell.limit_max_voltage(chemistry):
+                if is_focusout_event:
+                    entry.delete(0, tk.END)
+                    entry.insert(0, BatteryCell.limit_max_voltage(chemistry))
+                raise VoltageTooHighError(f"is above the {chemistry} maximum limit of {
+                    BatteryCell.limit_max_voltage(chemistry)}")
+        except (VoltageTooLowError, VoltageTooHighError) as e:
+            if is_focusout_event:
+                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                   f"{e}")
+            else:
+                entry.configure(style="entry_input_invalid.TEntry")
+                return False
+        except ValueError as e:
+            if is_focusout_event:
+                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                f"{e}\nWill be set to the recommended value.")
+                entry.delete(0, tk.END)
+                if path[-1] == "Volt per cell max":
+                    entry.insert(0, str(BatteryCell.recommended_max_voltage(chemistry)))
+                elif path[-1] == "Volt per cell low":
+                    entry.insert(0, str(BatteryCell.recommended_low_voltage(chemistry)))
+                elif path[-1] == "Volt per cell crit":
+                    entry.insert(0, str(BatteryCell.recommended_crit_voltage(chemistry)))
+                else:
+                    entry.insert(0, "3.8")
+            else:
+                entry.configure(style="entry_input_invalid.TEntry")
+                return False
+        entry.configure(style="entry_input_valid.TEntry")
+        return True
 
-            label = ttk.Label(entry_frame, text=key)
-            label.pack(side=tk.LEFT)
+    def validate_nr_cells(self, event, entry, path):
+        is_focusout_event = event and event.type == "10"
+        try:
+            value = int(entry.get())
+            if value < 1 or value > 50:
+                entry.configure(style="entry_input_invalid.TEntry")
+                raise ValueError("Nr of cells must be an integer between 1 and 50")
+        except ValueError as e:
+            if is_focusout_event:
+                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n{e}")
+            return False
+        entry.configure(style="entry_input_valid.TEntry")
+        return True
 
-            entry = self.add_entry_or_combobox(value, entry_frame, tuple(path+[key]))
-            entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 5))
+    def validate_motor_poles(self, event, entry, path):
+        is_focusout_event = event and event.type == "10"
+        try:
+            value = int(entry.get())
+            if value < 3 or value > 50:
+                entry.configure(style="entry_input_invalid.TEntry")
+                raise ValueError("Motor poles must be an integer between 3 and 50")
+        except ValueError as e:
+            if is_focusout_event:
+                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n{e}")
+            return False
+        entry.configure(style="entry_input_valid.TEntry")
+        return True
 
-            # Store the entry widget in the entry_widgets dictionary for later retrieval
-            self.entry_widgets[tuple(path+[key])] = entry
+    def validate_propeller(self, event, entry, path):
+        is_focusout_event = event and event.type == "10"
+        try:
+            value = float(entry.get())
+            if value < 0.3 or value > 400:
+                entry.configure(style="entry_input_invalid.TEntry")
+                raise ValueError("Propeller diameter in inches must be a float between 0.3 and 400")
+        except ValueError as e:
+            if is_focusout_event:
+                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n{e}")
+            return False
+        entry.configure(style="entry_input_valid.TEntry")
+        return True
 
     def save_data(self):
-        """
-        Saves the edited JSON data back to the file.
-        """
+        if self.validate_data():
+            ComponentEditorWindowBase.save_data(self)
+
+    def validate_data(self):  # pylint: disable=too-many-branches
         invalid_values = False
         duplicated_connections = False
         fc_connection_types = set()
@@ -172,210 +320,30 @@ class ComponentEditorWindow(BaseWindow):
 
             if path in [('Battery', 'Specifications', 'Volt per cell max'), ('Battery', 'Specifications', 'Volt per cell low'),
                         ('Battery', 'Specifications', 'Volt per cell crit')]:
-                self.validate_battery_voltages(None, entry, path)
+                if not self.validate_cell_voltage(None, entry, path):
+                    invalid_values = True
+            if path == ('Battery', 'Specifications', 'Volt per cell low'):
+                if value >= self.entry_widgets[('Battery', 'Specifications', 'Volt per cell max')].get():
+                    show_error_message("Error", "Battery Cell Low voltage must be lower than max voltage")
+                    entry.configure(style="entry_input_invalid.TEntry")
+                    invalid_values = True
+            if path == ('Battery', 'Specifications', 'Volt per cell crit'):
+                if value >= self.entry_widgets[('Battery', 'Specifications', 'Volt per cell low')].get():
+                    show_error_message("Error", "Battery Cell Crit voltage must be lower than low voltage")
+                    entry.configure(style="entry_input_invalid.TEntry")
+                    invalid_values = True
+            if path == ('Battery', 'Specifications', 'Number of cells'):
+                if not self.validate_nr_cells(None, entry, path):
+                    invalid_values = True
+            if path == ('Motors', 'Specifications', 'Poles'):
+                if not self.validate_motor_poles(None, entry, path):
+                    invalid_values = True
+            if path == ('Propellers', 'Specifications', 'Diameter_inches'):
+                if not self.validate_propeller(None, entry, path):
+                    invalid_values = True
 
-            # Navigate through the nested dictionaries using the elements of the path
-            current_data = self.data["Components"]
-            for key in path[:-1]:
-                current_data = current_data[key]
+        return not (invalid_values or duplicated_connections)
 
-            # Update the value in the data dictionary
-            current_data[path[-1]] = value
-
-        if invalid_values or duplicated_connections:
-            return
-
-        # Save the updated data back to the JSON file
-        if self.local_filesystem.save_vehicle_components_json_data(self.data, self.local_filesystem.vehicle_dir):
-            show_error_message("Error", "Failed to save data to file. Is the destination write protected?")
-        else:
-            logging_info("Data saved successfully.")
-        self.root.destroy()
-
-    @staticmethod
-    def add_argparse_arguments(parser):
-        parser.add_argument('--skip-component-editor',
-                            action='store_true',
-                            help='Skip the component editor window. Only use this if all components have been configured. '
-                            'Default to false')
-        return parser
-
-    def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
-        self.data['Components']['Flight Controller']['Firmware']['Type'] = vehicle_type
-        entry = self.entry_widgets[('Flight Controller', 'Firmware', 'Type')]
-        entry.delete(0, tk.END)
-        entry.insert(0, vehicle_type)
-        entry.config(state="disabled")
-        if version:
-            self.data['Components']['Flight Controller']['Firmware']['Version'] = version
-            entry = self.entry_widgets[('Flight Controller', 'Firmware', 'Version')]
-            entry.delete(0, tk.END)
-            entry.insert(0, version)
-            entry.config(state="disabled")
-
-    def add_entry_or_combobox(self, value, entry_frame, path):  # pylint: disable=too-many-return-statements
-                                                                # pylint: disable=too-many-statements
-        serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
-        can_ports = ["CAN1", "CAN2"]
-        i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
-
-        if path == ('RC Receiver', 'FC Connection', 'Type'):
-            cb = ttk.Combobox(entry_frame, values=["RCin/SBUS"] + serial_ports + can_ports)
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
-            #cb.bind("<Key>", lambda event, path=path: self.validate_combobox(event, path))
-            cb.set(value)
-            return cb
-        if path == ('RC Receiver', 'FC Connection', 'Protocol'):
-            # TODO get this list from RC_PROTOCOLS pdef metadata pylint: disable=fixme
-            cb = ttk.Combobox(entry_frame, values=["All", "PPM", "IBUS", "SBUS", "SBUS_NI", "DSM", "SUMD", "SRXL", "SRXL2",
-                                                   "CRSF", "ST24", "FPORT", "FPORT2", "FastSBUS", "DroneCAN", "Ghost",
-                                                   "MAVRadio"])
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
-            cb.set(value)
-            return cb
-        if path == ('Telemetry', 'FC Connection', 'Type'):
-            cb = ttk.Combobox(entry_frame, values=serial_ports + can_ports)
-            cb.set(value)
-            return cb
-        if path == ('Telemetry', 'FC Connection', 'Protocol'):
-            # TODO get this list from SERIAL1_PROTOCOL pdef metadata pylint: disable=fixme
-            cb = ttk.Combobox(entry_frame, values=["MAVLink1", "MAVLink2", "MAVLink High Latency"])
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
-            cb.set(value)
-            return cb
-        if path == ('Battery Monitor', 'FC Connection', 'Type'):
-            cb = ttk.Combobox(entry_frame, values=['Analog'] + i2c_ports + serial_ports + can_ports)
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
-            cb.set(value)
-            return cb
-        if path == ('Battery Monitor', 'FC Connection', 'Protocol'):
-            # TODO get this list from BATT_MONITOR pdef metadata pylint: disable=fixme
-            cb = ttk.Combobox(entry_frame, values=['Analog Voltage Only', 'Analog Voltage and Current', 'Solo', 'Bebop',
-                                                   'SMBus-Generic', 'DroneCAN-BatteryInfo', 'ESC',
-                                                   'Sum Of Selected Monitors', 'FuelFlow', 'FuelLevelPWM', 'SMBUS-SUI3',
-                                                   'SMBUS-SUI6', 'NeoDesign', 'SMBus-Maxell', 'Generator-Elec',
-                                                   'Generator-Fuel', 'Rotoye', 'MPPT', 'INA2XX', 'LTC2946', 'Torqeedo',
-                                                   'FuelLevelAnalog', 'Synthetic Current and Analog Voltage', 'INA239_SPI',
-                                                   'EFI', 'AD7091R5', 'Scripting'])
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
-            cb.set(value)
-            return cb
-        if path == ('ESC', 'FC Connection', 'Type'):
-            cb = ttk.Combobox(entry_frame, values=['Main Out'] + serial_ports + can_ports)
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
-            cb.set(value)
-            return cb
-        if path == ('ESC', 'FC Connection', 'Protocol'):
-            # TODO get this list from MOT_PWM_TYPE pdef metadata pylint: disable=fixme
-            cb = ttk.Combobox(entry_frame, values=['Normal', 'OneShot', 'OneShot125', 'Brushed', 'DShot150', 'DShot300',
-                                                   'DShot600', 'DShot1200', 'PWMRange', 'PWMAngle'])
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
-            cb.set(value)
-            return cb
-        if path == ('GNSS receiver', 'FC Connection', 'Type'):
-            cb = ttk.Combobox(entry_frame, values=serial_ports + can_ports)
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
-            cb.set(value)
-            return cb
-        if path == ('GNSS receiver', 'FC Connection', 'Protocol'):
-            # TODO get this list from GPS_TYPE pdef metadata pylint: disable=fixme
-            cb = ttk.Combobox(entry_frame, values=['Auto', 'uBlox', 'NMEA', 'SiRF', 'HIL', 'SwiftNav', 'DroneCAN', 'SBF',
-                                                   'GSOF', 'ERB', 'MAV', 'NOVA', 'HemisphereNMEA',
-                                                   'uBlox-MovingBaseline-Base', 'uBlox-MovingBaseline-Rover',
-                                                   'MSP', 'AllyStar', 'ExternalAHRS', 'Unicore',
-                                                   'DroneCAN-MovingBaseline-Base', 'DroneCAN-MovingBaseline-Rover',
-                                                   'UnicoreNMEA', 'UnicoreMovingBaselineNMEA', 'SBF-DualAntenna'])
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
-            cb.set(value)
-            return cb
-        if path == ('Battery', 'Specifications', 'Chemistry'):
-            cb = ttk.Combobox(entry_frame, values=['LiIon', 'LiIonSS', 'LiIonSSHV', 'Lipo', 'LipoHV', 'LipoHVSS'])
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
-            cb.set(value)
-            self.chemistry = value
-            return cb
-
-        entry = ttk.Entry(entry_frame)
-        if path in [('Battery', 'Specifications', 'Volt per cell max'), ('Battery', 'Specifications', 'Volt per cell low'),
-                    ('Battery', 'Specifications', 'Volt per cell crit')]:
-            entry.bind("<FocusOut>", lambda event, entry=entry, path=path: self.validate_battery_voltages(event, entry, path))
-        entry.insert(0, str(value))
-        return entry
-
-    def validate_combobox(self, event, path):
-        """
-        Validates the value of a combobox.
-        """
-        combobox = event.widget # Get the combobox widget that triggered the event
-        value = combobox.get() # Get the current value of the combobox
-        allowed_values = combobox.cget("values") # Get the list of allowed values
-
-        if value not in allowed_values:
-            if event.type == 10:
-                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
-                                   f"Allowed values are: {', '.join(allowed_values)}")
-            combobox.configure(style="comb_input_invalid.TCombobox")
-        else:
-            combobox.configure(style="comb_input_valid.TCombobox")
-
-        if path == ('Battery', 'Specifications', 'Chemistry'):
-            self.chemistry = value
-
-    def validate_battery_voltages(self, _event, entry, path):
-        """
-        Validates the value of a battery voltage entry.
-        """
-        value = entry.get()
-        try:
-            voltage = float(value)
-            if voltage < self.volt_limit_min:
-                entry.delete(0, tk.END)
-                entry.insert(0, self.volt_limit_min)
-                raise VoltageTooLowError(f"is below the {self.chemistry} minimum limit of {self.volt_limit_min}")
-            if voltage > self.volt_limit_max:
-                entry.delete(0, tk.END)
-                entry.insert(0, self.volt_limit_max)
-                raise VoltageTooHighError(f"is above the {self.chemistry} maximum limit of {self.volt_limit_max}")
-        except (VoltageTooLowError, VoltageTooHighError) as e:
-            show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
-                                f"{e}")
-        except ValueError as e:
-            show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
-                            f"{e}")
-            entry.delete(0, tk.END)
-            entry.insert(0, "3.8")
-
-    @property
-    def volt_limit_min(self) -> float:  # pylint: disable=too-many-return-statements
-        if self.chemistry == 'LiIon':
-            return 2.5
-        if self.chemistry == 'LiIonSS':
-            return 2.4
-        if self.chemistry == 'LiIonSSHV':
-            return 2.4
-        if self.chemistry == 'Lipo':
-            return 3.0
-        if self.chemistry == 'LipoHV':
-            return 3.0
-        if self.chemistry == 'LipoHVSS':
-            return 2.9
-        return 2.4
-
-    @property
-    def volt_limit_max(self) -> float:  # pylint: disable=too-many-return-statements
-        if self.chemistry == 'LiIon':
-            return 4.1
-        if self.chemistry == 'LiIonSS':
-            return 4.2
-        if self.chemistry == 'LiIonSSHV':
-            return 4.45
-        if self.chemistry == 'Lipo':
-            return 4.2
-        if self.chemistry == 'LipoHV':
-            return 4.35
-        if self.chemistry == 'LipoHVSS':
-            return 4.2
-        return 4.45
 
 if __name__ == "__main__":
     args = argument_parser()
