@@ -153,7 +153,7 @@ class ScrollFrame(tk.Frame):
 
     def on_frame_configure(self, _event):
         '''Reset the scroll region to encompass the inner frame'''
-        # whenever the size of the frame changes, alter the scroll region respectively.
+        # Whenever the size of the frame changes, alter the scroll region respectively.
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         # Calculate the bounding box for the scroll region, starting from the second row
         # bbox = self.canvas.bbox("all")
@@ -165,7 +165,7 @@ class ScrollFrame(tk.Frame):
     def on_canvas_configure(self, event):
         '''Reset the canvas window to encompass inner frame when required'''
         canvas_width = event.width
-        # whenever the size of the canvas changes alter the window region respectively.
+        # Whenever the size of the canvas changes alter the window region respectively.
         self.canvas.itemconfig(self.canvas_window, width=canvas_width)
 
     def on_mouse_wheel(self, event):                       # cross platform scroll wheel event
@@ -239,7 +239,7 @@ class ProgressWindow:
 
     def update_progress_bar(self, current_value: int, max_value: int):
         """
-        Update progress bar and the progress message with the current progress.
+        Update the progress bar and the progress message with the current progress.
 
         Args:
             current_value (int): The current progress value.
