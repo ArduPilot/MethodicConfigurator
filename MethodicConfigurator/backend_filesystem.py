@@ -608,10 +608,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
         return files[start_file_index]
 
     @staticmethod
+    def supported_vehicles():
+        return ['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
+                                    'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL']
+
+    @staticmethod
     def add_argparse_arguments(parser):
         parser.add_argument('-t', '--vehicle-type',
-                            choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
-                                    'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
+                            choices=LocalFilesystem.supported_vehicles(),
                             default='',
                             help='The type of the vehicle. Defaults to ArduCopter')
         parser.add_argument('--vehicle-dir',
