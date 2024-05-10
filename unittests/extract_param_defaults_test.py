@@ -22,7 +22,7 @@ from MethodicConfigurator.extract_param_defaults import MAVLINK_SYSID_MAX
 from MethodicConfigurator.extract_param_defaults import MAVLINK_COMPID_MAX
 
 
-class TestArgParseParameters(unittest.TestCase):
+class TestArgParseParameters(unittest.TestCase):  # pylint: disable=missing-class-docstring
     def test_command_line_arguments_combinations(self):
         # Check the 'format' and 'sort' default parameters
         args = parse_arguments(['dummy.bin'])
@@ -69,7 +69,7 @@ class TestArgParseParameters(unittest.TestCase):
         self.assertEqual(args.compid, 3)
 
 
-class TestExtractParameterDefaultValues(unittest.TestCase):
+class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=missing-class-docstring
 
     @patch('extract_param_defaults.mavutil.mavlink_connection')
     def test_logfile_does_not_exist(self, mock_mavlink_connection):
@@ -147,7 +147,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):
             extract_parameter_values('dummy.bin')
 
 
-class TestSortFunctions(unittest.TestCase):
+class TestSortFunctions(unittest.TestCase):  # pylint: disable=missing-class-docstring
     def test_missionplanner_sort(self):
         # Define a list of parameter names
         params = ['PARAM_GROUP1_PARAM1', 'PARAM_GROUP2_PARAM2', 'PARAM_GROUP1_PARAM2']
@@ -179,7 +179,7 @@ class TestSortFunctions(unittest.TestCase):
         self.assertEqual(sorted_params, ['PARAM1', 'PARAM2', 'PARAM3'])
 
 
-class TestOutputParams(unittest.TestCase):
+class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docstring
 
     @patch('builtins.print')
     def test_output_params(self, mock_print):
@@ -217,8 +217,8 @@ class TestOutputParams(unittest.TestCase):
         output_params(defaults, 'mavproxy')
 
         # Check if the print function was called with the correct parameters
-        expected_calls = [unittest.mock.call("%-15s %.6f" % ('PARAM1', 1.0)),
-                          unittest.mock.call("%-15s %.6f" % ('PARAM2', 2.0))]
+        expected_calls = [unittest.mock.call("%-15s %.6f" % ('PARAM1', 1.0)),  # pylint: disable=consider-using-f-string
+                          unittest.mock.call("%-15s %.6f" % ('PARAM2', 2.0))]  # pylint: disable=consider-using-f-string
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch('builtins.print')
@@ -232,8 +232,8 @@ class TestOutputParams(unittest.TestCase):
 
         # Check if the print function was called with the correct parameters
         expected_calls = [unittest.mock.call("\n# # Vehicle-Id Component-Id Name Value Type\n"),
-                          unittest.mock.call("%u %u %-15s %.6f %u" % (1, 1, 'PARAM1', 1.0, 9)),
-                          unittest.mock.call("%u %u %-15s %.6f %u" % (1, 1, 'PARAM2', 2.0, 9))]
+                          unittest.mock.call("%u %u %-15s %.6f %u" % (1, 1, 'PARAM1', 1.0, 9)),  # pylint: disable=consider-using-f-string
+                          unittest.mock.call("%u %u %-15s %.6f %u" % (1, 1, 'PARAM2', 2.0, 9))]  # pylint: disable=consider-using-f-string
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch('builtins.print')
@@ -247,12 +247,12 @@ class TestOutputParams(unittest.TestCase):
 
         # Check if the print function was called with the correct parameters
         expected_calls = [unittest.mock.call("\n# # Vehicle-Id Component-Id Name Value Type\n"),
-                          unittest.mock.call("%u %u %-15s %.6f %u" % (2, 4, 'PARAM1', 1.0, 9)),
-                          unittest.mock.call("%u %u %-15s %.6f %u" % (2, 4, 'PARAM2', 2.0, 9))]
+                          unittest.mock.call("%u %u %-15s %.6f %u" % (2, 4, 'PARAM1', 1.0, 9)),  # pylint: disable=consider-using-f-string
+                          unittest.mock.call("%u %u %-15s %.6f %u" % (2, 4, 'PARAM2', 2.0, 9))]  # pylint: disable=consider-using-f-string
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch('builtins.print')
-    def test_output_params_qgcs_SYSID_THISMAV(self, mock_print):
+    def test_output_params_qgcs_SYSID_THISMAV(self, mock_print):  # pylint: disable=invalid-name
         # Prepare a dummy defaults dictionary
         defaults = {'PARAM2': 2.0, 'PARAM1': 1.0, 'SYSID_THISMAV': 3.0}
 
@@ -262,13 +262,13 @@ class TestOutputParams(unittest.TestCase):
 
         # Check if the print function was called with the correct parameters
         expected_calls = [unittest.mock.call("\n# # Vehicle-Id Component-Id Name Value Type\n"),
-                          unittest.mock.call("%u %u %-15s %.6f %u" % (3, 7, 'PARAM1', 1.0, 9)),
-                          unittest.mock.call("%u %u %-15s %.6f %u" % (3, 7, 'PARAM2', 2.0, 9)),
-                          unittest.mock.call("%u %u %-15s %.6f %u" % (3, 7, 'SYSID_THISMAV', 3.0, 9))]
+                          unittest.mock.call("%u %u %-15s %.6f %u" % (3, 7, 'PARAM1', 1.0, 9)),  # pylint: disable=consider-using-f-string
+                          unittest.mock.call("%u %u %-15s %.6f %u" % (3, 7, 'PARAM2', 2.0, 9)),  # pylint: disable=consider-using-f-string
+                          unittest.mock.call("%u %u %-15s %.6f %u" % (3, 7, 'SYSID_THISMAV', 3.0, 9))]  # pylint: disable=consider-using-f-string
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch('builtins.print')
-    def test_output_params_qgcs_SYSID_INVALID(self, mock_print):
+    def test_output_params_qgcs_SYSID_INVALID(self, _mock_print):  # pylint: disable=invalid-name
         # Prepare a dummy defaults dictionary
         defaults = {'PARAM2': 2.0, 'PARAM1': 1.0, 'SYSID_THISMAV': -1.0}
 
@@ -285,7 +285,7 @@ class TestOutputParams(unittest.TestCase):
         self.assertEqual(str(cm.exception), f"Invalid system ID parameter 16777218 must be smaller than {MAVLINK_SYSID_MAX}")
 
     @patch('builtins.print')
-    def test_output_params_qgcs_COMPID_INVALID(self, mock_print):
+    def test_output_params_qgcs_COMPID_INVALID(self, _mock_print):  # pylint: disable=invalid-name
         # Prepare a dummy defaults dictionary
         defaults = {'PARAM2': 2.0, 'PARAM1': 1.0}
 
