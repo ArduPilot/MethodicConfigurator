@@ -69,11 +69,12 @@ class DirectorySelectionWidgets():
         self.directory_entry.pack(side=tk.LEFT, fill="x", expand=True, anchor=tk.NW, pady=(4, 0))
         show_tooltip(self.directory_entry, dir_tooltip)
 
-        # Create a button for directory selection
-        directory_selection_button = ttk.Button(directory_selection_subframe, text="...",
-                                                command=self.on_select_directory, width=2)
-        directory_selection_button.pack(side=tk.RIGHT, anchor=tk.NW)
-        show_tooltip(directory_selection_button, button_tooltip)
+        if button_tooltip:
+            # Create a button for directory selection
+            directory_selection_button = ttk.Button(directory_selection_subframe, text="...",
+                                                    command=self.on_select_directory, width=2)
+            directory_selection_button.pack(side=tk.RIGHT, anchor=tk.NW)
+            show_tooltip(directory_selection_button, button_tooltip)
 
     def on_select_directory(self):
         # Open the directory selection dialog
@@ -139,7 +140,8 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
                          "Vehicle-specific directory containing the intermediate\n"
                          "parameter files to be written to the flight controller",
                          "Select the vehicle-specific directory containing the\n"
-                         "intermediate parameter files to be written to the flight controller")
+                         "intermediate parameter files to be written to the flight controller" \
+                            if destroy_parent_on_open else '')
         self.local_filesystem = local_filesystem
         self.destroy_parent_on_open = destroy_parent_on_open
 
