@@ -15,7 +15,7 @@ from tkinter import messagebox
 from tkinter import ttk
 
 from logging import debug as logging_debug
-#from logging import info as logging_info
+from logging import info as logging_info
 #from logging import warning as logging_warning
 #from logging import error as logging_error
 from logging import critical as logging_critical
@@ -89,7 +89,7 @@ class ParameterEditorTable(ScrollFrame):
         self.write_checkbutton_var = {}
 
         # re-compute derived parameters because the fc_parameters values might have changed
-        if self.local_filesystem.configuration_steps:
+        if self.local_filesystem.configuration_steps and selected_file in self.local_filesystem.configuration_steps:
             self.variables['fc_parameters'] = fc_parameters
             error_msg = self.local_filesystem.compute_parameters(selected_file,
                                                                  self.local_filesystem.configuration_steps[selected_file],
@@ -97,12 +97,35 @@ class ParameterEditorTable(ScrollFrame):
             if error_msg:
                 messagebox.showerror("Error in derived parameters", error_msg)
 
+            self.rename_fc_connection(selected_file)
+
         if show_only_differences:
             self.__update_table(different_params, fc_parameters)
         else:
             self.__update_table(self.local_filesystem.file_parameters[selected_file], fc_parameters)
         # Scroll to the top of the parameter table
         self.canvas.yview("moveto", 0)
+
+    def rename_fc_connection(self, selected_file):
+        renames = {}
+        if "rename_connection" in self.local_filesystem.configuration_steps[selected_file]:
+            new_connection_name = self.local_filesystem.configuration_steps[selected_file]["rename_connection"]
+            new_connection_name = eval(str(new_connection_name), {}, self.variables)  # pylint: disable=eval-used
+            for param_name, _ in self.local_filesystem.file_parameters[selected_file].items():
+                old_name = param_name.split("_")[0]
+                if new_connection_name[:-1] in old_name:
+                    renames[param_name] = param_name.replace(old_name, new_connection_name)
+        new_names = set()
+        for old_name, new_name in renames.items():
+            if new_name in new_names:
+                self.local_filesystem.file_parameters[selected_file].pop(old_name)
+                logging_info("Removing duplicate parameter %s", old_name)
+            else:
+                new_names.add(new_name)
+                if new_name != old_name:
+                    self.local_filesystem.file_parameters[selected_file][new_name] = \
+                        self.local_filesystem.file_parameters[selected_file].pop(old_name)
+                    logging_info("Renaming parameter %s to %s", old_name, new_name)
 
     def __update_table(self, params, fc_parameters):  # pylint: disable=too-many-locals
         try:

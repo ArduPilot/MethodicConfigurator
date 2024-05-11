@@ -59,7 +59,8 @@
         "external_tool_text": "",
         "external_tool_url": "",
         "mandatory_text": "100% mandatory (0% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "rename_connection": "vehicle_components['Telemetry']['FC Connection']['Type']"
     },
     "07_esc.param": {
         "blog_text": "Configures settings for the Electronic Speed Controllers (ESCs), including PWM range and failsafe behavior.",
@@ -73,7 +74,8 @@
         "derived_parameters": {
             "MOT_PWM_TYPE": { "New Value": "vehicle_components['ESC']['FC Connection']['Protocol']", "Change Reason": "Specified in component editor window" },
             "SERVO_BLH_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" }
-        }
+        },
+        "rename_connection": "vehicle_components['ESC']['FC Connection']['Type']"
     },
     "08_batt1.param": {
         "blog_text": "Contains parameters for the first battery, including voltage thresholds and failsafe behavior.",
@@ -94,7 +96,8 @@
             "BATT_LOW_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.3)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.3) x no. of cells" },
             "MOT_BATT_VOLT_MAX": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell max']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Max voltage + 0.0) x no. of cells" },
             "MOT_BATT_VOLT_MIN": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" }
-        }
+        },
+        "rename_connection": "vehicle_components['Battery Monitor']['FC Connection']['Type']"
     },
     "09_batt2.param": {
         "blog_text": "Contains parameters for the second battery, including voltage thresholds and failsafe behavior.",
@@ -117,7 +120,8 @@
         "auto_changed_by": "",
         "derived_parameters": {
             "GPS_TYPE": { "New Value": "vehicle_components['GNSS receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
-        }
+        },
+        "rename_connection": "vehicle_components['GNSS receiver']['FC Connection']['Type']"
     },
     "11_mp_setup_mandatory_hardware.param": {
         "blog_text": "Sets up mandatory hardware components, ensuring all necessary sensors and systems are correctly configured.",
