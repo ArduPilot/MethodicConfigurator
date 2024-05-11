@@ -247,7 +247,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.annotate_params_into_files = tk.BooleanVar(value=False)
 
         # Create a Scrollable parameter editor table
-        self.parameter_editor_table = ParameterEditorTable(self.root, self.local_filesystem)
+        self.parameter_editor_table = ParameterEditorTable(self.root, self.local_filesystem, self.flight_controller)
         self.repopulate_parameter_table(self.current_file)
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 

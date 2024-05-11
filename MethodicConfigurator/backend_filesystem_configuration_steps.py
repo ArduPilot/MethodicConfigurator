@@ -101,8 +101,25 @@ class ConfigurationSteps:
         if parameter_type + '_parameters' in file_info and variables:
             for parameter, parameter_info in file_info[parameter_type + '_parameters'].items():
                 try:
+                    if ('fc_parameters' in str(parameter_info["New Value"])) and ('fc_parameters' not in variables):
+                        error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
+                            f"parameter '{parameter}' could not be computed: 'fc_parameters' not found"
+                        if parameter_type == 'forced':
+                            logging_error(error_msg)
+                            return error_msg
+                        logging_warning(error_msg)
+                        continue
                     result = eval(str(parameter_info["New Value"]), {}, variables)  # pylint: disable=eval-used
-                    destination[parameter] = Par(float(result), parameter_info["Change Reason"])
+
+                    # convert string text to string int or float
+                    if isinstance(result, str):
+                        if parameter in variables['doc_dict']:
+                            values = variables['doc_dict'][parameter]['values']
+                            result = next(key for key, value in values.items() if value == result)
+
+                    if filename not in destination:
+                        destination[filename] = {}
+                    destination[filename][parameter] = Par(float(result), parameter_info["Change Reason"])
                 except (SyntaxError, NameError) as e:
                     if parameter_type == 'forced':
                         error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \

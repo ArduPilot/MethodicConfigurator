@@ -38,10 +38,11 @@ class ParameterEditorTable(ScrollFrame):
     This class inherits from ScrollFrame and is responsible for creating,
     managing, and updating the table that displays parameters for editing.
     """
-    def __init__(self, root, local_filesystem):
+    def __init__(self, root, local_filesystem, flight_controller):
         super().__init__(root)
         self.root = root
         self.local_filesystem = local_filesystem
+        self.flight_controller = flight_controller
         self.background_color = root.cget("background")
         self.current_file = None
         self.write_checkbutton_var = {}
@@ -52,9 +53,11 @@ class ParameterEditorTable(ScrollFrame):
         if hasattr(self.local_filesystem, 'vehicle_components') and self.local_filesystem.vehicle_components and \
                 'Components' in self.local_filesystem.vehicle_components:
             variables['vehicle_components'] = self.local_filesystem.vehicle_components['Components']
-        if hasattr(self.local_filesystem, 'flight_controller') and self.local_filesystem.flight_controller and \
-                'parameters' in self.local_filesystem.flight_controller:
-            variables['fc_parameters'] = self.local_filesystem.flight_controller.parameters
+        if hasattr(self.local_filesystem, 'doc_dict') and self.local_filesystem.doc_dict:
+            variables['doc_dict'] = self.local_filesystem.doc_dict
+        if self.flight_controller and hasattr(self.flight_controller, 'fc_parameters') and \
+           self.flight_controller.fc_parameters:
+            variables['fc_parameters'] = self.flight_controller.fc_parameters
         if self.local_filesystem.configuration_steps:
             for filename, file_info in self.local_filesystem.configuration_steps.items():
                 error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'forced', variables)
@@ -85,20 +88,14 @@ class ParameterEditorTable(ScrollFrame):
 
         self.write_checkbutton_var = {}
 
-        configuration_steps = self.local_filesystem.configuration_steps
-        if configuration_steps and selected_file in configuration_steps:
-            file_info = configuration_steps[selected_file]
-        else:
-            file_info = None
-
         if show_only_differences:
-            self.__update_table(different_params, fc_parameters, file_info)
+            self.__update_table(different_params, fc_parameters)
         else:
-            self.__update_table(self.local_filesystem.file_parameters[selected_file], fc_parameters, file_info)
+            self.__update_table(self.local_filesystem.file_parameters[selected_file], fc_parameters)
         # Scroll to the top of the parameter table
         self.canvas.yview("moveto", 0)
 
-    def __update_table(self, params, fc_parameters, file_info):  # pylint: disable=too-many-locals
+    def __update_table(self, params, fc_parameters):  # pylint: disable=too-many-locals
         try:
             for i, (param_name, param) in enumerate(params.items(), 1):
                 param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
@@ -108,11 +105,11 @@ class ParameterEditorTable(ScrollFrame):
 
                 column_0 = self.__create_parameter_name(param_name, param_metadata, doc_tooltip)
                 column_1 = self.__create_flightcontroller_value(fc_parameters, param_name, param_default, doc_tooltip)
-                column_2 = self.__create_new_value_entry(param_name, param, param_metadata, file_info,
+                column_2 = self.__create_new_value_entry(param_name, param, param_metadata,
                                                          param_default, doc_tooltip)
                 column_3 = self.__create_unit_label(param_metadata)
                 column_4 = self.__create_write_write_checkbutton(param_name)
-                column_5 = self.__create_change_reason_entry(param_name, param, column_2, file_info)
+                column_5 = self.__create_change_reason_entry(param_name, param, column_2)
 
                 column_0.grid(row=i, column=0, sticky="w", padx=0)
                 column_1.grid(row=i, column=1, sticky="e", padx=0)
@@ -169,30 +166,21 @@ class ParameterEditorTable(ScrollFrame):
         new_value_entry.config(background=new_value_background)
 
     def __create_new_value_entry(self, param_name, param,  # pylint: disable=too-many-arguments
-                                 param_metadata, file_info, param_default, doc_tooltip):
+                                 param_metadata, param_default, doc_tooltip):
 
         present_as_forced = False
-        if file_info and 'forced_parameters' in file_info and param_name in file_info['forced_parameters']:
-            if "New Value" in file_info['forced_parameters'][param_name]:
-                present_as_forced = True
-                if param.value != file_info['forced_parameters'][param_name]["New Value"]:
-                    param.value = file_info['forced_parameters'][param_name]["New Value"]
-                    self.at_least_one_param_edited = True
-        if file_info and 'derived_parameters' in file_info and param_name in file_info['derived_parameters']:
-            if "New Value" in file_info['derived_parameters'][param_name]:
-                if 'Components' in self.local_filesystem.vehicle_components:
-                    present_as_forced = True
-                    # Prepare a dictionary that maps variable names to their values
-                    local_vars = {
-                        'vehicle_components': self.local_filesystem.vehicle_components['Components'],
-                        'fc_parameters': self.local_filesystem.file_parameters[self.current_file],
-                        # Add any other variables you want to make accessible within the eval expression
-                    }
-                    eval_result = eval(file_info['derived_parameters'][param_name]["New Value"],  # pylint: disable=eval-used
-                                    {}, local_vars)
-                    if param.value != eval_result:
-                        param.value = eval_result
-                        self.at_least_one_param_edited = True
+        if self.current_file in self.local_filesystem.forced_parameters and \
+           param_name in self.local_filesystem.forced_parameters[self.current_file]:
+            present_as_forced = True
+            if param.value != self.local_filesystem.forced_parameters[self.current_file][param_name].value:
+                param.value = self.local_filesystem.forced_parameters[self.current_file][param_name].value
+                self.at_least_one_param_edited = True
+        if self.current_file in self.local_filesystem.derived_parameters and \
+           param_name in self.local_filesystem.derived_parameters[self.current_file]:
+            present_as_forced = True
+            if param.value != self.local_filesystem.derived_parameters[self.current_file][param_name].value:
+                param.value = self.local_filesystem.derived_parameters[self.current_file][param_name].value
+                self.at_least_one_param_edited = True
 
         new_value_entry = tk.Entry(self.view_port, width=10, justify=tk.RIGHT)
         ParameterEditorTable.__update_new_value_entry_text(new_value_entry, param.value, param_default)
@@ -289,21 +277,21 @@ class ParameterEditorTable(ScrollFrame):
         show_tooltip(write_write_checkbutton, f'When selected write {param_name} new value to the flight controller')
         return write_write_checkbutton
 
-    def __create_change_reason_entry(self, param_name, param, new_value_entry, file_info):
+    def __create_change_reason_entry(self, param_name, param, new_value_entry):
 
         present_as_forced = False
-        if file_info and 'forced_parameters' in file_info and param_name in file_info['forced_parameters']:
-            if "Change Reason" in file_info['forced_parameters'][param_name]:
-                present_as_forced = True
-                if param.comment != file_info['forced_parameters'][param_name]["Change Reason"]:
-                    param.comment = file_info['forced_parameters'][param_name]["Change Reason"]
-                    self.at_least_one_param_edited = True
-        if file_info and 'derived_parameters' in file_info and param_name in file_info['derived_parameters']:
-            if "Change Reason" in file_info['derived_parameters'][param_name]:
-                present_as_forced = True
-                if param.comment != file_info['derived_parameters'][param_name]["Change Reason"]:
-                    param.comment = file_info['derived_parameters'][param_name]["Change Reason"]
-                    self.at_least_one_param_edited = True
+        if self.current_file in self.local_filesystem.forced_parameters and \
+           param_name in self.local_filesystem.forced_parameters[self.current_file]:
+            present_as_forced = True
+            if param.comment != self.local_filesystem.forced_parameters[self.current_file][param_name].comment:
+                param.comment = self.local_filesystem.forced_parameters[self.current_file][param_name].comment
+                self.at_least_one_param_edited = True
+        if self.current_file in self.local_filesystem.derived_parameters and \
+           param_name in self.local_filesystem.derived_parameters[self.current_file]:
+            present_as_forced = True
+            if param.comment != self.local_filesystem.derived_parameters[self.current_file][param_name].comment:
+                param.comment = self.local_filesystem.derived_parameters[self.current_file][param_name].comment
+                self.at_least_one_param_edited = True
 
         change_reason_entry = tk.Entry(self.view_port, background="white")
         change_reason_entry.insert(0, "" if param.comment is None else param.comment)
