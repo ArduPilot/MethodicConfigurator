@@ -115,7 +115,12 @@ class ConfigurationSteps:
                     if isinstance(result, str):
                         if parameter in variables['doc_dict']:
                             values = variables['doc_dict'][parameter]['values']
-                            result = next(key for key, value in values.items() if value == result)
+                            if values:
+                                result = next(key for key, value in values.items() if value == result)
+                            else:
+                                bitmasks = variables['doc_dict'][parameter]['Bitmask']
+                                if bitmasks:
+                                    result = 2**next(key for key, bitmask in bitmasks.items() if bitmask == result)
 
                     if filename not in destination:
                         destination[filename] = {}

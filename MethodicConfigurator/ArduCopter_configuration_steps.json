@@ -46,7 +46,10 @@
         "external_tool_text": "EdgeTX Companion",
         "external_tool_url": "https://edgetx.org/getedgetx/",
         "mandatory_text": "100% mandatory (0% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "derived_parameters": {
+            "RC_PROTOCOLS": { "New Value": "vehicle_components['RC Receiver']['FC Connection']['Protocol']", "Change Reason": "Selected in the component editor" }
+        }
     },
     "06_telemetry.param": {
         "blog_text": "Sets up telemetry parameters for data transmission, including GPS, altitude, and other flight metrics.",
