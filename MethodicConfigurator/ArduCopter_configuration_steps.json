@@ -196,6 +196,9 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "INS_HNTCH_ENABLE": { "New Value": 1, "Change Reason": "Use the first notch filter to filter the noise created by the motors/propellers" }
+        },
+        "derived_parameters": {
+            "INS_HNTCH_FREQ": { "New Value": "1.4*fc_parameters['INS_GYRO_FILTER']", "Change Reason": "Use 1.4 * INS_GYRO_FILTER as a first guess" }
         }
     },
     "18_notch_filter_results.param": {
@@ -216,7 +219,11 @@
         "external_tool_text": "",
         "external_tool_url": "",
         "mandatory_text": "100% mandatory (0% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "derived_parameters": {
+            "PSC_ACCZ_I": { "New Value": "2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
+            "PSC_ACCZ_P": { "New Value": "fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" }
+        }
     },
     "20_quick_tune_setup.param": {
         "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs before the MAGFit flight.",
