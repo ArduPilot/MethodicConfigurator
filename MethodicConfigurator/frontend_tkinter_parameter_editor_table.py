@@ -38,35 +38,35 @@ class ParameterEditorTable(ScrollFrame):
     This class inherits from ScrollFrame and is responsible for creating,
     managing, and updating the table that displays parameters for editing.
     """
-    def __init__(self, root, local_filesystem, flight_controller):
+    def __init__(self, root, local_filesystem):
         super().__init__(root)
         self.root = root
         self.local_filesystem = local_filesystem
-        self.flight_controller = flight_controller
         self.background_color = root.cget("background")
         self.current_file = None
         self.write_checkbutton_var = {}
         self.at_least_one_param_edited = False
 
         # Prepare a dictionary that maps variable names to their values
-        variables = {}
+        # These variables are used by the forced_parameters and derived_parameters in *_configuration_steps.json files
+        self.variables = {}
         if hasattr(self.local_filesystem, 'vehicle_components') and self.local_filesystem.vehicle_components and \
                 'Components' in self.local_filesystem.vehicle_components:
-            variables['vehicle_components'] = self.local_filesystem.vehicle_components['Components']
+            self.variables['vehicle_components'] = self.local_filesystem.vehicle_components['Components']
         if hasattr(self.local_filesystem, 'doc_dict') and self.local_filesystem.doc_dict:
-            variables['doc_dict'] = self.local_filesystem.doc_dict
-        if self.flight_controller and hasattr(self.flight_controller, 'fc_parameters') and \
-           self.flight_controller.fc_parameters:
-            variables['fc_parameters'] = self.flight_controller.fc_parameters
+            self.variables['doc_dict'] = self.local_filesystem.doc_dict
+
+        self.compute_forced_and_derived_parameters()
+
+    def compute_forced_and_derived_parameters(self):
         if self.local_filesystem.configuration_steps:
             for filename, file_info in self.local_filesystem.configuration_steps.items():
-                error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'forced', variables)
+                error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'forced', self.variables)
                 if error_msg:
                     messagebox.showerror("Error in forced parameters", error_msg)
-                error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'derived', variables)
-                if error_msg:
-                    messagebox.showerror("Error in derived parameters", error_msg)
-
+                #error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'derived', self.variables)
+                #if error_msg:
+                #    messagebox.showerror("Error in derived parameters", error_msg)
 
     def repopulate(self, selected_file: str, different_params: dict, fc_parameters: dict, show_only_differences: bool):
         for widget in self.view_port.winfo_children():
@@ -87,6 +87,15 @@ class ParameterEditorTable(ScrollFrame):
             show_tooltip(label, tooltips[i])
 
         self.write_checkbutton_var = {}
+
+        # re-compute derived parameters because the fc_parameters values might have changed
+        if self.local_filesystem.configuration_steps:
+            self.variables['fc_parameters'] = fc_parameters
+            error_msg = self.local_filesystem.compute_parameters(selected_file,
+                                                                 self.local_filesystem.configuration_steps[selected_file],
+                                                                 'derived', self.variables)
+            if error_msg:
+                messagebox.showerror("Error in derived parameters", error_msg)
 
         if show_only_differences:
             self.__update_table(different_params, fc_parameters)
