@@ -172,13 +172,15 @@ class ParameterEditorTable(ScrollFrame):
         if self.current_file in self.local_filesystem.forced_parameters and \
            param_name in self.local_filesystem.forced_parameters[self.current_file]:
             present_as_forced = True
-            if param.value != self.local_filesystem.forced_parameters[self.current_file][param_name].value:
+            if not is_within_tolerance(param.value,
+                                       self.local_filesystem.forced_parameters[self.current_file][param_name].value):
                 param.value = self.local_filesystem.forced_parameters[self.current_file][param_name].value
                 self.at_least_one_param_edited = True
         if self.current_file in self.local_filesystem.derived_parameters and \
            param_name in self.local_filesystem.derived_parameters[self.current_file]:
             present_as_forced = True
-            if param.value != self.local_filesystem.derived_parameters[self.current_file][param_name].value:
+            if not is_within_tolerance(param.value,
+                                       self.local_filesystem.derived_parameters[self.current_file][param_name].value):
                 param.value = self.local_filesystem.derived_parameters[self.current_file][param_name].value
                 self.at_least_one_param_edited = True
 
