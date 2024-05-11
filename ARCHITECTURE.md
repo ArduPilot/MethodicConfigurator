@@ -98,13 +98,15 @@ It consists of four main components:
    1. [`backend_flight_controller.py`](MethodicConfigurator/backend_flight_controller.py)
    2. [`backend_mavftp.py`](MethodicConfigurator/backend_mavftp.py)
    3. [`param_ftp.py`](MethodicConfigurator/param_ftp.py)
+   4. [`battery_cell_voltages.py`](MethodicConfigurator/battery_cell_voltages.py)
 4. the tkinter frontend, which is the GUI the user interacts with
    1. [`frontend_tkinter_base.py`](MethodicConfigurator/frontend_tkinter_base.py)
    2. [`frontend_tkinter_connection_selection.py`](MethodicConfigurator/frontend_tkinter_connection_selection.py)
    3. [`frontend_tkinter_directory_selection.py`](MethodicConfigurator/frontend_tkinter_directory_selection.py)
    4. [`frontend_tkinter_component_editor.py`](MethodicConfigurator/frontend_tkinter_component_editor.py)
-   5. [`frontend_tkinter_parameter_editor.py`](MethodicConfigurator/frontend_tkinter_parameter_editor.py)
-   6. [`frontend_tkinter_parameter_editor_table.py`](MethodicConfigurator/frontend_tkinter_parameter_editor_table.py)
+   5. [`frontend_tkinter_component_editor_base.py`](MethodicConfigurator/frontend_tkinter_component_editor_base.py)
+   6. [`frontend_tkinter_parameter_editor.py`](MethodicConfigurator/frontend_tkinter_parameter_editor.py)
+   7. [`frontend_tkinter_parameter_editor_table.py`](MethodicConfigurator/frontend_tkinter_parameter_editor_table.py)
 
 ![Software Architecture diagram](images/Architecture.drawio.png)
 
