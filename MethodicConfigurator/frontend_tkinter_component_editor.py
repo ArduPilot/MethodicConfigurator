@@ -214,14 +214,14 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 if is_focusout_event:
                     entry.delete(0, tk.END)
                     entry.insert(0, BatteryCell.limit_min_voltage(chemistry))
-                raise VoltageTooLowError(f"is below the {chemistry} minimum limit of {
-                    BatteryCell.limit_min_voltage(chemistry)}")
+                raise VoltageTooLowError(f"is below the {chemistry} minimum limit of "
+                                         f"{BatteryCell.limit_min_voltage(chemistry)}")
             if voltage > BatteryCell.limit_max_voltage(chemistry):
                 if is_focusout_event:
                     entry.delete(0, tk.END)
                     entry.insert(0, BatteryCell.limit_max_voltage(chemistry))
-                raise VoltageTooHighError(f"is above the {chemistry} maximum limit of {
-                    BatteryCell.limit_max_voltage(chemistry)}")
+                raise VoltageTooHighError(f"is above the {chemistry} maximum limit of "
+                                          f"{BatteryCell.limit_max_voltage(chemistry)}")
         except (VoltageTooLowError, VoltageTooHighError) as e:
             if is_focusout_event:
                 show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
