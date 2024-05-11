@@ -27,7 +27,7 @@ def package_files(directory):
 
 
 package_data = [
-    'vehcle_examples/diatone_taycan_mxc/*',
+    'vehcle_templates/ArduCopter/diatone_taycan_mxc/*',
     # Add any other package_data requirements here
 ]
 

@@ -111,7 +111,7 @@ class ConfigurationSteps:
                         continue
                     result = eval(str(parameter_info["New Value"]), {}, variables)  # pylint: disable=eval-used
 
-                    # convert string text to string int or float
+                    # convert (combobox) string text to (parameter value) string int or float
                     if isinstance(result, str):
                         if parameter in variables['doc_dict']:
                             values = variables['doc_dict'][parameter]['values']
