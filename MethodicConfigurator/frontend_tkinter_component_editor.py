@@ -116,7 +116,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                            'Synthetic Current and Analog Voltage', 'INA239_SPI', 'EFI', 'AD7091R5', 'Scripting'],
             },
             ('ESC', 'FC Connection', 'Type'): {
-                "values": ['Main Out'] + serial_ports + can_ports,
+                "values": ['Main Out', 'AIO'] + serial_ports + can_ports,
             },
             ('ESC', 'FC Connection', 'Protocol'): {
                 # TODO get this list from MOT_PWM_TYPE pdef metadata pylint: disable=fixme
@@ -297,7 +297,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     def validate_data(self):  # pylint: disable=too-many-branches
         invalid_values = False
         duplicated_connections = False
-        fc_connection_types = set()
+        fc_serial_connection = {}
 
         for path, entry in self.entry_widgets.items():
             value = entry.get()
@@ -310,12 +310,16 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     invalid_values = True
                     continue
                 if 'FC Connection' in path and 'Type' in path:
-                    if value in fc_connection_types and value not in ["CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4"]:
+                    if value in fc_serial_connection and value not in ["CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4"]:
+                        if path[0] in ['Telemetry', 'RC Receiver'] and \
+                           fc_serial_connection[value] in ['Telemetry', 'RC Receiver']:
+                            entry.configure(style="comb_input_valid.TCombobox")
+                            continue  # Allow telemetry and RC Receiver connections using the same SERIAL port
                         show_error_message("Error", f"Duplicate FC connection type '{value}' for {'>'.join(list(path))}")
                         entry.configure(style="comb_input_invalid.TCombobox")
                         duplicated_connections = True
                         continue
-                    fc_connection_types.add(value)
+                    fc_serial_connection[value] = path[0]
                 entry.configure(style="comb_input_valid.TCombobox")
 
             if path in [('Battery', 'Specifications', 'Volt per cell max'), ('Battery', 'Specifications', 'Volt per cell low'),
