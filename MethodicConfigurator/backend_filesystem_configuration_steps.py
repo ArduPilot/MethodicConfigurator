@@ -97,41 +97,42 @@ class ConfigurationSteps:
         If the parameter is forced, it is added to the forced_parameters dictionary.
         If the parameter is derived, it is added to the derived_parameters dictionary.
         """
+        if parameter_type + '_parameters' not in file_info or not variables:
+            return ""
         destination = self.forced_parameters if parameter_type == 'forced' else self.derived_parameters
-        if parameter_type + '_parameters' in file_info and variables:
-            for parameter, parameter_info in file_info[parameter_type + '_parameters'].items():
-                try:
-                    if ('fc_parameters' in str(parameter_info["New Value"])) and ('fc_parameters' not in variables):
-                        error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
-                            f"parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?"
-                        if parameter_type == 'forced':
-                            logging_error(error_msg)
-                            return error_msg
-                        logging_warning(error_msg)
-                        continue
-                    result = eval(str(parameter_info["New Value"]), {}, variables)  # pylint: disable=eval-used
-
-                    # convert (combobox) string text to (parameter value) string int or float
-                    if isinstance(result, str):
-                        if parameter in variables['doc_dict']:
-                            values = variables['doc_dict'][parameter]['values']
-                            if values:
-                                result = next(key for key, value in values.items() if value == result)
-                            else:
-                                bitmasks = variables['doc_dict'][parameter]['Bitmask']
-                                if bitmasks:
-                                    result = 2**next(key for key, bitmask in bitmasks.items() if bitmask == result)
-
-                    if filename not in destination:
-                        destination[filename] = {}
-                    destination[filename][parameter] = Par(float(result), parameter_info["Change Reason"])
-                except (SyntaxError, NameError) as e:
+        for parameter, parameter_info in file_info[parameter_type + '_parameters'].items():  # pylint: disable=too-many-nested-blocks
+            try:
+                if ('fc_parameters' in str(parameter_info["New Value"])) and ('fc_parameters' not in variables):
+                    error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
+                        f"parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?"
                     if parameter_type == 'forced':
-                        error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
-                            f"parameter '{parameter}' could not be computed: {e}"
                         logging_error(error_msg)
                         return error_msg
                     logging_warning(error_msg)
+                    continue
+                result = eval(str(parameter_info["New Value"]), {}, variables)  # pylint: disable=eval-used
+
+                # convert (combobox) string text to (parameter value) string int or float
+                if isinstance(result, str):
+                    if parameter in variables['doc_dict']:
+                        values = variables['doc_dict'][parameter]['values']
+                        if values:
+                            result = next(key for key, value in values.items() if value == result)
+                        else:
+                            bitmasks = variables['doc_dict'][parameter]['Bitmask']
+                            if bitmasks:
+                                result = 2**next(key for key, bitmask in bitmasks.items() if bitmask == result)
+
+                if filename not in destination:
+                    destination[filename] = {}
+                destination[filename][parameter] = Par(float(result), parameter_info["Change Reason"])
+            except (SyntaxError, NameError) as e:
+                if parameter_type == 'forced':
+                    error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
+                        f"parameter '{parameter}' could not be computed: {e}"
+                    logging_error(error_msg)
+                    return error_msg
+                logging_warning(error_msg)
         return ""
 
     def auto_changed_by(self, selected_file: str):
