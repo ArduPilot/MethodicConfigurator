@@ -81,7 +81,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             entry.insert(0, version)
             entry.config(state="disabled")
 
-    def add_entry_or_combobox(self, value, entry_frame, path):  # pylint: disable=too-many-statements
+    def add_entry_or_combobox(self, value, entry_frame, path):
         serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
         can_ports = ["CAN1", "CAN2"]
         i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
