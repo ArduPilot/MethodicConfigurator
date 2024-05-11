@@ -103,7 +103,7 @@ class ConfigurationSteps:
                 try:
                     if ('fc_parameters' in str(parameter_info["New Value"])) and ('fc_parameters' not in variables):
                         error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
-                            f"parameter '{parameter}' could not be computed: 'fc_parameters' not found"
+                            f"parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?"
                         if parameter_type == 'forced':
                             logging_error(error_msg)
                             return error_msg

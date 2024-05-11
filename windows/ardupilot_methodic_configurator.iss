@@ -51,6 +51,7 @@ Source: "..\windows\MethodicConfigurator.ico"; DestDir: "{app}"; Flags: ignoreve
 Source: "..\MethodicConfigurator\ArduPilot_icon.png"; DestDir: "{app}\_internal"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduPilot_logo.png"; DestDir: "{app}\_internal"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduCopter_configuration_steps.json"; DestDir: "{app}\_internal"; Flags: ignoreversion
+Source: "..\MethodicConfigurator\ArduPlane_configuration_steps.json"; DestDir: "{app}\_internal"; Flags: ignoreversion
 Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
 
 [Dirs]

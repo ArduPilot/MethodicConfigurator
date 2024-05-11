@@ -342,8 +342,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
                 zipf.write(os_path.join(self.vehicle_dir, file_name), arcname=file_name)
 
             # Check for and add specific files if they exist
-            specific_files = ["00_default.param", "apm.pdef.xml", "ArduCopter_configuration_steps.json",
-                              "vehicle_components.json", "vehicle.jpg"]
+            specific_files = ["00_default.param", "apm.pdef.xml", self.configuration_steps_filename,
+                              "vehicle_components.json", "vehicle.jpg", "last_written_filename.txt"]
             for file_name in specific_files:
                 file_path = os_path.join(self.vehicle_dir, file_name)
                 if os_path.exists(file_path):
