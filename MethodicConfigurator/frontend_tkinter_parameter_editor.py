@@ -247,7 +247,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.annotate_params_into_files = tk.BooleanVar(value=False)
 
         # Create a Scrollable parameter editor table
-        self.parameter_editor_table = ParameterEditorTable(self.root, self.local_filesystem)
+        self.parameter_editor_table = ParameterEditorTable(self.root, self.local_filesystem, self)
         self.repopulate_parameter_table(self.current_file)
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 
@@ -452,7 +452,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Delete the parameter table and create a new one with the next file if available
         self.on_skip_click(force_focus_out_event=False)
 
-    # This function can recurse multiple time if there is a write error
+    # This function can recurse multiple times if there is a write error
     def write_selected_params(self, selected_params):
         logging_info("Writing %d selected %s parameters to flight controller...", len(selected_params), self.current_file)
 

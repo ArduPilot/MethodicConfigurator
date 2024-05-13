@@ -13,6 +13,7 @@ from sys import exit as sys_exit
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
+from tkinter import simpledialog
 
 from logging import debug as logging_debug
 from logging import info as logging_info
@@ -29,19 +30,21 @@ from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 #from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
 from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
 
+from MethodicConfigurator.annotate_params import Par
 
 
-class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
+class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, too-many-instance-attributes
     """
     A class to manage and display the parameter editor table within the GUI.
 
     This class inherits from ScrollFrame and is responsible for creating,
     managing, and updating the table that displays parameters for editing.
     """
-    def __init__(self, root, local_filesystem):
+    def __init__(self, root, local_filesystem, parameter_editor):
         super().__init__(root)
         self.root = root
         self.local_filesystem = local_filesystem
+        self.parameter_editor = parameter_editor
         self.background_color = root.cget("background")
         self.current_file = None
         self.write_checkbutton_var = {}
@@ -74,8 +77,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.current_file = selected_file
 
         # Create labels for table headers
-        headers = ["Parameter", "Current Value", "New Value", "Unit", "Write", "Change Reason"]
-        tooltips = ["Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long",
+        headers = ["-/+", "Parameter", "Current Value", "New Value", "Unit", "Write", "Change Reason"]
+        tooltips = ["Delete or add a parameter",
+                    "Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long",
                     "Current value on the flight controller ",
                     "New value from the above selected intermediate parameter file",
                     "Parameter Unit",
@@ -135,32 +139,44 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 doc_tooltip = param_metadata.get('doc_tooltip') if param_metadata else \
                     "No documentation available in apm.pdef.xml for this parameter"
 
-                column_0 = self.__create_parameter_name(param_name, param_metadata, doc_tooltip)
-                column_1 = self.__create_flightcontroller_value(fc_parameters, param_name, param_default, doc_tooltip)
-                column_2 = self.__create_new_value_entry(param_name, param, param_metadata,
+                column_0 = self.__create_delete_button(param_name)
+                column_1 = self.__create_parameter_name(param_name, param_metadata, doc_tooltip)
+                column_2 = self.__create_flightcontroller_value(fc_parameters, param_name, param_default, doc_tooltip)
+                column_3 = self.__create_new_value_entry(param_name, param, param_metadata,
                                                          param_default, doc_tooltip)
-                column_3 = self.__create_unit_label(param_metadata)
-                column_4 = self.__create_write_write_checkbutton(param_name)
-                column_5 = self.__create_change_reason_entry(param_name, param, column_2)
+                column_4 = self.__create_unit_label(param_metadata)
+                column_5 = self.__create_write_write_checkbutton(param_name)
+                column_6 = self.__create_change_reason_entry(param_name, param, column_3)
 
                 column_0.grid(row=i, column=0, sticky="w", padx=0)
-                column_1.grid(row=i, column=1, sticky="e", padx=0)
+                column_1.grid(row=i, column=1, sticky="w", padx=0)
                 column_2.grid(row=i, column=2, sticky="e", padx=0)
                 column_3.grid(row=i, column=3, sticky="e", padx=0)
                 column_4.grid(row=i, column=4, sticky="e", padx=0)
-                column_5.grid(row=i, column=5, sticky="ew", padx=(0, 5))
+                column_5.grid(row=i, column=5, sticky="e", padx=0)
+                column_6.grid(row=i, column=6, sticky="ew", padx=(0, 5))
+
+            # Add the "Add" button at the bottom of the table
+            add_button = tk.Button(self.view_port, text="Add", command=lambda: self.__on_parameter_add(fc_parameters))
+            add_button.grid(row=len(params)+2, column=0, sticky="w", padx=0)
+
 
         except KeyError as e:
             logging_critical("Parameter %s not found in the %s file: %s", param_name, self.current_file, e, exc_info=True)
             sys_exit(1)
 
         # Configure the table_frame to stretch columns
-        self.view_port.columnconfigure(0, weight=0, minsize=120) # Parameter name
-        self.view_port.columnconfigure(1, weight=0) # Current Value
-        self.view_port.columnconfigure(2, weight=0) # New Value
-        self.view_port.columnconfigure(3, weight=0) # Units
-        self.view_port.columnconfigure(4, weight=0) # write to FC
-        self.view_port.columnconfigure(5, weight=1) # Change Reason
+        self.view_port.columnconfigure(0, weight=0) # Delete and Add buttons
+        self.view_port.columnconfigure(1, weight=0, minsize=120) # Parameter name
+        self.view_port.columnconfigure(2, weight=0) # Current Value
+        self.view_port.columnconfigure(3, weight=0) # New Value
+        self.view_port.columnconfigure(4, weight=0) # Units
+        self.view_port.columnconfigure(5, weight=0) # write to FC
+        self.view_port.columnconfigure(6, weight=1) # Change Reason
+
+    def __create_delete_button(self, param_name):
+        delete_button = tk.Button(self.view_port, text="Del", command=lambda: self.__on_parameter_delete(param_name))
+        return delete_button
 
     def __create_parameter_name(self, param_name, param_metadata, doc_tooltip):
         is_calibration = param_metadata.get('Calibration', False) if param_metadata else False
@@ -336,6 +352,38 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                                      self.__on_parameter_change_reason_change(event, current_file, param_name))
         show_tooltip(change_reason_entry, f'Reason why {param_name} should change to {new_value_entry.get()}')
         return change_reason_entry
+
+    def __on_parameter_delete(self, param_name):
+        if messagebox.askyesno(f"{self.current_file}", f"Are you sure you want to delete the {param_name} parameter?"):
+            del self.local_filesystem.file_parameters[self.current_file][param_name]
+            self.at_least_one_param_edited = True
+            self.parameter_editor.repopulate_parameter_table(self.current_file)
+
+    def __on_parameter_add(self, fc_parameters):
+        # Prompt the user for a parameter name
+        param_name = simpledialog.askstring("Enter the parameter name:", "Parameter Name")
+        if param_name:
+            if param_name in self.local_filesystem.file_parameters[self.current_file]:
+                messagebox.showerror("Parameter already exists.")
+            else:
+                if fc_parameters:
+                    if param_name in fc_parameters:
+                        self.local_filesystem.file_parameters[self.current_file][param_name] = Par(0, "")
+                        self.at_least_one_param_edited = True
+                        self.parameter_editor.repopulate_parameter_table(self.current_file)
+                    else:
+                        messagebox.showerror("Invalid parameter name.", "Parameter name not found in the flight controller.")
+                elif self.local_filesystem.doc_dict:
+                    if param_name in self.local_filesystem.doc_dict:
+                        self.local_filesystem.file_parameters[self.current_file][param_name] = Par(0, "")
+                        self.at_least_one_param_edited = True
+                        self.parameter_editor.repopulate_parameter_table(self.current_file)
+                    else:
+                        messagebox.showerror("Invalid parameter name.", "Parameter name not found in the apm.pdef.xml file.")
+                else:
+                    messagebox.showerror("Operation not possible",
+                                         "Can not add parameter when no FC is connected and no apm.pdef.xml file exists.")
+
 
     def __on_parameter_value_change(self, event, current_file, param_name):
         # Get the new value from the Entry widget
