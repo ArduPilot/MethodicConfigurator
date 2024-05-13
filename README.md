@@ -18,24 +18,24 @@ Usage is detailed in the [USERMANUAL.md](USERMANUAL.md) file
 
 ## MS Windows Installation
 
-Download the [latest MethodicConfiguratorSetup-x.x.x.exe installer file](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/latest). Just install it and you do not need any other steps.
-
-Otherwise, install [git](https://git-scm.com/) and [python](https://www.python.org/downloads/). Then do:
-
-```bash
-git clone https://github.com/ArduPilot/MethodicConfigurator.git
-cd MethodicConfigurator
-.\install_windows.bat
-```
+Download the [latest MethodicConfiguratorSetup-x.x.x.exe installer file](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/latest).
 
 ## Linux Installation
+
+Install [python pip](https://pypi.org/project/pip/). Then do:
+
+```bash
+pip install -U MethodicConfigurator
+```
+
+## MacOS Installation
 
 Install [git](https://git-scm.com/) and [python](https://www.python.org/downloads/). Then do:
 
 ```bash
 git clone https://github.com/ArduPilot/MethodicConfigurator.git
 cd MethodicConfigurator
-./install_linux.sh
+./install_macos.sh
 ```
 
 ## Support and Contributing
