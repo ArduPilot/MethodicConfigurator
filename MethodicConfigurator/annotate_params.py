@@ -239,8 +239,8 @@ class Par:
     @staticmethod
     def print_out(formatted_params: List[str], name: str) -> None:
         """
-        Prints out the contents of the provided list.
-        If the list is too large, print only the ones that fit on screen and
+        Print out the contents of the provided list.
+        If the list is too large, print only the ones that fit on the screen and
         wait for user input to continue.
 
         Parameters:
