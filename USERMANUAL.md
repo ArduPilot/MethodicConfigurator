@@ -3,7 +3,7 @@
 ## Overview
 
 Amilcar Lucas's - ArduPilot Methodic Configurator is a Python tool designed to simplify the configuration of ArduPilot drones.
-It provides a graphical user interface (GUI) for managing, editing and visualizing drone parameter files, as well as writing parameters to the vehicle.
+It provides a graphical user interface (GUI) for managing, editing and visualizing drone parameter files, as well as uploading parameters to the vehicle.
 It automates the tasks described in the [How to methodically tune (almost) any multicopter using ArduCopter forum Blog post](https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/1)
 
 ## Usage
@@ -127,13 +127,13 @@ Here you sequentially configure the parameters of your flight controller to meet
 - The first column is the ArduPilot parameter name used in that row.
   - ReadOnly parameters are presented on a *red background*🟥, they should not be present in an intermediate configuration file because under normal conditions they can not be changed
   - Sensor calibration parameters are presented on a *yellow background*🟨, they are vehicle-instance dependent and can NOT be reused between similar vehicles
-- The current parameter value read from your FC is in the `Current Value` column.
+- The current parameter value downloaded from your FC is in the `Current Value` column.
   - Not available parameter values are presented as `N/A` on an *orange background*🟧
   - Parameters that have the default parameter value are presented on a *light blue background* 🟦
 - The new value is the value in the intermediate file and will be written to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `example_vehicle` directory are just examples.
 - **In the parameter table, you can edit the `New Value` and `Change Reason` entries for each parameter.**
 - **You MUST edit the `Change Reason` so that other users understand why you changed the parameter to that particular `new value`**
-- Check the `Write` checkbox to select parameters to be written to the flight controller
+- Check the `Upload` checkbox to select parameters to be written to the flight controller
 - **Hover over the labels to see tooltips with additional information.**
 - The entire ArduPilot official parameter documentation is available on the tooltip, no need to use a browser to search for it.
 
@@ -142,27 +142,27 @@ Here you sequentially configure the parameters of your flight controller to meet
 - You can focus on the changed parameters by ticking the "See only changed parameters" checkbox
 - Usually, you want to see all parameters and look at their mouse-over tooltips to decide if and how you want to change them
 
-#### 7. Writing Parameters to the Flight Controller
+#### 7. Uploading Parameters to the Flight Controller
 
 - You can also jump to a particular file using the Combobox as explained in [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file)
-- **After editing parameters, click the `Write selected params to FC, and advance to next param file` button to write the (`Write` checkbox) selected parameters to the flight controller.**
-- All parameter's `New Value` and `Change Reason` will be written to the current intermediate parameter file, irrespective of the `Write` checkboxes
+- **After editing parameters, click the `Upload selected params to FC, and advance to next param file` button to upload the (`Upload` checkbox) selected parameters to the flight controller.**
+- All parameter's `New Value` and `Change Reason` will be written to the current intermediate parameter file, irrespective of the `Upload` checkboxes
 - The application will then:
-  - write the selected and changed parameters to the flight controller
+  - upload the selected and changed parameters to the flight controller
   - reset the flight controller if necessary for the new parameter values to take effect
-  - write the parameters again, because before the reset some parameters might have been not visible/writeable
-  - read all the parameters from the flight controller, and validate their value
-    - if some parameters fail to write correctly it asks the user if he wants to retry
+  - upload the parameters again, because before the reset some parameters might have been not visible/uploadable
+  - download all the parameters from the flight controller, and validate their value
+    - if some parameters fail to upload correctly it asks the user if he wants to retry
 - **The application will then advance to the next parameter file.**
 
 #### 8. Skipping to the Next Parameter File (optional)
 
-- If you want to skip the current parameter file without writing any changes, click the `Skip parameter file` button.
+- If you want to skip the current parameter file without uploading any changes, click the `Skip parameter file` button.
 
 #### 9. Completing the Configuration Process
 
 Once all the intermediate parameter files have been processed, the ArduPilot Methodic Configurator will display a summary message box.
-In other words when the last available intermediate parameter file is selected (see [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file)) and either `Write selected params to FC, and advance to next param file` or `Skip parameter file` button is pressed.
+In other words when the last available intermediate parameter file is selected (see [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file)) and either `Upload selected params to FC, and advance to next param file` or `Skip parameter file` button is pressed.
 This message box provides a comprehensive overview of the configuration process, including the number of parameters that were kept at their default values, the number of non-default read-only parameters that were ignored, and the number of non-default writable parameters that were updated.
 
 ![Configuration summary message box](images/Last_parameter_file_processed.png)
@@ -227,7 +227,7 @@ The file is first searched in the selected vehicle-specific directory, and if no
 The only version available on the internet is the latest 4.6.0-DEV.
 So until that changes you need to generate this file yourself for the firmware version that you want to use.
 
-The tool uses these files to manage the configuration process, allowing users to select and edit parameters, and to write the changes back to the flight controller. The intermediate parameter files are the primary focus of the user interface, as they contain the parameters that the user can modify. The documentation files provide context and guidance for each parameter.
+The tool uses these files to manage the configuration process, allowing users to select and edit parameters, and upload the changes back to the flight controller. The intermediate parameter files are the primary focus of the user interface, as they contain the parameters that the user can modify. The documentation files provide context and guidance for each parameter.
 
 ## Command Line Usage
 

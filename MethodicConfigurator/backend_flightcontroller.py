@@ -302,7 +302,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
             return str(e)
         return ""
 
-    def read_params(self, progress_callback=None) -> Dict[str, float]:
+    def download_params(self, progress_callback=None) -> Dict[str, float]:
         """
         Requests all flight controller parameters from a MAVLink connection.
 
@@ -324,14 +324,14 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         if self.__capabilities:
             if not (self.__capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP):  # pylint: disable=superfluous-parens
                 logging_info("MAVFTP is supported by the %s flight controller", self.comport.device)
-                # parameters, _defaults = self.read_params_via_mavftp(progress_callback)
+                # parameters, _defaults = self.download_params_via_mavftp(progress_callback)
                 return {}  # parameters
 
         logging_info("MAVFTP is not supported by the %s flight controller, fallback to MAVLink", self.comport.device)
         # MAVFTP is not supported, fall back to MAVLink
-        return self.__read_params_via_mavlink(progress_callback)
+        return self.__download_params_via_mavlink(progress_callback)
 
-    def __read_params_via_mavlink(self, progress_callback=None) -> Dict[str, float]:
+    def __download_params_via_mavlink(self, progress_callback=None) -> Dict[str, float]:
         logging_debug("Will fetch all parameters from the %s flight controller", self.comport.device)
         # Request all parameters
         self.master.mav.param_request_list_send(

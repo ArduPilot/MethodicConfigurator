@@ -178,7 +178,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.annotate_params_into_files = None
         self.parameter_editor_table = None
         self.reset_progress_window = None
-        self.param_read_progress_window = None
+        self.param_download_progress_window = None
         self.tempcal_imu_progress_window = None
 
         self.root.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version + " - Parameter editor")
@@ -194,7 +194,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.__create_parameter_area_widgets()
 
-        self.root.after(50, self.read_flight_controller_parameters(reread=False)) # 50 milliseconds
+        self.root.after(50, self.download_flight_controller_parameters(redownload=False)) # 50 milliseconds
         self.root.after(50, self.__please_read_the_docs())
         self.root.mainloop()
 
@@ -234,7 +234,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # Create a new frame inside the config_subframe for the flight controller connection selection label and combobox
         csw = ConnectionSelectionWidgets(self, config_subframe, self.flight_controller,
-                                         destroy_parent_on_connect=False, read_params_on_connect=True)
+                                         destroy_parent_on_connect=False, download_params_on_connect=True)
         csw.container_frame.pack(side=tk.RIGHT, fill="x", expand=False, padx=(6, 4))
 
         image_label = BaseWindow.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
@@ -276,17 +276,17 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                      "The files will be bigger, but all the existing parameter documentation will be included inside")
 
         # Create write button
-        write_selected_button = tk.Button(buttons_frame, text="Write selected params to FC, and advance to next param file",
-                                          command=self.on_write_selected_click)
+        write_selected_button = tk.Button(buttons_frame, text="Upload selected params to FC, and advance to next param file",
+                                          command=self.on_upload_selected_click)
         write_selected_button.pack(side=tk.LEFT, padx=(8, 8)) # Add padding on both sides of the write selected button
-        show_tooltip(write_selected_button, "Write selected parameters to the flight controller and advance to the next "
+        show_tooltip(write_selected_button, "Upload selected parameters to the flight controller and advance to the next "
                      "intermediate parameter file\nIf changes have been made to the current file it will ask if you want "
-                     "to save them\nIt will reset the FC if necessary, re-read all parameters and validate their value")
+                     "to save them\nIt will reset the FC if necessary, re-download all parameters and validate their value")
 
         # Create skip button
         skip_button = tk.Button(buttons_frame, text="Skip parameter file", command=self.on_skip_click)
         skip_button.pack(side=tk.RIGHT, padx=(8, 8)) # Add right padding to the skip button
-        show_tooltip(skip_button, "Skip to the next intermediate parameter file without writing any changes to the flight "
+        show_tooltip(skip_button, "Skip to the next intermediate parameter file without uploading any changes to the flight "
                      "controller\nIf changes have been made to the current file it will ask if you want to save them")
 
     @staticmethod
@@ -348,14 +348,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.documentation_frame.update_documentation_labels(selected_file)
             self.repopulate_parameter_table(selected_file)
 
-    def read_flight_controller_parameters(self, reread: bool = False):
-        self.param_read_progress_window = ProgressWindow(self.root, ("Re-r" if reread else "R") + "eading FC parameters",
-                                                         "Read {} of {} parameters")
+    def download_flight_controller_parameters(self, redownload: bool = False):
+        self.param_download_progress_window = ProgressWindow(self.root, ("Re-d" if redownload else "D") + \
+                                                             "ownloading FC parameters", "Downloaded {} of {} parameters")
         # Download all parameters from the flight controller
-        self.flight_controller.fc_parameters = self.flight_controller.read_params(
-            self.param_read_progress_window.update_progress_bar)
-        self.param_read_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
-        if not reread:
+        self.flight_controller.fc_parameters = self.flight_controller.download_params(
+            self.param_download_progress_window.update_progress_bar)
+        self.param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
+        if not redownload:
             self.on_param_file_combobox_change(None, True) # the initial param read will trigger a table update
 
     def repopulate_parameter_table(self, selected_file):
@@ -383,7 +383,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def on_show_only_changed_checkbox_change(self):
         self.repopulate_parameter_table(self.current_file)
 
-    def write_params_that_require_reset(self, selected_params: dict):
+    def upload_params_that_require_reset(self, selected_params: dict):
         """
         Write the selected parameters to the flight controller that require a reset.
 
@@ -435,14 +435,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.flight_controller.reset_and_reconnect(self.reset_progress_window.update_progress_bar)
             self.reset_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
 
-    def on_write_selected_click(self):
+    def on_upload_selected_click(self):
         self.parameter_editor_table.generate_edit_widgets_focus_out()
 
         self.write_changes_to_intermediate_parameter_file()
         selected_params = self.parameter_editor_table.get_write_selected_params(self.current_file)
         if selected_params:
             if hasattr(self.flight_controller, 'fc_parameters') and self.flight_controller.fc_parameters:
-                self.write_selected_params(selected_params)
+                self.upload_selected_params(selected_params)
             else:
                 logging_warning("No parameters were yet read from the flight controller, will not write any parameter")
                 messagebox.showwarning("Will not write any parameter", "No flight controller connection")
@@ -453,10 +453,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.on_skip_click(force_focus_out_event=False)
 
     # This function can recurse multiple times if there is a write error
-    def write_selected_params(self, selected_params):
-        logging_info("Writing %d selected %s parameters to flight controller...", len(selected_params), self.current_file)
+    def upload_selected_params(self, selected_params):
+        logging_info("Uploading %d selected %s parameters to flight controller...", len(selected_params), self.current_file)
 
-        self.write_params_that_require_reset(selected_params)
+        self.upload_params_that_require_reset(selected_params)
 
         # Write each selected parameter to the flight controller
         for param_name, param in selected_params.items():
@@ -471,9 +471,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 messagebox.showerror("ArduPilot methodic configurator", f"Failed to set parameter {param_name}: {e}")
 
         if self.at_least_one_changed_parameter_written:
-            # Re-download all parameters, in case one of them changed, and validate that all writes were successful
-            self.read_flight_controller_parameters(True)
-            logging_info("Re-read all parameters from the flight controller")
+            # Re-download all parameters, in case one of them changed, and validate that all uploads were successful
+            self.download_flight_controller_parameters(True)
+            logging_info("Re-download all parameters from the flight controller")
 
             # Validate that the read parameters are the same as the ones in the current_file
             param_write_error = []
@@ -493,7 +493,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 if messagebox.askretrycancel("Parameter write error",
                                              "Failed to write the following parameters to the flight controller:\n"
                                              f"{(', ').join(param_write_error)}"):
-                    self.write_selected_params(selected_params)
+                    self.upload_selected_params(selected_params)
             else:
                 logging_info("All parameters written to the flight controller successfully")
         self.local_filesystem.write_last_written_filename(self.current_file)

@@ -89,11 +89,11 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
     allowing the user to select a connection, and handling the connection process.
     """
     def __init__(self, parent, parent_frame, flight_controller: FlightController,  # pylint: disable=too-many-arguments
-                 destroy_parent_on_connect: bool, read_params_on_connect: bool):
+                 destroy_parent_on_connect: bool, download_params_on_connect: bool):
         self.parent = parent
         self.flight_controller = flight_controller
         self.destroy_parent_on_connect = destroy_parent_on_connect
-        self.read_params_on_connect = read_params_on_connect
+        self.download_params_on_connect = download_params_on_connect
         self.previous_selection = flight_controller.comport.device if hasattr(self.flight_controller.comport, "device") \
             else None
         self.connection_progress_window = None
@@ -158,8 +158,8 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
         self.previous_selection = self.flight_controller.comport.device
         if self.destroy_parent_on_connect:
             self.parent.root.destroy()
-        if self.read_params_on_connect and hasattr(self.parent, "read_flight_controller_parameters"):
-            self.parent.read_flight_controller_parameters(reread=False)
+        if self.download_params_on_connect and hasattr(self.parent, "download_flight_controller_parameters"):
+            self.parent.download_flight_controller_parameters(redownload=False)
         return False
 
 
@@ -206,7 +206,7 @@ class ConnectionSelectionWindow(BaseWindow):
         option2_label.pack(expand=False, fill=tk.X, padx=6)
         self.connection_selection_widgets = ConnectionSelectionWidgets(self, option2_label_frame, flight_controller,
                                                                        destroy_parent_on_connect=True,
-                                                                       read_params_on_connect=False)
+                                                                       download_params_on_connect=False)
         self.connection_selection_widgets.container_frame.pack(expand=True, fill=tk.X, padx=80, pady=6, anchor=tk.CENTER)
 
         # Option 3 - Skip FC connection, just edit the .param files on disk

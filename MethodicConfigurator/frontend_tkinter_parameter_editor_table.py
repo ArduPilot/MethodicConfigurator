@@ -77,13 +77,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.current_file = selected_file
 
         # Create labels for table headers
-        headers = ["-/+", "Parameter", "Current Value", "New Value", "Unit", "Write", "Change Reason"]
+        headers = ["-/+", "Parameter", "Current Value", "New Value", "Unit", "Upload", "Change Reason"]
         tooltips = ["Delete or add a parameter",
                     "Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long",
                     "Current value on the flight controller ",
                     "New value from the above selected intermediate parameter file",
                     "Parameter Unit",
-                    "When selected, write the new value to the flight controller",
+                    "When selected, upload the new value to the flight controller",
                     "Reason why respective parameter changed"]
         for i, header in enumerate(headers):
             label = tk.Label(self.view_port, text=header)
@@ -324,7 +324,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.write_checkbutton_var[param_name] = tk.BooleanVar(value=True) # Default to selected
         write_write_checkbutton = ttk.Checkbutton(self.view_port,
                                                           variable=self.write_checkbutton_var[param_name])
-        show_tooltip(write_write_checkbutton, f'When selected write {param_name} new value to the flight controller')
+        show_tooltip(write_write_checkbutton, f'When selected upload {param_name} new value to the flight controller')
         return write_write_checkbutton
 
     def __create_change_reason_entry(self, param_name, param, new_value_entry):

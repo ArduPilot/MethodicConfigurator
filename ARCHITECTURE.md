@@ -12,7 +12,7 @@ This list of functionalities provides a comprehensive overview of the software's
 
 - The software must allow users to view and manage drone parameters.
 - Users should be able to select an intermediate parameter file from a list of available files.
-- The software must display a table of parameters with columns for the parameter name, current value, new value, unit, write to flight controller, and change reason.
+- The software must display a table of parameters with columns for the parameter name, current value, new value, unit, upload to flight controller, and change reason.
 - The software must validate the new parameter values and handle out-of-bounds values gracefully, reverting to the old value if the user chooses not to use the new value.
 - The software must save parameter changes to both the flight controller and the intermediate parameter files
 
@@ -21,18 +21,18 @@ This list of functionalities provides a comprehensive overview of the software's
 - The software must support communication with the drone's flight controller using MAVlink and FTP over MAVLink protocols.
 - The software must handle the encoding and decoding of messages according to the specified protocols.
 - The software must allow users to tune drone parameters.
-- Users should be able to write selected parameters to the flight controller and advance to the next intermediate parameter file.
+- Users should be able to upload selected parameters to the flight controller and advance to the next intermediate parameter file.
 - The software must provide a mechanism to reset the ArduPilot if required by the changes made to the parameters.
-- The software must make sure the parameter change communication worked by re-reading and validating that the parameter changed on the vehicle.
+- The software must make sure the parameter change communication worked by re-downloading and validating that the parameter changed on the vehicle.
 
 ### 4. User Interface
 
 - The software must provide a user-friendly interface with clear navigation and controls.
 - The interface must be responsive and adapt to different screen sizes and resolutions.
 - Users should be able to toggle between showing only changed parameters and showing all parameters.
-- The software must provide feedback to the user, such as success or error messages, when performing actions like writing parameters to the flight controller.
-- Users should be able to skip to the next parameter file without writing changes.
-- The software must ensure that all changes made to entry widgets are processed before proceeding with other actions, such as writing parameters to the flight controller.
+- The software must provide feedback to the user, such as success or error messages, when performing actions like uploading parameters to the flight controller.
+- Users should be able to skip to the next parameter file without uploading changes.
+- The software must ensure that all changes made to entry widgets are processed before proceeding with other actions, such as uploading parameters to the flight controller.
 - Read-only parameters are displayed in red, Sensor Calibrations are displayed in yellow and non-existing parameters in blue
 - Users should be able to edit the new value for each parameter directly in the table.
 - Users should be able to edit the reason changed for each parameter directly in the table.

@@ -45,9 +45,9 @@ def argument_parser():
                                      'parameters. The GUI reads intermediate parameter files from a directory and '
                                      'displays their parameters in a table. Each row displays the parameter name, '
                                      'its current value on the flight controller, its new value from the selected '
-                                     'intermediate parameter file, and an "write" checkbox. The GUI includes "Write '
-                                     'Selected to FC" and "Skip" buttons at the bottom. '
-                                     'When "Write Selected to FC" is clicked, it writes the selected parameters to the '
+                                     'intermediate parameter file, and an "Upload" checkbox. The GUI includes "Upload '
+                                     'selected params to FC" and "Skip" buttons at the bottom. '
+                                     'When "Upload Selected to FC" is clicked, it writes the selected parameters to the '
                                      'flight controller. '
                                      'When "Skip" is pressed, it skips to the next intermediate parameter file. '
                                      'The process gets repeated for each intermediate parameter file.')

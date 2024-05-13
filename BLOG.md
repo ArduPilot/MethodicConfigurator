@@ -159,7 +159,7 @@ Start Mission Planner on the PC and [connect to the vehicle](https://ardupilot.o
 
 For this procedure follow these steps:
 
-1. Download the [02_imu_temperature_calibration_setup.param parameter file](diatone_taycan_mxc/params/02_imu_temperature_calibration_setup.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the flight controller [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+1. Download the [02_imu_temperature_calibration_setup.param parameter file](diatone_taycan_mxc/params/02_imu_temperature_calibration_setup.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the flight controller [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 1. Power off the flight controller and remove the battery.
 1. Place the flight controller **without battery** in a freezer capable of reaching your vehicle's minimum expected operation temperature (-18°C in our case).
 1. Once the flight controller is completely cooled down to its minimum expected operation temperature, take it out and power it. **Do not move the flight controller** for one or two hours.
@@ -189,7 +189,7 @@ After the calibration, temperature changes will cause no significant acceleromet
 ## 2.3 Configure flight controller orientation
 
 Follow [mounting the autopilot](https://ardupilot.org/copter/docs/common-mounting-the-flight-controller.html) documentation to determine the correct value of the [AHRS_ORIENTATION](https://ardupilot.org/copter/docs/parameters.html#ahrs-orientation) parameter.
-For its configuration, we created a [04_board_orientation.param parameter file](diatone_taycan_mxc/params/04_board_orientation.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+For its configuration, we created a [04_board_orientation.param parameter file](diatone_taycan_mxc/params/04_board_orientation.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 ## 2.4 Configure the RC receiver
 
@@ -204,18 +204,18 @@ Once the RC transmitter is running EdgeTx you can load the [Taycan MX-C EdgeTX c
 Or simply copy only the settings that you require, EdgeTX companion is very flexible.
 
 In our setup, we used an advanced RC receiver that cannot be fully configured using Mission Planner's `SETUP >> Mandatory Hardware >> Radio Calibration` menu.
-For its configuration, we created a [05_remote_controller.param parameter file](diatone_taycan_mxc/params/05_remote_controller.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+For its configuration, we created a [05_remote_controller.param parameter file](diatone_taycan_mxc/params/05_remote_controller.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 ## 2.5 Configure telemetry
 
 The RC transmitter we used has a big color display where telemetry data is displayed, nevertheless, we use telemetry data for real-time flight monitoring with Mission Planner or QGroundControl.
-For its configuration, we created a [06_telemetry.param parameter file](diatone_taycan_mxc/params/06_telemetry.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+For its configuration, we created a [06_telemetry.param parameter file](diatone_taycan_mxc/params/06_telemetry.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 Once this is operating we no longer need the USB connection to the vehicle.
 
 ## 2.6 Configure the ESC
 
 In our setup, we used a [Bi-directional Dshot ESC](https://ardupilot.org/copter/docs/common-dshot-escs.html) that cannot be fully configured using Mission Planner's `SETUP >> Mandatory Hardware >> Servo Output` menu.
-For its configuration, we created a [07_esc.param parameter file](diatone_taycan_mxc/params/07_esc.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+For its configuration, we created a [07_esc.param parameter file](diatone_taycan_mxc/params/07_esc.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 The step above configured ESC communication pass-thru.
 In our vehicle, we use *BLHeli_32 ARM* ESC firmware.
@@ -230,19 +230,19 @@ Configure the parameters to match the figures below.
 ## 2.7 Configure the primary battery monitor
 
 In our setup, the battery voltage is measured directly at the flight controller `Vbat` pin and the current is measured at the 4-in1 ESC `Curr` pin.
-For its configuration, we created a [08_batt1.param parameter file](diatone_taycan_mxc/params/08_batt1.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+For its configuration, we created a [08_batt1.param parameter file](diatone_taycan_mxc/params/08_batt1.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 ## 2.8 Configure the redundant (secondary) battery monitor
 
 To be on the safe side we used a Holybro PM02 as a redundant secondary voltage and current monitor.
 One other option would be the [CBU 2-8s DroneCAN Battery Monitor and Current Sensor](https://www.cbunmanned.com/store).
-For its configuration, we created a [09_batt2.param parameter file](diatone_taycan_mxc/params/09_batt2.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+For its configuration, we created a [09_batt2.param parameter file](diatone_taycan_mxc/params/09_batt2.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 ## 2.9 Configure the GNSS receiver(s)
 
 GNSS receivers very often contain a magnetometer (compass) sensor.
 So they need to be configured before proceeding to the next step.
-For its configuration, we created a [10_gnss.param parameter file](diatone_taycan_mxc/params/10_gnss.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+For its configuration, we created a [10_gnss.param parameter file](diatone_taycan_mxc/params/10_gnss.param). Download it to your PC, edit it with a text editor and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 ## 2.10 Configure "Mandatory Hardware" Parameters
 
@@ -254,7 +254,7 @@ This relates to the `FRAME_CLASS` and `FRAME_TYPE` parameters.
 
 ### [Initial Tune Parameters](https://ardupilot.org/copter/docs/setting-up-for-tuning.html)
 
-Answer the questions that Mission Planner asks, select *Add suggested settings for 4.0 and up (Battery failsafe and Fence)* and write the calculated parameters to the flight controller by pressing `Write to FC`.
+Answer the questions that Mission Planner asks, select *Add suggested settings for 4.0 and up (Battery failsafe and Fence)* and upload the calculated parameters to the flight controller by pressing `Upload to FC`.
 
 ![MP Initial Tune Parameters questions](mp_initial_parameters.png)
 
@@ -330,13 +330,13 @@ But that is wrong, **there are still steps to do before the first flight**.
 
 ## 2.11 General configuration
 
-The next configuration steps are exclusively done by editing intermediate parameter configuration files and in Mission Planner while connected to the vehicle [selecting *Compare Params*, reviewing the changes and pressing *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+The next configuration steps are exclusively done by editing intermediate parameter configuration files and in Mission Planner while connected to the vehicle [selecting *Compare Params*, reviewing the changes and pressing *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 In our case, a 3'' small drone, the props are expected to rotate at speeds higher than 400Hz and we have an STM32 H7 family processor.
 So the scheduler loop rate should be increased to 800Hz.
 For the inflight MagFit step, we must activate [Lua scripting](https://ardupilot.org/copter/docs/common-lua-scripts.html).
 
-Download the [12_general_configuration.param parameter file](diatone_taycan_mxc/params/12_general_configuration.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [12_general_configuration.param parameter file](diatone_taycan_mxc/params/12_general_configuration.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 ## 2.12 ArduPilot Hardware Report
 
@@ -354,7 +354,7 @@ If it doesn't, go back and perform the missing calibration(s).
 
 ![MP LOG_BITMASK parameter](mp_logging_bitmask.png)
 
-Download the [13_logging.param parameter file](diatone_taycan_mxc/params/13_logging.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [13_logging.param parameter file](diatone_taycan_mxc/params/13_logging.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 The table below explains which bit is responsible for which `.bin` dataflash log message(s):
 
@@ -511,12 +511,12 @@ Larger vehicles usually require higher than default PID rate values.
 
 Read and follow [ArduPilot's Remote ID setup instructions](https://ardupilot.org/copter/docs/common-remoteid.html).
 You might have to [build OpenDroneID firmware for production](https://ardupilot.org/dev/docs/opendroneid.html).
-Edit the `16_remote_id.param` file with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Edit the `16_remote_id.param` file with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 ## 2.17 Notch filters setup
 
 Configure the gyro noise reduction notch filters with a estimation of the operation parameters as described on the [17_notch_filter_setup.param parameter file](diatone_taycan_mxc/params/17_notch_filter_setup.param).
-Edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 The estimation will be improved after the first flight.
 
 
@@ -547,7 +547,7 @@ Below is the configuration we used.
 
 ![Filter Configuration](filter_konfiguration.png)
 
-In our case, we got the [18_notch_filter_results.param parameter file](diatone_taycan_mxc/params/18_notch_filter_results.param). Edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+In our case, we got the [18_notch_filter_results.param parameter file](diatone_taycan_mxc/params/18_notch_filter_results.param). Edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 Load the `.bin` log from the first flight onto the [online Ardupilot Log Viewer](https://plotbeta.ardupilot.org/) or into Mission Planner.
 Take a look at the `VIBE.VibeX`, `VIBE.VibeY`, `VIBE.VibeZ` graphs they [all should be below 15](https://ardupilot.org/copter/docs/common-measuring-vibration.html)
@@ -566,7 +566,7 @@ Now upload the `.bin` log to the [Hardware-Report Tool](https://firmware.ardupil
 
 ## 3.2 Configure the throttle controller
 
-Use the `.bin` log from the first flight to set the parameters described on the `19_throttle_controller.param` file. Edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Use the `.bin` log from the first flight to set the parameters described on the `19_throttle_controller.param` file. Edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 # 4. Second flight: MagFit
 
@@ -578,7 +578,7 @@ This flight will be used to calibrate the compass during a realistic operation s
 Follow these steps:
 
 1. Download the `copter-magfit-helper.lua` and `advance-wp.lua` scripts from [Scripted MagFit flightpath generation](https://discuss.ardupilot.org/t/scripted-magfit-flightpath-generation/97536) and put them on the micro SDCard's `APM/scripts` folder
-1. Activate MagFit by downloading the [22_inflight_magnetometer_fit_setup.param parameter file](diatone_taycan_mxc/params/22_inflight_magnetometer_fit_setup.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list)
+1. Activate MagFit by downloading the [22_inflight_magnetometer_fit_setup.param parameter file](diatone_taycan_mxc/params/22_inflight_magnetometer_fit_setup.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Uploadd Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list)
 1. Perform the MagFit figure-eight flight and land
 1. Download the latest `.bin` dataflash log file from the micro SDcard's `/APM/LOGS` folder
 1. Load it into MAVExplorer using the command line: `MAVExplorer.py filename.bin` or into the [ArduPilot MAGFit in flight compass calibration](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) using an internet browser.
@@ -600,7 +600,7 @@ Follow the first part of [evaluating the aircraft tune](https://ardupilot.org/co
 
 After landing take a look at the `RATE.*out` values in the `.bin` log file, they all should be below 0.1.
 
-Download the [26_evaluate_the_aircraft_tune_ff_disable.param parameter file](diatone_taycan_mxc/params/26_evaluate_the_aircraft_tune_ff_disable.param), and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [26_evaluate_the_aircraft_tune_ff_disable.param parameter file](diatone_taycan_mxc/params/26_evaluate_the_aircraft_tune_ff_disable.param), and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 
 # 6. Fourth flight: Evaluate the aircraft tune - part 2
@@ -609,7 +609,7 @@ Follow the second part of [evaluating the aircraft tune](https://ardupilot.org/c
 
 After landing take a look at the `RATE.*out` values in the `.bin` log file, they all should be below 0.1.
 
-Download the [27_evaluate_the_aircraft_tune_ff_enable.param parameter file](diatone_taycan_mxc/params/27_evaluate_the_aircraft_tune_ff_enable.param), and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [27_evaluate_the_aircraft_tune_ff_enable.param parameter file](diatone_taycan_mxc/params/27_evaluate_the_aircraft_tune_ff_enable.param), and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 
 # 7. [Autotune flight(s)](https://ardupilot.org/copter/docs/autotune.html)
@@ -784,7 +784,7 @@ After using Autotune to find proper PID parameters, it is time to evaluate the p
 Follow these steps:
 
 1. Power on the vehicle
-1. Download the [26_evaluate_the_aircraft_tune_ff_disable.param parameter file](diatone_taycan_mxc/params/26_evaluate_the_aircraft_tune_ff_disable.param), and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+1. Download the [26_evaluate_the_aircraft_tune_ff_disable.param parameter file](diatone_taycan_mxc/params/26_evaluate_the_aircraft_tune_ff_disable.param), and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 1. Switch to `ALTHOLD` flight mode and wait for home location acquisition.
 1. Take-off at around 10m above the ground.
 1. Perform smooth maneuvers using the RC transmitter roll stick.
@@ -793,7 +793,7 @@ Follow these steps:
 1. Repeat the maneuvers with increasing aggressivity making sure you stay inside the stable envelope of the vehicle.
 1. Land and download the latest `.bin` log file from `/APM/LOGS` to your PC
 1. Use [ArduPilot's PID Review Tool](https://firmware.ardupilot.org/Tools/WebTools/PIDReview/) to review the PID step response of each PID.
-1. Download the [27_evaluate_the_aircraft_tune_ff_enable.param parameter file](diatone_taycan_mxc/params/27_evaluate_the_aircraft_tune_ff_enable.param), and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+1. Download the [27_evaluate_the_aircraft_tune_ff_enable.param parameter file](diatone_taycan_mxc/params/27_evaluate_the_aircraft_tune_ff_enable.param), and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 In our vehicle, we got a transient response of around 60ms in roll and pitch and around 110ms in yaw.
 
@@ -830,7 +830,7 @@ The weight of our drone is 560g, therefore the ballistic coefficients are
 - [EK3_DRAG_BCOEF_X](https://ardupilot.org/copter/docs/parameters.html#ek3-drag-bcoef-x) = 0.56 kg / 0.01097 m² = 51.0399
 - [EK3_DRAG_BCOEF_Y](https://ardupilot.org/copter/docs/parameters.html#ek3-drag-bcoef-y) = 0.56 kg / 0.01455 m² = 38.4798
 
-Download the [38_windspeed_estimation.param parameter file](diatone_taycan_mxc/params/38_windspeed_estimation.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [38_windspeed_estimation.param parameter file](diatone_taycan_mxc/params/38_windspeed_estimation.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 Now do the flight to collect the data to [Calculate the Propeller Drag Coefficient](https://ardupilot.org/copter/docs/airspeed-estimation.html#calculate-the-propeller-drag-coefficient).
 After that, open the logs with MAVExplorer to get the needed values.
@@ -899,7 +899,7 @@ After it is set, do another flight and [check that the windspeed and direction a
 
 Follow [ArduCopter's baro compensation Wiki](https://ardupilot.org/copter/docs/airspeed-estimation.html#barometer-position-error-compensation) and/or use the [Lua script provided by Yuri in the forum](https://discuss.ardupilot.org/t/scripting-copter-wind-estimation-baro-compensation-tuning/98470/).
 
-Download the [39_barometer_compensation.param parameter file](diatone_taycan_mxc/params/39_barometer_compensation.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [39_barometer_compensation.param parameter file](diatone_taycan_mxc/params/39_barometer_compensation.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Uploadd Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 Now do the flight to collect the data and analyze the logs to see if the barometer is correctly compensated and insensitive to wind.
 
@@ -913,25 +913,25 @@ Documentation is available on [Fabian Bredemeier's Identification of a multicopt
 
 ## Roll rate mathematical model
 
-Download the [40_system_id_roll.param parameter file](diatone_taycan_mxc/params/40_system_id_roll.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [40_system_id_roll.param parameter file](diatone_taycan_mxc/params/40_system_id_roll.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 Now do the flight to collect the data for the roll rate system identification.
 
 ## Pitch rate mathematical model
 
-Download the [41_system_id_pitch.param parameter file](diatone_taycan_mxc/params/41_system_id_pitch.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [41_system_id_pitch.param parameter file](diatone_taycan_mxc/params/41_system_id_pitch.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 Now do the flight to collect the data for the pitch rate system identification.
 
 ## Yaw rate mathematical model
 
-Download the [42_system_id_yaw.param parameter file](diatone_taycan_mxc/params/42_system_id_yaw.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [42_system_id_yaw.param parameter file](diatone_taycan_mxc/params/42_system_id_yaw.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 Now do the flight to collect the data for the yaw rate system identification.
 
 ## Thrust mathematical model
 
-Download the [43_system_id_thrust.param parameter file](diatone_taycan_mxc/params/43_system_id_thrust.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [43_system_id_thrust.param parameter file](diatone_taycan_mxc/params/43_system_id_thrust.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 Now do the flight to collect the data for the thrust system identification.
 
@@ -941,30 +941,30 @@ This describes how to use IAV's multi-objective optimization to achieve even bet
 
 One other approach is described by Bill Geyer in his Blog post: [Predicting Closed Loop Response For Faster Autotune](https://discuss.ardupilot.org/t/predicting-closed-loop-response-for-faster-autotune/75096).
 
-Download the [44_analytical_pid_optimization.param parameter file](diatone_taycan_mxc/params/44_analytical_pid_optimization.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [44_analytical_pid_optimization.param parameter file](diatone_taycan_mxc/params/44_analytical_pid_optimization.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Uploadd Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 # 12. Productive configuration
 
 Some changes should be made for everyday productive operation.
 
-Download the [45_everyday_use.param parameter file](diatone_taycan_mxc/params/45_everyday_use.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [45_everyday_use.param parameter file](diatone_taycan_mxc/params/45_everyday_use.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 # 13. Position controller
 
 The most inner *angle rate* and *angle* control loops have been tuned. Now let's tune the position controller.
 
-Edit the `46_position_controller.param` file with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Edit the `46_position_controller.param` file with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 # 14. Precision land
 
 These are **optional**, and only make sense if you have extra hardware on your vehicle to support it.
-Download the [47_precision_land.param.param parameter file](diatone_taycan_mxc/params/47_precision_land.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [47_precision_land.param.param parameter file](diatone_taycan_mxc/params/47_precision_land.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 
 # 15. Guided operation without RC transmitter
 
 These are **optional**, and only make sense if you do beyond visual line-of-sight (BVLOS) autonomous flights using a companion computer.
-Download the [48_guided_operation.param.param parameter file](diatone_taycan_mxc/params/48_guided_operation.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Write Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [48_guided_operation.param.param parameter file](diatone_taycan_mxc/params/48_guided_operation.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 
 # 16. Conclusion
