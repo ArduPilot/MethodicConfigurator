@@ -37,7 +37,7 @@ from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
     """
     A custom Combobox widget that allows for the display of a list of tuples, where each tuple contains a key and a value.
-    This widget processes the list of tuples to separate keys and values for display purposes, and allows for the selection
+    This widget processes the list of tuples to separate keys and values for display purposes and allows for the selection
     of a tuple based on its key.
     """
     def process_list_pair_tuple(self, list_pair_tuple):
@@ -188,7 +188,7 @@ class ConnectionSelectionWindow(BaseWindow):
         self.introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)
 
         # Option 1 - Auto-connect
-        option1_label_frame = tk.LabelFrame(self.root, text="Option 1")
+        option1_label_frame = tk.LabelFrame(self.root, text="Auto-connect to flight controller")
         option1_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
         option1_label = tk.Label(option1_label_frame, text="Connect a flight controller to the PC,\n"
                                  "wait 7 seconds for it to fully boot and\n"
@@ -198,7 +198,7 @@ class ConnectionSelectionWindow(BaseWindow):
         autoconnect_button.pack(expand=False, fill=tk.X, padx=100, pady=6)
 
         # Option 2 - Manually select the flight controller connection or add a new one
-        option2_label_frame = tk.LabelFrame(self.root, text="Option 2")
+        option2_label_frame = tk.LabelFrame(self.root, text="Select flight controller connection")
         option2_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
         option2_label = tk.Label(option2_label_frame, text="Connect a flight controller to the PC,\n"
                                  "wait 7 seconds for it to fully boot and\n"
@@ -210,7 +210,7 @@ class ConnectionSelectionWindow(BaseWindow):
         self.connection_selection_widgets.container_frame.pack(expand=True, fill=tk.X, padx=80, pady=6, anchor=tk.CENTER)
 
         # Option 3 - Skip FC connection, just edit the .param files on disk
-        option3_label_frame = tk.LabelFrame(self.root, text="Option 3")
+        option3_label_frame = tk.LabelFrame(self.root, text="No flight controller connection")
         option3_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
         option3_label = tk.Label(option3_label_frame, text="Skip the flight controller connection,\n"
                                  "no default parameter values will be fetched from the FC,\n"
