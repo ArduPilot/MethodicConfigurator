@@ -465,7 +465,7 @@ def format_columns(values: Dict[str, Any], max_width: int = 105, max_columns: in
 
 def extract_parameter_name(item: str) -> str:
     """
-    Extract the parameter name from a line. Very simple to be used in sorting
+    Extract the parameter name from a line. Very simple to use in sorting
     """
     item = item.strip()
     match = re.match(PARAM_NAME_REGEX, item)
@@ -519,7 +519,7 @@ def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',  # py
     This function iterates over all the ArduPilot parameter files in the target directory or file.
     For each file, it DELETES all comments that start at the beginning of a line, optionally sorts the
     parameter names and checks if the parameter name is in the dictionary of parameter documentation.
-    If it is, it prefixes the line with comment derived from the dictionary element.
+    If it is, it prefixes the line with a comment derived from the dictionary element.
     If it's not, it copies the parameter line 1-to-1.
     After processing all the parameters in a file, it writes the new lines back to the file.
 
@@ -556,7 +556,7 @@ def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',  # py
             lines = file.readlines()
 
         new_lines = []
-        if os_path.basename(param_file).endswith("14_pid_adjustment.param"):
+        if os_path.basename(param_file).endswith("15_pid_adjustment.param"):
             new_lines.extend(lines[0:7])  # copy the first 8 lines verbatim
 
         total_params = 0
