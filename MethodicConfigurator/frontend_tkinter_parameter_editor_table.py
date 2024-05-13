@@ -361,28 +361,31 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
     def __on_parameter_add(self, fc_parameters):
         # Prompt the user for a parameter name
-        param_name = simpledialog.askstring("Enter the parameter name:", "Parameter Name")
-        if param_name:
-            if param_name in self.local_filesystem.file_parameters[self.current_file]:
-                messagebox.showerror("Parameter already exists.")
+        param_name = simpledialog.askstring("New parameter name", "Enter new parameter name:")
+        if not param_name:
+            messagebox.showerror("Parameter name can not be empty.")
+            return
+        if param_name in self.local_filesystem.file_parameters[self.current_file]:
+            messagebox.showerror("Parameter already exists, edit it instead")
+            return
+        if fc_parameters:
+            if param_name in fc_parameters:
+                self.local_filesystem.file_parameters[self.current_file][param_name] = Par(fc_parameters[param_name], "")
+                self.at_least_one_param_edited = True
+                self.parameter_editor.repopulate_parameter_table(self.current_file)
             else:
-                if fc_parameters:
-                    if param_name in fc_parameters:
-                        self.local_filesystem.file_parameters[self.current_file][param_name] = Par(0, "")
-                        self.at_least_one_param_edited = True
-                        self.parameter_editor.repopulate_parameter_table(self.current_file)
-                    else:
-                        messagebox.showerror("Invalid parameter name.", "Parameter name not found in the flight controller.")
-                elif self.local_filesystem.doc_dict:
-                    if param_name in self.local_filesystem.doc_dict:
-                        self.local_filesystem.file_parameters[self.current_file][param_name] = Par(0, "")
-                        self.at_least_one_param_edited = True
-                        self.parameter_editor.repopulate_parameter_table(self.current_file)
-                    else:
-                        messagebox.showerror("Invalid parameter name.", "Parameter name not found in the apm.pdef.xml file.")
-                else:
-                    messagebox.showerror("Operation not possible",
-                                         "Can not add parameter when no FC is connected and no apm.pdef.xml file exists.")
+                messagebox.showerror("Invalid parameter name.", "Parameter name not found in the flight controller.")
+        elif self.local_filesystem.doc_dict:
+            if param_name in self.local_filesystem.doc_dict:
+                self.local_filesystem.file_parameters[self.current_file][param_name] = Par( \
+                    self.local_filesystem.param_default_dict.get(param_name, Par(0, "")).value, "")
+                self.at_least_one_param_edited = True
+                self.parameter_editor.repopulate_parameter_table(self.current_file)
+            else:
+                messagebox.showerror("Invalid parameter name.", "Parameter name not found in the apm.pdef.xml file.")
+        else:
+            messagebox.showerror("Operation not possible",
+                                    "Can not add parameter when no FC is connected and no apm.pdef.xml file exists.")
 
 
     def __on_parameter_value_change(self, event, current_file, param_name):
