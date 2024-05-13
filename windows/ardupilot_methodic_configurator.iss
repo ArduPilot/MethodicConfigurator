@@ -48,8 +48,8 @@ Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.1-params\*.*"; D
 Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params"; Flags: ignoreversion
 Source: "..\windows\version.txt"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\windows\MethodicConfigurator.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\MethodicConfigurator\ArduPilot_icon.png"; DestDir: "{app}\_internal"; Flags: ignoreversion
-Source: "..\MethodicConfigurator\ArduPilot_logo.png"; DestDir: "{app}\_internal"; Flags: ignoreversion
+Source: "..\MethodicConfigurator\ArduPilot_icon.png"; DestDir: "{app}\_internal\MethodicConfigurator"; Flags: ignoreversion
+Source: "..\MethodicConfigurator\ArduPilot_logo.png"; DestDir: "{app}\_internal\MethodicConfigurator"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduCopter_configuration_steps.json"; DestDir: "{app}\_internal"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduPlane_configuration_steps.json"; DestDir: "{app}\_internal"; Flags: ignoreversion
 Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
