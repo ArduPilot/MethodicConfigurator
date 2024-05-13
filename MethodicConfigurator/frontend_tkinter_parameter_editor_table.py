@@ -20,14 +20,14 @@ from logging import info as logging_info
 #from logging import error as logging_error
 from logging import critical as logging_critical
 
-#from backend_filesystem import LocalFilesystem
-from backend_filesystem import is_within_tolerance
+#from MethodicConfigurator.backend_filesystem import LocalFilesystem
+from MethodicConfigurator.backend_filesystem import is_within_tolerance
 
-#from backend_flightcontroller import FlightController
+#from MethodicConfigurator.backend_flightcontroller import FlightController
 
-from frontend_tkinter_base import show_tooltip
-#from frontend_tkinter_base import AutoResizeCombobox
-from frontend_tkinter_base import ScrollFrame
+from MethodicConfigurator.frontend_tkinter_base import show_tooltip
+#from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
+from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
 
 
 

@@ -25,7 +25,7 @@ import serial.tools.list_ports
 import serial.tools.list_ports_common
 
 from serial.serialutil import SerialException
-from annotate_params import Par
+from MethodicConfigurator.annotate_params import Par
 
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules

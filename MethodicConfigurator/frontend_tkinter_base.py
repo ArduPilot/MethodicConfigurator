@@ -22,7 +22,7 @@ from platform import system as platform_system
 from PIL import Image
 from PIL import ImageTk
 
-from backend_filesystem import LocalFilesystem
+from MethodicConfigurator.backend_filesystem import LocalFilesystem
 
 
 def show_error_message(title: str, message: str):

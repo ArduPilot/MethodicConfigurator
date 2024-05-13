@@ -24,23 +24,23 @@ from typing import Tuple
 
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
-from backend_filesystem import LocalFilesystem
-from backend_filesystem import is_within_tolerance
+from MethodicConfigurator.backend_filesystem import LocalFilesystem
+from MethodicConfigurator.backend_filesystem import is_within_tolerance
 
-from backend_flightcontroller import FlightController
+from MethodicConfigurator.backend_flightcontroller import FlightController
 
-from frontend_tkinter_base import show_tooltip
-from frontend_tkinter_base import AutoResizeCombobox
-from frontend_tkinter_base import ProgressWindow
-from frontend_tkinter_base import BaseWindow
+from MethodicConfigurator.frontend_tkinter_base import show_tooltip
+from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
+from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
+from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 
-from frontend_tkinter_connection_selection import ConnectionSelectionWidgets
+from MethodicConfigurator.frontend_tkinter_connection_selection import ConnectionSelectionWidgets
 
-from frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
+from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 
-from frontend_tkinter_parameter_editor_table import ParameterEditorTable
+from MethodicConfigurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 
-from tempcal_imu import IMUfit
+from MethodicConfigurator.tempcal_imu import IMUfit
 
 
 class DocumentationFrame:  # pylint: disable=too-few-public-methods

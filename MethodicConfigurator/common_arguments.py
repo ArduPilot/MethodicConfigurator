@@ -8,7 +8,7 @@ This file is part of Ardupilot methodic configurator. https://github.com/ArduPil
 SPDX-License-Identifier:    GPL-3
 '''
 
-from version import VERSION
+from MethodicConfigurator.version import VERSION
 
 
 def add_common_arguments_and_parse(parser):

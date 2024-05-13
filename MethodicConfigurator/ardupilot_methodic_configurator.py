@@ -17,18 +17,18 @@ from logging import warning as logging_warning
 from logging import error as logging_error
 from sys import exit as sys_exit
 
-from backend_filesystem import LocalFilesystem
-from backend_flightcontroller import FlightController
+from MethodicConfigurator.backend_filesystem import LocalFilesystem
+from MethodicConfigurator.backend_flightcontroller import FlightController
 
-from frontend_tkinter_connection_selection import ConnectionSelectionWindow
+from MethodicConfigurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
 
-from frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
+from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
 
-from frontend_tkinter_component_editor import ComponentEditorWindow
+from MethodicConfigurator.frontend_tkinter_component_editor import ComponentEditorWindow
 
-from frontend_tkinter_parameter_editor import ParameterEditorWindow
+from MethodicConfigurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 
-from version import VERSION
+from MethodicConfigurator.version import VERSION
 
 
 # pylint: disable=duplicate-code

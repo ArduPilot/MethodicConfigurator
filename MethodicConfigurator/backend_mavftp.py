@@ -33,11 +33,11 @@ from typing import Dict
 from io import BytesIO as SIO
 
 # from param_ftp import ParamData
-from param_ftp import ftp_param_decode
+from MethodicConfigurator.param_ftp import ftp_param_decode
 
-from common_arguments import add_common_arguments_and_parse
+from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
-from backend_flightcontroller import FlightController
+from MethodicConfigurator.backend_flightcontroller import FlightController
 
 # adding all this allows pyinstaller to build a working Windows executable
 # note that using --hidden-import does not work for these modules

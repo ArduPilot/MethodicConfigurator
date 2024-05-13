@@ -22,15 +22,15 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import simpledialog
 
-from common_arguments import add_common_arguments_and_parse
+from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
-from backend_flightcontroller import FlightController
+from MethodicConfigurator.backend_flightcontroller import FlightController
 
-from frontend_tkinter_base import show_no_connection_error
-from frontend_tkinter_base import show_tooltip
-from frontend_tkinter_base import update_combobox_width
-from frontend_tkinter_base import ProgressWindow
-from frontend_tkinter_base import BaseWindow
+from MethodicConfigurator.frontend_tkinter_base import show_no_connection_error
+from MethodicConfigurator.frontend_tkinter_base import show_tooltip
+from MethodicConfigurator.frontend_tkinter_base import update_combobox_width
+from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
+from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 
 
 # https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb
