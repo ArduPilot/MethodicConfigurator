@@ -49,7 +49,8 @@
         "auto_changed_by": "",
         "derived_parameters": {
             "RC_PROTOCOLS": { "New Value": "vehicle_components['RC Receiver']['FC Connection']['Protocol']", "Change Reason": "Selected in the component editor" }
-        }
+        },
+        "rename_connection": "vehicle_components['RC Receiver']['FC Connection']['Type']"
     },
     "06_telemetry.param": {
         "blog_text": "Sets up telemetry parameters for data transmission, including GPS, altitude, and other flight metrics.",
@@ -92,8 +93,8 @@
         },
         "derived_parameters": {
             "BATT_ARM_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Number of cells']-1)*0.1+(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.3)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Don’t allow arming below this voltage" },
-            "BATT_CRT_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.2)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.2) x no. of cells" },
-            "BATT_LOW_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.3)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.3) x no. of cells" },
+            "BATT_CRT_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" },
+            "BATT_LOW_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell low'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Low voltage + 0.0) x no. of cells" },
             "MOT_BATT_VOLT_MAX": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell max']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Max voltage + 0.0) x no. of cells" },
             "MOT_BATT_VOLT_MIN": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" }
         },
