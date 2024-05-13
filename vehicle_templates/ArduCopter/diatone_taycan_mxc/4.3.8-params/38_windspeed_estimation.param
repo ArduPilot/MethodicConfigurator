@@ -7,7 +7,7 @@
 # Range: 0.0 1000.0
 # Units: kg/m/m (kilograms per square meter)
 # Default: 0
-EK3_DRAG_BCOEF_X,51.0399  # 0.56 kg / 0.01097 m²
+EK3_DRAG_BCOEF_X,54.6857  # 0.600 kg / 0.01097 m²
 
 # Ballistic coefficient for Y axis drag
 # Ratio of mass to drag coefficient measured along the Y body axis. This parameter enables estimation of
@@ -18,7 +18,7 @@ EK3_DRAG_BCOEF_X,51.0399  # 0.56 kg / 0.01097 m²
 # Range: 50.0 1000.0
 # Units: kg/m/m (kilograms per square meter)
 # Default: 0
-EK3_DRAG_BCOEF_Y,38.4798  # 0.56 kg / 0.01455 m²
+EK3_DRAG_BCOEF_Y,41.2284  # 0.600 kg / 0.01455 m²
 
 # Momentum coefficient for propeller drag
 # This parameter is used to predict the drag produced by the rotors when flying a multi-copter, enabling
@@ -35,7 +35,7 @@ EK3_DRAG_BCOEF_Y,38.4798  # 0.56 kg / 0.01455 m²
 # Increment: 0.01
 # Units: 1/s (per second)
 # Default: 0
-EK3_DRAG_MCOEF,0.5127
+EK3_DRAG_MCOEF,0.5195
 
 # Enable logging while disarmed
 # If LOG_DISARMED is set to 1 then logging will be enabled while disarmed. This can make for very large
@@ -43,7 +43,7 @@ EK3_DRAG_MCOEF,0.5127
 # 0: Disabled
 # 1: Enabled
 # Default: 0
-LOG_DISARMED,1 # allow post flight tuning with Replay
+LOG_DISARMED,1  # allow post flight tuning with Replay
 
 # Enable logging of information needed for Replay
 # If LOG_REPLAY is set to 1 then the EKF2 state estimator will log detailed information needed for
@@ -52,4 +52,4 @@ LOG_DISARMED,1 # allow post flight tuning with Replay
 # 0: Disabled
 # 1: Enabled
 # Default: 0
-LOG_REPLAY,1 # allow post flight tuning with Replay
+LOG_REPLAY,1  # allow post flight tuning with Replay

@@ -90,35 +90,6 @@ GPS_TYPE,2  # set it explicit to uBlox, instead of guessing which GNSS receiver 
 # Default: 5
 SERIAL3_PROTOCOL,5  # GNSS receiver is connected to serial3
 
-# Serial4 protocol selection
-# Control what protocol Serial4 port should be used for. Note that the Frsky options require external
-# converter hardware. See the wiki for details.
-# RebootRequired: True
-# -1: None                                             24: EFI Serial
-# 1: MAVLink1                                          25: LTM
-# 2: MAVLink2                                          26: RunCam
-# 3: Frsky D                                           27: HottTelem
-# 4: Frsky SPort                                       28: Scripting
-# 5: GPS                                               29: Crossfire VTX
-# 7: Alexmos Gimbal Serial                             30: Generator
-# 8: SToRM32 Gimbal Serial                             31: Winch
-# 9: Rangefinder                                       32: MSP
-# 10: FrSky SPort Passthrough (OpenTX)                 33: DJI FPV
-# 11: Lidar360                                         34: AirSpeed
-# 13: Beacon                                           35: ADSB
-# 14: Volz servo out                                   36: AHRS
-# 15: SBus servo out                                   37: SmartAudio
-# 16: ESC Telemetry                                    38: FETtecOneWire
-# 17: Devo Telemetry                                   39: Torqeedo
-# 18: OpticalFlow                                      40: AIS
-# 19: RobotisServo                                     41: CoDevESC
-# 20: NMEA Output                                      42: DisplayPort
-# 21: WindVane                                         43: MAVLink High Latency
-# 22: SLCAN                                            44: IRC Tramp
-# 23: RCIN
-# Default: 5
-SERIAL4_PROTOCOL,-1  # No GNSS connected to serial4, so disable it
-
 # Waypoint Radius
 # Defines the distance from a waypoint, that when crossed indicates the wp has been hit.
 # Units: cm (centimeters)

@@ -274,21 +274,6 @@ RC9_OPTION,300 # Used to jump to the next waypoint
 # Default: 0
 RSSI_TYPE,3 # TBS Crossfire protocol provides RSSI
 
-# Telemetry 2 Baud Rate
-# The baud rate of the Telem2 port. Most stm32-based boards can support rates of up to 1500. If you setup a
-# rate you cannot support and then can't connect to your board you should load a firmware from a different
-# vehicle type. That will reset all your parameters to defaults.
-# 1: 1200                                              115: 115200
-# 2: 2400                                              230: 230400
-# 4: 4800                                              256: 256000
-# 9: 9600                                              460: 460800
-# 19: 19200                                            500: 500000
-# 38: 38400                                            921: 921600
-# 57: 57600                                            1500: 1500000
-# 111: 111100
-# Default: 57
-SERIAL2_BAUD,115 # For Mavlink over crossfire
-
 # Serial7 protocol selection
 # Control what protocol Serial7 port should be used for. Note that the Frsky options require external
 # converter hardware. See the wiki for details.

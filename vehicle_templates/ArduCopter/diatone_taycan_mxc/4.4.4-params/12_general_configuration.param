@@ -1,14 +1,23 @@
+# Arm Checks to Perform (bitmask)
+# Checks prior to arming motor. This is a bitmask of checks that will be performed before allowing arming.
+# For most users it is recommended to leave this at the default of 1 (all checks enabled). You can select
+# whatever checks you prefer by adding together the values of each check type to set this parameter. For
+# example, to only allow arming when you have GPS lock and no RC failsafe you would set ARMING_CHECK to 72.
+# Bitmask: 0:All,1:Barometer,2:Compass,3:GPS lock,4:INS,5:Parameters,6:RC Channels,7:Board voltage,8:Battery Level,10:Logging Available,11:Hardware safety switch,12:GPS Configuration,13:System,14:Mission,15:Rangefinder,16:Camera,17:AuxAuth,18:VisualOdometry,19:FFT
+# Default: 1
+ARMING_CHECK,1  # perform all arming checks. If you have a problem fix it's source. Do NOT change this
+
 # Timezone offset from UTC
 # Adds offset in +- minutes from UTC to calculate local time
 # Range: -720 +840
 # Default: 0
-BRD_RTC_TZ_MIN,60
+BRD_RTC_TZ_MIN,60  # Berlin time zone
 
 # Fence Type
 # Enabled fence types held as bitmask
 # Bitmask: 0:Max altitude,1:Circle,2:Polygon,3:Min altitude
 # Default: 7
-FENCE_TYPE,11
+FENCE_TYPE,7  # cylinder and max altitude, to obey local regulations and safety measures
 
 # Accel filter cutoff frequency
 # Filter cutoff frequency for accelerometers. This can be set to a lower value to try to cope with very
@@ -110,4 +119,4 @@ SCHED_LOOP_RATE,800  # On our vehicle the propellers rotate at speeds higher tha
 # 0: None
 # 1: Lua Scripts
 # Default: 0
-SCR_ENABLE,1  # For MagFit automation and Windspeed Estimation automation
+SCR_ENABLE,1  # For VTOL-Quicktune, MagFit automation and Windspeed Estimation automation

@@ -9,14 +9,14 @@
 # 108000: Medium
 # 162000: Fast
 # Default: 110000
-ATC_ACCEL_R_MAX,507500
+ATC_ACCEL_R_MAX,523377.3125
 
 # Roll axis angle controller P gain
 # Roll axis angle controller P gain.  Converts the error between the desired roll angle and actual angle to
 # a desired roll rate
 # Range: 3.000 12.000
 # Default: 4.5
-ATC_ANG_RLL_P,36 # higher value mean a tighter tune
+ATC_ANG_RLL_P,36  # higher value mean a tighter tune
 
 # Roll axis rate controller D gain
 # Roll axis rate controller D gain.  Compensates for short-term change in desired roll rate vs actual roll
@@ -24,14 +24,14 @@ ATC_ANG_RLL_P,36 # higher value mean a tighter tune
 # Range: 0.0 0.03
 # Increment: 0.001
 # Default: 0.0036
-ATC_RAT_RLL_D,0.005008578
+ATC_RAT_RLL_D,0.002438
 
 # Roll axis rate controller I gain
 # Roll axis rate controller I gain.  Corrects long-term difference in desired roll rate vs actual roll rate
 # Range: 0.0 0.6
 # Increment: 0.01
 # Default: 0.135
-ATC_RAT_RLL_I,0.2908089
+ATC_RAT_RLL_I,0.125126
 
 # Roll axis rate controller P gain
 # Roll axis rate controller P gain.  Converts the difference between desired roll rate and actual roll rate
@@ -39,4 +39,4 @@ ATC_RAT_RLL_I,0.2908089
 # Range: 0.0 0.35
 # Increment: 0.005
 # Default: 0.135
-ATC_RAT_RLL_P,0.2908089
+ATC_RAT_RLL_P,0.125126
