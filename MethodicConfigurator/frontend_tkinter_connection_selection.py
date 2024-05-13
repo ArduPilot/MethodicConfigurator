@@ -174,7 +174,7 @@ class ConnectionSelectionWindow(BaseWindow):
     def __init__(self, flight_controller: FlightController, connection_result_string: str):
         super().__init__()
         self.root.title("Flight controller connection")
-        self.root.geometry("400x510") # Set the window size
+        self.root.geometry("420x510") # Set the window size
 
         # Explain why we are here
         if flight_controller.comport is None:

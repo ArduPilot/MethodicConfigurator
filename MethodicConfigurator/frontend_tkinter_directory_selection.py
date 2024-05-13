@@ -184,7 +184,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         super().__init__()
         self.local_filesystem = local_filesystem
         self.root.title("Select Vehicle directory")
-        self.root.geometry("400x535") # Set the window size
+        self.root.geometry("800x535") # Set the window size
 
         # Explain why we are here
         if local_filesystem.vehicle_dir == LocalFilesystem.getcwd():
