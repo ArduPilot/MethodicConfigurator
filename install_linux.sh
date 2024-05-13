@@ -10,7 +10,7 @@ sudo apt-get install -y python3-pil.imagetk
 
 # Uninstall serial and pyserial to avoid conflicts
 echo "Uninstalling serial and pyserial..."
-python3 -m pip uninstall -y serial pyserial
+sudo python3 -m pip uninstall -y serial pyserial
 
 # Install the project dependencies
 echo "Installing project dependencies..."
