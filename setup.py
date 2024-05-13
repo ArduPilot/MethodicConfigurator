@@ -18,26 +18,6 @@ from setuptools import find_packages
 from MethodicConfigurator.version import VERSION
 
 
-def package_files(directory):
-    paths = []
-    for (path, _directories, filenames) in os.walk(directory):
-        for filename in filenames:
-            paths.append(os.path.join('..', path, filename))
-    return paths
-
-
-package_data = [
-    'vehcle_templates/ArduCopter/diatone_taycan_mxc/*',
-    # Add any other package_data requirements here
-]
-
-# note that we do not include all the real dependencies here (like lxml etc)
-# as that breaks the pip install. It seems that pip is not smart enough to
-# use the system versions of these dependencies, so it tries to download and install
-# large numbers of modules like tkinter etc which may be already installed
-requirements = ['pymavlink>=2.4.14',
-                'pyserial>=3.0']
-
 dev_requirements = [
     'ruff',
     'pytest',
@@ -96,21 +76,19 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Scientific/Engineering',
     ],
     # Add the license
     license='GPLv3',
     python_requires='>=3.6',
     keywords=['ArduPilot', 'Configuration', 'SCM', 'Methodic', 'ArduCopter', 'ArduPlane', 'ArduRover', 'ArduSub'],
-    # Include package data
-    # package_data={
-    #    # If you have data files
-    #    '': ['*.md', '*.txt', '*.xml', '*.json'],
-    #    '4.3.8-params': ['*.param'],
-    #    '4.4.4-params': ['*.param'],
-    #    '4.5.1-params': ['*.param'],
-    #    '4.6.0-DEV-params': ['*.param'],
-    # },
+    include_package_data=True,
+    scripts=['MethodicConfigurator/annotate_params.py',
+             'MethodicConfigurator/extract_param_defaults.py',
+             'MethodicConfigurator/param_pid_adjustment_update.py'
+             ],
     # Specify entry points for command-line scripts
     entry_points={
         'console_scripts': [
