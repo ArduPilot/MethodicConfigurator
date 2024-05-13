@@ -4,7 +4,7 @@
 # Current sensor monitors, this is the maximum, full throttle current draw.
 # Units: A/V (ampere per volt)
 # Default: 40
-BATT_AMP_PERVLT,57
+BATT_AMP_PERVLT,158.4  # new calibrated value for Mamba F45_128k 4in1 ESC
 
 # Required arming voltage
 # Battery voltage level which is required to arm the aircraft. Set to 0 to allow arming at any voltage.

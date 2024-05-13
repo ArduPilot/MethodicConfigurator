@@ -59,10 +59,10 @@ GPS_POS1_Z,-0.07  # HX-CH7604A GNSS antenna pahse center location relative to CG
 # 13: ERB                                              25: UnicoreMovingBaselineNMEA
 # 14: MAV                                              26: SBF-DualAntenna
 # Default: 1
-GPS_TYPE,2  # set it explicit to uBlox, instead of guessing which GNSS receiver we have
+GPS_TYPE,2  # Defined in component editor
 
-# Serial3 protocol selection
-# Control what protocol Serial3 port should be used for. Note that the Frsky options require external
+# Serial 3 (GPS) protocol selection
+# Control what protocol Serial 3 (GPS) should be used for. Note that the Frsky options require external
 # converter hardware. See the wiki for details.
 # RebootRequired: True
 # -1: None                                             25: LTM
@@ -90,36 +90,6 @@ GPS_TYPE,2  # set it explicit to uBlox, instead of guessing which GNSS receiver 
 # 24: EFI Serial
 # Default: 5
 SERIAL3_PROTOCOL,5  # GNSS receiver is connected to serial3
-
-# Serial4 protocol selection
-# Control what protocol Serial4 port should be used for. Note that the Frsky options require external
-# converter hardware. See the wiki for details.
-# RebootRequired: True
-# -1: None                                             25: LTM
-# 1: MAVLink1                                          26: RunCam
-# 2: MAVLink2                                          27: HottTelem
-# 3: Frsky D                                           28: Scripting
-# 4: Frsky SPort                                       29: Crossfire VTX
-# 5: GPS                                               30: Generator
-# 7: Alexmos Gimbal Serial                             31: Winch
-# 8: Gimbal                                            32: MSP
-# 9: Rangefinder                                       33: DJI FPV
-# 10: FrSky SPort Passthrough (OpenTX)                 34: AirSpeed
-# 11: Lidar360                                         35: ADSB
-# 13: Beacon                                           36: AHRS
-# 14: Volz servo out                                   37: SmartAudio
-# 15: SBus servo out                                   38: FETtecOneWire
-# 16: ESC Telemetry                                    39: Torqeedo
-# 17: Devo Telemetry                                   40: AIS
-# 18: OpticalFlow                                      41: CoDevESC
-# 19: RobotisServo                                     42: DisplayPort
-# 20: NMEA Output                                      43: MAVLink High Latency
-# 21: WindVane                                         44: IRC Tramp
-# 22: SLCAN                                            45: DDS XRCE
-# 23: RCIN                                             46: IMUDATA
-# 24: EFI Serial
-# Default: 5
-SERIAL4_PROTOCOL,-1  # No GNSS connected to serial4, so disable it
 
 # Waypoint Radius
 # Defines the distance from a waypoint, that when crossed indicates the wp has been hit.

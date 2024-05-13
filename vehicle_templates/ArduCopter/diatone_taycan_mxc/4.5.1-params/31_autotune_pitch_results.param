@@ -9,14 +9,14 @@
 # 108000: Medium
 # 162000: Fast
 # Default: 110000
-ATC_ACCEL_P_MAX,360201.2
+ATC_ACCEL_P_MAX,401666.40625
 
 # Pitch axis angle controller P gain
 # Pitch axis angle controller P gain.  Converts the error between the desired pitch angle and actual angle
 # to a desired pitch rate
 # Range: 3.000 12.000
 # Default: 4.5
-ATC_ANG_PIT_P,28.51195 # higher value mean a tighter tune
+ATC_ANG_PIT_P,34.656452  # higher value mean a tighter tune
 
 # Pitch axis rate controller D gain
 # Pitch axis rate controller D gain.  Compensates for short-term change in desired pitch rate vs actual
@@ -24,7 +24,7 @@ ATC_ANG_PIT_P,28.51195 # higher value mean a tighter tune
 # Range: 0.0 0.03
 # Increment: 0.001
 # Default: 0.0036
-ATC_RAT_PIT_D,0.009135851
+ATC_RAT_PIT_D,0.004433
 
 # Pitch axis rate controller I gain
 # Pitch axis rate controller I gain.  Corrects long-term difference in desired pitch rate vs actual pitch
@@ -32,7 +32,7 @@ ATC_RAT_PIT_D,0.009135851
 # Range: 0.0 0.6
 # Increment: 0.01
 # Default: 0.135
-ATC_RAT_PIT_I,0.5622395
+ATC_RAT_PIT_I,0.282138
 
 # Pitch axis rate controller P gain
 # Pitch axis rate controller P gain.  Corrects in proportion to the difference between the desired pitch
@@ -40,4 +40,4 @@ ATC_RAT_PIT_I,0.5622395
 # Range: 0.0 0.35
 # Increment: 0.005
 # Default: 0.135
-ATC_RAT_PIT_P,0.5622395
+ATC_RAT_PIT_P,0.282138

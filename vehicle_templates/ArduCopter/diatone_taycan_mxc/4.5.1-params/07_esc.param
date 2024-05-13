@@ -9,7 +9,7 @@ SERIAL5_BAUD,115  # bi-directional DShot telemetry data rate from T-Motor F45 4i
 SERIAL5_PROTOCOL,16  # bi-directional DShot telemetry pin is connected to SERIAL5
 SERVO_BLH_AUTO,1  # Enables BLHeli pass-thru
 SERVO_BLH_BDMASK,15  # All four of our ESC support bi-directional DShot
-SERVO_BLH_POLES,14  # Number of T-Motor 1507 3800kv motor's magnetic poles
+SERVO_BLH_POLES,14  # Specified in component editor window
 SERVO_BLH_TRATE,5  # Set to a low value because the RPM telemetry uses bi-directional DShot telemetry instead of this UART telemetry
 SERVO_DSHOT_ESC,1  # BLHeli32
 SERVO_DSHOT_RATE,2  # Sends DShot control signals to the ESC twice per control loop

@@ -53,8 +53,8 @@ INS_TCAL1_ACC3_Y 0.213798686
 INS_TCAL1_ACC3_Z 0.011621521
 
 # Enable temperature calibration
-# Enable the use of temperature calibration parameters for this IMU. For automatic learning set to 2
-# and also set the INS_TCALn_TMAX to the target temperature, then reboot
+# Enable the use of temperature calibration parameters for this IMU. For automatic learning set to 2 and
+# also set the INS_TCALn_TMAX to the target temperature, then reboot
 # RebootRequired: True
 # 0: Disabled
 # 1: Enabled
@@ -117,8 +117,8 @@ INS_TCAL1_GYR3_Y 0.019491833
 INS_TCAL1_GYR3_Z 0.001409968
 
 # Temperature calibration max
-# The maximum temperature that the calibration is valid for. This must be at least 10 degrees above
-# TMIN for calibration
+# The maximum temperature that the calibration is valid for. This must be at least 10 degrees above TMIN
+# for calibration
 # Range: -70 80
 # Units: degC (degrees Celsius)
 # Calibration: 1
@@ -188,8 +188,8 @@ INS_TCAL2_ACC3_Y 0.002642167
 INS_TCAL2_ACC3_Z -0.065860983
 
 # Enable temperature calibration
-# Enable the use of temperature calibration parameters for this IMU. For automatic learning set to 2
-# and also set the INS_TCALn_TMAX to the target temperature, then reboot
+# Enable the use of temperature calibration parameters for this IMU. For automatic learning set to 2 and
+# also set the INS_TCALn_TMAX to the target temperature, then reboot
 # RebootRequired: True
 # 0: Disabled
 # 1: Enabled
@@ -252,8 +252,8 @@ INS_TCAL2_GYR3_Y -0.002372842
 INS_TCAL2_GYR3_Z -0.028350688
 
 # Temperature calibration max
-# The maximum temperature that the calibration is valid for. This must be at least 10 degrees above
-# TMIN for calibration
+# The maximum temperature that the calibration is valid for. This must be at least 10 degrees above TMIN
+# for calibration
 # Range: -70 80
 # Units: degC (degrees Celsius)
 # Calibration: 1

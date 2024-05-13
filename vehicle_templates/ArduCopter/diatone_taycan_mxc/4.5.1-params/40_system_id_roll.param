@@ -20,14 +20,26 @@ ARMING_CHECK,540126  # disable Parameter check because we need to set ATC_RAT_RL
 # Range: 0.0 0.6
 # Increment: 0.01
 # Default: 0.135
-ATC_RAT_RLL_I,0 # prevent the rate controllers from compensating too much of the frequency-sweep signal
+ATC_RAT_RLL_I,0  # prevent the rate controllers from compensating too much of the frequency-sweep signal
 
 # Rate Feedforward Enable
 # Controls whether body-frame rate feedforward is enabled or disabled
 # 0: Disabled
 # 1: Enabled
 # Default: 1
-ATC_RATE_FF_ENAB,0 # prevent the rate controllers from compensating too much of the frequency-sweep signal
+ATC_RATE_FF_ENAB,0  # prevent the rate controllers from compensating too much of the frequency-sweep signal
+
+# Flight Mode 5
+# Flight mode when pwm of Flightmode channel(FLTMODE_CH) is >1620, <= 1749
+# 0: Stabilize               7: Circle                  17: Brake                  24: ZigZag
+# 1: Acro                    9: Land                    18: Throw                  25: SystemID
+# 2: AltHold                 11: Drift                  19: Avoid_ADSB             26: Heli_Autorotate
+# 3: Auto                    13: Sport                  20: Guided_NoGPS           27: Auto RTL
+# 4: Guided                  14: Flip                   21: Smart_RTL
+# 5: Loiter                  15: AutoTune               22: FlowHold
+# 6: RTL                     16: PosHold                23: Follow
+# Default: 0
+FLTMODE5,25
 
 # Enable logging while disarmed
 # If LOG_DISARMED is set to 1 then logging will be enabled at all times including when disarmed. Logging
@@ -43,7 +55,7 @@ ATC_RATE_FF_ENAB,0 # prevent the rate controllers from compensating too much of 
 # 2: Disabled on USB connection
 # 3: Discard log on reboot if never armed
 # Default: 0
-LOG_DISARMED,0 # was only needed for wind speed estimation
+LOG_DISARMED,0  # was only needed for wind speed estimation
 
 # Enable logging of information needed for Replay
 # If LOG_REPLAY is set to 1 then the EKF2 and EKF3 state estimators will log detailed information needed
@@ -54,7 +66,7 @@ LOG_DISARMED,0 # was only needed for wind speed estimation
 # 0: Disabled
 # 1: Enabled
 # Default: 0
-LOG_REPLAY,0 # was only needed for wind speed estimation
+LOG_REPLAY,0  # was only needed for wind speed estimation
 
 # System identification axis
 # Controls which axis are being excited.  Set to non-zero to see more parameters
@@ -66,7 +78,7 @@ LOG_REPLAY,0 # was only needed for wind speed estimation
 # 5: Recovery Pitch Angle                              12: Mixer Yaw
 # 6: Recovery Yaw Angle                                13: Mixer Thrust
 # Default: 0
-SID_AXIS,10
+SID_AXIS,10  # Inject chip on the mixer roll signal
 
 # System identification Start Frequency
 # Frequency at the start of the sweep
@@ -117,13 +129,13 @@ SID_T_REC,130.0
 # 14: AltHold kP                      13: Heli Ext Gyro                   58: SysID Magnitude
 # 7: Throttle Rate kP                 38: Declination                     59: PSC Angle Max
 # Default: 0
-TUNE,58  # System identification magnitude
+TUNE,0  # System identification magnitude
 
 # Tuning maximum
 # Maximum value that the parameter currently being tuned with the transmitter's channel 6 knob will be set
 # to
 # Default: 0
-TUNE_MAX,0.40  # System identification max magnitude
+TUNE_MAX,0.4  # System identification max magnitude
 
 # Tuning minimum
 # Minimum value that the parameter currently being tuned with the transmitter's channel 6 knob will be set
