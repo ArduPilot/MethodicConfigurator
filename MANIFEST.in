@@ -1,1 +1,3 @@
 recursive-include vehicle_templates *
+include MethodicConfigurator/ArduPilot_icon.png
+include MethodicConfigurator/ArduPilot_logo.png
