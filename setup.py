@@ -10,8 +10,6 @@ This file is part of Ardupilot methodic configurator. https://github.com/ArduPil
 SPDX-License-Identifier:    GPL-3
 '''
 
-import os
-
 from setuptools import setup
 from setuptools import find_packages
 
