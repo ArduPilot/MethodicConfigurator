@@ -364,7 +364,7 @@ Now do some general configuration
 1. Select `12_general_configuration.param` on the *Current intermediate parameter file:* Combobox.
 1. Read the documentation links inside the `12_general_configuration.param documentation`
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Uploadd selected params to FC, and advance to next file` button.
+1. Press `Upload selected params to FC, and advance to next file` button.
 
 ## 2.14 ArduPilot Hardware Report
 
@@ -523,12 +523,12 @@ Setup the lua script using:
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. Close *ArduPilot Methodic Configurator*
 
-Perform the flight and afterwords:
+Perform the flight and afterward:
 
 1. Connect the flight controller to the PC
 1. On *ArduPilot Methodic Configurator* select `21_quicktune_results.param` on the *Current intermediate parameter file:* Combobox.
 1. When asked *Should the FC values now be copied to the 21_quicktune_results.param file?* select `Yes`.
-1. Press `Uploadd selected params to FC, and advance to next file` button.
+1. Press `Upload selected params to FC, and advance to next file` button.
 1. Close *ArduPilot Methodic Configurator*
 
 If you are impatient and do not want a fully optimized flight controller jump to *[section 14 Productive configuration](#h-12-productive-configuration-55)*
