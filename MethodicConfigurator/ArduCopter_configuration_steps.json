@@ -267,7 +267,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "MAGH_LOG_ENABLE": { "New Value": 1, "Change Reason": "Activates the logging of the MAGH.Active message" }
-        }
+        },
+        "jump_possible": {"45_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '45_everyday_use.param' file?"}
     },
     "23_inflight_magnetometer_fit_results.param": {
         "blog_text": "Records the results of the in-flight magnetometer calibration, providing data for analysis and adjustment.",

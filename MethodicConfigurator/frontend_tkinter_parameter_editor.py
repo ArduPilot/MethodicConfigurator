@@ -319,7 +319,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     self.local_filesystem.file_parameters = self.local_filesystem.read_params_from_files()
                     self.parameter_editor_table.set_at_least_one_param_edited(True)  # force writing doc annotations to file
 
-    def __should_copy_fc_values_to_file(self, selected_file):
+    def __should_copy_fc_values_to_file(self, selected_file: str):
         auto_changed_by = self.local_filesystem.auto_changed_by(selected_file)
         if auto_changed_by and self.flight_controller.fc_parameters:
             if messagebox.askyesno("Update file with values from FC?",
@@ -333,6 +333,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 if params_copied:
                     self.parameter_editor_table.set_at_least_one_param_edited(True)
 
+    def __should_jump_to_file(self, selected_file: str) -> str:
+        jump_possible = self.local_filesystem.jump_possible(selected_file)
+        for dest_file, msg in jump_possible.items():
+            if messagebox.askyesno("Skip some steps?", msg):
+                self.file_selection_combobox.set(dest_file)
+                return dest_file
+        return selected_file
+
     def on_param_file_combobox_change(self, _event, forced: bool = False):
         if not self.file_selection_combobox['values']:
             return
@@ -342,6 +350,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.write_changes_to_intermediate_parameter_file()
             self.__do_tempcal_imu(selected_file)
             self.__should_copy_fc_values_to_file(selected_file)
+            selected_file = self.__should_jump_to_file(selected_file)
 
             # Update the current_file attribute to the selected file
             self.current_file = selected_file
