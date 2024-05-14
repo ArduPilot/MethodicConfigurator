@@ -412,12 +412,27 @@ These three parameters linearize (correct) the non-linear *thrust vs. PWM* respo
 They are **crucial** for the stability of the vehicle.
 If this is set too high we see an increase in gain at the lower end of the thrust range and a decrease in gain at the upper end.
 
-**Therefore when set to high you can see instability at low throttle and if set too low you can see instability at high throttle.**
+**Therefore when set too high you can see instability at low throttle and if set too low you can see instability at high throttle.**
 
 The automation on `SETUP >> Mandatory Hardware >> Initial Tune Parameters` gave you a good starting point on their values.
 But we recommend using a [Trust Stand](https://ardupilot.org/copter/docs/motor-thrust-scaling.html#thrust-stands) or [Olliw method](http://www.olliw.eu/2018/thrust-from-motor-data/) or [ArduPilot DIY Thrust Stand](https://discuss.ardupilot.org/t/ardupilot-thrust-stand/68352) to determine their value.
 
 At the time of writing [Automatic `MOT_THST_EXPO` estimation lua script](https://discuss.ardupilot.org/t/automatic-mot-thst-expo-estimation-lua-script/100704/) is not yet ready for production use.
+
+We used an oversized test stand to test the motors. Since the test stand was too big for a single motor we tested all four motors at once. This was our setup:
+
+- [Series 1780 test stand](https://www.tytorobotics.com/pages/series-1780) from Tyto Robotics
+- [Delta Elektronika SM66-AR-110](https://www.delta-elektronika.nl/products/sm3300-series) power supply
+- T-Motor F1507 3800kv motors
+- Mamba Systems F45_128k BLHeli32 4in1 ESC
+- HQProp "DUCT-76MMX8" propellers
+
+![test stand with drone](images/motor_test_stand_with_drone_cropped.jpg)
+
+We fixed and updated Cell G8 as well as the plot's Data range of the [original ArduPilot Wiki Spreadsheet](https://docs.google.com/spreadsheets/d/1_75aZqiT_K1CdduhUe4-DjRgx3Alun4p8V2pt6vM5P8/edit#gid=0) creating [this corrected version](see spreadsheet in folder images)
+We imported the data into the spreadsheet and created this graph:
+
+![thrust vs PWM](images/motor_thrust_chart.PNG)
 
 1. On *ArduPilot Methodic Configurator* select `14_motor.param` on the *Current intermediate parameter file:* Combobox.
 1. Read the documentation links inside the `14_motor.param documentation`
