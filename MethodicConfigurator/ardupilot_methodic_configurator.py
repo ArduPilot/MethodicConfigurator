@@ -28,10 +28,11 @@ from MethodicConfigurator.frontend_tkinter_component_editor import ComponentEdit
 
 from MethodicConfigurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 
+from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
+
 from MethodicConfigurator.version import VERSION
 
 
-# pylint: disable=duplicate-code
 def argument_parser():
     """
     Parses command-line arguments for the script.
@@ -54,17 +55,7 @@ def argument_parser():
     parser = FlightController.add_argparse_arguments(parser)
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindow.add_argparse_arguments(parser)
-    parser.add_argument('--loglevel',
-                        type=str,
-                        default='INFO',
-                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        help='Logging level (default is INFO).')
-    parser.add_argument('-v', '--version',
-                        action='version',
-                        version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.')
-    return parser.parse_args()
-# pylint: enable=duplicate-code
+    return add_common_arguments_and_parse(parser)
 
 
 def main():

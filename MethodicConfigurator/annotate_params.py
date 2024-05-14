@@ -511,7 +511,7 @@ def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) 
     return param_name
 
 
-def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',  # pylint: disable=R0912, R0914, R0915
+def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',
                                    sort_type: str = 'none', param_default_dict: Optional[Dict] = None) -> None:
     """
     Updates the parameter documentation in the target file or in all *.param,*.parm files of the target directory.
@@ -555,60 +555,63 @@ def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',  # py
         with open(param_file, "r", encoding="utf-8") as file:
             lines = file.readlines()
 
-        new_lines = []
-        if os_path.basename(param_file).endswith("15_pid_adjustment.param"):
-            new_lines.extend(lines[0:7])  # copy the first 8 lines verbatim
+        update_parameter_documentation_file(doc, sort_type, param_default_dict, param_file, lines)
 
-        total_params = 0
-        documented_params = 0
-        undocumented_params = []
-        is_first_param_in_file = True  # pylint: disable=C0103
-        if sort_type == "missionplanner":
-            lines.sort(key=missionplanner_sort)
-        if sort_type == "mavproxy":
-            lines.sort(key=extract_parameter_name)
-        for n, line in enumerate(lines, start=1):
-            line = line.strip()
-            if not line.startswith("#") and line:
-                param_name = extract_parameter_name_and_validate(line, param_file, n)
+def update_parameter_documentation_file(doc, sort_type, param_default_dict, param_file, lines):  # pylint: disable=too-many-locals
+    new_lines = []
+    if os_path.basename(param_file).endswith("15_pid_adjustment.param"):
+        new_lines.extend(lines[0:7])  # copy the first 8 lines verbatim
 
-                if param_name in doc:
+    total_params = 0
+    documented_params = 0
+    undocumented_params = []
+    is_first_param_in_file = True
+    if sort_type == "missionplanner":
+        lines.sort(key=missionplanner_sort)
+    if sort_type == "mavproxy":
+        lines.sort(key=extract_parameter_name)
+    for n, line in enumerate(lines, start=1):
+        line = line.strip()
+        if not line.startswith("#") and line:
+            param_name = extract_parameter_name_and_validate(line, param_file, n)
+
+            if param_name in doc:
                     # If the parameter name is in the dictionary,
-                    #  prefix the line with comment derived from the dictionary element
-                    data = doc[param_name]
-                    prefix_parts = [
+                    #  prefix the line with a comment derived from the dictionary element
+                data = doc[param_name]
+                prefix_parts = [
                         f"{data['humanName']}",
                     ]
-                    prefix_parts += data["documentation"]
-                    for key, value in data["fields"].items():
-                        prefix_parts.append(f"{key}: {value}")
-                    prefix_parts += format_columns(data["values"])
-                    doc_text = "\n# ".join(prefix_parts)  # pylint: disable=C0103
-                    if param_name in param_default_dict:
-                        default_value = format(param_default_dict[param_name].value, '.6f').rstrip('0').rstrip('.')
-                        doc_text += f"\n# Default: {default_value}"
-                    if not is_first_param_in_file:
-                        new_lines.append("\n")
-                    new_lines.append(f"# {doc_text}\n{line}\n")
-                    documented_params += 1
-                else:
+                prefix_parts += data["documentation"]
+                for key, value in data["fields"].items():
+                    prefix_parts.append(f"{key}: {value}")
+                prefix_parts += format_columns(data["values"])
+                doc_text = "\n# ".join(prefix_parts)  # pylint: disable=C0103
+                if param_name in param_default_dict:
+                    default_value = format(param_default_dict[param_name].value, '.6f').rstrip('0').rstrip('.')
+                    doc_text += f"\n# Default: {default_value}"
+                if not is_first_param_in_file:
+                    new_lines.append("\n")
+                new_lines.append(f"# {doc_text}\n{line}\n")
+                documented_params += 1
+            else:
                     # If the parameter name is in not the dictionary, copy the parameter line 1-to-1
-                    new_lines.append(f"{line}\n")
-                    undocumented_params.append(param_name)
-                total_params += 1
-                is_first_param_in_file = False
+                new_lines.append(f"{line}\n")
+                undocumented_params.append(param_name)
+            total_params += 1
+            is_first_param_in_file = False
 
-        if total_params == documented_params:
-            logging.info("Read file %s with %d parameters, all got documented",
+    if total_params == documented_params:
+        logging.info("Read file %s with %d parameters, all got documented",
                          param_file, total_params)
-        else:
-            logging.warning("Read file %s with %d parameters, but only %s of which got documented",
+    else:
+        logging.warning("Read file %s with %d parameters, but only %s of which got documented",
                             param_file, total_params, documented_params)
-            logging.warning("No documentation found for: %s", ", ".join(undocumented_params))
+        logging.warning("No documentation found for: %s", ", ".join(undocumented_params))
 
         # Write the new file contents to the file
-        with open(param_file, "w", encoding="utf-8") as file:
-            file.writelines(new_lines)
+    with open(param_file, "w", encoding="utf-8") as file:
+        file.writelines(new_lines)
 
 
 def print_read_only_params(doc):
