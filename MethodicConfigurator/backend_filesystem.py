@@ -343,7 +343,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
 
             # Check for and add specific files if they exist
             specific_files = ["00_default.param", "apm.pdef.xml", self.configuration_steps_filename,
-                              "vehicle_components.json", "vehicle.jpg", "last_written_filename.txt",
+                              "vehicle_components.json", "vehicle.jpg", "last_uploaded_filename.txt",
                               "tempcal_gyro.png", "tempcal_acc.png"]
             for file_name in specific_files:
                 file_path = os_path.join(self.vehicle_dir, file_name)
@@ -555,19 +555,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
 
         return template_dir, new_base_dir, vehicle_dir
 
-    def write_last_written_filename(self, current_file: str):
+    def write_last_uploaded_filename(self, current_file: str):
         try:
-            with open(os_path.join(self.vehicle_dir, 'last_written_filename.txt'), 'w', encoding='utf-8') as file:
+            with open(os_path.join(self.vehicle_dir, 'last_uploaded_filename.txt'), 'w', encoding='utf-8') as file:
                 file.write(current_file)
         except Exception as e:  # pylint: disable=broad-except
-            logging_error("Error writing last written filename: %s", e)
+            logging_error("Error writing last uploaded filename: %s", e)
 
-    def __read_last_written_filename(self) -> str:
+    def __read_last_uploaded_filename(self) -> str:
         try:
-            with open(os_path.join(self.vehicle_dir, 'last_written_filename.txt'), 'r', encoding='utf-8') as file:
+            with open(os_path.join(self.vehicle_dir, 'last_uploaded_filename.txt'), 'r', encoding='utf-8') as file:
                 return file.read().strip()
         except Exception as e:  # pylint: disable=broad-except
-            logging_error("Error reading last written filename: %s", e)
+            logging_error("Error reading last uploaded filename: %s", e)
         return ""
 
     def get_start_file(self, explicit_index: int):
@@ -586,25 +586,25 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
                                 explicit_index, files[start_file_index])
             return files[start_file_index]
 
-        last_written_filename = self.__read_last_written_filename()
-        if last_written_filename:
-            logging_info("Last written file was %s.", last_written_filename)
+        last_uploaded_filename = self.__read_last_uploaded_filename()
+        if last_uploaded_filename:
+            logging_info("Last uploaded file was %s.", last_uploaded_filename)
         else:
-            logging_info("No last written file found. Starting with the first file.")
+            logging_info("No last uploaded file found. Starting with the first file.")
             return files[0]
 
-        if last_written_filename not in files:
-            # Handle the case where last_written_filename is not found in the list
-            logging_warning("Last written file not found in the list of files. Starting with the first file.")
+        if last_uploaded_filename not in files:
+            # Handle the case where last_uploaded_filename is not found in the list
+            logging_warning("Last uploaded file not found in the list of files. Starting with the first file.")
             return files[0]
 
-        # Find the index of last_written_filename in files
-        last_written_index = files.index(last_written_filename)
-        # Check if there is a file following last_written_filename
-        start_file_index = last_written_index + 1
+        # Find the index of last_uploaded_filename in files
+        last_uploaded_index = files.index(last_uploaded_filename)
+        # Check if there is a file following last_uploaded_filename
+        start_file_index = last_uploaded_index + 1
         if start_file_index >= len(files):
-            # Handle the case where last_written_filename is the last file in the list
-            logging_warning("Last written file is the last file in the list. Starting from there.")
+            # Handle the case where last_uploaded_filename is the last file in the list
+            logging_warning("Last uploaded file is the last file in the list. Starting from there.")
             start_file_index = len(files) - 1
         return files[start_file_index]
 

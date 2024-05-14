@@ -130,10 +130,10 @@ Here you sequentially configure the parameters of your flight controller to meet
 - The current parameter value downloaded from your FC is in the `Current Value` column.
   - Not available parameter values are presented as `N/A` on an *orange background*🟧
   - Parameters that have the default parameter value are presented on a *light blue background* 🟦
-- The new value is the value in the intermediate file and will be written to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `example_vehicle` directory are just examples.
+- The new value is the value in the intermediate file and will be uploaded to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `example_vehicle` directory are just examples.
 - **In the parameter table, you can edit the `New Value` and `Change Reason` entries for each parameter.**
 - **You MUST edit the `Change Reason` so that other users understand why you changed the parameter to that particular `new value`**
-- Check the `Upload` checkbox to select parameters to be written to the flight controller
+- Check the `Upload` checkbox to select parameters to be uploaded to the flight controller
 - **Hover over the labels to see tooltips with additional information.**
 - The entire ArduPilot official parameter documentation is available on the tooltip, no need to use a browser to search for it.
 

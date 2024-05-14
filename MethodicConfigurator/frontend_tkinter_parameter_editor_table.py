@@ -47,7 +47,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.parameter_editor = parameter_editor
         self.background_color = root.cget("background")
         self.current_file = None
-        self.write_checkbutton_var = {}
+        self.upload_checkbutton_var = {}
         self.at_least_one_param_edited = False
 
         # Prepare a dictionary that maps variable names to their values
@@ -90,7 +90,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             label.grid(row=0, column=i, sticky="ew") # Use sticky="ew" to make the label stretch horizontally
             show_tooltip(label, tooltips[i])
 
-        self.write_checkbutton_var = {}
+        self.upload_checkbutton_var = {}
 
         # re-compute derived parameters because the fc_parameters values might have changed
         if self.local_filesystem.configuration_steps and selected_file in self.local_filesystem.configuration_steps:
@@ -145,7 +145,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 column_3 = self.__create_new_value_entry(param_name, param, param_metadata,
                                                          param_default, doc_tooltip)
                 column_4 = self.__create_unit_label(param_metadata)
-                column_5 = self.__create_write_write_checkbutton(param_name)
+                column_5 = self.__create_upload_checkbutton(param_name)
                 column_6 = self.__create_change_reason_entry(param_name, param, column_3)
 
                 column_0.grid(row=i, column=0, sticky="w", padx=0)
@@ -158,6 +158,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
             # Add the "Add" button at the bottom of the table
             add_button = tk.Button(self.view_port, text="Add", command=lambda: self.__on_parameter_add(fc_parameters))
+            show_tooltip(add_button, f"Add a parameter to the {self.current_file} file")
             add_button.grid(row=len(params)+2, column=0, sticky="w", padx=0)
 
 
@@ -171,11 +172,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.view_port.columnconfigure(2, weight=0) # Current Value
         self.view_port.columnconfigure(3, weight=0) # New Value
         self.view_port.columnconfigure(4, weight=0) # Units
-        self.view_port.columnconfigure(5, weight=0) # write to FC
+        self.view_port.columnconfigure(5, weight=0) # Upload to FC
         self.view_port.columnconfigure(6, weight=1) # Change Reason
 
     def __create_delete_button(self, param_name):
         delete_button = tk.Button(self.view_port, text="Del", command=lambda: self.__on_parameter_delete(param_name))
+        show_tooltip(delete_button, f"Delete {param_name} from the {self.current_file} file")
         return delete_button
 
     def __create_parameter_name(self, param_name, param_metadata, doc_tooltip):
@@ -320,12 +322,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             show_tooltip(unit_label, unit_tooltip)
         return unit_label
 
-    def __create_write_write_checkbutton(self, param_name):
-        self.write_checkbutton_var[param_name] = tk.BooleanVar(value=True) # Default to selected
-        write_write_checkbutton = ttk.Checkbutton(self.view_port,
-                                                          variable=self.write_checkbutton_var[param_name])
-        show_tooltip(write_write_checkbutton, f'When selected upload {param_name} new value to the flight controller')
-        return write_write_checkbutton
+    def __create_upload_checkbutton(self, param_name):
+        self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=True) # Default to selected
+        upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
+        show_tooltip(upload_checkbutton, f'When selected upload {param_name} new value to the flight controller')
+        return upload_checkbutton
 
     def __create_change_reason_entry(self, param_name, param, new_value_entry):
 
@@ -449,9 +450,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         # Update the params dictionary with the new value
         self.local_filesystem.file_parameters[current_file][param_name].comment = new_value
 
-    def get_write_selected_params(self, current_file: str):
+    def get_upload_selected_params(self, current_file: str):
         selected_params = {}
-        for param_name, checkbutton_state in self.write_checkbutton_var.items():
+        for param_name, checkbutton_state in self.upload_checkbutton_var.items():
             if checkbutton_state.get():
                 selected_params[param_name] = self.local_filesystem.file_parameters[current_file][param_name]
         return selected_params

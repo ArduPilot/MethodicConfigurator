@@ -181,8 +181,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.param_download_progress_window = None
         self.tempcal_imu_progress_window = None
 
-        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version + " - Parameter editor")
-        self.root.geometry("880x500") # Set the window width
+        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version + \
+                        " - Parameter file editor and uploader")
+        self.root.geometry("900x500") # Set the window width
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)
@@ -226,7 +227,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                                                           self.current_file,
                                                           "Select the intermediate parameter file from the list of available "
                                                           "files in the selected vehicle directory\nIt will automatically "
-                                                          "advance to the next file once the current file is written to the "
+                                                          "advance to the next file once the current file is uploaded to the "
                                                           "fight controller",
                                                           state='readonly', width=45)
         self.file_selection_combobox.bind("<<ComboboxSelected>>", self.on_param_file_combobox_change)
@@ -264,7 +265,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                                                 variable=self.show_only_differences,
                                                 command=self.on_show_only_changed_checkbox_change)
         only_changed_checkbox.pack(side=tk.TOP, anchor=tk.NW)
-        show_tooltip(only_changed_checkbox, "Toggle to show only parameters that will change if/when written to the flight "
+        show_tooltip(only_changed_checkbox, "Toggle to show only parameters that will change if/when uploaded to the flight "
                      "controller")
 
         annotate_params_checkbox = ttk.Checkbutton(checkboxes_frame, text="Annotate docs into .param files",
@@ -275,11 +276,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                      "parameter files\n"
                      "The files will be bigger, but all the existing parameter documentation will be included inside")
 
-        # Create write button
-        write_selected_button = tk.Button(buttons_frame, text="Upload selected params to FC, and advance to next param file",
-                                          command=self.on_upload_selected_click)
-        write_selected_button.pack(side=tk.LEFT, padx=(8, 8)) # Add padding on both sides of the write selected button
-        show_tooltip(write_selected_button, "Upload selected parameters to the flight controller and advance to the next "
+        # Create upload button
+        upload_selected_button = tk.Button(buttons_frame, text="Upload selected params to FC, and advance to next param file",
+                                           command=self.on_upload_selected_click)
+        upload_selected_button.pack(side=tk.LEFT, padx=(8, 8)) # Add padding on both sides of the upload selected button
+        show_tooltip(upload_selected_button, "Upload selected parameters to the flight controller and advance to the next "
                      "intermediate parameter file\nIf changes have been made to the current file it will ask if you want "
                      "to save them\nIt will reset the FC if necessary, re-download all parameters and validate their value")
 
@@ -439,20 +440,20 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.parameter_editor_table.generate_edit_widgets_focus_out()
 
         self.write_changes_to_intermediate_parameter_file()
-        selected_params = self.parameter_editor_table.get_write_selected_params(self.current_file)
+        selected_params = self.parameter_editor_table.get_upload_selected_params(self.current_file)
         if selected_params:
             if hasattr(self.flight_controller, 'fc_parameters') and self.flight_controller.fc_parameters:
                 self.upload_selected_params(selected_params)
             else:
-                logging_warning("No parameters were yet read from the flight controller, will not write any parameter")
-                messagebox.showwarning("Will not write any parameter", "No flight controller connection")
+                logging_warning("No parameters were yet downloaded from the flight controller, will not upload any parameter")
+                messagebox.showwarning("Will not upload any parameter", "No flight controller connection")
         else:
-            logging_warning("No parameter was selected for write, will not write any parameter")
-            messagebox.showwarning("Will not write any parameter", "No parameter was selected for write")
+            logging_warning("No parameter was selected for upload, will not upload any parameter")
+            messagebox.showwarning("Will not upload any parameter", "No parameter was selected for upload")
         # Delete the parameter table and create a new one with the next file if available
         self.on_skip_click(force_focus_out_event=False)
 
-    # This function can recurse multiple times if there is a write error
+    # This function can recurse multiple times if there is an upload error
     def upload_selected_params(self, selected_params):
         logging_info("Uploading %d selected %s parameters to flight controller...", len(selected_params), self.current_file)
 
@@ -476,27 +477,27 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             logging_info("Re-download all parameters from the flight controller")
 
             # Validate that the read parameters are the same as the ones in the current_file
-            param_write_error = []
+            param_upload_error = []
             for param_name, param in selected_params.items():
                 if param_name in self.flight_controller.fc_parameters and \
                    param is not None and \
                    not is_within_tolerance(self.flight_controller.fc_parameters[param_name], float(param.value)):
-                    logging_error("Parameter %s write to the flight controller failed. Expected: %f, Actual: %f",
+                    logging_error("Parameter %s upload to the flight controller failed. Expected: %f, Actual: %f",
                                   param_name, param.value, self.flight_controller.fc_parameters[param_name])
-                    param_write_error.append(param_name)
+                    param_upload_error.append(param_name)
                 if param_name not in self.flight_controller.fc_parameters:
-                    logging_error("Parameter %s write to the flight controller failed. Expected: %f, Actual: N/A",
+                    logging_error("Parameter %s upload to the flight controller failed. Expected: %f, Actual: N/A",
                                   param_name, param.value)
-                    param_write_error.append(param_name)
+                    param_upload_error.append(param_name)
 
-            if param_write_error:
-                if messagebox.askretrycancel("Parameter write error",
-                                             "Failed to write the following parameters to the flight controller:\n"
-                                             f"{(', ').join(param_write_error)}"):
+            if param_upload_error:
+                if messagebox.askretrycancel("Parameter upload error",
+                                             "Failed to upload the following parameters to the flight controller:\n"
+                                             f"{(', ').join(param_upload_error)}"):
                     self.upload_selected_params(selected_params)
             else:
-                logging_info("All parameters written to the flight controller successfully")
-        self.local_filesystem.write_last_written_filename(self.current_file)
+                logging_info("All parameters uploaded to the flight controller successfully")
+        self.local_filesystem.write_last_uploaded_filename(self.current_file)
 
     def on_skip_click(self, _event=None, force_focus_out_event=True):
         if force_focus_out_event:

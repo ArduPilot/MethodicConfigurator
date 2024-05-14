@@ -75,6 +75,8 @@ class DirectorySelectionWidgets():
                                                     command=self.on_select_directory, width=2)
             directory_selection_button.pack(side=tk.RIGHT, anchor=tk.NW)
             show_tooltip(directory_selection_button, button_tooltip)
+        else:
+            self.directory_entry.xview_moveto(1.0)
 
     def on_select_directory(self):
         # Open the directory selection dialog
@@ -138,9 +140,9 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
         super().__init__(parent, parent_frame, initial_dir, "Vehicle directory:",
                          False,
                          "Vehicle-specific directory containing the intermediate\n"
-                         "parameter files to be written to the flight controller",
+                         "parameter files to be uploaded to the flight controller",
                          "Select the vehicle-specific directory containing the\n"
-                         "intermediate parameter files to be written to the flight controller" \
+                         "intermediate parameter files to be uploaded to the flight controller" \
                             if destroy_parent_on_open else '')
         self.local_filesystem = local_filesystem
         self.destroy_parent_on_open = destroy_parent_on_open

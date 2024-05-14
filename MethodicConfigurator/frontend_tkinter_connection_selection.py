@@ -234,7 +234,7 @@ class ConnectionSelectionWindow(BaseWindow):
         self.connection_selection_widgets.reconnect()
 
     def skip_fc_connection(self, flight_controller: FlightController):
-        logging_warning("Will proceed without FC connection. FC parameters will not be read nor written")
+        logging_warning("Will proceed without FC connection. FC parameters will not be downloaded nor uploaded")
         logging_warning("Only the intermediate '.param' files on the PC disk will be edited")
         flight_controller.disconnect()
         self.root.destroy()
