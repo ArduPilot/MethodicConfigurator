@@ -126,10 +126,10 @@ class ConfigurationSteps:
                 if filename not in destination:
                     destination[filename] = {}
                 destination[filename][parameter] = Par(float(result), parameter_info["Change Reason"])
-            except (SyntaxError, NameError) as e:
+            except (SyntaxError, NameError, KeyError) as e:
+                error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
+                    f"parameter '{parameter}' could not be computed: {e}"
                 if parameter_type == 'forced':
-                    error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
-                        f"parameter '{parameter}' could not be computed: {e}"
                     logging_error(error_msg)
                     return error_msg
                 logging_warning(error_msg)
