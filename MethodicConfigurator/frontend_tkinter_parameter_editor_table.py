@@ -131,7 +131,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                         self.local_filesystem.file_parameters[selected_file].pop(old_name)
                     logging_info("Renaming parameter %s to %s", old_name, new_name)
 
-    def __update_table(self, params, fc_parameters):  # pylint: disable=too-many-locals
+    def __update_table(self, params, fc_parameters):
         try:
             for i, (param_name, param) in enumerate(params.items(), 1):
                 param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
@@ -139,22 +139,22 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 doc_tooltip = param_metadata.get('doc_tooltip') if param_metadata else \
                     "No documentation available in apm.pdef.xml for this parameter"
 
-                column_0 = self.__create_delete_button(param_name)
-                column_1 = self.__create_parameter_name(param_name, param_metadata, doc_tooltip)
-                column_2 = self.__create_flightcontroller_value(fc_parameters, param_name, param_default, doc_tooltip)
-                column_3 = self.__create_new_value_entry(param_name, param, param_metadata,
-                                                         param_default, doc_tooltip)
-                column_4 = self.__create_unit_label(param_metadata)
-                column_5 = self.__create_upload_checkbutton(param_name)
-                column_6 = self.__create_change_reason_entry(param_name, param, column_3)
+                column = []
+                column[0] = self.__create_delete_button(param_name)
+                column[1] = self.__create_parameter_name(param_name, param_metadata, doc_tooltip)
+                column[2] = self.__create_flightcontroller_value(fc_parameters, param_name, param_default, doc_tooltip)
+                column[3] = self.__create_new_value_entry(param_name, param, param_metadata, param_default, doc_tooltip)
+                column[4] = self.__create_unit_label(param_metadata)
+                column[5] = self.__create_upload_checkbutton(param_name)
+                column[6] = self.__create_change_reason_entry(param_name, param, column[3])
 
-                column_0.grid(row=i, column=0, sticky="w", padx=0)
-                column_1.grid(row=i, column=1, sticky="w", padx=0)
-                column_2.grid(row=i, column=2, sticky="e", padx=0)
-                column_3.grid(row=i, column=3, sticky="e", padx=0)
-                column_4.grid(row=i, column=4, sticky="e", padx=0)
-                column_5.grid(row=i, column=5, sticky="e", padx=0)
-                column_6.grid(row=i, column=6, sticky="ew", padx=(0, 5))
+                column[0].grid(row=i, column=0, sticky="w", padx=0)
+                column[1].grid(row=i, column=1, sticky="w", padx=0)
+                column[2].grid(row=i, column=2, sticky="e", padx=0)
+                column[3].grid(row=i, column=3, sticky="e", padx=0)
+                column[4].grid(row=i, column=4, sticky="e", padx=0)
+                column[5].grid(row=i, column=5, sticky="e", padx=0)
+                column[6].grid(row=i, column=6, sticky="ew", padx=(0, 5))
 
             # Add the "Add" button at the bottom of the table
             add_button = tk.Button(self.view_port, text="Add", command=lambda: self.__on_parameter_add(fc_parameters))
