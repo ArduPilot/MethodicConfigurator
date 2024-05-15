@@ -47,11 +47,12 @@ This interface allows users to select a vehicle directory that contains intermed
   <ins><b><i>Vehicle Selection Window</i></b></ins>
 </p>
 
-It provides two main options for selecting a vehicle directory:
+It provides three main options for selecting a vehicle directory:
 
 #### Option 1: Create a New Vehicle Configuration Directory Based on an Existing Template
 
-This option allows users to create a new vehicle configuration directory by copying files from an existing template directory. It's useful for setting up a new vehicle configuration quickly.
+Create a new vehicle configuration directory by copying files from an existing template directory.
+It's useful for setting up a new vehicle configuration quickly.
 
 - Use the "Template directory" `...` button to select the existing vehicle template directory containing the intermediate parameter files to be copied.
 - Use the "Base directory" `...` button to select the existing directory where the new vehicle directory will be created.
@@ -60,9 +61,14 @@ This option allows users to create a new vehicle configuration directory by copy
 
 #### Option 2: Use an Existing Vehicle Configuration Directory
 
-This option allows users to select an existing vehicle configuration directory that already contains intermediate parameter files. It's useful for editing an existing vehicle configuration.
+Select an existing vehicle configuration directory that already contains intermediate parameter files.
+It's useful for editing an existing vehicle configuration.
 
 - Use the "Vehicle directory" `...` button to select the existing vehicle directory containing the intermediate parameter files.
+
+#### Option 3: Use the last used Vehicle Configuration Directory
+
+Select the last used vehicle configuration directory.
 
 ### Component Editor Interface
 
@@ -81,24 +87,23 @@ The application will validate your input.
 If issues are found the problematic fields' background will be marked in red color.
 Correct those entries and press the `Save data and start configuration` button again.
 
-### Parameter Editor interface
+### Parameter File Editor and uploader interface
 
 Here you sequentially configure the parameters of your flight controller to meet your needs while having all the available documentation at your fingertips.
 
 <p align="center">
   <img src="images/App_screenshot2.png" width=85% />
 <br>
-  <ins><b><i>Parameter Editor Window (main application)</i></b></ins>
+  <ins><b><i>Parameter File Editor and Uploader Window (main application)</i></b></ins>
 </p>
 
-#### 1. Select a Vehicle Directory (optional)
+#### 1. See the Current Vehicle Directory (optional)
 
-- **Click the `...` button next to the `Vehicle directory:` label to open a directory selection dialog.**
-- **Navigate to the directory containing the vehicle-specific intermediate parameter files (if you are running it for the first time use the one you just created) and click `OK`.**
-- vehicle-specific intermediate parameter filenames start with two digits followed by an underscore and end in `.param`
+- this vehicle contains the files to be edited and uploaded
 
 #### 2. Select an Intermediate Parameter File (optional)
 
+- vehicle-specific intermediate parameter filenames start with two digits followed by an underscore and end in `.param`
 - **Use the `Current intermediate parameter file:` combobox to select an intermediate parameter file.**
 - The first available intermediate parameter file not named `00_default.param` will be selected by default
 - If the selection changes, the parameter table will update to display the parameters from the selected file.
@@ -124,18 +129,21 @@ Here you sequentially configure the parameters of your flight controller to meet
 #### 5. Editing Parameters
 
 - The parameter table presents the parameters in the current intermediate parameter file
-- The first column is the ArduPilot parameter name used in that row.
+- The first column is a `Del` button that deletes the parameter in this row from the current intermediate parameter file.
+- The second column is the ArduPilot parameter name used in that row.
   - ReadOnly parameters are presented on a *red background*🟥, they should not be present in an intermediate configuration file because under normal conditions they can not be changed
   - Sensor calibration parameters are presented on a *yellow background*🟨, they are vehicle-instance dependent and can NOT be reused between similar vehicles
 - The current parameter value downloaded from your FC is in the `Current Value` column.
   - Not available parameter values are presented as `N/A` on an *orange background*🟧
   - Parameters that have the default parameter value are presented on a *light blue background* 🟦
-- The new value is the value in the intermediate file and will be uploaded to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `example_vehicle` directory are just examples.
+- The new value is the value in the intermediate file and will be uploaded to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `vehicle_template` directory are just examples.
+  - parameters that should not be changed by the users, or are derived from information in the [*component editor*](#component-editor-interface) are greyed out and can not be edited
 - **In the parameter table, you can edit the `New Value` and `Change Reason` entries for each parameter.**
-- **You MUST edit the `Change Reason` so that other users understand why you changed the parameter to that particular `new value`**
+- **You MUST edit the `Change Reason` so that other users understand why you changed the parameter to that particular `New value`**
 - Check the `Upload` checkbox to select parameters to be uploaded to the flight controller
 - **Hover over the labels to see tooltips with additional information.**
 - The entire ArduPilot official parameter documentation is available on the tooltip, no need to use a browser to search for it.
+- The `Add` button adds a parameter to the current intermediate parameter file.
 
 #### 6. Focus on the changed parameters (optional)
 
@@ -144,9 +152,9 @@ Here you sequentially configure the parameters of your flight controller to meet
 
 #### 7. Uploading Parameters to the Flight Controller
 
-- You can also jump to a particular file using the Combobox as explained in [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file)
+- You can also jump to a particular file using the Combobox as explained in [2. Select an intermediate parameter file](#2-select-an-intermediate-parameter-file-optional)
 - **After editing parameters, click the `Upload selected params to FC, and advance to next param file` button to upload the (`Upload` checkbox) selected parameters to the flight controller.**
-- All parameter's `New Value` and `Change Reason` will be written to the current intermediate parameter file, irrespective of the `Upload` checkboxes
+- All parameter' `New Value` and `Change Reason` will be written to the current intermediate parameter file, irrespective of the `Upload` checkboxes
 - The application will then:
   - upload the selected and changed parameters to the flight controller
   - reset the flight controller if necessary for the new parameter values to take effect
@@ -162,7 +170,7 @@ Here you sequentially configure the parameters of your flight controller to meet
 #### 9. Completing the Configuration Process
 
 Once all the intermediate parameter files have been processed, the ArduPilot Methodic Configurator will display a summary message box.
-In other words when the last available intermediate parameter file is selected (see [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file)) and either `Upload selected params to FC, and advance to next param file` or `Skip parameter file` button is pressed.
+In other words when the last available intermediate parameter file is selected (see [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file-optional)) and either `Upload selected params to FC, and advance to next param file` or `Skip parameter file` button is pressed.
 This message box provides a comprehensive overview of the configuration process, including the number of parameters that were kept at their default values, the number of non-default read-only parameters that were ignored, and the number of non-default writable parameters that were updated.
 
 ![Configuration summary message box](images/Last_parameter_file_processed.png)
