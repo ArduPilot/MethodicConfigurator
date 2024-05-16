@@ -3,7 +3,7 @@
 For illustrative purposes, we will use the small 3'' multicopter depicted above, but the tuning sequence we developed at [IAV GmbH](https://www.iav.com/) will work on almost any other multicopter.
 
 This method uses the latest available [ArduPilot WebTools](https://firmware.ardupilot.org/Tools/WebTools/), some of the new features of ArduCopter 4.3 and above and best practices from the [Ardupilot Community](https://discuss.ardupilot.org/).
-Sections 2.0 to 2.13 apply to **all ArduPilot vehicles**: ArduPlane, ArduRover, ArduBoat, ArduSub, ArduBlimp ...
+Sections 2.0 to 2.15 apply to **all ArduPilot vehicles**: ArduPlane, ArduRover, ArduBoat, ArduSub, ArduBlimp ...
 We will detail the firmware parameters to change, the sequence of how to change them, help you to find the value for each parameter, explain which test flights to conduct and the order in which to conduct them and help you document all your steps for traceability.
 This applies industry-proven [*software configuration management* (SCM)](https://en.wikipedia.org/wiki/Software_configuration_management) techniques to tuning an ArduCopter vehicle.
 
@@ -66,9 +66,9 @@ With these requirements in mind, and for our specific application, we have selec
 |:---|:----|
 |Frame | [Diatone Taycan MX-C](https://www.diatone.us/products/diatone-mxc-taycan-duct-3-inch-cinewhoop-fpv-drone) |
 |Flight Controller | [Matek H743 SLIM V3](http://www.mateksys.com/?portfolio=h743-slim) |
-|ESC | [T-Motor F45 4in1 ESC V2](https://store.tmotor.com/goods-899-F45A+6S+4IN1+V2+.html) |
-|Motors | 4x [Diatone Mamba 1404 5000kv](https://www.diatone.us/products/mamba-toka-1404-3000kv-4000kv-racing-motor-green) |
-|Propeller | 4x [HQProp 3018, 3-Blade](https://shop.rc-hangar15.de/HQProp-3018-Durable-3-3-Blatt-Propeller-TMount) |
+|ESC | [Mamba System F45_128k 4in1 ESC](https://www.diatone.us/products/mb-f45_128k-bl32-esc) |
+|Motors | 4x [T-Motor 15507 3800kv](https://www.fpv24.com/de/t-motor/t-motor-f-serie-f1507-cinematic-3800kv-3s-4s) |
+|Propeller | 4x [CineWhoop 3\", 8-Blade](https://shop.rc-hangar15.de/HQProp-76mm-CineWhoop-3-8-Blatt-Propeller-grau) |
 |BEC with voltage/current monitor | [Holybro PM02 V3](https://holybro.com/products/pm02-v3-12s-power-module) |
 |Battery | [SLS X-Cube 4S 1800mAh 40C/80C](https://www.stefansliposhop.de/akkus/sls-x-cube/sls-x-cube-40c/sls-x-cube-1800mah-4s1p-14-8v-40c-80c::1568.html) |
 |GNSS receiver | [Holybro H-RTK F9P Helical](https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445) |
@@ -191,8 +191,12 @@ The graphic below depicts the accelerometer drift versus time and the board temp
 
 Follow [mounting the autopilot](https://ardupilot.org/copter/docs/common-mounting-the-flight-controller.html) documentation to determine the correct value of the [AHRS_ORIENTATION](https://ardupilot.org/copter/docs/parameters.html#ahrs-orientation) parameter.
 
+## 2.5.1 Use ArduPilot Methodic Configurator to edit the parameter file and upload it to the flight controller
+
+1. The parameter file for this particular step is `04_board_orientation.param` other steps will use other parameter files
 1. On *ArduPilot Methodic Configurator* select `04_board_orientation.param` on the *Current intermediate parameter file:* Combobox.
 1. Read the documentation links inside the `04_board_orientation.param documentation`
+1. **Add** or **Del**ete parameters if necessary, using the respective GUI buttons
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
 1. Press `Upload selected params to FC, and advance to next file` button.
 
@@ -211,10 +215,7 @@ Or simply copy only the settings that you require, EdgeTX companion is very flex
 
 In our setup, we used an advanced RC receiver that cannot be fully configured using Mission Planner's `SETUP >> Mandatory Hardware >> Radio Calibration` menu.
 
-1. On *ArduPilot Methodic Configurator* select `05_remote_controller.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `05_remote_controller.param documentation`
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Upload selected params to FC, and advance to next file` button.
+Repeat the steps from section 2.5.1 to edit and upload the `05_remote_controller.param` file
 
 After that test the [RC failsafe](https://ardupilot.org/copter/docs/radio-failsafe.html)
 
@@ -222,10 +223,7 @@ After that test the [RC failsafe](https://ardupilot.org/copter/docs/radio-failsa
 
 The RC transmitter we used has a big color display where telemetry data is displayed, nevertheless, we use telemetry data for real-time flight monitoring with Mission Planner or QGroundControl.
 
-1. On *ArduPilot Methodic Configurator* select `06_telemetry.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `06_telemetry.param documentation`
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Upload selected params to FC, and advance to next file` button.
+Repeat the steps from section 2.5.1 to edit and upload the `06_telemetry.param` file
 
 Once this is operating we no longer need the USB connection to the vehicle. We can now use the telemetry connection instead.
 
@@ -233,10 +231,7 @@ Once this is operating we no longer need the USB connection to the vehicle. We c
 
 In our setup, we used a [Bi-directional Dshot ESC](https://ardupilot.org/copter/docs/common-dshot-escs.html) that cannot be fully configured using Mission Planner's `SETUP >> Mandatory Hardware >> Servo Output` menu.
 
-1. On *ArduPilot Methodic Configurator* select `07_esc.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `07_esc.param documentation`
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Upload selected params to FC, and advance to next file` button.
+Repeat the steps from section 2.5.1 to edit and upload the `07_esc.param` file
 
 The step above configured ESC communication pass-thru.
 In our vehicle, we use *BLHeli_32 ARM* ESC firmware.
@@ -252,30 +247,22 @@ https://youtu.be/7WeHTb7aBrE?si=gW9YbcQkZYK3DoNE
 
 In our setup, the battery voltage is measured directly at the flight controller `Vbat` pin and the current is measured at the 4-in1 ESC `Curr` pin.
 
-1. On *ArduPilot Methodic Configurator* select `08_batt1.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `08_batt1.param documentation`
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Upload selected params to FC, and advance to next file` button.
+Repeat the steps from section 2.5.1 to edit and upload the `08_batt1.param` file
 
 ## 2.10 Configure the redundant (secondary) battery monitor
 
 To be on the safe side we used a Holybro PM02 as a redundant secondary voltage and current monitor.
 One other option would be the [CBU 2-8s DroneCAN Battery Monitor and Current Sensor](https://www.cbunmanned.com/store).
 
-1. On *ArduPilot Methodic Configurator* select `09_batt2.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `09_batt2.param documentation`
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Upload selected params to FC, and advance to next file` button.
+Repeat the steps from section 2.5.1 to edit and upload the `09_batt2.param` file
 
 ## 2.11 Configure the GNSS receiver(s)
 
 GNSS receivers very often contain a magnetometer (compass) sensor. So they need to be configured before proceeding to the next step.
 
-1. On *ArduPilot Methodic Configurator* select `10_gnss.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `10_gnss.param documentation`
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Upload selected params to FC, and advance to next file` button.
-1. When asked *Should the FC values now be copied to the 11_mp_setup_mandatory_hardware.param file?* select `No` and close the *ArduPilot Methodic Configurator* software.
+Repeat the steps from section 2.5.1 to edit and upload the `10_gnss.param` file
+
+When asked *Should the FC values now be copied to the 11_mp_setup_mandatory_hardware.param file?* select `No` and close the *ArduPilot Methodic Configurator* software.
 
 ## 2.12 Configure "Mandatory Hardware" Parameters
 
@@ -382,10 +369,7 @@ If it doesn't, go back and perform the missing calibration(s).
 
 ![MP LOG_BITMASK parameter|690x221](upload://nAcJ2JbJ80e5yWRUjigqCKmyVWQ.png)
 
-1. On *ArduPilot Methodic Configurator* select `13_Logging.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `13_Logging.param documentation`
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Upload selected params to FC, and advance to next file` button.
+Repeat the steps from section 2.5.1 to edit and upload the `13_Logging.param` file
 
 The [`.bin` message table](https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/52) explains which bit is responsible for which `.bin` dataflash log messages:
 
@@ -434,40 +418,29 @@ We imported the data into the spreadsheet and created this graph:
 
 ![thrust vs PWM](images/motor_thrust_chart.PNG)
 
-1. On *ArduPilot Methodic Configurator* select `14_motor.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `14_motor.param documentation`
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Upload selected params to FC, and advance to next file` button.
+Repeat the steps from section 2.5.1 to edit and upload the `14_motor.param` file
 
 ## 2.17 Optional PID adjustment
 
 If you have a very small, or a very large vehicle that requires non-default PID values for a safe flight.
 Usually, smaller vehicles require lower than default PID rate values. Larger vehicles usually require higher than default PID rate values.
 
-1. On *ArduPilot Methodic Configurator* select `15_pid_adjustment.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `15_pid_adjustment.param documentation`
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Upload selected params to FC, and advance to next file` button.
+Repeat the steps from section 2.5.1 to edit and upload the `15_pid_adjustment.param` file
 
 ## 2.18 Remote ID (aka Drone ID)
 
 Read and follow [ArduPilot's Remote ID setup instructions](https://ardupilot.org/copter/docs/common-remoteid.html). You might have to [build OpenDroneID firmware for production](https://ardupilot.org/dev/docs/opendroneid.html).
 
-1. On *ArduPilot Methodic Configurator* select `16_remote_id.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `16_remote_id.param documentation`
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Upload selected params to FC, and advance to next file` button.
+Repeat the steps from section 2.5.1 to edit and upload the `16_remote_id.param` file
 
 ## 2.19 Notch filters setup
 
 Configure the gyro noise reduction notch filters with an estimation of the operation parameters.
 The estimation will be improved after the first flight.
 
-1. On *ArduPilot Methodic Configurator* select `17_notch_filter_setup.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `17_notch_filter_setup.param documentation`
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Upload selected params to FC, and advance to next file` button.
-1. When asked *Should the FC values now be copied to the 18_notch_filter_results.param file?* select `No` and close the *ArduPilot Methodic Configurator* software.
+Repeat the steps from section 2.5.1 to edit and upload the `17_notch_filter_setup.param` file
+
+When asked *Should the FC values now be copied to the 18_notch_filter_results.param file?* select `No` and close the *ArduPilot Methodic Configurator* software.
 
 # 3. First flight: Motor Thrust Hover and Harmonic Notch data collection
 
@@ -605,7 +578,7 @@ Setup the lua script using:
 1. When asked *Should the FC values now be copied to the 25_quicktune_results.param file?* select `No`.
 1. Close *ArduPilot Methodic Configurator*
 
-Perform the flight and afterwords:
+Perform the flight and afterward:
 
 1. Connect the flight controller to the PC
 1. On *ArduPilot Methodic Configurator* select `25_quicktune_results.param` on the *Current intermediate parameter file:* Combobox.
