@@ -90,11 +90,17 @@ class ComponentEditorWindowBase(BaseWindow):
         self.scroll_frame = ScrollFrame(self.root)
         self.scroll_frame.pack(side="top", fill="both", expand=True)
 
+        self.update_json_data()
+
         self.__populate_frames()
 
         self.save_button = ttk.Button(self.root, text="Save data and start configuration", command=self.save_data)
         show_tooltip(self.save_button, "Save component data and start parameter value configuration and tuning.")
         self.save_button.pack(pady=7)
+
+    def update_json_data(self):  # should be overwritten in child classes
+        if 'Format version' not in self.data:
+            self.data['Format version'] = 1
 
     def __populate_frames(self):
         """

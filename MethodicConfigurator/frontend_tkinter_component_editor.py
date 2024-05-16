@@ -68,6 +68,17 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         style.configure("entry_input_invalid.TEntry", fieldbackground="red")
         style.configure("entry_input_valid.TEntry", fieldbackground="white")
 
+    def update_json_data(self):
+        super().update_json_data()
+        if 'Components' not in self.data:
+            self.data['Components'] = {}
+        if 'Battery' not in self.data['Components']:
+            self.data['Components']['Battery'] = {}
+        if 'Specifications' not in self.data['Components']['Battery']:
+            self.data['Components']['Battery']['Specifications'] = {}
+        if 'Chemistry' not in self.data['Components']['Battery']['Specifications']:
+            self.data['Components']['Battery']['Specifications']['Chemistry'] = "Lipo"
+
     def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
         self.data['Components']['Flight Controller']['Firmware']['Type'] = vehicle_type
         entry = self.entry_widgets[('Flight Controller', 'Firmware', 'Type')]
