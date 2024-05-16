@@ -73,7 +73,7 @@
         "mandatory_text": "100% mandatory (0% optional)",
         "auto_changed_by": "",
         "forced_parameters": {
-            "MOT_HOVER_LEARN": { "New Value": 2, "Change Reason": "So that it can tune the throttle controller on file 19" }
+            "MOT_HOVER_LEARN": { "New Value": 2, "Change Reason": "So that it can tune the throttle controller on 19_throttle_controller.param file" }
         },
         "derived_parameters": {
             "MOT_PWM_TYPE": { "New Value": "vehicle_components['ESC']['FC Connection']['Protocol']", "Change Reason": "Specified in component editor window" },
@@ -92,7 +92,7 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "BATT_FS_CRT_ACT": { "New Value": 1, "Change Reason": "Land ASAP" },
-            "BATT_FS_LOW_ACT": { "New Value": 2, "Change Reason": "Return to launch and land at home or rally point" }
+            "BATT_FS_LOW_ACT": { "New Value": 2, "Change Reason": "Return and land at home or rally point" }
         },
         "derived_parameters": {
             "BATT_ARM_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Number of cells']-1)*0.1+(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.3)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Don’t allow arming below this voltage" },
@@ -135,7 +135,8 @@
         "external_tool_text": "Mission Planner",
         "external_tool_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-212-configure-mandatory-hardware-parameters-16",
         "mandatory_text": "100% mandatory (0% optional)",
-        "auto_changed_by": "Mission Planner. If you have not done this step in Mission Planner yet, close this application and use Mission Planner"
+        "auto_changed_by": "Mission Planner. If you have not done this step in Mission Planner yet, close this application and use Mission Planner",
+        "old_filenames": ["11_mp_setup_mandatory_hardware.param"]
     },
     "12_general_configuration.param": {
         "blog_text": "General configuration parameters for the vehicle, including flight modes and safety settings.",
@@ -149,7 +150,8 @@
         "forced_parameters": {
             "ARMING_CHECK": { "New Value": 1, "Change Reason": "Perform all arming checks. If you have a problem fix its source. Do NOT change this" },
             "SCR_ENABLE": { "New Value": 1, "Change Reason": "Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation" }
-        }
+        },
+        "old_filenames": ["12_general_configuration.param"]
     },
     "13_logging.param": {
         "blog_text": "Configures logging parameters, including what data is logged and how it's stored.",
@@ -164,7 +166,8 @@
             "INS_LOG_BAT_OPT": { "New Value": 4, "Change Reason": "Logs measured data both before and after the filters for Filter Review Webtool usage" },
             "LOG_BITMASK": { "New Value": 2242524, "Change Reason": "Logs Notch filter data and other control signals" },
             "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" }
-        }
+        },
+        "old_filenames": ["13_logging.param"]
     },
     "14_motor.param": {
         "blog_text": "ESC, Motor and propeller configurations.",
@@ -174,7 +177,8 @@
         "external_tool_text": "",
         "external_tool_url": "",
         "mandatory_text": "40% mandatory (60% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "old_filenames": ["14_motor.param"]
     },
     "15_pid_adjustment.param": {
         "blog_text": "Contains parameters for adjusting the Proportional-Integral-Derivative (PID) controllers, crucial for tuning the vehicle's flight characteristics.",
@@ -184,7 +188,8 @@
         "external_tool_text": "param_pid_adjustment_update.py",
         "external_tool_url": "https://github.com/ArduPilot/MethodicConfigurator/blob/master/MethodicConfigurator/param_pid_adjustment_update.py",
         "mandatory_text": "20% mandatory (80% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "old_filenames": ["15_pid_adjustment.param"]
     },
     "16_remote_id.param": {
         "blog_text": "Sets the remote ID for the vehicle, allowing it to comply with local laws.",
@@ -194,7 +199,8 @@
         "external_tool_text": "Dronetag BS user manual",
         "external_tool_url": "https://help.dronetag.cz/dronetag-bs",
         "mandatory_text": "0% mandatory (100% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "old_filenames": ["16_remote_id.param"]
     },
     "17_notch_filter_setup.param": {
         "blog_text": "Configures the notch filter settings, used to reduce noise in the signal from the gyroscope.",
@@ -210,7 +216,8 @@
         },
         "derived_parameters": {
             "INS_HNTCH_FREQ": { "New Value": "1.4*fc_parameters['INS_GYRO_FILTER']", "Change Reason": "Use 1.4 * INS_GYRO_FILTER as a first guess" }
-        }
+        },
+        "old_filenames": ["17_notch_filter_setup.param"]
     },
     "18_notch_filter_results.param": {
         "blog_text": "Records the results of the notch filter setup, providing data for analysis and adjustment.",
@@ -220,7 +227,8 @@
         "external_tool_text": "Ardupilot Filter Review tool 100",
         "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/FilterReview/",
         "mandatory_text": "100% mandatory (0% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "old_filenames": ["18_notch_filter_results.param"]
     },
     "19_throttle_controller.param": {
         "blog_text": "Configures settings for the throttle controller, including throttle curve and failsafe behavior.",
@@ -234,7 +242,18 @@
         "derived_parameters": {
             "PSC_ACCZ_I": { "New Value": "2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
             "PSC_ACCZ_P": { "New Value": "fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" }
-        }
+        },
+        "old_filenames": ["19_throttle_controller.param"]
+    },
+    "20_ekf_config.param": {
+        "blog_text": "Configure EKF noise weights.",
+        "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-4-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune-40",
+        "wiki_text": "Extended Kalman filter tuning",
+        "wiki_url": "https://ardupilot.org/dev/docs/extended-kalman-filter.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "old_filenames": ["20_ekf_config.param"]
     },
     "20_quick_tune_setup.param": {
         "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs before the MAGFit flight.",
@@ -247,7 +266,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "QUIK_ENABLE": { "New Value": 1, "Change Reason": "Use VTOL-Quicktune lua script to estimate a good PID starting values" }
-        }
+        },
+        "old_filenames": ["20_quick_tune_setup.param"]
     },
     "21_quick_tune_results.param": {
         "blog_text": "Results of the in-flight VTOL-quicktune lua script PIDs before the MAGFit flight.",
@@ -257,7 +277,8 @@
         "external_tool_text": "VTOL-quicktune lua script",
         "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/VTOL-quicktune.md",
         "mandatory_text": "80% mandatory (20% optional)",
-        "auto_changed_by": "VTOL-quicktune lua script"
+        "auto_changed_by": "VTOL-quicktune lua script",
+        "old_filenames": ["21_quick_tune_results.param"]
     },
 	"22_inflight_magnetometer_fit_setup.param": {
         "blog_text": "Sets up parameters for the in-flight magnetometer calibration, ensuring accurate compass heading.",
@@ -271,7 +292,8 @@
         "forced_parameters": {
             "MAGH_LOG_ENABLE": { "New Value": 1, "Change Reason": "Activates the logging of the MAGH.Active message" }
         },
-        "jump_possible": {"45_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '45_everyday_use.param' file?"}
+        "jump_possible": {"45_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '45_everyday_use.param' file?"},
+        "old_filenames": ["22_inflight_magnetometer_fit_setup.param"]
     },
     "23_inflight_magnetometer_fit_results.param": {
         "blog_text": "Records the results of the in-flight magnetometer calibration, providing data for analysis and adjustment.",
@@ -281,7 +303,8 @@
         "external_tool_text": "ArduPilot MAGFit in flight compass calibration",
         "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/MAGFit/",
         "mandatory_text": "80% mandatory (20% optional)",
-        "auto_changed_by": "MAGFit Webtool and YOU manually uploaded the result to the FC already"
+        "auto_changed_by": "MAGFit Webtool and YOU manually uploaded the result to the FC already",
+        "old_filenames": ["23_inflight_magnetometer_fit_results.param"]
     },
     "24_quick_tune_setup.param": {
         "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs after the MAGFit flight.",
@@ -294,7 +317,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "QUIK_ENABLE": { "New Value": 1, "Change Reason": "Use VTOL-Quicktune lua script to estimate a good PID starting values" }
-        }
+        },
+        "old_filenames": ["24_quick_tune_setup.param"]
     },
     "25_quick_tune_results.param": {
         "blog_text": "Results of the in-flight VTOL-quicktune lua script PIDs after the MAGFit flight.",
@@ -304,7 +328,8 @@
         "external_tool_text": "VTOL-quicktune lua script",
         "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/VTOL-quicktune.md",
         "mandatory_text": "30% mandatory (70% optional)",
-        "auto_changed_by": "VTOL-quicktune lua script"
+        "auto_changed_by": "VTOL-quicktune lua script",
+        "old_filenames": ["25_quick_tune_results.param"]
     },
     "26_evaluate_the_aircraft_tune_ff_disable.param": {
         "blog_text": "Contains parameters for evaluating the aircraft's tuning with feed-forward control disabled, useful for comparison.",
@@ -317,7 +342,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "ATC_RATE_FF_ENAB": { "New Value": 0, "Change Reason": "test the stabilization loops independent of the input shaping" }
-        }
+        },
+        "old_filenames": ["26_evaluate_the_aircraft_tune_ff_disable.param"]
     },
     "27_evaluate_the_aircraft_tune_ff_enable.param": {
         "blog_text": "Contains parameters for evaluating the aircraft's tuning with feed-forward control enabled, for optimal performance.",
@@ -330,7 +356,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "ATC_RATE_FF_ENAB": { "New Value": 1, "Change Reason": "re-enable normal operation, activate input shaping" }
-        }
+        },
+        "old_filenames": ["27_evaluate_the_aircraft_tune_ff_enable.param"]
     },
     "28_autotune_roll_setup.param": {
         "blog_text": "Sets up parameters for the roll axis autotuning process, aiming to optimize roll response.",
@@ -343,7 +370,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "AUTOTUNE_AXES": { "New Value": 1, "Change Reason": "Autotune roll axis" }
-        }
+        },
+        "old_filenames": ["28_autotune_roll_setup.param"]
     },
     "29_autotune_roll_results.param": {
         "blog_text": "Records the results of the roll axis autotuning, providing data for analysis and adjustment.",
@@ -353,7 +381,8 @@
         "external_tool_text": "",
         "external_tool_url": "",
         "mandatory_text": "80% mandatory (20% optional)",
-        "auto_changed_by": "ArduPilot autotune"
+        "auto_changed_by": "ArduPilot autotune",
+        "old_filenames": ["29_autotune_roll_results.param"]
     },
     "30_autotune_pitch_setup.param": {
         "blog_text": "Sets up parameters for the pitch axis autotuning process, aiming to optimize pitch response.",
@@ -366,7 +395,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "AUTOTUNE_AXES": { "New Value": 2, "Change Reason": "Autotune pitch axis" }
-        }
+        },
+        "old_filenames": ["30_autotune_pitch_setup.param"]
     },
     "31_autotune_pitch_results.param": {
         "blog_text": "Records the results of the pitch axis autotuning, providing data for analysis and adjustment.",
@@ -376,7 +406,8 @@
         "external_tool_text": "",
         "external_tool_url": "",
         "mandatory_text": "80% mandatory (20% optional)",
-        "auto_changed_by": "ArduPilot autotune"
+        "auto_changed_by": "ArduPilot autotune",
+        "old_filenames": ["31_autotune_pitch_results.param"]
     },
     "32_autotune_yaw_setup.param": {
         "blog_text": "Sets up parameters for the yaw axis autotuning process, aiming to optimize yaw response.",
@@ -389,7 +420,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "AUTOTUNE_AXES": { "New Value": 4, "Change Reason": "Autotune yaw axis" }
-        }
+        },
+        "old_filenames": ["32_autotune_yaw_setup.param"]
     },
     "33_autotune_yaw_results.param": {
         "blog_text": "Records the results of the yaw axis autotuning, providing data for analysis and adjustment.",
@@ -399,7 +431,8 @@
         "external_tool_text": "",
         "external_tool_url": "",
         "mandatory_text": "80% mandatory (20% optional)",
-        "auto_changed_by": "ArduPilot autotune"
+        "auto_changed_by": "ArduPilot autotune",
+        "old_filenames": ["33_autotune_yaw_results.param"]
     },
     "34_autotune_yawd_setup.param": {
         "blog_text": "Sets up parameters for the yaw rate autotuning process, aiming to optimize yaw rate response.",
@@ -412,7 +445,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "AUTOTUNE_AXES": { "New Value": 8, "Change Reason": "Autotune yaw D axis" }
-        }
+        },
+        "old_filenames": ["34_autotune_yawd_setup.param"]
     },
     "35_autotune_yawd_results.param": {
         "blog_text": "Records the results of the yaw rate autotuning, providing data for analysis and adjustment.",
@@ -422,7 +456,8 @@
         "external_tool_text": "",
         "external_tool_url": "",
         "mandatory_text": "80% mandatory (20% optional)",
-        "auto_changed_by": "ArduPilot autotune"
+        "auto_changed_by": "ArduPilot autotune",
+        "old_filenames": ["35_autotune_yawd_results.param"]
     },
     "36_autotune_roll_pitch_retune_setup.param": {
         "blog_text": "Sets up parameters for the roll and pitch axis retuning process, refining the vehicle's flight characteristics.",
@@ -435,7 +470,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "AUTOTUNE_AXES": { "New Value": 3, "Change Reason": "Autotune roll and pitch axis" }
-        }
+        },
+        "old_filenames": ["36_autotune_roll_pitch_retune_setup.param"]
     },
     "37_autotune_roll_pitch_retune_results.param": {
         "blog_text": "Records the results of the roll and pitch axis retuning, providing data for analysis and adjustment.",
@@ -445,7 +481,8 @@
         "external_tool_text": "",
         "external_tool_url": "",
         "mandatory_text": "80% mandatory (20% optional)",
-        "auto_changed_by": "ArduPilot autotune"
+        "auto_changed_by": "ArduPilot autotune",
+        "old_filenames": ["37_autotune_roll_pitch_retune_results.param"]
     },
     "38_windspeed_estimation.param": {
         "blog_text": "Configures parameters for wind speed estimation, crucial for accurate navigation and stabilization in windy conditions.",
@@ -459,7 +496,8 @@
         "forced_parameters": {
             "LOG_DISARMED": { "New Value": 1, "Change Reason": "allow post flight tuning with Replay" },
             "LOG_REPLAY": { "New Value": 1, "Change Reason": "allow post flight tuning with Replay" }
-        }
+        },
+        "old_filenames": ["38_windspeed_estimation.param"]
     },
     "39_barometer_compensation.param": {
         "blog_text": "Sets up parameters for barometer compensation, ensuring accurate altitude estimation.",
@@ -469,7 +507,8 @@
         "external_tool_text": "Lua script provided by Yuri",
         "external_tool_url": "https://discuss.ardupilot.org/t/scripting-copter-wind-estimation-baro-compensation-tuning/98470/1",
         "mandatory_text": "60% mandatory (40% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "old_filenames": ["39_barometer_compensation.param"]
     },
     "40_system_id_roll.param": {
         "blog_text": "Configures parameters for the roll axis system identification, part of the tuning process.",
@@ -484,7 +523,8 @@
             "LOG_DISARMED": { "New Value": 0, "Change Reason": "was only needed for wind speed estimation" },
             "LOG_REPLAY": { "New Value": 0, "Change Reason": "was only needed for wind speed estimation" },
             "SID_AXIS": { "New Value": 10, "Change Reason": "Inject chip on the mixer roll signal" }
-        }
+        },
+        "old_filenames": ["40_system_id_roll.param"]
     },
     "41_system_id_pitch.param": {
         "blog_text": "Configures parameters for the pitch axis system identification, part of the tuning process.",
@@ -497,7 +537,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "SID_AXIS": { "New Value": 11, "Change Reason": "Inject chip on the mixer pitch signal" }
-        }
+        },
+        "old_filenames": ["41_system_id_pitch.param"]
     },
     "42_system_id_yaw.param": {
         "blog_text": "Configures parameters for the yaw axis system identification, part of the tuning process.",
@@ -510,7 +551,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "SID_AXIS": { "New Value": 12, "Change Reason": "Inject chip on the mixer yaw signal" }
-        }
+        },
+        "old_filenames": ["42_system_id_yaw.param"]
     },
     "43_system_id_thrust.param": {
         "blog_text": "Configures parameters for the thrust axis system identification, part of the tuning process.",
@@ -523,7 +565,8 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "SID_AXIS": { "New Value": 13, "Change Reason": "Inject chip on the mixer thrust signal" }
-        }
+        },
+        "old_filenames": ["43_system_id_thrust.param"]
     },
     "44_analytical_pid_optimization.param": {
         "blog_text": "Contains parameters for analytical PID optimization, aiming to find the optimal PID values for the vehicle.",
@@ -538,7 +581,8 @@
             "ARMING_CHECK": { "New Value": 1, "Change Reason": "Normal state for everyday use" },
             "ATC_RATE_FF_ENAB": { "New Value": 1, "Change Reason": "Restore value now that system identification is done" },
             "SID_AXIS": { "New Value": 0, "Change Reason": "No more system identification chip injections" }
-        }
+        },
+        "old_filenames": ["44_analytical_pid_optimization.param"]
     },
     "45_everyday_use.param": {
         "blog_text": "Configures parameters for everyday use, ensuring the vehicle is safe and stable for routine flying.",
@@ -548,7 +592,8 @@
         "external_tool_text": "",
         "external_tool_url": "",
         "mandatory_text": "100% mandatory (0% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "old_filenames": ["45_everyday_use.param"]
     },
     "46_position_controller.param": {
         "blog_text": "Sets up parameters for the position controller, crucial for waypoint navigation and precision flying.",
@@ -558,7 +603,8 @@
         "external_tool_text": "",
         "external_tool_url": "",
         "mandatory_text": "40% mandatory (60% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "old_filenames": ["46_position_controller.param"]
     },
     "47_precision_land.param": {
         "blog_text": "Configures parameters for precision landing, ensuring accurate and safe landing of the vehicle.",
@@ -568,7 +614,8 @@
         "external_tool_text": "",
         "external_tool_url": "",
         "mandatory_text": "0% mandatory (100% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "old_filenames": ["47_precision_land.param"]
     },
     "48_guided_operation.param": {
         "blog_text": "Sets up parameters for guided operation, including waypoint navigation and obstacle avoidance.",
@@ -578,6 +625,7 @@
         "external_tool_text": "",
         "external_tool_url": "",
         "mandatory_text": "0% mandatory (100% optional)",
-        "auto_changed_by": ""
+        "auto_changed_by": "",
+        "old_filenames": ["48_guided_operation.param"]
     }
 }

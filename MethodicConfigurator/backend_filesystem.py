@@ -12,6 +12,7 @@ from os import path as os_path
 from os import getcwd as os_getcwd
 from os import listdir as os_listdir
 from os import makedirs as os_makedirs
+from os import rename as os_rename
 from os import sep as os_sep
 
 from shutil import copy2 as shutil_copy2
@@ -106,6 +107,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
         self.param_default_dict = {}
         self.doc_dict = {}
 
+        # Rename parameter files if some new files got added to the vehicle directory
+        self.rename_parameter_files()
+
         # Read intermediate parameters from files
         self.file_parameters = self.read_params_from_files()
         if not self.file_parameters:
@@ -119,6 +123,17 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
         self.__extend_and_reformat_parameter_documentation_metadata()
         self.load_vehicle_components_json_data(vehicle_dir)
 
+    def rename_parameter_files(self):
+        # Rename parameter files if some new files got added to the vehicle directory
+        if self.vehicle_dir is not None and self.configuration_steps is not None:
+            for new_filename in self.configuration_steps:
+                if 'old_filenames' in self.configuration_steps[new_filename]:
+                    for old_filename in self.configuration_steps[new_filename]['old_filenames']:
+                        if self.intermediate_parameter_file_exists(old_filename) and old_filename != new_filename:
+                            new_filename_path = os_path.join(self.vehicle_dir, new_filename)
+                            old_filename_path = os_path.join(self.vehicle_dir, old_filename)
+                            os_rename(old_filename_path, new_filename_path)
+                            logging_info("Renamed %s to %s", old_filename, new_filename)
 
     def __extend_and_reformat_parameter_documentation_metadata(self):
         for param_name, param_info in self.doc_dict.items():
