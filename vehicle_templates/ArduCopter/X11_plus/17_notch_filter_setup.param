@@ -48,7 +48,7 @@ INS_HNTCH_ENABLE,1  # Use the first notch filter to filter the noise created by 
 # Range: 10 495
 # Units: Hz (hertz)
 # Default: 80
-INS_HNTCH_FREQ,28  # Start with 1.4 • INS_GYRO_FILTER
+INS_HNTCH_FREQ,28  # Use 1.4 * INS_GYRO_FILTER as a first guess
 
 # Harmonic Notch Filter harmonics
 # Bitmask of harmonic frequencies to apply Harmonic Notch Filter to. This option takes effect on the next

@@ -32,7 +32,7 @@ This post is divided into the following sections:
 
 # 1. Getting the hardware right
 
-# 1.1 Rules of thumb for hardware requirements:
+## 1.1 Rules of thumb for hardware requirements
 
 1. **Robust frame construction:** A stable and rigid frame is crucial for stable and safe flight behavior. Carbon frames are recommended but not essential, and remember carbon is an electrical conductor.
 2. **ESC telemetry:** Use only ESCs that provide at least RPM telemetry. It simplifies Notch filter tuning and improves its response-time and accuracy.
@@ -411,12 +411,13 @@ We used an oversized test stand to test the motors. Since the test stand was too
 - Mamba Systems F45_128k BLHeli32 4in1 ESC
 - HQProp "DUCT-76MMX8" propellers
 
-![test stand with drone](images/motor_test_stand_with_drone_cropped.jpg)
+![motor_test_stand_with_drone_cropped|316x499](upload://l64naCKWjVAz2LoKhH5mF8LmtGZ.jpeg)
 
 We fixed and updated Cell G8 as well as the plot's Data range of the [original ArduPilot Wiki Spreadsheet](https://docs.google.com/spreadsheets/d/1_75aZqiT_K1CdduhUe4-DjRgx3Alun4p8V2pt6vM5P8/edit#gid=0) creating [this corrected version](images/ArduPilot_Motor_Thrust_Fit.ods)
+
 We imported the data into the spreadsheet and created this graph:
 
-![thrust vs PWM](images/motor_thrust_chart.PNG)
+![motor_thrust_chart|690x389](upload://szgrZX3irtiWsXM1nFUyqfFicIC.png)
 
 Repeat the steps from section 2.5.1 to edit and upload the `14_motor.param` file
 
