@@ -27,3 +27,5 @@ SERVO4_MAX,2000  # Use the full available 1000-2000 DShot range
 SERVO4_MIN,1000  # Use the full available 1000-2000 DShot range
 SERVO4_TRIM,1000  # Use the full available 1000-2000 DShot range
 TKOFF_RPM_MIN,1400  # Our motors should idle at around 1400 RPM, see https://ardupilot.org/copter/docs/tkoff-rpm-min.html
+
+MOT_HOVER_LEARN,2
