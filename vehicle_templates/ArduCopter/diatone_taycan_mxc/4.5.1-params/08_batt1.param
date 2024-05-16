@@ -48,7 +48,7 @@ BATT_CRT_VOLT,14
 # 5: Terminate
 # 6: Auto DO_LAND_START or RTL
 # Default: 0
-BATT_FS_CRT_ACT,1  # flying indoors, just land ASAP, no need to hit the celing while doing RTL
+BATT_FS_CRT_ACT,1  # flying indoors, just land ASAP, no need to hit the celling while doing RTL
 
 # Low battery failsafe action
 # What action the vehicle should perform if it hits a low battery failsafe
@@ -60,7 +60,7 @@ BATT_FS_CRT_ACT,1  # flying indoors, just land ASAP, no need to hit the celing w
 # 5: Terminate
 # 6: Auto DO_LAND_START or RTL
 # Default: 0
-BATT_FS_LOW_ACT,1  # flying indoors, just land ASAP, no need to hit the celing while doing RTL
+BATT_FS_LOW_ACT,1  # flying indoors, just land ASAP, no need to hit the celling while doing RTL
 
 # Failsafe voltage source
 # Voltage type used for detection of low voltage event
