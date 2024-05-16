@@ -1,0 +1,113 @@
+# If you have a very small, or a very large vehicle that requires non-default PID values for a safe flight, change them here
+#
+# Usually, smaller vehicles require lower than default PID rate values.
+# Larger vehicles usually require higher than default PID rate values.
+
+
+
+# Pitch axis angle controller P gain
+# Pitch axis angle controller P gain.  Converts the error between the desired pitch angle and actual
+# angle to a desired pitch rate
+# Range: 3.000 12.000
+# Default: 4.5
+ATC_ANG_PIT_P,6.0
+
+# Roll axis angle controller P gain
+# Roll axis angle controller P gain.  Converts the error between the desired roll angle and actual
+# angle to a desired roll rate
+# Range: 3.000 12.000
+# Default: 4.5
+ATC_ANG_RLL_P,5.2
+
+# Yaw axis angle controller P gain
+# Yaw axis angle controller P gain.  Converts the error between the desired yaw angle and actual angle
+# to a desired yaw rate
+# Range: 3.000 12.000
+# Default: 4.5
+ATC_ANG_YAW_P,3.0
+
+# Attitude control input time constant
+# Attitude control input time constant.  Low numbers lead to sharper response, higher numbers to
+# softer response
+# Units: s (seconds)
+# Range: 0 1
+# Increment: 0.01
+# 0.5: Very Soft
+# 0.2: Soft
+# 0.15: Medium
+# 0.1: Crisp
+# 0.05: Very Crisp
+# Default: 0.15
+ATC_INPUT_TC,0.17
+
+# Pitch axis rate controller D gain
+# Pitch axis rate controller D gain.  Compensates for short-term change in desired pitch rate vs
+# actual pitch rate
+# Range: 0.0 0.03
+# Increment: 0.001
+# Default: 0.0036
+ATC_RAT_PIT_D,0.002781  #  (0.0036 default)
+
+# Pitch axis rate controller I gain
+# Pitch axis rate controller I gain.  Corrects long-term difference in desired pitch rate vs actual
+# pitch rate
+# Range: 0.0 0.6
+# Increment: 0.01
+# Default: 0.135
+ATC_RAT_PIT_I,0.085568  #  = 1.283176 * (0.135 default)
+
+# Pitch axis rate controller P gain
+# Pitch axis rate controller P gain.  Corrects in proportion to the difference between the desired
+# pitch rate vs actual pitch rate
+# Range: 0.0 0.35
+# Increment: 0.005
+# Default: 0.135
+ATC_RAT_PIT_P,0.085568  #  = 1.283176 * (0.135 default)
+
+# Roll axis rate controller D gain
+# Roll axis rate controller D gain.  Compensates for short-term change in desired roll rate vs actual
+# roll rate
+# Range: 0.0 0.03
+# Increment: 0.001
+# Default: 0.0036
+ATC_RAT_RLL_D,0.00309  #  = 0.690593 * (0.0036 default)
+
+# Roll axis rate controller I gain
+# Roll axis rate controller I gain.  Corrects long-term difference in desired roll rate vs actual roll
+# rate
+# Range: 0.0 0.6
+# Increment: 0.01
+# Default: 0.135
+ATC_RAT_RLL_I,0.095506  #  = 1.061015 * (0.135 default)
+
+# Roll axis rate controller P gain
+# Roll axis rate controller P gain.  Corrects in proportion to the difference between the desired roll
+# rate vs actual roll rate
+# Range: 0.0 0.35
+# Increment: 0.005
+# Default: 0.135
+ATC_RAT_RLL_P,0.095506  #  = 1.061015 * (0.135 default)
+
+# Yaw axis rate controller D gain
+# Yaw axis rate controller D gain.  Compensates for short-term change in desired yaw rate vs actual
+# yaw rate
+# Range: 0.000 0.02
+# Increment: 0.001
+# Default: 0
+ATC_RAT_YAW_D,0  #  = 1 * (0 default)
+
+# Yaw axis rate controller I gain
+# Yaw axis rate controller I gain.  Corrects long-term difference in desired yaw rate vs actual yaw
+# rate
+# Range: 0.01 0.2
+# Increment: 0.01
+# Default: 0.018
+ATC_RAT_YAW_I,0.025  #  = 2.514026 * (0.018 default)
+
+# Yaw axis rate controller P gain
+# Yaw axis rate controller P gain.  Corrects in proportion to the difference between the desired yaw
+# rate vs actual yaw rate
+# Range: 0.180 0.60
+# Increment: 0.005
+# Default: 0.18
+ATC_RAT_YAW_P,0.25  #  = 2.514026 * (0.18 default)

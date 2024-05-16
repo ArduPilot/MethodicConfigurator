@@ -1,0 +1,26 @@
+# Serial 1 flow control
+# Enable flow control on serial 1 (telemetry 1). You must have the RTS and CTS pins connected to your
+# radio. The standard DF13 6 pin connector for a 3DR radio does have those pins connected. If this is set
+# to 2 then flow control will be auto-detected by checking for the output buffer filling on startup. Note
+# that the PX4v1 does not have hardware flow control pins on this port, so you should leave this disabled.
+# RebootRequired: True
+# 0: Disabled
+# 1: Enabled
+# 2: Auto
+# Default: 2
+BRD_SER1_RTSCTS,2  # we have no RTS/CTS pins connected
+
+# Telem1 Baud Rate
+# The baud rate used on the Telem1 port. Most stm32-based boards can support rates of up to 1500. If you
+# setup a rate you cannot support and then can't connect to your board you should load a firmware from a
+# different vehicle type. That will reset all your parameters to defaults.
+# 1: 1200                                              115: 115200
+# 2: 2400                                              230: 230400
+# 4: 4800                                              256: 256000
+# 9: 9600                                              460: 460800
+# 19: 19200                                            500: 500000
+# 38: 38400                                            921: 921600
+# 57: 57600                                            1500: 1500000
+# 111: 111100                                          2000: 2000000
+# Default: 57
+SERIAL1_BAUD,57  # P840 telemetry baud.

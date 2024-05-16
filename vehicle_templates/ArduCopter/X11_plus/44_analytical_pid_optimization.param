@@ -1,0 +1,34 @@
+# Arm Checks to Perform (bitmask)
+# Checks prior to arming motor. This is a bitmask of checks that will be performed before allowing arming.
+# For most users it is recommended to leave this at the default of 1 (all checks enabled). You can select
+# whatever checks you prefer by adding together the values of each check type to set this parameter. For
+# example, to only allow arming when you have GPS lock and no RC failsafe you would set ARMING_CHECK to 72.
+# Bitmask: 0:All,1:Barometer,2:Compass,3:GPS lock,4:INS,5:Parameters,6:RC Channels,7:Board voltage,8:Battery Level,10:Logging Available,11:Hardware safety switch,12:GPS Configuration,13:System,14:Mission,15:Rangefinder,16:Camera,17:AuxAuth,18:VisualOdometry,19:FFT
+# Default: 1
+ARMING_CHECK,1  # Normal state for everyday use
+
+# Rate Feedforward Enable
+# Controls whether body-frame rate feedforward is enabled or disabled
+# 0: Disabled
+# 1: Enabled
+# Default: 1
+ATC_RATE_FF_ENAB,1  # Restore value now that system identification is done
+
+# Acceleration (vertical) controller I gain
+# Acceleration (vertical) controller I gain.  Corrects long-term difference in desired vertical
+# acceleration and actual acceleration
+# Range: 0.000 3.000
+# Default: 1
+PSC_ACCZ_I,0.816  # now that system identification on thrust has been completed, restore it to 2 • MOT_THST_HOVER
+
+# System identification axis
+# Controls which axis are being excited.  Set to non-zero to see more parameters
+# 0: None                                              7: Rate Roll
+# 1: Input Roll Angle                                  8: Rate Pitch
+# 2: Input Pitch Angle                                 9: Rate Yaw
+# 3: Input Yaw Angle                                   10: Mixer Roll
+# 4: Recovery Roll Angle                               11: Mixer Pitch
+# 5: Recovery Pitch Angle                              12: Mixer Yaw
+# 6: Recovery Yaw Angle                                13: Mixer Thrust
+# Default: 0
+SID_AXIS,0  # No more system identification chip injections

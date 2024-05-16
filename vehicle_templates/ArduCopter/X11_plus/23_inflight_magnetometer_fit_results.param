@@ -1,0 +1,110 @@
+# Compass soft-iron diagonal X component
+# DIA_X in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y,
+# ODI_Z, DIA_Z]]
+# Calibration: 1
+# Default: 1
+COMPASS_DIA_X,1.033 # Diagonal X component for static compensation of metal in the frame
+
+# Compass soft-iron diagonal Y component
+# DIA_Y in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y,
+# ODI_Z, DIA_Z]]
+# Calibration: 1
+# Default: 1
+COMPASS_DIA_Y,1.032 # Diagonal Y component for static compensation of metal in the frame
+
+# Compass soft-iron diagonal Z component
+# DIA_Z in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y,
+# ODI_Z, DIA_Z]]
+# Default: 1
+COMPASS_DIA_Z,0.842 # Diagonal Z component for static compensation of metal in the frame
+
+# Motor interference compensation for body frame X axis
+# Multiplied by the current throttle and added to the compass's x-axis values to compensate for motor
+# interference (Offset per Amp or at Full Throttle)
+# Range: -1000 1000
+# Units: mGauss/A (milligauss per ampere)
+# Increment: 1
+# Calibration: 1
+# Default: 0
+COMPASS_MOT_X,0.195 # Correction value for motor currents in X direction
+
+# Motor interference compensation for body frame Y axis
+# Multiplied by the current throttle and added to the compass's y-axis values to compensate for motor
+# interference (Offset per Amp or at Full Throttle)
+# Range: -1000 1000
+# Units: mGauss/A (milligauss per ampere)
+# Increment: 1
+# Calibration: 1
+# Default: 0
+COMPASS_MOT_Y,0.394 # Correction value for motor currents in Y direction
+
+# Motor interference compensation for body frame Z axis
+# Multiplied by the current throttle and added to the compass's z-axis values to compensate for motor
+# interference (Offset per Amp or at Full Throttle)
+# Range: -1000 1000
+# Units: mGauss/A (milligauss per ampere)
+# Increment: 1
+# Default: 0
+COMPASS_MOT_Z,-1.366 # Correction value for motor currents in Z direction
+
+# Motor interference compensation type
+# Set motor interference compensation type to disabled, throttle or current.  Do not change manually.
+# Calibration: 1
+# 0: Disabled
+# 1: Use Throttle
+# 2: Use Current
+# Default: 0
+COMPASS_MOTCT,2 # Type of interference compensation; two means current-based compensation
+
+# Compass soft-iron off-diagonal X component
+# ODI_X in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y,
+# ODI_Z, DIA_Z]]
+# Calibration: 1
+# Default: 0
+COMPASS_ODI_X,0.001 # Off-diagonal X component for static compensation of metal in the frame
+
+# Compass soft-iron off-diagonal Y component
+# ODI_Y in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y,
+# ODI_Z, DIA_Z]]
+# Calibration: 1
+# Default: 0
+COMPASS_ODI_Y,-0.070 # Off-diagonal Y component for static compensation of metal in the frame
+
+# Compass soft-iron off-diagonal Z component
+# ODI_Z in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y,
+# ODI_Z, DIA_Z]]
+# Default: 0
+COMPASS_ODI_Z,0.083 # Off-diagonal Z component for static compensation of metal in the frame
+
+# Compass offsets in milligauss on the X axis
+# Offset to be added to the compass x-axis values to compensate for metal in the frame
+# Range: -400 400
+# Units: mGauss (milligauss)
+# Increment: 1
+# Calibration: 1
+# Default: 0
+COMPASS_OFS_X,313 # Lateral compass offset to the X axis for static compensation of metal in the frame
+
+# Compass offsets in milligauss on the Y axis
+# Offset to be added to the compass y-axis values to compensate for metal in the frame
+# Range: -400 400
+# Units: mGauss (milligauss)
+# Increment: 1
+# Calibration: 1
+# Default: 0
+COMPASS_OFS_Y,-42 # Lateral compass offset to the Y axis for static compensation of metal in the frame
+
+# Compass offsets in milligauss on the Z axis
+# Offset to be added to the compass z-axis values to compensate for metal in the frame
+# Range: -400 400
+# Units: mGauss (milligauss)
+# Increment: 1
+# Default: 0
+COMPASS_OFS_Z,214 # Lateral compass offset to the Z axis for static compensation of metal in the frame
+
+# Compass1 scale factor
+# Scaling factor for first compass to compensate for sensor scaling errors. If this is 0 then no scaling is
+# done
+# Range: 0 1.3
+# Default: 0
+COMPASS_SCALE,1.00 # Scaling factor for compensation

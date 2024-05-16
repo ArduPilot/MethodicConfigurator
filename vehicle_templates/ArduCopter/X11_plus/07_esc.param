@@ -1,0 +1,316 @@
+# Pitch slew rate limit
+# Sets an upper limit on the slew rate produced by the combined P and D gains. If the amplitude of the
+# control action produced by the rate feedback exceeds this value, then the D+P gain is reduced to respect
+# the limit. This limits the amplitude of high frequency oscillations caused by an excessive gain. The
+# limit should be set to no more than 25% of the actuators maximum slew rate to allow for load effects.
+# Note: The gain will not be reduced to less than 10% of the nominal value. A value of zero will disable
+# this feature.
+# Range: 0 200
+# Increment: 0.5
+# Default: 0
+ATC_RAT_PIT_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+
+# Roll slew rate limit
+# Sets an upper limit on the slew rate produced by the combined P and D gains. If the amplitude of the
+# control action produced by the rate feedback exceeds this value, then the D+P gain is reduced to respect
+# the limit. This limits the amplitude of high frequency oscillations caused by an excessive gain. The
+# limit should be set to no more than 25% of the actuators maximum slew rate to allow for load effects.
+# Note: The gain will not be reduced to less than 10% of the nominal value. A value of zero will disable
+# this feature.
+# Range: 0 200
+# Increment: 0.5
+# Default: 0
+ATC_RAT_RLL_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+
+# Yaw slew rate limit
+# Sets an upper limit on the slew rate produced by the combined P and D gains. If the amplitude of the
+# control action produced by the rate feedback exceeds this value, then the D+P gain is reduced to respect
+# the limit. This limits the amplitude of high frequency oscillations caused by an excessive gain. The
+# limit should be set to no more than 25% of the actuators maximum slew rate to allow for load effects.
+# Note: The gain will not be reduced to less than 10% of the nominal value. A value of zero will disable
+# this feature.
+# Range: 0 200
+# Increment: 0.5
+# Default: 0
+ATC_RAT_YAW_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+
+# Output PWM type
+# This selects the output PWM type, allowing for normal PWM continuous output, OneShot, brushed or DShot
+# motor output
+# RebootRequired: True
+# 0: Normal
+# 1: OneShot
+# 2: OneShot125
+# 3: Brushed
+# 4: DShot150
+# 5: DShot300
+# 6: DShot600
+# 7: DShot1200
+# 8: PWMRange
+# Default: 0
+MOT_PWM_TYPE,0  # Specified in component editor window
+
+# Buzzer Driver Types
+# Controls what types of Buzzer will be enabled
+# Bitmask: 0:Built-in buzzer, 1:DShot, 2:DroneCAN
+# Default: 5
+NTF_BUZZ_TYPES,4  # Our CubeOrange have it self buzzer.
+
+# LED Driver Types
+# Controls what types of LEDs will be enabled
+# Bitmask: 0:Built-in LED, 1:Internal ToshibaLED, 2:External ToshibaLED, 3:External PCA9685, 4:Oreo LED, 5:DroneCAN, 6:NCP5623 External, 7:NCP5623 Internal, 8:NeoPixel, 9:ProfiLED, 10:Scripting, 11:DShot, 12:ProfiLED_SPI, 13:LP5562 External, 14: LP5562 Internal, 15:IS31FL3195 External, 16: IS31FL3195 Internal, 17: DiscreteRGB, 18: NeoPixelRGB
+# Default: 123079
+NTF_LED_TYPES,231  # Our HERE3 CAN gives me to change to 231
+
+# Accel (vertical) slew rate limit
+# Sets an upper limit on the slew rate produced by the combined P and D gains. If the amplitude of the
+# control action produced by the rate feedback exceeds this value, then the D+P gain is reduced to respect
+# the limit. This limits the amplitude of high frequency oscillations caused by an excessive gain. The
+# limit should be set to no more than 25% of the actuators maximum slew rate to allow for load effects.
+# Note: The gain will not be reduced to less than 10% of the nominal value. A value of zero will disable
+# this feature.
+# Range: 0 200
+# Increment: 0.5
+# Default: 0
+PSC_ACCZ_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+
+# Serial5 protocol selection
+# Control what protocol Serial5 port should be used for. Note that the Frsky options require external
+# converter hardware. See the wiki for details.
+# RebootRequired: True
+# -1: None                                             25: LTM
+# 1: MAVLink1                                          26: RunCam
+# 2: MAVLink2                                          27: HottTelem
+# 3: Frsky D                                           28: Scripting
+# 4: Frsky SPort                                       29: Crossfire VTX
+# 5: GPS                                               30: Generator
+# 7: Alexmos Gimbal Serial                             31: Winch
+# 8: Gimbal                                            32: MSP
+# 9: Rangefinder                                       33: DJI FPV
+# 10: FrSky SPort Passthrough (OpenTX)                 34: AirSpeed
+# 11: Lidar360                                         35: ADSB
+# 13: Beacon                                           36: AHRS
+# 14: Volz servo out                                   37: SmartAudio
+# 15: SBus servo out                                   38: FETtecOneWire
+# 16: ESC Telemetry                                    39: Torqeedo
+# 17: Devo Telemetry                                   40: AIS
+# 18: OpticalFlow                                      41: CoDevESC
+# 19: RobotisServo                                     42: DisplayPort
+# 20: NMEA Output                                      43: MAVLink High Latency
+# 21: WindVane                                         44: IRC Tramp
+# 22: SLCAN                                            45: DDS XRCE
+# 23: RCIN                                             46: IMUDATA
+# 24: EFI Serial
+# Default: -1
+SERIAL5_PROTOCOL,-1  # No ESC telemtry
+
+# BLHeli pass-thru auto-enable for multicopter motors
+# If set to 1 this auto-enables BLHeli pass-thru support for all multicopter motors
+# RebootRequired: True
+# 0: Disabled
+# 1: Enabled
+# Default: 0
+SERVO_BLH_AUTO,0  # I don't use BLHeli
+
+# BLHeli bitmask of bi-directional dshot channels
+# Mask of channels which support bi-directional dshot. This is used for ESCs which have firmware that
+# supports bi-directional dshot allowing fast rpm telemetry values to be returned for the harmonic notch.
+# Bitmask: 0:Channel1,1:Channel2,2:Channel3,3:Channel4,4:Channel5,5:Channel6,6:Channel7,7:Channel8,8:Channel9,9:Channel10,10:Channel11,11:Channel12,12:Channel13,13:Channel14,14:Channel15,15:Channel16, 16:Channel 17, 17: Channel 18, 18: Channel 19, 19: Channel 20, 20: Channel 21, 21: Channel 22, 22: Channel 23, 23: Channel 24, 24: Channel 25, 25: Channel 26, 26: Channel 27, 27: Channel 28, 28: Channel 29, 29: Channel 30, 30: Channel 31, 31: Channel 32
+# RebootRequired: True
+# Default: 0
+SERVO_BLH_BDMASK,0  # I don't use BLHeli
+
+# BLHeli Motor Poles
+# This allows calculation of true RPM from ESC's eRPM. The default is 14.
+# Range: 1 127
+# RebootRequired: True
+# Default: 14
+SERVO_BLH_POLES,14  # Specified in component editor window
+
+# BLHeli telemetry rate
+# This sets the rate in Hz for requesting telemetry from ESCs. It is the rate per ESC. Setting to zero
+# disables telemetry requests
+# Units: Hz (hertz)
+# Range: 0 500
+# Default: 10
+SERVO_BLH_TRATE,5  # I don't have esc telemetry
+
+# Servo DShot ESC type
+# DShot ESC type for all outputs. The ESC type affects the range of DShot commands available and the bit
+# widths used. None means that no dshot commands will be executed. Some ESC types support Extended DShot
+# Telemetry (EDT) which allows telemetry other than RPM data to be returned when using bi-directional
+# dshot. If you enable EDT you must install EDT capable firmware for correct operation.
+# 0: None
+# 1: BLHeli32/Kiss
+# 2: BLHeli_S
+# 3: BLHeli32/Kiss+EDT
+# 4: BLHeli_S+EDT
+# Default: 0
+SERVO_DSHOT_ESC,0  # I don't use BLHeli
+
+# Servo DShot output rate
+# DShot output rate for all outputs as a multiple of the loop rate. 0 sets the output rate to be fixed at
+# 1Khz for low loop rates. This value should never be set below 500Hz.
+# 0: 1Khz
+# 1: loop-rate
+# 2: double loop-rate
+# 3: triple loop-rate
+# 4: quadruple loop rate
+# Default: 0
+SERVO_DSHOT_RATE,0  # Sends DShot control signals to the ESC twice per control loop
+
+# Maximum PWM
+# maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
+# limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 2000
+SERVO1_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+
+# Minimum PWM
+# minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
+# limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1000
+SERVO1_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+
+# Trim PWM
+# Trim PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
+# limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1000
+SERVO1_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+
+# Servo output function
+# Function assigned to this servo. Setting this to Disabled(0) will setup this output for control by auto
+# missions or MAVLink servo set commands. any other value will enable the corresponding function
+# RebootRequired: True
+# -1: GPIO                   40: Motor8                 90: CameraISO              127: RateYaw
+# 0: Disabled                51: RCIN1                  91: CameraAperture         129: ProfiLED1
+# 1: RCPassThru              52: RCIN2                  92: CameraFocus            130: ProfiLED2
+# 6: Mount1Yaw               53: RCIN3                  93: CameraShutterSpeed     131: ProfiLED3
+# 7: Mount1Pitch             54: RCIN4                  94: Script1                132: ProfiLEDClock
+# 8: Mount1Roll              55: RCIN5                  95: Script2                133: Winch Clutch
+# 9: Mount1Retract           56: RCIN6                  96: Script3                134: SERVOn_MIN
+# 10: CameraTrigger          57: RCIN7                  97: Script4                135: SERVOn_TRIM
+# 12: Mount2Yaw              58: RCIN8                  98: Script5                136: SERVOn_MAX
+# 13: Mount2Pitch            59: RCIN9                  99: Script6                138: Alarm
+# 14: Mount2Roll             60: RCIN10                 100: Script7               139: Alarm Inverted
+# 15: Mount2Retract          61: RCIN11                 101: Script8               140: RCIN1Scaled
+# 22: SprayerPump            62: RCIN12                 102: Script9               141: RCIN2Scaled
+# 23: SprayerSpinner         63: RCIN13                 103: Script10              142: RCIN3Scaled
+# 27: Parachute              64: RCIN14                 104: Script11              143: RCIN4Scaled
+# 28: Gripper                65: RCIN15                 105: Script12              144: RCIN5Scaled
+# 29: LandingGear            66: RCIN16                 106: Script13              145: RCIN6Scaled
+# 30: EngineRunEnable        73: ThrottleLeft           107: Script14              146: RCIN7Scaled
+# 31: HeliRSC                74: ThrottleRight          108: Script15              147: RCIN8Scaled
+# 32: HeliTailRSC            75: TiltMotorFrontLeft     109: Script16              148: RCIN9Scaled
+# 33: Motor1                 76: TiltMotorFrontRight    120: NeoPixel1             149: RCIN10Scaled
+# 34: Motor2                 81: BoostThrottle          121: NeoPixel2             150: RCIN11Scaled
+# 35: Motor3                 82: Motor9                 122: NeoPixel3             151: RCIN12Scaled
+# 36: Motor4                 83: Motor10                123: NeoPixel4             152: RCIN13Scaled
+# 37: Motor5                 84: Motor11                124: RateRoll              153: RCIN14Scaled
+# 38: Motor6                 85: Motor12                125: RatePitch             154: RCIN15Scaled
+# 39: Motor7                 88: Winch                  126: RateThrust            155: RCIN16Scaled
+# Default: 0
+SERVO13_FUNCTION,0  # For matek H743Slim v3 board
+
+# Maximum PWM
+# maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
+# limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 2000
+SERVO2_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+
+# Minimum PWM
+# minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
+# limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1000
+SERVO2_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+
+# Trim PWM
+# Trim PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
+# limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1000
+SERVO2_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+
+# Maximum PWM
+# maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
+# limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 2000
+SERVO3_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+
+# Minimum PWM
+# minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
+# limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1000
+SERVO3_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+
+# Trim PWM
+# Trim PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
+# limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1000
+SERVO3_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+
+# Maximum PWM
+# maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
+# limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 2000
+SERVO4_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+
+# Minimum PWM
+# minimum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
+# limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1000
+SERVO4_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+
+# Trim PWM
+# Trim PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
+# limit.
+# Units: PWM (PWM in microseconds)
+# Range: 800 2200
+# Increment: 1
+# Default: 1000
+SERVO4_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+
+# Takeoff Check RPM minimum
+# Takeoff is not permitted until motors report at least this RPM.  Set to zero to disable check
+# Range: 0 10000
+# Default: 0
+TKOFF_RPM_MIN,1400  # I don't have esc telemtry to measure
+
+MOT_PWM_MAX,1950
+
+MOT_PWM_MIN,1050
+
+MOT_SPOOL_TIME,3
+
+TKOFF_SLEW_TIME,4

@@ -1,0 +1,139 @@
+# Sets default state of the safety switch
+# This controls the default state of the safety switch at startup. When set to 1 the safety switch will
+# start in the safe state (flashing) at boot. When set to zero the safety switch will start in the unsafe
+# state (solid) at startup. Note that if a safety switch is fitted the user can still control the safety
+# state after startup using the switch. The safety state can also be controlled in software using a MAVLink
+# message.
+# RebootRequired: True
+# 0: Disabled
+# 1: Enabled
+# Default: 0
+BRD_SAFETY_DEFLT,0  # CubeOrange has no safety switch
+CAN_D1_PROTOCOL,1  # set virtual driver of CAN1 to DRONECAN for Here3
+CAN_P1_DRIVER,1  # Enable CAN1 bus for Here3
+GPS_CAN_NODEID1,125
+
+# GNSS system configuration
+# Bitmask for what GNSS system to use on the first GPS (all unchecked or zero to leave GPS as configured)
+# Bitmask: 0:GPS,1:SBAS,2:Galileo,3:Beidou,4:IMES,5:QZSS,6:GLONASS
+# Default: 0
+GPS_GNSS_MODE,5  # limit the constalations to ensure an update rate higher than 5Hz
+
+# Antenna X position offset
+# X position of the first GPS antenna in body frame. Positive X is forward of the origin. Use antenna phase
+# centroid location if provided by the manufacturer.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+GPS_POS1_X,0.02  # Here3 GPS antenna is little bit forward.
+
+# Antenna Y position offset
+# Y position of the first GPS antenna in body frame. Positive Y is to the right of the origin. Use antenna
+# phase centroid location if provided by the manufacturer.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+GPS_POS1_Y,-0.035  # Here3 GPS antenna is little bit in left.
+
+# Antenna Z position offset
+# Z position of the first GPS antenna in body frame. Positive Z is down from the origin. Use antenna phase
+# centroid location if provided by the manufacturer.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+GPS_POS1_Z,-0.09  # Here3 GPS antenna is little bit higher.
+
+# 1st GPS type
+# GPS type of 1st GPS
+# RebootRequired: True
+# 0: None                                              15: NOVA
+# 1: AUTO                                              16: HemisphereNMEA
+# 2: uBlox                                             17: uBlox-MovingBaseline-Base
+# 5: NMEA                                              18: uBlox-MovingBaseline-Rover
+# 6: SiRF                                              19: MSP
+# 7: HIL                                               20: AllyStar
+# 8: SwiftNav                                          21: ExternalAHRS
+# 9: DroneCAN                                          22: DroneCAN-MovingBaseline-Base
+# 10: SBF                                              23: DroneCAN-MovingBaseline-Rover
+# 11: GSOF                                             24: UnicoreNMEA
+# 13: ERB                                              25: UnicoreMovingBaselineNMEA
+# 14: MAV                                              26: SBF-DualAntenna
+# Default: 1
+GPS_TYPE,9  # Defined in component editor
+
+# LED Driver Types
+# Controls what types of LEDs will be enabled
+# Bitmask: 0:Built-in LED, 1:Internal ToshibaLED, 2:External ToshibaLED, 3:External PCA9685, 4:Oreo LED, 5:DroneCAN, 6:NCP5623 External, 7:NCP5623 Internal, 8:NeoPixel, 9:ProfiLED, 10:Scripting, 11:DShot, 12:ProfiLED_SPI, 13:LP5562 External, 14: LP5562 Internal, 15:IS31FL3195 External, 16: IS31FL3195 Internal, 17: DiscreteRGB, 18: NeoPixelRGB
+# Default: 123079
+NTF_LED_TYPES,231  # Enable DRONECAN LED
+
+# Serial 3 (GPS) protocol selection
+# Control what protocol Serial 3 (GPS) should be used for. Note that the Frsky options require external
+# converter hardware. See the wiki for details.
+# RebootRequired: True
+# -1: None                                             25: LTM
+# 1: MAVLink1                                          26: RunCam
+# 2: MAVLink2                                          27: HottTelem
+# 3: Frsky D                                           28: Scripting
+# 4: Frsky SPort                                       29: Crossfire VTX
+# 5: GPS                                               30: Generator
+# 7: Alexmos Gimbal Serial                             31: Winch
+# 8: Gimbal                                            32: MSP
+# 9: Rangefinder                                       33: DJI FPV
+# 10: FrSky SPort Passthrough (OpenTX)                 34: AirSpeed
+# 11: Lidar360                                         35: ADSB
+# 13: Beacon                                           36: AHRS
+# 14: Volz servo out                                   37: SmartAudio
+# 15: SBus servo out                                   38: FETtecOneWire
+# 16: ESC Telemetry                                    39: Torqeedo
+# 17: Devo Telemetry                                   40: AIS
+# 18: OpticalFlow                                      41: CoDevESC
+# 19: RobotisServo                                     42: DisplayPort
+# 20: NMEA Output                                      43: MAVLink High Latency
+# 21: WindVane                                         44: IRC Tramp
+# 22: SLCAN                                            45: DDS XRCE
+# 23: RCIN                                             46: IMUDATA
+# 24: EFI Serial
+# Default: 5
+SERIAL3_PROTOCOL,-1  # GNSS receiver is connected to CAN1
+
+# Serial4 protocol selection
+# Control what protocol Serial4 port should be used for. Note that the Frsky options require external
+# converter hardware. See the wiki for details.
+# RebootRequired: True
+# -1: None                                             25: LTM
+# 1: MAVLink1                                          26: RunCam
+# 2: MAVLink2                                          27: HottTelem
+# 3: Frsky D                                           28: Scripting
+# 4: Frsky SPort                                       29: Crossfire VTX
+# 5: GPS                                               30: Generator
+# 7: Alexmos Gimbal Serial                             31: Winch
+# 8: Gimbal                                            32: MSP
+# 9: Rangefinder                                       33: DJI FPV
+# 10: FrSky SPort Passthrough (OpenTX)                 34: AirSpeed
+# 11: Lidar360                                         35: ADSB
+# 13: Beacon                                           36: AHRS
+# 14: Volz servo out                                   37: SmartAudio
+# 15: SBus servo out                                   38: FETtecOneWire
+# 16: ESC Telemetry                                    39: Torqeedo
+# 17: Devo Telemetry                                   40: AIS
+# 18: OpticalFlow                                      41: CoDevESC
+# 19: RobotisServo                                     42: DisplayPort
+# 20: NMEA Output                                      43: MAVLink High Latency
+# 21: WindVane                                         44: IRC Tramp
+# 22: SLCAN                                            45: DDS XRCE
+# 23: RCIN                                             46: IMUDATA
+# 24: EFI Serial
+# Default: 5
+SERIAL4_PROTOCOL,-1  # No GNSS connected to serial4, so disable it
+
+# Waypoint Radius
+# Defines the distance from a waypoint, that when crossed indicates the wp has been hit.
+# Units: cm (centimeters)
+# Range: 5 1000
+# Increment: 1
+# Default: 200
+WPNAV_RADIUS,200  # we have a good GNSS receiver so we can afford to fly precisely

@@ -1,0 +1,42 @@
+# Board Orientation
+# Overall board orientation relative to the standard orientation for the board type. This rotates the IMU
+# and compass readings to allow the board to be oriented in your vehicle at any 90 or 45 degree angle. The
+# label for each option is specified in the order of rotations for that orientation. This option takes
+# affect on next boot. After changing you will need to re-level your vehicle. Firmware versions 4.2 and
+# prior can use a CUSTOM (100) rotation to set the AHRS_CUSTOM_ROLL/PIT/YAW angles for AHRS orientation.
+# Later versions provide two general custom rotations which can be used, Custom 1 and Custom 2, with
+# CUST_ROT1_ROLL/PIT/YAW or CUST_ROT2_ROLL/PIT/YAW angles.
+# 0: None                             16: Roll90                          32: Pitch180Roll270
+# 1: Yaw45                            17: Yaw45Roll90                     33: Pitch270Roll90
+# 2: Yaw90                            18: Yaw90Roll90                     34: Pitch270Roll180
+# 3: Yaw135                           19: Yaw135Roll90                    35: Pitch270Roll270
+# 4: Yaw180                           20: Roll270                         36: Yaw90Pitch180Roll90
+# 5: Yaw225                           21: Yaw45Roll270                    37: Yaw270Roll90
+# 6: Yaw270                           22: Yaw90Roll270                    38: Yaw293Pitch68Roll180
+# 7: Yaw315                           23: Yaw135Roll270                   39: Pitch315
+# 8: Roll180                          24: Pitch90                         40: Pitch315Roll90
+# 9: Yaw45Roll180                     25: Pitch270                        42: Roll45
+# 10: Yaw90Roll180                    26: Yaw90Pitch180                   43: Roll315
+# 11: Yaw135Roll180                   27: Yaw270Pitch180                  100: Custom 4.1 and older
+# 12: Pitch180                        28: Pitch90Roll90                   101: Custom 1
+# 13: Yaw225Roll180                   29: Pitch90Roll180                  102: Custom 2
+# 14: Yaw270Roll180                   30: Pitch90Roll270
+# 15: Yaw315Roll180                   31: Pitch180Roll90
+# Default: 0
+AHRS_ORIENTATION,0  # Point forward in the direction of travel
+
+# Enable logging while disarmed
+# If LOG_DISARMED is set to 1 then logging will be enabled at all times including when disarmed. Logging
+# before arming can make for very large logfiles but can help a lot when tracking down startup issues and
+# is necessary if logging of EKF replay data is selected via the LOG_REPLAY parameter. If LOG_DISARMED is
+# set to 2, then logging will be enabled when disarmed, but not if a USB connection is detected. This can
+# be used to prevent unwanted data logs being generated when the vehicle is connected via USB for log
+# downloading or parameter changes. If LOG_DISARMED is set to 3 then logging will happen while disarmed,
+# but if the vehicle never arms then the logs using the filesystem backend will be discarded on the next
+# boot.
+# 0: Disabled
+# 1: Enabled
+# 2: Disabled on USB connection
+# 3: Discard log on reboot if never armed
+# Default: 0
+LOG_DISARMED,0  # Log disarmed was only required for offline IMU temperature calibration

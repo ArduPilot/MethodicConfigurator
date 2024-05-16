@@ -1,0 +1,18 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+AUTO_OPTIONS,3
+BRD_HEAT_TARG,60
+BRD_RTC_TZ_MIN,60  # Berlin time zone
+FENCE_TYPE,7  # cylinder and max altitude, to obey local regulations and safety measures
+INS_ACCEL_FILTER,10  # the default is 20 and that lets too much noise in
+INS_POS1_X,0  # was -0.005
+INS_POS1_Y,0  # was -0.011
+INS_POS2_X,0  # was -0.011
+INS_POS2_Y,0  # was -0.01
+LAND_ALT_LOW,200  # come down fast and only slow down close to the ground. We have a good GNSS receiver, so thrust it
+RTL_ALT,300  # The default is too high for the kind of flights we do. This reduces the altitude for indoors
+RTL_LOIT_TIME,1000  # The default is too long. This reduces the time
+SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation
+EK3_SRC1_POSZ,3  # Amilcar does not recommend this
+FS_EKF_ACTION,2  # Amilcar does not recommend this
+SERIAL7_PROTOCOL,-1  # Do not use CubeOrange ADSB receiver
