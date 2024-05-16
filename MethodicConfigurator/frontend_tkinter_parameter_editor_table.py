@@ -140,13 +140,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                     "No documentation available in apm.pdef.xml for this parameter"
 
                 column = []
-                column[0] = self.__create_delete_button(param_name)
-                column[1] = self.__create_parameter_name(param_name, param_metadata, doc_tooltip)
-                column[2] = self.__create_flightcontroller_value(fc_parameters, param_name, param_default, doc_tooltip)
-                column[3] = self.__create_new_value_entry(param_name, param, param_metadata, param_default, doc_tooltip)
-                column[4] = self.__create_unit_label(param_metadata)
-                column[5] = self.__create_upload_checkbutton(param_name)
-                column[6] = self.__create_change_reason_entry(param_name, param, column[3])
+                column.append(self.__create_delete_button(param_name))
+                column.append(self.__create_parameter_name(param_name, param_metadata, doc_tooltip))
+                column.append(self.__create_flightcontroller_value(fc_parameters, param_name, param_default, doc_tooltip))
+                column.append(self.__create_new_value_entry(param_name, param, param_metadata, param_default, doc_tooltip))
+                column.append(self.__create_unit_label(param_metadata))
+                column.append(self.__create_upload_checkbutton(param_name))
+                column.append(self.__create_change_reason_entry(param_name, param, column[3]))
 
                 column[0].grid(row=i, column=0, sticky="w", padx=0)
                 column[1].grid(row=i, column=1, sticky="w", padx=0)
