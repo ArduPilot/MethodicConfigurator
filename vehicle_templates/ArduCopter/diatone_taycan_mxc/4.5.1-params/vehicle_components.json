@@ -173,6 +173,23 @@
                 "Protocol": "uBlox"
             },
             "Notes": "A very good receiver with an excellent antenna https://docs.holybro.com/gps-and-rtk-system/gps-led-and-buzzer/status-led-changes"
+        },
+        "GNSS receiver2": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "H-RTK F9P Helical",
+                "URL": "https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445",
+                "Version": "1"
+            },
+            "Firmware": {
+                "Type": "UBlox",
+                "Version": "1.13.2"
+            },
+            "FC Connection": {
+                "Type": "SERIAL4",
+                "Protocol": "uBlox"
+            },
+            "Notes": "A very good receiver with an excellent antenna https://docs.holybro.com/gps-and-rtk-system/gps-led-and-buzzer/status-led-changes"
         }
     }
 }

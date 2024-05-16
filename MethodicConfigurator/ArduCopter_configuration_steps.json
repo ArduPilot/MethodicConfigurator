@@ -121,7 +121,7 @@
         "auto_changed_by": "",
         "old_filenames": []
     },
-    "10_gnss.param": {
+    "10_gnss1.param": {
         "blog_text": "Configures settings for the Global Navigation Satellite System (GNSS), including positioning and velocity estimation.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-211-configure-the-gnss-receivers-15",
         "wiki_text": "GPS/Compass (landing page) - GPS* parameters",
@@ -131,9 +131,24 @@
         "mandatory_text": "100% mandatory (0% optional)",
         "auto_changed_by": "",
         "derived_parameters": {
-            "GPS_TYPE": { "New Value": "vehicle_components['GNSS receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
+            "GPS_TYPE": { "New Value": "vehicle_components['GNSS receiver1']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
         },
-        "rename_connection": "vehicle_components['GNSS receiver']['FC Connection']['Type']",
+        "rename_connection": "vehicle_components['GNSS receiver1']['FC Connection']['Type']",
+        "old_filenames": ["10_gnss.param"]
+    },
+    "11_gnss2.param": {
+        "blog_text": "Configures settings for the Global Navigation Satellite System (GNSS), including positioning and velocity estimation.",
+        "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-211-configure-the-gnss-receivers-15",
+        "wiki_text": "GPS/Compass (landing page) - GPS* parameters",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-positioning-landing-page.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": "",
+        "derived_parameters": {
+            "GPS_TYPE": { "New Value": "vehicle_components['GNSS receiver2']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
+        },
+        "rename_connection": "vehicle_components['GNSS receiver2']['FC Connection']['Type']",
         "old_filenames": []
     },
     "11_initial_atc.param": {
