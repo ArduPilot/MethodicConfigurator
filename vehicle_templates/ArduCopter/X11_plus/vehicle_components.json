@@ -16,10 +16,10 @@
         },
         "Frame": {
             "Product": {
-                "Manufacturer": "Aluminiumm",
-                "Model": "Custom",
+                "Manufacturer": "Papa Seleckis",
+                "Model": "Custom Aluminiumm",
                 "URL": "",
-                "Version": ""
+                "Version": "30 Kg payload"
             },
             "Notes": "Frame is custom, X type frame, the middle is welded. Arm lenght is 1950mm."
         },
@@ -47,7 +47,7 @@
                 "Type": "",
                 "Version": ""
             },
-            "Notes": ""
+            "Notes": "integrated in RC controller"
         },
         "RC Receiver": {
             "Product": {
@@ -78,8 +78,8 @@
                 "Version": ""
             },
             "FC Connection": {
-                "Type": "SERIAL2",
-                "Protocol": "MAVLink High Latency"
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
             },
             "Notes": "High range and strenght telemetry."
         },
@@ -95,14 +95,14 @@
                 "Version": "4.5.1"
             },
             "FC Connection": {
-                "Type": "I2C1",
+                "Type": "I2C2",
                 "Protocol": "Analog Voltage and Current"
             },
             "Notes": "Voltage is done via the flight controller. Current is done via the ESC."
         },
         "Battery": {
             "Product": {
-                "Manufacturer": "TATTO",
+                "Manufacturer": "gensTattu",
                 "Model": "6C 30000mah",
                 "URL": "https://genstattu.com/tattu-g-tech-30000mah-6s-22-2v-25c-lipo-battery-pack-with-as150u-f-plug/",
                 "Version": "AS150U-F"

@@ -34,6 +34,28 @@ ATC_RAT_RLL_SMAX,25  # limit the slew rate to prevent possible ESC desync - http
 # Default: 0
 ATC_RAT_YAW_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 
+# Hover Value Learning
+# Enable/Disable automatic learning of hover throttle
+# 0: Disabled
+# 1: Learn
+# 2: Learn and Save
+# Default: 2
+MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on file 19
+
+# PWM output maximum
+# This sets the max PWM value in microseconds that will ever be output to the motors
+# Units: PWM (PWM in microseconds)
+# Range: 0 2000
+# Default: 2000
+MOT_PWM_MAX,1950.0
+
+# PWM output minimum
+# This sets the min PWM output value in microseconds that will ever be output to the motors
+# Units: PWM (PWM in microseconds)
+# Range: 0 2000
+# Default: 1000
+MOT_PWM_MIN,1050.0
+
 # Output PWM type
 # This selects the output PWM type, allowing for normal PWM continuous output, OneShot, brushed or DShot
 # motor output
@@ -50,11 +72,19 @@ ATC_RAT_YAW_SMAX,25  # limit the slew rate to prevent possible ESC desync - http
 # Default: 0
 MOT_PWM_TYPE,0  # Specified in component editor window
 
+# Spool up time
+# Time in seconds to spool up the motors from zero to min throttle.
+# Range: 0.05 2
+# Units: s (seconds)
+# Increment: 0.1
+# Default: 0.5
+MOT_SPOOL_TIME,3.0
+
 # Buzzer Driver Types
 # Controls what types of Buzzer will be enabled
 # Bitmask: 0:Built-in buzzer, 1:DShot, 2:DroneCAN
 # Default: 5
-NTF_BUZZ_TYPES,4  # Our CubeOrange have it self buzzer.
+NTF_BUZZ_TYPES,5  # Our CubeOrange have it self buzzer.
 
 # LED Driver Types
 # Controls what types of LEDs will be enabled
@@ -74,98 +104,13 @@ NTF_LED_TYPES,231  # Our HERE3 CAN gives me to change to 231
 # Default: 0
 PSC_ACCZ_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 
-# Serial5 protocol selection
-# Control what protocol Serial5 port should be used for. Note that the Frsky options require external
-# converter hardware. See the wiki for details.
-# RebootRequired: True
-# -1: None                                             25: LTM
-# 1: MAVLink1                                          26: RunCam
-# 2: MAVLink2                                          27: HottTelem
-# 3: Frsky D                                           28: Scripting
-# 4: Frsky SPort                                       29: Crossfire VTX
-# 5: GPS                                               30: Generator
-# 7: Alexmos Gimbal Serial                             31: Winch
-# 8: Gimbal                                            32: MSP
-# 9: Rangefinder                                       33: DJI FPV
-# 10: FrSky SPort Passthrough (OpenTX)                 34: AirSpeed
-# 11: Lidar360                                         35: ADSB
-# 13: Beacon                                           36: AHRS
-# 14: Volz servo out                                   37: SmartAudio
-# 15: SBus servo out                                   38: FETtecOneWire
-# 16: ESC Telemetry                                    39: Torqeedo
-# 17: Devo Telemetry                                   40: AIS
-# 18: OpticalFlow                                      41: CoDevESC
-# 19: RobotisServo                                     42: DisplayPort
-# 20: NMEA Output                                      43: MAVLink High Latency
-# 21: WindVane                                         44: IRC Tramp
-# 22: SLCAN                                            45: DDS XRCE
-# 23: RCIN                                             46: IMUDATA
-# 24: EFI Serial
-# Default: -1
-SERIAL5_PROTOCOL,-1  # No ESC telemtry
-
-# BLHeli pass-thru auto-enable for multicopter motors
-# If set to 1 this auto-enables BLHeli pass-thru support for all multicopter motors
-# RebootRequired: True
-# 0: Disabled
-# 1: Enabled
-# Default: 0
-SERVO_BLH_AUTO,0  # I don't use BLHeli
-
-# BLHeli bitmask of bi-directional dshot channels
-# Mask of channels which support bi-directional dshot. This is used for ESCs which have firmware that
-# supports bi-directional dshot allowing fast rpm telemetry values to be returned for the harmonic notch.
-# Bitmask: 0:Channel1,1:Channel2,2:Channel3,3:Channel4,4:Channel5,5:Channel6,6:Channel7,7:Channel8,8:Channel9,9:Channel10,10:Channel11,11:Channel12,12:Channel13,13:Channel14,14:Channel15,15:Channel16, 16:Channel 17, 17: Channel 18, 18: Channel 19, 19: Channel 20, 20: Channel 21, 21: Channel 22, 22: Channel 23, 23: Channel 24, 24: Channel 25, 25: Channel 26, 26: Channel 27, 27: Channel 28, 28: Channel 29, 29: Channel 30, 30: Channel 31, 31: Channel 32
-# RebootRequired: True
-# Default: 0
-SERVO_BLH_BDMASK,0  # I don't use BLHeli
-
-# BLHeli Motor Poles
-# This allows calculation of true RPM from ESC's eRPM. The default is 14.
-# Range: 1 127
-# RebootRequired: True
-# Default: 14
-SERVO_BLH_POLES,14  # Specified in component editor window
-
-# BLHeli telemetry rate
-# This sets the rate in Hz for requesting telemetry from ESCs. It is the rate per ESC. Setting to zero
-# disables telemetry requests
-# Units: Hz (hertz)
-# Range: 0 500
-# Default: 10
-SERVO_BLH_TRATE,5  # I don't have esc telemetry
-
-# Servo DShot ESC type
-# DShot ESC type for all outputs. The ESC type affects the range of DShot commands available and the bit
-# widths used. None means that no dshot commands will be executed. Some ESC types support Extended DShot
-# Telemetry (EDT) which allows telemetry other than RPM data to be returned when using bi-directional
-# dshot. If you enable EDT you must install EDT capable firmware for correct operation.
-# 0: None
-# 1: BLHeli32/Kiss
-# 2: BLHeli_S
-# 3: BLHeli32/Kiss+EDT
-# 4: BLHeli_S+EDT
-# Default: 0
-SERVO_DSHOT_ESC,0  # I don't use BLHeli
-
-# Servo DShot output rate
-# DShot output rate for all outputs as a multiple of the loop rate. 0 sets the output rate to be fixed at
-# 1Khz for low loop rates. This value should never be set below 500Hz.
-# 0: 1Khz
-# 1: loop-rate
-# 2: double loop-rate
-# 3: triple loop-rate
-# 4: quadruple loop rate
-# Default: 0
-SERVO_DSHOT_RATE,0  # Sends DShot control signals to the ESC twice per control loop
-
 # Maximum PWM
 # maximum PWM pulse width in microseconds. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper
 # limit.
 # Units: PWM (PWM in microseconds)
 # Range: 800 2200
 # Increment: 1
-# Default: 2000
+# Default: 1900
 SERVO1_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 
 # Minimum PWM
@@ -174,7 +119,7 @@ SERVO1_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programm
 # Units: PWM (PWM in microseconds)
 # Range: 800 2200
 # Increment: 1
-# Default: 1000
+# Default: 1100
 SERVO1_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 
 # Trim PWM
@@ -183,7 +128,7 @@ SERVO1_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programm
 # Units: PWM (PWM in microseconds)
 # Range: 800 2200
 # Increment: 1
-# Default: 1000
+# Default: 1500
 SERVO1_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 
 # Servo output function
@@ -226,7 +171,7 @@ SERVO13_FUNCTION,0  # For matek H743Slim v3 board
 # Units: PWM (PWM in microseconds)
 # Range: 800 2200
 # Increment: 1
-# Default: 2000
+# Default: 1900
 SERVO2_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 
 # Minimum PWM
@@ -235,7 +180,7 @@ SERVO2_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programm
 # Units: PWM (PWM in microseconds)
 # Range: 800 2200
 # Increment: 1
-# Default: 1000
+# Default: 1100
 SERVO2_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 
 # Trim PWM
@@ -244,7 +189,7 @@ SERVO2_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programm
 # Units: PWM (PWM in microseconds)
 # Range: 800 2200
 # Increment: 1
-# Default: 1000
+# Default: 1500
 SERVO2_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 
 # Maximum PWM
@@ -253,7 +198,7 @@ SERVO2_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Program
 # Units: PWM (PWM in microseconds)
 # Range: 800 2200
 # Increment: 1
-# Default: 2000
+# Default: 1900
 SERVO3_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 
 # Minimum PWM
@@ -262,7 +207,7 @@ SERVO3_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programm
 # Units: PWM (PWM in microseconds)
 # Range: 800 2200
 # Increment: 1
-# Default: 1000
+# Default: 1100
 SERVO3_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 
 # Trim PWM
@@ -271,7 +216,7 @@ SERVO3_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programm
 # Units: PWM (PWM in microseconds)
 # Range: 800 2200
 # Increment: 1
-# Default: 1000
+# Default: 1500
 SERVO3_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 
 # Maximum PWM
@@ -280,7 +225,7 @@ SERVO3_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Program
 # Units: PWM (PWM in microseconds)
 # Range: 800 2200
 # Increment: 1
-# Default: 2000
+# Default: 1900
 SERVO4_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 
 # Minimum PWM
@@ -289,7 +234,7 @@ SERVO4_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programm
 # Units: PWM (PWM in microseconds)
 # Range: 800 2200
 # Increment: 1
-# Default: 1000
+# Default: 1100
 SERVO4_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 
 # Trim PWM
@@ -298,21 +243,18 @@ SERVO4_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programm
 # Units: PWM (PWM in microseconds)
 # Range: 800 2200
 # Increment: 1
-# Default: 1000
+# Default: 1500
 SERVO4_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 
 # Takeoff Check RPM minimum
 # Takeoff is not permitted until motors report at least this RPM.  Set to zero to disable check
 # Range: 0 10000
 # Default: 0
-TKOFF_RPM_MIN,1400  # I don't have esc telemtry to measure
+TKOFF_RPM_MIN,0  # I don't have esc telemtry to measure
 
-MOT_PWM_MAX,1950
-
-MOT_PWM_MIN,1050
-
-MOT_SPOOL_TIME,3
-
-TKOFF_SLEW_TIME,4
-
-MOT_HOVER_LEARN,2
+# Slew time of throttle during take-off
+# Time to slew the throttle from minimum to maximum while checking for a succsessful takeoff.
+# Units: s (seconds)
+# Range: 0.25 5.0
+# Default: 2
+TKOFF_SLEW_TIME,4.0
