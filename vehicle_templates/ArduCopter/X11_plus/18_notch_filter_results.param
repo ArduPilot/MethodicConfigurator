@@ -4,4 +4,4 @@ INS_HNTCH_FM_RAT,0.5  # Allowed undercutting of the base frequency of the first 
 INS_HNTCH_FREQ,27  # the minimum frequency that the motors are expected to operate at
 INS_HNTCH_HMNCS,3  # the motors produce secondary harmonics on this vehicle
 INS_HNTCH_OPTS,1
-INS_HNTCH_REF,0.13  # Calculate and change this according to the wiki
+INS_HNTCH_REF,0.125018  # MOT_THST_HOVER * SQUARE(min_freq / hover_freq)
