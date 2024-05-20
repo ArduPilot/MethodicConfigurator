@@ -193,6 +193,6 @@ if __name__ == "__main__":
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
 
-    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type)
+    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, args.allow_editing_template_files)
     app = ComponentEditorWindowBase(VERSION, filesystem)
     app.root.mainloop()
