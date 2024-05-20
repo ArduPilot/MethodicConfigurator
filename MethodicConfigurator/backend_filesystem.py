@@ -99,6 +99,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
             self.re_init(vehicle_dir, vehicle_type)
 
     def re_init(self, vehicle_dir: str, vehicle_type: str):
+        ConfigurationSteps.re_init(self, vehicle_dir, vehicle_type)
         self.vehicle_dir = vehicle_dir
         self.vehicle_type = vehicle_type
         self.param_default_dict = {}
