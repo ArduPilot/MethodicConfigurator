@@ -150,7 +150,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
     def on_select_directory(self):
         # Call the base class method to open the directory selection dialog
         if super().on_select_directory():
-            if "vehicle_templates" in self.directory:
+            if "vehicle_templates" in self.directory and not self.local_filesystem.allow_editing_template_files:
                 show_error_message("Invalid Vehicle Directory Selected",
                                    "Please do not edit the files provided 'vehicle_templates' directory\n"
                                    "as those are used as a template for new vehicles")
@@ -350,7 +350,7 @@ def main():
     logging_warning("This main is for testing and development only, usually the VehicleDirectorySelectionWindow is"
                     " called from another script")
 
-    local_filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type)
+    local_filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, args.allow_editing_template_files)
 
     # Get the list of intermediate parameter files files that will be processed sequentially
     files = list(local_filesystem.file_parameters.keys())

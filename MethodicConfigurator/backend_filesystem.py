@@ -91,10 +91,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
         param_default_dict (dict): A dictionary of default parameter values.
         doc_dict (dict): A dictionary containing documentation for each parameter.
     """
-    def __init__(self, vehicle_dir: str, vehicle_type: str):
+    def __init__(self, vehicle_dir: str, vehicle_type: str, allow_editing_template_files: bool = False):
         self.file_parameters = None
         VehicleComponents.__init__(self)
         ConfigurationSteps.__init__(self, vehicle_dir, vehicle_type)
+        self.allow_editing_template_files = allow_editing_template_files
         if vehicle_dir is not None:
             self.re_init(vehicle_dir, vehicle_type)
 
@@ -631,4 +632,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
                             help='Start directly on the nth intermediate parameter file (skips previous files). '
                             'Default is to start on the file next to the last that you wrote to the flight controller.'
                             'If the file does not exist, it will start on the first file.')
+        parser.add_argument('--allow-editing-template-files',
+                            action='store_true',
+                            help='Allow opening and editing template files directly. '
+                            'Only for software developers that know what they are doing.')
         return parser
