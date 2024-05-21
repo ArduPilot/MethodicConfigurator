@@ -16,6 +16,7 @@ SPDX-License-Identifier:    GPL-3
 """
 
 import os
+import re
 import json
 
 SEQUENCE_FILENAME = "ArduCopter_configuration_steps.json"
@@ -26,31 +27,24 @@ file_renames = {}
 # file_renames["old_name"] = "new_name"
 file_renames["00_Default_Parameters.param"] = "00_default.param"
 
-def prepare_file_renames(filename):
-    """Prepare a list of parameter files from the configuration steps JSON file."""
-    with open(os.path.join("MethodicConfigurator", filename), 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    param_files = []
-    for param_file in data:
-        param_files.append(param_file)
-    return param_files
 
-def reorder_param_files(param_files):
+def reorder_param_files(steps):
     """Reorder parameters and prepare renaming rules."""
     # Iterate over the param_files and rename the keys to be in two-digit prefix ascending order
-    new_dict = {}
+    param_files = list(steps)
+    renames = {}
     for i, old_key in enumerate(param_files, 2):
         new_key = f"{i:02d}_{old_key.split('_', 1)[1]}"
         # Get the value associated with new_key in the file_renames dictionary.
         # If new_key is not found, it will return new_key itself as the default value,
         # effectively leaving it unchanged.
         new_key = file_renames.get(new_key, new_key)
-        new_dict[new_key] = 1
+        renames[new_key] = old_key
         if old_key != new_key:
             print(f"Info: Will rename {old_key} to {new_key}")
-    return new_dict
+    return renames
 
-def loop_relevant_files(param_files, new_dict):
+def loop_relevant_files(renames, steps):
     param_dirs = ['.']
     # Search all *.py, *.json and *.md files in the current directory
     # and replace all occurrences of the old names with the new names
@@ -65,31 +59,57 @@ def loop_relevant_files(param_files, new_dict):
                 continue
             if file == 'vehicle_components.json':
                 continue
+            if file ==  SEQUENCE_FILENAME:
+                uplate_old_filenames(renames, steps)
             if update_file_content:
-                update_file_contents(param_files, new_dict, root, file)
+                update_file_contents(renames, root, file, steps)
     return param_dirs
 
-def update_file_contents(param_files, new_dict, root, file):
+def uplate_old_filenames(renames, steps):
+    for new_name, old_name in renames.items():
+        if old_name != new_name:
+            if "old_filenames" in steps[old_name]:
+                if old_name not in steps[old_name]["old_filenames"]:
+                    steps[old_name]["old_filenames"].append(old_name)
+            else:
+                steps[old_name]["old_filenames"] = [old_name]
+
+def update_file_contents(renames, root, file, steps):
     with open(os.path.join(root, file), "r", encoding="utf-8") as handle:
         file_content = handle.read()
-    if file in ["README.md", "BLOG.md", "BLOG-discuss1.md", "BLOG-discuss2.md"]:
-        for param_filename in param_files:
-            if param_filename not in file_content:
-                print(f"Error: The intermediate parameter file '{param_filename}'" \
+    if file in ["BLOG.md", "BLOG-discuss1.md", "BLOG-discuss2.md"]:
+        for _new_filename, old_filename in renames.items():
+            if old_filename not in file_content:
+                print(f"Error: The intermediate parameter file '{old_filename}'" \
                                 f" is not mentioned in the {file} file")
-    for old_name, new_name in zip(param_files, new_dict.keys()):
+    for new_name, old_name in renames.items():
         if 'configuration_steps.json' in file:
-            new_file_content = ""
-            for line in file_content.splitlines(keepends=True):
-                if "old_filenames" in line:
-                    new_file_content += line
-                else:
-                    new_file_content += line.replace(old_name, new_name)
-            file_content = new_file_content
+            file_content = update_configuration_steps_json_file_contents(steps, file_content, new_name, old_name)
         else:
             file_content = file_content.replace(old_name, new_name)
     with open(os.path.join(root, file), "w", encoding="utf-8") as handle:
         handle.write(file_content)
+
+def update_configuration_steps_json_file_contents(steps, file_content, new_name, old_name):
+    new_file_content = ""
+    curr_filename = ''
+    for line in file_content.splitlines(keepends=True):
+        re_search = re.search(r'^    \"(\w.+)\"', line)
+        if re_search:
+            curr_filename = re_search.group(1)
+        if "old_filenames" in line:
+            if curr_filename in steps and "old_filenames" in steps[curr_filename]:
+                        # WARNING!!! old_filenames can only used once, so we remove it after using it
+                old_filenames = str(steps[curr_filename].pop("old_filenames")).replace("\'", "\"")
+                new_file_content += f'        "old_filenames": {old_filenames}'
+                if line.endswith(",\n"):
+                    new_file_content += ","
+                new_file_content += "\n"
+            else:
+                new_file_content += line
+        else:
+            new_file_content += line.replace(old_name, new_name)
+    return new_file_content
 
 def rename_file(old_name, new_name, param_dir):
     """Rename a single file."""
@@ -100,16 +120,10 @@ def rename_file(old_name, new_name, param_dir):
     else:
         print(f"Error: Could not rename file {old_name_path}, file not found")
 
-def reorder_actual_files(param_files, new_dict, param_dirs):
-    # Rename the actual files on disk based on new_dict re-ordering
+def reorder_actual_files(renames, param_dirs):
+    # Rename the actual files on disk based on renames re-ordering
     for param_dir in param_dirs:
-        for old_name, new_name in zip(param_files, new_dict.keys()):
-            rename_file(old_name, new_name, param_dir)
-
-def rename_actual_files(param_dirs):
-    # Rename the actual files on disk based on file_renames
-    for param_dir in param_dirs:
-        for old_name, new_name in file_renames.items():
+        for new_name, old_name in renames.items():
             rename_file(old_name, new_name, param_dir)
 
 def change_line_endings_for_md_files():
@@ -125,11 +139,11 @@ def change_line_endings_for_md_files():
                     handle.write(content)
 
 def main():
-    param_files = prepare_file_renames(SEQUENCE_FILENAME)
-    new_dict = reorder_param_files(param_files)
-    param_dirs = loop_relevant_files(param_files, new_dict)
-    reorder_actual_files(param_files, new_dict, param_dirs)
-    rename_actual_files(param_dirs)
+    with open(os.path.join("MethodicConfigurator", SEQUENCE_FILENAME), 'r', encoding='utf-8') as f:
+        steps = json.load(f)
+    renames = reorder_param_files(steps)
+    param_dirs = loop_relevant_files(renames, steps)
+    reorder_actual_files(renames, param_dirs)
     change_line_endings_for_md_files()
 
 if __name__ == "__main__":
