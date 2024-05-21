@@ -1,0 +1,21 @@
+# Accelerometer noise (m/s^2)
+# This control disturbance noise controls the growth of estimated error due to accelerometer measurement
+# errors excluding bias. Increasing it makes the flter trust the accelerometer measurements less and other
+# measurements more.
+# Range: 0.01 1.0
+# Increment: 0.01
+# Units: m/s/s (meters per square second)
+# Default: 0.35
+EK3_ACC_P_NSE,0.35  # higher value -> trust accelerometer less, compared to other sources
+
+# Altitude measurement noise (m)
+# This is the RMS value of noise in the altitude measurement. Increasing it reduces the weighting of the
+# baro measurement and will make the filter respond more slowly to baro measurement errors, but will make
+# it more sensitive to GPS and accelerometer errors. A larger value for EK3_ALT_M_NSE may be required when
+# operating with EK3_SRCx_POSZ = 0. This parameter also sets the noise for the 'synthetic' zero height
+# measurement that is used when EK3_SRCx_POSZ = 0.
+# Range: 0.1 100.0
+# Increment: 0.1
+# Units: m (meters)
+# Default: 2
+EK3_ALT_M_NSE,2  # lower value -> trust baro more, compared to other sources

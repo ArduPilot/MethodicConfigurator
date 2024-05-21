@@ -17,7 +17,7 @@ After it is set, do another flight and [check that the windspeed and direction a
 
 Follow [ArduCopter's baro compensation Wiki](https://ardupilot.org/copter/docs/airspeed-estimation.html#barometer-position-error-compensation) and/or use the [Lua script provided by Yuri in the forum](https://discuss.ardupilot.org/t/scripting-copter-wind-estimation-baro-compensation-tuning/98470/).
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `39_barometer_compensation.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `40_barometer_compensation.param` file to the FC.
 
 Now do the flight to collect the data and analyze the logs to see if the barometer is correctly compensated and insensitive to wind.
 
@@ -30,25 +30,25 @@ Documentation is available on [Fabian Bredemeier's Identification of a multicopt
 
 ## Roll rate mathematical model
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `40_system_id_roll.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `41_system_id_roll.param` file to the FC.
 
 Now do the flight to collect the data for the roll rate system identification.
 
 ## Pitch rate mathematical model
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `41_system_id_pitch.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `42_system_id_pitch.param` file to the FC.
 
 Now do the flight to collect the data for the pitch rate system identification.
 
 ## Yaw rate mathematical model
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `42_system_id_yaw.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `43_system_id_yaw.param` file to the FC.
 
 Now do the flight to collect the data for the yaw rate system identification.
 
 ## Thrust mathematical model
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `43_system_id_thrust.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `44_system_id_thrust.param` file to the FC.
 
 Now do the flight to collect the data for the thrust system identification.
 
@@ -58,31 +58,31 @@ This describes how to use IAV's multi-objective optimization to achieve even bet
 
 One other approach is described by Bill Geyer in his Blog post: [Predicting Closed Loop Response For Faster Autotune](https://discuss.ardupilot.org/t/predicting-closed-loop-response-for-faster-autotune/75096).
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `44_analytical_pid_optimization.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `45_analytical_pid_optimization.param` file to the FC.
 
 # 14. Productive configuration
 
 Some changes should be made for everyday productive operation.
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `45_everyday_use.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `46_everyday_use.param` file to the FC.
 
 # 15. Position controller
 
 The most inner *angle rate* and *angle* control loops have been tuned. Now let's tune the position controller.
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `46_position_controller.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `47_position_controller.param` file to the FC.
 
 # 16. Precision land
 
 These are **optional**, and only make sense if you have extra hardware on your vehicle to support it.
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `47_precision_land.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `48_precision_land.param` file to the FC.
 
 # 17. Guided operation without RC transmitter
 
 These are **optional**, and only make sense if you do beyond visual line-of-sight (BVLOS) autonomous flights using a companion computer.
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `48_guided_operation.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `49_guided_operation.param` file to the FC.
 
 # 18. Conclusion
 
