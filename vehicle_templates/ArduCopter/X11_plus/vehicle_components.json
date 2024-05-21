@@ -86,16 +86,16 @@
         "Battery Monitor": {
             "Product": {
                 "Manufacturer": "CubePilot",
-                "Model": "CubeOrange",
-                "URL": "https://www.robotshop.com/products/cubepilot-the-cube-orange-standard-set-ads-b-carrier-board",
-                "Version": "3"
+                "Model": "HX4-06008",
+                "URL": "https://docs.cubepilot.org/user-guides/autopilot/the-cube-user-manual#power-module-connection",
+                "Version": "PB01A21"
             },
             "Firmware": {
-                "Type": "ArduCopter",
-                "Version": "4.5.1"
+                "Type": "",
+                "Version": ""
             },
             "FC Connection": {
-                "Type": "I2C2",
+                "Type": "Analog",
                 "Protocol": "Analog Voltage and Current"
             },
             "Notes": "Voltage is done via the flight controller. Current is done via the ESC."
