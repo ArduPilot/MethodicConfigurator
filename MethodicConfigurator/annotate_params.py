@@ -548,7 +548,7 @@ def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',
     # Iterate over all the target ArduPilot parameter files
     for param_file in param_files:
 
-        if os_path.basename(param_file).endswith("23_inflight_magnetometer_fit_setup.param") and "MAGH_ALT_DELTA" not in doc:
+        if os_path.basename(param_file).endswith("24_inflight_magnetometer_fit_setup.param") and "MAGH_ALT_DELTA" not in doc:
             continue
 
         # Read the entire file contents
@@ -559,7 +559,7 @@ def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',
 
 def update_parameter_documentation_file(doc, sort_type, param_default_dict, param_file, lines):  # pylint: disable=too-many-locals
     new_lines = []
-    if os_path.basename(param_file).endswith("15_pid_adjustment.param"):
+    if os_path.basename(param_file).endswith("16_pid_adjustment.param"):
         new_lines.extend(lines[0:7])  # copy the first 8 lines verbatim
 
     total_params = 0
@@ -641,7 +641,7 @@ def main():
                                                         xml_dir, LUA_PARAM_DEFINITION_XML_FILE)
             doc_dict = create_doc_dict(xml_root, args.vehicle_type, args.max_line_length)
             update_parameter_documentation(doc_dict, os_path.join(os_path.dirname(args.target),
-                                                                  "23_inflight_magnetometer_fit_setup.param"))
+                                                                  "24_inflight_magnetometer_fit_setup.param"))
     except Exception as exp:  # pylint: disable=W0718
         logging.fatal(exp)
         exit(1)  # pylint: disable=R1722

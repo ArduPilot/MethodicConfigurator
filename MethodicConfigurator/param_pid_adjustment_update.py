@@ -32,9 +32,9 @@ Updates PID adjustment parameters values based on the given ADJUSTMENT_FACTOR ar
 It loads three sets of parameters from files in the DIRECTORY directory:
     00_default.param - the (complete) default parameters,
     optimized_param_file - the (complete) optimized parameters, and
-    15_pid_adjustment.param - the (intermediate) PID adjustment parameters.
+    16_pid_adjustment.param - the (intermediate) PID adjustment parameters.
 It calculates the PID adjustment parameter values based on the ADJUSTMENT_FACTOR argument.
-It updates the intermediate parameter file 15_pid_adjustment.param with parameter comments
+It updates the intermediate parameter file 16_pid_adjustment.param with parameter comments
 explaining how their new value relates to the default parameter value.
 """)
     parser.add_argument("-d", "--directory",
@@ -155,7 +155,7 @@ def update_pid_adjustment_params(directory: str, optimized_param_file: str, adju
     """
     default_param_file_path = os.path.join(directory, "00_default.param")
     optimized_param_file_path = os.path.join(directory, optimized_param_file)
-    pid_adjustment_file_path = os.path.join(directory, "15_pid_adjustment.param")
+    pid_adjustment_file_path = os.path.join(directory, "16_pid_adjustment.param")
 
     # Load the default parameter file into a dictionary (comment source)
     default_params_dict, _ = Par.load_param_file_into_dict(default_param_file_path)
@@ -203,7 +203,7 @@ def main():
     # export the updated PID adjust parameters to a file, preserving the first eight header lines
     Par.export_to_param(pid_adjustment_params_dict, pid_adjustment_file_path, content_header)
     # annotate each parameter with up-to date documentation
-    subprocess.run(['./annotate_params.py', os.path.join(args.directory, "15_pid_adjustment.param")], check=True)
+    subprocess.run(['./annotate_params.py', os.path.join(args.directory, "16_pid_adjustment.param")], check=True)
 
 
 if __name__ == "__main__":
