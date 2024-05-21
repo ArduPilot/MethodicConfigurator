@@ -255,7 +255,7 @@
         "mandatory_text": "0% mandatory (100% optional)",
         "old_filenames": ["20_ekf_config.param"]
     },
-    "20_quick_tune_setup.param": {
+    "21_quick_tune_setup.param": {
         "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs before the MAGFit flight.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-4-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune-40",
         "wiki_text": "If lua scripting is not possible, do a manual tune instead",
@@ -269,7 +269,7 @@
         },
         "old_filenames": ["20_quick_tune_setup.param"]
     },
-    "21_quick_tune_results.param": {
+    "22_quick_tune_results.param": {
         "blog_text": "Results of the in-flight VTOL-quicktune lua script PIDs before the MAGFit flight.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-4-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune-40",
         "wiki_text": "If lua scripting is not possible, do a manual tune instead",
@@ -280,7 +280,7 @@
         "auto_changed_by": "VTOL-quicktune lua script",
         "old_filenames": ["21_quick_tune_results.param"]
     },
-	"22_inflight_magnetometer_fit_setup.param": {
+	"23_inflight_magnetometer_fit_setup.param": {
         "blog_text": "Sets up parameters for the in-flight magnetometer calibration, ensuring accurate compass heading.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-5-third-flight-magfit-41",
         "wiki_text": "If lua scripting is not possible do compassmot instead",
@@ -292,10 +292,10 @@
         "forced_parameters": {
             "MAGH_LOG_ENABLE": { "New Value": 1, "Change Reason": "Activates the logging of the MAGH.Active message" }
         },
-        "jump_possible": {"45_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '45_everyday_use.param' file?"},
+        "jump_possible": {"46_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '46_everyday_use.param' file?"},
         "old_filenames": ["22_inflight_magnetometer_fit_setup.param"]
     },
-    "23_inflight_magnetometer_fit_results.param": {
+    "24_inflight_magnetometer_fit_results.param": {
         "blog_text": "Records the results of the in-flight magnetometer calibration, providing data for analysis and adjustment.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-5-third-flight-magfit-41",
         "wiki_text": "If lua scripting is not possible do compassmot instead",
@@ -306,7 +306,7 @@
         "auto_changed_by": "MAGFit Webtool and YOU manually uploaded the result to the FC already",
         "old_filenames": ["23_inflight_magnetometer_fit_results.param"]
     },
-    "24_quick_tune_setup.param": {
+    "25_quick_tune_setup.param": {
         "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs after the MAGFit flight.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-6-fourth-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune-optional-43",
         "wiki_text": "If lua scripting is not possible, do a manual tune instead",
@@ -320,7 +320,7 @@
         },
         "old_filenames": ["24_quick_tune_setup.param"]
     },
-    "25_quick_tune_results.param": {
+    "26_quick_tune_results.param": {
         "blog_text": "Results of the in-flight VTOL-quicktune lua script PIDs after the MAGFit flight.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-6-fourth-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune-optional-43",
         "wiki_text": "If lua scripting is not possible, do a manual tune instead",
@@ -331,7 +331,7 @@
         "auto_changed_by": "VTOL-quicktune lua script",
         "old_filenames": ["25_quick_tune_results.param"]
     },
-    "26_evaluate_the_aircraft_tune_ff_disable.param": {
+    "27_evaluate_the_aircraft_tune_ff_disable.param": {
         "blog_text": "Contains parameters for evaluating the aircraft's tuning with feed-forward control disabled, useful for comparison.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-7-fifth-flight-evaluate-the-aircraft-tune-part-1-44",
         "wiki_text": "Evaluating the aircraft tune",
@@ -345,7 +345,7 @@
         },
         "old_filenames": ["26_evaluate_the_aircraft_tune_ff_disable.param"]
     },
-    "27_evaluate_the_aircraft_tune_ff_enable.param": {
+    "28_evaluate_the_aircraft_tune_ff_enable.param": {
         "blog_text": "Contains parameters for evaluating the aircraft's tuning with feed-forward control enabled, for optimal performance.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-8-sixth-flight-evaluate-the-aircraft-tune-part-2-45",
         "wiki_text": "Evaluating the aircraft tune",
@@ -359,7 +359,7 @@
         },
         "old_filenames": ["27_evaluate_the_aircraft_tune_ff_enable.param"]
     },
-    "28_autotune_roll_setup.param": {
+    "29_autotune_roll_setup.param": {
         "blog_text": "Sets up parameters for the roll axis autotuning process, aiming to optimize roll response.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-9-autotune-flightshttpsardupilotorgcopterdocsautotunehtml-46",
         "wiki_text": "AutoTune",
@@ -373,7 +373,7 @@
         },
         "old_filenames": ["28_autotune_roll_setup.param"]
     },
-    "29_autotune_roll_results.param": {
+    "30_autotune_roll_results.param": {
         "blog_text": "Records the results of the roll axis autotuning, providing data for analysis and adjustment.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#roll-axis-47",
         "wiki_text": "AutoTune",
@@ -384,7 +384,7 @@
         "auto_changed_by": "ArduPilot autotune",
         "old_filenames": ["29_autotune_roll_results.param"]
     },
-    "30_autotune_pitch_setup.param": {
+    "31_autotune_pitch_setup.param": {
         "blog_text": "Sets up parameters for the pitch axis autotuning process, aiming to optimize pitch response.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#pitch-axis-48",
         "wiki_text": "AutoTune",
@@ -398,7 +398,7 @@
         },
         "old_filenames": ["30_autotune_pitch_setup.param"]
     },
-    "31_autotune_pitch_results.param": {
+    "32_autotune_pitch_results.param": {
         "blog_text": "Records the results of the pitch axis autotuning, providing data for analysis and adjustment.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#pitch-axis-48",
         "wiki_text": "AutoTune",
@@ -409,7 +409,7 @@
         "auto_changed_by": "ArduPilot autotune",
         "old_filenames": ["31_autotune_pitch_results.param"]
     },
-    "32_autotune_yaw_setup.param": {
+    "33_autotune_yaw_setup.param": {
         "blog_text": "Sets up parameters for the yaw axis autotuning process, aiming to optimize yaw response.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#yaw-axis-49",
         "wiki_text": "AutoTune",
@@ -423,7 +423,7 @@
         },
         "old_filenames": ["32_autotune_yaw_setup.param"]
     },
-    "33_autotune_yaw_results.param": {
+    "34_autotune_yaw_results.param": {
         "blog_text": "Records the results of the yaw axis autotuning, providing data for analysis and adjustment.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#yaw-axis-49",
         "wiki_text": "AutoTune",
@@ -434,7 +434,7 @@
         "auto_changed_by": "ArduPilot autotune",
         "old_filenames": ["33_autotune_yaw_results.param"]
     },
-    "34_autotune_yawd_setup.param": {
+    "35_autotune_yawd_setup.param": {
         "blog_text": "Sets up parameters for the yaw rate autotuning process, aiming to optimize yaw rate response.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#yaw-d-axishttpswwwyoutubecomwatchvb76bpeercekt963s-50",
         "wiki_text": "AutoTune",
@@ -448,7 +448,7 @@
         },
         "old_filenames": ["34_autotune_yawd_setup.param"]
     },
-    "35_autotune_yawd_results.param": {
+    "36_autotune_yawd_results.param": {
         "blog_text": "Records the results of the yaw rate autotuning, providing data for analysis and adjustment.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#yaw-d-axishttpswwwyoutubecomwatchvb76bpeercekt963s-50",
         "wiki_text": "AutoTune",
@@ -459,7 +459,7 @@
         "auto_changed_by": "ArduPilot autotune",
         "old_filenames": ["35_autotune_yawd_results.param"]
     },
-    "36_autotune_roll_pitch_retune_setup.param": {
+    "37_autotune_roll_pitch_retune_setup.param": {
         "blog_text": "Sets up parameters for the roll and pitch axis retuning process, refining the vehicle's flight characteristics.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#re-tune-the-roll-and-pitch-axishttpsyoutubejk0i97dmsk0sif1lyl2iq8guuenclt2535-51",
         "wiki_text": "AutoTune",
@@ -473,7 +473,7 @@
         },
         "old_filenames": ["36_autotune_roll_pitch_retune_setup.param"]
     },
-    "37_autotune_roll_pitch_retune_results.param": {
+    "38_autotune_roll_pitch_retune_results.param": {
         "blog_text": "Records the results of the roll and pitch axis retuning, providing data for analysis and adjustment.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#re-tune-the-roll-and-pitch-axishttpsyoutubejk0i97dmsk0sif1lyl2iq8guuenclt2535-51",
         "wiki_text": "AutoTune",
@@ -484,7 +484,7 @@
         "auto_changed_by": "ArduPilot autotune",
         "old_filenames": ["37_autotune_roll_pitch_retune_results.param"]
     },
-    "38_windspeed_estimation.param": {
+    "39_windspeed_estimation.param": {
         "blog_text": "Configures parameters for wind speed estimation, crucial for accurate navigation and stabilization in windy conditions.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-11-windspeed-estimation-flightshttpsardupilotorgcopterdocsairspeed-estimationhtml-53",
         "wiki_text": "Windspeed Estimation",
@@ -499,7 +499,7 @@
         },
         "old_filenames": ["38_windspeed_estimation.param"]
     },
-    "39_barometer_compensation.param": {
+    "40_barometer_compensation.param": {
         "blog_text": "Sets up parameters for barometer compensation, ensuring accurate altitude estimation.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#h-12-baro-compensation-flightshttpsardupilotorgcopterdocsairspeed-estimationhtmlbarometer-position-error-compensation-1",
         "wiki_text": "Barometer Position Error Compensation",
@@ -510,7 +510,7 @@
         "auto_changed_by": "",
         "old_filenames": ["39_barometer_compensation.param"]
     },
-    "40_system_id_roll.param": {
+    "41_system_id_roll.param": {
         "blog_text": "Configures parameters for the roll axis system identification, part of the tuning process.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#h-13-system-identification-flightshttpsardupilotorgcopterdocssystemid-mode-operationhtml-2",
         "wiki_text": "Matlab and Simulink IAV scripts for system identification",
@@ -526,7 +526,7 @@
         },
         "old_filenames": ["40_system_id_roll.param"]
     },
-    "41_system_id_pitch.param": {
+    "42_system_id_pitch.param": {
         "blog_text": "Configures parameters for the pitch axis system identification, part of the tuning process.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#pitch-rate-mathematical-model-4",
         "wiki_text": "Matlab and Simulink IAV scripts for system identification",
@@ -540,7 +540,7 @@
         },
         "old_filenames": ["41_system_id_pitch.param"]
     },
-    "42_system_id_yaw.param": {
+    "43_system_id_yaw.param": {
         "blog_text": "Configures parameters for the yaw axis system identification, part of the tuning process.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#yaw-rate-mathematical-model-5",
         "wiki_text": "Matlab and Simulink IAV scripts for system identification",
@@ -554,7 +554,7 @@
         },
         "old_filenames": ["42_system_id_yaw.param"]
     },
-    "43_system_id_thrust.param": {
+    "44_system_id_thrust.param": {
         "blog_text": "Configures parameters for the thrust axis system identification, part of the tuning process.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#thrust-mathematical-model-6",
         "wiki_text": "Matlab and Simulink IAV scripts for system identification",
@@ -568,7 +568,7 @@
         },
         "old_filenames": ["43_system_id_thrust.param"]
     },
-    "44_analytical_pid_optimization.param": {
+    "45_analytical_pid_optimization.param": {
         "blog_text": "Contains parameters for analytical PID optimization, aiming to find the optimal PID values for the vehicle.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#analytical-multicopter-flight-controller-pid-optimizationhttpsdiscussardupilotorgtanalytical-multicopter-flight-controller-pid-optimization109759-7",
         "wiki_text": "",
@@ -584,7 +584,7 @@
         },
         "old_filenames": ["44_analytical_pid_optimization.param"]
     },
-    "45_everyday_use.param": {
+    "46_everyday_use.param": {
         "blog_text": "Configures parameters for everyday use, ensuring the vehicle is safe and stable for routine flying.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#h-14-productive-configuration-8",
         "wiki_text": "",
@@ -595,7 +595,7 @@
         "auto_changed_by": "",
         "old_filenames": ["45_everyday_use.param"]
     },
-    "46_position_controller.param": {
+    "47_position_controller.param": {
         "blog_text": "Sets up parameters for the position controller, crucial for waypoint navigation and precision flying.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#h-15-position-controller-9",
         "wiki_text": "",
@@ -606,7 +606,7 @@
         "auto_changed_by": "",
         "old_filenames": ["46_position_controller.param"]
     },
-    "47_precision_land.param": {
+    "48_precision_land.param": {
         "blog_text": "Configures parameters for precision landing, ensuring accurate and safe landing of the vehicle.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#h-16-precision-land-10",
         "wiki_text": "Precision Landing and Loiter",
@@ -617,7 +617,7 @@
         "auto_changed_by": "",
         "old_filenames": ["47_precision_land.param"]
     },
-    "48_guided_operation.param": {
+    "49_guided_operation.param": {
         "blog_text": "Sets up parameters for guided operation, including waypoint navigation and obstacle avoidance.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#h-17-guided-operation-without-rc-transmitter-11",
         "wiki_text": "Guided Mode",
