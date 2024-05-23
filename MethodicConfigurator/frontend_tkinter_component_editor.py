@@ -79,6 +79,11 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if 'Chemistry' not in self.data['Components']['Battery']['Specifications']:
             self.data['Components']['Battery']['Specifications']['Chemistry'] = "Lipo"
 
+        if 'Components' not in self.data:
+            self.data['Components'] = {}
+        if 'GNSS receiver' in self.data['Components']:
+            self.data['Components']['GNSS receiver1'] = self.data['Components'].pop('GNSS receiver')
+
     def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
         self.data['Components']['Flight Controller']['Firmware']['Type'] = vehicle_type
         entry = self.entry_widgets[('Flight Controller', 'Firmware', 'Type')]
