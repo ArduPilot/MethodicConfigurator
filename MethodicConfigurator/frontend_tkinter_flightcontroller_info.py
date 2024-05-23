@@ -33,6 +33,7 @@ class FlightControllerInfoWindow(BaseWindow):
         self.root.title("ArduPilot methodic configurator " + VERSION + " - Flight Controller Info")
         self.root.geometry("500x350")  # Adjust the window size as needed
         self.flight_controller = flight_controller
+        self.param_default_values = {}
 
         # Create a frame to hold all the labels and text fields
         self.info_frame = ttk.Frame(self.main_frame)
@@ -71,7 +72,10 @@ class FlightControllerInfoWindow(BaseWindow):
     def download_flight_controller_parameters(self):
         param_download_progress_window = ProgressWindow(self.root, "Downloading FC parameters",
                                                         "Downloaded {} of {} parameters")
-        self.flight_controller.fc_parameters = self.flight_controller.download_params(
+        self.flight_controller.fc_parameters, self.param_default_values = self.flight_controller.download_params(
             param_download_progress_window.update_progress_bar)
         param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
         self.root.destroy()
+
+    def get_param_default_values(self):
+        return self.param_default_values

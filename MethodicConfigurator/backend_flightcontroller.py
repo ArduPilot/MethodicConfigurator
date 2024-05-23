@@ -13,12 +13,13 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
 
-# import sys
+from sys import exit as sys_exit
 from time import sleep as time_sleep
 from os import path as os_path
 from os import name as os_name
 from os import readlink as os_readlink
 from typing import Dict
+from typing import Tuple
 
 import serial.tools.list_ports
 import serial.tools.list_ports_common
@@ -28,6 +29,8 @@ from serial.serialutil import SerialException
 from MethodicConfigurator.annotate_params import Par
 
 from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
+from MethodicConfigurator.backend_mavftp import MAVFTP
+from MethodicConfigurator.param_ftp import ftp_param_decode
 
 from MethodicConfigurator.argparse_check_range import CheckRange
 
@@ -268,12 +271,13 @@ class FlightController:
         self.info.set_vendor_id_and_product_id(m.vendor_id, m.product_id)
         return ""
 
-    def download_params(self, progress_callback=None) -> Dict[str, float]:
+    def download_params(self, progress_callback=None) -> Tuple[Dict[str, float], Dict[str, float]]:
         """
         Requests all flight controller parameters from a MAVLink connection.
 
         Returns:
             Dict[str, float]: A dictionary of flight controller parameters.
+            Dict[str, float]: A dictionary of flight controller default parameters.
         """
         # FIXME this entire if statement is for testing only, remove it later pylint: disable=fixme
         if self.master is None and self.comport is not None and self.comport.device == 'test':
@@ -287,17 +291,13 @@ class FlightController:
 
         # Check if MAVFTP is supported
         if self.info.is_mavftp_supported:
-            logging_info("MAVFTP is supported by the %s flight controller, but not yet from this SW",
+            logging_info("MAVFTP is supported by the %s flight controller",
                          self.comport.device)
 
-            # FIXME remove this call and uncomment below once it works pylint: disable=fixme
-            return self.__download_params_via_mavlink(progress_callback)
-
-            # parameters, _defaults = self.download_params_via_mavftp(progress_callback)
-            # return parameters
+            return self.download_params_via_mavftp(progress_callback)
 
         logging_info("MAVFTP is not supported by the %s flight controller, fallback to MAVLink", self.comport.device)
-        return self.__download_params_via_mavlink(progress_callback)
+        return self.__download_params_via_mavlink(progress_callback), {}
 
     def __download_params_via_mavlink(self, progress_callback=None) -> Dict[str, float]:
         logging_debug("Will fetch all parameters from the %s flight controller", self.comport.device)
@@ -331,6 +331,51 @@ class FlightController:
                 logging_error('Error: %s', error)
                 break
         return parameters
+
+    def download_params_via_mavftp(self, progress_callback=None) -> Tuple[Dict[str, float], Dict[str, float]]:
+        # FIXME global variables should be avoided but I found no other practical way get the FTP result pylint: disable=fixme
+        global ftp_should_run  # pylint: disable=global-variable-undefined
+        global pdict  # pylint: disable=global-variable-undefined
+        global defdict  # pylint: disable=global-variable-undefined
+        ftp_should_run = True
+        pdict = {}
+        defdict = {}
+
+        mavftp = MAVFTP(self.master,
+                        target_system=self.master.target_system,
+                        target_component=self.master.target_component)
+
+        def callback(fh):
+            '''called on ftp completion'''
+            global ftp_should_run  # pylint: disable=global-variable-undefined
+            global pdict  # pylint: disable=global-variable-not-assigned
+            global defdict  # pylint: disable=global-variable-not-assigned
+            data = fh.read()
+            logging_info("'MAVFTP get' parameter values and defaults done, got %u bytes", len(data))
+            pdata = ftp_param_decode(data)
+            if pdata is None:
+                logging_error("param decode failed")
+                sys_exit(1)
+
+            for (name, value, _ptype) in pdata.params:
+                pdict[name.decode('utf-8')] = value
+            logging_info("got %u parameter values", len(pdict))
+            if pdata.defaults:
+                for (name, value, _ptype) in pdata.defaults:
+                    defdict[name.decode('utf-8')] = value
+                logging_info("got %u parameter default values", len(defdict))
+            ftp_should_run = False
+            progress_callback(len(data), len(data))
+
+        mavftp.cmd_get(['@PARAM/param.pck?withdefaults=1'], callback=callback, callback_progress=progress_callback)
+
+        while ftp_should_run:
+            m = self.master.recv_match(type=['FILE_TRANSFER_PROTOCOL'], timeout=0.1)
+            if m is not None:
+                mavftp.mavlink_packet(m)
+            mavftp.idle_task()
+
+        return pdict, defdict
 
     def set_param(self, param_name: str, param_value: float):
         """

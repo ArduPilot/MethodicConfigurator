@@ -198,7 +198,7 @@ class Par:
         return tuple(parts)
 
     @staticmethod
-    def format_params(param_dict: Dict[str, 'Par'], file_format: str = "missionplanner") -> List[str]:
+    def format_params(param_dict: Dict[str, 'Par'], file_format: str = "missionplanner") -> List[str]:  # pylint: disable=too-many-branches
         """
         Formats the parameters in the provided dictionary into a list of strings.
 
@@ -225,17 +225,23 @@ class Par:
         formatted_params = []
         if file_format == "missionplanner":
             for key, parameter in param_dict.items():
-                if parameter.comment:
-                    formatted_params.append(f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}"
-                                            f"  # {parameter.comment}")
+                if isinstance(parameter, dict):
+                    if parameter.comment:
+                        formatted_params.append(f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}"
+                                                f"  # {parameter.comment}")
+                    else:
+                        formatted_params.append(f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}")
                 else:
-                    formatted_params.append(f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}")
+                    formatted_params.append(f"{key},{format(parameter, '.6f').rstrip('0').rstrip('.')}")
         elif file_format == "mavproxy":
             for key, parameter in param_dict.items():
-                if parameter.comment:
-                    formatted_params.append(f"{key:<16} {parameter.value:<8.6f}  # {parameter.comment}")
+                if isinstance(parameter, dict):
+                    if parameter.comment:
+                        formatted_params.append(f"{key:<16} {parameter.value:<8.6f}  # {parameter.comment}")
+                    else:
+                        formatted_params.append(f"{key:<16} {parameter.value:<8.6f}")
                 else:
-                    formatted_params.append(f"{key:<16} {parameter.value:<8.6f}")
+                    formatted_params.append(f"{key:<16} {parameter:<8.6f}")
         return formatted_params
 
     @staticmethod
@@ -690,9 +696,7 @@ def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
 def parse_parameter_metadata(xml_url: str, xml_dir: str, xml_file: str,
                         vehicle_type: str, max_line_length: int) -> Dict[str, Any]:
     xml_root = get_xml_data(xml_url, xml_dir, xml_file)
-    param_default_dict = load_default_param_file(xml_dir)
-    doc_dict = create_doc_dict(xml_root, vehicle_type, max_line_length)
-    return doc_dict, param_default_dict
+    return create_doc_dict(xml_root, vehicle_type, max_line_length)
 
 
 def main():
@@ -701,8 +705,9 @@ def main():
         xml_url = get_xml_url(args.vehicle_type, args.firmware_version)
         xml_dir = get_xml_dir(args.target)
 
-        [doc_dict, param_default_dict] = parse_parameter_metadata(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE,
-                                                                  args.vehicle_type, args.max_line_length)
+        doc_dict = parse_parameter_metadata(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE,
+                                            args.vehicle_type, args.max_line_length)
+        param_default_dict = load_default_param_file(xml_dir)
         update_parameter_documentation(doc_dict, args.target, args.sort, param_default_dict,
                                        args.delete_documentation_annotations)
         if args.verbose:
@@ -711,9 +716,10 @@ def main():
         # Annotate lua MAGfit XML documentation into the respective parameter file
         xml_file = LUA_PARAM_DEFINITION_XML_FILE
         if os_path.isfile(os_path.join(os_path.dirname(args.target), xml_file)):
-            [doc_dict, param_default_dict] = parse_parameter_metadata(xml_url, xml_dir, xml_file,
-                                                                      args.vehicle_type, args.max_line_length)
+            doc_dict = parse_parameter_metadata(xml_url, xml_dir, xml_file,
+                                                args.vehicle_type, args.max_line_length)
             target = os_path.join(os_path.dirname(args.target), "24_inflight_magnetometer_fit_setup.param")
+            param_default_dict = load_default_param_file(xml_dir)
             update_parameter_documentation(doc_dict, target, args.sort, param_default_dict,
                                            args.delete_documentation_annotations)
         else:

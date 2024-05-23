@@ -452,8 +452,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.param_download_progress_window = ProgressWindow(self.main_frame, ("Re-d" if redownload else "D") + \
                                                              "ownloading FC parameters", "Downloaded {} of {} parameters")
         # Download all parameters from the flight controller
-        self.flight_controller.fc_parameters = self.flight_controller.download_params(
+        self.flight_controller.fc_parameters, param_default_values = self.flight_controller.download_params(
             self.param_download_progress_window.update_progress_bar)
+        if param_default_values:
+            self.local_filesystem.write_param_default_values_to_file(param_default_values)
         self.param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
         if not redownload:
             self.on_param_file_combobox_change(None, True) # the initial param read will trigger a table update

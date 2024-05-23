@@ -116,8 +116,10 @@ def main():
     # Connect to the flight controller and read the parameters
     flight_controller, vehicle_type = connect_to_fc_and_read_parameters(args)
 
+    param_default_values = {}
     if flight_controller.master is not None or args.device == 'test':
-        FlightControllerInfoWindow(flight_controller)
+        fciw = FlightControllerInfoWindow(flight_controller)
+        param_default_values = fciw.get_param_default_values()
 
     try:
         local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, flight_controller.info.flight_sw_version,
@@ -125,6 +127,9 @@ def main():
     except SystemExit as exp:
         show_error_message("Fatal error reading parameter files", f"{exp}")
         raise
+
+    if param_default_values:
+        local_filesystem.write_param_default_values(param_default_values)
 
     # Get the list of intermediate parameter files files that will be processed sequentially
     files = list(local_filesystem.file_parameters.keys()) if local_filesystem.file_parameters else []
