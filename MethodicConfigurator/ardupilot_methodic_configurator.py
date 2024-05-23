@@ -68,7 +68,8 @@ def main():
 
     error_str = flight_controller.connect(args.device)
     if error_str:
-        logging_error(error_str)
+        if "No serial ports found" not in error_str:
+            logging_error(error_str)
         conn_sel_window = ConnectionSelectionWindow(flight_controller, error_str)
         conn_sel_window.root.mainloop()
 
@@ -90,7 +91,6 @@ def main():
     files = list(local_filesystem.file_parameters.keys())
 
     if not files:
-        logging_error("No intermediate parameter files found in %s.", args.vehicle_dir)
         vehicle_dir_window = VehicleDirectorySelectionWindow(local_filesystem)
         vehicle_dir_window.root.mainloop()
 
