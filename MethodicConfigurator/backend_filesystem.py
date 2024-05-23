@@ -33,6 +33,7 @@ from zipfile import ZipFile
 from MethodicConfigurator.annotate_params import PARAM_DEFINITION_XML_FILE, Par
 from MethodicConfigurator.annotate_params import get_xml_url
 from MethodicConfigurator.annotate_params import get_xml_dir
+from MethodicConfigurator.annotate_params import load_default_param_file
 from MethodicConfigurator.annotate_params import parse_parameter_metadata
 from MethodicConfigurator.annotate_params import format_columns
 from MethodicConfigurator.annotate_params import split_into_lines
@@ -88,12 +89,12 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self.vehicle_type = vehicle_type
         self.fw_version = fw_version
         self.allow_editing_template_files = allow_editing_template_files
+        self.param_default_dict = {}
         if vehicle_dir is not None:
             self.re_init(vehicle_dir, vehicle_type)
 
     def re_init(self, vehicle_dir: str, vehicle_type: str):
         self.vehicle_dir = vehicle_dir
-        self.param_default_dict = {}
         self.doc_dict = {}
 
         if not self.load_vehicle_components_json_data(vehicle_dir):
@@ -122,15 +123,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         # Read ArduPilot parameter documentation
         xml_url = get_xml_url(vehicle_type, self.fw_version)
         xml_dir = get_xml_dir(vehicle_dir)
-        [self.doc_dict, self.param_default_dict] = parse_parameter_metadata(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE,
-                                                                            vehicle_type, TOOLTIP_MAX_LENGTH)
+        self.doc_dict = parse_parameter_metadata(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE,
+                                                 vehicle_type, TOOLTIP_MAX_LENGTH)
+        self.param_default_dict = load_default_param_file(xml_dir)
 
         # Extend parameter documentation metadata if <parameter_file>.pdef.xml exists
         for filename in self.file_parameters:
             pdef_xml_file = filename.replace(".param", ".pdef.xml")
             if os_path.exists(os_path.join(xml_dir, pdef_xml_file)):
-                [doc_dict, _param_default_dict] = parse_parameter_metadata("", xml_dir, pdef_xml_file,
-                                                                           vehicle_type, TOOLTIP_MAX_LENGTH)
+                doc_dict = parse_parameter_metadata("", xml_dir, pdef_xml_file,
+                                                    vehicle_type, TOOLTIP_MAX_LENGTH)
                 self.doc_dict.update(doc_dict)
 
         self.__extend_and_reformat_parameter_documentation_metadata()
@@ -529,6 +531,17 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     return error_msg
             Par.export_to_param(Par.format_params(param_dict), os_path.join(self.vehicle_dir, param_filename))
         return ''
+
+    def write_param_default_values(self, param_default_values: Dict[str, float]):
+        param_default_values = dict(sorted(param_default_values.items()))
+        if self.param_default_dict != param_default_values:
+            self.param_default_dict = param_default_values
+            return True
+        return False
+
+    def write_param_default_values_to_file(self, param_default_values: Dict[str, float], filename: str='00_default.param'):
+        if self.write_param_default_values(param_default_values):
+            Par.export_to_param(Par.format_params(param_default_values), os_path.join(self.vehicle_dir, filename))
 
     @staticmethod
     def add_argparse_arguments(parser):
