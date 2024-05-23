@@ -58,6 +58,7 @@ setup(
         'pymavlink',
         'pyserial',
         'pillow',
+        'setuptools',
         'requests',
     ],
     extras_require={
