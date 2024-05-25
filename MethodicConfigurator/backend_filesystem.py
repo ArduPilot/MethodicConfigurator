@@ -24,7 +24,7 @@ from re import escape as re_escape
 from re import sub as re_sub
 
 # from sys import exit as sys_exit
-# from logging import debug as logging_debug
+from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
@@ -583,6 +583,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
         try:
             with open(os_path.join(self.vehicle_dir, 'last_uploaded_filename.txt'), 'r', encoding='utf-8') as file:
                 return file.read().strip()
+        except FileNotFoundError as e:
+            logging_debug("last_uploaded_filename.txt not found: %s", e)
         except Exception as e:  # pylint: disable=broad-except
             logging_error("Error reading last uploaded filename: %s", e)
         return ""
