@@ -234,7 +234,8 @@ class Par:
         if not formatted_params:
             return
         try:
-            with open(filename_out, "w", encoding="utf-8") as output_file:
+            # Ensure newline character is LF, even on windows
+            with open(filename_out, "w", encoding="utf-8", newline='\n') as output_file:
                 for line in formatted_params:
                     output_file.write(line + "\n")
         except IOError as e:
@@ -617,7 +618,7 @@ def update_parameter_documentation_file(doc, sort_type, param_default_dict, para
         logging.warning("No documentation found for: %s", ", ".join(undocumented_params))
 
         # Write the new file contents to the file
-    with open(param_file, "w", encoding="utf-8") as file:
+    with open(param_file, "w", encoding="utf-8", newline='\n') as file:  # Ensure newline character is LF, even on windows
         file.writelines(new_lines)
 
 
