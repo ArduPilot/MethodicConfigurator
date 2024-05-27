@@ -568,7 +568,7 @@ def update_parameter_documentation_file(doc, sort_type, param_default_dict, para
                                         delete_documentation_annotations: bool):
     new_lines = []
     if os_path.basename(param_file).endswith("16_pid_adjustment.param"):
-        new_lines.extend(lines[0:7])  # copy the first 8 lines verbatim
+        new_lines.extend(lines[0:5])  # copy the first 6 lines verbatim
 
     total_params = 0
     documented_params = 0
@@ -603,7 +603,7 @@ def update_parameter_documentation_file(doc, sort_type, param_default_dict, para
                 new_lines.append(f"# {doc_text}\n{line}\n")
                 documented_params += 1
             else:
-                    # If the parameter name is in not the dictionary, copy the parameter line 1-to-1
+                # If the parameter name is in not the dictionary, copy the parameter line 1-to-1
                 new_lines.append(f"{line}\n")
                 undocumented_params.append(param_name)
             total_params += 1
@@ -617,7 +617,7 @@ def update_parameter_documentation_file(doc, sort_type, param_default_dict, para
                             param_file, total_params, documented_params)
         logging.warning("No documentation found for: %s", ", ".join(undocumented_params))
 
-        # Write the new file contents to the file
+    # Write the new file contents to the file
     with open(param_file, "w", encoding="utf-8", newline='\n') as file:  # Ensure newline character is LF, even on windows
         file.writelines(new_lines)
 
