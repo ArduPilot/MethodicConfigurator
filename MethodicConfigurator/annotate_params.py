@@ -48,6 +48,10 @@ def arg_parser():
     parser.add_argument('target',
                         help='The target file or directory.',
                         )
+    parser.add_argument('-d', '--delete-documentation-annotations',
+                        action='store_true',
+                        help='Delete parameter documentation annotations (comments above parameters). Defaults to %(default)s',
+                        )
     parser.add_argument('-s', '--sort',
                         choices=['none', 'missionplanner', 'mavproxy'],
                         default='none',
@@ -64,7 +68,7 @@ def arg_parser():
                         help='Maximum documentation line length. Defaults to %(default)s',
                         )
     parser.add_argument('--verbose', action='store_true',
-                        help='Increase output verbosity, print ReadOnly parameter list. Defaults to false',
+                        help='Increase output verbosity, print ReadOnly parameter list. Defaults to %(default)s',
                         )
     parser.add_argument('-v', '--version', action='version', version=f'%(prog)s {VERSION}',
                         help='Display version information and exit.',
@@ -512,7 +516,8 @@ def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) 
 
 
 def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',
-                                   sort_type: str = 'none', param_default_dict: Optional[Dict] = None) -> None:
+                                   sort_type: str = 'none', param_default_dict: Optional[Dict] = None,
+                                   delete_documentation_annotations = False) -> None:
     """
     Updates the parameter documentation in the target file or in all *.param,*.parm files of the target directory.
 
@@ -555,9 +560,11 @@ def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',
         with open(param_file, "r", encoding="utf-8") as file:
             lines = file.readlines()
 
-        update_parameter_documentation_file(doc, sort_type, param_default_dict, param_file, lines)
+        update_parameter_documentation_file(doc, sort_type, param_default_dict, param_file, lines,
+                                            delete_documentation_annotations)
 
-def update_parameter_documentation_file(doc, sort_type, param_default_dict, param_file, lines):  # pylint: disable=too-many-locals
+def update_parameter_documentation_file(doc, sort_type, param_default_dict, param_file, lines,  # pylint: disable=too-many-locals, too-many-arguments
+                                        delete_documentation_annotations: bool):
     new_lines = []
     if os_path.basename(param_file).endswith("16_pid_adjustment.param"):
         new_lines.extend(lines[0:7])  # copy the first 8 lines verbatim
@@ -575,9 +582,9 @@ def update_parameter_documentation_file(doc, sort_type, param_default_dict, para
         if not line.startswith("#") and line:
             param_name = extract_parameter_name_and_validate(line, param_file, n)
 
-            if param_name in doc:
-                    # If the parameter name is in the dictionary,
-                    #  prefix the line with a comment derived from the dictionary element
+            if param_name in doc and not delete_documentation_annotations:
+                # If the parameter name is in the dictionary,
+                #  prefix the line with a comment derived from the dictionary element
                 data = doc[param_name]
                 prefix_parts = [
                         f"{data['humanName']}",
@@ -633,7 +640,8 @@ def main():
         xml_dir = args.target if os_path.isdir(args.target) else os_path.dirname(os_path.realpath(args.target))
         xml_root, param_default_dict = get_xml_data(BASE_URL + args.vehicle_type + "/", xml_dir, PARAM_DEFINITION_XML_FILE)
         doc_dict = create_doc_dict(xml_root, args.vehicle_type, args.max_line_length)
-        update_parameter_documentation(doc_dict, args.target, args.sort, param_default_dict)
+        update_parameter_documentation(doc_dict, args.target, args.sort, param_default_dict,
+                                       args.delete_documentation_annotations)
         if args.verbose:
             print_read_only_params(doc_dict)
         if os_path.isfile(os_path.join(os_path.dirname(args.target), LUA_PARAM_DEFINITION_XML_FILE)):
@@ -641,7 +649,8 @@ def main():
                                                         xml_dir, LUA_PARAM_DEFINITION_XML_FILE)
             doc_dict = create_doc_dict(xml_root, args.vehicle_type, args.max_line_length)
             update_parameter_documentation(doc_dict, os_path.join(os_path.dirname(args.target),
-                                                                  "24_inflight_magnetometer_fit_setup.param"))
+                                                                  "24_inflight_magnetometer_fit_setup.param"),
+                                           args.sort, param_default_dict, args.delete_documentation_annotations)
     except Exception as exp:  # pylint: disable=W0718
         logging.fatal(exp)
         exit(1)  # pylint: disable=R1722
