@@ -1,139 +1,15 @@
-# Compass offsets in milligauss on the X axis
-# Offset to be added to the compass x-axis values to compensate for metal in the frame
-# Range: -400 400
-# Units: mGauss (milligauss)
-# Increment: 1
-# Calibration: 1
-# Default: 0
 COMPASS_OFS_X,76.89418
-
-# Compass offsets in milligauss on the Y axis
-# Offset to be added to the compass y-axis values to compensate for metal in the frame
-# Range: -400 400
-# Units: mGauss (milligauss)
-# Increment: 1
-# Calibration: 1
-# Default: 0
 COMPASS_OFS_Y,-108.94388
-
-# Compass offsets in milligauss on the Z axis
-# Offset to be added to the compass z-axis values to compensate for metal in the frame
-# Range: -400 400
-# Units: mGauss (milligauss)
-# Increment: 1
-# Default: 0
 COMPASS_OFS_Z,295.8105
-
-# Compass soft-iron diagonal X component
-# DIA_X in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y,
-# ODI_Z, DIA_Z]]
-# Calibration: 1
-# Default: 1
 COMPASS_DIA_X,1.0596071
-
-# Compass soft-iron diagonal Y component
-# DIA_Y in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y,
-# ODI_Z, DIA_Z]]
-# Calibration: 1
-# Default: 1
 COMPASS_DIA_Y,1.0279562
-
-# Compass soft-iron diagonal Z component
-# DIA_Z in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y,
-# ODI_Z, DIA_Z]]
-# Default: 1
 COMPASS_DIA_Z,0.9124366
-
-# Compass soft-iron off-diagonal X component
-# ODI_X in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y,
-# ODI_Z, DIA_Z]]
-# Calibration: 1
-# Default: 0
 COMPASS_ODI_X,-0.0022481442
-
-# Compass soft-iron off-diagonal Y component
-# ODI_Y in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y,
-# ODI_Z, DIA_Z]]
-# Calibration: 1
-# Default: 0
 COMPASS_ODI_Y,-0.022540506
-
-# Compass soft-iron off-diagonal Z component
-# ODI_Z in the compass soft-iron calibration matrix: [[DIA_X, ODI_X, ODI_Y], [ODI_X, DIA_Y, ODI_Z], [ODI_Y,
-# ODI_Z, DIA_Z]]
-# Default: 0
 COMPASS_ODI_Z,-0.021016626
-
-# Motor interference compensation for body frame X axis
-# Multiplied by the current throttle and added to the compass's x-axis values to compensate for motor
-# interference (Offset per Amp or at Full Throttle)
-# Range: -1000 1000
-# Units: mGauss/A (milligauss per ampere)
-# Increment: 1
-# Calibration: 1
-# Default: 0
 COMPASS_MOT_X,0
-
-# Motor interference compensation for body frame Y axis
-# Multiplied by the current throttle and added to the compass's y-axis values to compensate for motor
-# interference (Offset per Amp or at Full Throttle)
-# Range: -1000 1000
-# Units: mGauss/A (milligauss per ampere)
-# Increment: 1
-# Calibration: 1
-# Default: 0
 COMPASS_MOT_Y,0
-
-# Motor interference compensation for body frame Z axis
-# Multiplied by the current throttle and added to the compass's z-axis values to compensate for motor
-# interference (Offset per Amp or at Full Throttle)
-# Range: -1000 1000
-# Units: mGauss/A (milligauss per ampere)
-# Increment: 1
-# Default: 0
 COMPASS_MOT_Z,0
-
-# Compass1 scale factor
-# Scaling factor for first compass to compensate for sensor scaling errors. If this is 0 then no scaling is
-# done
-# Range: 0 1.3
-# Default: 0
 COMPASS_SCALE,0.96805
-
-# Compass orientation
-# The orientation of the first external compass relative to the vehicle frame. This value will be ignored
-# unless this compass is set as an external compass. When set correctly in the northern hemisphere,
-# pointing the nose and right side down should increase the MagX and MagY values respectively. Rolling the
-# vehicle upside down should decrease the MagZ value. For southern hemisphere, switch increase and
-# decrease. NOTE: For internal compasses, AHRS_ORIENT is used. The label for each option is specified in
-# the order of rotations for that orientation. Firmware versions 4.2 and prior can use a CUSTOM (100)
-# rotation to set the COMPASS_CUS_ROLL/PIT/YAW angles for Compass orientation. Later versions provide two
-# general custom rotations which can be used, Custom 1 and Custom 2, with CUST_1_ROLL/PIT/YAW or
-# CUST_2_ROLL/PIT/YAW angles.
-# 0: None                             16: Roll90                          32: Pitch180Roll270
-# 1: Yaw45                            17: Yaw45Roll90                     33: Pitch270Roll90
-# 2: Yaw90                            18: Yaw90Roll90                     34: Pitch270Roll180
-# 3: Yaw135                           19: Yaw135Roll90                    35: Pitch270Roll270
-# 4: Yaw180                           20: Roll270                         36: Yaw90Pitch180Roll90
-# 5: Yaw225                           21: Yaw45Roll270                    37: Yaw270Roll90
-# 6: Yaw270                           22: Yaw90Roll270                    38: Yaw293Pitch68Roll180
-# 7: Yaw315                           23: Yaw135Roll270                   39: Pitch315
-# 8: Roll180                          24: Pitch90                         40: Pitch315Roll90
-# 9: Yaw45Roll180                     25: Pitch270                        42: Roll45
-# 10: Yaw90Roll180                    26: Yaw90Pitch180                   43: Roll315
-# 11: Yaw135Roll180                   27: Yaw270Pitch180                  100: Custom 4.1 and older
-# 12: Pitch180                        28: Pitch90Roll90                   101: Custom 1
-# 13: Yaw225Roll180                   29: Pitch90Roll180                  102: Custom 2
-# 14: Yaw270Roll180                   30: Pitch90Roll270
-# 15: Yaw315Roll180                   31: Pitch180Roll90
-# Default: 0
 COMPASS_ORIENT,6
-
-# Motor interference compensation type
-# Set motor interference compensation type to disabled, throttle or current.  Do not change manually.
-# Calibration: 1
-# 0: Disabled
-# 1: Use Throttle
-# 2: Use Current
-# Default: 0
 COMPASS_MOTCT,0

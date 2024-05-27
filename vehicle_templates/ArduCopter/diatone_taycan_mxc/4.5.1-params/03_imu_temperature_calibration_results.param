@@ -1,269 +1,42 @@
-# Accelerometer 1st order temperature coefficient X axis
-# This is the 1st order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_ACC1_X 115.946591342
-
-# Accelerometer 1st order temperature coefficient Y axis
-# This is the 1st order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_ACC1_Y 498.256973344
-
-# Accelerometer 1st order temperature coefficient Z axis
-# This is the 1st order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_ACC1_Z -381.446151984
-
-# Accelerometer 2nd order temperature coefficient X axis
-# This is the 2nd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_ACC2_X -22.931568706
-
-# Accelerometer 2nd order temperature coefficient Y axis
-# This is the 2nd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_ACC2_Y 13.578689275
-
-# Accelerometer 2nd order temperature coefficient Z axis
-# This is the 2nd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_ACC2_Z 19.361290207
-
-# Accelerometer 3rd order temperature coefficient X axis
-# This is the 3rd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_ACC3_X -0.601406268
-
-# Accelerometer 3rd order temperature coefficient Y axis
-# This is the 3rd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_ACC3_Y 0.213798686
-
-# Accelerometer 3rd order temperature coefficient Z axis
-# This is the 3rd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_ACC3_Z 0.011621521
-
-# Enable temperature calibration
-# Enable the use of temperature calibration parameters for this IMU. For automatic learning set to 2 and
-# also set the INS_TCALn_TMAX to the target temperature, then reboot
-# RebootRequired: True
-# 0: Disabled
-# 1: Enabled
-# 2: LearnCalibration
-# Default: 0
 INS_TCAL1_ENABLE 1
-
-# Gyroscope 1st order temperature coefficient X axis
-# This is the 1st order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_GYR1_X -32.634220542
-
-# Gyroscope 1st order temperature coefficient Y axis
-# This is the 1st order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_GYR1_Y 79.655005221
-
-# Gyroscope 1st order temperature coefficient Z axis
-# This is the 1st order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_GYR1_Z -151.124203469
-
-# Gyroscope 2nd order temperature coefficient X axis
-# This is the 2nd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_GYR2_X -0.611429461
-
-# Gyroscope 2nd order temperature coefficient Y axis
-# This is the 2nd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_GYR2_Y -2.040988991
-
-# Gyroscope 2nd order temperature coefficient Z axis
-# This is the 2nd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_GYR2_Z 1.238329627
-
-# Gyroscope 3rd order temperature coefficient X axis
-# This is the 3rd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_GYR3_X -0.009728067
-
-# Gyroscope 3rd order temperature coefficient Y axis
-# This is the 3rd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_GYR3_Y 0.019491833
-
-# Gyroscope 3rd order temperature coefficient Z axis
-# This is the 3rd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL1_GYR3_Z 0.001409968
-
-# Temperature calibration max
-# The maximum temperature that the calibration is valid for. This must be at least 10 degrees above TMIN
-# for calibration
-# Range: -70 80
-# Units: degC (degrees Celsius)
-# Calibration: 1
-# Default: 70
 INS_TCAL1_TMAX 56.0
-
-# Temperature calibration min
-# The minimum temperature that the calibration is valid for
-# Range: -70 80
-# Units: degC (degrees Celsius)
-# Calibration: 1
-# Default: 0
 INS_TCAL1_TMIN -14.6
-
-# Accelerometer 1st order temperature coefficient X axis
-# This is the 1st order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_ACC1_X -1088.415600440
-
-# Accelerometer 1st order temperature coefficient Y axis
-# This is the 1st order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_ACC1_Y 806.840522393
-
-# Accelerometer 1st order temperature coefficient Z axis
-# This is the 1st order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_ACC1_Z 327.521202466
-
-# Accelerometer 2nd order temperature coefficient X axis
-# This is the 2nd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_ACC2_X -13.630366124
-
-# Accelerometer 2nd order temperature coefficient Y axis
-# This is the 2nd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_ACC2_Y 6.347960639
-
-# Accelerometer 2nd order temperature coefficient Z axis
-# This is the 2nd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_ACC2_Z 9.967253125
-
-# Accelerometer 3rd order temperature coefficient X axis
-# This is the 3rd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_ACC3_X -0.376738491
-
-# Accelerometer 3rd order temperature coefficient Y axis
-# This is the 3rd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_ACC3_Y 0.002642167
-
-# Accelerometer 3rd order temperature coefficient Z axis
-# This is the 3rd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_ACC3_Z -0.065860983
-
-# Enable temperature calibration
-# Enable the use of temperature calibration parameters for this IMU. For automatic learning set to 2 and
-# also set the INS_TCALn_TMAX to the target temperature, then reboot
-# RebootRequired: True
-# 0: Disabled
-# 1: Enabled
-# 2: LearnCalibration
-# Default: 0
 INS_TCAL2_ENABLE 1
-
-# Gyroscope 1st order temperature coefficient X axis
-# This is the 1st order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_GYR1_X -44.455145632
-
-# Gyroscope 1st order temperature coefficient Y axis
-# This is the 1st order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_GYR1_Y -8.833005619
-
-# Gyroscope 1st order temperature coefficient Z axis
-# This is the 1st order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_GYR1_Z 88.004538868
-
-# Gyroscope 2nd order temperature coefficient X axis
-# This is the 2nd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_GYR2_X 1.435061412
-
-# Gyroscope 2nd order temperature coefficient Y axis
-# This is the 2nd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_GYR2_Y -0.204452936
-
-# Gyroscope 2nd order temperature coefficient Z axis
-# This is the 2nd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_GYR2_Z -2.086231519
-
-# Gyroscope 3rd order temperature coefficient X axis
-# This is the 3rd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_GYR3_X -0.048140576
-
-# Gyroscope 3rd order temperature coefficient Y axis
-# This is the 3rd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_GYR3_Y -0.002372842
-
-# Gyroscope 3rd order temperature coefficient Z axis
-# This is the 3rd order temperature coefficient from a temperature calibration
-# Calibration: 1
-# Default: 0
 INS_TCAL2_GYR3_Z -0.028350688
-
-# Temperature calibration max
-# The maximum temperature that the calibration is valid for. This must be at least 10 degrees above TMIN
-# for calibration
-# Range: -70 80
-# Units: degC (degrees Celsius)
-# Calibration: 1
-# Default: 70
 INS_TCAL2_TMAX 56.5
-
-# Temperature calibration min
-# The minimum temperature that the calibration is valid for
-# Range: -70 80
-# Units: degC (degrees Celsius)
-# Calibration: 1
-# Default: 0
 INS_TCAL2_TMIN -13.3

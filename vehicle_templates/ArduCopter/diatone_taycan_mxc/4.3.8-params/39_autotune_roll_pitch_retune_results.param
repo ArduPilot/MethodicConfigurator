@@ -1,86 +1,10 @@
-# Acceleration Max for Pitch
-# Maximum acceleration in pitch axis
-# Units: cdeg/s/s (centidegrees per square second)
-# Range: 0 180000
-# Increment: 1000
-# 0: Disabled
-# 30000: VerySlow
-# 72000: Slow
-# 108000: Medium
-# 162000: Fast
-# Default: 110000
 ATC_ACCEL_P_MAX,363812.1875  # Autotuned in a windless hangar
-
-# Acceleration Max for Roll
-# Maximum acceleration in roll axis
-# Units: cdeg/s/s (centidegrees per square second)
-# Range: 0 180000
-# Increment: 1000
-# 0: Disabled
-# 30000: VerySlow
-# 72000: Slow
-# 108000: Medium
-# 162000: Fast
-# Default: 110000
 ATC_ACCEL_R_MAX,495292.5625  # Autotuned in a windless hangar
-
-# Pitch axis angle controller P gain
-# Pitch axis angle controller P gain.  Converts the error between the desired pitch angle and actual angle
-# to a desired pitch rate
-# Range: 3.000 12.000
-# Default: 4.5
 ATC_ANG_PIT_P,36  # higher value mean a tighter tune
-
-# Roll axis angle controller P gain
-# Roll axis angle controller P gain.  Converts the error between the desired roll angle and actual angle to
-# a desired roll rate
-# Range: 3.000 12.000
-# Default: 4.5
 ATC_ANG_RLL_P,36  # higher value mean a tighter tune
-
-# Pitch axis rate controller D gain
-# Pitch axis rate controller D gain.  Compensates for short-term change in desired pitch rate vs actual
-# pitch rate
-# Range: 0.0 0.03
-# Increment: 0.001
-# Default: 0.0036
 ATC_RAT_PIT_D,0.003774  # Autotuned in a windless hangar
-
-# Pitch axis rate controller I gain
-# Pitch axis rate controller I gain.  Corrects long-term difference in desired pitch rate vs actual pitch
-# rate
-# Range: 0.0 0.6
-# Increment: 0.01
-# Default: 0.135
 ATC_RAT_PIT_I,0.193122  # Autotuned in a windless hangar
-
-# Pitch axis rate controller P gain
-# Pitch axis rate controller P gain.  Converts the difference between desired pitch rate and actual pitch
-# rate into a motor speed output
-# Range: 0.0 0.35
-# Increment: 0.005
-# Default: 0.135
 ATC_RAT_PIT_P,0.193122  # Autotuned in a windless hangar
-
-# Roll axis rate controller D gain
-# Roll axis rate controller D gain.  Compensates for short-term change in desired roll rate vs actual roll
-# rate
-# Range: 0.0 0.03
-# Increment: 0.001
-# Default: 0.0036
 ATC_RAT_RLL_D,0.00242  # Autotuned in a windless hangar
-
-# Roll axis rate controller I gain
-# Roll axis rate controller I gain.  Corrects long-term difference in desired roll rate vs actual roll rate
-# Range: 0.0 0.6
-# Increment: 0.01
-# Default: 0.135
 ATC_RAT_RLL_I,0.12357  # Autotuned in a windless hangar
-
-# Roll axis rate controller P gain
-# Roll axis rate controller P gain.  Converts the difference between desired roll rate and actual roll rate
-# into a motor speed output
-# Range: 0.0 0.35
-# Increment: 0.005
-# Default: 0.135
 ATC_RAT_RLL_P,0.12357  # Autotuned in a windless hangar

@@ -1,80 +1,14 @@
-# Quicktune auto filter enable
-# When enabled the PID filter settings are automatically set based on INS_GYRO_FILTER
-# 0: Disabled
-# 1: Enabled
 QUIK_AUTO_FILTER,1.0
-
-# Quicktune auto save
-# Number of seconds after completion of tune to auto-save. This is useful when using a 2 position switch
-# for quicktune
-# Units: s (seconds)
 QUIK_AUTO_SAVE,0.0
-
-# Quicktune axes
-# axes to tune
-# Bitmask: 0:Roll,1:Pitch,2:Yaw
 QUIK_AXES,7
-
-# Quicktune doubling time
-# Time to double a tuning parameter. Raise this for a slower tune.
-# Range: 5 20
-# Units: s (seconds)
 QUIK_DOUBLE_TIME,10.0
-
-# Quicktune enable
-# Enable quicktune system
-# 0: Disabled
-# 1: Enabled
 QUIK_ENABLE,1  # enables quiktune script
-
-# Quicktune gain margin
-# Reduction in gain after oscillation detected. Raise this number to get a more conservative tune
-# Range: 20 80
-# Units: % (percent)
 QUIK_GAIN_MARGIN,60.0
-
-# Quicktune maximum gain reduction
-# This controls how much quicktune is allowed to lower gains from the original gains. If the vehicle
-# already has a reasonable tune and is not oscillating then you can set this to zero to prevent gain
-# reductions. The default of 20% is reasonable for most vehicles. Using a maximum gain reduction lowers the
-# chance of an angle P oscillation happening if quicktune gets a false positive oscillation at a low gain,
-# which can result in very low rate gains and a dangerous angle P oscillation.
-# Units: % (percent)
-# Range: 0 100
 QUIK_MAX_REDUCE,20.0
-
-# Quicktune options
-# Additional options. When the Two Position Switch option is enabled then a high switch position will start
-# the tune, low will disable the tune. you should also set a QUIK_AUTO_SAVE time so that you will be able
-# to save the tune.
-# Bitmask: 0:UseTwoPositionSwitch
 QUIK_OPTIONS,0.0
-
-# Quicktune oscillation rate threshold
-# Threshold for oscillation detection. A lower value will lead to a more conservative tune.
-# Range: 1 10
 QUIK_OSC_SMAX,5.0
-
-# Quicktune RC function
-# RCn_OPTION number to use to control tuning stop/start/save
 QUIK_RC_FUNC,300  # the script uses this value to listen to RC switch
-
-# Quicktune roll/pitch PI ratio
-# Ratio between P and I gains for roll and pitch. Raise this to get a lower I gain
-# Range: 0.5 1.0
 QUIK_RP_PI_RATIO,1.0
-
-# Quicktune Yaw PI ratio
-# Ratio between P and I gains for yaw. Raise this to get a lower I gain
-# Range: 0.5 20
 QUIK_Y_PI_RATIO,10.0
-
-# Quicktune Yaw D max
-# Maximum value for yaw D gain
-# Range: 0.001 1
 QUIK_YAW_D_MAX,0.01
-
-# Quicktune Yaw P max
-# Maximum value for yaw P gain
-# Range: 0.1 3
 QUIK_YAW_P_MAX,0.5

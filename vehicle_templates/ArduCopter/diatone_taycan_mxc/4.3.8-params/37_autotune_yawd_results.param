@@ -1,42 +1,5 @@
-# Acceleration Max for Yaw
-# Maximum acceleration in yaw axis
-# Units: cdeg/s/s (centidegrees per square second)
-# Range: 0 72000
-# Increment: 1000
-# 0: Disabled
-# 9000: VerySlow
-# 18000: Slow
-# 36000: Medium
-# 54000: Fast
-# Default: 27000
 ATC_ACCEL_Y_MAX,305912.25  # Autotuned in a windless hangar
-
-# Yaw axis angle controller P gain
-# Yaw axis angle controller P gain.  Converts the error between the desired yaw angle and actual angle to a
-# desired yaw rate
-# Range: 3.000 12.000
-# Default: 4.5
 ATC_ANG_YAW_P,29.631269  # Autotuned in a windless hangar
-
-# Yaw axis rate controller D gain
-# Yaw axis rate controller D gain.  Compensates for short-term change in desired yaw rate vs actual yaw
-# rate
-# Range: 0.000 0.02
-# Increment: 0.001
-# Default: 0
 ATC_RAT_YAW_D,0.017587  # if == to AUTOTUNE_MIN_D, autotune failed
-
-# Yaw axis rate controller I gain
-# Yaw axis rate controller I gain.  Corrects long-term difference in desired yaw rate vs actual yaw rate
-# Range: 0.01 0.2
-# Increment: 0.01
-# Default: 0.018
 ATC_RAT_YAW_I,0.061538  # Autotuned in a windless hangar
-
-# Yaw axis rate controller P gain
-# Yaw axis rate controller P gain.  Converts the difference between desired yaw rate and actual yaw rate
-# into a motor speed output
-# Range: 0.180 0.60
-# Increment: 0.005
-# Default: 0.18
 ATC_RAT_YAW_P,0.615382  # Autotuned in a windless hangar

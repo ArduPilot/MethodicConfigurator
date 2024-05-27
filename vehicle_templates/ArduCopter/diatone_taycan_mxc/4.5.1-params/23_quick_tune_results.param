@@ -1,77 +1,10 @@
-# Pitch axis rate controller D gain
-# Pitch axis rate controller D gain.  Compensates for short-term change in desired pitch rate vs actual
-# pitch rate
-# Range: 0.0 0.03
-# Increment: 0.001
-# Default: 0.0036
 ATC_RAT_PIT_D,0.00659  # Tuned in a Hangar
-
-# Pitch axis rate controller I gain
-# Pitch axis rate controller I gain.  Corrects long-term difference in desired pitch rate vs actual pitch
-# rate
-# Range: 0.0 0.6
-# Increment: 0.01
-# Default: 0.135
 ATC_RAT_PIT_I,0.412175  # Tuned in a Hangar
-
-# Pitch axis rate controller P gain
-# Pitch axis rate controller P gain.  Corrects in proportion to the difference between the desired pitch
-# rate vs actual pitch rate
-# Range: 0.0 0.35
-# Increment: 0.005
-# Default: 0.135
 ATC_RAT_PIT_P,0.412175  # Tuned in a Hangar
-
-# Roll axis rate controller D gain
-# Roll axis rate controller D gain.  Compensates for short-term change in desired roll rate vs actual roll
-# rate
-# Range: 0.0 0.03
-# Increment: 0.001
-# Default: 0.0036
 ATC_RAT_RLL_D,0.003622  # Tuned in a Hangar
-
-# Roll axis rate controller I gain
-# Roll axis rate controller I gain.  Corrects long-term difference in desired roll rate vs actual roll rate
-# Range: 0.0 0.6
-# Increment: 0.01
-# Default: 0.135
 ATC_RAT_RLL_I,0.251225  # Tuned in a Hangar
-
-# Roll axis rate controller P gain
-# Roll axis rate controller P gain.  Corrects in proportion to the difference between the desired roll rate
-# vs actual roll rate
-# Range: 0.0 0.35
-# Increment: 0.005
-# Default: 0.135
 ATC_RAT_RLL_P,0.251225  # Tuned in a Hangar
-
-# Yaw axis rate controller D gain
-# Yaw axis rate controller D gain.  Compensates for short-term change in desired yaw rate vs actual yaw
-# rate
-# Range: 0.000 0.02
-# Increment: 0.001
-# Default: 0
 ATC_RAT_YAW_D,0.01  # Tuned in a Hangar
-
-# Yaw axis rate controller derivative frequency in Hz
-# Yaw axis rate controller derivative frequency in Hz
-# Range: 0 50
-# Increment: 1
-# Units: Hz (hertz)
-# Default: 0
 ATC_RAT_YAW_FLTD,57.5  # Tuned in a Hangar
-
-# Yaw axis rate controller I gain
-# Yaw axis rate controller I gain.  Corrects long-term difference in desired yaw rate vs actual yaw rate
-# Range: 0.01 0.2
-# Increment: 0.01
-# Default: 0.018
 ATC_RAT_YAW_I,0.05  # Tuned in a Hangar
-
-# Yaw axis rate controller P gain
-# Yaw axis rate controller P gain.  Corrects in proportion to the difference between the desired yaw rate
-# vs actual yaw rate
-# Range: 0.180 0.60
-# Increment: 0.005
-# Default: 0.18
 ATC_RAT_YAW_P,0.5  # Tuned in a Hangar
