@@ -20,7 +20,8 @@ import re
 import json
 
 SEQUENCE_FILENAME = "ArduCopter_configuration_steps.json"
-
+PYTHON_FILES = ["param_pid_adjustment_update.py", "param_pid_adjustment_update_test.py",
+                "annotate_params.py", "copy_magfit_pdef_to_template_dirs.py"]
 file_renames = {}
 
 # Add lines like these to rename files
@@ -53,15 +54,13 @@ def loop_relevant_files(renames, steps):
             if file.endswith(".param"):
                 if root not in param_dirs:
                     param_dirs.append(root)
-            update_file_content = file in ["param_pid_adjustment_update.py", "param_pid_adjustment_update_test.py",
-                                        "annotate_params.py"] or file.endswith(".md") or file.endswith(".json")
             if file == 'LICENSE.md':
                 continue
             if file == 'vehicle_components.json':
                 continue
             if file ==  SEQUENCE_FILENAME:
                 uplate_old_filenames(renames, steps)
-            if update_file_content:
+            if file in PYTHON_FILES or file.endswith(".md") or file.endswith(".json"):
                 update_file_contents(renames, root, file, steps)
     return param_dirs
 

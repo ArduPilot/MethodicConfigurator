@@ -14,7 +14,7 @@ import sys
 
 # Define the source directory and the file to be copied
 BASE_TARGET_DIR = 'vehicle_templates/ArduCopter/diatone_taycan_mxc'
-FILE_TO_COPY = '22_inflight_magnetometer_fit_setup.pdef.xml'
+FILE_TO_COPY = '24_inflight_magnetometer_fit_setup.pdef.xml'
 
 # Ensure the base target directory exists
 if not os.path.exists(BASE_TARGET_DIR):
