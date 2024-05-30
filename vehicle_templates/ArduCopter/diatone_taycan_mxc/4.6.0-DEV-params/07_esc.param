@@ -1,11 +1,11 @@
 ATC_RAT_PIT_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 ATC_RAT_RLL_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 ATC_RAT_YAW_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
-MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on file 19
+MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on the 20_throttle_controller.param file
 MOT_PWM_MAX,2000
 MOT_PWM_MIN,1000
-MOT_PWM_TYPE,6  # the most recomended speed for ArduCopter
-MOT_SPOOL_TIME,0.5
+MOT_PWM_TYPE,6  # Specified in component editor window
+MOT_SPOOL_TIME,0.5  # left at default because copter is small
 NTF_BUZZ_TYPES,3  # the 4-in-1 ESC uses this
 NTF_LED_TYPES,2369  # Built-in LED, NCP5623 External (Holybro F9P), Neopixel (Matek H743 slim v3), and DShot (4-in-1 ESC)
 PSC_ACCZ_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
@@ -31,4 +31,4 @@ SERVO4_MAX,2000  # Use the full available 1000-2000 DShot range
 SERVO4_MIN,1000  # Use the full available 1000-2000 DShot range
 SERVO4_TRIM,1000  # Use the full available 1000-2000 DShot range
 TKOFF_RPM_MIN,1400  # Our motors should idle at around 1400 RPM, see https://ardupilot.org/copter/docs/tkoff-rpm-min.html
-TKOFF_SLEW_TIME,2
+TKOFF_SLEW_TIME,2  # left at default because copter is small

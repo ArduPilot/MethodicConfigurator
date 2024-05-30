@@ -1,12 +1,12 @@
 BATT_AMP_PERVLT,158.4  # new calibrated value for Mamba F45_128k 4in1 ESC
-BATT_ARM_VOLT,15
-BATT_CAPACITY,1800
-BATT_CRT_MAH,450
-BATT_CRT_VOLT,14
-BATT_FS_CRT_ACT,1  # flying indoors, just land ASAP, no need to hit the celling while doing RTL
-BATT_FS_LOW_ACT,1  # flying indoors, just land ASAP, no need to hit the celling while doing RTL
-BATT_FS_VOLTSRC,1
-BATT_LOW_MAH,600
-BATT_LOW_VOLT,14.4
-BATT_MONITOR,4
-BATT_VOLT_MULT,10.985 # Use a power source with a voltage close to BATT_LOW_VOLT measure with a calibrated voltimeter and adapt this parameter so that the telemetry voltage reading matches it
+BATT_ARM_VOLT,15.7  # Don’t allow arming below this voltage
+BATT_CAPACITY,1800  # Total battery capacity
+BATT_CRT_MAH,450  # When only 450mAh out of the total 1800mAh remain, trigger critical failsafe
+BATT_CRT_VOLT,14.2  # (Critical voltage + 0.0) x no. of cells
+BATT_FS_CRT_ACT,1  # flying indoors, just land ASAP, no need to hit the ceiling while doing RTL
+BATT_FS_LOW_ACT,1  # flying indoors, just land ASAP, no need to hit the ceiling while doing RTL
+BATT_FS_VOLTSRC,1  # Let the firmware handle the nasty business of variable and battery dependent internal resistance
+BATT_LOW_MAH,600  # When only 450mAh out of the total 1800mAh remain, trigger low failsafe
+BATT_LOW_VOLT,14.4  # (Low voltage + 0.0) x no. of cells
+BATT_MONITOR,4.0
+BATT_VOLT_MULT,10.985  # Use a power source with a voltage close to BATT_LOW_VOLT measure with a calibrated voltimeter and adapt this parameter so that the telemetry voltage reading matches it

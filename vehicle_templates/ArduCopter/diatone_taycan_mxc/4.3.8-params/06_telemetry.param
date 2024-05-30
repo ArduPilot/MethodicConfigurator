@@ -1,2 +1,2 @@
-BRD_SER1_RTSCTS,0  # we have no RTS/CTS pins connected
+BRD_SER1_RTSCTS,1  # we have RTS/CTS pins connected
 SERIAL1_BAUD,460  # The MAVLink over ESP32 telemetry
