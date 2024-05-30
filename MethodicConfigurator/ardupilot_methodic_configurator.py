@@ -11,7 +11,7 @@ SPDX-License-Identifier:    GPL-3
 import argparse
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
-# from logging import debug as logging_debug
+from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
@@ -20,9 +20,9 @@ from sys import exit as sys_exit
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_flightcontroller import FlightController
 
-from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
-
 from MethodicConfigurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
+
+from MethodicConfigurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 
 from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
 
@@ -77,15 +77,18 @@ def main():
 
     vehicle_type = args.vehicle_type
     if vehicle_type == "":  # not explicitly set, to try to guess it
-        if flight_controller.vehicle_type is not None:
-            vehicle_type = flight_controller.vehicle_type
-            logging_info("Vehicle type not set explicitly, auto-detected %s.", vehicle_type)
+        if flight_controller.info.vehicle_type is not None:
+            vehicle_type = flight_controller.info.vehicle_type
+            logging_debug("Vehicle type not set explicitly, auto-detected %s.", vehicle_type)
     else:
         logging_info("Vehicle type explicitly set to %s.", vehicle_type)
 
     if vehicle_type == "": # did not guess it, default to ArduCopter
         vehicle_type = "ArduCopter"
         logging_warning("Could not detect vehicle type. Defaulting to ArduCopter.")
+
+    if flight_controller.master is not None:
+        FlightControllerInfoWindow(flight_controller)
 
     local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, args.allow_editing_template_files)
 
@@ -100,16 +103,10 @@ def main():
     start_file = local_filesystem.get_start_file(args.n)
 
     component_editor_window = ComponentEditorWindow(VERSION, local_filesystem)
-    component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.version)
+    component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.info.flight_sw_version_and_type)
     if vehicle_dir_window and \
        vehicle_dir_window.created_new_vehicle_from_template and \
-       flight_controller.master is not None:
-        param_download_progress_window = ProgressWindow(component_editor_window.root, "Downloading FC parameters",
-                                                        "Downloaded {} of {} parameters")
-        # Download all parameters from the flight controller
-        flight_controller.fc_parameters = flight_controller.download_params(
-            param_download_progress_window.update_progress_bar)
-        param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
+       flight_controller.fc_parameters:
         # copy vehicle parameters to component editor values
         component_editor_window.set_values_from_fc_parameters(flight_controller.fc_parameters, local_filesystem.doc_dict)
     if not args.skip_component_editor:

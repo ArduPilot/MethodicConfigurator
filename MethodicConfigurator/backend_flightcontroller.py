@@ -25,7 +25,10 @@ import serial.tools.list_ports
 import serial.tools.list_ports_common
 
 from serial.serialutil import SerialException
+
 from MethodicConfigurator.annotate_params import Par
+
+from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
 
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules
@@ -34,12 +37,6 @@ try:
     # import pymavlink.dialects.v20.ardupilotmega
 except Exception: # pylint: disable=broad-exception-caught
     pass
-
-# Get the current directory
-# current_dir = os_path.dirname(os_path.abspath(__file__))
-
-# Add the current directory to the PATH environment variable
-# os.environ['PATH'] = os.environ['PATH'] + os.pathsep + current_dir
 
 preferred_ports = [
     '*FTDI*',
@@ -84,7 +81,7 @@ class FakeSerialForUnitTests():
         pass
 
 
-class FlightController:  # pylint: disable=too-many-instance-attributes
+class FlightController:
     """
     A class to manage the connection and parameters of a flight controller.
 
@@ -108,11 +105,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         self.master = None
         self.comport = None
         self.fc_parameters = {}
-        self.__target_system = None
-        self.__target_component = None
-        self.__capabilities = None
-        self.version = None
-        self.vehicle_type = None
+        self.info = BackendFlightcontrollerInfo()
 
     def discover_connections(self):
         comports = FlightController.__list_serial_ports()
@@ -136,10 +129,7 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
             self.master.close()
             self.master = None
         self.fc_parameters = {}
-        self.__target_system = None
-        self.__target_component = None
-        self.__capabilities = None
-        self.version = None
+        self.info = BackendFlightcontrollerInfo()
 
     def add_connection(self, connection_string: str):
         """
@@ -202,22 +192,17 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
                     self.__connection_tuples.insert(-1, (self.comport.device, self.comport.description))
             else:
                 return "No serial ports found. Please connect a flight controller and try again."
-        error_message = self.__create_connection_with_retry(progress_callback=progress_callback)
-        return error_message
+        return self.__create_connection_with_retry(progress_callback=progress_callback)
 
     def __request_message(self, message_id: int):
         self.master.mav.command_long_send(
-            self.__target_system,
-            self.__target_component,
+            self.info.system_id,
+            self.info.component_id,
             mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
             0, # confirmation
             message_id, 0, 0, 0, 0, 0, 0)
 
-    def __cmd_version(self):
-        '''show version'''
-        self.__request_message(mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION)
-
-    def __create_connection_with_retry(self, progress_callback, retries: int = 3, # pylint: disable=too-many-return-statements
+    def __create_connection_with_retry(self, progress_callback, retries: int = 3,
                                        timeout: int = 5) -> mavutil.mavlink_connection:
         """
         Attempts to create a connection to the flight controller with retries.
@@ -249,57 +234,38 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
             if m is None:
                 logging_error("No MAVLink heartbeat received, connection failed.")
                 return "No MAVLink heartbeat received, connection failed."
-            self.__target_system = m.get_srcSystem()
-            self.__target_component = m.get_srcComponent()
-            logging_debug("Connection established with systemID %d, componentID %d.", self.__target_system,
-                          self.__target_component)
-            logging_info(f"Autopilot type {self.__decode_mav_autopilot(m.autopilot)}")
-            if m.autopilot != mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA:
-                logging_error("Unsupported autopilot type %s", self.__decode_mav_autopilot(m.autopilot))
-                return f"Unsupported autopilot type {self.__decode_mav_autopilot(m.autopilot)}"
-            self.vehicle_type = self.__classify_vehicle_type(m.type)
-            logging_info(f"Vehicle type {self.__decode_mav_type(m.type)} running {self.vehicle_type} firmware")
+            self.info.set_system_id_and_component_id(m.get_srcSystem(), m.get_srcComponent())
+            logging_debug("Connection established with systemID %d, componentID %d.",
+                        self.info.system_id,
+                        self.info.component_id)
 
-            self.__cmd_version()
-            m = self.master.recv_match(type='AUTOPILOT_VERSION', blocking=True, timeout=timeout)
-            if m is None:
-                logging_error("No AUTOPILOT_VERSION MAVLink message received, connection failed.")
-                return "No AUTOPILOT_VERSION MAVLink message received, connection failed."
-            self.__capabilities = m.capabilities
-            _cap_list = self.__decode_flight_capabilities(self.__capabilities)
-            # logging_info("Flight Controller Capabilities: %s", (", ").join(
-            #     [capability.removeprefix("MAV_PROTOCOL_CAPABILITY_")
-            #      for capability in _cap_list]))
-            v_major, v_minor, v_patch, v_fw_type = self.__decode_flight_sw_version(m.flight_sw_version)
-            self.version = f"{v_major}.{v_minor}.{v_patch}"
-            logging_info("Flight Controller Version: %s %s", self.version, v_fw_type)
-            # logging_info(f"Flight Controller Middleware version number: {m.middleware_sw_version}")
-            # logging_info(f"Flight Controller Operating system version number: {m.os_sw_version}")
-            logging_info(f"Flight Controller HW / board version: {m.board_version}")
-            # Convert each value in the array to hex and join them together
-            flight_custom_version_hex = ''.join(chr(c) for c in m.flight_custom_version)
-            # middleware_custom_version_hex = ''.join(chr(c) for c in m.middleware_custom_version)
-            os_custom_version_hex = ''.join(chr(c) for c in m.os_custom_version)
-            logging_info(f"Flight Controller first 8 hex bytes of the FC git hash: {flight_custom_version_hex}")
-            # logging_info(f"Flight Controller first 8 hex bytes of the MW git hash: {middleware_custom_version_hex}")
-            logging_info(f"Flight Controller first 8 hex bytes of the ChibiOS git hash: {os_custom_version_hex}")
-            if m.vendor_id == 0x1209 and m.product_id == 0x5740:
-                return ""  # these are just generic ArduPilot values, there is no value in printing them
-            pid_vid_dict = self.__list_ardupilot_supported_usb_pid_vid()
-            if m.vendor_id in pid_vid_dict:
-                logging_info(f"Flight Controller board vendor: {pid_vid_dict[m.vendor_id]['vendor']}")
-                if m.product_id in pid_vid_dict[m.vendor_id]['PID']:
-                    logging_info(f"Flight Controller board product: {pid_vid_dict[m.vendor_id]['PID'][m.product_id]}")
-                else:
-                    logging_info(f"Flight Controller board product ID: 0x{hex(m.product_id)}")
+            self.info.set_autopilot(m.autopilot)
+            if self.info.is_supported:
+                logging_info(f"Autopilot type {self.info.autopilot}")
             else:
-                logging_info(f"Flight Controller board vendor ID: 0x{hex(m.vendor_id)}")
-                logging_info(f"Flight Controller product ID: 0x{hex(m.product_id)}")
-            # logging_info(f"Flight Controller UID if provided by hardware: {m.uid}")
+                logging_error("Unsupported autopilot type %s", self.info.autopilot)
+                return f"Unsupported autopilot type {self.info.autopilot}"
+
+            self.info.set_type(m.type)
+            logging_info(f"Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware")
+
+            self.__request_message(mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION)
+            m = self.master.recv_match(type='AUTOPILOT_VERSION', blocking=True, timeout=timeout)
+            return self.__process_autopilot_version(m)
         except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
             logging_warning("Connection failed: %s", e)
             logging_error("Failed to connect after %d attempts.", retries)
             return str(e)
+
+    def __process_autopilot_version(self, m):
+        if m is None:
+            return "No AUTOPILOT_VERSION MAVLink message received, connection failed."
+        self.info.set_capabilities(m.capabilities)
+        self.info.set_flight_sw_version(m.flight_sw_version)
+        self.info.set_board_version(m.board_version)
+        self.info.set_flight_custom_version(m.flight_custom_version)
+        self.info.set_os_custom_version(m.os_custom_version)
+        self.info.set_vendor_id_and_product_id(m.vendor_id, m.product_id)
         return ""
 
     def download_params(self, progress_callback=None) -> Dict[str, float]:
@@ -321,11 +287,10 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
 
         # Check if MAVFTP is supported
         # FIXME remove the "not" once it works pylint: disable=fixme
-        if self.__capabilities:
-            if not (self.__capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP):  # pylint: disable=superfluous-parens
-                logging_info("MAVFTP is supported by the %s flight controller", self.comport.device)
-                # parameters, _defaults = self.download_params_via_mavftp(progress_callback)
-                return {}  # parameters
+        if not self.info.is_mavftp_supported:
+            logging_info("MAVFTP is supported by the %s flight controller", self.comport.device)
+            # parameters, _defaults = self.download_params_via_mavftp(progress_callback)
+            return {}  # parameters
 
         logging_info("MAVFTP is not supported by the %s flight controller, fallback to MAVLink", self.comport.device)
         # MAVFTP is not supported, fall back to MAVLink
@@ -482,171 +447,6 @@ class FlightController:  # pylint: disable=too-many-instance-attributes
         Get all available connections.
         """
         return self.__connection_tuples
-
-    @staticmethod
-    def __list_ardupilot_supported_usb_pid_vid():
-        """
-        List all ArduPilot supported USB vendor ID (VID) and product ID (PID).
-
-        source: https://ardupilot.org/dev/docs/USB-IDs.html
-        """
-        return {
-            0x0483: {'vendor': 'ST Microelectronics', 'PID': {0x5740: 'ChibiOS'}},
-            0x1209: {'vendor': 'ArduPilot', 'PID': {0x5740: 'MAVLink',
-                                                    0x5741: 'Bootloader',
-                                                    }
-                     },
-            0x16D0: {'vendor': 'ArduPilot', 'PID': {0x0E65: 'MAVLink'}},
-            0x26AC: {'vendor': '3D Robotics', 'PID': {}},
-            0x2DAE: {'vendor': 'Hex', 'PID': {0x1101: 'CubeBlack+',
-                                              0x1001: 'CubeBlack bootloader',
-                                              0x1011: 'CubeBlack',
-                                              0x1016: 'CubeOrange',
-                                              0x1005: 'CubePurple bootloader',
-                                              0x1015: 'CubePurple',
-                                              0x1002: 'CubeYellow bootloader',
-                                              0x1012: 'CubeYellow',
-                                              0x1003: 'CubeBlue bootloader',
-                                              0x1013: 'CubeBlue',              # These where detected by microsoft copilot
-                                              0x1004: 'CubeGreen bootloader',
-                                              0x1014: 'CubeGreen',
-                                              0x1006: 'CubeRed bootloader',
-                                              0x1017: 'CubeRed',
-                                              0x1007: 'CubeOrange bootloader',
-                                              0x1018: 'CubeOrange',
-                                              0x1008: 'CubePurple bootloader',
-                                              0x1019: 'CubePurple',
-                                              }
-                     },
-            0x3162: {'vendor': 'Holybro', 'PID': {0x004B: 'Durandal'}},
-            0x27AC: {'vendor': 'Laser Navigation', 'PID': {0x1151: 'VRBrain-v51',
-                                                           0x1152: 'VRBrain-v52',
-                                                           0x1154: 'VRBrain-v54',
-                                                           0x1910: 'VRCore-v10',
-                                                           0x1351: 'VRUBrain-v51',
-                                                           }
-                     },
-        }
-
-    @staticmethod
-    def __decode_flight_sw_version(flight_sw_version):
-        '''decode 32 bit flight_sw_version mavlink parameter
-        corresponds to ArduPilot encoding in  GCS_MAVLINK::send_autopilot_version'''
-        fw_type_id = (flight_sw_version >>  0) % 256  # noqa E221, E222
-        patch      = (flight_sw_version >>  8) % 256  # noqa E221, E222
-        minor      = (flight_sw_version >> 16) % 256  # noqa E221
-        major      = (flight_sw_version >> 24) % 256  # noqa E221
-        if fw_type_id == 0:
-            fw_type = "dev"
-        elif fw_type_id == 64:
-            fw_type = "alpha"
-        elif fw_type_id == 128:
-            fw_type = "beta"
-        elif fw_type_id == 192:
-            fw_type = "rc"
-        elif fw_type_id == 255:
-            fw_type = "official"
-        else:
-            fw_type = "undefined"
-        return major, minor, patch, fw_type
-
-
-    @staticmethod
-    def __decode_flight_capabilities(capabilities):
-        '''Decode 32 bit flight controller capabilities bitmask mavlink parameter.
-        Returns a list of concise English descriptions of each active capability.
-        '''
-        # Initialize an empty list to store the descriptions
-        descriptions = []
-
-        # Iterate through each bit in the capabilities bitmask
-        for bit in range(32):
-            # Check if the bit is set
-            if capabilities & (1 << bit):
-                # Use the bit value to get the corresponding capability enum
-                capability = mavutil.mavlink.enums["MAV_PROTOCOL_CAPABILITY"].get(1 << bit, "Unknown capability")
-                # Append the description of the capability to the list
-                logging_info(capability.description)
-                descriptions.append(capability.name)
-
-        return descriptions
-
-
-    # see for more info:
-    # import pymavlink.dialects.v20.ardupilotmega
-    # pymavlink.dialects.v20.ardupilotmega.enums["MAV_TYPE"]
-    @staticmethod
-    def __decode_mav_type(mav_type):
-        return mavutil.mavlink.enums["MAV_TYPE"].get(mav_type,
-                                                    mavutil.mavlink.EnumEntry("None", "Unknown type")).description
-
-
-    @staticmethod
-    def __decode_mav_autopilot(mav_autopilot):
-        return mavutil.mavlink.enums["MAV_AUTOPILOT"].get(mav_autopilot,
-                                                        mavutil.mavlink.EnumEntry("None", "Unknown type")).description
-
-
-    @staticmethod
-    def __classify_vehicle_type(mav_type_int):
-        """
-        Classify the vehicle type based on the MAV_TYPE enum.
-
-        Parameters:
-        mav_type_int (int): The MAV_TYPE enum value.
-
-        Returns:
-        str: The classified vehicle type.
-        """
-        # Define the mapping from MAV_TYPE_* integer to vehicle type category
-        mav_type_to_vehicle_type = {
-            mavutil.mavlink.MAV_TYPE_FIXED_WING: 'ArduPlane',
-            mavutil.mavlink.MAV_TYPE_QUADROTOR: 'ArduCopter',
-            mavutil.mavlink.MAV_TYPE_COAXIAL: 'Heli',
-            mavutil.mavlink.MAV_TYPE_HELICOPTER: 'Heli',
-            mavutil.mavlink.MAV_TYPE_ANTENNA_TRACKER: 'AntennaTracker',
-            mavutil.mavlink.MAV_TYPE_GCS: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_AIRSHIP: 'ArduBlimp',
-            mavutil.mavlink.MAV_TYPE_FREE_BALLOON: 'ArduBlimp',
-            mavutil.mavlink.MAV_TYPE_ROCKET: 'ArduCopter',
-            mavutil.mavlink.MAV_TYPE_GROUND_ROVER: 'Rover',
-            mavutil.mavlink.MAV_TYPE_SURFACE_BOAT: 'Rover',
-            mavutil.mavlink.MAV_TYPE_SUBMARINE: 'ArduSub',
-            mavutil.mavlink.MAV_TYPE_HEXAROTOR: 'ArduCopter',
-            mavutil.mavlink.MAV_TYPE_OCTOROTOR: 'ArduCopter',
-            mavutil.mavlink.MAV_TYPE_TRICOPTER: 'ArduCopter',
-            mavutil.mavlink.MAV_TYPE_FLAPPING_WING: 'ArduPlane',
-            mavutil.mavlink.MAV_TYPE_KITE: 'ArduPlane',
-            mavutil.mavlink.MAV_TYPE_ONBOARD_CONTROLLER: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_VTOL_DUOROTOR: 'ArduPlane',
-            mavutil.mavlink.MAV_TYPE_VTOL_QUADROTOR: 'ArduPlane',
-            mavutil.mavlink.MAV_TYPE_VTOL_TILTROTOR: 'ArduPlane',
-            mavutil.mavlink.MAV_TYPE_VTOL_RESERVED2: 'ArduPlane',
-            mavutil.mavlink.MAV_TYPE_VTOL_RESERVED3: 'ArduPlane',
-            mavutil.mavlink.MAV_TYPE_VTOL_RESERVED4: 'ArduPlane',
-            mavutil.mavlink.MAV_TYPE_VTOL_RESERVED5: 'ArduPlane',
-            mavutil.mavlink.MAV_TYPE_GIMBAL: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_ADSB: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_PARAFOIL: 'ArduPlane',
-            mavutil.mavlink.MAV_TYPE_DODECAROTOR: 'ArduCopter',
-            mavutil.mavlink.MAV_TYPE_CAMERA: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_CHARGING_STATION: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_FLARM: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_SERVO: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_ODID: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_DECAROTOR: 'ArduCopter',
-            mavutil.mavlink.MAV_TYPE_BATTERY: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_PARACHUTE: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_LOG: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_OSD: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_IMU: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_GPS: 'AP_Periph',
-            mavutil.mavlink.MAV_TYPE_WINCH: 'AP_Periph',
-            # Add more mappings as needed
-        }
-
-        # Return the classified vehicle type based on the MAV_TYPE enum
-        return mav_type_to_vehicle_type.get(mav_type_int, None)
 
     @staticmethod
     def add_argparse_arguments(parser):
