@@ -58,7 +58,7 @@ class ComponentEditorWindowBase(BaseWindow):
         super().__init__()
         self.local_filesystem = local_filesystem
 
-        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version + " - Vehicle Component Editor")
+        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator " + version + " - Vehicle Component Editor")
         self.root.geometry("880x600") # Set the window width
 
         self.data = local_filesystem.load_vehicle_components_json_data(local_filesystem.vehicle_dir)

@@ -24,6 +24,8 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 
+from MethodicConfigurator.version import VERSION
+
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
@@ -185,7 +187,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
     def __init__(self, local_filesystem: LocalFilesystem):
         super().__init__()
         self.local_filesystem = local_filesystem
-        self.root.title("Select Vehicle directory")
+        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator " + VERSION + " - Select Vehicle directory")
         self.root.geometry("800x535") # Set the window size
 
         # Explain why we are here

@@ -181,7 +181,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.param_download_progress_window = None
         self.tempcal_imu_progress_window = None
 
-        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator - " + version + \
+        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator " + version + \
                         " - Parameter file editor and uploader")
         self.root.geometry("900x500") # Set the window width
 
