@@ -334,7 +334,7 @@
         "forced_parameters": {
             "MAGH_LOG_ENABLE": { "New Value": 1, "Change Reason": "Activates the logging of the MAGH.Active message" }
         },
-        "jump_possible": {"47_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '47_everyday_use.param' file?"},
+        "jump_possible": {"50_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '50_everyday_use.param' file?"},
         "old_filenames": ["22_inflight_magnetometer_fit_setup.param"]
     },
     "25_inflight_magnetometer_fit_results.param": {
@@ -629,18 +629,7 @@
         },
         "old_filenames": ["44_analytical_pid_optimization.param"]
     },
-    "47_everyday_use.param": {
-        "blog_text": "Configures parameters for everyday use, ensuring the vehicle is safe and stable for routine flying.",
-        "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#h-14-productive-configuration-8",
-        "wiki_text": "",
-        "wiki_url": "",
-        "external_tool_text": "",
-        "external_tool_url": "",
-        "mandatory_text": "100% mandatory (0% optional)",
-        "auto_changed_by": "",
-        "old_filenames": ["45_everyday_use.param"]
-    },
-    "48_position_controller.param": {
+    "47_position_controller.param": {
         "blog_text": "Sets up parameters for the position controller, crucial for waypoint navigation and precision flying.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#h-15-position-controller-9",
         "wiki_text": "",
@@ -649,7 +638,18 @@
         "external_tool_url": "",
         "mandatory_text": "40% mandatory (60% optional)",
         "auto_changed_by": "",
-        "old_filenames": ["46_position_controller.param"]
+        "old_filenames": ["46_position_controller.param", "48_position_controller.param"]
+    },
+    "48_guided_operation.param": {
+        "blog_text": "Sets up parameters for guided operation, including waypoint navigation and obstacle avoidance.",
+        "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#h-17-guided-operation-without-rc-transmitter-11",
+        "wiki_text": "Guided Mode",
+        "wiki_url": "https://ardupilot.org/copter/docs/ac2_guidedmode.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": "",
+        "old_filenames": ["48_guided_operation.param", "50_guided_operation.param"]
     },
     "49_precision_land.param": {
         "blog_text": "Configures parameters for precision landing, ensuring accurate and safe landing of the vehicle.",
@@ -662,15 +662,15 @@
         "auto_changed_by": "",
         "old_filenames": ["47_precision_land.param"]
     },
-    "50_guided_operation.param": {
-        "blog_text": "Sets up parameters for guided operation, including waypoint navigation and obstacle avoidance.",
-        "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#h-17-guided-operation-without-rc-transmitter-11",
-        "wiki_text": "Guided Mode",
-        "wiki_url": "https://ardupilot.org/copter/docs/ac2_guidedmode.html",
+    "50_everyday_use.param": {
+        "blog_text": "Configures parameters for everyday use, ensuring the vehicle is safe and stable for routine flying.",
+        "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/3#h-14-productive-configuration-8",
+        "wiki_text": "",
+        "wiki_url": "",
         "external_tool_text": "",
         "external_tool_url": "",
-        "mandatory_text": "0% mandatory (100% optional)",
+        "mandatory_text": "100% mandatory (0% optional)",
         "auto_changed_by": "",
-        "old_filenames": ["48_guided_operation.param"]
+        "old_filenames": ["45_everyday_use.param", "47_everyday_use.param"]
     }
 }

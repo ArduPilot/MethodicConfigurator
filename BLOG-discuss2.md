@@ -60,17 +60,17 @@ One other approach is described by Bill Geyer in his Blog post: [Predicting Clos
 
 Use *ArduPilot Methodic Configurator* to edit and upload the `46_analytical_pid_optimization.param` file to the FC.
 
-# 14. Productive configuration
-
-Some changes should be made for everyday productive operation.
-
-Use *ArduPilot Methodic Configurator* to edit and upload the `47_everyday_use.param` file to the FC.
-
-# 15. Position controller
+# 14. Position controller
 
 The most inner *angle rate* and *angle* control loops have been tuned. Now let's tune the position controller.
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `48_position_controller.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `47_position_controller.param` file to the FC.
+
+# 15. Guided operation without RC transmitter
+
+These are **optional**, and only make sense if you do beyond visual line-of-sight (BVLOS) autonomous flights using a companion computer.
+
+Use *ArduPilot Methodic Configurator* to edit and upload the `48_guided_operation.param` file to the FC.
 
 # 16. Precision land
 
@@ -78,11 +78,11 @@ These are **optional**, and only make sense if you have extra hardware on your v
 
 Use *ArduPilot Methodic Configurator* to edit and upload the `49_precision_land.param` file to the FC.
 
-# 17. Guided operation without RC transmitter
+# 17. Productive configuration
 
-These are **optional**, and only make sense if you do beyond visual line-of-sight (BVLOS) autonomous flights using a companion computer.
+Some changes should be made for everyday productive operation.
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `50_guided_operation.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `50_everyday_use.param` file to the FC.
 
 # 18. Conclusion
 

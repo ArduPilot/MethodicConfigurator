@@ -947,13 +947,13 @@ Download the [46_analytical_pid_optimization.param parameter file](diatone_tayca
 
 Some changes should be made for everyday productive operation.
 
-Download the [47_everyday_use.param parameter file](diatone_taycan_mxc/params/47_everyday_use.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [50_everyday_use.param parameter file](diatone_taycan_mxc/params/50_everyday_use.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 # 13. Position controller
 
 The most inner *angle rate* and *angle* control loops have been tuned. Now let's tune the position controller.
 
-Edit the `48_position_controller.param` file with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Edit the `47_position_controller.param` file with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 # 14. Precision land
 
@@ -964,7 +964,7 @@ Download the [49_precision_land.param.param parameter file](diatone_taycan_mxc/p
 # 15. Guided operation without RC transmitter
 
 These are **optional**, and only make sense if you do beyond visual line-of-sight (BVLOS) autonomous flights using a companion computer.
-Download the [50_guided_operation.param.param parameter file](diatone_taycan_mxc/params/50_guided_operation.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
+Download the [48_guided_operation.param.param parameter file](diatone_taycan_mxc/params/48_guided_operation.param) to your PC, edit it with a text editor to meet your needs and in Mission Planner while connected to the vehicle [select *Compare Params*, review the changes and press *Continue* followed by *Upload Params*](https://ardupilot.org/planner/docs/mission-planner-configuration-and-tuning.html#full-parameter-list).
 
 
 # 16. Conclusion
@@ -985,7 +985,7 @@ This process was developed for our specific multicopter, but it can be tailored 
 | Roll | `31_autotune_roll_results.param`, `39_autotune_roll_pitch_retune_results.param` |
 | Pitch | `33_autotune_pitch_results.param`, `39_autotune_roll_pitch_retune_results.param` |
 | Yaw | `35_autotune_yaw_results.param`, `37_autotune_yawd_results.param` |
-| Position XY velocity | `48_position_controller.param` |
+| Position XY velocity | `47_position_controller.param` |
 
 Many thanks to the ArduPilot's developers and community.
 
