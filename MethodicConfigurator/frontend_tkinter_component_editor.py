@@ -78,6 +78,16 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             self.data['Components']['Battery']['Specifications'] = {}
         if 'Chemistry' not in self.data['Components']['Battery']['Specifications']:
             self.data['Components']['Battery']['Specifications']['Chemistry'] = "Lipo"
+        if 'Capacity mAh' not in self.data['Components']['Battery']['Specifications']:
+            self.data['Components']['Battery']['Specifications']['Capacity mAh'] = 0
+        if 'Frame' not in self.data['Components']:
+            self.data['Components']['Frame'] = {}
+        if 'Specifications' not in self.data['Components']['Frame']:
+            self.data['Components']['Frame']['Specifications'] = {}
+        if 'TOW min Kg' not in self.data['Components']['Frame']['Specifications']:
+            self.data['Components']['Frame']['Specifications']['TOW min Kg'] = 1
+        if 'TOW max Kg' not in self.data['Components']['Frame']['Specifications']:
+            self.data['Components']['Frame']['Specifications']['TOW max Kg'] = 1
 
     def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
         self.data['Components']['Flight Controller']['Firmware']['Type'] = vehicle_type

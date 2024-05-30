@@ -21,6 +21,10 @@
                 "URL": "https://www.diatone.us/products/diatone-mxc-taycan-duct-3-inch-cinewhoop-fpv-drone",
                 "Version": "2022"
             },
+            "Specifications": {
+                "TOW min Kg": 0.6,
+                "TOW max Kg": 0.6
+            },
             "Notes": "A small 3'' ducted frame"
         },
         "RC Controller": {
@@ -112,7 +116,8 @@
                 "Volt per cell max": 4.2,
                 "Volt per cell low": 3.6,
                 "Volt per cell crit": 3.55,
-                "Number of cells": 4
+                "Number of cells": 4,
+                "Capacity mAh": 1800
             },
             "Notes": "A normal battery"
         },

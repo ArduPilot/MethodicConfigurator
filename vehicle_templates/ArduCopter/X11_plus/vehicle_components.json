@@ -21,6 +21,10 @@
                 "URL": "",
                 "Version": "30 Kg payload"
             },
+            "Specifications": {
+                "TOW min Kg": 20,
+                "TOW max Kg": 50
+            },
             "Notes": "Frame is custom, X type frame, the middle is welded. Arm length is 1950mm."
         },
         "RC Controller": {
@@ -103,7 +107,7 @@
         "Battery": {
             "Product": {
                 "Manufacturer": "gensTattu",
-                "Model": "6C 30000mah",
+                "Model": "6C 30000mAh",
                 "URL": "https://genstattu.com/tattu-g-tech-30000mah-6s-22-2v-25c-lipo-battery-pack-with-as150u-f-plug/",
                 "Version": "AS150U-F"
             },
@@ -112,7 +116,8 @@
                 "Volt per cell max": 4.2,
                 "Volt per cell low": 3.6,
                 "Volt per cell crit": 3.55,
-                "Number of cells": 6
+                "Number of cells": 6,
+                "Capacity mAh": 30000
             },
             "Notes": "Normal battery 3.5 kg."
         },
