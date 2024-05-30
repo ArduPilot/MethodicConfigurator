@@ -210,7 +210,7 @@ class Par:
                     formatted_params.append(f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}"
                                             f"  # {parameter.comment}")
                 else:
-                    formatted_params.append(f"{key},{parameter.value}")
+                    formatted_params.append(f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}")
         elif file_format == "mavproxy":
             for key, parameter in param_dict.items():
                 if parameter.comment:
