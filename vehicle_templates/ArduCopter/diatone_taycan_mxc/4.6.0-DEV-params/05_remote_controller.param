@@ -7,5 +7,4 @@ RC7_OPTION,31  # "Motor Emergency Stop", stops all motors immediately at a high 
 RC8_OPTION,30  # "Lost Copter Sound", generates a loud tone from the buzzer at a high signal to locate a lost multicopter
 RC9_OPTION,300 # Used to jump to the next waypoint
 RSSI_TYPE,3 # TBS Crossfire protocol provides RSSI
-SERIAL2_BAUD,115 # For Mavlink over crossfire
 SERIAL7_PROTOCOL,23 # Specifies the serial port 7 as RC-Input

@@ -1,10 +1,10 @@
-BATT_AMP_PERVLT,57
+BATT_AMP_PERVLT,158.4  # new calibrated value for Mamba F45_128k 4in1 ESC
 BATT_ARM_VOLT,15
 BATT_CAPACITY,1800
 BATT_CRT_MAH,450
 BATT_CRT_VOLT,14
-BATT_FS_CRT_ACT,1  # flying indoors, just land ASAP, no need to hit the celing while doing RTL
-BATT_FS_LOW_ACT,1  # flying indoors, just land ASAP, no need to hit the celing while doing RTL
+BATT_FS_CRT_ACT,1  # flying indoors, just land ASAP, no need to hit the celling while doing RTL
+BATT_FS_LOW_ACT,1  # flying indoors, just land ASAP, no need to hit the celling while doing RTL
 BATT_FS_VOLTSRC,1
 BATT_LOW_MAH,600
 BATT_LOW_VOLT,14.4

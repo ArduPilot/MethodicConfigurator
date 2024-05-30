@@ -3,6 +3,7 @@
 # Usually, smaller vehicles require lower than default PID rate values.
 # Larger vehicles usually require higher than default PID rate values.
 
+ATC_INPUT_TC,0.15
 ATC_RAT_PIT_D,0.003334  #  = 0.925972 * (0.0036 default)
 ATC_RAT_PIT_I,0.173229  #  = 1.283176 * (0.135 default)
 ATC_RAT_PIT_P,0.173229  #  = 1.283176 * (0.135 default)

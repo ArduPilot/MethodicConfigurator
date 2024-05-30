@@ -1,2 +1,2 @@
-AUTOTUNE_AGGR,0.10 # Use the default for now
-AUTOTUNE_AXES,1 # Autotune on roll axis
+AUTOTUNE_AGGR,0.085  # Use smaller than default because there is no wind in the Hangar
+AUTOTUNE_AXES,1  # Autotune roll axis

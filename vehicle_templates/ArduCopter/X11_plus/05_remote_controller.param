@@ -6,8 +6,5 @@ RC6_OPTION,0  # I don't use.
 RC7_OPTION,0  # I don't use.
 RC8_OPTION,0  # I have only 10 channels
 RC9_OPTION,99  # I use 99 to AUTO RTL.
-RC10_MAX,1932
-RC10_MIN,1057
 RC10_OPTION,17
-RC10_TRIM,1057
 RSSI_TYPE,0  # radio without RSSI

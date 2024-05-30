@@ -1,12 +1,13 @@
-BRD_RTC_TZ_MIN,60
-FENCE_TYPE,11
-INS_ACCEL_FILTER,10 # the default is 20 and that lets too much noise in
-INS_POS1_X,0 # was -0.005
-INS_POS1_Y,0 # was -0.011
-INS_POS2_X,0 # was -0.011
-INS_POS2_Y,0 # was -0.01
-LAND_ALT_LOW,200 # come down fast and only slow down close to the ground. We have a good GNSS receiver, so thrust it
-RTL_ALT,300 # The default is too high for the kind of flights we do. This reduces the altitude for indoors
-RTL_LOIT_TIME,1000 # The default is too long. This reduces the time
-SCHED_LOOP_RATE,800 # On our vehicle the propellers rotate at speeds higher than 400Hz and we have a powerful STM32 H7 family processor. So we increase this for added performance.
-SCR_ENABLE,1  # For MagFit automation and Windspeed Estimation automation
+ARMING_CHECK,1  # perform all arming checks. If you have a problem fix it's source. Do NOT change this
+BRD_RTC_TZ_MIN,60  # Berlin time zone
+FENCE_TYPE,7  # cylinder and max altitude, to obey local regulations and safety measures
+INS_ACCEL_FILTER,10  # the default is 20 and that lets too much noise in
+INS_POS1_X,0  # was -0.005
+INS_POS1_Y,0  # was -0.011
+INS_POS2_X,0  # was -0.011
+INS_POS2_Y,0  # was -0.01
+LAND_ALT_LOW,200  # come down fast and only slow down close to the ground. We have a good GNSS receiver, so thrust it
+RTL_ALT,300  # The default is too high for the kind of flights we do. This reduces the altitude for indoors
+RTL_LOIT_TIME,1000  # The default is too long. This reduces the time
+SCHED_LOOP_RATE,800  # On our vehicle the propellers rotate at speeds higher than 400Hz and we have a powerful STM32 H7 family processor. So we increase this for added performance.
+SCR_ENABLE,1  # For VTOL-Quicktune, MagFit automation and Windspeed Estimation automation

@@ -463,6 +463,9 @@
         "forced_parameters": {
             "AUTOTUNE_AXES": { "New Value": 4, "Change Reason": "Autotune yaw axis" }
         },
+        "derived_parameters": {
+            "ATC_RAT_YAW_FLTD": { "New Value": "fc_parameters['INS_GYRO_FILTER'] / 4", "Change Reason": "Use INS_GYRO_FILTER / 4 as a first guess" }
+        },
         "old_filenames": ["32_autotune_yaw_setup.param"]
     },
     "35_autotune_yaw_results.param": {
