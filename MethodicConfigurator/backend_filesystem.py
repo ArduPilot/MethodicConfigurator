@@ -391,8 +391,13 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
     def vehicle_image_exists(self):
         return os_path.exists(self.vehicle_image_filepath())
 
-    def new_vehicle_dir(self, base_dir: str, new_dir: str):
+    @staticmethod
+    def new_vehicle_dir(base_dir: str, new_dir: str):
         return os_path.join(base_dir, new_dir)
+
+    @staticmethod
+    def directory_exists(directory: str) -> bool:
+        return os_path.exists(directory)
 
     def create_new_vehicle_dir(self, new_vehicle_dir: str):
         # Check if the new vehicle directory already exists

@@ -273,18 +273,30 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         show_tooltip(open_last_vehicle_directory_button,
                      "Directly open the last used vehicle directory for configuring the vehicle")
 
-    def create_new_vehicle_from_template(self):
+    def create_new_vehicle_from_template(self):  # pylint: disable=too-many-return-statements
         # Get the selected template directory and new vehicle directory name
         template_dir = self.template_dir.get_selected_directory()
         new_base_dir = self.new_base_dir.get_selected_directory()
         new_vehicle_name = self.new_dir.get_selected_directory()
+
+        if template_dir == "":
+            show_error_message("Vehicle template directory", "Vehicle template directory cannot be empty")
+            return
+        if not LocalFilesystem.valid_directory_name(template_dir):
+            show_error_message("Vehicle template directory",
+                               "Vehicle template directory name must not contain invalid characters")
+            return
+        if not LocalFilesystem.directory_exists(template_dir):
+            show_error_message("Vehicle template directory", "Vehicle template directory does not exist")
+            return
+
         if new_vehicle_name == "":
             show_error_message("New vehicle directory", "New vehicle name cannot be empty")
             return
         if not LocalFilesystem.valid_directory_name(new_vehicle_name):
             show_error_message("New vehicle directory", "New vehicle name must not contain invalid characters")
             return
-        new_vehicle_dir = self.local_filesystem.new_vehicle_dir(new_base_dir, new_vehicle_name)
+        new_vehicle_dir = LocalFilesystem.new_vehicle_dir(new_base_dir, new_vehicle_name)
 
         error_msg = self.local_filesystem.create_new_vehicle_dir(new_vehicle_dir)
         if error_msg:
