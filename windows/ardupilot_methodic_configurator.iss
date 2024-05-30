@@ -33,7 +33,7 @@ ChangesEnvironment=yes
 Type: filesandordirs; Name: {commonpf}\{#MyAppName}
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params"
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params"
-Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.1-params"
+Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.3-params"
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params"
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\X11_plus";
 
@@ -49,7 +49,7 @@ Source: "..\MethodicConfigurator\dist\ardupilot_methodic_configurator\*"; DestDi
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params"; Flags: ignoreversion
 Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params"; Flags: ignoreversion
-Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.1-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.1-params"; Flags: ignoreversion
+Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.3-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.3-params"; Flags: ignoreversion
 Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params"; Flags: ignoreversion
 Source: "..\vehicle_templates\ArduCopter\X11_plus\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\X11_plus"; Flags: ignoreversion
 Source: "..\windows\version.txt"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator"; Flags: ignoreversion

@@ -10,7 +10,7 @@
             },
             "Firmware": {
                 "Type": "ArduCopter",
-                "Version": "4.5.1"
+                "Version": "4.4.4"
             },
             "Notes": "This is a custom build with a Matek H743 SLIM flight controller. The board is a 20x20mm stackable board with a 400Mhz processor, 1Mb flash, 512kb RAM, and a 32-bit STM32H743 processor. The board has a built-in barometer, 6 UARTs, 8 PWM outputs, and 8 ADC inputs."
         },
@@ -92,7 +92,7 @@
             },
             "Firmware": {
                 "Type": "ArduCopter",
-                "Version": "4.5.1"
+                "Version": "4.4.4"
             },
             "FC Connection": {
                 "Type": "Analog",

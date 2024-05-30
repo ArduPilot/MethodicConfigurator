@@ -561,7 +561,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
         else:
             site_directory = program_dir
         template_default_dir = os_path.join(site_directory, "vehicle_templates", "ArduCopter",
-                                            "diatone_taycan_mxc", "4.5.1-params")
+                                            "diatone_taycan_mxc", "4.5.3-params")
         vehicles_default_dir = os_path.join(settings_directory, "vehicles")
         if not os_path.exists(vehicles_default_dir):
             os_makedirs(vehicles_default_dir, exist_ok=True)
