@@ -52,12 +52,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         # Prepare a dictionary that maps variable names to their values
         # These variables are used by the forced_parameters and derived_parameters in *_configuration_steps.json files
-        self.variables = {}
-        if hasattr(self.local_filesystem, 'vehicle_components') and self.local_filesystem.vehicle_components and \
-                'Components' in self.local_filesystem.vehicle_components:
-            self.variables['vehicle_components'] = self.local_filesystem.vehicle_components['Components']
-        if hasattr(self.local_filesystem, 'doc_dict') and self.local_filesystem.doc_dict:
-            self.variables['doc_dict'] = self.local_filesystem.doc_dict
+        self.variables = local_filesystem.get_eval_variables()
 
         self.compute_forced_and_derived_parameters()
 

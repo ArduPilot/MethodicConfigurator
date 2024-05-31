@@ -102,6 +102,46 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             entry.insert(0, version)
             entry.config(state="disabled")
 
+    @staticmethod
+    def reverse_key_search(doc: dict, param_name: str, values: list) -> list:
+        return [key for key, value in doc[param_name]["values"].items() if value in values]
+
+    def set_values_from_fc_parameters(self, fc_parameters: dict, doc: dict):
+        serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
+        #can_ports = ["CAN1", "CAN2"]
+        #i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
+
+        rc_receiver_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["RC Input"])
+        telemetry_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL",
+                                                      ["MAVLink1", "MAVLink2", "MAVLink High Latency"])
+        gnss_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["GPS"])
+        esc_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["ESC Telemetry", "FETtecOneWire", "CoDevESC"])
+        for serial in serial_ports:
+            if serial + "_PROTOCOL" in fc_parameters:
+                if fc_parameters[serial + "_PROTOCOL"] in rc_receiver_protocols:
+                    self.data['Components']['RC Receiver']['FC Connection']['Type'] = serial
+                    #self.data['Components']['RC Receiver']['FC Connection']['Protocol'] = \
+                    # doc['RC_PROTOCOLS']['values'][fc_parameters['RC_PROTOCOLS']]
+                elif fc_parameters[serial + "_PROTOCOL"] in telemetry_protocols:
+                    self.data['Components']['Telemetry']['FC Connection']['Type'] = serial
+                    self.data['Components']['Telemetry']['FC Connection']['Protocol'] = \
+                        doc[serial + "_PROTOCOL"]['values'][str(fc_parameters[serial + "_PROTOCOL"]).rstrip('0').rstrip('.')]
+                elif fc_parameters[serial + "_PROTOCOL"] in gnss_protocols:
+                    self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = serial
+                    self.data['Components']['GNSS Receiver']['FC Connection']['Protocol'] = \
+                        doc['GPS_TYPE']['values'][str(fc_parameters['GPS_TYPE']).rstrip('0').rstrip('.')]
+                elif fc_parameters[serial + "_PROTOCOL"] in esc_protocols:
+                    self.data['Components']['ESC']['FC Connection']['Type'] = serial
+                    self.data['Components']['ESC']['FC Connection']['Protocol'] = \
+                        doc['MOT_PWM_TYPE']['values'][str(fc_parameters['MOT_PWM_TYPE']).rstrip('0').rstrip('.')]
+        if "BATT_MONITOR" in fc_parameters:
+            analog = [key for key, value in doc["BATT_MONITOR"]["values"].items() \
+                      if value in ['Analog Voltage Only', 'Analog Voltage and Current']]
+            if fc_parameters["BATT_MONITOR"] in analog:
+                self.data['Components']['Battery Monitor']['FC Connection']['Type'] = "Analog"
+            self.data['Components']['Battery Monitor']['FC Connection']['Protocol'] = \
+                doc['BATT_MONITOR']['values'][str(fc_parameters["BATT_MONITOR"]).rstrip('0').rstrip('.')]
+
     def add_entry_or_combobox(self, value, entry_frame, path):
         serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
         can_ports = ["CAN1", "CAN2"]

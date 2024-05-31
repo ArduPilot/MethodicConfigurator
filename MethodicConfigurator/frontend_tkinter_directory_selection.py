@@ -23,6 +23,7 @@ from logging import debug as logging_error
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
+from tkinter import Checkbutton
 
 from MethodicConfigurator.version import VERSION
 
@@ -184,11 +185,13 @@ class VehicleDirectorySelectionWindow(BaseWindow):
     configuration directory based on an existing template or using an existing
     vehicle configuration directory.
     """
-    def __init__(self, local_filesystem: LocalFilesystem):
+    def __init__(self, local_filesystem: LocalFilesystem, fc_connected: bool = False):
         super().__init__()
         self.local_filesystem = local_filesystem
         self.root.title("Amilcar Lucas's - ArduPilot methodic configurator " + VERSION + " - Select Vehicle directory")
-        self.root.geometry("800x535") # Set the window size
+        self.root.geometry("800x575") # Set the window size
+        self.use_fc_params = tk.BooleanVar(value=False)
+        self.created_new_vehicle_from_template = False
 
         # Explain why we are here
         if local_filesystem.vehicle_dir == LocalFilesystem.getcwd():
@@ -201,7 +204,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         template_dir, new_base_dir, vehicle_dir = LocalFilesystem.get_recently_used_dirs()
         self.create_option1_widgets(template_dir,
                                     new_base_dir,
-                                    "MyVehicleName")
+                                    "MyVehicleName",
+                                    fc_connected)
         self.create_option2_widgets(vehicle_dir)
         self.create_option3_widgets(vehicle_dir)
 
@@ -211,7 +215,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
     def close_and_quit(self):
         sys_exit(0)
 
-    def create_option1_widgets(self, initial_template_dir: str, initial_base_dir: str, initial_new_dir: str):
+    def create_option1_widgets(self, initial_template_dir: str, initial_base_dir: str, initial_new_dir: str,
+                               fc_connected: bool):
         # Option 1 - Create a new vehicle configuration directory based on an existing template
         option1_label_frame = tk.LabelFrame(self.root, text="Create a new vehicle configuration directory")
         option1_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=5)
@@ -225,6 +230,17 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                                                       template_dir_edit_tooltip,
                                                       template_dir_btn_tooltip)
         self.template_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
+
+        use_fc_params_checkbox = Checkbutton(option1_label_frame, variable=self.use_fc_params,
+                                             text="Use parameter values from connected FC, not from template files")
+        use_fc_params_checkbox.pack(anchor=tk.NW)
+        show_tooltip(use_fc_params_checkbox, "Use the parameter values from the connected flight controller instead\n" \
+                     "of the template files when creating a new vehicle directory from a template.\n" \
+                     "This option is only available when a flight controller is connected")
+        if not fc_connected:
+            self.use_fc_params.set(False)
+            use_fc_params_checkbox.config(state=tk.DISABLED)
+
         new_base_dir_edit_tooltip = "Existing directory where the new vehicle directory will be created"
         new_base_dir_btn_tooltip = "Select the existing directory where the new vehicle directory will be created"
         self.new_base_dir = DirectorySelectionWidgets(self, option1_label_frame, initial_base_dir,
@@ -324,6 +340,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                 " template vehicle directory.\n" \
                 "Please select a vehicle directory containing valid ArduPilot intermediate parameter files."
             show_error_message("No Parameter Files Found", error_message)
+        self.created_new_vehicle_from_template = True
 
     def open_last_vehicle_directory(self, last_vehicle_dir: str):
         # Attempt to open the last opened vehicle directory

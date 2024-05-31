@@ -632,6 +632,32 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
             start_file_index = len(files) - 1
         return files[start_file_index]
 
+    def get_eval_variables(self):
+        variables = {}
+        if hasattr(self, 'vehicle_components') and self.vehicle_components and \
+                'Components' in self.vehicle_components:
+            variables['vehicle_components'] = self.vehicle_components['Components']
+        if hasattr(self, 'doc_dict') and self.doc_dict:
+            variables['doc_dict'] = self.doc_dict
+        return variables
+
+    def copy_fc_params_values_to_template_created_vehicle_files(self, fc_parameters: Dict[str, 'Par']):
+        eval_variables = self.get_eval_variables()
+        for param_filename, param_dict in self.file_parameters.items():
+            for param_name, param in param_dict.items():
+                if param_name in fc_parameters:
+                    param.value = fc_parameters[param_name]
+            if self.configuration_steps and param_filename in self.configuration_steps:
+                step_dict = self.configuration_steps[param_filename]
+                error_msg = self.compute_parameters(param_filename, step_dict, 'forced', eval_variables)
+                if error_msg:
+                    return error_msg
+                error_msg = self.compute_parameters(param_filename, step_dict, 'derived', eval_variables)
+                if error_msg:
+                    return error_msg
+            Par.export_to_param(Par.format_params(param_dict), os_path.join(self.vehicle_dir, param_filename))
+        return ''
+
     @staticmethod
     def supported_vehicles():
         return ['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',

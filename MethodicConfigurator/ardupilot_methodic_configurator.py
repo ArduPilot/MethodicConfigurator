@@ -20,6 +20,8 @@ from sys import exit as sys_exit
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_flightcontroller import FlightController
 
+from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
+
 from MethodicConfigurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
 
 from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
@@ -90,16 +92,38 @@ def main():
     # Get the list of intermediate parameter files files that will be processed sequentially
     files = list(local_filesystem.file_parameters.keys())
 
+    vehicle_dir_window = None
     if not files:
-        vehicle_dir_window = VehicleDirectorySelectionWindow(local_filesystem)
+        vehicle_dir_window = VehicleDirectorySelectionWindow(local_filesystem, flight_controller.master is not None)
         vehicle_dir_window.root.mainloop()
 
     start_file = local_filesystem.get_start_file(args.n)
 
+    component_editor_window = ComponentEditorWindow(VERSION, local_filesystem)
+    component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.version)
+    if vehicle_dir_window and \
+       vehicle_dir_window.created_new_vehicle_from_template and \
+       flight_controller.master is not None:
+        param_download_progress_window = ProgressWindow(component_editor_window.root, "Downloading FC parameters",
+                                                        "Downloaded {} of {} parameters")
+        # Download all parameters from the flight controller
+        flight_controller.fc_parameters = flight_controller.download_params(
+            param_download_progress_window.update_progress_bar)
+        param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
+        # copy vehicle parameters to component editor values
+        component_editor_window.set_values_from_fc_parameters(flight_controller.fc_parameters, local_filesystem.doc_dict)
     if not args.skip_component_editor:
-        component_editor_window = ComponentEditorWindow(VERSION, local_filesystem)
-        component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.version)
         component_editor_window.root.mainloop()
+
+    if vehicle_dir_window and \
+       vehicle_dir_window.created_new_vehicle_from_template and \
+       vehicle_dir_window.use_fc_params.get():
+        error_message = local_filesystem.copy_fc_params_values_to_template_created_vehicle_files(
+            flight_controller.fc_parameters)
+        if error_message:
+            logging_error(error_message)
+            #messagebox.showerror("Error in derived parameters", error_msg)
+            sys_exit(1)
 
     # Call the GUI function with the starting intermediate parameter file
     ParameterEditorWindow(start_file, flight_controller, local_filesystem, VERSION)
