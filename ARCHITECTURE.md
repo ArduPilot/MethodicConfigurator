@@ -59,10 +59,10 @@ This list of functionalities provides a comprehensive overview of the software's
 - Users should be able to navigate through different parameter files and select the one to be used.
 - Comments are first-class citizens and are preserved when reading/writing files
 - The software must write at the end of the configuration the following summary files:
-  - Complete flight controller "reason changed" annotated parameters in "complete.param" file
-  - Non-default, read-only "reason changed" annotated parameters in, "non-default_read-only.param" file
-  - Non-default, writable calibrations "reason changed" annotated parameters in "non-default_writable_calibrations.param" file
-  - Non-default, writable non-calibrations "reason changed" annotated parameters in "non-default_writable_non-calibrations.param" file
+  - Complete flight controller *reason changed* annotated parameters in `complete.param` file
+  - Non-default, read-only *reason changed* annotated parameters in, `non-default_read-only.param` file
+  - Non-default, writable calibrations *reason changed* annotated parameters in `non-default_writable_calibrations.param` file
+  - Non-default, writable non-calibrations *reason changed* annotated parameters in `non-default_writable_non-calibrations.param` file
 
 ### 9. Customization and Extensibility
 
