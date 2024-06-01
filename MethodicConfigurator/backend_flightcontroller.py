@@ -307,7 +307,7 @@ class FlightController:
         # Loop to receive all parameters
         while True:
             try:
-                m = self.master.recv_match(type='PARAM_VALUE', blocking=True)
+                m = self.master.recv_match(type='PARAM_VALUE', blocking=True, timeout=10)
                 if m is None:
                     break
                 message = m.to_dict()
