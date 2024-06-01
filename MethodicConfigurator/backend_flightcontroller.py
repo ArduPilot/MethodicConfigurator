@@ -143,7 +143,7 @@ class FlightController:
             logging_debug("Did not add empty connection")
         return False
 
-    def connect(self, device: str, progress_callback=None):
+    def connect(self, device: str, progress_callback=None) -> str:
         """
         Establishes a connection to the FlightController using a specified device.
 
@@ -229,7 +229,6 @@ class FlightController:
             logging_debug("Waiting for MAVLink heartbeat")
             m = self.master.wait_heartbeat(timeout=timeout)
             if m is None:
-                logging_error("No MAVLink heartbeat received, connection failed.")
                 return "No MAVLink heartbeat received, connection failed."
             self.info.set_system_id_and_component_id(m.get_srcSystem(), m.get_srcComponent())
             logging_debug("Connection established with systemID %d, componentID %d.",
@@ -240,7 +239,6 @@ class FlightController:
             if self.info.is_supported:
                 logging_info(f"Autopilot type {self.info.autopilot}")
             else:
-                logging_error("Unsupported autopilot type %s", self.info.autopilot)
                 return f"Unsupported autopilot type {self.info.autopilot}"
 
             self.info.set_type(m.type)
