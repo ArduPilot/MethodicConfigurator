@@ -33,7 +33,7 @@ from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
 from MethodicConfigurator.annotate_params import Par
 
 
-class ParameterEditorTable(ScrollFrame):
+class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     """
     A class to manage and display the parameter editor table within the GUI.
 
