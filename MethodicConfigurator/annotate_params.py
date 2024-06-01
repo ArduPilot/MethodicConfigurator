@@ -594,7 +594,7 @@ def update_parameter_documentation_file(doc, sort_type, param_default_dict, para
                 for key, value in data["fields"].items():
                     prefix_parts.append(f"{key}: {value}")
                 prefix_parts += format_columns(data["values"])
-                doc_text = "\n# ".join(prefix_parts)  # pylint: disable=C0103
+                doc_text = "\n# ".join(prefix_parts)
                 if param_name in param_default_dict:
                     default_value = format(param_default_dict[param_name].value, '.6f').rstrip('0').rstrip('.')
                     doc_text += f"\n# Default: {default_value}"

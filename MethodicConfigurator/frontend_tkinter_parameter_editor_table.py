@@ -33,7 +33,7 @@ from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
 from MethodicConfigurator.annotate_params import Par
 
 
-class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, too-many-instance-attributes
+class ParameterEditorTable(ScrollFrame):
     """
     A class to manage and display the parameter editor table within the GUI.
 
@@ -45,7 +45,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.root = root
         self.local_filesystem = local_filesystem
         self.parameter_editor = parameter_editor
-        self.background_color = root.cget("background")
         self.current_file = None
         self.upload_checkbutton_var = {}
         self.at_least_one_param_edited = False
@@ -180,7 +179,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         is_readonly = param_metadata.get('ReadOnly', False) if param_metadata else False
         parameter_label = tk.Label(self.view_port, text=param_name + (" " * (16 - len(param_name))),
                                            background="red" if is_readonly else "yellow" if is_calibration else
-                                           self.background_color)
+                                           self.root.cget("background"))
         if doc_tooltip:
             show_tooltip(parameter_label, doc_tooltip)
         return parameter_label
