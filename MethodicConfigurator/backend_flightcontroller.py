@@ -392,9 +392,13 @@ class FlightController:
         return ['tcp:127.0.0.1:5760', 'udp:127.0.0.1:14550']
 
     def __auto_detect_serial(self):
+        serial_list = []
         for connection in self.__connection_tuples:
             if 'mavlink' in connection[1].lower():
-                return [mavutil.SerialPort(device=connection[0], description=connection[1])]
+                serial_list.append(mavutil.SerialPort(device=connection[0], description=connection[1]))
+        if len(serial_list) == 1:
+            # selected automatically if unique
+            return serial_list
 
         serial_list = mavutil.auto_detect_serial(preferred_list=preferred_ports)
         serial_list.sort(key=lambda x: x.device)
