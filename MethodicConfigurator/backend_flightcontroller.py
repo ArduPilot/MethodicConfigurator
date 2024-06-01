@@ -254,7 +254,8 @@ class FlightController:
 
     def __process_autopilot_version(self, m):
         if m is None:
-            return "No AUTOPILOT_VERSION MAVLink message received, connection failed."
+            return ""
+            #return "No AUTOPILOT_VERSION MAVLink message received, connection failed."
         self.info.set_capabilities(m.capabilities)
         self.info.set_flight_sw_version(m.flight_sw_version)
         self.info.set_board_version(m.board_version)
