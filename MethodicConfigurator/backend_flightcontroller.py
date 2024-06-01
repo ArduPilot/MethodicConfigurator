@@ -281,14 +281,17 @@ class FlightController:
             return None
 
         # Check if MAVFTP is supported
-        # FIXME remove the "not" once it works pylint: disable=fixme
-        if not self.info.is_mavftp_supported:
-            logging_info("MAVFTP is supported by the %s flight controller", self.comport.device)
+        if self.info.is_mavftp_supported:
+            logging_info("MAVFTP is supported by the %s flight controller, but not yet from this SW",
+                         self.comport.device)
+
+            # FIXME remove this call and uncomment below once it works pylint: disable=fixme
+            return self.__download_params_via_mavlink(progress_callback)
+
             # parameters, _defaults = self.download_params_via_mavftp(progress_callback)
-            return {}  # parameters
+            # return parameters
 
         logging_info("MAVFTP is not supported by the %s flight controller, fallback to MAVLink", self.comport.device)
-        # MAVFTP is not supported, fall back to MAVLink
         return self.__download_params_via_mavlink(progress_callback)
 
     def __download_params_via_mavlink(self, progress_callback=None) -> Dict[str, float]:
