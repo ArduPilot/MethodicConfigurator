@@ -20,6 +20,8 @@ from sys import exit as sys_exit
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_flightcontroller import FlightController
 
+from MethodicConfigurator.frontend_tkinter_base import show_error_message
+
 from MethodicConfigurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
 
 from MethodicConfigurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
@@ -60,7 +62,7 @@ def argument_parser():
     return add_common_arguments_and_parse(parser)
 
 
-def main():
+def main():  # pylint: disable=too-many-branches
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
@@ -90,7 +92,11 @@ def main():
     if flight_controller.master is not None:
         FlightControllerInfoWindow(flight_controller)
 
-    local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, args.allow_editing_template_files)
+    try:
+        local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, args.allow_editing_template_files)
+    except SystemExit as exp:
+        show_error_message("Fatal error reading parameter files", f"{exp}")
+        raise
 
     # Get the list of intermediate parameter files files that will be processed sequentially
     files = list(local_filesystem.file_parameters.keys())
@@ -119,7 +125,7 @@ def main():
             flight_controller.fc_parameters)
         if error_message:
             logging_error(error_message)
-            #messagebox.showerror("Error in derived parameters", error_msg)
+            show_error_message("Error in derived parameters", error_message)
             sys_exit(1)
 
     # Call the GUI function with the starting intermediate parameter file

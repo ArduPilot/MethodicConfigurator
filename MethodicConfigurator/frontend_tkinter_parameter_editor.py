@@ -316,7 +316,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     IMUfit(filename, tempcal_imu_result_param_fullpath, False, False, False, False,
                             self.local_filesystem.vehicle_dir, self.tempcal_imu_progress_window.update_progress_bar_300_pct)
                     self.tempcal_imu_progress_window.destroy()
-                    self.local_filesystem.file_parameters = self.local_filesystem.read_params_from_files()
+                    try:
+                        self.local_filesystem.file_parameters = self.local_filesystem.read_params_from_files()
+                    except SystemExit as exp:
+                        messagebox.showerror("Fatal error reading parameter files", f"{exp}")
+                        raise
                     self.parameter_editor_table.set_at_least_one_param_edited(True)  # force writing doc annotations to file
 
     def __should_copy_fc_values_to_file(self, selected_file: str):

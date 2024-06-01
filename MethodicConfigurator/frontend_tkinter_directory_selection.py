@@ -159,7 +159,13 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
                                    "as those are used as a template for new vehicles")
                 return
             self.local_filesystem.vehicle_dir = self.directory
-            self.local_filesystem.re_init(self.directory, self.local_filesystem.vehicle_type)
+
+            try:
+                self.local_filesystem.re_init(self.directory, self.local_filesystem.vehicle_type)
+            except SystemExit as exp:
+                show_error_message("Fatal error reading parameter files", f"{exp}")
+                raise
+
             files = list(self.local_filesystem.file_parameters.keys())
             if files:
                 LocalFilesystem.store_recently_used_vehicle_dir(self.directory)
@@ -291,7 +297,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         show_tooltip(open_last_vehicle_directory_button,
                      "Directly open the last used vehicle directory for configuring the vehicle")
 
-    def create_new_vehicle_from_template(self):  # pylint: disable=too-many-return-statements
+    def create_new_vehicle_from_template(self):
         # Get the selected template directory and new vehicle directory name
         template_dir = self.template_dir.get_selected_directory()
         new_base_dir = self.new_base_dir.get_selected_directory()
@@ -299,10 +305,6 @@ class VehicleDirectorySelectionWindow(BaseWindow):
 
         if template_dir == "":
             show_error_message("Vehicle template directory", "Vehicle template directory cannot be empty")
-            return
-        if not LocalFilesystem.valid_directory_name(template_dir):
-            show_error_message("Vehicle template directory",
-                               "Vehicle template directory name must not contain invalid characters")
             return
         if not LocalFilesystem.directory_exists(template_dir):
             show_error_message("Vehicle template directory", "Vehicle template directory does not exist")
@@ -328,7 +330,13 @@ class VehicleDirectorySelectionWindow(BaseWindow):
 
         # Update the local_filesystem with the new vehicle directory
         self.local_filesystem.vehicle_dir = new_vehicle_dir
-        self.local_filesystem.re_init(new_vehicle_dir, self.local_filesystem.vehicle_type)
+
+        try:
+            self.local_filesystem.re_init(new_vehicle_dir, self.local_filesystem.vehicle_type)
+        except SystemExit as exp:
+            show_error_message("Fatal error reading parameter files", f"{exp}")
+            raise
+
         files = list(self.local_filesystem.file_parameters.keys())
         if files:
             LocalFilesystem.store_recently_used_template_dirs(template_dir, new_base_dir)
@@ -347,7 +355,13 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         if last_vehicle_dir:
             # If a last opened directory is found, proceed as if the user had manually selected it
             self.local_filesystem.vehicle_dir = last_vehicle_dir
-            self.local_filesystem.re_init(last_vehicle_dir, self.local_filesystem.vehicle_type)
+
+            try:
+                self.local_filesystem.re_init(last_vehicle_dir, self.local_filesystem.vehicle_type)
+            except SystemExit as exp:
+                show_error_message("Fatal error reading parameter files", f"{exp}")
+                raise
+
             files = list(self.local_filesystem.file_parameters.keys())
             if files:
                 self.root.destroy()
