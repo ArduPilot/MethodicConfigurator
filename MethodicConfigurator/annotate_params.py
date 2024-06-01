@@ -111,7 +111,7 @@ class Par:
         return False
 
     @staticmethod
-    def load_param_file_into_dict(param_file: str) -> Dict[str, 'Par']:  # pylint: disable=R0912
+    def load_param_file_into_dict(param_file: str) -> Dict[str, 'Par']:
         """
         Loads an ArduPilot parameter file into a dictionary with name, value pairs.
 
@@ -122,46 +122,53 @@ class Par:
         dict: A dictionary containing the parameters from the file.
         """
         parameter_dict = {}
-        with open(param_file, encoding="utf-8") as f_handle:
-            for i, line in enumerate(f_handle, start=1):
-                original_line = line
-                line = line.strip()
-                comment = None
-                if not line:
-                    continue  # skip empty lines
-                if line[0] == "#":
-                    continue  # skip comments
-                if "#" in line:
-                    line, comment = line.split("#", 1)  # strip trailing comments
-                    comment = comment.strip()
-                if "," in line:
-                    # parse mission planner style parameter files
-                    parameter, value = line.split(",", 1)
-                elif " " in line:
-                    # parse mavproxy style parameter files
-                    parameter, value = line.split(" ", 1)
-                elif "\t" in line:
-                    parameter, value = line.split("\t", 1)
-                else:
-                    raise SystemExit(f"Missing parameter-value separator: {line} in {param_file} line {i}")
-                parameter = parameter.strip()
-                if len(parameter) > PARAM_NAME_MAX_LEN:
-                    raise SystemExit(f"Too long parameter name: {parameter} in {param_file} line {i}")
-                if not re.match(PARAM_NAME_REGEX, parameter):
-                    raise SystemExit(f"Invalid characters in parameter name {parameter} in {param_file} line {i}")
-                if parameter in parameter_dict:
-                    raise SystemExit(f"Duplicated parameter {parameter} in {param_file} line {i}")
-                try:
-                    fvalue = float(value.strip())
-                    parameter_dict[parameter] = Par(fvalue, comment)
-                except ValueError as exc:
-                    raise SystemExit(f"Invalid parameter value {value} in {param_file} line {i}") from exc
-                except IOError as exc:
-                    _exc_type, exc_value, exc_traceback = sys_exc_info()
-                    fname = os_path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
-                    logging.critical("in line %s of file %s: %s", exc_traceback.tb_lineno, fname, exc_value)
-                    raise SystemExit(f"Caused by line {i} of file {param_file}: {original_line}") from exc
+        try:
+            with open(param_file, encoding="utf-8") as f_handle:
+                for i, line in enumerate(f_handle, start=1):
+                    original_line = line
+                    line = line.strip()
+                    comment = None
+                    if not line:
+                        continue  # skip empty lines
+                    if line[0] == "#":
+                        continue  # skip comments
+                    if "#" in line:
+                        line, comment = line.split("#", 1)  # strip trailing comments
+                        comment = comment.strip()
+                    if "," in line:
+                        # parse mission planner style parameter files
+                        parameter, value = line.split(",", 1)
+                    elif " " in line:
+                        # parse mavproxy style parameter files
+                        parameter, value = line.split(" ", 1)
+                    elif "\t" in line:
+                        parameter, value = line.split("\t", 1)
+                    else:
+                        raise SystemExit(f"Missing parameter-value separator: {line} in {param_file} line {i}")
+                    parameter = parameter.strip()
+                    Par.validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value)
+        except UnicodeDecodeError as exp:
+            raise SystemExit(f"Fatal error reading {param_file}: {exp}") from exp
         return parameter_dict
+
+    @staticmethod
+    def validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value):  # pylint: disable=too-many-arguments
+        if len(parameter) > PARAM_NAME_MAX_LEN:
+            raise SystemExit(f"Too long parameter name: {parameter} in {param_file} line {i}")
+        if not re.match(PARAM_NAME_REGEX, parameter):
+            raise SystemExit(f"Invalid characters in parameter name {parameter} in {param_file} line {i}")
+        if parameter in parameter_dict:
+            raise SystemExit(f"Duplicated parameter {parameter} in {param_file} line {i}")
+        try:
+            fvalue = float(value.strip())
+            parameter_dict[parameter] = Par(fvalue, comment)
+        except ValueError as exc:
+            raise SystemExit(f"Invalid parameter value {value} in {param_file} line {i}") from exc
+        except IOError as exc:
+            _exc_type, exc_value, exc_traceback = sys_exc_info()
+            fname = os_path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
+            logging.critical("in line %s of file %s: %s", exc_traceback.tb_lineno, fname, exc_value)
+            raise SystemExit(f"Caused by line {i} of file {param_file}: {original_line}") from exc
 
     @staticmethod
     def missionplanner_sort(item: str) -> Tuple[str, ...]:
