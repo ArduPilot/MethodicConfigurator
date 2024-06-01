@@ -432,6 +432,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 logging_error("Failed to set parameter %s: %s", param_name, e)
                 messagebox.showerror("ArduPilot methodic configurator", f"Failed to set parameter {param_name}: {e}")
 
+        self.__reset_and_reconnect(fc_reset_required, fc_reset_unsure)
+
+    def __reset_and_reconnect(self, fc_reset_required, fc_reset_unsure):
         if not fc_reset_required:
             if fc_reset_unsure:
                 # Ask the user if they want to reset the ArduPilot
@@ -442,7 +445,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.reset_progress_window = ProgressWindow(self.root, "Resetting Flight Controller",
                                                         "Waiting for {} of {} seconds")
             # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
-            self.flight_controller.reset_and_reconnect(self.reset_progress_window.update_progress_bar)
+            error_message = self.flight_controller.reset_and_reconnect(self.reset_progress_window.update_progress_bar)
+            if error_message:
+                logging_error(error_message)
+                messagebox.showerror("ArduPilot methodic configurator", error_message)
             self.reset_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
 
     def on_upload_selected_click(self):

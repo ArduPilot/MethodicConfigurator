@@ -341,7 +341,8 @@ class FlightController:
             return None
         return self.master.param_set_send(param_name, param_value)
 
-    def reset_and_reconnect(self, reset_progress_callback=None, connection_progress_callback=None, sleep_time: int = None):
+    def reset_and_reconnect(self, reset_progress_callback=None, connection_progress_callback=None,
+                            sleep_time: int = None) -> str:
         """
         Reset the flight controller and reconnect.
 
@@ -349,7 +350,7 @@ class FlightController:
             sleep_time (int, optional): The time in seconds to wait before reconnecting.
         """
         if self.master is None: # FIXME for testing only pylint: disable=fixme
-            return
+            return ""
         # Issue a reset
         self.master.reboot_autopilot()
         logging_info("Reset command sent to ArduPilot.")
@@ -376,7 +377,7 @@ class FlightController:
             reset_progress_callback(current_step, sleep_time)
 
         # Reconnect to the flight controller
-        self.__create_connection_with_retry(connection_progress_callback)
+        return self.__create_connection_with_retry(connection_progress_callback)
 
     @staticmethod
     def __list_usb_devices():
