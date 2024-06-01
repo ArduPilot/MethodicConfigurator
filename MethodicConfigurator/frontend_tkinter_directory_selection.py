@@ -21,6 +21,7 @@ from logging import warning as logging_warning
 from logging import debug as logging_error
 
 import tkinter as tk
+from tkinter import messagebox
 from tkinter import ttk
 from tkinter import filedialog
 from tkinter import Checkbutton
@@ -31,7 +32,6 @@ from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 
-from MethodicConfigurator.frontend_tkinter_base import show_error_message
 from MethodicConfigurator.frontend_tkinter_base import show_no_param_files_error
 from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
@@ -154,16 +154,16 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
         # Call the base class method to open the directory selection dialog
         if super().on_select_directory():
             if "vehicle_templates" in self.directory and not self.local_filesystem.allow_editing_template_files:
-                show_error_message("Invalid Vehicle Directory Selected",
-                                   "Please do not edit the files provided 'vehicle_templates' directory\n"
-                                   "as those are used as a template for new vehicles")
+                messagebox.showerror("Invalid Vehicle Directory Selected",
+                                     "Please do not edit the files provided 'vehicle_templates' directory\n"
+                                     "as those are used as a template for new vehicles")
                 return
             self.local_filesystem.vehicle_dir = self.directory
 
             try:
                 self.local_filesystem.re_init(self.directory, self.local_filesystem.vehicle_type)
             except SystemExit as exp:
-                show_error_message("Fatal error reading parameter files", f"{exp}")
+                messagebox.showerror("Fatal error reading parameter files", f"{exp}")
                 raise
 
             files = list(self.local_filesystem.file_parameters.keys())
@@ -304,28 +304,28 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         new_vehicle_name = self.new_dir.get_selected_directory()
 
         if template_dir == "":
-            show_error_message("Vehicle template directory", "Vehicle template directory cannot be empty")
+            messagebox.showerror("Vehicle template directory", "Vehicle template directory cannot be empty")
             return
         if not LocalFilesystem.directory_exists(template_dir):
-            show_error_message("Vehicle template directory", "Vehicle template directory does not exist")
+            messagebox.showerror("Vehicle template directory", "Vehicle template directory does not exist")
             return
 
         if new_vehicle_name == "":
-            show_error_message("New vehicle directory", "New vehicle name cannot be empty")
+            messagebox.showerror("New vehicle directory", "New vehicle name cannot be empty")
             return
         if not LocalFilesystem.valid_directory_name(new_vehicle_name):
-            show_error_message("New vehicle directory", "New vehicle name must not contain invalid characters")
+            messagebox.showerror("New vehicle directory", "New vehicle name must not contain invalid characters")
             return
         new_vehicle_dir = LocalFilesystem.new_vehicle_dir(new_base_dir, new_vehicle_name)
 
         error_msg = self.local_filesystem.create_new_vehicle_dir(new_vehicle_dir)
         if error_msg:
-            show_error_message("New vehicle directory", error_msg)
+            messagebox.showerror("New vehicle directory", error_msg)
             return
 
         error_msg = self.local_filesystem.copy_template_files_to_new_vehicle_dir(template_dir, new_vehicle_dir)
         if error_msg:
-            show_error_message("Copying template files", error_msg)
+            messagebox.showerror("Copying template files", error_msg)
             return
 
         # Update the local_filesystem with the new vehicle directory
@@ -334,7 +334,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         try:
             self.local_filesystem.re_init(new_vehicle_dir, self.local_filesystem.vehicle_type)
         except SystemExit as exp:
-            show_error_message("Fatal error reading parameter files", f"{exp}")
+            messagebox.showerror("Fatal error reading parameter files", f"{exp}")
             raise
 
         files = list(self.local_filesystem.file_parameters.keys())
@@ -347,7 +347,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             error_message = f"No intermediate parameter files found in the selected '{template_dir}'" \
                 " template vehicle directory.\n" \
                 "Please select a vehicle directory containing valid ArduPilot intermediate parameter files."
-            show_error_message("No Parameter Files Found", error_message)
+            messagebox.showerror("No Parameter Files Found", error_message)
         self.created_new_vehicle_from_template = True
 
     def open_last_vehicle_directory(self, last_vehicle_dir: str):
@@ -359,7 +359,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             try:
                 self.local_filesystem.re_init(last_vehicle_dir, self.local_filesystem.vehicle_type)
             except SystemExit as exp:
-                show_error_message("Fatal error reading parameter files", f"{exp}")
+                messagebox.showerror("Fatal error reading parameter files", f"{exp}")
                 raise
 
             files = list(self.local_filesystem.file_parameters.keys())
@@ -369,8 +369,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                 show_no_param_files_error(last_vehicle_dir)
         else:
             # If no last opened directory is found, display a message to the user
-            show_error_message("No Last Vehicle Directory Found",
-                            "No last opened vehicle directory was found. Please select a directory manually.")
+            messagebox.showerror("No Last Vehicle Directory Found",
+                                 "No last opened vehicle directory was found. Please select a directory manually.")
 
 def argument_parser():
     """
