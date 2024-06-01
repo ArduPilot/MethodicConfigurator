@@ -419,7 +419,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                             logging_info("Parameter %s changed to %f, reset required", param_name, param.value)
                         fc_reset_required = True
                     # Check if any of the selected parameters have a _TYPE, _EN, or _ENABLE suffix
-                    elif param_name.endswith(('_TYPE', '_EN', '_ENABLE')):
+                    elif param_name.endswith(('_TYPE', '_EN', '_ENABLE', 'SID_AXIS')):
                         self.flight_controller.set_param(param_name, float(param.value))
                         self.at_least_one_changed_parameter_written = True
                         if param_name in self.flight_controller.fc_parameters:
