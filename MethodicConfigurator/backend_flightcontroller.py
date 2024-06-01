@@ -19,8 +19,7 @@ from os import path as os_path
 from os import name as os_name
 from os import readlink as os_readlink
 from typing import Dict
-# import usb.core
-# import usb.util
+
 import serial.tools.list_ports
 import serial.tools.list_ports_common
 
@@ -109,11 +108,9 @@ class FlightController:
 
     def discover_connections(self):
         comports = FlightController.__list_serial_ports()
-        usbports = FlightController.__list_usb_devices()
         netports = FlightController.__list_network_ports()
         # list of tuples with the first element being the port name and the second element being the port description
         self.__connection_tuples = [(port.device, port.description) for port in comports] + \
-            [(port, port) for port in usbports] + \
             [(port, port) for port in netports]
         logging_info('Available connection ports are:')
         for port in self.__connection_tuples:
@@ -378,38 +375,6 @@ class FlightController:
 
         # Reconnect to the flight controller
         return self.__create_connection_with_retry(connection_progress_callback)
-
-    @staticmethod
-    def __list_usb_devices():
-        """
-        List all connected USB devices.
-        """
-        ret = []
-        return ret # FIXME for testing only pylint: disable=fixme
-        # devices = usb.core.find(find_all=True)
-        # for device in devices:
-        #     try:
-        #         manufacturer = usb.util.get_string(device, device.iManufacturer)
-        #     except ValueError as e:
-        #         logging_warning("Failed to retrieve string descriptor for device (VID:PID) - %04x:%04x: %s",
-        #                         device.idVendor, device.idProduct, e)
-        #         manufacturer = "Unknown"
-        #     try:
-        #         product = usb.util.get_string(device, device.iProduct)
-        #     except ValueError as e:
-        #         logging_warning("Failed to retrieve string descriptor for device (VID:PID) - %04x:%04x: %s",
-        #                         device.idVendor, device.idProduct, e)
-        #         product = "Unknown"
-        #     logging_info("USB device (VID:PID) - %04x:%04x, Manufacturer: %s, Product: %s",
-        #                  device.idVendor,
-        #                  device.idProduct,
-        #                  manufacturer,
-        #                  product)
-        #     ret.append([device.idVendor,
-        #                 device.idProduct,
-        #                 manufacturer,
-        #                 product])
-        # return ret
 
     @staticmethod
     def __list_serial_ports():
