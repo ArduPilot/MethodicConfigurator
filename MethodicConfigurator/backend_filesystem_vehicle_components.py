@@ -27,24 +27,24 @@ class VehicleComponents:
     vehicle components configurations from a JSON file.
     """
     def __init__(self):
-        self.__vehicle_components_json_filename = "vehicle_components.json"
+        self.vehicle_components_json_filename = "vehicle_components.json"
         self.vehicle_components = None
 
     def load_vehicle_components_json_data(self, vehicle_dir: str):
         data = {}
         try:
-            filepath = os_path.join(vehicle_dir, self.__vehicle_components_json_filename)
+            filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
             with open(filepath, 'r', encoding='utf-8') as file:
                 data = json_load(file)
         except FileNotFoundError:
-            logging_warning("File '%s' not found in %s.", self.__vehicle_components_json_filename, vehicle_dir)
+            logging_warning("File '%s' not found in %s.", self.vehicle_components_json_filename, vehicle_dir)
         except JSONDecodeError:
             logging_error("Error decoding JSON data from file '%s'.", filepath)
         self.vehicle_components = data
         return data
 
     def save_vehicle_components_json_data(self, data, vehicle_dir: str) -> bool:
-        filepath = os_path.join(vehicle_dir, self.__vehicle_components_json_filename)
+        filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
         try:
             with open(filepath, 'w', encoding='utf-8') as file:
                 json_dump(data, file, indent=4)
