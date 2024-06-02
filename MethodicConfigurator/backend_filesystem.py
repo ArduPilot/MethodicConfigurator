@@ -550,10 +550,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
 
 
     @staticmethod
-    def get_recently_used_dirs():
-        settings_directory = LocalFilesystem.__user_config_dir()
-        settings = LocalFilesystem.__get_settings_as_dict()
-
+    def get_templates_base_dir():
         current_dir = os_path.dirname(os_path.abspath(__file__))
         if platform_system() == 'Windows':
             current_dir = current_dir.replace("\\_internal", "")
@@ -565,12 +562,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
             site_directory = LocalFilesystem.__site_config_dir()
         else:
             site_directory = program_dir
-        template_default_dir = os_path.join(site_directory, "vehicle_templates", "ArduCopter",
-                                            "diatone_taycan_mxc", "4.5.3-params")
+        return os_path.join(site_directory, "vehicle_templates")
+
+    @staticmethod
+    def get_recently_used_dirs():
+        template_default_dir = os_path.join(LocalFilesystem.get_templates_base_dir(),
+                                            "ArduCopter", "diatone_taycan_mxc", "4.5.3-params")
+
+        settings_directory = LocalFilesystem.__user_config_dir()
         vehicles_default_dir = os_path.join(settings_directory, "vehicles")
         if not os_path.exists(vehicles_default_dir):
             os_makedirs(vehicles_default_dir, exist_ok=True)
 
+        settings = LocalFilesystem.__get_settings_as_dict()
         template_dir = settings["directory_selection"].get("template_dir", template_default_dir)
         new_base_dir = settings["directory_selection"].get("new_base_dir", vehicles_default_dir)
         vehicle_dir = settings["directory_selection"].get("vehicle_dir", vehicles_default_dir)

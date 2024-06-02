@@ -24,7 +24,7 @@ from frontend_tkinter_base import BaseWindow
 from version import VERSION
 
 
-class FlightControllerInfoWindow(BaseWindow):
+class FlightControllerInfoWindow(BaseWindow):  # pylint: disable=too-few-public-methods
     """
     Display flight controller hardware, firmware and parameter information
     """
