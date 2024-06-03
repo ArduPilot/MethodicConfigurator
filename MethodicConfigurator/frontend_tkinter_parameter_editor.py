@@ -233,11 +233,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.file_selection_combobox.bind("<<ComboboxSelected>>", self.on_param_file_combobox_change)
         self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
-        # Create a new frame inside the config_subframe for the flight controller connection selection label and combobox
-        csw = ConnectionSelectionWidgets(self, config_subframe, self.flight_controller,
-                                         destroy_parent_on_connect=False, download_params_on_connect=True)
-        csw.container_frame.pack(side=tk.RIGHT, fill="x", expand=False, padx=(6, 4))
-
         image_label = BaseWindow.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
         image_label.bind("<Button-1>", lambda event: show_about_window(self.root, version))
