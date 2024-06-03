@@ -1,0 +1,10 @@
+{
+    "configurations": [
+        {
+            "name": "Python Debugger: ardupilot_methodic_configurator.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "MethodicConfigurator/ardupilot_methodic_configurator.py"
+        }
+    ]
+}
