@@ -195,7 +195,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.__create_parameter_area_widgets()
 
-        #self.root.after(50, self.on_param_file_combobox_change(None, True)) # trigger a table update
         self.root.after(50, self.__please_read_the_docs())
         self.root.mainloop()
 
