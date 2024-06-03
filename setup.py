@@ -10,6 +10,7 @@ This file is part of Ardupilot methodic configurator. https://github.com/ArduPil
 SPDX-License-Identifier:    GPL-3
 '''
 
+import os
 from setuptools import setup
 from setuptools import find_packages
 
@@ -25,7 +26,18 @@ dev_requirements = [
     # Add any other development requirements here
 ]
 
+extra_scripts = [
+    'MethodicConfigurator/annotate_params.py',
+    'MethodicConfigurator/extract_param_defaults.py',
+    'MethodicConfigurator/param_pid_adjustment_update.py'
+]
+
 PRJ_URL = "https://github.com/ArduPilot/MethodicConfigurator"
+
+for file in extra_scripts:
+    os.chmod(file, 0o755)
+
+os.chmod("MethodicConfigurator/ardupilot_methodic_configurator.py", 0o755)
 
 # Read the long description from the README file
 with open('README.md', 'r', encoding='utf-8') as f:
@@ -84,10 +96,7 @@ setup(
     python_requires='>=3.6',
     keywords=['ArduPilot', 'Configuration', 'SCM', 'Methodic', 'ArduCopter', 'ArduPlane', 'ArduRover', 'ArduSub'],
     include_package_data=True,
-    scripts=['MethodicConfigurator/annotate_params.py',
-             'MethodicConfigurator/extract_param_defaults.py',
-             'MethodicConfigurator/param_pid_adjustment_update.py'
-             ],
+    scripts=extra_scripts,
     # Specify entry points for command-line scripts
     entry_points={
         'console_scripts': [
