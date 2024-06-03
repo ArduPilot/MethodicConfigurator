@@ -89,7 +89,7 @@ def main():  # pylint: disable=too-many-branches
         vehicle_type = "ArduCopter"
         logging_warning("Could not detect vehicle type. Defaulting to ArduCopter.")
 
-    if flight_controller.master is not None:
+    if flight_controller.master is not None or args.device == 'test':
         FlightControllerInfoWindow(flight_controller)
 
     try:
