@@ -6,7 +6,7 @@ Used as part of building the Windows setup file (MethodicConfiguratorWinBuild.ba
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-(C) 2024 Amilcar do Carmo Lucas, IAV GmbH
+(C) 2024 Amilcar do Carmo Lucas
 
 SPDX-License-Identifier:    GPL-3
 '''

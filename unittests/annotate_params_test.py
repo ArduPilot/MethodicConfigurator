@@ -5,7 +5,7 @@ These are the unit tests for the python script that fetches online ArduPilot
 parameter documentation (if not cached) and adds it to the specified file or
 to all *.param and *.parm files in the specified directory.
 
-Author: Amilcar do Carmo Lucas, IAV GmbH
+Author: Amilcar do Carmo Lucas
 '''
 
 # pylint: skip-file

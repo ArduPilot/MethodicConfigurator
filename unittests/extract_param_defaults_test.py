@@ -3,7 +3,7 @@
 '''
 Extracts parameter default values from an ArduPilot .bin file. Unittests.
 
-Amilcar do Carmo Lucas, IAV GmbH
+Amilcar do Carmo Lucas
 '''
 
 

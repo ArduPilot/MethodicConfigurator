@@ -7,7 +7,7 @@ This version has been modified to work with >= python3.6 and to pass pylint and 
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-(C) 2024 Amilcar do Carmo Lucas, IAV GmbH
+(C) 2024 Amilcar do Carmo Lucas
 
 SPDX-License-Identifier:    GPL-3
 '''

@@ -5,7 +5,7 @@ Based on https://pagure.io/github-release-stats/blob/master/f/get_release_stats.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-(C) 2024 Amilcar do Carmo Lucas, IAV GmbH
+(C) 2024 Amilcar do Carmo Lucas
 
 SPDX-License-Identifier:    GPL-3
 '''

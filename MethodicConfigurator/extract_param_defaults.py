@@ -7,7 +7,7 @@ Supports Mission Planner, MAVProxy and QGCS file format output
 
 Currently has 95% unit test coverage
 
-Amilcar do Carmo Lucas, IAV GmbH
+Amilcar do Carmo Lucas
 '''
 
 import argparse

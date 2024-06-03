@@ -16,7 +16,7 @@ Supports both Mission Planner and MAVProxy file formats
 Supports sorting the parameters
 Has unit tests with 88% coverage
 
-Author: Amilcar do Carmo Lucas, IAV GmbH
+Author: Amilcar do Carmo Lucas
 """
 
 from os import path as os_path
