@@ -103,7 +103,7 @@ def main():  # pylint: disable=too-many-branches
 
     vehicle_dir_window = None
     if not files:
-        vehicle_dir_window = VehicleDirectorySelectionWindow(local_filesystem, flight_controller.master is not None)
+        vehicle_dir_window = VehicleDirectorySelectionWindow(local_filesystem, len(flight_controller.fc_parameters) > 0)
         vehicle_dir_window.root.mainloop()
 
     start_file = local_filesystem.get_start_file(args.n)
