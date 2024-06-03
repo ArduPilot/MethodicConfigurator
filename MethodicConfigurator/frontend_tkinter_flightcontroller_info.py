@@ -13,14 +13,14 @@ from logging import info as logging_info
 
 import tkinter as tk
 
-from backend_flightcontroller import FlightController
-#from backend_flightcontroller_info import BackendFlightcontrollerInfo
+from MethodicConfigurator.backend_flightcontroller import FlightController
+#from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
 
-#from frontend_tkinter_base import show_tooltip
-from frontend_tkinter_base import ProgressWindow
-from frontend_tkinter_base import BaseWindow
+#from MethodicConfigurator.frontend_tkinter_base import show_tooltip
+from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
+from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 
-from version import VERSION
+from MethodicConfigurator.version import VERSION
 
 
 class FlightControllerInfoWindow(BaseWindow):  # pylint: disable=too-few-public-methods
