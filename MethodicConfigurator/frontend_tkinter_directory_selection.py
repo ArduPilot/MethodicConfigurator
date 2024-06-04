@@ -140,11 +140,11 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
                  local_filesystem: LocalFilesystem,
                  initial_dir: str, destroy_parent_on_open: bool) -> None:
         # Call the parent constructor with the necessary arguments
-        super().__init__(parent, parent_frame, initial_dir, "Vehicle directory:",
+        super().__init__(parent, parent_frame, initial_dir, "Vehicle configuration directory:",
                          False,
                          "Vehicle-specific directory containing the intermediate\n"
                          "parameter files to be uploaded to the flight controller",
-                         "Select the vehicle-specific directory containing the\n"
+                         "Select the vehicle-specific configuration directory containing the\n"
                          "intermediate parameter files to be uploaded to the flight controller" \
                             if destroy_parent_on_open else '')
         self.local_filesystem = local_filesystem
@@ -194,7 +194,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
     def __init__(self, local_filesystem: LocalFilesystem, fc_connected: bool = False):
         super().__init__()
         self.local_filesystem = local_filesystem
-        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator " + VERSION + " - Select Vehicle directory")
+        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator " + VERSION + \
+                        " - Select vehicle configuration directory")
         self.root.geometry("800x575") # Set the window size
         self.use_fc_params = tk.BooleanVar(value=False)
         self.created_new_vehicle_from_template = False
@@ -205,7 +206,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         else:
             introduction_text = "No intermediate parameter files found\nin the --vehicle-dir specified directory."
         introduction_label = tk.Label(self.root, text=introduction_text + \
-                                           "\nChoose one of the following three options:")
+                                           "\nChoose one of the following options:")
         introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)
         template_dir, new_base_dir, vehicle_dir = LocalFilesystem.get_recently_used_dirs()
         self.create_option1_widgets(template_dir,
@@ -226,10 +227,10 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         # Option 1 - Create a new vehicle configuration directory based on an existing template
         option1_label_frame = tk.LabelFrame(self.root, text="Create a new vehicle configuration directory")
         option1_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=5)
-        template_dir_edit_tooltip = "Existing vehicle template directory containing the\n" \
-                                    "intermediate parameter files to be copied to the new vehicle directory"
-        template_dir_btn_tooltip = "Select the existing vehicle template directory containing the\n" \
-                                   "intermediate parameter files to be copied to the new vehicle directory"
+        template_dir_edit_tooltip = "Existing vehicle template directory containing the intermediate\n" \
+                                    "parameter files to be copied to the new vehicle configuration directory"
+        template_dir_btn_tooltip = "Select the existing vehicle template directory containing the intermediate\n" \
+                                   "parameter files to be copied to the new vehicle configuration directory"
         self.template_dir = DirectorySelectionWidgets(self, option1_label_frame, initial_template_dir,
                                                       "(source) Template directory:",
                                                       False,
@@ -240,32 +241,34 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         use_fc_params_checkbox = Checkbutton(option1_label_frame, variable=self.use_fc_params,
                                              text="Use parameter values from connected FC, not from template files")
         use_fc_params_checkbox.pack(anchor=tk.NW)
-        show_tooltip(use_fc_params_checkbox, "Use the parameter values from the connected flight controller instead\n" \
-                     "of the template files when creating a new vehicle directory from a template.\n" \
+        show_tooltip(use_fc_params_checkbox,
+                     "Use the parameter values from the connected flight controller instead of the\n" \
+                     "template files when creating a new vehicle configuration directory from a template.\n" \
                      "This option is only available when a flight controller is connected")
         if not fc_connected:
             self.use_fc_params.set(False)
             use_fc_params_checkbox.config(state=tk.DISABLED)
 
-        new_base_dir_edit_tooltip = "Existing directory where the new vehicle directory will be created"
-        new_base_dir_btn_tooltip = "Select the existing directory where the new vehicle directory will be created"
+        new_base_dir_edit_tooltip = "Existing directory where the new vehicle configuration directory will be created"
+        new_base_dir_btn_tooltip = "Select the directory where the new vehicle configuration directory will be created"
         self.new_base_dir = DirectorySelectionWidgets(self, option1_label_frame, initial_base_dir,
                                                       "(destination) base directory:",
                                                       False,
                                                       new_base_dir_edit_tooltip,
                                                       new_base_dir_btn_tooltip)
         self.new_base_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
-        new_dir_edit_tooltip = "A new vehicle directory with this name will be created at the (destination) base directory"
+        new_dir_edit_tooltip = "A new vehicle configuration directory with this name will be created at the " \
+            "(destination) base directory"
         self.new_dir = DirectoryNameWidgets(option1_label_frame, initial_new_dir,
                                             "(destination) new vehicle name:",
                                             new_dir_edit_tooltip)
         self.new_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
         create_vehicle_directory_from_template_button = tk.Button(option1_label_frame,
-                                                                  text="Create vehicle directory from template",
+                                                                  text="Create vehicle configuration directory from template",
                                                                   command=self.create_new_vehicle_from_template)
         create_vehicle_directory_from_template_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)
         show_tooltip(create_vehicle_directory_from_template_button,
-                     "Create a new vehicle directory on the (destination) base directory,\n"
+                     "Create a new vehicle configuration directory on the (destination) base directory,\n"
                      "copy the template files from the (source) template directory to it and\n"
                      "load the newly created files into the application")
 
@@ -283,22 +286,23 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         self.connection_selection_widgets.container_frame.pack(expand=True, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
     def create_option3_widgets(self, last_vehicle_dir: str):
-        # Option 3 - Open the last used vehicle directory
-        option3_label_frame = tk.LabelFrame(self.root, text="Open the last used vehicle directory")
+        # Option 3 - Open the last used vehicle configuration directory
+        option3_label_frame = tk.LabelFrame(self.root, text="Open the last used vehicle configuration directory")
         option3_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
 
-        # Check if there is a last used vehicle directory
+        # Check if there is a last used vehicle configuration directory
         button_state = tk.NORMAL if last_vehicle_dir else tk.DISABLED
-        open_last_vehicle_directory_button = tk.Button(option3_label_frame, text="Open Last Used Vehicle Directory",
-                                                command=lambda last_vehicle_dir=last_vehicle_dir: \
-                                                    self.open_last_vehicle_directory(last_vehicle_dir),
-                                                state=button_state)
+        open_last_vehicle_directory_button = tk.Button(option3_label_frame,
+                                                       text="Open Last Used Vehicle Configuration Directory",
+                                                       command=lambda last_vehicle_dir=last_vehicle_dir: \
+                                                        self.open_last_vehicle_directory(last_vehicle_dir),
+                                                       state=button_state)
         open_last_vehicle_directory_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)
         show_tooltip(open_last_vehicle_directory_button,
-                     "Directly open the last used vehicle directory for configuring the vehicle")
+                     "Directly open the last used vehicle configuration directory for configuring and tuning the vehicle")
 
     def create_new_vehicle_from_template(self):
-        # Get the selected template directory and new vehicle directory name
+        # Get the selected template directory and new vehicle configuration directory name
         template_dir = self.template_dir.get_selected_directory()
         new_base_dir = self.new_base_dir.get_selected_directory()
         new_vehicle_name = self.new_dir.get_selected_directory()
@@ -328,7 +332,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             messagebox.showerror("Copying template files", error_msg)
             return
 
-        # Update the local_filesystem with the new vehicle directory
+        # Update the local_filesystem with the new vehicle configuration directory
         self.local_filesystem.vehicle_dir = new_vehicle_dir
 
         try:
@@ -345,13 +349,13 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         else:
             # No intermediate parameter files were found in the source template directory
             error_message = f"No intermediate parameter files found in the selected '{template_dir}'" \
-                " template vehicle directory.\n" \
-                "Please select a vehicle directory containing valid ArduPilot intermediate parameter files."
+                " template vehicle configuration directory.\n" \
+                "Please select a vehicle configuration directory containing valid ArduPilot intermediate parameter files."
             messagebox.showerror("No Parameter Files Found", error_message)
         self.created_new_vehicle_from_template = True
 
     def open_last_vehicle_directory(self, last_vehicle_dir: str):
-        # Attempt to open the last opened vehicle directory
+        # Attempt to open the last opened vehicle configuration directory
         if last_vehicle_dir:
             # If a last opened directory is found, proceed as if the user had manually selected it
             self.local_filesystem.vehicle_dir = last_vehicle_dir
@@ -370,7 +374,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         else:
             # If no last opened directory is found, display a message to the user
             messagebox.showerror("No Last Vehicle Directory Found",
-                                 "No last opened vehicle directory was found. Please select a directory manually.")
+                                 "No last opened vehicle configuration directory was found.\n" \
+                                    "Please select a directory manually.")
 
 def argument_parser():
     """
