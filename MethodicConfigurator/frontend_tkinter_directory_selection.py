@@ -196,7 +196,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         self.local_filesystem = local_filesystem
         self.root.title("Amilcar Lucas's - ArduPilot methodic configurator " + VERSION + \
                         " - Select vehicle configuration directory")
-        self.root.geometry("800x575") # Set the window size
+        self.root.geometry("800x625") # Set the window size
         self.use_fc_params = tk.BooleanVar(value=False)
         self.created_new_vehicle_from_template = False
 
@@ -206,7 +206,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         else:
             introduction_text = "No intermediate parameter files found\nin the --vehicle-dir specified directory."
         introduction_label = tk.Label(self.root, text=introduction_text + \
-                                           "\nChoose one of the following options:")
+                                           "\nChoose one of the following three options:")
         introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)
         template_dir, new_base_dir, vehicle_dir = LocalFilesystem.get_recently_used_dirs()
         self.create_option1_widgets(template_dir,
@@ -225,8 +225,9 @@ class VehicleDirectorySelectionWindow(BaseWindow):
     def create_option1_widgets(self, initial_template_dir: str, initial_base_dir: str, initial_new_dir: str,
                                fc_connected: bool):
         # Option 1 - Create a new vehicle configuration directory based on an existing template
-        option1_label_frame = tk.LabelFrame(self.root, text="Create a new vehicle configuration directory")
-        option1_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=5)
+        option1_label_frame = tk.LabelFrame(self.root, text="Create a new vehicle configuration directory",
+                                            font= ('Helvetica 11 bold'), borderwidth=2, relief="solid")
+        option1_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
         template_dir_edit_tooltip = "Existing vehicle template directory containing the intermediate\n" \
                                     "parameter files to be copied to the new vehicle configuration directory"
         template_dir_btn_tooltip = "Select the existing vehicle template directory containing the intermediate\n" \
@@ -274,10 +275,12 @@ class VehicleDirectorySelectionWindow(BaseWindow):
 
     def create_option2_widgets(self, initial_dir: str):
         # Option 2 - Use an existing vehicle configuration directory
-        option2_label_frame = tk.LabelFrame(self.root, text="Open an existing vehicle configuration directory")
+        option2_label_frame = tk.LabelFrame(self.root, text="Open an existing vehicle configuration directory",
+                                            font= ('Helvetica 11 bold'), borderwidth=2, relief="solid")
         option2_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
-        option2_label = tk.Label(option2_label_frame, text="Use an existing vehicle configuration directory\n"
-                                 "with intermediate parameter files, apm.pdef.xml\nand vehicle_components.json")
+        option2_label = tk.Label(option2_label_frame,
+                                 text="Use an existing vehicle configuration directory with\n" \
+                                   "intermediate parameter files, apm.pdef.xml and vehicle_components.json")
         option2_label.pack(expand=False, fill=tk.X, padx=6)
         self.connection_selection_widgets = VehicleDirectorySelectionWidgets(self, option2_label_frame,
                                                                              self.local_filesystem,
@@ -287,8 +290,16 @@ class VehicleDirectorySelectionWindow(BaseWindow):
 
     def create_option3_widgets(self, last_vehicle_dir: str):
         # Option 3 - Open the last used vehicle configuration directory
-        option3_label_frame = tk.LabelFrame(self.root, text="Open the last used vehicle configuration directory")
+        option3_label_frame = tk.LabelFrame(self.root, text="Open the last used vehicle configuration directory",
+                                            font= ('Helvetica 11 bold'), borderwidth=2, relief="solid")
         option3_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
+
+        last_dir = DirectorySelectionWidgets(self, option3_label_frame, last_vehicle_dir if last_vehicle_dir else '',
+                                             "Last used vehicle configuration directory:",
+                                             False,
+                                             "Last used vehicle configuration directory",
+                                             "")
+        last_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
         # Check if there is a last used vehicle configuration directory
         button_state = tk.NORMAL if last_vehicle_dir else tk.DISABLED
