@@ -8,4 +8,4 @@ This file is part of Ardupilot methodic configurator. https://github.com/ArduPil
 SPDX-License-Identifier:    GPL-3
 '''
 
-VERSION = '0.6.5'
+VERSION = '0.6.6'
