@@ -271,6 +271,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Create upload button
         upload_selected_button = tk.Button(buttons_frame, text="Upload selected params to FC, and advance to next param file",
                                            command=self.on_upload_selected_click)
+        upload_selected_button.configure(state='normal' if self.flight_controller.master else 'disabled')
         upload_selected_button.pack(side=tk.LEFT, padx=(8, 8)) # Add padding on both sides of the upload selected button
         show_tooltip(upload_selected_button, "Upload selected parameters to the flight controller and advance to the next "
                      "intermediate parameter file\nIf changes have been made to the current file it will ask if you want "
