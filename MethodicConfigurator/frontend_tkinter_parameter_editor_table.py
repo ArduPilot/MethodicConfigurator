@@ -139,7 +139,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 column.append(self.__create_flightcontroller_value(fc_parameters, param_name, param_default, doc_tooltip))
                 column.append(self.__create_new_value_entry(param_name, param, param_metadata, param_default, doc_tooltip))
                 column.append(self.__create_unit_label(param_metadata))
-                column.append(self.__create_upload_checkbutton(param_name))
+                column.append(self.__create_upload_checkbutton(param_name, bool(fc_parameters)))
                 column.append(self.__create_change_reason_entry(param_name, param, column[3]))
 
                 column[0].grid(row=i, column=0, sticky="w", padx=0)
@@ -316,9 +316,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(unit_label, unit_tooltip)
         return unit_label
 
-    def __create_upload_checkbutton(self, param_name):
-        self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=True) # Default to selected
-        upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
+    def __create_upload_checkbutton(self, param_name, fc_connected):
+        self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=fc_connected)
+        upload_checkbutton = tk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
+        upload_checkbutton.configure(state='normal' if fc_connected else 'disabled')
         show_tooltip(upload_checkbutton, f'When selected upload {param_name} new value to the flight controller')
         return upload_checkbutton
 
