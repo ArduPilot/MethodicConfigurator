@@ -8,6 +8,8 @@ This file is part of Ardupilot methodic configurator. https://github.com/ArduPil
 SPDX-License-Identifier:    GPL-3
 '''
 
+# https://wiki.tcl-lang.org/page/Changing+Widget+Colors
+
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
@@ -60,7 +62,7 @@ def show_tooltip(widget, text):
 
     tooltip = tk.Toplevel(widget)
     tooltip.wm_overrideredirect(True)
-    tooltip_label = tk.Label(tooltip, text=text, bg="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT)
+    tooltip_label = ttk.Label(tooltip, text=text, background="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT)
     tooltip_label.pack()
     tooltip.withdraw() # Initially hide the tooltip
 
@@ -112,23 +114,25 @@ class AutoResizeCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
             show_tooltip(self, tooltip)
 
 
-class ScrollFrame(tk.Frame):
+class ScrollFrame(ttk.Frame):
     """
     A custom Frame widget that supports scrolling.
 
-    This class extends the tk.Frame widget to include a canvas and a scrollbar,
+    This class extends the ttk.Frame widget to include a canvas and a scrollbar,
     allowing for scrolling content within the frame. It's useful for creating
     scrollable areas within your application's GUI.
     """
     def __init__(self, parent):
         super().__init__(parent) # create a frame (self)
 
-        self.canvas = tk.Canvas(self, borderwidth=0)                                 # place canvas on self
+        # place canvas on self, copy ttk.background to tk.background
+        self.canvas = tk.Canvas(self, borderwidth=0, background=ttk.Style(parent).lookup('TFrame', 'background'))
 
         # place a frame on the canvas, this frame will hold the child widgets
-        self.view_port = tk.Frame(self.canvas)
+        self.view_port = ttk.Frame(self.canvas)
 
-        self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)  # place a scrollbar on self
+        # place a tk.scrollbar on self. ttk.scrollbar will not work here
+        self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         # attach scrollbar action to scroll of canvas
         self.canvas.configure(yscrollcommand=self.vsb.set)
 
@@ -218,12 +222,15 @@ class ProgressWindow:
         self.progress_window.title(title)
         self.progress_window.geometry(f"{width}x{height}")
 
+        main_frame = ttk.Frame(self.progress_window)
+        main_frame.pack(expand=True, fill=tk.BOTH)
+
         # Create a progress bar
-        self.progress_bar = ttk.Progressbar(self.progress_window, length=100, mode='determinate')
+        self.progress_bar = ttk.Progressbar(main_frame, length=100, mode='determinate')
         self.progress_bar.pack(side=tk.TOP, fill=tk.X, expand=False, padx=(5, 5), pady=(10, 10))
 
         # Create a label to display the progress message
-        self.progress_label = tk.Label(self.progress_window, text=message.format(0, 0))
+        self.progress_label = ttk.Label(main_frame, text=message.format(0, 0))
         self.progress_label.pack(side=tk.TOP, fill=tk.X, expand=False, pady=(10, 10))
 
         self.progress_window.lift()
@@ -280,17 +287,14 @@ class BaseWindow:
         # Set the theme to 'alt'
         style = ttk.Style()
         style.theme_use('alt')
+        style.configure("Bold.TLabel", font=("TkDefaultFont", 11, "bold"))
+
+        self.main_frame = ttk.Frame(self.root)
+        self.main_frame.pack(expand=True, fill=tk.BOTH)
 
         # Set the application icon for the window and all child windows
         # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
         self.root.iconphoto(True, tk.PhotoImage(file=LocalFilesystem.application_icon_filepath()))
-
-        # Get the background color for the 'TFrame' widget
-        self.default_background_color = '#f0f0f0' # style.lookup('TFrame', 'background')
-
-        # Configure the background color for the checkbutton
-        style.configure('TCheckbutton', background=self.default_background_color)
-        style.configure('TCombobox', background=self.default_background_color)
 
     @staticmethod
     def center_window(window, parent):
@@ -311,7 +315,7 @@ class BaseWindow:
         window.geometry(f"+{x}+{y}")
 
     @staticmethod
-    def put_image_in_label(parent: tk.Toplevel, filepath: str, image_height: int=40) -> tk.Label:
+    def put_image_in_label(parent: tk.Toplevel, filepath: str, image_height: int=40) -> ttk.Label:
         # Load the image and scale it down to image_height pixels in height
         image = Image.open(filepath)
         width, height = image.size
@@ -323,6 +327,6 @@ class BaseWindow:
         photo = ImageTk.PhotoImage(resized_image)
 
         # Create a label with the resized image
-        image_label = tk.Label(parent, image=photo)
+        image_label = ttk.Label(parent, image=photo)
         image_label.image = photo # Keep a reference to the image to prevent it from being garbage collected
         return image_label

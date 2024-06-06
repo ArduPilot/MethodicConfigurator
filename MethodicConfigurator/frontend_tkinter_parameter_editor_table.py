@@ -49,6 +49,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.upload_checkbutton_var = {}
         self.at_least_one_param_edited = False
 
+        style = ttk.Style()
+        style.configure('narrow.TButton', padding=0, width=4, border=(0, 0, 0, 0))
+
         # Prepare a dictionary that maps variable names to their values
         # These variables are used by the forced_parameters and derived_parameters in *_configuration_steps.json files
         self.variables = local_filesystem.get_eval_variables()
@@ -80,7 +83,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                     "When selected, upload the new value to the flight controller",
                     "Reason why respective parameter changed"]
         for i, header in enumerate(headers):
-            label = tk.Label(self.view_port, text=header)
+            label = ttk.Label(self.view_port, text=header)
             label.grid(row=0, column=i, sticky="ew") # Use sticky="ew" to make the label stretch horizontally
             show_tooltip(label, tooltips[i])
 
@@ -151,7 +154,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 column[6].grid(row=i, column=6, sticky="ew", padx=(0, 5))
 
             # Add the "Add" button at the bottom of the table
-            add_button = tk.Button(self.view_port, text="Add", command=lambda: self.__on_parameter_add(fc_parameters))
+            add_button = ttk.Button(self.view_port, text="Add", style='narrow.TButton',
+                                    command=lambda: self.__on_parameter_add(fc_parameters))
             show_tooltip(add_button, f"Add a parameter to the {self.current_file} file")
             add_button.grid(row=len(params)+2, column=0, sticky="w", padx=0)
 
@@ -170,16 +174,17 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.view_port.columnconfigure(6, weight=1) # Change Reason
 
     def __create_delete_button(self, param_name):
-        delete_button = tk.Button(self.view_port, text="Del", command=lambda: self.__on_parameter_delete(param_name))
+        delete_button = ttk.Button(self.view_port, text="Del", style='narrow.TButton',
+                                   command=lambda: self.__on_parameter_delete(param_name))
         show_tooltip(delete_button, f"Delete {param_name} from the {self.current_file} file")
         return delete_button
 
     def __create_parameter_name(self, param_name, param_metadata, doc_tooltip):
         is_calibration = param_metadata.get('Calibration', False) if param_metadata else False
         is_readonly = param_metadata.get('ReadOnly', False) if param_metadata else False
-        parameter_label = tk.Label(self.view_port, text=param_name + (" " * (16 - len(param_name))),
+        parameter_label = ttk.Label(self.view_port, text=param_name + (" " * (16 - len(param_name))),
                                            background="red" if is_readonly else "yellow" if is_calibration else
-                                           self.root.cget("background"))
+                                           ttk.Style(self.root).lookup('TFrame', 'background'))
         if doc_tooltip:
             show_tooltip(parameter_label, doc_tooltip)
         return parameter_label
@@ -189,19 +194,19 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             value_str = format(fc_parameters[param_name], '.6f').rstrip('0').rstrip('.')
             if param_default is not None and is_within_tolerance(fc_parameters[param_name], param_default.value):
                         # If it matches, set the background color to light blue
-                flightcontroller_value = tk.Label(self.view_port, text=value_str,
+                flightcontroller_value = ttk.Label(self.view_port, text=value_str,
                                                           background="light blue")
             else:
                         # Otherwise, set the background color to the default color
-                flightcontroller_value = tk.Label(self.view_port, text=value_str)
+                flightcontroller_value = ttk.Label(self.view_port, text=value_str)
         else:
-            flightcontroller_value = tk.Label(self.view_port, text="N/A", background="orange")
+            flightcontroller_value = ttk.Label(self.view_port, text="N/A", background="orange")
         if doc_tooltip:
             show_tooltip(flightcontroller_value, doc_tooltip)
         return flightcontroller_value
 
     @staticmethod
-    def __update_new_value_entry_text(new_value_entry: tk.Entry, value: float, param_default):
+    def __update_new_value_entry_text(new_value_entry: ttk.Entry, value: float, param_default):
         new_value_entry.delete(0, tk.END)
         text = format(value, '.6f').rstrip('0').rstrip('.')
         new_value_entry.insert(0, text)
@@ -228,7 +233,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 param.value = self.local_filesystem.derived_parameters[self.current_file][param_name].value
                 self.at_least_one_param_edited = True
 
-        new_value_entry = tk.Entry(self.view_port, width=10, justify=tk.RIGHT)
+        new_value_entry = ttk.Entry(self.view_port, width=10, justify=tk.RIGHT)
         ParameterEditorTable.__update_new_value_entry_text(new_value_entry, param.value, param_default)
         bitmask_dict = param_metadata.get('Bitmask', None) if param_metadata else None
         try:
@@ -295,7 +300,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         new_decimal_value = sum(1 << key for key in checked_keys)
 
         # Replace the close button with a read-only label displaying the current new_decimal_value
-        close_label = tk.Label(window, text=f"{param_name} Value: {new_decimal_value}", state='disabled')
+        close_label = ttk.Label(window, text=f"{param_name} Value: {new_decimal_value}", state='disabled')
         close_label.grid(row=len(bitmask_dict), column=0, pady=10)
 
         # Bind the on_close function to the window's WM_DELETE_WINDOW protocol
@@ -309,7 +314,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         window.wait_window() # Wait for the window to be closed
 
     def __create_unit_label(self, param_metadata):
-        unit_label = tk.Label(self.view_port, text=param_metadata.get('unit') if param_metadata else "")
+        unit_label = ttk.Label(self.view_port, text=param_metadata.get('unit') if param_metadata else "")
         unit_tooltip = param_metadata.get('unit_tooltip') if param_metadata else \
             "No documentation available in apm.pdef.xml for this parameter"
         if unit_tooltip:
@@ -318,7 +323,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def __create_upload_checkbutton(self, param_name, fc_connected):
         self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=fc_connected)
-        upload_checkbutton = tk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
+        upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
         upload_checkbutton.configure(state='normal' if fc_connected else 'disabled')
         show_tooltip(upload_checkbutton, f'When selected upload {param_name} new value to the flight controller')
         return upload_checkbutton
@@ -339,7 +344,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 param.comment = self.local_filesystem.derived_parameters[self.current_file][param_name].comment
                 self.at_least_one_param_edited = True
 
-        change_reason_entry = tk.Entry(self.view_port, background="white")
+        change_reason_entry = ttk.Entry(self.view_port, background="white")
         change_reason_entry.insert(0, "" if param.comment is None else param.comment)
         if present_as_forced:
             change_reason_entry.config(state='disabled', background='light grey')
@@ -455,7 +460,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     def generate_edit_widgets_focus_out(self):
         # Trigger the <FocusOut> event for all entry widgets to ensure all changes are processed
         for widget in self.view_port.winfo_children():
-            if isinstance(widget, tk.Entry):
+            if isinstance(widget, ttk.Entry):
                 widget.event_generate("<FocusOut>", when="now")
 
     def get_at_least_one_param_edited(self):
