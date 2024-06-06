@@ -59,11 +59,11 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         self.__create_documentation_frame()
 
     def __create_documentation_frame(self):
-        self.documentation_frame = tk.LabelFrame(self.root, text="Documentation")
+        self.documentation_frame = ttk.LabelFrame(self.root, text="Documentation")
         self.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 4), padx=(4, 4))
 
         # Create a grid structure within the documentation_frame
-        documentation_grid = tk.Frame(self.documentation_frame)
+        documentation_grid = ttk.Frame(self.documentation_frame)
         documentation_grid.pack(fill="both", expand=True)
 
         descriptive_texts = ["Forum Blog:", "Wiki:", "External tool:", "Mandatory:"]
@@ -74,12 +74,12 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
                                 "vehicle,\n 0% you can ignore this file if it does not apply to your vehicle"]
         for i, text in enumerate(descriptive_texts):
             # Create labels for the first column with static descriptive text
-            label = tk.Label(documentation_grid, text=text)
+            label = ttk.Label(documentation_grid, text=text)
             label.grid(row=i, column=0, sticky="w")
             show_tooltip(label, descriptive_tooltips[i])
 
             # Create labels for the second column with the documentation links
-            self.documentation_labels[text] = tk.Label(documentation_grid)
+            self.documentation_labels[text] = ttk.Label(documentation_grid)
             self.documentation_labels[text].grid(row=i, column=1, sticky="w")
 
         # Dynamically update the documentation text and URL links
@@ -107,11 +107,11 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
     def __update_documentation_label(self, label_key, text, url, url_expected=True):
         label = self.documentation_labels[label_key]
         if url:
-            label.config(text=text, fg="blue", cursor="hand2", underline=True)
+            label.config(text=text, foreground="blue", cursor="hand2", underline=True)
             label.bind("<Button-1>", lambda event, url=url: webbrowser_open(url))
             show_tooltip(label, url)
         else:
-            label.config(text=text, fg="black", cursor="arrow", underline=False)
+            label.config(text=text, foreground="black", cursor="arrow", underline=False)
             label.bind("<Button-1>", lambda event: None)
             if url_expected:
                 show_tooltip(label, "Documentation URL not available")
@@ -123,29 +123,32 @@ def show_about_window(root, version: str):
     about_window.title("About")
     about_window.geometry("650x220")
 
+    main_frame = ttk.Frame(about_window)
+    main_frame.pack(expand=True, fill=tk.BOTH)
+
     # Add the "About" message
     about_message = f"ArduPilot Methodic Configurator Version: {version}\n\n" \
                     "A clear configuration sequence for ArduPilot vehicles.\n\n" \
                     "Copyright © 2024 Amilcar do Carmo Lucas and ArduPilot.org\n\n" \
                     "Licensed under the GNU General Public License v3.0"
-    about_label = tk.Label(about_window, text=about_message, wraplength=450)
+    about_label = ttk.Label(main_frame, text=about_message, wraplength=450)
     about_label.pack(padx=10, pady=10)
 
     # Create buttons for each action
-    user_manual_button = tk.Button(about_window, text="User Manual",
-                                   command=lambda: webbrowser_open(
+    user_manual_button = ttk.Button(main_frame, text="User Manual",
+                                    command=lambda: webbrowser_open(
                                        "https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"))
-    support_forum_button = tk.Button(about_window, text="Support Forum",
-                                     command=lambda: webbrowser_open(
+    support_forum_button = ttk.Button(main_frame, text="Support Forum",
+                                      command=lambda: webbrowser_open(
                                          "http://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/1"))
-    report_bug_button = tk.Button(about_window, text="Report a Bug",
-                                  command=lambda: webbrowser_open(
+    report_bug_button = ttk.Button(main_frame, text="Report a Bug",
+                                   command=lambda: webbrowser_open(
                                       "https://github.com/ArduPilot/MethodicConfigurator/issues/new"))
-    credits_button = tk.Button(about_window, text="Credits",
-                               command=lambda: webbrowser_open(
+    credits_button = ttk.Button(main_frame, text="Credits",
+                                command=lambda: webbrowser_open(
                                    "https://github.com/ArduPilot/MethodicConfigurator/blob/master/credits/CREDITS.md"))
-    source_button = tk.Button(about_window, text="Source Code",
-                              command=lambda: webbrowser_open(
+    source_button = ttk.Button(main_frame, text="Source Code",
+                               command=lambda: webbrowser_open(
                                   "https://github.com/ArduPilot/MethodicConfigurator"))
 
     # Pack the buttons
@@ -189,7 +192,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.__create_conf_widgets(version)
 
         # Create a DocumentationFrame object for the Documentation Content
-        self.documentation_frame = DocumentationFrame(self.root, self.local_filesystem, self.current_file)
+        self.documentation_frame = DocumentationFrame(self.main_frame, self.local_filesystem, self.current_file)
 
         self.__create_parameter_area_widgets()
 
@@ -197,10 +200,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.root.mainloop()
 
     def __create_conf_widgets(self, version: str):
-        config_frame = tk.Frame(self.root)
+        config_frame = ttk.Frame(self.main_frame)
         config_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0)) # Pack the frame at the top of the window
 
-        config_subframe = tk.Frame(config_frame)
+        config_subframe = ttk.Frame(config_frame)
         config_subframe.pack(side=tk.LEFT, fill="x", expand=True, anchor=tk.NW) # Pack the frame at the top of the window
 
         # Create a new frame inside the config_subframe for the intermediate parameter file directory selection labels
@@ -211,11 +214,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         directory_selection_frame.container_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(4, 6))
 
         # Create a new frame inside the config_subframe for the intermediate parameter file selection label and combobox
-        file_selection_frame = tk.Frame(config_subframe)
+        file_selection_frame = ttk.Frame(config_subframe)
         file_selection_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(6, 6))
 
         # Create a label for the Combobox
-        file_selection_label = tk.Label(file_selection_frame, text="Current intermediate parameter file:")
+        file_selection_label = ttk.Label(file_selection_frame, text="Current intermediate parameter file:")
         file_selection_label.pack(side=tk.TOP, anchor=tk.NW) # Add the label to the top of the file_selection_frame
 
         # Create Combobox for intermediate parameter file selection
@@ -232,7 +235,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         image_label = BaseWindow.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
-        image_label.bind("<Button-1>", lambda event: show_about_window(self.root, version))
+        image_label.bind("<Button-1>", lambda event: show_about_window(self.main_frame, version))
         show_tooltip(image_label, "User Manual, Support Forum, Report a Bug, Credits, Source Code")
 
     def __create_parameter_area_widgets(self):
@@ -240,16 +243,16 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.annotate_params_into_files = tk.BooleanVar(value=False)
 
         # Create a Scrollable parameter editor table
-        self.parameter_editor_table = ParameterEditorTable(self.root, self.local_filesystem, self)
+        self.parameter_editor_table = ParameterEditorTable(self.main_frame, self.local_filesystem, self)
         self.repopulate_parameter_table(self.current_file)
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 
         # Create a frame for the buttons
-        buttons_frame = tk.Frame(self.root)
+        buttons_frame = ttk.Frame(self.main_frame)
         buttons_frame.pack(side="bottom", fill="x", expand=False, pady=(10, 10))
 
         # Create a frame for the checkboxes
-        checkboxes_frame = tk.Frame(buttons_frame)
+        checkboxes_frame = ttk.Frame(buttons_frame)
         checkboxes_frame.pack(side=tk.LEFT, padx=(8, 8))
 
         # Create a checkbox for toggling parameter display
@@ -269,8 +272,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                      "The files will be bigger, but all the existing parameter documentation will be included inside")
 
         # Create upload button
-        upload_selected_button = tk.Button(buttons_frame, text="Upload selected params to FC, and advance to next param file",
-                                           command=self.on_upload_selected_click)
+        upload_selected_button = ttk.Button(buttons_frame, text="Upload selected params to FC, and advance to next param file",
+                                            command=self.on_upload_selected_click)
         upload_selected_button.configure(state='normal' if self.flight_controller.master else 'disabled')
         upload_selected_button.pack(side=tk.LEFT, padx=(8, 8)) # Add padding on both sides of the upload selected button
         show_tooltip(upload_selected_button, "Upload selected parameters to the flight controller and advance to the next "
@@ -278,7 +281,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                      "to save them\nIt will reset the FC if necessary, re-download all parameters and validate their value")
 
         # Create skip button
-        skip_button = tk.Button(buttons_frame, text="Skip parameter file", command=self.on_skip_click)
+        skip_button = ttk.Button(buttons_frame, text="Skip parameter file", command=self.on_skip_click)
         skip_button.pack(side=tk.RIGHT, padx=(8, 8)) # Add right padding to the skip button
         show_tooltip(skip_button, "Skip to the next intermediate parameter file without uploading any changes to the flight "
                      "controller\nIf changes have been made to the current file it will ask if you want to save them")
@@ -303,7 +306,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 if filename:
                     messagebox.showwarning("IMU temperature calibration", "Please wait, this can take a really long time and\n"
                                            "the GUI will be unresponsive until it finishes.")
-                    self.tempcal_imu_progress_window = ProgressWindow(self.root, "Reading IMU calibration messages",
+                    self.tempcal_imu_progress_window = ProgressWindow(self.main_frame, "Reading IMU calibration messages",
                                                                       "Please wait, this can take a long time")
                     # Pass the selected filename to the IMUfit class
                     IMUfit(filename, tempcal_imu_result_param_fullpath, False, False, False, False,
@@ -356,7 +359,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.repopulate_parameter_table(selected_file)
 
     def download_flight_controller_parameters(self, redownload: bool = False):
-        self.param_download_progress_window = ProgressWindow(self.root, ("Re-d" if redownload else "D") + \
+        self.param_download_progress_window = ProgressWindow(self.main_frame, ("Re-d" if redownload else "D") + \
                                                              "ownloading FC parameters", "Downloaded {} of {} parameters")
         # Download all parameters from the flight controller
         self.flight_controller.fc_parameters = self.flight_controller.download_params(
@@ -439,7 +442,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                                                         "(s) potentially require a reset\nDo you want to reset the ArduPilot?")
 
         if fc_reset_required:
-            self.reset_progress_window = ProgressWindow(self.root, "Resetting Flight Controller",
+            self.reset_progress_window = ProgressWindow(self.main_frame, "Resetting Flight Controller",
                                                         "Waiting for {} of {} seconds")
             # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
             error_message = self.flight_controller.reset_and_reconnect(self.reset_progress_window.update_progress_bar)

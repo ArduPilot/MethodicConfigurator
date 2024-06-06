@@ -69,32 +69,34 @@ class ComponentEditorWindowBase(BaseWindow):
 
         self.entry_widgets = {} # Dictionary for entry widgets
 
-        main_frame = ttk.Frame(self.root)
-        main_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0)) # Pack the frame at the top of the window
+        intro_frame = ttk.Frame(self.main_frame)
+        intro_frame.pack(side=tk.TOP, fill="x", expand=False)
 
         explanation_text = "Please configure ALL vehicle component properties in this window.\n"
         explanation_text += "Scroll down and make sure you do not miss a property.\n"
         explanation_text += "Saving the result will write to the vehicle_components.json file."
-        explanation_label = tk.Label(main_frame, text=explanation_text, wraplength=800, justify=tk.LEFT)
+        explanation_label = ttk.Label(intro_frame, text=explanation_text, wraplength=800, justify=tk.LEFT)
         explanation_label.pack(side=tk.LEFT, padx=(10, 10), pady=(10, 0), anchor=tk.NW)
 
         # Load the vehicle image and scale it down to image_height pixels in height
         if local_filesystem.vehicle_image_exists():
-            image_label = self.put_image_in_label(main_frame, local_filesystem.vehicle_image_filepath(), 100)
+            image_label = self.put_image_in_label(intro_frame, local_filesystem.vehicle_image_filepath(), 100)
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
             show_tooltip(image_label, "Replace the vehicle.jpg file in the vehicle directory to change the vehicle image.")
         else:
-            image_label = tk.Label(main_frame, text="No vehicle.jpg image file found on the vehicle directory.")
+            image_label = ttk.Label(intro_frame, text="No vehicle.jpg image file found on the vehicle directory.")
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
 
-        self.scroll_frame = ScrollFrame(self.root)
+        self.scroll_frame = ScrollFrame(self.main_frame)
         self.scroll_frame.pack(side="top", fill="both", expand=True)
 
         self.update_json_data()
 
         self.__populate_frames()
 
-        self.save_button = ttk.Button(self.root, text="Save data and start configuration", command=self.save_data)
+        save_frame = ttk.Frame(self.main_frame)
+        save_frame.pack(side=tk.TOP, fill="x", expand=False)
+        self.save_button = ttk.Button(save_frame, text="Save data and start configuration", command=self.save_data)
         show_tooltip(self.save_button, "Save component data and start parameter value configuration and tuning.")
         self.save_button.pack(pady=7)
 

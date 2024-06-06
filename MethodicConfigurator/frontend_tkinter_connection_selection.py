@@ -99,11 +99,11 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
         self.connection_progress_window = None
 
         # Create a new frame for the flight controller connection selection label and combobox
-        self.container_frame = tk.Frame(parent_frame)
+        self.container_frame = ttk.Frame(parent_frame)
 
         # Create a description label for the flight controller connection selection
-        conn_selection_label = tk.Label(self.container_frame, text="flight controller connection:")
-        conn_selection_label.pack(side=tk.TOP, anchor=tk.NW) # Add the label to the top of the conn_selection_frame
+        conn_selection_label = ttk.Label(self.container_frame, text="flight controller connection:")
+        conn_selection_label.pack(side=tk.TOP) # Add the label to the top of the conn_selection_frame
 
         # Create a read-only combobox for flight controller connection selection
         self.conn_selection_combobox = PairTupleCombobox(self.container_frame, self.flight_controller.get_connection_tuples(),
@@ -111,7 +111,7 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
                                                         "FC connection",
                                                          state='readonly')
         self.conn_selection_combobox.bind("<<ComboboxSelected>>", self.on_select_connection_combobox_change)
-        self.conn_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
+        self.conn_selection_combobox.pack(side=tk.TOP, pady=(4, 0))
         show_tooltip(self.conn_selection_combobox, "Select the flight controller connection\nYou can add a custom connection "
                      "to the existing ones")
 
@@ -174,7 +174,7 @@ class ConnectionSelectionWindow(BaseWindow):
     def __init__(self, flight_controller: FlightController, connection_result_string: str):
         super().__init__()
         self.root.title("Flight controller connection")
-        self.root.geometry("420x510") # Set the window size
+        self.root.geometry("460x450") # Set the window size
 
         # Explain why we are here
         if flight_controller.comport is None:
@@ -184,45 +184,56 @@ class ConnectionSelectionWindow(BaseWindow):
                 introduction_text = connection_result_string.replace(":", ":\n")
             else:
                 introduction_text = connection_result_string
-        self.introduction_label = tk.Label(self.root, text=introduction_text + "\nChoose one of the following three options:")
+        self.introduction_label = ttk.Label(self.main_frame, anchor=tk.CENTER, justify=tk.CENTER,
+                                            text=introduction_text + "\nChoose one of the following three options:")
         self.introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)
 
         # Option 1 - Auto-connect
-        option1_label_frame = tk.LabelFrame(self.root, text="Auto-connect to flight controller")
+        option1_label = ttk.Label(text="Auto-connect to flight controller", style="Bold.TLabel")
+        option1_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option1_label, borderwidth=2, relief="solid")
         option1_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
-        option1_label = tk.Label(option1_label_frame, text="Connect a flight controller to the PC,\n"
-                                 "wait 7 seconds for it to fully boot and\n"
-                                 "press the Auto-connect button below to connect to it")
+        option1_label = ttk.Label(option1_label_frame, anchor=tk.CENTER, justify=tk.CENTER,
+                                  text="Connect a flight controller to the PC,\n"
+                                  "wait 7 seconds for it to fully boot and\n"
+                                  "press the Auto-connect button below to connect to it")
         option1_label.pack(expand=False, fill=tk.X, padx=6)
-        autoconnect_button = tk.Button(option1_label_frame, text="Auto-connect", command=self.fc_autoconnect)
+        autoconnect_button = ttk.Button(option1_label_frame, text="Auto-connect", command=self.fc_autoconnect)
         autoconnect_button.pack(expand=False, fill=tk.X, padx=100, pady=6)
+        show_tooltip(autoconnect_button, "Auto-connect to a 'Mavlink'-talking serial device")
 
         # Option 2 - Manually select the flight controller connection or add a new one
-        option2_label_frame = tk.LabelFrame(self.root, text="Select flight controller connection")
+        option2_label = ttk.Label(text="Select flight controller connection", style="Bold.TLabel")
+        option2_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option2_label, borderwidth=2, relief="solid")
         option2_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
-        option2_label = tk.Label(option2_label_frame, text="Connect a flight controller to the PC,\n"
-                                 "wait 7 seconds for it to fully boot and\n"
-                                 "manually select the fight controller connection or add a new one")
+        option2_label = ttk.Label(option2_label_frame, anchor=tk.CENTER, justify=tk.CENTER,
+                                  text="Connect a flight controller to the PC,\n"
+                                  "wait 7 seconds for it to fully boot and\n"
+                                  "manually select the fight controller connection or add a new one")
         option2_label.pack(expand=False, fill=tk.X, padx=6)
         self.connection_selection_widgets = ConnectionSelectionWidgets(self, option2_label_frame, flight_controller,
                                                                        destroy_parent_on_connect=True,
                                                                        download_params_on_connect=False)
-        self.connection_selection_widgets.container_frame.pack(expand=True, fill=tk.X, padx=80, pady=6, anchor=tk.CENTER)
+        self.connection_selection_widgets.container_frame.pack(expand=False, fill=tk.X, padx=80, pady=6)
 
         # Option 3 - Skip FC connection, just edit the .param files on disk
-        option3_label_frame = tk.LabelFrame(self.root, text="No flight controller connection")
+        option3_label = ttk.Label(text="No flight controller connection", style="Bold.TLabel")
+        option3_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option3_label, borderwidth=2, relief="solid")
         option3_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
-        option3_label = tk.Label(option3_label_frame, text="Skip the flight controller connection,\n"
-                                 "no default parameter values will be fetched from the FC,\n"
-                                 "default parameter values from disk will be used instead\n"
-                                 "(if '00_default.param' file is present)\n"
-                                 "and just edit the intermediate '.param' files on disk")
-        option3_label.pack(expand=False, fill=tk.X, padx=6)
-        skip_fc_connection_button = tk.Button(option3_label_frame,
+        #option3_label = ttk.Label(option3_label_frame, anchor=tk.CENTER, justify=tk.CENTER,
+        #                          text="Skip the flight controller connection,\n"
+        #                          "no default parameter values will be fetched from the FC,\n"
+        #                          "default parameter values from disk will be used instead\n"
+        #                          "(if '00_default.param' file is present)\n"
+        #                          "and just edit the intermediate '.param' files on disk")
+        #option3_label.pack(expand=False, fill=tk.X, padx=6)
+        skip_fc_connection_button = ttk.Button(option3_label_frame,
                                               text="Skip FC connection, just edit the .param files on disk",
                                               command=lambda flight_controller=flight_controller:
                                               self.skip_fc_connection(flight_controller))
         skip_fc_connection_button.pack(expand=False, fill=tk.X, padx=15, pady=6)
+        show_tooltip(skip_fc_connection_button,
+                     "No parameter values will be fetched from the FC, default parameter values from disk will be used\n"
+                     "instead (if '00_default.param' file is present) and just edit the intermediate '.param' files on disk")
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_and_quit)

@@ -24,7 +24,6 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 from tkinter import filedialog
-from tkinter import Checkbutton
 
 from MethodicConfigurator.version import VERSION
 
@@ -53,15 +52,15 @@ class DirectorySelectionWidgets():
         self.autoresize_width = autoresize_width
 
         # Create a new frame for the directory selection label and button
-        self.container_frame = tk.Frame(parent_frame)
+        self.container_frame = ttk.Frame(parent_frame)
 
         # Create a description label for the directory
-        directory_selection_label = tk.Label(self.container_frame, text=label_text)
+        directory_selection_label = ttk.Label(self.container_frame, text=label_text)
         directory_selection_label.pack(side=tk.TOP, anchor=tk.NW)
         show_tooltip(directory_selection_label, dir_tooltip)
 
         # Create a new subframe for the directory selection
-        directory_selection_subframe = tk.Frame(self.container_frame)
+        directory_selection_subframe = ttk.Frame(self.container_frame)
         directory_selection_subframe.pack(side=tk.TOP, fill="x", expand=False, anchor=tk.NW)
 
         # Create a read-only entry for the directory
@@ -111,16 +110,16 @@ class DirectoryNameWidgets():  # pylint: disable=too-few-public-methods
     """
     def __init__(self, parent_frame, initial_dir: str, label_text: str, dir_tooltip: str):
         # Create a new frame for the directory name selection label
-        self.container_frame = tk.Frame(parent_frame)
+        self.container_frame = ttk.Frame(parent_frame)
 
         # Create a description label for the directory name entry
-        directory_selection_label = tk.Label(self.container_frame, text=label_text)
+        directory_selection_label = ttk.Label(self.container_frame, text=label_text)
         directory_selection_label.pack(side=tk.TOP, anchor=tk.NW)
         show_tooltip(directory_selection_label, dir_tooltip)
 
         # Create an entry for the directory
         self.dir_var = tk.StringVar(value=initial_dir)
-        directory_entry = tk.Entry(self.container_frame, textvariable=self.dir_var,
+        directory_entry = ttk.Entry(self.container_frame, textvariable=self.dir_var,
                                         width=max(4, len(initial_dir)))
         directory_entry.pack(side=tk.LEFT, fill="x", expand=True, anchor=tk.NW, pady=(4, 0))
         show_tooltip(directory_entry, dir_tooltip)
@@ -136,7 +135,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
     directory selections. It includes additional logic for updating the local filesystem with the
     selected vehicle directory and re-initializing the filesystem with the new directory.
     """
-    def __init__(self, parent: tk, parent_frame: tk.Frame,  # pylint: disable=too-many-arguments
+    def __init__(self, parent: ttk, parent_frame: ttk.Frame,  # pylint: disable=too-many-arguments
                  local_filesystem: LocalFilesystem,
                  initial_dir: str, destroy_parent_on_open: bool) -> None:
         # Call the parent constructor with the necessary arguments
@@ -205,8 +204,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             introduction_text = "No intermediate parameter files found\nin current working directory."
         else:
             introduction_text = "No intermediate parameter files found\nin the --vehicle-dir specified directory."
-        introduction_label = tk.Label(self.root, text=introduction_text + \
-                                           "\nChoose one of the following three options:")
+        introduction_label = ttk.Label(self.main_frame, anchor=tk.CENTER, justify=tk.CENTER,
+                                       text=introduction_text + "\nChoose one of the following three options:")
         introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)
         template_dir, new_base_dir, vehicle_dir = LocalFilesystem.get_recently_used_dirs()
         self.create_option1_widgets(template_dir,
@@ -222,11 +221,11 @@ class VehicleDirectorySelectionWindow(BaseWindow):
     def close_and_quit(self):
         sys_exit(0)
 
-    def create_option1_widgets(self, initial_template_dir: str, initial_base_dir: str, initial_new_dir: str,
-                               fc_connected: bool):
+    def create_option1_widgets(self, initial_template_dir: str, initial_base_dir: str,
+                               initial_new_dir: str, fc_connected: bool):
         # Option 1 - Create a new vehicle configuration directory based on an existing template
-        option1_label_frame = tk.LabelFrame(self.root, text="Create a new vehicle configuration directory",
-                                            font= ('Helvetica 11 bold'), borderwidth=2, relief="solid")
+        option1_label = ttk.Label(text="Create a new vehicle configuration directory", style="Bold.TLabel")
+        option1_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option1_label, borderwidth=2, relief="solid")
         option1_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
         template_dir_edit_tooltip = "Existing vehicle template directory containing the intermediate\n" \
                                     "parameter files to be copied to the new vehicle configuration directory"
@@ -239,8 +238,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                                                       template_dir_btn_tooltip)
         self.template_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
-        use_fc_params_checkbox = Checkbutton(option1_label_frame, variable=self.use_fc_params,
-                                             text="Use parameter values from connected FC, not from template files")
+        use_fc_params_checkbox = ttk.Checkbutton(option1_label_frame, variable=self.use_fc_params,
+                                                 text="Use parameter values from connected FC, not from template files")
         use_fc_params_checkbox.pack(anchor=tk.NW)
         show_tooltip(use_fc_params_checkbox,
                      "Use the parameter values from the connected flight controller instead of the\n" \
@@ -264,7 +263,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                                             "(destination) new vehicle name:",
                                             new_dir_edit_tooltip)
         self.new_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
-        create_vehicle_directory_from_template_button = tk.Button(option1_label_frame,
+        create_vehicle_directory_from_template_button = ttk.Button(option1_label_frame,
                                                                   text="Create vehicle configuration directory from template",
                                                                   command=self.create_new_vehicle_from_template)
         create_vehicle_directory_from_template_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)
@@ -275,11 +274,11 @@ class VehicleDirectorySelectionWindow(BaseWindow):
 
     def create_option2_widgets(self, initial_dir: str):
         # Option 2 - Use an existing vehicle configuration directory
-        option2_label_frame = tk.LabelFrame(self.root, text="Open an existing vehicle configuration directory",
-                                            font= ('Helvetica 11 bold'), borderwidth=2, relief="solid")
+        option2_label = ttk.Label(text="Open an existing vehicle configuration directory", style="Bold.TLabel")
+        option2_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option2_label, borderwidth=2, relief="solid")
         option2_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
-        option2_label = tk.Label(option2_label_frame,
-                                 text="Use an existing vehicle configuration directory with\n" \
+        option2_label = ttk.Label(option2_label_frame, anchor=tk.CENTER, justify=tk.CENTER,
+                                  text="Use an existing vehicle configuration directory with\n" \
                                    "intermediate parameter files, apm.pdef.xml and vehicle_components.json")
         option2_label.pack(expand=False, fill=tk.X, padx=6)
         self.connection_selection_widgets = VehicleDirectorySelectionWidgets(self, option2_label_frame,
@@ -290,8 +289,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
 
     def create_option3_widgets(self, last_vehicle_dir: str):
         # Option 3 - Open the last used vehicle configuration directory
-        option3_label_frame = tk.LabelFrame(self.root, text="Open the last used vehicle configuration directory",
-                                            font= ('Helvetica 11 bold'), borderwidth=2, relief="solid")
+        option3_label = ttk.Label(text="Open the last used vehicle configuration directory", style="Bold.TLabel")
+        option3_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option3_label, borderwidth=2, relief="solid")
         option3_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
 
         last_dir = DirectorySelectionWidgets(self, option3_label_frame, last_vehicle_dir if last_vehicle_dir else '',
@@ -303,7 +302,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
 
         # Check if there is a last used vehicle configuration directory
         button_state = tk.NORMAL if last_vehicle_dir else tk.DISABLED
-        open_last_vehicle_directory_button = tk.Button(option3_label_frame,
+        open_last_vehicle_directory_button = ttk.Button(option3_label_frame,
                                                        text="Open Last Used Vehicle Configuration Directory",
                                                        command=lambda last_vehicle_dir=last_vehicle_dir: \
                                                         self.open_last_vehicle_directory(last_vehicle_dir),
