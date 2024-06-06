@@ -38,24 +38,8 @@ class FlightControllerInfoWindow(BaseWindow):
         self.info_frame = ttk.Frame(self.main_frame)
         self.info_frame.pack(padx=20, pady=20)
 
-        # Dictionary mapping attribute names to their descriptions
-        attribute_descriptions = {
-            "Vendor": "vendor",
-            "Product": "product",
-            "Hardware Version": "board_version",
-            "Autopilot Type": "autopilot",
-            "ArduPilot FW Type": "vehicle_type",
-            "MAV Type": "mav_type",
-            "Firmware Version": "flight_sw_version_and_type",
-            "Git Hash": "flight_custom_version",
-            "OS Git Hash": "os_custom_version",
-            "Capabilities": "capabilities",
-            "System ID": "system_id",
-            "Component ID": "component_id"
-        }
-
         # Dynamically create labels and text fields for each attribute
-        for row_nr, (description, attr_name) in enumerate(attribute_descriptions.items()):
+        for row_nr, (description, attr_value) in enumerate(flight_controller.info.get_info().items()):
             label = ttk.Label(self.info_frame, text=f"{description}:")
             label.grid(row=row_nr, column=0, sticky="w")
 
@@ -63,7 +47,6 @@ class FlightControllerInfoWindow(BaseWindow):
             text_field.grid(row=row_nr, column=1, sticky="w")
 
             # Check if the attribute exists and has a non-empty value before inserting
-            attr_value = getattr(flight_controller.info, attr_name, "")
             if attr_value:
                 if isinstance(attr_value, dict):
                     text_field.insert(tk.END, (", ").join(attr_value.keys()))
