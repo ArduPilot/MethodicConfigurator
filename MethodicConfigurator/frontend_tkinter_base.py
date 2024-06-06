@@ -287,7 +287,7 @@ class BaseWindow:
         # Set the theme to 'alt'
         style = ttk.Style()
         style.theme_use('alt')
-        style.configure("Bold.TLabel", font=("TkDefaultFont", 11, "bold"))
+        style.configure("Bold.TLabel", font=("TkDefaultFont", 10, "bold"))
 
         self.main_frame = ttk.Frame(self.root)
         self.main_frame.pack(expand=True, fill=tk.BOTH)
