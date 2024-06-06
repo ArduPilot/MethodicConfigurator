@@ -35,11 +35,31 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         self.flight_custom_version = None
         self.os_custom_version = None
         self.vendor = None
+        self.vendor_id = None
+        self.vendor_and_vendor_id = None
         self.product = None
+        self.product_id = None
+        self.product_and_product_id = None
         self.capabilities = None
 
         self.is_supported = False
         self.is_mavftp_supported = False
+
+    def get_info(self):
+        return {
+            "Vendor": self.vendor_and_vendor_id,
+            "Product": self.product_and_product_id,
+            "Hardware Version": self.board_version,
+            "Autopilot Type": self.autopilot,
+            "ArduPilot FW Type": self.vehicle_type,
+            "MAV Type": self.mav_type,
+            "Firmware Version": self.flight_sw_version_and_type,
+            "Git Hash": self.flight_custom_version,
+            "OS Git Hash": self.os_custom_version,
+            "Capabilities": self.capabilities,
+            "System ID": self.system_id,
+            "Component ID": self.component_id
+        }
 
     def set_system_id_and_component_id(self, system_id, component_id):
         self.system_id = system_id
@@ -70,15 +90,19 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
     def set_vendor_id_and_product_id(self, vendor_id, product_id):
         pid_vid_dict = self.__list_ardupilot_supported_usb_pid_vid()
 
+        self.vendor_id = f"0x{vendor_id:04X}" if vendor_id else "Unknown"
         if vendor_id and vendor_id in pid_vid_dict:
-            self.vendor = f"{pid_vid_dict[vendor_id]['vendor']} (0x{vendor_id:04X})"
+            self.vendor = f"{pid_vid_dict[vendor_id]['vendor']}"
         elif vendor_id:
-            self.vendor = f"Unknown (0x{vendor_id:04X})"
+            self.vendor = "Unknown"
+        self.vendor_and_vendor_id = f"{self.vendor} ({self.vendor_id})"
 
+        self.product_id = f"0x{product_id:04X}" if product_id else "Unknown"
         if vendor_id and product_id and product_id in pid_vid_dict[vendor_id]['PID']:
-            self.product = f"{pid_vid_dict[vendor_id]['PID'][product_id]} (0x{product_id:04X})"
+            self.product = f"{pid_vid_dict[vendor_id]['PID'][product_id]}"
         elif product_id:
-            self.product = f"Unknown (0x{product_id:04X})"
+            self.product = "Unknown"
+        self.product_and_product_id = f"{self.product} ({self.product_id})"
 
     def set_capabilities(self, capabilities):
         self.capabilities = self.__decode_flight_capabilities(capabilities)
