@@ -1,0 +1,7 @@
+INS_LOG_BAT_MASK,3  # the Matek H743 fligth controller only has two IMUs
+INS_TCAL1_ENABLE,2  # Activates the temperature calibration for IMU 1 at the next start
+INS_TCAL1_TMAX,60  # our H7 processor acts as a heater and heats up the board to almost 60 deg
+INS_TCAL2_ENABLE,2  # Activates the temperature calibration for IMU 2 at the next start
+INS_TCAL2_TMAX,60  # our H7 processor acts as a heater and heats up the board to almost 60 deg
+LOG_BITMASK,524416  # Only for IMU and Raw-IMU
+LOG_DISARMED,1  # Gather data for the offline IMU temperature compensation while the FC is disarmed

@@ -1,0 +1,2 @@
+BRD_SER1_RTSCTS,1  # we have RTS/CTS pins connected
+SERIAL1_BAUD,115  # The MAVLink telemetry

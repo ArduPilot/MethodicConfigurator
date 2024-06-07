@@ -1,0 +1,2 @@
+AHRS_ORIENTATION,0  # Point forward in the direction of travel
+LOG_DISARMED,0  # Log disarmed was only required for offline IMU temperature calibration

@@ -1,0 +1,5 @@
+ATC_ACCEL_Y_MAX,287426.9  # Autotuned in a windless hangar
+ATC_ANG_YAW_P,36  # Autotuned in a windless hangar
+ATC_RAT_YAW_D,0.004533  # if == to AUTOTUNE_MIN_D, autotune failed
+ATC_RAT_YAW_I,0.039443  # Autotuned in a windless hangar
+ATC_RAT_YAW_P,0.394428  # Autotuned in a windless hangar

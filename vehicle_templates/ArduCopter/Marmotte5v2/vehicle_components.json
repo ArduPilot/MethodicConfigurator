@@ -1,0 +1,183 @@
+{
+    "Format version": 1,
+    "Components": {
+        "Flight Controller": {
+            "Product": {
+                "Manufacturer": "Mamba",
+                "Model": "H743",
+                "URL": "",
+                "Version": "V4"
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.5.3"
+            },
+            "Notes": ""
+        },
+        "Frame": {
+            "Product": {
+                "Manufacturer": "Armattan",
+                "Model": "Marmotte",
+                "URL": "",
+                "Version": "5v2"
+            },
+            "Specifications": {
+                "TOW min Kg": 0.7,
+                "TOW max Kg": 0.7
+            },
+            "Notes": ""
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "Radiomaster",
+                "Model": "TX16S",
+                "URL": "https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller",
+                "Version": "MKI"
+            },
+            "Firmware": {
+                "Type": "EdgeTx",
+                "Version": "2.9.2-providence"
+            },
+            "Notes": "Yaapu telem included, this is just the controller with the sticks. Some controllers include the RC transmitter, this one does not."
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "TBS",
+                "Model": "TRACER Micro TX",
+                "URL": "https://www.team-blacksheep.com/products/prod:tbs_tracer_mtx",
+                "Version": "2"
+            },
+            "Firmware": {
+                "Type": "Crossfire TX",
+                "Version": "4.0.0"
+            },
+            "Notes": "This RC transmitter piggie-backs on the back of the Radiomaster TX16S"
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "TBS",
+                "Model": "Crossfire RX se",
+                "URL": "https://www.team-blacksheep.com/products/prod:crossfire_nano_se",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "Crossfire",
+                "Version": "7"
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "All"
+            },
+            "Notes": "This receiver is on the vehicle and is connected to the flight controller"
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "Espressif",
+                "Model": "ESP32 WROOM",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "dronebridge",
+                "Version": "1.5"
+            },
+            "FC Connection": {
+                "Type": "SERIAL2",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": "A cheap WiFi alternative to the more commonly used 3DR and RFDesigns telemetry modems"
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "Matek",
+                "Model": "H743 SLIM",
+                "URL": "https://www.mateksys.com/?portfolio=h743-slim",
+                "Version": "3"
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.5.3"
+            },
+            "FC Connection": {
+                "Type": "Analog",
+                "Protocol": "Analog Voltage and Current"
+            },
+            "Notes": "Voltage is done via the flight controller. Current is done via the ESC."
+        },
+        "Battery": {
+            "Product": {
+                "Manufacturer": "SLS",
+                "Model": "",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "Chemistry": "Lipo",
+                "Volt per cell max": 4.2,
+                "Volt per cell low": 3.6,
+                "Volt per cell crit": 3.55,
+                "Number of cells": 6,
+                "Capacity mAh": 1400
+            },
+            "Notes": ""
+        },
+        "ESC": {
+            "Product": {
+                "Manufacturer": "Mamba System",
+                "Model": "F45_128k 4in1 ESC",
+                "URL": "https://www.diatone.us/products/mb-f45_128k-bl32-esc",
+                "Version": "1"
+            },
+            "Firmware": {
+                "Type": "BLHeli32",
+                "Version": "32.10"
+            },
+            "FC Connection": {
+                "Type": "SERIAL6",
+                "Protocol": "DShot600"
+            },
+            "Notes": "Runs BDshot600"
+        },
+        "Motors": {
+            "Product": {
+                "Manufacturer": "T-Motor",
+                "Model": "T-Motor 15507 3800kv",
+                "URL": "https://www.fpv24.com/de/t-motor/t-motor-f-serie-f1507-cinematic-3800kv-3s-4s",
+                "Version": ""
+            },
+            "Specifications": {
+                "Poles": 14
+            },
+            "Notes": ""
+        },
+        "Propellers": {
+            "Product": {
+                "Manufacturer": "HQProp",
+                "Model": "",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "Diameter_inches": 5
+            },
+            "Notes": ""
+        },
+        "GNSS receiver": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "H-RTK F9P Helical",
+                "URL": "https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445",
+                "Version": "1"
+            },
+            "Firmware": {
+                "Type": "UBlox",
+                "Version": "1.13.2"
+            },
+            "FC Connection": {
+                "Type": "SERIAL7",
+                "Protocol": "uBlox"
+            },
+            "Notes": "A very good receiver with an excellent antenna https://docs.holybro.com/gps-and-rtk-system/gps-led-and-buzzer/status-led-changes"
+        }
+    }
+}
