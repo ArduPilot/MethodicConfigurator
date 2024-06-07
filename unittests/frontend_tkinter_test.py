@@ -18,10 +18,10 @@ from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 
 
 class TestShowErrorMessage(unittest.TestCase):
-    @patch('tkinter.messagebox.showwarning')
+    @patch('tkinter.messagebox.showerror')
     @patch('tkinter.Tk')
     @patch('tkinter.ttk.Style') # Mock the ttk.Style class
-    def test_show_error_message(self, mock_style, mock_tk, mock_showwarning):
+    def test_show_error_message(self, mock_style, mock_tk, mock_showerror):
         # Mock the Tkinter Tk class to prevent it from actually creating a window
         mock_tk.return_value.withdraw.return_value = None
         mock_tk.return_value.destroy.return_value = None
@@ -32,8 +32,8 @@ class TestShowErrorMessage(unittest.TestCase):
         # Assert that the Tkinter Tk class was instantiated
         mock_tk.assert_called_once()
 
-        # Assert that the Tkinter messagebox.showwarning function was called with the correct parameters
-        mock_showwarning.assert_called_once_with("Test Title", "Test Message")
+        # Assert that the Tkinter messagebox.showerror function was called with the correct parameters
+        mock_showerror.assert_called_once_with("Test Title", "Test Message")
 
         # Assert that the Tkinter Tk instance's withdraw method was called
         mock_tk.return_value.withdraw.assert_called_once()
@@ -44,7 +44,7 @@ class TestShowErrorMessage(unittest.TestCase):
 
 class TestShowTooltip(unittest.TestCase):
     @patch('tkinter.Toplevel')
-    @patch('tkinter.Label')
+    @patch('tkinter.ttk.Label')
     def test_show_tooltip(self, mock_label, mock_toplevel):
         # Mock the Tkinter Toplevel class to prevent it from actually creating a window
         mock_toplevel.return_value.deiconify.return_value = None
@@ -74,7 +74,7 @@ class TestShowTooltip(unittest.TestCase):
 
         # Assert that the Tkinter Label class was instantiated with the correct parameters
         mock_label.assert_called_once_with(mock_toplevel.return_value, text="Test Tooltip Message",
-                                           bg="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT)
+                                           background="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT)
 
         # Assert that the Tkinter Toplevel instance's deiconify method was called
         # mock_toplevel.return_value.deiconify.assert_called()
