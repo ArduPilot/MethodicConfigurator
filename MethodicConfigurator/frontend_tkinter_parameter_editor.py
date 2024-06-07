@@ -33,6 +33,7 @@ from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
 from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
+from MethodicConfigurator.frontend_tkinter_base import RichText
 
 from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 
@@ -199,7 +200,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.__create_parameter_area_widgets()
 
-        self.root.after(50, self.__please_read_the_docs())
+        self.root.after(50, self.__please_read_the_docs(self.root))
         self.root.mainloop()
 
     def __create_conf_widgets(self, version: str):
@@ -290,10 +291,51 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                      "controller\nIf changes have been made to the current file it will ask if you want to save them")
 
     @staticmethod
-    def __please_read_the_docs():
-        messagebox.showinfo("Welcome to the ArduPilot Methodic Configurator",
-                            "Please read ALL the documentation on top of the parameter table"
-                            " before editing the parameters and the reason they changed")
+    def __please_read_the_docs(parent: tk.Tk):
+        welcome_window = BaseWindow(parent)
+        welcome_window.root.title("Welcome to the ArduPilot Methodic Configurator")
+        welcome_window.root.geometry("690x170")
+
+        style = ttk.Style()
+
+        instructions_text = RichText(welcome_window.main_frame, wrap=tk.WORD, height=5, bd=0,
+                                     background=style.lookup("TLabel", "background"))
+        instructions_text.pack(padx=10, pady=10)
+        instructions_text.insert(tk.END, "1. Read ")
+        instructions_text.insert(tk.END, "all", "bold")
+        instructions_text.insert(tk.END, " the documentation on top of the parameter table\n")
+        instructions_text.insert(tk.END, "2. Edit the parameter ")
+        instructions_text.insert(tk.END, "New Values", "italic")
+        instructions_text.insert(tk.END, " and", "bold")
+        instructions_text.insert(tk.END, " their ")
+        instructions_text.insert(tk.END, "Change Reason\n", "italic")
+        instructions_text.insert(tk.END, "3. Use ")
+        instructions_text.insert(tk.END, "Del", "italic")
+        instructions_text.insert(tk.END, " and ")
+        instructions_text.insert(tk.END, "Add", "italic")
+        instructions_text.insert(tk.END, " buttons to delete and add parameters if necessary\n")
+        instructions_text.insert(tk.END, "4. Press the ")
+        instructions_text.insert(tk.END, "Upload selected params to FC, and advance to next param file", "italic")
+        instructions_text.insert(tk.END, " button\n")
+        instructions_text.insert(tk.END, "5. Repeat until the program automatically closes")
+        instructions_text.config(state=tk.DISABLED)
+
+        dismiss_button = ttk.Button(welcome_window.main_frame, text="Dismiss",
+                                    command=lambda: ParameterEditorWindow.__close_instructions_window(welcome_window, parent))
+        dismiss_button.pack(pady=10)
+
+        BaseWindow.center_window(welcome_window.root, parent)
+        welcome_window.root.attributes('-topmost', True)
+
+        # Disable the parent window
+        #parent.state('withdraw')
+
+    @staticmethod
+    def __close_instructions_window(welcome_window, parent):
+        welcome_window.root.destroy()
+        #parent.deiconify()  # Show the parent window again
+        #parent.state('normal')  # Enable the parent window
+        parent.focus_set()
 
     def __do_tempcal_imu(self, selected_file:str):
         tempcal_imu_result_param_filename, tempcal_imu_result_param_fullpath = \
