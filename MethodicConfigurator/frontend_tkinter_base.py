@@ -33,13 +33,14 @@ def show_error_message(title: str, message: str):
     style = ttk.Style()
     style.theme_use('alt')
     root.withdraw() # Hide the main window
-    messagebox.showwarning(title, message)
+    messagebox.showerror(title, message)
     root.destroy()
 
 
 def show_no_param_files_error(dirname: str):
     error_message = f"No intermediate parameter files found in the selected '{dirname}' vehicle directory.\n" \
-        "Please select a vehicle directory containing valid ArduPilot intermediate parameter files."
+        "Please select and step inside a vehicle directory containing valid ArduPilot intermediate parameter files.\n\n" \
+        "Make sure to step inside the directory (double-click) and not just select it."
     show_error_message("No Parameter Files Found", error_message)
 
 
