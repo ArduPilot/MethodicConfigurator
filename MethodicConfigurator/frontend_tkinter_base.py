@@ -115,7 +115,7 @@ class AutoResizeCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
             show_tooltip(self, tooltip)
 
 
-class ScrollFrame(ttk.Frame):
+class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
     """
     A custom Frame widget that supports scrolling.
 
