@@ -286,6 +286,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         window.title(f"Select {param_name} Bitmask Options")
         checkbox_vars = {}
 
+        main_frame = ttk.Frame(window)
+        main_frame.pack(expand=True, fill=tk.BOTH)
+
         # Convert current_value to a set of checked keys
         current_value = int(event.widget.get())
         checked_keys = {key for key, _value in bitmask_dict.items() if (current_value >> key) & 1}
@@ -293,14 +296,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         for i, (key, value) in enumerate(bitmask_dict.items()):
             var = tk.BooleanVar(value=key in checked_keys)
             checkbox_vars[key] = var
-            checkbox = tk.Checkbutton(window, text=value, variable=var, command=update_label)
+            checkbox = ttk.Checkbutton(main_frame, text=value, variable=var, command=update_label)
             checkbox.grid(row=i, column=0, sticky="w")
 
         # Calculate new_decimal_value here to ensure it's accessible when creating the label
         new_decimal_value = sum(1 << key for key in checked_keys)
 
         # Replace the close button with a read-only label displaying the current new_decimal_value
-        close_label = ttk.Label(window, text=f"{param_name} Value: {new_decimal_value}", state='disabled')
+        close_label = ttk.Label(main_frame, text=f"{param_name} Value: {new_decimal_value}")
         close_label.grid(row=len(bitmask_dict), column=0, pady=10)
 
         # Bind the on_close function to the window's WM_DELETE_WINDOW protocol
