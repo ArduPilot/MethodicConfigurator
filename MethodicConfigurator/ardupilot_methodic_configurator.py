@@ -115,8 +115,9 @@ def main():  # pylint: disable=too-many-branches
        flight_controller.fc_parameters:
         # copy vehicle parameters to component editor values
         component_editor_window.set_values_from_fc_parameters(flight_controller.fc_parameters, local_filesystem.doc_dict)
-    if not args.skip_component_editor:
-        component_editor_window.root.mainloop()
+    if args.skip_component_editor:
+        component_editor_window.root.after(10, component_editor_window.root.destroy)
+    component_editor_window.root.mainloop()
 
     if vehicle_dir_window and \
        vehicle_dir_window.created_new_vehicle_from_template and \
