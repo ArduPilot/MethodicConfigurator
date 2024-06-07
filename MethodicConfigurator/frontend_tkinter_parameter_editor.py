@@ -132,7 +132,7 @@ def show_about_window(root, version: str):
                     "Copyright © 2024 Amilcar do Carmo Lucas and ArduPilot.org\n\n" \
                     "Licensed under the GNU General Public License v3.0"
     about_label = ttk.Label(main_frame, text=about_message, wraplength=450)
-    about_label.pack(padx=10, pady=10)
+    about_label.grid(column=0, row=0, padx=10, pady=10, columnspan=5)  # Span across all columns
 
     # Create buttons for each action
     user_manual_button = ttk.Button(main_frame, text="User Manual",
@@ -151,12 +151,15 @@ def show_about_window(root, version: str):
                                command=lambda: webbrowser_open(
                                   "https://github.com/ArduPilot/MethodicConfigurator"))
 
-    # Pack the buttons
-    user_manual_button.pack(side=tk.LEFT, padx=10, pady=10)
-    support_forum_button.pack(side=tk.LEFT, padx=10, pady=10)
-    report_bug_button.pack(side=tk.LEFT, padx=10, pady=10)
-    credits_button.pack(side=tk.LEFT, padx=10, pady=10)
-    source_button.pack(side=tk.LEFT, padx=10, pady=10)
+    # Place buttons using grid for equal spacing and better control over layout
+    user_manual_button.grid(column=0, row=1, padx=10, pady=10)
+    support_forum_button.grid(column=1, row=1, padx=10, pady=10)
+    report_bug_button.grid(column=2, row=1, padx=10, pady=10)
+    credits_button.grid(column=3, row=1, padx=10, pady=10)
+    source_button.grid(column=4, row=1, padx=10, pady=10)
+
+    # Configure the grid to ensure equal spacing and expansion
+    main_frame.columnconfigure([0, 1, 2, 3, 4], weight=1)
 
 
 class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
