@@ -357,11 +357,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             LocalFilesystem.store_recently_used_vehicle_dir(new_vehicle_dir)
             self.root.destroy()
         else:
-            # No intermediate parameter files were found in the source template directory
-            error_message = f"No intermediate parameter files found in the selected '{template_dir}'" \
-                " template vehicle configuration directory.\n" \
-                "Please select a vehicle configuration directory containing valid ArduPilot intermediate parameter files."
-            messagebox.showerror("No Parameter Files Found", error_message)
+            show_no_param_files_error(template_dir)
         self.created_new_vehicle_from_template = True
 
     def open_last_vehicle_directory(self, last_vehicle_dir: str):
