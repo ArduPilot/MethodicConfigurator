@@ -1,0 +1,13 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+BRD_RTC_TZ_MIN,0  # London time zone
+FENCE_TYPE,7  # cylinder and max altitude, to obey local regulations and safety measures
+INS_ACCEL_FILTER,20  # the default is 20 and that lets too much noise in
+INS_POS1_X,0
+INS_POS1_Y,0
+INS_POS2_X,0
+INS_POS2_Y,0
+LAND_ALT_LOW,1000  # The default is OK
+RTL_ALT,2000  # The default is too low for the kind of flights we do.
+RTL_LOIT_TIME,5000  # The default is OK
+SCHED_LOOP_RATE,800  # On our vehicle the propellers rotate at speeds higher than 400Hz and we have a powerful STM32 H7 family processor. So we increase this for added performance.
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation

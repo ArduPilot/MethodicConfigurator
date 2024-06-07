@@ -1,0 +1,12 @@
+ANGLE_MAX,8000
+LOIT_ACC_MAX,500
+LOIT_BRK_ACCEL,250
+LOIT_BRK_DELAY,1
+LOIT_BRK_JERK,500
+PSC_VELXY_FF,0.579  # PSCN.AE/PSCN.VE if you have flown North-South or PSCE.AE/PSCE.VE if you have flown East-West
+WPNAV_ACCEL,2000  # high speed missions in auto
+WPNAV_ACCEL_C,0
+WPNAV_ACCEL_Z,1000  # high speed missions in auto
+WPNAV_JERK,40  # high speed missions in auto
+WPNAV_SPEED,3000  # high speed missions in auto
+WPNAV_SPEED_DN,1000  # high speed missions in auto

@@ -1,0 +1,21 @@
+ANGLE_MAX,2000  # limit the angle to limit the speed at SID-chirp low-frequencies
+ARMING_CHECK,540126  # disable Parameter check because we need to set ATC_RAT_RLL_I out-of-range (was 30175)
+ATC_ANG_PIT_P,4.5  # reset to default to not interfere with sysID
+ATC_ANG_RLL_P,4.5  # reset to default to not interfere with sysID
+ATC_ANG_YAW_P,4.5  # reset to default to not interfere with sysID
+ATC_RAT_RLL_I,0  # prevent the rate controllers from compensating too much of the frequency-sweep signal
+ATC_RATE_FF_ENAB,0  # prevent the rate controllers from compensating too much of the frequency-sweep signal
+FLTMODE5,25  # Activate sysid instead of autotune
+LOG_BITMASK,176127  # attitude sample rate at loop rate
+LOG_DISARMED,0  # was only needed for wind speed estimation
+LOG_REPLAY,0  # was only needed for wind speed estimation
+SID_AXIS,10  # Inject chip on the mixer roll signal
+SID_F_START_HZ,0.05
+SID_F_STOP_HZ,5
+SID_MAGNITUDE,0.15
+SID_T_FADE_IN,5
+SID_T_FADE_OUT,5
+SID_T_REC,130
+TUNE,0  # System identification magnitude
+TUNE_MAX,0.1  # System identification max magnitude
+TUNE_MIN,0.005  # System identification min magnitude

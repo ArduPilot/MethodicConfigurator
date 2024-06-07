@@ -1,0 +1,5 @@
+ATC_THR_MIX_MAX,0.5  # according to autotune documentation this should be raised up-to 0.9 after the tune
+BATT_FS_LOW_ACT,0
+LOG_BITMASK,178175
+RTL_ALT,2000
+RTL_CLIMB_MIN,0
