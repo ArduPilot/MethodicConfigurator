@@ -43,15 +43,15 @@ from zipfile import ZipFile
 from platformdirs import site_config_dir
 from platformdirs import user_config_dir
 
-from MethodicConfigurator.annotate_params import BASE_URL, PARAM_DEFINITION_XML_FILE, Par
-from MethodicConfigurator.annotate_params import get_xml_data
-from MethodicConfigurator.annotate_params import create_doc_dict
-from MethodicConfigurator.annotate_params import format_columns
-from MethodicConfigurator.annotate_params import split_into_lines
-from MethodicConfigurator.annotate_params import update_parameter_documentation
+from annotate_params import BASE_URL, PARAM_DEFINITION_XML_FILE, Par
+from annotate_params import get_xml_data
+from annotate_params import create_doc_dict
+from annotate_params import format_columns
+from annotate_params import split_into_lines
+from annotate_params import update_parameter_documentation
 
-from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
-from MethodicConfigurator.backend_filesystem_configuration_steps import ConfigurationSteps
+from backend_filesystem_vehicle_components import VehicleComponents
+from backend_filesystem_configuration_steps import ConfigurationSteps
 
 
 TOOLTIP_MAX_LENGTH = 105

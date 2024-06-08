@@ -14,14 +14,14 @@ from logging import info as logging_info
 import tkinter as tk
 from tkinter import ttk
 
-from MethodicConfigurator.backend_flightcontroller import FlightController
-#from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
+from backend_flightcontroller import FlightController
+#from backend_flightcontroller_info import BackendFlightcontrollerInfo
 
-#from MethodicConfigurator.frontend_tkinter_base import show_tooltip
-from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
-from MethodicConfigurator.frontend_tkinter_base import BaseWindow
+#from frontend_tkinter_base import show_tooltip
+from frontend_tkinter_base import ProgressWindow
+from frontend_tkinter_base import BaseWindow
 
-from MethodicConfigurator.version import VERSION
+from version import VERSION
 
 
 class FlightControllerInfoWindow(BaseWindow):

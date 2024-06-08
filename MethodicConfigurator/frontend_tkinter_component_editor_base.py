@@ -18,16 +18,16 @@ from logging import info as logging_info
 import tkinter as tk
 from tkinter import ttk
 
-from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
+from common_arguments import add_common_arguments_and_parse
 
-from MethodicConfigurator.backend_filesystem import LocalFilesystem
+from backend_filesystem import LocalFilesystem
 
-from MethodicConfigurator.frontend_tkinter_base import show_tooltip
-from MethodicConfigurator.frontend_tkinter_base import show_error_message
-from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
-from MethodicConfigurator.frontend_tkinter_base import BaseWindow
+from frontend_tkinter_base import show_tooltip
+from frontend_tkinter_base import show_error_message
+from frontend_tkinter_base import ScrollFrame
+from frontend_tkinter_base import BaseWindow
 
-from MethodicConfigurator.version import VERSION
+from version import VERSION
 
 
 def argument_parser():

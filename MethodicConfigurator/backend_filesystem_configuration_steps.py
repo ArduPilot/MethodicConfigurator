@@ -21,7 +21,7 @@ from json import JSONDecodeError
 
 from typing import Tuple
 
-from MethodicConfigurator.annotate_params import Par
+from annotate_params import Par
 
 
 class ConfigurationSteps:
