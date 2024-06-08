@@ -18,18 +18,18 @@ from logging import getLevelName as logging_getLevelName
 import tkinter as tk
 from tkinter import ttk
 
-from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
+from common_arguments import add_common_arguments_and_parse
 
-from MethodicConfigurator.backend_filesystem import LocalFilesystem
+from backend_filesystem import LocalFilesystem
 
-from MethodicConfigurator.battery_cell_voltages import BatteryCell
+from battery_cell_voltages import BatteryCell
 
-from MethodicConfigurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
+from frontend_tkinter_component_editor_base import ComponentEditorWindowBase
 
-#from MethodicConfigurator.frontend_tkinter_base import show_tooltip
-from MethodicConfigurator.frontend_tkinter_base import show_error_message
+#from frontend_tkinter_base import show_tooltip
+from frontend_tkinter_base import show_error_message
 
-from MethodicConfigurator.version import VERSION
+from version import VERSION
 
 
 def argument_parser():

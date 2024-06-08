@@ -25,9 +25,9 @@ import serial.tools.list_ports_common
 
 from serial.serialutil import SerialException
 
-from MethodicConfigurator.annotate_params import Par
+from annotate_params import Par
 
-from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
+from backend_flightcontroller_info import BackendFlightcontrollerInfo
 
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules

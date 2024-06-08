@@ -15,16 +15,16 @@ from logging import getLevelName as logging_getLevelName
 import tkinter as tk
 from tkinter import ttk
 
-from MethodicConfigurator.middleware_template_overview import TemplateOverview
+from middleware_template_overview import TemplateOverview
 
-from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
-from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
+from backend_filesystem_program_settings import ProgramSettings
+from backend_filesystem_vehicle_components import VehicleComponents
 
-from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
+from common_arguments import add_common_arguments_and_parse
 
-from MethodicConfigurator.frontend_tkinter_base import BaseWindow
+from frontend_tkinter_base import BaseWindow
 
-from MethodicConfigurator.version import VERSION
+from version import VERSION
 
 class TemplateOverviewWindow(BaseWindow):
     """
