@@ -18,6 +18,7 @@ from copy import deepcopy
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
+from logging import info as logging_info
 from logging import debug as logging_error
 
 import tkinter as tk
@@ -35,6 +36,8 @@ from MethodicConfigurator.frontend_tkinter_base import show_no_param_files_error
 from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 
+from MethodicConfigurator.frontend_tkinter_template_overview import TemplateOverviewWindow
+
 
 class DirectorySelectionWidgets():
     """
@@ -45,11 +48,13 @@ class DirectorySelectionWidgets():
     directory selection dialog.
     """
     def __init__(self, parent, parent_frame, initialdir: str, label_text: str,  # pylint: disable=too-many-arguments
-                 autoresize_width: bool, dir_tooltip: str, button_tooltip: str):
+                 autoresize_width: bool, dir_tooltip: str, button_tooltip: str,
+                 local_filesystem: LocalFilesystem = None):
         self.parent = parent
         self.directory = deepcopy(initialdir)
         self.label_text = label_text
         self.autoresize_width = autoresize_width
+        self.local_filesystem = local_filesystem
 
         # Create a new frame for the directory selection label and button
         self.container_frame = ttk.Frame(parent_frame)
@@ -81,8 +86,13 @@ class DirectorySelectionWidgets():
             self.directory_entry.xview_moveto(1.0)
 
     def on_select_directory(self):
-        # Open the directory selection dialog
-        selected_directory = filedialog.askdirectory(initialdir=self.directory, title=f"Select {self.label_text}")
+        if self.local_filesystem:
+            TemplateOverviewWindow(self.parent.root, self.local_filesystem)
+            selected_directory = self.local_filesystem.get_recently_used_dirs()[0]
+            logging_info("Selected template directory: %s", selected_directory)
+        else:
+            selected_directory = filedialog.askdirectory(initialdir=self.directory, title=f"Select {self.label_text}")
+
         if selected_directory:
             if self.autoresize_width:
                 # Set the width of the directory_entry to match the width of the selected_directory text
@@ -235,7 +245,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                                                       "(source) Template directory:",
                                                       False,
                                                       template_dir_edit_tooltip,
-                                                      template_dir_btn_tooltip)
+                                                      template_dir_btn_tooltip,
+                                                      self.local_filesystem)
         self.template_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
         use_fc_params_checkbox = ttk.Checkbutton(option1_label_frame, variable=self.use_fc_params,
