@@ -13,6 +13,7 @@ from os import getcwd as os_getcwd
 from os import listdir as os_listdir
 from os import makedirs as os_makedirs
 from os import rename as os_rename
+from os import walk as os_walk
 from os import sep as os_sep
 
 from shutil import copy2 as shutil_copy2
@@ -53,6 +54,7 @@ from annotate_params import update_parameter_documentation
 from backend_filesystem_vehicle_components import VehicleComponents
 from backend_filesystem_configuration_steps import ConfigurationSteps
 
+from middleware_template_overview import TemplateOverview
 
 TOOLTIP_MAX_LENGTH = 105
 
@@ -538,6 +540,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
         LocalFilesystem.__set_settings_from_dict(settings)
 
     @staticmethod
+    def store_template_dir(relative_template_dir: str):
+        settings, pattern, replacement = LocalFilesystem.__get_settings_config()
+
+        template_dir = os_path.join(LocalFilesystem.get_templates_base_dir(), relative_template_dir)
+
+        # Update the settings with the new values
+        settings["directory_selection"].update({
+            "template_dir": re_sub(pattern, replacement, template_dir)
+        })
+
+        LocalFilesystem.__set_settings_from_dict(settings)
+
+    @staticmethod
     def store_recently_used_vehicle_dir(vehicle_dir: str):
         settings, pattern, replacement = LocalFilesystem.__get_settings_config()
 
@@ -666,6 +681,31 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
     def supported_vehicles():
         return ['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
                                     'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL']
+
+    @staticmethod
+    def get_vehicle_components_overviews():
+        """
+        Finds all subdirectories of base_dir containing a "vehicle_components.json" file,
+        creates a dictionary where the keys are the subdirectory names (relative to base_dir)
+        and the values are instances of VehicleComponents.
+
+        :param base_dir: The base directory to start searching from.
+        :return: A dictionary mapping subdirectory paths to VehicleComponents instances.
+        """
+        vehicle_components_dict = {}
+        file_to_find = VehicleComponents().vehicle_components_json_filename
+        template_default_dir = LocalFilesystem.get_templates_base_dir()
+        for root, _dirs, files in os_walk(template_default_dir):
+            if file_to_find in files:
+                relative_path = os_path.relpath(root, template_default_dir)
+                vehicle_components = VehicleComponents()
+                comp_data = vehicle_components.load_vehicle_components_json_data(root)
+                if comp_data:
+                    comp_data = comp_data.get('Components', {})
+                    vehicle_components_overview = TemplateOverview(comp_data)
+                    vehicle_components_dict[relative_path] = vehicle_components_overview
+
+        return vehicle_components_dict
 
     @staticmethod
     def add_argparse_arguments(parser):
