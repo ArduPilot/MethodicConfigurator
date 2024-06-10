@@ -254,7 +254,9 @@ class FlightController:
 
     def __process_autopilot_version(self, m):
         if m is None:
-            return "No AUTOPILOT_VERSION MAVLink message received, connection failed."
+            return "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n" \
+                "Only ArduPilot versions newer than 4.3.8 are supported.\n" \
+                "Make sure parameter SERIAL0_PROTOCOL is set to 2"
         self.info.set_capabilities(m.capabilities)
         self.info.set_flight_sw_version(m.flight_sw_version)
         self.info.set_board_version(m.board_version)
