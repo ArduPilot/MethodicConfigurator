@@ -14,71 +14,86 @@ Before starting the application on your PC you should connect a flight controlle
 
 This interface allows users to select or add a connection to a flight controller **if one was not yet auto-detected**.
 
-<p align="center">
-  <img src="images/App_screenshot_FC_connection.png" width=45% />
+![Flight controller connection selection window](images/App_screenshot_FC_connection.png)
+<figure>
 <br>
   <ins><b><i>Flight controller connection selection window</i></b></ins>
-</p>
+</figure>
 
 It provides three main options for connecting to a flight controller:
 
-#### Option 1: Auto-connect
+#### Option 1: Auto-connect to flight controller
 
 This option automatically attempts to connect to a flight controller that has been connected to the PC. The user must wait for at least 7 seconds for the flight controller to fully boot before attempting the connection.
 
-#### Option 2: Manually Select or Add a Connection
+#### Option 2: Select flight controller connection
 
-This option allows users to manually select an existing flight controller connection or add a new one. It provides a dropdown menu listing all available connections, including an option to add a new connection.
+Manually select an existing flight controller connection or add a new one.
+It provides a dropdown menu listing all available connections, including an option to add a new connection.
 
 - To select an existing connection, use the dropdown menu to choose the desired connection.
 - To add a new connection, select "Add another" from the dropdown menu. A dialog box will prompt you to enter the connection string for the new flight controller.
 
-#### Option 3: Skip Flight Controller Connection
+#### Option 3: No flight controller Connection
 
-This option allows users to skip the flight controller connection process. It proceeds with editing the intermediate `.param` files on disk without fetching parameter values nor parameter default parameter values from the flight controller.
+Skip the flight controller connection process.
+It proceeds with editing the intermediate `.param` files on disk without fetching parameter values nor parameter default parameter values from the flight controller.
 
-### Vehicle Directory Selection Interface
+### Flight Controller Info and parameter download
+
+If a flight controller is connected the software will now get information from it.
+The information is presented in the corresponding window and at the same time all flight controller parameters are downloaded to the PC.
+
+![Flight controller info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
+<figure>
+<br>
+  <ins><b><i>Flight controller info and parameter download</i></b></ins>
+</figure>
+
+
+### Vehicle Configuration Directory Selection Interface
 
 This interface allows users to select a vehicle directory that contains intermediate parameter files for ArduPilot **if one was not specified with the `--vehicle-dir` command line parameter**.
 
-<p align="center">
-  <img src="images/App_screenshot_Vehicle_directory.png" width=45% />
+![Vehicle Selection Window](images/App_screenshot_Vehicle_directory.png)
+<figure align="center">
 <br>
   <ins><b><i>Vehicle Selection Window</i></b></ins>
-</p>
+</figure>
 
 It provides three main options for selecting a vehicle directory:
 
-#### Option 1: Create a New Vehicle Configuration Directory Based on an Existing Template
+#### Option 1: Create a new vehicle configuration directory
 
 Create a new vehicle configuration directory by copying files from an existing template directory.
 It's useful for setting up a new vehicle configuration quickly.
 
-- Use the "Template directory" `...` button to select the existing vehicle template directory containing the intermediate parameter files to be copied.
+- Use the "Template directory" `...` button to select the existing vehicle template directory containing the intermediate parameter files to be copied. Use the overview window to select the template that better matches the components of your own vehicle.
+![Vehicle template overview](images/App_screenshot_Vehicle_overview.png)
 - Use the "Base directory" `...` button to select the existing directory where the new vehicle directory will be created.
 - Enter the name for the new vehicle directory in the "New vehicle name" field.
 - Click the "Create vehicle directory from template" button to create the new vehicle directory on the base directory and copy the template files to it.
 
-#### Option 2: Use an Existing Vehicle Configuration Directory
+#### Option 2: Open an existing vehicle configuration directory
 
 Select an existing vehicle configuration directory that already contains intermediate parameter files.
 It's useful for editing an existing vehicle configuration.
 
 - Use the "Vehicle directory" `...` button to select the existing vehicle directory containing the intermediate parameter files.
 
-#### Option 3: Use the last used Vehicle Configuration Directory
+#### Option 3: Open the last used vehicle configuration Directory
 
 Select the last used vehicle configuration directory.
 
-### Component Editor Interface
+### Vehicle Component Editor Interface
 
 Here you specify the components of your vehicle, their properties and how they are connected to the flight controller.
 
-<p align="center">
-  <img src="images/App_screenshot_Component_Editor.png" width=55% />
+![Component Editor Window](images/App_screenshot_Component_Editor.png)
+<figure align="center">
 <br>
   <ins><b><i>Component Editor Window</i></b></ins>
-</p>
+</figure>
 
 Change every field to match your vehicle's.
 When finished press the `Save data and start configuration` button.
@@ -91,15 +106,15 @@ Correct those entries and press the `Save data and start configuration` button a
 
 Here you sequentially configure the parameters of your flight controller to meet your needs while having all the available documentation at your fingertips.
 
-<p align="center">
-  <img src="images/App_screenshot2.png" width=85% />
+![Parameter File Editor and Uploader Window (main application)](images/App_screenshot2.png)
+<figure align="center">
 <br>
   <ins><b><i>Parameter File Editor and Uploader Window (main application)</i></b></ins>
-</p>
+</figure>
 
 #### 1. See the Current Vehicle Directory (optional)
 
-- this vehicle contains the files to be edited and uploaded
+- this vehicle configuration directory contains the files to be edited and uploaded
 
 #### 2. Select an Intermediate Parameter File (optional)
 
@@ -108,11 +123,10 @@ Here you sequentially configure the parameters of your flight controller to meet
 - The first available intermediate parameter file not named `00_default.param` will be selected by default
 - If the selection changes, the parameter table will update to display the parameters from the selected file.
 
-#### 3. Select a Flight Controller Connection (optional)
+#### 3. About information and help links (optional)
 
-- **If a flight controller is detected and the `--device` command-line parameter was not explicitly set, it will connect to it.**
-- The `Flight controller connection:` Combobox lists available connections.
-- Select a connection to establish communication with the flight controller.
+When you click the ArduPilot logo the following window will appear:
+![About and help information](images/App_screenshot_about.png)
 
 #### 4. Viewing Documentation
 
@@ -145,10 +159,15 @@ Here you sequentially configure the parameters of your flight controller to meet
 - The entire ArduPilot official parameter documentation is available on the tooltip, no need to use a browser to search for it.
 - The `Add` button adds a parameter to the current intermediate parameter file.
 
-#### 6. Focus on the changed parameters (optional)
+#### 6a. Focus on the changed parameters (optional)
 
 - You can focus on the changed parameters by ticking the "See only changed parameters" checkbox
 - Usually, you want to see all parameters and look at their mouse-over tooltips to decide if and how you want to change them
+
+#### 6b. Annotate parameter metadata information into the parameter files (optional)
+
+Annotate parameter metadata information into the parameter files in the form of comments preceding the respective parameter.
+It will create bigger and harder-to-compare parameter files but is more suitable for text editor editing.
 
 #### 7. Uploading Parameters to the Flight Controller
 

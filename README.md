@@ -8,13 +8,16 @@
 | | | [![coverage](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/coverage.yml/badge.svg)](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/coverage.yml) | [![Windows Build](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/windows_build.yml/badge.svg)](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/windows_build.yml) |
 
 Amilcar Lucas's ArduPilot Methodic Configurator is a Python tool that implements a [clear and proven configuration sequence of ArduPilot of drones](https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/1).
+
+![When to use ArduPilot Methodic Configurator](images/when_to_use_amc.png)
+
 It provides a graphical user interface (GUI) for managing and visualizing ArduPilot parameters, parameter files and documentation.
 
 ![Application Screenshot](images/App_screenshot1.png)
 
 ## Usage
 
-Usage is detailed in the [USERMANUAL.md](USERMANUAL.md) file
+There is a [Quick-start guide](QUICKSTART.md) and a more detailed [Usermanual](USERMANUAL.md)
 
 ## MS Windows Installation
 
