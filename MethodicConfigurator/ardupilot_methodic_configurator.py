@@ -62,12 +62,7 @@ def argument_parser():
     return add_common_arguments_and_parse(parser)
 
 
-def main():  # pylint: disable=too-many-branches
-    args = argument_parser()
-
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
-
-    # Connect to the flight controller and read the parameters
+def connect_to_fc_and_read_parameters(args):
     flight_controller = FlightController(args.reboot_time)
 
     error_str = flight_controller.connect(args.device)
@@ -88,26 +83,10 @@ def main():  # pylint: disable=too-many-branches
     if vehicle_type == "": # did not guess it, default to ArduCopter
         vehicle_type = "ArduCopter"
         logging_warning("Could not detect vehicle type. Defaulting to ArduCopter.")
+    return flight_controller,vehicle_type
 
-    if flight_controller.master is not None or args.device == 'test':
-        FlightControllerInfoWindow(flight_controller)
 
-    try:
-        local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, args.allow_editing_template_files)
-    except SystemExit as exp:
-        show_error_message("Fatal error reading parameter files", f"{exp}")
-        raise
-
-    # Get the list of intermediate parameter files files that will be processed sequentially
-    files = list(local_filesystem.file_parameters.keys())
-
-    vehicle_dir_window = None
-    if not files:
-        vehicle_dir_window = VehicleDirectorySelectionWindow(local_filesystem, len(flight_controller.fc_parameters) > 0)
-        vehicle_dir_window.root.mainloop()
-
-    start_file = local_filesystem.get_start_file(args.n)
-
+def component_editor(args, flight_controller, vehicle_type, local_filesystem, vehicle_dir_window):
     component_editor_window = ComponentEditorWindow(VERSION, local_filesystem)
     component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.info.flight_sw_version_and_type)
     component_editor_window.set_fc_manufacturer(flight_controller.info.vendor)
@@ -131,12 +110,43 @@ def main():  # pylint: disable=too-many-branches
             show_error_message("Error in derived parameters", error_message)
             sys_exit(1)
 
+
+def main():
+    args = argument_parser()
+
+    logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
+
+    # Connect to the flight controller and read the parameters
+    flight_controller, vehicle_type = connect_to_fc_and_read_parameters(args)
+
+    if flight_controller.master is not None or args.device == 'test':
+        FlightControllerInfoWindow(flight_controller)
+
+    try:
+        local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, args.allow_editing_template_files)
+    except SystemExit as exp:
+        show_error_message("Fatal error reading parameter files", f"{exp}")
+        raise
+
+    # Get the list of intermediate parameter files files that will be processed sequentially
+    files = list(local_filesystem.file_parameters.keys())
+
+    vehicle_dir_window = None
+    if not files:
+        vehicle_dir_window = VehicleDirectorySelectionWindow(local_filesystem, len(flight_controller.fc_parameters) > 0)
+        vehicle_dir_window.root.mainloop()
+
+    start_file = local_filesystem.get_start_file(args.n)
+
+    component_editor(args, flight_controller, vehicle_type, local_filesystem, vehicle_dir_window)
+
     # Call the GUI function with the starting intermediate parameter file
     ParameterEditorWindow(start_file, flight_controller, local_filesystem, VERSION)
 
     # Close the connection to the flight controller
     flight_controller.disconnect()
     sys_exit(0)
+
 
 if __name__ == "__main__":
     main()
