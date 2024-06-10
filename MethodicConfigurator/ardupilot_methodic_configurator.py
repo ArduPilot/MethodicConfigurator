@@ -110,6 +110,8 @@ def main():  # pylint: disable=too-many-branches
 
     component_editor_window = ComponentEditorWindow(VERSION, local_filesystem)
     component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.info.flight_sw_version_and_type)
+    component_editor_window.set_fc_manufacturer(flight_controller.info.vendor)
+    component_editor_window.set_fc_model(flight_controller.info.product)
     if vehicle_dir_window and \
        vehicle_dir_window.created_new_vehicle_from_template and \
        flight_controller.fc_parameters:

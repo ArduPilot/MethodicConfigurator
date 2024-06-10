@@ -102,6 +102,22 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             entry.insert(0, version)
             entry.config(state="disabled")
 
+    def set_fc_manufacturer(self, manufacturer: str):
+        if manufacturer and manufacturer != "Unknown" and manufacturer != "ArduPilot":
+            self.data['Components']['Flight Controller']['Product']['Manufacturer'] = manufacturer
+            entry = self.entry_widgets[('Flight Controller', 'Product', 'Manufacturer')]
+            entry.delete(0, tk.END)
+            entry.insert(0, manufacturer)
+            entry.config(state="disabled")
+
+    def set_fc_model(self, model: str):
+        if model and model != "Unknown" and model != "MAVLink":
+            self.data['Components']['Flight Controller']['Product']['Model'] = model
+            entry = self.entry_widgets[('Flight Controller', 'Product', 'Model')]
+            entry.delete(0, tk.END)
+            entry.insert(0, model)
+            entry.config(state="disabled")
+
     @staticmethod
     def reverse_key_search(doc: dict, param_name: str, values: list) -> list:
         return [key for key, value in doc[param_name]["values"].items() if value in values]
