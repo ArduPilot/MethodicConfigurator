@@ -12,6 +12,8 @@
 
 ![AMC install 04](images/AMC_install_04.png)
 
+![AMC install 05](images/AMC_install_05.png)
+
 ## 2. Install *Mission Planner* software on a PC or Mac
 
 1. Download and install [Mission Planner](https://firmware.ardupilot.org/Tools/MissionPlanner/).
