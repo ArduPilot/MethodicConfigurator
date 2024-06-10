@@ -72,10 +72,14 @@ class ComponentEditorWindowBase(BaseWindow):
         intro_frame = ttk.Frame(self.main_frame)
         intro_frame.pack(side=tk.TOP, fill="x", expand=False)
 
-        explanation_text = "Please configure ALL vehicle component properties in this window.\n"
+        style = ttk.Style()
+        style.configure("bigger.TLabel", font=("TkDefaultFont", 14))
+
+        explanation_text = "Please configure all vehicle component properties in this window.\n"
         explanation_text += "Scroll down and make sure you do not miss a property.\n"
         explanation_text += "Saving the result will write to the vehicle_components.json file."
         explanation_label = ttk.Label(intro_frame, text=explanation_text, wraplength=800, justify=tk.LEFT)
+        explanation_label.configure(style="bigger.TLabel")
         explanation_label.pack(side=tk.LEFT, padx=(10, 10), pady=(10, 0), anchor=tk.NW)
 
         # Load the vehicle image and scale it down to image_height pixels in height
