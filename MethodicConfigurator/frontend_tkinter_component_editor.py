@@ -89,34 +89,28 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if 'TOW max Kg' not in self.data['Components']['Frame']['Specifications']:
             self.data['Components']['Frame']['Specifications']['TOW max Kg'] = 1
 
-    def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
-        self.data['Components']['Flight Controller']['Firmware']['Type'] = vehicle_type
-        entry = self.entry_widgets[('Flight Controller', 'Firmware', 'Type')]
+    def set_component_value_and_update_ui(self, path: tuple, value: str):
+        data_path = self.data['Components']
+        for key in path[:-1]:
+            data_path = data_path[key]
+        data_path[path[-1]] = value
+        entry = self.entry_widgets[path]
         entry.delete(0, tk.END)
-        entry.insert(0, vehicle_type)
+        entry.insert(0, value)
         entry.config(state="disabled")
+
+    def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
+        self.set_component_value_and_update_ui(('Flight Controller', 'Firmware', 'Type'), vehicle_type)
         if version:
-            self.data['Components']['Flight Controller']['Firmware']['Version'] = version
-            entry = self.entry_widgets[('Flight Controller', 'Firmware', 'Version')]
-            entry.delete(0, tk.END)
-            entry.insert(0, version)
-            entry.config(state="disabled")
+            self.set_component_value_and_update_ui(('Flight Controller', 'Firmware', 'Version'), version)
 
     def set_fc_manufacturer(self, manufacturer: str):
-        if manufacturer and manufacturer != "Unknown" and manufacturer != "ArduPilot":
-            self.data['Components']['Flight Controller']['Product']['Manufacturer'] = manufacturer
-            entry = self.entry_widgets[('Flight Controller', 'Product', 'Manufacturer')]
-            entry.delete(0, tk.END)
-            entry.insert(0, manufacturer)
-            entry.config(state="disabled")
+        if manufacturer and manufacturer!= "Unknown" and manufacturer!= "ArduPilot":
+            self.set_component_value_and_update_ui(('Flight Controller', 'Product', 'Manufacturer'), manufacturer)
 
     def set_fc_model(self, model: str):
-        if model and model != "Unknown" and model != "MAVLink":
-            self.data['Components']['Flight Controller']['Product']['Model'] = model
-            entry = self.entry_widgets[('Flight Controller', 'Product', 'Model')]
-            entry.delete(0, tk.END)
-            entry.insert(0, model)
-            entry.config(state="disabled")
+        if model and model!= "Unknown" and model!= "MAVLink":
+            self.set_component_value_and_update_ui(('Flight Controller', 'Product', 'Model'), model)
 
     @staticmethod
     def reverse_key_search(doc: dict, param_name: str, values: list) -> list:
