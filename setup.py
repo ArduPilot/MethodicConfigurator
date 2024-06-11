@@ -101,6 +101,9 @@ setup(
     entry_points={
         'console_scripts': [
             'ardupilot_methodic_configurator=MethodicConfigurator.ardupilot_methodic_configurator:main',
+            'extract_param_defaults=MethodicConfigurator.extract_param_defaults:main',
+            'annotate_params=MethodicConfigurator.annotate_params:main',
+            'param_pid_adjustment_update=MethodicConfigurator.param_pid_adjustment_update:main',
         ],
     },
 )
