@@ -110,12 +110,23 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     def rename_fc_connection(self, selected_file):
         renames = {}
         if "rename_connection" in self.local_filesystem.configuration_steps[selected_file]:
-            new_connection_name = self.local_filesystem.configuration_steps[selected_file]["rename_connection"]
-            new_connection_name = eval(str(new_connection_name), {}, self.variables)  # pylint: disable=eval-used
+            new_connection_prefix = self.local_filesystem.configuration_steps[selected_file]["rename_connection"]
+            new_connection_prefix = eval(str(new_connection_prefix), {}, self.variables)  # pylint: disable=eval-used
             for param_name, _ in self.local_filesystem.file_parameters[selected_file].items():
-                old_name = param_name.split("_")[0]
-                if new_connection_name[:-1] in old_name:
-                    renames[param_name] = param_name.replace(old_name, new_connection_name)
+                new_prefix = new_connection_prefix
+                old_prefix = param_name.split("_")[0]
+
+                # Handle CAN parameter names peculiarities
+                if new_connection_prefix[:-1] == "CAN" and "CAN_P" in param_name:
+                    old_prefix = param_name.split("_")[0] + '_' + param_name.split("_")[1]
+                    new_prefix = "CAN_P" + new_connection_prefix[-1]
+                if new_connection_prefix[:-1] == "CAN" and "CAN_D" in param_name:
+                    old_prefix = param_name.split("_")[0] + '_' + param_name.split("_")[1]
+                    new_prefix = "CAN_D" + new_connection_prefix[-1]
+
+                if new_connection_prefix[:-1] in old_prefix:
+                    renames[param_name] = param_name.replace(old_prefix, new_prefix)
+
         new_names = set()
         for old_name, new_name in renames.items():
             if new_name in new_names:
