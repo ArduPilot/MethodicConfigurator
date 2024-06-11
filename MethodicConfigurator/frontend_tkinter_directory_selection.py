@@ -178,11 +178,6 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
             files = list(self.local_filesystem.file_parameters.keys())
             if files:
                 LocalFilesystem.store_recently_used_vehicle_dir(self.directory)
-                if hasattr(self.parent, 'file_selection_combobox'):
-                    # Update the file selection combobox with the new files
-                    self.parent.file_selection_combobox.set_entries_tupple(files, files[0])
-                    # Trigger the combobox change event to update the table
-                    self.parent.on_param_file_combobox_change(None, forced=True)
                 if self.destroy_parent_on_open:
                     self.parent.root.destroy()
             else:
