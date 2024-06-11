@@ -54,7 +54,7 @@ class DirectorySelectionWidgets():
         self.directory = deepcopy(initialdir)
         self.label_text = label_text
         self.autoresize_width = autoresize_width
-        self.local_filesystem = local_filesystem
+        self.local_filesystem2 = local_filesystem  # "2" to not collide with VehicleDirectorySelectionWidgets.local_filesystem
 
         # Create a new frame for the directory selection label and button
         self.container_frame = ttk.Frame(parent_frame)
@@ -86,9 +86,9 @@ class DirectorySelectionWidgets():
             self.directory_entry.xview_moveto(1.0)
 
     def on_select_directory(self):
-        if self.local_filesystem:
-            TemplateOverviewWindow(self.parent.root, self.local_filesystem)
-            selected_directory = self.local_filesystem.get_recently_used_dirs()[0]
+        if self.local_filesystem2:
+            TemplateOverviewWindow(self.parent.root, self.local_filesystem2)
+            selected_directory = self.local_filesystem2.get_recently_used_dirs()[0]
             logging_info("Selected template directory: %s", selected_directory)
         else:
             selected_directory = filedialog.askdirectory(initialdir=self.directory, title=f"Select {self.label_text}")
