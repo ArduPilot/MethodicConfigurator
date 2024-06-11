@@ -24,6 +24,7 @@
 1. Connect the flight controller to the computer using a USB cable.
 1. Open *Mission Planner* software.
 1. Go to *SETUP* > *Install Firmware* select your vehicle type and install version 4.3.8 **or newer** of the ArduPilot firmware onto the flight controller.
+![Install ArduPilot firmware](images/MissionPlanne_install_firmware.png)
 1. Wait until the firmware download is complete.
 1. Disconnect the USB cable from the flight controller.
 
