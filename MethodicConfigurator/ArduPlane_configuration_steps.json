@@ -553,6 +553,7 @@
         "external_tool_url": "https://discuss.ardupilot.org/t/scripting-copter-wind-estimation-baro-compensation-tuning/98470/1",
         "mandatory_text": "60% mandatory (40% optional)",
         "auto_changed_by": "",
+        "jump_possible": {"47_position_controller.param": "If you do not want an analytical PID optimization\nyou can skip some steps now.\n\nJump to '47_position_controller.param' file?"},
         "old_filenames": ["39_barometer_compensation.param"]
     },
     "42_system_id_roll.param": {
