@@ -37,6 +37,7 @@ Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\ve
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.3-params"
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params"
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\X11_plus";
+Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Marmotte5v2";
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -48,11 +49,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "..\MethodicConfigurator\dist\ardupilot_methodic_configurator\ardupilot_methodic_configurator.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\dist\ardupilot_methodic_configurator\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params"; Flags: ignoreversion
-Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params"; Flags: ignoreversion
-Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.3-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.3-params"; Flags: ignoreversion
-Source: "..\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.0-DEV-params"; Flags: ignoreversion
-Source: "..\vehicle_templates\ArduCopter\X11_plus\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\X11_plus"; Flags: ignoreversion
+Source: "..\vehicle_templates\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\windows\version.txt"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\windows\MethodicConfigurator.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduPilot_icon.png"; DestDir: "{app}\_internal\MethodicConfigurator"; Flags: ignoreversion
