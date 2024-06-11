@@ -662,6 +662,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
 
     def copy_fc_params_values_to_template_created_vehicle_files(self, fc_parameters: Dict[str, 'Par']):
         eval_variables = self.get_eval_variables()
+        eval_variables['fc_parameters'] = fc_parameters
         for param_filename, param_dict in self.file_parameters.items():
             for param_name, param in param_dict.items():
                 if param_name in fc_parameters:
