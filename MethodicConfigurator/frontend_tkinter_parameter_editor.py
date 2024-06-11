@@ -200,7 +200,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.__create_parameter_area_widgets()
 
-        self.root.after(50, self.__please_read_the_docs(self.root))
+        # trigger a table update to ask the user what to do in the case this file needs special actions
+        self.root.after(10, self.on_param_file_combobox_change(None, True))
+
+        # this one should be on top of the previous one hence the longer time
+        self.root.after(100, self.__please_read_the_docs(self.root))
         self.root.mainloop()
 
     def __create_conf_widgets(self, version: str):
