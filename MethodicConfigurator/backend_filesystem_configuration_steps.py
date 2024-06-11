@@ -40,6 +40,7 @@ class ConfigurationSteps:
         self.configuration_steps = {}
         self.forced_parameters = {}
         self.derived_parameters = {}
+        self.log_loaded_file = False
 
     def re_init(self, vehicle_dir: str, vehicle_type: str):
         self.configuration_steps_filename = vehicle_type + "_configuration_steps.json"
@@ -51,11 +52,14 @@ class ConfigurationSteps:
                 with open(os_path.join(directory, self.configuration_steps_filename), 'r', encoding='utf-8') as file:
                     self.configuration_steps = json_load(file)
                     file_found = True
-                    if i == 0:
-                        logging_warning("Configuration steps '%s' loaded from %s (overwriting default configuration steps).",
+                    if self.log_loaded_file:
+                        if i == 0:
+                            logging_warning("Configuration steps '%s' loaded from %s " \
+                                            "(overwriting default configuration steps).",
+                                            self.configuration_steps_filename, directory)
+                        if i == 1:
+                            logging_info("Configuration steps '%s' loaded from %s.",
                                          self.configuration_steps_filename, directory)
-                    if i == 1:
-                        logging_info("Configuration steps '%s' loaded from %s.", self.configuration_steps_filename, directory)
                     break
             except FileNotFoundError:
                 pass
@@ -68,7 +72,7 @@ class ConfigurationSteps:
                 self.__validate_parameters_in_configuration_steps(filename, file_info, 'derived')
         else:
             logging_warning("No configuration steps documentation and no forced and derived parameters will be available.")
-
+        self.log_loaded_file = True
 
     def __validate_parameters_in_configuration_steps(self, filename: str, file_info: dict, parameter_type: str) -> None:
         """
