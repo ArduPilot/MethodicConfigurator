@@ -1,0 +1,10 @@
+ARMING_RUDDER,2
+BRD_ALT_CONFIG,0
+RC_OPTIONS,288  # Enables Crossfire Telemetry
+RC_PROTOCOLS,1  # Selected in the component editor
+RC6_OPTION,0
+RC7_OPTION,0
+RC8_OPTION,4
+RC9_OPTION,31  # "Motor Emergency Stop", stops all motors immediately at a high signal
+RSSI_TYPE,3  # TBS Crossfire protocol provides RSSI
+SERIAL1_PROTOCOL,23  # Specifies the serial port 1 as RC-Input

@@ -1,0 +1,4 @@
+ARMING_CHECK,1  # Normal state for everyday use
+ATC_RATE_FF_ENAB,1  # Restore value now that system identification is done
+PSC_ACCZ_I,0.24  # now that system identification on thrust has been completed, restore it to 2 • MOT_THST_HOVER
+SID_AXIS,0  # No more system identification chip injections

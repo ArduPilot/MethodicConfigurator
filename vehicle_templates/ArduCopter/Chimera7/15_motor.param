@@ -1,0 +1,4 @@
+MOT_SPIN_ARM,0.02  # The T-Motor F55 ESCs reliably start spinning with this value
+MOT_SPIN_MAX,0.98  # Upper dead zone of the T-Motor F55 ESC
+MOT_SPIN_MIN,0.06  # MOT_SPIN_ARM + 0.04
+MOT_THST_EXPO,0.62

@@ -1,0 +1,10 @@
+ATC_RAT_PIT_D,0.00174  # Tuned by Andy Piper
+ATC_RAT_PIT_I,0.08429  # Tuned by Andy Piper
+ATC_RAT_PIT_P,0.08429  # Tuned by Andy Piper
+ATC_RAT_RLL_D,0.001535  # Tuned by Andy Piper
+ATC_RAT_RLL_I,0.077343  # Tuned by Andy Piper
+ATC_RAT_RLL_P,0.077343  # Tuned by Andy Piper
+ATC_RAT_YAW_D,0.006014  # Tuned by Andy Piper
+ATC_RAT_YAW_FLTD,30  # Tuned by Andy Piper
+ATC_RAT_YAW_I,0.030876  # Tuned by Andy Piper
+ATC_RAT_YAW_P,0.308758  # Tuned by Andy Piper
