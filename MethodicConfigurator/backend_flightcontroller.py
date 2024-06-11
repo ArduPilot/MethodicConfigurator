@@ -399,7 +399,7 @@ class FlightController:
     def __auto_detect_serial(self):
         serial_list = []
         for connection in self.__connection_tuples:
-            if 'mavlink' in connection[1].lower():
+            if connection[1] and 'mavlink' in connection[1].lower():
                 serial_list.append(mavutil.SerialPort(device=connection[0], description=connection[1]))
         if len(serial_list) == 1:
             # selected automatically if unique
