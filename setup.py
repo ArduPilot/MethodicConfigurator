@@ -44,6 +44,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
     # Use Absolute links so that the pyPI page renders correctly
     long_description = long_description.replace("(USERMANUAL.md", f"({PRJ_URL}/blob/master/USERMANUAL.md")
+    long_description = long_description.replace("(QUICKSTART.md", f"({PRJ_URL}/blob/master/QUICKSTART.md")
     long_description = long_description.replace("(CONTRIBUTING.md", f"({PRJ_URL}/blob/master/CONTRIBUTING.md")
     long_description = long_description.replace("(ARCHITECTURE.md", f"({PRJ_URL}/blob/master/ARCHITECTURE.md")
     long_description = long_description.replace("(CODE_OF_CONDUCT.md", f"({PRJ_URL}/blob/master/CODE_OF_CONDUCT.md")
