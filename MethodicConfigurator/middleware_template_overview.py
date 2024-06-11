@@ -21,7 +21,6 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
         # The declaration order of these parameters determines the column order in the GUI
         self.fc_manufacturer = components_data.get('Flight Controller', {}).get('Product', {}).get('Manufacturer', '')
         self.fc_model = components_data.get('Flight Controller', {}).get('Product', {}).get('Model', '')
-        self.tow_min_kg = components_data.get('Frame', {}).get('Specifications', {}).get('TOW min Kg', '')
         self.tow_max_kg = components_data.get('Frame', {}).get('Specifications', {}).get('TOW max Kg', '')
         self.rc_protocol = components_data.get('RC Receiver', {}).get('FC Connection', {}).get('Protocol', '')
         self.telemetry_model = components_data.get('Telemetry', {}).get('Product', {}).get('Model', '')
@@ -35,7 +34,6 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
         return ("Template path",
                 "FC\nManufacturer",
                 "FC\nModel",
-                "TOW Min\n[KG]",
                 "TOW Max\n[KG]",
                 "RC\nProtocol",
                 "Telemetry\nModel",
