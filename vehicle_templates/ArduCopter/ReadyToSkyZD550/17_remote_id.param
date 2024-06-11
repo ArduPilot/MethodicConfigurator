@@ -1,0 +1,7 @@
+FLTMODE_CH,6 # Ch 6 on this rig (putting these in remote ID since it'd be otherwise blank)
+FLTMODE1,0 # stabilize
+FLTMODE2,2 # alt hold
+FLTMODE3,5 # loiter
+FLTMODE4,0 # stabilize (future use)
+FLTMODE5,0 # stabilize (future use)
+FLTMODE6,0 # stabilize (future use)

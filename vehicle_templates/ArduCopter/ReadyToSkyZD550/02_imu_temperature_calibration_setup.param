@@ -1,0 +1,10 @@
+INS_LOG_BAT_MASK,7  # Cube Orange has 3 IMUs
+INS_TCAL1_ENABLE,2  # Activates the temperature calibration for IMU 1 at the next start
+INS_TCAL1_TMAX,64  # heated IMU
+INS_TCAL2_ENABLE,2  # Activates the temperature calibration for IMU 2 at the next start
+INS_TCAL2_TMAX,64  # heated IMU
+INS_TCAL3_ENABLE,2  # Activates the temperature calibration for IMU 2 at the next start
+INS_TCAL3_TMAX,50  # non-heated IMU
+LOG_BITMASK,524416  # Only for IMU and Raw-IMU
+LOG_DISARMED,1  # Gather data for the offline IMU temperature compensation while the FC is disarmed
+BRD_HEAT_TARG,65 # Cube seems to deny anything greater than 65

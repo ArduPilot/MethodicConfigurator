@@ -1,0 +1,10 @@
+ATC_ACCEL_P_MAX,161427.234375  # autotuned in calm wind
+ATC_ACCEL_R_MAX,134434.875  # autotuned in calm wind
+ATC_ANG_PIT_P,23.456852  # autotuned in calm wind
+ATC_ANG_RLL_P,17.503864  # autotuned in calm wind
+ATC_RAT_PIT_D,0.002313  # autotuned in calm wind
+ATC_RAT_PIT_I,0.064254  # autotuned in calm wind
+ATC_RAT_PIT_P,0.064254  # autotuned in calm wind
+ATC_RAT_RLL_D,0.001895  # autotuned in calm wind
+ATC_RAT_RLL_I,0.049622  # autotuned in calm wind
+ATC_RAT_RLL_P,0.049622  # autotuned in calm wind

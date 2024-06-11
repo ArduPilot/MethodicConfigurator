@@ -1,0 +1,2 @@
+AUTOTUNE_AGGR,0.085  # slightly less aggressive tune
+AUTOTUNE_AXES,1  # Autotune roll axis

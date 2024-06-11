@@ -39,6 +39,7 @@ Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\ve
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\X11_plus";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Marmotte5v2";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Chimera7";
+Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\ReadyToSkyZD550";
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

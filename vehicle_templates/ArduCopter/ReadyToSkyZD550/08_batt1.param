@@ -1,0 +1,12 @@
+BATT_AMP_PERVLT,29.87824  # measured/calibrated
+BATT_ARM_VOLT,23.6  # Don’t allow arming below this voltage
+BATT_CAPACITY,6500  # Total battery capacity
+BATT_CRT_MAH,1625  # trigger critical failsafe at 25% remaining
+BATT_CRT_VOLT,21.3  # (Critical voltage + 0.0) x no. of cells
+BATT_FS_CRT_ACT,1  # Land ASAP
+BATT_FS_LOW_ACT,2  # Return and land at home or rally point
+BATT_FS_VOLTSRC,1  # Let the firmware handle the nasty business of variable and battery dependent internal resistance
+BATT_LOW_MAH,2000  # trigger low failsafe just below 33% remaining
+BATT_LOW_VOLT,21.6  # (Low voltage + 0.0) x no. of cells
+BATT_MONITOR,4
+BATT_VOLT_MULT,18.97948  # measured/calibrated

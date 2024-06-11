@@ -1,0 +1,5 @@
+INS_LOG_BAT_MASK,7  # 3 IMUs on Cube
+INS_LOG_BAT_OPT,4  # Logs measured data both before and after the filters for Filter Review Webtool usage
+INS_RAW_LOG_OPT,9  # To get more Notch filter data
+LOG_BITMASK,2242524  # Logs Notch filter data and other control signals
+LOG_FILE_DSRMROT,1  # One .bin log file per flight, not per battery/reboot

@@ -1,0 +1,5 @@
+ATC_ACCEL_Y_MAX,37852.535156  # autotuned in slight breeze
+ATC_ANG_YAW_P,9.290332  # autotuned in slight breeze
+ATC_RAT_YAW_D,0.001  # if == to AUTOTUNE_MIN_D, autotune failed
+ATC_RAT_YAW_I,0.038931  # autotuned in slight breeze
+ATC_RAT_YAW_P,0.389311  # autotuned in slight breeze

@@ -1,0 +1,6 @@
+INS_HNTCH_ATT,20  # just enough to filter the noise created by the motors/propellers
+INS_HNTCH_BW,20  # just enough to filter the noise created by the motors/propellers
+INS_HNTCH_FM_RAT,1  # Allowed undercutting of the base frequency of the first notch filter
+INS_HNTCH_FREQ,50  # the minimum frequency that the motors are expected to operate at
+INS_HNTCH_HMNCS,1  # the motors produce secondary harmonics on this vehicle
+INS_HNTCH_OPTS,6  # One Notch per motor, update at loop rate

@@ -1,0 +1,183 @@
+{
+    "Format version": 1,
+    "Components": {
+        "Flight Controller": {
+            "Product": {
+                "Manufacturer": "Cube",
+                "Model": "Orange",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.5.3 official"
+            },
+            "Notes": ""
+        },
+        "Frame": {
+            "Product": {
+                "Manufacturer": "ReadyToSky",
+                "Model": "ZD550",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "TOW min Kg": 2.884,
+                "TOW max Kg": 2.884
+            },
+            "Notes": "10-14\" Props"
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "Radiomaster",
+                "Model": "TX16S",
+                "URL": "https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller",
+                "Version": "MKI"
+            },
+            "Firmware": {
+                "Type": "EdgeTx",
+                "Version": "2.9.2-providence"
+            },
+            "Notes": ""
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "BetaFPV",
+                "Model": "ExpressLRS 1W",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "Matek",
+                "Model": "ExpressLRS Diversity",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL5",
+                "Protocol": "CRSF"
+            },
+            "Notes": "ExpressLRS"
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "mRo",
+                "Model": "SiK 915Mhz",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "SiK",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink High Latency"
+            },
+            "Notes": ""
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "Cube",
+                "Model": "Orange",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.5.3"
+            },
+            "FC Connection": {
+                "Type": "I2C1",
+                "Protocol": "Analog Voltage and Current"
+            },
+            "Notes": "Voltage is done via the flight controller. Current is done via the ESC."
+        },
+        "Battery": {
+            "Product": {
+                "Manufacturer": "Zeee",
+                "Model": "6S 6500mAh LiHV",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "Chemistry": "LipoHV",
+                "Volt per cell max": 4.35,
+                "Volt per cell low": 3.6,
+                "Volt per cell crit": 3.55,
+                "Number of cells": 6,
+                "Capacity mAh": 6500
+            },
+            "Notes": "A normal battery"
+        },
+        "ESC": {
+            "Product": {
+                "Manufacturer": "iFlight",
+                "Model": "Blitz 4-in-1 80A",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "BLHeli32",
+                "Version": "32.10"
+            },
+            "FC Connection": {
+                "Type": "SERIAL3",
+                "Protocol": "DShot600"
+            },
+            "Notes": "Runs BDshot600"
+        },
+        "Motors": {
+            "Product": {
+                "Manufacturer": "iFlight",
+                "Model": "Xing 4214 660kV",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "Poles": 14
+            },
+            "Notes": ""
+        },
+        "Propellers": {
+            "Product": {
+                "Manufacturer": "Master Airscrew",
+                "Model": "11x3, 10 pitch",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "Diameter_inches": 11
+            },
+            "Notes": ""
+        },
+        "GNSS receiver": {
+            "Product": {
+                "Manufacturer": "Cube",
+                "Model": "Here3",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "DroneCAN/uBlox",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "CAN1",
+                "Protocol": "DroneCAN"
+            },
+            "Notes": ""
+        }
+    }
+}

@@ -1,0 +1,9 @@
+BRD_SAFETY_DEFLT,0  # do not use safety switch
+CAN_D1_PROTOCOL,1  # Here3
+CAN_P1_DRIVER,1  # Here3
+GPS_GNSS_MODE,7  # limit the constalations to ensure an update rate higher than 5Hz
+GPS_POS1_X,0  # GNSS antenna pahse center location relative to CG
+GPS_POS1_Y,0  # GNSS antenna pahse center location relative to CG
+GPS_POS1_Z,0  # GNSS antenna pahse center location relative to CG
+GPS_TYPE,9  # Defined in component editor
+WPNAV_RADIUS,100  # RTK GPS should allow for precise flying
