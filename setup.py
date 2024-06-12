@@ -57,7 +57,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 try:
     subprocess.check_call(['ln', '-sf', 'vehicle_templates', 'MethodicConfigurator/vehicle_templates'])
     print("Symbolic link created successfully.")
-except Exception as e:
+except subprocess.CalledProcessError as e:
     print(f"Failed to create symbolic link: {e}")
 
 setup(
