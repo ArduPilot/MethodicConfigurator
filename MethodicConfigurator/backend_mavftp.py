@@ -6,9 +6,9 @@ Original from MAVProxy/MAVProxy/modules/mavproxy_ftp.py
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-(C) 2024 Amilcar do Carmo Lucas
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
-SPDX-License-Identifier:    GPL-3
+SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
 # pylint: skip-file

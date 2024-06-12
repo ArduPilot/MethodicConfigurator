@@ -1,4 +1,4 @@
-# Credits
+# Licenses
 
 This software is built on top of (depends on) other open source software.
 We thank the developers of those software.

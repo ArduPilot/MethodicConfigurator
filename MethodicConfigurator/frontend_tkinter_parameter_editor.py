@@ -3,9 +3,9 @@
 '''
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-(C) 2024 Amilcar do Carmo Lucas
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
-SPDX-License-Identifier:    GPL-3
+SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
 import tkinter as tk
@@ -145,9 +145,9 @@ def show_about_window(root, version: str):
     report_bug_button = ttk.Button(main_frame, text="Report a Bug",
                                    command=lambda: webbrowser_open(
                                       "https://github.com/ArduPilot/MethodicConfigurator/issues/new"))
-    credits_button = ttk.Button(main_frame, text="Credits",
+    licenses_button = ttk.Button(main_frame, text="Licenses",
                                 command=lambda: webbrowser_open(
-                                   "https://github.com/ArduPilot/MethodicConfigurator/blob/master/credits/CREDITS.md"))
+                                   "https://github.com/ArduPilot/MethodicConfigurator/blob/master/LICENSES/CREDITS.md"))
     source_button = ttk.Button(main_frame, text="Source Code",
                                command=lambda: webbrowser_open(
                                   "https://github.com/ArduPilot/MethodicConfigurator"))
@@ -156,7 +156,7 @@ def show_about_window(root, version: str):
     user_manual_button.grid(column=0, row=1, padx=10, pady=10)
     support_forum_button.grid(column=1, row=1, padx=10, pady=10)
     report_bug_button.grid(column=2, row=1, padx=10, pady=10)
-    credits_button.grid(column=3, row=1, padx=10, pady=10)
+    licenses_button.grid(column=3, row=1, padx=10, pady=10)
     source_button.grid(column=4, row=1, padx=10, pady=10)
 
     # Configure the grid to ensure equal spacing and expansion
@@ -244,7 +244,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         image_label = BaseWindow.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
         image_label.bind("<Button-1>", lambda event: show_about_window(self.main_frame, version))
-        show_tooltip(image_label, "User Manual, Support Forum, Report a Bug, Credits, Source Code")
+        show_tooltip(image_label, "User Manual, Support Forum, Report a Bug, Licenses, Source Code")
 
     def __create_parameter_area_widgets(self):
         self.show_only_differences = tk.BooleanVar(value=False)
