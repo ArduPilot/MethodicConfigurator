@@ -11,18 +11,13 @@ SPDX-License-Identifier:    GPL-3
 from os import path as os_path
 from os import getcwd as os_getcwd
 from os import listdir as os_listdir
-from os import makedirs as os_makedirs
 from os import rename as os_rename
 from os import walk as os_walk
-from os import sep as os_sep
 
 from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
 
 from re import compile as re_compile
-from re import match as re_match
-from re import escape as re_escape
-from re import sub as re_sub
 
 # from sys import exit as sys_exit
 from logging import debug as logging_debug
@@ -30,19 +25,11 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
 
-from json import load as json_load
-from json import dump as json_dump
-
-from platform import system as platform_system
-
 from typing import Dict
 from typing import List
 from typing import Tuple
 
 from zipfile import ZipFile
-
-from platformdirs import site_config_dir
-from platformdirs import user_config_dir
 
 from MethodicConfigurator.annotate_params import BASE_URL, PARAM_DEFINITION_XML_FILE, Par
 from MethodicConfigurator.annotate_params import get_xml_data
@@ -53,6 +40,7 @@ from MethodicConfigurator.annotate_params import update_parameter_documentation
 
 from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
 from MethodicConfigurator.backend_filesystem_configuration_steps import ConfigurationSteps
+from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 
 from MethodicConfigurator.middleware_template_overview import TemplateOverview
 
@@ -79,7 +67,7 @@ def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1
     return abs(x - y) <= atol + (rtol * abs(y))
 
 
-class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable=too-many-public-methods
+class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  # pylint: disable=too-many-public-methods
     """
     A class to manage local filesystem operations for the ArduPilot methodic configurator.
 
@@ -98,6 +86,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
         self.file_parameters = None
         VehicleComponents.__init__(self)
         ConfigurationSteps.__init__(self, vehicle_dir, vehicle_type)
+        ProgramSettings.__init__(self)
         self.fw_version = fw_version
         self.allow_editing_template_files = allow_editing_template_files
         if vehicle_dir is not None:
@@ -394,16 +383,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
 
         logging_info("Intermediate parameter files and summary files zipped to %s", zip_file_path)
 
-    @staticmethod
-    def application_icon_filepath():
-        script_dir = os_path.dirname(os_path.abspath(__file__))
-        return os_path.join(script_dir, 'ArduPilot_icon.png')
-
-    @staticmethod
-    def application_logo_filepath():
-        script_dir = os_path.dirname(os_path.abspath(__file__))
-        return os_path.join(script_dir, 'ArduPilot_logo.png')
-
     def vehicle_image_filepath(self):
         return os_path.join(self.vehicle_dir, 'vehicle.jpg')
 
@@ -417,19 +396,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
     @staticmethod
     def directory_exists(directory: str) -> bool:
         return os_path.exists(directory)
-
-    def create_new_vehicle_dir(self, new_vehicle_dir: str):
-        # Check if the new vehicle directory already exists
-        if os_path.exists(new_vehicle_dir):
-            return "Directory already exists, choose a different one"
-
-        try:
-            # Create the new vehicle directory
-            os_makedirs(new_vehicle_dir, exist_ok=True)
-        except OSError as e:
-            logging_error("Error creating new vehicle directory: %s", e)
-            return str(e)
-        return ""
 
     def copy_template_files_to_new_vehicle_dir(self, template_dir: str, new_vehicle_dir: str):
         # Copy the template files to the new vehicle directory
@@ -445,26 +411,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
     def getcwd():
         return os_getcwd()
 
-    @staticmethod
-    def valid_directory_name(dir_name: str):
-        """
-        Check if a given directory name contains only alphanumeric characters, underscores, hyphens,
-        and the OS directory separator.
-
-        This function is designed to ensure that the directory name does not contain characters that are
-        invalid for directory names in many operating systems. It does not guarantee that the name
-        is valid in all contexts or operating systems, as directory name validity can vary.
-
-        Parameters:
-        - dir_name (str): The directory name to check.
-
-        Returns:
-        - bool: True if the directory name matches the allowed pattern, False otherwise.
-        """
-        # Include os.sep in the pattern
-        pattern = r'^[\w' + re_escape(os_sep) + '-]+$'
-        return re_match(pattern, dir_name) is not None
-
     def tempcal_imu_result_param_tuple(self):
         tempcal_imu_result_param_filename = "03_imu_temperature_calibration_results.param"
         return [tempcal_imu_result_param_filename, os_path.join(self.vehicle_dir, tempcal_imu_result_param_filename)]
@@ -479,139 +425,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
                 else:
                     logging_warning("Parameter %s not found in the current parameter file", param)
         return ret
-
-    @staticmethod
-    def __user_config_dir():
-        user_config_directory = user_config_dir(".ardupilot_methodic_configurator", False, roaming=True, ensure_exists=True)
-
-        if not os_path.exists(user_config_directory):
-            raise FileNotFoundError(f"The user configuration directory '{user_config_directory}' does not exist.")
-        if not os_path.isdir(user_config_directory):
-            raise NotADirectoryError(f"The path '{user_config_directory}' is not a directory.")
-
-        return user_config_directory
-
-    @staticmethod
-    def __site_config_dir():
-        site_config_directory = site_config_dir(".ardupilot_methodic_configurator", False, version=None, multipath=False,
-                                                ensure_exists=True)
-
-        if not os_path.exists(site_config_directory):
-            raise FileNotFoundError(f"The site configuration directory '{site_config_directory}' does not exist.")
-        if not os_path.isdir(site_config_directory):
-            raise NotADirectoryError(f"The path '{site_config_directory}' is not a directory.")
-
-        return site_config_directory
-
-    @staticmethod
-    def __get_settings_as_dict():
-        settings_path = os_path.join(LocalFilesystem.__user_config_dir(), "settings.json")
-
-        settings = {}
-
-        try:
-            with open(settings_path, "r", encoding='utf-8') as settings_file:
-                settings = json_load(settings_file)
-        except FileNotFoundError:
-            # If the file does not exist, it will be created later
-            pass
-
-        if "Format version" not in settings:
-            settings["Format version"] = 1
-
-        if "directory_selection" not in settings:
-            settings["directory_selection"] = {}
-        return settings
-
-    @staticmethod
-    def __set_settings_from_dict(settings):
-        settings_path = os_path.join(LocalFilesystem.__user_config_dir(), "settings.json")
-
-        with open(settings_path, "w", encoding='utf-8') as settings_file:
-            json_dump(settings, settings_file, indent=4)
-
-    @staticmethod
-    def __get_settings_config():
-        settings = LocalFilesystem.__get_settings_as_dict()
-
-        # Regular expression pattern to match single backslashes
-        pattern = r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)"
-
-        # Replacement string
-        if platform_system() == 'Windows':
-            replacement = r"\\"
-        else:
-            replacement = r"/"
-        return settings, pattern, replacement
-
-    @staticmethod
-    def store_recently_used_template_dirs(template_dir: str, new_base_dir: str):
-        settings, pattern, replacement = LocalFilesystem.__get_settings_config()
-
-        # Update the settings with the new values
-        settings["directory_selection"].update({
-            "template_dir": re_sub(pattern, replacement, template_dir),
-            "new_base_dir": re_sub(pattern, replacement, new_base_dir)
-        })
-
-        LocalFilesystem.__set_settings_from_dict(settings)
-
-    @staticmethod
-    def store_template_dir(relative_template_dir: str):
-        settings, pattern, replacement = LocalFilesystem.__get_settings_config()
-
-        template_dir = os_path.join(LocalFilesystem.get_templates_base_dir(), relative_template_dir)
-
-        # Update the settings with the new values
-        settings["directory_selection"].update({
-            "template_dir": re_sub(pattern, replacement, template_dir)
-        })
-
-        LocalFilesystem.__set_settings_from_dict(settings)
-
-    @staticmethod
-    def store_recently_used_vehicle_dir(vehicle_dir: str):
-        settings, pattern, replacement = LocalFilesystem.__get_settings_config()
-
-        # Update the settings with the new values
-        settings["directory_selection"].update({
-            "vehicle_dir": re_sub(pattern, replacement, vehicle_dir)
-        })
-
-        LocalFilesystem.__set_settings_from_dict(settings)
-
-
-    @staticmethod
-    def get_templates_base_dir():
-        current_dir = os_path.dirname(os_path.abspath(__file__))
-        if platform_system() == 'Windows':
-            current_dir = current_dir.replace("\\_internal", "")
-        elif "site-packages" not in current_dir:
-            current_dir = current_dir.replace("/MethodicConfigurator", "")
-        program_dir = current_dir
-
-        if platform_system() == 'Windows':
-            site_directory = LocalFilesystem.__site_config_dir()
-        else:
-            site_directory = program_dir
-        return os_path.join(site_directory, "vehicle_templates")
-
-    @staticmethod
-    def get_recently_used_dirs():
-        template_default_dir = os_path.join(LocalFilesystem.get_templates_base_dir(),
-                                            "ArduCopter", "diatone_taycan_mxc", "4.5.3-params")
-
-        settings_directory = LocalFilesystem.__user_config_dir()
-        vehicles_default_dir = os_path.join(settings_directory, "vehicles")
-        if not os_path.exists(vehicles_default_dir):
-            os_makedirs(vehicles_default_dir, exist_ok=True)
-
-        settings = LocalFilesystem.__get_settings_as_dict()
-        template_dir = settings["directory_selection"].get("template_dir", template_default_dir)
-        new_base_dir = settings["directory_selection"].get("new_base_dir", vehicles_default_dir)
-        vehicle_dir = settings["directory_selection"].get("vehicle_dir", vehicles_default_dir)
-
-        return template_dir, new_base_dir, vehicle_dir
 
     def write_last_uploaded_filename(self, current_file: str):
         try:
@@ -679,7 +492,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
 
     def copy_fc_params_values_to_template_created_vehicle_files(self, fc_parameters: Dict[str, 'Par']):
         eval_variables = self.get_eval_variables()
-        eval_variables['fc_parameters'] = fc_parameters
         for param_filename, param_dict in self.file_parameters.items():
             for param_name, param in param_dict.items():
                 if param_name in fc_parameters:
@@ -712,7 +524,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
         """
         vehicle_components_dict = {}
         file_to_find = VehicleComponents().vehicle_components_json_filename
-        template_default_dir = LocalFilesystem.get_templates_base_dir()
+        template_default_dir = ProgramSettings.get_templates_base_dir()
         for root, _dirs, files in os_walk(template_default_dir):
             if file_to_find in files:
                 relative_path = os_path.relpath(root, template_default_dir)
