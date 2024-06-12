@@ -55,19 +55,19 @@ with open('README.md', 'r', encoding='utf-8') as f:
                                                 f"{PRJ_URL}/raw/master/images/App_screenshot1.png")
 
 # So that the vehicle_templates directory contents get correctly read by the MANIFEST.in file
-source_dir = 'vehicle_templates'
-dest_dir = 'MethodicConfigurator/vehicle_templates'
+TEMPLATES_SRC_DIR = 'vehicle_templates'
+TEMPLATES_DST_DIR = 'MethodicConfigurator/vehicle_templates'
 
-if os.path.exists(dest_dir):
-    shutil.rmtree(dest_dir)
+if os.path.exists(TEMPLATES_DST_DIR):
+    shutil.rmtree(TEMPLATES_DST_DIR)
 
 try:
-    shutil.copytree(source_dir, dest_dir)
+    shutil.copytree(TEMPLATES_SRC_DIR, TEMPLATES_DST_DIR)
     print("Directory tree copied successfully.")
 except FileExistsError as e:
-    print(f"The destination directory '{dest_dir}' already exists and cannot be overwritten.")
+    print(f"The destination directory '{TEMPLATES_DST_DIR}' already exists and cannot be overwritten.")
 except PermissionError as e:
-    print(f"Permission denied when trying to copy '{source_dir}' to '{dest_dir}'. Please check your permissions.")
+    print(f"Permission denied when trying to copy '{TEMPLATES_SRC_DIR}' to '{TEMPLATES_DST_DIR}'. Please check your permissions.")
 except Exception as e:  # pylint: disable=broad-except
     print(f"An unexpected error occurred while copying the directory tree: {e}")
 
@@ -137,5 +137,5 @@ setup(
 )
 
 # Remove the symbolic link now that the setup is done
-if os.path.exists(dest_dir):
-    shutil.rmtree(dest_dir)
+if os.path.exists(TEMPLATES_DST_DIR):
+    shutil.rmtree(TEMPLATES_DST_DIR)
