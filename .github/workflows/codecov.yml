@@ -22,7 +22,10 @@ jobs:
           pip install -U .
         
       - name: Run tests and collect coverage
-        run: pytest --cov MethodicConfigurator
+        # run: pytest --cov MethodicConfigurator
+        run: |
+          coverage run -m pytest
+          coverage xml -o unittests/coverage.xml
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v4.0.1
