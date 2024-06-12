@@ -18,6 +18,7 @@ from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
 
 from re import compile as re_compile
+from re import match as re_match
 
 # from sys import exit as sys_exit
 from logging import debug as logging_debug
@@ -107,6 +108,20 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         if not self.file_parameters:
             return # No files intermediate parameters files found, no need to continue, the rest needs them
 
+        self.load_vehicle_components_json_data(vehicle_dir)
+
+        if self.vehicle_components and 'Components' in self.vehicle_components:
+            components = self.vehicle_components['Components']
+        else:
+            components = None
+        if self.fw_version is None and components:
+            version_str = components.get('Flight Controller', {}).get('Firmware', {}).get('Version', '')
+            version_str = version_str.lstrip().split(' ')[0] if version_str else ''
+            if re_match(r'^\d+\.\d+\.\d+$', version_str):
+                self.fw_version = version_str
+            else:
+                logging_error(f"FW version string {version_str} on {self.vehicle_components_json_filename} is invalid")
+
         # Read ArduPilot parameter documentation
         xml_dir = vehicle_dir if os_path.isdir(vehicle_dir) else os_path.dirname(os_path.realpath(vehicle_dir))
         vehicle_parm_subdir = {
@@ -129,7 +144,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self.doc_dict = create_doc_dict(xml_root, vehicle_type, TOOLTIP_MAX_LENGTH)
 
         self.__extend_and_reformat_parameter_documentation_metadata()
-        self.load_vehicle_components_json_data(vehicle_dir)
 
     def rename_parameter_files(self):
         # Rename parameter files if some new files got added to the vehicle directory
