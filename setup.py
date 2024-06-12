@@ -10,8 +10,9 @@ This file is part of Ardupilot methodic configurator. https://github.com/ArduPil
 SPDX-License-Identifier:    GPL-3
 '''
 
+import shutil
 import os
-import subprocess
+
 from setuptools import setup
 from setuptools import find_packages
 
@@ -54,11 +55,21 @@ with open('README.md', 'r', encoding='utf-8') as f:
                                                 f"{PRJ_URL}/raw/master/images/App_screenshot1.png")
 
 # So that the vehicle_templates directory contents get correctly read by the MANIFEST.in file
+source_dir = 'vehicle_templates'
+dest_dir = 'MethodicConfigurator/vehicle_templates'
+
+if os.path.exists(dest_dir):
+    shutil.rmtree(dest_dir)
+
 try:
-    subprocess.check_call(['ln', '-sf', 'vehicle_templates', 'MethodicConfigurator/vehicle_templates'])
-    print("Symbolic link created successfully.")
-except subprocess.CalledProcessError as e:
-    print(f"Failed to create symbolic link: {e}")
+    shutil.copytree(source_dir, dest_dir)
+    print("Directory tree copied successfully.")
+except FileExistsError as e:
+    print(f"The destination directory '{dest_dir}' already exists and cannot be overwritten.")
+except PermissionError as e:
+    print(f"Permission denied when trying to copy '{source_dir}' to '{dest_dir}'. Please check your permissions.")
+except Exception as e:  # pylint: disable=broad-except
+    print(f"An unexpected error occurred while copying the directory tree: {e}")
 
 setup(
     name='MethodicConfigurator',
@@ -126,8 +137,5 @@ setup(
 )
 
 # Remove the symbolic link now that the setup is done
-try:
-    os.unlink('MethodicConfigurator/vehicle_templates')
-    print("Symbolic link removed successfully.")
-except FileNotFoundError:
-    print("No symbolic link found to remove.")
+if os.path.exists(dest_dir):
+    shutil.rmtree(dest_dir)
