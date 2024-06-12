@@ -16,6 +16,8 @@ from os import path as os_path
 from logging import warning as logging_warning
 from logging import error as logging_error
 
+from re import match as re_match
+
 from json import load as json_load
 from json import dump as json_dump
 from json import JSONDecodeError
@@ -52,3 +54,17 @@ class VehicleComponents:
             logging_error("Error saving JSON data to file '%s': %s", filepath, e)
             return True
         return False
+
+    def get_fc_fw_version_from_vehicle_components_json(self) -> str:
+        if self.vehicle_components and 'Components' in self.vehicle_components:
+            components = self.vehicle_components['Components']
+        else:
+            components = None
+        if components:
+            version_str = components.get('Flight Controller', {}).get('Firmware', {}).get('Version', '')
+            version_str = version_str.lstrip().split(' ')[0] if version_str else ''
+            if re_match(r'^\d+\.\d+\.\d+$', version_str):
+                return version_str
+            else:
+                logging_error(f"FW version string {version_str} on {self.vehicle_components_json_filename} is invalid")
+        return None
