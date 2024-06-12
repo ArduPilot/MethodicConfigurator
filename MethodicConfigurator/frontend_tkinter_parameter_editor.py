@@ -147,7 +147,7 @@ def show_about_window(root, version: str):
                                       "https://github.com/ArduPilot/MethodicConfigurator/issues/new"))
     licenses_button = ttk.Button(main_frame, text="Licenses",
                                 command=lambda: webbrowser_open(
-                                   "https://github.com/ArduPilot/MethodicConfigurator/blob/master/LICENSES/CREDITS.md"))
+                                   "https://github.com/ArduPilot/MethodicConfigurator/blob/master/credits/CREDITS.md"))
     source_button = ttk.Button(main_frame, text="Source Code",
                                command=lambda: webbrowser_open(
                                   "https://github.com/ArduPilot/MethodicConfigurator"))

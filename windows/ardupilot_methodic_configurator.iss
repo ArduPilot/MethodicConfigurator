@@ -59,6 +59,7 @@ Source: "..\MethodicConfigurator\ArduPilot_logo.png"; DestDir: "{app}\_internal\
 Source: "..\MethodicConfigurator\ArduCopter_configuration_steps.json"; DestDir: "{app}\_internal\MethodicConfigurator"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduPlane_configuration_steps.json"; DestDir: "{app}\_internal\MethodicConfigurator"; Flags: ignoreversion
 Source: "..\LICENSES\*.*"; DestDir: "{app}\LICENSES"; Flags: ignoreversion
+Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
 
 [Dirs]
 Name: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; Flags: uninsneveruninstall
