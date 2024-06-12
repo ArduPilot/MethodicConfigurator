@@ -65,6 +65,5 @@ class VehicleComponents:
             version_str = version_str.lstrip().split(' ')[0] if version_str else ''
             if re_match(r'^\d+\.\d+\.\d+$', version_str):
                 return version_str
-            else:
-                logging_error(f"FW version string {version_str} on {self.vehicle_components_json_filename} is invalid")
+            logging_error(f"FW version string {version_str} on {self.vehicle_components_json_filename} is invalid")
         return None
