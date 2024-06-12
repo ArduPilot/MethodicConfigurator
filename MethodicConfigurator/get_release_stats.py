@@ -5,9 +5,9 @@ Based on https://pagure.io/github-release-stats/blob/master/f/get_release_stats.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-(C) 2024 Amilcar do Carmo Lucas
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
-SPDX-License-Identifier:    GPL-3
+SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
 import itertools
