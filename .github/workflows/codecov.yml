@@ -1,39 +1,29 @@
 name: Codecov
 
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
-
+on: [push, pull_request, workflow_dispatch]
 jobs:
-  codecov:
+  run:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
-
+          python-version: '3.12'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -U pymavlink pytest pytest-cov coverage mock
-          pip install build
-          pip install -U .
+          python -m pip install pymavlink pytest pytest-cov coverage mock
         
-      - name: Test with unittest
-        run: |
-          coverage run -m pytest
-          coverage xml -o unittests/coverage.xml
+      - name: Run tests and collect coverage
+        run: pytest --cov MethodicConfigurator
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v4.0.1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
