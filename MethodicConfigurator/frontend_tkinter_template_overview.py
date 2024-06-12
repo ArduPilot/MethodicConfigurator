@@ -17,15 +17,14 @@ from tkinter import ttk
 
 from MethodicConfigurator.middleware_template_overview import TemplateOverview
 
-from MethodicConfigurator.backend_filesystem import LocalFilesystem
+from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
+from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
 
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
-from MethodicConfigurator.frontend_tkinter_base import show_error_message
 
 from MethodicConfigurator.version import VERSION
-
 
 class TemplateOverviewWindow(BaseWindow):
     """
@@ -38,18 +37,15 @@ class TemplateOverviewWindow(BaseWindow):
 
     Attributes:
         window (tk.Tk): The root Tkinter window object for the GUI.
-        local_filesystem (LocalFilesystem): An instance of LocalFilesystem used to interact with the filesystem, including
-                                            operations related to template directories.
 
     Methods:
         on_row_double_click(event): Handles the event triggered when a row in the Treeview is double-clicked, allowing the user
                                      to store the corresponding template directory.
     """
-    def __init__(self, parent: tk.Tk, local_filesystem: LocalFilesystem):
+    def __init__(self, parent: tk.Tk):
         super().__init__(parent)
         self.root.title(f"Amilcar Lucas's - ArduPilot methodic configurator {VERSION} - Template Overview and selection")
         self.root.geometry("1200x300")
-        self.local_filesystem = local_filesystem
 
         instruction_text = "Please double-click the template below that most resembles your own vehicle components"
         instruction_label = ttk.Label(self.main_frame, text=instruction_text, font=('Arial', 12))
@@ -75,7 +71,7 @@ class TemplateOverviewWindow(BaseWindow):
             self.tree.heading(col, text=col)
 
         # Populate the Treeview with data from the template overview
-        for key, template_overview in self.local_filesystem.get_vehicle_components_overviews().items():
+        for key, template_overview in VehicleComponents.get_vehicle_components_overviews().items():
             attribute_names = template_overview.attributes()
             values = (key,) + tuple(getattr(template_overview, attr, '') for attr in attribute_names)
             self.tree.insert('', 'end', text=key, values=values)
@@ -118,7 +114,7 @@ class TemplateOverviewWindow(BaseWindow):
         item_id = self.tree.identify_row(event.y)
         if item_id:
             selected_template_relative_path = self.tree.item(item_id)['text']
-            self.local_filesystem.store_template_dir(selected_template_relative_path)
+            ProgramSettings.store_template_dir(selected_template_relative_path)
             self.root.destroy()
 
 def argument_parser():
@@ -136,7 +132,6 @@ def argument_parser():
                                                  'apply changes directly to the flight controller. The tool is built to '
                                                  'semi-automate the configuration process of ArduPilot for drones by '
                                                  'providing a clear and intuitive interface for parameter management.')
-    parser = LocalFilesystem.add_argparse_arguments(parser)
     return add_common_arguments_and_parse(parser)
 
 def main():
@@ -144,17 +139,9 @@ def main():
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
 
-    vehicle_type = "ArduCopter"
+    TemplateOverviewWindow(None)
 
-    try:
-        local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, None, args.allow_editing_template_files)
-    except SystemExit as expt:
-        show_error_message("Fatal error reading parameter files", f"{expt}")
-        raise
-
-    TemplateOverviewWindow(None, local_filesystem)
-
-    print(local_filesystem.get_recently_used_dirs()[0])
+    print(ProgramSettings.get_recently_used_dirs()[0])
 
 if __name__ == "__main__":
     main()

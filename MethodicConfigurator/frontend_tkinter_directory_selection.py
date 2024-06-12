@@ -31,6 +31,7 @@ from MethodicConfigurator.version import VERSION
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
+from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 
 from MethodicConfigurator.frontend_tkinter_base import show_no_param_files_error
 from MethodicConfigurator.frontend_tkinter_base import show_tooltip
@@ -49,12 +50,12 @@ class DirectorySelectionWidgets():
     """
     def __init__(self, parent, parent_frame, initialdir: str, label_text: str,  # pylint: disable=too-many-arguments
                  autoresize_width: bool, dir_tooltip: str, button_tooltip: str,
-                 local_filesystem: LocalFilesystem = None):
+                 is_template_selection: bool):
         self.parent = parent
         self.directory = deepcopy(initialdir)
         self.label_text = label_text
         self.autoresize_width = autoresize_width
-        self.local_filesystem2 = local_filesystem  # "2" to not collide with VehicleDirectorySelectionWidgets.local_filesystem
+        self.is_template_selection = is_template_selection
 
         # Create a new frame for the directory selection label and button
         self.container_frame = ttk.Frame(parent_frame)
@@ -86,9 +87,9 @@ class DirectorySelectionWidgets():
             self.directory_entry.xview_moveto(1.0)
 
     def on_select_directory(self):
-        if self.local_filesystem2:
-            TemplateOverviewWindow(self.parent.root, self.local_filesystem2)
-            selected_directory = self.local_filesystem2.get_recently_used_dirs()[0]
+        if self.is_template_selection:
+            TemplateOverviewWindow(self.parent.root)
+            selected_directory = ProgramSettings.get_recently_used_dirs()[0]
             logging_info("Selected template directory: %s", selected_directory)
         else:
             selected_directory = filedialog.askdirectory(initialdir=self.directory, title=f"Select {self.label_text}")
@@ -155,7 +156,8 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
                          "parameter files to be uploaded to the flight controller",
                          "Select the vehicle-specific configuration directory containing the\n"
                          "intermediate parameter files to be uploaded to the flight controller" \
-                            if destroy_parent_on_open else '')
+                            if destroy_parent_on_open else '',
+                         False)
         self.local_filesystem = local_filesystem
         self.destroy_parent_on_open = destroy_parent_on_open
 
@@ -241,7 +243,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                                                       False,
                                                       template_dir_edit_tooltip,
                                                       template_dir_btn_tooltip,
-                                                      self.local_filesystem)
+                                                      True)
         self.template_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
         use_fc_params_checkbox = ttk.Checkbutton(option1_label_frame, variable=self.use_fc_params,
@@ -261,7 +263,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                                                       "(destination) base directory:",
                                                       False,
                                                       new_base_dir_edit_tooltip,
-                                                      new_base_dir_btn_tooltip)
+                                                      new_base_dir_btn_tooltip,
+                                                      False)
         self.new_base_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
         new_dir_edit_tooltip = "A new vehicle configuration directory with this name will be created at the " \
             "(destination) base directory"
@@ -303,7 +306,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                                              "Last used vehicle configuration directory:",
                                              False,
                                              "Last used vehicle configuration directory",
-                                             "")
+                                             "",
+                                             False)
         last_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
         # Check if there is a last used vehicle configuration directory

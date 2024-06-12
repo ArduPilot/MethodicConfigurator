@@ -9,6 +9,7 @@ SPDX-License-Identifier:    GPL-3
 '''
 
 from os import path as os_path
+from os import walk as os_walk
 
 # from sys import exit as sys_exit
 # from logging import debug as logging_debug
@@ -21,6 +22,10 @@ from re import match as re_match
 from json import load as json_load
 from json import dump as json_dump
 from json import JSONDecodeError
+
+from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
+
+from MethodicConfigurator.middleware_template_overview import TemplateOverview
 
 
 class VehicleComponents:
@@ -67,3 +72,28 @@ class VehicleComponents:
                 return version_str
             logging_error(f"FW version string {version_str} on {self.vehicle_components_json_filename} is invalid")
         return None
+
+    @staticmethod
+    def get_vehicle_components_overviews():
+        """
+        Finds all subdirectories of base_dir containing a "vehicle_components.json" file,
+        creates a dictionary where the keys are the subdirectory names (relative to base_dir)
+        and the values are instances of VehicleComponents.
+
+        :param base_dir: The base directory to start searching from.
+        :return: A dictionary mapping subdirectory paths to VehicleComponents instances.
+        """
+        vehicle_components_dict = {}
+        file_to_find = VehicleComponents().vehicle_components_json_filename
+        template_default_dir = ProgramSettings.get_templates_base_dir()
+        for root, _dirs, files in os_walk(template_default_dir):
+            if file_to_find in files:
+                relative_path = os_path.relpath(root, template_default_dir)
+                vehicle_components = VehicleComponents()
+                comp_data = vehicle_components.load_vehicle_components_json_data(root)
+                if comp_data:
+                    comp_data = comp_data.get('Components', {})
+                    vehicle_components_overview = TemplateOverview(comp_data)
+                    vehicle_components_dict[relative_path] = vehicle_components_overview
+
+        return vehicle_components_dict
