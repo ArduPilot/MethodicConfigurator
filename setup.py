@@ -64,9 +64,9 @@ if os.path.exists(TEMPLATES_DST_DIR):
 try:
     shutil.copytree(TEMPLATES_SRC_DIR, TEMPLATES_DST_DIR)
     print("Directory tree copied successfully.")
-except FileExistsError as e:
+except FileExistsError:
     print(f"The destination directory '{TEMPLATES_DST_DIR}' already exists and cannot be overwritten.")
-except PermissionError as e:
+except PermissionError:
     print(f"Permission denied when trying to copy '{TEMPLATES_SRC_DIR}' to '{TEMPLATES_DST_DIR}'. Please check your permissions.")
 except Exception as e:  # pylint: disable=broad-except
     print(f"An unexpected error occurred while copying the directory tree: {e}")
