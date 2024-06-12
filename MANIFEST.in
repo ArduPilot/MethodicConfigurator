@@ -1,3 +1,6 @@
-recursive-include vehicle_templates *
+recursive-include MethodicConfigurator/vehicle_templates *.param
+recursive-include MethodicConfigurator/vehicle_templates *.json
+recursive-include MethodicConfigurator/vehicle_templates *.jpg
+recursive-include MethodicConfigurator/vehicle_templates *.xml
 include MethodicConfigurator/ArduPilot_icon.png
 include MethodicConfigurator/ArduPilot_logo.png

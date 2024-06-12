@@ -569,7 +569,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps):  # pylint: disable
         current_dir = os_path.dirname(os_path.abspath(__file__))
         if platform_system() == 'Windows':
             current_dir = current_dir.replace("\\_internal", "")
-        else:
+        elif "site-packages" not in current_dir:
             current_dir = current_dir.replace("/MethodicConfigurator", "")
         program_dir = current_dir
 

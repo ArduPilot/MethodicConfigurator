@@ -11,11 +11,11 @@ SPDX-License-Identifier:    GPL-3
 '''
 
 import os
+import subprocess
 from setuptools import setup
 from setuptools import find_packages
 
 from MethodicConfigurator.version import VERSION
-
 
 dev_requirements = [
     'ruff',
@@ -52,6 +52,13 @@ with open('README.md', 'r', encoding='utf-8') as f:
     long_description = long_description.replace("(credits/CREDITS.md", f"({PRJ_URL}/blob/master/credits/CREDITS.md")
     long_description = long_description.replace("images/App_screenshot1.png",
                                                 f"{PRJ_URL}/raw/master/images/App_screenshot1.png")
+
+# So that the vehicle_templates directory contents get correctly read by the MANIFEST.in file
+try:
+    subprocess.check_call(['ln', '-sf', 'vehicle_templates', 'MethodicConfigurator/vehicle_templates'])
+    print("Symbolic link created successfully.")
+except Exception as e:
+    print(f"Failed to create symbolic link: {e}")
 
 setup(
     name='MethodicConfigurator',
@@ -107,4 +114,20 @@ setup(
             'param_pid_adjustment_update=MethodicConfigurator.param_pid_adjustment_update:main',
         ],
     },
+    project_urls={
+        'Homepage': PRJ_URL,
+        'Documentation': f'{PRJ_URL}/blob/master/USERMANUAL.md',
+        'Bug Tracker': f'{PRJ_URL}/issues',
+        'Source Code': PRJ_URL,
+        'Forum': 'https://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/',
+        'Chat': 'https://discord.com/invite/ArduPilot',
+        'Download': f'{PRJ_URL}/releases',
+    },
 )
+
+# Remove the symbolic link now that the setup is done
+try:
+    os.unlink('MethodicConfigurator/vehicle_templates')
+    print("Symbolic link removed successfully.")
+except FileNotFoundError:
+    print("No symbolic link found to remove.")
