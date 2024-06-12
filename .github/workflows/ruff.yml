@@ -1,4 +1,4 @@
-name: Python cleanliness
+name: Ruff
 
 on: [push, pull_request, workflow_dispatch]
 
