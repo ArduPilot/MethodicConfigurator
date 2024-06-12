@@ -123,7 +123,8 @@ def main():
         FlightControllerInfoWindow(flight_controller)
 
     try:
-        local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, args.allow_editing_template_files)
+        local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, flight_controller.info.flight_sw_version,
+                                           args.allow_editing_template_files)
     except SystemExit as exp:
         show_error_message("Fatal error reading parameter files", f"{exp}")
         raise

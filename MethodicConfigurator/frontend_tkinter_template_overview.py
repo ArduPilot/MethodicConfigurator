@@ -147,7 +147,7 @@ def main():
     vehicle_type = "ArduCopter"
 
     try:
-        local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, args.allow_editing_template_files)
+        local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, None, args.allow_editing_template_files)
     except SystemExit as expt:
         show_error_message("Fatal error reading parameter files", f"{expt}")
         raise

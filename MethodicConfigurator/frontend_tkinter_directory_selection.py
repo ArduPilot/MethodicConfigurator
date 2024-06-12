@@ -412,7 +412,7 @@ def main():
     logging_warning("This main is for testing and development only, usually the VehicleDirectorySelectionWindow is"
                     " called from another script")
 
-    local_filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, args.allow_editing_template_files)
+    local_filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, None, args.allow_editing_template_files)
 
     # Get the list of intermediate parameter files files that will be processed sequentially
     files = list(local_filesystem.file_parameters.keys())
