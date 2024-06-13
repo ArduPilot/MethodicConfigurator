@@ -321,7 +321,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         instructions_text.insert(tk.END, "4. Press the ")
         instructions_text.insert(tk.END, "Upload selected params to FC, and advance to next param file", "italic")
         instructions_text.insert(tk.END, " button\n")
-        instructions_text.insert(tk.END, "5. Repeat until the program automatically closes")
+        instructions_text.insert(tk.END, "5. Repeat from the top until the program automatically closes")
         instructions_text.config(state=tk.DISABLED)
 
         dismiss_button = ttk.Button(welcome_window.main_frame, text="Dismiss",

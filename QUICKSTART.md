@@ -69,7 +69,7 @@ Now do this in a loop until the software automatically closes or you are asked t
 - Edit the parameter's *New value* and *Reason changed* fields to match your vehicle (marked with the big red number 5),
 - Press *Del* and/or *Add* buttons to delete or add parameters respectively (marked with the big red number 5),
 - Press *Upload selected params to FC, and advance to next param file* (marked with the big red number 7),
-- Repeat until the program automatically closes.
+- Repeat from the top until the program automatically closes.
 
 ## 6. Use the *ArduPilot Methodic Configurator* software after having created a vehicle from template
 
