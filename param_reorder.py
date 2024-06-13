@@ -45,6 +45,7 @@ def reorder_param_files(steps):
             print(f"Info: Will rename {old_key} to {new_key}")
     return renames
 
+
 def loop_relevant_files(renames, steps):
     param_dirs = ['.']
     # Search all *.py, *.json and *.md files in the current directory
@@ -64,6 +65,7 @@ def loop_relevant_files(renames, steps):
                 update_file_contents(renames, root, file, steps)
     return param_dirs
 
+
 def uplate_old_filenames(renames, steps):
     for new_name, old_name in renames.items():
         if old_name != new_name:
@@ -72,6 +74,7 @@ def uplate_old_filenames(renames, steps):
                     steps[old_name]["old_filenames"].append(old_name)
             else:
                 steps[old_name]["old_filenames"] = [old_name]
+
 
 def update_file_contents(renames, root, file, steps):
     with open(os.path.join(root, file), "r", encoding="utf-8") as handle:
@@ -88,6 +91,7 @@ def update_file_contents(renames, root, file, steps):
             file_content = file_content.replace(old_name, new_name)
     with open(os.path.join(root, file), "w", encoding="utf-8") as handle:
         handle.write(file_content)
+
 
 def update_configuration_steps_json_file_contents(steps, file_content, new_name, old_name):
     new_file_content = ""
@@ -110,6 +114,7 @@ def update_configuration_steps_json_file_contents(steps, file_content, new_name,
             new_file_content += line.replace(old_name, new_name)
     return new_file_content
 
+
 def rename_file(old_name, new_name, param_dir):
     """Rename a single file."""
     old_name_path = os.path.join(param_dir, old_name)
@@ -119,11 +124,13 @@ def rename_file(old_name, new_name, param_dir):
     else:
         print(f"Error: Could not rename file {old_name_path}, file not found")
 
+
 def reorder_actual_files(renames, param_dirs):
     # Rename the actual files on disk based on renames re-ordering
     for param_dir in param_dirs:
         for new_name, old_name in renames.items():
             rename_file(old_name, new_name, param_dir)
+
 
 def change_line_endings_for_md_files():
     # Change line endings of BLOG*.md files to CRLF
@@ -137,6 +144,7 @@ def change_line_endings_for_md_files():
                 with open(file_path, "wb") as handle:
                     handle.write(content)
 
+
 def main():
     with open(os.path.join("MethodicConfigurator", SEQUENCE_FILENAME), 'r', encoding='utf-8') as f:
         steps = json.load(f)
@@ -144,6 +152,7 @@ def main():
     param_dirs = loop_relevant_files(renames, steps)
     reorder_actual_files(renames, param_dirs)
     change_line_endings_for_md_files()
+
 
 if __name__ == "__main__":
     main()

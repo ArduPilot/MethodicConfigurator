@@ -1,4 +1,9 @@
 # Contributing
+<!--
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
 
 ## How to contribute to the ArduPilot Methodic Configurator project?
 

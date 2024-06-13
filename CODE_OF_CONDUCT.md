@@ -1,5 +1,10 @@
 ArduPilot Methodic Configurator Developer Code of Conduct
 =========================================================
+<!--
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
 
 Rev 1.0 Apr 3nd 2024
 
@@ -24,23 +29,23 @@ Our Pledge
 In the interest of fostering an open and welcoming environment, we as
 developers and maintainers pledge to:
 
--   Endeavour to make participation in our project and our community a
-    harassment-free experience for everyone, regardless of age, body
-    size, disability, ethnicity, gender identity and expression, level
-    of experience, nationality, personal appearance, race, religion, or
-    sexual identity and orientation.
--   Endeavour to understand the intent of development activities they
-    undertake, where there may be reason to think that the vehicle may
-    be used as a weapon or in an application where it is effectively in
-    control of human life.
--   Not knowingly support or facilitate the weaponization of systems
-    using Ardupilot or ArduPilot Methodic Configurator
--   ArduPilot and ArduPilot Methodic Configurator are NOT certified for
-    use in applications where ArduPilot is effectively in control of human
-    lives. Members of the development team must not knowingly assist in
-    projects where ArduPilot will be in control of human lives.
-    “In control of human lives” includes but isn’t limited to manned
-    aircraft.
+- Endeavor to make participation in our project and our community a
+  harassment-free experience for everyone, regardless of age, body
+  size, disability, ethnicity, gender identity and expression, level
+  of experience, nationality, personal appearance, race, religion, or
+  sexual identity and orientation.
+- Endeavor to understand the intent of development activities they
+  undertake, where there may be reason to think that the vehicle may
+  be used as a weapon or in an application where it is effectively in
+  control of human life.
+- Not knowingly support or facilitate the weaponization of systems
+  using ArduPilot or ArduPilot Methodic Configurator
+- ArduPilot and ArduPilot Methodic Configurator are NOT certified for
+  use in applications where ArduPilot is effectively in control of human
+  lives. Members of the development team must not knowingly assist in
+  projects where ArduPilot will be in control of human lives.
+  “In control of human lives” includes but isn’t limited to manned
+  aircraft.
 
 Our Standards
 -------------
@@ -48,27 +53,27 @@ Our Standards
 Examples of behavior that contributes to achieving the aims of ArduPilot
 Methodic Configurator include:
 
--   Using welcoming and inclusive language
--   Being respectful of differing viewpoints and experiences
--   Gracefully accepting constructive criticism
--   Focusing on what is best for the community
--   Showing empathy towards other community members
+- Using welcoming and inclusive language
+- Being respectful of differing viewpoints and experiences
+- Gracefully accepting constructive criticism
+- Focusing on what is best for the community
+- Showing empathy towards other community members
 
 Examples of unacceptable behavior by contributors include:
 
--   The use of sexualized language or imagery and unwelcome sexual
-    attention or advances
--   Trolling, insulting/derogatory comments, and personal or political
-    attacks
--   Public or private harassment
--   Publishing others’ private information, such as a physical or
-    electronic address, without explicit permission
--   Modifying ArduPilot Methodic Configurator code to intentionally support
-    weaponization
--   Knowingly designing, testing or using weaponized systems running
-    ArduPilot Methodic Configurator
--   Other conduct which could reasonably be considered inappropriate in
-    a public or professional setting
+- The use of sexualized language or imagery and unwelcome sexual
+  attention or advances
+- Trolling, insulting/derogatory comments, and personal or political
+  attacks
+- Public or private harassment
+- Publishing others’ private information, such as a physical or
+  electronic address, without explicit permission
+- Modifying ArduPilot Methodic Configurator code to intentionally support
+  weaponization
+- Knowingly designing, testing or using weaponized systems running
+  ArduPilot Methodic Configurator
+- Other conduct which could reasonably be considered inappropriate in
+  a public or professional setting
 
 Our Responsibilities
 --------------------

@@ -1,4 +1,9 @@
-# How to methodically tune (almost) any multicopter using ArduCopter 4.4.x
+# How to methodically tune any ArduCopter
+<!--
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
 
 ![Cinewhoop Diatone Taycan MX-C](cinewhoop.png)
 

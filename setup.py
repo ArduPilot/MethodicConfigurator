@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-This script downloads the licenses of the direct and indirect dependencies of the project
+This script creates the MethodicConfigurator pip python package
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 

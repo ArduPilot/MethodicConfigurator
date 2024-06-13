@@ -117,6 +117,7 @@ class TemplateOverviewWindow(BaseWindow):
             ProgramSettings.store_template_dir(selected_template_relative_path)
             self.root.destroy()
 
+
 def argument_parser():
     """
     Parses command-line arguments for the script.
@@ -134,6 +135,7 @@ def argument_parser():
                                                  'providing a clear and intuitive interface for parameter management.')
     return add_common_arguments_and_parse(parser)
 
+
 def main():
     args = argument_parser()
 
@@ -142,6 +144,7 @@ def main():
     TemplateOverviewWindow(None)
 
     print(ProgramSettings.get_recently_used_dirs()[0])
+
 
 if __name__ == "__main__":
     main()

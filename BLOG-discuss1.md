@@ -1,4 +1,9 @@
 ![Cinewhoop Diatone Taycan MX-C|586x500](upload://naJEdzmLeF8hvzupJCpLBT7tZay.jpeg)
+<!--
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
 
 For illustrative purposes, we will use the small 3'' multicopter depicted above, but the tuning sequence we developed at [IAV GmbH](https://www.iav.com/) will work on almost any other multicopter.
 

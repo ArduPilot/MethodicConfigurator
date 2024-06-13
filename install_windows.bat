@@ -1,4 +1,7 @@
 @echo off
+rem SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+rem
+rem SPDX-License-Identifier: GPL-3.0-or-later
 
 echo WARNING: If you proceed the python serial package will be uninstalled because it conflicts with pyserial.
 choice /C YN /M "Do you want to proceed? (Y/N)"

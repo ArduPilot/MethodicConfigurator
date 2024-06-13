@@ -456,17 +456,35 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
     print(f"Loaded {len(data.accel[0]['T'])} accel and {len(data.gyro[0]['T'])} gyro samples")
 
     if progress_callback:
-        progress = 210
-        progress_callback(progress)
+        progress_callback(210)
     if not tclr:
         # apply moving average filter with 2s width
         data.Filter(2)
 
+    c, clog = generate_calibration_file(outfile, online, progress_callback, data, c)
+
+    if no_graph:
+        return
+    num_imus = len(data.IMUs())
+
+    generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus)
+
+    if progress_callback:
+        progress_callback(290)
+
+    generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus)
+
+    if progress_callback:
+        progress_callback(300)
+
+    pyplot.show()
+
+def generate_calibration_file(outfile, online, progress_callback, data, c):  # pylint: disable=too-many-locals
     clog = c
     c = Coefficients()
 
     if progress_callback:
-        progress += 10
+        progress = 220
         progress_callback(progress)
         progress_delta = 60 / (len(data.IMUs()) * len(AXES))
     with open(outfile, "w", encoding='utf-8') as calfile:
@@ -503,12 +521,10 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
             calfile.write(params)
 
     print(f"Calibration written to {outfile}")
+    return c, clog
 
-    if no_graph:
-        return
+def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus):  # pylint: disable=too-many-arguments
     _fig, axs = pyplot.subplots(len(data.IMUs()), 1, sharex=True)
-
-    num_imus = len(data.IMUs())
     if num_imus == 1:
         axs = [axs]
 
@@ -536,12 +552,10 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
         axs[imu].legend(loc='upper left')
         axs[imu].set_title(f'IMU[{imu}] Gyro (deg/s)')
 
-    if progress_callback:
-        progress_callback(290)
-
     if figpath:
         _fig.savefig(os.path.join(figpath, 'tempcal_gyro.png'))
 
+def generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus):  # pylint: disable=too-many-arguments
     _fig, axs = pyplot.subplots(num_imus, 1, sharex=True)
     if num_imus == 1:
         axs = [axs]
@@ -576,11 +590,6 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
     if figpath:
         _fig.savefig(os.path.join(figpath, 'tempcal_acc.png'))
 
-    if progress_callback:
-        progress_callback(300)
-
-    pyplot.show()
-
 
 def main():
     parser = ArgumentParser(description=__doc__)
@@ -599,6 +608,7 @@ def main():
     args = parser.parse_args()
 
     IMUfit(args.log, args.outfile, args.no_graph, args.log_parm, args.online, args.tclr, None, None)
+
 
 if __name__ == "__main__":
     main()

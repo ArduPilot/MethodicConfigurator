@@ -25,6 +25,7 @@ def compute_average(issues_date):
         return sum_of_issues / len(issues_date)
     return sum_of_issues
 
+
 def main():
     api_token = None
     gh = Github(api_token)
@@ -70,5 +71,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()

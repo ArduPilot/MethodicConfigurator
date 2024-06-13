@@ -1,4 +1,9 @@
 Continuation from the Blog post above....
+<!--
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
 
 For better accuracy, you should do that for all directions and take the average. In our case, we got:
 

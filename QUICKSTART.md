@@ -1,4 +1,9 @@
 # Quick start guide
+<!--
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
 
 ## 1. Install *ArduPilot Methodic Configurator* software on a PC or Mac
 
@@ -35,14 +40,14 @@
 1. Open the *ArduPilot Methodic Configurator* software.
 1. The software should now automatically detect and connect to your flight controller.
 ![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
-1. Select the vehicle template that better resembles your own vehicle.
+1. Select the vehicle template that better resembles your vehicle.
 ![AMC template selection1](images/App_screenshot_Vehicle_directory1.png)
 ![AMC template selection2](images/App_screenshot_Vehicle_overview.png)
 1. Give a name to your vehicle.
 ![AMC new vehicle name](images/App_screenshot_Vehicle_directory2.png)
 1. Press *Create vehicle configuration from template*.
 ![AMC new vehicle create](images/App_screenshot_Vehicle_directory3.png)
-1. Edit all the components of your vehicle to match your own in the *vehicle Component Editor* window.
+1. Edit all the components of your vehicle to match your own in the *Vehicle Component Editor* window.
 ![AMC component editor](images/App_screenshot_Component_Editor.png)
 1. Press *Save data and start configuration*.
 1. The application will validate your input.
@@ -66,7 +71,6 @@ Now do this in a loop until the software automatically closes or you are asked t
 - Press *Upload selected params to FC, and advance to next param file* (marked with the big red number 7),
 - Repeat until the program automatically closes.
 
-
 ## 6. Use the *ArduPilot Methodic Configurator* software after having created a vehicle from template
 
 1. Connect the flight controller to the computer using a USB cable.
@@ -82,5 +86,5 @@ double-click and step inside the directory that you want to use, not just select
 1. Press *Save data and start configuration*.
 1. You should now see the *Parameter file editor and uploader* window.
 ![AMC parameter file editor and uploader](images/App_screenshot2.png)
-1. Proceed as explained on [section 5](#5-configure-the-vehicles-parameters-in-a-traceable-way)
-Congratulations your flight controller is now fully configured in the safest and fastest way publicly know.
+1. Proceed as explained in [section 5](#5-configure-the-vehicles-parameters-in-a-traceable-way)
+Congratulations your flight controller is now fully configured in the safest and fastest way publicly known.

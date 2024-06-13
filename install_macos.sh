@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+#
+#SPDX-License-Identifier: GPL-3.0-or-later
 
 # Use venv if you use python3 due to the PEP668
 python3 -m venv venv

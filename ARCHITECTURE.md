@@ -1,4 +1,9 @@
 # Software architecture
+<!--
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
 
 Before we decided on a software architecture or programming language or toolkit we gathered software requirements as presented below.
 

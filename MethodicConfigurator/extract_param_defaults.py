@@ -206,6 +206,7 @@ def output_params(params: Dict[str, float], format_type: str = 'missionplanner',
         elif format_type == "qgcs":
             print(f"{sysid} {compid} {param_name:<15} {param_value:.6f} {MAV_PARAM_TYPE_REAL32}")
 
+
 def main():
     args = parse_arguments()
     parameter_values = extract_parameter_values(args.bin_file, args.type)
