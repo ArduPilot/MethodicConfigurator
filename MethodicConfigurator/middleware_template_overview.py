@@ -22,11 +22,12 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
         self.fc_manufacturer = components_data.get('Flight Controller', {}).get('Product', {}).get('Manufacturer', '')
         self.fc_model = components_data.get('Flight Controller', {}).get('Product', {}).get('Model', '')
         self.tow_max_kg = components_data.get('Frame', {}).get('Specifications', {}).get('TOW max Kg', '')
+        self.prop_diameter_inches = components_data.get('Propellers', {}).get('Specifications', {}).get('Diameter_inches', '')
         self.rc_protocol = components_data.get('RC Receiver', {}).get('FC Connection', {}).get('Protocol', '')
         self.telemetry_model = components_data.get('Telemetry', {}).get('Product', {}).get('Model', '')
         self.esc_protocol = components_data.get('ESC', {}).get('FC Connection', {}).get('Protocol', '')
-        self.prop_diameter_inches = components_data.get('Propellers', {}).get('Specifications', {}).get('Diameter_inches', '')
         self.gnss_model = components_data.get('GNSS receiver', {}).get('Product', {}).get('Model', '')
+        self.gnss_connection = components_data.get('GNSS receiver', {}).get('FC Connection', {}).get('Type', '')
 
     @staticmethod
     def columns():
@@ -35,11 +36,13 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
                 "FC\nManufacturer",
                 "FC\nModel",
                 "TOW Max\n[KG]",
+                "Prop Diameter\n[inches]",
                 "RC\nProtocol",
                 "Telemetry\nModel",
                 "ESC\nProtocol",
-                "Prop Diameter\n[inches]",
-                "GNSS\nModel")
+                "GNSS\nModel",
+                "GNSS\nConnection",
+                )
 
     def attributes(self):
         return self.__dict__.keys()
