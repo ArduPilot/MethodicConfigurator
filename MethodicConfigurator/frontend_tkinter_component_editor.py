@@ -218,6 +218,14 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         entry = ttk.Entry(entry_frame)
         entry_config = {
+            ('Frame', 'Specifications', 'TOW min Kg'): {
+                "type": float,
+                "validate": lambda event, entry=entry, path=path: self.validate_takeoff_weight(event, entry, path),
+            },
+            ('Frame', 'Specifications', 'TOW max Kg'): {
+                "type": float,
+                "validate": lambda event, entry=entry, path=path: self.validate_takeoff_weight(event, entry, path),
+            },
             ('Battery', 'Specifications', 'Volt per cell max'): {
                 "type": float,
                 "validate": lambda event, entry=entry, path=path: self.validate_cell_voltage(event, entry, path),
@@ -239,7 +247,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 "validate": lambda event, entry=entry, path=path: self.validate_motor_poles(event, entry, path),
             },
             ('Propellers', 'Specifications', 'Diameter_inches'): {
-                "type": int,
+                "type": float,
                 "validate": lambda event, entry=entry, path=path: self.validate_propeller(event, entry, path),
             },
         }
@@ -265,6 +273,20 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             combobox.configure(style="comb_input_invalid.TCombobox")
             return False
         combobox.configure(style="comb_input_valid.TCombobox")
+        return True
+
+    def validate_takeoff_weight(self, event, entry, path):
+        is_focusout_event = event and event.type == "10"
+        try:
+            weight = float(entry.get())
+            if weight < 0.01 or weight > 600:
+                entry.configure(style="entry_input_invalid.TEntry")
+                raise ValueError("Takeoff weight must be a float between 0.01 and 600")
+        except ValueError as e:
+            if is_focusout_event:
+                show_error_message("Error", f"Invalid value '{weight}' for {'>'.join(list(path))}\n{e}")
+            return False
+        entry.configure(style="entry_input_valid.TEntry")
         return True
 
     def validate_cell_voltage(self, event, entry, path):  # pylint: disable=too-many-branches
@@ -393,6 +415,12 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     fc_serial_connection[value] = path[0]
                 entry.configure(style="comb_input_valid.TCombobox")
 
+            if path == ('Frame', 'Specifications', 'TOW min Kg'):
+                if not self.validate_takeoff_weight(None, entry, path):
+                    invalid_values = True
+            if path == ('Frame', 'Specifications', 'TOW max Kg'):
+                if not self.validate_takeoff_weight(None, entry, path):
+                    invalid_values = True
             if path in [('Battery', 'Specifications', 'Volt per cell max'), ('Battery', 'Specifications', 'Volt per cell low'),
                         ('Battery', 'Specifications', 'Volt per cell crit')]:
                 if not self.validate_cell_voltage(None, entry, path):
