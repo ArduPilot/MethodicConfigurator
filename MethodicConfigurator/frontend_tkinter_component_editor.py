@@ -275,6 +275,20 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         combobox.configure(style="comb_input_valid.TCombobox")
         return True
 
+    def validate_entry_limits(self, event, entry, data_type, limits, name, path):  # pylint: disable=too-many-arguments
+        is_focusout_event = event and event.type == "10"
+        try:
+            value = data_type(entry.get())
+            if value < limits[0] or value > limits[1]:
+                entry.configure(style="entry_input_invalid.TEntry")
+                raise ValueError(f"{name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}")
+        except ValueError as e:
+            if is_focusout_event:
+                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n{e}")
+            return False
+        entry.configure(style="entry_input_valid.TEntry")
+        return True
+
     def validate_takeoff_weight(self, event, entry, path):
         is_focusout_event = event and event.type == "10"
         try:
