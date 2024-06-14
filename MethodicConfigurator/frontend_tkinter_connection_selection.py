@@ -189,8 +189,8 @@ class ConnectionSelectionWindow(BaseWindow):
         self.introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)
 
         # Option 1 - Auto-connect
-        option1_label = ttk.Label(text="Auto-connect to flight controller", style="Bold.TLabel")
-        option1_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option1_label, borderwidth=1, relief="solid")
+        option1_label = ttk.Label(text="Auto connection", style="Bold.TLabel")
+        option1_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option1_label, borderwidth=2, relief="solid")
         option1_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
         option1_label = ttk.Label(option1_label_frame, anchor=tk.CENTER, justify=tk.CENTER,
                                   text="Connect a flight controller to the PC,\n"
@@ -202,8 +202,8 @@ class ConnectionSelectionWindow(BaseWindow):
         show_tooltip(autoconnect_button, "Auto-connect to a 'Mavlink'-talking serial device")
 
         # Option 2 - Manually select the flight controller connection or add a new one
-        option2_label = ttk.Label(text="Select flight controller connection", style="Bold.TLabel")
-        option2_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option2_label, borderwidth=1, relief="solid")
+        option2_label = ttk.Label(text="Manual connection", style="Bold.TLabel")
+        option2_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option2_label, borderwidth=2, relief="solid")
         option2_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
         option2_label = ttk.Label(option2_label_frame, anchor=tk.CENTER, justify=tk.CENTER,
                                   text="Connect a flight controller to the PC,\n"
@@ -216,8 +216,8 @@ class ConnectionSelectionWindow(BaseWindow):
         self.connection_selection_widgets.container_frame.pack(expand=False, fill=tk.X, padx=80, pady=6)
 
         # Option 3 - Skip FC connection, just edit the .param files on disk
-        option3_label = ttk.Label(text="No flight controller connection", style="Bold.TLabel")
-        option3_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option3_label, borderwidth=1, relief="solid")
+        option3_label = ttk.Label(text="No connection", style="Bold.TLabel")
+        option3_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option3_label, borderwidth=2, relief="solid")
         option3_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
         #option3_label = ttk.Label(option3_label_frame, anchor=tk.CENTER, justify=tk.CENTER,
         #                          text="Skip the flight controller connection,\n"

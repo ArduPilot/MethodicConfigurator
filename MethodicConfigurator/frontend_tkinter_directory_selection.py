@@ -231,8 +231,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
     def create_option1_widgets(self, initial_template_dir: str, initial_base_dir: str,
                                initial_new_dir: str, fc_connected: bool):
         # Option 1 - Create a new vehicle configuration directory based on an existing template
-        option1_label = ttk.Label(text="Create a new vehicle configuration directory", style="Bold.TLabel")
-        option1_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option1_label, borderwidth=1, relief="solid")
+        option1_label = ttk.Label(text="New", style="Bold.TLabel")
+        option1_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option1_label, borderwidth=2, relief="solid")
         option1_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
         template_dir_edit_tooltip = "Existing vehicle template directory containing the intermediate\n" \
                                     "parameter files to be copied to the new vehicle configuration directory"
@@ -283,8 +283,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
 
     def create_option2_widgets(self, initial_dir: str):
         # Option 2 - Use an existing vehicle configuration directory
-        option2_label = ttk.Label(text="Open an existing vehicle configuration directory", style="Bold.TLabel")
-        option2_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option2_label, borderwidth=1, relief="solid")
+        option2_label = ttk.Label(text="Open", style="Bold.TLabel")
+        option2_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option2_label, borderwidth=2, relief="solid")
         option2_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
         option2_label = ttk.Label(option2_label_frame, anchor=tk.CENTER, justify=tk.CENTER,
                                   text="Use an existing vehicle configuration directory with\n" \
@@ -298,8 +298,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
 
     def create_option3_widgets(self, last_vehicle_dir: str):
         # Option 3 - Open the last used vehicle configuration directory
-        option3_label = ttk.Label(text="Open the last used vehicle configuration directory", style="Bold.TLabel")
-        option3_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option3_label, borderwidth=1, relief="solid")
+        option3_label = ttk.Label(text="Re-Open", style="Bold.TLabel")
+        option3_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option3_label, borderwidth=2, relief="solid")
         option3_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
 
         last_dir = DirectorySelectionWidgets(self, option3_label_frame, last_vehicle_dir if last_vehicle_dir else '',
