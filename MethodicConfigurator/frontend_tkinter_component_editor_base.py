@@ -74,6 +74,10 @@ class ComponentEditorWindowBase(BaseWindow):
 
         style = ttk.Style()
         style.configure("bigger.TLabel", font=("TkDefaultFont", 14))
+        style.configure("comb_input_invalid.TCombobox", fieldbackground="red")
+        style.configure("comb_input_valid.TCombobox", fieldbackground="white")
+        style.configure("entry_input_invalid.TEntry", fieldbackground="red")
+        style.configure("entry_input_valid.TEntry", fieldbackground="white")
 
         explanation_text = "Please configure all vehicle component properties in this window.\n"
         explanation_text += "Scroll down and make sure you do not miss a property.\n"
@@ -107,6 +111,16 @@ class ComponentEditorWindowBase(BaseWindow):
     def update_json_data(self):  # should be overwritten in child classes
         if 'Format version' not in self.data:
             self.data['Format version'] = 1
+
+    def _set_component_value_and_update_ui(self, path: tuple, value: str):
+        data_path = self.data['Components']
+        for key in path[:-1]:
+            data_path = data_path[key]
+        data_path[path[-1]] = value
+        entry = self.entry_widgets[path]
+        entry.delete(0, tk.END)
+        entry.insert(0, value)
+        entry.config(state="disabled")
 
     def __populate_frames(self):
         """

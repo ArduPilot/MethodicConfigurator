@@ -62,11 +62,6 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     """
     def __init__(self, version, local_filesystem: LocalFilesystem=None):
         ComponentEditorWindowBase.__init__(self, version, local_filesystem)
-        style = ttk.Style()
-        style.configure("comb_input_invalid.TCombobox", fieldbackground="red")
-        style.configure("comb_input_valid.TCombobox", fieldbackground="white")
-        style.configure("entry_input_invalid.TEntry", fieldbackground="red")
-        style.configure("entry_input_valid.TEntry", fieldbackground="white")
 
     def update_json_data(self):
         super().update_json_data()
@@ -88,16 +83,6 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             self.data['Components']['Frame']['Specifications']['TOW min Kg'] = 1
         if 'TOW max Kg' not in self.data['Components']['Frame']['Specifications']:
             self.data['Components']['Frame']['Specifications']['TOW max Kg'] = 1
-
-    def set_component_value_and_update_ui(self, path: tuple, value: str):
-        data_path = self.data['Components']
-        for key in path[:-1]:
-            data_path = data_path[key]
-        data_path[path[-1]] = value
-        entry = self.entry_widgets[path]
-        entry.delete(0, tk.END)
-        entry.insert(0, value)
-        entry.config(state="disabled")
 
     def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
         self.set_component_value_and_update_ui(('Flight Controller', 'Firmware', 'Type'), vehicle_type)
