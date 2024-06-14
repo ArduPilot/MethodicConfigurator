@@ -85,17 +85,17 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             self.data['Components']['Frame']['Specifications']['TOW max Kg'] = 1
 
     def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
-        self.set_component_value_and_update_ui(('Flight Controller', 'Firmware', 'Type'), vehicle_type)
+        self._set_component_value_and_update_ui(('Flight Controller', 'Firmware', 'Type'), vehicle_type)
         if version:
-            self.set_component_value_and_update_ui(('Flight Controller', 'Firmware', 'Version'), version)
+            self._set_component_value_and_update_ui(('Flight Controller', 'Firmware', 'Version'), version)
 
     def set_fc_manufacturer(self, manufacturer: str):
         if manufacturer and manufacturer!= "Unknown" and manufacturer!= "ArduPilot":
-            self.set_component_value_and_update_ui(('Flight Controller', 'Product', 'Manufacturer'), manufacturer)
+            self._set_component_value_and_update_ui(('Flight Controller', 'Product', 'Manufacturer'), manufacturer)
 
     def set_fc_model(self, model: str):
         if model and model!= "Unknown" and model!= "MAVLink":
-            self.set_component_value_and_update_ui(('Flight Controller', 'Product', 'Model'), model)
+            self._set_component_value_and_update_ui(('Flight Controller', 'Product', 'Model'), model)
 
     @staticmethod
     def reverse_key_search(doc: dict, param_name: str, values: list) -> list:
@@ -202,46 +202,44 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             return cb
 
         entry = ttk.Entry(entry_frame)
-        entry_config = {
-            ('Frame', 'Specifications', 'TOW min Kg'): {
-                "type": float,
-                "validate": lambda event, entry=entry, path=path: self.validate_takeoff_weight(event, entry, path),
-            },
-            ('Frame', 'Specifications', 'TOW max Kg'): {
-                "type": float,
-                "validate": lambda event, entry=entry, path=path: self.validate_takeoff_weight(event, entry, path),
-            },
-            ('Battery', 'Specifications', 'Volt per cell max'): {
-                "type": float,
-                "validate": lambda event, entry=entry, path=path: self.validate_cell_voltage(event, entry, path),
-            },
-            ('Battery', 'Specifications', 'Volt per cell low'): {
-                "type": float,
-                "validate": lambda event, entry=entry, path=path: self.validate_cell_voltage(event, entry, path),
-            },
-            ('Battery', 'Specifications', 'Volt per cell crit'): {
-                "type": float,
-                "validate": lambda event, entry=entry, path=path: self.validate_cell_voltage(event, entry, path),
-            },
-            ('Battery', 'Specifications', 'Number of cells'): {
-                "type": int,
-                "validate": lambda event, entry=entry, path=path: self.validate_nr_cells(event, entry, path),
-            },
-            ('Motors', 'Specifications', 'Poles'): {
-                "type": int,
-                "validate": lambda event, entry=entry, path=path: self.validate_motor_poles(event, entry, path),
-            },
-            ('Propellers', 'Specifications', 'Diameter_inches'): {
-                "type": float,
-                "validate": lambda event, entry=entry, path=path: self.validate_propeller(event, entry, path),
-            },
-        }
-        config = entry_config.get(path)
-        if config:
-            entry.bind("<FocusOut>", config["validate"])
-            entry.bind("<KeyRelease>", config["validate"])
+        validate_function = self.get_validate_function(entry, path)
+        if validate_function:
+            entry.bind("<FocusOut>", validate_function)
+            entry.bind("<KeyRelease>", validate_function)
         entry.insert(0, str(value))
         return entry
+
+    def get_validate_function(self, entry, path):
+        validate_functions = {
+            ('Frame', 'Specifications', 'TOW min Kg'): lambda event, entry=entry, path=path:
+                self.validate_entry_limits(event, entry, float, (0.01, 600), "Takeoff Weight", path),
+
+            ('Frame', 'Specifications', 'TOW max Kg'): lambda event, entry=entry, path=path:
+                self.validate_entry_limits(event, entry, float, (0.01, 600), "Takeoff Weight", path),
+
+            ('Battery', 'Specifications', 'Volt per cell max'): lambda event, entry=entry, path=path:
+                self.validate_cell_voltage(event, entry, path),
+
+            ('Battery', 'Specifications', 'Volt per cell low'): lambda event, entry=entry, path=path:
+                self.validate_cell_voltage(event, entry, path),
+
+            ('Battery', 'Specifications', 'Volt per cell crit'): lambda event, entry=entry, path=path:
+                self.validate_cell_voltage(event, entry, path),
+
+            ('Battery', 'Specifications', 'Number of cells'): lambda event, entry=entry, path=path:
+                self.validate_entry_limits(event, entry, int, (1, 50), "Nr of cells", path),
+
+            ('Battery', 'Specifications', 'Capacity mAh'): lambda event, entry=entry, path=path:
+                self.validate_entry_limits(event, entry, int, (100, 1000000), "mAh capacity", path),
+
+            ('Motors', 'Specifications', 'Poles'): lambda event, entry=entry, path=path:
+                self.validate_entry_limits(event, entry, int, (3, 50), "Motor Poles", path),
+
+            ('Propellers', 'Specifications', 'Diameter_inches'): lambda event, entry=entry, path=path:
+                self.validate_entry_limits(event, entry, float, (0.3, 400), "Propeller Diameter", path),
+
+        }
+        return validate_functions.get(path, None)
 
     def validate_combobox(self, event, path) -> bool:
         """
@@ -270,20 +268,6 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         except ValueError as e:
             if is_focusout_event:
                 show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n{e}")
-            return False
-        entry.configure(style="entry_input_valid.TEntry")
-        return True
-
-    def validate_takeoff_weight(self, event, entry, path):
-        is_focusout_event = event and event.type == "10"
-        try:
-            weight = float(entry.get())
-            if weight < 0.01 or weight > 600:
-                entry.configure(style="entry_input_invalid.TEntry")
-                raise ValueError("Takeoff weight must be a float between 0.01 and 600")
-        except ValueError as e:
-            if is_focusout_event:
-                show_error_message("Error", f"Invalid value '{weight}' for {'>'.join(list(path))}\n{e}")
             return False
         entry.configure(style="entry_input_valid.TEntry")
         return True
@@ -340,48 +324,6 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         entry.configure(style="entry_input_valid.TEntry")
         return True
 
-    def validate_nr_cells(self, event, entry, path):
-        is_focusout_event = event and event.type == "10"
-        try:
-            value = int(entry.get())
-            if value < 1 or value > 50:
-                entry.configure(style="entry_input_invalid.TEntry")
-                raise ValueError("Nr of cells must be an integer between 1 and 50")
-        except ValueError as e:
-            if is_focusout_event:
-                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n{e}")
-            return False
-        entry.configure(style="entry_input_valid.TEntry")
-        return True
-
-    def validate_motor_poles(self, event, entry, path):
-        is_focusout_event = event and event.type == "10"
-        try:
-            value = int(entry.get())
-            if value < 3 or value > 50:
-                entry.configure(style="entry_input_invalid.TEntry")
-                raise ValueError("Motor poles must be an integer between 3 and 50")
-        except ValueError as e:
-            if is_focusout_event:
-                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n{e}")
-            return False
-        entry.configure(style="entry_input_valid.TEntry")
-        return True
-
-    def validate_propeller(self, event, entry, path):
-        is_focusout_event = event and event.type == "10"
-        try:
-            value = float(entry.get())
-            if value < 0.3 or value > 400:
-                entry.configure(style="entry_input_invalid.TEntry")
-                raise ValueError("Propeller diameter in inches must be a float between 0.3 and 400")
-        except ValueError as e:
-            if is_focusout_event:
-                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n{e}")
-            return False
-        entry.configure(style="entry_input_valid.TEntry")
-        return True
-
     def save_data(self):
         if self.validate_data():
             ComponentEditorWindowBase.save_data(self)
@@ -414,11 +356,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     fc_serial_connection[value] = path[0]
                 entry.configure(style="comb_input_valid.TCombobox")
 
-            if path == ('Frame', 'Specifications', 'TOW min Kg'):
-                if not self.validate_takeoff_weight(None, entry, path):
-                    invalid_values = True
-            if path == ('Frame', 'Specifications', 'TOW max Kg'):
-                if not self.validate_takeoff_weight(None, entry, path):
+            validate_function = self.get_validate_function(entry, path)
+            if validate_function:
+                mock_focus_out_event = type('', (), {'type': '10'})()
+                if not validate_function(mock_focus_out_event):
                     invalid_values = True
             if path in [('Battery', 'Specifications', 'Volt per cell max'), ('Battery', 'Specifications', 'Volt per cell low'),
                         ('Battery', 'Specifications', 'Volt per cell crit')]:
@@ -433,15 +374,6 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 if value >= self.entry_widgets[('Battery', 'Specifications', 'Volt per cell low')].get():
                     show_error_message("Error", "Battery Cell Crit voltage must be lower than low voltage")
                     entry.configure(style="entry_input_invalid.TEntry")
-                    invalid_values = True
-            if path == ('Battery', 'Specifications', 'Number of cells'):
-                if not self.validate_nr_cells(None, entry, path):
-                    invalid_values = True
-            if path == ('Motors', 'Specifications', 'Poles'):
-                if not self.validate_motor_poles(None, entry, path):
-                    invalid_values = True
-            if path == ('Propellers', 'Specifications', 'Diameter_inches'):
-                if not self.validate_propeller(None, entry, path):
                     invalid_values = True
 
         return not (invalid_values or duplicated_connections)
