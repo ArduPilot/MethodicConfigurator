@@ -51,6 +51,8 @@ class TemplateOverviewWindow(BaseWindow):
         instruction_label = ttk.Label(self.main_frame, text=instruction_text, font=('Arial', 12))
         instruction_label.pack(pady=(10, 20))
 
+        self.sort_column = None
+
         style = ttk.Style(self.root)
         # Add padding to Treeview heading style
         style.layout("Treeview.Heading", [
@@ -76,10 +78,13 @@ class TemplateOverviewWindow(BaseWindow):
             values = (key,) + tuple(getattr(template_overview, attr, '') for attr in attribute_names)
             self.tree.insert('', 'end', text=key, values=values)
 
-        self.adjust_treeview_column_widths()
+        self.__adjust_treeview_column_widths()
 
-        self.tree.bind('<Double-1>', self.on_row_double_click)
+        self.tree.bind('<Double-1>', self.__on_row_double_click)
         self.tree.pack(fill=tk.BOTH, expand=True)
+
+        for col in self.tree["columns"]:
+            self.tree.heading(col, text=col, command=lambda col=col: self.__sort_by_column(col, False))
 
         if isinstance(self.root, tk.Toplevel):
             try:
@@ -91,7 +96,7 @@ class TemplateOverviewWindow(BaseWindow):
         else:
             self.root.mainloop()
 
-    def adjust_treeview_column_widths(self):
+    def __adjust_treeview_column_widths(self):
         """
         Adjusts the column widths of the Treeview to fit the contents of each column.
         """
@@ -109,13 +114,32 @@ class TemplateOverviewWindow(BaseWindow):
             # Update the column's width property to accommodate the largest text width
             self.tree.column(col, width=int(max_width*0.6 + 10))
 
-    def on_row_double_click(self, event):
+    def __on_row_double_click(self, event):
         """Handle row double-click event."""
         item_id = self.tree.identify_row(event.y)
         if item_id:
             selected_template_relative_path = self.tree.item(item_id)['text']
             ProgramSettings.store_template_dir(selected_template_relative_path)
             self.root.destroy()
+
+    def __sort_by_column(self, col, reverse: bool):
+        if self.sort_column  and self.sort_column != col:
+            self.tree.heading(self.sort_column, text=self.sort_column)
+        self.tree.heading(col, text=col + (' ▼' if reverse else ' ▲'))
+        self.sort_column = col
+
+        try:
+            col_data = [(float(self.tree.set(k, col)), k) for k in self.tree.get_children('')]
+        except ValueError:
+            col_data = [(self.tree.set(k, col), k) for k in self.tree.get_children('')]
+        col_data.sort(reverse=reverse)
+
+        # rearrange items in sorted positions
+        for index, (_val, k) in enumerate(col_data):
+            self.tree.move(k, '', index)
+
+        # reverse sort next time
+        self.tree.heading(col, command=lambda: self.__sort_by_column(col, not reverse))
 
 
 def argument_parser():
