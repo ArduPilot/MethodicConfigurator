@@ -14,9 +14,12 @@ This script fetches online ArduPilot parameter documentation (if not cached) and
 Supports AP_Periph, AntennaTracker, ArduCopter, ArduPlane, ArduSub, Blimp, Heli, Rover and SITL vehicle types
 Supports both Mission Planner and MAVProxy file formats
 Supports sorting the parameters
+
 Has unit tests with 88% coverage
 
-Author: Amilcar do Carmo Lucas
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from os import path as os_path
