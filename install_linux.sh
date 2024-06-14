@@ -29,7 +29,7 @@ if [ -f /etc/debian_version ] || [ -f /etc/os-release ] && grep -q 'ID_LIKE=.*de
     # Define the desktop entry content
     desktop_entry="[Desktop Entry]\nName=ArduPilot Methodic Configurator\nComment=A clear ArduPilot configuration sequence\nExec=bash -c 'cd $prog_dir && python3 ardupilot_methodic_configurator.py'\nIcon=$prog_dir/ArduPilot_icon.png\nTerminal=true\nType=Application\nCategories=Development;\nKeywords=ardupilot;arducopter;drone;copter;scm"
     # Create the .desktop file in the appropriate directory
-    echo -e $desktop_entry > "/home/$USER/.local/share/applications/MethodicConfigurator.desktop"
+    echo -e "$desktop_entry" > "/home/$USER/.local/share/applications/MethodicConfigurator.desktop"
     echo "MethodicConfigurator.desktop created successfully."
 else
     echo "This system is not Debian-based. Skipping .desktop file creation."
