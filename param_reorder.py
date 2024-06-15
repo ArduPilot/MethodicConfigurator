@@ -102,7 +102,7 @@ def update_configuration_steps_json_file_contents(steps, file_content, new_name,
             curr_filename = re_search.group(1)
         if "old_filenames" in line:
             if curr_filename in steps and "old_filenames" in steps[curr_filename]:
-                        # WARNING!!! old_filenames can only used once, so we remove it after using it
+                # WARNING!!! old_filenames can only used once, so we remove it after using it
                 old_filenames = str(steps[curr_filename].pop("old_filenames")).replace("\'", "\"")
                 new_file_content += f'        "old_filenames": {old_filenames}'
                 if line.endswith(",\n"):

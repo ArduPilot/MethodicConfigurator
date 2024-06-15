@@ -112,5 +112,6 @@ class TestCopyTemplateFilesToNewVehicleDir():
         mock_copy2.assert_called_once_with('template_dir/file1', 'new_vehicle_dir/file1')
         mock_copytree.assert_called_once_with('template_dir/dir1', 'new_vehicle_dir/dir1')
 
+
 if __name__ == '__main__':
     unittest.main()

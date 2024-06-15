@@ -211,7 +211,7 @@ class ProgressWindow:
     This class is responsible for creating a progress window that displays the progress of
     a task. It includes a progress bar and a label to display the progress message.
     """
-    def __init__(self, parent, title, message: str="", width:  int=300, height: int=80):  # pylint: disable=too-many-arguments
+    def __init__(self, parent, title, message: str="", width: int=300, height: int=80):  # pylint: disable=too-many-arguments
         self.parent = parent
         self.message = message
         self.progress_window = None

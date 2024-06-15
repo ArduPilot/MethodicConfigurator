@@ -204,11 +204,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         if param_name in fc_parameters:
             value_str = format(fc_parameters[param_name], '.6f').rstrip('0').rstrip('.')
             if param_default is not None and is_within_tolerance(fc_parameters[param_name], param_default.value):
-                        # If it matches, set the background color to light blue
+                # If it matches, set the background color to light blue
                 flightcontroller_value = ttk.Label(self.view_port, text=value_str,
                                                           background="light blue")
             else:
-                        # Otherwise, set the background color to the default color
+                # Otherwise, set the background color to the default color
                 flightcontroller_value = ttk.Label(self.view_port, text=value_str)
         else:
             flightcontroller_value = ttk.Label(self.view_port, text="N/A", background="orange")
