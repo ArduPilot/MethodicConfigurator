@@ -56,6 +56,10 @@ def arg_parser():
                         action='store_true',
                         help='Delete parameter documentation annotations (comments above parameters). Defaults to %(default)s',
                         )
+    parser.add_argument('-f', '--firmware-version',
+                        default='latest',
+                        help='Flight controller firmware version. Defaults to %(default)s.',
+                        )
     parser.add_argument('-s', '--sort',
                         choices=['none', 'missionplanner', 'mavproxy'],
                         default='none',
@@ -646,24 +650,61 @@ def print_read_only_params(doc):
             logging.info(param_name)
 
 
+def get_xml_dir(target: str) -> str:
+    return target if os_path.isdir(target) else os_path.dirname(os_path.realpath(target))
+
+
+def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
+    vehicle_parm_subdir = {
+        "ArduCopter": "versioned/Copter/stable-",
+        "ArduPlane": "versioned/Plane/stable-",
+        "Rover": "versioned/Rover/stable-",
+        "ArduSub": "versioned/Sub/stable-",
+        "AntennaTracker": "versioned/Tracker/stable-",
+        # Not yet versioned in the https://autotest.ardupilot.org/Parameters server
+        'AP_Periph': 'versioned/Periph/stable-',
+        'Blimp': 'versioned/Blimp/stable-',
+        'Heli': 'versioned/Heli/stable-',
+        'SITL': 'versioned/SITL/stable-'
+    }
+    if firmware_version:
+        xml_url = BASE_URL + vehicle_parm_subdir[vehicle_type] + firmware_version + "/"
+    else:
+        xml_url = BASE_URL + vehicle_type + "/"
+    return xml_url
+
+def parse_parameter_metadata(xml_url: str, xml_dir: str, xml_file: str,
+                        vehicle_type: str, max_line_length: int) -> Dict[str, Any]:
+    xml_root, param_default_dict = get_xml_data(xml_url, xml_dir, xml_file)
+    doc_dict = create_doc_dict(xml_root, vehicle_type, max_line_length)
+    return doc_dict, param_default_dict
+
+
 def main():
     args = arg_parser()
     try:
-        xml_dir = args.target if os_path.isdir(args.target) else os_path.dirname(os_path.realpath(args.target))
-        xml_root, param_default_dict = get_xml_data(BASE_URL + args.vehicle_type + "/", xml_dir, PARAM_DEFINITION_XML_FILE)
-        doc_dict = create_doc_dict(xml_root, args.vehicle_type, args.max_line_length)
+        xml_url = get_xml_url(args.vehicle_type, args.firmware_version)
+        xml_dir = get_xml_dir(args.target)
+
+        [doc_dict, param_default_dict] = parse_parameter_metadata(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE,
+                                                                  args.vehicle_type, args.max_line_length)
         update_parameter_documentation(doc_dict, args.target, args.sort, param_default_dict,
                                        args.delete_documentation_annotations)
         if args.verbose:
             print_read_only_params(doc_dict)
-        if os_path.isfile(os_path.join(os_path.dirname(args.target), LUA_PARAM_DEFINITION_XML_FILE)):
-            xml_root, param_default_dict = get_xml_data(BASE_URL + args.vehicle_type + "/",
-                                                        xml_dir, LUA_PARAM_DEFINITION_XML_FILE)
-            doc_dict = create_doc_dict(xml_root, args.vehicle_type, args.max_line_length)
-            update_parameter_documentation(doc_dict, os_path.join(os_path.dirname(args.target),
-                                                                  "24_inflight_magnetometer_fit_setup.param"),
-                                           args.sort, param_default_dict, args.delete_documentation_annotations)
-    except Exception as exp:  # pylint: disable=W0718
+
+        # Annotate lua MAGfit XML documentation into the respective parameter file
+        xml_file = LUA_PARAM_DEFINITION_XML_FILE
+        if os_path.isfile(os_path.join(os_path.dirname(args.target), xml_file)):
+            [doc_dict, param_default_dict] = parse_parameter_metadata(xml_url, xml_dir, xml_file,
+                                                                      args.vehicle_type, args.max_line_length)
+            target = os_path.join(os_path.dirname(args.target), "24_inflight_magnetometer_fit_setup.param")
+            update_parameter_documentation(doc_dict, target, args.sort, param_default_dict,
+                                           args.delete_documentation_annotations)
+        else:
+            logging.warning("No LUA MAGfit XML documentation found, skipping annotation of %s", target)
+
+    except  (IOError, OSError, SystemExit) as exp:
         logging.fatal(exp)
         sys_exit(1)
 
