@@ -30,9 +30,10 @@ from typing import Tuple
 
 from zipfile import ZipFile
 
-from MethodicConfigurator.annotate_params import BASE_URL, PARAM_DEFINITION_XML_FILE, Par
-from MethodicConfigurator.annotate_params import get_xml_data
-from MethodicConfigurator.annotate_params import create_doc_dict
+from MethodicConfigurator.annotate_params import PARAM_DEFINITION_XML_FILE, Par
+from MethodicConfigurator.annotate_params import get_xml_url
+from MethodicConfigurator.annotate_params import get_xml_dir
+from MethodicConfigurator.annotate_params import parse_parameter_metadata
 from MethodicConfigurator.annotate_params import format_columns
 from MethodicConfigurator.annotate_params import split_into_lines
 from MethodicConfigurator.annotate_params import update_parameter_documentation
@@ -110,25 +111,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             self.fw_version = self.get_fc_fw_version_from_vehicle_components_json()
 
         # Read ArduPilot parameter documentation
-        xml_dir = vehicle_dir if os_path.isdir(vehicle_dir) else os_path.dirname(os_path.realpath(vehicle_dir))
-        vehicle_parm_subdir = {
-            "ArduCopter": "versioned/Copter/stable-",
-            "ArduPlane": "versioned/Plane/stable-",
-            "Rover": "versioned/Rover/stable-",
-            "ArduSub": "versioned/Sub/stable-",
-            "AntennaTracker": "versioned/Tracker/stable-",
-            # Not yet versioned in the https://autotest.ardupilot.org/Parameters server
-            'AP_Periph': 'versioned/Periph/stable-',
-            'Blimp': 'versioned/Blimp/stable-',
-            'Heli': 'versioned/Heli/stable-',
-            'SITL': 'versioned/SITL/stable-'
-        }
-        if self.fw_version:
-            xml_url = BASE_URL + vehicle_parm_subdir[vehicle_type] + self.fw_version + "/"
-        else:
-            xml_url = BASE_URL + vehicle_type + "/"
-        xml_root, self.param_default_dict = get_xml_data(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE)
-        self.doc_dict = create_doc_dict(xml_root, vehicle_type, TOOLTIP_MAX_LENGTH)
+        xml_url = get_xml_url(vehicle_type, self.fw_version)
+        xml_dir = get_xml_dir(vehicle_dir)
+        [self.doc_dict, self.param_default_dict] = parse_parameter_metadata(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE,
+                                                                            vehicle_type, TOOLTIP_MAX_LENGTH)
 
         self.__extend_and_reformat_parameter_documentation_metadata()
 
