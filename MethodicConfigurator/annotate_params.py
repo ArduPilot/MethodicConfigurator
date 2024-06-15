@@ -28,6 +28,7 @@ from os import popen as os_popen
 import glob
 import re
 from sys import exc_info as sys_exc_info
+from sys import exit as sys_exit
 from typing import Any, Dict, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 import argparse
@@ -37,7 +38,7 @@ import logging
 BASE_URL = "https://autotest.ardupilot.org/Parameters/"
 
 PARAM_DEFINITION_XML_FILE = "apm.pdef.xml"
-LUA_PARAM_DEFINITION_XML_FILE = "22_inflight_magnetometer_fit_setup.pdef.xml"
+LUA_PARAM_DEFINITION_XML_FILE = "24_inflight_magnetometer_fit_setup.pdef.xml"
 
 # ArduPilot parameter names start with a capital letter and can have capital letters, numbers and _
 PARAM_NAME_REGEX = r'^[A-Z][A-Z_0-9]*'
@@ -58,20 +59,20 @@ def arg_parser():
     parser.add_argument('-s', '--sort',
                         choices=['none', 'missionplanner', 'mavproxy'],
                         default='none',
-                        help='Sort the parameters in the file. Defaults to not sorting.',
+                        help='Sort the parameters in the file. Defaults to %(default)s.',
                         )
     parser.add_argument('-t', '--vehicle-type',
                         choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
                                  'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
                         default='ArduCopter',
-                        help='The type of the vehicle. Defaults to ArduCopter',
+                        help='The type of the vehicle. Defaults to %(default)s.',
                         )
     parser.add_argument('-m', '--max-line-length',
                         type=int, default=100,
-                        help='Maximum documentation line length. Defaults to %(default)s',
+                        help='Maximum documentation line length. Defaults to %(default)s.',
                         )
     parser.add_argument('--verbose', action='store_true',
-                        help='Increase output verbosity, print ReadOnly parameter list. Defaults to %(default)s',
+                        help='Increase output verbosity, print ReadOnly parameter list. Defaults to %(default)s.',
                         )
     parser.add_argument('-v', '--version', action='version', version=f'%(prog)s {VERSION}',
                         help='Display version information and exit.',
@@ -313,12 +314,12 @@ def get_xml_data(base_url: str, directory: str, filename: str) -> ET.Element:
     else:
         # No locally cached file exists, get it from the internet
         try:
-            from requests import get as requests_get  # pylint: disable=C0415
-            from requests import exceptions as requests_exceptions  # pylint: disable=C0415
-        except ImportError:
+            from requests import get as requests_get  # pylint: disable=import-outside-toplevel
+            from requests import exceptions as requests_exceptions  # pylint: disable=import-outside-toplevel
+        except ImportError as exc:
             logging.critical("The requests package was not found")
             logging.critical("Please install it by running 'pip install requests' in your terminal.")
-            raise SystemExit("requests package is not installed")  # pylint: disable=W0707
+            raise SystemExit("requests package is not installed") from exc
         try:
             # Send a GET request to the URL
             response = requests_get(base_url + filename, timeout=5)
@@ -664,7 +665,7 @@ def main():
                                            args.sort, param_default_dict, args.delete_documentation_annotations)
     except Exception as exp:  # pylint: disable=W0718
         logging.fatal(exp)
-        exit(1)  # pylint: disable=R1722
+        sys_exit(1)
 
 
 if __name__ == "__main__":
