@@ -30,9 +30,14 @@ import re
 from sys import exc_info as sys_exc_info
 from sys import exit as sys_exit
 from typing import Any, Dict, List, Optional, Tuple
-import xml.etree.ElementTree as ET
+
+from xml.etree import ElementTree as ET # no parsing, just data-structure manipulation
+
 import argparse
 import logging
+
+from defusedxml import ElementTree as DET # just parsing, no data-structure manipulation
+
 
 # URL of the XML file
 BASE_URL = "https://autotest.ardupilot.org/Parameters/"
@@ -341,7 +346,7 @@ def get_xml_data(base_url: str, directory: str, filename: str) -> ET.Element:
             raise SystemExit("permission denied to write online XML documentation to file") from e
 
     # Parse the XML data
-    root = ET.fromstring(xml_data)
+    root = DET.fromstring(xml_data)
 
     # Load parameter default values if the 00_default.param file exists
     try:

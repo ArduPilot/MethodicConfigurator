@@ -84,6 +84,7 @@ setup(
     author_email='amilcar.lucas@iav.de',
     packages=find_packages(),
     install_requires=[
+        'defusedxml',
         'matplotlib',
         'numpy',
         'platformdirs',
