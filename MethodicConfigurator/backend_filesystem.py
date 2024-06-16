@@ -116,6 +116,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         [self.doc_dict, self.param_default_dict] = parse_parameter_metadata(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE,
                                                                             vehicle_type, TOOLTIP_MAX_LENGTH)
 
+        # Extend parameter documentation metadata if <parameter_file>.pdef.xml exists
+        for filename in self.file_parameters:
+            pdef_xml_file = filename.replace(".param", ".pdef.xml")
+            if os_path.exists(os_path.join(xml_dir, pdef_xml_file)):
+                [doc_dict, _param_default_dict] = parse_parameter_metadata("", xml_dir, pdef_xml_file,
+                                                                           vehicle_type, TOOLTIP_MAX_LENGTH)
+                self.doc_dict.update(doc_dict)
+
         self.__extend_and_reformat_parameter_documentation_metadata()
 
     def rename_parameter_files(self):
@@ -130,23 +138,26 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                             os_rename(old_filename_path, new_filename_path)
                             logging_info("Renamed %s to %s", old_filename, new_filename)
 
-    def __extend_and_reformat_parameter_documentation_metadata(self):
+    def __extend_and_reformat_parameter_documentation_metadata(self):  # pylint: disable=too-many-branches
         for param_name, param_info in self.doc_dict.items():
             if 'fields' in param_info:
-                if 'Units' in param_info['fields']:
-                    param_info['unit'] = param_info['fields']['Units'].split('(')[0].strip()
-                    param_info['unit_tooltip'] = param_info['fields']['Units'].split('(')[1].strip(')')
-                if 'Range' in param_info['fields']:
-                    param_info['min'] = float(param_info['fields']['Range'].split(' ')[0].strip())
-                    param_info['max'] = float(param_info['fields']['Range'].split(' ')[1].strip())
-                if 'Calibration' in param_info['fields']:
-                    param_info['Calibration'] = self.str_to_bool(param_info['fields']['Calibration'].strip())
-                if 'ReadOnly' in param_info['fields']:
-                    param_info['ReadOnly'] = self.str_to_bool(param_info['fields']['ReadOnly'].strip())
-                if 'RebootRequired' in param_info['fields']:
-                    param_info['RebootRequired'] = self.str_to_bool(param_info['fields']['RebootRequired'].strip())
-                if 'Bitmask' in param_info['fields']:
-                    bitmask_items = param_info['fields']['Bitmask'].split(',')
+                param_fields = param_info['fields']
+                if 'Units' in param_fields:
+                    units_list = param_fields['Units'].split('(')
+                    param_info['unit'] = units_list[0].strip()
+                    if len(units_list) > 1:
+                        param_info['unit_tooltip'] = units_list[1].strip(')').strip()
+                if 'Range' in param_fields:
+                    param_info['min'] = float(param_fields['Range'].split(' ')[0].strip())
+                    param_info['max'] = float(param_fields['Range'].split(' ')[1].strip())
+                if 'Calibration' in param_fields:
+                    param_info['Calibration'] = self.str_to_bool(param_fields['Calibration'].strip())
+                if 'ReadOnly' in param_fields:
+                    param_info['ReadOnly'] = self.str_to_bool(param_fields['ReadOnly'].strip())
+                if 'RebootRequired' in param_fields:
+                    param_info['RebootRequired'] = self.str_to_bool(param_fields['RebootRequired'].strip())
+                if 'Bitmask' in param_fields:
+                    bitmask_items = param_fields['Bitmask'].split(',')
                     param_info['Bitmask'] = {}
                     for item in bitmask_items:
                         key, value = item.split(':')
