@@ -13,7 +13,7 @@ from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from logging import debug as logging_debug
 from logging import info as logging_info
-from logging import warning as logging_warning
+#from logging import warning as logging_warning
 from logging import error as logging_error
 from sys import exit as sys_exit
 
@@ -80,9 +80,6 @@ def connect_to_fc_and_read_parameters(args):
     else:
         logging_info("Vehicle type explicitly set to %s.", vehicle_type)
 
-    if vehicle_type == "": # did not guess it, default to ArduCopter
-        vehicle_type = "ArduCopter"
-        logging_warning("Could not detect vehicle type. Defaulting to ArduCopter.")
     return flight_controller,vehicle_type
 
 
@@ -130,7 +127,7 @@ def main():
         raise
 
     # Get the list of intermediate parameter files files that will be processed sequentially
-    files = list(local_filesystem.file_parameters.keys())
+    files = list(local_filesystem.file_parameters.keys()) if local_filesystem.file_parameters else []
 
     vehicle_dir_window = None
     if not files:
@@ -139,7 +136,7 @@ def main():
 
     start_file = local_filesystem.get_start_file(args.n)
 
-    component_editor(args, flight_controller, vehicle_type, local_filesystem, vehicle_dir_window)
+    component_editor(args, flight_controller, local_filesystem.vehicle_type, local_filesystem, vehicle_dir_window)
 
     # Call the GUI function with the starting intermediate parameter file
     ParameterEditorWindow(start_file, flight_controller, local_filesystem, VERSION)

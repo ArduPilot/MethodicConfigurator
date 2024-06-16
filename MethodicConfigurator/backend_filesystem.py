@@ -85,17 +85,31 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         VehicleComponents.__init__(self)
         ConfigurationSteps.__init__(self, vehicle_dir, vehicle_type)
         ProgramSettings.__init__(self)
+        self.vehicle_type = vehicle_type
         self.fw_version = fw_version
         self.allow_editing_template_files = allow_editing_template_files
         if vehicle_dir is not None:
             self.re_init(vehicle_dir, vehicle_type)
 
     def re_init(self, vehicle_dir: str, vehicle_type: str):
-        ConfigurationSteps.re_init(self, vehicle_dir, vehicle_type)
         self.vehicle_dir = vehicle_dir
-        self.vehicle_type = vehicle_type
         self.param_default_dict = {}
         self.doc_dict = {}
+
+        if not self.load_vehicle_components_json_data(vehicle_dir):
+            return
+
+        if self.fw_version is None:
+            self.fw_version = self.get_fc_fw_version_from_vehicle_components_json()
+
+        if vehicle_type == "":
+            vehicle_type = self.get_fc_fw_type_from_vehicle_components_json()
+        if vehicle_type == "":
+            vehicle_type = "ArduCopter"
+            logging_warning("Could not detect vehicle type. Defaulting to %s.", vehicle_type)
+        self.vehicle_type = vehicle_type
+
+        ConfigurationSteps.re_init(self, vehicle_dir, vehicle_type)
 
         # Rename parameter files if some new files got added to the vehicle directory
         self.rename_parameter_files()
@@ -104,11 +118,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self.file_parameters = self.read_params_from_files()
         if not self.file_parameters:
             return # No files intermediate parameters files found, no need to continue, the rest needs them
-
-        self.load_vehicle_components_json_data(vehicle_dir)
-
-        if self.fw_version is None:
-            self.fw_version = self.get_fc_fw_version_from_vehicle_components_json()
 
         # Read ArduPilot parameter documentation
         xml_url = get_xml_url(vehicle_type, self.fw_version)
@@ -515,14 +524,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return ''
 
     @staticmethod
-    def supported_vehicles():
-        return ['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
-                                    'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL']
-
-    @staticmethod
     def add_argparse_arguments(parser):
         parser.add_argument('-t', '--vehicle-type',
-                            choices=LocalFilesystem.supported_vehicles(),
+                            choices=VehicleComponents.supported_vehicles(),
                             default='',
                             help='The type of the vehicle. Defaults to ArduCopter')
         parser.add_argument('--vehicle-dir',
