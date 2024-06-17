@@ -43,9 +43,17 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
     def process_list_pair_tuple(self, list_pair_tuple):
         r_list_keys = []
         r_list_shows = []
-        for tpl in list_pair_tuple:
-            r_list_keys.append(tpl[0])
-            r_list_shows.append(tpl[1])
+        if isinstance(list_pair_tuple, list):
+            for tpl in list_pair_tuple:
+                r_list_keys.append(tpl[0])
+                r_list_shows.append(tpl[1])
+        elif isinstance(list_pair_tuple, dict):
+            for key, value in list_pair_tuple.items():
+                r_list_keys.append(key)
+                r_list_shows.append(value)
+        else:
+            logging_critical("list_pair_tuple must be a tuple or a dictionary, not %s", type(list_pair_tuple))
+            sys_exit(1)
         return r_list_keys, r_list_shows
 
     def __init__(self, container, list_pair_tuple, selected_element, cb_name, *args, **kwargs):

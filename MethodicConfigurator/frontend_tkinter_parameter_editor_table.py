@@ -29,6 +29,9 @@ from MethodicConfigurator.backend_filesystem import is_within_tolerance
 from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 #from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
 from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
+from MethodicConfigurator.frontend_tkinter_base import get_font_family
+
+from MethodicConfigurator.frontend_tkinter_connection_selection import PairTupleCombobox
 
 from MethodicConfigurator.annotate_params import Par
 
@@ -219,8 +222,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     @staticmethod
     def __update_new_value_entry_text(new_value_entry: ttk.Entry, value: float, param_default):
         new_value_entry.delete(0, tk.END)
-        text = format(value, '.6f').rstrip('0').rstrip('.')
-        new_value_entry.insert(0, text)
+        value_str = format(value, '.6f').rstrip('0').rstrip('.')
+        new_value_entry.insert(0, value_str)
         new_value_background = "light blue" if param_default is not None and \
             is_within_tolerance(value, param_default.value) else "white"
         new_value_entry.config(background=new_value_background)
@@ -244,9 +247,20 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 param.value = self.local_filesystem.derived_parameters[self.current_file][param_name].value
                 self.at_least_one_param_edited = True
 
-        new_value_entry = ttk.Entry(self.view_port, width=10, justify=tk.RIGHT)
-        ParameterEditorTable.__update_new_value_entry_text(new_value_entry, param.value, param_default)
-        bitmask_dict = param_metadata.get('Bitmask', None) if param_metadata else None
+        bitmask_dict = None
+        value_str = format(param.value, '.6f').rstrip('0').rstrip('.')
+        if 'values' in param_metadata and param_metadata['values'] and \
+           value_str in param_metadata['values']:
+            selected_value = param_metadata['values'].get(value_str, None)
+            new_value_entry = PairTupleCombobox(self.view_port, param_metadata['values'],
+                                                value_str, param_name)
+            new_value_entry.set(selected_value)
+            new_value_entry.config(state='readonly', width=9, font=(get_font_family(new_value_entry), 9))
+            new_value_entry.config(background='white')  # does not work when done together with state='readonly'
+        else:
+            new_value_entry = ttk.Entry(self.view_port, width=10, justify=tk.RIGHT)
+            ParameterEditorTable.__update_new_value_entry_text(new_value_entry, param.value, param_default)
+            bitmask_dict = param_metadata.get('Bitmask', None) if param_metadata else None
         try:
             old_value = self.local_filesystem.file_parameters[self.current_file][param_name].value
         except KeyError as e:
@@ -405,7 +419,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def __on_parameter_value_change(self, event, current_file, param_name):
         # Get the new value from the Entry widget
-        new_value = event.widget.get()
+        if isinstance(event.widget, PairTupleCombobox):
+            new_value = event.widget.get_selected_key()
+        else:
+            new_value = event.widget.get()
         try:
             old_value = self.local_filesystem.file_parameters[current_file][param_name].value
         except KeyError as e:
