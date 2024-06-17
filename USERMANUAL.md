@@ -55,7 +55,6 @@ The information is presented in the corresponding window and at the same time al
   <ins><b><i>Flight controller info and parameter download</i></b></ins>
 </figure>
 
-
 ### Vehicle Configuration Directory Selection Interface
 
 This interface allows users to select a vehicle directory that contains intermediate parameter files for ArduPilot **if one was not specified with the `--vehicle-dir` command line parameter**.
@@ -68,7 +67,7 @@ This interface allows users to select a vehicle directory that contains intermed
 
 It provides three main options for selecting a vehicle directory:
 
-#### Option 1: Create a new vehicle configuration directory
+#### New
 
 Create a new vehicle configuration directory by copying files from an existing template directory.
 It's useful for setting up a new vehicle configuration quickly.
@@ -79,16 +78,16 @@ It's useful for setting up a new vehicle configuration quickly.
 - Enter the name for the new vehicle directory in the "New vehicle name" field.
 - Click the "Create vehicle directory from template" button to create the new vehicle directory on the base directory and copy the template files to it.
 
-#### Option 2: Open an existing vehicle configuration directory
+#### Open
 
-Select an existing vehicle configuration directory that already contains intermediate parameter files.
+Open an existing vehicle configuration directory that already contains intermediate parameter files.
 It's useful for editing an existing vehicle configuration.
 
 - Use the "Vehicle directory" `...` button to select the existing vehicle directory containing the intermediate parameter files.
 
-#### Option 3: Open the last used vehicle configuration Directory
+#### Re-open
 
-Select the last used vehicle configuration directory.
+Re-open the last used vehicle configuration directory.
 
 ### Vehicle Component Editor Interface
 
@@ -156,7 +155,7 @@ When you click the ArduPilot logo the following window will appear:
   - Not available parameter values are presented as `N/A` on an *orange background*🟧
   - Parameters that have the default parameter value are presented on a *light blue background* 🟦
 - The new value is the value in the intermediate file and will be uploaded to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `vehicle_template` directory are just examples.
-  - parameters that should not be changed by the users, or are derived from information in the [*component editor*](#component-editor-interface) are greyed out and can not be edited
+  - parameters that should not be changed by the users, or are derived from information in the [*component editor*](#vehicle-component-editor-interface) are greyed out and can not be edited
 - **In the parameter table, you can edit the `New Value` and `Change Reason` entries for each parameter.**
 - **You MUST edit the `Change Reason` so that other users understand why you changed the parameter to that particular `New value`**
 - Check the `Upload` checkbox to select parameters to be uploaded to the flight controller
