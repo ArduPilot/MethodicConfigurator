@@ -14,11 +14,13 @@ import tempfile
 from unittest.mock import patch, mock_open
 import os
 import unittest
-import xml.etree.ElementTree as ET
 import requests
 import mock
 
-from annotate_params import get_xml_data
+from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
+from defusedxml import ElementTree as DET  # just parsing, no data-structure manipulation
+
+from MethodicConfigurator.annotate_params import get_xml_data
 from MethodicConfigurator.annotate_params import remove_prefix
 from MethodicConfigurator.annotate_params import split_into_lines
 from MethodicConfigurator.annotate_params import create_doc_dict
@@ -258,7 +260,7 @@ class TestParamDocsUpdate(unittest.TestCase):
             </param>
         </root>
         '''
-        root = ET.fromstring(xml_data)
+        root = DET.fromstring(xml_data)
 
         # Expected output
         expected_output = {
@@ -491,7 +493,7 @@ PARAM_1\t100
             </param>
         </root>
         '''
-        root = ET.fromstring(xml_data)
+        root = DET.fromstring(xml_data)
         doc_dict = create_doc_dict(root, "VehicleType")
 
         # Call the function with the mock XML data

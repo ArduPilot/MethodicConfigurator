@@ -31,11 +31,10 @@ from sys import exc_info as sys_exc_info
 from sys import exit as sys_exit
 from typing import Any, Dict, List, Optional, Tuple
 
-from xml.etree import ElementTree as ET # no parsing, just data-structure manipulation
-
 import argparse
 import logging
 
+from xml.etree import ElementTree as ET # no parsing, just data-structure manipulation
 from defusedxml import ElementTree as DET # just parsing, no data-structure manipulation
 
 
