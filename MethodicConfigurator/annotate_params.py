@@ -345,8 +345,10 @@ def get_xml_data(base_url: str, directory: str, filename: str) -> ET.Element:
             raise SystemExit("permission denied to write online XML documentation to file") from e
 
     # Parse the XML data
-    root = DET.fromstring(xml_data)
+    return DET.fromstring(xml_data)
 
+
+def load_default_param_file(directory: str) -> Dict[str, Any]:
     # Load parameter default values if the 00_default.param file exists
     try:
         param_default_dict = Par.load_param_file_into_dict(os_path.join(directory, '00_default.param'))
@@ -354,7 +356,7 @@ def get_xml_data(base_url: str, directory: str, filename: str) -> ET.Element:
         logging.warning("Default parameter file 00_default.param not found. No default values will be annotated.")
         logging.warning("Create one by using the command ./extract_param_defaults.py log_file.bin > 00_default.param")
         param_default_dict = {}
-    return root, param_default_dict
+    return param_default_dict
 
 
 def remove_prefix(text: str, prefix: str) -> str:
@@ -679,7 +681,8 @@ def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
 
 def parse_parameter_metadata(xml_url: str, xml_dir: str, xml_file: str,
                         vehicle_type: str, max_line_length: int) -> Dict[str, Any]:
-    xml_root, param_default_dict = get_xml_data(xml_url, xml_dir, xml_file)
+    xml_root = get_xml_data(xml_url, xml_dir, xml_file)
+    param_default_dict = load_default_param_file(xml_dir)
     doc_dict = create_doc_dict(xml_root, vehicle_type, max_line_length)
     return doc_dict, param_default_dict
 

@@ -73,7 +73,7 @@ class TestParamDocsUpdate(unittest.TestCase):
         mock_load_param.side_effect = FileNotFoundError
 
         # Call the function with a local file
-        result, _d = get_xml_data("/path/to/local/file/", ".", "test.xml")
+        result = get_xml_data("/path/to/local/file/", ".", "test.xml")
 
         # Check the result
         self.assertIsInstance(result, ET.Element)
@@ -94,7 +94,7 @@ class TestParamDocsUpdate(unittest.TestCase):
             pass
 
         # Call the function with a remote file
-        result, _d = get_xml_data("http://example.com/", ".", "test.xml")
+        result = get_xml_data("http://example.com/", ".", "test.xml")
 
         # Check the result
         self.assertIsInstance(result, ET.Element)
@@ -117,7 +117,7 @@ class TestParamDocsUpdate(unittest.TestCase):
         mock_open = mock.mock_open(read_data='<root></root>')
         with patch('builtins.open', mock_open):
             # Call the function with a filename that exists in the script directory
-            result, _d = get_xml_data(BASE_URL, ".", PARAM_DEFINITION_XML_FILE)
+            result = get_xml_data(BASE_URL, ".", PARAM_DEFINITION_XML_FILE)
 
         # Check the result
         self.assertIsInstance(result, ET.Element)
@@ -161,7 +161,7 @@ class TestParamDocsUpdate(unittest.TestCase):
         mock_get.return_value.text = "<root></root>"
 
         # Call the function with a remote file
-        result, _d = get_xml_data("http://example.com/", ".", "test.xml")
+        result = get_xml_data("http://example.com/", ".", "test.xml")
 
         # Check the result
         self.assertIsInstance(result, ET.Element)
