@@ -163,6 +163,13 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                         key, value = item.split(':')
                         param_info['Bitmask'][int(key.strip())] = value.strip()
 
+            if 'values' in param_info and param_info['values']:
+                try:
+                    param_info['Values'] = {int(k): v for k, v in param_info['values'].items()}
+                except ValueError:
+                    param_info['Values'] = {float(k): v for k, v in param_info['values'].items()}
+                # print(param_info['Values'])
+
             prefix_parts = [
                 f"{param_info['humanName']}",
             ]
