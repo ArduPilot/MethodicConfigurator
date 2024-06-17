@@ -34,7 +34,7 @@ from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
 from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 from MethodicConfigurator.frontend_tkinter_base import RichText
-from MethodicConfigurator.frontend_tkinter_base import get_font_family
+from MethodicConfigurator.frontend_tkinter_base import get_widget_font
 
 from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 
@@ -194,6 +194,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)
 
+        style = ttk.Style()
+        style.map('readonly.TCombobox', fieldbackground=[('readonly', 'white')])
+        style.map('readonly.TCombobox', selectbackground=[('readonly', 'white')])
+        style.map('readonly.TCombobox', selectforeground=[('readonly', 'black')])
+
         self.__create_conf_widgets(version)
 
         # Create a DocumentationFrame object for the Documentation Content
@@ -238,11 +243,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                                                           "files in the selected vehicle directory\nIt will automatically "
                                                           "advance to the next file once the current file is uploaded to the "
                                                           "fight controller",
-                                                          state='readonly', width=45)
+                                                          state='readonly', width=45, style='readonly.TCombobox')
         self.file_selection_combobox.bind("<<ComboboxSelected>>", self.on_param_file_combobox_change)
         self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
-        self.legend_frame(config_subframe, get_font_family(file_selection_label))
+        self.legend_frame(config_subframe, get_widget_font(file_selection_label)['family'])
 
         image_label = BaseWindow.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))

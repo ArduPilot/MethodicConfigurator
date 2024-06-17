@@ -21,6 +21,8 @@ from logging import info as logging_info
 #from logging import error as logging_error
 from logging import critical as logging_critical
 
+from platform import system as platform_system
+
 #from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_filesystem import is_within_tolerance
 
@@ -29,7 +31,7 @@ from MethodicConfigurator.backend_filesystem import is_within_tolerance
 from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 #from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
 from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
-from MethodicConfigurator.frontend_tkinter_base import get_font_family
+from MethodicConfigurator.frontend_tkinter_base import get_widget_font
 
 from MethodicConfigurator.frontend_tkinter_connection_selection import PairTupleCombobox
 
@@ -253,10 +255,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
            value_str in param_metadata['values']:
             selected_value = param_metadata['values'].get(value_str, None)
             new_value_entry = PairTupleCombobox(self.view_port, param_metadata['values'],
-                                                value_str, param_name)
+                                                value_str, param_name,
+                                                style='TCombobox' if present_as_forced else 'readonly.TCombobox')
             new_value_entry.set(selected_value)
-            new_value_entry.config(state='readonly', width=9, font=(get_font_family(new_value_entry), 9))
-            new_value_entry.config(background='white')  # does not work when done together with state='readonly'
+            font = get_widget_font(new_value_entry)
+            font['size'] -= 2 if platform_system() == 'Windows' else 1
+            new_value_entry.config(state='readonly', width=9, font=(font['family'], font['size']))
         else:
             new_value_entry = ttk.Entry(self.view_port, width=10, justify=tk.RIGHT)
             ParameterEditorTable.__update_new_value_entry_text(new_value_entry, param.value, param_default)

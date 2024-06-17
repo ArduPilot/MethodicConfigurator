@@ -314,14 +314,11 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
         self.tag_configure("h1", font=h1_font, spacing3=default_size)
 
 
-def get_font_family(widget: tk.Widget) -> str:
+def get_widget_font(widget: tk.Widget) -> dict:
     style = ttk.Style()
-    widget_style = widget.cget("style")  # Get the style used by the widget
-    font_descriptions = style.lookup(widget_style, 'font')
-    if font_descriptions:
-        font_family = font_descriptions[0]  # Font description is a tuple where the first element is the family
-        return font_family
-    return "Font family not found"
+    widget_style = widget.cget('style')  # Get the style used by the widget
+    font_name = style.lookup(widget_style, 'font')
+    return tkFont.nametofont(font_name).config()
 
 
 class BaseWindow:
