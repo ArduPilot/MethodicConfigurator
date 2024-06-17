@@ -34,6 +34,7 @@ from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
 from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 from MethodicConfigurator.frontend_tkinter_base import RichText
+from MethodicConfigurator.frontend_tkinter_base import get_font_family
 
 from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 
@@ -188,7 +189,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.root.title("Amilcar Lucas's - ArduPilot methodic configurator " + version + \
                         " - Parameter file editor and uploader")
-        self.root.geometry("900x500") # Set the window width
+        self.root.geometry("990x550") # Set the window width
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)
@@ -241,10 +242,39 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.file_selection_combobox.bind("<<ComboboxSelected>>", self.on_param_file_combobox_change)
         self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
+        self.legend_frame(config_subframe, get_font_family(file_selection_label))
+
         image_label = BaseWindow.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
         image_label.bind("<Button-1>", lambda event: show_about_window(self.main_frame, version))
         show_tooltip(image_label, "User Manual, Support Forum, Report a Bug, Licenses, Source Code")
+
+    def legend_frame(self, config_subframe: ttk.Frame, font_family: str):
+        style = ttk.Style()
+        style.configure('Legend.TLabelframe', font=(font_family, 9))
+        legend_frame = ttk.LabelFrame(config_subframe, text="Legend", style='Legend.TLabelframe')
+        legend_left = ttk.Frame(legend_frame)
+        legend_left.pack(side=tk.LEFT, anchor=tk.NW)
+        show_tooltip(legend_frame, "the meaning of the text background colors")
+
+        font_size = 8
+        font = (font_family, font_size)
+        np_label = ttk.Label(legend_left, text="Normal parameter", font=font)
+        np_label.pack(side=tk.TOP, anchor=tk.NW)
+        cal_label = ttk.Label(legend_left, text="Calibration param", background="yellow", font=font)
+        cal_label.pack(side=tk.TOP, anchor=tk.NW)
+        readonly_label = ttk.Label(legend_left, text="Read-only param", background="red", font=font)
+        readonly_label.pack(side=tk.TOP, anchor=tk.NW)
+        legend_right = ttk.Frame(legend_frame)
+        legend_right.pack(side=tk.RIGHT, anchor=tk.NE)
+        default_label = ttk.Label(legend_right, text="Default value", background="lightblue", font=font)
+        default_label.pack(side=tk.TOP, anchor=tk.NW)
+        na_label = ttk.Label(legend_right, text="Not available", background="orange", font=font)
+        na_label.pack(side=tk.TOP, anchor=tk.NW)
+        ne_label = ttk.Label(legend_right, text="Not editable", font=font)
+        ne_label.configure(state='disabled')
+        ne_label.pack(side=tk.TOP, anchor=tk.NW)
+        legend_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(2, 2))
 
     def __create_parameter_area_widgets(self):
         self.show_only_differences = tk.BooleanVar(value=False)
