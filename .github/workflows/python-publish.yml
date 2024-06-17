@@ -29,17 +29,17 @@ jobs:
         fetch-depth: 0
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
 
     - name: Install dependencies
       run: |
-        python -m pip install -U pip wheel pymavlink
+        python -m pip install -U pip wheel pymavlink build
         pip install -U .
 
     - name: Build package
       run: python -m build
 
-    - name: Publish package distribuitions tp PyPI
+    - name: Publish package distribuitions to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
