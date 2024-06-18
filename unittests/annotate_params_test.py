@@ -11,16 +11,20 @@ Author: Amilcar do Carmo Lucas
 # pylint: skip-file
 
 import tempfile
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, mock_open, Mock
 import os
 import unittest
 import requests
 import mock
+import argparse
 
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 from defusedxml import ElementTree as DET  # just parsing, no data-structure manipulation
 
+from MethodicConfigurator.annotate_params import arg_parser
+from MethodicConfigurator.annotate_params import main
 from MethodicConfigurator.annotate_params import get_xml_data
+from MethodicConfigurator.annotate_params import get_xml_url
 from MethodicConfigurator.annotate_params import remove_prefix
 from MethodicConfigurator.annotate_params import split_into_lines
 from MethodicConfigurator.annotate_params import create_doc_dict
@@ -79,7 +83,7 @@ class TestParamDocsUpdate(unittest.TestCase):
         self.assertIsInstance(result, ET.Element)
 
         # Assert that the file was opened correctly
-        mock_open.assert_called_once_with('./test.xml', 'r', encoding='utf-8')
+        mock_open.assert_called_once_with(os.path.join(".", "test.xml"), 'r', encoding='utf-8')
 
     @patch('requests.get')
     def test_get_xml_data_remote_file(self, mock_get):
@@ -550,6 +554,100 @@ PARAM_1\t100
 
         # Check if the file is still empty
         self.assertEqual(updated_content, "")
+
+
+class AnnotateParamsTest(unittest.TestCase):
+
+    @patch('argparse.ArgumentParser.parse_args')
+    def test_arg_parser_valid_arguments(self, mock_parse_args):
+        test_args = ['--vehicle-type', 'ArduCopter', '--sort', 'none', '--target', 'parameters']
+        mock_parse_args.return_value = argparse.Namespace(
+            vehicle_type='ArduCopter',
+            sort='none',
+            target='parameters',
+            verbose=False,
+            max_line_length=100,
+        )
+        with patch('sys.argv', test_args):
+            args = arg_parser()
+            self.assertEqual(args.vehicle_type, 'ArduCopter')
+            self.assertEqual(args.sort, 'none')
+            self.assertEqual(args.target, 'parameters')
+            self.assertEqual(args.verbose, False)
+            self.assertEqual(args.max_line_length, 100)
+
+    def test_arg_parser_invalid_vehicle_type(self):
+        test_args = ['--vehicle-type', 'InvalidType', '--sort', 'none', '--target', 'parameters']
+        with patch('sys.argv', test_args):
+            with self.assertRaises(SystemExit):
+                arg_parser()
+
+    def test_arg_parser_invalid_sort_option(self):
+        test_args = ['--vehicle-type', 'ArduCopter', '--sort', 'invalid', '--target', 'parameters']
+        with patch('sys.argv', test_args):
+            with self.assertRaises(SystemExit):
+                arg_parser()
+
+    def test_arg_parser_invalid_target_option(self):
+        test_args = ['--vehicle-type', 'ArduCopter', '--sort', 'none', '--target', 'invalid']
+        with patch('sys.argv', test_args):
+            with self.assertRaises(SystemExit):
+                arg_parser()
+
+
+class TestAnnotateParamsExceptionHandling(unittest.TestCase):
+
+    @patch('annotate_params.arg_parser')
+    @patch('annotate_params.get_xml_url')
+    @patch('annotate_params.get_xml_dir')
+    @patch('annotate_params.parse_parameter_metadata')
+    @patch('annotate_params.update_parameter_documentation')
+    @patch('builtins.open', new_callable=mock_open)
+    def test_main_ioerror(
+        self, mock_file, mock_update, mock_parse_metadata, mock_get_xml_dir, mock_get_xml_url, mock_arg_parser
+    ):
+        mock_arg_parser.return_value = Mock(
+            vehicle_type='ArduCopter',
+            target='.',
+            sort='none',
+            delete_documentation_annotations=False,
+            verbose=False
+        )
+        mock_file.side_effect = IOError("Mocked IO Error")
+
+        with self.assertRaises(SystemExit) as cm:
+            main()
+
+        self.assertEqual(cm.exception.code, 2)
+
+    @patch('annotate_params.arg_parser')
+    @patch('annotate_params.get_xml_url')
+    @patch('annotate_params.get_xml_dir')
+    @patch('annotate_params.parse_parameter_metadata')
+    @patch('annotate_params.update_parameter_documentation')
+    @patch('builtins.open', new_callable=mock_open)
+    def test_main_oserror(
+        self, mock_file, mock_update, mock_parse_metadata, mock_get_xml_dir, mock_get_xml_url, mock_arg_parser
+    ):
+        mock_arg_parser.return_value = Mock(
+            vehicle_type='ArduCopter',
+            target='.',
+            sort='none',
+            delete_documentation_annotations=False,
+            verbose=False
+        )
+        mock_file.side_effect = OSError("Mocked OS Error")
+
+        with self.assertRaises(SystemExit) as cm:
+            main()
+
+        self.assertEqual(cm.exception.code, 2)
+
+    @patch('annotate_params.get_xml_url')
+    def test_get_xml_url_exception(self, mock_get_xml_url):
+        mock_get_xml_url.side_effect = ValueError("Mocked Value Error")
+        with self.assertRaises(ValueError):
+            get_xml_url('NonExistingVehicle', '4.0')
 
 
 if __name__ == '__main__':

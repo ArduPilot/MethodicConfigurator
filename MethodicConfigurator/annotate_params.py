@@ -673,8 +673,13 @@ def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
         'Heli': 'versioned/Heli/stable-',
         'SITL': 'versioned/SITL/stable-'
     }
+    try:
+        vehicle_subdir = vehicle_parm_subdir[vehicle_type] + firmware_version
+    except KeyError as e:
+        raise ValueError(f"Vehicle type '{vehicle_type}' is not supported.") from e
+
     if firmware_version:
-        xml_url = BASE_URL + vehicle_parm_subdir[vehicle_type] + firmware_version + "/"
+        xml_url = BASE_URL + vehicle_subdir + "/"
     else:
         xml_url = BASE_URL + vehicle_type + "/"
     return xml_url

@@ -2,8 +2,23 @@
 #
 # SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 #
-#SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: GPL-3.0-or-later
 
-PYTHONPATH=../MethodicConfigurator python3 -m coverage run -m unittest annotate_params_test.py
-python3 -m coverage html
+REQUIRED_PKGS=("coverage" "mock" "defusedxml")
+
+is_installed() {
+    pip show "$1" > /dev/null 2>&1
+}
+
+for pkg in "${REQUIRED_PKGS[@]}"; do
+    if ! is_installed "$pkg"; then
+        echo "Installing $pkg..."
+        pip install "$pkg"
+    else
+        echo "$pkg is already installed."
+    fi
+done
+
+PYTHONPATH=../MethodicConfigurator python -m coverage run -m unittest annotate_params_test.py
+python -m coverage html
 firefox htmlcov/annotate_params_py.html
