@@ -201,8 +201,8 @@
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-215-configure-logging-32",
         "wiki_text": "Downloading and Analyzing Data Logs in Mission Planner",
         "wiki_url": "https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html",
-        "external_tool_text": "Motor/Propeller order and direction test",
-        "external_tool_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-216-motorpropeller-order-and-direction-test-33",
+        "external_tool_text": "",
+        "external_tool_url": "",
         "mandatory_text": "100% mandatory (0% optional)",
         "auto_changed_by": "",
         "forced_parameters": {
@@ -217,8 +217,8 @@
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#motor-thrust-scalinghttpsardupilotorgcopterdocsmotor-thrust-scalinghtml-mot_thst_expohttpsardupilotorgcopterdocsparametershtmlmot-thst-expo-mot_spin_minhttpsardupilotorgcopterdocsparametershtmlmot-spin-min-and-mot_spin_maxhttpsardupilotorgcopterdocsparametershtmlmot-spin-max-34",
         "wiki_text": "Motor Thrust Scaling",
         "wiki_url": "https://ardupilot.org/copter/docs/motor-thrust-scaling.html",
-        "external_tool_text": "",
-        "external_tool_url": "",
+        "external_tool_text": "Motor/Propeller order and direction test",
+        "external_tool_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-216-motorpropeller-order-and-direction-test-33",
         "mandatory_text": "40% mandatory (60% optional)",
         "auto_changed_by": "",
         "old_filenames": ["14_motor.param"]
