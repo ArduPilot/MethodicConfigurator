@@ -25,5 +25,6 @@ class TestVersion(unittest.TestCase):
         msg = f"VERSION string '{VERSION}' does not follow semantic versioning"
         self.assertIsNotNone(match, msg)
 
+
 if __name__ == '__main__':
     unittest.main()

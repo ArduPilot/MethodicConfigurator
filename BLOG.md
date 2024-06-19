@@ -89,7 +89,6 @@ The figure excludes the LiPo battery and the PM02 BEC with a voltage/current mon
 
 ![Matek H743, Holobro F9p, T-Motor F45 4in1 ESC and TBS Crossfire Nano rx se connections](matek_h743_schaltplan.png)
 
-
 # 2. Proper initial configuration
 
 For reproducibility and quality purposes, we configure the vehicle with a well-defined sequence of intermediate parameter files.

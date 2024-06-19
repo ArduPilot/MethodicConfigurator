@@ -42,5 +42,6 @@ class TestCommonArguments(unittest.TestCase):  # pylint: disable=missing-class-d
         updated_parser.parse_args(['--version'])
         updated_parser.parse_args.assert_called_with(['--version'])
 
+
 if __name__ == '__main__':
     unittest.main()

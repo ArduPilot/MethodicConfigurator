@@ -318,7 +318,7 @@ Change the parameters according to your requirements.
 
 ### [ESC Calibration](https://ardupilot.org/copter/docs/esc-calibration.html)
 
-Do not make changes here, these parameters will be set later on the [Motor/Propeller order and direction test](#214-motorpropeller-order-and-direction-test) section
+Do not make changes here, these parameters will be set later on the [Motor/Propeller order and direction test](#216-motorpropeller-order-and-direction-test) section
 
 ### [Flight Modes](https://ardupilot.org/copter/docs/flight-modes.html)
 

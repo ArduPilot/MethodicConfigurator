@@ -80,5 +80,6 @@ class TestTemplateOverview(unittest.TestCase):  # pylint: disable=missing-class-
         }
         self.assertEqual(expected_attributes, set(attribute_keys))
 
+
 if __name__ == '__main__':
     unittest.main()
