@@ -243,7 +243,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
 
         # Assert that the error message is as expected
-        self.assertEqual(cm.exception.args[0], "Parameter PARAM2 is not present in test_directory/00_default.param")
+        self.assertEqual(cm.exception.args[0], f"Parameter PARAM2 is not present in {os.path.join('test_directory','00_default.param')}")
 
     def test_parameter_missing_from_default_file(self):
         # A parameter is missing from the default parameter file
@@ -251,7 +251,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             f.write('PARAM1,1.0\nPARAM3,3.0\n')
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        self.assertEqual(cm.exception.args[0], "Parameter PARAM2 is not present in test_directory/00_default.param")
+        self.assertEqual(cm.exception.args[0], f"Parameter PARAM2 is not present in {os.path.join('test_directory','00_default.param')}")
 
     def test_parameter_missing_from_optimized_file(self):
         # A parameter is missing from the optimized parameter file
@@ -260,7 +260,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         self.assertEqual(cm.exception.args[0],
-                         "Parameter PARAM2 is not present in test_directory/optimized_parameter_file.param")
+                         f"Parameter PARAM2 is not present in {os.path.join('test_directory','optimized_parameter_file.param')}")
 
     def test_empty_files(self):
         # Both the default and optimized parameter files are empty
@@ -270,7 +270,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             pass
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        self.assertEqual(cm.exception.args[0], "Failed to load default parameters from test_directory/00_default.param")
+        self.assertEqual(cm.exception.args[0], f"Failed to load default parameters from {os.path.join('test_directory','00_default.param')}")
 
     def test_empty_default_file(self):
         # Create an empty default parameter file
@@ -278,7 +278,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             pass
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        self.assertEqual(cm.exception.args[0], "Failed to load default parameters from test_directory/00_default.param")
+        self.assertEqual(cm.exception.args[0], f"Failed to load default parameters from {os.path.join('test_directory','00_default.param')}")
 
     def test_empty_optimized_file(self):
         # Create an empty optimized parameter file
@@ -287,7 +287,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         self.assertEqual(cm.exception.args[0],
-                         "Failed to load optimized parameters from test_directory/optimized_parameter_file.param")
+                         f"Failed to load optimized parameters from {os.path.join('test_directory','optimized_parameter_file.param')}")
 
     def test_empty_adjustment_file(self):
         # Create an empty adjustment parameter file
@@ -296,7 +296,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         self.assertEqual(cm.exception.args[0],
-                         "Failed to load PID adjustment parameters from test_directory/16_pid_adjustment.param")
+                         f"Failed to load PID adjustment parameters from {os.path.join('test_directory','16_pid_adjustment.param')}")
 
     def test_zero_default_value(self):
         # Set a parameter in the default parameter file to zero

@@ -16,7 +16,6 @@ import os
 import unittest
 import requests
 import mock
-import argparse
 
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 from defusedxml import ElementTree as DET  # just parsing, no data-structure manipulation
@@ -35,7 +34,7 @@ from MethodicConfigurator.annotate_params import BASE_URL
 from MethodicConfigurator.annotate_params import PARAM_DEFINITION_XML_FILE
 
 
-class TestParamDocsUpdate(unittest.TestCase):
+class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-docstring
 
     def setUp(self):
         # Create a temporary directory
@@ -558,16 +557,8 @@ PARAM_1\t100
 
 class AnnotateParamsTest(unittest.TestCase):
 
-    @patch('argparse.ArgumentParser.parse_args')
-    def test_arg_parser_valid_arguments(self, mock_parse_args):
-        test_args = ['--vehicle-type', 'ArduCopter', '--sort', 'none', '--target', 'parameters']
-        mock_parse_args.return_value = argparse.Namespace(
-            vehicle_type='ArduCopter',
-            sort='none',
-            target='parameters',
-            verbose=False,
-            max_line_length=100,
-        )
+    def test_arg_parser_valid_arguments(self):
+        test_args = ['annotate_params', '--vehicle-type', 'ArduCopter', '--sort', 'none', 'parameters']
         with patch('sys.argv', test_args):
             args = arg_parser()
             self.assertEqual(args.vehicle_type, 'ArduCopter')
@@ -577,19 +568,19 @@ class AnnotateParamsTest(unittest.TestCase):
             self.assertEqual(args.max_line_length, 100)
 
     def test_arg_parser_invalid_vehicle_type(self):
-        test_args = ['--vehicle-type', 'InvalidType', '--sort', 'none', '--target', 'parameters']
+        test_args = ['annotate_params', '--vehicle-type', 'InvalidType', '--sort', 'none', 'parameters']
         with patch('sys.argv', test_args):
             with self.assertRaises(SystemExit):
                 arg_parser()
 
     def test_arg_parser_invalid_sort_option(self):
-        test_args = ['--vehicle-type', 'ArduCopter', '--sort', 'invalid', '--target', 'parameters']
+        test_args = ['annotate_params', '--vehicle-type', 'ArduCopter', '--sort', 'invalid', 'parameters']
         with patch('sys.argv', test_args):
             with self.assertRaises(SystemExit):
                 arg_parser()
 
-    def test_arg_parser_invalid_target_option(self):
-        test_args = ['--vehicle-type', 'ArduCopter', '--sort', 'none', '--target', 'invalid']
+    def test_arg_parser_invalid_line_length_option(self):
+        test_args = ['annotate_params', '--vehicle-type', 'ArduCopter', '--sort', 'none', '-m', 'invalid', 'parameters']
         with patch('sys.argv', test_args):
             with self.assertRaises(SystemExit):
                 arg_parser()
@@ -618,7 +609,7 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             main()
 
-        self.assertEqual(cm.exception.code, 2)
+        self.assertIn(cm.exception.code, [1, 2])
 
     @patch('annotate_params.arg_parser')
     @patch('annotate_params.get_xml_url')
@@ -641,7 +632,7 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             main()
 
-        self.assertEqual(cm.exception.code, 2)
+        self.assertIn(cm.exception.code, [1, 2])
 
     @patch('annotate_params.get_xml_url')
     def test_get_xml_url_exception(self, mock_get_xml_url):

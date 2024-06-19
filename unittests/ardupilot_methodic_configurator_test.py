@@ -18,7 +18,7 @@ from unittest.mock import patch
 from MethodicConfigurator.ardupilot_methodic_configurator import argument_parser
 
 
-class TestArgumentParser(unittest.TestCase):
+class TestArgumentParser(unittest.TestCase):  # pylint: disable=missing-class-docstring
     @patch('argparse.ArgumentParser.parse_args',
            return_value=argparse.Namespace(conn='tcp:127.0.0.1:5760', params='params_dir'))
     def test_argument_parser(self, mock_args):

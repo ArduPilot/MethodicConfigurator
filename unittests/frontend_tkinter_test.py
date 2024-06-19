@@ -17,7 +17,7 @@ from MethodicConfigurator.frontend_tkinter_base import show_error_message
 from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 
 
-class TestShowErrorMessage(unittest.TestCase):
+class TestShowErrorMessage(unittest.TestCase):  # pylint: disable=missing-class-docstring
     @patch('tkinter.messagebox.showerror')
     @patch('tkinter.Tk')
     @patch('tkinter.ttk.Style') # Mock the ttk.Style class
