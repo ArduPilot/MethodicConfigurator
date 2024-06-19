@@ -8,8 +8,8 @@ on:
     types: [published]
   workflow_dispatch:
   push:
-    branches:
-      - 'refs/tags/v*'
+    tags:
+      - "v*.*.*"
 
 jobs:
   deploy:
