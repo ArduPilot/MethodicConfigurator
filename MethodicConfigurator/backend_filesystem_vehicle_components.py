@@ -60,6 +60,18 @@ class VehicleComponents:
             return True
         return False
 
+    def get_fc_fw_type_from_vehicle_components_json(self) -> str:
+        if self.vehicle_components and 'Components' in self.vehicle_components:
+            components = self.vehicle_components['Components']
+        else:
+            components = None
+        if components:
+            fw_type = components.get('Flight Controller', {}).get('Firmware', {}).get('Type', '')
+            if fw_type in self.supported_vehicles():
+                return fw_type
+            logging_error(f"Firmware type {fw_type} in {self.vehicle_components_json_filename} is not supported")
+        return ""
+
     def get_fc_fw_version_from_vehicle_components_json(self) -> str:
         if self.vehicle_components and 'Components' in self.vehicle_components:
             components = self.vehicle_components['Components']
@@ -72,6 +84,11 @@ class VehicleComponents:
                 return version_str
             logging_error(f"FW version string {version_str} on {self.vehicle_components_json_filename} is invalid")
         return None
+
+    @staticmethod
+    def supported_vehicles():
+        return ['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
+                                    'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL']
 
     @staticmethod
     def get_vehicle_components_overviews():

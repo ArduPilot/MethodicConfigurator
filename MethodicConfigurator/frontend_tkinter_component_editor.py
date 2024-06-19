@@ -22,6 +22,8 @@ from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 
+from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
+
 from MethodicConfigurator.battery_cell_voltages import BatteryCell
 
 from MethodicConfigurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
@@ -144,7 +146,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         combobox_config = {
             ('Flight Controller', 'Firmware', 'Type'): {
-                "values": LocalFilesystem.supported_vehicles(),
+                "values": VehicleComponents.supported_vehicles(),
             },
             ('RC Receiver', 'FC Connection', 'Type'): {
                 "values": ["RCin/SBUS"] + serial_ports + can_ports,

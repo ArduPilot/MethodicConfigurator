@@ -43,6 +43,8 @@ class ConfigurationSteps:
         self.log_loaded_file = False
 
     def re_init(self, vehicle_dir: str, vehicle_type: str):
+        if vehicle_type == '':
+            return
         self.configuration_steps_filename = vehicle_type + "_configuration_steps.json"
         # Define a list of directories to search for the configuration_steps_filename file
         search_directories = [vehicle_dir, os_path.dirname(os_path.abspath(__file__))]
