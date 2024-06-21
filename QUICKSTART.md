@@ -5,6 +5,10 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
+## Do you need this software at all?
+
+![When to use ArduPilot Methodic Configurator](images/when_to_use_amc.png)
+
 ## 1. Install *ArduPilot Methodic Configurator* software on a PC or Mac
 
 1. Download and install [ArduPilot Methodic Configurator](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/latest) software.
