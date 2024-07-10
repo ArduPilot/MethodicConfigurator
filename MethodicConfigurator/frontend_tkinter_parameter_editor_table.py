@@ -251,7 +251,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         bitmask_dict = None
         value_str = format(param.value, '.6f').rstrip('0').rstrip('.')
-        if 'values' in param_metadata and param_metadata['values'] and \
+        if param_metadata and 'values' in param_metadata and param_metadata['values'] and \
            value_str in param_metadata['values']:
             selected_value = param_metadata['values'].get(value_str, None)
             new_value_entry = PairTupleCombobox(self.view_port, param_metadata['values'],
