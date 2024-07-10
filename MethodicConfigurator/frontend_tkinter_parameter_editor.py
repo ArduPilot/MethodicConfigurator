@@ -198,6 +198,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         style.map('readonly.TCombobox', fieldbackground=[('readonly', 'white')])
         style.map('readonly.TCombobox', selectbackground=[('readonly', 'white')])
         style.map('readonly.TCombobox', selectforeground=[('readonly', 'black')])
+        style.map('default_v.TCombobox', fieldbackground=[('readonly', 'light blue')])
+        style.map('default_v.TCombobox', selectbackground=[('readonly', 'light blue')])
+        style.map('default_v.TCombobox', selectforeground=[('readonly', 'black')])
+        style.configure('default_v.TEntry', fieldbackground="light blue")
 
         self.__create_conf_widgets(version)
 

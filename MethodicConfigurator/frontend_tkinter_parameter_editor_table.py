@@ -221,14 +221,26 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(flightcontroller_value, doc_tooltip)
         return flightcontroller_value
 
+    def __update_combobox_style_on_selection(self, combobox_widget, param_default):
+        try:
+            current_value = float(combobox_widget.get_selected_key())
+            has_default_value = param_default is not None and is_within_tolerance(current_value, param_default.value)
+            combobox_widget.configure(style='default_v.TCombobox' if has_default_value else 'readonly.TCombobox')
+        except ValueError:
+            logging_info(f'Could not solve the selected {combobox_widget} key to a float value.')
+            pass
+
     @staticmethod
     def __update_new_value_entry_text(new_value_entry: ttk.Entry, value: float, param_default):
+        if isinstance(new_value_entry, PairTupleCombobox):
+            return
         new_value_entry.delete(0, tk.END)
         value_str = format(value, '.6f').rstrip('0').rstrip('.')
         new_value_entry.insert(0, value_str)
-        new_value_background = "light blue" if param_default is not None and \
-            is_within_tolerance(value, param_default.value) else "white"
-        new_value_entry.config(background=new_value_background)
+        if param_default is not None and is_within_tolerance(value, param_default.value):
+            new_value_entry.configure(style='default_v.TEntry')
+        else:
+            new_value_entry.configure(style='TEntry')
 
     def __create_new_value_entry(self, param_name, param,  # pylint: disable=too-many-arguments
                                  param_metadata, param_default, doc_tooltip):
@@ -254,13 +266,17 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         if param_metadata and 'values' in param_metadata and param_metadata['values'] and \
            value_str in param_metadata['values']:
             selected_value = param_metadata['values'].get(value_str, None)
+            has_default_value = param_default is not None and is_within_tolerance(param.value, param_default.value)
             new_value_entry = PairTupleCombobox(self.view_port, param_metadata['values'],
                                                 value_str, param_name,
-                                                style='TCombobox' if present_as_forced else 'readonly.TCombobox')
+                                                style='TCombobox' if present_as_forced else \
+                                                    'default_v.TCombobox' if has_default_value else 'readonly.TCombobox')
             new_value_entry.set(selected_value)
             font = get_widget_font(new_value_entry)
             font['size'] -= 2 if platform_system() == 'Windows' else 1
             new_value_entry.config(state='readonly', width=9, font=(font['family'], font['size']))
+            new_value_entry.bind("<<ComboboxSelected>>",
+                                 lambda event: self.__update_combobox_style_on_selection(new_value_entry, param_default))
         else:
             new_value_entry = ttk.Entry(self.view_port, width=10, justify=tk.RIGHT)
             ParameterEditorTable.__update_new_value_entry_text(new_value_entry, param.value, param_default)
@@ -464,8 +480,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         else:
             # Revert to the previous (valid) value
             p = old_value
-        ParameterEditorTable.__update_new_value_entry_text(event.widget, p,
-                                                           self.local_filesystem.param_default_dict.get(param_name, None))
+        self.__update_new_value_entry_text(event.widget, p, self.local_filesystem.param_default_dict.get(param_name, None))
 
     def __on_parameter_change_reason_change(self, event, current_file, param_name):
         # Get the new value from the Entry widget
