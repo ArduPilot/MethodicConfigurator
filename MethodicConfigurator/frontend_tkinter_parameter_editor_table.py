@@ -228,7 +228,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             combobox_widget.configure(style='default_v.TCombobox' if has_default_value else 'readonly.TCombobox')
         except ValueError:
             logging_info(f'Could not solve the selected {combobox_widget} key to a float value.')
-            pass
 
     @staticmethod
     def __update_new_value_entry_text(new_value_entry: ttk.Entry, value: float, param_default):
