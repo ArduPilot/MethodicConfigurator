@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
 '''
-Extracts parameter default values from an ArduPilot .bin file. Unittests.
+Extracts parameter default values from an ArduPilot .bin log file. Unittests.
 
-Amilcar do Carmo Lucas
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
 
