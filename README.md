@@ -31,10 +31,34 @@ Download the [latest MethodicConfiguratorSetup-x.x.x.exe installer file](https:/
 
 ## Linux Installation
 
+### Older distros without venv
+
 Install [python pip](https://pypi.org/project/pip/). Then do:
 
 ```bash
 pip install -U MethodicConfigurator
+```
+
+To run it do:
+
+```bash
+ardupilot_methodic_configurator
+```
+
+### Newer distros with venv
+
+```bash
+python -m venv .ardupilot_methodic_configurator_venv
+source .ardupilot_methodic_configurator_venv/bin/activate
+python -m pip install --upgrade pip
+pip install MethodicConfigurator
+```
+
+To run it do:
+
+```bash
+source .ardupilot_methodic_configurator_venv/bin/activate
+ardupilot_methodic_configurator
 ```
 
 ## MacOS Installation
