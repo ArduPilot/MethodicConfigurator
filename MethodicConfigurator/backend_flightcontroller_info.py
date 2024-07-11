@@ -144,8 +144,12 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
             if capabilities & (1 << bit):
                 # Use the bit value to get the corresponding capability enum
                 capability = mavutil.mavlink.enums["MAV_PROTOCOL_CAPABILITY"].get(1 << bit, "Unknown capability")
-                # Append the abbreviated name and description of the capability dictionary
-                capabilities_dict[capability.name.replace("MAV_PROTOCOL_CAPABILITY_", "")] = capability.description
+
+                if hasattr(capability, 'description'):
+                    # Append the abbreviated name and description of the capability dictionary
+                    capabilities_dict[capability.name.replace("MAV_PROTOCOL_CAPABILITY_", "")] = capability.description
+                else:
+                    capabilities_dict[f'BIT{bit}'] = capability
 
         return capabilities_dict
 
