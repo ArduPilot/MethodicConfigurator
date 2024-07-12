@@ -69,6 +69,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'forced', self.variables)
                 if error_msg:
                     messagebox.showerror("Error in forced parameters", error_msg)
+                else:
+                    # Add forced parameters not yet in the parameter list to the parameter list
+                    if filename in self.local_filesystem.forced_parameters:
+                        for param_name, param in self.local_filesystem.forced_parameters[filename].items():
+                            if filename not in self.local_filesystem.file_parameters:
+                                continue
+                            if param_name not in self.local_filesystem.file_parameters[filename]:
+                                self.local_filesystem.file_parameters[filename][param_name] = param
                 #error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'derived', self.variables)
                 #if error_msg:
                 #    messagebox.showerror("Error in derived parameters", error_msg)
@@ -102,6 +110,15 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                                                                  'derived', self.variables)
             if error_msg:
                 messagebox.showerror("Error in derived parameters", error_msg)
+            else:
+                # Add derived parameters not yet in the parameter list to the parameter list
+                if selected_file in self.local_filesystem.derived_parameters:
+                    for param_name, param in self.local_filesystem.derived_parameters[selected_file].items():
+                        if selected_file not in self.local_filesystem.file_parameters:
+                            continue
+                        if param_name not in self.local_filesystem.file_parameters[selected_file] and \
+                           param_name in fc_parameters:
+                            self.local_filesystem.file_parameters[selected_file][param_name] = param
 
             self.rename_fc_connection(selected_file)
 
