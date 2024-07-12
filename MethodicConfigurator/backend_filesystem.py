@@ -459,7 +459,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             logging_error("Error reading last uploaded filename: %s", e)
         return ""
 
-    def get_start_file(self, explicit_index: int, tcal_enabled: bool) -> str:
+    def get_start_file(self, explicit_index: int, tcal_available: bool) -> str:
         # Get the list of intermediate parameter files files that will be processed sequentially
         files = list(self.file_parameters.keys())
 
@@ -479,7 +479,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         if last_uploaded_filename:
             logging_info("Last uploaded file was %s.", last_uploaded_filename)
         else:
-            if tcal_enabled:
+            if not tcal_available:
                 logging_info("No last uploaded file found. Starting with the first non-tcal file.")
                 return files[2]
             logging_info("No last uploaded file found. Starting with the first file.")
@@ -487,7 +487,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         if last_uploaded_filename not in files:
             # Handle the case where last_uploaded_filename is not found in the list
-            if tcal_enabled:
+            if not tcal_available:
                 logging_info("Last uploaded file not found in the list of files. Starting with the first non-tcal file.")
                 return files[2]
             logging_warning("Last uploaded file not found in the list of files. Starting with the first file.")
