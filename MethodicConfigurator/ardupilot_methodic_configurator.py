@@ -134,9 +134,9 @@ def main():
         vehicle_dir_window = VehicleDirectorySelectionWindow(local_filesystem, len(flight_controller.fc_parameters) > 0)
         vehicle_dir_window.root.mainloop()
 
-    start_file = local_filesystem.get_start_file(args.n)
-
     component_editor(args, flight_controller, local_filesystem.vehicle_type, local_filesystem, vehicle_dir_window)
+
+    start_file = local_filesystem.get_start_file(args.n, 'INS_TCAL1_ENABLE' in flight_controller.fc_parameters)
 
     # Call the GUI function with the starting intermediate parameter file
     ParameterEditorWindow(start_file, flight_controller, local_filesystem, VERSION)
