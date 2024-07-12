@@ -77,6 +77,7 @@ It's useful for setting up a new vehicle configuration quickly.
 
 - Use the "Source template directory" `...` button to select the existing vehicle template directory containing the intermediate parameter files to be copied. Use the overview window to select the template that better matches the components of your vehicle.
 ![Vehicle template overview](images/App_screenshot_Vehicle_overview.png)
+- By default, the new vehicle parameter values are taken from the source template. But if your connected vehicle has already been correctly configured, checking the `Use parameter values from connected FC, not from template files` will use the parameter values from the FC instead.
 - Use the "Destination base directory" `...` button to select the existing directory where the new vehicle directory will be created.
 - Enter the name for the new vehicle directory in the "Destination new vehicle name" field.
 - Click the "Create vehicle directory from template" button to create the new vehicle directory on the base directory and copy the template files to it.
