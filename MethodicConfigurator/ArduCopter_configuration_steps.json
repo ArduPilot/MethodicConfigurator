@@ -44,6 +44,9 @@
         "forced_parameters": {
             "LOG_DISARMED": { "New Value": 0, "Change Reason": "Log disarmed was only required for offline IMU temperature calibration" }
         },
+        "derived_parameters": {
+            "BRD_HEAT_TARG": { "New Value": "45", "Change Reason": "Reset to default after offline IMU temperature calibration" }
+        },
         "old_filenames": []
     },
     "05_remote_controller.param": {
