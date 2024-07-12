@@ -71,6 +71,11 @@ Now do this in a loop until the software automatically closes or you are asked t
 
 - Read all the documentation links displayed at the top of the GUI (marked with the big red number 4),
 - Edit the parameter's *New value* and *Reason changed* fields to match your vehicle (marked with the big red number 5),
+   - The *Reason changed* field is extremely important because:
+      - if forces you to think, causing rational decisions instead of impulsive ones
+      - justifies your decisions on a vehicle certification process required in most countries
+      - allows for someone else to see if you know what you are doing
+      - allows for someone else (or yourself after a few weeks) to understand your rationale
 - Press *Del* and/or *Add* buttons to delete or add parameters respectively (marked with the big red number 5),
 - Press *Upload selected params to FC, and advance to next param file* (marked with the big red number 7),
 - Repeat from the top until the program automatically closes.
@@ -91,4 +96,5 @@ double-click and step inside the directory that you want to use, not just select
 1. You should now see the *Parameter file editor and uploader* window.
 ![AMC parameter file editor and uploader](images/App_screenshot2.png)
 1. Proceed as explained in [section 5](#5-configure-the-vehicles-parameters-in-a-traceable-way)
+
 Congratulations your flight controller is now fully configured in the safest and fastest way publicly known.
