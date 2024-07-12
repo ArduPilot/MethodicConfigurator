@@ -75,10 +75,10 @@ It provides three main options for selecting a vehicle directory:
 Create a new vehicle configuration directory by copying files from an existing template directory.
 It's useful for setting up a new vehicle configuration quickly.
 
-- Use the "Template directory" `...` button to select the existing vehicle template directory containing the intermediate parameter files to be copied. Use the overview window to select the template that better matches the components of your own vehicle.
+- Use the "Source template directory" `...` button to select the existing vehicle template directory containing the intermediate parameter files to be copied. Use the overview window to select the template that better matches the components of your vehicle.
 ![Vehicle template overview](images/App_screenshot_Vehicle_overview.png)
-- Use the "Base directory" `...` button to select the existing directory where the new vehicle directory will be created.
-- Enter the name for the new vehicle directory in the "New vehicle name" field.
+- Use the "Destination base directory" `...` button to select the existing directory where the new vehicle directory will be created.
+- Enter the name for the new vehicle directory in the "Destination new vehicle name" field.
 - Click the "Create vehicle directory from template" button to create the new vehicle directory on the base directory and copy the template files to it.
 
 #### Open

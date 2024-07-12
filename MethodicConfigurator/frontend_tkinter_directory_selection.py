@@ -239,7 +239,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         template_dir_btn_tooltip = "Select the existing vehicle template directory containing the intermediate\n" \
                                    "parameter files to be copied to the new vehicle configuration directory"
         self.template_dir = DirectorySelectionWidgets(self, option1_label_frame, initial_template_dir,
-                                                      "(source) Template directory:",
+                                                      "Source Template directory:",
                                                       False,
                                                       template_dir_edit_tooltip,
                                                       template_dir_btn_tooltip,
@@ -260,7 +260,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         new_base_dir_edit_tooltip = "Existing directory where the new vehicle configuration directory will be created"
         new_base_dir_btn_tooltip = "Select the directory where the new vehicle configuration directory will be created"
         self.new_base_dir = DirectorySelectionWidgets(self, option1_label_frame, initial_base_dir,
-                                                      "(destination) base directory:",
+                                                      "Destination base directory:",
                                                       False,
                                                       new_base_dir_edit_tooltip,
                                                       new_base_dir_btn_tooltip,
@@ -269,7 +269,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         new_dir_edit_tooltip = "A new vehicle configuration directory with this name will be created at the " \
             "(destination) base directory"
         self.new_dir = DirectoryNameWidgets(option1_label_frame, initial_new_dir,
-                                            "(destination) new vehicle name:",
+                                            "Destination new vehicle name:",
                                             new_dir_edit_tooltip)
         self.new_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
         create_vehicle_directory_from_template_button = ttk.Button(option1_label_frame,
