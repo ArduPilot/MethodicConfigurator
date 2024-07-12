@@ -110,7 +110,8 @@ class ConfigurationSteps:
         destination = self.forced_parameters if parameter_type == 'forced' else self.derived_parameters
         for parameter, parameter_info in file_info[parameter_type + '_parameters'].items():  # pylint: disable=too-many-nested-blocks
             try:
-                if ('fc_parameters' in str(parameter_info["New Value"])) and ('fc_parameters' not in variables):
+                if ('fc_parameters' in str(parameter_info["New Value"])) and \
+                   ('fc_parameters' not in variables or variables['fc_parameters'] == {}):
                     error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
                         f"parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?"
                     if parameter_type == 'forced':
