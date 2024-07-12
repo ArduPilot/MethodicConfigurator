@@ -11,6 +11,9 @@ Amilcar Lucas's - ArduPilot Methodic Configurator is a Python tool designed to s
 It provides a graphical user interface (GUI) for managing, editing and visualizing drone parameter files, as well as uploading parameters to the vehicle.
 It automates the tasks described in the [How to methodically tune (almost) any multicopter using ArduCopter forum Blog post](https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/1)
 
+This user manual gives a general overview of the Software functionality.
+There are also [quick start instructions](QUICKSTART.md) and [specific use case instructions](USECASES.md).
+
 ## Usage
 
 Before starting the application on your PC you should connect a flight controller to the PC and wait at least seven seconds.

@@ -98,3 +98,5 @@ double-click and step inside the directory that you want to use, not just select
 1. Proceed as explained in [section 5](#5-configure-the-vehicles-parameters-in-a-traceable-way)
 
 Congratulations your flight controller is now fully configured in the safest and fastest way publicly known.
+
+There is also [documentation on other use cases](USECASES.md).
