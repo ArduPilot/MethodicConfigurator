@@ -15,10 +15,12 @@ from logging import error as logging_error
 
 from sys import exit as sys_exit
 from time import sleep as time_sleep
+from time import time as time_time
 from os import path as os_path
 from os import name as os_name
 from os import readlink as os_readlink
 from typing import Dict
+from typing import List
 from typing import Tuple
 
 import serial.tools.list_ports
@@ -197,6 +199,32 @@ class FlightController:
                 return "No serial ports found. Please connect a flight controller and try again."
         return self.__create_connection_with_retry(progress_callback=progress_callback)
 
+    def __request_banner(self):
+        '''Request banner information from the flight controller'''
+        # https://mavlink.io/en/messages/ardupilotmega.html#MAV_CMD_DO_SEND_BANNER
+        self.master.mav.command_long_send(
+            self.master.target_system,
+            self.master.target_component,
+            mavutil.mavlink.MAV_CMD_DO_SEND_BANNER,
+            0,
+            0, 0, 0, 0, 0, 0, 0)
+
+    def __receive_banner_text(self) -> List[str]:
+        """Starts listening for STATUS_TEXT MAVLink messages."""
+        start_time = time_time()
+        banner_msgs = []
+        while True:
+            msg = self.master.recv_match(type='STATUSTEXT', blocking=False)
+            if msg:
+                if banner_msgs:
+                    banner_msgs.append(msg.text)
+                else:
+                    banner_msgs = [msg.text]
+            time_sleep(0.1)  # Sleep briefly to reduce CPU usage
+            if time_time() - start_time > 1:  # Check if 1 seconds have passed since the start of the loop
+                break  # Exit the loop if 1 seconds have elapsed
+        return banner_msgs
+
     def __request_message(self, message_id: int):
         self.master.mav.command_long_send(
             self.info.system_id,
@@ -250,15 +278,18 @@ class FlightController:
             self.info.set_type(m.type)
             logging_info(f"Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware")
 
+            self.__request_banner()
+            banner_msgs = self.__receive_banner_text()
+
             self.__request_message(mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION)
             m = self.master.recv_match(type='AUTOPILOT_VERSION', blocking=True, timeout=timeout)
-            return self.__process_autopilot_version(m)
+            return self.__process_autopilot_version(m, banner_msgs)
         except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
             logging_warning("Connection failed: %s", e)
             logging_error("Failed to connect after %d attempts.", retries)
             return str(e)
 
-    def __process_autopilot_version(self, m):
+    def __process_autopilot_version(self, m, banner_msgs) -> str:
         if m is None:
             return "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n" \
                 "Only ArduPilot versions newer than 4.3.8 are supported.\n" \
@@ -269,6 +300,28 @@ class FlightController:
         self.info.set_flight_custom_version(m.flight_custom_version)
         self.info.set_os_custom_version(m.os_custom_version)
         self.info.set_vendor_id_and_product_id(m.vendor_id, m.product_id)
+
+        os_custom_version = ''
+        os_custom_version_index = None
+        for i, msg in enumerate(banner_msgs):
+            if 'ChibiOS:' in msg:
+                os_custom_version = msg.split(' ')[1].strip()
+                if os_custom_version != self.info.os_custom_version:
+                    logging_warning("ChibiOS version mismatch: %s (BANNER)!= % s(AUTOPILOT_VERSION)", os_custom_version,
+                                    self.info.os_custom_version)
+                os_custom_version_index = i
+                continue
+            logging_info("FC banner %s", msg)
+
+        # the banner message after the ChibiOS one contains the FC type
+        fc_product = ''
+        if os_custom_version_index is not None:
+            fc_type_msgs = banner_msgs[os_custom_version_index+1].split(' ')
+            if len(fc_type_msgs) >= 3:
+                fc_product = fc_type_msgs[0]
+        if fc_product != self.info.product:
+            logging_warning("FC product mismatch: %s (BANNER)!= %s(AUTOPILOT_VERSION)", fc_product, self.info.product)
+            self.info.product = fc_product  # force the one from the banner because it is more reliable
         return ""
 
     def download_params(self, progress_callback=None) -> Tuple[Dict[str, float], Dict[str, 'Par']]:
