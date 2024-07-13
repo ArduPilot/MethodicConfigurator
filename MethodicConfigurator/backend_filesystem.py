@@ -475,23 +475,24 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                                 explicit_index, files[start_file_index])
             return files[start_file_index]
 
+        if tcal_available:
+            start_file = files[0]
+            info_msg = "Starting with the first file."
+        else:
+            start_file = files[2]
+            info_msg = "Starting with the first non-tcal file."
+
         last_uploaded_filename = self.__read_last_uploaded_filename()
         if last_uploaded_filename:
             logging_info("Last uploaded file was %s.", last_uploaded_filename)
         else:
-            if not tcal_available:
-                logging_info("No last uploaded file found. Starting with the first non-tcal file.")
-                return files[2]
-            logging_info("No last uploaded file found. Starting with the first file.")
-            return files[0]
+            logging_info("No last uploaded file found. %s.", info_msg)
+            return start_file
 
         if last_uploaded_filename not in files:
             # Handle the case where last_uploaded_filename is not found in the list
-            if not tcal_available:
-                logging_info("Last uploaded file not found in the list of files. Starting with the first non-tcal file.")
-                return files[2]
-            logging_warning("Last uploaded file not found in the list of files. Starting with the first file.")
-            return files[0]
+            logging_warning("Last uploaded file not found in the list of files.  %s.", info_msg)
+            return start_file
 
         # Find the index of last_uploaded_filename in files
         last_uploaded_index = files.index(last_uploaded_filename)
