@@ -1,0 +1,3 @@
+INS_FAST_SAMPLE,7  # All IMUs can run fast on the CubeOrange flight controller
+INS_GYRO_RATE,1  # the H743 can do 4KHz here
+INS_HNTCH_ENABLE,1  # Use the first notch filter to filter the noise created by the motors/propellers

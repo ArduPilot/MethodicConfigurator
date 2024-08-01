@@ -1,0 +1,13 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+BRD_RTC_TZ_MIN,0  # Berlin time zone
+FENCE_TYPE,6  # circle to obey local regulations and safety measures
+INS_ACCEL_FILTER,10  # the default is 20 and that lets too much noise in
+INS_POS1_X,0
+INS_POS1_Y,0
+INS_POS2_X,0
+INS_POS2_Y,0
+SCHED_LOOP_RATE,50  # keep default
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation
+SERIAL2_BAUD,921
+SERIAL4_BAUD,57
+SERIAL4_PROTOCOL,2

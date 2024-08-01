@@ -1,0 +1,14 @@
+BATT2_AMP_PERVLT,17.73  # calibrated using batt charger
+BATT2_ARM_VOLT,15  # In our build this is a redundant monitor for batt1 so == BATT_ARM_VOLT
+BATT2_CAPACITY,1800  # In our build this is a redundant monitor for batt1 so == BATT_CAPACITY
+BATT2_CRT_MAH,450  # In our build this is a redundant monitor for batt1 so == BATT_CRT_MAH
+BATT2_CRT_VOLT,14  # In our build this is a redundant monitor for batt1 so == BATT_CRT_VOLT
+BATT2_CURR_PIN,7
+BATT2_FS_CRT_ACT,1  # flying indoors, just land ASAP, no need to hit the ceiling while doing RTL
+BATT2_FS_LOW_ACT,1  # flying indoors, just land ASAP, no need to hit the ceiling while doing RTL
+BATT2_FS_VOLTSRC,1  # In our build this is a redundant monitor for batt1 so == BATT_FS_VOLTSRC
+BATT2_LOW_MAH,600  # In our build this is a redundant monitor for batt1 so == BATT_LOW_MAH
+BATT2_LOW_VOLT,14.4  # In our build this is a redundant monitor for batt1 so == BATT_LOW_VOLT
+BATT2_MONITOR,0
+BATT2_VOLT_MULT,228.342  # Use a power source with a voltage close to BATT2_LOW_VOLT measure with a calibrated voltimeter and adapt this parameter so that the telemetry voltage reading matches it
+BATT2_VOLT_PIN,18
