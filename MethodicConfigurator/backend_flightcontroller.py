@@ -345,7 +345,7 @@ class FlightController:
         return self.master.param_set_send(param_name, param_value)
 
     def reset_and_reconnect(self, reset_progress_callback=None, connection_progress_callback=None,
-                            sleep_time: int = None) -> str:
+                            extra_sleep_time: int = None) -> str:
         """
         Reset the flight controller and reconnect.
 
@@ -363,8 +363,10 @@ class FlightController:
 
         current_step = 0
 
-        if sleep_time is None or sleep_time <= 7:
-            sleep_time = self.__reboot_time
+        if extra_sleep_time is None or extra_sleep_time < 0:
+            extra_sleep_time = 0
+
+        sleep_time = self.__reboot_time + extra_sleep_time
 
         while current_step != sleep_time:
             # Call the progress callback with the current progress

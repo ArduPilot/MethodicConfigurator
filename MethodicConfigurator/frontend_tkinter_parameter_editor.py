@@ -24,6 +24,8 @@ from typing import Tuple
 
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
+from MethodicConfigurator.annotate_params import Par
+
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_filesystem import is_within_tolerance
 
@@ -532,8 +534,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if fc_reset_required:
             self.reset_progress_window = ProgressWindow(self.main_frame, "Resetting Flight Controller",
                                                         "Waiting for {} of {} seconds")
+            filesystem_boot_delay = self.local_filesystem.file_parameters[self.current_file].get('BRD_BOOT_DELAY', Par(0.0))
+            flightcontroller_boot_delay = self.flight_controller.fc_parameters.get('BRD_BOOT_DELAY', 0)
+            extra_sleep_time = max(filesystem_boot_delay.value, flightcontroller_boot_delay) // 1000 + 1  # round up
             # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
-            error_message = self.flight_controller.reset_and_reconnect(self.reset_progress_window.update_progress_bar)
+            error_message = self.flight_controller.reset_and_reconnect(self.reset_progress_window.update_progress_bar, None,
+                                                                       extra_sleep_time)
             if error_message:
                 logging_error(error_message)
                 messagebox.showerror("ArduPilot methodic configurator", error_message)
