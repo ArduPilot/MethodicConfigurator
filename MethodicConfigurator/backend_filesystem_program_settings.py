@@ -202,7 +202,7 @@ class ProgramSettings:
     @staticmethod
     def get_recently_used_dirs():
         template_default_dir = os_path.join(ProgramSettings.get_templates_base_dir(),
-                                            "ArduCopter", "diatone_taycan_mxc", "4.5.3-params")
+                                            "ArduCopter", "diatone_taycan_mxc", "4.5.x-params")
 
         settings_directory = ProgramSettings.__user_config_dir()
         vehicles_default_dir = os_path.join(settings_directory, "vehicles")

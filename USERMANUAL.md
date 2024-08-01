@@ -259,7 +259,7 @@ If the file does not exist or is invalid, use this command to regenerate it
 
 - **ArduPilot parameter documentation File**: The `apm.pdef.xml` contains documentation and metadata for each ArduPilot parameter in an XML format.
 The file is first searched in the selected vehicle-specific directory, and if not found, in the directory where the script is located, and if not found automatically downloaded from the internet.
-The only version available on the internet is the latest 4.6.0-DEV.
+The only version available on the internet is the latest 4.6.x.
 So until that changes you need to generate this file yourself for the firmware version that you want to use.
 
 The tool uses these files to manage the configuration process, allowing users to select and edit parameters, and upload the changes back to the flight controller. The intermediate parameter files are the primary focus of the user interface, as they contain the parameters that the user can modify. The documentation files provide context and guidance for each parameter.

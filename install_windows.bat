@@ -25,8 +25,8 @@ setlocal enabledelayedexpansion
 for %%f in (
     4.3.8-params
     4.4.4-params
-    4.5.3-params
-    4.6.0-DEV-params
+    4.5.x-params
+    4.6.x-params
 ) do (
     set "src=apm.pdef.%%f.xml"
     set "dest=vehicle_templates\ArduCopter\diatone_taycan_mxc\%%f\apm.pdef.xml"
