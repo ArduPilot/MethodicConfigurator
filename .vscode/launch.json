@@ -4,7 +4,8 @@
             "name": "Python Debugger: ardupilot_methodic_configurator.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "MethodicConfigurator/ardupilot_methodic_configurator.py"
+            "program": "MethodicConfigurator/ardupilot_methodic_configurator.py",
+            "args": ["--allow-editing-template-files"],
         }
     ]
 }
