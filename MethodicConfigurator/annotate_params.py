@@ -331,6 +331,9 @@ def get_xml_data(base_url: str, directory: str, filename: str) -> ET.Element:
         try:
             # Send a GET request to the URL
             response = requests_get(base_url + filename, timeout=5)
+            if response.status_code != 200:
+                logging.critical("Remote URL: %s", base_url + filename)
+                raise requests_exceptions.RequestException(f"HTTP status code {response.status_code}")
         except requests_exceptions.RequestException as e:
             logging.critical("Unable to fetch XML data: %s", e)
             raise SystemExit("unable to fetch online XML documentation") from e
