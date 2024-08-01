@@ -311,7 +311,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         last_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
         # Check if there is a last used vehicle configuration directory
-        button_state = tk.NORMAL if last_vehicle_dir else tk.DISABLED
+        button_state = tk.NORMAL if last_vehicle_dir and self.local_filesystem.directory_exists(last_vehicle_dir) else \
+            tk.DISABLED
         open_last_vehicle_directory_button = ttk.Button(option3_label_frame,
                                                        text="Open Last Used Vehicle Configuration Directory",
                                                        command=lambda last_vehicle_dir=last_vehicle_dir: \
