@@ -29,6 +29,9 @@ from MethodicConfigurator.annotate_params import Par
 
 from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
 
+from MethodicConfigurator.argparse_check_range import CheckRange
+
+
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules
 try:
@@ -431,6 +434,9 @@ class FlightController:
                             )
         parser.add_argument('-r', '--reboot-time',
                             type=int,
+                            min=5,
+                            max=50,
+                            action=CheckRange,
                             default=7,
                             help='Flight controller reboot time. '
                             'Default is %(default)s')
