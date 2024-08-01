@@ -11,14 +11,15 @@
         "forced_parameters": {
             "INS_TCAL1_ENABLE": { "New Value": 2, "Change Reason": "Activates the temperature calibration for IMU 1 at the next start" },
             "LOG_BITMASK": { "New Value": 524416, "Change Reason": "Only for IMU and Raw-IMU" },
-            "LOG_DISARMED": { "New Value": 1, "Change Reason": "Gather data for the offline IMU temperature compensation while the FC is disarmed" }
+            "LOG_DISARMED": { "New Value": 1, "Change Reason": "Gather data for the offline IMU temperature calibration while the FC is disarmed" }
         },
         "derived_parameters": {
-            "INS_LOG_BAT_MASK": { "New Value": "15 if 'INS_TCAL4_ENABLE' in fc_parameters else 7 if 'INS_TCAL3_ENABLE' in fc_parameters else 3 if 'INS_TCAL2_ENABLE' in fc_parameters else 1", "Change Reason": "Calculate IMU compensation for all IMUs, irrespective of their usage in a future step. Saves the trouble of recalibrating an inactive IMU if you later decide to activate it" },
+            "INS_LOG_BAT_MASK": { "New Value": "15 if 'INS_TCAL4_ENABLE' in fc_parameters else 7 if 'INS_TCAL3_ENABLE' in fc_parameters else 3 if 'INS_TCAL2_ENABLE' in fc_parameters else 1", "Change Reason": "Calculate IMU calibration for all IMUs, irrespective of their usage in a future step. Saves the trouble of recalibrating an inactive IMU if you later decide to activate it" },
             "INS_TCAL2_ENABLE": { "New Value": "2", "Change Reason": "Activates the temperature calibration for IMU 2 at the next start" },
             "INS_TCAL3_ENABLE": { "New Value": "2", "Change Reason": "Activates the temperature calibration for IMU 3 at the next start" },
             "BRD_HEAT_TARG": { "New Value": "65", "Change Reason": "Reasonable for most places on this planet" }
         },
+        "jump_possible": {"04_board_orientation.param": "IMU temperature calibration reduces the number of possible 'Accel inconsistent' and 'Gyro inconsistent' errors.\nIMU temperature calibration is optional.\n\nDo you want to skip it?"},
         "old_filenames": []
     },
     "03_imu_temperature_calibration_results.param": {
