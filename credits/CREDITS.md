@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # Licenses
 
 We use [REUSE software API](https://api.reuse.software/) in the form of SPDX tags in most of the files to explicitly declare Copyright and License.
-However we do not do it for every single file and hence are [![REUSE status](https://api.reuse.software/badge/github.com/ArduPilot/MethodicConfigurator)](https://api.reuse.software/info/github.com/ArduPilot/MethodicConfigurator)
+However, we do not do it for every single file and hence are [![REUSE status](https://api.reuse.software/badge/github.com/ArduPilot/MethodicConfigurator)](https://api.reuse.software/info/github.com/ArduPilot/MethodicConfigurator)
 
 This software is licensed under the [GNU General Public License v3.0](../LICENSE.md) and is built on top of (depends on) other open-source software.
 We are thankful to the developers of those software packages.
@@ -30,6 +30,7 @@ It directly uses:
 | [pyserial](https://pyserial.readthedocs.io/en/latest/pyserial.html) | [BSD License](https://github.com/pyserial/pyserial/blob/master/LICENSE.txt) |
 | [Scrollable TK frame](https://gist.github.com/mp035/9f2027c3ef9172264532fcd6262f3b01) by Mark Pointing | [Mozilla Public License, v. 2.0](https://mozilla.org/MPL/2.0/) |
 | [Python Tkinter ComboBox](https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb) by geraldew | [Mozilla Public License, v. 2.0](https://mozilla.org/MPL/2.0/) |
+| [Argparse check limits](https://gist.github.com/dmitriykovalev/2ab1aa33a8099ef2d514925d84aa89e7) by Dmitriy Kovalev | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0) |
 
 It indirectly uses:
 
