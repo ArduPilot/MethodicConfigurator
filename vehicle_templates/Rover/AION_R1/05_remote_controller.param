@@ -1,0 +1,10 @@
+ARMING_RUDDER,2
+BRD_ALT_CONFIG,0  # Stay at default
+MODE_CH,5
+RC_OPTIONS,32  # Stay at default
+RC_PROTOCOLS,1  # Selected in the component editor
+RC6_OPTION,0
+RC7_OPTION,153  # "Motor Emergency Stop", stops all motors immediately at a high signal
+RC8_OPTION,30  # "Lost rover Sound", generates a loud tone from the buzzer at a high signal to locate a lost multicopter
+RC9_OPTION,0
+RSSI_TYPE,0  # Does the Herelink airunit provide RSSI?

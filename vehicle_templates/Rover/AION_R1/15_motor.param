@@ -1,0 +1,2 @@
+MOT_THR_MIN,4  # It reliably starts spinning at this level
+MOT_THST_EXPO,0  # Measured with the motor test stand RCBenchmark Series 1780 from Tyto Robotics

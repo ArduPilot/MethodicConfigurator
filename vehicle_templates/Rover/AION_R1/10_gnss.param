@@ -1,0 +1,9 @@
+BRD_SAFETY_DEFLT,0  # Here4 has no safety switch
+CAN_P1_DRIVER,1
+GPS_AUTO_SWITCH,2  # Randy I do not understand why this, there is only one GNSS receiver
+GPS_GNSS_MODE,0  # limit the constalations to ensure an update rate higher than 5Hz
+GPS_POS1_X,0
+GPS_POS1_Y,0
+GPS_POS1_Z,0
+GPS_TYPE,9  # Defined in component editor
+SERIAL3_PROTOCOL,-1  # GNSS receiver is connected to CAN1
