@@ -2,7 +2,7 @@
 max-line-length=127
 
 [MESSAGES CONTROL]
-disable=C0116,E0401
+disable=missing-function-docstring,import-error
 
 enable=useless-suppression
 fail-on=useless-suppression
