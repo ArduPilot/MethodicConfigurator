@@ -36,15 +36,15 @@ class FlightControllerInfoWindow(BaseWindow):
 
         # Create a frame to hold all the labels and text fields
         self.info_frame = ttk.Frame(self.main_frame)
-        self.info_frame.pack(padx=20, pady=20)
+        self.info_frame.pack(fill=tk.BOTH, padx=20, pady=20)
 
         # Dynamically create labels and text fields for each attribute
         for row_nr, (description, attr_value) in enumerate(flight_controller.info.get_info().items()):
             label = ttk.Label(self.info_frame, text=f"{description}:")
             label.grid(row=row_nr, column=0, sticky="w")
 
-            text_field = ttk.Entry(self.info_frame, width=60)
-            text_field.grid(row=row_nr, column=1, sticky="w")
+            text_field = ttk.Entry(self.info_frame)
+            text_field.grid(row=row_nr, column=1, sticky="ew", columnspan=1)
 
             # Check if the attribute exists and has a non-empty value before inserting
             if attr_value:
@@ -55,6 +55,8 @@ class FlightControllerInfoWindow(BaseWindow):
             else:
                 text_field.insert(tk.END, "N/A")  # Insert "Not Available" if the attribute is missing or empty
             text_field.configure(state="readonly")
+
+        self.info_frame.columnconfigure(1, weight=1)
 
         logging_info("Firmware Version: %s", flight_controller.info.flight_sw_version_and_type)
         logging_info(f"Firmware first 8 hex bytes of the FC git hash: {flight_controller.info.flight_custom_version}")
