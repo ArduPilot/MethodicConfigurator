@@ -383,9 +383,12 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                 messagebox.showerror("Fatal error reading parameter files", f"{exp}")
                 raise
 
-            files = list(self.local_filesystem.file_parameters.keys())
-            if files:
-                self.root.destroy()
+            if self.local_filesystem.file_parameters:
+                files = list(self.local_filesystem.file_parameters.keys())
+                if files:
+                    self.root.destroy()
+                else:
+                    show_no_param_files_error(last_vehicle_dir)
             else:
                 show_no_param_files_error(last_vehicle_dir)
         else:
