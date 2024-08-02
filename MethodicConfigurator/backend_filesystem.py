@@ -383,7 +383,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             # Check for and add specific files if they exist
             specific_files = ["00_default.param", "apm.pdef.xml", self.configuration_steps_filename,
                               "vehicle_components.json", "vehicle.jpg", "last_uploaded_filename.txt",
-                              "tempcal_gyro.png", "tempcal_acc.png"]
+                              "tempcal_gyro.png", "tempcal_acc.png", self.vehicle_type + "_configuration_steps.json"]
             for file_name in specific_files:
                 file_path = os_path.join(self.vehicle_dir, file_name)
                 if os_path.exists(file_path):
