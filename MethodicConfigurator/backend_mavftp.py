@@ -292,7 +292,7 @@ class MAVFTP:  # pylint: disable=missing-class-docstring, too-many-instance-attr
         self.fh.write(op.payload)
         self.read_total += len(op.payload)
         if self.callback_progress is not None:
-            self.callback_progress(self.fh, self.read_total)
+            self.callback_progress(self.read_total, self.read_total+1)
 
     def handle_burst_read(self, op, _m):  # pylint: disable=too-many-branches, too-many-statements, too-many-return-statements
         '''handle OP_BurstReadFile reply'''
