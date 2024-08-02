@@ -263,7 +263,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     def validate_entry_limits(self, event, entry, data_type, limits, name, path):  # pylint: disable=too-many-arguments
         is_focusout_event = event and event.type == "10"
         try:
-            value = data_type(entry.get())
+            value = entry.get()  # make sure value is defined to prevent exception in the except block
+            value = data_type(value)
             if value < limits[0] or value > limits[1]:
                 entry.configure(style="entry_input_invalid.TEntry")
                 raise ValueError(f"{name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}")
