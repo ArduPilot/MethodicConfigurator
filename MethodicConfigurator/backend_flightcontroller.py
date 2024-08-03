@@ -28,13 +28,13 @@ import serial.tools.list_ports_common
 
 from serial.serialutil import SerialException
 
-from MethodicConfigurator.annotate_params import Par
+from annotate_params import Par
 
-from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
-from MethodicConfigurator.backend_mavftp import MAVFTP
-from MethodicConfigurator.param_ftp import ftp_param_decode
+from backend_flightcontroller_info import BackendFlightcontrollerInfo
+from backend_mavftp import MAVFTP
+from param_ftp import ftp_param_decode
 
-from MethodicConfigurator.argparse_check_range import CheckRange
+from argparse_check_range import CheckRange
 
 
 # adding all this allows pyinstaller to build a working windows executable

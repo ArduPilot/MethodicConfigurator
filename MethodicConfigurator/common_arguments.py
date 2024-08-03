@@ -8,7 +8,7 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-from MethodicConfigurator.version import VERSION
+from version import VERSION
 
 
 def add_common_arguments_and_parse(parser):

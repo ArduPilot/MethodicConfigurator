@@ -32,7 +32,7 @@ import sys
 
 from pymavlink import mavutil
 
-from MethodicConfigurator.param_ftp import ftp_param_decode
+from param_ftp import ftp_param_decode
 
 
 # pylint: disable=invalid-name

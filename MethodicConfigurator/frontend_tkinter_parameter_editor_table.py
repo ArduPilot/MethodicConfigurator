@@ -23,19 +23,19 @@ from logging import critical as logging_critical
 
 from platform import system as platform_system
 
-#from MethodicConfigurator.backend_filesystem import LocalFilesystem
-from MethodicConfigurator.backend_filesystem import is_within_tolerance
+#from backend_filesystem import LocalFilesystem
+from backend_filesystem import is_within_tolerance
 
-#from MethodicConfigurator.backend_flightcontroller import FlightController
+#from backend_flightcontroller import FlightController
 
-from MethodicConfigurator.frontend_tkinter_base import show_tooltip
-#from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
-from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
-from MethodicConfigurator.frontend_tkinter_base import get_widget_font
+from frontend_tkinter_base import show_tooltip
+#from frontend_tkinter_base import AutoResizeCombobox
+from frontend_tkinter_base import ScrollFrame
+from frontend_tkinter_base import get_widget_font
 
-from MethodicConfigurator.frontend_tkinter_connection_selection import PairTupleCombobox
+from frontend_tkinter_connection_selection import PairTupleCombobox
 
-from MethodicConfigurator.annotate_params import Par
+from annotate_params import Par
 
 
 class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors

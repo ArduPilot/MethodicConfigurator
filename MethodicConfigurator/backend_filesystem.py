@@ -30,18 +30,18 @@ from typing import Tuple
 
 from zipfile import ZipFile
 
-from MethodicConfigurator.annotate_params import PARAM_DEFINITION_XML_FILE, Par
-from MethodicConfigurator.annotate_params import get_xml_url
-from MethodicConfigurator.annotate_params import get_xml_dir
-from MethodicConfigurator.annotate_params import load_default_param_file
-from MethodicConfigurator.annotate_params import parse_parameter_metadata
-from MethodicConfigurator.annotate_params import format_columns
-from MethodicConfigurator.annotate_params import split_into_lines
-from MethodicConfigurator.annotate_params import update_parameter_documentation
+from annotate_params import PARAM_DEFINITION_XML_FILE, Par
+from annotate_params import get_xml_url
+from annotate_params import get_xml_dir
+from annotate_params import load_default_param_file
+from annotate_params import parse_parameter_metadata
+from annotate_params import format_columns
+from annotate_params import split_into_lines
+from annotate_params import update_parameter_documentation
 
-from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
-from MethodicConfigurator.backend_filesystem_configuration_steps import ConfigurationSteps
-from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
+from backend_filesystem_vehicle_components import VehicleComponents
+from backend_filesystem_configuration_steps import ConfigurationSteps
+from backend_filesystem_program_settings import ProgramSettings
 
 TOOLTIP_MAX_LENGTH = 105
 

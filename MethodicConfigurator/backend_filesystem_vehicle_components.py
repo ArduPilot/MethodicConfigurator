@@ -23,9 +23,9 @@ from json import load as json_load
 from json import dump as json_dump
 from json import JSONDecodeError
 
-from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
+from backend_filesystem_program_settings import ProgramSettings
 
-from MethodicConfigurator.middleware_template_overview import TemplateOverview
+from middleware_template_overview import TemplateOverview
 
 
 class VehicleComponents:
