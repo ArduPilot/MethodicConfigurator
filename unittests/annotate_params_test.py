@@ -76,7 +76,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         mock_load_param.side_effect = FileNotFoundError
 
         # Call the function with a local file
-        result = get_xml_data("/path/to/local/file/", ".", "test.xml")
+        result = get_xml_data("/path/to/local/file/", ".", "test.xml", "ArduCopter")
 
         # Check the result
         self.assertIsInstance(result, ET.Element)
@@ -97,7 +97,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
             pass
 
         # Call the function with a remote file
-        result = get_xml_data("http://example.com/", ".", "test.xml")
+        result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
         # Check the result
         self.assertIsInstance(result, ET.Element)
@@ -120,7 +120,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         mock_open = mock.mock_open(read_data='<root></root>')
         with patch('builtins.open', mock_open):
             # Call the function with a filename that exists in the script directory
-            result = get_xml_data(BASE_URL, ".", PARAM_DEFINITION_XML_FILE)
+            result = get_xml_data(BASE_URL, ".", PARAM_DEFINITION_XML_FILE, "ArduCopter")
 
         # Check the result
         self.assertIsInstance(result, ET.Element)
@@ -140,7 +140,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
 
             # Call the function with a remote file
             with self.assertRaises(SystemExit):
-                get_xml_data("http://example.com/", ".", "test.xml")
+                get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
     @patch('requests.get')
     def test_get_xml_data_request_failure(self, mock_get):
@@ -155,7 +155,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
 
         # Call the function with a remote file
         with self.assertRaises(SystemExit):
-            get_xml_data("http://example.com/", ".", "test.xml")
+            get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
     @patch('requests.get')
     def test_get_xml_data_valid_xml(self, mock_get):
@@ -164,7 +164,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         mock_get.return_value.text = "<root></root>"
 
         # Call the function with a remote file
-        result = get_xml_data("http://example.com/", ".", "test.xml")
+        result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
         # Check the result
         self.assertIsInstance(result, ET.Element)
@@ -183,7 +183,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
 
         # Call the function with a remote file
         with self.assertRaises(ET.ParseError):
-            get_xml_data("http://example.com/", ".", "test.xml")
+            get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
     @patch('requests.get')
     @patch('os.path.isfile')
@@ -201,7 +201,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
 
         # Call the function with a local file
         with self.assertRaises(FileNotFoundError):
-            get_xml_data("/path/to/local/file/", ".", "test.xml")
+            get_xml_data("/path/to/local/file/", ".", "test.xml", "ArduCopter")
 
     @patch('requests.get')
     def test_get_xml_data_network_issue(self, mock_get):
@@ -210,7 +210,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
 
         # Call the function with a remote file
         with self.assertRaises(SystemExit):
-            get_xml_data("http://example.com/", ".", "test.xml")
+            get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
     def test_remove_prefix(self):
         # Test case 1: Normal operation

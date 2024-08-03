@@ -316,9 +316,9 @@ class FlightController:
         # the banner message after the ChibiOS one contains the FC type
         fc_product = ''
         if os_custom_version_index is not None:
-            fc_type_msgs = banner_msgs[os_custom_version_index+1].split(' ')
-            if len(fc_type_msgs) >= 3:
-                fc_product = fc_type_msgs[0]
+            fc_product_banner_substrings = banner_msgs[os_custom_version_index+1].split(' ')
+            if len(fc_product_banner_substrings) >= 3:
+                fc_product = fc_product_banner_substrings[0]
         if fc_product != self.info.product:
             logging_warning("FC product mismatch: %s (BANNER)!= %s(AUTOPILOT_VERSION)", fc_product, self.info.product)
             self.info.product = fc_product  # force the one from the banner because it is more reliable

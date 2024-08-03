@@ -209,6 +209,7 @@ class Par:
         Parameters:
         param_dict (Dict[str, 'Par']): A dictionary of 'Par' objects.
                                        Each key is a parameter name and each value is a 'Par' object.
+                                       Par can be a simple float or a Par object with a comment.
         file_format (str): Can be "missionplanner" or "mavproxy"
 
         Returns:
@@ -303,7 +304,7 @@ class Par:
             print(line)
 
 
-def get_xml_data(base_url: str, directory: str, filename: str) -> ET.Element:
+def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str) -> ET.Element:
     """
     Fetches XML data from a local file or a URL.
 
@@ -311,6 +312,7 @@ def get_xml_data(base_url: str, directory: str, filename: str) -> ET.Element:
         base_url (str): The base URL for fetching the XML file.
         directory (str): The directory where the XML file is expected.
         filename (str): The name of the XML file.
+        vehicle_type (str): The type of the vehicle.
 
     Returns:
         ET.Element: The root element of the parsed XML data.
@@ -336,13 +338,24 @@ def get_xml_data(base_url: str, directory: str, filename: str) -> ET.Element:
             raise SystemExit("requests package is not installed") from exc
         try:
             # Send a GET request to the URL
-            response = requests_get(base_url + filename, timeout=5)
+            url = base_url + filename
+            response = requests_get(url, timeout=5)
             if response.status_code != 200:
-                logging.critical("Remote URL: %s", base_url + filename)
+                logging.warning("Remote URL: %s", url)
                 raise requests_exceptions.RequestException(f"HTTP status code {response.status_code}")
         except requests_exceptions.RequestException as e:
-            logging.critical("Unable to fetch XML data: %s", e)
-            raise SystemExit("unable to fetch online XML documentation") from e
+            logging.warning("Unable to fetch XML data: %s", e)
+            # Send a GET request to the URL to the fallback (DEV) URL
+            try:
+                url = BASE_URL + vehicle_type + '/' + PARAM_DEFINITION_XML_FILE
+                logging.warning("Falling back to the DEV XML file: %s", url)
+                response = requests_get(url, timeout=5)
+                if response.status_code != 200:
+                    logging.critical("Remote URL: %s", url)
+                    raise requests_exceptions.RequestException(f"HTTP status code {response.status_code}")
+            except requests_exceptions.RequestException as exp:
+                logging.critical("Unable to fetch XML data: %s", exp)
+                raise SystemExit("unable to fetch online XML documentation") from exp
         # Get the text content of the response
         xml_data = response.text
         try:
@@ -695,7 +708,7 @@ def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
 
 def parse_parameter_metadata(xml_url: str, xml_dir: str, xml_file: str,
                         vehicle_type: str, max_line_length: int) -> Dict[str, Any]:
-    xml_root = get_xml_data(xml_url, xml_dir, xml_file)
+    xml_root = get_xml_data(xml_url, xml_dir, xml_file, vehicle_type)
     return create_doc_dict(xml_root, vehicle_type, max_line_length)
 
 
