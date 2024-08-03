@@ -128,8 +128,9 @@ def main():
         show_error_message("Fatal error reading parameter files", f"{exp}")
         raise
 
+    param_default_values_dirty = False
     if param_default_values:
-        local_filesystem.write_param_default_values(param_default_values)
+        param_default_values_dirty = local_filesystem.write_param_default_values(param_default_values)
 
     # Get the list of intermediate parameter files files that will be processed sequentially
     files = list(local_filesystem.file_parameters.keys()) if local_filesystem.file_parameters else []
@@ -140,6 +141,10 @@ def main():
         vehicle_dir_window.root.mainloop()
 
     component_editor(args, flight_controller, local_filesystem.vehicle_type, local_filesystem, vehicle_dir_window)
+
+    # now that we are sure that the vehicle directory is set, we can write the default values to the file
+    if param_default_values_dirty:
+        local_filesystem.write_param_default_values_to_file(param_default_values)
 
     imu_tcal_available = 'INS_TCAL1_ENABLE' in flight_controller.fc_parameters or not flight_controller.fc_parameters
     start_file = local_filesystem.get_start_file(args.n, imu_tcal_available)

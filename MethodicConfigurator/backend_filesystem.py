@@ -541,7 +541,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     def write_param_default_values_to_file(self, param_default_values: Dict[str, 'Par'], filename: str='00_default.param'):
         if self.write_param_default_values(param_default_values):
-            Par.export_to_param(Par.format_params(param_default_values), os_path.join(self.vehicle_dir, filename))
+            Par.export_to_param(Par.format_params(self.param_default_dict), os_path.join(self.vehicle_dir, filename))
 
     @staticmethod
     def add_argparse_arguments(parser):
