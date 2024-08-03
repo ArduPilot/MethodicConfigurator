@@ -35,6 +35,8 @@ from frontend_tkinter_base import get_widget_font
 
 from frontend_tkinter_connection_selection import PairTupleCombobox
 
+from frontend_tkinter_combobox_autocomplete import Combobox_Autocomplete
+
 from annotate_params import Par
 
 
@@ -424,7 +426,45 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def __on_parameter_add(self, fc_parameters):
         # Prompt the user for a parameter name
-        param_name = simpledialog.askstring("New parameter name", "Enter new parameter name:")
+        # param_name = simpledialog.askstring("New parameter name", "Enter new parameter name:")
+
+        add_parameter_window = tk.Toplevel(self.root)
+        add_parameter_window.title("Add Parameter")
+
+        # Label for instruction
+        instruction_label = tk.Label(add_parameter_window, text="Enter new parameter name:")
+        instruction_label.pack(pady=5)
+
+        # ComboBox for dynamic filtering
+        parameter_name_combobox = Combobox_Autocomplete(add_parameter_window, self.local_filesystem.doc_dict.keys(), highlightthickness=1, startswith_match=False)
+        parameter_name_combobox.pack(padx=5, pady=5)
+        parameter_name_combobox.focus()
+
+        #parameter_name_combobox = ttk.Combobox(add_parameter_window, values=[])
+        #parameter_name_combobox.pack(pady=5)
+
+        # Function to update "as you type" the ComboBox options 
+        #def update_combobox_options(*args):
+        #    search_term = parameter_name_combobox.get().upper()
+        #    if len(search_term) >= 3:
+        #        matching_keys = [key for key in self.local_filesystem.doc_dict.keys() if search_term in key]
+        #        parameter_name_combobox["values"] = matching_keys
+                # Automatically select the first item if there's only one match
+        #        if len(matching_keys) == 1:
+        #            parameter_name_combobox.set(matching_keys[0])
+
+        # Bind the Entry widget to update the ComboBox options
+        #parameter_name_combobox.bind("<KeyRelease>", update_combobox_options)
+
+        # Additional bindings to handle Enter press and selection
+        #parameter_name_combobox.bind("<Return>", lambda event: self.__confirm_parameter_addition(parameter_name_combobox.get().upper(), fc_parameters))
+        parameter_name_combobox.bind("<<ComboboxSelected>>", lambda event: self.__confirm_parameter_addition(parameter_name_combobox.get().upper(), fc_parameters))
+
+        # Button to confirm the addition
+        #confirm_button = tk.Button(add_parameter_window, text="Confirm", command=lambda fc_parameters=fc_parameters: self.__confirm_parameter_addition(parameter_name_combobox.get().upper(), fc_parameters))
+        #confirm_button.pack(pady=5)
+
+    def __confirm_parameter_addition(self, param_name: str, fc_parameters: dict):
         if not param_name:
             messagebox.showerror("Parameter name can not be empty.")
             return
