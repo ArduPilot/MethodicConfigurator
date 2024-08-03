@@ -225,7 +225,7 @@ class Par:
         formatted_params = []
         if file_format == "missionplanner":
             for key, parameter in param_dict.items():
-                if isinstance(parameter, dict):
+                if isinstance(parameter, Par):
                     if parameter.comment:
                         formatted_params.append(f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}"
                                                 f"  # {parameter.comment}")
@@ -235,7 +235,7 @@ class Par:
                     formatted_params.append(f"{key},{format(parameter, '.6f').rstrip('0').rstrip('.')}")
         elif file_format == "mavproxy":
             for key, parameter in param_dict.items():
-                if isinstance(parameter, dict):
+                if isinstance(parameter, Par):
                     if parameter.comment:
                         formatted_params.append(f"{key:<16} {parameter.value:<8.6f}  # {parameter.comment}")
                     else:

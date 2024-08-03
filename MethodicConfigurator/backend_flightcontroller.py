@@ -271,13 +271,13 @@ class FlightController:
         self.info.set_vendor_id_and_product_id(m.vendor_id, m.product_id)
         return ""
 
-    def download_params(self, progress_callback=None) -> Tuple[Dict[str, float], Dict[str, float]]:
+    def download_params(self, progress_callback=None) -> Tuple[Dict[str, float], Dict[str, 'Par']]:
         """
         Requests all flight controller parameters from a MAVLink connection.
 
         Returns:
             Dict[str, float]: A dictionary of flight controller parameters.
-            Dict[str, float]: A dictionary of flight controller default parameters.
+            Dict[str, Par]: A dictionary of flight controller default parameters.
         """
         # FIXME this entire if statement is for testing only, remove it later pylint: disable=fixme
         if self.master is None and self.comport is not None and self.comport.device == 'test':
@@ -332,7 +332,7 @@ class FlightController:
                 break
         return parameters
 
-    def download_params_via_mavftp(self, progress_callback=None) -> Tuple[Dict[str, float], Dict[str, float]]:
+    def download_params_via_mavftp(self, progress_callback=None) -> Tuple[Dict[str, float], Dict[str, 'Par']]:
         # FIXME global variables should be avoided but I found no other practical way get the FTP result pylint: disable=fixme
         global ftp_should_run  # pylint: disable=global-variable-undefined
         global pdict  # pylint: disable=global-variable-undefined
@@ -362,7 +362,7 @@ class FlightController:
             logging_info("got %u parameter values", len(pdict))
             if pdata.defaults:
                 for (name, value, _ptype) in pdata.defaults:
-                    defdict[name.decode('utf-8')] = value
+                    defdict[name.decode('utf-8')] = Par(value)
                 logging_info("got %u parameter default values", len(defdict))
             ftp_should_run = False
             progress_callback(len(data), len(data))

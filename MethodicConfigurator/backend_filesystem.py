@@ -532,14 +532,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             Par.export_to_param(Par.format_params(param_dict), os_path.join(self.vehicle_dir, param_filename))
         return ''
 
-    def write_param_default_values(self, param_default_values: Dict[str, float]):
+    def write_param_default_values(self, param_default_values: Dict[str, 'Par']) -> bool:
         param_default_values = dict(sorted(param_default_values.items()))
         if self.param_default_dict != param_default_values:
             self.param_default_dict = param_default_values
             return True
         return False
 
-    def write_param_default_values_to_file(self, param_default_values: Dict[str, float], filename: str='00_default.param'):
+    def write_param_default_values_to_file(self, param_default_values: Dict[str, 'Par'], filename: str='00_default.param'):
         if self.write_param_default_values(param_default_values):
             Par.export_to_param(Par.format_params(param_default_values), os_path.join(self.vehicle_dir, filename))
 
