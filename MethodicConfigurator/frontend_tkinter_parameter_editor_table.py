@@ -13,7 +13,6 @@ from sys import exit as sys_exit
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
-from tkinter import simpledialog
 
 from logging import debug as logging_debug
 from logging import info as logging_info
@@ -32,8 +31,11 @@ from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 #from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
 from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
 from MethodicConfigurator.frontend_tkinter_base import get_widget_font
+from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 
 from MethodicConfigurator.frontend_tkinter_connection_selection import PairTupleCombobox
+
+from MethodicConfigurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 
 from MethodicConfigurator.annotate_params import Par
 
@@ -423,32 +425,76 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             self.parameter_editor.repopulate_parameter_table(self.current_file)
 
     def __on_parameter_add(self, fc_parameters):
+        add_parameter_window = BaseWindow(self.root)
+        add_parameter_window.root.title("Add Parameter to " + self.current_file)
+        add_parameter_window.root.geometry("450x300")
+
+        # Label for instruction
+        instruction_label = ttk.Label(add_parameter_window.main_frame, text="Enter the parameter name to add:")
+        instruction_label.pack(pady=5)
+
+        if self.local_filesystem.doc_dict:
+            param_dict = self.local_filesystem.doc_dict
+        else:
+            param_dict = fc_parameters
+
+        if not param_dict:
+            messagebox.showerror("Operation not possible",
+                                 "No apm.pdef.xml file and no FC connected. Not possible autocomplete parameter names.")
+            return
+
+        # Remove the parameters that are already displayed in this configuration step
+        possible_add_param_names = [param_name for param_name in param_dict \
+                                    if param_name not in self.local_filesystem.file_parameters[self.current_file]]
+
+        possible_add_param_names.sort()
+
         # Prompt the user for a parameter name
-        param_name = simpledialog.askstring("New parameter name", "Enter new parameter name:")
+        parameter_name_combobox = EntryWithDynamicalyFilteredListbox(add_parameter_window.main_frame,
+                                                                     possible_add_param_names,
+                                                                     startswith_match=False, ignorecase_match=True,
+                                                                     listbox_height=12, width=28)
+        parameter_name_combobox.pack(padx=5, pady=5)
+        BaseWindow.center_window(add_parameter_window.root, self.root)
+        parameter_name_combobox.focus()
+
+        def custom_selection_handler(event):
+            parameter_name_combobox.update_entry_from_listbox(event)
+            if self.__confirm_parameter_addition(parameter_name_combobox.get().upper(), fc_parameters):
+                add_parameter_window.root.destroy()
+            else:
+                add_parameter_window.root.focus()
+
+        # Bindings to handle Enter press and selection while respecting original functionalities
+        parameter_name_combobox.bind("<Return>", custom_selection_handler)
+        parameter_name_combobox.bind("<<ComboboxSelected>>", custom_selection_handler)
+
+    def __confirm_parameter_addition(self, param_name: str, fc_parameters: dict) -> bool:
         if not param_name:
-            messagebox.showerror("Parameter name can not be empty.")
-            return
+            messagebox.showerror("Invalid parameter name.", "Parameter name can not be empty.")
+            return False
         if param_name in self.local_filesystem.file_parameters[self.current_file]:
-            messagebox.showerror("Parameter already exists, edit it instead")
-            return
+            messagebox.showerror("Invalid parameter name.", "Parameter already exists, edit it instead")
+            return False
         if fc_parameters:
             if param_name in fc_parameters:
                 self.local_filesystem.file_parameters[self.current_file][param_name] = Par(fc_parameters[param_name], "")
                 self.at_least_one_param_edited = True
                 self.parameter_editor.repopulate_parameter_table(self.current_file)
-            else:
-                messagebox.showerror("Invalid parameter name.", "Parameter name not found in the flight controller.")
+                return True
+            messagebox.showerror("Invalid parameter name.", "Parameter name not found in the flight controller.")
         elif self.local_filesystem.doc_dict:
             if param_name in self.local_filesystem.doc_dict:
                 self.local_filesystem.file_parameters[self.current_file][param_name] = Par( \
                     self.local_filesystem.param_default_dict.get(param_name, Par(0, "")).value, "")
                 self.at_least_one_param_edited = True
                 self.parameter_editor.repopulate_parameter_table(self.current_file)
-            else:
-                messagebox.showerror("Invalid parameter name.", "Parameter name not found in the apm.pdef.xml file.")
+                return True
+            messagebox.showerror("Invalid parameter name.", f"'{param_name}' not found in the apm.pdef.xml file.", )
         else:
             messagebox.showerror("Operation not possible",
                                     "Can not add parameter when no FC is connected and no apm.pdef.xml file exists.")
+        return False
 
 
     def __on_parameter_value_change(self, event, current_file, param_name):
