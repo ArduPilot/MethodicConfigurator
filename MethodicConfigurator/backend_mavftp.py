@@ -31,7 +31,8 @@ from io import BytesIO as SIO
 import sys
 
 from pymavlink import mavutil
-from param_ftp import ftp_param_decode
+
+from MethodicConfigurator.param_ftp import ftp_param_decode
 
 
 # pylint: disable=invalid-name
