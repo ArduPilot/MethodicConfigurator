@@ -12,9 +12,9 @@ from os import path as os_path
 from os import walk as os_walk
 
 # from sys import exit as sys_exit
-# from logging import debug as logging_debug
+from logging import debug as logging_debug
 #from logging import info as logging_info
-from logging import warning as logging_warning
+#from logging import warning as logging_warning
 from logging import error as logging_error
 
 from re import match as re_match
@@ -44,7 +44,8 @@ class VehicleComponents:
             with open(filepath, 'r', encoding='utf-8') as file:
                 data = json_load(file)
         except FileNotFoundError:
-            logging_warning("File '%s' not found in %s.", self.vehicle_components_json_filename, vehicle_dir)
+            # Normal users do not need this information
+            logging_debug("File '%s' not found in %s.", self.vehicle_components_json_filename, vehicle_dir)
         except JSONDecodeError:
             logging_error("Error decoding JSON data from file '%s'.", filepath)
         self.vehicle_components = data

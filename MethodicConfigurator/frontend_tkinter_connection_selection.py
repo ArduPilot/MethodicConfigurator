@@ -79,7 +79,8 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
                 sys_exit(1)
             update_combobox_width(self)
         else:
-            logging_warning("No %s combobox element selected", self.cb_name)
+            # Normal users do not need this information
+            logging_debug("No %s combobox element selected", self.cb_name)
 
     def get_selected_key(self):
         try:
