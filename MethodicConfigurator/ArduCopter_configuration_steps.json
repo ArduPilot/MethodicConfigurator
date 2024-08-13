@@ -1,5 +1,8 @@
 {
     "02_imu_temperature_calibration_setup.param": {
+        "what": "InertialMeasurementUnit Temperature Calibration setup",
+        "why": "The IMU drift is temperature dependent and can cause gyro and/or accel inconsistent errors",
+        "why_now": "You need to cool down the FC to perform this calibration. It is easier to do before the FC is mounted in the vehicle",
         "blog_text": "Contains setup parameters for IMU temperature calibration, part of the initial calibration process.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-23-configure-imu-temperature-calibrationhttpsardupilotorgcopterdocscommon-imutempcalhtml-using-ardupilot-methodic-configuratorhttpsgithubcomardupilotmethodicconfigurator-7",
         "wiki_text": "IMU Temperature Calibration",
@@ -23,6 +26,9 @@
         "old_filenames": []
     },
     "03_imu_temperature_calibration_results.param": {
+        "what": "InertialMeasurementUnit Temperature Calibration results",
+        "why": "The IMU drift is temperature dependent and can cause gyro and/or accel inconsistent errors",
+        "why_now": "Requires the setup step. It is easier to do before the FC is mounted in the vehicle",
         "blog_text": "Records the results of the IMU temperature calibration, providing data for analysis and adjustment.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-23-configure-imu-temperature-calibrationhttpsardupilotorgcopterdocscommon-imutempcalhtml-using-ardupilot-methodic-configuratorhttpsgithubcomardupilotmethodicconfigurator-7",
         "wiki_text": "IMU Temperature Calibration",
@@ -34,6 +40,9 @@
         "old_filenames": []
     },
     "04_board_orientation.param": {
+        "what": "Defines the orientation of the flight controller board relative to the vehicle's body frame",
+        "why": "Correct orientation ensures that the flight controller accurately interprets the vehicle's movements and orientation, which is fundamental for stable flight and navigation.",
+        "why_now": "The following steps require that the orientation is correctly set",
         "blog_text": "Defines the orientation of the flight controller board relative to the vehicle's body frame, crucial for accurate navigation and stabilization.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-25-configure-flight-controller-orientation-9",
         "wiki_text": "Mounting the Autopilot - AHRS_ORIENTATION parameter",
@@ -51,6 +60,9 @@
         "old_filenames": []
     },
     "05_remote_controller.param": {
+        "what": "Configures remote controller connection, protocol and settings, including channel mapping and flight modes",
+        "why": "Remote controller is mandatory in the initial configuration and tunning phases. Later might be required for operation and/or safety",
+        "why_now": "It is a pre-requirement for configuring some telemetry systems and ESCs",
         "blog_text": "Configures settings related to the remote controller, including channel mapping and control modes.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-26-configure-the-rc-receiver-11",
         "wiki_text": "Radio Control Systems",
@@ -66,6 +78,9 @@
         "old_filenames": []
     },
     "06_telemetry.param": {
+        "what": "Configures telemetry connection, data protocol and settings between the autopilot and the ground control station(s)",
+        "why": "Telemetry allows the ground control station to monitor the vehicle's status in real-time, providing flight information for safe and efficient operation.",
+        "why_now": "Sometimes it depends on the remote controller. Configuring telemetry early allows vehicle configuration and sensor calibration in later steps without requiring a USB cable connection to the autopilot",
         "blog_text": "Sets up telemetry parameters for data transmission, including GPS, altitude, and other flight metrics.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-27-configure-telemetry-12",
         "wiki_text": "Telemetry (landing page)",
@@ -78,6 +93,9 @@
         "old_filenames": []
     },
     "07_esc.param": {
+        "what": "Configures settings for the Electronic Speed Controllers (ESCs), including PWM range and failsafe behavior.",
+        "why": "Proper ESC configuration is crucial for accurate motor control, affecting vehicle performance and safety. It ensures motors respond correctly to control signals and fail safely in various flight conditions.",
+        "why_now": "Pre-requires remote control configuration. Uses GCS telemetry if available. Setting up ESCs early allows for initial motor tests and ensures a stable base for further tuning and flight testing without risking damage to the vehicle.",
         "blog_text": "Configures settings for the Electronic Speed Controllers (ESCs), including PWM range and failsafe behavior.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-28-configure-the-esc-13",
         "wiki_text": "ESC (Electronic Speed Controls)",
@@ -97,6 +115,9 @@
         "old_filenames": []
     },
     "08_batt1.param": {
+        "what": "Configure parameters for the first battery, including health monitoring thresholds and failsafe behavior",
+        "why": "Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge",
+        "why_now": "The failsafe configuration step requires this. During flight tests PID scaling depends on the battery voltage",
         "blog_text": "Contains parameters for the first battery, including voltage thresholds and failsafe behavior.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-29-configure-the-primary-battery-monitor-14",
         "wiki_text": "Battery Monitors (aka Power Monitors/Modules) - BATT_* parameters",
@@ -121,6 +142,9 @@
         "old_filenames": []
     },
     "09_batt2.param": {
+        "what": "Configure parameters for the first battery, including health monitoring thresholds and failsafe behavior",
+        "why": "Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge",
+        "why_now": "The failsafe configuration step requires this. Controller PID scaling depends on the battery voltage",
         "blog_text": "Contains parameters for the second battery, including voltage thresholds and failsafe behavior.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-210-configure-the-redundant-secondary-battery-monitor-15",
         "wiki_text": "Battery Monitors (aka Power Monitors/Modules) - BATT2_* parameters",
@@ -132,6 +156,9 @@
         "old_filenames": []
     },
     "10_gnss.param": {
+        "what": "Configures the Global Navigation Satellite System (GNSS) connection and settings, including antenna phase center location and constellation selection for optimal update rates",
+        "why": "GNSS positioning is required to compensate for the IMU drift. This is required by the configuration and tuning steps. After configuration and tuning are complete the GNSS can be replaced by other positioning system",
+        "why_now": "Needs to be done before compass calibration",
         "blog_text": "Configures settings for the Global Navigation Satellite System (GNSS), including positioning and velocity estimation.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-211-configure-the-gnss-receivers-16",
         "wiki_text": "GPS/Compass (landing page) - GPS* parameters",
