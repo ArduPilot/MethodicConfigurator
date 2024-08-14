@@ -4,8 +4,8 @@ The software is meant to guide you a in sequence of procedural steps to configur
 
 Hence the two main use cases are:
 
-1. [Create a vehicle configuration based on a pre-existing template](QUICKSTART.md#4-use-the-ardupilot-methodic-configurator-software-for-the-first-time)
-1. [Edit existing vehicle configuration files to configure and tune a vehicle](QUICKSTART.md#6-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-template)
+1. [Create a vehicle configuration based on a pre-existing template](QUICKSTART.md#5-use-the-ardupilot-methodic-configurator-software-for-the-first-time)
+1. [Edit existing vehicle configuration files to configure and tune a vehicle](QUICKSTART.md#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template)
 
 But there are other use cases as well:
 
@@ -37,14 +37,14 @@ If issues are found the problematic fields' background will be marked in red col
 Correct those entries and press the `Save data and start configuration` button again.
 1. You should now see the *Parameter file editor and uploader* window.
 ![AMC parameter file editor and uploader](images/App_screenshot2.png)
-1. Follow the procedure to [configure the vehicle parameters](QUICKSTART.md#5-configure-the-vehicles-parameters-in-a-traceable-way) 
+1. Follow the procedure to [configure the vehicle parameters](QUICKSTART.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
 
 ## Review and or edit configuration files without having the vehicle FC
 
 1. Open the *ArduPilot Methodic Configurator* software.
-1. Select `Skip FC connection, just edit .param files on disk` button .
+1. Select `Skip FC connection, just edit .param files on disk` button.
 ![AMC no connection](images/App_screenshot_FC_connection_no_connection.png)
 1. Open the vehicle configuration directory that you want to edit or review.
 ![AMC open vehicle configuration](images/App_screenshot_Vehicle_directory4.png)
@@ -57,13 +57,13 @@ If issues are found the problematic fields' background will be marked in red col
 Correct those entries and press the `Save data and start configuration` button again.
 1. You should now see the *Parameter file editor and uploader* window.
 ![AMC parameter file editor and uploader](images/App_screenshot2.png) the `Upload selected params to FC, and advance to next param file` button will be grayed out because there is no FC connected.
-1. Follow the procedure to [configure the vehicle parameters](QUICKSTART.md#5-configure-the-vehicles-parameters-in-a-traceable-way) 
+1. Follow the procedure to [configure the vehicle parameters](QUICKSTART.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
 
-# Use the correct default values
+## Use the correct default values
 
-To get the correct default values for your board you need to do:
+To get the correct default values for your board (if it does not support MAVFTP) you need to do:
 
 ```bash
 cd VehicleConfigurarationDirectory

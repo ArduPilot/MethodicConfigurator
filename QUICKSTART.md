@@ -45,7 +45,7 @@ Assemble and connect all components. Make sure you [follow best practices](BLOG.
 
 ### 1.6 Basic mandatory configuration
 
-Again using the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-template) perform the following steps:
+Again using the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template) perform the following steps:
 
 - [04_board_orientation.param](BLOG.md#23-configure-flight-controller-orientation) flight controller orientation
 - [05_remote_controller.param](BLOG.md#24-configure-the-rc-receiver) remote controller connections and protocol
@@ -55,11 +55,11 @@ Again using the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardu
 - [10_gnss.param](BLOG.md#29-configure-the-gnss-receivers) GNSS receiver connection and protocol
 - [11_initial_atc.param](BLOG.md#29-configure-the-gnss-receivers) initial attitude PID gains (vehicle size dependent)
 
-Now use Mission Planner to do:
+Now use [Mission Planner](https://firmware.ardupilot.org/Tools/MissionPlanner/) to do:
 
 - [12_mp_setup_mandatory_hardware.param](BLOG.md#210-configure-mandatory-hardware-parameters) calibrate vehicle sensors
 
-And continue with the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-template):
+And continue with the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template):
 
 - [13_general_configuration.param](BLOG.md#211-general-configuration) general misc configuration
 - [Test if the hardware diagnostics are OK](BLOG.md#212-ardupilot-hardware-report)
@@ -81,7 +81,7 @@ These are the very minimum tuning steps required for a stable flight:
 - [19_notch_filter_results.param](BLOG.md#31-notch-filter-calibration) use the webtool information to configure the notch filter(s)
 - [20_throttle_controller.param](BLOG.md#32-configure-the-throttle-controller) the altitude controller depends on the power-to-thrust ratio found in the first flight
 - [21_ekf_config.param](BLOG.md#32-configure-the-throttle-controller) sometimes the EKF3 needs a tune to maintain altitude
-- [22_quick_tune_setup.param]()You need lua scripting support to do this) if not available you can tune manually and [23_quick_tune_results.param]()You need lua scripting support to do this if not available you can tune manually.
+- [22_quick_tune_setup.param]() and [23_quick_tune_results.param]() You need lua scripting support to do this if not available you can tune manually.
 
 That is it, if you are impatient and do not want an optimized vehicle you can skip to [everyday use](#113-everyday-use).
 
@@ -89,9 +89,8 @@ That is it, if you are impatient and do not want an optimized vehicle you can sk
 
 These are the standard tuning steps required for an optimized flight:
 
-- [24_inflight_magnetometer_fit_setup.param](BLOG.md#4-second-flight-magfit) Use lua scripted flight path or fly manually and  [25_inflight_magnetometer_fit_results.param](BLOG.md#4-second-flight-magfit) Use the magfit webtool to calculate a file that the ardupilot methodic configurator can use
-- [26_quick_tune_setup.param]()Redo quick-tune now that the compass magnetic interference is fully calibrated
-- [27_quick_tune_results.param]()Redo quick-tune now that the compass magnetic interference is fully calibrated
+- [24_inflight_magnetometer_fit_setup.param](BLOG.md#4-second-flight-magfit) Use lua scripted flight path or fly manually and  [25_inflight_magnetometer_fit_results.param](BLOG.md#4-second-flight-magfit) Use the [magfit webtool](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) to calculate a file that the ardupilot methodic configurator can use
+- [26_quick_tune_setup.param]() and [27_quick_tune_results.param]() Redo quick-tune now that the compass magnetic interference is fully calibrated
 - [28_evaluate_the_aircraft_tune_ff_disable.param](BLOG.md#5-third-flight-evaluate-the-aircraft-tune---part-1) and [26_evaluate_the_aircraft_tune_ff_enable.param](BLOG.md#6-fourth-flight-evaluate-the-aircraft-tune---part-2)
 - [30_autotune_roll_setup.param](BLOG.md#7-autotune-flights) and [31_autotune_roll_results.param](BLOG.md#7-autotune-flights) tune roll axis rate and angle PIDs
 - [32_autotune_pitch_setup.param](BLOG.md#7-autotune-flights) and [33_autotune_pitch_results.param](BLOG.md#7-autotune-flights) tune pitch axis rate and angle PIDs
@@ -122,6 +121,8 @@ Now that tuning and configuration are done, some logging and tests can be disabl
 - [50_everyday_use.param](BLOG.md#12-productive-configuration)
 
 Enjoy your properly configured vehicle.
+
+The following sections describe each step of the procedure in more detail.
 
 ## 2. Install *ArduPilot Methodic Configurator* software on a PC or Mac
 
@@ -194,7 +195,7 @@ Now do this in a loop until the software automatically closes or you are asked t
 - Press *Upload selected params to FC, and advance to next param file* (marked with the big red number 7),
 - Repeat from the top until the program automatically closes.
 
-## 7. Use the *ArduPilot Methodic Configurator* software after having created a vehicle from template
+## 7. Use the *ArduPilot Methodic Configurator* software after having created a vehicle from a template
 
 1. Connect the flight controller to the computer using a USB cable.
 1. Wait at least 7 seconds.

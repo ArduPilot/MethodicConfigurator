@@ -50,6 +50,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
     long_description = long_description.replace("(ARCHITECTURE.md", f"({PRJ_URL}/blob/master/ARCHITECTURE.md")
     long_description = long_description.replace("(CODE_OF_CONDUCT.md", f"({PRJ_URL}/blob/master/CODE_OF_CONDUCT.md")
     long_description = long_description.replace("(LICENSE.md", f"({PRJ_URL}/blob/master/LICENSE.md")
+    long_description = long_description.replace("(USECASES.md", f"({PRJ_URL}/blob/master/USECASES.md")
     long_description = long_description.replace("(credits/CREDITS.md", f"({PRJ_URL}/blob/master/credits/CREDITS.md")
     long_description = long_description.replace("images/App_screenshot1.png",
                                                 f"{PRJ_URL}/raw/master/images/App_screenshot1.png")
