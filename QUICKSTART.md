@@ -26,7 +26,7 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 
 ### 1.3 Input vehicle components and component connections into ArduPilot Methodic Configurator
 
-The software needs this information to automatically pre-select configuration settings relevant for your specific vehicle
+The software needs this information to automatically pre-select configuration settings relevant to your specific vehicle
 
 - [Start the ArduPilot Methodic Configurator and input select a vehicle that resembles yours](#5-use-the-ardupilot-methodic-configurator-software-for-the-first-time) and input vehicle components and component connections information into the ArduPilot Methodic Configurator *component editor window*
 
@@ -49,7 +49,7 @@ Again using the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardu
 
 - [04_board_orientation.param](BLOG.md#23-configure-flight-controller-orientation) flight controller orientation
 - [05_remote_controller.param](BLOG.md#24-configure-the-rc-receiver) remote controller connections and protocol
-- [06_telemetry.param](BLOG.md#25-configure-telemetry) telemetry transceiver connections and protocol
+- [06_telemetry.param](BLOG.md#25-configure-telemetry) telemetry transceiver connections and protocol (optional)
 - [07_esc.param](BLOG.md#26-configure-the-esc) Electronic-Speed-Controller connections and protocol
 - [08_batt1.param](BLOG.md#27-configure-the-primary-battery-monitor) Battery health and state of charge monitoring
 - [10_gnss.param](BLOG.md#29-configure-the-gnss-receivers) GNSS receiver connection and protocol
@@ -91,7 +91,7 @@ These are the standard tuning steps required for an optimized flight:
 
 - [24_inflight_magnetometer_fit_setup.param](BLOG.md#4-second-flight-magfit) Use lua scripted flight path or fly manually and  [25_inflight_magnetometer_fit_results.param](BLOG.md#4-second-flight-magfit) Use the [magfit webtool](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) to calculate a file that the ardupilot methodic configurator can use
 - [26_quick_tune_setup.param]() and [27_quick_tune_results.param]() Redo quick-tune now that the compass magnetic interference is fully calibrated
-- [28_evaluate_the_aircraft_tune_ff_disable.param](BLOG.md#5-third-flight-evaluate-the-aircraft-tune---part-1) and [26_evaluate_the_aircraft_tune_ff_enable.param](BLOG.md#6-fourth-flight-evaluate-the-aircraft-tune---part-2)
+- [28_evaluate_the_aircraft_tune_ff_disable.param](BLOG.md#5-third-flight-evaluate-the-aircraft-tune---part-1) and [29_evaluate_the_aircraft_tune_ff_enable.param](BLOG.md#6-fourth-flight-evaluate-the-aircraft-tune---part-2)
 - [30_autotune_roll_setup.param](BLOG.md#7-autotune-flights) and [31_autotune_roll_results.param](BLOG.md#7-autotune-flights) tune roll axis rate and angle PIDs
 - [32_autotune_pitch_setup.param](BLOG.md#7-autotune-flights) and [33_autotune_pitch_results.param](BLOG.md#7-autotune-flights) tune pitch axis rate and angle PIDs
 - [34_autotune_yaw_setup.param](BLOG.md#7-autotune-flights) and [35_autotune_yaw_results.param](BLOG.md#7-autotune-flights) tune yaw axis rate and angle PIDs
