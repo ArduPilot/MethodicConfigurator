@@ -16,7 +16,7 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 ### 1.1 Select the vehicle components
 
 - while [choosing an Autopilot](https://ardupilot.org/copter/docs/common-autopilots.html) and [other hardware](https://ardupilot.org/copter/docs/common-optional-hardware.html) components [avoid these components](https://discuss.ardupilot.org/t/hardware-to-avoid-when-building-your-first-multirotor/114014/1)
-- Use [ecalc for multirotor](https://www.ecalc.ch/index.htm?statementnotaccepted) to select the propulsion system.
+- Use [ecalc for multirotor](https://www.ecalc.ch/index.htm) to select the propulsion system.
 
 ### 1.2 Install Software
 
@@ -71,9 +71,9 @@ And continue with the [*ArduPilot Methodic configurator* software GUI](#7-use-th
 
 ### 1.7 Assemble propellers and perform the first flight
 
-Now that all mandatory steps are done you can [perform the first flight](BLOG.md#3-first-flight-motor-thrust-hover-and-harmonic-notch-data-collection)
+Now that all mandatory configuration steps are done you can [perform the first flight](BLOG.md#3-first-flight-motor-thrust-hover-and-harmonic-notch-data-collection)
 
-### 1.8 Minimalistic tuning
+### 1.8 Minimalistic mandatory tuning
 
 These are the very minimum tuning steps required for a stable flight:
 
@@ -113,7 +113,7 @@ Now the standard tuning is complete you can skip to [everyday use](#113-everyday
 
 ### 1.12 Position controller tuning (optional)
 
-- [47, 48, 49](BLOG.md#13-position-controller)
+- [47_position_controller.param, 48_guided_operation.param, 49_precision_land.param](BLOG.md#13-position-controller)
 
 ### 1.13 Everyday use
 
