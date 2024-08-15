@@ -174,6 +174,9 @@
         "old_filenames": []
     },
     "11_initial_atc.param": {
+        "what": "Configures parameters depending on the vehicle's propeller size",
+        "why": "Propeller size has a big influence on the vehicle dynamics, this adapts controller response to it",
+        "why_now": "Done before sensor calibration in Mission Planner to minimize the changes the uses has to do in mission planner",
         "blog_text": "Initial attitude controller configuration",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-211-configure-the-gnss-receivers-16",
         "wiki_text": "Initial parameters calculator",
@@ -207,6 +210,9 @@
         "old_filenames": []
     },
     "12_mp_setup_mandatory_hardware.param": {
+        "what": "accelerometer, gyroscope, compass and RC calibration using Mission Planner",
+        "why": "Sensors need to be calibrated once before they can be used",
+        "why_now": "this can only be done effectively after all the preceding steps because it uses their results",
         "blog_text": "Sets up mandatory hardware components, ensuring all necessary sensors and systems are correctly configured.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-212-configure-mandatory-hardware-parameters-17",
         "wiki_text": "Follow the blog instructions and use Mission Planner instead of this tool to configure the mandatory hardware parameters.",
@@ -218,6 +224,9 @@
         "old_filenames": ["11_mp_setup_mandatory_hardware.param"]
     },
     "13_general_configuration.param": {
+        "what": "General configuration parameters for the vehicle, including flight modes and safety settings.",
+        "why": "The parameter defaults of some parameters are not sutable for the flight tests that will follow",
+        "why_now": "Most parameters have been configured in previous steps. These are parameters that did not fit in any of the categories of the previous steps.",
         "blog_text": "General configuration parameters for the vehicle, including flight modes and safety settings.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-213-general-configuration-30",
         "wiki_text": "",
@@ -233,6 +242,9 @@
         "old_filenames": ["12_general_configuration.param"]
     },
     "14_logging.param": {
+        "what": "Configures logging parameters, including what data is logged and how it's stored.",
+        "why": "parameter values at later steps depend on data that is gathered by means of logging",
+        "why_now": "All the previous steps did not require logging, but the following ones do",
         "blog_text": "Configures logging parameters, including what data is logged and how it's stored.",
         "blog_url": "https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842#h-215-configure-logging-32",
         "wiki_text": "Downloading and Analyzing Data Logs in Mission Planner",
