@@ -109,7 +109,8 @@
         },
         "derived_parameters": {
             "MOT_PWM_TYPE": { "New Value": "vehicle_components['ESC']['FC Connection']['Protocol']", "Change Reason": "Specified in component editor window" },
-            "SERVO_BLH_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" }
+            "SERVO_BLH_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
+            "SERVO_FTW_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" }
         },
         "rename_connection": "vehicle_components['ESC']['FC Connection']['Type']",
         "old_filenames": []
