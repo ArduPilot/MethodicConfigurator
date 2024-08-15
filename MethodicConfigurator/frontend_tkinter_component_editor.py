@@ -146,6 +146,24 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         can_ports = ["CAN1", "CAN2"]
         i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
 
+        # Default values for comboboxes in case the apm.pdef.xml metadata is not available
+        fallbacks = {
+            'RC_PROTOCOLS': ["All", "PPM", "IBUS", "SBUS", "SBUS_NI", "DSM", "SUMD", "SRXL", "SRXL2",
+                             "CRSF", "ST24", "FPORT", "FPORT2", "FastSBUS", "DroneCAN", "Ghost", "MAVRadio"],
+            'SERIAL1_PROTOCOL': ["MAVLink1", "MAVLink2", "MAVLink High Latency"],
+            'BATT_MONITOR': ['Analog Voltage Only', 'Analog Voltage and Current', 'Solo', 'Bebop', 'SMBus-Generic',
+                             'DroneCAN-BatteryInfo', 'ESC', 'Sum Of Selected Monitors', 'FuelFlow', 'FuelLevelPWM',
+                             'SMBUS-SUI3', 'SMBUS-SUI6', 'NeoDesign', 'SMBus-Maxell', 'Generator-Elec', 'Generator-Fuel',
+                             'Rotoye', 'MPPT', 'INA2XX', 'LTC2946', 'Torqeedo', 'FuelLevelAnalog',
+                             'Synthetic Current and Analog Voltage', 'INA239_SPI', 'EFI', 'AD7091R5', 'Scripting'],
+            'MOT_PWM_TYPE': ['Normal', 'OneShot', 'OneShot125', 'Brushed', 'DShot150', 'DShot300', 'DShot600',
+                             'DShot1200', 'PWMRange', 'PWMAngle'],
+            'GPS_TYPE': ['Auto', 'uBlox', 'NMEA', 'SiRF', 'HIL', 'SwiftNav', 'DroneCAN', 'SBF', 'GSOF', 'ERB',
+                         'MAV', 'NOVA', 'HemisphereNMEA', 'uBlox-MovingBaseline-Base', 'uBlox-MovingBaseline-Rover',
+                         'MSP', 'AllyStar', 'ExternalAHRS', 'Unicore', 'DroneCAN-MovingBaseline-Base',
+                         'DroneCAN-MovingBaseline-Rover', 'UnicoreNMEA', 'UnicoreMovingBaselineNMEA', 'SBF-DualAntenna'],
+        }
+        param_metadata = self.local_filesystem.doc_dict
         combobox_config = {
             ('Flight Controller', 'Firmware', 'Type'): {
                 "values": VehicleComponents.supported_vehicles(),
@@ -154,8 +172,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 "values": ["RCin/SBUS"] + serial_ports + can_ports,
             },
             ('RC Receiver', 'FC Connection', 'Protocol'): {
-                "values": ["All", "PPM", "IBUS", "SBUS", "SBUS_NI", "DSM", "SUMD", "SRXL", "SRXL2",
-                           "CRSF", "ST24", "FPORT", "FPORT2", "FastSBUS", "DroneCAN", "Ghost", "MAVRadio"],
+                "values": param_metadata["RC_PROTOCOLS"]["values"] if "RC_PROTOCOLS" in param_metadata else fallbacks['RC_PROTOCOLS'],
             },
             ('Telemetry', 'FC Connection', 'Type'): {
                 "values": serial_ports + can_ports,
