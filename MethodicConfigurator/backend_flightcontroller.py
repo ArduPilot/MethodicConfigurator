@@ -315,7 +315,7 @@ class FlightController:
 
         # the banner message after the ChibiOS one contains the FC type
         fc_product = ''
-        if os_custom_version_index is not None:
+        if os_custom_version_index is not None and os_custom_version_index + 1 < len(banner_msgs):
             fc_product_banner_substrings = banner_msgs[os_custom_version_index+1].split(' ')
             if len(fc_product_banner_substrings) >= 3:
                 fc_product = fc_product_banner_substrings[0]
