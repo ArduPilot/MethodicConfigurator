@@ -14,6 +14,7 @@ from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 # from logging import debug as logging_debug
 #from logging import info as logging_info
+from logging import error as logging_error
 
 import tkinter as tk
 from tkinter import ttk
@@ -150,7 +151,6 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         fallbacks = {
             'RC_PROTOCOLS': ["All", "PPM", "IBUS", "SBUS", "SBUS_NI", "DSM", "SUMD", "SRXL", "SRXL2",
                              "CRSF", "ST24", "FPORT", "FPORT2", "FastSBUS", "DroneCAN", "Ghost", "MAVRadio"],
-            'SERIAL1_PROTOCOL': ["MAVLink1", "MAVLink2", "MAVLink High Latency"],
             'BATT_MONITOR': ['Analog Voltage Only', 'Analog Voltage and Current', 'Solo', 'Bebop', 'SMBus-Generic',
                              'DroneCAN-BatteryInfo', 'ESC', 'Sum Of Selected Monitors', 'FuelFlow', 'FuelLevelPWM',
                              'SMBUS-SUI3', 'SMBUS-SUI6', 'NeoDesign', 'SMBus-Maxell', 'Generator-Elec', 'Generator-Fuel',
@@ -163,7 +163,20 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                          'MSP', 'AllyStar', 'ExternalAHRS', 'Unicore', 'DroneCAN-MovingBaseline-Base',
                          'DroneCAN-MovingBaseline-Rover', 'UnicoreNMEA', 'UnicoreMovingBaselineNMEA', 'SBF-DualAntenna'],
         }
-        param_metadata = self.local_filesystem.doc_dict
+        def get_combobox_values(param_name: str) -> list:
+            param_metadata = self.local_filesystem.doc_dict
+            if param_name in param_metadata:
+                if "values" in param_metadata[param_name] and param_metadata[param_name]["values"]:
+                    return list(param_metadata[param_name]["values"].values())
+                elif "Bitmask" in param_metadata[param_name] and param_metadata[param_name]["Bitmask"]:
+                    return list(param_metadata[param_name]["Bitmask"].values())
+                else:
+                    logging_error("No values found for %s in the metadata", param_name)
+            if param_name in fallbacks:
+                return fallbacks[param_name]
+            logging_error("No fallback values found for %s", param_name)
+            return []
+
         combobox_config = {
             ('Flight Controller', 'Firmware', 'Type'): {
                 "values": VehicleComponents.supported_vehicles(),
@@ -172,43 +185,31 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 "values": ["RCin/SBUS"] + serial_ports + can_ports,
             },
             ('RC Receiver', 'FC Connection', 'Protocol'): {
-                "values": param_metadata["RC_PROTOCOLS"]["values"] if "RC_PROTOCOLS" in param_metadata else fallbacks['RC_PROTOCOLS'],
+                "values": get_combobox_values('RC_PROTOCOLS'),
             },
             ('Telemetry', 'FC Connection', 'Type'): {
                 "values": serial_ports + can_ports,
             },
             ('Telemetry', 'FC Connection', 'Protocol'): {
-                # TODO get this list from SERIAL1_PROTOCOL pdef metadata pylint: disable=fixme
                 "values": ["MAVLink1", "MAVLink2", "MAVLink High Latency"],
             },
             ('Battery Monitor', 'FC Connection', 'Type'): {
                 "values": ['Analog'] + i2c_ports + serial_ports + can_ports,
             },
             ('Battery Monitor', 'FC Connection', 'Protocol'): {
-                # TODO get this list from BATT_MONITOR pdef metadata pylint: disable=fixme
-                "values": ['Analog Voltage Only', 'Analog Voltage and Current', 'Solo', 'Bebop', 'SMBus-Generic',
-                           'DroneCAN-BatteryInfo', 'ESC', 'Sum Of Selected Monitors', 'FuelFlow', 'FuelLevelPWM',
-                           'SMBUS-SUI3', 'SMBUS-SUI6', 'NeoDesign', 'SMBus-Maxell', 'Generator-Elec', 'Generator-Fuel',
-                           'Rotoye', 'MPPT', 'INA2XX', 'LTC2946', 'Torqeedo', 'FuelLevelAnalog',
-                           'Synthetic Current and Analog Voltage', 'INA239_SPI', 'EFI', 'AD7091R5', 'Scripting'],
+                "values": get_combobox_values('BATT_MONITOR'),
             },
             ('ESC', 'FC Connection', 'Type'): {
                 "values": ['Main Out', 'AIO'] + serial_ports + can_ports,
             },
             ('ESC', 'FC Connection', 'Protocol'): {
-                # TODO get this list from MOT_PWM_TYPE pdef metadata pylint: disable=fixme
-                "values": ['Normal', 'OneShot', 'OneShot125', 'Brushed', 'DShot150', 'DShot300', 'DShot600',
-                           'DShot1200', 'PWMRange', 'PWMAngle'],
+                "values": get_combobox_values('MOT_PWM_TYPE'),
             },
             ('GNSS receiver', 'FC Connection', 'Type'): {
                 "values": serial_ports + can_ports,
             },
             ('GNSS receiver', 'FC Connection', 'Protocol'): {
-                # TODO get this list from GPS_TYPE pdef metadata pylint: disable=fixme
-                "values": ['Auto', 'uBlox', 'NMEA', 'SiRF', 'HIL', 'SwiftNav', 'DroneCAN', 'SBF', 'GSOF', 'ERB',
-                           'MAV', 'NOVA', 'HemisphereNMEA', 'uBlox-MovingBaseline-Base', 'uBlox-MovingBaseline-Rover',
-                           'MSP', 'AllyStar', 'ExternalAHRS', 'Unicore', 'DroneCAN-MovingBaseline-Base',
-                           'DroneCAN-MovingBaseline-Rover', 'UnicoreNMEA', 'UnicoreMovingBaselineNMEA', 'SBF-DualAntenna'],
+                "values": get_combobox_values('GPS_TYPE'),
             },
             ('Battery', 'Specifications', 'Chemistry'): {
                 "values": BatteryCell.chemistries(),
