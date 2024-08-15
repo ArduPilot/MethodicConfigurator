@@ -151,7 +151,7 @@ class FlightController:
             logging_debug("Did not add empty connection")
         return False
 
-    def connect(self, device: str, progress_callback=None) -> str:
+    def connect(self, device: str, progress_callback=None, log_errors: bool=True) -> str:
         """
         Establishes a connection to the FlightController using a specified device.
 
@@ -197,7 +197,7 @@ class FlightController:
                     self.__connection_tuples.insert(-1, (self.comport.device, self.comport.description))
             else:
                 return "No serial ports found. Please connect a flight controller and try again."
-        return self.__create_connection_with_retry(progress_callback=progress_callback)
+        return self.__create_connection_with_retry(progress_callback=progress_callback, log_errors=log_errors)
 
     def __request_banner(self):
         '''Request banner information from the flight controller'''
@@ -234,7 +234,7 @@ class FlightController:
             message_id, 0, 0, 0, 0, 0, 0)
 
     def __create_connection_with_retry(self, progress_callback, retries: int = 3,
-                                       timeout: int = 5) -> mavutil.mavlink_connection:
+                                       timeout: int = 5, log_errors: bool = True) -> mavutil.mavlink_connection:
         """
         Attempts to create a connection to the flight controller with retries.
 
@@ -285,8 +285,9 @@ class FlightController:
             m = self.master.recv_match(type='AUTOPILOT_VERSION', blocking=True, timeout=timeout)
             return self.__process_autopilot_version(m, banner_msgs)
         except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
-            logging_warning("Connection failed: %s", e)
-            logging_error("Failed to connect after %d attempts.", retries)
+            if log_errors:
+                logging_warning("Connection failed: %s", e)
+                logging_error("Failed to connect after %d attempts.", retries)
             return str(e)
 
     def __process_autopilot_version(self, m, banner_msgs) -> str:

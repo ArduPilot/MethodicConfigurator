@@ -65,9 +65,9 @@ def argument_parser():
 def connect_to_fc_and_read_parameters(args):
     flight_controller = FlightController(args.reboot_time)
 
-    error_str = flight_controller.connect(args.device)
+    error_str = flight_controller.connect(args.device, log_errors=False)
     if error_str:
-        if "No serial ports found" not in error_str:
+        if args.device and "No serial ports found" not in error_str:
             logging_error(error_str)
         conn_sel_window = ConnectionSelectionWindow(flight_controller, error_str)
         conn_sel_window.root.mainloop()
