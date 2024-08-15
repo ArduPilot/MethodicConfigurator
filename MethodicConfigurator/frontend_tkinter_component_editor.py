@@ -121,6 +121,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         return fallbacks
 
     def set_values_from_fc_parameters(self, fc_parameters: dict, doc: dict):
+        self.set_protocol_and_connection_from_fc_parameters(fc_parameters, doc)
+        self.set_motor_poles_from_fc_parameters(fc_parameters, doc)
+
+    def set_protocol_and_connection_from_fc_parameters(self, fc_parameters: dict, doc: dict):
         rc_receiver_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["RCIN"], [23])
         telemetry_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL",
                                                       ["MAVLink1", "MAVLink2", "MAVLink High Latency"], [1, 2, 43])
@@ -128,12 +132,14 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         esc_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL",
                                                 ["ESC Telemetry", "FETtecOneWire", "Torqeedo", "CoDevESC"],
                                                 [16, 38, 39, 41])
-        dshot_protocols = self.reverse_key_search(doc, "MOT_PWM_TYPE",
-                                                  ["OneShot", "OneShot125", "DShot150", "DShot300", "DShot600", "DShot1200"],
-                                                  [1, 2, 4, 5, 6, 7])
         for serial in self.serial_ports:
             if serial + "_PROTOCOL" in fc_parameters:
                 serial_protocol = fc_parameters[serial + "_PROTOCOL"]
+                try:
+                    serial_protocol = int(serial_protocol)
+                except ValueError:
+                    logging_error("Invalid non-integer value for %s_PROTOCOL %f", serial, serial_protocol)
+                    serial_protocol = 0
                 if serial_protocol in rc_receiver_protocols:
                     self.data['Components']['RC Receiver']['FC Connection']['Type'] = serial
                     #self.data['Components']['RC Receiver']['FC Connection']['Protocol'] = \
@@ -141,22 +147,40 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 elif serial_protocol in telemetry_protocols:
                     self.data['Components']['Telemetry']['FC Connection']['Type'] = serial
                     self.data['Components']['Telemetry']['FC Connection']['Protocol'] = \
-                        doc[serial + "_PROTOCOL"]['values'][str(serial_protocol).rstrip('0').rstrip('.')]
+                        doc[serial + "_PROTOCOL"]['values'][str(serial_protocol)]
                 elif serial_protocol in gnss_protocols:
                     self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = serial
+                    gps_type = fc_parameters['GPS_TYPE'] if "GPS_TYPE" in fc_parameters else 0
+                    try:
+                        gps_type = int(gps_type)
+                    except ValueError:
+                        logging_error("Invalid non-integer value for GPS_TYPE %f", gps_type)
+                        gps_type = 0
                     self.data['Components']['GNSS Receiver']['FC Connection']['Protocol'] = \
-                        doc['GPS_TYPE']['values'][str(fc_parameters['GPS_TYPE']).rstrip('0').rstrip('.')]
+                        doc['GPS_TYPE']['values'][str(gps_type)]
                 elif serial_protocol in esc_protocols:
                     self.data['Components']['ESC']['FC Connection']['Type'] = serial
+                    mot_pwm_type = fc_parameters['MOT_PWM_TYPE'] if "MOT_PWM_TYPE" in fc_parameters else 0
+                    try:
+                        mot_pwm_type = int(mot_pwm_type)
+                    except ValueError:
+                        logging_error("Invalid non-integer value for MOT_PWM_TYPE %f", mot_pwm_type)
+                        mot_pwm_type = 0
                     self.data['Components']['ESC']['FC Connection']['Protocol'] = \
-                        doc['MOT_PWM_TYPE']['values'][str(fc_parameters['MOT_PWM_TYPE']).rstrip('0').rstrip('.')]
-        if "BATT_MONITOR" in fc_parameters:
-            analog = [key for key, value in doc["BATT_MONITOR"]["values"].items() \
+                        doc['MOT_PWM_TYPE']['values'][str(mot_pwm_type)]
+        if "BATT_MONITOR" in fc_parameters and "BATT_MONITOR" in doc:
+            batt_monitor = int(fc_parameters["BATT_MONITOR"])
+            analog = [int(key) for key, value in doc["BATT_MONITOR"]["values"].items() \
                       if value in ['Analog Voltage Only', 'Analog Voltage and Current']]
-            if fc_parameters["BATT_MONITOR"] in analog:
+            if batt_monitor in analog:
                 self.data['Components']['Battery Monitor']['FC Connection']['Type'] = "Analog"
             self.data['Components']['Battery Monitor']['FC Connection']['Protocol'] = \
-                doc['BATT_MONITOR']['values'][str(fc_parameters["BATT_MONITOR"]).rstrip('0').rstrip('.')]
+                doc['BATT_MONITOR']['values'][str(batt_monitor)]
+
+    def set_motor_poles_from_fc_parameters(self, fc_parameters: dict, doc: dict):
+        dshot_protocols = self.reverse_key_search(doc, "MOT_PWM_TYPE",
+                                                  ["OneShot", "OneShot125", "DShot150", "DShot300", "DShot600", "DShot1200"],
+                                                  [1, 2, 4, 5, 6, 7])
         if "MOT_PWM_TYPE" in fc_parameters and fc_parameters["MOT_PWM_TYPE"] in dshot_protocols:
             if "SERVO_BLH_POLES" in fc_parameters:
                 self.data['Components']['Motors']['Specifications']['Poles'] = fc_parameters["SERVO_BLH_POLES"]
