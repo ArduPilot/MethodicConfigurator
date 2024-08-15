@@ -103,34 +103,40 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             self._set_component_value_and_update_ui(('Flight Controller', 'Product', 'Model'), model)
 
     @staticmethod
-    def reverse_key_search(doc: dict, param_name: str, values: list) -> list:
-        return [key for key, value in doc[param_name]["values"].items() if value in values]
+    def reverse_key_search(doc: dict, param_name: str, values: list, fallbacks: list) -> list:
+        retv = [int(key) for key, value in doc[param_name]["values"].items() if value in values]
+        if retv:
+            return retv
+        logging_error("No values found for %s in the metadata", param_name)
+        return fallbacks
 
     def set_values_from_fc_parameters(self, fc_parameters: dict, doc: dict):
         serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
         #can_ports = ["CAN1", "CAN2"]
         #i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
 
-        rc_receiver_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["RC Input"])
+        rc_receiver_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["RCIN"], [23])
         telemetry_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL",
-                                                      ["MAVLink1", "MAVLink2", "MAVLink High Latency"])
-        gnss_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["GPS"])
-        esc_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["ESC Telemetry", "FETtecOneWire", "CoDevESC"])
+                                                      ["MAVLink1", "MAVLink2", "MAVLink High Latency"], [1, 2, 43])
+        gnss_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["GPS"], [5])
+        esc_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["ESC Telemetry", "FETtecOneWire", "Torqeedo", "CoDevESC"],
+                                                [16, 38, 39, 41])
         for serial in serial_ports:
             if serial + "_PROTOCOL" in fc_parameters:
-                if fc_parameters[serial + "_PROTOCOL"] in rc_receiver_protocols:
+                serial_protocol = fc_parameters[serial + "_PROTOCOL"]
+                if serial_protocol in rc_receiver_protocols:
                     self.data['Components']['RC Receiver']['FC Connection']['Type'] = serial
                     #self.data['Components']['RC Receiver']['FC Connection']['Protocol'] = \
-                    # doc['RC_PROTOCOLS']['values'][fc_parameters['RC_PROTOCOLS']]
-                elif fc_parameters[serial + "_PROTOCOL"] in telemetry_protocols:
+                    # doc['RC_PROTOCOLS']['values'][fc_parameters['RC_PROTOCOLS']] this is a Bitmask and not a value
+                elif serial_protocol in telemetry_protocols:
                     self.data['Components']['Telemetry']['FC Connection']['Type'] = serial
                     self.data['Components']['Telemetry']['FC Connection']['Protocol'] = \
-                        doc[serial + "_PROTOCOL"]['values'][str(fc_parameters[serial + "_PROTOCOL"]).rstrip('0').rstrip('.')]
-                elif fc_parameters[serial + "_PROTOCOL"] in gnss_protocols:
+                        doc[serial + "_PROTOCOL"]['values'][str(serial_protocol).rstrip('0').rstrip('.')]
+                elif serial_protocol in gnss_protocols:
                     self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = serial
                     self.data['Components']['GNSS Receiver']['FC Connection']['Protocol'] = \
                         doc['GPS_TYPE']['values'][str(fc_parameters['GPS_TYPE']).rstrip('0').rstrip('.')]
-                elif fc_parameters[serial + "_PROTOCOL"] in esc_protocols:
+                elif serial_protocol in esc_protocols:
                     self.data['Components']['ESC']['FC Connection']['Type'] = serial
                     self.data['Components']['ESC']['FC Connection']['Protocol'] = \
                         doc['MOT_PWM_TYPE']['values'][str(fc_parameters['MOT_PWM_TYPE']).rstrip('0').rstrip('.')]
