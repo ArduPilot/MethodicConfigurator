@@ -118,10 +118,12 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         telemetry_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL",
                                                       ["MAVLink1", "MAVLink2", "MAVLink High Latency"], [1, 2, 43])
         gnss_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["GPS"], [5])
-        esc_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["ESC Telemetry", "FETtecOneWire", "Torqeedo", "CoDevESC"],
+        esc_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL",
+                                                ["ESC Telemetry", "FETtecOneWire", "Torqeedo", "CoDevESC"],
                                                 [16, 38, 39, 41])
-        dshot_protocols = self.reverse_key_search(doc, "MOT_PWM_TYPE", ["OneShot", "OneShot125", "DShot150",
-                                                                        "DShot300", "DShot600", "DShot1200"], [1, 2, 4, 5, 6, 7])
+        dshot_protocols = self.reverse_key_search(doc, "MOT_PWM_TYPE",
+                                                  ["OneShot", "OneShot125", "DShot150", "DShot300", "DShot600", "DShot1200"],
+                                                  [1, 2, 4, 5, 6, 7])
         for serial in self.serial_ports:
             if serial + "_PROTOCOL" in fc_parameters:
                 serial_protocol = fc_parameters[serial + "_PROTOCOL"]
@@ -178,10 +180,9 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             if param_name in param_metadata:
                 if "values" in param_metadata[param_name] and param_metadata[param_name]["values"]:
                     return list(param_metadata[param_name]["values"].values())
-                elif "Bitmask" in param_metadata[param_name] and param_metadata[param_name]["Bitmask"]:
+                if "Bitmask" in param_metadata[param_name] and param_metadata[param_name]["Bitmask"]:
                     return list(param_metadata[param_name]["Bitmask"].values())
-                else:
-                    logging_error("No values found for %s in the metadata", param_name)
+                logging_error("No values found for %s in the metadata", param_name)
             if param_name in fallbacks:
                 return fallbacks[param_name]
             logging_error("No fallback values found for %s", param_name)
