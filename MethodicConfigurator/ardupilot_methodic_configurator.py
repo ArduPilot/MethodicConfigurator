@@ -85,14 +85,16 @@ def connect_to_fc_and_read_parameters(args):
 
 def component_editor(args, flight_controller, vehicle_type, local_filesystem, vehicle_dir_window):
     component_editor_window = ComponentEditorWindow(VERSION, local_filesystem)
-    component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.info.flight_sw_version_and_type)
-    component_editor_window.set_fc_manufacturer(flight_controller.info.vendor)
-    component_editor_window.set_fc_model(flight_controller.info.product)
     if vehicle_dir_window and \
        vehicle_dir_window.created_new_vehicle_from_template and \
+       vehicle_dir_window.use_fc_params.get() and \
        flight_controller.fc_parameters:
         # copy vehicle parameters to component editor values
         component_editor_window.set_values_from_fc_parameters(flight_controller.fc_parameters, local_filesystem.doc_dict)
+    component_editor_window.populate_frames()
+    component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.info.flight_sw_version_and_type)
+    component_editor_window.set_fc_manufacturer(flight_controller.info.vendor)
+    component_editor_window.set_fc_model(flight_controller.info.product)
     if args.skip_component_editor:
         component_editor_window.root.after(10, component_editor_window.root.destroy)
     component_editor_window.root.mainloop()
