@@ -120,6 +120,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         gnss_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["GPS"], [5])
         esc_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["ESC Telemetry", "FETtecOneWire", "Torqeedo", "CoDevESC"],
                                                 [16, 38, 39, 41])
+        dshot_protocols = self.reverse_key_search(doc, "MOT_PWM_TYPE", ["OneShot", "OneShot125", "DShot150",
+                                                                        "DShot300", "DShot600", "DShot1200"], [1, 2, 4, 5, 6, 7])
         for serial in self.serial_ports:
             if serial + "_PROTOCOL" in fc_parameters:
                 serial_protocol = fc_parameters[serial + "_PROTOCOL"]
@@ -146,6 +148,12 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 self.data['Components']['Battery Monitor']['FC Connection']['Type'] = "Analog"
             self.data['Components']['Battery Monitor']['FC Connection']['Protocol'] = \
                 doc['BATT_MONITOR']['values'][str(fc_parameters["BATT_MONITOR"]).rstrip('0').rstrip('.')]
+        if "MOT_PWM_TYPE" in fc_parameters and fc_parameters["MOT_PWM_TYPE"] in dshot_protocols:
+            if "SERVO_BLH_POLES" in fc_parameters:
+                self.data['Components']['Motors']['Specifications']['Poles'] = fc_parameters["SERVO_BLH_POLES"]
+        else:
+            if "SERVO_FTW_MASK" in fc_parameters and fc_parameters["SERVO_FTW_MASK"] and "SERVO_FTW_POLES" in fc_parameters:
+                self.data['Components']['Motors']['Specifications']['Poles'] = fc_parameters["SERVO_FTW_POLES"]
 
     def add_entry_or_combobox(self, value, entry_frame, path):
 
@@ -205,7 +213,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 "values": ['Main Out', 'AIO'] + self.serial_ports + self.can_ports,
             },
             ('ESC', 'FC Connection', 'Protocol'): {
-                "values": get_combobox_values('MOT_PWM_TYPE'),
+                "values": get_combobox_values('MOT_PWM_TYPE')# + ['FETtecOneWire', 'Torqeedo', 'CoDevESC'],
             },
             ('GNSS receiver', 'FC Connection', 'Type'): {
                 "values": self.serial_ports + self.can_ports,
