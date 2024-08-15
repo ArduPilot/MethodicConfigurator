@@ -65,6 +65,9 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     """
     def __init__(self, version, local_filesystem: LocalFilesystem=None):
         ComponentEditorWindowBase.__init__(self, version, local_filesystem)
+        self.serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
+        self.can_ports = ["CAN1", "CAN2"]
+        self.i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
 
     def update_json_data(self):
         super().update_json_data()
@@ -111,17 +114,13 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         return fallbacks
 
     def set_values_from_fc_parameters(self, fc_parameters: dict, doc: dict):
-        serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
-        #can_ports = ["CAN1", "CAN2"]
-        #i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
-
         rc_receiver_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["RCIN"], [23])
         telemetry_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL",
                                                       ["MAVLink1", "MAVLink2", "MAVLink High Latency"], [1, 2, 43])
         gnss_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["GPS"], [5])
         esc_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["ESC Telemetry", "FETtecOneWire", "Torqeedo", "CoDevESC"],
                                                 [16, 38, 39, 41])
-        for serial in serial_ports:
+        for serial in self.serial_ports:
             if serial + "_PROTOCOL" in fc_parameters:
                 serial_protocol = fc_parameters[serial + "_PROTOCOL"]
                 if serial_protocol in rc_receiver_protocols:
@@ -149,9 +148,6 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 doc['BATT_MONITOR']['values'][str(fc_parameters["BATT_MONITOR"]).rstrip('0').rstrip('.')]
 
     def add_entry_or_combobox(self, value, entry_frame, path):
-        serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
-        can_ports = ["CAN1", "CAN2"]
-        i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
 
         # Default values for comboboxes in case the apm.pdef.xml metadata is not available
         fallbacks = {
@@ -188,31 +184,31 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 "values": VehicleComponents.supported_vehicles(),
             },
             ('RC Receiver', 'FC Connection', 'Type'): {
-                "values": ["RCin/SBUS"] + serial_ports + can_ports,
+                "values": ["RCin/SBUS"] + self.serial_ports + self.can_ports,
             },
             ('RC Receiver', 'FC Connection', 'Protocol'): {
                 "values": get_combobox_values('RC_PROTOCOLS'),
             },
             ('Telemetry', 'FC Connection', 'Type'): {
-                "values": serial_ports + can_ports,
+                "values": self.serial_ports + self.can_ports,
             },
             ('Telemetry', 'FC Connection', 'Protocol'): {
                 "values": ["MAVLink1", "MAVLink2", "MAVLink High Latency"],
             },
             ('Battery Monitor', 'FC Connection', 'Type'): {
-                "values": ['Analog'] + i2c_ports + serial_ports + can_ports,
+                "values": ['Analog'] + self.i2c_ports + self.serial_ports + self.can_ports,
             },
             ('Battery Monitor', 'FC Connection', 'Protocol'): {
                 "values": get_combobox_values('BATT_MONITOR'),
             },
             ('ESC', 'FC Connection', 'Type'): {
-                "values": ['Main Out', 'AIO'] + serial_ports + can_ports,
+                "values": ['Main Out', 'AIO'] + self.serial_ports + self.can_ports,
             },
             ('ESC', 'FC Connection', 'Protocol'): {
                 "values": get_combobox_values('MOT_PWM_TYPE'),
             },
             ('GNSS receiver', 'FC Connection', 'Type'): {
-                "values": serial_ports + can_ports,
+                "values": self.serial_ports + self.can_ports,
             },
             ('GNSS receiver', 'FC Connection', 'Protocol'): {
                 "values": get_combobox_values('GPS_TYPE'),
