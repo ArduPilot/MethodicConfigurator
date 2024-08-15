@@ -64,10 +64,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     for editing component configurations in the ArduPilot Methodic Configurator.
     """
     def __init__(self, version, local_filesystem: LocalFilesystem=None):
-        ComponentEditorWindowBase.__init__(self, version, local_filesystem)
         self.serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
         self.can_ports = ["CAN1", "CAN2"]
         self.i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
+        ComponentEditorWindowBase.__init__(self, version, local_filesystem)
 
     def update_json_data(self):
         super().update_json_data()
