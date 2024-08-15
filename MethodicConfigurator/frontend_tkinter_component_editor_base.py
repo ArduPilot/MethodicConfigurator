@@ -100,8 +100,6 @@ class ComponentEditorWindowBase(BaseWindow):
 
         self.update_json_data()
 
-        self.__populate_frames()
-
         save_frame = ttk.Frame(self.main_frame)
         save_frame.pack(side=tk.TOP, fill="x", expand=False)
         self.save_button = ttk.Button(save_frame, text="Save data and start configuration", command=self.save_data)
@@ -122,7 +120,7 @@ class ComponentEditorWindowBase(BaseWindow):
         entry.insert(0, value)
         entry.config(state="disabled")
 
-    def __populate_frames(self):
+    def populate_frames(self):
         """
         Populates the ScrollFrame with widgets based on the JSON data.
         """

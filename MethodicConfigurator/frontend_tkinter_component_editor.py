@@ -18,6 +18,7 @@ from logging import error as logging_error
 
 import tkinter as tk
 from tkinter import ttk
+from math import log2
 
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
@@ -58,6 +59,145 @@ class VoltageTooLowError(Exception):
 class VoltageTooHighError(Exception):
     """Raised when the voltage is above the maximum limit."""
 
+
+serial_protocols_dict = {
+    '-1': {'protocol': 'None', 'component': None},
+    '1': {'protocol': 'MAVLink1', 'component': 'Telemetry'},
+    '2': {'protocol': 'MAVLink2', 'component': 'Telemetry'},
+    '3': {'protocol': 'Frsky D', 'component': None},
+    '4': {'protocol': 'Frsky SPort', 'component': None},
+    '5': {'protocol': 'GPS', 'component': 'GNSS Receiver'},
+    '7': {'protocol': 'Alexmos Gimbal Serial', 'component': None},
+    '8': {'protocol': 'Gimbal', 'component': None},
+    '9': {'protocol': 'Rangefinder', 'component': None},
+    '10': {'protocol': 'FrSky SPort Passthrough (OpenTX)', 'component': None},
+    '11': {'protocol': 'Lidar360', 'component': None},
+    '13': {'protocol': 'Beacon', 'component': None},
+    '14': {'protocol': 'Volz servo out', 'component': None},
+    '15': {'protocol': 'SBus servo out', 'component': None},
+    '16': {'protocol': 'ESC Telemetry', 'component': None},
+    '17': {'protocol': 'Devo Telemetry', 'component': None},
+    '18': {'protocol': 'OpticalFlow', 'component': None},
+    '19': {'protocol': 'RobotisServo', 'component': None},
+    '20': {'protocol': 'NMEA Output', 'component': None},
+    '21': {'protocol': 'WindVane', 'component': None},
+    '22': {'protocol': 'SLCAN', 'component': None},
+    '23': {'protocol': 'RCIN', 'component': 'RC Receiver'},
+    '24': {'protocol': 'EFI Serial', 'component': None},
+    '25': {'protocol': 'LTM', 'component': None},
+    '26': {'protocol': 'RunCam', 'component': None},
+    '27': {'protocol': 'HottTelem', 'component': None},
+    '28': {'protocol': 'Scripting', 'component': None},
+    '29': {'protocol': 'Crossfire VTX', 'component': None},
+    '30': {'protocol': 'Generator', 'component': None},
+    '31': {'protocol': 'Winch', 'component': None},
+    '32': {'protocol': 'MSP', 'component': None},
+    '33': {'protocol': 'DJI FPV', 'component': None},
+    '34': {'protocol': 'AirSpeed', 'component': None},
+    '35': {'protocol': 'ADSB', 'component': None},
+    '36': {'protocol': 'AHRS', 'component': None},
+    '37': {'protocol': 'SmartAudio', 'component': None},
+    '38': {'protocol': 'FETtecOneWire', 'component': 'ESC'},
+    '39': {'protocol': 'Torqeedo', 'component': 'ESC'},
+    '40': {'protocol': 'AIS', 'component': None},
+    '41': {'protocol': 'CoDevESC', 'component': 'ESC'},
+    '42': {'protocol': 'DisplayPort', 'component': None},
+    '43': {'protocol': 'MAVLink High Latency', 'component': 'Telemetry'},
+    '44': {'protocol': 'IRC Tramp', 'component': None},
+    '45': {'protocol': 'DDS XRCE', 'component': None},
+    '46': {'protocol': 'IMUDATA', 'component': None},
+}
+
+
+batt_monitor_connection = {
+    '0': {'type': 'None', 'protocol': 'Disabled'},
+    '3': {'type': 'Analog', 'protocol': 'Analog Voltage Only'},
+    '4': {'type': 'Analog', 'protocol': 'Analog Voltage and Current'},
+    '5': {'type': 'i2c', 'protocol': 'Solo'},
+    '6': {'type': 'i2c', 'protocol': 'Bebop'},
+    '7': {'type': 'i2c', 'protocol': 'SMBus-Generic'},
+    '8': {'type': 'can', 'protocol': 'DroneCAN-BatteryInfo'},
+    '9': {'type': 'None', 'protocol': 'ESC'},
+    '10': {'type': 'None', 'protocol': 'Sum Of Selected Monitors'},
+    '11': {'type': 'i2c', 'protocol': 'FuelFlow'},
+    '12': {'type': 'pwm', 'protocol': 'FuelLevelPWM'},
+    '13': {'type': 'i2c', 'protocol': 'SMBUS-SUI3'},
+    '14': {'type': 'i2c', 'protocol': 'SMBUS-SUI6'},
+    '15': {'type': 'i2c', 'protocol': 'NeoDesign'},
+    '16': {'type': 'i2c', 'protocol': 'SMBus-Maxell'},
+    '17': {'type': 'i2c', 'protocol': 'Generator-Elec'},
+    '18': {'type': 'i2c', 'protocol': 'Generator-Fuel'},
+    '19': {'type': 'i2c', 'protocol': 'Rotoye'},
+    '20': {'type': 'i2c', 'protocol': 'MPPT'},
+    '21': {'type': 'i2c', 'protocol': 'INA2XX'},
+    '22': {'type': 'i2c', 'protocol': 'LTC2946'},
+    '23': {'type': 'None', 'protocol': 'Torqeedo'},
+    '24': {'type': 'Analog', 'protocol': 'FuelLevelAnalog'},
+    '25': {'type': 'Analog', 'protocol': 'Synthetic Current and Analog Voltage'},
+    '26': {'type': 'spi', 'protocol': 'INA239_SPI'},
+    '27': {'type': 'i2c', 'protocol': 'EFI'},
+    '28': {'type': 'i2c', 'protocol': 'AD7091R5'},
+    '29': {'type': 'None', 'protocol': 'Scripting'},
+}
+
+
+gnss_receiver_connection = {
+    '0': {'type': None, 'protocol': 'None'},
+    '1': {'type': 'serial', 'protocol': 'AUTO'},
+    '2': {'type': 'serial', 'protocol': 'uBlox'},
+    '5': {'type': 'serial', 'protocol': 'NMEA'},
+    '6': {'type': 'serial', 'protocol': 'SiRF'},
+    '7': {'type': 'serial', 'protocol': 'HIL'},
+    '8': {'type': 'serial', 'protocol': 'SwiftNav'},
+    '9': {'type': 'can', 'protocol': 'DroneCAN'},
+    '10': {'type': 'serial', 'protocol': 'SBF'},
+    '11': {'type': 'serial', 'protocol': 'GSOF'},
+    '13': {'type': 'serial', 'protocol': 'ERB'},
+    '14': {'type': 'serial', 'protocol': 'MAV'},
+    '15': {'type': 'serial', 'protocol': 'NOVA'},
+    '16': {'type': 'serial', 'protocol': 'HemisphereNMEA'},
+    '17': {'type': 'serial', 'protocol': 'uBlox-MovingBaseline-Base'},
+    '18': {'type': 'serial', 'protocol': 'uBlox-MovingBaseline-Rover'},
+    '19': {'type': 'serial', 'protocol': 'MSP'},
+    '20': {'type': 'serial', 'protocol': 'AllyStar'},
+    '21': {'type': 'serial', 'protocol': 'ExternalAHRS'},
+    '22': {'type': 'can', 'protocol': 'DroneCAN-MovingBaseline-Base'},
+    '23': {'type': 'can', 'protocol': 'DroneCAN-MovingBaseline-Rover'},
+    '24': {'type': 'serial', 'protocol': 'UnicoreNMEA'},
+    '25': {'type': 'serial', 'protocol': 'UnicoreMovingBaselineNMEA'},
+    '26': {'type': 'serial', 'protocol': 'SBF-DualAntenna'},
+}
+
+mot_pwm_type_dict = {
+    '0': {'type': 'Main Out', 'protocol': 'Normal', 'is_dshot': False},
+    '1': {'type': 'Main Out', 'protocol': 'OneShot', 'is_dshot': True},
+    '2': {'type': 'Main Out', 'protocol': 'OneShot125', 'is_dshot': True},
+    '3': {'type': 'Main Out', 'protocol': 'Brushed', 'is_dshot': False},
+    '4': {'type': 'Main Out', 'protocol': 'DShot150', 'is_dshot': True},
+    '5': {'type': 'Main Out', 'protocol': 'DShot300', 'is_dshot': True},
+    '6': {'type': 'Main Out', 'protocol': 'DShot600', 'is_dshot': True},
+    '7': {'type': 'Main Out', 'protocol': 'DShot1200', 'is_dshot': True},
+    '8': {'type': 'Main Out', 'protocol': 'PWMRange', 'is_dshot': False},
+}
+rc_protocols_dict = {
+    '0': {'type': 'RCin/SBUS', 'protocol': 'All'},
+    '1': {'type': 'RCin/SBUS', 'protocol': 'PPM'},
+    '2': {'type': 'RCin/SBUS', 'protocol': 'IBUS'},
+    '3': {'type': 'RCin/SBUS', 'protocol': 'SBUS'},
+    '4': {'type': 'RCin/SBUS', 'protocol': 'SBUS_NI'},
+    '5': {'type': 'RCin/SBUS', 'protocol': 'DSM'},
+    '6': {'type': 'RCin/SBUS', 'protocol': 'SUMD'},
+    '7': {'type': 'RCin/SBUS', 'protocol': 'SRXL'},
+    '8': {'type': 'RCin/SBUS', 'protocol': 'SRXL2'},
+    '9': {'type': 'RCin/SBUS', 'protocol': 'CRSF'},
+    '10': {'type': 'RCin/SBUS', 'protocol': 'ST24'},
+    '11': {'type': 'RCin/SBUS', 'protocol': 'FPORT'},
+    '12': {'type': 'RCin/SBUS', 'protocol': 'FPORT2'},
+    '13': {'type': 'RCin/SBUS', 'protocol': 'FastSBUS'},
+    '14': {'type': 'can', 'protocol': 'DroneCAN'},
+    '15': {'type': 'RCin/SBUS', 'protocol': 'Ghost'},
+}
+
 class ComponentEditorWindow(ComponentEditorWindowBase):
     """
     This class validates the user input and handles user interactions
@@ -69,7 +209,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         self.i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
         ComponentEditorWindowBase.__init__(self, version, local_filesystem)
 
-    def update_json_data(self):  # pylint: disable=too-many-branches, too-many-statements
+    def update_json_data(self):
         super().update_json_data()
         # To update old JSON files that do not have these new fields
         if 'Components' not in self.data:
@@ -115,96 +255,163 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     @staticmethod
     def reverse_key_search(doc: dict, param_name: str, values: list, fallbacks: list) -> list:
         retv = [int(key) for key, value in doc[param_name]["values"].items() if value in values]
+        if len(values) != len(fallbacks):
+            logging_error("Length of values %u and fallbacks %u differ for %s", len(values), len(fallbacks), param_name)
         if retv:
             return retv
         logging_error("No values found for %s in the metadata", param_name)
         return fallbacks
 
+    def assert_dict_is_uptodate(self, doc: dict, dict_to_check: dict, doc_key: str, doc_dict: str):
+        """ Asserts that the given dictionary is up-to-date with the apm.pdef.xml documentation metadata. """
+        if doc and doc_key in doc and doc[doc_key] and doc_dict in doc[doc_key]:
+            for key, doc_protocol in doc[doc_key][doc_dict].items():
+                if key in dict_to_check:
+                    code_protocol = dict_to_check[key].get('protocol', None)
+                    if code_protocol != doc_protocol:
+                        logging_error("Protocol %s does not match %s in %s metadata", code_protocol, doc_protocol, doc_key)
+                else:
+                    logging_error("Protocol %s not found in %s metadata", doc_protocol, doc_key)
+
     def set_values_from_fc_parameters(self, fc_parameters: dict, doc: dict):
-        self.set_protocol_and_connection_from_fc_parameters(fc_parameters, doc)
-        self.set_motor_poles_from_fc_parameters(fc_parameters, doc)
+        self.assert_dict_is_uptodate(doc, serial_protocols_dict, 'SERIAL1_PROTOCOL', 'values')
+        self.assert_dict_is_uptodate(doc, batt_monitor_connection, 'BATT_MONITOR', 'values')
+        self.assert_dict_is_uptodate(doc, gnss_receiver_connection, 'GPS_TYPE', 'values')
+        self.assert_dict_is_uptodate(doc, mot_pwm_type_dict, 'MOT_PWM_TYPE', 'values')
+        self.assert_dict_is_uptodate(doc, rc_protocols_dict, 'RC_PROTOCOLS', 'Bitmask')
 
-    def set_protocol_and_connection_from_fc_parameters(self, fc_parameters: dict, doc: dict):
-        rc_receiver_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["RCIN"], [23])
-        telemetry_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL",
-                                                      ["MAVLink1", "MAVLink2", "MAVLink High Latency"], [1, 2, 43])
-        gnss_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL", ["GPS"], [5])
-        esc_protocols = self.reverse_key_search(doc, "SERIAL1_PROTOCOL",
-                                                ["ESC Telemetry", "FETtecOneWire", "Torqeedo", "CoDevESC"],
-                                                [16, 38, 39, 41])
-        for serial in self.serial_ports:
-            if serial + "_PROTOCOL" in fc_parameters:
-                serial_protocol = fc_parameters[serial + "_PROTOCOL"]
-                try:
-                    serial_protocol = int(serial_protocol)
-                except ValueError:
-                    logging_error("Invalid non-integer value for %s_PROTOCOL %f", serial, serial_protocol)
-                    serial_protocol = 0
-                if serial_protocol in rc_receiver_protocols:
-                    self.data['Components']['RC Receiver']['FC Connection']['Type'] = serial
-                    #self.data['Components']['RC Receiver']['FC Connection']['Protocol'] = \
-                    # doc['RC_PROTOCOLS']['values'][fc_parameters['RC_PROTOCOLS']] this is a Bitmask and not a value
-                elif serial_protocol in telemetry_protocols:
-                    self.data['Components']['Telemetry']['FC Connection']['Type'] = serial
-                    self.data['Components']['Telemetry']['FC Connection']['Protocol'] = \
-                        doc[serial + "_PROTOCOL"]['values'][str(serial_protocol)]
-                elif serial_protocol in gnss_protocols:
-                    self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = serial
-                    gps_type = fc_parameters['GPS_TYPE'] if "GPS_TYPE" in fc_parameters else 0
-                    try:
-                        gps_type = int(gps_type)
-                    except ValueError:
-                        logging_error("Invalid non-integer value for GPS_TYPE %f", gps_type)
-                        gps_type = 0
-                    self.data['Components']['GNSS Receiver']['FC Connection']['Protocol'] = \
-                        doc['GPS_TYPE']['values'][str(gps_type)]
-                elif serial_protocol in esc_protocols:
-                    self.data['Components']['ESC']['FC Connection']['Type'] = serial
-                    mot_pwm_type = fc_parameters['MOT_PWM_TYPE'] if "MOT_PWM_TYPE" in fc_parameters else 0
-                    try:
-                        mot_pwm_type = int(mot_pwm_type)
-                    except ValueError:
-                        logging_error("Invalid non-integer value for MOT_PWM_TYPE %f", mot_pwm_type)
-                        mot_pwm_type = 0
-                    self.data['Components']['ESC']['FC Connection']['Protocol'] = \
-                        doc['MOT_PWM_TYPE']['values'][str(mot_pwm_type)]
-        if "BATT_MONITOR" in fc_parameters and "BATT_MONITOR" in doc:
-            batt_monitor = int(fc_parameters["BATT_MONITOR"])
-            analog = [int(key) for key, value in doc["BATT_MONITOR"]["values"].items() \
-                      if value in ['Analog Voltage Only', 'Analog Voltage and Current']]
-            if batt_monitor in analog:
-                self.data['Components']['Battery Monitor']['FC Connection']['Type'] = "Analog"
-            self.data['Components']['Battery Monitor']['FC Connection']['Protocol'] = \
-                doc['BATT_MONITOR']['values'][str(batt_monitor)]
+        self.set_gnss_type_and_protocol_from_fc_parameters(fc_parameters)
+        self.set_serial_type_and_protocol_from_fc_parameters(fc_parameters, doc)
+        self.set_battery_type_and_protocol_from_fc_parameters(fc_parameters)
+        self.set_motor_poles_from_fc_parameters(fc_parameters)
 
-    def set_motor_poles_from_fc_parameters(self, fc_parameters: dict, doc: dict):
-        dshot_protocols = self.reverse_key_search(doc, "MOT_PWM_TYPE",
-                                                  ["OneShot", "OneShot125", "DShot150", "DShot300", "DShot600", "DShot1200"],
-                                                  [1, 2, 4, 5, 6, 7])
-        if "MOT_PWM_TYPE" in fc_parameters and fc_parameters["MOT_PWM_TYPE"] in dshot_protocols:
-            if "SERVO_BLH_POLES" in fc_parameters:
-                self.data['Components']['Motors']['Specifications']['Poles'] = fc_parameters["SERVO_BLH_POLES"]
+    def set_gnss_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
+        gps1_type = fc_parameters['GPS_TYPE'] if "GPS_TYPE" in fc_parameters else 0
+        try:
+            gps1_type = int(gps1_type)
+        except ValueError:
+            logging_error("Invalid non-integer value for GPS_TYPE %f", gps1_type)
+            gps1_type = 0
+        if str(gps1_type) in gnss_receiver_connection:
+            gps1_connection_type = gnss_receiver_connection[str(gps1_type)].get('type')
+            gps1_connection_protocol = gnss_receiver_connection[str(gps1_type)].get('protocol')
+            if gps1_connection_type is None:
+                self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = "None"
+                self.data['Components']['GNSS Receiver']['FC Connection']['Protocol'] = "None"
+            elif gps1_connection_type == 'serial':
+                # GNSS connection type will be detected later in set_protocol_and_connection_from_fc_parameters()
+                self.data['Components']['GNSS Receiver']['FC Connection']['Protocol'] = gps1_connection_protocol
+            elif gps1_connection_type == 'can':
+                if 'CAN_D1_PROTOCOL' in fc_parameters and fc_parameters['CAN_D1_PROTOCOL'] == 1 and \
+                'CAN_P1_DRIVER' in fc_parameters and fc_parameters['CAN_P1_DRIVER'] == 1:
+                    self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = "CAN1"
+                elif 'CAN_D2_PROTOCOL' in fc_parameters and fc_parameters['CAN_D2_PROTOCOL'] == 1 and \
+                    'CAN_P2_DRIVER' in fc_parameters and fc_parameters['CAN_P2_DRIVER'] == 2:
+                    self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = "CAN2"
+                else:
+                    logging_error("Invalid CAN_Dx_PROTOCOL %s and CAN_Px_DRIVER %s for GNSS Receiver",
+                                  fc_parameters.get('CAN_D1_PROTOCOL'), fc_parameters.get('CAN_P1_DRIVER'))
+                    self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = "None"
+                self.data['Components']['GNSS Receiver']['FC Connection']['Protocol'] = gps1_connection_protocol
+            else:
+                logging_error("Invalid GNSS connection type %s", gps1_connection_type)
+                self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = "None"
         else:
-            if "SERVO_FTW_MASK" in fc_parameters and fc_parameters["SERVO_FTW_MASK"] and "SERVO_FTW_POLES" in fc_parameters:
+            logging_error("GPS_TYPE %u not in gnss_receiver_connection", gps1_type)
+            self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = "None"
+
+    def set_serial_type_and_protocol_from_fc_parameters(self, fc_parameters: dict, doc: dict):
+        if 'RC_PROTOCOLS' in fc_parameters:
+            rc_protocols_nr = int(fc_parameters['RC_PROTOCOLS'])
+            # check if rc_protocols_nr is a power of two (only one bit set)
+            if rc_protocols_nr & (rc_protocols_nr - 1) == 0:
+                # rc_bit is the number of the bit that is set
+                rc_bit = str(int(log2(rc_protocols_nr)))
+                protocol = rc_protocols_dict[rc_bit].get('protocol')
+                self.data['Components']['RC Receiver']['FC Connection']['Protocol'] = protocol
+
+        rc = 1
+        telem = 1
+        gnss = 1
+        esc = 1
+        for serial in self.serial_ports:
+            if serial + "_PROTOCOL" not in fc_parameters:
+                continue
+            serial_protocol_nr = fc_parameters[serial + "_PROTOCOL"]
+            try:
+                serial_protocol_nr = int(serial_protocol_nr)
+            except ValueError:
+                logging_error("Invalid non-integer value for %s_PROTOCOL %f", serial, serial_protocol_nr)
+                serial_protocol_nr = 0
+            component = serial_protocols_dict[str(serial_protocol_nr)].get('component')
+            protocol = serial_protocols_dict[str(serial_protocol_nr)].get('protocol')
+            if component is None:
+                continue
+            if component == 'RC Receiver' and rc == 1:
+                self.data['Components'][component]['FC Connection']['Type'] = serial # only one RC supported
+                rc += 1
+            elif component == 'Telemetry' and telem == 1:
+                self.data['Components'][component]['FC Connection']['Type'] = serial  # only one telemetry supported
+                self.data['Components'][component]['FC Connection']['Protocol'] = protocol
+                telem += 1
+            elif component == 'GNSS Receiver' and gnss == 1:
+                self.data['Components'][component]['FC Connection']['Type'] = serial # only one GNSS supported
+                gnss += 1
+            elif component == 'ESC' and esc == 1:
+                self.data['Components'][component]['FC Connection']['Type'] = serial # only one ESC supported
+                self.data['Components'][component]['FC Connection']['Protocol'] = protocol
+                esc += 1
+
+        mot_pwm_type = fc_parameters['MOT_PWM_TYPE'] if "MOT_PWM_TYPE" in fc_parameters else 0
+        try:
+            mot_pwm_type = int(mot_pwm_type)
+        except ValueError:
+            logging_error("Invalid non-integer value for MOT_PWM_TYPE %f", mot_pwm_type)
+            mot_pwm_type = 0
+        if esc == 1:
+            self.data['Components']['ESC']['FC Connection']['Protocol'] = \
+                doc['MOT_PWM_TYPE']['values'][str(mot_pwm_type)]
+
+    def set_battery_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
+        if "BATT_MONITOR" in fc_parameters:
+            batt_monitor = int(fc_parameters["BATT_MONITOR"])
+            self.data['Components']['Battery Monitor']['FC Connection']['Type'] = \
+                batt_monitor_connection[str(batt_monitor)].get('type')
+            self.data['Components']['Battery Monitor']['FC Connection']['Protocol'] = \
+                batt_monitor_connection[str(batt_monitor)].get('protocol')
+
+    def set_motor_poles_from_fc_parameters(self, fc_parameters: dict):
+        if "MOT_PWM_TYPE" in fc_parameters:
+            mot_pwm_type_str = str(fc_parameters["MOT_PWM_TYPE"])
+            if mot_pwm_type_str in mot_pwm_type_dict and mot_pwm_type_dict[mot_pwm_type_str].get('is_dshot', False):
+                if "SERVO_BLH_POLES" in fc_parameters:
+                    self.data['Components']['Motors']['Specifications']['Poles'] = fc_parameters["SERVO_BLH_POLES"]
+            elif "SERVO_FTW_MASK" in fc_parameters and fc_parameters["SERVO_FTW_MASK"] and "SERVO_FTW_POLES" in fc_parameters:
                 self.data['Components']['Motors']['Specifications']['Poles'] = fc_parameters["SERVO_FTW_POLES"]
 
-    def add_entry_or_combobox(self, value, entry_frame, path):
+    def update_esc_protocol_combobox_entries(self, esc_connection_type):
+        """ Updates the ESC Protocol combobox entries based on the selected ESC Type."""
+        if len(esc_connection_type) > 3 and esc_connection_type[:3] == 'CAN':
+            protocols = ['DroneCAN']
+        elif len(esc_connection_type) > 6 and esc_connection_type[:6] == 'SERIAL':
+            protocols = [value['protocol'] for value in serial_protocols_dict.values() if value['component'] == 'ESC']
+        else:
+            protocols = list(self.local_filesystem.doc_dict['MOT_PWM_TYPE']["values"].values())
 
+        protocol_path = ('ESC', 'FC Connection', 'Protocol')
+        if protocol_path in self.entry_widgets:
+            protocol_combobox = self.entry_widgets[protocol_path]
+            protocol_combobox['values'] = protocols  # Update the combobox entries
+            protocol_combobox.set(protocols[0] if protocols else '')
+            protocol_combobox.update_idletasks() # re-draw the combobox ASAP
+
+    def add_entry_or_combobox(self, value, entry_frame, path):
         # Default values for comboboxes in case the apm.pdef.xml metadata is not available
         fallbacks = {
-            'RC_PROTOCOLS': ["All", "PPM", "IBUS", "SBUS", "SBUS_NI", "DSM", "SUMD", "SRXL", "SRXL2",
-                             "CRSF", "ST24", "FPORT", "FPORT2", "FastSBUS", "DroneCAN", "Ghost", "MAVRadio"],
-            'BATT_MONITOR': ['Analog Voltage Only', 'Analog Voltage and Current', 'Solo', 'Bebop', 'SMBus-Generic',
-                             'DroneCAN-BatteryInfo', 'ESC', 'Sum Of Selected Monitors', 'FuelFlow', 'FuelLevelPWM',
-                             'SMBUS-SUI3', 'SMBUS-SUI6', 'NeoDesign', 'SMBus-Maxell', 'Generator-Elec', 'Generator-Fuel',
-                             'Rotoye', 'MPPT', 'INA2XX', 'LTC2946', 'Torqeedo', 'FuelLevelAnalog',
-                             'Synthetic Current and Analog Voltage', 'INA239_SPI', 'EFI', 'AD7091R5', 'Scripting'],
-            'MOT_PWM_TYPE': ['Normal', 'OneShot', 'OneShot125', 'Brushed', 'DShot150', 'DShot300', 'DShot600',
-                             'DShot1200', 'PWMRange', 'PWMAngle'],
-            'GPS_TYPE': ['Auto', 'uBlox', 'NMEA', 'SiRF', 'HIL', 'SwiftNav', 'DroneCAN', 'SBF', 'GSOF', 'ERB',
-                         'MAV', 'NOVA', 'HemisphereNMEA', 'uBlox-MovingBaseline-Base', 'uBlox-MovingBaseline-Rover',
-                         'MSP', 'AllyStar', 'ExternalAHRS', 'Unicore', 'DroneCAN-MovingBaseline-Base',
-                         'DroneCAN-MovingBaseline-Rover', 'UnicoreNMEA', 'UnicoreMovingBaselineNMEA', 'SBF-DualAntenna'],
+            'RC_PROTOCOLS': [value['protocol'] for value in rc_protocols_dict.values()],
+            'BATT_MONITOR': [value['protocol'] for value in batt_monitor_connection.values()],
+            'MOT_PWM_TYPE': [value['protocol'] for value in mot_pwm_type_dict.values()],
+            'GPS_TYPE': [value['protocol'] for value in gnss_receiver_connection.values()],
         }
         def get_combobox_values(param_name: str) -> list:
             param_metadata = self.local_filesystem.doc_dict
@@ -236,7 +443,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 "values": ["MAVLink1", "MAVLink2", "MAVLink High Latency"],
             },
             ('Battery Monitor', 'FC Connection', 'Type'): {
-                "values": ['Analog'] + self.i2c_ports + self.serial_ports + self.can_ports,
+                "values": ['None', 'Analog', 'SPI', 'PWM'] + self.i2c_ports + self.serial_ports + self.can_ports,
             },
             ('Battery Monitor', 'FC Connection', 'Protocol'): {
                 "values": get_combobox_values('BATT_MONITOR'),
@@ -245,10 +452,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 "values": ['Main Out', 'AIO'] + self.serial_ports + self.can_ports,
             },
             ('ESC', 'FC Connection', 'Protocol'): {
-                "values": get_combobox_values('MOT_PWM_TYPE')# + ['FETtecOneWire', 'Torqeedo', 'CoDevESC'],
+                "values": get_combobox_values('MOT_PWM_TYPE')
             },
             ('GNSS Receiver', 'FC Connection', 'Type'): {
-                "values": self.serial_ports + self.can_ports,
+                "values": ['None'] + self.serial_ports + self.can_ports,
             },
             ('GNSS Receiver', 'FC Connection', 'Protocol'): {
                 "values": get_combobox_values('GPS_TYPE'),
@@ -262,6 +469,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             cb = ttk.Combobox(entry_frame, values=config["values"])
             cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
             cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))
+
+            if path == ('ESC', 'FC Connection', 'Type'):  #  immediate update of ESC Protocol upon ESC Type selection
+                cb.bind("<<ComboboxSelected>>", lambda event, path=path: self.update_esc_protocol_combobox_entries(cb.get()))
+
             cb.set(value)
             return cb
 
@@ -319,6 +530,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                                    f"Allowed values are: {', '.join(allowed_values)}")
             combobox.configure(style="comb_input_invalid.TCombobox")
             return False
+
+        if path == ('ESC', 'FC Connection', 'Type'):
+            self.update_esc_protocol_combobox_entries(value)
+
         combobox.configure(style="comb_input_valid.TCombobox")
         return True
 
