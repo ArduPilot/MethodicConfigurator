@@ -275,9 +275,15 @@ GNSS receivers very often contain a magnetometer (compass) sensor. So they need 
 
 Repeat the steps from section 2.5.1 to edit and upload the `10_gnss.param` file
 
+## 2.12 Initial attitude PID gains (vehicle size dependent)
+
+Propeller size has a big influence on the vehicle dynamics, this adapts controller response to it.
+
+Repeat the steps from section 2.5.1 to edit and upload the `11_initial_atc.param` file
+
 When asked *Should the FC values now be copied to the 12_mp_setup_mandatory_hardware.param file?* select `No` and close the *ArduPilot Methodic Configurator* software.
 
-## 2.12 Configure "Mandatory Hardware" Parameters
+## 2.13 Configure "Mandatory Hardware" Parameters
 
 Open Mission Planner, connect to the flight controller and select `SETUP >> Mandatory Hardware` and work yourself through all the submenus as described below. **DO NOT SKIP ANY STEP**.
 
@@ -354,7 +360,7 @@ The changes you did in the steps above have been stored in your vehicle.
 Most of the changed parameters are vehicle-instance specific and can not be reused between two vehicles, no matter how similar they are.
 Close Mission Planner.
 
-## 2.13 General configuration
+## 2.14 General configuration
 
 Now do some general configuration
 
@@ -366,7 +372,7 @@ Now do some general configuration
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
 1. Press `Upload selected params to FC, and advance to next file` button.
 
-## 2.14 ArduPilot Hardware Report
+## 2.15 ArduPilot Hardware Report
 
 For this test, you need to:
 
@@ -378,7 +384,7 @@ If it doesn't, go back and perform the missing calibration(s).
 
 ![Hardware-Report after IMU temperature compensation](images/blog/hardware_report_tempcal.png)
 
-## 2.15 Configure Logging
+## 2.16 Configure Logging
 
 ![MP LOG_BITMASK parameter](images/blog/mp_logging_bitmask.png)
 
@@ -500,7 +506,7 @@ The table below explains which bit is responsible for which `.bin` dataflash log
 <tr><td>WINC</td><td>Winch</td><td>10Hz</td><td>Any</td><td>any</td><td>any</td></tr>
 </table>
 
-## 2.16 Motor/Propeller order and direction test
+## 2.17 Motor/Propeller order and direction test
 
 Start by [checking the motor numbering with the Mission Planner Motor test](https://ardupilot.org/copter/docs/connect-escs-and-motors.html#checking-the-motor-numbering-with-the-mission-planner-motor-test) without propellers. Remember the **correct order is A, B, C, D** and not 1, 2, 3, 4.
 
@@ -548,20 +554,20 @@ We imported the data into the spreadsheet and created this graph:
 
 Repeat the steps from section 2.5.1 to edit and upload the `15_motor.param` file
 
-## 2.17 Optional PID adjustment
+## 2.18 Optional PID adjustment
 
 If you have a very small, or a very large vehicle that requires non-default PID values for a safe flight.
 Usually, smaller vehicles require lower than default PID rate values. Larger vehicles usually require higher than default PID rate values.
 
 Repeat the steps from section 2.5.1 to edit and upload the `16_pid_adjustment.param` file
 
-## 2.18 Remote ID (aka Drone ID)
+## 2.19 Remote ID (aka Drone ID)
 
 Read and follow [ArduPilot's Remote ID setup instructions](https://ardupilot.org/copter/docs/common-remoteid.html). You might have to [build OpenDroneID firmware for production](https://ardupilot.org/dev/docs/opendroneid.html).
 
 Repeat the steps from section 2.5.1 to edit and upload the `17_remote_id.param` file
 
-## 2.19 Notch filters setup
+## 2.20 Notch filters setup
 
 Configure the gyro noise reduction notch filters with an estimation of the operation parameters.
 The estimation will be improved after the first flight.

@@ -47,27 +47,27 @@ Assemble and connect all components. Make sure you [follow best practices](BLOG.
 
 Again using the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template) perform the following steps:
 
-- [04_board_orientation.param](BLOG.md#23-configure-flight-controller-orientation) flight controller orientation
-- [05_remote_controller.param](BLOG.md#24-configure-the-rc-receiver) remote controller connections and protocol
-- [06_telemetry.param](BLOG.md#25-configure-telemetry) telemetry transceiver connections and protocol (optional)
-- [07_esc.param](BLOG.md#26-configure-the-esc) Electronic-Speed-Controller connections and protocol
-- [08_batt1.param](BLOG.md#27-configure-the-primary-battery-monitor) Battery health and state of charge monitoring
-- [10_gnss.param](BLOG.md#29-configure-the-gnss-receivers) GNSS receiver connection and protocol
-- [11_initial_atc.param](BLOG.md#29-configure-the-gnss-receivers) initial attitude PID gains (vehicle size dependent)
+- [04_board_orientation.param](BLOG.md#25-configure-flight-controller-orientation) flight controller orientation
+- [05_remote_controller.param](BLOG.md#26-configure-the-rc-receiver) remote controller connections and protocol
+- [06_telemetry.param](BLOG.md#27-configure-telemetry) telemetry transceiver connections and protocol (optional)
+- [07_esc.param](BLOG.md#28-configure-the-esc) Electronic-Speed-Controller connections and protocol
+- [08_batt1.param](BLOG.md#29-configure-the-primary-battery-monitor) Battery health and state of charge monitoring
+- [10_gnss.param](BLOG.md#211-configure-the-gnss-receivers) GNSS receiver connection and protocol
+- [11_initial_atc.param](BLOG.md#212-initial-attitude-pid-gains-vehicle-size-dependent) initial attitude PID gains (vehicle size dependent)
 
 Now use [Mission Planner](https://firmware.ardupilot.org/Tools/MissionPlanner/) to do:
 
-- [12_mp_setup_mandatory_hardware.param](BLOG.md#210-configure-mandatory-hardware-parameters) calibrate vehicle sensors
+- [12_mp_setup_mandatory_hardware.param](BLOG.md#213-configure-mandatory-hardware-parameters) calibrate vehicle sensors
 
 And continue with the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template):
 
-- [13_general_configuration.param](BLOG.md#211-general-configuration) general misc configuration
-- [Test if the hardware diagnostics are OK](BLOG.md#212-ardupilot-hardware-report)
-- [14_logging.param](BLOG.md#213-configure-logging) configure Dataflash/SDCard logging (black box data)
-- [15_motor.param](BLOG.md#214-motorpropeller-order-and-direction-test) motor order and direction tests. ESC linearization.
-- [16_pid_adjustment.parm](BLOG.md#215-optional-pid-adjustment) attitude PID gains (vehicle size dependent)
-- [17_remote_id.param](BLOG.md#216-remote-id-aka-drone-id) required by law in many countries
-- [18_notch_filter_setup.param](BLOG.md#217-notch-filters-setup) to remove motor noise, reduce power consumption and increase flight stability
+- [13_general_configuration.param](BLOG.md#214-general-configuration) general misc configuration
+- [Test if the hardware diagnostics are OK](BLOG.md#215-ardupilot-hardware-report)
+- [14_logging.param](BLOG.md#216-configure-logging) configure Dataflash/SDCard logging (black box data)
+- [15_motor.param](BLOG.md#217-motorpropeller-order-and-direction-test) motor order and direction tests. ESC linearization.
+- [16_pid_adjustment.parm](BLOG.md#218-optional-pid-adjustment) attitude PID gains (vehicle size dependent)
+- [17_remote_id.param](BLOG.md#219-remote-id-aka-drone-id) required by law in many countries
+- [18_notch_filter_setup.param](BLOG.md#220-notch-filters-setup) to remove motor noise, reduce power consumption and increase flight stability
 
 ### 1.7 Assemble propellers and perform the first flight
 
@@ -81,7 +81,7 @@ These are the very minimum tuning steps required for a stable flight:
 - [19_notch_filter_results.param](BLOG.md#31-notch-filter-calibration) use the webtool information to configure the notch filter(s)
 - [20_throttle_controller.param](BLOG.md#32-configure-the-throttle-controller) the altitude controller depends on the power-to-thrust ratio found in the first flight
 - [21_ekf_config.param](BLOG.md#32-configure-the-throttle-controller) sometimes the EKF3 needs a tune to maintain altitude
-- [22_quick_tune_setup.param]() and [23_quick_tune_results.param]() You need lua scripting support to do this if not available you can tune manually.
+- [22_quick_tune_setup.param](BLOG.md#4-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune) and [23_quick_tune_results.param](BLOG.md#4-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune) You need lua scripting support to do this if not available you can tune manually.
 
 That is it, if you are impatient and do not want an optimized vehicle you can skip to [everyday use](#113-everyday-use).
 
@@ -89,36 +89,36 @@ That is it, if you are impatient and do not want an optimized vehicle you can sk
 
 These are the standard tuning steps required for an optimized flight:
 
-- [24_inflight_magnetometer_fit_setup.param](BLOG.md#4-second-flight-magfit) Use lua scripted flight path or fly manually and  [25_inflight_magnetometer_fit_results.param](BLOG.md#4-second-flight-magfit) Use the [magfit webtool](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) to calculate a file that the ardupilot methodic configurator can use
-- [26_quick_tune_setup.param]() and [27_quick_tune_results.param]() Redo quick-tune now that the compass magnetic interference is fully calibrated
-- [28_evaluate_the_aircraft_tune_ff_disable.param](BLOG.md#5-third-flight-evaluate-the-aircraft-tune---part-1) and [29_evaluate_the_aircraft_tune_ff_enable.param](BLOG.md#6-fourth-flight-evaluate-the-aircraft-tune---part-2)
-- [30_autotune_roll_setup.param](BLOG.md#7-autotune-flights) and [31_autotune_roll_results.param](BLOG.md#7-autotune-flights) tune roll axis rate and angle PIDs
-- [32_autotune_pitch_setup.param](BLOG.md#7-autotune-flights) and [33_autotune_pitch_results.param](BLOG.md#7-autotune-flights) tune pitch axis rate and angle PIDs
-- [34_autotune_yaw_setup.param](BLOG.md#7-autotune-flights) and [35_autotune_yaw_results.param](BLOG.md#7-autotune-flights) tune yaw axis rate and angle PIDs
-- [36_autotune_yawd_setup.param](BLOG.md#7-autotune-flights) and [37_autotune_yawd_results.param](BLOG.md#7-autotune-flights) tune yawd axis rate and angle PIDs
-- [38_autotune_roll_pitch_retune_setup.param](BLOG.md#7-autotune-flights) and [39_autotune_roll_pitch_retune_results.param](BLOG.md#7-autotune-flights) re-tune roll and pitch pitch axis rate and angle PIDs
+- [24_inflight_magnetometer_fit_setup.param](BLOG.md#5-third-flight-magfit) Use lua scripted flight path or fly manually and  [25_inflight_magnetometer_fit_results.param](BLOG.md#5-third-flight-magfit) Use the [magfit webtool](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) to calculate a file that the ardupilot methodic configurator can use
+- [26_quick_tune_setup.param](BLOG.md#6-fourth-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune-optional) and [27_quick_tune_results.param](BLOG.md#6-fourth-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune-optional) Redo quick-tune now that the compass magnetic interference is fully calibrated
+- [28_evaluate_the_aircraft_tune_ff_disable.param](BLOG.md#7-fifth-flight-evaluate-the-aircraft-tune---part-1) and [29_evaluate_the_aircraft_tune_ff_enable.param](BLOG.md#8-sixth-flight-evaluate-the-aircraft-tune---part-2)
+- [30_autotune_roll_setup.param](BLOG.md#9-autotune-flights) and [31_autotune_roll_results.param](BLOG.md#9-autotune-flights) tune roll axis rate and angle PIDs
+- [32_autotune_pitch_setup.param](BLOG.md#9-autotune-flights) and [33_autotune_pitch_results.param](BLOG.md#9-autotune-flights) tune pitch axis rate and angle PIDs
+- [34_autotune_yaw_setup.param](BLOG.md#9-autotune-flights) and [35_autotune_yaw_results.param](BLOG.md#9-autotune-flights) tune yaw axis rate and angle PIDs
+- [36_autotune_yawd_setup.param](BLOG.md#9-autotune-flights) and [37_autotune_yawd_results.param](BLOG.md#9-autotune-flights) tune yawd axis rate and angle PIDs
+- [38_autotune_roll_pitch_retune_setup.param](BLOG.md#9-autotune-flights) and [39_autotune_roll_pitch_retune_results.param](BLOG.md#9-autotune-flights) re-tune roll and pitch pitch axis rate and angle PIDs
 
 Now the standard tuning is complete you can skip to [everyday use](#113-everyday-use)
 
 ### 1.10 Improve altitude under windy conditions (optional)
 
-- [40_windspeed_estimation.param](BLOG.md#9-windspeed-estimation-flights) estimates the wind speed
-- [41_barometer_compensation.param](BLOG.md#10-baro-compensation-flights) Uses the estimated wind speed to improve altitude stability
+- [40_windspeed_estimation.param](BLOG.md#11-windspeed-estimation-flights) estimates the wind speed
+- [41_barometer_compensation.param](BLOG.md#12-baro-compensation-flights) Uses the estimated wind speed to improve altitude stability
 
 ### 1.11 System identification for analytical PID optimization (optional)
 
-- [42_system_id_roll.param, 43_system_id_pitch.param, 44_system_id_yaw.param](BLOG.md#11-system-identification-flights)
-- [46_analytical_pid_optimization.param](BLOG.md#11-system-identification-flights)
+- [42_system_id_roll.param, 43_system_id_pitch.param, 44_system_id_yaw.param](BLOG.md#13-system-identification-flights)
+- [46_analytical_pid_optimization.param](BLOG.md#13-system-identification-flights)
 
 ### 1.12 Position controller tuning (optional)
 
-- [47_position_controller.param, 48_guided_operation.param, 49_precision_land.param](BLOG.md#13-position-controller)
+- [47_position_controller.param, 48_guided_operation.param, 49_precision_land.param](BLOG.md#14-position-controller)
 
 ### 1.13 Everyday use
 
 Now that tuning and configuration are done, some logging and tests can be disabled and some more safety features enabled:
 
-- [50_everyday_use.param](BLOG.md#12-productive-configuration)
+- [50_everyday_use.param](BLOG.md#17-productive-configuration)
 
 Enjoy your properly configured vehicle.
 
