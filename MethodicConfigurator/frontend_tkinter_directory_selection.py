@@ -177,14 +177,15 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
                 messagebox.showerror("Fatal error reading parameter files", f"{exp}")
                 raise
 
-            files = list(self.local_filesystem.file_parameters.keys())
-            if files:
-                LocalFilesystem.store_recently_used_vehicle_dir(self.directory)
-                if self.destroy_parent_on_open:
-                    self.parent.root.destroy()
-            else:
-                # No files were found in the selected directory
-                show_no_param_files_error(self.directory)
+            if self.local_filesystem.file_parameters:
+                files = list(self.local_filesystem.file_parameters.keys())
+                if files:
+                    LocalFilesystem.store_recently_used_vehicle_dir(self.directory)
+                    if self.destroy_parent_on_open:
+                        self.parent.root.destroy()
+                    return
+            # No files were found in the selected directory
+            show_no_param_files_error(self.directory)
 
 
 class VehicleDirectorySelectionWindow(BaseWindow):
