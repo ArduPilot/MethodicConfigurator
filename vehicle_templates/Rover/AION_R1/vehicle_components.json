@@ -162,7 +162,7 @@
             },
             "Notes": "Not applicable"
         },
-        "GNSS receiver": {
+        "GNSS Receiver": {
             "Product": {
                 "Manufacturer": "CubePilot",
                 "Model": "Here4",
