@@ -86,6 +86,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if 'TOW max Kg' not in self.data['Components']['Frame']['Specifications']:
             self.data['Components']['Frame']['Specifications']['TOW max Kg'] = 1
 
+        self.data['Program version'] = VERSION
+
     def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
         self._set_component_value_and_update_ui(('Flight Controller', 'Firmware', 'Type'), vehicle_type)
         if version:
