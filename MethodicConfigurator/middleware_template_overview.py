@@ -14,7 +14,7 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
 
     This class encapsulates the data and attributes associated with a specific vehicle template configuration.
     It is designed to hold information about various components of a drone, such as the flight controller, telemetry system,
-    ESCs, propellers, and GNSS receiver, along with their specifications. The class facilitates easy access to these
+    ESCs, propellers, and GNSS Receiver, along with their specifications. The class facilitates easy access to these
     attributes, enabling the GUI to display and select the templates in a structured format.
     """
     def __init__(self, components_data: dict):
@@ -26,8 +26,8 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
         self.rc_protocol = components_data.get('RC Receiver', {}).get('FC Connection', {}).get('Protocol', '')
         self.telemetry_model = components_data.get('Telemetry', {}).get('Product', {}).get('Model', '')
         self.esc_protocol = components_data.get('ESC', {}).get('FC Connection', {}).get('Protocol', '')
-        self.gnss_model = components_data.get('GNSS receiver', {}).get('Product', {}).get('Model', '')
-        self.gnss_connection = components_data.get('GNSS receiver', {}).get('FC Connection', {}).get('Type', '')
+        self.gnss_model = components_data.get('GNSS Receiver', {}).get('Product', {}).get('Model', '')
+        self.gnss_connection = components_data.get('GNSS Receiver', {}).get('FC Connection', {}).get('Type', '')
 
     @staticmethod
     def columns():

@@ -69,8 +69,9 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         self.i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
         ComponentEditorWindowBase.__init__(self, version, local_filesystem)
 
-    def update_json_data(self):
+    def update_json_data(self):  # pylint: disable=too-many-branches, too-many-statements
         super().update_json_data()
+        # To update old JSON files that do not have these new fields
         if 'Components' not in self.data:
             self.data['Components'] = {}
         if 'Battery' not in self.data['Components']:
@@ -81,6 +82,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             self.data['Components']['Battery']['Specifications']['Chemistry'] = "Lipo"
         if 'Capacity mAh' not in self.data['Components']['Battery']['Specifications']:
             self.data['Components']['Battery']['Specifications']['Capacity mAh'] = 0
+
+        # To update old JSON files that do not have these new fields
         if 'Frame' not in self.data['Components']:
             self.data['Components']['Frame'] = {}
         if 'Specifications' not in self.data['Components']['Frame']:
@@ -89,6 +92,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             self.data['Components']['Frame']['Specifications']['TOW min Kg'] = 1
         if 'TOW max Kg' not in self.data['Components']['Frame']['Specifications']:
             self.data['Components']['Frame']['Specifications']['TOW max Kg'] = 1
+
+        # Older versions used receiver instead of Receiver, rename it for consistency with other fields
+        if 'GNSS receiver' in self.data['Components']:
+            self.data['Components']['GNSS Receiver'] = self.data['Components'].pop('GNSS receiver')
 
         self.data['Program version'] = VERSION
 
@@ -216,10 +223,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             ('ESC', 'FC Connection', 'Protocol'): {
                 "values": get_combobox_values('MOT_PWM_TYPE')# + ['FETtecOneWire', 'Torqeedo', 'CoDevESC'],
             },
-            ('GNSS receiver', 'FC Connection', 'Type'): {
+            ('GNSS Receiver', 'FC Connection', 'Type'): {
                 "values": self.serial_ports + self.can_ports,
             },
-            ('GNSS receiver', 'FC Connection', 'Protocol'): {
+            ('GNSS Receiver', 'FC Connection', 'Protocol'): {
                 "values": get_combobox_values('GPS_TYPE'),
             },
             ('Battery', 'Specifications', 'Chemistry'): {

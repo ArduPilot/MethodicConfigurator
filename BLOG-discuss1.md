@@ -76,7 +76,7 @@ With these requirements in mind, and for our specific application, we have selec
 |Propeller | 4x [CineWhoop 3\", 8-Blade](https://shop.rc-hangar15.de/HQProp-76mm-CineWhoop-3-8-Blatt-Propeller-grau) |
 |BEC with voltage/current monitor | [Holybro PM02 V3](https://holybro.com/products/pm02-v3-12s-power-module) |
 |Battery | [SLS X-Cube 4S 1800mAh 40C/80C](https://www.stefansliposhop.de/akkus/sls-x-cube/sls-x-cube-40c/sls-x-cube-1800mah-4s1p-14-8v-40c-80c::1568.html) |
-|GNSS receiver | [Holybro H-RTK F9P Helical](https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445) |
+|GNSS Receiver | [Holybro H-RTK F9P Helical](https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445) |
 |SDCard | Any FAT32 or exFAT formated fast Micro-SDCard > 8 GiB |
 |RC Receiver | [TBS Crossfire Nano RX se](https://www.team-blacksheep.com/products/prod:crossfire_nano_se) |
 |RC Transmitter | [Radiomaster TX16S](https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller) with [EdgeTx](https://edgetx.org/) and [Yaapu scripts](https://github.com/yaapu/FrskyTelemetryScript/wiki/Passthrough-over-CRSF-and-ExpressLRS) |
