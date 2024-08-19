@@ -171,6 +171,12 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
                 return
             self.local_filesystem.vehicle_dir = self.directory
 
+            if not self.local_filesystem.vehicle_configuration_files_exist(self.directory):
+                messagebox.showerror("Invalid Vehicle Directory Selected",
+                            "Selected directory must contain files matching \\d\\d_*\\.param " \
+                            f"and a {self.local_filesystem.vehicle_components_json_filename} file")
+                return
+
             try:
                 self.local_filesystem.re_init(self.directory, self.local_filesystem.vehicle_type)
             except SystemExit as exp:

@@ -13,6 +13,8 @@ from os import getcwd as os_getcwd
 from os import listdir as os_listdir
 from os import rename as os_rename
 
+from platform import system as platform_system
+
 from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
 
@@ -136,6 +138,17 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.doc_dict.update(doc_dict)
 
         self.__extend_and_reformat_parameter_documentation_metadata()
+
+    def vehicle_configuration_files_exist(self, vehicle_dir: str) -> bool:
+        if os_path.exists(vehicle_dir) and os_path.isdir(vehicle_dir):
+            vehicle_configuration_files = os_listdir(vehicle_dir)
+            if platform_system() == 'Windows':
+                vehicle_configuration_files = [f.lower() for f in vehicle_configuration_files]
+            pattern = re_compile(r'^\d{2}_.*\.param$')
+            if self.vehicle_components_json_filename in vehicle_configuration_files and \
+               any(pattern.match(f) for f in vehicle_configuration_files):
+                return True
+        return False
 
     def rename_parameter_files(self):
         # Rename parameter files if some new files got added to the vehicle directory
@@ -384,8 +397,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
             # Check for and add specific files if they exist
             specific_files = ["00_default.param", "apm.pdef.xml", self.configuration_steps_filename,
-                              "vehicle_components.json", "vehicle.jpg", "last_uploaded_filename.txt",
-                              "tempcal_gyro.png", "tempcal_acc.png", self.vehicle_type + "_configuration_steps.json"]
+                              self.vehicle_components_json_filename, "vehicle.jpg", "last_uploaded_filename.txt",
+                              "tempcal_gyro.png", "tempcal_acc.png"]
             for file_name in specific_files:
                 file_path = os_path.join(self.vehicle_dir, file_name)
                 if os_path.exists(file_path):
