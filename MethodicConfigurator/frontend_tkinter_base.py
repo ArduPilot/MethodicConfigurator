@@ -254,7 +254,11 @@ class ProgressWindow:
             current_value (int): The current progress value.
             max_value (int): The maximum progress value, if 0 uses percentage.
         """
-        self.progress_window.lift()
+        try:
+            self.progress_window.lift()
+        except tk.TclError as e:
+            logging_error(f"Lifting window: {e} on file {__file__}")
+            return
 
         self.progress_bar['value'] = current_value
         self.progress_bar['maximum'] = max_value
