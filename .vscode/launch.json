@@ -1,11 +1,36 @@
 {
     "configurations": [
         {
+            "name": "Python Debugger: Current File without Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python Debugger: Current File with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": "rmdir lkvn"
+        },
+        {
+            "name": "Python Debugger: Current File with Debug Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": "--loglevel DEBUG --debug 2 rmdir lkvn"
+        },
+        {
             "name": "Python Debugger: ardupilot_methodic_configurator.py",
             "type": "debugpy",
             "request": "launch",
             "program": "MethodicConfigurator/ardupilot_methodic_configurator.py",
-            "args": ["--allow-editing-template-files"],
+            "args": [
+                "--allow-editing-template-files"
+            ],
         }
     ]
 }

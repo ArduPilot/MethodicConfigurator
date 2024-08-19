@@ -188,6 +188,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.reset_progress_window = None
         self.param_download_progress_window = None
         self.tempcal_imu_progress_window = None
+        self.file_upload_progress_window = None
 
         self.root.title("Amilcar Lucas's - ArduPilot methodic configurator " + version + \
                         " - Parameter file editor and uploader")
@@ -431,6 +432,38 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 return dest_file
         return selected_file
 
+    def __should_download_file_from_url(self, selected_file: str):
+        url, local_filename = self.local_filesystem.get_download_url_and_local_filename(selected_file)
+        if url and local_filename:
+            if self.local_filesystem.vehicle_configuration_file_exists(local_filename):
+                return  # file already exists in the vehicle directory, no need to download it
+            if messagebox.askyesno("Download file from URL",
+                                f"Should the {local_filename} file be downloaded from the URL\n{url}?"):
+                if not self.local_filesystem.download_file_from_url(url, local_filename):
+                    messagebox.showerror("Download failed",
+                                         f"Failed to download {local_filename} from {url}, please download it manually")
+
+    def __should_upload_file_to_fc(self, selected_file: str):
+        local_filename, remote_filename = self.local_filesystem.get_upload_local_and_remote_filenames(selected_file)
+        if local_filename and remote_filename:
+            if not self.local_filesystem.vehicle_configuration_file_exists(local_filename):
+                messagebox.showerror("Will not upload any file", f"Local file {local_filename} does not exist")
+                return
+            if self.flight_controller.master:
+                if messagebox.askyesno("Upload file to FC",
+                        f"Should the {local_filename} file be uploaded to the flight controller as {remote_filename}?"):
+                    self.file_upload_progress_window = ProgressWindow(self.main_frame, "Uploading file",
+                                                                      "Uploaded {} of {} %")
+                    if not self.flight_controller.upload_file(local_filename, remote_filename,
+                                                              self.file_upload_progress_window.update_progress_bar):
+                        messagebox.showerror("Upload failed",
+                                             f"Failed to upload {local_filename} to {remote_filename}," \
+                                             " please upload it manually")
+                    self.file_upload_progress_window.destroy()
+            else:
+                logging_warning("No flight controller connection, will not upload any file")
+                messagebox.showwarning("Will not upload any file", "No flight controller connection")
+
     def on_param_file_combobox_change(self, _event, forced: bool = False):
         if not self.file_selection_combobox['values']:
             return
@@ -441,6 +474,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.__do_tempcal_imu(selected_file)
             self.__should_copy_fc_values_to_file(selected_file)
             selected_file = self.__should_jump_to_file(selected_file)
+            self.__should_download_file_from_url(selected_file)
+            self.__should_upload_file_to_fc(selected_file)
 
             # Update the current_file attribute to the selected file
             self.current_file = selected_file
@@ -682,7 +717,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def write_summary_file(self, param_dict: dict, filename: str, annotate_doc: bool):
         should_write_file = True
         if param_dict:
-            if self.local_filesystem.intermediate_parameter_file_exists(filename):
+            if self.local_filesystem.vehicle_configuration_file_exists(filename):
                 should_write_file = messagebox.askyesno("Overwrite existing file",
                                                         f"{filename} file already exists.\nDo you want to overwrite it?")
             if should_write_file:

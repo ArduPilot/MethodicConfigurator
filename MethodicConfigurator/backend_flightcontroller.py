@@ -13,7 +13,6 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
 
-from sys import exit as sys_exit
 from time import sleep as time_sleep
 from time import time as time_time
 from os import path as os_path
@@ -32,7 +31,6 @@ from MethodicConfigurator.annotate_params import Par
 
 from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
 from MethodicConfigurator.backend_mavftp import MAVFTP
-from MethodicConfigurator.param_ftp import ftp_param_decode
 
 from MethodicConfigurator.argparse_check_range import CheckRange
 
@@ -44,23 +42,6 @@ try:
     # import pymavlink.dialects.v20.ardupilotmega
 except Exception: # pylint: disable=broad-exception-caught
     pass
-
-preferred_ports = [
-    '*FTDI*',
-    "*Arduino_Mega_2560*",
-    "*3D*",
-    "*USB_to_UART*",
-    '*Ardu*',
-    '*PX4*',
-    '*Hex_*',
-    '*Holybro_*',
-    '*mRo*',
-    '*FMU*',
-    '*Swift-Flyer*',
-    '*Serial*',
-    '*CubePilot*',
-    '*Qiotek*',
-]
 
 
 class FakeSerialForUnitTests():
@@ -387,47 +368,29 @@ class FlightController:
         return parameters
 
     def download_params_via_mavftp(self, progress_callback=None) -> Tuple[Dict[str, float], Dict[str, 'Par']]:
-        # FIXME global variables should be avoided but I found no other practical way get the FTP result pylint: disable=fixme
-        global ftp_should_run  # pylint: disable=global-variable-undefined
-        global pdict  # pylint: disable=global-variable-undefined
-        global defdict  # pylint: disable=global-variable-undefined
-        ftp_should_run = True
-        pdict = {}
-        defdict = {}
 
         mavftp = MAVFTP(self.master,
                         target_system=self.master.target_system,
                         target_component=self.master.target_component)
 
-        def callback(fh):
-            '''called on ftp completion'''
-            global ftp_should_run  # pylint: disable=global-variable-undefined
-            global pdict  # pylint: disable=global-variable-not-assigned
-            global defdict  # pylint: disable=global-variable-not-assigned
-            data = fh.read()
-            logging_info("'MAVFTP get' parameter values and defaults done, got %u bytes", len(data))
-            pdata = ftp_param_decode(data)
-            if pdata is None:
-                logging_error("param decode failed")
-                sys_exit(1)
+        def get_params_progress_callback(completion: float):
+            if progress_callback is not None and completion is not None:
+                progress_callback(int(completion*100), 100)
 
-            for (name, value, _ptype) in pdata.params:
-                pdict[name.decode('utf-8')] = value
-            logging_info("got %u parameter values", len(pdict))
-            if pdata.defaults:
-                for (name, value, _ptype) in pdata.defaults:
-                    defdict[name.decode('utf-8')] = Par(value)
-                logging_info("got %u parameter default values", len(defdict))
-            ftp_should_run = False
-            progress_callback(len(data), len(data))
-
-        mavftp.cmd_get(['@PARAM/param.pck?withdefaults=1'], callback=callback, callback_progress=progress_callback)
-
-        while ftp_should_run:
-            m = self.master.recv_match(type=['FILE_TRANSFER_PROTOCOL'], timeout=0.1)
-            if m is not None:
-                mavftp.mavlink_packet(m)
-            mavftp.idle_task()
+        complete_param_filename = 'complete.param'
+        default_param_filename = '00_default.param'
+        mavftp.cmd_getparams([complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback)
+        ret = mavftp.process_ftp_reply('getparams', timeout=10)
+        pdict = {}
+        if ret.error_code == 0:
+            # load the parameters from the file
+            par_dict = Par.load_param_file_into_dict(complete_param_filename)
+            for name, data in par_dict.items():
+                pdict[name] = data.value
+            defdict = Par.load_param_file_into_dict(default_param_filename)
+        else:
+            ret.display_message()
+            defdict = {}
 
         return pdict, defdict
 
@@ -500,8 +463,25 @@ class FlightController:
         """
         return ['tcp:127.0.0.1:5760', 'udp:127.0.0.1:14550']
 
+# pylint: disable=duplicate-code
     def __auto_detect_serial(self):
         serial_list = []
+        preferred_ports = [
+            '*FTDI*',
+            "*Arduino_Mega_2560*",
+            "*3D*",
+            "*USB_to_UART*",
+            '*Ardu*',
+            '*PX4*',
+            '*Hex_*',
+            '*Holybro_*',
+            '*mRo*',
+            '*FMU*',
+            '*Swift-Flyer*',
+            '*Serial*',
+            '*CubePilot*',
+            '*Qiotek*',
+        ]
         for connection in self.__connection_tuples:
             if connection[1] and 'mavlink' in connection[1].lower():
                 serial_list.append(mavutil.SerialPort(device=connection[0], description=connection[1]))
@@ -518,12 +498,31 @@ class FlightController:
                 serial_list.pop(1)
 
         return serial_list
+# pylint: enable=duplicate-code
 
     def get_connection_tuples(self):
         """
         Get all available connections.
         """
         return self.__connection_tuples
+
+    def upload_file(self, local_filename: str, remote_filename: str, progress_callback=None):
+        """ Upload a file to the flight controller. """
+        if self.master is None:
+            return False
+        mavftp = MAVFTP(self.master,
+                        target_system=self.master.target_system,
+                        target_component=self.master.target_component)
+
+        def put_progress_callback(completion: float):
+            if progress_callback is not None and completion is not None:
+                progress_callback(int(completion*100), 100)
+
+        mavftp.cmd_put([local_filename, remote_filename], progress_callback=put_progress_callback)
+        ret = mavftp.process_ftp_reply('CreateFile', timeout=10)
+        if ret.error_code != 0:
+            ret.display_message()
+        return ret.error_code == 0
 
     @staticmethod
     def add_argparse_arguments(parser):

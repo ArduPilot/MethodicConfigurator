@@ -32,6 +32,8 @@ from typing import Tuple
 
 from zipfile import ZipFile
 
+from requests import get as requests_get
+
 from MethodicConfigurator.annotate_params import PARAM_DEFINITION_XML_FILE, Par
 from MethodicConfigurator.annotate_params import get_xml_url
 from MethodicConfigurator.annotate_params import get_xml_dir
@@ -156,7 +158,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             for new_filename in self.configuration_steps:
                 if 'old_filenames' in self.configuration_steps[new_filename]:
                     for old_filename in self.configuration_steps[new_filename]['old_filenames']:
-                        if self.intermediate_parameter_file_exists(old_filename) and old_filename != new_filename:
+                        if self.vehicle_configuration_file_exists(old_filename) and old_filename != new_filename:
                             new_filename_path = os_path.join(self.vehicle_dir, new_filename)
                             old_filename_path = os_path.join(self.vehicle_dir, old_filename)
                             os_rename(old_filename_path, new_filename_path)
@@ -272,9 +274,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                                            "missionplanner",
                                            self.param_default_dict)
 
-    def intermediate_parameter_file_exists(self, filename: str) -> bool:
+    def vehicle_configuration_file_exists(self, filename: str) -> bool:
         """
-        Check if an intermediate parameter file exists in the vehicle directory.
+        Check if a vehicle configuration file exists in the vehicle directory.
 
         Parameters:
         - filename (str): The name of the file to check.
@@ -555,6 +557,42 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def write_param_default_values_to_file(self, param_default_values: Dict[str, 'Par'], filename: str='00_default.param'):
         if self.write_param_default_values(param_default_values):
             Par.export_to_param(Par.format_params(self.param_default_dict), os_path.join(self.vehicle_dir, filename))
+
+    def get_download_url_and_local_filename(self, selected_file: str) -> Tuple[str, str]:
+        if selected_file in self.configuration_steps:
+            if 'download_file' in self.configuration_steps[selected_file] and \
+               self.configuration_steps[selected_file]['download_file']:
+                src = self.configuration_steps[selected_file]['download_file'].get('source_url', '')
+                dst = self.configuration_steps[selected_file]['download_file'].get('dest_local', '')
+                if self.vehicle_dir and src and dst:
+                    return src, os_path.join(self.vehicle_dir, dst)
+        return '', ''
+
+    def get_upload_local_and_remote_filenames(self, selected_file: str) -> Tuple[str, str]:
+        if selected_file in self.configuration_steps:
+            if 'upload_file' in self.configuration_steps[selected_file] and \
+               self.configuration_steps[selected_file]['upload_file']:
+                src = self.configuration_steps[selected_file]['upload_file'].get('source_local', '')
+                dst = self.configuration_steps[selected_file]['upload_file'].get('dest_on_fc', '')
+                if self.vehicle_dir and src and dst:
+                    return os_path.join(self.vehicle_dir, src), dst
+        return '', ''
+
+    @staticmethod
+    def download_file_from_url(url: str, local_filename: str, timeout: int=5) -> bool:
+        if not url or not local_filename:
+            logging_error("URL or local filename not provided.")
+            return False
+        logging_info("Downloading %s from %s", local_filename, url)
+        response = requests_get(url, timeout=timeout)
+
+        if response.status_code == 200:
+            with open(local_filename, "wb") as file:
+                file.write(response.content)
+            return True
+
+        logging_error("Failed to download the file")
+        return False
 
     @staticmethod
     def add_argparse_arguments(parser):
