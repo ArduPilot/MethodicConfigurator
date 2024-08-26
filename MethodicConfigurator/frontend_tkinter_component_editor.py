@@ -375,7 +375,18 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         except ValueError:
             logging_error("Invalid non-integer value for MOT_PWM_TYPE %f", mot_pwm_type)
             mot_pwm_type = 0
-        if esc == 1:
+        if esc == 1: # only set ESC protocol if no ESC was found in the serial ports
+            if fc_parameters['SERVO1_FUNCTION'] in [33, 34, 35, 36] or \
+               fc_parameters['SERVO2_FUNCTION'] in [33, 34, 35, 36] or \
+               fc_parameters['SERVO3_FUNCTION'] in [33, 34, 35, 36] or \
+               fc_parameters['SERVO4_FUNCTION'] in [33, 34, 35, 36] or \
+               fc_parameters['SERVO5_FUNCTION'] in [33, 34, 35, 36] or \
+               fc_parameters['SERVO6_FUNCTION'] in [33, 34, 35, 36] or \
+               fc_parameters['SERVO7_FUNCTION'] in [33, 34, 35, 36] or \
+               fc_parameters['SERVO8_FUNCTION'] in [33, 34, 35, 36]:
+                self.data['Components']['ESC']['FC Connection']['Type'] = "Main Out"
+            else:
+                self.data['Components']['ESC']['FC Connection']['Type'] = "AIO"
             self.data['Components']['ESC']['FC Connection']['Protocol'] = \
                 doc['MOT_PWM_TYPE']['values'][str(mot_pwm_type)]
 
