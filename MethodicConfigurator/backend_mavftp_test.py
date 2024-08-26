@@ -61,113 +61,118 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         self.log_stream.seek(0)
         self.log_stream.truncate(0)
 
+    @staticmethod
+    def ftp_operation(seq: int, opcode: int, req_opcode: int, payload: bytearray) -> FTP_OP:
+        return FTP_OP(seq=seq, session=1, opcode=opcode, size=0, req_opcode=req_opcode, burst_complete=0, offset=0,
+                      payload=payload)
+
     def test_decode_ftp_ack_and_nack(self):
         # Test cases grouped by expected outcome
 # pylint: disable=line-too-long
         test_cases = [
             {
                 "name": "Successful Operation",
-                "op": FTP_OP(seq=1, session=1, opcode=OP_Ack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=None),
+                "op": self.ftp_operation(seq=1, opcode=OP_Ack, req_opcode=OP_ListDirectory, payload=None),
                 "expected_message": "ListDirectory succeeded"
             },
             {
                 "name": "Generic Failure",
-                "op": FTP_OP(seq=2, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_Fail])),
+                "op": self.ftp_operation(seq=2, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_Fail])),
                 "expected_message": "ListDirectory failed, generic error"
             },
             {
                 "name": "System Error",
-                "op": FTP_OP(seq=3, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_FailErrno, 1])),  # System error 1
+                "op": self.ftp_operation(seq=3, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_FailErrno, 1])),  # System error 1
                 "expected_message": "ListDirectory failed, system error 1"
             },
             {
                 "name": "Invalid Data Size",
-                "op": FTP_OP(seq=4, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_InvalidDataSize])),
+                "op": self.ftp_operation(seq=4, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_InvalidDataSize])),
                 "expected_message": "ListDirectory failed, invalid data size"
             },
             {
                 "name": "Invalid Session",
-                "op": FTP_OP(seq=5, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_InvalidSession])),
+                "op": self.ftp_operation(seq=5, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_InvalidSession])),
                 "expected_message": "ListDirectory failed, session is not currently open"
             },
             {
                 "name": "No Sessions Available",
-                "op": FTP_OP(seq=6, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_NoSessionsAvailable])),
+                "op": self.ftp_operation(seq=6, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_NoSessionsAvailable])),
                 "expected_message": "ListDirectory failed, no sessions available"
             },
             {
                 "name": "End of File",
-                "op": FTP_OP(seq=7, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_EndOfFile])),
+                "op": self.ftp_operation(seq=7, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_EndOfFile])),
                 "expected_message": "ListDirectory failed, offset past end of file"
             },
             {
                 "name": "Unknown Command",
-                "op": FTP_OP(seq=8, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_UnknownCommand])),
+                "op": self.ftp_operation(seq=8, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_UnknownCommand])),
                 "expected_message": "ListDirectory failed, unknown command"
             },
             {
                 "name": "File Exists",
-                "op": FTP_OP(seq=9, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_FileExists])),
+                "op": self.ftp_operation(seq=9, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_FileExists])),
                 "expected_message": "ListDirectory failed, file/directory already exists"
             },
             {
                 "name": "File Protected",
-                "op": FTP_OP(seq=10, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_FileProtected])),
+                "op": self.ftp_operation(seq=10, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_FileProtected])),
                 "expected_message": "ListDirectory failed, file/directory is protected"
             },
             {
                 "name": "File Not Found",
-                "op": FTP_OP(seq=11, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_FileNotFound])),
+                "op": self.ftp_operation(seq=11, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_FileNotFound])),
                 "expected_message": "ListDirectory failed, file/directory not found"
             },
             {
                 "name": "No Error Code in Payload",
-                "op": FTP_OP(seq=12, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=None),
+                "op": self.ftp_operation(seq=12, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=None),
                 "expected_message": "ListDirectory failed, payload contains no error code"
             },
             {
                 "name": "No Error Code in Nack",
-                "op": FTP_OP(seq=13, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_None])),
+                "op": self.ftp_operation(seq=13, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_None])),
                 "expected_message": "ListDirectory failed, no error code"
             },
             {
                 "name": "No Filesystem Error in Payload",
-                "op": FTP_OP(seq=14, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_FailErrno])),
+                "op": self.ftp_operation(seq=14, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_FailErrno])),
                 "expected_message": "ListDirectory failed, file-system error missing in payload"
             },
             {
                 "name": "Invalid Error Code",
-                "op": FTP_OP(seq=15, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_InvalidErrorCode])),
+                "op": self.ftp_operation(seq=15, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_InvalidErrorCode])),
                 "expected_message": "ListDirectory failed, invalid error code"
             },
             {
                 "name": "Payload Too Large",
-                "op": FTP_OP(seq=16, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([0, 0, 0])),
+                "op": self.ftp_operation(seq=16, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([0, 0, 0])),
                 "expected_message": "ListDirectory failed, payload is too long"
             },
             {
                 "name": "Invalid Opcode",
-                "op": FTP_OP(seq=17, session=1, opcode=126, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=None),
+                "op": self.ftp_operation(seq=17, opcode=126, req_opcode=OP_ListDirectory, payload=None),
                 "expected_message": "ListDirectory failed, invalid opcode 126"
             },
             {
                 "name": "Unknown Opcode in Request",
-                "op": FTP_OP(seq=19, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_UnknownCommand])),  # Assuming 100 is an unknown opcode
+                "op": self.ftp_operation(seq=19, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_UnknownCommand])),  # Assuming 100 is an unknown opcode
                 "expected_message": "ListDirectory failed, unknown command"
             },
             {
                 "name": "Payload with System Error",
-                "op": FTP_OP(seq=20, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([ERR_FailErrno, 2])),  # System error 2
+                "op": self.ftp_operation(seq=20, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_FailErrno, 2])),  # System error 2
                 "expected_message": "ListDirectory failed, system error 2"
             },
             {
                 "name": "Invalid Error Code in Payload",
-                "op": FTP_OP(seq=21, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0, payload=bytes([105])),  # Assuming 105 is an invalid error code
+                "op": self.ftp_operation(seq=21, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([105])),  # Assuming 105 is an invalid error code
                 "expected_message": "ListDirectory failed, invalid error code 105"
             },
             {
                 "name": "Invalid Opcode with Payload",
-                "op": FTP_OP(seq=23, session=1, opcode=126, size=0, req_opcode=OP_ReadFile, burst_complete=0, offset=0, payload=bytes([1, 1])),  # Invalid opcode with payload
+                "op": self.ftp_operation(seq=23, opcode=126, req_opcode=OP_ReadFile, payload=bytes([1, 1])),  # Invalid opcode with payload
                 "expected_message": "ReadFile failed, invalid opcode 126"
             },
             # Add more test cases as needed...
@@ -192,8 +197,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         self.log_stream.truncate(0)
 
         # Test for unknown error code in display_message
-        op = FTP_OP(seq=22, session=1, opcode=OP_Nack, size=0, req_opcode=OP_ListDirectory, burst_complete=0, offset=0,
-                    payload=bytes([255]))
+        op = self.ftp_operation(seq=22, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([255]))
         ret = self.mav_ftp._MAVFTP__decode_ftp_ack_and_nack(op, "ListDirectory")  # pylint: disable=protected-access
         ret.error_code = 125  # Set error code to 125 to trigger unknown error message
         ret.display_message()
