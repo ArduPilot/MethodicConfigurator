@@ -319,7 +319,7 @@ class FlightController:
             filename = 'params.param'
             logging_warning("Testing active, will load all parameters from the %s file", filename)
             par_dict_with_comments = Par.load_param_file_into_dict(filename)
-            return {k: v.value for k, v in par_dict_with_comments.items()}
+            return {k: v.value for k, v in par_dict_with_comments.items()}, {}
 
         if self.master is None:
             return None
