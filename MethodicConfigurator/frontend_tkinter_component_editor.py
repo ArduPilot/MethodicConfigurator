@@ -288,7 +288,9 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         self.assert_dict_is_uptodate(doc, rc_protocols_dict, 'RC_PROTOCOLS', 'Bitmask')
 
         self.set_gnss_type_and_protocol_from_fc_parameters(fc_parameters)
-        self.set_serial_type_and_protocol_from_fc_parameters(fc_parameters, doc)
+        esc_is_serial_controlled = self.set_serial_type_and_protocol_from_fc_parameters(fc_parameters)
+        if not esc_is_serial_controlled:
+            self.set_esc_type_and_protocol_from_fc_parameters(fc_parameters, doc)
         self.set_battery_type_and_protocol_from_fc_parameters(fc_parameters)
         self.set_motor_poles_from_fc_parameters(fc_parameters)
 
@@ -327,7 +329,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             logging_error("GPS_TYPE %u not in gnss_receiver_connection", gps1_type)
             self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = "None"
 
-    def set_serial_type_and_protocol_from_fc_parameters(self, fc_parameters: dict, doc: dict):
+    def set_serial_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
         if 'RC_PROTOCOLS' in fc_parameters:
             rc_protocols_nr = int(fc_parameters['RC_PROTOCOLS'])
             # check if rc_protocols_nr is a power of two (only one bit set)
@@ -369,25 +371,23 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 self.data['Components'][component]['FC Connection']['Protocol'] = protocol
                 esc += 1
 
+        return esc >= 2
+
+    def set_esc_type_and_protocol_from_fc_parameters(self, fc_parameters: dict, doc: dict):
         mot_pwm_type = fc_parameters['MOT_PWM_TYPE'] if "MOT_PWM_TYPE" in fc_parameters else 0
         try:
             mot_pwm_type = int(mot_pwm_type)
         except ValueError:
             logging_error("Invalid non-integer value for MOT_PWM_TYPE %f", mot_pwm_type)
             mot_pwm_type = 0
-        if esc == 1: # only set ESC protocol if no ESC was found in the serial ports
-            if fc_parameters['SERVO1_FUNCTION'] in [33, 34, 35, 36] or \
-               fc_parameters['SERVO2_FUNCTION'] in [33, 34, 35, 36] or \
-               fc_parameters['SERVO3_FUNCTION'] in [33, 34, 35, 36] or \
-               fc_parameters['SERVO4_FUNCTION'] in [33, 34, 35, 36] or \
-               fc_parameters['SERVO5_FUNCTION'] in [33, 34, 35, 36] or \
-               fc_parameters['SERVO6_FUNCTION'] in [33, 34, 35, 36] or \
-               fc_parameters['SERVO7_FUNCTION'] in [33, 34, 35, 36] or \
-               fc_parameters['SERVO8_FUNCTION'] in [33, 34, 35, 36]:
-                self.data['Components']['ESC']['FC Connection']['Type'] = "Main Out"
-            else:
-                self.data['Components']['ESC']['FC Connection']['Type'] = "AIO"
-            self.data['Components']['ESC']['FC Connection']['Protocol'] = \
+        main_out_functions = [fc_parameters.get('SERVO' + str(i) + '_FUNCTION', 0) for i in range(1, 9)]
+
+        # if any element of main_out_functions is in [33, 34, 35, 36] then ESC is connected to main_out
+        if any(servo_function in [33, 34, 35, 36] for servo_function in main_out_functions):
+            self.data['Components']['ESC']['FC Connection']['Type'] = "Main Out"
+        else:
+            self.data['Components']['ESC']['FC Connection']['Type'] = "AIO"
+        self.data['Components']['ESC']['FC Connection']['Protocol'] = \
                 doc['MOT_PWM_TYPE']['values'][str(mot_pwm_type)]
 
     def set_battery_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
