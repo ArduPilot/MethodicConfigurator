@@ -421,7 +421,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return os_path.join(self.vehicle_dir, 'vehicle.jpg')
 
     def vehicle_image_exists(self):
-        return os_path.exists(self.vehicle_image_filepath())
+        return os_path.exists(self.vehicle_image_filepath()) and os_path.isfile(self.vehicle_image_filepath())
+
 
     @staticmethod
     def new_vehicle_dir(base_dir: str, new_dir: str):
@@ -429,7 +430,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     @staticmethod
     def directory_exists(directory: str) -> bool:
-        return os_path.exists(directory)
+        return os_path.exists(directory) and os_path.isdir(directory)
 
     def copy_template_files_to_new_vehicle_dir(self, template_dir: str, new_vehicle_dir: str):
         # Copy the template files to the new vehicle directory
