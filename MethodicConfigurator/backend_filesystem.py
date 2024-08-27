@@ -378,6 +378,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         zip_file_path = self.zip_file_path()
         return os_path.exists(zip_file_path) and os_path.isfile(zip_file_path)
 
+    def add_configuration_file_to_zip(self, zipf, filename):
+        if self.vehicle_configuration_file_exists(filename):
+            zipf.write(os_path.join(self.vehicle_dir, filename), arcname=filename)
+
     def zip_files(self, files_to_zip: List[Tuple[bool, str]]):
         """
         Zips the intermediate parameter files that were written to, including specific summary files.
@@ -396,21 +400,20 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             # Add all intermediate parameter files
             for file_name in self.file_parameters:
                 zipf.write(os_path.join(self.vehicle_dir, file_name), arcname=file_name)
+                # Add step-specific documentation metadata files
+                pdef_xml_file = file_name.replace(".param", ".pdef.xml")
+                self.add_configuration_file_to_zip(zipf, pdef_xml_file)
 
             # Check for and add specific files if they exist
             specific_files = ["00_default.param", "apm.pdef.xml", self.configuration_steps_filename,
                               self.vehicle_components_json_filename, "vehicle.jpg", "last_uploaded_filename.txt",
                               "tempcal_gyro.png", "tempcal_acc.png"]
             for file_name in specific_files:
-                file_path = os_path.join(self.vehicle_dir, file_name)
-                if os_path.exists(file_path):
-                    zipf.write(file_path, arcname=file_name)
+                self.add_configuration_file_to_zip(zipf, file_name)
 
             for wrote, filename in files_to_zip:
                 if wrote:
-                    file_path = os_path.join(self.vehicle_dir, filename)
-                    if os_path.exists(file_path):
-                        zipf.write(file_path, arcname=filename)
+                    self.add_configuration_file_to_zip(zipf, filename)
 
         logging_info("Intermediate parameter files and summary files zipped to %s", zip_file_path)
 
