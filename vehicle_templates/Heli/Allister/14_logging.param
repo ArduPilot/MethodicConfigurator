@@ -1,0 +1,6 @@
+INS_LOG_BAT_CNT,1024  # the default of 1024 causes some problems with https://firmware.ardupilot.org/Tools/WebTools/FilterReview/
+INS_LOG_BAT_MASK,3  # Will use 2 of 3 IMU
+INS_LOG_BAT_OPT,4  # Logs measured data both before and after the filters for Filter Review Webtool usage
+INS_RAW_LOG_OPT,0
+LOG_BITMASK,2242524  # Logs Notch filter data and other control signals
+LOG_FILE_DSRMROT,1  # One .bin log file per flight, not per battery/reboot

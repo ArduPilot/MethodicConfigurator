@@ -431,6 +431,8 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
     # Use the findall method with an XPath expression to find all "param" elements
     for param in root.findall(".//param"):
         name = param.get("name")
+        if vehicle_type == "Heli":
+            vehicle_type = "Helicopter"
         # Remove the <vehicle_type>: prefix from the name if it exists
         name = remove_prefix(name, vehicle_type + ":")
 
@@ -692,7 +694,7 @@ def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
         # Not yet versioned in the https://autotest.ardupilot.org/Parameters server
         'AP_Periph': 'versioned/Periph/stable-',
         'Blimp': 'versioned/Blimp/stable-',
-        'Heli': 'versioned/Heli/stable-',
+        'Heli': 'versioned/Copter/stable-',
         'SITL': 'versioned/SITL/stable-'
     }
     try:

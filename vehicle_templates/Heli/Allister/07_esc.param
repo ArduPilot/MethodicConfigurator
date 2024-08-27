@@ -1,0 +1,22 @@
+ATC_RAT_PIT_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_RLL_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_YAW_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+NTF_BUZZ_TYPES,5
+NTF_LED_TYPES,123079
+PSC_ACCZ_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+SERVO_BLH_POLES,14  # Specified in component editor window
+SERVO_FTW_POLES,14  # Specified in component editor window
+SERVO1_MAX,2000  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO1_MIN,1000  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO1_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO13_FUNCTION,0  # For matek H743Slim v3 board
+SERVO2_MAX,2000  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO2_MIN,1000  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO2_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO3_MAX,2000  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO3_MIN,1000  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO3_TRIM,1485
+SERVO4_MAX,885
+SERVO4_MIN,620
+SERVO4_TRIM,750
+TKOFF_SLEW_TIME,2
