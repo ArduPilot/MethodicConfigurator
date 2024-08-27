@@ -211,7 +211,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
                         " - Select vehicle configuration directory")
         self.root.geometry("800x625") # Set the window size
         self.use_fc_params = tk.BooleanVar(value=False)
-        self.created_new_vehicle_from_template = False
+        self.configuration_template = None  # will be set to a string if a template was used
 
         # Explain why we are here
         if local_filesystem.vehicle_dir == LocalFilesystem.getcwd():
@@ -376,7 +376,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             self.root.destroy()
         else:
             show_no_param_files_error(template_dir)
-        self.created_new_vehicle_from_template = True
+        self.configuration_template = LocalFilesystem.get_directory_name_from_full_path(template_dir)
 
     def open_last_vehicle_directory(self, last_vehicle_dir: str):
         # Attempt to open the last opened vehicle configuration directory

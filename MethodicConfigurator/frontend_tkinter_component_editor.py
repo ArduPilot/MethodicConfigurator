@@ -259,6 +259,9 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if model and model!= "Unknown" and model!= "MAVLink":
             self._set_component_value_and_update_ui(('Flight Controller', 'Product', 'Model'), model)
 
+    def set_vehicle_configuration_template(self, configuration_template: str):
+        self.data['Configuration template'] = configuration_template
+
     @staticmethod
     def reverse_key_search(doc: dict, param_name: str, values: list, fallbacks: list) -> list:
         retv = [int(key) for key, value in doc[param_name]["values"].items() if value in values]

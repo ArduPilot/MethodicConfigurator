@@ -360,15 +360,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         return non_default__read_only_params, non_default__writable_calibrations, non_default__writable_non_calibrations
 
-    # Extract the vehicle name from the directory path
-    def get_vehicle_directory_name(self):
+    @staticmethod
+    def get_directory_name_from_full_path(full_path: str) -> str:
         # Normalize the path to ensure it's in a standard format
-        normalized_path = os_path.normpath(self.vehicle_dir)
+        normalized_path = os_path.normpath(full_path)
 
         # Split the path into head and tail, then get the basename of the tail
         directory_name = os_path.basename(os_path.split(normalized_path)[1])
 
         return directory_name
+
+    # Extract the vehicle name from the directory path
+    def get_vehicle_directory_name(self) -> str:
+        return self.get_directory_name_from_full_path(self.vehicle_dir)
 
     def zip_file_path(self):
         vehicle_name = self.get_vehicle_directory_name()
