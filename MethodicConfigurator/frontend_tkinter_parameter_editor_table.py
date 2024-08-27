@@ -58,7 +58,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         style.configure('narrow.TButton', padding=0, width=4, border=(0, 0, 0, 0))
 
         # Prepare a dictionary that maps variable names to their values
-        # These variables are used by the forced_parameters and derived_parameters in *_configuration_steps.json files
+        # These variables are used by the forced_parameters and derived_parameters in configuration_steps_*.json files
         self.variables = local_filesystem.get_eval_variables()
 
         self.compute_forced_and_derived_parameters()

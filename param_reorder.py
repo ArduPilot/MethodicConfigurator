@@ -2,7 +2,7 @@
 
 """
 This script inserts and/or removes parameter files in the configuration sequence
-defined in the ArduCopter_configuration_steps.json file.
+defined in the configuration_steps_ArduCopter.json file.
 
 It also replaces all occurrences of the old names with the new names
  in all *.py and *.md files in the current directory.
@@ -19,7 +19,7 @@ import os
 import re
 import json
 
-SEQUENCE_FILENAME = "ArduCopter_configuration_steps.json"
+SEQUENCE_FILENAME = "configuration_steps_ArduCopter.json"
 PYTHON_FILES = ["param_pid_adjustment_update.py", "param_pid_adjustment_update_test.py",
                 "annotate_params.py", "copy_magfit_pdef_to_template_dirs.py"]
 file_renames = {}
@@ -85,7 +85,7 @@ def update_file_contents(renames, root, file, steps):
                 print(f"Error: The intermediate parameter file '{old_filename}'" \
                                 f" is not mentioned in the {file} file")
     for new_name, old_name in renames.items():
-        if 'configuration_steps.json' in file:
+        if 'configuration_steps' in file and file.endswith(".json"):
             file_content = update_configuration_steps_json_file_contents(steps, file_content, new_name, old_name)
         else:
             file_content = file_content.replace(old_name, new_name)

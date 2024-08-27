@@ -43,6 +43,8 @@ Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\ve
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Marmotte5v2";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Chimera7";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\ReadyToSkyZD550";
+Type: filesandordirs; Name: "{app}\_internal\MethodicConfigurator\ArduCopter_configuration_steps.json";
+Type: filesandordirs; Name: "{app}\_internal\MethodicConfigurator\ArduPlane_configuration_steps.json";
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -59,8 +61,7 @@ Source: "..\windows\version.txt"; DestDir: "{commonappdata}\.ardupilot_methodic_
 Source: "..\windows\MethodicConfigurator.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduPilot_icon.png"; DestDir: "{app}\_internal\MethodicConfigurator"; Flags: ignoreversion
 Source: "..\MethodicConfigurator\ArduPilot_logo.png"; DestDir: "{app}\_internal\MethodicConfigurator"; Flags: ignoreversion
-Source: "..\MethodicConfigurator\ArduCopter_configuration_steps.json"; DestDir: "{app}\_internal\MethodicConfigurator"; Flags: ignoreversion
-Source: "..\MethodicConfigurator\ArduPlane_configuration_steps.json"; DestDir: "{app}\_internal\MethodicConfigurator"; Flags: ignoreversion
+Source: "..\MethodicConfigurator\configuration_steps_*.json"; DestDir: "{app}\_internal\MethodicConfigurator"; Flags: ignoreversion
 Source: "..\LICENSES\*.*"; DestDir: "{app}\LICENSES"; Flags: ignoreversion
 Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
 

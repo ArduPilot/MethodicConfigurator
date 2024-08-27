@@ -36,7 +36,7 @@ class ConfigurationSteps:
         configuration_steps (dict): A dictionary containing the configuration steps.
     """
     def __init__(self, _vehicle_dir: str, vehicle_type: str):
-        self.configuration_steps_filename = vehicle_type + "_configuration_steps.json"
+        self.configuration_steps_filename = "configuration_steps_" + vehicle_type + ".json"
         self.configuration_steps = {}
         self.forced_parameters = {}
         self.derived_parameters = {}
@@ -45,7 +45,7 @@ class ConfigurationSteps:
     def re_init(self, vehicle_dir: str, vehicle_type: str):
         if vehicle_type == '':
             return
-        self.configuration_steps_filename = vehicle_type + "_configuration_steps.json"
+        self.configuration_steps_filename = "configuration_steps_" + vehicle_type + ".json"
         # Define a list of directories to search for the configuration_steps_filename file
         search_directories = [vehicle_dir, os_path.dirname(os_path.abspath(__file__))]
         file_found = False
