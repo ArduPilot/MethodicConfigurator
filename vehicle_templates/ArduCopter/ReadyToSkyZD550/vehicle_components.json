@@ -3,8 +3,8 @@
     "Components": {
         "Flight Controller": {
             "Product": {
-                "Manufacturer": "Cube",
-                "Model": "Orange",
+                "Manufacturer": "CubePilot",
+                "Model": "CubeOrange",
                 "URL": "",
                 "Version": ""
             },
