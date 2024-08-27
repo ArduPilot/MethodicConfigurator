@@ -272,7 +272,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         logging_error("No values found for %s in the metadata", param_name)
         return fallbacks
 
-    def assert_dict_is_uptodate(self, doc: dict, dict_to_check: dict, doc_key: str, doc_dict: str):
+    def __assert_dict_is_uptodate(self, doc: dict, dict_to_check: dict, doc_key: str, doc_dict: str):
         """ Asserts that the given dictionary is up-to-date with the apm.pdef.xml documentation metadata. """
         if doc and doc_key in doc and doc[doc_key] and doc_dict in doc[doc_key]:
             for key, doc_protocol in doc[doc_key][doc_dict].items():
@@ -284,20 +284,20 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     logging_error("Protocol %s not found in %s metadata", doc_protocol, doc_key)
 
     def set_values_from_fc_parameters(self, fc_parameters: dict, doc: dict):
-        self.assert_dict_is_uptodate(doc, serial_protocols_dict, 'SERIAL1_PROTOCOL', 'values')
-        self.assert_dict_is_uptodate(doc, batt_monitor_connection, 'BATT_MONITOR', 'values')
-        self.assert_dict_is_uptodate(doc, gnss_receiver_connection, 'GPS_TYPE', 'values')
-        self.assert_dict_is_uptodate(doc, mot_pwm_type_dict, 'MOT_PWM_TYPE', 'values')
-        self.assert_dict_is_uptodate(doc, rc_protocols_dict, 'RC_PROTOCOLS', 'Bitmask')
+        self.__assert_dict_is_uptodate(doc, serial_protocols_dict, 'SERIAL1_PROTOCOL', 'values')
+        self.__assert_dict_is_uptodate(doc, batt_monitor_connection, 'BATT_MONITOR', 'values')
+        self.__assert_dict_is_uptodate(doc, gnss_receiver_connection, 'GPS_TYPE', 'values')
+        self.__assert_dict_is_uptodate(doc, mot_pwm_type_dict, 'MOT_PWM_TYPE', 'values')
+        self.__assert_dict_is_uptodate(doc, rc_protocols_dict, 'RC_PROTOCOLS', 'Bitmask')
 
-        self.set_gnss_type_and_protocol_from_fc_parameters(fc_parameters)
-        esc_is_serial_controlled = self.set_serial_type_and_protocol_from_fc_parameters(fc_parameters)
+        self.__set_gnss_type_and_protocol_from_fc_parameters(fc_parameters)
+        esc_is_serial_controlled = self.__set_serial_type_and_protocol_from_fc_parameters(fc_parameters)
         if not esc_is_serial_controlled:
-            self.set_esc_type_and_protocol_from_fc_parameters(fc_parameters, doc)
-        self.set_battery_type_and_protocol_from_fc_parameters(fc_parameters)
-        self.set_motor_poles_from_fc_parameters(fc_parameters)
+            self.__set_esc_type_and_protocol_from_fc_parameters(fc_parameters, doc)
+        self.__set_battery_type_and_protocol_from_fc_parameters(fc_parameters)
+        self.__set_motor_poles_from_fc_parameters(fc_parameters)
 
-    def set_gnss_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
+    def __set_gnss_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
         gps1_type = fc_parameters['GPS_TYPE'] if "GPS_TYPE" in fc_parameters else 0
         try:
             gps1_type = int(gps1_type)
@@ -332,7 +332,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             logging_error("GPS_TYPE %u not in gnss_receiver_connection", gps1_type)
             self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = "None"
 
-    def set_serial_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
+    def __set_serial_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
         if 'RC_PROTOCOLS' in fc_parameters:
             rc_protocols_nr = int(fc_parameters['RC_PROTOCOLS'])
             # check if rc_protocols_nr is a power of two (only one bit set)
@@ -376,7 +376,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         return esc >= 2
 
-    def set_esc_type_and_protocol_from_fc_parameters(self, fc_parameters: dict, doc: dict):
+    def __set_esc_type_and_protocol_from_fc_parameters(self, fc_parameters: dict, doc: dict):
         mot_pwm_type = fc_parameters['MOT_PWM_TYPE'] if "MOT_PWM_TYPE" in fc_parameters else 0
         try:
             mot_pwm_type = int(mot_pwm_type)
@@ -393,7 +393,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         self.data['Components']['ESC']['FC Connection']['Protocol'] = \
                 doc['MOT_PWM_TYPE']['values'][str(mot_pwm_type)]
 
-    def set_battery_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
+    def __set_battery_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
         if "BATT_MONITOR" in fc_parameters:
             batt_monitor = int(fc_parameters["BATT_MONITOR"])
             self.data['Components']['Battery Monitor']['FC Connection']['Type'] = \
@@ -401,7 +401,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             self.data['Components']['Battery Monitor']['FC Connection']['Protocol'] = \
                 batt_monitor_connection[str(batt_monitor)].get('protocol')
 
-    def set_motor_poles_from_fc_parameters(self, fc_parameters: dict):
+    def __set_motor_poles_from_fc_parameters(self, fc_parameters: dict):
         if "MOT_PWM_TYPE" in fc_parameters:
             mot_pwm_type_str = str(fc_parameters["MOT_PWM_TYPE"])
             if mot_pwm_type_str in mot_pwm_type_dict and mot_pwm_type_dict[mot_pwm_type_str].get('is_dshot', False):
