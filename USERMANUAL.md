@@ -248,7 +248,7 @@ The ArduPilot Methodic Configurator uses several configuration files to manage a
 
 - **Intermediate Parameter Files**: These files are located in the vehicle-specific directory and are named with two digits followed by an underscore, ending in `.param`. They contain the parameters that need to be configured for the drone. Each file corresponds to a specific configuration step or aspect of the drone's setup.
 
-- **Documentation File**: This file provides documentation for each intermediate parameter file. It is used to display relevant information about the parameters and their configuration process. The `ArduCopter_configuration_steps.json` documentation file is first searched in the selected vehicle-specific directory, and if not found, in the directory where the script is located.
+- **Documentation File**: This file provides documentation for each intermediate parameter file. It is used to display relevant information about the parameters and their configuration process. The `configuration_steps_ArduCopter.json` documentation file is first searched in the selected vehicle-specific directory, and if not found, in the directory where the script is located.
 
 - **Default Parameter Values File**: The `00_defaults.param` file is located in the vehicle-specific directory.
 If the file does not exist or is invalid, use this command to regenerate it

@@ -73,7 +73,7 @@ This list of functionalities provides a comprehensive overview of the software's
 
 - The software must be extensible to support new drone models and parameter configurations.
 - Users should be able to customize the software's behavior through configuration files:
-  - `ArduCopter_configuration_steps.json`, `ArduPlane_configuration_steps.json`, etc
+  - `configuration_steps_ArduCopter.json`, `configuration_steps_ArduPlane.json`, etc
   - `vehicle_components.json`
   - intermediate parameter files (`*.param`)
 - Development should use industry best practices:
