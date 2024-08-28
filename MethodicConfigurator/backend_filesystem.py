@@ -439,7 +439,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def copy_template_files_to_new_vehicle_dir(self, template_dir: str, new_vehicle_dir: str):
         # Copy the template files to the new vehicle directory
         for item in os_listdir(template_dir):
-            if item in ['vehicle.jpg', 'apm.pdef.xml']:
+            if item in ['vehicle.jpg', 'apm.pdef.xml', 'tempcal_acc.png', 'tempcal_gyro.png']:
                 continue
             s = os_path.join(template_dir, item)
             d = os_path.join(new_vehicle_dir, item)
