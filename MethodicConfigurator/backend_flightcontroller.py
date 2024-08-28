@@ -289,7 +289,7 @@ class FlightController:
             if 'ChibiOS:' in msg:
                 os_custom_version = msg.split(' ')[1].strip()
                 if os_custom_version != self.info.os_custom_version:
-                    logging_warning("ChibiOS version mismatch: %s (BANNER)!= % s(AUTOPILOT_VERSION)", os_custom_version,
+                    logging_warning("ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)", os_custom_version,
                                     self.info.os_custom_version)
                 os_custom_version_index = i
                 continue
@@ -302,7 +302,7 @@ class FlightController:
             if len(fc_product_banner_substrings) >= 3:
                 fc_product = fc_product_banner_substrings[0]
         if fc_product != self.info.product:
-            logging_warning("FC product mismatch: %s (BANNER)!= %s(AUTOPILOT_VERSION)", fc_product, self.info.product)
+            logging_warning("FC product mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)", fc_product, self.info.product)
             self.info.product = fc_product  # force the one from the banner because it is more reliable
         return ""
 
