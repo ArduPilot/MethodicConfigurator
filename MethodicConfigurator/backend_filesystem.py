@@ -12,6 +12,7 @@ from os import path as os_path
 from os import getcwd as os_getcwd
 from os import listdir as os_listdir
 from os import rename as os_rename
+import subprocess
 
 from platform import system as platform_system
 
@@ -32,6 +33,7 @@ from typing import Tuple
 
 from zipfile import ZipFile
 
+from requests import exceptions as requests_exceptions
 from requests import get as requests_get
 
 from MethodicConfigurator.annotate_params import PARAM_DEFINITION_XML_FILE, Par
@@ -592,14 +594,23 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             logging_error("URL or local filename not provided.")
             return False
         logging_info("Downloading %s from %s", local_filename, url)
-        response = requests_get(url, timeout=timeout)
+        try:
+            # Attempt to download the file using requests with SSL verification
+            response = requests_get(url, timeout=timeout)
+            response.raise_for_status()  # Raise an HTTPError for bad responses
 
-        if response.status_code == 200:
-            with open(local_filename, "wb") as file:
+            # Write the response content to a file
+            with open(local_filename, 'wb') as file:
                 file.write(response.content)
             return True
-
-        logging_error("Failed to download the file")
+        except requests_exceptions.RequestException as e:
+            logging_error(f"Requests failed: {e}. Attempting to download using curl.")
+            try:
+                # Fall back to using curl if requests fail
+                result = subprocess.run(['curl', '-L', '-o', local_filename, url], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                return True
+            except subprocess.CalledProcessError as e:
+                logging_error(f"Failed to download file using curl. Error: {e.stderr.decode().strip()}")
         return False
 
     @staticmethod
