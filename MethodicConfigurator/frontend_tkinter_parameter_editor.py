@@ -8,11 +8,15 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
+from argparse import ArgumentParser
+
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 from tkinter import filedialog
 
+from logging import basicConfig as logging_basicConfig
+from logging import getLevelName as logging_getLevelName
 #from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import warning as logging_warning
@@ -25,6 +29,8 @@ from typing import Tuple
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
 from MethodicConfigurator.annotate_params import Par
+
+from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_filesystem import is_within_tolerance
@@ -43,6 +49,8 @@ from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDir
 from MethodicConfigurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 
 from MethodicConfigurator.tempcal_imu import IMUfit
+
+from MethodicConfigurator.version import VERSION
 
 
 class DocumentationFrame:  # pylint: disable=too-few-public-methods
@@ -174,7 +182,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     parameters, documentation, and flight controller connection settings.
     """
     def __init__(self, current_file: str, flight_controller: FlightController,
-                 local_filesystem: LocalFilesystem, version: str):
+                 local_filesystem: LocalFilesystem, display_welcome_popup: bool=True):
         super().__init__()
         self.current_file = current_file
         self.flight_controller = flight_controller
@@ -190,7 +198,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.tempcal_imu_progress_window = None
         self.file_upload_progress_window = None
 
-        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator " + version + \
+        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator " + VERSION + \
                         " - Parameter file editor and uploader")
         self.root.geometry("990x550") # Set the window width
 
@@ -206,7 +214,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         style.map('default_v.TCombobox', selectforeground=[('readonly', 'black')])
         style.configure('default_v.TEntry', fieldbackground="light blue")
 
-        self.__create_conf_widgets(version)
+        self.__create_conf_widgets(VERSION)
 
         # Create a DocumentationFrame object for the Documentation Content
         self.documentation_frame = DocumentationFrame(self.main_frame, self.local_filesystem, self.current_file)
@@ -217,7 +225,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.root.after(10, self.on_param_file_combobox_change(None, True))
 
         # this one should be on top of the previous one hence the longer time
-        self.root.after(100, self.__please_read_the_docs(self.root))
+        if display_welcome_popup:
+            self.root.after(100, self.__please_read_the_docs(self.root))
         self.root.mainloop()
 
     def __create_conf_widgets(self, version: str):
@@ -742,3 +751,38 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.parameter_editor_table.generate_edit_widgets_focus_out()
         self.write_changes_to_intermediate_parameter_file()
         self.root.quit() # Then stop the Tkinter event loop
+
+    @staticmethod
+    def add_argparse_arguments(parser):
+        parser.add_argument('--skip-welcome-popup',
+                            action='store_true',
+                            help='Skip the welcome popup window. Only use this if you already know how to use the software. '
+                            'Default to false')
+        return parser
+
+
+def argument_parser():
+    """
+    Parses command-line arguments for the script.
+
+    This function sets up an argument parser to handle the command-line arguments for the script.
+
+    Returns:
+    argparse.Namespace: An object containing the parsed arguments.
+    """
+    parser = ArgumentParser(description='A GUI for editing ArduPilot param files. '
+                            'Not to be used directly, but through the main ArduPilot methodic configurator script.')
+    parser = FlightController.add_argparse_arguments(parser)
+    parser = LocalFilesystem.add_argparse_arguments(parser)
+    parser = ParameterEditorWindow.add_argparse_arguments(parser)
+    return add_common_arguments_and_parse(parser)
+
+
+if __name__ == "__main__":
+    args = argument_parser()
+
+    logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
+
+    fc = FlightController(args.reboot_time)
+    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, None, args.allow_editing_template_files)
+    ParameterEditorWindow('04_board_orientation.param', fc, filesystem, not args.skip_welcome_popup)
