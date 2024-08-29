@@ -59,6 +59,7 @@ def argument_parser():
     parser = FlightController.add_argparse_arguments(parser)
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindow.add_argparse_arguments(parser)
+    parser = ParameterEditorWindow.add_argparse_arguments(parser)
     return add_common_arguments_and_parse(parser)
 
 
@@ -155,7 +156,7 @@ def main():
     start_file = local_filesystem.get_start_file(args.n, imu_tcal_available)
 
     # Call the GUI function with the starting intermediate parameter file
-    ParameterEditorWindow(start_file, flight_controller, local_filesystem, VERSION)
+    ParameterEditorWindow(start_file, flight_controller, local_filesystem, not args.skip_welcome_popup)
 
     # Close the connection to the flight controller
     flight_controller.disconnect()
