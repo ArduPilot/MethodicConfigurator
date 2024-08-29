@@ -1,0 +1,10 @@
+ATC_INPUT_TC,0.15
+ATC_RAT_PIT_D,0.0036  # (0.0036 default)
+ATC_RAT_PIT_I,0.135  # 0.115 recommendet for that drone (0.135 default)
+ATC_RAT_PIT_P,0.135  # 0.115 recommendet for that drone (0.135 default)
+ATC_RAT_RLL_D,0.0036  # (0.0036 default)
+ATC_RAT_RLL_I,0.135  # 0.115 recommendet for that drone (0.135 default)
+ATC_RAT_RLL_P,0.135  # 0.115 recommendet for that drone (0.135 default)
+ATC_RAT_YAW_D,0  # = 1 * (0 default)
+ATC_RAT_YAW_I,0.018  # 0.05 for that drone (0.018 default)
+ATC_RAT_YAW_P,0.18  # 0.5 for that drone (0.18 default)

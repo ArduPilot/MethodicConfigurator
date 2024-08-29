@@ -1,0 +1,4 @@
+MOT_SPIN_ARM,0.1  # The T-Motor iESCs reliably start spinning with this value (based on motor test)
+MOT_SPIN_MAX,0.95  # Upper dead zone of the ESC
+MOT_SPIN_MIN,0.13  # MOT_SPIN_ARM + 0.03
+MOT_THST_EXPO,0.5  # According to discussions about T-Motor Alpha / Flame / Star ESCs

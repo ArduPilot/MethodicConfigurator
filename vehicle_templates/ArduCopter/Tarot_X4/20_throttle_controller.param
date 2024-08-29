@@ -1,0 +1,3 @@
+ATC_THR_MIX_MAN,0.1  # because we have learned the MOT_THST_HOVER value
+PSC_ACCZ_I,0.400526  # Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
+PSC_ACCZ_P,0.200263  # Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned

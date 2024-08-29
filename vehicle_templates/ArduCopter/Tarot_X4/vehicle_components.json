@@ -1,0 +1,184 @@
+{
+    "Format version": 1,
+    "Components": {
+        "Flight Controller": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "Pixhawk6X",
+                "URL": "https://holybro.com/products/pixhawk-6x",
+                "Version": "Standard v1"
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.5.5 official"
+            },
+            "Notes": "This is a custom build with a Holybro 6X flight controller with standard carrier board."
+        },
+        "Frame": {
+            "Product": {
+                "Manufacturer": "Tarot",
+                "Model": "X4",
+                "URL": "http://www.tarotrc.com/Product/Detail.aspx?Lang=en&Id=3c47ef4b-df8a-40f1-b43e-64b6364e9882",
+                "Version": "Custom"
+            },
+            "Specifications": {
+                "TOW min Kg": 5,
+                "TOW max Kg": 7
+            },
+            "Notes": "A frame with 960mm diameter (motor to notor) using T-Motor MN7005(7206) propulsion sets for 25mm tube arms"
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "Radiomaster",
+                "Model": "Boxer",
+                "URL": "https://www.radiomasterrc.com/products/boxer-radio-controller-m2",
+                "Version": "M2 ELRS LBT (EU)"
+            },
+            "Firmware": {
+                "Type": "EdgeTx",
+                "Version": "2.10.2"
+            },
+            "Notes": "Yaapu telem included. 2.4 GHz RC transmitter included."
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "Radiomaster",
+                "Model": "internal",
+                "URL": "https://www.radiomasterrc.com/products/boxer-radio-controller-m2",
+                "Version": "M2"
+            },
+            "Firmware": {
+                "Type": "ELRS (internal)",
+                "Version": "3.4.3"
+            },
+            "Notes": "Using the internal RF module"
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "Radiomaster",
+                "Model": "RPTD4 ExpressLRS 2.4Ghz diversity receiver",
+                "URL": "https://www.radiomasterrc.com/products/rp4td-expresslrs-2-4ghz-diversity-receiver",
+                "Version": "EU LBT"
+            },
+            "Firmware": {
+                "Type": "ELRS",
+                "Version": "3.4.3"
+            },
+            "FC Connection": {
+                "Type": "SERIAL6",
+                "Protocol": "CRSF"
+            },
+            "Notes": "This receiver is on the vehicle and is connected to the flight controller"
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "Espressif",
+                "Model": "Xiao ESP32C3",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "Serial Bridge Custom",
+                "Version": "1.0"
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": "A cheap ESP Now based alternative to the more commonly used 3DR and RFDesigns telemetry modems. Custom developed firmware."
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "HolyBro",
+                "Model": "PM02D HV Power Module",
+                "URL": "https://holybro.com/collections/power-modules-pdbs/products/pm02d-power-module",
+                "Version": "HV"
+            },
+            "Firmware": {
+                "Type": "HolyBro",
+                "Version": "Unknown"
+            },
+            "FC Connection": {
+                "Type": "I2C3",
+                "Protocol": "INA2XX"
+            },
+            "Notes": "Voltage is done via the flight controller."
+        },
+        "Battery": {
+            "Product": {
+                "Manufacturer": "Custom made",
+                "Model": "6S 30Ah",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "Chemistry": "LiIon",
+                "Volt per cell max": 4.1,
+                "Volt per cell low": 3.1,
+                "Volt per cell crit": 2.75,
+                "Number of cells": 6,
+                "Capacity mAh": 30000
+            },
+            "Notes": "A custom made 6S6P LiIon battery made from Samsung 50S cells"
+        },
+        "ESC": {
+            "Product": {
+                "Manufacturer": "T-Motor",
+                "Model": "STAR 50 iESC",
+                "URL": "https://iha-race.com/de/producto/dron-t-motor-m1000/",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "T-Motor",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "Main Out",
+                "Protocol": "Normal"
+            },
+            "Notes": "ESCs are integrated in the motor arm sets"
+        },
+        "Motors": {
+            "Product": {
+                "Manufacturer": "T-Motor",
+                "Model": "T-Motor MN7005(7206) 230KV",
+                "URL": "https://store.tmotor.com/product/mn7005-kv230-motor-antigravity-type.html",
+                "Version": ""
+            },
+            "Specifications": {
+                "Poles": 28
+            },
+            "Notes": "T-Motor MN7005 (7206) 230KV with integrated ESC"
+        },
+        "Propellers": {
+            "Product": {
+                "Manufacturer": "Mejzlik",
+                "Model": "24 x 8.1",
+                "URL": "https://www.mejzlik.eu",
+                "Version": "LAF"
+            },
+            "Specifications": {
+                "Diameter_inches": 24
+            },
+            "Notes": "Mejzlik 24 inch 8.1 \"light and firm\" version"
+        },
+        "GNSS Receiver": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "M9N GPS",
+                "URL": "https://holybro.com/products/m9n-gps",
+                "Version": "Standard"
+            },
+            "Firmware": {
+                "Type": "ublox",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL3",
+                "Protocol": "AUTO"
+            },
+            "Notes": "Standard GPS"
+        }
+    },
+    "Program version": "0.9.4"
+}

@@ -1,0 +1,10 @@
+BATT_ARM_VOLT,18.8  # Don’t allow arming below this voltage
+BATT_CAPACITY,30000  # Total battery capacity specified in the component editor
+BATT_CRT_MAH,0  # Energy consumption not measured
+BATT_CRT_VOLT,16.5  # (Critical voltage + 0.0) x no. of cells
+BATT_FS_CRT_ACT,1  # Land ASAP
+BATT_FS_LOW_ACT,2  # Return and land at home or rally point
+BATT_FS_VOLTSRC,0  # Using only RAW voltage
+BATT_LOW_MAH,0  # Energy consumption not measured
+BATT_LOW_VOLT,18.6  # (Low voltage + 0.0) x no. of cells
+BATT_MONITOR,21  # I2C based (PM02D)

@@ -1,0 +1,8 @@
+BRD_SAFETY_DEFLT,1  # Use Holybro M9N module safety switch
+GPS_GNSS_MODE,0  # leave default
+GPS_POS1_X,0.04  # Antenna 4 cm in front of CoG
+GPS_POS1_Y,0.11  # Antenna 11 cm right from CoG
+GPS_POS1_Z,-0.08  # Antenna 8 cm above CoG
+GPS_TYPE,1  # Defined in component editor
+SERIAL3_PROTOCOL,5  # GNSS receiver is connected to serial3
+WPNAV_RADIUS,200  # leave default

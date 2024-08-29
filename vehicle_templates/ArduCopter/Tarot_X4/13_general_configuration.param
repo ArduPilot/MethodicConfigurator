@@ -1,0 +1,13 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+BRD_RTC_TZ_MIN,0  # UTC
+FENCE_TYPE,7  # cylinder and max altitude, to obey local regulations and safety measures
+INS_ACCEL_FILTER,20  # Suggested bei MP
+INS_POS1_X,0
+INS_POS1_Y,0
+INS_POS2_X,0
+INS_POS2_Y,0
+LAND_ALT_LOW,1000  # come down fast and only slow down close to the ground. Baro could be off by 5m
+RTL_ALT,3500  # 35 m goes above trees
+RTL_LOIT_TIME,5000  # The default is too long. This reduces the time
+SCHED_LOOP_RATE,400  # we have a powerful STM32 H7 family processor. But the vehicle is big, so leave it at default
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation

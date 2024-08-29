@@ -1,0 +1,33 @@
+ATC_RAT_PIT_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_RLL_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_YAW_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on 20_throttle_controller.param file
+MOT_PWM_MAX,2000  # 1940 recommended for T-Motor, but 2000 should not make things worse
+MOT_PWM_MIN,1100  # 1100 recommended for T-Motor ESCs
+MOT_PWM_TYPE,0  # Specified in component editor window
+MOT_SPOOL_TIME,0.5  # left at default because props are lightweight and motors strong enough
+NTF_BUZZ_TYPES,5  # left default - don't know, if the T-Motor STAR ESCs provide options
+NTF_LED_TYPES,123079  # Left default
+PSC_ACCZ_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+SERIAL5_BAUD,57  # left default (no DShot telemetry available)
+SERIAL5_PROTOCOL,-1  # no DShot telemetry available
+SERVO_BLH_AUTO,0  # BLHeli pass-thru not availble with T-Motor ESCs
+SERVO_BLH_BDMASK,0  # no bidirectional DShot available
+SERVO_BLH_POLES,28  # Specified in component editor window
+SERVO_BLH_TRATE,10  # Left default (no RPM telemetry / bi-directional DShot telemetry available)
+SERVO_DSHOT_ESC,0  # using PWM
+SERVO_DSHOT_RATE,0  # Default
+SERVO1_MAX,1940  # Recommended by T-Motor
+SERVO1_MIN,1100  # Recommended by T-Motor
+SERVO1_TRIM,1500
+SERVO2_MAX,1940  # Recommended by T-Motor
+SERVO2_MIN,1100  # Recommended by T-Motor
+SERVO2_TRIM,1500
+SERVO3_MAX,1940  # Recommended by T-Motor
+SERVO3_MIN,1100  # Recommended by T-Motor
+SERVO3_TRIM,1500
+SERVO4_MAX,1940  # Recommended by T-Motor
+SERVO4_MIN,1100  # Recommended by T-Motor
+SERVO4_TRIM,1500
+TKOFF_RPM_MIN,0  # no RPM feedback
+TKOFF_SLEW_TIME,2  # left at default because copter is small

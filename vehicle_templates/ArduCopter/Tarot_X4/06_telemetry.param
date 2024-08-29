@@ -1,0 +1,3 @@
+BRD_SER1_RTSCTS,2  # Auto detect (currently RTS/CTS are not connected)
+SERIAL2_BAUD,921  # The MAVLink over ESP32 telemetry
+SERIAL2_PROTOCOL,2  # Use MAVLink 2 for telemetry

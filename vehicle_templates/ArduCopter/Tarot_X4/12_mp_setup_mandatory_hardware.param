@@ -1,0 +1,79 @@
+AHRS_TRIM_X,0
+AHRS_TRIM_Y,0
+ATC_ACCEL_P_MAX,48000  # manually adjusted later (you should start with the initally calculated values)
+ATC_ACCEL_R_MAX,48000  # manually adjusted later (you should start with the initally calculated values)
+ATC_ACCEL_Y_MAX,14400  # manually adjusted later (you should start with the initally calculated values)
+ATC_RAT_PIT_FLTD,10  # INS_GYRO_FILTER / 2
+ATC_RAT_PIT_FLTT,10  # INS_GYRO_FILTER / 2
+ATC_RAT_RLL_FLTD,10  # INS_GYRO_FILTER / 2
+ATC_RAT_RLL_FLTT,10  # INS_GYRO_FILTER / 2
+ATC_RAT_YAW_FLTE,2
+ATC_RAT_YAW_FLTT,10  # INS_GYRO_FILTER / 2
+COMPASS_EXTERNAL,1
+COMPASS_ORIENT,6
+COMPASS_PRIO1_ID,658953
+COMPASS_USE2,0
+COMPASS_USE3,1
+FENCE_ACTION,3
+FENCE_ALT_MAX,120
+FENCE_ENABLE,1
+FENCE_RADIUS,350  # Initially you should start with a 150m fence radius.
+FLTMODE1,0  # We use a tri-state-switch
+FLTMODE2,0  # We use a tri-state-switch
+FLTMODE3,2  # We use a tri-state-switch
+FLTMODE4,2  # We use a tri-state-switch
+FLTMODE5,5  # We use a tri-state-switch
+FLTMODE6,5  # We use a tri-state-switch
+FRAME_CLASS,1
+FRAME_TYPE,1
+INS_ACC1_CALTEMP,45.229469
+INS_ACC2_CALTEMP,42.25
+INS_ACC2SCAL_X,1
+INS_ACC2SCAL_Y,1
+INS_ACC2SCAL_Z,1
+INS_ACC3SCAL_X,1
+INS_ACC3SCAL_Y,1
+INS_ACC3SCAL_Z,1
+INS_ACCSCAL_X,1
+INS_ACCSCAL_Y,1
+INS_ACCSCAL_Z,1
+INS_GYRO_FILTER,20
+INS_USE3,1
+MOT_BAT_VOLT_MAX,24.6
+MOT_BAT_VOLT_MIN,16.5
+MOT_SPIN_ARM,0.1  # Derived from motor test
+MOT_SPIN_MAX,0.95
+MOT_SPIN_MIN,0.13  # Derived from motor test
+MOT_THST_EXPO,0.5  # There was no explicit recommendation for T-Motor iESCs so I used a value in the middle between recommendation for Flame and for ALPHA ESCs
+MOT_THST_HOVER,0.200263  # 0.2 is a good guess.
+RC1_MAX,2011
+RC1_MIN,987
+RC1_TRIM,1500
+RC2_MAX,2011
+RC2_MIN,987
+RC2_TRIM,1500
+RC3_MAX,2011
+RC3_MIN,987
+RC3_TRIM,1500
+RC4_MAX,2011
+RC4_MIN,987
+RC4_TRIM,1500
+RC5_MAX,2011
+RC5_MIN,987
+RC5_TRIM,2011
+RC6_MAX,2011
+RC6_MIN,987
+RC6_TRIM,987
+RC7_MAX,2011
+RC7_MIN,987
+RC7_TRIM,987
+RC8_MAX,2011
+RC8_MIN,987
+RC8_TRIM,987
+RC9_MAX,2011
+RC9_MIN,987
+RC9_TRIM,987
+SERVO1_FUNCTION,33
+SERVO2_FUNCTION,34
+SERVO3_FUNCTION,35
+SERVO4_FUNCTION,36
