@@ -653,7 +653,12 @@ Now upload the `.bin` log to the [Hardware-Report Tool](https://firmware.ardupil
 
 Use the `.bin` log from the first flight to set the parameters described on the `20_throttle_controller.param` file.
 
-## 8.3 Second Flight: PID VTOL-Quiktune lua script or manual PID tune
+## 8.3 Configure the EKF altitude source weights
+
+In some situations you will need to configure the expected noise levels of the altitude sources.
+And the weight that EKF should use for each source on the `23_ekf_config.param` file.
+
+## 8.4 Second Flight: PID VTOL-Quiktune lua script or manual PID tune
 
 If your flight controller can run lua scripts perform a [PID lua VTOL-Quicktune](https://ardupilot.org/copter/docs/quiktune.html).
 If you have an STM32 F4 or F7 processor that can not run lua scripts perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) instead.
