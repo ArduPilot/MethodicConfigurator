@@ -34,7 +34,7 @@ The software needs this information to automatically pre-select configuration se
 
 IMU temperature calibration reduces the probability of *Accel inconsistent* and *Gyro inconsistent* errors and reduces the time required to arm the vehicle.
 IMU temperature calibration requires lowering the temperature of the autopilot (flight controller) to circa -20°C.
-That is hard to do once the autopilot is assembled inside the vehicle, hence it is done now.
+That is harder to do once the autopilot is assembled inside the vehicle, hence it is done now.
 
 - [start the software](#6-configure-the-vehicles-parameters-in-a-traceable-way)
 - Perform [IMU temperature calibration](BLOG.md#21-configure-imu-temperature-calibration-using-the-offline-calibration-tool)

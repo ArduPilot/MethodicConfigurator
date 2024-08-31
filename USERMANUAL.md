@@ -120,6 +120,30 @@ Here you sequentially configure the parameters of your flight controller to meet
   <ins><b><i>Parameter File Editor and Uploader Window (main application)</i></b></ins>
 </figure>
 
+For reproducibility and quality purposes, we configure the vehicle with a well-defined sequence of intermediate parameter files.
+
+Each file modifies just a small set of the [over 1200 parameters on the flight controller](https://ardupilot.org/copter/docs/parameters.html).
+By splitting the process into small manageable steps, we reduce the probability of making a mistake or missing a step and allow interleaving parameter changes with test flights.
+Each intermediate parameter file is a text file, editable in any common text editor (excluding MS Word) like [Notepad++](https://notepad-plus-plus.org/), [nano](https://www.nano-editor.org/) or [code](https://code.visualstudio.com/). It contains the *official ArduPilot parameter documentation* in the form of comments in the lines preceding the parameter. By using this you save the time of looking up the online documentation for each parameter.
+It contains the **reason why we changed the parameter** in a comment on the same line as the parameter and is used to trace each parameter change to the reason for that parameter change.
+
+Comments start with the '#' character.
+A small example with a single parameter is shown below:
+
+```text
+
+# Arming with Rudder enable/disable
+# Allow arm/disarm by rudder input. When enabled arming can be done with right rudder, disarming with left rudder.
+# 0: Disabled
+# 1: ArmingOnly
+# 2: ArmOrDisarm
+ARMING_RUDDER,0 # We find it safer to use only a switch to arm instead of through rudder inputs
+```
+
+If you are working with multiple vehicles, create a separate directory for each vehicle with a descriptive identifiable name. Copy the aprox. 50 *intermediate parameter files* into them. Edit the files to match the specific requirements of each vehicle. Now you have traceable documentation records for every parameter change on each of your vehicles.
+
+If you are in the business of manufacturing multicopters and maintain **high-quality standards that result in the production of multiple, nearly identical vehicles**, you can reuse most intermediate parameter files across these vehicles. Only three intermediate parameter files: `03_imu_temperature_calibration_results.param`, `12_mp_setup_mandatory_hardware.param` and `25_inflight_magnetometer_fit_results.param` are specific to each vehicle instance. All other intermediate parameter files can be used without modifications across all instances (or serial numbers) of the same product model.
+
 #### 1. See the Current Vehicle Directory (optional)
 
 - this vehicle configuration directory contains the files to be edited and uploaded
