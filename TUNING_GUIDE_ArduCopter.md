@@ -693,9 +693,9 @@ These are the standard tuning steps required for an optimized flight:
 ## 9.1 Third flight: MagFit
 
 Now that the Harmonic Notch filter, the throttle controller and PIDs are configured, the third flight will be safer.
-This flight will be used to calibrate the compass during a realistic operation scenario in the air.
+This flight will be used to [calibrate the compass during a realistic operation scenario in the air](https://ardupilot.org/copter/docs/common-magfit.html#using-mavexplorer-s-integrated-magfit-utility).
 
-## [Inflight MagFit calibration](https://ardupilot.org/copter/docs/common-magfit.html#using-mavexplorer-s-integrated-magfit-utility)
+### 9.1.1 Setup inflight MagFit calibration
 
 Follow these steps before the flight:
 
@@ -713,6 +713,8 @@ Follow these steps before the flight:
 1. Close *ArduPilot Methodic Configurator*
 
 Perform the MagFit figure-eight flight and land
+
+### 9.1.2 Calculate inflight MagFit calibration
 
 1. Download the latest `.bin` dataflash log file from the micro SDcard's `/APM/LOGS` folder
 1. Load it into MAVExplorer using the command line: `MAVExplorer.py filename.bin` or into the [ArduPilot MAGFit in flight compass calibration](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) using an internet browser.
@@ -737,6 +739,8 @@ The report should now look like this:
 If your flight controller can run lua scripts perform a [PID lua VTOL-Quicktune](https://ardupilot.org/copter/docs/quiktune.html).
 If you have an STM32 F4 or F7 processor that can not run lua scripts perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) instead.
 
+### 9.2.1 Setup quicktune
+
 Setup the lua script using:
 
 1. Download the [VTOL-quicktune.lua](https://raw.githubusercontent.com/ArduPilot/ardupilot/master/libraries/AP_Scripting/applets/VTOL-quicktune.lua) to your PC
@@ -751,6 +755,8 @@ Setup the lua script using:
 1. Close *ArduPilot Methodic Configurator*
 
 Perform the flight and afterward:
+
+### 9.2.2 Store quicktune results to file
 
 1. Connect the flight controller to the PC
 1. On *ArduPilot Methodic Configurator* select `25_quicktune_results.param` on the *Current intermediate parameter file:* Combobox.
@@ -784,9 +790,9 @@ Follow the second part of [evaluating the aircraft tune](https://ardupilot.org/c
 
 After landing take a look at the `RATE.*out` values in the `.bin` log file, they all should be below 0.1.
 
-## 9.5 [Autotune flight(s)](https://ardupilot.org/copter/docs/autotune.html)
+## 9.5 Autotune flight(s)
 
-The Autotune is an automated iterative process:
+The [Autotune](https://ardupilot.org/copter/docs/autotune.html) is an automated iterative process:
 
 1. It changes the parameter values of the attitude PID controllers
 1. Tests the [overshoot and settling-time](https://aleksandarhaber.com/transient-response-specifications-peak-time-settling-time-rise-time-and-percent-overshoot/) of the control loop using the new PID values
@@ -819,7 +825,7 @@ We set up the autotune as a flight mode, and as such it will use the underlying 
 If you want to use the `LOITER` flight mode as the underlying mode during autotune you need to [set an RC channel function switch to autotune](https://ardupilot.org/copter/docs/autotune.html#setup-before-flying-in-autotune-mode).
 Follow the sequence below for tuning each axis as that particular order improves the results.
 
-### Roll axis
+### 9.5.1 Roll axis autotune
 
 1. On *ArduPilot Methodic Configurator* select `30_autotune_roll_setup.param` and upload it to the FC. It will activate the roll axis Autotune.
 1. When asked *Should the FC values now be copied to the 31_autotune_roll_results.param file?* select `No`.
@@ -847,7 +853,7 @@ If the battery got depleted before Autotune completion, change the initial PID p
 |ATC_ANG_RLL_P|ATUN.SP|
 |ATC_ACCEL_R_MAX|ATUN.ddt|
 
-### Pitch axis
+### 9.5.2 Pitch axis autotune
 
 1. On *ArduPilot Methodic Configurator* select `32_autotune_pitch_setup.param` and upload it to the FC. It will activate the pitch axis Autotune.
 1. When asked *Should the FC values now be copied to the 33_autotune_pitch_results.param file?* select `No`.
@@ -875,7 +881,7 @@ If the battery got depleted before Autotune completion, change the initial PID p
 |ATC_ANG_PIT_P|ATUN.SP|
 |ATC_ACCEL_P_MAX|ATUN.ddt|
 
-### Yaw axis
+### 9.5.3 Yaw axis autotune
 
 1. Use *ArduPilot Methodic Configurator* to edit and upload the `34_autotune_yaw_setup.param` file to the FC. It will activate the yaw axis Autotune.
 1. Outdoors on a non-windy day (or indoors in a big warehouse like we at IAV do) take off and fly in either `AltHold` or `Loiter` flight mode.
@@ -900,9 +906,9 @@ If the battery got depleted before Autotune completion, change the initial PID p
 |ATC_ANG_YAW_P|ATUN.SP|
 |ATC_ACCEL_Y_MAX|ATUN.ddt|
 
-### [Yaw D axis](https://www.youtube.com/watch?v=b76bPEeRCEk&t=963s)
+### 9.5.4 Yaw D axis autotune (optional)
 
-This particular `YawD` Autotune axis is only relevant for small, agile vehicles.
+This particular `YawD` Autotune axis is [only relevant for small, agile vehicles](https://www.youtube.com/watch?v=b76bPEeRCEk&t=963s).
 
 1. Use *ArduPilot Methodic Configurator* to edit and upload the `36_autotune_yawd_setup.param` file to the FC.
 2. Outdoors on a non-windy day (or indoors in a big warehouse like we at IAV do) take-off and fly in either `AltHold` or `Loiter` flight mode.
@@ -926,7 +932,7 @@ If the battery got depleted before Autotune completion, change the initial PID p
 |ATC_ANG_YAW_P|ATUN.SP|
 |ATC_ACCEL_Y_MAX|ATUN.ddt|
 
-### [re-tune the roll and pitch axis](https://youtu.be/jK0I97dMsK0?si=F1lyl2iq8gUUencl&t=2535)
+### 9.5.5 Roll and pitch axis re-autotune
 
 Now that the yaw axis is tuned, the [autotune should be able to improve the roll and pitch axis tune](https://youtu.be/jK0I97dMsK0?si=F1lyl2iq8gUUencl&t=2535).
 
@@ -1081,25 +1087,25 @@ Their goal is to build a mathematical model of the vehicle that can later be use
 
 Documentation is available on [Fabian Bredemeier's Identification of a multicopter section at ArduCopter's_wiki](https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter).
 
-### Roll rate mathematical model
+### 11.1.1 Roll rate mathematical model
 
 Use *ArduPilot Methodic Configurator* to edit and upload the `42_system_id_roll.param` file to the FC.
 
 Now do the flight to collect the data for the roll rate system identification.
 
-### Pitch rate mathematical model
+### 11.1.2 Pitch rate mathematical model
 
 Use *ArduPilot Methodic Configurator* to edit and upload the `43_system_id_pitch.param` file to the FC.
 
 Now do the flight to collect the data for the pitch rate system identification.
 
-### Yaw rate mathematical model
+### 11.1.3 Yaw rate mathematical model
 
 Use *ArduPilot Methodic Configurator* to edit and upload the `44_system_id_yaw.param` file to the FC.
 
 Now do the flight to collect the data for the yaw rate system identification.
 
-### Thrust mathematical model
+### 11.1.4 Thrust mathematical model
 
 Use *ArduPilot Methodic Configurator* to edit and upload the `45_system_id_thrust.param` file to the FC.
 
