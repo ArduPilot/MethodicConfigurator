@@ -130,9 +130,14 @@ So, [start the ArduPilot Methodic Configurator and input select a vehicle that r
 1. Close Mission Planner, if it is open on the PC.
 1. Connect the flight controller to the PC via a USB cable and wait 7 seconds.
 1. Open *ArduPilot Methodic Configurator*, and [connect it to the vehicle](USERMANUAL.md#usage).
-1. Now using [New vehicle](USERMANUAL.md#new)
-1. Select the template to use, select the destination directory, give it a name and press `Create vehicle directory from template`
-1. On the component editor window, **add all the details of the components of your system** as we did in [Section 1.2](#12-our-example-vehicle).
+   ![FC connection and parameter download](images/App_screenshot_FC_info_and_param_download.png)
+1. Now using [New](USERMANUAL.md#new) subsection
+   ![New vehicle](images/App_screenshot_Vehicle_directory1.png)
+1. Fom the existing templates, select the one most similar to your vehicle:
+   ![New vehicle](images/App_screenshot_Vehicle_overview.png)
+1. select the destination directory, give it a name and press `Create vehicle configuration directory from template`
+1. On the component editor window, **add all the details of the components of your system** as we did in [Section 1.2](#12-our-example-vehicle):
+   ![Component editor window](images/App_screenshot_Component_Editor.png)
 1. Make sure to **scroll all the way down and enter all the information requested**, even if it does not seam important to you.
 1. Click the `Save data and start configuration` button on the bottom
 1. You now have a vehicle configuration directory with the name that you selected. But the files are just templates, you need to edit them in the next steps.
@@ -202,10 +207,16 @@ Follow [mounting the autopilot](https://ardupilot.org/copter/docs/common-mountin
 ### 6.1.1 Use ArduPilot Methodic Configurator to edit the parameter file and upload it to the flight controller
 
 1. The parameter file for this particular step is `04_board_orientation.param` other steps will use other parameter files
+  ![parameter file editor window](images/App_screenshot_Parameter_file_editor_and_uploader4.png)
 1. On *ArduPilot Methodic Configurator* select `04_board_orientation.param` on the *Current intermediate parameter file:* Combobox.
 1. Read the documentation links inside the `04_board_orientation.param documentation`
 1. **Add** or **Del**ete parameters if necessary, using the respective GUI buttons
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
+1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements.
+The `Change Reason` field is extremely important because:
+    - if forces you to think, causing rational decisions instead of impulsive ones
+    - justifies your decisions on a vehicle certification process required in most countries
+    - allows for someone else to see if you know what you are doing
+    - allows for someone else (or yourself after a few weeks) to understand your rationale
 1. Press `Upload selected params to FC, and advance to next file` button.
 
 ## 6.2 Configure the RC receiver
