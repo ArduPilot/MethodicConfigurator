@@ -149,6 +149,8 @@ IMU temperature calibration reduces the probability of *Accel inconsistent* and 
 IMU temperature calibration requires lowering the temperature of the autopilot (flight controller) to circa -20°C.
 That is harder to do once the autopilot is assembled inside the vehicle, hence it is done now.
 
+## 4.1 Setup IMU temperature calibration
+
 1. [Start the software](QUICKSTART.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
 1. On *ArduPilot Methodic Configurator* select `02_imu_temperature_calibration_setup.param` on the *Current intermediate parameter file:* Combobox if not already selected.
 1. Read the *Forum Blog:* and *Wiki:* documentation by pressing on the blue URL links.
@@ -161,6 +163,9 @@ That is harder to do once the autopilot is assembled inside the vehicle, hence i
 1. Power it off, and remove the micro SDCard
 1. Copy the latest `.bin` log file in the micro SDcard from `/APM/LOGS` to your PC
 1. Insert the micro SDcard back into the flight controller
+
+## 4.2 Calculate IMU temperature calibration
+
 1. Connect a USB cable to the FC and open *ArduPilot Methodic Configurator*. It will ask you again *Do you want to provide a .bin log file and run the IMU temperature calibration using it?* Select `Yes` and point it to the `.bin` file that you just downloaded.
 1. Wait until finished It can take 10 Minutes or more look at the produced graphs they are also automatically saved to disk on the vehicle directory
 1. Press `Upload selected params to FC, and advance to next file`.
