@@ -79,7 +79,7 @@ def uplate_old_filenames(renames, steps):
 def update_file_contents(renames, root, file, steps):
     with open(os.path.join(root, file), "r", encoding="utf-8") as handle:
         file_content = handle.read()
-    if file in ["BLOG.md", "BLOG-discuss1.md", "BLOG-discuss2.md"]:
+    if file.startswith("TUNING_GUIDE_") and file.endswith(".md"):
         for _new_filename, old_filename in renames.items():
             if old_filename not in file_content:
                 print(f"Error: The intermediate parameter file '{old_filename}'" \
@@ -133,10 +133,10 @@ def reorder_actual_files(renames, param_dirs):
 
 
 def change_line_endings_for_md_files():
-    # Change line endings of BLOG*.md files to CRLF
+    # Change line endings of TUNING_GUIDE_*.md, README.md files to CRLF
     for root, _dirs, files in os.walk("."):
         for file in files:
-            if (file.startswith("BLOG") and file.endswith(".md")) or file == "README.md":
+            if (file.startswith("README") or file.startswith("TUNING_GUIDE_")) and file.endswith(".md"):
                 file_path = os.path.join(root, file)
                 with open(file_path, "rb") as handle:
                     content = handle.read()

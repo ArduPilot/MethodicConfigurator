@@ -1080,12 +1080,12 @@ Now do the flight to collect the data and analyze the logs to see if the baromet
 
 # 11. System identification for analytical PID optimization (optional)
 
-## 11.1 [System Identification Flights](https://ardupilot.org/copter/docs/systemid-mode-operation.html)
+This uses [Ardupilot's system identification flight mode](https://ardupilot.org/copter/docs/systemid-mode-operation.html) to collect data to [build a mathematical model of the vehicle](https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter) that can later be used to further [optimize the control loops of the vehicle according to a set of constraints (requirements)](https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759).
 
-These steps are optional.
-Their goal is to build a mathematical model of the vehicle that can later be used to further [optimize the control loops of the vehicle according to a set of constraints (requirements)](https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759).
+## 11.1 System Identification Flights
 
-Documentation is available on [Fabian Bredemeier's Identification of a multicopter section at ArduCopter's_wiki](https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter).
+These flights need to be performormed in the total absense of wind.
+The vehicle PIDs need to be a bit detuned in order to not fully cancel out the injected chirp signals.
 
 ### 11.1.1 Roll rate mathematical model
 
@@ -1111,9 +1111,9 @@ Use *ArduPilot Methodic Configurator* to edit and upload the `45_system_id_thrus
 
 Now do the flight to collect the data for the thrust system identification.
 
-### [Analytical Multicopter Flight Controller PID Optimization](https://discuss.ardupilot.org/t/analytical-multicopter-flight-controller-pid-optimization/109759)
+## 11.2 Analytical Multicopter Flight Controller PID Optimization
 
-This describes how to use IAV's multi-objective optimization to achieve even better (according to a predefined set of constraints) PID tuning.
+This describes how to use [IAV's multi-objective optimization](https://discuss.ardupilot.org/t/analytical-multicopter-flight-controller-pid-optimization/109759) to achieve even better (according to a predefined set of constraints) PID tuning.
 
 One other approach is described by Bill Geyer in his Blog post: [Predicting Closed Loop Response For Faster Autotune](https://discuss.ardupilot.org/t/predicting-closed-loop-response-for-faster-autotune/75096).
 

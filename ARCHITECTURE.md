@@ -10,7 +10,7 @@ Before we decided on a software architecture or programming language or toolkit 
 ## Software requirements
 
 The goal of this software is to automate some of the tasks involved in configuring and tuning an ArduPilot-based vehicle.
-The method it follows is explained in the [How to methodically tune (almost) any multicopter using ArduCopter forum Blog post](https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/1).
+The method it follows is explained in the [How to methodically tune any ArduCopter](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter).
 This list of functionalities provides a comprehensive overview of the software's capabilities and can serve as a starting point for further development and refinement.
 
 ### 1. Parameter Configuration Management

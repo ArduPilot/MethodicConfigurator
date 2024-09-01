@@ -681,7 +681,7 @@
     },
     "42_system_id_roll.param": {
         "blog_text": "Configures parameters for the roll axis system identification, part of the tuning process.",
-        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane#1111-roll-rate-mathematical-model",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane#11-system-identification-for-analytical-pid-optimization-optional",
         "wiki_text": "Matlab and Simulink IAV scripts for system identification",
         "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
         "external_tool_text": "ArduCopter Simulink Model",
@@ -739,7 +739,7 @@
     },
     "46_analytical_pid_optimization.param": {
         "blog_text": "Contains parameters for analytical PID optimization, aiming to find the optimal PID values for the vehicle.",
-        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane#analytical-multicopter-flight-controller-pid-optimization",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane#112-analytical-multicopter-flight-controller-pid-optimization",
         "wiki_text": "",
         "wiki_url": "",
         "external_tool_text": "IAV analytical PID model optimization",

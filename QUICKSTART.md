@@ -37,88 +37,88 @@ IMU temperature calibration requires lowering the temperature of the autopilot (
 That is harder to do once the autopilot is assembled inside the vehicle, hence it is done now.
 
 - [start the software](#6-configure-the-vehicles-parameters-in-a-traceable-way)
-- Perform [IMU temperature calibration](BLOG.md#21-configure-imu-temperature-calibration-using-the-offline-calibration-tool)
+- Perform [IMU temperature calibration](TUNING_GUIDE_ArduCopter.md#21-configure-imu-temperature-calibration-using-the-offline-calibration-tool)
 
 ### 1.5 Assemble all components except the propellers
 
-Assemble and connect all components. Make sure you [follow best practices](BLOG.md#1-getting-the-hardware-right)
+Assemble and connect all components. Make sure you [follow best practices](TUNING_GUIDE_ArduCopter.md#11-multicopter-hardware-best-practices)
 
 ### 1.6 Basic mandatory configuration
 
 Again using the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template) perform the following steps:
 
-- [04_board_orientation.param](BLOG.md#25-configure-flight-controller-orientation) flight controller orientation
-- [05_remote_controller.param](BLOG.md#26-configure-the-rc-receiver) remote controller connections and protocol
-- [06_telemetry.param](BLOG.md#27-configure-telemetry) telemetry transceiver connections and protocol (optional)
-- [07_esc.param](BLOG.md#28-configure-the-esc) Electronic-Speed-Controller connections and protocol
-- [08_batt1.param](BLOG.md#29-configure-the-primary-battery-monitor) Battery health and state of charge monitoring
-- [10_gnss.param](BLOG.md#211-configure-the-gnss-receivers) GNSS receiver connection and protocol
-- [11_initial_atc.param](BLOG.md#212-initial-attitude-pid-gains-vehicle-size-dependent) initial attitude PID gains (vehicle size dependent)
+- [04_board_orientation.param](TUNING_GUIDE_ArduCopter.md#61-configure-flight-controller-orientation) flight controller orientation
+- [05_remote_controller.param](TUNING_GUIDE_ArduCopter.md#62-configure-the-rc-receiver) remote controller connections and protocol
+- [06_telemetry.param](TUNING_GUIDE_ArduCopter.md#63-configure-telemetry) telemetry transceiver connections and protocol (optional)
+- [07_esc.param](TUNING_GUIDE_ArduCopter.md#64-configure-the-esc) Electronic-Speed-Controller connections and protocol
+- [08_batt1.param](TUNING_GUIDE_ArduCopter.md#65-configure-the-primary-battery-monitor) Battery health and state of charge monitoring
+- [10_gnss.param](TUNING_GUIDE_ArduCopter.md#67-configure-the-gnss-receivers) GNSS receiver connection and protocol
+- [11_initial_atc.param](TUNING_GUIDE_ArduCopter.md#68-initial-attitude-pid-gains-vehicle-size-dependent) initial attitude PID gains (vehicle size dependent)
 
 Now use [Mission Planner](https://firmware.ardupilot.org/Tools/MissionPlanner/) to do:
 
-- [12_mp_setup_mandatory_hardware.param](BLOG.md#213-configure-mandatory-hardware-parameters) calibrate vehicle sensors
+- [12_mp_setup_mandatory_hardware.param](TUNING_GUIDE_ArduCopter.md#69-configure-mandatory-hardware-parameters) calibrate vehicle sensors
 
 And continue with the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template):
 
-- [13_general_configuration.param](BLOG.md#214-general-configuration) general misc configuration
-- [Test if the hardware diagnostics are OK](BLOG.md#215-ardupilot-hardware-report)
-- [14_logging.param](BLOG.md#216-configure-logging) configure Dataflash/SDCard logging (black box data)
-- [15_motor.param](BLOG.md#217-motorpropeller-order-and-direction-test) motor order and direction tests. ESC linearization.
-- [16_pid_adjustment.parm](BLOG.md#218-optional-pid-adjustment) attitude PID gains (vehicle size dependent)
-- [17_remote_id.param](BLOG.md#219-remote-id-aka-drone-id) required by law in many countries
-- [18_notch_filter_setup.param](BLOG.md#220-notch-filters-setup) to remove motor noise, reduce power consumption and increase flight stability
+- [13_general_configuration.param](TUNING_GUIDE_ArduCopter.md#610-general-configuration) general misc configuration
+- [Test if the hardware diagnostics are OK](TUNING_GUIDE_ArduCopter.md#611-ardupilot-hardware-report)
+- [14_logging.param](TUNING_GUIDE_ArduCopter.md#612-configure-logging) configure Dataflash/SDCard logging (black box data)
+- [15_motor.param](TUNING_GUIDE_ArduCopter.md#613-motorpropeller-order-and-direction-test) motor order and direction tests. ESC linearization.
+- [16_pid_adjustment.parm](TUNING_GUIDE_ArduCopter.md#614-optional-pid-adjustment) attitude PID gains (vehicle size dependent)
+- [17_remote_id.param](TUNING_GUIDE_ArduCopter.md#615-remote-id-aka-drone-id) required by law in many countries
+- [18_notch_filter_setup.param](TUNING_GUIDE_ArduCopter.md#616-notch-filters-setup) to remove motor noise, reduce power consumption and increase flight stability
 
 ### 1.7 Assemble propellers and perform the first flight
 
-Now that all mandatory configuration steps are done you can [perform the first flight](BLOG.md#3-first-flight-motor-thrust-hover-and-harmonic-notch-data-collection)
+Now that all mandatory configuration steps are done you can [perform the first flight](TUNING_GUIDE_ArduCopter.md#7-assemble-propellers-and-perform-the-first-flight)
 
 ### 1.8 Minimalistic mandatory tuning
 
-These are the very minimum tuning steps required for a stable flight:
+These are the very [minimum tuning steps](TUNING_GUIDE_ArduCopter.md#8-minimalistic-mandatory-tuning) required for a stable flight:
 
 - Load the `.bin` log file from the first flight into [Notch filter webtool](https://firmware.ardupilot.org/Tools/WebTools/FilterReview/)
-- [19_notch_filter_results.param](BLOG.md#31-notch-filter-calibration) use the webtool information to configure the notch filter(s)
-- [20_throttle_controller.param](BLOG.md#32-configure-the-throttle-controller) the altitude controller depends on the power-to-thrust ratio found in the first flight
-- [21_ekf_config.param](BLOG.md#32-configure-the-throttle-controller) sometimes the EKF3 needs a tune to maintain altitude
-- [22_quick_tune_setup.param](BLOG.md#4-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune) and [23_quick_tune_results.param](BLOG.md#4-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune) You need lua scripting support to do this if not available you can tune manually.
+- [19_notch_filter_results.param](TUNING_GUIDE_ArduCopter.md#81-notch-filter-calibration) use the webtool information to configure the notch filter(s)
+- [20_throttle_controller.param](TUNING_GUIDE_ArduCopter.md#82-configure-the-throttle-controller) the altitude controller depends on the power-to-thrust ratio found in the first flight
+- [21_ekf_config.param](TUNING_GUIDE_ArduCopter.md#83-configure-the-ekf-altitude-source-weights) sometimes the EKF3 needs a tune to maintain altitude
+- [22_quick_tune_setup.param](TUNING_GUIDE_ArduCopter.md#84-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune) and [23_quick_tune_results.param](TUNING_GUIDE_ArduCopter.md#84-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune) You need lua scripting support to do this if not available you can tune manually.
 
 That is it, if you are impatient and do not want an optimized vehicle you can skip to [everyday use](#113-everyday-use).
 
 ### 1.9 Standard tuning (optional)
 
-These are the standard tuning steps required for an optimized flight:
+These are the [standard tuning steps](TUNING_GUIDE_ArduCopter.md#9-standard-tuning-optional) required for an optimized flight:
 
-- [24_inflight_magnetometer_fit_setup.param](BLOG.md#5-third-flight-magfit) Use lua scripted flight path or fly manually and  [25_inflight_magnetometer_fit_results.param](BLOG.md#5-third-flight-magfit) Use the [magfit webtool](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) to calculate a file that the ardupilot methodic configurator can use
-- [26_quick_tune_setup.param](BLOG.md#6-fourth-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune-optional) and [27_quick_tune_results.param](BLOG.md#6-fourth-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune-optional) Redo quick-tune now that the compass magnetic interference is fully calibrated
-- [28_evaluate_the_aircraft_tune_ff_disable.param](BLOG.md#7-fifth-flight-evaluate-the-aircraft-tune---part-1) and [29_evaluate_the_aircraft_tune_ff_enable.param](BLOG.md#8-sixth-flight-evaluate-the-aircraft-tune---part-2)
-- [30_autotune_roll_setup.param](BLOG.md#9-autotune-flights) and [31_autotune_roll_results.param](BLOG.md#9-autotune-flights) tune roll axis rate and angle PIDs
-- [32_autotune_pitch_setup.param](BLOG.md#9-autotune-flights) and [33_autotune_pitch_results.param](BLOG.md#9-autotune-flights) tune pitch axis rate and angle PIDs
-- [34_autotune_yaw_setup.param](BLOG.md#9-autotune-flights) and [35_autotune_yaw_results.param](BLOG.md#9-autotune-flights) tune yaw axis rate and angle PIDs
-- [36_autotune_yawd_setup.param](BLOG.md#9-autotune-flights) and [37_autotune_yawd_results.param](BLOG.md#9-autotune-flights) tune yawd axis rate and angle PIDs
-- [38_autotune_roll_pitch_retune_setup.param](BLOG.md#9-autotune-flights) and [39_autotune_roll_pitch_retune_results.param](BLOG.md#9-autotune-flights) re-tune roll and pitch pitch axis rate and angle PIDs
+- [24_inflight_magnetometer_fit_setup.param](TUNING_GUIDE_ArduCopter.md#91-third-flight-magfit) Use lua scripted flight path or fly manually and  [25_inflight_magnetometer_fit_results.param](TUNING_GUIDE_ArduCopter.md#912-calculate-inflight-magfit-calibration) Use the [magfit webtool](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) to calculate a file that the ardupilot methodic configurator can use
+- [26_quick_tune_setup.param](TUNING_GUIDE_ArduCopter.md#921-setup-quicktune) and [27_quick_tune_results.param](TUNING_GUIDE_ArduCopter.md#922-store-quicktune-results-to-file) Redo quick-tune now that the compass magnetic interference is fully calibrated
+- [28_evaluate_the_aircraft_tune_ff_disable.param](TUNING_GUIDE_ArduCopter.md#93-fifth-flight-evaluate-the-aircraft-tune---part-1) and [29_evaluate_the_aircraft_tune_ff_enable.param](TUNING_GUIDE_ArduCopter.md#94-sixth-flight-evaluate-the-aircraft-tune---part-2)
+- [30_autotune_roll_setup.param](TUNING_GUIDE_ArduCopter.md#95-autotune-flights) and [31_autotune_roll_results.param](TUNING_GUIDE_ArduCopter.md#951-roll-axis-autotune) tune roll axis rate and angle PIDs
+- [32_autotune_pitch_setup.param](TUNING_GUIDE_ArduCopter.md#952-pitch-axis-autotune) and [33_autotune_pitch_results.param](TUNING_GUIDE_ArduCopter.md#952-pitch-axis-autotune) tune pitch axis rate and angle PIDs
+- [34_autotune_yaw_setup.param](TUNING_GUIDE_ArduCopter.md#953-yaw-axis-autotune) and [35_autotune_yaw_results.param](TUNING_GUIDE_ArduCopter.md#953-yaw-axis-autotune) tune yaw axis rate and angle PIDs
+- [36_autotune_yawd_setup.param](TUNING_GUIDE_ArduCopter.md#954-yaw-d-axis-autotune-optional) and [37_autotune_yawd_results.param](TUNING_GUIDE_ArduCopter.md#954-yaw-d-axis-autotune-optional) tune yawd axis rate and angle PIDs
+- [38_autotune_roll_pitch_retune_setup.param](TUNING_GUIDE_ArduCopter.md#955-roll-and-pitch-axis-re-autotune) and [39_autotune_roll_pitch_retune_results.param](TUNING_GUIDE_ArduCopter.md#955-roll-and-pitch-axis-re-autotune) re-tune roll and pitch pitch axis rate and angle PIDs
 
 Now the standard tuning is complete you can skip to [everyday use](#113-everyday-use)
 
 ### 1.10 Improve altitude under windy conditions (optional)
 
-- [40_windspeed_estimation.param](BLOG.md#11-windspeed-estimation-flights) estimates the wind speed
-- [41_barometer_compensation.param](BLOG.md#12-baro-compensation-flights) Uses the estimated wind speed to improve altitude stability
+- [40_windspeed_estimation.param](TUNING_GUIDE_ArduCopter.md#10-improve-altitude-under-windy-conditions-optional) estimates the wind speed
+- [41_barometer_compensation.param](TUNING_GUIDE_ArduCopter.md#102-baro-compensation-flights) Uses the estimated wind speed to improve altitude stability
 
 ### 1.11 System identification for analytical PID optimization (optional)
 
-- [42_system_id_roll.param, 43_system_id_pitch.param, 44_system_id_yaw.param](BLOG.md#13-system-identification-flights)
-- [46_analytical_pid_optimization.param](BLOG.md#13-system-identification-flights)
+- [42_system_id_roll.param, 43_system_id_pitch.param, 44_system_id_yaw.param](TUNING_GUIDE_ArduCopter.md#11-system-identification-for-analytical-pid-optimization-optional)
+- [46_analytical_pid_optimization.param](TUNING_GUIDE_ArduCopter.md#112-analytical-multicopter-flight-controller-pid-optimization)
 
 ### 1.12 Position controller tuning (optional)
 
-- [47_position_controller.param, 48_guided_operation.param, 49_precision_land.param](BLOG.md#14-position-controller)
+- [47_position_controller.param, 48_guided_operation.param, 49_precision_land.param](TUNING_GUIDE_ArduCopter.md#12-position-controller-tuning-optional)
 
 ### 1.13 Everyday use
 
 Now that tuning and configuration are done, some logging and tests can be disabled and some more safety features enabled:
 
-- [50_everyday_use.param](BLOG.md#17-productive-configuration)
+- [50_everyday_use.param](TUNING_GUIDE_ArduCopter.md#13-productive-configuration)
 
 Enjoy your properly configured vehicle.
 
