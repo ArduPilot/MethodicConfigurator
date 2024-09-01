@@ -65,6 +65,8 @@ if os.path.exists(TEMPLATES_DST_DIR):
 try:
     shutil.copytree(TEMPLATES_SRC_DIR, TEMPLATES_DST_DIR)
     print("Directory tree copied successfully.")
+except FileNotFoundError:
+    print(f"Error: Source directory '{TEMPLATES_SRC_DIR}' does not exist.")
 except FileExistsError:
     print(f"The destination directory '{TEMPLATES_DST_DIR}' already exists and cannot be overwritten.")
 except PermissionError:
@@ -83,7 +85,7 @@ setup(
     url=PRJ_URL,
     author='Amilcar do Carmo Lucas',
     author_email='amilcar.lucas@iav.de',
-    packages=find_packages(),
+    packages=find_packages(where='MethodicConfigurator'),
     install_requires=[
         'defusedxml',
         'matplotlib',
@@ -117,6 +119,7 @@ setup(
     license='GPLv3',
     python_requires='>=3.6',
     keywords=['ArduPilot', 'Configuration', 'SCM', 'Methodic', 'ArduCopter', 'ArduPlane', 'ArduRover', 'ArduSub'],
+    package_dir={"": "MethodicConfigurator"},
     include_package_data=True,
     scripts=extra_scripts,
     # Specify entry points for command-line scripts
