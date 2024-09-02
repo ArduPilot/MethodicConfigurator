@@ -1,0 +1,6 @@
+FRAME_CLASS,6
+FRAME_TYPE,1
+FS_CRASH_CHECK,0  # Crash check is unreliable in Trad-Heli
+H_FLYBAR_MODE,0
+H_HOVER_LEARN,2
+H_OPTIONS,1

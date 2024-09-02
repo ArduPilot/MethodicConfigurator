@@ -1,0 +1,10 @@
+INS_FAST_SAMPLE,3
+INS_GYRO_RATE,1
+INS_HNTCH_ATT,40  # this is just a hunch, it must be improved after the first flight (by the next file)
+INS_HNTCH_BW,10  # this is just a hunch, it must be improved after the first flight (by the next file)
+INS_HNTCH_ENABLE,1  # Use the first notch filter to filter the noise created by the motors/propellers
+INS_HNTCH_FREQ,33.3  # Rotor RPM (2000)
+INS_HNTCH_HMNCS,3  # First and Second harmonics.
+INS_HNTCH_MODE,0  # Fixed filter as Heli Rotor RPM is fixed. 
+INS_HNTCH_OPTS,0
+INS_HNTCH_REF,0

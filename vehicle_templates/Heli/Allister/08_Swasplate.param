@@ -1,0 +1,25 @@
+H_SW_TYPE,3
+SERVO1_FUNCTION,33  # Swashplate Front Left
+SERVO1_REVERSED,1  # Required for OMP M4
+SERVO2_FUNCTION,34  # Swashplate Front Right
+SERVO2_REVERSED,1  # Required for OMP M4
+SERVO3_FUNCTION,35  # Swashplate Aft
+SERVO3_REVERSED,1  # Required for OMP M4
+
+H_COL_ANG_MAX,12  # Non-aerobatic flying
+H_COL_ANG_MIN,-5  # Non-aerobatic flying
+H_COL_HOVER,0.6  # Starting point, will be set during Alt-hold hover.
+H_COL_LAND_MIN,-2
+H_COL_MAX,1640  # Starting point, to be checked during rigging.
+H_COL_MIN,1400  # Starting point, to be checked during rigging.
+H_COL_ZERO_THRST,0  # Symetrical blades
+H_CYC_MAX,1500  # Starting point, to be checked during rigging.
+SERVO1_MAX,2000  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO1_MIN,1000  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO1_TRIM,1500  # Adjust all linkages so the swasplate is level at 1500.
+SERVO2_MAX,2000  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO2_MIN,1000  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO2_TRIM,1500  # Adjust all linkages so the swasplate is level at 1500.
+SERVO3_MAX,2000  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO3_MIN,1000  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
+SERVO3_TRIM,1500 # Adjust all linkages so the swasplate is level at 1500.

@@ -15,4 +15,4 @@ RTL_ALT,2000
 RTL_LOIT_TIME,5000
 SCHED_LOOP_RATE,400
 SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation
-SERIAL7_PROTOCOL,2  # Do not use CubeOrange ADSB receiver
+SERIAL7_PROTOCOL,2

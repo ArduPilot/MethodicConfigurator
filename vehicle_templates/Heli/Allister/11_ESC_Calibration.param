@@ -1,0 +1,4 @@
+RC3_MAX,1900  # Set RC 3 to match the MIN/MAX range of the HeliRSC Output
+RC3_MIN,1100  # Set RC 3 to match the MIN/MAX range of the HeliRSC Output
+SERVO5_FUNCTION,53  # RC passthrough temporarily for ESC calibration.
+SERVO8_FUNCTION,31  # temporary as default for HeliRSC.  This can be any serial port without a connection.

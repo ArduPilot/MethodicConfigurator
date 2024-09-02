@@ -3,66 +3,66 @@
     "Components": {
         "Flight Controller": {
             "Product": {
-                "Manufacturer": "CubePilot",
-                "Model": "CubeOrange",
-                "URL": "https://www.robotshop.com/products/cubepilot-the-cube-orange-standard-set-ads-b-carrier-board",
+                "Manufacturer": "Holybro",
+                "Model": "Pixhawk 6C Mini",
+                "URL": "https://holybro.com/products/pixhawk-6c-mini?srsltid=AfmBOoowEp_mRvPFxB3wvUi1Cu8wFLKFyPu3hLwfmDt5JQGUxbdnTtqr",
                 "Version": "1.0"
             },
             "Firmware": {
                 "Type": "Heli",
                 "Version": "4.5.5"
             },
-            "Notes": "This is CubeOrange with 94.5mm x 44.3mm x 17.3mm"
+            "Notes": "This will fit on the Flybarless tray, however it needs to be reversed."
         },
         "Frame": {
             "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
+                "Manufacturer": "OMP",
+                "Model": "M4",
+                "URL": "https://www.omphobby.com/OMPHOBBY-M4-RC-Helicopter-p3639115.html",
+                "Version": "Base"
             },
             "Specifications": {
-                "TOW min Kg": 2,
-                "TOW max Kg": 2
+                "TOW min Kg": 1,
+                "TOW max Kg": 1
             },
-            "Notes": ""
+            "Notes": "This was done with the Basic M4 Combo kit, not the max"
         },
         "RC Controller": {
             "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
+                "Manufacturer": "Radiomaster",
+                "Model": "TX16S",
+                "URL": "https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller",
+                "Version": "Max"
             },
             "Firmware": {
-                "Type": "",
-                "Version": ""
+                "Type": "EdgeTX",
+                "Version": "2.10"
             },
-            "Notes": ""
+            "Notes": "External TBS Module"
         },
         "RC Transmitter": {
             "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
+                "Manufacturer": "TBS",
+                "Model": "Crossfire Micro TX ",
+                "URL": "https://www.team-blacksheep.com/products/prod:crossfire_micro_tx",
+                "Version": "V2"
             },
             "Firmware": {
-                "Type": "",
-                "Version": ""
+                "Type": "Crossfire",
+                "Version": "6.36"
             },
-            "Notes": "integrated in RC controller"
+            "Notes": "External on TX16S"
         },
         "RC Receiver": {
             "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
+                "Manufacturer": "TBS",
+                "Model": "Crossfire Nano",
+                "URL": "https://www.team-blacksheep.com/products/prod:crossfire_nano_se",
                 "Version": ""
             },
             "Firmware": {
-                "Type": "",
-                "Version": ""
+                "Type": "Crossfire",
+                "Version": "6.36"
             },
             "FC Connection": {
                 "Type": "SERIAL1",
@@ -85,14 +85,14 @@
                 "Type": "SERIAL2",
                 "Protocol": "MAVLink2"
             },
-            "Notes": ""
+            "Notes": "No telemetry installed."
         },
         "Battery Monitor": {
             "Product": {
-                "Manufacturer": "CubePilot",
-                "Model": "HX4-06008",
-                "URL": "https://docs.cubepilot.org/user-guides/autopilot/the-cube-user-manual#power-module-connection",
-                "Version": "PB01A21"
+                "Manufacturer": "Holybro",
+                "Model": "PMO2 V3",
+                "URL": "https://holybro.com/collections/power-modules-pdbs/products/pm02-v3-12s-power-module",
+                "Version": ""
             },
             "Firmware": {
                 "Type": "",
@@ -102,31 +102,31 @@
                 "Type": "Analog",
                 "Protocol": "Analog Voltage and Current"
             },
-            "Notes": "Voltage is done via the flight controller. Current is done via the ESC."
+            "Notes": "Voltage and current are monitored by the battery monitor.  "
         },
         "Battery": {
             "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
+                "Manufacturer": "OMP",
+                "Model": "6S - 2000 mAh",
+                "URL": "https://www.omphobby.com/OMPHOBBY-M4-Helicopter-6S-2000mAh-HV-Battery-For-M4-M4-Max-OSHM4049-p3669457.html",
+                "Version": "OSHM4049"
             },
             "Specifications": {
                 "Chemistry": "LipoHV",
-                "Volt per cell max": 4.2,
-                "Volt per cell low": 3.6,
-                "Volt per cell crit": 3.55,
+                "Volt per cell max": 4.35,
+                "Volt per cell low": 3.7,
+                "Volt per cell crit": 3.6,
                 "Number of cells": 6,
-                "Capacity mAh": 30000
+                "Capacity mAh": 2000
             },
             "Notes": ""
         },
         "ESC": {
             "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
+                "Manufacturer": "OMP",
+                "Model": "65A Heli ESC",
+                "URL": "https://www.omphobby.com/OMPHOBBY-M4-Helicopter-65A-ESC-OSHM4050-p3669459.html",
+                "Version": "OSHM4050"
             },
             "Firmware": {
                 "Type": "",
@@ -140,34 +140,34 @@
         },
         "Motors": {
             "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
+                "Manufacturer": "OMP",
+                "Model": "8108 Motor",
+                "URL": "https://www.omphobby.com/OMPHOBBY-M4-Helicopter-8108-Motor-OSHM4024-p3668886.html",
+                "Version": "OSHM4024"
             },
             "Specifications": {
-                "Poles": 14
+                "Poles": 42
             },
-            "Notes": ""
+            "Notes": "V8108 KV205 36N42P"
         },
         "Propellers": {
             "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
+                "Manufacturer": "OMP",
+                "Model": "385mm",
+                "URL": "https://www.omphobby.com/OMPHOBBY-M4-Helicopter-385mm-Main-blade-OSHM4046-p3669412.html",
+                "Version": "OSHM4046"
             },
             "Specifications": {
-                "Diameter_inches": 43
+                "Diameter_inches": 34
             },
-            "Notes": ""
+            "Notes": "875 mm Rotor diameter"
         },
         "GNSS Receiver": {
             "Product": {
-                "Manufacturer": "CubePilot",
-                "Model": "Here 3",
-                "URL": "https://docs.cubepilot.org/user-guides/here-3/here-3-manual",
-                "Version": "1"
+                "Manufacturer": "Holybro",
+                "Model": "Micro M10",
+                "URL": "https://holybro.com/collections/standard-gps-module/products/micro-m10-m9n-gps",
+                "Version": "With Case"
             },
             "Firmware": {
                 "Type": "UBlox",
@@ -177,8 +177,9 @@
                 "Type": "SERIAL4",
                 "Protocol": "AUTO"
             },
-            "Notes": "uBlox M8P GNSS with a patch antenna."
+            "Notes": "Installed on the tail boom.  "
         }
     },
-    "Program version": "0.9.3"
+    "Program version": "0.9.4",
+    "Configuration template": "Allister"
 }

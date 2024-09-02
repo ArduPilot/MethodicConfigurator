@@ -1,9 +1,9 @@
-ARMING_RUDDER,2
-RC_OPTIONS,800
+ARMING_RUDDER,2  # Use Rudder Arming/disarming
+RC_OPTIONS,800  # Throttle at zero.  Passthrough telemetry for Yaapu.  Supress the mode messages.
 RC_PROTOCOLS,1  # Selected in the component editor
 RC10_OPTION,0
 RC6_OPTION,0
-RC7_OPTION,32
+RC7_OPTION,32  # Motor Interlock required to get blades turning.
 RC8_OPTION,0
 RC9_OPTION,0
 RSSI_TYPE,3

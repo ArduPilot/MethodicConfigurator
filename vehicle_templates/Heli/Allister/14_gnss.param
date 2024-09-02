@@ -1,4 +1,4 @@
-BRD_SAFETY_DEFLT,0  # CubeOrange has no safety switch
+BRD_SAFETY_DEFLT,0  # Pixhawk has no safety switch
 CAN_D1_PROTOCOL,1  # set virtual driver of CAN1 to DRONECAN for Here3
 CAN_P1_DRIVER,0  # Enable CAN1 bus for Here3
 GPS_GNSS_MODE,0  # limit the constellations to ensure an update rate higher than 5Hz

@@ -1,0 +1,5 @@
+H_TAIL_TYPE,0
+SERVO4_FUNCTION,36  # Tailrotor Servo
+SERVO4_MAX,885  # Highspeed Tailrotor Servo
+SERVO4_MIN,620  # Highspeed Tailrotor Servo
+SERVO4_TRIM,750  # Highspeed Tailrotor Servo.  Adjust mechanical tirm so that the tirm value represents neutral pitch.

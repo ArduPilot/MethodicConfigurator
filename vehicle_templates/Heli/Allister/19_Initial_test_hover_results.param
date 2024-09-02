@@ -1,0 +1,5 @@
+AHRS_TRIM_Y,-0.023843  # To be adjusted so heli does not drift longitudinaly
+ATC_HOVR_ROL_TRM,350  # To be adjusted so heli does not drift laterally
+SERVO1_TRIM,1500  # To be adjusted if i-term is Stabilized at ATC_RAT_xxx_ILMI
+SERVO2_TRIM,1500  # To be adjusted if i-term is Stabilized at ATC_RAT_xxx_ILMI
+SERVO3_TRIM,1480  # To be adjusted if i-term is Stabilized at ATC_RAT_xxx_ILMI
