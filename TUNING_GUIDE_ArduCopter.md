@@ -264,7 +264,7 @@ So we use BLHeliSuite32 Version 32.9.0.6 to configure the ESCs.
 Flash the Firmware version described in the table above.
 Configure the parameters to match the figures below.
 
-https://youtu.be/7WeHTb7aBrE?si=gW9YbcQkZYK3DoNE
+[![Tuning your BLHeli_32 to stop desyncs and improve motor performance in your FPV quadcopter](https://img.youtube.com/vi/7WeHTb7aBrE/0.jpg)](https://www.youtube.com/watch?v=7WeHTb7aBrE)
 
 ![ESC Setup](images/blog/BLHeli32_Konfig.PNG)
 
