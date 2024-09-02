@@ -85,7 +85,7 @@ setup(
     url=PRJ_URL,
     author='Amilcar do Carmo Lucas',
     author_email='amilcar.lucas@iav.de',
-    packages=find_packages(where='MethodicConfigurator'),
+    packages=find_packages(),
     install_requires=[
         'defusedxml',
         'matplotlib',
@@ -119,7 +119,7 @@ setup(
     license='GPLv3',
     python_requires='>=3.6',
     keywords=['ArduPilot', 'Configuration', 'SCM', 'Methodic', 'ArduCopter', 'ArduPlane', 'ArduRover', 'ArduSub'],
-    package_dir={"": "MethodicConfigurator"},
+    #package_dir={"": "MethodicConfigurator"}, this unfortunatly breaks the build
     include_package_data=True,
     scripts=extra_scripts,
     # Specify entry points for command-line scripts
