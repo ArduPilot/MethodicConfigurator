@@ -36,16 +36,16 @@ You will be able to tune multiple vehicles (think production line) using this me
 
 While [choosing an Autopilot](https://ardupilot.org/copter/docs/common-autopilots.html) and [other hardware](https://ardupilot.org/copter/docs/common-optional-hardware.html) components [avoid these components](https://discuss.ardupilot.org/t/hardware-to-avoid-when-building-your-first-multirotor/114014/1)
 
-Use tools like [ecalc for multirotor](https://www.ecalc.ch/index.htm) to find a suitable set of components to meet your needs.
+Use tools like [ecalc for heli](https://www.ecalc.ch/index.htm) to find a suitable set of components to meet your needs.
 
 ![eCalc example screenshot](images/blog/eCalc_(en).PNG)
 
-## 1.1 Multicopter hardware best-practices
+## 1.1 Helicopter hardware best-practices
 
 1. **Robust frame construction:** A stable and rigid frame is crucial for stable and safe flight behavior. Carbon frames are recommended but not essential, and remember carbon is an electrical conductor.
-2. **ESC telemetry:** Use only ESCs that provide at least RPM telemetry. It simplifies Notch filter tuning and improves its response-time and accuracy.
-3. **Vibration reduction:** Vibrations reduce the efficiency, stability and lifespan of the drone. Propellers and motors are the source of most of the vibrations. All components must be securely fastened to minimize vibrations and avoid damage caused by vibrations. Stiff frames reduce vibrations.
-    - X and Y vibrations are caused by prop and/or motor imbalance - all propellers must be carefully balanced.
+2. **ESC Governors:** Using ESCs that provide an internal governor can simplify setup. It maintains a stable rotor speed which makes it easy to apply a notch filter to reduce rotor noise in the control signals.  
+3. **Vibration reduction:** Vibrations reduce the efficiency, stability and lifespan of the drone. The rotor system and motors are the source of most of the vibrations. All components must be securely fastened to minimize vibrations and avoid damage caused by vibrations. Stiff frames reduce vibrations.
+    - X and Y vibrations are caused by rotor system and/or motor imbalance - The rotor system must be carefully balanced.
     - Z vibrations are caused by the downwash of each blade hitting the arm and the forward traveling propeller hitting the oncoming air when moving.
 4. **Protection of sensors from external disturbances:**
    1. **Vibration-damping mounting of the FC**
@@ -58,29 +58,28 @@ Use tools like [ecalc for multirotor](https://www.ecalc.ch/index.htm) to find a 
 8. **Voltage monitoring:** to [dynamically scale the PIDs and maintain stable flight in low battery conditions](https://ardupilot.org/copter/docs/current-limiting-and-voltage-scaling.html#voltage-scaling).
 9. **Current monitoring:** to compensate for the dynamic magnetic field caused by the high motor currents.
 10. **FC Power supply:** Must provide enough current for the flight controller, [GNSS](https://en.wikipedia.org/wiki/Satellite_navigation) receivers and other payloads operating on 5V.
-11. **Roll/Pitch/Yaw-Imbalance:** When mounting the motors on the arms, especially on round arms, make sure that all motors and propellers are perfectly level so that the thrust produced is directed straight down. Misaligned motors will cause the multicopter to drift. Depending on which motors are misaligned and their direction of misalignment, the multicopter drifts laterally forward, backward, left, right, or axially around the Z-axis, and efficiency is reduced accordingly.
-12. **Helical GNSS antennas:** These kinds of antennas are the [preferred choice for drones and their benefits justify the extra cost](https://discuss.ardupilot.org/t/big-gps-round-up/67755).
-13. **STM32 H7 processor family:** Flight controllers that use these processors, have enough processing power and memory to run ArduCopter firmware without restrictions.
+11. **Helical GNSS antennas:** These kinds of antennas are the [preferred choice for drones and their benefits justify the extra cost](https://discuss.ardupilot.org/t/big-gps-round-up/67755).
+12. **STM32 H7 processor family:** Flight controllers that use these processors, have enough processing power and memory to run ArduCopter firmware without restrictions.
 
 ## 1.2 Our (example) vehicle
 
-To demonstrate how to methodically tune a ArduCopter vehicle we selected a small copter that we could fly and tune indoors.
+To demonstrate how to methodically tune a ArduCopter vehicle we selected a small helicopter.
 It uses the following components:
 
 | Type | Part |
 |:---|:----|
-|Frame | [Diatone Taycan MX-C](https://www.diatone.us/products/diatone-mxc-taycan-duct-3-inch-cinewhoop-fpv-drone) |
-|Flight Controller | [Matek H743 SLIM V3](http://www.mateksys.com/?portfolio=h743-slim) |
-|ESC | [Mamba System F45_128k 4in1 ESC](https://www.diatone.us/products/mb-f45_128k-bl32-esc) |
-|Motors | 4x [T-Motor 15507 3800kv](https://www.fpv24.com/de/t-motor/t-motor-f-serie-f1507-cinematic-3800kv-3s-4s) |
-|Propeller | 4x [CineWhoop 3\", 8-Blade](https://shop.rc-hangar15.de/HQProp-76mm-CineWhoop-3-8-Blatt-Propeller-grau) |
+|Frame | [T-Rex 500](https://www.diatone.us/products/diatone-mxc-taycan-duct-3-inch-cinewhoop-fpv-drone) |
+|Flight Controller | [Qiotek Adept F405](http://www.mateksys.com/?portfolio=h743-slim) |
+|ESC | [Castle Creations 75](https://www.diatone.us/products/mb-f45_128k-bl32-esc) |
+|Motor | [Align XXXX](https://www.fpv24.com/de/t-motor/t-motor-f-serie-f1507-cinematic-3800kv-3s-4s) |
+|Rotor Blades | 2x [Align 500](https://shop.rc-hangar15.de/HQProp-76mm-CineWhoop-3-8-Blatt-Propeller-grau) |
 |BEC with voltage/current monitor | [Holybro PM02 V3](https://holybro.com/products/pm02-v3-12s-power-module) |
-|Battery | [SLS X-Cube 4S 1800mAh 40C/80C](https://www.stefansliposhop.de/akkus/sls-x-cube/sls-x-cube-40c/sls-x-cube-1800mah-4s1p-14-8v-40c-80c::1568.html) |
+|Battery | [6s 4500mAh](https://www.stefansliposhop.de/akkus/sls-x-cube/sls-x-cube-40c/sls-x-cube-1800mah-4s1p-14-8v-40c-80c::1568.html) |
 |GNSS Receiver | [Holybro H-RTK F9P Helical](https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445) |
 |SDCard | Any FAT32 or exFAT formated fast Micro-SDCard > 8 GiB |
-|RC Receiver | [TBS Crossfire Nano RX se](https://www.team-blacksheep.com/products/prod:crossfire_nano_se) |
-|RC Transmitter | [Radiomaster TX16S](https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller) with [EdgeTx](https://edgetx.org/) and [Yaapu scripts](https://github.com/yaapu/FrskyTelemetryScript/wiki/Passthrough-over-CRSF-and-ExpressLRS) |
-| Remote ID transmitter | [Holybro Remote ID transmitter](https://holybro.com/products/remote-id) |
+|RC Receiver | [Futaba 7603](https://www.team-blacksheep.com/products/prod:crossfire_nano_se) |
+|RC Transmitter | [Futaba 9C](https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller) |
+| Remote ID transmitter | [Remote ID transmitter](https://holybro.com/products/remote-id) |
 
 Your vehicle will be different as your application will have different requirements.
 
@@ -182,7 +181,7 @@ After the calibration, temperature changes will cause no significant acceleromet
 
 Now that the optional IMU temperature calibration is done we must assemble and connect all components except the propellers.
 
-Read the [Multicopter hardware best-practices](#11-multicopter-hardware-best-practices) section again before assembling the vehicle.
+Read the [Helicopter hardware best-practices](#11-Helicopter-hardware-best-practices) section again before assembling the vehicle.
 
 If you changed the way the components are connected to the flight controller (FC), re-enter the updated information into ArduPilot Methodic Configurator [component editor window](USERMANUAL.md#vehicle-component-editor-interface).
 
@@ -201,7 +200,7 @@ The figure excludes the LiPo battery and the PM02 BEC with a voltage/current mon
 |Holybro H-RTK F9P Helical | `5V`, `Tx2`, `Rx2`, `CL1`, `DA1`, not connected, not connected, `3V3`, `Buzz`, `G` |
 |TBS Crossfire Nano RX se | `G`, `5V`, `Rx6`, `Tx6` |
 
-![Matek H743, Holobro F9p, T-Motor F45 4in1 ESC and TBS Crossfire Nano rx se connections](images/blog/matek_h743_schaltplan.png)
+![Insert Heli example of connections](images/blog/matek_h743_schaltplan.png)
 
 
 # 6. Basic mandatory configuration
@@ -305,14 +304,6 @@ Open Mission Planner, connect to the flight controller and select `SETUP >> Mand
 
 This relates to the `FRAME_CLASS` and `FRAME_TYPE` parameters.
 
-### [Initial Tune Parameters](https://ardupilot.org/copter/docs/setting-up-for-tuning.html)
-
-Answer the questions that Mission Planner asks, select *Add suggested settings for 4.0 and up (Battery failsafe and Fence)* and upload the calculated parameters to the flight controller by pressing `Upload to FC`.
-
-![MP Initial Tune Parameters questions](images/blog/mp_initial_parameters.png)
-
-![MP Initial Tune Parameters results](images/blog/mp_initial_parameters_calc.png)
-
 ### [Accel Calibration](https://ardupilot.org/copter/docs/common-accelerometer-calibration.html)
 
 Follow the [ArduPilot wiki instructions](https://ardupilot.org/copter/docs/common-accelerometer-calibration.html) and calibrate the accelerometers.
@@ -342,11 +333,11 @@ Make sure all transmitter channels move across their entire range.
 
 ### [Servo Output](https://ardupilot.org/copter/docs/common-dshot-escs.html#configure-the-servo-functions)
 
-Change the parameters according to your requirements.
+There should be a more detailed setup in this area for helicopters.
 
 ### [ESC Calibration](https://ardupilot.org/copter/docs/esc-calibration.html)
 
-Do not make changes here, these parameters will be set later on the [Motor/Propeller order and direction test](#613-motorpropeller-order-and-direction-test) section
+ESC calibration is only needed if the ESC doesn't have an internal governor.  In that case, the throttle curve would be used with the built-in rotor speed governor.
 
 ### [Flight Modes](https://ardupilot.org/copter/docs/flight-modes.html)
 
@@ -520,55 +511,9 @@ The table below explains which bit is responsible for which `.bin` dataflash log
 <tr><td>WINC</td><td>Winch</td><td>10Hz</td><td>Any</td><td>any</td><td>any</td></tr>
 </table>
 
-## 6.13 Motor/Propeller order and direction test
 
-Start by [checking the motor numbering with the Mission Planner Motor test](https://ardupilot.org/copter/docs/connect-escs-and-motors.html#checking-the-motor-numbering-with-the-mission-planner-motor-test) without propellers. Remember the **correct order is A, B, C, D** and not 1, 2, 3, 4.
 
-Make sure the `MOT_SPIN_ARM` is high enough so that all motors spin reliably.
-Make sure the `MOT_SPIN_MIN` is at least 0.03 higher than `MOT_SPIN_ARM`.
-
-**!!! If you get this test wrong or skip it, you might destroy your vehicle and endanger yourself !!!**
-
-Do not try to test the attitude controller without propellers, it will not work, such tests are inconclusive and meaningless.
-Do not try to test the attitude controller with the vehicle tied down on the ground, it will not work, such tests are inconclusive and meaningless.
-At this point, the vehicle does not react to roll, pitch, yaw or thrust inputs.
-
-Now mount the propellers on the vehicle.
-
-After that, follow the [setting Motor Range](https://ardupilot.org/copter/docs/set-motor-range.html) to adjust the motor demand by the flight controller to the limitations of the ESC.
-
-### [Motor Thrust scaling](https://ardupilot.org/copter/docs/motor-thrust-scaling.html) ([MOT_THST_EXPO](https://ardupilot.org/copter/docs/parameters.html#mot-thst-expo), [MOT_SPIN_MIN](https://ardupilot.org/copter/docs/parameters.html#mot-spin-min) and [MOT_SPIN_MAX](https://ardupilot.org/copter/docs/parameters.html#mot-spin-max))
-
-These three parameters linearize (correct) the non-linear *thrust vs. PWM* response of the propulsion system (battery, ESC, motors, propellers).
-They are **crucial** for the stability of the vehicle.
-If this is set too high we see an increase in gain at the lower end of the thrust range and a decrease in gain at the upper end.
-
-**Therefore when set too high you can see instability at low throttle and if set too low you can see instability at high throttle.**
-
-The automation on `SETUP >> Mandatory Hardware >> Initial Tune Parameters` gave you a good starting point on their values.
-But we recommend using a [Trust Stand](https://ardupilot.org/copter/docs/motor-thrust-scaling.html#thrust-stands) or [Olliw method](http://www.olliw.eu/2018/thrust-from-motor-data/) or [ArduPilot DIY Thrust Stand](https://discuss.ardupilot.org/t/ardupilot-thrust-stand/68352) to determine their value.
-
-At the time of writing [Automatic `MOT_THST_EXPO` estimation lua script](https://discuss.ardupilot.org/t/automatic-mot-thst-expo-estimation-lua-script/100704/) is not yet ready for production use.
-
-We used an oversized test stand to test the motors. Since the test stand was too big for a single motor we tested all four motors at once. This was our setup:
-
-- [Series 1780 test stand](https://www.tytorobotics.com/pages/series-1780) from Tyto Robotics
-- [Delta Elektronika SM66-AR-110](https://www.delta-elektronika.nl/products/sm3300-series) power supply
-- T-Motor F1507 3800kv motors
-- Mamba Systems F45_128k BLHeli32 4in1 ESC
-- HQProp "DUCT-76MMX8" propellers
-
-![motor_test_stand_with_drone_cropped|316x499](images/blog/motor_test_stand_with_drone_cropped.jpg)
-
-We fixed and updated Cell G8 as well as the plot's Data range of the [original ArduPilot Wiki Spreadsheet](https://docs.google.com/spreadsheets/d/1_75aZqiT_K1CdduhUe4-DjRgx3Alun4p8V2pt6vM5P8/edit#gid=0) creating [this corrected version](images/blog/ArduPilot_Motor_Thrust_Fit.ods)
-
-We imported the data into the spreadsheet and created this graph:
-
-![motor_thrust_chart|690x389](images/blog/motor_thrust_chart.PNG)
-
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `15_motor.param` file
-
-## 6.14 Optional PID adjustment
+## 6.14 Optional PID adjustment (not sure how this applies to helicopters)
 
 If you have a very small, or a very large vehicle that requires non-default PID values for a safe flight.
 Usually, smaller vehicles require lower than default PID rate values. Larger vehicles usually require higher than default PID rate values.
@@ -590,12 +535,12 @@ Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-t
 
 When asked *Should the FC values now be copied to the 19_notch_filter_results.param file?* select `No` and close the *ArduPilot Methodic Configurator* software.
 
-# 7. Assemble propellers and perform the first flight
+# 7. Install rotor blades and perform the first flight
 
-Assemble the propellors in the vehicle ensuring that they are [balanced in order to reduce vibrations](https://www.youtube.com/watch?v=zTDkCZ698uA).
+Install the rotor blades in the vehicle ensuring that they are [balanced in order to reduce vibrations (add heli specific)](https://www.youtube.com/watch?v=zTDkCZ698uA).
 High vibrations will cause your vehicle to behave eradicaly endangering people and property.
 
-Now that all mandatory configuration steps are done and the props are on you can perform the first flight.
+Now that all mandatory configuration steps are done and the rotor blades are installed you can perform the first flight.
 
 ## 7.1 First flight: Motor Thrust Hover and Harmonic Notch data collection
 
