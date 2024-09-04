@@ -92,7 +92,7 @@ class ComponentEditorWindowBase(BaseWindow):
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
             show_tooltip(image_label, "Replace the vehicle.jpg file in the vehicle directory to change the vehicle image.")
         else:
-            image_label = ttk.Label(intro_frame, text="No vehicle.jpg image file found on the vehicle directory.")
+            image_label = ttk.Label(intro_frame, text="Add a 'vehicle.jpg' image file to the vehicle directory.")
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
 
         self.scroll_frame = ScrollFrame(self.main_frame)
