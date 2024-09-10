@@ -423,7 +423,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if protocol_path in self.entry_widgets:
             protocol_combobox = self.entry_widgets[protocol_path]
             protocol_combobox['values'] = protocols  # Update the combobox entries
-            protocol_combobox.set(protocols[0] if protocols else '')
+            if protocol_combobox.get() not in protocols:
+                protocol_combobox.set(protocols[0] if protocols else '')
             protocol_combobox.update_idletasks() # re-draw the combobox ASAP
 
     def add_entry_or_combobox(self, value, entry_frame, path):
@@ -638,6 +639,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             value = entry.get()
 
             if isinstance(entry, ttk.Combobox):
+                if path == ('ESC', 'FC Connection', 'Type'):
+                    self.update_esc_protocol_combobox_entries(value)
                 if value not in entry.cget("values"):
                     show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
                                     f"Allowed values are: {', '.join(entry.cget('values'))}")
@@ -650,6 +653,11 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                            fc_serial_connection[value] in ['Telemetry', 'RC Receiver']:
                             entry.configure(style="comb_input_valid.TCombobox")
                             continue  # Allow telemetry and RC Receiver connections using the same SERIAL port
+                        if self.data['Components']['Battery Monitor']['FC Connection']['Protocol'] == 'ESC' and \
+                           path[0] in ['Battery Monitor', 'ESC'] and \
+                           fc_serial_connection[value] in ['Battery Monitor', 'ESC']:
+                            entry.configure(style="comb_input_valid.TCombobox")
+                            continue  # Allow 'Battery Monitor' and 'ESC' connections using the same SERIAL port
                         show_error_message("Error", f"Duplicate FC connection type '{value}' for {'>'.join(list(path))}")
                         entry.configure(style="comb_input_invalid.TCombobox")
                         duplicated_connections = True

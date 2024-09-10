@@ -1,0 +1,3 @@
+BRD_SER1_RTSCTS,2  # default to auto
+SERIAL2_BAUD,115  # 115200 baud
+SERIAL2_PROTOCOL,2  # MAVLink 2

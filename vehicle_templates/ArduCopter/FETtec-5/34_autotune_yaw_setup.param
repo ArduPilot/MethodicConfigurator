@@ -1,0 +1,3 @@
+ATC_RAT_YAW_FLTD,28.75  # Use INS_GYRO_FILTER / 4 as a first guess
+AUTOTUNE_AGGR,0.075  # slightly less agressive tune
+AUTOTUNE_AXES,4  # Autotune yaw axis

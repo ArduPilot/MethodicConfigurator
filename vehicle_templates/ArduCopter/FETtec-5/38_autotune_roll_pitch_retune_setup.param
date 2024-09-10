@@ -1,0 +1,2 @@
+AUTOTUNE_AGGR,0.075  # slightly less aggressive tune
+AUTOTUNE_AXES,3  # Autotune roll and pitch axis

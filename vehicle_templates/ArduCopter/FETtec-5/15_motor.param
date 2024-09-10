@@ -1,0 +1,4 @@
+MOT_SPIN_ARM,0.04  # this works
+MOT_SPIN_MAX,0.95  # this works
+MOT_SPIN_MIN,0.07  # this works
+MOT_THST_EXPO,0.58  # FETtec specific

@@ -1,0 +1,10 @@
+ATC_RAT_PIT_I,0.070819  # prevent the rate controllers from compensating too much of the frequency-sweep signal
+ATC_RAT_RLL_I,0.043044  # we are not performing system identification on the roll axis, so restore it to the autotuned value
+ATC_RATE_FF_ENAB,1  # prevent the rate controllers from compensating too much of the frequency-sweep signal
+SID_AXIS,11  # Inject chip on the mixer pitch signal
+SID_F_START_HZ,0.05
+SID_F_STOP_HZ,5
+SID_MAGNITUDE,0.15
+SID_T_FADE_IN,5
+SID_T_FADE_OUT,5
+SID_T_REC,130
