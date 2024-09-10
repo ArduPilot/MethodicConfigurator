@@ -123,6 +123,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             self.rename_fc_connection(selected_file)
 
         if show_only_differences:
+            # recompute different_params because of renames and derived values changes
+            different_params = {param_name: file_value for param_name, file_value in
+                self.local_filesystem.file_parameters[selected_file].items()
+                if param_name not in fc_parameters or (param_name in fc_parameters and \
+                not is_within_tolerance(fc_parameters[param_name], float(file_value.value)))}
             self.__update_table(different_params, fc_parameters)
         else:
             self.__update_table(self.local_filesystem.file_parameters[selected_file], fc_parameters)
