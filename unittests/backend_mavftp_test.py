@@ -15,33 +15,33 @@ import unittest
 from io import StringIO
 import logging
 from pymavlink import mavutil
-from backend_mavftp import FTP_OP, MAVFTP, MAVFTPReturn
+from MethodicConfigurator.backend_mavftp import FTP_OP, MAVFTP, MAVFTPReturn
 
-from backend_mavftp import OP_ListDirectory
-from backend_mavftp import OP_ReadFile
-from backend_mavftp import OP_Ack
-from backend_mavftp import OP_Nack
-from backend_mavftp import ERR_None
-from backend_mavftp import ERR_Fail
-from backend_mavftp import ERR_FailErrno
-from backend_mavftp import ERR_InvalidDataSize
-from backend_mavftp import ERR_InvalidSession
-from backend_mavftp import ERR_NoSessionsAvailable
-from backend_mavftp import ERR_EndOfFile
-from backend_mavftp import ERR_UnknownCommand
-from backend_mavftp import ERR_FileExists
-from backend_mavftp import ERR_FileProtected
-from backend_mavftp import ERR_FileNotFound
-#from backend_mavftp import ERR_NoErrorCodeInPayload
-#from backend_mavftp import ERR_NoErrorCodeInNack
-#from backend_mavftp import ERR_NoFilesystemErrorInPayload
-from backend_mavftp import ERR_InvalidErrorCode
-#from backend_mavftp import ERR_PayloadTooLarge
-#from backend_mavftp import ERR_InvalidOpcode
-from backend_mavftp import ERR_InvalidArguments
-from backend_mavftp import ERR_PutAlreadyInProgress
-from backend_mavftp import ERR_FailToOpenLocalFile
-from backend_mavftp import ERR_RemoteReplyTimeout
+from MethodicConfigurator.backend_mavftp import OP_ListDirectory
+from MethodicConfigurator.backend_mavftp import OP_ReadFile
+from MethodicConfigurator.backend_mavftp import OP_Ack
+from MethodicConfigurator.backend_mavftp import OP_Nack
+from MethodicConfigurator.backend_mavftp import ERR_None
+from MethodicConfigurator.backend_mavftp import ERR_Fail
+from MethodicConfigurator.backend_mavftp import ERR_FailErrno
+from MethodicConfigurator.backend_mavftp import ERR_InvalidDataSize
+from MethodicConfigurator.backend_mavftp import ERR_InvalidSession
+from MethodicConfigurator.backend_mavftp import ERR_NoSessionsAvailable
+from MethodicConfigurator.backend_mavftp import ERR_EndOfFile
+from MethodicConfigurator.backend_mavftp import ERR_UnknownCommand
+from MethodicConfigurator.backend_mavftp import ERR_FileExists
+from MethodicConfigurator.backend_mavftp import ERR_FileProtected
+from MethodicConfigurator.backend_mavftp import ERR_FileNotFound
+#from MethodicConfigurator.backend_mavftp import ERR_NoErrorCodeInPayload
+#from MethodicConfigurator.backend_mavftp import ERR_NoErrorCodeInNack
+#from MethodicConfigurator.backend_mavftp import ERR_NoFilesystemErrorInPayload
+from MethodicConfigurator.backend_mavftp import ERR_InvalidErrorCode
+#from MethodicConfigurator.backend_mavftp import ERR_PayloadTooLarge
+#from MethodicConfigurator.backend_mavftp import ERR_InvalidOpcode
+from MethodicConfigurator.backend_mavftp import ERR_InvalidArguments
+from MethodicConfigurator.backend_mavftp import ERR_PutAlreadyInProgress
+from MethodicConfigurator.backend_mavftp import ERR_FailToOpenLocalFile
+from MethodicConfigurator.backend_mavftp import ERR_RemoteReplyTimeout
 
 
 class TestMAVFTPPayloadDecoding(unittest.TestCase):
@@ -49,7 +49,12 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
 
     def setUp(self):
         self.log_stream = StringIO()
-        logging.basicConfig(stream=self.log_stream, level=logging.DEBUG, format='%(levelname)s: %(message)s')
+        handler = logging.StreamHandler(self.log_stream)
+        formatter = logging.Formatter('%(levelname)s: %(message)s')
+        handler.setFormatter(formatter)
+        logger = logging.getLogger()
+        logger.addHandler(handler)
+        logger.setLevel(logging.DEBUG)
 
         # Mock mavutil.mavlink_connection to simulate a connection
         self.mock_master = mavutil.mavlink_connection(device="udp:localhost:14550", source_system=1)
@@ -61,6 +66,16 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         self.log_stream.seek(0)
         self.log_stream.truncate(0)
 
+    def test_logging(self):
+        # Code that triggers logging
+        logging.info("This is a test log message")
+
+        # Flush and get log output
+        log_output = self.log_stream.getvalue()
+
+        # Assert to check if the expected log is in log_output
+        self.assertIn("This is a test log message", log_output)
+
     @staticmethod
     def ftp_operation(seq: int, opcode: int, req_opcode: int, payload: bytearray) -> FTP_OP:
         return FTP_OP(seq=seq, session=1, opcode=opcode, size=0, req_opcode=req_opcode, burst_complete=0, offset=0,
@@ -68,7 +83,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
 
     def test_decode_ftp_ack_and_nack(self):
         # Test cases grouped by expected outcome
-# pylint: disable=line-too-long
+        # pylint: disable=line-too-long
         test_cases = [
             {
                 "name": "Successful Operation",
@@ -177,7 +192,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
             },
             # Add more test cases as needed...
         ]
-# pylint: enable=line-too-long
+        # pylint: enable=line-too-long
 
         for case in test_cases:
             ret = self.mav_ftp._MAVFTP__decode_ftp_ack_and_nack(case['op'])  # pylint: disable=protected-access
