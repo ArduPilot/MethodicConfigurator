@@ -1,0 +1,10 @@
+ATC_RAT_PIT_D,0.001324  # tuned outside in light wind
+ATC_RAT_PIT_I,0.070819  # tuned outside in light wind
+ATC_RAT_PIT_P,0.070819  # tuned outside in light wind
+ATC_RAT_RLL_D,0.000663  # tuned outside in light wind
+ATC_RAT_RLL_I,0.043044  # tuned outside in light wind
+ATC_RAT_RLL_P,0.043044  # tuned outside in light wind
+ATC_RAT_YAW_D,0.005688  # tuned outside in light wind
+ATC_RAT_YAW_FLTD,28.75  # tuned outside in light wind
+ATC_RAT_YAW_I,0.046383  # tuned outside in light wind
+ATC_RAT_YAW_P,0.463828  # tuned outside in light wind

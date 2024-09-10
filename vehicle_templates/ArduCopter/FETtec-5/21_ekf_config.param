@@ -1,0 +1,2 @@
+EK3_ACC_P_NSE,0.35  # higher value -> trust accelerometer less, compared to other sources
+EK3_ALT_M_NSE,10  # lower value -> trust baro more, compared to other sources

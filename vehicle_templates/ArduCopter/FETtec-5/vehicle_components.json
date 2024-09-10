@@ -1,0 +1,185 @@
+{
+    "Format version": 1,
+    "Components": {
+        "Flight Controller": {
+            "Product": {
+                "Manufacturer": "CubePilot",
+                "Model": "CubeOrangePlus",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.5.4 official"
+            },
+            "Notes": ""
+        },
+        "Frame": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "TOW min Kg": 1.3,
+                "TOW max Kg": 2.0
+            },
+            "Notes": "5\" Props"
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "FrSky",
+                "Model": "Tx7",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "OpenTx",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "TBS",
+                "Model": "Tracer",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "TBS",
+                "Model": "Tracer Nano RX",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "RCin/SBUS",
+                "Protocol": "All"
+            },
+            "Notes": ""
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL2",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": ""
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "FETtec",
+                "Model": "65A",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "FETtec",
+                "Version": "10_224"
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "ESC"
+            },
+            "Notes": "ESC Telemetry is used as battery monitor"
+        },
+        "Battery": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "Chemistry": "Lipo",
+                "Volt per cell max": 4.2,
+                "Volt per cell low": 3.5,
+                "Volt per cell crit": 3.2,
+                "Number of cells": 6,
+                "Capacity mAh": 5000
+            },
+            "Notes": ""
+        },
+        "ESC": {
+            "Product": {
+                "Manufacturer": "FETtec",
+                "Model": "65A",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "FETtec",
+                "Version": "10_224"
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "FETtecOneWire"
+            },
+            "Notes": "Firmware should be > 183"
+        },
+        "Motors": {
+            "Product": {
+                "Manufacturer": "T-Motor",
+                "Model": "F80 1900 kv",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "Poles": 14
+            },
+            "Notes": ""
+        },
+        "Propellers": {
+            "Product": {
+                "Manufacturer": "HQProp",
+                "Model": 5043,
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "Diameter_inches": 5
+            },
+            "Notes": ""
+        },
+        "GNSS Receiver": {
+            "Product": {
+                "Manufacturer": "Cube",
+                "Model": "Here3",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "DroneCAN/uBlox",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL4",
+                "Protocol": "uBlox"
+            },
+            "Notes": "First GNSS receiver is connected to SERIAL4 the second to CAN1"
+        }
+    },
+    "Program version": "0.9.6",
+    "Configuration template": "ReadyToSkyZD550"
+}

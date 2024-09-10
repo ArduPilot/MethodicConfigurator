@@ -1,0 +1,11 @@
+BRD_SAFETY_DEFLT,0  # do not use safety switch
+CAN_D1_PROTOCOL,1  # 2nd GPS (Here3) is connected via CAN
+CAN_P1_DRIVER,1  # Here3
+GPS_GNSS_MODE,7  # limit the constalations to ensure an update rate higher than 5Hz
+GPS_POS1_X,0  # GNSS antenna pahse center location relative to CG
+GPS_POS1_Y,0  # GNSS antenna pahse center location relative to CG
+GPS_POS1_Z,0  # GNSS antenna pahse center location relative to CG
+GPS_TYPE,2  # Defined in component editor
+GPS_TYPE2,9
+SERIAL4_PROTOCOL,5  # 1st GPS is connected to SERIAL4
+WPNAV_RADIUS,1000  # RTK GPS should allow for precise flying

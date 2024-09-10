@@ -1,0 +1,40 @@
+ATC_RAT_PIT_SMAX,50  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_RLL_SMAX,50  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_YAW_SMAX,50  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on 20_throttle_controller.param file
+MOT_PWM_MAX,2000
+MOT_PWM_MIN,1000
+MOT_PWM_TYPE,0  # Specified in component editor window
+MOT_SPOOL_TIME,0.5  # default
+NTF_BUZZ_TYPES,5  # the 4-in-1 ESC uses this
+NTF_LED_TYPES,231  # Built-in, DroneCAN, Scripting
+PSC_ACCZ_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+SERIAL1_BAUD,57  # FETtec one-wire data rate
+SERIAL1_PROTOCOL,38  # FETtec one-wire is connected to SERIAL1
+SERVO_BLH_AUTO,0
+SERVO_BLH_POLES,14  # Specified in component editor window
+SERVO_BLH_RVMASK,0
+SERVO_BLH_TRATE,10
+SERVO_DSHOT_ESC,0
+SERVO_DSHOT_RATE,0
+SERVO_FTW_MASK,15  # FETtec one-wire output to the first 4 ESCs
+SERVO_FTW_POLES,14  # Specified in component editor window
+SERVO_FTW_RVMASK,4  # FETtec one-wire 3rd motor is reversed
+SERVO10_FUNCTION,0
+SERVO10_MAX,1900  # Use the full available 1000-2000 FETtec one-wire range
+SERVO10_MIN,1100  # Use the full available 1000-2000 FETtec one-wire range
+SERVO10_TRIM,1500  # Use the full available 1000-2000 FETtec one-wire range
+SERVO11_FUNCTION,0
+SERVO11_MAX,1900  # Use the full available 1000-2000 FETtec one-wire range
+SERVO11_MIN,1100  # Use the full available 1000-2000 FETtec one-wire range
+SERVO11_TRIM,1500  # Use the full available 1000-2000 FETtec one-wire range
+SERVO12_FUNCTION,0
+SERVO12_MAX,1900  # Use the full available 1000-2000 FETtec one-wire range
+SERVO12_MIN,1100  # Use the full available 1000-2000 FETtec one-wire range
+SERVO12_TRIM,1500  # Use the full available 1000-2000 FETtec one-wire range
+SERVO9_FUNCTION,0
+SERVO9_MAX,1900  # Use the full available 1000-2000 FETtec one-wire range
+SERVO9_MIN,1100  # Use the full available 1000-2000 FETtec one-wire range
+SERVO9_TRIM,1500  # Use the full available 1000-2000 FETtec one-wire range
+TKOFF_RPM_MIN,1000  # idle RPM https://ardupilot.org/copter/docs/tkoff-rpm-min.html
+TKOFF_SLEW_TIME,2  # default
