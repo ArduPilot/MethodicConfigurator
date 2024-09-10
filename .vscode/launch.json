@@ -29,7 +29,9 @@
             "request": "launch",
             "program": "MethodicConfigurator/ardupilot_methodic_configurator.py",
             "args": [
-                "--allow-editing-template-files"
+                "--allow-editing-template-files",
+                "--device=test",
+                "--skip-welcome-popup"
             ],
         }
     ]
