@@ -511,20 +511,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             fc_parameters = self.flight_controller.fc_parameters
         else:
             fc_parameters = {}
-        # Different parameters based on the tolerance value
-        different_params = {param_name: file_value for param_name, file_value in
-                            self.local_filesystem.file_parameters[selected_file].items()
-                            if param_name not in fc_parameters or (param_name in fc_parameters and \
-                                not is_within_tolerance(fc_parameters[param_name], float(file_value.value)))}
-        if not different_params and self.show_only_differences.get():
-            logging_info("No different parameters found in %s. Skipping...", selected_file)
-            messagebox.showinfo("ArduPilot methodic configurator",
-                                f"No different parameters found in {selected_file}. Skipping...")
-            self.on_skip_click(force_focus_out_event=False)
-            return
         # Re-populate the table with the new parameters
-        self.parameter_editor_table.repopulate(selected_file, different_params,
-                                               fc_parameters, self.show_only_differences.get())
+        self.parameter_editor_table.repopulate(selected_file, fc_parameters, self.show_only_differences.get())
 
     def on_show_only_changed_checkbox_change(self):
         self.repopulate_parameter_table(self.current_file)

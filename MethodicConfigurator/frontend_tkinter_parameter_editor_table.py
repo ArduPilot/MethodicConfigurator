@@ -87,7 +87,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                    (fc_parameters is None or param_name in fc_parameters):
                     self.local_filesystem.file_parameters[filename][param_name] = param
 
-    def repopulate(self, selected_file: str, different_params: dict, fc_parameters: dict, show_only_differences: bool):
+    def repopulate(self, selected_file: str, fc_parameters: dict, show_only_differences: bool):
         for widget in self.view_port.winfo_children():
             widget.destroy()
         self.current_file = selected_file
@@ -129,6 +129,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 if param_name not in fc_parameters or (param_name in fc_parameters and \
                 not is_within_tolerance(fc_parameters[param_name], float(file_value.value)))}
             self.__update_table(different_params, fc_parameters)
+            if not different_params:
+                logging_info("No different parameters found in %s. Skipping...", selected_file)
+                messagebox.showinfo("ArduPilot methodic configurator",
+                                    f"No different parameters found in {selected_file}. Skipping...")
+                self.parameter_editor.on_skip_click(force_focus_out_event=False)
+                return
         else:
             self.__update_table(self.local_filesystem.file_parameters[selected_file], fc_parameters)
         # Scroll to the top of the parameter table
