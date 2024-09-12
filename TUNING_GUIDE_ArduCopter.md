@@ -699,7 +699,8 @@ This flight will be used to [calibrate the compass during a realistic operation 
 
 Follow these steps before the flight:
 
-1. Download the `advance-wp.lua` scripts from [Scripted MagFit flightpath generation](https://discuss.ardupilot.org/t/scripted-magfit-flightpath-generation/97536) and put it on the micro SDCard's `APM/scripts` folder
+1. On Ardupilot versions < 4.6.0 download the `advance-wp.lua` scripts from [ardupilot github repository](https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/advance-wp.lua), follow [Scripted MagFit flightpath generation](https://discuss.ardupilot.org/t/scripted-magfit-flightpath-generation/97536) and put it on the micro SDCard's `APM/scripts` folder.
+1. On Ardupilot versions >= 4.6.0 the script is already included.
 1. insert the SD-Card on the flight controller
 1. connect your flight controller to the PC
 1. Make sure your PC has internet connection
