@@ -301,9 +301,13 @@ When asked *Should the FC values now be copied to the 12_mp_setup_mandatory_hard
 
 Open Mission Planner, connect to the flight controller and select `SETUP >> Mandatory Hardware` and work yourself through all the submenus as described below. **DO NOT SKIP ANY STEP**.
 
-### [Frame Type](https://ardupilot.org/copter/docs/frame-type-configuration.html)
+### Frame Type
 
 This relates to the `FRAME_CLASS` and `FRAME_TYPE` parameters.
+To do [frame type configuration](https://ardupilot.org/copter/docs/frame-type-configuration.html)
+you should read [how to connect ESCs and Motors](https://ardupilot.org/copter/docs/connect-escs-and-motors.html)
+
+**WARNING:** If you do an error here your vehicle will flip and crash on every attempt to takeoff.
 
 ### [Initial Tune Parameters](https://ardupilot.org/copter/docs/setting-up-for-tuning.html)
 
