@@ -180,7 +180,7 @@ After the calibration, temperature changes will cause no significant acceleromet
 
 # 5. Assemble all components except the propellers
 
-Now that the optional IMU temperature calibration is done we must assemble and connect all components except the propellers.
+Now that the optional IMU temperature calibration is done we must [assemble and connect all components](https://ardupilot.org/copter/docs/autopilot-assembly-instructions.html) except the propellers.
 
 Read the [Multicopter hardware best-practices](#11-multicopter-hardware-best-practices) section again before assembling the vehicle.
 
