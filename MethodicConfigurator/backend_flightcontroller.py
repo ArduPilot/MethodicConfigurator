@@ -244,7 +244,8 @@ class FlightController:
             logging_debug(_("Waiting for MAVLink heartbeat"))
             m = self.master.wait_heartbeat(timeout=timeout)
             if m is None:
-                return _("No MAVLink heartbeat received, connection failed.")            self.info.set_system_id_and_component_id(m.get_srcSystem(), m.get_srcComponent())
+                return _("No MAVLink heartbeat received, connection failed.")            
+            self.info.set_system_id_and_component_id(m.get_srcSystem(), m.get_srcComponent())
             logging_debug(_("Connection established with systemID %d, componentID %d."),
                         self.info.system_id,
                         self.info.component_id)

@@ -745,8 +745,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def add_argparse_arguments(parser):
         parser.add_argument('--skip-welcome-popup',
                             action='store_true',
-                            help=_('Skip the welcome popup window. Only use this if you already know how to use the software. '
-                            'Default to false'))
+                            help=_('Skip the welcome popup window. Only use this if you already know how to use the software. ')
+                            _('Default to false'))
         return parser
 
 
