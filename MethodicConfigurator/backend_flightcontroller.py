@@ -34,6 +34,8 @@ from MethodicConfigurator.backend_mavftp import MAVFTP
 
 from MethodicConfigurator.argparse_check_range import CheckRange
 
+from MethodicConfigurator.internationalization import _
+
 
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules
@@ -85,7 +87,7 @@ class FlightController:
         """
         # warn people about ModemManager which interferes badly with ArduPilot
         if os_path.exists("/usr/sbin/ModemManager"):
-            logging_warning("You should uninstall ModemManager as it conflicts with ArduPilot")
+            logging_warning(_("You should uninstall ModemManager as it conflicts with ArduPilot"))
 
         self.__reboot_time = reboot_time
         self.__connection_tuples = []
@@ -101,11 +103,11 @@ class FlightController:
         # list of tuples with the first element being the port name and the second element being the port description
         self.__connection_tuples = [(port.device, port.description) for port in comports] + \
             [(port, port) for port in netports]
-        logging_info('Available connection ports are:')
+        logging_info(_('Available connection ports are:'))
         for port in self.__connection_tuples:
             logging_info("%s - %s", port[0], port[1])
         # now that it is logged, add the 'Add another' tuple
-        self.__connection_tuples += [tuple(['Add another', 'Add another'])]
+        self.__connection_tuples += [tuple([_('Add another'), _('Add another')])]
 
     def disconnect(self):
         """
@@ -125,11 +127,11 @@ class FlightController:
             # Check if connection_string is not the first element of any tuple in self.other_connection_tuples
             if all(connection_string != t[0] for t in self.__connection_tuples):
                 self.__connection_tuples.insert(-1, (connection_string, connection_string))
-                logging_debug("Added connection %s", connection_string)
+                logging_debug(_("Added connection %s"), connection_string)
                 return True
-            logging_debug("Did not add duplicated connection %s", connection_string)
+            logging_debug(_("Did not add duplicated connection %s"), connection_string)
         else:
-            logging_debug("Did not add empty connection")
+            logging_debug(_("Did not add empty connection"))
         return False
 
     def connect(self, device: str, progress_callback=None, log_errors: bool=True) -> str:
@@ -163,13 +165,13 @@ class FlightController:
                 if os_name == 'posix':
                     try:
                         dev = autodetect_serial[0].device
-                        logging_debug("Auto-detected device %s", dev)
+                        logging_debug(_("Auto-detected device %s"), dev)
                         # Get the directory part of the soft link
                         softlink_dir = os_path.dirname(dev)
                         # Resolve the soft link and join it with the directory part
                         resolved_path = os_path.abspath(os_path.join(softlink_dir, os_readlink(dev)))
                         autodetect_serial[0].device = resolved_path
-                        logging_debug("Resolved soft link %s to %s", dev, resolved_path)
+                        logging_debug(_("Resolved soft link %s to %s"), dev, resolved_path)
                     except OSError:
                         pass # Not a soft link, proceed with the original device path
                 self.comport = autodetect_serial[0]
@@ -177,7 +179,7 @@ class FlightController:
                 if self.comport.device not in [t[0] for t in self.__connection_tuples]:
                     self.__connection_tuples.insert(-1, (self.comport.device, self.comport.description))
             else:
-                return "No serial ports found. Please connect a flight controller and try again."
+                return _("No serial ports found. Please connect a flight controller and try again.")
         return self.__create_connection_with_retry(progress_callback=progress_callback, log_errors=log_errors)
 
     def __request_banner(self):
@@ -236,28 +238,28 @@ class FlightController:
         """
         if self.comport is None or self.comport.device == 'test': # FIXME for testing only pylint: disable=fixme
             return ""
-        logging_info("Will connect to %s", self.comport.device)
+        logging_info(_("Will connect to %s"), self.comport.device)
         try:
             # Create the connection
             self.master = mavutil.mavlink_connection(device=self.comport.device, timeout=timeout,
                                                      retries=retries, progress_callback=progress_callback)
-            logging_debug("Waiting for MAVLink heartbeat")
+            logging_debug(_("Waiting for MAVLink heartbeat"))
             m = self.master.wait_heartbeat(timeout=timeout)
             if m is None:
-                return "No MAVLink heartbeat received, connection failed."
+                return _("No MAVLink heartbeat received, connection failed.")
             self.info.set_system_id_and_component_id(m.get_srcSystem(), m.get_srcComponent())
-            logging_debug("Connection established with systemID %d, componentID %d.",
+            logging_debug(_("Connection established with systemID %d, componentID %d."),
                         self.info.system_id,
                         self.info.component_id)
 
             self.info.set_autopilot(m.autopilot)
             if self.info.is_supported:
-                logging_info(f"Autopilot type {self.info.autopilot}")
+                logging_info(_(f"Autopilot type {self.info.autopilot}"))
             else:
-                return f"Unsupported autopilot type {self.info.autopilot}"
+                return _(f"Unsupported autopilot type {self.info.autopilot}")
 
             self.info.set_type(m.type)
-            logging_info(f"Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware")
+            logging_info(_(f"Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"))
 
             self.__request_banner()
             banner_msgs = self.__receive_banner_text()
@@ -267,15 +269,15 @@ class FlightController:
             return self.__process_autopilot_version(m, banner_msgs)
         except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
             if log_errors:
-                logging_warning("Connection failed: %s", e)
-                logging_error("Failed to connect after %d attempts.", retries)
+                logging_warning(_("Connection failed: %s"), e)
+                logging_error(_("Failed to connect after %d attempts."), retries)
             return str(e)
 
     def __process_autopilot_version(self, m, banner_msgs) -> str:
         if m is None:
-            return "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n" \
+            return _("No AUTOPILOT_VERSION MAVLink message received, connection failed.\n" \
                 "Only ArduPilot versions newer than 4.3.8 are supported.\n" \
-                "Make sure parameter SERIAL0_PROTOCOL is set to 2"
+                "Make sure parameter SERIAL0_PROTOCOL is set to 2")
         self.info.set_capabilities(m.capabilities)
         self.info.set_flight_sw_version(m.flight_sw_version)
         self.info.set_board_version(m.board_version)
@@ -289,7 +291,7 @@ class FlightController:
             if 'ChibiOS:' in msg:
                 os_custom_version = msg.split(' ')[1].strip()
                 if os_custom_version != self.info.os_custom_version:
-                    logging_warning("ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)", os_custom_version,
+                    logging_warning(_("ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"), os_custom_version,
                                     self.info.os_custom_version)
                 os_custom_version_index = i
                 continue
@@ -302,7 +304,7 @@ class FlightController:
             if len(fc_product_banner_substrings) >= 3:
                 fc_product = fc_product_banner_substrings[0]
         if fc_product != self.info.product:
-            logging_warning("FC product mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)", fc_product, self.info.product)
+            logging_warning(_("FC product mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"), fc_product, self.info.product)
             self.info.product = fc_product  # force the one from the banner because it is more reliable
         return ""
 
@@ -317,7 +319,7 @@ class FlightController:
         # FIXME this entire if statement is for testing only, remove it later pylint: disable=fixme
         if self.master is None and self.comport is not None and self.comport.device == 'test':
             filename = 'params.param'
-            logging_warning("Testing active, will load all parameters from the %s file", filename)
+            logging_warning(_("Testing active, will load all parameters from the %s file"), filename)
             par_dict_with_comments = Par.load_param_file_into_dict(filename)
             return {k: v.value for k, v in par_dict_with_comments.items()}, {}
 
@@ -326,16 +328,16 @@ class FlightController:
 
         # Check if MAVFTP is supported
         if self.info.is_mavftp_supported:
-            logging_info("MAVFTP is supported by the %s flight controller",
+            logging_info(_("MAVFTP is supported by the %s flight controller"),
                          self.comport.device)
 
             return self.download_params_via_mavftp(progress_callback)
 
-        logging_info("MAVFTP is not supported by the %s flight controller, fallback to MAVLink", self.comport.device)
+        logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), self.comport.device)
         return self.__download_params_via_mavlink(progress_callback), {}
 
     def __download_params_via_mavlink(self, progress_callback=None) -> Dict[str, float]:
-        logging_debug("Will fetch all parameters from the %s flight controller", self.comport.device)
+        logging_debug(_("Will fetch all parameters from the %s flight controller"), self.comport.device)
         # Request all parameters
         self.master.mav.param_request_list_send(
             self.master.target_system, self.master.target_component
@@ -354,16 +356,16 @@ class FlightController:
                 param_id = message['param_id'] # .decode("utf-8")
                 param_value = message['param_value']
                 parameters[param_id] = param_value
-                logging_debug('Received parameter: %s = %s', param_id, param_value)
+                logging_debug(_('Received parameter: %s = %s'), param_id, param_value)
                 # Call the progress callback with the current progress
                 if progress_callback:
                     progress_callback(len(parameters), m.param_count)
                 if m.param_count == len(parameters):
-                    logging_debug("Fetched %d parameter values from the %s flight controller",
+                    logging_debug(_("Fetched %d parameter values from the %s flight controller"),
                                   m.param_count, self.comport.device)
                     break
             except Exception as error:  # pylint: disable=broad-except
-                logging_error('Error: %s', error)
+                logging_error(_('Error: %s'), error)
                 break
         return parameters
 
@@ -418,7 +420,7 @@ class FlightController:
             return ""
         # Issue a reset
         self.master.reboot_autopilot()
-        logging_info("Reset command sent to ArduPilot.")
+        logging_info(_("Reset command sent to ArduPilot."))
         time_sleep(0.3)
 
         self.disconnect()
@@ -529,8 +531,9 @@ class FlightController:
         parser.add_argument('--device',
                             type=str,
                             default="",
-                            help='MAVLink connection string to the flight controller. If set to "none" no connection is made.'
-                            ' Defaults to autodetection'
+                            help=_('MAVLink connection string to the flight controller. '
+                                   'If set to "none" no connection is made.'
+                                   ' Defaults to autodetection')
                             )
         parser.add_argument('-r', '--reboot-time',
                             type=int,
@@ -538,6 +541,6 @@ class FlightController:
                             max=50,
                             action=CheckRange,
                             default=7,
-                            help='Flight controller reboot time. '
-                            'Default is %(default)s')
+                            help=_('Flight controller reboot time. '
+                            'Default is %(default)s'))
         return parser

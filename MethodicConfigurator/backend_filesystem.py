@@ -47,6 +47,8 @@ from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleCo
 from MethodicConfigurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 
+from MethodicConfigurator.internationalization import _
+
 TOOLTIP_MAX_LENGTH = 105
 
 
@@ -111,7 +113,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             vehicle_type = self.get_fc_fw_type_from_vehicle_components_json()
         if vehicle_type == "":
             vehicle_type = "ArduCopter"
-            logging_warning("Could not detect vehicle type. Defaulting to %s.", vehicle_type)
+            logging_warning(_("Could not detect vehicle type. Defaulting to %s."), vehicle_type)
         self.vehicle_type = vehicle_type
 
         ConfigurationSteps.re_init(self, vehicle_dir, vehicle_type)
@@ -232,7 +234,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                         continue
                     parameters[filename] = Par.load_param_file_into_dict(os_path.join(self.vehicle_dir, filename))
         else:
-            logging_error("Error: %s is not a directory.", self.vehicle_dir)
+            logging_error(_("Error: %s is not a directory."), self.vehicle_dir)
         return parameters
 
     @staticmethod
@@ -419,7 +421,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 if wrote:
                     self.add_configuration_file_to_zip(zipf, filename)
 
-        logging_info("Intermediate parameter files and summary files zipped to %s", zip_file_path)
+        logging_info(_("Intermediate parameter files and summary files zipped to %s"), zip_file_path)
 
     def vehicle_image_filepath(self):
         return os_path.join(self.vehicle_dir, 'vehicle.jpg')
@@ -464,7 +466,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     v.value = params[param]
                     ret += 1
                 else:
-                    logging_warning("Parameter %s not found in the current parameter file", param)
+                    logging_warning(_("Parameter %s not found in the current parameter file"), param)
         return ret
 
     def write_last_uploaded_filename(self, current_file: str):
@@ -472,16 +474,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             with open(os_path.join(self.vehicle_dir, 'last_uploaded_filename.txt'), 'w', encoding='utf-8') as file:
                 file.write(current_file)
         except Exception as e:  # pylint: disable=broad-except
-            logging_error("Error writing last uploaded filename: %s", e)
+            logging_error(_("Error writing last uploaded filename: %s"), e)
 
     def __read_last_uploaded_filename(self) -> str:
         try:
             with open(os_path.join(self.vehicle_dir, 'last_uploaded_filename.txt'), 'r', encoding='utf-8') as file:
                 return file.read().strip()
         except FileNotFoundError as e:
-            logging_debug("last_uploaded_filename.txt not found: %s", e)
+            logging_debug(_("last_uploaded_filename.txt not found: %s"), e)
         except Exception as e:  # pylint: disable=broad-except
-            logging_error("Error reading last uploaded filename: %s", e)
+            logging_error(_("Error reading last uploaded filename: %s"), e)
         return ""
 
     def get_start_file(self, explicit_index: int, tcal_available: bool) -> str:
@@ -496,27 +498,27 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             start_file_index = explicit_index # Ensure the index is within the range of available files
             if start_file_index >= len(files):
                 start_file_index = len(files) - 1
-                logging_warning("Starting file index %s is out of range. Starting with file %s instead.",
+                logging_warning(_("Starting file index %s is out of range. Starting with file %s instead."),
                                 explicit_index, files[start_file_index])
             return files[start_file_index]
 
         if tcal_available:
             start_file = files[0]
-            info_msg = "Starting with the first file."
+            info_msg = _("Starting with the first file.")
         else:
             start_file = files[2]
-            info_msg = "Starting with the first non-tcal file."
+            info_msg = _("Starting with the first non-tcal file.")
 
         last_uploaded_filename = self.__read_last_uploaded_filename()
         if last_uploaded_filename:
-            logging_info("Last uploaded file was %s.", last_uploaded_filename)
+            logging_info(_("Last uploaded file was %s."), last_uploaded_filename)
         else:
-            logging_info("No last uploaded file found. %s.", info_msg)
+            logging_info(_("No last uploaded file found. %s."), info_msg)
             return start_file
 
         if last_uploaded_filename not in files:
             # Handle the case where last_uploaded_filename is not found in the list
-            logging_warning("Last uploaded file not found in the list of files.  %s.", info_msg)
+            logging_warning(_("Last uploaded file not found in the list of files.  %s."), info_msg)
             return start_file
 
         # Find the index of last_uploaded_filename in files
@@ -525,7 +527,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         start_file_index = last_uploaded_index + 1
         if start_file_index >= len(files):
             # Handle the case where last_uploaded_filename is the last file in the list
-            logging_warning("Last uploaded file is the last file in the list. Starting from there.")
+            logging_warning(_("Last uploaded file is the last file in the list. Starting from there."))
             start_file_index = len(files) - 1
         return files[start_file_index]
 
@@ -589,9 +591,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     @staticmethod
     def download_file_from_url(url: str, local_filename: str, timeout: int=5) -> bool:
         if not url or not local_filename:
-            logging_error("URL or local filename not provided.")
+            logging_error(_("URL or local filename not provided."))
             return False
-        logging_info("Downloading %s from %s", local_filename, url)
+        logging_info(_("Downloading %s from %s"), local_filename, url)
         response = requests_get(url, timeout=timeout)
 
         if response.status_code == 200:
@@ -599,7 +601,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 file.write(response.content)
             return True
 
-        logging_error("Failed to download the file")
+        logging_error(_("Failed to download the file"))
         return False
 
     @staticmethod
@@ -607,20 +609,20 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         parser.add_argument('-t', '--vehicle-type',
                             choices=VehicleComponents.supported_vehicles(),
                             default='',
-                            help='The type of the vehicle. Defaults to ArduCopter')
+                            help=_('The type of the vehicle. Defaults to ArduCopter'))
         parser.add_argument('--vehicle-dir',
                             type=str,
                             default=os_getcwd(),
-                            help='Directory containing vehicle-specific intermediate parameter files. '
-                            'Defaults to the current working directory')
+                            help=_('Directory containing vehicle-specific intermediate parameter files. '
+                            'Defaults to the current working directory'))
         parser.add_argument('--n',
                             type=int,
                             default=-1,
-                            help='Start directly on the nth intermediate parameter file (skips previous files). '
+                            help=_('Start directly on the nth intermediate parameter file (skips previous files). '
                             'Default is to start on the file next to the last that you wrote to the flight controller.'
-                            'If the file does not exist, it will start on the first file.')
+                            'If the file does not exist, it will start on the first file.'))
         parser.add_argument('--allow-editing-template-files',
                             action='store_true',
-                            help='Allow opening and editing template files directly. '
-                            'Only for software developers that know what they are doing.')
+                            help=_('Allow opening and editing template files directly. '
+                            'Only for software developers that know what they are doing.'))
         return parser

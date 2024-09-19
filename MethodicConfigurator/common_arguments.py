@@ -9,16 +9,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
 from MethodicConfigurator.version import VERSION
-
+from MethodicConfigurator.internationalization import _
 
 def add_common_arguments_and_parse(parser):
     parser.add_argument('--loglevel',
                         type=str,
                         default='INFO',
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        help='Logging level (default is INFO).')
+                        help=_('Logging level (default is INFO).'))
     parser.add_argument('-v', '--version',
                         action='version',
                         version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.')
+                        help=_('Display version information and exit.'))
     return parser.parse_args()

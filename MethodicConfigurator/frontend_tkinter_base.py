@@ -27,6 +27,8 @@ from PIL import ImageTk
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 
+from MethodicConfigurator.internationalization import _
+
 
 def show_error_message(title: str, message: str):
     root = tk.Tk()
@@ -39,16 +41,16 @@ def show_error_message(title: str, message: str):
 
 
 def show_no_param_files_error(dirname: str):
-    error_message = f"No intermediate parameter files found in the selected '{dirname}' vehicle directory.\n" \
+    error_message = _(f"No intermediate parameter files found in the selected '{dirname}' vehicle directory.\n" \
         "Please select and step inside a vehicle directory containing valid ArduPilot intermediate parameter files.\n\n" \
-        "Make sure to step inside the directory (double-click) and not just select it."
-    show_error_message("No Parameter Files Found", error_message)
+        "Make sure to step inside the directory (double-click) and not just select it.")
+    show_error_message(_("No Parameter Files Found"), error_message)
 
 
 def show_no_connection_error(error_string: str):
-    error_message = f"{error_string}\n\nPlease connect a flight controller to the PC,\n" \
-        "wait at least 7 seconds and retry."
-    show_error_message("No Connection to the Flight Controller", error_message)
+    error_message = _(f"{error_string}\n\nPlease connect a flight controller to the PC,\n" \
+        "wait at least 7 seconds and retry.")
+    show_error_message(_("No Connection to the Flight Controller"), error_message)
 
 
 def show_tooltip(widget, text):
@@ -106,10 +108,10 @@ class AutoResizeCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
             if selected_element in values:
                 self.set(selected_element)
             else:
-                logging_error("param_file combobox selected string '%s' not in list %s", selected_element, values)
+                logging_error(_("param_file combobox selected string '%s' not in list %s"), selected_element, values)
         else:
             if values:
-                logging_warning("No param_file combobox element selected")
+                logging_warning(_("No param_file combobox element selected"))
         if values:
             update_combobox_width(self)
         if tooltip:
@@ -243,7 +245,7 @@ class ProgressWindow:
         self.progress_bar.update()
 
     def update_progress_bar_300_pct(self, percent: int):
-        self.message = "Please be patient, {:.1f}% of {}% complete"
+        self.message = _("Please be patient, {:.1f}% of {}% complete")
         self.update_progress_bar(percent/3, max_value=100)
 
     def update_progress_bar(self, current_value: int, max_value: int):
@@ -257,7 +259,7 @@ class ProgressWindow:
         try:
             self.progress_window.lift()
         except tk.TclError as e:
-            logging_error(f"Lifting window: {e} on file {__file__}")
+            logging_error(_(f"Lifting window: {e} on file {__file__}"))
             return
 
         self.progress_bar['value'] = current_value
