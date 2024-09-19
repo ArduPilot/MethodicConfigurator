@@ -27,6 +27,8 @@ from MethodicConfigurator.backend_filesystem_program_settings import ProgramSett
 
 from MethodicConfigurator.middleware_template_overview import TemplateOverview
 
+from MethodicConfigurator.internationalization import _
+
 
 class VehicleComponents:
     """
@@ -45,9 +47,9 @@ class VehicleComponents:
                 data = json_load(file)
         except FileNotFoundError:
             # Normal users do not need this information
-            logging_debug("File '%s' not found in %s.", self.vehicle_components_json_filename, vehicle_dir)
+            logging_debug(_("File '%s' not found in %s."), self.vehicle_components_json_filename, vehicle_dir)
         except JSONDecodeError:
-            logging_error("Error decoding JSON data from file '%s'.", filepath)
+            logging_error(_("Error decoding JSON data from file '%s'."), filepath)
         self.vehicle_components = data
         return data
 
@@ -57,7 +59,7 @@ class VehicleComponents:
             with open(filepath, 'w', encoding='utf-8') as file:
                 json_dump(data, file, indent=4)
         except Exception as e:  # pylint: disable=broad-except
-            logging_error("Error saving JSON data to file '%s': %s", filepath, e)
+            logging_error(_("Error saving JSON data to file '%s': %s"), filepath, e)
             return True
         return False
 
@@ -83,7 +85,7 @@ class VehicleComponents:
             version_str = version_str.lstrip().split(' ')[0] if version_str else ''
             if re_match(r'^\d+\.\d+\.\d+$', version_str):
                 return version_str
-            logging_error(f"FW version string {version_str} on {self.vehicle_components_json_filename} is invalid")
+            logging_error(_(f"FW version string {version_str} on {self.vehicle_components_json_filename} is invalid"))
         return None
 
     @staticmethod

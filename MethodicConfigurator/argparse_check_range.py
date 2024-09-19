@@ -16,7 +16,7 @@ from operator import gt
 from operator import ge
 from operator import lt
 from operator import le
-
+from MethodicConfigurator.internationalization import _
 
 class CheckRange(Action):
     '''
@@ -29,9 +29,9 @@ class CheckRange(Action):
 
     def __init__(self, *args, **kwargs):
         if "min" in kwargs and "inf" in kwargs:
-            raise ValueError("either min or inf, but not both")
+            raise ValueError(_("either min or inf, but not both"))
         if "max" in kwargs and "sup" in kwargs:
-            raise ValueError("either max or sup, but not both")
+            raise ValueError(_("either max or sup, but not both"))
 
         for name in self.ops:
             if name in kwargs:

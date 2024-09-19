@@ -37,6 +37,8 @@ from MethodicConfigurator.frontend_tkinter_connection_selection import PairTuple
 
 from MethodicConfigurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 
+from MethodicConfigurator.internationalization import _
+
 from MethodicConfigurator.annotate_params import Par
 
 
@@ -70,7 +72,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             for filename, file_info in self.local_filesystem.configuration_steps.items():
                 error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'forced', self.variables)
                 if error_msg:
-                    messagebox.showerror("Error in forced parameters", error_msg)
+                    messagebox.showerror(_("Error in forced parameters"), error_msg)
                 else:
                     self.add_forced_or_derived_parameters(filename, self.local_filesystem.forced_parameters)
                 #error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'derived', self.variables)
@@ -93,14 +95,15 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.current_file = selected_file
 
         # Create labels for table headers
-        headers = ["-/+", "Parameter", "Current Value", "New Value", "Unit", "Upload", "Change Reason"]
-        tooltips = ["Delete or add a parameter",
-                    "Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long",
-                    "Current value on the flight controller ",
-                    "New value from the above selected intermediate parameter file",
-                    "Parameter Unit",
-                    "When selected, upload the new value to the flight controller",
-                    "Reason why respective parameter changed"]
+        headers = [_("-/+"), _("Parameter"), _("Current Value"), _("New Value"), _("Unit"), _("Upload"), _("Change Reason")]
+        tooltips = [_("Delete or add a parameter"),
+                    _("Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long"),
+                    _("Current value on the flight controller "),
+                    _("New value from the above selected intermediate parameter file"),
+                    _("Parameter Unit"),
+                    _("When selected, upload the new value to the flight controller"),
+                    _("Reason why respective parameter changed")]
+
         for i, header in enumerate(headers):
             label = ttk.Label(self.view_port, text=header)
             label.grid(row=0, column=i, sticky="ew") # Use sticky="ew" to make the label stretch horizontally
@@ -115,7 +118,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                                                                  self.local_filesystem.configuration_steps[selected_file],
                                                                  'derived', self.variables)
             if error_msg:
-                messagebox.showerror("Error in derived parameters", error_msg)
+                messagebox.showerror(_("Error in derived parameters"), error_msg)
             else:
                 # Add derived parameters not yet in the parameter list to the parameter list
                 self.add_forced_or_derived_parameters(selected_file, self.local_filesystem.derived_parameters, fc_parameters)
@@ -130,9 +133,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 not is_within_tolerance(fc_parameters[param_name], float(file_value.value)))}
             self.__update_table(different_params, fc_parameters)
             if not different_params:
-                logging_info("No different parameters found in %s. Skipping...", selected_file)
-                messagebox.showinfo("ArduPilot methodic configurator",
-                                    f"No different parameters found in {selected_file}. Skipping...")
+                logging_info(_("No different parameters found in %s. Skipping..."), selected_file)
+                messagebox.showinfo(_("ArduPilot methodic configurator"),
+                                    _(f"No different parameters found in {selected_file}. Skipping..."))
                 self.parameter_editor.on_skip_click(force_focus_out_event=False)
                 return
         else:
@@ -164,13 +167,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         for old_name, new_name in renames.items():
             if new_name in new_names:
                 self.local_filesystem.file_parameters[selected_file].pop(old_name)
-                logging_info("Removing duplicate parameter %s", old_name)
+                logging_info(_("Removing duplicate parameter %s"), old_name)
             else:
                 new_names.add(new_name)
                 if new_name != old_name:
                     self.local_filesystem.file_parameters[selected_file][new_name] = \
                         self.local_filesystem.file_parameters[selected_file].pop(old_name)
-                    logging_info("Renaming parameter %s to %s", old_name, new_name)
+                    logging_info(_("Renaming parameter %s to %s"), old_name, new_name)
 
     def __update_table(self, params, fc_parameters):
         try:
@@ -178,7 +181,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
                 param_default = self.local_filesystem.param_default_dict.get(param_name, None)
                 doc_tooltip = param_metadata.get('doc_tooltip') if param_metadata else \
-                    "No documentation available in apm.pdef.xml for this parameter"
+                    _("No documentation available in apm.pdef.xml for this parameter")
 
                 column = []
                 column.append(self.__create_delete_button(param_name))
@@ -198,14 +201,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 column[6].grid(row=i, column=6, sticky="ew", padx=(0, 5))
 
             # Add the "Add" button at the bottom of the table
-            add_button = ttk.Button(self.view_port, text="Add", style='narrow.TButton',
+            add_button = ttk.Button(self.view_port, text=_("Add"), style='narrow.TButton',
                                     command=lambda: self.__on_parameter_add(fc_parameters))
-            show_tooltip(add_button, f"Add a parameter to the {self.current_file} file")
+            show_tooltip(add_button, _(f"Add a parameter to the {self.current_file} file"))
             add_button.grid(row=len(params)+2, column=0, sticky="w", padx=0)
 
 
         except KeyError as e:
-            logging_critical("Parameter %s not found in the %s file: %s", param_name, self.current_file, e, exc_info=True)
+            logging_critical(_("Parameter %s not found in the %s file: %s"), param_name, self.current_file, e, exc_info=True)
             sys_exit(1)
 
         # Configure the table_frame to stretch columns
@@ -218,9 +221,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.view_port.columnconfigure(6, weight=1) # Change Reason
 
     def __create_delete_button(self, param_name):
-        delete_button = ttk.Button(self.view_port, text="Del", style='narrow.TButton',
+        delete_button = ttk.Button(self.view_port, text=_("Del"), style='narrow.TButton',
                                    command=lambda: self.__on_parameter_delete(param_name))
-        show_tooltip(delete_button, f"Delete {param_name} from the {self.current_file} file")
+        show_tooltip(delete_button, _(f"Delete {param_name} from the {self.current_file} file"))
         return delete_button
 
     def __create_parameter_name(self, param_name, param_metadata, doc_tooltip):
@@ -244,7 +247,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 # Otherwise, set the background color to the default color
                 flightcontroller_value = ttk.Label(self.view_port, text=value_str)
         else:
-            flightcontroller_value = ttk.Label(self.view_port, text="N/A", background="orange")
+            flightcontroller_value = ttk.Label(self.view_port, text=_("N/A"), background="orange")
         if doc_tooltip:
             show_tooltip(flightcontroller_value, doc_tooltip)
         return flightcontroller_value
@@ -255,7 +258,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             has_default_value = param_default is not None and is_within_tolerance(current_value, param_default.value)
             combobox_widget.configure(style='default_v.TCombobox' if has_default_value else 'readonly.TCombobox')
         except ValueError:
-            logging_info(f'Could not solve the selected {combobox_widget} key to a float value.')
+            logging_info(_(f'Could not solve the selected {combobox_widget} key to a float value.'))
 
     @staticmethod
     def __update_new_value_entry_text(new_value_entry: ttk.Entry, value: float, param_default):
@@ -311,7 +314,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         try:
             old_value = self.local_filesystem.file_parameters[self.current_file][param_name].value
         except KeyError as e:
-            logging_critical("Parameter %s not found in the %s file: %s", param_name, self.current_file, e, exc_info=True)
+            logging_critical(_("Parameter %s not found in the %s file: %s"), param_name, self.current_file, e, exc_info=True)
             sys_exit(1)
         if present_as_forced:
             new_value_entry.config(state='disabled', background='light grey')
@@ -355,7 +358,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         # Temporarily unbind the FocusIn event to prevent triggering the window again
         event.widget.unbind("<FocusIn>")
         window = tk.Toplevel(self.root)
-        window.title(f"Select {param_name} Bitmask Options")
+        window.title(_(f"Select {param_name} Bitmask Options"))
         checkbox_vars = {}
 
         main_frame = ttk.Frame(window)
@@ -391,7 +394,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     def __create_unit_label(self, param_metadata):
         unit_label = ttk.Label(self.view_port, text=param_metadata.get('unit') if param_metadata else "")
         unit_tooltip = param_metadata.get('unit_tooltip') if param_metadata else \
-            "No documentation available in apm.pdef.xml for this parameter"
+            _("No documentation available in apm.pdef.xml for this parameter")
         if unit_tooltip:
             show_tooltip(unit_label, unit_tooltip)
         return unit_label
@@ -400,7 +403,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=fc_connected)
         upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
         upload_checkbutton.configure(state='normal' if fc_connected else 'disabled')
-        show_tooltip(upload_checkbutton, f'When selected upload {param_name} new value to the flight controller')
+        show_tooltip(upload_checkbutton, _(f'When selected upload {param_name} new value to the flight controller'))
         return upload_checkbutton
 
     def __create_change_reason_entry(self, param_name, param, new_value_entry):
@@ -426,22 +429,22 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         else:
             change_reason_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
                                      self.__on_parameter_change_reason_change(event, current_file, param_name))
-        show_tooltip(change_reason_entry, f'Reason why {param_name} should change to {new_value_entry.get()}')
+        show_tooltip(change_reason_entry, _(f'Reason why {param_name} should change to {new_value_entry.get()}'))
         return change_reason_entry
 
     def __on_parameter_delete(self, param_name):
-        if messagebox.askyesno(f"{self.current_file}", f"Are you sure you want to delete the {param_name} parameter?"):
+        if messagebox.askyesno(f"{self.current_file}", _(f"Are you sure you want to delete the {param_name} parameter?")):
             del self.local_filesystem.file_parameters[self.current_file][param_name]
             self.at_least_one_param_edited = True
             self.parameter_editor.repopulate_parameter_table(self.current_file)
 
     def __on_parameter_add(self, fc_parameters):
         add_parameter_window = BaseWindow(self.root)
-        add_parameter_window.root.title("Add Parameter to " + self.current_file)
+        add_parameter_window.root.title(_("Add Parameter to ") + self.current_file)
         add_parameter_window.root.geometry("450x300")
 
         # Label for instruction
-        instruction_label = ttk.Label(add_parameter_window.main_frame, text="Enter the parameter name to add:")
+        instruction_label = ttk.Label(add_parameter_window.main_frame, text=_(_("Enter the parameter name to add:")))
         instruction_label.pack(pady=5)
 
         if self.local_filesystem.doc_dict:
@@ -450,8 +453,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             param_dict = fc_parameters
 
         if not param_dict:
-            messagebox.showerror("Operation not possible",
-                                 "No apm.pdef.xml file and no FC connected. Not possible autocomplete parameter names.")
+            messagebox.showerror(_("Operation not possible"),
+                                 _("No apm.pdef.xml file and no FC connected. Not possible autocomplete parameter names."))
             return
 
         # Remove the parameters that are already displayed in this configuration step
@@ -482,10 +485,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def __confirm_parameter_addition(self, param_name: str, fc_parameters: dict) -> bool:
         if not param_name:
-            messagebox.showerror("Invalid parameter name.", "Parameter name can not be empty.")
+            messagebox.showerror(_("Invalid parameter name."), _("Parameter name can not be empty."))
             return False
         if param_name in self.local_filesystem.file_parameters[self.current_file]:
-            messagebox.showerror("Invalid parameter name.", "Parameter already exists, edit it instead")
+            messagebox.showerror(_("Invalid parameter name."), _("Parameter already exists, edit it instead"))
             return False
         if fc_parameters:
             if param_name in fc_parameters:
@@ -493,7 +496,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 self.at_least_one_param_edited = True
                 self.parameter_editor.repopulate_parameter_table(self.current_file)
                 return True
-            messagebox.showerror("Invalid parameter name.", "Parameter name not found in the flight controller.")
+            messagebox.showerror(_("Invalid parameter name."), _("Parameter name not found in the flight controller."))
         elif self.local_filesystem.doc_dict:
             if param_name in self.local_filesystem.doc_dict:
                 self.local_filesystem.file_parameters[self.current_file][param_name] = Par( \
@@ -501,10 +504,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 self.at_least_one_param_edited = True
                 self.parameter_editor.repopulate_parameter_table(self.current_file)
                 return True
-            messagebox.showerror("Invalid parameter name.", f"'{param_name}' not found in the apm.pdef.xml file.", )
+            messagebox.showerror(_("Invalid parameter name."), _(f"'{param_name}' not found in the apm.pdef.xml file."), )
         else:
-            messagebox.showerror("Operation not possible",
-                                    "Can not add parameter when no FC is connected and no apm.pdef.xml file exists.")
+            messagebox.showerror(_("Operation not possible"),
+                                    _("Can not add parameter when no FC is connected and no apm.pdef.xml file exists."))
         return False
 
 
@@ -517,7 +520,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         try:
             old_value = self.local_filesystem.file_parameters[current_file][param_name].value
         except KeyError as e:
-            logging_critical("Parameter %s not found in the %s file: %s", param_name, current_file, e, exc_info=True)
+            logging_critical(_("Parameter %s not found in the %s file: %s"), param_name, current_file, e, exc_info=True)
             sys_exit(1)
         valid = True
         # Check if the input is a valid float
@@ -529,22 +532,22 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             p_max = param_metadata.get('max', None) if param_metadata else None
             if changed:
                 if p_min and p < p_min:
-                    if not messagebox.askyesno("Out-of-bounds Value",
-                                               f"The value for {param_name} {p} should be greater than {p_min}\n"
-                                               "Use out-of-bounds value?", icon='warning'):
+                    if not messagebox.askyesno(_("Out-of-bounds Value"),
+                                               _(f"The value for {param_name} {p} should be greater than {p_min}\n"
+                                               "Use out-of-bounds value?"), icon='warning'):
                         valid = False
                 if p_max and p > p_max:
-                    if not messagebox.askyesno("Out-of-bounds Value",
-                                               f"The value for {param_name} {p} should be smaller than {p_max}\n"
-                                               "Use out-of-bounds value?", icon='warning'):
+                    if not messagebox.askyesno(_("Out-of-bounds Value"),
+                                               _(f"The value for {param_name} {p} should be smaller than {p_max}\n"
+                                               "Use out-of-bounds value?"), icon='warning'):
                         valid = False
         except ValueError:
             # Optionally, you can handle the invalid value here, for example, by showing an error message
-            messagebox.showerror("Invalid Value", f"The value for {param_name} must be a valid float.")
+            messagebox.showerror(_("Invalid Value"), _(f"The value for {param_name} must be a valid float."))
             valid = False
         if valid:
             if changed and not self.at_least_one_param_edited:
-                logging_debug("Parameter %s changed, will later ask if change(s) should be saved to file.", param_name)
+                logging_debug(_("Parameter %s changed, will later ask if change(s) should be saved to file."), param_name)
             self.at_least_one_param_edited = changed or self.at_least_one_param_edited
             # Update the params dictionary with the new value
             self.local_filesystem.file_parameters[current_file][param_name].value = p
@@ -560,12 +563,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             changed = new_value != self.local_filesystem.file_parameters[current_file][param_name].comment and \
                 not (new_value == "" and self.local_filesystem.file_parameters[current_file][param_name].comment is None)
         except KeyError as e:
-            logging_critical("Parameter %s not found in the %s file %s: %s", param_name, current_file,
+            logging_critical(_("Parameter %s not found in the %s file %s: %s"), param_name, current_file,
                              new_value, e, exc_info=True)
             sys_exit(1)
         if changed and not self.at_least_one_param_edited:
-            logging_debug("Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to "
-                          "file.",
+            logging_debug(_("Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to "
+                          "file."),
                           param_name, self.local_filesystem.file_parameters[current_file][param_name].comment, new_value)
         self.at_least_one_param_edited = changed or self.at_least_one_param_edited
         # Update the params dictionary with the new value

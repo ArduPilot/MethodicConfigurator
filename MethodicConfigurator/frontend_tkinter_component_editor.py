@@ -33,6 +33,8 @@ from MethodicConfigurator.frontend_tkinter_component_editor_base import Componen
 #from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import show_error_message
 
+from MethodicConfigurator.internationalization import _
+
 from MethodicConfigurator.version import VERSION
 
 
@@ -45,8 +47,8 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = ArgumentParser(description='A GUI for editing JSON files that contain vehicle component configurations. '
-                            'Not to be used directly, but through the main ArduPilot methodic configurator script.')
+    parser = ArgumentParser(description=_('A GUI for editing JSON files that contain vehicle component configurations. '
+                            'Not to be used directly, but through the main ArduPilot methodic configurator script.'))
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindow.add_argparse_arguments(parser)
     return add_common_arguments_and_parse(parser)
@@ -266,10 +268,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     def reverse_key_search(doc: dict, param_name: str, values: list, fallbacks: list) -> list:
         retv = [int(key) for key, value in doc[param_name]["values"].items() if value in values]
         if len(values) != len(fallbacks):
-            logging_error("Length of values %u and fallbacks %u differ for %s", len(values), len(fallbacks), param_name)
+            logging_error(_("Length of values %u and fallbacks %u differ for %s"), len(values), len(fallbacks), param_name)
         if retv:
             return retv
-        logging_error("No values found for %s in the metadata", param_name)
+        logging_error(_("No values found for %s in the metadata"), param_name)
         return fallbacks
 
     def __assert_dict_is_uptodate(self, doc: dict, dict_to_check: dict, doc_key: str, doc_dict: str):
@@ -279,9 +281,9 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 if key in dict_to_check:
                     code_protocol = dict_to_check[key].get('protocol', None)
                     if code_protocol != doc_protocol:
-                        logging_error("Protocol %s does not match %s in %s metadata", code_protocol, doc_protocol, doc_key)
+                        logging_error(_("Protocol %s does not match %s in %s metadata"), code_protocol, doc_protocol, doc_key)
                 else:
-                    logging_error("Protocol %s not found in %s metadata", doc_protocol, doc_key)
+                    logging_error(_("Protocol %s not found in %s metadata"), doc_protocol, doc_key)
 
     def set_values_from_fc_parameters(self, fc_parameters: dict, doc: dict):
         self.__assert_dict_is_uptodate(doc, serial_protocols_dict, 'SERIAL1_PROTOCOL', 'values')
@@ -302,7 +304,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         try:
             gps1_type = int(gps1_type)
         except ValueError:
-            logging_error("Invalid non-integer value for GPS_TYPE %f", gps1_type)
+            logging_error(_("Invalid non-integer value for GPS_TYPE %f"), gps1_type)
             gps1_type = 0
         if str(gps1_type) in gnss_receiver_connection:
             gps1_connection_type = gnss_receiver_connection[str(gps1_type)].get('type')
@@ -321,7 +323,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     'CAN_P2_DRIVER' in fc_parameters and fc_parameters['CAN_P2_DRIVER'] == 2:
                     self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = "CAN2"
                 else:
-                    logging_error("Invalid CAN_Dx_PROTOCOL %s and CAN_Px_DRIVER %s for GNSS Receiver",
+                    logging_error(_("Invalid CAN_Dx_PROTOCOL %s and CAN_Px_DRIVER %s for GNSS Receiver"),
                                   fc_parameters.get('CAN_D1_PROTOCOL'), fc_parameters.get('CAN_P1_DRIVER'))
                     self.data['Components']['GNSS Receiver']['FC Connection']['Type'] = "None"
                 self.data['Components']['GNSS Receiver']['FC Connection']['Protocol'] = gps1_connection_protocol
@@ -353,7 +355,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             try:
                 serial_protocol_nr = int(serial_protocol_nr)
             except ValueError:
-                logging_error("Invalid non-integer value for %s_PROTOCOL %f", serial, serial_protocol_nr)
+                logging_error(_("Invalid non-integer value for %s_PROTOCOL %f"), serial, serial_protocol_nr)
                 serial_protocol_nr = 0
             component = serial_protocols_dict[str(serial_protocol_nr)].get('component')
             protocol = serial_protocols_dict[str(serial_protocol_nr)].get('protocol')
@@ -381,7 +383,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         try:
             mot_pwm_type = int(mot_pwm_type)
         except ValueError:
-            logging_error("Invalid non-integer value for MOT_PWM_TYPE %f", mot_pwm_type)
+            logging_error(_("Invalid non-integer value for MOT_PWM_TYPE %f"), mot_pwm_type)
             mot_pwm_type = 0
         main_out_functions = [fc_parameters.get('SERVO' + str(i) + '_FUNCTION', 0) for i in range(1, 9)]
 
@@ -447,10 +449,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     return list(param_metadata[param_name]["values"].values())
                 if "Bitmask" in param_metadata[param_name] and param_metadata[param_name]["Bitmask"]:
                     return list(param_metadata[param_name]["Bitmask"].values())
-                logging_error("No values found for %s in the metadata", param_name)
+                logging_error(_("No values found for %s in the metadata"), param_name)
             if param_name in fallbacks:
                 return fallbacks[param_name]
-            logging_error("No fallback values found for %s", param_name)
+            logging_error(_("No fallback values found for %s"), param_name)
             return []
 
         combobox_config = {
@@ -553,8 +555,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         if value not in allowed_values:
             if event.type == "10": # FocusOut events
-                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
-                                   f"Allowed values are: {', '.join(allowed_values)}")
+                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                   f"Allowed values are: {', '.join(allowed_values)}"))
             combobox.configure(style="comb_input_invalid.TCombobox")
             return False
 
@@ -574,7 +576,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 raise ValueError(f"{name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}")
         except ValueError as e:
             if is_focusout_event:
-                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n{e}")
+                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n{e}"))
             return False
         entry.configure(style="entry_input_valid.TEntry")
         return True
@@ -585,7 +587,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         """
         chemistry_path = ('Battery', 'Specifications', 'Chemistry')
         if chemistry_path not in self.entry_widgets:
-            show_error_message("Error", "Battery Chemistry not set. Will default to Lipo.")
+            show_error_message(_("Error"), _("Battery Chemistry not set. Will default to Lipo."))
             chemistry = "Lipo"
         else:
             chemistry = self.entry_widgets[chemistry_path].get()
@@ -597,25 +599,25 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 if is_focusout_event:
                     entry.delete(0, tk.END)
                     entry.insert(0, BatteryCell.limit_min_voltage(chemistry))
-                raise VoltageTooLowError(f"is below the {chemistry} minimum limit of "
-                                         f"{BatteryCell.limit_min_voltage(chemistry)}")
+                raise VoltageTooLowError(_(f"is below the {chemistry} minimum limit of "
+                                         f"{BatteryCell.limit_min_voltage(chemistry)}"))
             if voltage > BatteryCell.limit_max_voltage(chemistry):
                 if is_focusout_event:
                     entry.delete(0, tk.END)
                     entry.insert(0, BatteryCell.limit_max_voltage(chemistry))
-                raise VoltageTooHighError(f"is above the {chemistry} maximum limit of "
-                                          f"{BatteryCell.limit_max_voltage(chemistry)}")
+                raise VoltageTooHighError(_(f"is above the {chemistry} maximum limit of "
+                                          f"{BatteryCell.limit_max_voltage(chemistry)}"))
         except (VoltageTooLowError, VoltageTooHighError) as e:
             if is_focusout_event:
-                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
-                                   f"{e}")
+                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                   f"{e}"))
             else:
                 entry.configure(style="entry_input_invalid.TEntry")
                 return False
         except ValueError as e:
             if is_focusout_event:
-                show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
-                                f"{e}\nWill be set to the recommended value.")
+                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                f"{e}\nWill be set to the recommended value."))
                 entry.delete(0, tk.END)
                 if path[-1] == "Volt per cell max":
                     entry.insert(0, str(BatteryCell.recommended_max_voltage(chemistry)))
@@ -647,8 +649,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 if path == ('ESC', 'FC Connection', 'Type'):
                     self.update_esc_protocol_combobox_entries(value)
                 if value not in entry.cget("values"):
-                    show_error_message("Error", f"Invalid value '{value}' for {'>'.join(list(path))}\n"
-                                    f"Allowed values are: {', '.join(entry.cget('values'))}")
+                    show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                    f"Allowed values are: {', '.join(entry.cget('values'))}"))
                     entry.configure(style="comb_input_invalid.TCombobox")
                     invalid_values = True
                     continue
@@ -663,7 +665,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                            fc_serial_connection[value] in ['Battery Monitor', 'ESC']:
                             entry.configure(style="comb_input_valid.TCombobox")
                             continue  # Allow 'Battery Monitor' and 'ESC' connections using the same SERIAL port
-                        show_error_message("Error", f"Duplicate FC connection type '{value}' for {'>'.join(list(path))}")
+                        show_error_message(_("Error"), _(f"Duplicate FC connection type '{value}' for {'>'.join(list(path))}"))
                         entry.configure(style="comb_input_invalid.TCombobox")
                         duplicated_connections = True
                         continue
@@ -681,12 +683,12 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     invalid_values = True
             if path == ('Battery', 'Specifications', 'Volt per cell low'):
                 if value >= self.entry_widgets[('Battery', 'Specifications', 'Volt per cell max')].get():
-                    show_error_message("Error", "Battery Cell Low voltage must be lower than max voltage")
+                    show_error_message_("Error"), _("Battery Cell Low voltage must be lower than max voltage")
                     entry.configure(style="entry_input_invalid.TEntry")
                     invalid_values = True
             if path == ('Battery', 'Specifications', 'Volt per cell crit'):
                 if value >= self.entry_widgets[('Battery', 'Specifications', 'Volt per cell low')].get():
-                    show_error_message("Error", "Battery Cell Crit voltage must be lower than low voltage")
+                    show_error_message(_("Error"), _("Battery Cell Crit voltage must be lower than low voltage"))
                     entry.configure(style="entry_input_invalid.TEntry")
                     invalid_values = True
 

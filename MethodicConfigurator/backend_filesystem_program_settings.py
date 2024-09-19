@@ -27,6 +27,8 @@ from platform import system as platform_system
 from platformdirs import site_config_dir
 from platformdirs import user_config_dir
 
+from MethodicConfigurator.internationalization import _
+
 
 class ProgramSettings:
     """
@@ -53,13 +55,12 @@ class ProgramSettings:
     def create_new_vehicle_dir(new_vehicle_dir: str):
         # Check if the new vehicle directory already exists
         if os_path.exists(new_vehicle_dir):
-            return "Directory already exists, choose a different one"
-
+            return _("Directory already exists, choose a different one")
         try:
             # Create the new vehicle directory
             os_makedirs(new_vehicle_dir, exist_ok=True)
         except OSError as e:
-            logging_error("Error creating new vehicle directory: %s", e)
+            logging_error(_("Error creating new vehicle directory: %s"), e)
             return str(e)
         return ""
 
@@ -88,9 +89,9 @@ class ProgramSettings:
         user_config_directory = user_config_dir(".ardupilot_methodic_configurator", False, roaming=True, ensure_exists=True)
 
         if not os_path.exists(user_config_directory):
-            raise FileNotFoundError(f"The user configuration directory '{user_config_directory}' does not exist.")
+            raise FileNotFoundError(_(f"The user configuration directory '{user_config_directory}' does not exist."))
         if not os_path.isdir(user_config_directory):
-            raise NotADirectoryError(f"The path '{user_config_directory}' is not a directory.")
+            raise NotADirectoryError(_(f"The path '{user_config_directory}' is not a directory."))
 
         return user_config_directory
 
@@ -100,9 +101,9 @@ class ProgramSettings:
                                                 ensure_exists=True)
 
         if not os_path.exists(site_config_directory):
-            raise FileNotFoundError(f"The site configuration directory '{site_config_directory}' does not exist.")
+            raise FileNotFoundError(_(f"The site configuration directory '{site_config_directory}' does not exist."))
         if not os_path.isdir(site_config_directory):
-            raise NotADirectoryError(f"The path '{site_config_directory}' is not a directory.")
+            raise NotADirectoryError(_(f"The path '{site_config_directory}' is not a directory."))
 
         return site_config_directory
 
