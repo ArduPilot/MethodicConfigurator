@@ -198,7 +198,7 @@ class IMUData:
     def IMUs(self):
         '''return list of IMUs'''
         if len(self.accel.keys()) != len(self.gyro.keys()):
-            print("accel and gyro data doesn't match")
+            print(_("accel and gyro data doesn't match"))
             sys.exit(1)
         return self.accel.keys()
 
@@ -283,7 +283,7 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
            online, tclr, figpath,
            progress_callback):
     '''find IMU calibration parameters from a log file'''
-    print(f"Processing log {logfile}")
+    print(_(f"Processing log {logfile}"))
     mlog = mavutil.mavlink_connection(logfile, progress_callback=progress_callback)
 
     data = IMUData()
@@ -311,7 +311,7 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
     for mtype in messages:
         total_msgs += mlog.counts[mlog.name_to_id[mtype]]
 
-    print(f"Found {total_msgs} messages")
+    print(_(f"Found {total_msgs} messages"))
 
     pct = 0
     msgcnt = 0
@@ -337,11 +337,11 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
                 if stop_capture[imu]:
                     continue
                 if msg.Value == 1 and c.enable[imu] == 2:
-                    print(f"TCAL[{imu}] enabled")
+                    print(_(f"TCAL[{imu}] enabled"))
                     stop_capture[imu] = True
                     continue
                 if msg.Value == 0 and c.enable[imu] == 1:
-                    print(f"TCAL[{imu}] disabled")
+                    print(_(f"TCAL[{imu}] disabled"))
                     stop_capture[imu] = True
                     continue
                 c.set_enable(imu, msg.Value)
@@ -404,7 +404,7 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
                 continue
             if msg.Name == 'AHRS_ORIENTATION':
                 orientation = int(msg.Value)
-                print(f"Using orientation {orientation}")
+                print(_(f"Using orientation {orientation}"))
                 continue
 
         if msg_type == 'TCLR' and tclr:
@@ -438,7 +438,7 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
                 acc = acc.rotate_by_inverse_id(orientation)
                 gyr = gyr.rotate_by_inverse_id(orientation)
             if acc is None or gyr is None:
-                print(f"Invalid AHRS_ORIENTATION {orientation}")
+                print(_(f"Invalid AHRS_ORIENTATION {orientation}"))
                 sys.exit(1)
 
             if c.enable[imu] == 1:
@@ -450,10 +450,10 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
             data.add_gyro(imu, T, time, gyr)
 
     if len(data.IMUs()) == 0:
-        print("No data found")
+        print(_("No data found"))
         sys.exit(1)
 
-    print(f"Loaded {len(data.accel[0]['T'])} accel and {len(data.gyro[0]['T'])} gyro samples")
+    print(_(f"Loaded {len(data.accel[0]['T'])} accel and {len(data.gyro[0]['T'])} gyro samples"))
 
     if progress_callback:
         progress_callback(210)
@@ -520,7 +520,7 @@ def generate_calibration_file(outfile, online, progress_callback, data, c):  # p
             print(params)
             calfile.write(params)
 
-    print(f"Calibration written to {outfile}")
+    print(_(f"Calibration written to {outfile}"))
     return c, clog
 
 def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus):  # pylint: disable=too-many-arguments
@@ -540,7 +540,7 @@ def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus):  
         if log_parm:
             for axis in AXES:
                 if clog.enable[imu] == 0.0:
-                    print(f"IMU[{imu}] disabled in log parms")
+                    print(_(f"IMU[{imu}] disabled in log parms"))
                     continue
                 poly = np.poly1d(clog.gcoef[imu][axis])
                 correction = poly(data.gyro[imu]['T'] - TEMP_REF) - poly(clog.gtcal[imu] - TEMP_REF) + clog.gofs[imu][axis]
@@ -574,7 +574,7 @@ def generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus): 
         if log_parm:
             for axis in AXES:
                 if clog.enable[imu] == 0.0:
-                    print(f"IMU[{imu}] disabled in log parms")
+                    print(_(f"IMU[{imu}] disabled in log parms"))
                     continue
                 poly = np.poly1d(clog.acoef[imu][axis])
                 ofs = data.accel_at_temp(imu, axis, clog.atcal[imu])

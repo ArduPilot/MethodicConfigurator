@@ -51,39 +51,39 @@ VERSION = '1.0'
 
 
 def arg_parser():
-    parser = argparse.ArgumentParser(description='Fetches on-line ArduPilot parameter documentation and adds it to the '
-                                     'specified file or to all *.param and *.parm files in the specified directory.')
+    parser = argparse.ArgumentParser(description=_('Fetches on-line ArduPilot parameter documentation and adds it to the '
+                                     'specified file or to all *.param and *.parm files in the specified directory.'))
     parser.add_argument('target',
-                        help='The target file or directory.',
+                        help=_('The target file or directory.'),
                         )
     parser.add_argument('-d', '--delete-documentation-annotations',
                         action='store_true',
-                        help='Delete parameter documentation annotations (comments above parameters). Defaults to %(default)s',
+                        help=_('Delete parameter documentation annotations (comments above parameters). Defaults to %(default)s'),
                         )
     parser.add_argument('-f', '--firmware-version',
                         default='latest',
-                        help='Flight controller firmware version. Defaults to %(default)s.',
+                        help=_('Flight controller firmware version. Defaults to %(default)s.'),
                         )
     parser.add_argument('-s', '--sort',
                         choices=['none', 'missionplanner', 'mavproxy'],
                         default='none',
-                        help='Sort the parameters in the file. Defaults to %(default)s.',
+                        help=_('Sort the parameters in the file. Defaults to %(default)s.'),
                         )
     parser.add_argument('-t', '--vehicle-type',
                         choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
                                  'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
                         default='ArduCopter',
-                        help='The type of the vehicle. Defaults to %(default)s.',
+                        help=_('The type of the vehicle. Defaults to %(default)s.'),
                         )
     parser.add_argument('-m', '--max-line-length',
                         type=int, default=100,
-                        help='Maximum documentation line length. Defaults to %(default)s.',
+                        help=_('Maximum documentation line length. Defaults to %(default)s.'),
                         )
     parser.add_argument('--verbose', action='store_true',
-                        help='Increase output verbosity, print ReadOnly parameter list. Defaults to %(default)s.',
+                        help=_('Increase output verbosity, print ReadOnly parameter list. Defaults to %(default)s.'),
                         )
     parser.add_argument('-v', '--version', action='version', version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.',
+                        help=_('Display version information and exit.'),
                         )
 
     args = parser.parse_args()
@@ -96,8 +96,8 @@ def arg_parser():
     # Custom validation for --max-line-length
     def check_max_line_length(value):
         if value < 50 or value > 300:
-            logging.critical("--max-line-length must be in the interval 50 .. 300, not %d", value)
-            raise SystemExit("Correct it and try again")
+            logging.critical(_("--max-line-length must be in the interval 50 .. 300, not %d"), value)
+            raise SystemExit(_("Correct it and try again"))
         return value
 
     args.max_line_length = check_max_line_length(args.max_line_length)
@@ -156,31 +156,31 @@ class Par:
                     elif "\t" in line:
                         parameter, value = line.split("\t", 1)
                     else:
-                        raise SystemExit(f"Missing parameter-value separator: {line} in {param_file} line {i}")
+                        raise SystemExit(_(f"Missing parameter-value separator: {line} in {param_file} line {i}"))
                     parameter = parameter.strip()
                     Par.validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value)
         except UnicodeDecodeError as exp:
-            raise SystemExit(f"Fatal error reading {param_file}: {exp}") from exp
+            raise SystemExit(_(f"Fatal error reading {param_file}: {exp}")) from exp
         return parameter_dict
 
     @staticmethod
     def validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value):  # pylint: disable=too-many-arguments
         if len(parameter) > PARAM_NAME_MAX_LEN:
-            raise SystemExit(f"Too long parameter name: {parameter} in {param_file} line {i}")
+            raise SystemExit(_(f"Too long parameter name: {parameter} in {param_file} line {i}"))
         if not re.match(PARAM_NAME_REGEX, parameter):
-            raise SystemExit(f"Invalid characters in parameter name {parameter} in {param_file} line {i}")
+            raise SystemExit(_(f"Invalid characters in parameter name {parameter} in {param_file} line {i}"))
         if parameter in parameter_dict:
-            raise SystemExit(f"Duplicated parameter {parameter} in {param_file} line {i}")
+            raise SystemExit(_(f"Duplicated parameter {parameter} in {param_file} line {i}"))
         try:
             fvalue = float(value.strip())
             parameter_dict[parameter] = Par(fvalue, comment)
         except ValueError as exc:
-            raise SystemExit(f"Invalid parameter value {value} in {param_file} line {i}") from exc
+            raise SystemExit(_(f"Invalid parameter value {value} in {param_file} line {i}")) from exc
         except IOError as exc:
             _exc_type, exc_value, exc_traceback = sys_exc_info()
             fname = os_path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
-            logging.critical("in line %s of file %s: %s", exc_traceback.tb_lineno, fname, exc_value)
-            raise SystemExit(f"Caused by line {i} of file {param_file}: {original_line}") from exc
+            logging.critical(_("in line %s of file %s: %s"), exc_traceback.tb_lineno, fname, exc_value)
+            raise SystemExit(_(f"Caused by line {i} of file {param_file}: {original_line}")) from exc
 
     @staticmethod
     def missionplanner_sort(item: str) -> Tuple[str, ...]:
@@ -221,7 +221,7 @@ class Par:
         elif file_format == "mavproxy":
             param_dict = dict(sorted(param_dict.items()))  # sort in ASCIIbetical order
         else:
-            raise SystemExit(f"ERROR: Unsupported file format {file_format}")
+            raise SystemExit(_(f"ERROR: Unsupported file format {file_format}"))
 
         formatted_params = []
         if file_format == "missionplanner":
@@ -265,7 +265,7 @@ class Par:
                 for line in formatted_params:
                     output_file.write(line + "\n")
         except IOError as e:
-            raise SystemExit(f"ERROR: writing to file {filename_out}: {e}") from e
+            raise SystemExit(_(f"ERROR: writing to file {filename_out}: {e}")) from e
 
     @staticmethod
     def print_out(formatted_params: List[str], name: str) -> None:
@@ -298,7 +298,7 @@ class Par:
         for line in formatted_params:
             i += 1
             if i % rows == 0 and __name__ == "__main__":
-                input(f"\n{name} list is long hit enter to continue")
+                input(_(f"\n{name} list is long hit enter to continue"))
                 rows, _columns = os_popen('stty size', 'r').read().split()
                 rows = int(rows) - 2 # -2 for the next print and the input line
             print(line)
@@ -333,29 +333,29 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
             from requests import get as requests_get  # pylint: disable=import-outside-toplevel
             from requests import exceptions as requests_exceptions  # pylint: disable=import-outside-toplevel
         except ImportError as exc:
-            logging.critical("The requests package was not found")
-            logging.critical("Please install it by running 'pip install requests' in your terminal.")
-            raise SystemExit("requests package is not installed") from exc
+            logging.critical(_("The requests package was not found"))
+            logging.critical(_("Please install it by running 'pip install requests' in your terminal."))
+            raise SystemExit(_("requests package is not installed")) from exc
         try:
             # Send a GET request to the URL
             url = base_url + filename
             response = requests_get(url, timeout=5)
             if response.status_code != 200:
-                logging.warning("Remote URL: %s", url)
-                raise requests_exceptions.RequestException(f"HTTP status code {response.status_code}")
+                logging.warning_("Remote URL: %s"), url)
+                raise requests_exceptions.RequestException(_(f"HTTP status code {response.status_code}"))
         except requests_exceptions.RequestException as e:
-            logging.warning("Unable to fetch XML data: %s", e)
+            logging.warning(_("Unable to fetch XML data: %s", e))
             # Send a GET request to the URL to the fallback (DEV) URL
             try:
                 url = BASE_URL + vehicle_type + '/' + PARAM_DEFINITION_XML_FILE
-                logging.warning("Falling back to the DEV XML file: %s", url)
+                logging.warning(_("Falling back to the DEV XML file: %s", url))
                 response = requests_get(url, timeout=5)
                 if response.status_code != 200:
-                    logging.critical("Remote URL: %s", url)
-                    raise requests_exceptions.RequestException(f"HTTP status code {response.status_code}")
+                    logging.critical(_("Remote URL: %s", url))
+                    raise requests_exceptions.RequestException(_(f"HTTP status code {response.status_code}"))
             except requests_exceptions.RequestException as exp:
-                logging.critical("Unable to fetch XML data: %s", exp)
-                raise SystemExit("unable to fetch online XML documentation") from exp
+                logging.critical(_("Unable to fetch XML data: %s"), exp)
+                raise SystemExit(_("unable to fetch online XML documentation")) from exp
         # Get the text content of the response
         xml_data = response.text
         try:
@@ -363,8 +363,8 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
             with open(os_path.join(directory, filename), "w", encoding="utf-8") as file:
                 file.write(xml_data)
         except PermissionError as e:
-            logging.critical("Permission denied to write XML data to file: %s", e)
-            raise SystemExit("permission denied to write online XML documentation to file") from e
+            logging.critical(_("Permission denied to write XML data to file: %s"), e)
+            raise SystemExit(_("permission denied to write online XML documentation to file")) from e
 
     # Parse the XML data
     return DET.fromstring(xml_data)
@@ -375,8 +375,8 @@ def load_default_param_file(directory: str) -> Dict[str, Any]:
     try:
         param_default_dict = Par.load_param_file_into_dict(os_path.join(directory, '00_default.param'))
     except FileNotFoundError:
-        logging.warning("Default parameter file 00_default.param not found. No default values will be annotated.")
-        logging.warning("Create one by using the command ./extract_param_defaults.py log_file.bin > 00_default.param")
+        logging.warning(_("Default parameter file 00_default.param not found. No default values will be annotated."))
+        logging.warning(_("Create one by using the command ./extract_param_defaults.py log_file.bin > 00_default.param"))
         param_default_dict = {}
     return param_default_dict
 
@@ -547,17 +547,17 @@ def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) 
     if match:
         param_name = match.group(0)
     else:
-        logging.critical("Invalid line %d in file %s: %s", line_nr, filename, line)
-        raise SystemExit("Invalid line in input file")
+        logging.critical(_("Invalid line %d in file %s: %s"), line_nr, filename, line)
+        raise SystemExit(_("Invalid line in input file"))
     param_len = len(param_name)
     param_sep = line[param_len] # the character following the parameter name must be a separator
     if param_sep not in {',', ' ', '\t'}:
-        logging.critical("Invalid parameter name %s on line %d in file %s", param_name, line_nr,
+        logging.critical(_("Invalid parameter name %s on line %d in file %s"), param_name, line_nr,
                          filename)
-        raise SystemExit("Invalid parameter name")
+        raise SystemExit(_("Invalid parameter name"))
     if param_len > PARAM_NAME_MAX_LEN:
-        logging.critical("Too long parameter name on line %d in file %s", line_nr, filename)
-        raise SystemExit("Too long parameter name")
+        logging.critical(_("Too long parameter name on line %d in file %s"), line_nr, filename)
+        raise SystemExit(_("Too long parameter name"))
     return param_name
 
 
@@ -591,7 +591,7 @@ def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',
         param_files = glob.glob(os_path.join(target, "*.param")) \
             + glob.glob(os_path.join(target, "*.parm"))
     else:
-        raise ValueError(f"Target '{target}' is neither a file nor a directory.")
+        raise ValueError(_(f"Target '{target}' is neither a file nor a directory."))
 
     if param_default_dict is None:
         param_default_dict = {}
@@ -655,12 +655,12 @@ def update_parameter_documentation_file(doc, sort_type, param_default_dict, para
             is_first_param_in_file = False
 
     if total_params == documented_params:
-        logging.info("Read file %s with %d parameters, all got documented",
+        logging.info(_("Read file %s with %d parameters, all got documented"),
                          param_file, total_params)
     else:
-        logging.warning("Read file %s with %d parameters, but only %s of which got documented",
+        logging.warning(_("Read file %s with %d parameters, but only %s of which got documented"),
                             param_file, total_params, documented_params)
-        logging.warning("No documentation found for: %s", ", ".join(undocumented_params))
+        logging.warning(_("No documentation found for: %s", ", ".join(undocumented_params)))
 
     # Write the new file contents to the file
     with open(param_file, "w", encoding="utf-8", newline='\n') as file:  # Ensure newline character is LF, even on windows
@@ -700,7 +700,7 @@ def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
     try:
         vehicle_subdir = vehicle_parm_subdir[vehicle_type] + firmware_version
     except KeyError as e:
-        raise ValueError(f"Vehicle type '{vehicle_type}' is not supported.") from e
+        raise ValueError(_(f"Vehicle type '{vehicle_type}' is not supported.")) from e
 
     if firmware_version:
         xml_url = BASE_URL + vehicle_subdir + "/"
@@ -738,7 +738,7 @@ def main():
             update_parameter_documentation(doc_dict, target, args.sort, param_default_dict,
                                            args.delete_documentation_annotations)
         else:
-            logging.warning("No LUA MAGfit XML documentation found, skipping annotation of %s", target)
+            logging.warning(_("No LUA MAGfit XML documentation found, skipping annotation of %s"), target)
 
     except  (IOError, OSError, SystemExit) as exp:
         logging.fatal(exp)

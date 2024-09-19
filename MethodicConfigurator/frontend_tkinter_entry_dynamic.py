@@ -35,7 +35,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
     def __init__(self, master, list_of_items=None, custom_filter_function=None, listbox_width=None, listbox_height=12, # pylint: disable=too-many-arguments
                  ignorecase_match=False, startswith_match=True, vscrollbar=True, hscrollbar=True, **kwargs):
         if list_of_items is None:
-            raise ValueError("List_of_items can't be 'None'")
+            raise ValueError(_("List_of_items can't be 'None'"))
         self._list_of_items = list_of_items
 
         self.filter_function = custom_filter_function if custom_filter_function else self.default_filter_function

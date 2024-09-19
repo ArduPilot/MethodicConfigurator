@@ -35,20 +35,20 @@ def argument_parser():
     """
     Parses command-line arguments for the script.
     """
-    parser = ArgumentParser(description='This main is just an example, adapt it to your needs')
+    parser = ArgumentParser(description=_('This main is just an example, adapt it to your needs'))
     parser.add_argument("--baudrate", type=int, default=115200,
-                        help="master port baud rate. Defaults to %(default)s")
+                        help=_("master port baud rate. Defaults to %(default)s"))
     parser.add_argument("--device", type=str, default='',
-                        help="serial device. For windows use COMx where x is the port number. "
-                                "For Unix use /dev/ttyUSBx where x is the port number. Defaults to autodetection")
+                        help=_("serial device. For windows use COMx where x is the port number. ")
+                                _("For Unix use /dev/ttyUSBx where x is the port number. Defaults to autodetection"))
     parser.add_argument("--source-system", type=int, default=250,
-                        help='MAVLink source system for this GCS. Defaults to %(default)s')
+                        help=_('MAVLink source system for this GCS. Defaults to %(default)s'))
     parser.add_argument("--loglevel", default="INFO",
-                        help="log level. Defaults to %(default)s")
+                        help=_("log level. Defaults to %(default)s"))
 
     # MAVFTP settings
     parser.add_argument("--debug", type=int, default=0, choices=[0, 1, 2],
-                        help="Debug level 0 for none, 2 for max verbosity. Defaults to %(default)s")
+                        help=_("Debug level 0 for none, 2 for max verbosity. Defaults to %(default)s"))
 
     return parser.parse_args()
 
@@ -90,27 +90,27 @@ def auto_connect(device):
             if os.name == 'posix':
                 try:
                     dev = autodetect_serial[0].device
-                    logging_debug("Auto-detected device %s", dev)
+                    logging_debug(_("Auto-detected device %s"), dev)
                     # Get the directory part of the soft link
                     softlink_dir = os.path.dirname(dev)
                     # Resolve the soft link and join it with the directory part
                     resolved_path = os.path.abspath(os.path.join(softlink_dir, os.readlink(dev)))
                     autodetect_serial[0].device = resolved_path
-                    logging_debug("Resolved soft link %s to %s", dev, resolved_path)
+                    logging_debug(_("Resolved soft link %s to %s"), dev, resolved_path)
                 except OSError:
                     pass # Not a soft link, proceed with the original device path
             comport = autodetect_serial[0]
         else:
-            logging_error("No serial ports found. Please connect a flight controller and try again.")
+            logging_error(_("No serial ports found. Please connect a flight controller and try again."))
             sys.exit(1)
     return comport
 
 
 def wait_heartbeat(m):
     '''wait for a heartbeat so we know the target system IDs'''
-    logging_info("Waiting for flight controller heartbeat")
+    logging_info(_("Waiting for flight controller heartbeat"))
     m.wait_heartbeat()
-    logging_info("Got heartbeat from system %u, component %u", m.target_system, m.target_system)
+    logging_info(_("Got heartbeat from system %u, component %u"), m.target_system, m.target_system)
 # pylint: enable=duplicate-code
 
 
@@ -141,10 +141,10 @@ def get_last_log(mav_ftp):
             file_contents = file.readline()
             remote_filenumber = int(file_contents.strip())
     except FileNotFoundError:
-        logging_error("File LASTLOG.TXT not found.")
+        logging_error(_("File LASTLOG.TXT not found."))
         return
     except ValueError:
-        logging_error("Could not extract last log file number from LASTLOG.TXT contants %s", file_contents)
+        logging_error(_("Could not extract last log file number from LASTLOG.TXT contants %s"), file_contents)
         return
     remote_filenumber = remote_filenumber - 1 # we do not want the very last log
     remote_filename = f'/APM/LOGS/{remote_filenumber:08}.BIN'
@@ -159,7 +159,7 @@ def download_script(url, local_filename):
         with open(local_filename, "wb") as file:
             file.write(response.content)
     else:
-        logging_error("Failed to download the file")
+        logging_error(_("Failed to download the file"))
 
 
 def create_directory(mav_ftp, remote_directory):

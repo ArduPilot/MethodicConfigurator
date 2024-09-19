@@ -39,18 +39,18 @@ explaining how their new value relates to the default parameter value.
 """)
     parser.add_argument("-d", "--directory",
                         required=True,
-                        help="The directory where the parameter files are located.",
+                        help=_("The directory where the parameter files are located."),
                         )
     parser.add_argument("-a", "--adjustment_factor",
                         type=ranged_type(float, 0.1, 0.8), default=0.5,
-                        help="The adjustment factor to apply to the optimized parameters. "
-                             "Must be in the interval 0.1 to 0.8. Defaults to 0.5.",
+                        help=_("The adjustment factor to apply to the optimized parameters. ")
+                             _("Must be in the interval 0.1 to 0.8. Defaults to 0.5."),
                         )
     parser.add_argument('-v', '--version', action='version', version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.',
+                        help=_('Display version information and exit.'),
                         )
     parser.add_argument("optimized_param_file",
-                        help="The name of the optimized parameter file.",
+                        help=_("The name of the optimized parameter file."),
                         )
     args = parser.parse_args()
     return args
@@ -69,9 +69,9 @@ def ranged_type(value_type, min_value, max_value):
         try:
             f = value_type(arg)
         except ValueError as exc:
-            raise argparse.ArgumentTypeError(f'must be a valid {value_type}') from exc
+            raise argparse.ArgumentTypeError(_(f'must be a valid {value_type}')) from exc
         if f < min_value or f > max_value:
-            raise argparse.ArgumentTypeError(f'must be within [{min_value}, {max_value}]')
+            raise argparse.ArgumentTypeError(_(f'must be within [{min_value}, {max_value}]'))
         return f
     # Return function handle to checking function
     return range_checker
@@ -110,17 +110,17 @@ class Par:
                 elif "\t" in line:
                     parameter, value = line.split("\t", 1)
                 else:
-                    raise SystemExit(f"Missing parameter-value separator: {line} in {param_file} line {n}")
+                    raise SystemExit(_(f"Missing parameter-value separator: {line} in {param_file} line {n}"))
                 if len(parameter) > PARAM_NAME_MAX_LEN:
-                    raise SystemExit(f"Too long parameter name: {parameter} in {param_file} line {n}")
+                    raise SystemExit(_(f"Too long parameter name: {parameter} in {param_file} line {n}"))
                 if not re.match(PARAM_NAME_REGEX, parameter):
-                    raise SystemExit(f"Invalid characters in parameter name {parameter} in {param_file} line {n}")
+                    raise SystemExit(_(f"Invalid characters in parameter name {parameter} in {param_file} line {n}"))
                 try:
                     fvalue = float(value)
                 except ValueError as exc:
-                    raise SystemExit(f"Invalid parameter value {value} in {param_file} line {n}") from exc
+                    raise SystemExit(_(f"Invalid parameter value {value} in {param_file} line {n}")) from exc
                 if parameter in parameter_dict:
-                    raise SystemExit(f"Duplicated parameter {parameter} in {param_file} line {n}")
+                    raise SystemExit(_(f"Duplicated parameter {parameter} in {param_file} line {n}")
                 parameter_dict[parameter] = Par(fvalue, comment)
         return parameter_dict, content
 
@@ -167,20 +167,20 @@ def update_pid_adjustment_params(directory: str, optimized_param_file: str, adju
     pid_adjustment_params_dict, content = Par.load_param_file_into_dict(pid_adjustment_file_path)
 
     if not default_params_dict:
-        raise SystemExit(f"Failed to load default parameters from {default_param_file_path}")
+        raise SystemExit(_(f"Failed to load default parameters from {default_param_file_path}"))
 
     if not optimized_params_dict:
-        raise SystemExit(f"Failed to load optimized parameters from {optimized_param_file_path}")
+        raise SystemExit(_(f"Failed to load optimized parameters from {optimized_param_file_path}"))
 
     if not pid_adjustment_params_dict:
-        raise SystemExit(f"Failed to load PID adjustment parameters from {pid_adjustment_file_path}")
+        raise SystemExit(_(f"Failed to load PID adjustment parameters from {pid_adjustment_file_path}"))
 
     # Update the PID adjustment parameters based on the given adjustment factor
     for param_name, param_value in pid_adjustment_params_dict.items():
         if param_name not in optimized_params_dict:
-            raise SystemExit(f"Parameter {param_name} is not present in {optimized_param_file_path}")
+            raise SystemExit(_(f"Parameter {param_name} is not present in {optimized_param_file_path}"))
         if param_name not in default_params_dict:
-            raise SystemExit(f"Parameter {param_name} is not present in {default_param_file_path}")
+            raise SystemExit(_(f"Parameter {param_name} is not present in {default_param_file_path}"))
         # adjust the parameter value
         param_value.value = optimized_params_dict[param_name].value * adjustment_factor
         if default_params_dict[param_name].value != 0:
