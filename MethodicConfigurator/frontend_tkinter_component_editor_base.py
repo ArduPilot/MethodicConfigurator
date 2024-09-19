@@ -27,6 +27,8 @@ from MethodicConfigurator.frontend_tkinter_base import show_error_message
 from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 
+from MethodicConfigurator.internationalization import _
+
 from MethodicConfigurator.version import VERSION
 
 
@@ -39,8 +41,8 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = ArgumentParser(description='A GUI for editing JSON files that contain vehicle component configurations. '
-                            'Not to be used directly, but through the main ArduPilot methodic configurator script.')
+    parser = ArgumentParser(description=_('A GUI for editing JSON files that contain vehicle component configurations. '
+                            'Not to be used directly, but through the main ArduPilot methodic configurator script.'))
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindowBase.add_argparse_arguments(parser)
     return add_common_arguments_and_parse(parser)
@@ -58,7 +60,7 @@ class ComponentEditorWindowBase(BaseWindow):
         super().__init__()
         self.local_filesystem = local_filesystem
 
-        self.root.title("Amilcar Lucas's - ArduPilot methodic configurator " + version + " - Vehicle Component Editor")
+        self.root.title(_("Amilcar Lucas's - ArduPilot methodic configurator ") + version + _(" - Vehicle Component Editor"))
         self.root.geometry("880x600") # Set the window width
 
         self.data = local_filesystem.load_vehicle_components_json_data(local_filesystem.vehicle_dir)
@@ -79,9 +81,9 @@ class ComponentEditorWindowBase(BaseWindow):
         style.configure("entry_input_invalid.TEntry", fieldbackground="red")
         style.configure("entry_input_valid.TEntry", fieldbackground="white")
 
-        explanation_text = "Please configure all vehicle component properties in this window.\n"
-        explanation_text += "Scroll down and make sure you do not miss a property.\n"
-        explanation_text += "Saving the result will write to the vehicle_components.json file."
+        explanation_text = _("Please configure all vehicle component properties in this window.\n")
+        explanation_text += _("Scroll down and make sure you do not miss a property.\n")
+        explanation_text += _("Saving the result will write to the vehicle_components.json file.")
         explanation_label = ttk.Label(intro_frame, text=explanation_text, wraplength=800, justify=tk.LEFT)
         explanation_label.configure(style="bigger.TLabel")
         explanation_label.pack(side=tk.LEFT, padx=(10, 10), pady=(10, 0), anchor=tk.NW)
@@ -90,9 +92,9 @@ class ComponentEditorWindowBase(BaseWindow):
         if local_filesystem.vehicle_image_exists():
             image_label = self.put_image_in_label(intro_frame, local_filesystem.vehicle_image_filepath(), 100)
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
-            show_tooltip(image_label, "Replace the vehicle.jpg file in the vehicle directory to change the vehicle image.")
+            show_tooltip(image_label, _("Replace the vehicle.jpg file in the vehicle directory to change the vehicle image."))
         else:
-            image_label = ttk.Label(intro_frame, text="Add a 'vehicle.jpg' image file to the vehicle directory.")
+            image_label = ttk.Label(intro_frame, text=_("Add a 'vehicle.jpg' image file to the vehicle directory."))
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
 
         self.scroll_frame = ScrollFrame(self.main_frame)
@@ -102,8 +104,8 @@ class ComponentEditorWindowBase(BaseWindow):
 
         save_frame = ttk.Frame(self.main_frame)
         save_frame.pack(side=tk.TOP, fill="x", expand=False)
-        self.save_button = ttk.Button(save_frame, text="Save data and start configuration", command=self.save_data)
-        show_tooltip(self.save_button, "Save component data and start parameter value configuration and tuning.")
+        self.save_button = ttk.Button(save_frame, text=_("Save data and start configuration"), command=self.save_data)
+        show_tooltip(self.save_button, _("Save component data and start parameter value configuration and tuning."))
         self.save_button.pack(pady=7)
 
     def update_json_data(self):  # should be overwritten in child classes
@@ -186,9 +188,9 @@ class ComponentEditorWindowBase(BaseWindow):
 
         # Save the updated data back to the JSON file
         if self.local_filesystem.save_vehicle_components_json_data(self.data, self.local_filesystem.vehicle_dir):
-            show_error_message("Error", "Failed to save data to file. Is the destination write protected?")
+            show_error_message(_("Error"), _("Failed to save data to file. Is the destination write protected?"))
         else:
-            logging_info("Vehicle component data saved successfully.")
+            logging_info(_("Vehicle component data saved successfully."))
         self.root.destroy()
 
     # This function will be overwritten in child classes
@@ -201,8 +203,8 @@ class ComponentEditorWindowBase(BaseWindow):
     def add_argparse_arguments(parser):
         parser.add_argument('--skip-component-editor',
                             action='store_true',
-                            help='Skip the component editor window. Only use this if all components have been configured. '
-                            'Default to false')
+                            help=_('Skip the component editor window. Only use this if all components have been configured. '
+                            'Default to false'))
         return parser
 
 

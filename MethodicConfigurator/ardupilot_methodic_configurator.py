@@ -34,6 +34,8 @@ from MethodicConfigurator.frontend_tkinter_parameter_editor import ParameterEdit
 
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
+from MethodicConfigurator.internationalization import _
+
 from MethodicConfigurator.version import VERSION
 
 
@@ -46,7 +48,7 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = argparse.ArgumentParser(description='ArduPilot methodic configurator is a simple GUI with a table that lists '
+    parser = argparse.ArgumentParser(description=_('ArduPilot methodic configurator is a simple GUI with a table that lists '
                                      'parameters. The GUI reads intermediate parameter files from a directory and '
                                      'displays their parameters in a table. Each row displays the parameter name, '
                                      'its current value on the flight controller, its new value from the selected '
@@ -55,7 +57,7 @@ def argument_parser():
                                      'When "Upload Selected to FC" is clicked, it uploads the selected parameters to the '
                                      'flight controller. '
                                      'When "Skip" is pressed, it skips to the next intermediate parameter file. '
-                                     'The process gets repeated for each intermediate parameter file.')
+                                     'The process gets repeated for each intermediate parameter file.'))
     parser = FlightController.add_argparse_arguments(parser)
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindow.add_argparse_arguments(parser)
@@ -68,7 +70,7 @@ def connect_to_fc_and_read_parameters(args):
 
     error_str = flight_controller.connect(args.device, log_errors=False)
     if error_str:
-        if args.device and "No serial ports found" not in error_str:
+        if args.device and _("No serial ports found") not in error_str:
             logging_error(error_str)
         conn_sel_window = ConnectionSelectionWindow(flight_controller, error_str)
         conn_sel_window.root.mainloop()
@@ -77,9 +79,9 @@ def connect_to_fc_and_read_parameters(args):
     if vehicle_type == "":  # not explicitly set, to try to guess it
         if flight_controller.info.vehicle_type is not None:
             vehicle_type = flight_controller.info.vehicle_type
-            logging_debug("Vehicle type not set explicitly, auto-detected %s.", vehicle_type)
+            logging_debug(_("Vehicle type not set explicitly, auto-detected %s."), vehicle_type)
     else:
-        logging_info("Vehicle type explicitly set to %s.", vehicle_type)
+        logging_info(_("Vehicle type explicitly set to %s."), vehicle_type)
 
     return flight_controller,vehicle_type
 
@@ -110,7 +112,7 @@ def component_editor(args, flight_controller, vehicle_type, local_filesystem, ve
             flight_controller.fc_parameters)
         if error_message:
             logging_error(error_message)
-            show_error_message("Error in derived parameters", error_message)
+            show_error_message(_("Error in derived parameters"), error_message)
             sys_exit(1)
 
 
@@ -131,7 +133,7 @@ def main():
         local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, flight_controller.info.flight_sw_version,
                                            args.allow_editing_template_files)
     except SystemExit as exp:
-        show_error_message("Fatal error reading parameter files", f"{exp}")
+        show_error_message(_("Fatal error reading parameter files"), f"{exp}")
         raise
 
     param_default_values_dirty = False

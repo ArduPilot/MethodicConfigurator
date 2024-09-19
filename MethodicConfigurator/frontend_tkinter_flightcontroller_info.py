@@ -21,6 +21,8 @@ from MethodicConfigurator.backend_flightcontroller import FlightController
 from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 
+from MethodicConfigurator.internationalization import _
+
 from MethodicConfigurator.version import VERSION
 
 
@@ -30,7 +32,7 @@ class FlightControllerInfoWindow(BaseWindow):
     """
     def __init__(self, flight_controller: FlightController):
         super().__init__()
-        self.root.title("ArduPilot methodic configurator " + VERSION + " - Flight Controller Info")
+        self.root.title(_("ArduPilot methodic configurator ") + VERSION + _(" - Flight Controller Info"))
         self.root.geometry("500x350")  # Adjust the window size as needed
         self.flight_controller = flight_controller
         self.param_default_values = {}
@@ -59,19 +61,19 @@ class FlightControllerInfoWindow(BaseWindow):
 
         self.info_frame.columnconfigure(1, weight=1)
 
-        logging_info("Firmware Version: %s", flight_controller.info.flight_sw_version_and_type)
-        logging_info(f"Firmware first 8 hex bytes of the FC git hash: {flight_controller.info.flight_custom_version}")
-        logging_info(f"Firmware first 8 hex bytes of the ChibiOS git hash: {flight_controller.info.os_custom_version}")
-        logging_info(f"Flight Controller HW / board version: {flight_controller.info.board_version}")
-        logging_info(f"Flight Controller USB vendor ID: {flight_controller.info.vendor}")
-        logging_info(f"Flight Controller USB product ID: {flight_controller.info.product}")
+        logging_info(_("Firmware Version: %s"), flight_controller.info.flight_sw_version_and_type)
+        logging_info(_(f"Firmware first 8 hex bytes of the FC git hash: {flight_controller.info.flight_custom_version}"))
+        logging_info(_(f"Firmware first 8 hex bytes of the ChibiOS git hash: {flight_controller.info.os_custom_version}"))
+        logging_info(_(f"Flight Controller HW / board version: {flight_controller.info.board_version}"))
+        logging_info(_(f"Flight Controller USB vendor ID: {flight_controller.info.vendor}"))
+        logging_info(_(f"Flight Controller USB product ID: {flight_controller.info.product}"))
 
         self.root.after(50, self.download_flight_controller_parameters()) # 50 milliseconds
         self.root.mainloop()
 
     def download_flight_controller_parameters(self):
-        param_download_progress_window = ProgressWindow(self.root, "Downloading FC parameters",
-                                                        "Downloaded {} of {} parameters")
+        param_download_progress_window = ProgressWindow(self.root, _("Downloading FC parameters"),
+                                                        _("Downloaded {} of {} parameters"))
         self.flight_controller.fc_parameters, self.param_default_values = self.flight_controller.download_params(
             param_download_progress_window.update_progress_bar)
         param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
