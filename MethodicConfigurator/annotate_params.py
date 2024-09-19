@@ -51,8 +51,8 @@ VERSION = '1.0'
 
 
 def arg_parser():
-    parser = argparse.ArgumentParser(description=_('Fetches on-line ArduPilot parameter documentation and adds it to the '
-                                     'specified file or to all *.param and *.parm files in the specified directory.'))
+    parser = argparse.ArgumentParser(description=_('Fetches on-line ArduPilot parameter documentation and adds it to the ')
+                                     _('specified file or to all *.param and *.parm files in the specified directory.'))
     parser.add_argument('target',
                         help=_('The target file or directory.'),
                         )
