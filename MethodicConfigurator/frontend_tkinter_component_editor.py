@@ -417,7 +417,12 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         elif len(esc_connection_type) > 6 and esc_connection_type[:6] == 'SERIAL':
             protocols = [value['protocol'] for value in serial_protocols_dict.values() if value['component'] == 'ESC']
         else:
-            protocols = list(self.local_filesystem.doc_dict['MOT_PWM_TYPE']["values"].values())
+            if 'MOT_PWM_TYPE' in self.local_filesystem.doc_dict:
+                protocols = list(self.local_filesystem.doc_dict['MOT_PWM_TYPE']["values"].values())
+            elif 'Q_M_PWM_TYPE' in self.local_filesystem.doc_dict:
+                protocols = list(self.local_filesystem.doc_dict['Q_M_PWM_TYPE']["values"].values())
+            else:
+                protocols = []
 
         protocol_path = ('ESC', 'FC Connection', 'Protocol')
         if protocol_path in self.entry_widgets:
