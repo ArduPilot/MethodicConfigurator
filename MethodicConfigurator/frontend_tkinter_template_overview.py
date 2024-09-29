@@ -14,7 +14,7 @@ from logging import getLevelName as logging_getLevelName
 
 import tkinter as tk
 from tkinter import ttk
-
+from MethodicConfigurator.internationalization import _
 from MethodicConfigurator.middleware_template_overview import TemplateOverview
 
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
@@ -44,10 +44,10 @@ class TemplateOverviewWindow(BaseWindow):
     """
     def __init__(self, parent: tk.Tk):
         super().__init__(parent)
-        self.root.title(f"Amilcar Lucas's - ArduPilot methodic configurator {VERSION} - Template Overview and selection")
+        self.root.title(_(f"Amilcar Lucas's - ArduPilot methodic configurator {VERSION} - Template Overview and selection"))
         self.root.geometry("1200x300")
 
-        instruction_text = "Please double-click the template below that most resembles your own vehicle components"
+        instruction_text = _("Please double-click the template below that most resembles your own vehicle components")
         instruction_label = ttk.Label(self.main_frame, text=instruction_text, font=('Arial', 12))
         instruction_label.pack(pady=(10, 20))
 
@@ -151,12 +151,12 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = argparse.ArgumentParser(description='ArduPilot methodic configurator is a GUI-based tool designed to simplify '
+    parser = argparse.ArgumentParser(description=_('ArduPilot methodic configurator is a GUI-based tool designed to simplify '
                                                  'the management and visualization of ArduPilot parameters. It enables users '
                                                  'to browse through various vehicle templates, edit parameter files, and '
                                                  'apply changes directly to the flight controller. The tool is built to '
                                                  'semi-automate the configuration process of ArduPilot for drones by '
-                                                 'providing a clear and intuitive interface for parameter management.')
+                                                 'providing a clear and intuitive interface for parameter management.'))
     return add_common_arguments_and_parse(parser)
 
 

@@ -73,7 +73,7 @@ class TestShowTooltip(unittest.TestCase):
         mock_toplevel.assert_called_once()
 
         # Assert that the Tkinter Label class was instantiated with the correct parameters
-        mock_label.assert_called_once_with(mock_toplevel.return_value, text="Test Tooltip Message",
+        mock_label.assert_called_once_with(mock_toplevel.return_value, text=_("Test Tooltip Message"),
                                            background="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT)
 
         # Assert that the Tkinter Toplevel instance's deiconify method was called

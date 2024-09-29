@@ -38,26 +38,26 @@ def parse_arguments(args=None):
     parser = argparse.ArgumentParser(description='Extracts parameter default values from an ArduPilot .bin log file.')
     parser.add_argument('-f', '--format',
                         choices=['missionplanner', 'mavproxy', 'qgcs'],
-                        default='missionplanner', help='Output file format. Defaults to %(default)s.',
+                        default='missionplanner', help=_('Output file format. Defaults to %(default)s.'),
                         )
     parser.add_argument('-s', '--sort',
                         choices=['none', 'missionplanner', 'mavproxy', 'qgcs'],
-                        default='', help='Sort the parameters in the file. Defaults to the same as the format.',
+                        default='', help=_('Sort the parameters in the file. Defaults to the same as the format.'),
                         )
     parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.1',
-                        help='Display version information and exit.',
+                        help=_('Display version information and exit.'),
                         )
     parser.add_argument('-i', '--sysid', type=int, default=-1,
-                        help='System ID for qgcs output format. Defaults to SYSID_THISMAV if defined else 1.',
+                        help=_('System ID for qgcs output format. Defaults to SYSID_THISMAV if defined else 1.'),
                         )
     parser.add_argument('-c', '--compid', type=int, default=-1,
-                        help='Component ID for qgcs output format. Defaults to 1.',
+                        help=_('Component ID for qgcs output format. Defaults to 1.'),
                         )
     parser.add_argument('-t', '--type',
                         choices=['defaults', 'values', 'non_default_values'],
-                        default='defaults', help='Type of parameter values to extract. Defaults to %(default)s.',
+                        default='defaults', help=_('Type of parameter values to extract. Defaults to %(default)s.'),
                         )
-    parser.add_argument('bin_file', help='The ArduPilot .bin log file to read')
+    parser.add_argument('bin_file', help=_('The ArduPilot .bin log file to read'))
     args, _ = parser.parse_known_args(args)
 
     if args.sort == '':
@@ -65,9 +65,9 @@ def parse_arguments(args=None):
 
     if args.format != 'qgcs':
         if args.sysid != -1:
-            raise SystemExit("--sysid parameter is only relevant if --format is qgcs")
+            raise SystemExit(_("--sysid parameter is only relevant if --format is qgcs"))
         if args.compid != -1:
-            raise SystemExit("--compid parameter is only relevant if --format is qgcs")
+            raise SystemExit(_("--compid parameter is only relevant if --format is qgcs"))
 
     return args
 
@@ -86,7 +86,7 @@ def extract_parameter_values(logfile: str, param_type: str = 'defaults') -> Dict
     try:
         mlog = mavutil.mavlink_connection(logfile)
     except Exception as e:
-        raise SystemExit(f"Error opening the {logfile} logfile: {str(e)}") from e
+        raise SystemExit(_(f"Error opening the {logfile} logfile: {str(e)}")) from e
     values = {}
     while True:
         m = mlog.recv_match(type=['PARM'])
@@ -96,9 +96,9 @@ def extract_parameter_values(logfile: str, param_type: str = 'defaults') -> Dict
             return values
         pname = m.Name
         if len(pname) > PARAM_NAME_MAX_LEN:
-            raise SystemExit(f"Too long parameter name: {pname}")
+            raise SystemExit(_(f"Too long parameter name: {pname}"))
         if not re.match(PARAM_NAME_REGEX, pname):
-            raise SystemExit(f"Invalid parameter name {pname}")
+            raise SystemExit(_(f"Invalid parameter name {pname}"))
         # parameter names are supposed to be unique
         if pname in values:
             continue
@@ -112,7 +112,7 @@ def extract_parameter_values(logfile: str, param_type: str = 'defaults') -> Dict
             if hasattr(m, 'Value') and hasattr(m, 'Default') and m.Value != m.Default:
                 values[pname] = m.Value
         else:
-            raise SystemExit(f"Invalid type {param_type}")
+            raise SystemExit(_(f"Invalid type {param_type}"))
 
 
 def missionplanner_sort(item: str) -> Tuple[str, ...]:
@@ -184,13 +184,13 @@ def output_params(params: Dict[str, float], format_type: str = 'missionplanner',
         if compid == -1:
             compid = 1  # if unspecified, default to 1
         if sysid < 0:
-            raise SystemExit(f"Invalid system ID parameter {sysid} must not be negative")
+            raise SystemExit(_(f"Invalid system ID parameter {sysid} must not be negative"))
         if sysid > MAVLINK_SYSID_MAX-1:
-            raise SystemExit(f"Invalid system ID parameter {sysid} must be smaller than {MAVLINK_SYSID_MAX}")
+            raise SystemExit(_(f"Invalid system ID parameter {sysid} must be smaller than {MAVLINK_SYSID_MAX}"))
         if compid < 0:
-            raise SystemExit(f"Invalid component ID parameter {compid} must not be negative")
+            raise SystemExit(_(f"Invalid component ID parameter {compid} must not be negative"))
         if compid > MAVLINK_COMPID_MAX-1:
-            raise SystemExit(f"Invalid component ID parameter {compid} must be smaller than {MAVLINK_COMPID_MAX}")
+            raise SystemExit(_(f"Invalid component ID parameter {compid} must be smaller than {MAVLINK_COMPID_MAX}"))
         # see https://dev.qgroundcontrol.com/master/en/file_formats/parameters.html
         print("""
 # # Vehicle-Id Component-Id Name Value Type
