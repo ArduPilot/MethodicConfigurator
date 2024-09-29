@@ -15,7 +15,7 @@ from logging import getLevelName as logging_getLevelName
 # from logging import debug as logging_debug
 #from logging import info as logging_info
 from logging import error as logging_error
-
+from MethodicConfigurator.internationalization import _
 import tkinter as tk
 from tkinter import ttk
 from math import log2
@@ -45,8 +45,8 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = ArgumentParser(description=_('A GUI for editing JSON files that contain vehicle component configurations. ')
-                            _('Not to be used directly, but through the main ArduPilot methodic configurator script.'))
+    parser = ArgumentParser(description=_('A GUI for editing JSON files that contain vehicle component configurations. '
+                            'Not to be used directly, but through the main ArduPilot methodic configurator script.'))
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindow.add_argparse_arguments(parser)
     return add_common_arguments_and_parse(parser)
@@ -548,8 +548,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         if value not in allowed_values:
             if event.type == "10": # FocusOut events
-                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n")
-                                   _(f"Allowed values are: {', '.join(allowed_values)}"))
+                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                   f"Allowed values are: {', '.join(allowed_values)}"))
             combobox.configure(style="comb_input_invalid.TCombobox")
             return False
 
@@ -592,25 +592,25 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 if is_focusout_event:
                     entry.delete(0, tk.END)
                     entry.insert(0, BatteryCell.limit_min_voltage(chemistry))
-                raise VoltageTooLowError(_(f"is below the {chemistry} minimum limit of ")
-                                         f"{BatteryCell.limit_min_voltage(chemistry)}")
+                raise VoltageTooLowError(_(f"is below the {chemistry} minimum limit of "
+                                         f"{BatteryCell.limit_min_voltage(chemistry)}"))
             if voltage > BatteryCell.limit_max_voltage(chemistry):
                 if is_focusout_event:
                     entry.delete(0, tk.END)
                     entry.insert(0, BatteryCell.limit_max_voltage(chemistry))
-                raise VoltageTooHighError(_(f"is above the {chemistry} maximum limit of ")
-                                          f"{BatteryCell.limit_max_voltage(chemistry)}")
+                raise VoltageTooHighError(_(f"is above the {chemistry} maximum limit of "
+                                          f"{BatteryCell.limit_max_voltage(chemistry)}"))
         except (VoltageTooLowError, VoltageTooHighError) as e:
             if is_focusout_event:
-                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n")
-                                   f"{e}")
+                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                   f"{e}"))
             else:
                 entry.configure(style="entry_input_invalid.TEntry")
                 return False
         except ValueError as e:
             if is_focusout_event:
-                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n")
-                                _(f"{e}\nWill be set to the recommended value."))
+                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                f"{e}\nWill be set to the recommended value."))
                 entry.delete(0, tk.END)
                 if path[-1] == "Volt per cell max":
                     entry.insert(0, str(BatteryCell.recommended_max_voltage(chemistry)))
@@ -642,8 +642,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 if path == ('ESC', 'FC Connection', 'Type'):
                     self.update_esc_protocol_combobox_entries(value)
                 if value not in entry.cget("values"):
-                    show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n")
-                                    _(f"Allowed values are: {', '.join(entry.cget('values'))}"))
+                    show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n"
+                                    f"Allowed values are: {', '.join(entry.cget('values'))}"))
                     entry.configure(style="comb_input_invalid.TCombobox")
                     invalid_values = True
                     continue
@@ -676,7 +676,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     invalid_values = True
             if path == ('Battery', 'Specifications', 'Volt per cell low'):
                 if value >= self.entry_widgets[('Battery', 'Specifications', 'Volt per cell max')].get():
-                    show_error_message_("Error"), _("Battery Cell Low voltage must be lower than max voltage"))
+                    show_error_message_("Error"), _("Battery Cell Low voltage must be lower than max voltage")
                     entry.configure(style="entry_input_invalid.TEntry")
                     invalid_values = True
             if path == ('Battery', 'Specifications', 'Volt per cell crit'):

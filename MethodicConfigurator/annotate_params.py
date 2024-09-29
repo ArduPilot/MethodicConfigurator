@@ -24,6 +24,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from os import path as os_path
 from os import popen as os_popen
+from MethodicConfigurator.internationalization import _
 
 import glob
 import re
@@ -51,8 +52,8 @@ VERSION = '1.0'
 
 
 def arg_parser():
-    parser = argparse.ArgumentParser(description=_('Fetches on-line ArduPilot parameter documentation and adds it to the ')
-                                     _('specified file or to all *.param and *.parm files in the specified directory.'))
+    parser = argparse.ArgumentParser(description=_('Fetches on-line ArduPilot parameter documentation and adds it to the '
+                                     'specified file or to all *.param and *.parm files in the specified directory.'))
     parser.add_argument('target',
                         help=_('The target file or directory.'),
                         )
@@ -341,7 +342,7 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
             url = base_url + filename
             response = requests_get(url, timeout=5)
             if response.status_code != 200:
-                logging.warning_("Remote URL: %s"), url)
+                logging.warning_("Remote URL: %s"), url
                 raise requests_exceptions.RequestException(_(f"HTTP status code {response.status_code}"))
         except requests_exceptions.RequestException as e:
             logging.warning(_("Unable to fetch XML data: %s", e))

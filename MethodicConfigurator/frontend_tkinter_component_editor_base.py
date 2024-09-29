@@ -19,7 +19,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
-
+from MethodicConfigurator.internationalization import _
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 
 from MethodicConfigurator.frontend_tkinter_base import show_tooltip
@@ -39,8 +39,8 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = ArgumentParser(description=_('A GUI for editing JSON files that contain vehicle component configurations. ')
-                            _('Not to be used directly, but through the main ArduPilot methodic configurator script.'))
+    parser = ArgumentParser(description=_('A GUI for editing JSON files that contain vehicle component configurations. '
+                            'Not to be used directly, but through the main ArduPilot methodic configurator script.'))
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindowBase.add_argparse_arguments(parser)
     return add_common_arguments_and_parse(parser)

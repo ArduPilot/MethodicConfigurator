@@ -16,7 +16,7 @@ from operator import gt
 from operator import ge
 from operator import lt
 from operator import le
-
+from MethodicConfigurator.internationalization import _
 
 class CheckRange(Action):
     '''

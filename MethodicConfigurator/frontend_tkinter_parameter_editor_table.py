@@ -19,7 +19,7 @@ from logging import info as logging_info
 #from logging import warning as logging_warning
 #from logging import error as logging_error
 from logging import critical as logging_critical
-
+from MethodicConfigurator.internationalization import _
 from platform import system as platform_system
 
 #from MethodicConfigurator.backend_filesystem import LocalFilesystem
@@ -531,13 +531,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if changed:
                 if p_min and p < p_min:
                     if not messagebox.askyesno(_("Out-of-bounds Value"),
-                                               _(f"The value for {param_name} {p} should be greater than {p_min}\n")
-                                               _("Use out-of-bounds value?"), icon='warning'):
+                                               _(f"The value for {param_name} {p} should be greater than {p_min}\n"
+                                               "Use out-of-bounds value?"), icon='warning'):
                         valid = False
                 if p_max and p > p_max:
                     if not messagebox.askyesno(_("Out-of-bounds Value"),
-                                               _(f"The value for {param_name} {p} should be smaller than {p_max}\n")
-                                               _("Use out-of-bounds value?"), icon='warning'):
+                                               _(f"The value for {param_name} {p} should be smaller than {p_max}\n"
+                                               "Use out-of-bounds value?"), icon='warning'):
                         valid = False
         except ValueError:
             # Optionally, you can handle the invalid value here, for example, by showing an error message
@@ -565,8 +565,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                              new_value, e, exc_info=True)
             sys_exit(1)
         if changed and not self.at_least_one_param_edited:
-            logging_debug(_("Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to ")
-                          _("file."),
+            logging_debug(_("Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to "
+                          "file."),
                           param_name, self.local_filesystem.file_parameters[current_file][param_name].comment, new_value)
         self.at_least_one_param_edited = changed or self.at_least_one_param_edited
         # Update the params dictionary with the new value

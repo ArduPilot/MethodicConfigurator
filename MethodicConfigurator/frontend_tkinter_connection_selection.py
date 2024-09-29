@@ -17,7 +17,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import debug as logging_debug
 from logging import warning as logging_warning
 from logging import critical as logging_critical
-
+from MethodicConfigurator.internationalization import _
 import tkinter as tk
 from tkinter import ttk
 from tkinter import simpledialog
@@ -121,8 +121,8 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
                                                          state='readonly')
         self.conn_selection_combobox.bind("<<ComboboxSelected>>", self.on_select_connection_combobox_change)
         self.conn_selection_combobox.pack(side=tk.TOP, pady=(4, 0))
-        show_tooltip(self.conn_selection_combobox, _("Select the flight controller connection\nYou can add a custom connection ")
-                     _("to the existing ones"))
+        show_tooltip(self.conn_selection_combobox, _("Select the flight controller connection\nYou can add a custom connection "
+                     "to the existing ones"))
 
     def on_select_connection_combobox_change(self, _event):
         selected_connection = self.conn_selection_combobox.get_selected_key()
@@ -138,11 +138,11 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
     def add_connection(self):
         # Open the connection selection dialog
         selected_connection = simpledialog.askstring(_("Flight Controller Connection"),
-                                                     _("Enter the connection string to the flight controller. ")
-                                                     _("Examples are:\n\nCOM4 (on windows)\n")
+                                                     _("Enter the connection string to the flight controller. "
+                                                     "Examples are:\n\nCOM4 (on windows)\n"
                                                      "/dev/serial/by-id/usb-xxx (on linux)\n"
                                                      "tcp:127.0.0.1:5761\n"
-                                                     "udp:127.0.0.1:14551")
+                                                     "udp:127.0.0.1:14551"))
         if selected_connection:
             logging_debug(_(f"Will add new connection: {selected_connection} if not duplicated"))
             self.flight_controller.add_connection(selected_connection)
@@ -202,9 +202,9 @@ class ConnectionSelectionWindow(BaseWindow):
         option1_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option1_label, borderwidth=2, relief="solid")
         option1_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
         option1_label = ttk.Label(option1_label_frame, anchor=tk.CENTER, justify=tk.CENTER,
-                                  text=_("Connect a flight controller to the PC,\n")
-                                  _("wait 7 seconds for it to fully boot and\n")
-                                  _("press the Auto-connect button below to connect to it")
+                                  text=_("Connect a flight controller to the PC,\n"
+                                  "wait 7 seconds for it to fully boot and\n"
+                                  "press the Auto-connect button below to connect to it"))
         option1_label.pack(expand=False, fill=tk.X, padx=6)
         autoconnect_button = ttk.Button(option1_label_frame, text=_("Auto-connect"), command=self.fc_autoconnect)
         autoconnect_button.pack(expand=False, fill=tk.X, padx=100, pady=6)
@@ -215,9 +215,9 @@ class ConnectionSelectionWindow(BaseWindow):
         option2_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option2_label, borderwidth=2, relief="solid")
         option2_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
         option2_label = ttk.Label(option2_label_frame, anchor=tk.CENTER, justify=tk.CENTER,
-                                  text=_("Connect a flight controller to the PC,\n")
-                                  _("wait 7 seconds for it to fully boot and\n")
-                                  _("manually select the fight controller connection or add a new one")
+                                  text=_("Connect a flight controller to the PC,\n"
+                                  "wait 7 seconds for it to fully boot and\n"
+                                  "manually select the fight controller connection or add a new one"))
         option2_label.pack(expand=False, fill=tk.X, padx=6)
         self.connection_selection_widgets = ConnectionSelectionWidgets(self, option2_label_frame, flight_controller,
                                                                        destroy_parent_on_connect=True,
@@ -241,8 +241,8 @@ class ConnectionSelectionWindow(BaseWindow):
                                               self.skip_fc_connection(flight_controller))
         skip_fc_connection_button.pack(expand=False, fill=tk.X, padx=15, pady=6)
         show_tooltip(skip_fc_connection_button,
-                     _("No parameter values will be fetched from the FC, default parameter values from disk will be used\n")
-                     _("instead (if '00_default.param' file is present) and just edit the intermediate '.param' files on disk"))
+                     _("No parameter values will be fetched from the FC, default parameter values from disk will be used\n"
+                     "instead (if '00_default.param' file is present) and just edit the intermediate '.param' files on disk"))
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_and_quit)
@@ -269,8 +269,8 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = ArgumentParser(description=_('This main is for testing and development only. ')
-                            _('Usually, the ConnectionSelectionWidgets is called from another script'))
+    parser = ArgumentParser(description=_('This main is for testing and development only. '
+                            'Usually, the ConnectionSelectionWidgets is called from another script'))
     parser = FlightController.add_argparse_arguments(parser)
     return add_common_arguments_and_parse(parser)
 
@@ -280,8 +280,8 @@ def main():
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
 
-    logging_warning(_("This main is for testing and development only, usually the ConnectionSelectionWindow is called from ")
-                    _("another script"))
+    logging_warning(_("This main is for testing and development only, usually the ConnectionSelectionWindow is called from "
+                    "another script"))
 
     flight_controller = FlightController(args.reboot_time) # Initialize your FlightController instance
     result = flight_controller.connect(device=args.device) # Connect to the flight controller

@@ -18,7 +18,7 @@ from logging import error as logging_error
 
 from json import load as json_load
 from json import JSONDecodeError
-
+from MethodicConfigurator.internationalization import _
 from typing import Tuple
 
 from MethodicConfigurator.annotate_params import Par
@@ -56,8 +56,8 @@ class ConfigurationSteps:
                     file_found = True
                     if self.log_loaded_file:
                         if i == 0:
-                            logging_warning(_("Configuration steps '%s' loaded from %s ") \
-                                            _("(overwriting default configuration steps)."),
+                            logging_warning(_("Configuration steps '%s' loaded from %s " \
+                                            "(overwriting default configuration steps)."),
                                             self.configuration_steps_filename, directory)
                         if i == 1:
                             logging_info(_("Configuration steps '%s' loaded from %s."),
@@ -90,12 +90,12 @@ class ConfigurationSteps:
                 return
             for parameter, parameter_info in file_info[parameter_type + '_parameters'].items():
                 if "New Value" not in parameter_info:
-                    logging_error(_("Error in file '%s': '%s' %s parameter '%s'")
-                                        _(" 'New Value' attribute not found."),
+                    logging_error(_("Error in file '%s': '%s' %s parameter '%s'"
+                                        " 'New Value' attribute not found."),
                                         self.configuration_steps_filename, filename, parameter_type, parameter)
                 if "Change Reason" not in parameter_info:
-                    logging_error(_("Error in file '%s': '%s' %s parameter '%s'")
-                                        _(" 'Change Reason' attribute not found."),
+                    logging_error(_("Error in file '%s': '%s' %s parameter '%s'"
+                                        " 'Change Reason' attribute not found."),
                                         self.configuration_steps_filename, filename, parameter_type, parameter)
 
     def compute_parameters(self, filename: str, file_info: dict, parameter_type: str, variables: dict) -> str:
@@ -112,8 +112,8 @@ class ConfigurationSteps:
             try:
                 if ('fc_parameters' in str(parameter_info["New Value"])) and \
                    ('fc_parameters' not in variables or variables['fc_parameters'] == {}):
-                    error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
-                        _(f"parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?")
+                    error_msg = _(f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
+                        f"parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?")
                     if parameter_type == 'forced':
                         logging_error(error_msg)
                         return error_msg
@@ -136,8 +136,8 @@ class ConfigurationSteps:
                     destination[filename] = {}
                 destination[filename][parameter] = Par(float(result), parameter_info["Change Reason"])
             except (SyntaxError, NameError, KeyError, StopIteration) as e:
-                error_msg = f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
-                    _(f"parameter '{parameter}' could not be computed: {e}")
+                error_msg = _(f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
+                    f"parameter '{parameter}' could not be computed: {e}")
                 if parameter_type == 'forced':
                     logging_error(error_msg)
                     return error_msg
@@ -158,11 +158,11 @@ class ConfigurationSteps:
         documentation = self.configuration_steps.get(selected_file, {}) if \
             self.configuration_steps else None
         if documentation is None:
-            text = _(f"File '{self.configuration_steps_filename}' not found. ") \
-                _("No intermediate parameter configuration steps available")
+            text = _(f"File '{self.configuration_steps_filename}' not found. " \
+                "No intermediate parameter configuration steps available")
             url = None
         else:
-            text = documentation.get(prefix_key + "_text", _(f"No documentation available for {selected_file} in the ")
-                                     _(f"{self.configuration_steps_filename} file"))
+            text = documentation.get(prefix_key + "_text", _(f"No documentation available for {selected_file} in the "
+                                     f"{self.configuration_steps_filename} file"))
             url = documentation.get(prefix_key + "_url", None)
         return text, url

@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
-
+from MethodicConfigurator.internationalization import _
 from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import error as logging_error
@@ -39,8 +39,8 @@ def argument_parser():
     parser.add_argument("--baudrate", type=int, default=115200,
                         help=_("master port baud rate. Defaults to %(default)s"))
     parser.add_argument("--device", type=str, default='',
-                        help=_("serial device. For windows use COMx where x is the port number. ")
-                                _("For Unix use /dev/ttyUSBx where x is the port number. Defaults to autodetection"))
+                        help=_("serial device. For windows use COMx where x is the port number. "
+                                "For Unix use /dev/ttyUSBx where x is the port number. Defaults to autodetection"))
     parser.add_argument("--source-system", type=int, default=250,
                         help=_('MAVLink source system for this GCS. Defaults to %(default)s'))
     parser.add_argument("--loglevel", default="INFO",

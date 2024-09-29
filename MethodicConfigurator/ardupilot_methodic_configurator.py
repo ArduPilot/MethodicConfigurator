@@ -16,7 +16,7 @@ from logging import info as logging_info
 #from logging import warning as logging_warning
 from logging import error as logging_error
 from sys import exit as sys_exit
-
+from MethodicConfigurator.internationalization import _
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_flightcontroller import FlightController
 
@@ -46,16 +46,16 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = argparse.ArgumentParser(description=_('ArduPilot methodic configurator is a simple GUI with a table that lists ')
-                                     _('parameters. The GUI reads intermediate parameter files from a directory and ')
-                                     _('displays their parameters in a table. Each row displays the parameter name, ')
-                                     _('its current value on the flight controller, its new value from the selected ')
-                                     _('intermediate parameter file, and an "Upload" checkbox. The GUI includes "Upload ')
-                                     _('selected params to FC" and "Skip" buttons at the bottom. ')
-                                     _('When "Upload Selected to FC" is clicked, it uploads the selected parameters to the ')
-                                     _('flight controller. ')
-                                     _('When "Skip" is pressed, it skips to the next intermediate parameter file. ')
-                                     _('The process gets repeated for each intermediate parameter file.'))
+    parser = argparse.ArgumentParser(description=_('ArduPilot methodic configurator is a simple GUI with a table that lists '
+                                     'parameters. The GUI reads intermediate parameter files from a directory and '
+                                     'displays their parameters in a table. Each row displays the parameter name, '
+                                     'its current value on the flight controller, its new value from the selected '
+                                     'intermediate parameter file, and an "Upload" checkbox. The GUI includes "Upload '
+                                     'selected params to FC" and "Skip" buttons at the bottom. '
+                                     'When "Upload Selected to FC" is clicked, it uploads the selected parameters to the '
+                                     'flight controller. '
+                                     'When "Skip" is pressed, it skips to the next intermediate parameter file. '
+                                     'The process gets repeated for each intermediate parameter file.'))
     parser = FlightController.add_argparse_arguments(parser)
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindow.add_argparse_arguments(parser)

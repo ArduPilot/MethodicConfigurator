@@ -12,7 +12,7 @@ from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import warning as logging_warning
 from logging import error as logging_error
-
+from MethodicConfigurator.internationalization import _
 from time import sleep as time_sleep
 from time import time as time_time
 from os import path as os_path
@@ -273,9 +273,9 @@ class FlightController:
 
     def __process_autopilot_version(self, m, banner_msgs) -> str:
         if m is None:
-            return _("No AUTOPILOT_VERSION MAVLink message received, connection failed.\n") \
-                _("Only ArduPilot versions newer than 4.3.8 are supported.\n") \
-                _("Make sure parameter SERIAL0_PROTOCOL is set to 2")
+            return _("No AUTOPILOT_VERSION MAVLink message received, connection failed.\n" \
+                "Only ArduPilot versions newer than 4.3.8 are supported.\n" \
+                "Make sure parameter SERIAL0_PROTOCOL is set to 2")
         self.info.set_capabilities(m.capabilities)
         self.info.set_flight_sw_version(m.flight_sw_version)
         self.info.set_board_version(m.board_version)
@@ -538,6 +538,6 @@ class FlightController:
                             max=50,
                             action=CheckRange,
                             default=7,
-                            help=_('Flight controller reboot time. ')
-                            _('Default is %(default)s'))
+                            help=_('Flight controller reboot time. '
+                            'Default is %(default)s'))
         return parser

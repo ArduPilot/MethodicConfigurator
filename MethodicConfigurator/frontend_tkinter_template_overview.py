@@ -14,7 +14,7 @@ from logging import getLevelName as logging_getLevelName
 
 import tkinter as tk
 from tkinter import ttk
-
+from MethodicConfigurator.internationalization import _
 from MethodicConfigurator.middleware_template_overview import TemplateOverview
 
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
@@ -151,12 +151,12 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = argparse.ArgumentParser(description=_('ArduPilot methodic configurator is a GUI-based tool designed to simplify ')
-                                                 _('the management and visualization of ArduPilot parameters. It enables users ')
-                                                 _('to browse through various vehicle templates, edit parameter files, and ')
-                                                 _('apply changes directly to the flight controller. The tool is built to ')
-                                                 _('semi-automate the configuration process of ArduPilot for drones by ')
-                                                 _('providing a clear and intuitive interface for parameter management.'))
+    parser = argparse.ArgumentParser(description=_('ArduPilot methodic configurator is a GUI-based tool designed to simplify '
+                                                 'the management and visualization of ArduPilot parameters. It enables users '
+                                                 'to browse through various vehicle templates, edit parameter files, and '
+                                                 'apply changes directly to the flight controller. The tool is built to '
+                                                 'semi-automate the configuration process of ArduPilot for drones by '
+                                                 'providing a clear and intuitive interface for parameter management.'))
     return add_common_arguments_and_parse(parser)
 
 

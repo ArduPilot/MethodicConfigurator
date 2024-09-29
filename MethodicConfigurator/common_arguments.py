@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
 from MethodicConfigurator.version import VERSION
-
+from MethodicConfigurator.internationalization import _
 
 def add_common_arguments_and_parse(parser):
     parser.add_argument('--loglevel',

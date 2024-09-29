@@ -19,7 +19,7 @@ import struct
 import time
 import random
 import os
-
+from MethodicConfigurator.internationalization import _
 from io import BytesIO as SIO
 
 import sys
@@ -1332,14 +1332,14 @@ if __name__ == "__main__":
 
         This function sets up an argument parser to handle the command-line arguments for the script.
         """
-        parser = ArgumentParser(description=_('MAVFTP - MAVLink File Transfer Protocol https://mavlink.io/en/services/ftp.html')
-                                _(' A tool to do file operations between a ground control station and a drone using the MAVLink')
-                                _(' protocol.'))
+        parser = ArgumentParser(description=_('MAVFTP - MAVLink File Transfer Protocol https://mavlink.io/en/services/ftp.html'
+                                ' A tool to do file operations between a ground control station and a drone using the MAVLink'
+                                ' protocol.'))
         parser.add_argument("--baudrate", type=int, default=115200,
                             help=_("master port baud rate. Defaults to %(default)s"))
         parser.add_argument("--device", type=str, default='',
-                            help=_("serial device. For windows use COMx where x is the port number. ")
-                                 _("For Unix use /dev/ttyUSBx where x is the port number. Defaults to autodetection"))
+                            help=_("serial device. For windows use COMx where x is the port number. "
+                                 "For Unix use /dev/ttyUSBx where x is the port number. Defaults to autodetection"))
         parser.add_argument("--source-system", type=int, default=250,
                             help=_('MAVLink source system for this GCS. Defaults to %(default)s'))
         parser.add_argument("--loglevel", default="INFO",

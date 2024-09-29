@@ -21,7 +21,7 @@ from logging import warning as logging_warning
 from logging import error as logging_error
 
 from platform import system as platform_system
-
+from MethodicConfigurator.internationalization import _
 from PIL import Image
 from PIL import ImageTk
 
@@ -39,15 +39,15 @@ def show_error_message(title: str, message: str):
 
 
 def show_no_param_files_error(dirname: str):
-    error_message = _(f"No intermediate parameter files found in the selected '{dirname}' vehicle directory.\n") \
-        _("Please select and step inside a vehicle directory containing valid ArduPilot intermediate parameter files.\n\n") \
-        _("Make sure to step inside the directory (double-click) and not just select it.")
+    error_message = _(f"No intermediate parameter files found in the selected '{dirname}' vehicle directory.\n" \
+        "Please select and step inside a vehicle directory containing valid ArduPilot intermediate parameter files.\n\n" \
+        "Make sure to step inside the directory (double-click) and not just select it.")
     show_error_message(_("No Parameter Files Found"), error_message)
 
 
 def show_no_connection_error(error_string: str):
-    error_message = _(f"{error_string}\n\nPlease connect a flight controller to the PC,\n") \
-        _("wait at least 7 seconds and retry.")
+    error_message = _(f"{error_string}\n\nPlease connect a flight controller to the PC,\n" \
+        "wait at least 7 seconds and retry.")
     show_error_message(_("No Connection to the Flight Controller"), error_message)
 
 

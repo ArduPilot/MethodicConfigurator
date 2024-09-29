@@ -14,7 +14,7 @@ from os import listdir as os_listdir
 from os import rename as os_rename
 
 from platform import system as platform_system
-
+from MethodicConfigurator.internationalization import _
 from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
 
@@ -611,16 +611,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         parser.add_argument('--vehicle-dir',
                             type=str,
                             default=os_getcwd(),
-                            help=_('Directory containing vehicle-specific intermediate parameter files. ')
-                            _('Defaults to the current working directory'))
+                            help=_('Directory containing vehicle-specific intermediate parameter files. '
+                            'Defaults to the current working directory'))
         parser.add_argument('--n',
                             type=int,
                             default=-1,
-                            help=_('Start directly on the nth intermediate parameter file (skips previous files). ')
-                            _('Default is to start on the file next to the last that you wrote to the flight controller.')
-                            _('If the file does not exist, it will start on the first file.'))
+                            help=_('Start directly on the nth intermediate parameter file (skips previous files). '
+                            'Default is to start on the file next to the last that you wrote to the flight controller.'
+                            'If the file does not exist, it will start on the first file.'))
         parser.add_argument('--allow-editing-template-files',
                             action='store_true',
-                            help=_('Allow opening and editing template files directly. ')
-                            _('Only for software developers that know what they are doing.'))
+                            help=_('Allow opening and editing template files directly. '
+                            'Only for software developers that know what they are doing.'))
         return parser

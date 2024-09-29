@@ -18,7 +18,7 @@ import argparse
 import subprocess
 from typing import List, Dict
 import re
-
+from MethodicConfigurator.internationalization import _
 PARAM_NAME_REGEX = r'^[A-Z][A-Z_0-9]*$'
 PARAM_NAME_MAX_LEN = 16
 VERSION = '1.0'
@@ -43,8 +43,8 @@ explaining how their new value relates to the default parameter value.
                         )
     parser.add_argument("-a", "--adjustment_factor",
                         type=ranged_type(float, 0.1, 0.8), default=0.5,
-                        help=_("The adjustment factor to apply to the optimized parameters. ")
-                             _("Must be in the interval 0.1 to 0.8. Defaults to 0.5."),
+                        help=_("The adjustment factor to apply to the optimized parameters. "
+                             "Must be in the interval 0.1 to 0.8. Defaults to 0.5."),
                         )
     parser.add_argument('-v', '--version', action='version', version=f'%(prog)s {VERSION}',
                         help=_('Display version information and exit.'),
@@ -120,7 +120,7 @@ class Par:
                 except ValueError as exc:
                     raise SystemExit(_(f"Invalid parameter value {value} in {param_file} line {n}")) from exc
                 if parameter in parameter_dict:
-                    raise SystemExit(_(f"Duplicated parameter {parameter} in {param_file} line {n}")
+                    raise SystemExit(_(f"Duplicated parameter {parameter} in {param_file} line {n}"))
                 parameter_dict[parameter] = Par(fvalue, comment)
         return parameter_dict, content
 
