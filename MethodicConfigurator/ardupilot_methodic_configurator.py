@@ -34,7 +34,7 @@ from MethodicConfigurator.frontend_tkinter_parameter_editor import ParameterEdit
 
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator.internationalization import _, load_translation
 
 from MethodicConfigurator.version import VERSION
 
@@ -117,6 +117,10 @@ def component_editor(args, flight_controller, vehicle_type, local_filesystem, ve
 
 
 def main():
+    # modify the global _() function
+    global _  # pylint: disable=global-statement
+
+    _ = load_translation()  # done as soon as possible so that the correct language is used
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
