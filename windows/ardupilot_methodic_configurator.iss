@@ -65,6 +65,7 @@ Source: "..\MethodicConfigurator\ArduPilot_logo.png"; DestDir: "{app}\_internal\
 Source: "..\MethodicConfigurator\configuration_steps_*.json"; DestDir: "{app}\_internal\MethodicConfigurator"; Flags: ignoreversion
 Source: "..\LICENSES\*.*"; DestDir: "{app}\LICENSES"; Flags: ignoreversion
 Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
+Source: "..\\MethodicConfigurator\locale\*.mo"; DestDir: "{app}\_internal\MethodicConfigurator\locale"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Dirs]
 Name: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; Flags: uninsneveruninstall
