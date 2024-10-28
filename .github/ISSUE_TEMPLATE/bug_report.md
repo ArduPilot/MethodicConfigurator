@@ -1,35 +1,68 @@
----
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
-
----
-
-**Describe the bug**
-A clear and concise description of what the bug is.
-
-**To Reproduce**
-Steps to reproduce the behavior:
-
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
-
-**Expected behavior**
-A clear and concise description of what you expected to happen.
-
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
-
-**Desktop (please complete the following information):**
-
-- OS: [e.g. iOS]
-- Version: [e.g. 22]
-
-**ArduPilot context**
-
-- ArduPilot version
-- Flight controller hardware
+name: Bug report 🐛
+description: Report a bug to help us improve
+labels: ['bug']
+assignees:
+  - amilcarlucas
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: checkboxes
+    id: new-bug
+    attributes:
+      label: Is there an existing issue for this?
+      description: Please search to see if an issue already exists for the bug you encountered.
+      options:
+        - label: I have searched the existing issues
+          required: true
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Description of the bug
+      description: Tell us what bug you encountered and what should have happened
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps To Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        Please tell us how to reproduce this bug, for example:
+        1. Build with '...' arguments
+        2. Run with '....' arguments
+        4. Use '...' configuration options
+        5. See the error
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What should be the expected behavior.
+      placeholder: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / Logs
+      description: If applicable, add screenshots to help explain your problem.
+      placeholder: Paste your screenshots here.
+  - type: textarea
+    id: software-info
+    attributes:
+      label: Software information
+      description: Please provide the following information about your environment.
+      value: |
+        - Operating system:
+        - arduPilot Methodic Configuration version:
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Do you want to share any additional context about this bug?
+      placeholder: Add any other context about the problem here.

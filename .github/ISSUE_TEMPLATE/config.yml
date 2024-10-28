@@ -1,0 +1,7 @@
+contact_links:
+  - name: Discord Chat
+    url: https://discord.com/channels/674039678562861068/859928885705965579
+    about: Ask questions and have discussions about ArduPilot Methodic Configurator on Discord
+  - name: Discuss Forum
+    url: https://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038
+    about: Ask questions and have discussions about ArduPilot Methodic Configurator on Discord on ArduPilot's Discuss Forum
