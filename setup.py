@@ -20,6 +20,7 @@ from MethodicConfigurator.version import VERSION
 
 dev_requirements = [
     'ruff',
+    'pre-commit',
     'pytest',
     'pytest-cov',
     'coverage',
