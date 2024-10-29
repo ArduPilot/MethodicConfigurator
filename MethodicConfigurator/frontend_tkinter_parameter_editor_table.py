@@ -168,12 +168,18 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if new_name in new_names:
                 self.local_filesystem.file_parameters[selected_file].pop(old_name)
                 logging_info(_("Removing duplicate parameter %s"), old_name)
+                messagebox.showinfo(_("Parameter Removed"),
+                                    _(f"The parameter '{old_name}' was removed due to duplication."))
             else:
                 new_names.add(new_name)
                 if new_name != old_name:
                     self.local_filesystem.file_parameters[selected_file][new_name] = \
                         self.local_filesystem.file_parameters[selected_file].pop(old_name)
                     logging_info(_("Renaming parameter %s to %s"), old_name, new_name)
+                    messagebox.showinfo(_("Parameter Renamed"),
+                                        _(f"The parameter '{old_name}' was renamed to '{new_name}'.\n"
+                                          "to follow the flight controller connection defined in the component editor "
+                                          "window."))
 
     def __update_table(self, params, fc_parameters):
         try:
