@@ -10,3 +10,9 @@ WPNAV_ACCEL_Z,200  # high speed missions in auto
 WPNAV_JERK,5  # high speed missions in auto
 WPNAV_SPEED,2000  # high speed missions in auto
 WPNAV_SPEED_DN,250  # high speed missions in auto
+PSC_JERK_Z,25
+PSC_POSZ_P,1.5
+PSC_VELZ_P,7
+PILOT_SPEED_UP,800
+PILOT_SPEED_DN,500
+PILOT_ACCEL_Z,1000
