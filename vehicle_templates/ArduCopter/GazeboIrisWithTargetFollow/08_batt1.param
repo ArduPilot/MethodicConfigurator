@@ -1,0 +1,12 @@
+BATT_AMP_PERVLT,17  # new calibrated value for Mamba F45_128k 4in1 ESC
+BATT_ARM_VOLT,15.7  # Don’t allow arming below this voltage
+BATT_CAPACITY,1800  # Total battery capacity specified in the component editor
+BATT_CRT_MAH,0  # When only 450mAh out of the total 1800mAh remain, trigger critical failsafe
+BATT_CRT_VOLT,14.2  # (Critical voltage + 0.0) x no. of cells
+BATT_FS_CRT_ACT,1  # Land ASAP
+BATT_FS_LOW_ACT,2  # Return and land at home or rally point
+BATT_FS_VOLTSRC,0  # Let the firmware handle the nasty business of variable and battery dependent internal resistance
+BATT_LOW_MAH,0  # When only 450mAh out of the total 1800mAh remain, trigger low failsafe
+BATT_LOW_VOLT,14.4  # (Low voltage + 0.0) x no. of cells
+BATT_MONITOR,4  # Selected in component editor window
+BATT_VOLT_MULT,10.1  # Use a power source with a voltage close to BATT_LOW_VOLT measure with a calibrated voltimeter and adapt this parameter so that the telemetry voltage reading matches it

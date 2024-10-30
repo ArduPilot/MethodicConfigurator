@@ -1,0 +1,2 @@
+AUTOTUNE_AGGR,0.075  # Use smaller than default because there is no wind in the Hangar
+AUTOTUNE_AXES,2  # Autotune pitch axis

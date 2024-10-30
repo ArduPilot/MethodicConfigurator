@@ -1,0 +1,8 @@
+BRD_SAFETY_DEFLT,0  # Matek H743 Slim has no safety switch
+GPS_GNSS_MODE,7  # limit the constalations to ensure an update rate higher than 5Hz
+GPS_POS1_X,0.056  # HX-CH7604A GNSS antenna pahse center location relative to CG
+GPS_POS1_Y,0  # HX-CH7604A GNSS antenna pahse center location relative to CG
+GPS_POS1_Z,-0.07  # HX-CH7604A GNSS antenna pahse center location relative to CG
+GPS_TYPE,2  # Defined in component editor
+SERIAL3_PROTOCOL,5  # GNSS receiver is connected to serial3
+WPNAV_RADIUS,200  # we have a good GNSS receiver so we can afford to fly precisely

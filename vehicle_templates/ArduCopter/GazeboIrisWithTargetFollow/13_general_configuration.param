@@ -1,0 +1,40 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+BRD_RTC_TZ_MIN,0  # Berlin time zone
+CAM1_TRK_COMPID,0
+CAM1_TRK_ENABLE,1
+CAM1_TRK_SYSID,245
+CAM1_TYPE,1
+FENCE_TYPE,7  # cylinder and max altitude, to obey local regulations and safety measures
+FOLL_DIST_MAX,100
+FOLL_ENABLE,1
+FOLL_OPTIONS,2
+FOLL_POS_P,0.1
+FOLL_YAW_BEHAVE,1
+INS_ACCEL_FILTER,20  # the default is 20 and that lets too much noise in
+INS_POS1_X,0  # was -0.005
+INS_POS1_Y,0  # was -0.011
+INS_POS2_X,0  # was -0.011
+INS_POS2_Y,0  # was -0.01
+LAND_ALT_LOW,1000  # come down fast and only slow down close to the ground. We have a good GNSS receiver, so thrust it
+NET_ENABLE,1
+NET_OPTIONS,0
+NET_P1_IP0,127
+NET_P1_IP1,0
+NET_P1_IP2,0
+NET_P1_IP3,1
+NET_P1_PORT,14560
+NET_P1_TYPE,1
+NET_P2_IP0,127
+NET_P2_IP1,0
+NET_P2_IP2,0
+NET_P2_IP3,1
+NET_P2_PORT,14570
+NET_P2_PROTOCOL,2
+NET_P2_TYPE,1
+RTL_ALT,1500  # The default is too high for the kind of flights we do. This reduces the altitude for indoors
+RTL_LOIT_TIME,5000  # The default is too long. This reduces the time
+SCHED_LOOP_RATE,400  # On our vehicle the propellers rotate at speeds higher than 400Hz and we have a powerful STM32 H7 family processor. So we increase this for added performance.
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation
+SERVO10_FUNCTION,7
+SERVO11_FUNCTION,6
+SERVO9_FUNCTION,8

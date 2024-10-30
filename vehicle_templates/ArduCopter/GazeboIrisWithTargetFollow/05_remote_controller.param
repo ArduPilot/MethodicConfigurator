@@ -1,0 +1,9 @@
+ARMING_RUDDER,2  # We find it safer to use only a switch to arm instead of through rudder inputs
+BRD_ALT_CONFIG,0
+RC_OPTIONS,32  # Enables Crossfire Telemetry
+RC_PROTOCOLS,1  # Selected in the component editor
+RC6_OPTION,212
+RC7_OPTION,213
+RC8_OPTION,214
+RC9_OPTION,0
+RSSI_TYPE,0

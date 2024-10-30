@@ -1,0 +1,34 @@
+ATC_RAT_PIT_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_RLL_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_YAW_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on 20_throttle_controller.param file
+MOT_PWM_MAX,2000
+MOT_PWM_MIN,1000
+MOT_PWM_TYPE,0  # Specified in component editor window
+MOT_SPOOL_TIME,0.5  # left at default because copter is small
+NTF_BUZZ_TYPES,5  # the 4-in-1 ESC uses this
+NTF_LED_TYPES,123079  # Built-in LED, NCP5623 External (Holybro F9P), Neopixel (Matek H743 slim v3), and DShot (4-in-1 ESC)
+PSC_ACCZ_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+SERIAL5_BAUD,57  # bi-directional DShot telemetry data rate from T-Motor F45 4in1 ESC V2
+SERIAL5_PROTOCOL,-1  # bi-directional DShot telemetry pin is connected to SERIAL5
+SERVO_BLH_AUTO,1  # Enables BLHeli pass-thru
+SERVO_BLH_BDMASK,15  # All four of our ESC support bi-directional DShot
+SERVO_BLH_POLES,3  # Specified in component editor window
+SERVO_BLH_TRATE,5  # Set to a low value because the RPM telemetry uses bi-directional DShot telemetry instead of this UART telemetry
+SERVO_DSHOT_ESC,0  # BLHeli32
+SERVO_DSHOT_RATE,0  # Sends DShot control signals to the ESC twice per control loop
+SERVO1_MAX,1900  # Use the full available 1000-2000 DShot range
+SERVO1_MIN,1100  # Use the full available 1000-2000 DShot range
+SERVO1_TRIM,1500  # Use the full available 1000-2000 DShot range
+SERVO13_FUNCTION,0  # For matek H743Slim v3 board
+SERVO2_MAX,1900  # Use the full available 1000-2000 DShot range
+SERVO2_MIN,1100  # Use the full available 1000-2000 DShot range
+SERVO2_TRIM,1500  # Use the full available 1000-2000 DShot range
+SERVO3_MAX,1900  # Use the full available 1000-2000 DShot range
+SERVO3_MIN,1100  # Use the full available 1000-2000 DShot range
+SERVO3_TRIM,1500  # Use the full available 1000-2000 DShot range
+SERVO4_MAX,1900  # Use the full available 1000-2000 DShot range
+SERVO4_MIN,1100  # Use the full available 1000-2000 DShot range
+SERVO4_TRIM,1500  # Use the full available 1000-2000 DShot range
+TKOFF_RPM_MIN,0  # Our motors should idle at around 1400 RPM, see https://ardupilot.org/copter/docs/tkoff-rpm-min.html
+TKOFF_SLEW_TIME,2  # left at default because copter is small

@@ -1,0 +1,185 @@
+{
+    "Format version": 1,
+    "Components": {
+        "Flight Controller": {
+            "Product": {
+                "Manufacturer": "ArduPilot",
+                "Model": "SITL",
+                "URL": "-",
+                "Version": "-"
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.6.0 dev"
+            },
+            "Notes": "This is iris drone with a gimbal attached, works like a servo joint. All other sensors and actuators are plugins that work in gazebo."
+        },
+        "Frame": {
+            "Product": {
+                "Manufacturer": "Gazebo",
+                "Model": "iris_with_gimbal",
+                "URL": "-",
+                "Version": "-"
+            },
+            "Specifications": {
+                "TOW min Kg": 0.6,
+                "TOW max Kg": 0.6
+            },
+            "Notes": "TOW in this case a taken ideal, and not calculated including gimbal."
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "-",
+                "Model": "-",
+                "URL": "-",
+                "Version": "-"
+            },
+            "Firmware": {
+                "Type": "-",
+                "Version": "-"
+            },
+            "Notes": ""
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "-",
+                "Model": "-",
+                "URL": "-",
+                "Version": "-"
+            },
+            "Firmware": {
+                "Type": "-",
+                "Version": "-"
+            },
+            "Notes": "-"
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "-",
+                "Model": "-",
+                "URL": "-",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "-",
+                "Version": "-"
+            },
+            "FC Connection": {
+                "Type": "RCin/SBUS",
+                "Protocol": "All"
+            },
+            "Notes": ""
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "ArduPilot",
+                "Model": "SITL",
+                "URL": "",
+                "Version": "4.6.x"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": ""
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "ArduPilot",
+                "Model": "SITL",
+                "URL": "-",
+                "Version": "4.6.x"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "Analog",
+                "Protocol": "Analog Voltage and Current"
+            },
+            "Notes": ""
+        },
+        "Battery": {
+            "Product": {
+                "Manufacturer": "ArduPilot",
+                "Model": "SITL",
+                "URL": "-",
+                "Version": "4.6.x"
+            },
+            "Specifications": {
+                "Chemistry": "Lipo",
+                "Volt per cell max": 4.2,
+                "Volt per cell low": 3.6,
+                "Volt per cell crit": 3.55,
+                "Number of cells": 4,
+                "Capacity mAh": 1800
+            },
+            "Notes": "A Simulated battery"
+        },
+        "ESC": {
+            "Product": {
+                "Manufacturer": "ArduPilot",
+                "Model": "SITL",
+                "URL": "-",
+                "Version": "4.6.x"
+            },
+            "Firmware": {
+                "Type": "-",
+                "Version": "-"
+            },
+            "FC Connection": {
+                "Type": "Main Out",
+                "Protocol": "Normal"
+            },
+            "Notes": ""
+        },
+        "Motors": {
+            "Product": {
+                "Manufacturer": "ArduPilot",
+                "Model": "gz-sim-apply-joint-force-system",
+                "URL": "-",
+                "Version": "-"
+            },
+            "Specifications": {
+                "Poles": 3
+            },
+            "Notes": ""
+        },
+        "Propellers": {
+            "Product": {
+                "Manufacturer": "ArduPilot",
+                "Model": "gz-sim-apply-joint-force-system",
+                "URL": "-",
+                "Version": "-"
+            },
+            "Specifications": {
+                "Diameter_inches": 3
+            },
+            "Notes": ""
+        },
+        "GNSS Receiver": {
+            "Product": {
+                "Manufacturer": "ArduPilot",
+                "Model": "SITL",
+                "URL": "-",
+                "Version": "4.6.x"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL3",
+                "Protocol": "uBlox"
+            },
+            "Notes": "-"
+        }
+    },
+    "Program version": "0.9.8",
+    "Configuration template": "4.5.x-params"
+}

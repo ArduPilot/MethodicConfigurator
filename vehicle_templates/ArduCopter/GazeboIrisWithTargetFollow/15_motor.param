@@ -1,0 +1,4 @@
+MOT_SPIN_ARM,0.1  # The Mamba F45_128K ESCs reliably start spinning with this value
+MOT_SPIN_MAX,0.95  # Upper dead zone of the Mamba F45_128K ESC
+MOT_SPIN_MIN,0.15  # MOT_SPIN_ARM + 0.03
+MOT_THST_EXPO,0.65  # Measured with the motor test stand RCBenchmark Series 1780 from Tyto Robotics

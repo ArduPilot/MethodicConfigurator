@@ -1,0 +1,10 @@
+ATC_INPUT_TC,0.15
+ATC_RAT_PIT_D,0.0036  # = 0.925972 * (0.0036 default)
+ATC_RAT_PIT_I,0.135  # = 1.283176 * (0.135 default)
+ATC_RAT_PIT_P,0.135  # = 1.283176 * (0.135 default)
+ATC_RAT_RLL_D,0.0036  # = 0.690593 * (0.0036 default)
+ATC_RAT_RLL_I,0.135  # = 1.061015 * (0.135 default)
+ATC_RAT_RLL_P,0.135  # = 1.061015 * (0.135 default)
+ATC_RAT_YAW_D,0  # = 1 * (0 default)
+ATC_RAT_YAW_I,0.02  # = 2.514026 * (0.018 default)
+ATC_RAT_YAW_P,0.3  # = 2.514026 * (0.18 default)
