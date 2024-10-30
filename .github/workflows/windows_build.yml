@@ -57,6 +57,7 @@ jobs:
           cd  windows
           $env:VERSION=$(python return_version.py)
           python return_version.py > version.txt
+          curl -L -o "c:\program files (x86)\inno setup 6\Languages\ChineseSimplified.isl" https://raw.githubusercontent.com/jrsoftware/issrc/refs/heads/main/Files/Languages/Unofficial/ChineseSimplified.isl
           ISCC.exe /dMyAppVersion=$env:VERSION ardupilot_methodic_configurator.iss
           ls Output
 
