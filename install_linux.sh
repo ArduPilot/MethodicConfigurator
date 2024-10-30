@@ -18,7 +18,7 @@ sudo python3 -m pip uninstall -y serial pyserial
 
 # Install the project dependencies
 echo "Installing project dependencies..."
-python3 -m pip install .
+python3 -m pip install -e .[dev]
 
 # Get the directory of the script
 prog_dir=$(realpath "$(dirname "$0")")/MethodicConfigurator
@@ -47,6 +47,18 @@ else
 fi
 
 update-desktop-database ~/.local/share/applications/
+
+# configure git local repository settings
+git config --local pull.rebase true
+git config --local push.autoSetupRemote
+git config --local init.defaultbranch master
+git config --local sequence.editor "code --wait"
+
+# install pre-commit git hooks
+pre-commit install
+
+# setuptools has a bug and refuses to install these files, so do it manually
+cp vehicle_templates ~/.local/lib/python3.12/site-packages/MethodicConfigurator/
 
 echo "Installation complete."
 echo ""
