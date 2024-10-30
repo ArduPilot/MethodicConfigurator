@@ -17,6 +17,7 @@ from logging import info as logging_info
 
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
@@ -26,6 +27,7 @@ from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import show_error_message
 from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
+from MethodicConfigurator.frontend_tkinter_base import RichText
 
 from MethodicConfigurator.internationalization import _
 
@@ -107,6 +109,49 @@ class ComponentEditorWindowBase(BaseWindow):
         self.save_button = ttk.Button(save_frame, text=_("Save data and start configuration"), command=self.save_data)
         show_tooltip(self.save_button, _("Save component data and start parameter value configuration and tuning."))
         self.save_button.pack(pady=7)
+        self.root.after(10, self.__display_component_editor_usage_instructions(self.root))
+
+    @staticmethod
+    def __display_component_editor_usage_instructions(parent: tk.Tk):
+        usage_popup_window = BaseWindow(parent)
+        usage_popup_window.root.title(_("How to use the component editor"))
+        usage_popup_window.root.geometry("690x150")
+
+        style = ttk.Style()
+
+        instructions_text = RichText(usage_popup_window.main_frame, wrap=tk.WORD, height=5, bd=0,
+                                     background=style.lookup("TLabel", "background"))
+        instructions_text.pack(padx=6, pady=10)
+        instructions_text.insert(tk.END, _("1. Describe "))
+        instructions_text.insert(tk.END, _("all"), "bold")
+        instructions_text.insert(tk.END, _(" vehicle component properties in the window below\n"))
+        instructions_text.insert(tk.END, _("2. Scroll "))
+        instructions_text.insert(tk.END, _("all the way down"), "bold")
+        instructions_text.insert(tk.END, _(" and make sure to edit "))
+        instructions_text.insert(tk.END, _("all"), "bold")
+        instructions_text.insert(tk.END, _(" fields\n"))
+        instructions_text.insert(tk.END, _("3. Do not be lazy, collect the required information and enter it\n"))
+        instructions_text.insert(tk.END, _("4. Press the "))
+        instructions_text.insert(tk.END, _("Save data and start configuration"), "italic")
+        instructions_text.insert(tk.END, _(" only after all information is correct"))
+
+        instructions_text.config(state=tk.DISABLED)
+
+        dismiss_button = ttk.Button(usage_popup_window.main_frame, text=_("Dismiss"),
+                                    command=lambda: ComponentEditorWindowBase.__close_instructions_window(usage_popup_window,
+                                                                                                          parent))
+        dismiss_button.pack(pady=10)
+
+        BaseWindow.center_window(usage_popup_window.root, parent)
+        usage_popup_window.root.attributes('-topmost', True)
+
+        parent.attributes('-disabled', True)  # Disable parent window input
+
+    @staticmethod
+    def __close_instructions_window(welcome_window, parent):
+        welcome_window.root.destroy()
+        parent.attributes('-disabled', False)  # Re-enable the parent window
+        parent.focus_set()
 
     def update_json_data(self):  # should be overwritten in child classes
         if 'Format version' not in self.data:
@@ -167,6 +212,17 @@ class ComponentEditorWindowBase(BaseWindow):
         """
         Saves the edited JSON data back to the file.
         """
+        confirm_message = _("ArduPilot Methodic Configurator only operates correctly if all component properties are correct."
+                            " ArduPilot parameter values depend on the components used and their connections."
+                            " Have you used the scrollbar on the right side of the window and "
+                            "entered the correct values for all components?")
+        user_confirmation = messagebox.askyesno(_("Confirm that all component properties are correct"), confirm_message)
+
+        if not user_confirmation:
+            # User chose 'No', so return and do not save data
+            return
+
+        # User confirmed, proceed with saving the data
         for path, entry in self.entry_widgets.items():
             value = entry.get()
             # Navigate through the nested dictionaries using the elements of the path

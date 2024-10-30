@@ -386,14 +386,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         BaseWindow.center_window(welcome_window.root, parent)
         welcome_window.root.attributes('-topmost', True)
 
-        # Disable the parent window
-        #parent.state('withdraw')
+        parent.attributes('-disabled', True)  # Disable parent window input
 
     @staticmethod
     def __close_instructions_window(welcome_window, parent):
         welcome_window.root.destroy()
-        #parent.deiconify()  # Show the parent window again
-        #parent.state('normal')  # Enable the parent window
+        parent.attributes('-disabled', False)  # Re-enable the parent window
         parent.focus_set()
 
     def __do_tempcal_imu(self, selected_file:str):
