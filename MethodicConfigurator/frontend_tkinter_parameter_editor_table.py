@@ -440,9 +440,16 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def __on_parameter_delete(self, param_name):
         if messagebox.askyesno(f"{self.current_file}", _(f"Are you sure you want to delete the {param_name} parameter?")):
+            # Capture current vertical scroll position
+            current_scroll_position = self.canvas.yview()[0]
+
+            # Delete the parameter
             del self.local_filesystem.file_parameters[self.current_file][param_name]
             self.at_least_one_param_edited = True
             self.parameter_editor.repopulate_parameter_table(self.current_file)
+
+            # Restore the scroll position
+            self.canvas.yview_moveto(current_scroll_position)
 
     def __on_parameter_add(self, fc_parameters):
         add_parameter_window = BaseWindow(self.root)
