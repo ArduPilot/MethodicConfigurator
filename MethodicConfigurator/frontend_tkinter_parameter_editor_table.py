@@ -133,9 +133,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 not is_within_tolerance(fc_parameters[param_name], float(file_value.value)))}
             self.__update_table(different_params, fc_parameters)
             if not different_params:
-                logging_info(_("No different parameters found in %s. Skipping..."), selected_file)
-                messagebox.showinfo(_("ArduPilot methodic configurator"),
-                                    _(f"No different parameters found in {selected_file}. Skipping..."))
+                info_msg = _("No different parameters found in {selected_file}. Skipping...").format(**locals())
+                logging_info(info_msg)
+                messagebox.showinfo(_("ArduPilot methodic configurator"), info_msg)
                 self.parameter_editor.on_skip_click(force_focus_out_event=False)
                 return
         else:
@@ -168,18 +168,17 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if new_name in new_names:
                 self.local_filesystem.file_parameters[selected_file].pop(old_name)
                 logging_info(_("Removing duplicate parameter %s"), old_name)
-                messagebox.showinfo(_("Parameter Removed"),
-                                    _(f"The parameter '{old_name}' was removed due to duplication."))
+                info_msg = _("The parameter '{old_name}' was removed due to duplication.")
+                messagebox.showinfo(_("Parameter Removed"), info_msg.format(**locals()))
             else:
                 new_names.add(new_name)
                 if new_name != old_name:
                     self.local_filesystem.file_parameters[selected_file][new_name] = \
                         self.local_filesystem.file_parameters[selected_file].pop(old_name)
                     logging_info(_("Renaming parameter %s to %s"), old_name, new_name)
-                    messagebox.showinfo(_("Parameter Renamed"),
-                                        _(f"The parameter '{old_name}' was renamed to '{new_name}'.\n"
-                                          "to follow the flight controller connection defined in the component editor "
-                                          "window."))
+                    info_msg = _("The parameter '{old_name}' was renamed to '{new_name}'.\n"
+                                 "to follow the flight controller connection defined in the component editor window.")
+                    messagebox.showinfo(_("Parameter Renamed"), info_msg.format(**locals()))
 
     def __update_table(self, params, fc_parameters):
         try:
@@ -209,7 +208,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             # Add the "Add" button at the bottom of the table
             add_button = ttk.Button(self.view_port, text=_("Add"), style='narrow.TButton',
                                     command=lambda: self.__on_parameter_add(fc_parameters))
-            show_tooltip(add_button, _(f"Add a parameter to the {self.current_file} file"))
+            tooltip_msg = _("Add a parameter to the {self.current_file} file")
+            show_tooltip(add_button, tooltip_msg.format(**locals()))
             add_button.grid(row=len(params)+2, column=0, sticky="w", padx=0)
 
 
@@ -229,7 +229,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     def __create_delete_button(self, param_name):
         delete_button = ttk.Button(self.view_port, text=_("Del"), style='narrow.TButton',
                                    command=lambda: self.__on_parameter_delete(param_name))
-        show_tooltip(delete_button, _(f"Delete {param_name} from the {self.current_file} file"))
+        tooltip_msg = _("Delete {param_name} from the {self.current_file} file")
+        show_tooltip(delete_button, tooltip_msg.format(**locals()))
         return delete_button
 
     def __create_parameter_name(self, param_name, param_metadata, doc_tooltip):
@@ -264,7 +265,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             has_default_value = param_default is not None and is_within_tolerance(current_value, param_default.value)
             combobox_widget.configure(style='default_v.TCombobox' if has_default_value else 'readonly.TCombobox')
         except ValueError:
-            logging_info(_(f'Could not solve the selected {combobox_widget} key to a float value.'))
+            msg = _('Could not solve the selected {combobox_widget} key to a float value.')
+            logging_info(msg.format(**locals()))
 
     @staticmethod
     def __update_new_value_entry_text(new_value_entry: ttk.Entry, value: float, param_default):
@@ -356,15 +358,20 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             event.widget.bind("<FocusIn>", lambda event:
                                         self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value))
 
+        def get_param_value_msg(_param_name, checked_keys) -> str:
+            _new_decimal_value = sum(1 << key for key in checked_keys)
+            text = _("{_param_name} Value: {_new_decimal_value}")
+            return text.format(**locals())
+
         def update_label():
             checked_keys = [key for key, var in checkbox_vars.items() if var.get()]
-            new_decimal_value = sum(1 << key for key in checked_keys)
-            close_label.config(text=f"{param_name} Value: {new_decimal_value}")
+            close_label.config(text=get_param_value_msg(param_name, checked_keys))
 
         # Temporarily unbind the FocusIn event to prevent triggering the window again
         event.widget.unbind("<FocusIn>")
         window = tk.Toplevel(self.root)
-        window.title(_(f"Select {param_name} Bitmask Options"))
+        title = _("Select {param_name} Bitmask Options")
+        window.title(title.format(**locals()))
         checkbox_vars = {}
 
         main_frame = ttk.Frame(window)
@@ -380,11 +387,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             checkbox = ttk.Checkbutton(main_frame, text=value, variable=var, command=update_label)
             checkbox.grid(row=i, column=0, sticky="w")
 
-        # Calculate new_decimal_value here to ensure it's accessible when creating the label
-        new_decimal_value = sum(1 << key for key in checked_keys)
-
         # Replace the close button with a read-only label displaying the current new_decimal_value
-        close_label = ttk.Label(main_frame, text=f"{param_name} Value: {new_decimal_value}")
+        close_label = ttk.Label(main_frame, text=get_param_value_msg(param_name, checked_keys))
         close_label.grid(row=len(bitmask_dict), column=0, pady=10)
 
         # Bind the on_close function to the window's WM_DELETE_WINDOW protocol
@@ -409,7 +413,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=fc_connected)
         upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
         upload_checkbutton.configure(state='normal' if fc_connected else 'disabled')
-        show_tooltip(upload_checkbutton, _(f'When selected upload {param_name} new value to the flight controller'))
+        msg = _('When selected upload {param_name} new value to the flight controller')
+        show_tooltip(upload_checkbutton, msg.format(**locals()))
         return upload_checkbutton
 
     def __create_change_reason_entry(self, param_name, param, new_value_entry):
@@ -435,11 +440,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         else:
             change_reason_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
                                      self.__on_parameter_change_reason_change(event, current_file, param_name))
-        show_tooltip(change_reason_entry, _(f'Reason why {param_name} should change to {new_value_entry.get()}'))
+        _value = new_value_entry.get()
+        msg = _('Reason why {param_name} should change to {_value}')
+        show_tooltip(change_reason_entry, msg.format(**locals()))
         return change_reason_entry
 
     def __on_parameter_delete(self, param_name):
-        if messagebox.askyesno(f"{self.current_file}", _(f"Are you sure you want to delete the {param_name} parameter?")):
+        msg = _("Are you sure you want to delete the {param_name} parameter?")
+        if messagebox.askyesno(f"{self.current_file}", msg.format(**locals())):
             # Capture current vertical scroll position
             current_scroll_position = self.canvas.yview()[0]
 
@@ -517,10 +525,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 self.at_least_one_param_edited = True
                 self.parameter_editor.repopulate_parameter_table(self.current_file)
                 return True
-            messagebox.showerror(_("Invalid parameter name."), _(f"'{param_name}' not found in the apm.pdef.xml file."), )
+            error_msg = _("'{param_name}' not found in the apm.pdef.xml file.")
+            messagebox.showerror(_("Invalid parameter name."), error_msg.format(**locals()))
         else:
             messagebox.showerror(_("Operation not possible"),
-                                    _("Can not add parameter when no FC is connected and no apm.pdef.xml file exists."))
+                                 _("Can not add parameter when no FC is connected and no apm.pdef.xml file exists."))
         return False
 
 
@@ -545,18 +554,19 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             p_max = param_metadata.get('max', None) if param_metadata else None
             if changed:
                 if p_min and p < p_min:
+                    msg = _("The value for {param_name} {p} should be greater than {p_min}\n")
                     if not messagebox.askyesno(_("Out-of-bounds Value"),
-                                               _(f"The value for {param_name} {p} should be greater than {p_min}\n"
-                                               "Use out-of-bounds value?"), icon='warning'):
+                                               msg.format(**locals()) + _("Use out-of-bounds value?"), icon='warning'):
                         valid = False
                 if p_max and p > p_max:
+                    msg = _("The value for {param_name} {p} should be smaller than {p_max}\n")
                     if not messagebox.askyesno(_("Out-of-bounds Value"),
-                                               _(f"The value for {param_name} {p} should be smaller than {p_max}\n"
-                                               "Use out-of-bounds value?"), icon='warning'):
+                                               msg.format(**locals()) + _("Use out-of-bounds value?"), icon='warning'):
                         valid = False
         except ValueError:
             # Optionally, you can handle the invalid value here, for example, by showing an error message
-            messagebox.showerror(_("Invalid Value"), _(f"The value for {param_name} must be a valid float."))
+            error_msg = _("The value for {param_name} must be a valid float.")
+            messagebox.showerror(_("Invalid Value"), error_msg.format(**locals()))
             valid = False
         if valid:
             if changed and not self.at_least_one_param_edited:

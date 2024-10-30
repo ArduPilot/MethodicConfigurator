@@ -72,7 +72,8 @@ class VehicleComponents:
             fw_type = components.get('Flight Controller', {}).get('Firmware', {}).get('Type', '')
             if fw_type in self.supported_vehicles():
                 return fw_type
-            logging_error(f"Firmware type {fw_type} in {self.vehicle_components_json_filename} is not supported")
+            error_msg = _("Firmware type {fw_type} in {self.vehicle_components_json_filename} is not supported")
+            logging_error(error_msg.format(**locals()))
         return ""
 
     def get_fc_fw_version_from_vehicle_components_json(self) -> str:
@@ -85,7 +86,8 @@ class VehicleComponents:
             version_str = version_str.lstrip().split(' ')[0] if version_str else ''
             if re_match(r'^\d+\.\d+\.\d+$', version_str):
                 return version_str
-            logging_error(_(f"FW version string {version_str} on {self.vehicle_components_json_filename} is invalid"))
+            error_msg = _("FW version string {version_str} on {self.vehicle_components_json_filename} is invalid")
+            logging_error(error_msg.format(**locals()))
         return None
 
     @staticmethod

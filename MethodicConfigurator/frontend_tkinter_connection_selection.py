@@ -128,7 +128,8 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
 
     def on_select_connection_combobox_change(self, _event):
         selected_connection = self.conn_selection_combobox.get_selected_key()
-        logging_debug(_(f"Connection combobox changed to: {selected_connection}"))
+        error_msg = _("Connection combobox changed to: {selected_connection}")
+        logging_debug(error_msg.format(**locals()))
         if self.flight_controller.master is None or selected_connection != self.flight_controller.comport.device:
             if selected_connection == 'Add another':
                 if not self.add_connection() and self.previous_selection:
@@ -146,14 +147,17 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
                                                      "tcp:127.0.0.1:5761\n"
                                                      "udp:127.0.0.1:14551"))
         if selected_connection:
-            logging_debug(_(f"Will add new connection: {selected_connection} if not duplicated"))
+            error_msg = _("Will add new connection: {selected_connection} if not duplicated")
+            logging_debug(error_msg.format(**locals()))
             self.flight_controller.add_connection(selected_connection)
             connection_tuples = self.flight_controller.get_connection_tuples()
-            logging_debug(_(f"Updated connection tuples: {connection_tuples} with selected connection: {selected_connection}"))
+            error_msg = _("Updated connection tuples: {connection_tuples} with selected connection: {selected_connection}")
+            logging_debug(error_msg.format(**locals()))
             self.conn_selection_combobox.set_entries_tupple(connection_tuples, selected_connection)
             self.reconnect(selected_connection)
         else:
-            logging_debug(_(f"Add connection canceled or string empty {selected_connection}"))
+            error_msg = _("Add connection canceled or string empty {selected_connection}")
+            logging_debug(error_msg.format(**locals()))
         return selected_connection
 
     def reconnect(self, selected_connection: str = ""):  # defaults to auto-connect

@@ -102,7 +102,8 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
     def update_documentation_labels(self, current_file: str):
         self.current_file = current_file
         if current_file:
-            frame_title = _(f"{current_file} Documentation")
+            title = _("{current_file} Documentation")
+            frame_title = title.format(**locals())
         else:
             frame_title = _("Documentation")
         self.documentation_frame.config(text=frame_title)
@@ -131,7 +132,7 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
                 show_tooltip(label, _("Documentation URL not available"))
 
 
-def show_about_window(root, version: str):
+def show_about_window(root, _version: str):
     # Create a new window for the custom "About" message
     about_window = tk.Toplevel(root)
     about_window.title(_("About"))
@@ -141,11 +142,11 @@ def show_about_window(root, version: str):
     main_frame.pack(expand=True, fill=tk.BOTH)
 
     # Add the "About" message
-    about_message = _(f"ArduPilot Methodic Configurator Version: {version}\n\n" \
+    about_message = _("ArduPilot Methodic Configurator Version: {_version}\n\n" \
                     "A clear configuration sequence for ArduPilot vehicles.\n\n" \
                     "Copyright © 2024 Amilcar do Carmo Lucas and ArduPilot.org\n\n" \
                     "Licensed under the GNU General Public License v3.0")
-    about_label = ttk.Label(main_frame, text=about_message, wraplength=450)
+    about_label = ttk.Label(main_frame, text=about_message.format(**locals()), wraplength=450)
     about_label.grid(column=0, row=0, padx=10, pady=10, columnspan=5)  # Span across all columns
 
     # Create buttons for each action
@@ -398,11 +399,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         tempcal_imu_result_param_filename, tempcal_imu_result_param_fullpath = \
            self.local_filesystem.tempcal_imu_result_param_tuple()
         if selected_file == tempcal_imu_result_param_filename:
-            if messagebox.askyesno(_("IMU temperature calibration"),
-                                    _(f"If you proceed the {tempcal_imu_result_param_filename}\n"
-                                    "will be overwritten with the new calibration results.\n"
-                                    "Do you want to provide a .bin log file and\n"
-                                    "run the IMU temperature calibration using it?")):
+            msg = _("If you proceed the {tempcal_imu_result_param_filename}\n"
+                    "will be overwritten with the new calibration results.\n"
+                    "Do you want to provide a .bin log file and\n"
+                    "run the IMU temperature calibration using it?")
+            if messagebox.askyesno(_("IMU temperature calibration"), msg.format(**locals())):
                 # file selection dialog to select the *.bin file to be used in the IMUfit temperature calibration
                 filename = filedialog.askopenfilename(filetypes=[(_("ArduPilot binary log files"), ["*.bin", "*.BIN"])])
                 if filename:
@@ -424,11 +425,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def __should_copy_fc_values_to_file(self, selected_file: str):
         auto_changed_by = self.local_filesystem.auto_changed_by(selected_file)
         if auto_changed_by and self.flight_controller.fc_parameters:
-            if messagebox.askyesno(_("Update file with values from FC?"),
-                                   _("This configuration step should be performed outside this tool by\n"
-                                   f"{auto_changed_by}\n"
-                                   "and that should have changed the parameters on the FC.\n\n"
-                                   f"Should the FC values now be copied to the {selected_file} file?")):
+            msg = _("This configuration step should be performed outside this tool by\n"
+                    "{auto_changed_by}\n"
+                    "and that should have changed the parameters on the FC.\n\n"
+                    "Should the FC values now be copied to the {selected_file} file?")
+            if messagebox.askyesno(_("Update file with values from FC?"), msg.format(**locals())):
                 relevant_fc_params = {key: value for key, value in self.flight_controller.fc_parameters.items() \
                                       if key in self.local_filesystem.file_parameters[selected_file]}
                 params_copied = self.local_filesystem.copy_fc_values_to_file(selected_file, relevant_fc_params)
@@ -448,28 +449,28 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if url and local_filename:
             if self.local_filesystem.vehicle_configuration_file_exists(local_filename):
                 return  # file already exists in the vehicle directory, no need to download it
-            if messagebox.askyesno(_("Download file from URL"),
-                                _(f"Should the {local_filename} file be downloaded from the URL\n{url}?")):
+            msg = _("Should the {local_filename} file be downloaded from the URL\n{url}?")
+            if messagebox.askyesno(_("Download file from URL"), msg.format(**locals())):
                 if not self.local_filesystem.download_file_from_url(url, local_filename):
-                    messagebox.showerror(_("Download failed"),
-                                         _(f"Failed to download {local_filename} from {url}, please download it manually"))
+                    error_msg = _("Failed to download {local_filename} from {url}, please download it manually")
+                    messagebox.showerror(_("Download failed"), error_msg.format(**locals()))
 
     def __should_upload_file_to_fc(self, selected_file: str):
         local_filename, remote_filename = self.local_filesystem.get_upload_local_and_remote_filenames(selected_file)
         if local_filename and remote_filename:
             if not self.local_filesystem.vehicle_configuration_file_exists(local_filename):
-                messagebox.showerror(_("Will not upload any file"), _(f"Local file {local_filename} does not exist"))
+                error_msg = _("Local file {local_filename} does not exist")
+                messagebox.showerror(_("Will not upload any file"), error_msg.format(**locals()))
                 return
             if self.flight_controller.master:
-                if messagebox.askyesno(_("Upload file to FC"),
-                        _(f"Should the {local_filename} file be uploaded to the flight controller as {remote_filename}?")):
+                msg = _("Should the {local_filename} file be uploaded to the flight controller as {remote_filename}?")
+                if messagebox.askyesno(_("Upload file to FC"), msg.format(**locals())):
                     self.file_upload_progress_window = ProgressWindow(self.main_frame, _("Uploading file"),
                                                                       _("Uploaded {} of {} %"))
                     if not self.flight_controller.upload_file(local_filename, remote_filename,
                                                               self.file_upload_progress_window.update_progress_bar):
-                        messagebox.showerror(_("Upload failed"),
-                                             _(f"Failed to upload {local_filename} to {remote_filename}," \
-                                             " please upload it manually"))
+                        error_msg = _("Failed to upload {local_filename} to {remote_filename}, please upload it manually")
+                        messagebox.showerror(_("Upload failed"), error_msg.format(**locals()))
                     self.file_upload_progress_window.destroy()
             else:
                 logging_warning(_("No flight controller connection, will not upload any file"))
@@ -555,9 +556,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                         else:
                             logging_info(_("Parameter %s changed to %f, possible reset required"), param_name, param.value)
                         fc_reset_unsure.append(param_name)
-            except ValueError as e:
-                logging_error(_("Failed to set parameter %s: %s"), param_name, e)
-                messagebox.showerror(_("ArduPilot methodic configurator"), _(f"Failed to set parameter {param_name}: {e}"))
+            except ValueError as _e:
+                error_msg = _("Failed to set parameter {param_name}: {_e}").format(**locals())
+                logging_error(error_msg)
+                messagebox.showerror(_("ArduPilot methodic configurator"), error_msg)
 
         self.__reset_and_reconnect(fc_reset_required, fc_reset_unsure)
 
@@ -565,9 +567,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if not fc_reset_required:
             if fc_reset_unsure:
                 # Ask the user if they want to reset the ArduPilot
-                fc_reset_required = messagebox.askyesno(_("Possible reset required"),
-                                                        _(f"{(', ').join(fc_reset_unsure)} parameter(s) potentially require"
-                                                           " a reset\nDo you want to reset the ArduPilot?"))
+                _param_list_str = (', ').join(fc_reset_unsure)
+                msg = _("{_param_list_str} parameter(s) potentially require a reset\nDo you want to reset the ArduPilot?")
+                fc_reset_required = messagebox.askyesno(_("Possible reset required"), msg.format(**locals()))
 
         if fc_reset_required:
             self.reset_progress_window = ProgressWindow(self.main_frame, _("Resetting Flight Controller"),
@@ -615,9 +617,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 if param_name not in self.flight_controller.fc_parameters or \
                    not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param.value):
                     self.at_least_one_changed_parameter_written = True
-            except ValueError as e:
-                logging_error(_("Failed to set parameter %s: %s"), param_name, e)
-                messagebox.showerror(_("ArduPilot methodic configurator"), _(f"Failed to set parameter {param_name}: {e}"))
+            except ValueError as _e:
+                error_msg = _("Failed to set parameter {param_name}: {_e}").format(**locals())
+                logging_error(error_msg)
+                messagebox.showerror(_("ArduPilot methodic configurator"), error_msg)
 
         if self.at_least_one_changed_parameter_written:
             # Re-download all parameters, in case one of them changed, and validate that all uploads were successful
@@ -640,8 +643,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
             if param_upload_error:
                 if messagebox.askretrycancel(_("Parameter upload error"),
-                                             _("Failed to upload the following parameters to the flight controller:\n"
-                                             f"{(', ').join(param_upload_error)}")):
+                                             _("Failed to upload the following parameters to the flight controller:\n") +
+                                             f"{(', ').join(param_upload_error)}"):
                     self.upload_selected_params(selected_params)
             else:
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
@@ -675,13 +678,13 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def write_changes_to_intermediate_parameter_file(self):
         if self.parameter_editor_table.get_at_least_one_param_edited():
-            if messagebox.askyesno(_("One or more parameters have been edited"),
-                                   _(f"Do you want to write the changes to the {self.current_file} file?")):
+            msg = _("Do you want to write the changes to the {self.current_file} file?")
+            if messagebox.askyesno(_("One or more parameters have been edited"), msg.format(**locals())):
                 self.local_filesystem.export_to_param(self.local_filesystem.file_parameters[self.current_file],
                                                       self.current_file, annotate_doc=self.annotate_params_into_files.get())
         self.parameter_editor_table.set_at_least_one_param_edited(False)
 
-    def write_summary_files(self):
+    def write_summary_files(self):  # pylint: disable=too-many-locals
         if not hasattr(self.flight_controller, 'fc_parameters') or self.flight_controller.fc_parameters is None:
             return
         annotated_fc_parameters = self.local_filesystem.annotate_intermediate_comments_to_param_dict(
@@ -689,18 +692,22 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         non_default__read_only_params, non_default__writable_calibrations, non_default__writable_non_calibrations = \
             self.local_filesystem.categorize_parameters(annotated_fc_parameters)
 
-        nr_unchanged_params = len(annotated_fc_parameters) - len(non_default__read_only_params) - \
-            len(non_default__writable_calibrations) - len(non_default__writable_non_calibrations)
+        nr_total_params = len(annotated_fc_parameters)
+        nr_non_default__read_only_params = len(non_default__read_only_params)
+        nr_non_default__writable_calibrations = len(non_default__writable_calibrations)
+        nr_non_default__writable_non_calibrations = len(non_default__writable_non_calibrations)
+        _nr_unchanged_params = nr_total_params - nr_non_default__read_only_params - \
+            nr_non_default__writable_calibrations - nr_non_default__writable_non_calibrations
         # If there are no more files, present a summary message box
-        summary_message = _(f"Methodic configuration of {len(annotated_fc_parameters)} parameters complete:\n\n" \
-            f"{nr_unchanged_params} kept their default value\n\n" \
-            f"{len(non_default__read_only_params)} non-default read-only parameters - " \
+        summary_message = _("Methodic configuration of {nr_total_params} parameters complete:\n\n" \
+            "{_nr_unchanged_params} kept their default value\n\n" \
+            "{nr_non_default__read_only_params} non-default read-only parameters - " \
             "ignore these, you can not change them\n\n" \
-            f"{len(non_default__writable_calibrations)} non-default writable sensor-calibrations - " \
+            "{nr_non_default__writable_calibrations} non-default writable sensor-calibrations - " \
             "non-reusable between vehicles\n\n" \
-            f"{len(non_default__writable_non_calibrations)} non-default writable non-sensor-calibrations - " \
+            "{nr_non_default__writable_non_calibrations} non-default writable non-sensor-calibrations - " \
             "these can be reused between similar vehicles")
-        messagebox.showinfo(_("Last parameter file processed"), summary_message)
+        messagebox.showinfo(_("Last parameter file processed"), summary_message.format(**locals()))
         wrote_complete = self.write_summary_file(annotated_fc_parameters,
                                                  "complete.param", False)
         wrote_read_only = self.write_summary_file(non_default__read_only_params,
@@ -720,8 +727,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         should_write_file = True
         if param_dict:
             if self.local_filesystem.vehicle_configuration_file_exists(filename):
-                should_write_file = messagebox.askyesno(_("Overwrite existing file"),
-                                                        _(f"{filename} file already exists.\nDo you want to overwrite it?"))
+                msg = _("{} file already exists.\nDo you want to overwrite it?")
+                should_write_file = messagebox.askyesno(_("Overwrite existing file"), msg.format(filename))
             if should_write_file:
                 self.local_filesystem.export_to_param(param_dict, filename, annotate_doc)
                 logging_info(_("Summary file %s written"), filename)
@@ -731,13 +738,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         should_write_file = True
         zip_file_path = self.local_filesystem.zip_file_path()
         if self.local_filesystem.zip_file_exists():
-            should_write_file = messagebox.askyesno(_("Overwrite existing file"),
-                                                    _(f"{zip_file_path} file already exists.\nDo you want to overwrite it?"))
+            msg = _("{} file already exists.\nDo you want to overwrite it?")
+            should_write_file = messagebox.askyesno(_("Overwrite existing file"), msg.format(zip_file_path))
         if should_write_file:
             self.local_filesystem.zip_files(files_to_zip)
-            messagebox.showinfo(_("Parameter files zipped"), _("All relevant files have been zipped into the \n"
-                                f"{zip_file_path} file.\n\nYou can now upload this file to the ArduPilot Methodic\n"
-                                "Configuration Blog post on discuss.ardupilot.org."))
+            msg = _("All relevant files have been zipped into the \n"
+                    "{zip_file_path} file.\n\nYou can now upload this file to the ArduPilot Methodic\n"
+                    "Configuration Blog post on discuss.ardupilot.org.")
+            messagebox.showinfo(_("Parameter files zipped"), msg.format(**locals()))
         return should_write_file
 
     def close_connection_and_quit(self):

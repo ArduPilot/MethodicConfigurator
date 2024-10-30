@@ -94,7 +94,8 @@ class DirectorySelectionWidgets():
             selected_directory = ProgramSettings.get_recently_used_dirs()[0]
             logging_info(_("Selected template directory: %s"), selected_directory)
         else:
-            selected_directory = filedialog.askdirectory(initialdir=self.directory, title=f"Select {self.label_text}")
+            title = _("Select {self.label_text}")
+            selected_directory = filedialog.askdirectory(initialdir=self.directory, title=title.format(**locals()))
 
         if selected_directory:
             if self.autoresize_width:
@@ -174,9 +175,9 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
             self.local_filesystem.vehicle_dir = self.directory
 
             if not self.local_filesystem.vehicle_configuration_files_exist(self.directory):
-                messagebox.showerror(_("Invalid Vehicle Directory Selected"),
-                            _("Selected directory must contain files matching \\d\\d_*\\.param " \
-                            f"and a {self.local_filesystem.vehicle_components_json_filename} file"))
+                _filename = self.local_filesystem.vehicle_components_json_filename
+                error_msg = _("Selected directory must contain files matching \\d\\d_*\\.param and a {_filename} file")
+                messagebox.showerror(_("Invalid Vehicle Directory Selected"), error_msg.format(**locals()))
                 return
 
             try:

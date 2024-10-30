@@ -40,17 +40,17 @@ def show_error_message(title: str, message: str):
     root.destroy()
 
 
-def show_no_param_files_error(dirname: str):
-    error_message = _(f"No intermediate parameter files found in the selected '{dirname}' vehicle directory.\n" \
+def show_no_param_files_error(_dirname: str):
+    error_message = _("No intermediate parameter files found in the selected '{_dirname}' vehicle directory.\n" \
         "Please select and step inside a vehicle directory containing valid ArduPilot intermediate parameter files.\n\n" \
         "Make sure to step inside the directory (double-click) and not just select it.")
-    show_error_message(_("No Parameter Files Found"), error_message)
+    show_error_message(_("No Parameter Files Found"), error_message.format(**locals()))
 
 
-def show_no_connection_error(error_string: str):
-    error_message = _(f"{error_string}\n\nPlease connect a flight controller to the PC,\n" \
+def show_no_connection_error(_error_string: str):
+    error_message = _("{_error_string}\n\nPlease connect a flight controller to the PC,\n" \
         "wait at least 7 seconds and retry.")
-    show_error_message(_("No Connection to the Flight Controller"), error_message)
+    show_error_message(_("No Connection to the Flight Controller"), error_message.format(**locals()))
 
 
 def show_tooltip(widget, text):
@@ -258,8 +258,9 @@ class ProgressWindow:
         """
         try:
             self.progress_window.lift()
-        except tk.TclError as e:
-            logging_error(_(f"Lifting window: {e} on file {__file__}"))
+        except tk.TclError as _e:
+            msg = _("Lifting window: {_e} on file {__file__}")
+            logging_error(msg.format(**locals()))
             return
 
         self.progress_bar['value'] = current_value

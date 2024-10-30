@@ -46,7 +46,8 @@ class TemplateOverviewWindow(BaseWindow):
     """
     def __init__(self, parent: tk.Tk):
         super().__init__(parent)
-        self.root.title(_(f"Amilcar Lucas's - ArduPilot methodic configurator {VERSION} - Template Overview and selection"))
+        title = _("Amilcar Lucas's - ArduPilot methodic configurator {} - Template Overview and selection")
+        self.root.title(title.format(VERSION))
         self.root.geometry("1200x300")
 
         instruction_text = _("Please double-click the template below that most resembles your own vehicle components")

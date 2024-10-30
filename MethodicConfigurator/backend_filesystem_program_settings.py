@@ -89,9 +89,11 @@ class ProgramSettings:
         user_config_directory = user_config_dir(".ardupilot_methodic_configurator", False, roaming=True, ensure_exists=True)
 
         if not os_path.exists(user_config_directory):
-            raise FileNotFoundError(_(f"The user configuration directory '{user_config_directory}' does not exist."))
+            error_msg = _("The user configuration directory '{user_config_directory}' does not exist.")
+            raise FileNotFoundError(error_msg.format(**locals()))
         if not os_path.isdir(user_config_directory):
-            raise NotADirectoryError(_(f"The path '{user_config_directory}' is not a directory."))
+            error_msg = _("The path '{user_config_directory}' is not a directory.")
+            raise NotADirectoryError(error_msg.format(**locals()))
 
         return user_config_directory
 
@@ -101,9 +103,11 @@ class ProgramSettings:
                                                 ensure_exists=True)
 
         if not os_path.exists(site_config_directory):
-            raise FileNotFoundError(_(f"The site configuration directory '{site_config_directory}' does not exist."))
+            error_msg = _("The site configuration directory '{site_config_directory}' does not exist.")
+            raise FileNotFoundError(error_msg.format(**locals()))
         if not os_path.isdir(site_config_directory):
-            raise NotADirectoryError(_(f"The path '{site_config_directory}' is not a directory."))
+            error_msg = _("The path '{site_config_directory}' is not a directory.")
+            raise NotADirectoryError(error_msg.format(**locals()))
 
         return site_config_directory
 

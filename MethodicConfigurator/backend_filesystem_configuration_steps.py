@@ -113,8 +113,9 @@ class ConfigurationSteps:
             try:
                 if ('fc_parameters' in str(parameter_info["New Value"])) and \
                    ('fc_parameters' not in variables or variables['fc_parameters'] == {}):
-                    error_msg = _(f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
-                        f"parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?")
+                    error_msg = _("In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
+                        "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?")
+                    error_msg = error_msg.format(**locals())
                     if parameter_type == 'forced':
                         logging_error(error_msg)
                         return error_msg
@@ -136,9 +137,10 @@ class ConfigurationSteps:
                 if filename not in destination:
                     destination[filename] = {}
                 destination[filename][parameter] = Par(float(result), parameter_info["Change Reason"])
-            except (SyntaxError, NameError, KeyError, StopIteration) as e:
-                error_msg = _(f"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
-                    f"parameter '{parameter}' could not be computed: {e}")
+            except (SyntaxError, NameError, KeyError, StopIteration) as _e:
+                error_msg = _("In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
+                    "parameter '{parameter}' could not be computed: {_e}")
+                error_msg = error_msg.format(**locals())
                 if parameter_type == 'forced':
                     logging_error(error_msg)
                     return error_msg
@@ -159,11 +161,12 @@ class ConfigurationSteps:
         documentation = self.configuration_steps.get(selected_file, {}) if \
             self.configuration_steps else None
         if documentation is None:
-            text = _(f"File '{self.configuration_steps_filename}' not found. " \
+            text = _("File '{self.configuration_steps_filename}' not found. " \
                 "No intermediate parameter configuration steps available")
+            text = text.format(**locals())
             url = None
         else:
-            text = documentation.get(prefix_key + "_text", _(f"No documentation available for {selected_file} in the "
-                                     f"{self.configuration_steps_filename} file"))
+            text = _("No documentation available for {selected_file} in the {self.configuration_steps_filename} file")
+            text = documentation.get(prefix_key + "_text", text.format(**locals()))
             url = documentation.get(prefix_key + "_url", None)
         return text, url
