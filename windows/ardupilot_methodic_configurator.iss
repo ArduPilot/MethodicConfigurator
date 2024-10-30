@@ -49,8 +49,8 @@ Type: filesandordirs; Name: "{app}\_internal\MethodicConfigurator\ArduCopter_con
 Type: filesandordirs; Name: "{app}\_internal\MethodicConfigurator\ArduPlane_configuration_steps.json";
 
 [Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "chinese"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+Name: "en"; MessagesFile: "compiler:Default.isl"
+Name: "zh_CN"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -73,14 +73,15 @@ Source: "..\\MethodicConfigurator\locale\*.mo"; DestDir: "{app}\_internal\Method
 Name: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; Flags: uninsneveruninstall
 
 [Icons]
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; IconFilename: "{app}\MethodicConfigurator.ico"
+Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; IconFilename: "{app}\MethodicConfigurator.ico"; Languages: en
+Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; IconFilename: "{app}\MethodicConfigurator.ico"; Parameters: "--language {language}"; Languages: zh_CN
 Name: "{group}\Documentation"; Filename: "https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"
 Name: "{group}\Vehicle Templates"; Filename: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates"
 Name: "{group}\ArduPilot MethodicConfigurator Forum"; Filename: "https://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/"
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; IconFilename: "{app}\MethodicConfigurator.ico"
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent; Parameters: "--language {language}"
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
