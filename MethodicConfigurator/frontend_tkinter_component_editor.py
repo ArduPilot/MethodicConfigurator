@@ -355,7 +355,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             try:
                 serial_protocol_nr = int(serial_protocol_nr)
             except ValueError:
-                logging_error(_("Invalid non-integer value for %s_PROTOCOL %f"), serial, serial_protocol_nr)
+                msg = _("Invalid non-integer value for {serial}_PROTOCOL {serial_protocol_nr}")
+                logging_error(msg.format(**locals()))
                 serial_protocol_nr = 0
             component = serial_protocols_dict[str(serial_protocol_nr)].get('component')
             protocol = serial_protocols_dict[str(serial_protocol_nr)].get('protocol')
@@ -555,8 +556,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         if value not in allowed_values:
             if event.type == "10": # FocusOut events
-                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n"
-                                   f"Allowed values are: {', '.join(allowed_values)}"))
+                _paths_str = '>'.join(list(path))
+                _allowed_str = ', '.join(allowed_values)
+                error_msg = _("Invalid value '{value}' for {_paths_str}\nAllowed values are: {_allowed_str}")
+                show_error_message(_("Error"), error_msg.format(**locals()))
             combobox.configure(style="comb_input_invalid.TCombobox")
             return False
 
@@ -566,17 +569,20 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         combobox.configure(style="comb_input_valid.TCombobox")
         return True
 
-    def validate_entry_limits(self, event, entry, data_type, limits, name, path):  # pylint: disable=too-many-arguments
+    def validate_entry_limits(self, event, entry, data_type, limits, _name, path):  # pylint: disable=too-many-arguments
         is_focusout_event = event and event.type == "10"
         try:
             value = entry.get()  # make sure value is defined to prevent exception in the except block
             value = data_type(value)
             if value < limits[0] or value > limits[1]:
                 entry.configure(style="entry_input_invalid.TEntry")
-                raise ValueError(f"{name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}")
-        except ValueError as e:
+                error_msg = _("{_name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}")
+                raise ValueError(error_msg.format(**locals()))
+        except ValueError as _e:
             if is_focusout_event:
-                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n{e}"))
+                _paths_str = '>'.join(list(path))
+                error_msg = _("Invalid value '{value}' for {_paths_str}\n{e}")
+                show_error_message(_("Error"), error_msg.format(**locals()))
             return False
         entry.configure(style="entry_input_valid.TEntry")
         return True
@@ -593,31 +599,34 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             chemistry = self.entry_widgets[chemistry_path].get()
         value = entry.get()
         is_focusout_event = event and event.type == "10"
+        _path_str = '>'.join(list(path))
         try:
             voltage = float(value)
-            if voltage < BatteryCell.limit_min_voltage(chemistry):
+            volt_limit = BatteryCell.limit_min_voltage(chemistry)
+            if voltage < volt_limit:
                 if is_focusout_event:
                     entry.delete(0, tk.END)
-                    entry.insert(0, BatteryCell.limit_min_voltage(chemistry))
-                raise VoltageTooLowError(_(f"is below the {chemistry} minimum limit of "
-                                         f"{BatteryCell.limit_min_voltage(chemistry)}"))
-            if voltage > BatteryCell.limit_max_voltage(chemistry):
+                    entry.insert(0, volt_limit)
+                error_msg = _("is below the {chemistry} minimum limit of {volt_limit}")
+                raise VoltageTooLowError(error_msg.format(**locals()))
+            volt_limit = BatteryCell.limit_max_voltage(chemistry)
+            if voltage > volt_limit:
                 if is_focusout_event:
                     entry.delete(0, tk.END)
-                    entry.insert(0, BatteryCell.limit_max_voltage(chemistry))
-                raise VoltageTooHighError(_(f"is above the {chemistry} maximum limit of "
-                                          f"{BatteryCell.limit_max_voltage(chemistry)}"))
-        except (VoltageTooLowError, VoltageTooHighError) as e:
+                    entry.insert(0, volt_limit)
+                error_msg = _("is above the {chemistry} maximum limit of {volt_limit}")
+                raise VoltageTooHighError(error_msg.format(**locals()))
+        except (VoltageTooLowError, VoltageTooHighError) as _e:
             if is_focusout_event:
-                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n"
-                                   f"{e}"))
+                error_msg = _("Invalid value '{value}' for {_path_str}\n{_e}")
+                show_error_message(_("Error"), error_msg.format(**locals()))
             else:
                 entry.configure(style="entry_input_invalid.TEntry")
                 return False
-        except ValueError as e:
+        except ValueError as _e:
             if is_focusout_event:
-                show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n"
-                                f"{e}\nWill be set to the recommended value."))
+                error_msg = _("Invalid value '{value}' for {_path_str}\n{_e}\nWill be set to the recommended value.")
+                show_error_message(_("Error"), error_msg.format(**locals()))
                 entry.delete(0, tk.END)
                 if path[-1] == "Volt per cell max":
                     entry.insert(0, str(BatteryCell.recommended_max_voltage(chemistry)))
@@ -645,12 +654,14 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         for path, entry in self.entry_widgets.items():
             value = entry.get()
 
+            _path_str = '>'.join(list(path))
             if isinstance(entry, ttk.Combobox):
                 if path == ('ESC', 'FC Connection', 'Type'):
                     self.update_esc_protocol_combobox_entries(value)
                 if value not in entry.cget("values"):
-                    show_error_message(_("Error"), _(f"Invalid value '{value}' for {'>'.join(list(path))}\n"
-                                    f"Allowed values are: {', '.join(entry.cget('values'))}"))
+                    _values_str = ', '.join(entry.cget('values'))
+                    error_msg = _("Invalid value '{value}' for {_path_str}\nAllowed values are: {_values_str}")
+                    show_error_message(_("Error"), error_msg.format(**locals()))
                     entry.configure(style="comb_input_invalid.TCombobox")
                     invalid_values = True
                     continue
@@ -665,7 +676,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                            fc_serial_connection[value] in ['Battery Monitor', 'ESC']:
                             entry.configure(style="comb_input_valid.TCombobox")
                             continue  # Allow 'Battery Monitor' and 'ESC' connections using the same SERIAL port
-                        show_error_message(_("Error"), _(f"Duplicate FC connection type '{value}' for {'>'.join(list(path))}"))
+                        error_msg = _("Duplicate FC connection type '{value}' for {_path_str}")
+                        show_error_message(_("Error"), error_msg.format(**locals()))
                         entry.configure(style="comb_input_invalid.TCombobox")
                         duplicated_connections = True
                         continue

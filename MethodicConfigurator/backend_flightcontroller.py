@@ -254,12 +254,15 @@ class FlightController:
 
             self.info.set_autopilot(m.autopilot)
             if self.info.is_supported:
-                logging_info(_(f"Autopilot type {self.info.autopilot}"))
+                msg = _("Autopilot type {self.info.autopilot}")
+                logging_info(msg.format(**locals()))
             else:
-                return _(f"Unsupported autopilot type {self.info.autopilot}")
+                msg = _("Unsupported autopilot type {self.info.autopilot}")
+                return msg.format(**locals())
 
             self.info.set_type(m.type)
-            logging_info(_(f"Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"))
+            msg = _("Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware")
+            logging_info(msg.format(**locals()))
 
             self.__request_banner()
             banner_msgs = self.__receive_banner_text()

@@ -41,20 +41,21 @@ class CheckRange(Action):
 
     def interval(self):
         if hasattr(self, "min"):
-            lo = f"[{self.min}"
+            _lo = f"[{self.min}"
         elif hasattr(self, "inf"):
-            lo = f"({self.inf}"
+            _lo = f"({self.inf}"
         else:
-            lo = "(-infinity"
+            _lo = "(-infinity"
 
         if hasattr(self, "max"):
-            up = f"{self.max}]"
+            _up = f"{self.max}]"
         elif hasattr(self, "sup"):
-            up = f"{self.sup})"
+            _up = f"{self.sup})"
         else:
-            up = "+infinity)"
+            _up = "+infinity)"
 
-        return f"valid range: {lo}, {up}"
+        msg = _("valid range: {_lo}, {_up}")
+        return msg.format(**locals())
 
     def __call__(self, parser, namespace, values, option_string=None):
         for name, op in self.ops.items():

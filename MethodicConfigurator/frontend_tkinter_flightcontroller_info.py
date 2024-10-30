@@ -62,11 +62,11 @@ class FlightControllerInfoWindow(BaseWindow):
         self.info_frame.columnconfigure(1, weight=1)
 
         logging_info(_("Firmware Version: %s"), flight_controller.info.flight_sw_version_and_type)
-        logging_info(_(f"Firmware first 8 hex bytes of the FC git hash: {flight_controller.info.flight_custom_version}"))
-        logging_info(_(f"Firmware first 8 hex bytes of the ChibiOS git hash: {flight_controller.info.os_custom_version}"))
-        logging_info(_(f"Flight Controller HW / board version: {flight_controller.info.board_version}"))
-        logging_info(_(f"Flight Controller USB vendor ID: {flight_controller.info.vendor}"))
-        logging_info(_(f"Flight Controller USB product ID: {flight_controller.info.product}"))
+        logging_info(_("Firmware first 8 hex bytes of the FC git hash: %s"), flight_controller.info.flight_custom_version)
+        logging_info(_("Firmware first 8 hex bytes of the ChibiOS git hash: %s"), flight_controller.info.os_custom_version)
+        logging_info(_("Flight Controller HW / board version: %s"), flight_controller.info.board_version)
+        logging_info(_("Flight Controller USB vendor ID: %s"), flight_controller.info.vendor)
+        logging_info(_("Flight Controller USB product ID: %s"), flight_controller.info.product)
 
         self.root.after(50, self.download_flight_controller_parameters()) # 50 milliseconds
         self.root.mainloop()
