@@ -593,7 +593,7 @@ msgstr "tudo"
 msgid ""
 " vehicle component properties in the window below\n"
 msgstr ""
-"propriedades do componente do veículo na janela abaixo\n"
+" as propriedades dos componentes do veículo na janela abaixo\n"
 
 #: MethodicConfigurator/frontend_tkinter_component_editor_base.py:128
 msgid "2. Scroll "
