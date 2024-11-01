@@ -11,11 +11,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import gettext
 from os import path as os_path
+import builtins
 
 # Do not import nor use logging functions in this file.
 # Logging is not yet configured when these functions are called
 
-LANGUAGE_CHOICES = ['en', 'zh_CN']
+LANGUAGE_CHOICES = ['en', 'zh_CN', 'pt']
 
 
 def identity_function(s):
@@ -39,6 +40,10 @@ def load_translation() -> callable:
         locale_dir = os_path.join(script_dir, 'locale')
         translation = gettext.translation('MethodicConfigurator', localedir=locale_dir,
                                           languages=[pre_args.language], fallback=False)
+        translation.install()
+        # Do not use logging functions here the logging system has not been configured yet
+        # Do not translate this message, the translation will not work here anyways
+        print("Loaded %s translation.", pre_args.language)
         return translation.gettext
     except FileNotFoundError:
         # Do not use logging functions here the logging system has not been configured yet
@@ -48,5 +53,5 @@ def load_translation() -> callable:
 
 
 # Default to identity function if _ is not already defined
-if '_' not in globals():
-    _ = identity_function
+if '_' not in globals() and '_' not in locals() and '_' not in builtins.__dict__:
+    _ = load_translation()

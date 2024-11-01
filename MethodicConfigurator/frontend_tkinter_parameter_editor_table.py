@@ -177,7 +177,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                         self.local_filesystem.file_parameters[selected_file].pop(old_name)
                     logging_info(_("Renaming parameter %s to %s"), old_name, new_name)
                     info_msg = _("The parameter '{old_name}' was renamed to '{new_name}'.\n"
-                                 "to follow the flight controller connection defined in the component editor window.")
+                                 "to obey the flight controller connection defined in the component editor window.")
                     messagebox.showinfo(_("Parameter Renamed"), info_msg.format(**locals()))
 
     def __update_table(self, params, fc_parameters):
