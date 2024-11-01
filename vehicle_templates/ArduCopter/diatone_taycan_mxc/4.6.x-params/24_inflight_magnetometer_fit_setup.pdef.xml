@@ -28,13 +28,29 @@
                 <field name="Units">m/s</field>
                 <field name="Default">1/2 of WPNAV_SPEED</field>
             </param>
-            <param name="MAGH_NUM_WP" humanName="Number of waypoint in figure 8" documentation="The number of waypoints to be used in defining the figure-8. Use more points for a smoother path at the cost of potentially slower speed during navigation. Defaults to 18. 16-24 should be adequate for most cases.">
+            <param name="MAGH_NUM_WP" humanName="Number of waypoints in figure 8" documentation="The number of waypoints to be used in defining the figure-8. Use more points for a smoother path at the cost of potentially slower speed during navigation. Defaults to 18. 16-24 should be adequate for most cases.">
                 <field name="Range">16 24</field>
                 <field name="Default">18</field>
             </param>
             <param name="MAGH_USE_LOITER" humanName="Use loiter" documentation="Insert a LOITER_UNLIMITED waypoint prior to the figure-8 so that the new waypoints can be downloaded and verified prior to continuing. Set 0 to disable (not recommended). See the end of the writeup for a helper script to advance waypoints via an RC switch.">
                 <field name="Range">0 1</field>
                 <field name="Default">1</field>
+            </param>
+            <param name="WAYPT_ADVANCE" humanName="Advance waypoint" documentation="Aux function assigned for manually advancing waypoints.">
+                <field name="Range">300 307</field>
+                <field name="Default">300</field>
+            </param>
+            <param name="WAYPT_ANNOUNCE" humanName="Waypoint announce" documentation="Aux function assigned to enable sending waypoint distance text messages.">
+                <field name="Range">300 307</field>
+                <field name="Default">301</field>
+            </param>
+            <param name="WAYPT_ANNOUNCE_S" humanName="Waypoint announce interval" documentation="How often to broadcast waypoint distance text messages (seconds).">
+                <field name="Range">0 3600</field>
+                <field name="Default">0</field>
+            </param>
+            <param name="WAYPT_BUZZ_ENABLE" humanName="Waypoint buzzer enable" documentation="Enable audio feedback for waypoint proximity (increasing pitch/frequency as waypoint distance closes).">
+                <field name="Range">0 1</field>
+                <field name="Default">0</field>
             </param>
         </parameters>
     </vehicles>
