@@ -26,6 +26,8 @@ from logging import error as logging_error
 from typing import List
 from typing import Tuple
 
+from platform import system as platform_system
+
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
 from MethodicConfigurator.annotate_params import Par
@@ -387,12 +389,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         BaseWindow.center_window(welcome_window.root, parent)
         welcome_window.root.attributes('-topmost', True)
 
-        parent.attributes('-disabled', True)  # Disable parent window input
+        if platform_system() == 'Windows':
+            parent.attributes('-disabled', True)  # Disable parent window input
 
     @staticmethod
     def __close_instructions_window(welcome_window, parent):
         welcome_window.root.destroy()
-        parent.attributes('-disabled', False)  # Re-enable the parent window
+        if platform_system() == 'Windows':
+            parent.attributes('-disabled', False)  # Re-enable the parent window
         parent.focus_set()
 
     def __do_tempcal_imu(self, selected_file:str):

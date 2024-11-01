@@ -19,6 +19,8 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 
+from platform import system as platform_system
+
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
@@ -115,7 +117,7 @@ class ComponentEditorWindowBase(BaseWindow):
     def __display_component_editor_usage_instructions(parent: tk.Tk):
         usage_popup_window = BaseWindow(parent)
         usage_popup_window.root.title(_("How to use the component editor"))
-        usage_popup_window.root.geometry("690x150")
+        usage_popup_window.root.geometry("690x160")
 
         style = ttk.Style()
 
@@ -145,12 +147,14 @@ class ComponentEditorWindowBase(BaseWindow):
         BaseWindow.center_window(usage_popup_window.root, parent)
         usage_popup_window.root.attributes('-topmost', True)
 
-        parent.attributes('-disabled', True)  # Disable parent window input
+        if platform_system() == 'Windows':
+            parent.attributes('-disabled', True)  # Disable parent window input
 
     @staticmethod
     def __close_instructions_window(welcome_window, parent):
         welcome_window.root.destroy()
-        parent.attributes('-disabled', False)  # Re-enable the parent window
+        if platform_system() == 'Windows':
+            parent.attributes('-disabled', False)  # Re-enable the parent window
         parent.focus_set()
 
     def update_json_data(self):  # should be overwritten in child classes
