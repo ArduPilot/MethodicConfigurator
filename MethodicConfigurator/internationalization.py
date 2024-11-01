@@ -10,6 +10,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import gettext
+from os import path as os_path
+
 # Do not import nor use logging functions in this file.
 # Logging is not yet configured when these functions are called
 
@@ -33,7 +35,9 @@ def load_translation() -> callable:
 
     # Load the correct language ASAP based on the command line argument
     try:
-        translation = gettext.translation('MethodicConfigurator', localedir='locale',
+        script_dir = os_path.dirname(os_path.abspath(__file__))
+        locale_dir = os_path.join(script_dir, 'locale')
+        translation = gettext.translation('MethodicConfigurator', localedir=locale_dir,
                                           languages=[pre_args.language], fallback=False)
         return translation.gettext
     except FileNotFoundError:
