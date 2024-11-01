@@ -1,5 +1,5 @@
 # ArduPilot Methodic Configurator.
-# Copyright (C) 2024 ArduPilot.org
+# Copyright (C) 2024 Amilcar Lucas, ArduPilot.org
 # SakuraRC_Yang <35626190+BloodSakura3774@users.noreply.github.com>, 2024.
 #
 msgid ""
@@ -1645,7 +1645,7 @@ msgstr "将参数 %s 重命名为 %s"
 #: MethodicConfigurator/frontend_tkinter_parameter_editor_table.py:179
 msgid ""
 "The parameter '{old_name}' was renamed to '{new_name}'.\n"
-"to follow the flight controller connection defined in the component editor window."
+"to obey the flight controller connection defined in the component editor window."
 msgstr ""
 "参数 '{old_name}' 已重命名为 '{new_name}'。\n"
 "以遵循组件编辑器窗口中定义的飞行控制器连接。"
