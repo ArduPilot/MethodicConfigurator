@@ -16,7 +16,6 @@ from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from logging import debug as logging_debug
 from logging import warning as logging_warning
-from logging import critical as logging_critical
 
 import tkinter as tk
 from tkinter import ttk
@@ -28,68 +27,12 @@ from MethodicConfigurator.backend_flightcontroller import FlightController
 
 from MethodicConfigurator.frontend_tkinter_base import show_no_connection_error
 from MethodicConfigurator.frontend_tkinter_base import show_tooltip
-from MethodicConfigurator.frontend_tkinter_base import update_combobox_width
 from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 
+from MethodicConfigurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
+
 from MethodicConfigurator.internationalization import _
-
-
-# https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb
-class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
-    """
-    A custom Combobox widget that allows for the display of a list of tuples, where each tuple contains a key and a value.
-    This widget processes the list of tuples to separate keys and values for display purposes and allows for the selection
-    of a tuple based on its key.
-    """
-    def process_list_pair_tuple(self, list_pair_tuple):
-        r_list_keys = []
-        r_list_shows = []
-        if isinstance(list_pair_tuple, list):
-            for tpl in list_pair_tuple:
-                r_list_keys.append(tpl[0])
-                r_list_shows.append(tpl[1])
-        elif isinstance(list_pair_tuple, dict):
-            for key, value in list_pair_tuple.items():
-                r_list_keys.append(key)
-                r_list_shows.append(value)
-        else:
-            logging_critical(_("list_pair_tuple must be a tuple or a dictionary, not %s"), type(list_pair_tuple))
-            sys_exit(1)
-        return r_list_keys, r_list_shows
-
-    def __init__(self, container, list_pair_tuple, selected_element, cb_name, *args, **kwargs):
-        super().__init__(container, *args, **kwargs)
-        self.cb_name = cb_name
-        self.set_entries_tupple(list_pair_tuple, selected_element)
-
-    def set_entries_tupple(self, list_pair_tuple, selected_element):
-        self.list_keys, self.list_shows = self.process_list_pair_tuple(list_pair_tuple)
-        self['values'] = tuple(self.list_shows)
-        # still need to set the default value from the nominated key
-        if selected_element:
-            try:
-                default_key_index = self.list_keys.index(selected_element)
-                self.current(default_key_index)
-            except IndexError:
-                logging_critical(_("%s combobox selected string '%s' not in list %s"),
-                                 self.cb_name, selected_element, self.list_keys)
-                sys_exit(1)
-            except ValueError:
-                logging_critical(_("%s combobox selected string '%s' not in list %s"),
-                                 self.cb_name, selected_element, self.list_keys)
-                sys_exit(1)
-            update_combobox_width(self)
-        else:
-            # Normal users do not need this information
-            logging_debug(_("No %s combobox element selected"), self.cb_name)
-
-    def get_selected_key(self):
-        try:
-            i_index = self.current()
-            return self.list_keys[i_index]
-        except IndexError:
-            return None
 
 
 class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attributes
@@ -121,7 +64,7 @@ class ConnectionSelectionWidgets():  # pylint: disable=too-many-instance-attribu
                                                          self.previous_selection,
                                                         "FC connection",
                                                          state='readonly')
-        self.conn_selection_combobox.bind("<<ComboboxSelected>>", self.on_select_connection_combobox_change)
+        self.conn_selection_combobox.bind("<<ComboboxSelected>>", self.on_select_connection_combobox_change, '+')
         self.conn_selection_combobox.pack(side=tk.TOP, pady=(4, 0))
         show_tooltip(self.conn_selection_combobox, _("Select the flight controller connection\nYou can add a custom "
                                                      "connection to the existing ones"))
