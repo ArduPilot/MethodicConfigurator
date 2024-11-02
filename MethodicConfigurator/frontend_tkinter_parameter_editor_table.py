@@ -33,7 +33,7 @@ from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
 from MethodicConfigurator.frontend_tkinter_base import get_widget_font
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 
-from MethodicConfigurator.frontend_tkinter_connection_selection import PairTupleCombobox
+from MethodicConfigurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 
 from MethodicConfigurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 
@@ -41,6 +41,8 @@ from MethodicConfigurator.internationalization import _
 
 from MethodicConfigurator.annotate_params import Par
 
+
+NEW_VALUE_WIDGET_WIDTH = 9
 
 class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     """
@@ -259,11 +261,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(flightcontroller_value, doc_tooltip)
         return flightcontroller_value
 
-    def __update_combobox_style_on_selection(self, combobox_widget, param_default):
+    def __update_combobox_style_on_selection(self, combobox_widget, param_default, event):
         try:
             current_value = float(combobox_widget.get_selected_key())
             has_default_value = param_default is not None and is_within_tolerance(current_value, param_default.value)
             combobox_widget.configure(style='default_v.TCombobox' if has_default_value else 'readonly.TCombobox')
+            event.width = NEW_VALUE_WIDGET_WIDTH
+            combobox_widget.on_combo_configure(event)
         except ValueError:
             msg = _('Could not solve the selected {combobox_widget} key to a float value.')
             logging_info(msg.format(**locals()))
@@ -312,11 +316,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             new_value_entry.set(selected_value)
             font = get_widget_font(new_value_entry)
             font['size'] -= 2 if platform_system() == 'Windows' else 1
-            new_value_entry.config(state='readonly', width=9, font=(font['family'], font['size']))
+            new_value_entry.config(state='readonly', width=NEW_VALUE_WIDGET_WIDTH, font=(font['family'], font['size']))
             new_value_entry.bind("<<ComboboxSelected>>",
-                                 lambda event: self.__update_combobox_style_on_selection(new_value_entry, param_default))
+                                 lambda event: self.__update_combobox_style_on_selection(new_value_entry, param_default,
+                                                                                         event), '+')
         else:
-            new_value_entry = ttk.Entry(self.view_port, width=10, justify=tk.RIGHT)
+            new_value_entry = ttk.Entry(self.view_port, width=NEW_VALUE_WIDGET_WIDTH+1, justify=tk.RIGHT)
             ParameterEditorTable.__update_new_value_entry_text(new_value_entry, param.value, param_default)
             bitmask_dict = param_metadata.get('Bitmask', None) if param_metadata else None
         try:
@@ -531,7 +536,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             messagebox.showerror(_("Operation not possible"),
                                  _("Can not add parameter when no FC is connected and no apm.pdef.xml file exists."))
         return False
-
 
     def __on_parameter_value_change(self, event, current_file, param_name):
         # Get the new value from the Entry widget
