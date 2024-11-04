@@ -26,8 +26,6 @@ from logging import error as logging_error
 from typing import List
 from typing import Tuple
 
-from platform import system as platform_system
-
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
 from MethodicConfigurator.annotate_params import Par
@@ -37,6 +35,8 @@ from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_filesystem import is_within_tolerance
 
+from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
+
 from MethodicConfigurator.backend_flightcontroller import FlightController
 
 from MethodicConfigurator.frontend_tkinter_base import show_tooltip
@@ -45,6 +45,7 @@ from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 from MethodicConfigurator.frontend_tkinter_base import RichText
 from MethodicConfigurator.frontend_tkinter_base import get_widget_font
+from MethodicConfigurator.frontend_tkinter_base import UsagePopupWindow
 
 from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 
@@ -134,11 +135,11 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
                 show_tooltip(label, _("Documentation URL not available"))
 
 
-def show_about_window(root, _version: str):
+def show_about_window(root, _version: str):  # pylint: disable=too-many-locals
     # Create a new window for the custom "About" message
     about_window = tk.Toplevel(root)
     about_window.title(_("About"))
-    about_window.geometry("650x220")
+    about_window.geometry("650x320")
 
     main_frame = ttk.Frame(about_window)
     main_frame.pack(expand=True, fill=tk.BOTH)
@@ -150,6 +151,26 @@ def show_about_window(root, _version: str):
                     "Licensed under the GNU General Public License v3.0")
     about_label = ttk.Label(main_frame, text=about_message.format(**locals()), wraplength=450)
     about_label.grid(column=0, row=0, padx=10, pady=10, columnspan=5)  # Span across all columns
+
+    usage_popup_frame = ttk.Frame(main_frame)
+    usage_popup_frame.grid(column=0, row=1, columnspan=5, padx=10, pady=10)
+
+    usage_popup_label = ttk.Label(usage_popup_frame, text=_("Display usage popup"))
+    usage_popup_label.pack(side=tk.TOP, anchor=tk.W)
+
+    component_editor_var = tk.BooleanVar(value=ProgramSettings.display_usage_popup("component_editor"))
+    component_editor_checkbox = ttk.Checkbutton(usage_popup_frame, text=_("Component editor window"),
+                                                variable=component_editor_var,
+                                                command=lambda: ProgramSettings.set_display_usage_popup("component_editor",
+                                                                                                component_editor_var.get()))
+    component_editor_checkbox.pack(side=tk.TOP, anchor=tk.W)
+
+    parameter_editor_var = tk.BooleanVar(value=ProgramSettings.display_usage_popup("parameter_editor"))
+    parameter_editor_checkbox = ttk.Checkbutton(usage_popup_frame, text=_("Parameter file editor and uploader window"),
+                                                 variable=parameter_editor_var,
+                                                 command=lambda: ProgramSettings.set_display_usage_popup("parameter_editor",
+                                                                                                parameter_editor_var.get()))
+    parameter_editor_checkbox.pack(side=tk.TOP, anchor=tk.W)
 
     # Create buttons for each action
     user_manual_button = ttk.Button(main_frame, text=_("User Manual"),
@@ -169,11 +190,11 @@ def show_about_window(root, _version: str):
                                   "https://github.com/ArduPilot/MethodicConfigurator"))
 
     # Place buttons using grid for equal spacing and better control over layout
-    user_manual_button.grid(column=0, row=1, padx=10, pady=10)
-    support_forum_button.grid(column=1, row=1, padx=10, pady=10)
-    report_bug_button.grid(column=2, row=1, padx=10, pady=10)
-    licenses_button.grid(column=3, row=1, padx=10, pady=10)
-    source_button.grid(column=4, row=1, padx=10, pady=10)
+    user_manual_button.grid(column=0, row=2, padx=10, pady=10)
+    support_forum_button.grid(column=1, row=2, padx=10, pady=10)
+    report_bug_button.grid(column=2, row=2, padx=10, pady=10)
+    licenses_button.grid(column=3, row=2, padx=10, pady=10)
+    source_button.grid(column=4, row=2, padx=10, pady=10)
 
     # Configure the grid to ensure equal spacing and expansion
     main_frame.columnconfigure([0, 1, 2, 3, 4], weight=1)
@@ -187,7 +208,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     parameters, documentation, and flight controller connection settings.
     """
     def __init__(self, current_file: str, flight_controller: FlightController,
-                 local_filesystem: LocalFilesystem, display_welcome_popup: bool=True):
+                 local_filesystem: LocalFilesystem):
         super().__init__()
         self.current_file = current_file
         self.flight_controller = flight_controller
@@ -230,8 +251,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.root.after(10, self.on_param_file_combobox_change(None, True))
 
         # this one should be on top of the previous one hence the longer time
-        if display_welcome_popup:
-            self.root.after(100, self.__please_read_the_docs(self.root))
+        if UsagePopupWindow.should_display("parameter_editor"):
+            self.root.after(100, self.__display_usage_popup_window(self.root))
         self.root.mainloop()
 
     def __create_conf_widgets(self, version: str):
@@ -352,16 +373,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                      "controller\nIf changes have been made to the current file it will ask if you want to save them"))
 
     @staticmethod
-    def __please_read_the_docs(parent: tk.Tk):
-        welcome_window = BaseWindow(parent)
-        welcome_window.root.title(_("Welcome to the ArduPilot Methodic Configurator"))
-        welcome_window.root.geometry("690x170")
-
+    def __display_usage_popup_window(parent: tk.Tk):
+        usage_popup_window = BaseWindow(parent)
         style = ttk.Style()
 
-        instructions_text = RichText(welcome_window.main_frame, wrap=tk.WORD, height=5, bd=0,
+        instructions_text = RichText(usage_popup_window.main_frame, wrap=tk.WORD, height=5, bd=0,
                                      background=style.lookup("TLabel", "background"))
-        instructions_text.pack(padx=10, pady=10)
         instructions_text.insert(tk.END, _("1. Read "))
         instructions_text.insert(tk.END, _("all"), "bold")
         instructions_text.insert(tk.END, _(" the documentation on top of the parameter table\n"))
@@ -379,25 +396,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         instructions_text.insert(tk.END, _("Upload selected params to FC, and advance to next param file"), "italic")
         instructions_text.insert(tk.END, _(" button\n"))
         instructions_text.insert(tk.END, _("5. Repeat from the top until the program automatically closes"))
-
         instructions_text.config(state=tk.DISABLED)
 
-        dismiss_button = ttk.Button(welcome_window.main_frame, text=_("Dismiss"),
-                                    command=lambda: ParameterEditorWindow.__close_instructions_window(welcome_window, parent))
-        dismiss_button.pack(pady=10)
-
-        BaseWindow.center_window(welcome_window.root, parent)
-        welcome_window.root.attributes('-topmost', True)
-
-        if platform_system() == 'Windows':
-            parent.attributes('-disabled', True)  # Disable parent window input
-
-    @staticmethod
-    def __close_instructions_window(welcome_window, parent):
-        welcome_window.root.destroy()
-        if platform_system() == 'Windows':
-            parent.attributes('-disabled', False)  # Re-enable the parent window
-        parent.focus_set()
+        UsagePopupWindow.display(parent, usage_popup_window, _("How to use the parameter file editor and uploader window"),
+                                 "parameter_editor", "690x200", instructions_text)
 
     def __do_tempcal_imu(self, selected_file:str):
         tempcal_imu_result_param_filename, tempcal_imu_result_param_fullpath = \
@@ -759,10 +761,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     @staticmethod
     def add_argparse_arguments(parser):
-        parser.add_argument('--skip-welcome-popup',
-                            action='store_true',
-                            help=_('Skip the welcome popup window. Only use this if you already know how to use the software. '
-                            'Default to false'))
         return parser
 
 
@@ -790,4 +788,4 @@ if __name__ == "__main__":
 
     fc = FlightController(args.reboot_time)
     filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, None, args.allow_editing_template_files)
-    ParameterEditorWindow('04_board_orientation.param', fc, filesystem, not args.skip_welcome_popup)
+    ParameterEditorWindow('04_board_orientation.param', fc, filesystem)

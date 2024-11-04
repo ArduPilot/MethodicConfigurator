@@ -14,6 +14,7 @@ import tkinter as tk
 from tkinter import font as tkFont
 from tkinter import messagebox
 from tkinter import ttk
+from tkinter import BooleanVar
 
 # from logging import debug as logging_debug
 # from logging import info as logging_info
@@ -26,6 +27,8 @@ from PIL import Image
 from PIL import ImageTk
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
+
+from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 
 from MethodicConfigurator.internationalization import _
 
@@ -389,3 +392,56 @@ class BaseWindow:
         image_label = ttk.Label(parent, image=photo)
         image_label.image = photo # Keep a reference to the image to prevent it from being garbage collected
         return image_label
+
+
+class UsagePopupWindow():
+    """
+    A class for creating and managing usage popup windows in the application.
+
+    This class extends the BaseWindow class to provide functionality for displaying
+    usage popups with instructions and options to show them again or dismiss.
+    """
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def should_display(ptype: str) -> bool:
+        return ProgramSettings.display_usage_popup(ptype)
+
+    @staticmethod
+    def display(parent: tk.Tk, usage_popup_window: BaseWindow, title: str,  # pylint: disable=too-many-arguments
+                ptype: str, geometry: str, instructions_text: RichText):
+
+        usage_popup_window.root.title(title)
+        usage_popup_window.root.geometry(geometry)
+
+        instructions_text.pack(padx=6, pady=10)
+
+        show_again_var = BooleanVar()
+        show_again_var.set(True)
+
+        def update_show_again():
+            ProgramSettings.set_display_usage_popup(ptype, show_again_var.get())
+
+        show_again_checkbox = ttk.Checkbutton(usage_popup_window.main_frame, text=_("Show this usage popup again"),
+                                            variable=show_again_var, command=update_show_again)
+        show_again_checkbox.pack(pady=(10, 5))
+
+        dismiss_button = ttk.Button(usage_popup_window.main_frame, text=_("Dismiss"),
+                                    command=lambda: UsagePopupWindow.close(usage_popup_window, parent))
+        dismiss_button.pack(pady=10)
+
+        BaseWindow.center_window(usage_popup_window.root, parent)
+        usage_popup_window.root.attributes('-topmost', True)
+
+        if platform_system() == 'Windows':
+            parent.attributes('-disabled', True)  # Disable parent window input
+
+        usage_popup_window.root.protocol("WM_DELETE_WINDOW", lambda: UsagePopupWindow.close(usage_popup_window, parent))
+
+    @staticmethod
+    def close(usage_popup_window, parent):
+        usage_popup_window.root.destroy()
+        if platform_system() == 'Windows':
+            parent.attributes('-disabled', False)  # Re-enable the parent window
+        parent.focus_set()

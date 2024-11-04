@@ -31,7 +31,6 @@
             "args": [
                 "--allow-editing-template-files",
                 "--device=test",
-                "--skip-welcome-popup",
                 "--skip-component-editor",
                 "--vehicle-dir=C:\\Users\\amilc\\Documents\\iav\\ardupilot_methodic_configurator\\vehicle_templates\\ArduCopter\\FETtec-5"
             ],

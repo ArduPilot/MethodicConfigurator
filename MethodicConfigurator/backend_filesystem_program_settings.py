@@ -129,6 +129,14 @@ class ProgramSettings:
 
         if "directory_selection" not in settings:
             settings["directory_selection"] = {}
+
+        if "display_usage_popup" not in settings:
+            settings["display_usage_popup"] = {}
+        if "component_editor" not in settings["display_usage_popup"]:
+            settings["display_usage_popup"]["component_editor"] = True
+        if "parameter_editor" not in settings["display_usage_popup"]:
+            settings["display_usage_popup"]["parameter_editor"] = True
+
         return settings
 
     @staticmethod
@@ -220,3 +228,14 @@ class ProgramSettings:
         vehicle_dir = settings["directory_selection"].get("vehicle_dir", vehicles_default_dir)
 
         return template_dir, new_base_dir, vehicle_dir
+
+    @staticmethod
+    def display_usage_popup(ptype: str):
+        return ProgramSettings.__get_settings_as_dict()["display_usage_popup"].get(ptype, True)
+
+    @staticmethod
+    def set_display_usage_popup(ptype: str, value: bool):
+        if ptype in ["component_editor", "parameter_editor"]:
+            settings, _, _ = ProgramSettings.__get_settings_config()
+            settings["display_usage_popup"][ptype] = value
+            ProgramSettings.__set_settings_from_dict(settings)

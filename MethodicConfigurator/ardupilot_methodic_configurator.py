@@ -162,7 +162,7 @@ def main():
     start_file = local_filesystem.get_start_file(args.n, imu_tcal_available)
 
     # Call the GUI function with the starting intermediate parameter file
-    ParameterEditorWindow(start_file, flight_controller, local_filesystem, not args.skip_welcome_popup)
+    ParameterEditorWindow(start_file, flight_controller, local_filesystem)
 
     # Close the connection to the flight controller
     flight_controller.disconnect()
