@@ -179,5 +179,6 @@
             },
             "Notes": "uBlox M8P GNSS with a patch antenna."
         }
-    }
+    },
+    "Program version": "0.9.9"
 }

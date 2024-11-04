@@ -179,5 +179,6 @@
             },
             "Notes": "A very good receiver with an excellent antenna https://docs.holybro.com/gps-and-rtk-system/gps-led-and-buzzer/status-led-changes"
         }
-    }
+    },
+    "Program version": "0.9.9"
 }
