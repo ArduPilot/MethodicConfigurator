@@ -6,7 +6,7 @@ repos:
         args: [ --fix ]
         language: system
         types: [python]
-        stages: [commit]
+        stages: [pre-commit]
   - repo: local
     hooks:
       - id: pylint
@@ -20,4 +20,4 @@ repos:
             "-sn", # Don't display the score
             "--rcfile=.pylintrc", # Link to your config file
           ]
-        stages: [push]
+        stages: [pre-push]
