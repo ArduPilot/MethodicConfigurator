@@ -418,7 +418,7 @@
         "forced_parameters": {
             "MAGH_LOG_ENABLE": { "New Value": 1, "Change Reason": "Activates the logging of the MAGH.Active message" }
         },
-        "jump_possible": {"50_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '50_everyday_use.param' file?"},
+        "jump_possible": {"53_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '53_everyday_use.param' file?"},
         "old_filenames": ["22_inflight_magnetometer_fit_setup.param"],
         "download_file": { "source_url": "https://discuss.ardupilot.org/uploads/short-url/4pyrl7PcfqiMEaRItUhljuAqLSs.lua", "dest_local": "copter-magfit-helper.lua" },
         "upload_file": { "source_local": "copter-magfit-helper.lua", "dest_on_fc": "/APM/Scripts/copter-magfit-helper.lua" }
@@ -788,7 +788,38 @@
         "auto_changed_by": "",
         "old_filenames": ["47_precision_land.param"]
     },
-    "50_everyday_use.param": {
+    "50_optical_flow_setup.param": {
+        "blog_text": "Setup optical flow sensor calibration, needed before using it.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#13-productive-configuration",
+        "wiki_text": "optical flow sensor setup",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
+        "external_tool_text": "optical flow sensors",
+        "external_tool_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensors-landingpage.html",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": "",
+        "jump_possible": {"53_everyday_use.param": "If you do not use optical flow\nyou can skip some steps now.\n\nJump to '53_everyday_use.param' file?"}
+    },
+    "51_optical_flow_results.param": {
+        "blog_text": "Optical flow sensor calibration results, needed before using it.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#13-productive-configuration",
+        "wiki_text": "optical flow sensor setup",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
+        "external_tool_text": "FlowCal",
+        "external_tool_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": "FlowCal"
+    },
+    "52_use_optical_flow_instead_of_gnss.param": {
+        "blog_text": "Optical flow sensor calibration results, needed before using it.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#13-productive-configuration",
+        "wiki_text": "optical flow sensor setup",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": ""
+    },
+    "53_everyday_use.param": {
         "blog_text": "Configures parameters for everyday use, ensuring the vehicle is safe and stable for routine flying.",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#13-productive-configuration",
         "wiki_text": "",
@@ -797,6 +828,6 @@
         "external_tool_url": "",
         "mandatory_text": "100% mandatory (0% optional)",
         "auto_changed_by": "",
-        "old_filenames": ["45_everyday_use.param", "47_everyday_use.param"]
+        "old_filenames": ["45_everyday_use.param", "47_everyday_use.param", "50_everyday_use.param"]
     }
 }

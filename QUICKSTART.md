@@ -118,7 +118,7 @@ Now the standard tuning is complete you can skip to [everyday use](#113-everyday
 
 Now that tuning and configuration are done, some logging and tests can be disabled and some more safety features enabled:
 
-- [50_everyday_use.param](TUNING_GUIDE_ArduCopter.md#13-productive-configuration)
+- [53_everyday_use.param](TUNING_GUIDE_ArduCopter.md#13-productive-configuration)
 
 Enjoy your properly configured vehicle.
 
