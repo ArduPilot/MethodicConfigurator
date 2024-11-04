@@ -151,8 +151,8 @@ class ComponentEditorWindowBase(BaseWindow):
             parent.attributes('-disabled', True)  # Disable parent window input
 
     @staticmethod
-    def __close_instructions_window(welcome_window, parent):
-        welcome_window.root.destroy()
+    def __close_instructions_window(instructions_window, parent):
+        instructions_window.root.destroy()
         if platform_system() == 'Windows':
             parent.attributes('-disabled', False)  # Re-enable the parent window
         parent.focus_set()

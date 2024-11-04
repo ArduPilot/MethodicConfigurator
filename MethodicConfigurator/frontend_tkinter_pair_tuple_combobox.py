@@ -117,6 +117,27 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
 
 
 class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-ancestors
+    """
+    A subclass of PairTupleCombobox that enhances the dropdown experience by displaying tooltips for the highlighted entry.
+
+    This class extends the functionality of PairTupleCombobox by adding tooltips to the items displayed in the dropdown menu.
+    When an item is selected or hovered over, a tooltip appears on the right side of the combobox, showing the full value and
+      descriptive text of the currently highlighted, potentially truncated, combobox entry.
+
+    The tooltip updates dynamically in real-time based on:
+    1. Cursor movement within the dropdown list
+    2. Mouse hover over the dropdown items
+
+    Key features:
+    - Provides immediate feedback on long entries without scrolling
+    - Improves usability by offering more information at a glance
+    - Maintains focus on the selected item while providing additional details
+
+    Behavior:
+    - Tooltip disappears automatically when:
+      a) An item is selected from the dropdown
+      b) The dropdown is closed (either by selection or pressing Esc)
+    """
     def __init__(self, container, list_pair_tuple, selected_element, cb_name, *args, **kwargs):
         super().__init__(container, list_pair_tuple, selected_element, cb_name, *args, **kwargs)
         self.tooltip = None
@@ -204,8 +225,8 @@ def main():
     root.geometry("400x100")  # Set a size for the window
 
     # Generate 20 random strings between 4 and 70 characters
-    import random
-    import string
+    import random  # pylint: disable=import-outside-toplevel
+    import string  # pylint: disable=import-outside-toplevel
     random_strings = [''.join(random.choices(string.ascii_letters + string.digits, k=random.randint(4, 70))) \
         for _ in range(20)]
 
