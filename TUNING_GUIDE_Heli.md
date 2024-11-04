@@ -1089,7 +1089,7 @@ Use *ArduPilot Methodic Configurator* to edit and upload the `49_precision_land.
 
 Some changes should be made for everyday productive operation.
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `50_everyday_use.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `53_everyday_use.param` file to the FC.
 
 # 14. Conclusion
 

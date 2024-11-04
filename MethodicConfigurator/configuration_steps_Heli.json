@@ -136,6 +136,8 @@
             "BATT_CAPACITY": { "New Value": "(vehicle_components['Battery']['Specifications']['Capacity mAh'])", "Change Reason": "Total battery capacity specified in the component editor" },
             "BATT_CRT_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" },
             "BATT_LOW_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell low'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Low voltage + 0.0) x no. of cells" },
+            "BATT_MONITOR": { "New Value": "vehicle_components['Battery Monitor']['FC Connection']['Protocol']", "Change Reason": "Selected in component editor window" },
+            "BATT_I2C_BUS": { "New Value": "0 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C1' else 1 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C2' else 2 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C3' else 4", "Change Reason": "Selected in component editor window" },
             "MOT_BATT_VOLT_MAX": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell max']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Max voltage + 0.0) x no. of cells" },
             "MOT_BATT_VOLT_MIN": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" }
         },
@@ -413,7 +415,7 @@
         "forced_parameters": {
             "MAGH_LOG_ENABLE": { "New Value": 1, "Change Reason": "Activates the logging of the MAGH.Active message" }
         },
-        "jump_possible": {"50_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '50_everyday_use.param' file?"},
+        "jump_possible": {"53_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '53_everyday_use.param' file?"},
         "old_filenames": ["22_inflight_magnetometer_fit_setup.param"],
         "download_file": { "source_url": "https://discuss.ardupilot.org/uploads/short-url/4pyrl7PcfqiMEaRItUhljuAqLSs.lua", "dest_local": "copter-magfit-helper.lua" },
         "upload_file": { "source_local": "copter-magfit-helper.lua", "dest_on_fc": "/APM/Scripts/copter-magfit-helper.lua" }
@@ -678,7 +680,7 @@
     },
     "42_system_id_roll.param": {
         "blog_text": "Configures parameters for the roll axis system identification, part of the tuning process.",
-        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#1111-roll-rate-mathematical-model",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#11-system-identification-for-analytical-pid-optimization-optional",
         "wiki_text": "Matlab and Simulink IAV scripts for system identification",
         "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
         "external_tool_text": "ArduCopter Simulink Model",
@@ -783,7 +785,38 @@
         "auto_changed_by": "",
         "old_filenames": ["47_precision_land.param"]
     },
-    "50_everyday_use.param": {
+    "50_optical_flow_setup.param": {
+        "blog_text": "Setup optical flow sensor calibration, needed before using it.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#13-productive-configuration",
+        "wiki_text": "optical flow sensor setup",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
+        "external_tool_text": "optical flow sensors",
+        "external_tool_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensors-landingpage.html",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": "",
+        "jump_possible": {"53_everyday_use.param": "If you do not use optical flow\nyou can skip some steps now.\n\nJump to '53_everyday_use.param' file?"}
+    },
+    "51_optical_flow_results.param": {
+        "blog_text": "Optical flow sensor calibration results, needed before using it.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#13-productive-configuration",
+        "wiki_text": "optical flow sensor setup",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
+        "external_tool_text": "FlowCal",
+        "external_tool_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": "FlowCal"
+    },
+    "52_use_optical_flow_instead_of_gnss.param": {
+        "blog_text": "Optical flow sensor calibration results, needed before using it.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#13-productive-configuration",
+        "wiki_text": "optical flow sensor setup",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": ""
+    },
+    "53_everyday_use.param": {
         "blog_text": "Configures parameters for everyday use, ensuring the vehicle is safe and stable for routine flying.",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#13-productive-configuration",
         "wiki_text": "",
@@ -792,6 +825,6 @@
         "external_tool_url": "",
         "mandatory_text": "100% mandatory (0% optional)",
         "auto_changed_by": "",
-        "old_filenames": ["45_everyday_use.param", "47_everyday_use.param"]
+        "old_filenames": ["45_everyday_use.param", "47_everyday_use.param", "50_everyday_use.param"]
     }
 }
