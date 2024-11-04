@@ -19,8 +19,6 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 
-from platform import system as platform_system
-
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
@@ -30,6 +28,7 @@ from MethodicConfigurator.frontend_tkinter_base import show_error_message
 from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 from MethodicConfigurator.frontend_tkinter_base import RichText
+from MethodicConfigurator.frontend_tkinter_base import UsagePopupWindow
 
 from MethodicConfigurator.internationalization import _
 
@@ -111,19 +110,16 @@ class ComponentEditorWindowBase(BaseWindow):
         self.save_button = ttk.Button(save_frame, text=_("Save data and start configuration"), command=self.save_data)
         show_tooltip(self.save_button, _("Save component data and start parameter value configuration and tuning."))
         self.save_button.pack(pady=7)
-        self.root.after(10, self.__display_component_editor_usage_instructions(self.root))
+        if UsagePopupWindow.should_display("component_editor"):
+            self.root.after(10, self.__display_component_editor_usage_instructions(self.root))
 
     @staticmethod
     def __display_component_editor_usage_instructions(parent: tk.Tk):
         usage_popup_window = BaseWindow(parent)
-        usage_popup_window.root.title(_("How to use the component editor"))
-        usage_popup_window.root.geometry("690x160")
-
         style = ttk.Style()
 
         instructions_text = RichText(usage_popup_window.main_frame, wrap=tk.WORD, height=5, bd=0,
                                      background=style.lookup("TLabel", "background"))
-        instructions_text.pack(padx=6, pady=10)
         instructions_text.insert(tk.END, _("1. Describe "))
         instructions_text.insert(tk.END, _("all"), "bold")
         instructions_text.insert(tk.END, _(" vehicle component properties in the window below\n"))
@@ -136,26 +132,10 @@ class ComponentEditorWindowBase(BaseWindow):
         instructions_text.insert(tk.END, _("4. Press the "))
         instructions_text.insert(tk.END, _("Save data and start configuration"), "italic")
         instructions_text.insert(tk.END, _(" only after all information is correct"))
-
         instructions_text.config(state=tk.DISABLED)
 
-        dismiss_button = ttk.Button(usage_popup_window.main_frame, text=_("Dismiss"),
-                                    command=lambda: ComponentEditorWindowBase.__close_instructions_window(usage_popup_window,
-                                                                                                          parent))
-        dismiss_button.pack(pady=10)
-
-        BaseWindow.center_window(usage_popup_window.root, parent)
-        usage_popup_window.root.attributes('-topmost', True)
-
-        if platform_system() == 'Windows':
-            parent.attributes('-disabled', True)  # Disable parent window input
-
-    @staticmethod
-    def __close_instructions_window(instructions_window, parent):
-        instructions_window.root.destroy()
-        if platform_system() == 'Windows':
-            parent.attributes('-disabled', False)  # Re-enable the parent window
-        parent.focus_set()
+        UsagePopupWindow.display(parent, usage_popup_window, _("How to use the component editor window"),
+                                 "component_editor", "690x200", instructions_text)
 
     def update_json_data(self):  # should be overwritten in child classes
         if 'Format version' not in self.data:
