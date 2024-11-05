@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from math import nan
 
-
 battery_cell_voltages = {
     "LiIon": {
         "absolute_max": 4.1,

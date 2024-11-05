@@ -15,14 +15,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # pylint: skip-file
 
-import unittest
 import argparse
 import os
 import shutil
+import unittest
 
-from MethodicConfigurator.param_pid_adjustment_update import ranged_type
-from MethodicConfigurator.param_pid_adjustment_update import Par
-from MethodicConfigurator.param_pid_adjustment_update import update_pid_adjustment_params
+from MethodicConfigurator.param_pid_adjustment_update import Par, ranged_type, update_pid_adjustment_params
 
 
 class TestRangedType(unittest.TestCase):
@@ -264,7 +262,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
 
     def test_empty_files(self):
         # Both the default and optimized parameter files are empty
-        with open(self.default_param_file, 'w', encoding='utf-8') as f:  # noqa F841
+        with open(self.default_param_file, 'w', encoding='utf-8') as f:  # F841
             pass
         with open(self.optimized_param_file, 'w', encoding='utf-8') as f:  # noqa F841
             pass

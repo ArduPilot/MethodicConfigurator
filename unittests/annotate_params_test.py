@@ -10,28 +10,30 @@ Author: Amilcar do Carmo Lucas
 
 # pylint: skip-file
 
-import tempfile
-from unittest.mock import patch, mock_open, Mock
 import os
+import tempfile
 import unittest
-import requests
-import mock
-
+from unittest.mock import Mock, mock_open, patch
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
+
+import mock
+import requests
 from defusedxml import ElementTree as DET  # just parsing, no data-structure manipulation
 
-from MethodicConfigurator.annotate_params import arg_parser
-from MethodicConfigurator.annotate_params import main
-from MethodicConfigurator.annotate_params import get_xml_data
-from MethodicConfigurator.annotate_params import get_xml_url
-from MethodicConfigurator.annotate_params import remove_prefix
-from MethodicConfigurator.annotate_params import split_into_lines
-from MethodicConfigurator.annotate_params import create_doc_dict
-from MethodicConfigurator.annotate_params import format_columns
-from MethodicConfigurator.annotate_params import update_parameter_documentation
-from MethodicConfigurator.annotate_params import print_read_only_params
-from MethodicConfigurator.annotate_params import BASE_URL
-from MethodicConfigurator.annotate_params import PARAM_DEFINITION_XML_FILE
+from MethodicConfigurator.annotate_params import (
+    BASE_URL,
+    PARAM_DEFINITION_XML_FILE,
+    arg_parser,
+    create_doc_dict,
+    format_columns,
+    get_xml_data,
+    get_xml_url,
+    main,
+    print_read_only_params,
+    remove_prefix,
+    split_into_lines,
+    update_parameter_documentation,
+)
 
 
 class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-docstring

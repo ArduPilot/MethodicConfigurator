@@ -41,7 +41,7 @@ def copy_files(source, target):
             shutil.copy2(source_path, target_path)
             print(f"Copied {file} to {target}")
         except Exception as e:  # pylint: disable=broad-except
-            print(f"Error copying {file} to {target}: {str(e)}")
+            print(f"Error copying {file} to {target}: {e!s}")
 
 # Get all ArduCopter subdirectories
 target_dirs = get_subdirectories(BASE_DIR)

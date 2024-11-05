@@ -13,9 +13,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
 import math
+import os
 import re
 import sys
-import os
 from argparse import ArgumentParser
 
 import numpy as np

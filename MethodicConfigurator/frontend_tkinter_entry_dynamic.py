@@ -11,11 +11,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
 
-from tkinter import StringVar, Entry, Listbox
-from tkinter.constants import END, HORIZONTAL, N, S, E, W, VERTICAL, SINGLE
-
 import tkinter as tk
-from tkinter import ttk
+from tkinter import Entry, Listbox, StringVar, ttk
+from tkinter.constants import END, HORIZONTAL, SINGLE, VERTICAL, E, N, S, W
 
 from MethodicConfigurator.internationalization import _
 

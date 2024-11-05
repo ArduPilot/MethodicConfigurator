@@ -8,26 +8,23 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-from os import path as os_path
-from os import walk as os_walk
+from json import JSONDecodeError
+from json import dump as json_dump
+from json import load as json_load
 
 # from sys import exit as sys_exit
 from logging import debug as logging_debug
+
 #from logging import info as logging_info
 #from logging import warning as logging_warning
 from logging import error as logging_error
-
+from os import path as os_path
+from os import walk as os_walk
 from re import match as re_match
 
-from json import load as json_load
-from json import dump as json_dump
-from json import JSONDecodeError
-
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
-
-from MethodicConfigurator.middleware_template_overview import TemplateOverview
-
 from MethodicConfigurator.internationalization import _
+from MethodicConfigurator.middleware_template_overview import TemplateOverview
 
 
 class VehicleComponents:

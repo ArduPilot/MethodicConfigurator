@@ -8,24 +8,20 @@ SPDX-FileCopyrightText: 2024 Amilcar Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-from argparse import ArgumentParser
-
-from logging import basicConfig as logging_basicConfig
-from logging import getLevelName as logging_getLevelName
-
-from logging import debug as logging_debug
-from logging import info as logging_info
-from logging import error as logging_error
-
 import os
 import sys
-#import time
+from argparse import ArgumentParser
+from logging import basicConfig as logging_basicConfig
+from logging import debug as logging_debug
+from logging import error as logging_error
+from logging import getLevelName as logging_getLevelName
+from logging import info as logging_info
 
-import requests
-
-
-from pymavlink import mavutil
 import backend_mavftp as mavftp
+
+#import time
+import requests
+from pymavlink import mavutil
 
 old_mavftp_member_variable_values = {}
 

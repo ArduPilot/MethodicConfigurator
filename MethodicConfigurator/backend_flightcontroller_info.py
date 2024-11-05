@@ -112,10 +112,10 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
     def __decode_flight_sw_version(flight_sw_version):
         '''decode 32 bit flight_sw_version mavlink parameter
         corresponds to ArduPilot encoding in  GCS_MAVLINK::send_autopilot_version'''
-        fw_type_id = (flight_sw_version >>  0) % 256  # noqa E221, E222
-        patch      = (flight_sw_version >>  8) % 256  # noqa E221, E222
-        minor      = (flight_sw_version >> 16) % 256  # noqa E221
-        major      = (flight_sw_version >> 24) % 256  # noqa E221
+        fw_type_id = (flight_sw_version >>  0) % 256  # E221, E222
+        patch      = (flight_sw_version >>  8) % 256  # E221, E222
+        minor      = (flight_sw_version >> 16) % 256  # E221
+        major      = (flight_sw_version >> 24) % 256  # E221
         if fw_type_id == 0:
             fw_type = "dev"
         elif fw_type_id == 64:

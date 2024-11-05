@@ -8,29 +8,20 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-from sys import exit as sys_exit
-
-from argparse import ArgumentParser
-
-from logging import basicConfig as logging_basicConfig
-from logging import getLevelName as logging_getLevelName
-from logging import debug as logging_debug
-from logging import warning as logging_warning
-from logging import critical as logging_critical
-
 import tkinter as tk
-from tkinter import ttk
-from tkinter import Toplevel
-from tkinter import Label
 import tkinter.font as tkfont
-
+from argparse import ArgumentParser
+from logging import basicConfig as logging_basicConfig
+from logging import critical as logging_critical
+from logging import debug as logging_debug
+from logging import getLevelName as logging_getLevelName
+from logging import warning as logging_warning
 from platform import system as platform_system
+from sys import exit as sys_exit
+from tkinter import Label, Toplevel, ttk
 
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
-
-from MethodicConfigurator.frontend_tkinter_base import update_combobox_width
-from MethodicConfigurator.frontend_tkinter_base import get_widget_font
-
+from MethodicConfigurator.frontend_tkinter_base import get_widget_font, update_combobox_width
 from MethodicConfigurator.internationalization import _
 
 

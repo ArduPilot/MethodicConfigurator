@@ -8,24 +8,20 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-from os import path as os_path
-from os import makedirs as os_makedirs
-from os import sep as os_sep
-
-from re import match as re_match
-from re import escape as re_escape
-from re import sub as re_sub
+from json import dump as json_dump
+from json import load as json_load
 
 # from sys import exit as sys_exit
 from logging import error as logging_error
-
-from json import load as json_load
-from json import dump as json_dump
-
+from os import makedirs as os_makedirs
+from os import path as os_path
+from os import sep as os_sep
 from platform import system as platform_system
+from re import escape as re_escape
+from re import match as re_match
+from re import sub as re_sub
 
-from platformdirs import site_config_dir
-from platformdirs import user_config_dir
+from platformdirs import site_config_dir, user_config_dir
 
 from MethodicConfigurator.internationalization import _
 

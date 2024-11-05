@@ -8,45 +8,38 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-from os import path as os_path
-from os import getcwd as os_getcwd
-from os import listdir as os_listdir
-from os import rename as os_rename
-
-from platform import system as platform_system
-
-from shutil import copy2 as shutil_copy2
-from shutil import copytree as shutil_copytree
-
-from re import compile as re_compile
-
 # from sys import exit as sys_exit
 from logging import debug as logging_debug
+from logging import error as logging_error
 from logging import info as logging_info
 from logging import warning as logging_warning
-from logging import error as logging_error
-
-from typing import Dict
-from typing import List
-from typing import Tuple
-
+from os import getcwd as os_getcwd
+from os import listdir as os_listdir
+from os import path as os_path
+from os import rename as os_rename
+from platform import system as platform_system
+from re import compile as re_compile
+from shutil import copy2 as shutil_copy2
+from shutil import copytree as shutil_copytree
+from typing import Dict, List, Tuple
 from zipfile import ZipFile
 
 from requests import get as requests_get
 
-from MethodicConfigurator.annotate_params import PARAM_DEFINITION_XML_FILE, Par
-from MethodicConfigurator.annotate_params import get_xml_url
-from MethodicConfigurator.annotate_params import get_xml_dir
-from MethodicConfigurator.annotate_params import load_default_param_file
-from MethodicConfigurator.annotate_params import parse_parameter_metadata
-from MethodicConfigurator.annotate_params import format_columns
-from MethodicConfigurator.annotate_params import split_into_lines
-from MethodicConfigurator.annotate_params import update_parameter_documentation
-
-from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
+from MethodicConfigurator.annotate_params import (
+    PARAM_DEFINITION_XML_FILE,
+    Par,
+    format_columns,
+    get_xml_dir,
+    get_xml_url,
+    load_default_param_file,
+    parse_parameter_metadata,
+    split_into_lines,
+    update_parameter_documentation,
+)
 from MethodicConfigurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
-
+from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
 from MethodicConfigurator.internationalization import _
 
 TOOLTIP_MAX_LENGTH = 105
@@ -191,7 +184,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                         key, value = item.split(':')
                         param_info['Bitmask'][int(key.strip())] = value.strip()
 
-            if 'values' in param_info and param_info['values']:
+            if param_info.get('values'):
                 try:
                     param_info['Values'] = {int(k): v for k, v in param_info['values'].items()}
                 except ValueError:

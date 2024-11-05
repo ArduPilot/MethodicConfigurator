@@ -11,26 +11,18 @@ SPDX-FileCopyrightText: 2011-2024 Andrew Tridgell, 2024 Amilcar Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-from argparse import ArgumentParser
-
 import logging
-
-import struct
-import time
-import random
 import os
-
-from io import BytesIO as SIO
-
+import random
+import struct
 import sys
-
-from typing import Dict
-from typing import Tuple
-
+import time
+from argparse import ArgumentParser
 from datetime import datetime
+from io import BytesIO as SIO
+from typing import Dict, Tuple
 
 from pymavlink import mavutil
-
 
 # pylint: disable=too-many-lines
 # pylint: disable=invalid-name

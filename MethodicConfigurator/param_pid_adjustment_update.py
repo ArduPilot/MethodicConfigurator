@@ -13,11 +13,11 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-import os
 import argparse
-import subprocess
-from typing import List, Dict
+import os
 import re
+import subprocess
+from typing import Dict, List
 
 PARAM_NAME_REGEX = r'^[A-Z][A-Z_0-9]*$'
 PARAM_NAME_MAX_LEN = 16

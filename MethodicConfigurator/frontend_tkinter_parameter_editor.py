@@ -8,53 +8,39 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-from argparse import ArgumentParser
-
 import tkinter as tk
-from tkinter import messagebox
-from tkinter import ttk
-from tkinter import filedialog
-
+from argparse import ArgumentParser
 from logging import basicConfig as logging_basicConfig
+from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
+
 #from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import warning as logging_warning
-from logging import error as logging_error
+from tkinter import filedialog, messagebox, ttk
+
 #from logging import critical as logging_critical
-
-from typing import List
-from typing import Tuple
-
+from typing import List, Tuple
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
 from MethodicConfigurator.annotate_params import Par
-
-from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
-
-from MethodicConfigurator.backend_filesystem import LocalFilesystem
-from MethodicConfigurator.backend_filesystem import is_within_tolerance
-
+from MethodicConfigurator.backend_filesystem import LocalFilesystem, is_within_tolerance
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
-
 from MethodicConfigurator.backend_flightcontroller import FlightController
-
-from MethodicConfigurator.frontend_tkinter_base import show_tooltip
-from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
-from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
-from MethodicConfigurator.frontend_tkinter_base import BaseWindow
-from MethodicConfigurator.frontend_tkinter_base import RichText
-from MethodicConfigurator.frontend_tkinter_base import get_widget_font
-from MethodicConfigurator.frontend_tkinter_base import UsagePopupWindow
-
+from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
+from MethodicConfigurator.frontend_tkinter_base import (
+    AutoResizeCombobox,
+    BaseWindow,
+    ProgressWindow,
+    RichText,
+    UsagePopupWindow,
+    get_widget_font,
+    show_tooltip,
+)
 from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
-
 from MethodicConfigurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
-
 from MethodicConfigurator.internationalization import _
-
 from MethodicConfigurator.tempcal_imu import IMUfit
-
 from MethodicConfigurator.version import VERSION
 
 

@@ -11,25 +11,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
 import tkinter as tk
-from tkinter import font as tkFont
-from tkinter import messagebox
-from tkinter import ttk
-from tkinter import BooleanVar
+from logging import error as logging_error
 
 # from logging import debug as logging_debug
 # from logging import info as logging_info
 from logging import warning as logging_warning
-from logging import error as logging_error
-
 from platform import system as platform_system
+from tkinter import BooleanVar, messagebox, ttk
+from tkinter import font as tkFont
 
-from PIL import Image
-from PIL import ImageTk
+from PIL import Image, ImageTk
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
-
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
-
 from MethodicConfigurator.internationalization import _
 
 
@@ -112,9 +106,8 @@ class AutoResizeCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
                 self.set(selected_element)
             else:
                 logging_error(_("param_file combobox selected string '%s' not in list %s"), selected_element, values)
-        else:
-            if values:
-                logging_warning(_("No param_file combobox element selected"))
+        elif values:
+            logging_warning(_("No param_file combobox element selected"))
         if values:
             update_combobox_width(self)
         if tooltip:
@@ -188,11 +181,10 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
                 self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
             elif platform_system() == 'Darwin':
                 self.canvas.yview_scroll(int(-1 * event.delta), "units")
-            else:
-                if event.num == 4:
-                    self.canvas.yview_scroll(-1, "units")
-                elif event.num == 5:
-                    self.canvas.yview_scroll(1, "units")
+            elif event.num == 4:
+                self.canvas.yview_scroll(-1, "units")
+            elif event.num == 5:
+                self.canvas.yview_scroll(1, "units")
 
     def on_enter(self, _event):                             # bind wheel events when the cursor enters the control
         if platform_system() == 'Linux':

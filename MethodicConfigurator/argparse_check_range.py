@@ -10,13 +10,11 @@ SPDX-License-Identifier: Apache-2.0
 https://gist.github.com/dmitriykovalev/2ab1aa33a8099ef2d514925d84aa89e7
 '''
 
-from argparse import Action
-from argparse import ArgumentError
-from operator import gt
-from operator import ge
-from operator import lt
-from operator import le
+from argparse import Action, ArgumentError
+from operator import ge, gt, le, lt
+
 from MethodicConfigurator.internationalization import _
+
 
 class CheckRange(Action):
     '''

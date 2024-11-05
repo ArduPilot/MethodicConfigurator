@@ -8,20 +8,18 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-from os import path as os_path
+from json import JSONDecodeError
+from json import load as json_load
+from logging import error as logging_error
 
 # from sys import exit as sys_exit
 # from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import warning as logging_warning
-from logging import error as logging_error
-
-from json import load as json_load
-from json import JSONDecodeError
+from os import path as os_path
 from typing import Tuple
 
 from MethodicConfigurator.annotate_params import Par
-
 from MethodicConfigurator.internationalization import _
 
 

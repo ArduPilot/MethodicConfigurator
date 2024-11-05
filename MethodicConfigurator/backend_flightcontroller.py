@@ -9,33 +9,25 @@ SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
 from logging import debug as logging_debug
+from logging import error as logging_error
 from logging import info as logging_info
 from logging import warning as logging_warning
-from logging import error as logging_error
-
+from os import name as os_name
+from os import path as os_path
+from os import readlink as os_readlink
 from time import sleep as time_sleep
 from time import time as time_time
-from os import path as os_path
-from os import name as os_name
-from os import readlink as os_readlink
-from typing import Dict
-from typing import List
-from typing import Tuple
+from typing import Dict, List, Tuple
 
 import serial.tools.list_ports
 import serial.tools.list_ports_common
-
 from serial.serialutil import SerialException
 
 from MethodicConfigurator.annotate_params import Par
-
+from MethodicConfigurator.argparse_check_range import CheckRange
 from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
 from MethodicConfigurator.backend_mavftp import MAVFTP
-
-from MethodicConfigurator.argparse_check_range import CheckRange
-
 from MethodicConfigurator.internationalization import _
-
 
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules

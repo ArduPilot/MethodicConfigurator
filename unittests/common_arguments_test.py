@@ -9,8 +9,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
 import unittest
-from unittest.mock import MagicMock
 from argparse import ArgumentParser
+from unittest.mock import MagicMock
 
 from MethodicConfigurator import common_arguments
 
