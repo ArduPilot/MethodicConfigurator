@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-'''
+"""
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
-'''
+"""
 
 from json import JSONDecodeError
 from json import load as json_load
@@ -34,6 +34,7 @@ class ConfigurationSteps:
         configuration_steps_filename (str): The name of the file containing documentation for the configuration files.
         configuration_steps (dict): A dictionary containing the configuration steps.
     """
+
     def __init__(self, _vehicle_dir: str, vehicle_type: str):
         self.configuration_steps_filename = "configuration_steps_" + vehicle_type + ".json"
         self.configuration_steps = {}
@@ -42,7 +43,7 @@ class ConfigurationSteps:
         self.log_loaded_file = False
 
     def re_init(self, vehicle_dir: str, vehicle_type: str):
-        if vehicle_type == '':
+        if vehicle_type == "":
             return
         self.configuration_steps_filename = "configuration_steps_" + vehicle_type + ".json"
         # Define a list of directories to search for the configuration_steps_filename file
@@ -50,17 +51,20 @@ class ConfigurationSteps:
         file_found = False
         for i, directory in enumerate(search_directories):
             try:
-                with open(os_path.join(directory, self.configuration_steps_filename), 'r', encoding='utf-8') as file:
+                with open(os_path.join(directory, self.configuration_steps_filename), "r", encoding="utf-8") as file:
                     self.configuration_steps = json_load(file)
                     file_found = True
                     if self.log_loaded_file:
                         if i == 0:
-                            logging_warning(_("Configuration steps '%s' loaded from %s " \
-                                            "(overwriting default configuration steps)."),
-                                            self.configuration_steps_filename, directory)
+                            logging_warning(
+                                _("Configuration steps '%s' loaded from %s (overwriting default configuration steps)."),
+                                self.configuration_steps_filename,
+                                directory,
+                            )
                         if i == 1:
-                            logging_info(_("Configuration steps '%s' loaded from %s."),
-                                         self.configuration_steps_filename, directory)
+                            logging_info(
+                                _("Configuration steps '%s' loaded from %s."), self.configuration_steps_filename, directory
+                            )
                     break
             except FileNotFoundError:
                 pass
@@ -69,8 +73,8 @@ class ConfigurationSteps:
                 break
         if file_found:
             for filename, file_info in self.configuration_steps.items():
-                self.__validate_parameters_in_configuration_steps(filename, file_info, 'forced')
-                self.__validate_parameters_in_configuration_steps(filename, file_info, 'derived')
+                self.__validate_parameters_in_configuration_steps(filename, file_info, "forced")
+                self.__validate_parameters_in_configuration_steps(filename, file_info, "derived")
         else:
             logging_warning(_("No configuration steps documentation and no forced and derived parameters will be available."))
         self.log_loaded_file = True
@@ -82,20 +86,32 @@ class ConfigurationSteps:
         This method checks if the parameters in the configuration steps are correctly formatted.
         If a parameter is missing the 'New Value' or 'Change Reason' attribute, an error message is logged.
         """
-        if parameter_type + '_parameters' in file_info:
-            if not isinstance(file_info[parameter_type + '_parameters'], dict):
-                logging_error(_("Error in file '%s': '%s' %s parameter is not a dictionary"),
-                             self.configuration_steps_filename, filename, parameter_type)
+        if parameter_type + "_parameters" in file_info:
+            if not isinstance(file_info[parameter_type + "_parameters"], dict):
+                logging_error(
+                    _("Error in file '%s': '%s' %s parameter is not a dictionary"),
+                    self.configuration_steps_filename,
+                    filename,
+                    parameter_type,
+                )
                 return
-            for parameter, parameter_info in file_info[parameter_type + '_parameters'].items():
+            for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():
                 if "New Value" not in parameter_info:
-                    logging_error(_("Error in file '%s': '%s' %s parameter '%s'"
-                                        " 'New Value' attribute not found."),
-                                        self.configuration_steps_filename, filename, parameter_type, parameter)
+                    logging_error(
+                        _("Error in file '%s': '%s' %s parameter '%s' 'New Value' attribute not found."),
+                        self.configuration_steps_filename,
+                        filename,
+                        parameter_type,
+                        parameter,
+                    )
                 if "Change Reason" not in parameter_info:
-                    logging_error(_("Error in file '%s': '%s' %s parameter '%s'"
-                                        " 'Change Reason' attribute not found."),
-                                        self.configuration_steps_filename, filename, parameter_type, parameter)
+                    logging_error(
+                        _("Error in file '%s': '%s' %s parameter '%s' 'Change Reason' attribute not found."),
+                        self.configuration_steps_filename,
+                        filename,
+                        parameter_type,
+                        parameter,
+                    )
 
     def compute_parameters(self, filename: str, file_info: dict, parameter_type: str, variables: dict) -> str:
         """
@@ -104,17 +120,20 @@ class ConfigurationSteps:
         If the parameter is forced, it is added to the forced_parameters dictionary.
         If the parameter is derived, it is added to the derived_parameters dictionary.
         """
-        if parameter_type + '_parameters' not in file_info or not variables:
+        if parameter_type + "_parameters" not in file_info or not variables:
             return ""
-        destination = self.forced_parameters if parameter_type == 'forced' else self.derived_parameters
-        for parameter, parameter_info in file_info[parameter_type + '_parameters'].items():  # pylint: disable=too-many-nested-blocks
+        destination = self.forced_parameters if parameter_type == "forced" else self.derived_parameters
+        for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():  # pylint: disable=too-many-nested-blocks
             try:
-                if ('fc_parameters' in str(parameter_info["New Value"])) and \
-                   ('fc_parameters' not in variables or variables['fc_parameters'] == {}):
-                    error_msg = _("In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
-                        "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?")
+                if ("fc_parameters" in str(parameter_info["New Value"])) and (
+                    "fc_parameters" not in variables or variables["fc_parameters"] == {}
+                ):
+                    error_msg = _(
+                        "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
+                        "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?"
+                    )
                     error_msg = error_msg.format(**locals())
-                    if parameter_type == 'forced':
+                    if parameter_type == "forced":
                         logging_error(error_msg)
                         return error_msg
                     logging_warning(error_msg)
@@ -123,23 +142,25 @@ class ConfigurationSteps:
 
                 # convert (combobox) string text to (parameter value) string int or float
                 if isinstance(result, str):
-                    if parameter in variables['doc_dict']:
-                        values = variables['doc_dict'][parameter]['values']
+                    if parameter in variables["doc_dict"]:
+                        values = variables["doc_dict"][parameter]["values"]
                         if values:
                             result = next(key for key, value in values.items() if value == result)
                         else:
-                            bitmasks = variables['doc_dict'][parameter]['Bitmask']
+                            bitmasks = variables["doc_dict"][parameter]["Bitmask"]
                             if bitmasks:
-                                result = 2**next(key for key, bitmask in bitmasks.items() if bitmask == result)
+                                result = 2 ** next(key for key, bitmask in bitmasks.items() if bitmask == result)
 
                 if filename not in destination:
                     destination[filename] = {}
                 destination[filename][parameter] = Par(float(result), parameter_info["Change Reason"])
             except (SyntaxError, NameError, KeyError, StopIteration) as _e:
-                error_msg = _("In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} " \
-                    "parameter '{parameter}' could not be computed: {_e}")
+                error_msg = _(
+                    "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
+                    "parameter '{parameter}' could not be computed: {_e}"
+                )
                 error_msg = error_msg.format(**locals())
-                if parameter_type == 'forced':
+                if parameter_type == "forced":
                     logging_error(error_msg)
                     return error_msg
                 logging_warning(error_msg)
@@ -147,20 +168,21 @@ class ConfigurationSteps:
 
     def auto_changed_by(self, selected_file: str):
         if selected_file in self.configuration_steps:
-            return self.configuration_steps[selected_file].get('auto_changed_by', '')
-        return ''
+            return self.configuration_steps[selected_file].get("auto_changed_by", "")
+        return ""
 
     def jump_possible(self, selected_file: str):
         if selected_file in self.configuration_steps:
-            return self.configuration_steps[selected_file].get('jump_possible', {})
+            return self.configuration_steps[selected_file].get("jump_possible", {})
         return {}
 
     def get_documentation_text_and_url(self, selected_file: str, prefix_key: str) -> Tuple[str, str]:
-        documentation = self.configuration_steps.get(selected_file, {}) if \
-            self.configuration_steps else None
+        documentation = self.configuration_steps.get(selected_file, {}) if self.configuration_steps else None
         if documentation is None:
-            text = _("File '{self.configuration_steps_filename}' not found. " \
-                "No intermediate parameter configuration steps available")
+            text = _(
+                "File '{self.configuration_steps_filename}' not found. "
+                "No intermediate parameter configuration steps available"
+            )
             text = text.format(**locals())
             url = None
         else:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-'''
+"""
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 https://code.activestate.com/recipes/580770-combobox-autocomplete/
@@ -8,8 +8,7 @@ https://code.activestate.com/recipes/580770-combobox-autocomplete/
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
-'''
-
+"""
 
 import tkinter as tk
 from tkinter import Entry, Listbox, StringVar, ttk
@@ -32,8 +31,20 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
     """
     Entry with dynamicaly filtered ListBox to emulate an inteligent combobox widget
     """
-    def __init__(self, master, list_of_items=None, custom_filter_function=None, listbox_width=None, listbox_height=12, # pylint: disable=too-many-arguments
-                 ignorecase_match=False, startswith_match=True, vscrollbar=True, hscrollbar=True, **kwargs):
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        master,
+        list_of_items=None,
+        custom_filter_function=None,
+        listbox_width=None,
+        listbox_height=12,
+        ignorecase_match=False,
+        startswith_match=True,
+        vscrollbar=True,
+        hscrollbar=True,
+        **kwargs,
+    ):
         if list_of_items is None:
             raise ValueError(_("List_of_items can't be 'None'"))
         self._list_of_items = list_of_items
@@ -56,14 +67,14 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
         Entry.__init__(self, master, **kwargs)
 
-        self._trace_id = self._entry_var.trace_add('write', self._on_change_entry_var)
+        self._trace_id = self._entry_var.trace_add("write", self._on_change_entry_var)
 
         self._listbox = None
 
         self.bind("<Up>", self._previous)
         self.bind("<Down>", self._next)
-        self.bind('<Control-n>', self._next)
-        self.bind('<Control-p>', self._previous)
+        self.bind("<Control-n>", self._next)
+        self.bind("<Control-p>", self._previous)
 
         self.bind("<Return>", self.update_entry_from_listbox)
         self.bind("<Escape>", lambda event: self.unpost_listbox())
@@ -78,10 +89,9 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         return [item for item in self._list_of_items if entry_data in item]
 
     def _on_change_entry_var(self, _name, _index, _mode):
-
         entry_data = self._entry_var.get()
 
-        if entry_data == '':
+        if entry_data == "":
             self.unpost_listbox()
             self.focus()
         else:
@@ -105,39 +115,40 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
     def _build_listbox(self, values):
         listbox_frame = ttk.Frame(self.master)
 
-        self._listbox = Listbox(listbox_frame, background="white", selectmode=SINGLE, activestyle="none",
-                                exportselection=False)
-        self._listbox.grid(row=0, column=0,sticky = N+E+W+S)
+        self._listbox = Listbox(
+            listbox_frame, background="white", selectmode=SINGLE, activestyle="none", exportselection=False
+        )
+        self._listbox.grid(row=0, column=0, sticky=N + E + W + S)
 
         self._listbox.bind("<ButtonRelease-1>", self.update_entry_from_listbox)
         self._listbox.bind("<Return>", self.update_entry_from_listbox)
         self._listbox.bind("<Escape>", lambda event: self.unpost_listbox())
 
-        self._listbox.bind('<Control-n>', self._next)
-        self._listbox.bind('<Control-p>', self._previous)
+        self._listbox.bind("<Control-n>", self._next)
+        self._listbox.bind("<Control-p>", self._previous)
 
         if self._use_vscrollbar:
-            vbar = ttk.Scrollbar(listbox_frame, orient=VERTICAL, command= self._listbox.yview)
-            vbar.grid(row=0, column=1, sticky=N+S)
+            vbar = ttk.Scrollbar(listbox_frame, orient=VERTICAL, command=self._listbox.yview)
+            vbar.grid(row=0, column=1, sticky=N + S)
 
-            self._listbox.configure(yscrollcommand= lambda first, last: autoscroll(vbar, first, last))
+            self._listbox.configure(yscrollcommand=lambda first, last: autoscroll(vbar, first, last))
 
         if self._use_hscrollbar:
-            hbar = ttk.Scrollbar(listbox_frame, orient=HORIZONTAL, command= self._listbox.xview)
-            hbar.grid(row=1, column=0, sticky=E+W)
+            hbar = ttk.Scrollbar(listbox_frame, orient=HORIZONTAL, command=self._listbox.xview)
+            hbar.grid(row=1, column=0, sticky=E + W)
 
-            self._listbox.configure(xscrollcommand= lambda first, last: autoscroll(hbar, first, last))
+            self._listbox.configure(xscrollcommand=lambda first, last: autoscroll(hbar, first, last))
 
-        listbox_frame.grid_columnconfigure(0, weight= 1)
-        listbox_frame.grid_rowconfigure(0, weight= 1)
+        listbox_frame.grid_columnconfigure(0, weight=1)
+        listbox_frame.grid_rowconfigure(0, weight=1)
 
         x = -self.cget("borderwidth") - self.cget("highlightthickness")
-        y = self.winfo_height()-self.cget("borderwidth") - self.cget("highlightthickness")
+        y = self.winfo_height() - self.cget("borderwidth") - self.cget("highlightthickness")
 
         if self._listbox_width:
             width = self._listbox_width
         else:
-            width=self.winfo_width()
+            width = self.winfo_width()
 
         listbox_frame.place(in_=self, x=x, y=y, width=width)
 
@@ -152,7 +163,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
             return
 
         entry_data = self._entry_var.get()
-        if entry_data == '':
+        if entry_data == "":
             return
 
         values = self.filter_function(entry_data)
@@ -179,7 +190,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
     def _set_var(self, text):
         self._entry_var.trace_remove("write", self._trace_id)
         self._entry_var.set(text)
-        self._trace_id = self._entry_var.trace_add('write', self._on_change_entry_var)
+        self._trace_id = self._entry_var.trace_add("write", self._on_change_entry_var)
 
     def update_entry_from_listbox(self, _event):
         if self._listbox is not None:
@@ -202,7 +213,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         if self._listbox is not None:
             current_selection = self._listbox.curselection()
 
-            if len(current_selection)==0:
+            if len(current_selection) == 0:
                 self._listbox.selection_set(0)
                 self._listbox.activate(0)
             else:
@@ -222,9 +233,8 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
     def _next(self, _event):
         if self._listbox is not None:
-
             current_selection = self._listbox.curselection()
-            if len(current_selection)==0:
+            if len(current_selection) == 0:
                 self._listbox.selection_set(0)
                 self._listbox.activate(0)
             else:
@@ -234,50 +244,126 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
                 if index == self._listbox.size() - 1:
                     index = 0
                 else:
-                    index +=1
+                    index += 1
 
                 self._listbox.see(index)
                 self._listbox.selection_set(index)
                 self._listbox.activate(index)
         return "break"
 
-if __name__ == '__main__':
-    def main():
 
+if __name__ == "__main__":
+
+    def main():
         list_of_items = [
-            "Cordell Cannata", "Lacey Naples", "Zachery Manigault", "Regan Brunt",
-            "Mario Hilgefort", "Austin Phong", "Moises Saum", "Willy Neill",
-            "Rosendo Sokoloff", "Salley Christenberry", "Toby Schneller",
-            "Angel Buchwald", "Nestor Criger", "Arie Jozwiak", "Nita Montelongo",
-            "Clemencia Okane", "Alison Scaggs", "Von Petrella", "Glennie Gurley",
-            "Jamar Callender", "Titus Wenrich", "Chadwick Liedtke", "Sharlene Yochum",
-            "Leonida Mutchler", "Duane Pickett", "Morton Brackins", "Ervin Trundy",
-            "Antony Orwig", "Audrea Yutzy", "Michal Hepp", "Annelle Hoadley",
-            "Hank Wyman", "Mika Fernandez", "Elisa Legendre", "Sade Nicolson",
-            "Jessie Yi", "Forrest Mooneyhan", "Alvin Widell", "Lizette Ruppe",
-            "Marguerita Pilarski", "Merna Argento", "Jess Daquila", "Breann Bevans",
-            "Melvin Guidry", "Jacelyn Vanleer", "Jerome Riendeau", "Iraida Nyquist",
-            "Micah Glantz", "Dorene Waldrip", "Fidel Garey", "Vertie Deady",
-            "Rosalinda Odegaard", "Chong Hayner", "Candida Palazzolo", "Bennie Faison",
-            "Nova Bunkley", "Francis Buckwalter", "Georgianne Espinal", "Karleen Dockins",
-            "Hertha Lucus", "Ike Alberty", "Deangelo Revelle", "Juli Gallup",
-            "Wendie Eisner", "Khalilah Travers", "Rex Outman", "Anabel King",
-            "Lorelei Tardiff", "Pablo Berkey", "Mariel Tutino", "Leigh Marciano",
-            "Ok Nadeau", "Zachary Antrim", "Chun Matthew", "Golden Keniston",
-            "Anthony Johson", "Rossana Ahlstrom", "Amado Schluter", "Delila Lovelady",
-            "Josef Belle", "Leif Negrete", "Alec Doss", "Darryl Stryker",
-            "Michael Cagley", "Sabina Alejo", "Delana Mewborn", "Aurelio Crouch",
-            "Ashlie Shulman", "Danielle Conlan", "Randal Donnell", "Rheba Anzalone",
-            "Lilian Truax", "Weston Quarterman", "Britt Brunt", "Leonie Corbett",
-            "Monika Gamet", "Ingeborg Bello", "Angelique Zhang", "Santiago Thibeau",
-            "Eliseo Helmuth"
+            "Cordell Cannata",
+            "Lacey Naples",
+            "Zachery Manigault",
+            "Regan Brunt",
+            "Mario Hilgefort",
+            "Austin Phong",
+            "Moises Saum",
+            "Willy Neill",
+            "Rosendo Sokoloff",
+            "Salley Christenberry",
+            "Toby Schneller",
+            "Angel Buchwald",
+            "Nestor Criger",
+            "Arie Jozwiak",
+            "Nita Montelongo",
+            "Clemencia Okane",
+            "Alison Scaggs",
+            "Von Petrella",
+            "Glennie Gurley",
+            "Jamar Callender",
+            "Titus Wenrich",
+            "Chadwick Liedtke",
+            "Sharlene Yochum",
+            "Leonida Mutchler",
+            "Duane Pickett",
+            "Morton Brackins",
+            "Ervin Trundy",
+            "Antony Orwig",
+            "Audrea Yutzy",
+            "Michal Hepp",
+            "Annelle Hoadley",
+            "Hank Wyman",
+            "Mika Fernandez",
+            "Elisa Legendre",
+            "Sade Nicolson",
+            "Jessie Yi",
+            "Forrest Mooneyhan",
+            "Alvin Widell",
+            "Lizette Ruppe",
+            "Marguerita Pilarski",
+            "Merna Argento",
+            "Jess Daquila",
+            "Breann Bevans",
+            "Melvin Guidry",
+            "Jacelyn Vanleer",
+            "Jerome Riendeau",
+            "Iraida Nyquist",
+            "Micah Glantz",
+            "Dorene Waldrip",
+            "Fidel Garey",
+            "Vertie Deady",
+            "Rosalinda Odegaard",
+            "Chong Hayner",
+            "Candida Palazzolo",
+            "Bennie Faison",
+            "Nova Bunkley",
+            "Francis Buckwalter",
+            "Georgianne Espinal",
+            "Karleen Dockins",
+            "Hertha Lucus",
+            "Ike Alberty",
+            "Deangelo Revelle",
+            "Juli Gallup",
+            "Wendie Eisner",
+            "Khalilah Travers",
+            "Rex Outman",
+            "Anabel King",
+            "Lorelei Tardiff",
+            "Pablo Berkey",
+            "Mariel Tutino",
+            "Leigh Marciano",
+            "Ok Nadeau",
+            "Zachary Antrim",
+            "Chun Matthew",
+            "Golden Keniston",
+            "Anthony Johson",
+            "Rossana Ahlstrom",
+            "Amado Schluter",
+            "Delila Lovelady",
+            "Josef Belle",
+            "Leif Negrete",
+            "Alec Doss",
+            "Darryl Stryker",
+            "Michael Cagley",
+            "Sabina Alejo",
+            "Delana Mewborn",
+            "Aurelio Crouch",
+            "Ashlie Shulman",
+            "Danielle Conlan",
+            "Randal Donnell",
+            "Rheba Anzalone",
+            "Lilian Truax",
+            "Weston Quarterman",
+            "Britt Brunt",
+            "Leonie Corbett",
+            "Monika Gamet",
+            "Ingeborg Bello",
+            "Angelique Zhang",
+            "Santiago Thibeau",
+            "Eliseo Helmuth",
         ]
 
         root = tk.Tk()
         root.geometry("300x300")
 
-        combobox_autocomplete = EntryWithDynamicalyFilteredListbox(root, list_of_items=list_of_items,
-                                                                   ignorecase_match=True, startswith_match=False)
+        combobox_autocomplete = EntryWithDynamicalyFilteredListbox(
+            root, list_of_items=list_of_items, ignorecase_match=True, startswith_match=False
+        )
 
         combobox_autocomplete.pack()
 

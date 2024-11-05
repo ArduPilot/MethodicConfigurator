@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-'''
+"""
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
-'''
+"""
 
 import os
 import shutil
@@ -20,6 +20,7 @@ files_to_copy = ["50_optical_flow_setup.param", "51_optical_flow_results.param",
 # Base directory for vehicle templates
 BASE_DIR = "vehicle_templates"
 
+
 # Function to get all subdirectories excluding the source (do not copy onto itself)
 def get_subdirectories(base_dir, exclude_source=True):
     subdirs = []
@@ -30,6 +31,7 @@ def get_subdirectories(base_dir, exclude_source=True):
         if len(dirs) == 0:  # Check if the directory is a leaf directory
             subdirs.append(rel_dir)
     return subdirs
+
 
 # Function to copy files
 def copy_files(source, target):
@@ -42,6 +44,7 @@ def copy_files(source, target):
             print(f"Copied {file} to {target}")
         except Exception as e:  # pylint: disable=broad-except
             print(f"Error copying {file} to {target}: {e!s}")
+
 
 # Get all ArduCopter subdirectories
 target_dirs = get_subdirectories(BASE_DIR)

@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 
-'''
+"""
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
-'''
+"""
 
 import argparse
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 
-#from logging import warning as logging_warning
+# from logging import warning as logging_warning
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
@@ -40,16 +40,20 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = argparse.ArgumentParser(description=_('ArduPilot methodic configurator is a simple GUI with a table that lists '
-                                     'parameters. The GUI reads intermediate parameter files from a directory and '
-                                     'displays their parameters in a table. Each row displays the parameter name, '
-                                     'its current value on the flight controller, its new value from the selected '
-                                     'intermediate parameter file, and an "Upload" checkbox. The GUI includes "Upload '
-                                     'selected params to FC" and "Skip" buttons at the bottom. '
-                                     'When "Upload Selected to FC" is clicked, it uploads the selected parameters to the '
-                                     'flight controller. '
-                                     'When "Skip" is pressed, it skips to the next intermediate parameter file. '
-                                     'The process gets repeated for each intermediate parameter file.'))
+    parser = argparse.ArgumentParser(
+        description=_(
+            "ArduPilot methodic configurator is a simple GUI with a table that lists "
+            "parameters. The GUI reads intermediate parameter files from a directory and "
+            "displays their parameters in a table. Each row displays the parameter name, "
+            "its current value on the flight controller, its new value from the selected "
+            'intermediate parameter file, and an "Upload" checkbox. The GUI includes "Upload '
+            'selected params to FC" and "Skip" buttons at the bottom. '
+            'When "Upload Selected to FC" is clicked, it uploads the selected parameters to the '
+            "flight controller. "
+            'When "Skip" is pressed, it skips to the next intermediate parameter file. '
+            "The process gets repeated for each intermediate parameter file."
+        )
+    )
     parser = FlightController.add_argparse_arguments(parser)
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindow.add_argparse_arguments(parser)
@@ -75,33 +79,33 @@ def connect_to_fc_and_read_parameters(args):
     else:
         logging_info(_("Vehicle type explicitly set to %s."), vehicle_type)
 
-    return flight_controller,vehicle_type
+    return flight_controller, vehicle_type
 
 
 def component_editor(args, flight_controller, vehicle_type, local_filesystem, vehicle_dir_window):
     component_editor_window = ComponentEditorWindow(VERSION, local_filesystem)
-    if vehicle_dir_window and \
-       vehicle_dir_window.configuration_template is not None and \
-       vehicle_dir_window.use_fc_params.get() and \
-       flight_controller.fc_parameters:
+    if (
+        vehicle_dir_window
+        and vehicle_dir_window.configuration_template is not None
+        and vehicle_dir_window.use_fc_params.get()
+        and flight_controller.fc_parameters
+    ):
         # copy vehicle parameters to component editor values
         component_editor_window.set_values_from_fc_parameters(flight_controller.fc_parameters, local_filesystem.doc_dict)
     component_editor_window.populate_frames()
     component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.info.flight_sw_version_and_type)
     component_editor_window.set_fc_manufacturer(flight_controller.info.vendor)
     component_editor_window.set_fc_model(flight_controller.info.product)
-    if vehicle_dir_window and \
-       vehicle_dir_window.configuration_template is not None:
+    if vehicle_dir_window and vehicle_dir_window.configuration_template is not None:
         component_editor_window.set_vehicle_configuration_template(vehicle_dir_window.configuration_template)
     if args.skip_component_editor:
         component_editor_window.root.after(10, component_editor_window.root.destroy)
     component_editor_window.root.mainloop()
 
-    if vehicle_dir_window and \
-       vehicle_dir_window.configuration_template is not None and \
-       vehicle_dir_window.use_fc_params.get():
+    if vehicle_dir_window and vehicle_dir_window.configuration_template is not None and vehicle_dir_window.use_fc_params.get():
         error_message = local_filesystem.copy_fc_params_values_to_template_created_vehicle_files(
-            flight_controller.fc_parameters)
+            flight_controller.fc_parameters
+        )
         if error_message:
             logging_error(error_message)
             show_error_message(_("Error in derived parameters"), error_message)
@@ -115,19 +119,20 @@ def main():
     _ = load_translation()  # done as soon as possible so that the correct language is used
     args = argument_parser()
 
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
+    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
     # Connect to the flight controller and read the parameters
     flight_controller, vehicle_type = connect_to_fc_and_read_parameters(args)
 
     param_default_values = {}
-    if flight_controller.master is not None or args.device == 'test':
+    if flight_controller.master is not None or args.device == "test":
         fciw = FlightControllerInfoWindow(flight_controller)
         param_default_values = fciw.get_param_default_values()
 
     try:
-        local_filesystem = LocalFilesystem(args.vehicle_dir, vehicle_type, flight_controller.info.flight_sw_version,
-                                           args.allow_editing_template_files)
+        local_filesystem = LocalFilesystem(
+            args.vehicle_dir, vehicle_type, flight_controller.info.flight_sw_version, args.allow_editing_template_files
+        )
     except SystemExit as exp:
         show_error_message(_("Fatal error reading parameter files"), f"{exp}")
         raise
@@ -150,7 +155,7 @@ def main():
     if param_default_values_dirty:
         local_filesystem.write_param_default_values_to_file(param_default_values)
 
-    imu_tcal_available = 'INS_TCAL1_ENABLE' in flight_controller.fc_parameters or not flight_controller.fc_parameters
+    imu_tcal_available = "INS_TCAL1_ENABLE" in flight_controller.fc_parameters or not flight_controller.fc_parameters
     start_file = local_filesystem.get_start_file(args.n, imu_tcal_available)
 
     # Call the GUI function with the starting intermediate parameter file

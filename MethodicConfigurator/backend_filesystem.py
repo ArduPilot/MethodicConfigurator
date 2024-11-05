@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-'''
+"""
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
-'''
+"""
 
 # from sys import exit as sys_exit
 from logging import debug as logging_debug
@@ -80,6 +80,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         param_default_dict (dict): A dictionary of default parameter values.
         doc_dict (dict): A dictionary containing documentation for each parameter.
     """
+
     def __init__(self, vehicle_dir: str, vehicle_type: str, fw_version: str, allow_editing_template_files: bool):
         self.file_parameters = None
         VehicleComponents.__init__(self)
@@ -117,21 +118,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         # Read intermediate parameters from files
         self.file_parameters = self.read_params_from_files()
         if not self.file_parameters:
-            return # No files intermediate parameters files found, no need to continue, the rest needs them
+            return  # No files intermediate parameters files found, no need to continue, the rest needs them
 
         # Read ArduPilot parameter documentation
         xml_url = get_xml_url(vehicle_type, self.fw_version)
         xml_dir = get_xml_dir(vehicle_dir)
-        self.doc_dict = parse_parameter_metadata(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE,
-                                                 vehicle_type, TOOLTIP_MAX_LENGTH)
+        self.doc_dict = parse_parameter_metadata(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE, vehicle_type, TOOLTIP_MAX_LENGTH)
         self.param_default_dict = load_default_param_file(xml_dir)
 
         # Extend parameter documentation metadata if <parameter_file>.pdef.xml exists
         for filename in self.file_parameters:
             pdef_xml_file = filename.replace(".param", ".pdef.xml")
             if os_path.exists(os_path.join(xml_dir, pdef_xml_file)):
-                doc_dict = parse_parameter_metadata("", xml_dir, pdef_xml_file,
-                                                    vehicle_type, TOOLTIP_MAX_LENGTH)
+                doc_dict = parse_parameter_metadata("", xml_dir, pdef_xml_file, vehicle_type, TOOLTIP_MAX_LENGTH)
                 self.doc_dict.update(doc_dict)
 
         self.__extend_and_reformat_parameter_documentation_metadata()
@@ -139,11 +138,12 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def vehicle_configuration_files_exist(self, vehicle_dir: str) -> bool:
         if os_path.exists(vehicle_dir) and os_path.isdir(vehicle_dir):
             vehicle_configuration_files = os_listdir(vehicle_dir)
-            if platform_system() == 'Windows':
+            if platform_system() == "Windows":
                 vehicle_configuration_files = [f.lower() for f in vehicle_configuration_files]
-            pattern = re_compile(r'^\d{2}_.*\.param$')
-            if self.vehicle_components_json_filename in vehicle_configuration_files and \
-               any(pattern.match(f) for f in vehicle_configuration_files):
+            pattern = re_compile(r"^\d{2}_.*\.param$")
+            if self.vehicle_components_json_filename in vehicle_configuration_files and any(
+                pattern.match(f) for f in vehicle_configuration_files
+            ):
                 return True
         return False
 
@@ -151,8 +151,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         # Rename parameter files if some new files got added to the vehicle directory
         if self.vehicle_dir is not None and self.configuration_steps is not None:
             for new_filename in self.configuration_steps:
-                if 'old_filenames' in self.configuration_steps[new_filename]:
-                    for old_filename in self.configuration_steps[new_filename]['old_filenames']:
+                if "old_filenames" in self.configuration_steps[new_filename]:
+                    for old_filename in self.configuration_steps[new_filename]["old_filenames"]:
                         if self.vehicle_configuration_file_exists(old_filename) and old_filename != new_filename:
                             new_filename_path = os_path.join(self.vehicle_dir, new_filename)
                             old_filename_path = os_path.join(self.vehicle_dir, old_filename)
@@ -161,34 +161,34 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     def __extend_and_reformat_parameter_documentation_metadata(self):  # pylint: disable=too-many-branches
         for param_name, param_info in self.doc_dict.items():
-            if 'fields' in param_info:
-                param_fields = param_info['fields']
-                if 'Units' in param_fields:
-                    units_list = param_fields['Units'].split('(')
-                    param_info['unit'] = units_list[0].strip()
+            if "fields" in param_info:
+                param_fields = param_info["fields"]
+                if "Units" in param_fields:
+                    units_list = param_fields["Units"].split("(")
+                    param_info["unit"] = units_list[0].strip()
                     if len(units_list) > 1:
-                        param_info['unit_tooltip'] = units_list[1].strip(')').strip()
-                if 'Range' in param_fields:
-                    param_info['min'] = float(param_fields['Range'].split(' ')[0].strip())
-                    param_info['max'] = float(param_fields['Range'].split(' ')[1].strip())
-                if 'Calibration' in param_fields:
-                    param_info['Calibration'] = self.str_to_bool(param_fields['Calibration'].strip())
-                if 'ReadOnly' in param_fields:
-                    param_info['ReadOnly'] = self.str_to_bool(param_fields['ReadOnly'].strip())
-                if 'RebootRequired' in param_fields:
-                    param_info['RebootRequired'] = self.str_to_bool(param_fields['RebootRequired'].strip())
-                if 'Bitmask' in param_fields:
-                    bitmask_items = param_fields['Bitmask'].split(',')
-                    param_info['Bitmask'] = {}
+                        param_info["unit_tooltip"] = units_list[1].strip(")").strip()
+                if "Range" in param_fields:
+                    param_info["min"] = float(param_fields["Range"].split(" ")[0].strip())
+                    param_info["max"] = float(param_fields["Range"].split(" ")[1].strip())
+                if "Calibration" in param_fields:
+                    param_info["Calibration"] = self.str_to_bool(param_fields["Calibration"].strip())
+                if "ReadOnly" in param_fields:
+                    param_info["ReadOnly"] = self.str_to_bool(param_fields["ReadOnly"].strip())
+                if "RebootRequired" in param_fields:
+                    param_info["RebootRequired"] = self.str_to_bool(param_fields["RebootRequired"].strip())
+                if "Bitmask" in param_fields:
+                    bitmask_items = param_fields["Bitmask"].split(",")
+                    param_info["Bitmask"] = {}
                     for item in bitmask_items:
-                        key, value = item.split(':')
-                        param_info['Bitmask'][int(key.strip())] = value.strip()
+                        key, value = item.split(":")
+                        param_info["Bitmask"][int(key.strip())] = value.strip()
 
-            if param_info.get('values'):
+            if param_info.get("values"):
                 try:
-                    param_info['Values'] = {int(k): v for k, v in param_info['values'].items()}
+                    param_info["Values"] = {int(k): v for k, v in param_info["values"].items()}
                 except ValueError:
-                    param_info['Values'] = {float(k): v for k, v in param_info['values'].items()}
+                    param_info["Values"] = {float(k): v for k, v in param_info["values"].items()}
                 # print(param_info['Values'])
 
             prefix_parts = [
@@ -196,13 +196,13 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             ]
             prefix_parts += param_info["documentation"]
             for key, value in param_info["fields"].items():
-                if key not in ['Units', 'UnitText']:
+                if key not in ["Units", "UnitText"]:
                     prefix_parts += split_into_lines(f"{key}: {value}", TOOLTIP_MAX_LENGTH)
             prefix_parts += format_columns(param_info["values"], TOOLTIP_MAX_LENGTH)
             if param_name in self.param_default_dict:
-                default_value = format(self.param_default_dict[param_name].value, '.6f').rstrip('0').rstrip('.')
+                default_value = format(self.param_default_dict[param_name].value, ".6f").rstrip("0").rstrip(".")
                 prefix_parts += [f"Default: {default_value}"]
-            param_info['doc_tooltip'] = ('\n').join(prefix_parts)
+            param_info["doc_tooltip"] = ("\n").join(prefix_parts)
 
     def read_params_from_files(self):
         """
@@ -219,11 +219,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         parameters = {}
         if os_path.isdir(self.vehicle_dir):
             # Regular expression pattern for filenames starting with two digits followed by an underscore and ending in .param
-            pattern = re_compile(r'^\d{2}_.*\.param$')
+            pattern = re_compile(r"^\d{2}_.*\.param$")
 
             for filename in sorted(os_listdir(self.vehicle_dir)):
                 if pattern.match(filename):
-                    if filename in ['00_default.param', '01_ignore_readonly.param']:
+                    if filename in ["00_default.param", "01_ignore_readonly.param"]:
                         continue
                     parameters[filename] = Par.load_param_file_into_dict(os_path.join(self.vehicle_dir, filename))
         else:
@@ -250,7 +250,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return False
         return None
 
-    def export_to_param(self, params: Dict[str, 'Par'], filename_out: str, annotate_doc: bool = True) -> None:
+    def export_to_param(self, params: Dict[str, "Par"], filename_out: str, annotate_doc: bool = True) -> None:
         """
         Exports a dictionary of parameters to a .param file and optionally annotates the documentation.
 
@@ -264,10 +264,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         """
         Par.export_to_param(Par.format_params(params), os_path.join(self.vehicle_dir, filename_out))
         if annotate_doc:
-            update_parameter_documentation(self.doc_dict,
-                                           os_path.join(self.vehicle_dir, filename_out),
-                                           "missionplanner",
-                                           self.param_default_dict)
+            update_parameter_documentation(
+                self.doc_dict, os_path.join(self.vehicle_dir, filename_out), "missionplanner", self.param_default_dict
+            )
 
     def vehicle_configuration_file_exists(self, filename: str) -> bool:
         """
@@ -279,8 +278,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         Returns:
         - bool: True if the file exists and is a file (not a directory), False otherwise.
         """
-        return os_path.exists(os_path.join(self.vehicle_dir, filename)) and \
-            os_path.isfile(os_path.join(self.vehicle_dir, filename))
+        return os_path.exists(os_path.join(self.vehicle_dir, filename)) and os_path.isfile(
+            os_path.join(self.vehicle_dir, filename)
+        )
 
     def __all_intermediate_parameter_file_comments(self) -> Dict[str, str]:
         """
@@ -300,7 +300,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     ret[param] = info.comment
         return ret
 
-    def annotate_intermediate_comments_to_param_dict(self, param_dict: Dict[str, float]) -> Dict[str, 'Par']:
+    def annotate_intermediate_comments_to_param_dict(self, param_dict: Dict[str, float]) -> Dict[str, "Par"]:
         """
         Annotates comments from intermediate parameter files to a parameter value-only dictionary.
 
@@ -317,10 +317,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         ret = {}
         ip_comments = self.__all_intermediate_parameter_file_comments()
         for param, value in param_dict.items():
-            ret[param] = Par(float(value), ip_comments.get(param, ''))
+            ret[param] = Par(float(value), ip_comments.get(param, ""))
         return ret
 
-    def categorize_parameters(self, param: Dict[str, 'Par']) -> List[Dict[str, 'Par']]:
+    def categorize_parameters(self, param: Dict[str, "Par"]) -> List[Dict[str, "Par"]]:
         """
         Categorize parameters into three categories based on their default values and documentation attributes.
 
@@ -340,15 +340,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         non_default__writable_calibrations = {}
         non_default__writable_non_calibrations = {}
         for param_name, param_info in param.items():
-            if param_name in self.param_default_dict and is_within_tolerance(param_info.value,
-                                                                             self.param_default_dict[param_name].value):
-                continue     # parameter has a default value, ignore it
+            if param_name in self.param_default_dict and is_within_tolerance(
+                param_info.value, self.param_default_dict[param_name].value
+            ):
+                continue  # parameter has a default value, ignore it
 
-            if param_name in self.doc_dict and self.doc_dict[param_name].get('ReadOnly', False):
+            if param_name in self.doc_dict and self.doc_dict[param_name].get("ReadOnly", False):
                 non_default__read_only_params[param_name] = param_info
                 continue
 
-            if param_name in self.doc_dict and self.doc_dict[param_name].get('Calibration', False):
+            if param_name in self.doc_dict and self.doc_dict[param_name].get("Calibration", False):
                 non_default__writable_calibrations[param_name] = param_info
                 continue
             non_default__writable_non_calibrations[param_name] = param_info
@@ -395,7 +396,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                                             indicating if the file was written and a string for the filename.
         """
         zip_file_path = self.zip_file_path()
-        with ZipFile(zip_file_path, 'w') as zipf:
+        with ZipFile(zip_file_path, "w") as zipf:
             # Add all intermediate parameter files
             for file_name in self.file_parameters:
                 zipf.write(os_path.join(self.vehicle_dir, file_name), arcname=file_name)
@@ -404,9 +405,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.add_configuration_file_to_zip(zipf, pdef_xml_file)
 
             # Check for and add specific files if they exist
-            specific_files = ["00_default.param", "apm.pdef.xml", self.configuration_steps_filename,
-                              self.vehicle_components_json_filename, "vehicle.jpg", "last_uploaded_filename.txt",
-                              "tempcal_gyro.png", "tempcal_acc.png"]
+            specific_files = [
+                "00_default.param",
+                "apm.pdef.xml",
+                self.configuration_steps_filename,
+                self.vehicle_components_json_filename,
+                "vehicle.jpg",
+                "last_uploaded_filename.txt",
+                "tempcal_gyro.png",
+                "tempcal_acc.png",
+            ]
             for file_name in specific_files:
                 self.add_configuration_file_to_zip(zipf, file_name)
 
@@ -417,11 +425,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         logging_info(_("Intermediate parameter files and summary files zipped to %s"), zip_file_path)
 
     def vehicle_image_filepath(self):
-        return os_path.join(self.vehicle_dir, 'vehicle.jpg')
+        return os_path.join(self.vehicle_dir, "vehicle.jpg")
 
     def vehicle_image_exists(self):
         return os_path.exists(self.vehicle_image_filepath()) and os_path.isfile(self.vehicle_image_filepath())
-
 
     @staticmethod
     def new_vehicle_dir(base_dir: str, new_dir: str):
@@ -434,7 +441,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def copy_template_files_to_new_vehicle_dir(self, template_dir: str, new_vehicle_dir: str):
         # Copy the template files to the new vehicle directory
         for item in os_listdir(template_dir):
-            if item in ['apm.pdef.xml', 'vehicle.jpg', 'last_uploaded_filename.txt', 'tempcal_acc.png', 'tempcal_gyro.png']:
+            if item in ["apm.pdef.xml", "vehicle.jpg", "last_uploaded_filename.txt", "tempcal_acc.png", "tempcal_gyro.png"]:
                 continue
             s = os_path.join(template_dir, item)
             d = os_path.join(new_vehicle_dir, item)
@@ -464,14 +471,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     def write_last_uploaded_filename(self, current_file: str):
         try:
-            with open(os_path.join(self.vehicle_dir, 'last_uploaded_filename.txt'), 'w', encoding='utf-8') as file:
+            with open(os_path.join(self.vehicle_dir, "last_uploaded_filename.txt"), "w", encoding="utf-8") as file:
                 file.write(current_file)
         except Exception as e:  # pylint: disable=broad-except
             logging_error(_("Error writing last uploaded filename: %s"), e)
 
     def __read_last_uploaded_filename(self) -> str:
         try:
-            with open(os_path.join(self.vehicle_dir, 'last_uploaded_filename.txt'), 'r', encoding='utf-8') as file:
+            with open(os_path.join(self.vehicle_dir, "last_uploaded_filename.txt"), "r", encoding="utf-8") as file:
                 return file.read().strip()
         except FileNotFoundError as e:
             logging_debug(_("last_uploaded_filename.txt not found: %s"), e)
@@ -488,11 +495,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 return ""
 
             # Determine the starting file based on the --n command line argument
-            start_file_index = explicit_index # Ensure the index is within the range of available files
+            start_file_index = explicit_index  # Ensure the index is within the range of available files
             if start_file_index >= len(files):
                 start_file_index = len(files) - 1
-                logging_warning(_("Starting file index %s is out of range. Starting with file %s instead."),
-                                explicit_index, files[start_file_index])
+                logging_warning(
+                    _("Starting file index %s is out of range. Starting with file %s instead."),
+                    explicit_index,
+                    files[start_file_index],
+                )
             return files[start_file_index]
 
         if tcal_available:
@@ -526,14 +536,13 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     def get_eval_variables(self):
         variables = {}
-        if hasattr(self, 'vehicle_components') and self.vehicle_components and \
-                'Components' in self.vehicle_components:
-            variables['vehicle_components'] = self.vehicle_components['Components']
-        if hasattr(self, 'doc_dict') and self.doc_dict:
-            variables['doc_dict'] = self.doc_dict
+        if hasattr(self, "vehicle_components") and self.vehicle_components and "Components" in self.vehicle_components:
+            variables["vehicle_components"] = self.vehicle_components["Components"]
+        if hasattr(self, "doc_dict") and self.doc_dict:
+            variables["doc_dict"] = self.doc_dict
         return variables
 
-    def copy_fc_params_values_to_template_created_vehicle_files(self, fc_parameters: Dict[str, 'Par']):
+    def copy_fc_params_values_to_template_created_vehicle_files(self, fc_parameters: Dict[str, "Par"]):
         eval_variables = self.get_eval_variables()
         for param_filename, param_dict in self.file_parameters.items():
             for param_name, param in param_dict.items():
@@ -541,48 +550,52 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     param.value = fc_parameters[param_name]
             if self.configuration_steps and param_filename in self.configuration_steps:
                 step_dict = self.configuration_steps[param_filename]
-                error_msg = self.compute_parameters(param_filename, step_dict, 'forced', eval_variables)
+                error_msg = self.compute_parameters(param_filename, step_dict, "forced", eval_variables)
                 if error_msg:
                     return error_msg
-                error_msg = self.compute_parameters(param_filename, step_dict, 'derived', eval_variables)
+                error_msg = self.compute_parameters(param_filename, step_dict, "derived", eval_variables)
                 if error_msg:
                     return error_msg
             Par.export_to_param(Par.format_params(param_dict), os_path.join(self.vehicle_dir, param_filename))
-        return ''
+        return ""
 
-    def write_param_default_values(self, param_default_values: Dict[str, 'Par']) -> bool:
+    def write_param_default_values(self, param_default_values: Dict[str, "Par"]) -> bool:
         param_default_values = dict(sorted(param_default_values.items()))
         if self.param_default_dict != param_default_values:
             self.param_default_dict = param_default_values
             return True
         return False
 
-    def write_param_default_values_to_file(self, param_default_values: Dict[str, 'Par'], filename: str='00_default.param'):
+    def write_param_default_values_to_file(self, param_default_values: Dict[str, "Par"], filename: str = "00_default.param"):
         if self.write_param_default_values(param_default_values):
             Par.export_to_param(Par.format_params(self.param_default_dict), os_path.join(self.vehicle_dir, filename))
 
     def get_download_url_and_local_filename(self, selected_file: str) -> Tuple[str, str]:
         if selected_file in self.configuration_steps:
-            if 'download_file' in self.configuration_steps[selected_file] and \
-               self.configuration_steps[selected_file]['download_file']:
-                src = self.configuration_steps[selected_file]['download_file'].get('source_url', '')
-                dst = self.configuration_steps[selected_file]['download_file'].get('dest_local', '')
+            if (
+                "download_file" in self.configuration_steps[selected_file]
+                and self.configuration_steps[selected_file]["download_file"]
+            ):
+                src = self.configuration_steps[selected_file]["download_file"].get("source_url", "")
+                dst = self.configuration_steps[selected_file]["download_file"].get("dest_local", "")
                 if self.vehicle_dir and src and dst:
                     return src, os_path.join(self.vehicle_dir, dst)
-        return '', ''
+        return "", ""
 
     def get_upload_local_and_remote_filenames(self, selected_file: str) -> Tuple[str, str]:
         if selected_file in self.configuration_steps:
-            if 'upload_file' in self.configuration_steps[selected_file] and \
-               self.configuration_steps[selected_file]['upload_file']:
-                src = self.configuration_steps[selected_file]['upload_file'].get('source_local', '')
-                dst = self.configuration_steps[selected_file]['upload_file'].get('dest_on_fc', '')
+            if (
+                "upload_file" in self.configuration_steps[selected_file]
+                and self.configuration_steps[selected_file]["upload_file"]
+            ):
+                src = self.configuration_steps[selected_file]["upload_file"].get("source_local", "")
+                dst = self.configuration_steps[selected_file]["upload_file"].get("dest_on_fc", "")
                 if self.vehicle_dir and src and dst:
                     return os_path.join(self.vehicle_dir, src), dst
-        return '', ''
+        return "", ""
 
     @staticmethod
-    def download_file_from_url(url: str, local_filename: str, timeout: int=5) -> bool:
+    def download_file_from_url(url: str, local_filename: str, timeout: int = 5) -> bool:
         if not url or not local_filename:
             logging_error(_("URL or local filename not provided."))
             return False
@@ -599,23 +612,39 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     @staticmethod
     def add_argparse_arguments(parser):
-        parser.add_argument('-t', '--vehicle-type',
-                            choices=VehicleComponents.supported_vehicles(),
-                            default='',
-                            help=_('The type of the vehicle. Defaults to ArduCopter'))
-        parser.add_argument('--vehicle-dir',
-                            type=str,
-                            default=os_getcwd(),
-                            help=_('Directory containing vehicle-specific intermediate parameter files. '
-                            'Defaults to the current working directory'))
-        parser.add_argument('--n',
-                            type=int,
-                            default=-1,
-                            help=_('Start directly on the nth intermediate parameter file (skips previous files). '
-                            'Default is to start on the file next to the last that you wrote to the flight controller.'
-                            'If the file does not exist, it will start on the first file.'))
-        parser.add_argument('--allow-editing-template-files',
-                            action='store_true',
-                            help=_('Allow opening and editing template files directly. '
-                            'Only for software developers that know what they are doing.'))
+        parser.add_argument(
+            "-t",
+            "--vehicle-type",
+            choices=VehicleComponents.supported_vehicles(),
+            default="",
+            help=_("The type of the vehicle. Defaults to ArduCopter"),
+        )
+        parser.add_argument(
+            "--vehicle-dir",
+            type=str,
+            default=os_getcwd(),
+            help=_(
+                "Directory containing vehicle-specific intermediate parameter files. "
+                "Defaults to the current working directory"
+            ),
+        )
+        parser.add_argument(
+            "--n",
+            type=int,
+            default=-1,
+            help=_(
+                "Start directly on the nth intermediate parameter file (skips previous files). "
+                "Default is to start on the file next to the last that you wrote to the flight controller."
+                "If the file does not exist, it will start on the first file."
+            ),
+        )
+        parser.add_argument(
+            "--allow-editing-template-files",
+            action="store_true",
+            help=_(
+                "Allow opening and editing template files directly. "
+                "Only for software developers that know what they are doing."
+                "Defaults to %(default)s"
+            ),
+        )
         return parser

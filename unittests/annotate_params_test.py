@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 
-'''
+"""
 These are the unit tests for the python script that fetches online ArduPilot
 parameter documentation (if not cached) and adds it to the specified file or
 to all *.param and *.parm files in the specified directory.
 
 Author: Amilcar do Carmo Lucas
-'''
+"""
 
 # pylint: skip-file
 
@@ -37,7 +37,6 @@ from MethodicConfigurator.annotate_params import (
 
 
 class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-docstring
-
     def setUp(self):
         # Create a temporary directory
         self.temp_dir = tempfile.mkdtemp()
@@ -51,25 +50,25 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
                 "humanName": "Param 1",
                 "documentation": ["Documentation for Param 1"],
                 "fields": {"Field1": "Value1", "Field2": "Value2"},
-                "values": {"Code1": "Value1", "Code2": "Value2"}
+                "values": {"Code1": "Value1", "Code2": "Value2"},
             },
             "PARAM2": {
                 "humanName": "Param 2",
                 "documentation": ["Documentation for Param 2"],
                 "fields": {"Field3": "Value3", "Field4": "Value4"},
-                "values": {"Code3": "Value3", "Code4": "Value4"}
+                "values": {"Code3": "Value3", "Code4": "Value4"},
             },
             "PARAM_1": {
                 "humanName": "Param _ 1",
                 "documentation": ["Documentation for Param_1"],
                 "fields": {"Field_1": "Value_1", "Field_2": "Value_2"},
-                "values": {"Code_1": "Value_1", "Code_2": "Value_2"}
+                "values": {"Code_1": "Value_1", "Code_2": "Value_2"},
             },
         }
 
-    @patch('builtins.open', new_callable=mock_open, read_data='<root></root>')
-    @patch('os.path.isfile')
-    @patch('annotate_params.Par.load_param_file_into_dict')
+    @patch("builtins.open", new_callable=mock_open, read_data="<root></root>")
+    @patch("os.path.isfile")
+    @patch("annotate_params.Par.load_param_file_into_dict")
     def test_get_xml_data_local_file(self, mock_load_param, mock_isfile, mock_open):
         # Mock the isfile function to return True
         mock_isfile.return_value = True
@@ -84,9 +83,9 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         self.assertIsInstance(result, ET.Element)
 
         # Assert that the file was opened correctly
-        mock_open.assert_called_once_with(os.path.join(".", "test.xml"), 'r', encoding='utf-8')
+        mock_open.assert_called_once_with(os.path.join(".", "test.xml"), "r", encoding="utf-8")
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_get_xml_data_remote_file(self, mock_get):
         # Mock the response
         mock_get.return_value.status_code = 200
@@ -107,20 +106,21 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         # Assert that the requests.get function was called once
         mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5)
 
-    @patch('os.path.isfile')
-    @patch('annotate_params.Par.load_param_file_into_dict')
+    @patch("os.path.isfile")
+    @patch("annotate_params.Par.load_param_file_into_dict")
     def test_get_xml_data_script_dir_file(self, mock_load_param, mock_isfile):
         # Mock the isfile function to return False for the current directory and True for the script directory
         def side_effect(filename):
             return True
+
         mock_isfile.side_effect = side_effect
 
         # Mock the load_param_file_into_dict function to raise FileNotFoundError
         mock_load_param.side_effect = FileNotFoundError
 
         # Mock the open function to return a dummy XML string
-        mock_open = mock.mock_open(read_data='<root></root>')
-        with patch('builtins.open', mock_open):
+        mock_open = mock.mock_open(read_data="<root></root>")
+        with patch("builtins.open", mock_open):
             # Call the function with a filename that exists in the script directory
             result = get_xml_data(BASE_URL, ".", PARAM_DEFINITION_XML_FILE, "ArduCopter")
 
@@ -128,12 +128,11 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         self.assertIsInstance(result, ET.Element)
 
         # Assert that the file was opened correctly
-        mock_open.assert_called_once_with(os.path.join('.', PARAM_DEFINITION_XML_FILE), 'r', encoding='utf-8')
+        mock_open.assert_called_once_with(os.path.join(".", PARAM_DEFINITION_XML_FILE), "r", encoding="utf-8")
 
     def test_get_xml_data_no_requests_package(self):
         # Temporarily remove the requests module
-        with patch.dict('sys.modules', {'requests': None}):
-
+        with patch.dict("sys.modules", {"requests": None}):
             # Remove the test.xml file if it exists
             try:
                 os.remove("test.xml")
@@ -144,7 +143,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
             with self.assertRaises(SystemExit):
                 get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_get_xml_data_request_failure(self, mock_get):
         # Mock the response
         mock_get.side_effect = requests.exceptions.RequestException
@@ -159,7 +158,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         with self.assertRaises(SystemExit):
             get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_get_xml_data_valid_xml(self, mock_get):
         # Mock the response
         mock_get.return_value.status_code = 200
@@ -171,7 +170,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         # Check the result
         self.assertIsInstance(result, ET.Element)
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_get_xml_data_invalid_xml(self, mock_get):
         # Mock the response
         mock_get.return_value.status_code = 200
@@ -187,8 +186,8 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         with self.assertRaises(ET.ParseError):
             get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
-    @patch('requests.get')
-    @patch('os.path.isfile')
+    @patch("requests.get")
+    @patch("os.path.isfile")
     def test_get_xml_data_missing_file(self, mock_isfile, mock_get):
         # Mock the isfile function to return False
         mock_isfile.return_value = False
@@ -205,7 +204,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         with self.assertRaises(FileNotFoundError):
             get_xml_data("/path/to/local/file/", ".", "test.xml", "ArduCopter")
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_get_xml_data_network_issue(self, mock_get):
         # Mock the response
         mock_get.side_effect = requests.exceptions.ConnectionError
@@ -245,7 +244,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
 
     def test_create_doc_dict(self):
         # Mock XML data
-        xml_data = '''
+        xml_data = """
         <root>
             <param name="PARAM1" humanName="Param 1" documentation="Documentation for Param 1">
                 <field name="Field1">Value1</field>
@@ -264,7 +263,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
                 </values>
             </param>
         </root>
-        '''
+        """
         root = DET.fromstring(xml_data)
 
         # Expected output
@@ -273,14 +272,14 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
                 "humanName": "Param 1",
                 "documentation": ["Documentation for Param 1"],
                 "fields": {"Field1": "Value1", "Field2": "Value2"},
-                "values": {"Code1": "Value1", "Code2": "Value2"}
+                "values": {"Code1": "Value1", "Code2": "Value2"},
             },
             "PARAM2": {
                 "humanName": "Param 2",
                 "documentation": ["Documentation for Param 2"],
                 "fields": {"Units": "m/s (meters per second)"},
-                "values": {"Code3": "Value3", "Code4": "Value4"}
-            }
+                "values": {"Code3": "Value3", "Code4": "Value4"},
+            },
         }
 
         # Call the function with the mock XML data
@@ -308,12 +307,12 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
 
         # Define the expected output
         expected_output = [
-            'Key1: Value1                                         Key7: Value7',
-            'Key2: Value2                                         Key8: Value8',
-            'Key3: Value3                                         Key9: Value9',
-            'Key4: Value4                                         Key10: Value10',
-            'Key5: Value5                                         Key11: Value11',
-            'Key6: Value6                                         Key12: Value12',
+            "Key1: Value1                                         Key7: Value7",
+            "Key2: Value2                                         Key8: Value8",
+            "Key3: Value3                                         Key9: Value9",
+            "Key4: Value4                                         Key10: Value10",
+            "Key5: Value5                                         Key11: Value11",
+            "Key6: Value6                                         Key12: Value12",
         ]
 
         # Call the function with the input
@@ -357,7 +356,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         with open(self.temp_file.name, "r", encoding="utf-8") as file:
             updated_content = file.read()
 
-        expected_content = '''# Param 2
+        expected_content = """# Param 2
 # Documentation for Param 2
 # Field3: Value3
 # Field4: Value4
@@ -383,7 +382,7 @@ PARAM5 5
 # Code1: Value1
 # Code2: Value2
 PARAM1 100
-'''
+"""
         self.assertEqual(updated_content, expected_content)
 
     def test_update_parameter_documentation_sorting_missionplanner(self):
@@ -398,7 +397,7 @@ PARAM1 100
         with open(self.temp_file.name, "r", encoding="utf-8") as file:
             updated_content = file.read()
 
-        expected_content = '''# Param _ 1
+        expected_content = """# Param _ 1
 # Documentation for Param_1
 # Field_1: Value_1
 # Field_2: Value_2
@@ -421,7 +420,7 @@ PARAM1,100
 # Code3: Value3
 # Code4: Value4
 PARAM2 100 # ignore, me
-'''
+"""
         self.assertEqual(updated_content, expected_content)
 
     def test_update_parameter_documentation_sorting_mavproxy(self):
@@ -436,7 +435,7 @@ PARAM2 100 # ignore, me
         with open(self.temp_file.name, "r", encoding="utf-8") as file:
             updated_content = file.read()
 
-        expected_content = '''# Param 1
+        expected_content = """# Param 1
 # Documentation for Param 1
 # Field1: Value1
 # Field2: Value2
@@ -459,7 +458,7 @@ PARAM2 100
 # Code_1: Value_1
 # Code_2: Value_2
 PARAM_1\t100
-'''
+"""
         self.assertEqual(updated_content, expected_content)
 
     def test_update_parameter_documentation_invalid_line_format(self):
@@ -474,10 +473,10 @@ PARAM_1\t100
         # Check if the SystemExit exception contains the expected message
         self.assertEqual(cm.exception.code, "Invalid line in input file")
 
-    @patch('logging.Logger.info')
+    @patch("logging.Logger.info")
     def test_print_read_only_params(self, mock_info):
         # Mock XML data
-        xml_data = '''
+        xml_data = """
         <root>
             <param name="PARAM1" humanName="Param 1" documentation="Documentation for Param 1">
                 <field name="ReadOnly">True</field>
@@ -497,7 +496,7 @@ PARAM_1\t100
                 </values>
             </param>
         </root>
-        '''
+        """
         root = DET.fromstring(xml_data)
         doc_dict = create_doc_dict(root, "VehicleType")
 
@@ -505,7 +504,7 @@ PARAM_1\t100
         print_read_only_params(doc_dict)
 
         # Check if the parameter name was logged
-        mock_info.assert_has_calls([mock.call('ReadOnly parameters:'), mock.call('PARAM1')])
+        mock_info.assert_has_calls([mock.call("ReadOnly parameters:"), mock.call("PARAM1")])
 
     def test_update_parameter_documentation_invalid_target(self):
         # Call the function with an invalid target
@@ -530,7 +529,7 @@ PARAM_1\t100
         with self.assertRaises(SystemExit):
             update_parameter_documentation(self.doc_dict, self.temp_file.name)
 
-    @patch('logging.Logger.warning')
+    @patch("logging.Logger.warning")
     def test_missing_parameter_documentation(self, mock_warning):
         # Write some initial content to the temporary file
         with open(self.temp_file.name, "w", encoding="utf-8") as file:
@@ -540,10 +539,12 @@ PARAM_1\t100
         update_parameter_documentation(self.doc_dict, self.temp_file.name)
 
         # Check if the warnings were logged
-        mock_warning.assert_has_calls([
-            mock.call('Read file %s with %d parameters, but only %s of which got documented', self.temp_file.name, 1, 0),
-            mock.call('No documentation found for: %s', 'MISSING_DOC_PARA')
-        ])
+        mock_warning.assert_has_calls(
+            [
+                mock.call("Read file %s with %d parameters, but only %s of which got documented", self.temp_file.name, 1, 0),
+                mock.call("No documentation found for: %s", "MISSING_DOC_PARA"),
+            ]
+        )
 
     def test_empty_parameter_file(self):
         # Call the function with the temporary file
@@ -558,53 +559,47 @@ PARAM_1\t100
 
 
 class AnnotateParamsTest(unittest.TestCase):
-
     def test_arg_parser_valid_arguments(self):
-        test_args = ['annotate_params', '--vehicle-type', 'ArduCopter', '--sort', 'none', 'parameters']
-        with patch('sys.argv', test_args):
+        test_args = ["annotate_params", "--vehicle-type", "ArduCopter", "--sort", "none", "parameters"]
+        with patch("sys.argv", test_args):
             args = arg_parser()
-            self.assertEqual(args.vehicle_type, 'ArduCopter')
-            self.assertEqual(args.sort, 'none')
-            self.assertEqual(args.target, 'parameters')
+            self.assertEqual(args.vehicle_type, "ArduCopter")
+            self.assertEqual(args.sort, "none")
+            self.assertEqual(args.target, "parameters")
             self.assertEqual(args.verbose, False)
             self.assertEqual(args.max_line_length, 100)
 
     def test_arg_parser_invalid_vehicle_type(self):
-        test_args = ['annotate_params', '--vehicle-type', 'InvalidType', '--sort', 'none', 'parameters']
-        with patch('sys.argv', test_args):
+        test_args = ["annotate_params", "--vehicle-type", "InvalidType", "--sort", "none", "parameters"]
+        with patch("sys.argv", test_args):
             with self.assertRaises(SystemExit):
                 arg_parser()
 
     def test_arg_parser_invalid_sort_option(self):
-        test_args = ['annotate_params', '--vehicle-type', 'ArduCopter', '--sort', 'invalid', 'parameters']
-        with patch('sys.argv', test_args):
+        test_args = ["annotate_params", "--vehicle-type", "ArduCopter", "--sort", "invalid", "parameters"]
+        with patch("sys.argv", test_args):
             with self.assertRaises(SystemExit):
                 arg_parser()
 
     def test_arg_parser_invalid_line_length_option(self):
-        test_args = ['annotate_params', '--vehicle-type', 'ArduCopter', '--sort', 'none', '-m', 'invalid', 'parameters']
-        with patch('sys.argv', test_args):
+        test_args = ["annotate_params", "--vehicle-type", "ArduCopter", "--sort", "none", "-m", "invalid", "parameters"]
+        with patch("sys.argv", test_args):
             with self.assertRaises(SystemExit):
                 arg_parser()
 
 
 class TestAnnotateParamsExceptionHandling(unittest.TestCase):
-
-    @patch('annotate_params.arg_parser')
-    @patch('annotate_params.get_xml_url')
-    @patch('annotate_params.get_xml_dir')
-    @patch('annotate_params.parse_parameter_metadata')
-    @patch('annotate_params.update_parameter_documentation')
-    @patch('builtins.open', new_callable=mock_open)
+    @patch("annotate_params.arg_parser")
+    @patch("annotate_params.get_xml_url")
+    @patch("annotate_params.get_xml_dir")
+    @patch("annotate_params.parse_parameter_metadata")
+    @patch("annotate_params.update_parameter_documentation")
+    @patch("builtins.open", new_callable=mock_open)
     def test_main_ioerror(
         self, mock_file, mock_update, mock_parse_metadata, mock_get_xml_dir, mock_get_xml_url, mock_arg_parser
     ):
         mock_arg_parser.return_value = Mock(
-            vehicle_type='ArduCopter',
-            target='.',
-            sort='none',
-            delete_documentation_annotations=False,
-            verbose=False
+            vehicle_type="ArduCopter", target=".", sort="none", delete_documentation_annotations=False, verbose=False
         )
         mock_file.side_effect = IOError("Mocked IO Error")
 
@@ -613,21 +608,17 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
 
         self.assertIn(cm.exception.code, [1, 2])
 
-    @patch('annotate_params.arg_parser')
-    @patch('annotate_params.get_xml_url')
-    @patch('annotate_params.get_xml_dir')
-    @patch('annotate_params.parse_parameter_metadata')
-    @patch('annotate_params.update_parameter_documentation')
-    @patch('builtins.open', new_callable=mock_open)
+    @patch("annotate_params.arg_parser")
+    @patch("annotate_params.get_xml_url")
+    @patch("annotate_params.get_xml_dir")
+    @patch("annotate_params.parse_parameter_metadata")
+    @patch("annotate_params.update_parameter_documentation")
+    @patch("builtins.open", new_callable=mock_open)
     def test_main_oserror(
         self, mock_file, mock_update, mock_parse_metadata, mock_get_xml_dir, mock_get_xml_url, mock_arg_parser
     ):
         mock_arg_parser.return_value = Mock(
-            vehicle_type='ArduCopter',
-            target='.',
-            sort='none',
-            delete_documentation_annotations=False,
-            verbose=False
+            vehicle_type="ArduCopter", target=".", sort="none", delete_documentation_annotations=False, verbose=False
         )
         mock_file.side_effect = OSError("Mocked OS Error")
 
@@ -636,12 +627,12 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
 
         self.assertIn(cm.exception.code, [1, 2])
 
-    @patch('annotate_params.get_xml_url')
+    @patch("annotate_params.get_xml_url")
     def test_get_xml_url_exception(self, mock_get_xml_url):
         mock_get_xml_url.side_effect = ValueError("Mocked Value Error")
         with self.assertRaises(ValueError):
-            get_xml_url('NonExistingVehicle', '4.0')
+            get_xml_url("NonExistingVehicle", "4.0")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

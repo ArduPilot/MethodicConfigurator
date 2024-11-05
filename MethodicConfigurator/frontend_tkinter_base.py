@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-'''
+"""
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
-'''
+"""
 
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
@@ -32,22 +32,23 @@ def show_error_message(title: str, message: str):
     root = tk.Tk()
     # Set the theme to 'alt'
     style = ttk.Style()
-    style.theme_use('alt')
-    root.withdraw() # Hide the main window
+    style.theme_use("alt")
+    root.withdraw()  # Hide the main window
     messagebox.showerror(title, message)
     root.destroy()
 
 
 def show_no_param_files_error(_dirname: str):
-    error_message = _("No intermediate parameter files found in the selected '{_dirname}' vehicle directory.\n" \
-        "Please select and step inside a vehicle directory containing valid ArduPilot intermediate parameter files.\n\n" \
-        "Make sure to step inside the directory (double-click) and not just select it.")
+    error_message = _(
+        "No intermediate parameter files found in the selected '{_dirname}' vehicle directory.\n"
+        "Please select and step inside a vehicle directory containing valid ArduPilot intermediate parameter files.\n\n"
+        "Make sure to step inside the directory (double-click) and not just select it."
+    )
     show_error_message(_("No Parameter Files Found"), error_message.format(**locals()))
 
 
 def show_no_connection_error(_error_string: str):
-    error_message = _("{_error_string}\n\nPlease connect a flight controller to the PC,\n" \
-        "wait at least 7 seconds and retry.")
+    error_message = _("{_error_string}\n\nPlease connect a flight controller to the PC,\nwait at least 7 seconds and retry.")
     show_error_message(_("No Connection to the Flight Controller"), error_message.format(**locals()))
 
 
@@ -66,7 +67,7 @@ def show_tooltip(widget, text):
     tooltip.wm_overrideredirect(True)
     tooltip_label = ttk.Label(tooltip, text=text, background="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT)
     tooltip_label.pack()
-    tooltip.withdraw() # Initially hide the tooltip
+    tooltip.withdraw()  # Initially hide the tooltip
 
     # Bind the <Enter> and <Leave> events to show and hide the tooltip
     widget.bind("<Enter>", enter)
@@ -75,9 +76,9 @@ def show_tooltip(widget, text):
 
 def update_combobox_width(combobox):
     # Calculate the maximum width needed for the content
-    max_width = max(len(value) for value in combobox['values'])
+    max_width = max(len(value) for value in combobox["values"])
     # Set a minimum width for the combobox
-    min_width = 4 # Adjust this value as needed
+    min_width = 4  # Adjust this value as needed
     # Set the width of the combobox to the maximum width, but not less than the minimum width
     combobox.config(width=max(min_width, max_width))
 
@@ -96,12 +97,13 @@ class AutoResizeCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         selected_element: The initially selected element in the Combobox.
         tooltip: A string representing the tooltip text to display when hovering over the widget.
     """
+
     def __init__(self, container, values, selected_element, tooltip, *args, **kwargs):
         super().__init__(container, *args, **kwargs)
         self.set_entries_tupple(values, selected_element, tooltip)
 
     def set_entries_tupple(self, values, selected_element, tooltip=None):
-        self['values'] = tuple(values)
+        self["values"] = tuple(values)
         if selected_element:
             if selected_element in values:
                 self.set(selected_element)
@@ -123,11 +125,12 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
     allowing for scrolling content within the frame. It's useful for creating
     scrollable areas within your application's GUI.
     """
+
     def __init__(self, parent):
-        super().__init__(parent) # create a frame (self)
+        super().__init__(parent)  # create a frame (self)
 
         # place canvas on self, copy ttk.background to tk.background
-        self.canvas = tk.Canvas(self, borderwidth=0, background=ttk.Style(parent).lookup('TFrame', 'background'))
+        self.canvas = tk.Canvas(self, borderwidth=0, background=ttk.Style(parent).lookup("TFrame", "background"))
 
         # place a frame on the canvas, this frame will hold the child widgets
         self.view_port = ttk.Frame(self.canvas)
@@ -137,11 +140,15 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         # attach scrollbar action to scroll of canvas
         self.canvas.configure(yscrollcommand=self.vsb.set)
 
-        self.vsb.pack(side="right", fill="y")                                        # pack scrollbar to right of self
+        self.vsb.pack(side="right", fill="y")  # pack scrollbar to right of self
         # pack canvas to left of self and expand to fill
         self.canvas.pack(side="left", fill="both", expand=True)
-        self.canvas_window = self.canvas.create_window((4, 4), window=self.view_port, # add view port frame to canvas
-                                                       anchor="nw", tags="self.view_port")
+        self.canvas_window = self.canvas.create_window(
+            (4, 4),
+            window=self.view_port,  # add view port frame to canvas
+            anchor="nw",
+            tags="self.view_port",
+        )
 
         # bind an event whenever the size of the view_port frame changes.
         self.view_port.bind("<Configure>", self.on_frame_configure)
@@ -149,15 +156,15 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         self.canvas.bind("<Configure>", self.on_canvas_configure)
 
         # bind wheel events when the cursor enters the control
-        self.view_port.bind('<Enter>', self.on_enter)
+        self.view_port.bind("<Enter>", self.on_enter)
         # unbind wheel events when the cursor leaves the control
-        self.view_port.bind('<Leave>', self.on_leave)
+        self.view_port.bind("<Leave>", self.on_leave)
 
         # perform an initial stretch on render, otherwise the scroll region has a tiny border until the first resize
         self.on_frame_configure(None)
 
     def on_frame_configure(self, _event):
-        '''Reset the scroll region to encompass the inner frame'''
+        """Reset the scroll region to encompass the inner frame"""
         # Whenever the size of the frame changes, alter the scroll region respectively.
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         # Calculate the bounding box for the scroll region, starting from the second row
@@ -168,34 +175,34 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         #     self.canvas.configure(scrollregion=bbox)
 
     def on_canvas_configure(self, event):
-        '''Reset the canvas window to encompass inner frame when required'''
+        """Reset the canvas window to encompass inner frame when required"""
         canvas_width = event.width
         # Whenever the size of the canvas changes alter the window region respectively.
         self.canvas.itemconfig(self.canvas_window, width=canvas_width)
 
-    def on_mouse_wheel(self, event):                       # cross platform scroll wheel event
+    def on_mouse_wheel(self, event):  # cross platform scroll wheel event
         canvas_height = self.canvas.winfo_height()
         rows_height = self.canvas.bbox("all")[3]
 
-        if rows_height > canvas_height: # only scroll if the rows overflow the frame
-            if platform_system() == 'Windows':
+        if rows_height > canvas_height:  # only scroll if the rows overflow the frame
+            if platform_system() == "Windows":
                 self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-            elif platform_system() == 'Darwin':
+            elif platform_system() == "Darwin":
                 self.canvas.yview_scroll(int(-1 * event.delta), "units")
             elif event.num == 4:
                 self.canvas.yview_scroll(-1, "units")
             elif event.num == 5:
                 self.canvas.yview_scroll(1, "units")
 
-    def on_enter(self, _event):                             # bind wheel events when the cursor enters the control
-        if platform_system() == 'Linux':
+    def on_enter(self, _event):  # bind wheel events when the cursor enters the control
+        if platform_system() == "Linux":
             self.canvas.bind_all("<Button-4>", self.on_mouse_wheel)
             self.canvas.bind_all("<Button-5>", self.on_mouse_wheel)
         else:
             self.canvas.bind_all("<MouseWheel>", self.on_mouse_wheel)
 
-    def on_leave(self, _event):                             # unbind wheel events when the cursor leaves the control
-        if platform_system() == 'Linux':
+    def on_leave(self, _event):  # unbind wheel events when the cursor leaves the control
+        if platform_system() == "Linux":
             self.canvas.unbind_all("<Button-4>")
             self.canvas.unbind_all("<Button-5>")
         else:
@@ -209,7 +216,8 @@ class ProgressWindow:
     This class is responsible for creating a progress window that displays the progress of
     a task. It includes a progress bar and a label to display the progress message.
     """
-    def __init__(self, parent, title, message: str="", width: int=300, height: int=80):  # pylint: disable=too-many-arguments
+
+    def __init__(self, parent, title, message: str = "", width: int = 300, height: int = 80):  # pylint: disable=too-many-arguments
         self.parent = parent
         self.message = message
         self.progress_window = None
@@ -226,7 +234,7 @@ class ProgressWindow:
         main_frame.pack(expand=True, fill=tk.BOTH)
 
         # Create a progress bar
-        self.progress_bar = ttk.Progressbar(main_frame, length=100, mode='determinate')
+        self.progress_bar = ttk.Progressbar(main_frame, length=100, mode="determinate")
         self.progress_bar.pack(side=tk.TOP, fill=tk.X, expand=False, padx=(5, 5), pady=(10, 10))
 
         # Create a label to display the progress message
@@ -242,7 +250,7 @@ class ProgressWindow:
 
     def update_progress_bar_300_pct(self, percent: int):
         self.message = _("Please be patient, {:.1f}% of {}% complete")
-        self.update_progress_bar(percent/3, max_value=100)
+        self.update_progress_bar(percent / 3, max_value=100)
 
     def update_progress_bar(self, current_value: int, max_value: int):
         """
@@ -259,8 +267,8 @@ class ProgressWindow:
             logging_error(msg.format(**locals()))
             return
 
-        self.progress_bar['value'] = current_value
-        self.progress_bar['maximum'] = max_value
+        self.progress_bar["value"] = current_value
+        self.progress_bar["maximum"] = max_value
 
         # Update the progress message
         self.progress_label.config(text=self.message.format(current_value, max_value))
@@ -298,6 +306,7 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
         RichText in your UI definitions. Apply tags to text segments using the tag_add method
         and configure the appearance accordingly.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -310,7 +319,7 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
 
         bold_font.configure(weight="bold")
         italic_font.configure(slant="italic")
-        h1_font.configure(size=int(default_size*2), weight="bold")
+        h1_font.configure(size=int(default_size * 2), weight="bold")
 
         self.tag_configure("bold", font=bold_font)
         self.tag_configure("italic", font=italic_font)
@@ -319,8 +328,8 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
 
 def get_widget_font(widget: tk.Widget) -> dict:
     style = ttk.Style()
-    widget_style = widget.cget('style')  # Get the style used by the widget
-    font_name = style.lookup(widget_style, 'font')
+    widget_style = widget.cget("style")  # Get the style used by the widget
+    font_name = style.lookup(widget_style, "font")
     return tkFont.nametofont(font_name).config()
 
 
@@ -332,7 +341,8 @@ class BaseWindow:
     root window, applying a theme, and configuring the application icon. It also includes methods for
     creating a progress window and centering a window on its parent.
     """
-    def __init__(self, root_tk: Optional[tk.Tk]=None):
+
+    def __init__(self, root_tk: Optional[tk.Tk] = None):
         if root_tk:
             self.root = tk.Toplevel(root_tk)
         else:
@@ -340,7 +350,7 @@ class BaseWindow:
 
         # Set the theme to 'alt'
         style = ttk.Style()
-        style.theme_use('alt')
+        style.theme_use("alt")
         style.configure("Bold.TLabel", font=("TkDefaultFont", 10, "bold"))
 
         self.main_frame = ttk.Frame(self.root)
@@ -370,7 +380,7 @@ class BaseWindow:
         window.geometry(f"+{x}+{y}")
 
     @staticmethod
-    def put_image_in_label(parent: tk.Toplevel, filepath: str, image_height: int=40) -> ttk.Label:
+    def put_image_in_label(parent: tk.Toplevel, filepath: str, image_height: int = 40) -> ttk.Label:
         # Load the image and scale it down to image_height pixels in height
         image = Image.open(filepath)
         width, height = image.size
@@ -383,17 +393,18 @@ class BaseWindow:
 
         # Create a label with the resized image
         image_label = ttk.Label(parent, image=photo)
-        image_label.image = photo # Keep a reference to the image to prevent it from being garbage collected
+        image_label.image = photo  # Keep a reference to the image to prevent it from being garbage collected
         return image_label
 
 
-class UsagePopupWindow():
+class UsagePopupWindow:
     """
     A class for creating and managing usage popup windows in the application.
 
     This class extends the BaseWindow class to provide functionality for displaying
     usage popups with instructions and options to show them again or dismiss.
     """
+
     def __init__(self):
         pass
 
@@ -402,9 +413,14 @@ class UsagePopupWindow():
         return ProgramSettings.display_usage_popup(ptype)
 
     @staticmethod
-    def display(parent: tk.Tk, usage_popup_window: BaseWindow, title: str,  # pylint: disable=too-many-arguments
-                ptype: str, geometry: str, instructions_text: RichText):
-
+    def display(  # pylint: disable=too-many-arguments
+        parent: tk.Tk,
+        usage_popup_window: BaseWindow,
+        title: str,
+        ptype: str,
+        geometry: str,
+        instructions_text: RichText,
+    ):
         usage_popup_window.root.title(title)
         usage_popup_window.root.geometry(geometry)
 
@@ -416,25 +432,32 @@ class UsagePopupWindow():
         def update_show_again():
             ProgramSettings.set_display_usage_popup(ptype, show_again_var.get())
 
-        show_again_checkbox = ttk.Checkbutton(usage_popup_window.main_frame, text=_("Show this usage popup again"),
-                                            variable=show_again_var, command=update_show_again)
+        show_again_checkbox = ttk.Checkbutton(
+            usage_popup_window.main_frame,
+            text=_("Show this usage popup again"),
+            variable=show_again_var,
+            command=update_show_again,
+        )
         show_again_checkbox.pack(pady=(10, 5))
 
-        dismiss_button = ttk.Button(usage_popup_window.main_frame, text=_("Dismiss"),
-                                    command=lambda: UsagePopupWindow.close(usage_popup_window, parent))
+        dismiss_button = ttk.Button(
+            usage_popup_window.main_frame,
+            text=_("Dismiss"),
+            command=lambda: UsagePopupWindow.close(usage_popup_window, parent),
+        )
         dismiss_button.pack(pady=10)
 
         BaseWindow.center_window(usage_popup_window.root, parent)
-        usage_popup_window.root.attributes('-topmost', True)
+        usage_popup_window.root.attributes("-topmost", True)
 
-        if platform_system() == 'Windows':
-            parent.attributes('-disabled', True)  # Disable parent window input
+        if platform_system() == "Windows":
+            parent.attributes("-disabled", True)  # Disable parent window input
 
         usage_popup_window.root.protocol("WM_DELETE_WINDOW", lambda: UsagePopupWindow.close(usage_popup_window, parent))
 
     @staticmethod
     def close(usage_popup_window, parent):
         usage_popup_window.root.destroy()
-        if platform_system() == 'Windows':
-            parent.attributes('-disabled', False)  # Re-enable the parent window
+        if platform_system() == "Windows":
+            parent.attributes("-disabled", False)  # Re-enable the parent window
         parent.focus_set()
