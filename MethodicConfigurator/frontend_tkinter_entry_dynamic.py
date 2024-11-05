@@ -14,7 +14,7 @@ import tkinter as tk
 from tkinter import Entry, Listbox, StringVar, ttk
 from tkinter.constants import END, HORIZONTAL, SINGLE, VERTICAL, E, N, S, W
 
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 
 
 def autoscroll(sbar, first, last):

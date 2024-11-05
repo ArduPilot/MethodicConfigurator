@@ -20,7 +20,7 @@ from os import path as os_path
 from typing import Tuple
 
 from MethodicConfigurator.annotate_params import Par
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 
 
 class ConfigurationSteps:

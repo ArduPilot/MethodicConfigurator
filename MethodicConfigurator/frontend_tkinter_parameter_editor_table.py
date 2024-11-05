@@ -29,7 +29,7 @@ from MethodicConfigurator.backend_filesystem import is_within_tolerance
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ScrollFrame, get_widget_font, show_tooltip
 from MethodicConfigurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from MethodicConfigurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 
 NEW_VALUE_WIDGET_WIDTH = 9
 

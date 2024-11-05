@@ -27,7 +27,7 @@ from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 # from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import show_error_message
 from MethodicConfigurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 from MethodicConfigurator.version import VERSION
 
 

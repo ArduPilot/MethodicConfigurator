@@ -27,7 +27,7 @@ from MethodicConfigurator.annotate_params import Par
 from MethodicConfigurator.argparse_check_range import CheckRange
 from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
 from MethodicConfigurator.backend_mavftp import MAVFTP
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules

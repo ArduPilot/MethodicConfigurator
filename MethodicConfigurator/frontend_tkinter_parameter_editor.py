@@ -39,7 +39,7 @@ from MethodicConfigurator.frontend_tkinter_base import (
 )
 from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from MethodicConfigurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 from MethodicConfigurator.tempcal_imu import IMUfit
 from MethodicConfigurator.version import VERSION
 

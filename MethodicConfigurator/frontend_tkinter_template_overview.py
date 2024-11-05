@@ -18,7 +18,7 @@ from MethodicConfigurator.backend_filesystem_program_settings import ProgramSett
 from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 from MethodicConfigurator.middleware_template_overview import TemplateOverview
 from MethodicConfigurator.version import VERSION
 

@@ -23,7 +23,7 @@ from os import walk as os_walk
 from re import match as re_match
 
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 from MethodicConfigurator.middleware_template_overview import TemplateOverview
 
 

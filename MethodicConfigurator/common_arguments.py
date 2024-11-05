@@ -8,7 +8,8 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from MethodicConfigurator.internationalization import LANGUAGE_CHOICES, _
+from MethodicConfigurator import _
+from MethodicConfigurator.internationalization import LANGUAGE_CHOICES
 from MethodicConfigurator.version import VERSION
 
 
@@ -26,7 +27,7 @@ def add_common_arguments_and_parse(parser):
     parser.add_argument(
         "--language",
         type=str,
-        default="en",
+        default=LANGUAGE_CHOICES[0],
         choices=LANGUAGE_CHOICES,
         help=_("User interface language (default is %(default)s)."),
     )

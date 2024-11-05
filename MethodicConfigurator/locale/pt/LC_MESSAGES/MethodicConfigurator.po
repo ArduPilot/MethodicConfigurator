@@ -792,8 +792,8 @@ msgid ""
 "No parameter values will be fetched from the FC, default parameter values from disk will be used\n"
 "instead (if '00_default.param' file is present) and just edit the intermediate '.param' files on disk"
 msgstr ""
-"Não serão buscados valores de parâmetros do FC, serão utilizados os valores padrão dos parâmetros em disco\n"
-"em vez disso (se o arquivo '00_default.param' estiver presente) e você pode apenas editar os arquivos intermediários '.param' no disco."
+"Não serão buscados valores de parâmetros do FC, em vez disso serão utilizados os valores padrão dos parâmetros em disco\n"
+"(se o arquivo '00_default.param' estiver presente) e você pode apenas editar os arquivos intermediários '.param' no disco."
 
 #: MethodicConfigurator/frontend_tkinter_connection_selection.py:263
 msgid "Will proceed without FC connection. FC parameters will not be downloaded nor uploaded"

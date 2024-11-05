@@ -22,7 +22,7 @@ from tkinter import Label, Toplevel, ttk
 
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 from MethodicConfigurator.frontend_tkinter_base import get_widget_font, update_combobox_width
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 
 
 # https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb
