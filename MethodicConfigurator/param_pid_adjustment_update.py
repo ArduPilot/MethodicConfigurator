@@ -17,7 +17,7 @@ import argparse
 import os
 import re
 import subprocess
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 PARAM_NAME_REGEX = r'^[A-Z][A-Z_0-9]*$'
 PARAM_NAME_MAX_LEN = 16
@@ -85,7 +85,7 @@ class Par:
         value (float): The value of the parameter.
         comment (str): An optional comment describing the parameter.
     """
-    def __init__(self, value: float, comment: str = None):
+    def __init__(self, value: float, comment: Optional[str] = None):
         self.value = value
         self.comment = comment
 
@@ -94,8 +94,8 @@ class Par:
         parameter_dict = {}
         content = []
         with open(param_file, encoding="utf-8") as f_handle:
-            for n, line in enumerate(f_handle, start=1):
-                line = line.strip()
+            for n, f_line in enumerate(f_handle, start=1):
+                line = f_line.strip()
                 content.append(line)
                 comment = None
                 if not line or line.startswith("#"):
@@ -125,7 +125,7 @@ class Par:
         return parameter_dict, content
 
     @staticmethod
-    def export_to_param(param_dict: Dict[str, 'Par'], filename_out: str, content_header: List[str] = None) -> None:
+    def export_to_param(param_dict: Dict[str, 'Par'], filename_out: str, content_header: Optional[List[str]] = None) -> None:
         if content_header is None:
             content_header = []
         with open(filename_out, "w", encoding="utf-8") as output_file:

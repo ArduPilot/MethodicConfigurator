@@ -23,8 +23,8 @@ def extract_missing_translations(po_file, output_file):
     missing_translations = []
 
     # Iterate through lines to find untranslated msgid
-    for i, line in enumerate(lines):
-        line = line.strip()
+    for i, f_line in enumerate(lines):
+        line = f_line.strip()
 
         if line.startswith('msgid'):
             msgid = line.split('"')[1]  # Get the msgid string

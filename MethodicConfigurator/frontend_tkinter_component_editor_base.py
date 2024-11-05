@@ -174,7 +174,7 @@ class ComponentEditorWindowBase(BaseWindow):
             frame.pack(fill=tk.X, side=side, pady=pady, padx=5, anchor=anchor)
             for sub_key, sub_value in value.items():
                 # recursively add child elements
-                self.__add_widget(frame, sub_key, sub_value, path + [key])
+                self.__add_widget(frame, sub_key, sub_value, [*path, key])
         else:                                   # JSON leaf elements, add Entry widget
             entry_frame = ttk.Frame(parent)
             entry_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
@@ -182,11 +182,11 @@ class ComponentEditorWindowBase(BaseWindow):
             label = ttk.Label(entry_frame, text=key)
             label.pack(side=tk.LEFT)
 
-            entry = self.add_entry_or_combobox(value, entry_frame, tuple(path+[key]))
+            entry = self.add_entry_or_combobox(value, entry_frame, tuple([*path, key]))
             entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 5))
 
             # Store the entry widget in the entry_widgets dictionary for later retrieval
-            self.entry_widgets[tuple(path+[key])] = entry
+            self.entry_widgets[tuple([*path, key])] = entry
 
     def save_data(self):
         """
