@@ -17,7 +17,7 @@ from os import path as os_path
 from os import readlink as os_readlink
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import serial.tools.list_ports
 import serial.tools.list_ports_common
@@ -404,7 +404,7 @@ class FlightController:
         return self.master.param_set_send(param_name, param_value)
 
     def reset_and_reconnect(self, reset_progress_callback=None, connection_progress_callback=None,
-                            extra_sleep_time: int = None) -> str:
+                            extra_sleep_time: Optional[int] = None) -> str:
         """
         Reset the flight controller and reconnect.
 

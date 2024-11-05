@@ -20,10 +20,10 @@ class CheckRange(Action):
     '''
     Check if the Argparse argument value is within the specified range
     '''
-    ops = {"inf": gt,
+    ops = frozenset({"inf": gt,
            "min": ge,
            "sup": lt,
-           "max": le}
+           "max": le})
 
     def __init__(self, *args, **kwargs):
         if "min" in kwargs and "inf" in kwargs:

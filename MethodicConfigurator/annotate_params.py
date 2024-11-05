@@ -133,9 +133,9 @@ class Par:
         parameter_dict = {}
         try:
             with open(param_file, encoding="utf-8") as f_handle:
-                for i, line in enumerate(f_handle, start=1):
-                    original_line = line
-                    line = line.strip()
+                for i, f_line in enumerate(f_handle, start=1):
+                    original_line = f_line
+                    line = f_line.strip()
                     comment = None
                     if not line:
                         continue  # skip empty lines
@@ -620,8 +620,8 @@ def update_parameter_documentation_file(doc, sort_type, param_default_dict, para
         lines.sort(key=missionplanner_sort)
     if sort_type == "mavproxy":
         lines.sort(key=extract_parameter_name)
-    for n, line in enumerate(lines, start=1):
-        line = line.strip()
+    for n, f_line in enumerate(lines, start=1):
+        line = f_line.strip()
         if not line.startswith("#") and line:
             param_name = extract_parameter_name_and_validate(line, param_file, n)
 

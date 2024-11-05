@@ -453,7 +453,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 "values": VehicleComponents.supported_vehicles(),
             },
             ('RC Receiver', 'FC Connection', 'Type'): {
-                "values": ["RCin/SBUS"] + self.serial_ports + self.can_ports,
+                "values": ["RCin/SBUS", *self.serial_ports, *self.can_ports],
             },
             ('RC Receiver', 'FC Connection', 'Protocol'): {
                 "values": get_combobox_values('RC_PROTOCOLS'),
@@ -465,19 +465,19 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 "values": ["MAVLink1", "MAVLink2", "MAVLink High Latency"],
             },
             ('Battery Monitor', 'FC Connection', 'Type'): {
-                "values": ['None', 'Analog', 'SPI', 'PWM'] + self.i2c_ports + self.serial_ports + self.can_ports,
+                "values": ['None', 'Analog', 'SPI', 'PWM', *self.i2c_ports, *self.serial_ports, *self.can_ports],
             },
             ('Battery Monitor', 'FC Connection', 'Protocol'): {
                 "values": get_combobox_values('BATT_MONITOR'),
             },
             ('ESC', 'FC Connection', 'Type'): {
-                "values": ['Main Out', 'AIO'] + self.serial_ports + self.can_ports,
+                "values": ['Main Out', 'AIO', *self.serial_ports, *self.can_ports],
             },
             ('ESC', 'FC Connection', 'Protocol'): {
                 "values": get_combobox_values('MOT_PWM_TYPE')
             },
             ('GNSS Receiver', 'FC Connection', 'Type'): {
-                "values": ['None'] + self.serial_ports + self.can_ports,
+                "values": ['None', *self.serial_ports, *self.can_ports],
             },
             ('GNSS Receiver', 'FC Connection', 'Protocol'): {
                 "values": get_combobox_values('GPS_TYPE'),

@@ -19,6 +19,7 @@ from logging import warning as logging_warning
 from platform import system as platform_system
 from tkinter import BooleanVar, messagebox, ttk
 from tkinter import font as tkFont
+from typing import Optional
 
 from PIL import Image, ImageTk
 
@@ -331,7 +332,7 @@ class BaseWindow:
     root window, applying a theme, and configuring the application icon. It also includes methods for
     creating a progress window and centering a window on its parent.
     """
-    def __init__(self, root_tk: tk.Tk=None):
+    def __init__(self, root_tk: Optional[tk.Tk]=None):
         if root_tk:
             self.root = tk.Toplevel(root_tk)
         else:

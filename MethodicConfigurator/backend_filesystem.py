@@ -294,7 +294,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         - Dict[str, str]: A dictionary mapping parameter names to their comments.
         """
         ret = {}
-        for _filename, params in self.file_parameters.items():
+        for params in self.file_parameters.values():
             for param, info in params.items():
                 if info.comment:
                     ret[param] = info.comment

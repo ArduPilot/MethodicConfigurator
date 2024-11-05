@@ -80,7 +80,7 @@ def update_file_contents(renames, root, file, steps):
     with open(os.path.join(root, file), "r", encoding="utf-8") as handle:
         file_content = handle.read()
     if file.startswith("TUNING_GUIDE_") and file.endswith(".md"):
-        for _new_filename, old_filename in renames.items():
+        for old_filename in renames.values():
             if old_filename not in file_content:
                 print(f"Error: The intermediate parameter file '{old_filename}'" \
                                 f" is not mentioned in the {file} file")
