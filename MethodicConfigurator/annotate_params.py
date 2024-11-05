@@ -42,53 +42,72 @@ PARAM_DEFINITION_XML_FILE = "apm.pdef.xml"
 LUA_PARAM_DEFINITION_XML_FILE = "24_inflight_magnetometer_fit_setup.pdef.xml"
 
 # ArduPilot parameter names start with a capital letter and can have capital letters, numbers and _
-PARAM_NAME_REGEX = r'^[A-Z][A-Z_0-9]*'
+PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*"
 PARAM_NAME_MAX_LEN = 16
-VERSION = '1.0'
+VERSION = "1.0"
 
 
 def arg_parser():
-    parser = argparse.ArgumentParser(description='Fetches on-line ArduPilot parameter documentation and adds it to the '
-                                     'specified file or to all *.param and *.parm files in the specified directory.')
-    parser.add_argument('target',
-                        help='The target file or directory.',
-                        )
-    parser.add_argument('-d', '--delete-documentation-annotations',
-                        action='store_true',
-                        help='Delete parameter documentation annotations (comments above parameters). Defaults to %(default)s',
-                        )
-    parser.add_argument('-f', '--firmware-version',
-                        default='latest',
-                        help='Flight controller firmware version. Defaults to %(default)s.',
-                        )
-    parser.add_argument('-s', '--sort',
-                        choices=['none', 'missionplanner', 'mavproxy'],
-                        default='none',
-                        help='Sort the parameters in the file. Defaults to %(default)s.',
-                        )
-    parser.add_argument('-t', '--vehicle-type',
-                        choices=['AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane',
-                                 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'],
-                        default='ArduCopter',
-                        help='The type of the vehicle. Defaults to %(default)s.',
-                        )
-    parser.add_argument('-m', '--max-line-length',
-                        type=int, default=100,
-                        help='Maximum documentation line length. Defaults to %(default)s.',
-                        )
-    parser.add_argument('--verbose', action='store_true',
-                        help='Increase output verbosity, print ReadOnly parameter list. Defaults to %(default)s.',
-                        )
-    parser.add_argument('-v', '--version', action='version', version=f'%(prog)s {VERSION}',
-                        help='Display version information and exit.',
-                        )
+    parser = argparse.ArgumentParser(
+        description="Fetches on-line ArduPilot parameter documentation and adds it to the "
+        "specified file or to all *.param and *.parm files in the specified directory."
+    )
+    parser.add_argument(
+        "target",
+        help="The target file or directory.",
+    )
+    parser.add_argument(
+        "-d",
+        "--delete-documentation-annotations",
+        action="store_true",
+        help="Delete parameter documentation annotations (comments above parameters). Defaults to %(default)s",
+    )
+    parser.add_argument(
+        "-f",
+        "--firmware-version",
+        default="latest",
+        help="Flight controller firmware version. Defaults to %(default)s.",
+    )
+    parser.add_argument(
+        "-s",
+        "--sort",
+        choices=["none", "missionplanner", "mavproxy"],
+        default="none",
+        help="Sort the parameters in the file. Defaults to %(default)s.",
+    )
+    parser.add_argument(
+        "-t",
+        "--vehicle-type",
+        choices=["AP_Periph", "AntennaTracker", "ArduCopter", "ArduPlane", "ArduSub", "Blimp", "Heli", "Rover", "SITL"],
+        default="ArduCopter",
+        help="The type of the vehicle. Defaults to %(default)s.",
+    )
+    parser.add_argument(
+        "-m",
+        "--max-line-length",
+        type=int,
+        default=100,
+        help="Maximum documentation line length. Defaults to %(default)s.",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Increase output verbosity, print ReadOnly parameter list. Defaults to %(default)s.",
+    )
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"%(prog)s {VERSION}",
+        help="Display version information and exit.",
+    )
 
     args = parser.parse_args()
 
     if args.verbose:
-        logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     else:
-        logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
+        logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
     # Custom validation for --max-line-length
     def check_max_line_length(value):
@@ -110,6 +129,7 @@ class Par:
         value (float): The value of the parameter.
         comment (Optional[str]): An optional comment associated with the parameter.
     """
+
     def __init__(self, value: float, comment: Optional[str] = None):
         self.value = value
         self.comment = comment
@@ -120,7 +140,7 @@ class Par:
         return False
 
     @staticmethod
-    def load_param_file_into_dict(param_file: str) -> Dict[str, 'Par']:
+    def load_param_file_into_dict(param_file: str) -> Dict[str, "Par"]:
         """
         Loads an ArduPilot parameter file into a dictionary with name, value pairs.
 
@@ -195,7 +215,7 @@ class Par:
         return tuple(parts)
 
     @staticmethod
-    def format_params(param_dict: Dict[str, 'Par'], file_format: str = "missionplanner") -> List[str]:  # pylint: disable=too-many-branches
+    def format_params(param_dict: Dict[str, "Par"], file_format: str = "missionplanner") -> List[str]:  # pylint: disable=too-many-branches
         """
         Formats the parameters in the provided dictionary into a list of strings.
 
@@ -225,8 +245,9 @@ class Par:
             for key, parameter in param_dict.items():
                 if isinstance(parameter, Par):
                     if parameter.comment:
-                        formatted_params.append(f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}"
-                                                f"  # {parameter.comment}")
+                        formatted_params.append(
+                            f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}" f"  # {parameter.comment}"
+                        )
                     else:
                         formatted_params.append(f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}")
                 else:
@@ -258,7 +279,7 @@ class Par:
             return
         try:
             # Ensure newline character is LF, even on windows
-            with open(filename_out, "w", encoding="utf-8", newline='\n') as output_file:
+            with open(filename_out, "w", encoding="utf-8", newline="\n") as output_file:
                 for line in formatted_params:
                     output_file.write(line + "\n")
         except IOError as e:
@@ -284,10 +305,10 @@ class Par:
         rows = 100
         # Get the size of the terminal
         if __name__ == "__main__":
-            rows, _columns = os_popen('stty size', 'r').read().split()
+            rows, _columns = os_popen("stty size", "r").read().split()
 
         # Convert rows to integer
-        rows = int(rows) - 2 # -2 for the next print and the input line
+        rows = int(rows) - 2  # -2 for the next print and the input line
 
         # Convert rows
         print(f"\n{name} has {len(formatted_params)} parameters:")
@@ -296,8 +317,8 @@ class Par:
             i += 1
             if i % rows == 0 and __name__ == "__main__":
                 input(f"\n{name} list is long hit enter to continue")
-                rows, _columns = os_popen('stty size', 'r').read().split()
-                rows = int(rows) - 2 # -2 for the next print and the input line
+                rows, _columns = os_popen("stty size", "r").read().split()
+                rows = int(rows) - 2  # -2 for the next print and the input line
             print(line)
 
 
@@ -344,7 +365,7 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
             logging.warning("Unable to fetch XML data: %s", e)
             # Send a GET request to the URL to the fallback (DEV) URL
             try:
-                url = BASE_URL + vehicle_type + '/' + PARAM_DEFINITION_XML_FILE
+                url = BASE_URL + vehicle_type + "/" + PARAM_DEFINITION_XML_FILE
                 logging.warning("Falling back to the DEV XML file: %s", url)
                 response = requests_get(url, timeout=5)
                 if response.status_code != 200:
@@ -370,7 +391,7 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
 def load_default_param_file(directory: str) -> Dict[str, Any]:
     # Load parameter default values if the 00_default.param file exists
     try:
-        param_default_dict = Par.load_param_file_into_dict(os_path.join(directory, '00_default.param'))
+        param_default_dict = Par.load_param_file_into_dict(os_path.join(directory, "00_default.param"))
     except FileNotFoundError:
         logging.warning("Default parameter file 00_default.param not found. No default values will be annotated.")
         logging.warning("Create one by using the command ./extract_param_defaults.py log_file.bin > 00_default.param")
@@ -390,7 +411,7 @@ def remove_prefix(text: str, prefix: str) -> str:
         str: The string without the prefix.
     """
     if text.startswith(prefix):
-        return text[len(prefix):]
+        return text[len(prefix) :]
     return text
 
 
@@ -405,9 +426,7 @@ def split_into_lines(string_to_split: str, maximum_line_length: int) -> List[str
     Returns:
         List[str]: The list of lines.
     """
-    doc_lines = re.findall(
-        r".{1," + str(maximum_line_length) + r"}(?:\s|$)", string_to_split
-    )
+    doc_lines = re.findall(r".{1," + str(maximum_line_length) + r"}(?:\s|$)", string_to_split)
     # Remove trailing whitespace from each line
     return [line.rstrip() for line in doc_lines]
 
@@ -445,7 +464,7 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
                 fields[key] = f"{value} ({fields['UnitText']})"
                 delete_unit_text = True
         if delete_unit_text:
-            del fields['UnitText']
+            del fields["UnitText"]
         # the keys are the "code" attribute of the "values/value" sub-elements
         # the values are the text content of the "values/value" sub-elements
         values = {value.get("code"): value.text for value in param.findall("values/value")}
@@ -500,11 +519,11 @@ def format_columns(values: Dict[str, Any], max_width: int = 105, max_columns: in
     for j in range(num_rows):
         row = []
         for i in range(num_cols):
-            if i*num_rows + j < len(strings):
-                if i < num_cols - 1 and ((i+1)*num_rows + j < len(strings)):
-                    row.append(strings[i*num_rows + j].ljust(col_width))
+            if i * num_rows + j < len(strings):
+                if i < num_cols - 1 and ((i + 1) * num_rows + j < len(strings)):
+                    row.append(strings[i * num_rows + j].ljust(col_width))
                 else:
-                    row.append(strings[i*num_rows + j])
+                    row.append(strings[i * num_rows + j])
         formatted_strings.append(" ".join(row))
 
     return formatted_strings
@@ -547,10 +566,9 @@ def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) 
         logging.critical("Invalid line %d in file %s: %s", line_nr, filename, line)
         raise SystemExit("Invalid line in input file")
     param_len = len(param_name)
-    param_sep = line[param_len] # the character following the parameter name must be a separator
-    if param_sep not in {',', ' ', '\t'}:
-        logging.critical("Invalid parameter name %s on line %d in file %s", param_name, line_nr,
-                         filename)
+    param_sep = line[param_len]  # the character following the parameter name must be a separator
+    if param_sep not in {",", " ", "\t"}:
+        logging.critical("Invalid parameter name %s on line %d in file %s", param_name, line_nr, filename)
         raise SystemExit("Invalid parameter name")
     if param_len > PARAM_NAME_MAX_LEN:
         logging.critical("Too long parameter name on line %d in file %s", line_nr, filename)
@@ -558,9 +576,13 @@ def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) 
     return param_name
 
 
-def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',
-                                   sort_type: str = 'none', param_default_dict: Optional[Dict] = None,
-                                   delete_documentation_annotations = False) -> None:
+def update_parameter_documentation(
+    doc: Dict[str, Any],
+    target: str = ".",
+    sort_type: str = "none",
+    param_default_dict: Optional[Dict] = None,
+    delete_documentation_annotations=False,
+) -> None:
     """
     Updates the parameter documentation in the target file or in all *.param,*.parm files of the target directory.
 
@@ -585,8 +607,7 @@ def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',
         param_files = [target]
     elif os_path.isdir(target):
         # If it's a directory, process all .param and .parm files in that directory
-        param_files = glob.glob(os_path.join(target, "*.param")) \
-            + glob.glob(os_path.join(target, "*.parm"))
+        param_files = glob.glob(os_path.join(target, "*.param")) + glob.glob(os_path.join(target, "*.parm"))
     else:
         raise ValueError(f"Target '{target}' is neither a file nor a directory.")
 
@@ -595,7 +616,6 @@ def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',
 
     # Iterate over all the target ArduPilot parameter files
     for param_file in param_files:
-
         if os_path.basename(param_file).endswith("24_inflight_magnetometer_fit_setup.param") and "MAGH_ALT_DELTA" not in doc:
             continue
 
@@ -603,11 +623,19 @@ def update_parameter_documentation(doc: Dict[str, Any], target: str = '.',
         with open(param_file, "r", encoding="utf-8") as file:
             lines = file.readlines()
 
-        update_parameter_documentation_file(doc, sort_type, param_default_dict, param_file, lines,
-                                            delete_documentation_annotations)
+        update_parameter_documentation_file(
+            doc, sort_type, param_default_dict, param_file, lines, delete_documentation_annotations
+        )
 
-def update_parameter_documentation_file(doc, sort_type, param_default_dict, param_file, lines,  # pylint: disable=too-many-locals, too-many-arguments
-                                        delete_documentation_annotations: bool):
+
+def update_parameter_documentation_file(  # pylint: disable=too-many-locals, too-many-arguments
+    doc,
+    sort_type,
+    param_default_dict,
+    param_file,
+    lines,
+    delete_documentation_annotations: bool,
+):
     new_lines = []
     if os_path.basename(param_file).endswith("16_pid_adjustment.param"):
         new_lines.extend(lines[0:5])  # copy the first 6 lines verbatim
@@ -630,15 +658,15 @@ def update_parameter_documentation_file(doc, sort_type, param_default_dict, para
                 #  prefix the line with a comment derived from the dictionary element
                 data = doc[param_name]
                 prefix_parts = [
-                        f"{data['humanName']}",
-                    ]
+                    f"{data['humanName']}",
+                ]
                 prefix_parts += data["documentation"]
                 for key, value in data["fields"].items():
                     prefix_parts.append(f"{key}: {value}")
                 prefix_parts += format_columns(data["values"])
                 doc_text = "\n# ".join(prefix_parts)
                 if param_name in param_default_dict:
-                    default_value = format(param_default_dict[param_name].value, '.6f').rstrip('0').rstrip('.')
+                    default_value = format(param_default_dict[param_name].value, ".6f").rstrip("0").rstrip(".")
                     doc_text += f"\n# Default: {default_value}"
                 if not is_first_param_in_file:
                     new_lines.append("\n")
@@ -652,15 +680,15 @@ def update_parameter_documentation_file(doc, sort_type, param_default_dict, para
             is_first_param_in_file = False
 
     if total_params == documented_params:
-        logging.info("Read file %s with %d parameters, all got documented",
-                         param_file, total_params)
+        logging.info("Read file %s with %d parameters, all got documented", param_file, total_params)
     else:
-        logging.warning("Read file %s with %d parameters, but only %s of which got documented",
-                            param_file, total_params, documented_params)
+        logging.warning(
+            "Read file %s with %d parameters, but only %s of which got documented", param_file, total_params, documented_params
+        )
         logging.warning("No documentation found for: %s", ", ".join(undocumented_params))
 
     # Write the new file contents to the file
-    with open(param_file, "w", encoding="utf-8", newline='\n') as file:  # Ensure newline character is LF, even on windows
+    with open(param_file, "w", encoding="utf-8", newline="\n") as file:  # Ensure newline character is LF, even on windows
         file.writelines(new_lines)
 
 
@@ -673,7 +701,7 @@ def print_read_only_params(doc):
     """
     logging.info("ReadOnly parameters:")
     for param_name, param_value in doc.items():
-        if 'ReadOnly' in param_value['fields'] and param_value['fields']['ReadOnly']:
+        if "ReadOnly" in param_value["fields"] and param_value["fields"]["ReadOnly"]:
             logging.info(param_name)
 
 
@@ -689,10 +717,10 @@ def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
         "ArduSub": "versioned/Sub/stable-",
         "AntennaTracker": "versioned/Tracker/stable-",
         # Not yet versioned in the https://autotest.ardupilot.org/Parameters server
-        'AP_Periph': 'versioned/Periph/stable-',
-        'Blimp': 'versioned/Blimp/stable-',
-        'Heli': 'versioned/Copter/stable-',
-        'SITL': 'versioned/SITL/stable-'
+        "AP_Periph": "versioned/Periph/stable-",
+        "Blimp": "versioned/Blimp/stable-",
+        "Heli": "versioned/Copter/stable-",
+        "SITL": "versioned/SITL/stable-",
     }
     try:
         vehicle_subdir = vehicle_parm_subdir[vehicle_type] + firmware_version
@@ -705,8 +733,10 @@ def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
         xml_url = BASE_URL + vehicle_type + "/"
     return xml_url
 
-def parse_parameter_metadata(xml_url: str, xml_dir: str, xml_file: str,
-                        vehicle_type: str, max_line_length: int) -> Dict[str, Any]:
+
+def parse_parameter_metadata(
+    xml_url: str, xml_dir: str, xml_file: str, vehicle_type: str, max_line_length: int
+) -> Dict[str, Any]:
     xml_root = get_xml_data(xml_url, xml_dir, xml_file, vehicle_type)
     return create_doc_dict(xml_root, vehicle_type, max_line_length)
 
@@ -717,27 +747,29 @@ def main():
         xml_url = get_xml_url(args.vehicle_type, args.firmware_version)
         xml_dir = get_xml_dir(args.target)
 
-        doc_dict = parse_parameter_metadata(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE,
-                                            args.vehicle_type, args.max_line_length)
+        doc_dict = parse_parameter_metadata(
+            xml_url, xml_dir, PARAM_DEFINITION_XML_FILE, args.vehicle_type, args.max_line_length
+        )
         param_default_dict = load_default_param_file(xml_dir)
-        update_parameter_documentation(doc_dict, args.target, args.sort, param_default_dict,
-                                       args.delete_documentation_annotations)
+        update_parameter_documentation(
+            doc_dict, args.target, args.sort, param_default_dict, args.delete_documentation_annotations
+        )
         if args.verbose:
             print_read_only_params(doc_dict)
 
         # Annotate lua MAGfit XML documentation into the respective parameter file
         xml_file = LUA_PARAM_DEFINITION_XML_FILE
         if os_path.isfile(os_path.join(os_path.dirname(args.target), xml_file)):
-            doc_dict = parse_parameter_metadata(xml_url, xml_dir, xml_file,
-                                                args.vehicle_type, args.max_line_length)
+            doc_dict = parse_parameter_metadata(xml_url, xml_dir, xml_file, args.vehicle_type, args.max_line_length)
             target = os_path.join(os_path.dirname(args.target), "24_inflight_magnetometer_fit_setup.param")
             param_default_dict = load_default_param_file(xml_dir)
-            update_parameter_documentation(doc_dict, target, args.sort, param_default_dict,
-                                           args.delete_documentation_annotations)
+            update_parameter_documentation(
+                doc_dict, target, args.sort, param_default_dict, args.delete_documentation_annotations
+            )
         else:
             logging.warning("No LUA MAGfit XML documentation found, skipping annotation of %s", target)
 
-    except  (IOError, OSError, SystemExit) as exp:
+    except (IOError, OSError, SystemExit) as exp:
         logging.fatal(exp)
         sys_exit(1)
 

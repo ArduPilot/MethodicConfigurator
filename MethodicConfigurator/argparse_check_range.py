@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-'''
+"""
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Dmitriy Kovalev
@@ -8,7 +8,7 @@ SPDX-FileCopyrightText: 2024 Dmitriy Kovalev
 SPDX-License-Identifier: Apache-2.0
 
 https://gist.github.com/dmitriykovalev/2ab1aa33a8099ef2d514925d84aa89e7
-'''
+"""
 
 from argparse import Action, ArgumentError
 from operator import ge, gt, le, lt
@@ -17,13 +17,11 @@ from MethodicConfigurator.internationalization import _
 
 
 class CheckRange(Action):
-    '''
+    """
     Check if the Argparse argument value is within the specified range
-    '''
-    ops = frozenset({"inf": gt,
-           "min": ge,
-           "sup": lt,
-           "max": le})
+    """
+
+    ops = {"inf": gt, "min": ge, "sup": lt, "max": le}
 
     def __init__(self, *args, **kwargs):
         if "min" in kwargs and "inf" in kwargs:

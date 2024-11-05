@@ -20,8 +20,12 @@ import os
 import re
 
 SEQUENCE_FILENAME = "configuration_steps_ArduCopter.json"
-PYTHON_FILES = ["param_pid_adjustment_update.py", "param_pid_adjustment_update_test.py",
-                "annotate_params.py", "copy_magfit_pdef_to_template_dirs.py"]
+PYTHON_FILES = [
+    "param_pid_adjustment_update.py",
+    "param_pid_adjustment_update_test.py",
+    "annotate_params.py",
+    "copy_magfit_pdef_to_template_dirs.py",
+]
 file_renames = {}
 
 # Add lines like these to rename files
@@ -47,7 +51,7 @@ def reorder_param_files(steps):
 
 
 def loop_relevant_files(renames, steps):
-    param_dirs = ['.']
+    param_dirs = ["."]
     # Search all *.py, *.json and *.md files in the current directory
     # and replace all occurrences of the old names with the new names
     for root, _dirs, files in os.walk("."):
@@ -55,11 +59,11 @@ def loop_relevant_files(renames, steps):
             if file.endswith(".param"):
                 if root not in param_dirs:
                     param_dirs.append(root)
-            if file == 'LICENSE.md':
+            if file == "LICENSE.md":
                 continue
-            if file == 'vehicle_components.json':
+            if file == "vehicle_components.json":
                 continue
-            if file ==  SEQUENCE_FILENAME:
+            if file == SEQUENCE_FILENAME:
                 uplate_old_filenames(renames, steps)
             if file in PYTHON_FILES or file.endswith(".md") or file.endswith(".json"):
                 update_file_contents(renames, root, file, steps)
@@ -82,10 +86,9 @@ def update_file_contents(renames, root, file, steps):
     if file.startswith("TUNING_GUIDE_") and file.endswith(".md"):
         for old_filename in renames.values():
             if old_filename not in file_content:
-                print(f"Error: The intermediate parameter file '{old_filename}'" \
-                                f" is not mentioned in the {file} file")
+                print(f"Error: The intermediate parameter file '{old_filename}'" f" is not mentioned in the {file} file")
     for new_name, old_name in renames.items():
-        if 'configuration_steps' in file and file.endswith(".json"):
+        if "configuration_steps" in file and file.endswith(".json"):
             file_content = update_configuration_steps_json_file_contents(steps, file_content, new_name, old_name)
         else:
             file_content = file_content.replace(old_name, new_name)
@@ -95,15 +98,15 @@ def update_file_contents(renames, root, file, steps):
 
 def update_configuration_steps_json_file_contents(steps, file_content, new_name, old_name):
     new_file_content = ""
-    curr_filename = ''
+    curr_filename = ""
     for line in file_content.splitlines(keepends=True):
-        re_search = re.search(r'^    \"(\w.+)\"', line)
+        re_search = re.search(r"^    \"(\w.+)\"", line)
         if re_search:
             curr_filename = re_search.group(1)
         if "old_filenames" in line:
             if curr_filename in steps and "old_filenames" in steps[curr_filename]:
                 # WARNING!!! old_filenames can only used once, so we remove it after using it
-                old_filenames = str(steps[curr_filename].pop("old_filenames")).replace("\'", "\"")
+                old_filenames = str(steps[curr_filename].pop("old_filenames")).replace("'", '"')
                 new_file_content += f'        "old_filenames": {old_filenames}'
                 if line.endswith(",\n"):
                     new_file_content += ","
@@ -140,13 +143,13 @@ def change_line_endings_for_md_files():
                 file_path = os.path.join(root, file)
                 with open(file_path, "rb") as handle:
                     content = handle.read()
-                content = content.replace(b'\n', b'\r\n')
+                content = content.replace(b"\n", b"\r\n")
                 with open(file_path, "wb") as handle:
                     handle.write(content)
 
 
 def main():
-    with open(os.path.join("MethodicConfigurator", SEQUENCE_FILENAME), 'r', encoding='utf-8') as f:
+    with open(os.path.join("MethodicConfigurator", SEQUENCE_FILENAME), "r", encoding="utf-8") as f:
         steps = json.load(f)
     renames = reorder_param_files(steps)
     param_dirs = loop_relevant_files(renames, steps)

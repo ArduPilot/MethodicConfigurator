@@ -13,4 +13,4 @@ ignore =
     E261
 
 
-max-line-length = 127
+max-line-length = 128

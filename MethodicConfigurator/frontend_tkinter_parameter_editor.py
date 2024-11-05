@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-'''
+"""
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
-'''
+"""
 
 import tkinter as tk
 from argparse import ArgumentParser
@@ -14,12 +14,12 @@ from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 
-#from logging import debug as logging_debug
+# from logging import debug as logging_debug
 from logging import info as logging_info
 from logging import warning as logging_warning
 from tkinter import filedialog, messagebox, ttk
 
-#from logging import critical as logging_critical
+# from logging import critical as logging_critical
 from typing import List, Tuple
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
@@ -53,6 +53,7 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
     the documentation links based on the current file and provides
     functionality to open these links in a web browser.
     """
+
     def __init__(self, root: tk.Tk, local_filesystem, current_file: str):
         self.root = root
         self.local_filesystem = local_filesystem
@@ -70,11 +71,15 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         documentation_grid.pack(fill="both", expand=True)
 
         descriptive_texts = [_("Forum Blog:"), _("Wiki:"), _("External tool:"), _("Mandatory:")]
-        descriptive_tooltips = [_("ArduPilot's forum Methodic configuration Blog post relevant for the current file"),
-                                _("ArduPilot's wiki page relevant for the current file"),
-                                _("External tool or documentation relevant for the current file"),
-                                _("Mandatory level of the current file,\n 100% you MUST use this file to configure the "
-                                "vehicle,\n 0% you can ignore this file if it does not apply to your vehicle")]
+        descriptive_tooltips = [
+            _("ArduPilot's forum Methodic configuration Blog post relevant for the current file"),
+            _("ArduPilot's wiki page relevant for the current file"),
+            _("External tool or documentation relevant for the current file"),
+            _(
+                "Mandatory level of the current file,\n 100% you MUST use this file to configure the "
+                "vehicle,\n 0% you can ignore this file if it does not apply to your vehicle"
+            ),
+        ]
         for i, text in enumerate(descriptive_texts):
             # Create labels for the first column with static descriptive text
             label = ttk.Label(documentation_grid, text=text)
@@ -97,16 +102,16 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
             frame_title = _("Documentation")
         self.documentation_frame.config(text=frame_title)
 
-        blog_text, blog_url = self.local_filesystem.get_documentation_text_and_url(current_file, 'blog')
-        self.__update_documentation_label(_('Forum Blog:'), blog_text, blog_url)
-        wiki_text, wiki_url = self.local_filesystem.get_documentation_text_and_url(current_file, 'wiki')
-        self.__update_documentation_label(_('Wiki:'), wiki_text, wiki_url)
-        external_tool_text, external_tool_url = self.local_filesystem.get_documentation_text_and_url(current_file,
-                                                                                                     'external_tool')
-        self.__update_documentation_label(_('External tool:'), external_tool_text, external_tool_url)
-        mandatory_text, mandatory_url = self.local_filesystem.get_documentation_text_and_url(current_file,
-                                                                                             'mandatory')
-        self.__update_documentation_label(_('Mandatory:'), mandatory_text, mandatory_url, False)
+        blog_text, blog_url = self.local_filesystem.get_documentation_text_and_url(current_file, "blog")
+        self.__update_documentation_label(_("Forum Blog:"), blog_text, blog_url)
+        wiki_text, wiki_url = self.local_filesystem.get_documentation_text_and_url(current_file, "wiki")
+        self.__update_documentation_label(_("Wiki:"), wiki_text, wiki_url)
+        external_tool_text, external_tool_url = self.local_filesystem.get_documentation_text_and_url(
+            current_file, "external_tool"
+        )
+        self.__update_documentation_label(_("External tool:"), external_tool_text, external_tool_url)
+        mandatory_text, mandatory_url = self.local_filesystem.get_documentation_text_and_url(current_file, "mandatory")
+        self.__update_documentation_label(_("Mandatory:"), mandatory_text, mandatory_url, False)
 
     def __update_documentation_label(self, label_key, text, url, url_expected=True):
         label = self.documentation_labels[label_key]
@@ -131,10 +136,12 @@ def show_about_window(root, _version: str):  # pylint: disable=too-many-locals
     main_frame.pack(expand=True, fill=tk.BOTH)
 
     # Add the "About" message
-    about_message = _("ArduPilot Methodic Configurator Version: {_version}\n\n" \
-                    "A clear configuration sequence for ArduPilot vehicles.\n\n" \
-                    "Copyright © 2024 Amilcar do Carmo Lucas and ArduPilot.org\n\n" \
-                    "Licensed under the GNU General Public License v3.0")
+    about_message = _(
+        "ArduPilot Methodic Configurator Version: {_version}\n\n"
+        "A clear configuration sequence for ArduPilot vehicles.\n\n"
+        "Copyright © 2024 Amilcar do Carmo Lucas and ArduPilot.org\n\n"
+        "Licensed under the GNU General Public License v3.0"
+    )
     about_label = ttk.Label(main_frame, text=about_message.format(**locals()), wraplength=450)
     about_label.grid(column=0, row=0, padx=10, pady=10, columnspan=5)  # Span across all columns
 
@@ -145,35 +152,47 @@ def show_about_window(root, _version: str):  # pylint: disable=too-many-locals
     usage_popup_label.pack(side=tk.TOP, anchor=tk.W)
 
     component_editor_var = tk.BooleanVar(value=ProgramSettings.display_usage_popup("component_editor"))
-    component_editor_checkbox = ttk.Checkbutton(usage_popup_frame, text=_("Component editor window"),
-                                                variable=component_editor_var,
-                                                command=lambda: ProgramSettings.set_display_usage_popup("component_editor",
-                                                                                                component_editor_var.get()))
+    component_editor_checkbox = ttk.Checkbutton(
+        usage_popup_frame,
+        text=_("Component editor window"),
+        variable=component_editor_var,
+        command=lambda: ProgramSettings.set_display_usage_popup("component_editor", component_editor_var.get()),
+    )
     component_editor_checkbox.pack(side=tk.TOP, anchor=tk.W)
 
     parameter_editor_var = tk.BooleanVar(value=ProgramSettings.display_usage_popup("parameter_editor"))
-    parameter_editor_checkbox = ttk.Checkbutton(usage_popup_frame, text=_("Parameter file editor and uploader window"),
-                                                 variable=parameter_editor_var,
-                                                 command=lambda: ProgramSettings.set_display_usage_popup("parameter_editor",
-                                                                                                parameter_editor_var.get()))
+    parameter_editor_checkbox = ttk.Checkbutton(
+        usage_popup_frame,
+        text=_("Parameter file editor and uploader window"),
+        variable=parameter_editor_var,
+        command=lambda: ProgramSettings.set_display_usage_popup("parameter_editor", parameter_editor_var.get()),
+    )
     parameter_editor_checkbox.pack(side=tk.TOP, anchor=tk.W)
 
     # Create buttons for each action
-    user_manual_button = ttk.Button(main_frame, text=_("User Manual"),
-                                    command=lambda: webbrowser_open(
-                                       "https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"))
-    support_forum_button = ttk.Button(main_frame, text=_("Support Forum"),
-                                      command=lambda: webbrowser_open(
-                                         "http://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/1"))
-    report_bug_button = ttk.Button(main_frame, text=_("Report a Bug"),
-                                   command=lambda: webbrowser_open(
-                                      "https://github.com/ArduPilot/MethodicConfigurator/issues/new"))
-    licenses_button = ttk.Button(main_frame, text=_("Licenses"),
-                                command=lambda: webbrowser_open(
-                                   "https://github.com/ArduPilot/MethodicConfigurator/blob/master/credits/CREDITS.md"))
-    source_button = ttk.Button(main_frame, text=_("Source Code"),
-                               command=lambda: webbrowser_open(
-                                  "https://github.com/ArduPilot/MethodicConfigurator"))
+    user_manual_button = ttk.Button(
+        main_frame,
+        text=_("User Manual"),
+        command=lambda: webbrowser_open("https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"),
+    )
+    support_forum_button = ttk.Button(
+        main_frame,
+        text=_("Support Forum"),
+        command=lambda: webbrowser_open("http://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/1"),
+    )
+    report_bug_button = ttk.Button(
+        main_frame,
+        text=_("Report a Bug"),
+        command=lambda: webbrowser_open("https://github.com/ArduPilot/MethodicConfigurator/issues/new"),
+    )
+    licenses_button = ttk.Button(
+        main_frame,
+        text=_("Licenses"),
+        command=lambda: webbrowser_open("https://github.com/ArduPilot/MethodicConfigurator/blob/master/credits/CREDITS.md"),
+    )
+    source_button = ttk.Button(
+        main_frame, text=_("Source Code"), command=lambda: webbrowser_open("https://github.com/ArduPilot/MethodicConfigurator")
+    )
 
     # Place buttons using grid for equal spacing and better control over layout
     user_manual_button.grid(column=0, row=2, padx=10, pady=10)
@@ -193,8 +212,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     and provides functionalities for displaying and interacting with drone
     parameters, documentation, and flight controller connection settings.
     """
-    def __init__(self, current_file: str, flight_controller: FlightController,
-                 local_filesystem: LocalFilesystem):
+
+    def __init__(self, current_file: str, flight_controller: FlightController, local_filesystem: LocalFilesystem):
         super().__init__()
         self.current_file = current_file
         self.flight_controller = flight_controller
@@ -210,21 +229,22 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.tempcal_imu_progress_window = None
         self.file_upload_progress_window = None
 
-        self.root.title(_("Amilcar Lucas's - ArduPilot methodic configurator ") + VERSION + \
-                        _(" - Parameter file editor and uploader"))
-        self.root.geometry("990x550") # Set the window width
+        self.root.title(
+            _("Amilcar Lucas's - ArduPilot methodic configurator ") + VERSION + _(" - Parameter file editor and uploader")
+        )
+        self.root.geometry("990x550")  # Set the window width
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)
 
         style = ttk.Style()
-        style.map('readonly.TCombobox', fieldbackground=[('readonly', 'white')])
-        style.map('readonly.TCombobox', selectbackground=[('readonly', 'white')])
-        style.map('readonly.TCombobox', selectforeground=[('readonly', 'black')])
-        style.map('default_v.TCombobox', fieldbackground=[('readonly', 'light blue')])
-        style.map('default_v.TCombobox', selectbackground=[('readonly', 'light blue')])
-        style.map('default_v.TCombobox', selectforeground=[('readonly', 'black')])
-        style.configure('default_v.TEntry', fieldbackground="light blue")
+        style.map("readonly.TCombobox", fieldbackground=[("readonly", "white")])
+        style.map("readonly.TCombobox", selectbackground=[("readonly", "white")])
+        style.map("readonly.TCombobox", selectforeground=[("readonly", "black")])
+        style.map("default_v.TCombobox", fieldbackground=[("readonly", "light blue")])
+        style.map("default_v.TCombobox", selectbackground=[("readonly", "light blue")])
+        style.map("default_v.TCombobox", selectforeground=[("readonly", "black")])
+        style.configure("default_v.TEntry", fieldbackground="light blue")
 
         self.__create_conf_widgets(VERSION)
 
@@ -243,16 +263,16 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def __create_conf_widgets(self, version: str):
         config_frame = ttk.Frame(self.main_frame)
-        config_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0)) # Pack the frame at the top of the window
+        config_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0))  # Pack the frame at the top of the window
 
         config_subframe = ttk.Frame(config_frame)
-        config_subframe.pack(side=tk.LEFT, fill="x", expand=True, anchor=tk.NW) # Pack the frame at the top of the window
+        config_subframe.pack(side=tk.LEFT, fill="x", expand=True, anchor=tk.NW)  # Pack the frame at the top of the window
 
         # Create a new frame inside the config_subframe for the intermediate parameter file directory selection labels
         # and directory selection button
-        directory_selection_frame = VehicleDirectorySelectionWidgets(self, config_subframe, self.local_filesystem,
-                                                                     self.local_filesystem.vehicle_dir,
-                                                                     destroy_parent_on_open=False)
+        directory_selection_frame = VehicleDirectorySelectionWidgets(
+            self, config_subframe, self.local_filesystem, self.local_filesystem.vehicle_dir, destroy_parent_on_open=False
+        )
         directory_selection_frame.container_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(4, 6))
 
         # Create a new frame inside the config_subframe for the intermediate parameter file selection label and combobox
@@ -261,21 +281,27 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # Create a label for the Combobox
         file_selection_label = ttk.Label(file_selection_frame, text=_("Current intermediate parameter file:"))
-        file_selection_label.pack(side=tk.TOP, anchor=tk.NW) # Add the label to the top of the file_selection_frame
+        file_selection_label.pack(side=tk.TOP, anchor=tk.NW)  # Add the label to the top of the file_selection_frame
 
         # Create Combobox for intermediate parameter file selection
-        self.file_selection_combobox = AutoResizeCombobox(file_selection_frame,
-                                                          list(self.local_filesystem.file_parameters.keys()),
-                                                          self.current_file,
-                                                          _("Select the intermediate parameter file from the list of available"
-                                                          " files in the selected vehicle directory\nIt will automatically "
-                                                          "advance to the next file once the current file is uploaded to the "
-                                                          "fight controller"),
-                                                          state='readonly', width=45, style='readonly.TCombobox')
+        self.file_selection_combobox = AutoResizeCombobox(
+            file_selection_frame,
+            list(self.local_filesystem.file_parameters.keys()),
+            self.current_file,
+            _(
+                "Select the intermediate parameter file from the list of available"
+                " files in the selected vehicle directory\nIt will automatically "
+                "advance to the next file once the current file is uploaded to the "
+                "fight controller"
+            ),
+            state="readonly",
+            width=45,
+            style="readonly.TCombobox",
+        )
         self.file_selection_combobox.bind("<<ComboboxSelected>>", self.on_param_file_combobox_change)
         self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
-        self.legend_frame(config_subframe, get_widget_font(file_selection_label)['family'])
+        self.legend_frame(config_subframe, get_widget_font(file_selection_label)["family"])
 
         image_label = BaseWindow.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
@@ -284,8 +310,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def legend_frame(self, config_subframe: ttk.Frame, font_family: str):
         style = ttk.Style()
-        style.configure('Legend.TLabelframe', font=(font_family, 9))
-        legend_frame = ttk.LabelFrame(config_subframe, text=_("Legend"), style='Legend.TLabelframe')
+        style.configure("Legend.TLabelframe", font=(font_family, 9))
+        legend_frame = ttk.LabelFrame(config_subframe, text=_("Legend"), style="Legend.TLabelframe")
         legend_left = ttk.Frame(legend_frame)
         legend_left.pack(side=tk.LEFT, anchor=tk.NW)
         show_tooltip(legend_frame, _("the meaning of the text background colors"))
@@ -305,7 +331,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         na_label = ttk.Label(legend_right, text=_("Not available"), background="orange", font=font)
         na_label.pack(side=tk.TOP, anchor=tk.NW)
         ne_label = ttk.Label(legend_right, text=_("Not editable"), font=font)
-        ne_label.configure(state='disabled')
+        ne_label.configure(state="disabled")
         ne_label.pack(side=tk.TOP, anchor=tk.NW)
         legend_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(2, 2))
 
@@ -327,44 +353,69 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         checkboxes_frame.pack(side=tk.LEFT, padx=(8, 8))
 
         # Create a checkbox for toggling parameter display
-        only_changed_checkbox = ttk.Checkbutton(checkboxes_frame, text=_("See only changed parameters"),
-                                                variable=self.show_only_differences,
-                                                command=self.on_show_only_changed_checkbox_change)
+        only_changed_checkbox = ttk.Checkbutton(
+            checkboxes_frame,
+            text=_("See only changed parameters"),
+            variable=self.show_only_differences,
+            command=self.on_show_only_changed_checkbox_change,
+        )
         only_changed_checkbox.pack(side=tk.TOP, anchor=tk.NW)
-        show_tooltip(only_changed_checkbox, _("Toggle to show only parameters that will change if/when uploaded to the flight "
-                     "controller"))
+        show_tooltip(
+            only_changed_checkbox,
+            _("Toggle to show only parameters that will change if/when uploaded to the flight controller"),
+        )
 
-        annotate_params_checkbox = ttk.Checkbutton(checkboxes_frame, text=_("Annotate docs into .param files"),
-                                                   state='normal' if self.local_filesystem.doc_dict else 'disabled',
-                                                   variable=self.annotate_params_into_files)
+        annotate_params_checkbox = ttk.Checkbutton(
+            checkboxes_frame,
+            text=_("Annotate docs into .param files"),
+            state="normal" if self.local_filesystem.doc_dict else "disabled",
+            variable=self.annotate_params_into_files,
+        )
         annotate_params_checkbox.pack(side=tk.TOP, anchor=tk.NW)
-        show_tooltip(annotate_params_checkbox, _("Annotate ArduPilot parameter documentation metadata into the intermediate "
-                     "parameter files\n"
-                     "The files will be bigger, but all the existing parameter documentation will be included inside"))
+        show_tooltip(
+            annotate_params_checkbox,
+            _(
+                "Annotate ArduPilot parameter documentation metadata into the intermediate parameter files\n"
+                "The files will be bigger, but all the existing parameter documentation will be included inside"
+            ),
+        )
 
         # Create upload button
-        upload_selected_button = ttk.Button(buttons_frame, text=_("Upload selected params to FC, "
-                                                                  "and advance to next param file"),
-                                            command=self.on_upload_selected_click)
-        upload_selected_button.configure(state='normal' if self.flight_controller.master else 'disabled')
-        upload_selected_button.pack(side=tk.LEFT, padx=(8, 8)) # Add padding on both sides of the upload selected button
-        show_tooltip(upload_selected_button, _("Upload selected parameters to the flight controller and advance to the next "
-                     "intermediate parameter file\nIf changes have been made to the current file it will ask if you want "
-                     "to save them\nIt will reset the FC if necessary, re-download all parameters and validate their value"))
+        upload_selected_button = ttk.Button(
+            buttons_frame,
+            text=_("Upload selected params to FC, and advance to next param file"),
+            command=self.on_upload_selected_click,
+        )
+        upload_selected_button.configure(state="normal" if self.flight_controller.master else "disabled")
+        upload_selected_button.pack(side=tk.LEFT, padx=(8, 8))  # Add padding on both sides of the upload selected button
+        show_tooltip(
+            upload_selected_button,
+            _(
+                "Upload selected parameters to the flight controller and advance to the next "
+                "intermediate parameter file\nIf changes have been made to the current file it will ask if you want "
+                "to save them\nIt will reset the FC if necessary, re-download all parameters and validate their value"
+            ),
+        )
 
         # Create skip button
         skip_button = ttk.Button(buttons_frame, text=_("Skip parameter file"), command=self.on_skip_click)
-        skip_button.pack(side=tk.RIGHT, padx=(8, 8)) # Add right padding to the skip button
-        show_tooltip(skip_button, _("Skip to the next intermediate parameter file without uploading any changes to the flight "
-                     "controller\nIf changes have been made to the current file it will ask if you want to save them"))
+        skip_button.pack(side=tk.RIGHT, padx=(8, 8))  # Add right padding to the skip button
+        show_tooltip(
+            skip_button,
+            _(
+                "Skip to the next intermediate parameter file without uploading any changes to the flight "
+                "controller\nIf changes have been made to the current file it will ask if you want to save them"
+            ),
+        )
 
     @staticmethod
     def __display_usage_popup_window(parent: tk.Tk):
         usage_popup_window = BaseWindow(parent)
         style = ttk.Style()
 
-        instructions_text = RichText(usage_popup_window.main_frame, wrap=tk.WORD, height=5, bd=0,
-                                     background=style.lookup("TLabel", "background"))
+        instructions_text = RichText(
+            usage_popup_window.main_frame, wrap=tk.WORD, height=5, bd=0, background=style.lookup("TLabel", "background")
+        )
         instructions_text.insert(tk.END, _("1. Read "))
         instructions_text.insert(tk.END, _("all"), "bold")
         instructions_text.insert(tk.END, _(" the documentation on top of the parameter table\n"))
@@ -384,28 +435,51 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         instructions_text.insert(tk.END, _("5. Repeat from the top until the program automatically closes"))
         instructions_text.config(state=tk.DISABLED)
 
-        UsagePopupWindow.display(parent, usage_popup_window, _("How to use the parameter file editor and uploader window"),
-                                 "parameter_editor", "690x200", instructions_text)
+        UsagePopupWindow.display(
+            parent,
+            usage_popup_window,
+            _("How to use the parameter file editor and uploader window"),
+            "parameter_editor",
+            "690x200",
+            instructions_text,
+        )
 
-    def __do_tempcal_imu(self, selected_file:str):
-        tempcal_imu_result_param_filename, tempcal_imu_result_param_fullpath = \
-           self.local_filesystem.tempcal_imu_result_param_tuple()
+    def __do_tempcal_imu(self, selected_file: str):
+        tempcal_imu_result_param_filename, tempcal_imu_result_param_fullpath = (
+            self.local_filesystem.tempcal_imu_result_param_tuple()
+        )
         if selected_file == tempcal_imu_result_param_filename:
-            msg = _("If you proceed the {tempcal_imu_result_param_filename}\n"
-                    "will be overwritten with the new calibration results.\n"
-                    "Do you want to provide a .bin log file and\n"
-                    "run the IMU temperature calibration using it?")
+            msg = _(
+                "If you proceed the {tempcal_imu_result_param_filename}\n"
+                "will be overwritten with the new calibration results.\n"
+                "Do you want to provide a .bin log file and\n"
+                "run the IMU temperature calibration using it?"
+            )
             if messagebox.askyesno(_("IMU temperature calibration"), msg.format(**locals())):
                 # file selection dialog to select the *.bin file to be used in the IMUfit temperature calibration
                 filename = filedialog.askopenfilename(filetypes=[(_("ArduPilot binary log files"), ["*.bin", "*.BIN"])])
                 if filename:
-                    messagebox.showwarning(_("IMU temperature calibration"), _("Please wait, this can take a really long time "
-                                           "and\nthe GUI will be unresponsive until it finishes."))
-                    self.tempcal_imu_progress_window = ProgressWindow(self.main_frame, _("Reading IMU calibration messages"),
-                                                                      _("Please wait, this can take a long time"))
+                    messagebox.showwarning(
+                        _("IMU temperature calibration"),
+                        _(
+                            "Please wait, this can take a really long time "
+                            "and\nthe GUI will be unresponsive until it finishes."
+                        ),
+                    )
+                    self.tempcal_imu_progress_window = ProgressWindow(
+                        self.main_frame, _("Reading IMU calibration messages"), _("Please wait, this can take a long time")
+                    )
                     # Pass the selected filename to the IMUfit class
-                    IMUfit(filename, tempcal_imu_result_param_fullpath, False, False, False, False,
-                            self.local_filesystem.vehicle_dir, self.tempcal_imu_progress_window.update_progress_bar_300_pct)
+                    IMUfit(
+                        filename,
+                        tempcal_imu_result_param_fullpath,
+                        False,
+                        False,
+                        False,
+                        False,
+                        self.local_filesystem.vehicle_dir,
+                        self.tempcal_imu_progress_window.update_progress_bar_300_pct,
+                    )
                     self.tempcal_imu_progress_window.destroy()
                     try:
                         self.local_filesystem.file_parameters = self.local_filesystem.read_params_from_files()
@@ -417,13 +491,18 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def __should_copy_fc_values_to_file(self, selected_file: str):
         auto_changed_by = self.local_filesystem.auto_changed_by(selected_file)
         if auto_changed_by and self.flight_controller.fc_parameters:
-            msg = _("This configuration step should be performed outside this tool by\n"
-                    "{auto_changed_by}\n"
-                    "and that should have changed the parameters on the FC.\n\n"
-                    "Should the FC values now be copied to the {selected_file} file?")
+            msg = _(
+                "This configuration step should be performed outside this tool by\n"
+                "{auto_changed_by}\n"
+                "and that should have changed the parameters on the FC.\n\n"
+                "Should the FC values now be copied to the {selected_file} file?"
+            )
             if messagebox.askyesno(_("Update file with values from FC?"), msg.format(**locals())):
-                relevant_fc_params = {key: value for key, value in self.flight_controller.fc_parameters.items() \
-                                      if key in self.local_filesystem.file_parameters[selected_file]}
+                relevant_fc_params = {
+                    key: value
+                    for key, value in self.flight_controller.fc_parameters.items()
+                    if key in self.local_filesystem.file_parameters[selected_file]
+                }
                 params_copied = self.local_filesystem.copy_fc_values_to_file(selected_file, relevant_fc_params)
                 if params_copied:
                     self.parameter_editor_table.set_at_least_one_param_edited(True)
@@ -457,10 +536,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if self.flight_controller.master:
                 msg = _("Should the {local_filename} file be uploaded to the flight controller as {remote_filename}?")
                 if messagebox.askyesno(_("Upload file to FC"), msg.format(**locals())):
-                    self.file_upload_progress_window = ProgressWindow(self.main_frame, _("Uploading file"),
-                                                                      _("Uploaded {} of {} %"))
-                    if not self.flight_controller.upload_file(local_filename, remote_filename,
-                                                              self.file_upload_progress_window.update_progress_bar):
+                    self.file_upload_progress_window = ProgressWindow(
+                        self.main_frame, _("Uploading file"), _("Uploaded {} of {} %")
+                    )
+                    if not self.flight_controller.upload_file(
+                        local_filename, remote_filename, self.file_upload_progress_window.update_progress_bar
+                    ):
                         error_msg = _("Failed to upload {local_filename} to {remote_filename}, please upload it manually")
                         messagebox.showerror(_("Upload failed"), error_msg.format(**locals()))
                     self.file_upload_progress_window.destroy()
@@ -469,7 +550,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 messagebox.showwarning(_("Will not upload any file"), _("No flight controller connection"))
 
     def on_param_file_combobox_change(self, _event, forced: bool = False):
-        if not self.file_selection_combobox['values']:
+        if not self.file_selection_combobox["values"]:
             return
         self.parameter_editor_table.generate_edit_widgets_focus_out()
         selected_file = self.file_selection_combobox.get()
@@ -489,21 +570,23 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def download_flight_controller_parameters(self, redownload: bool = False):
         operation_string = _("Re-downloading FC parameters") if redownload else _("Downloading FC parameters")
-        self.param_download_progress_window = ProgressWindow(self.main_frame, operation_string,
-                                                             _("Downloaded {} of {} parameters"))
+        self.param_download_progress_window = ProgressWindow(
+            self.main_frame, operation_string, _("Downloaded {} of {} parameters")
+        )
         # Download all parameters from the flight controller
         self.flight_controller.fc_parameters, param_default_values = self.flight_controller.download_params(
-            self.param_download_progress_window.update_progress_bar)
+            self.param_download_progress_window.update_progress_bar
+        )
         if param_default_values:
             self.local_filesystem.write_param_default_values_to_file(param_default_values)
         self.param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
         if not redownload:
-            self.on_param_file_combobox_change(None, True) # the initial param read will trigger a table update
+            self.on_param_file_combobox_change(None, True)  # the initial param read will trigger a table update
 
     def repopulate_parameter_table(self, selected_file):
         if not selected_file:
             return  # no file was yet selected, so skip it
-        if hasattr(self.flight_controller, 'fc_parameters') and self.flight_controller.fc_parameters:
+        if hasattr(self.flight_controller, "fc_parameters") and self.flight_controller.fc_parameters:
             fc_parameters = self.flight_controller.fc_parameters
         else:
             fc_parameters = {}
@@ -526,25 +609,34 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         for param_name, param in selected_params.items():
             try:
                 logging_info(_("Parameter %s set to %f"), param_name, param.value)
-                if param_name not in self.flight_controller.fc_parameters or \
-                   not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param.value):
+                if param_name not in self.flight_controller.fc_parameters or not is_within_tolerance(
+                    self.flight_controller.fc_parameters[param_name], param.value
+                ):
                     param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
-                    if param_metadata and param_metadata.get('RebootRequired', False):
+                    if param_metadata and param_metadata.get("RebootRequired", False):
                         self.flight_controller.set_param(param_name, float(param.value))
                         self.at_least_one_changed_parameter_written = True
                         if param_name in self.flight_controller.fc_parameters:
-                            logging_info(_("Parameter %s changed from %f to %f, reset required"), param_name,
-                                         self.flight_controller.fc_parameters[param_name], param.value)
+                            logging_info(
+                                _("Parameter %s changed from %f to %f, reset required"),
+                                param_name,
+                                self.flight_controller.fc_parameters[param_name],
+                                param.value,
+                            )
                         else:
                             logging_info(_("Parameter %s changed to %f, reset required"), param_name, param.value)
                         fc_reset_required = True
                     # Check if any of the selected parameters have a _TYPE, _EN, or _ENABLE suffix
-                    elif param_name.endswith(('_TYPE', '_EN', '_ENABLE', 'SID_AXIS')):
+                    elif param_name.endswith(("_TYPE", "_EN", "_ENABLE", "SID_AXIS")):
                         self.flight_controller.set_param(param_name, float(param.value))
                         self.at_least_one_changed_parameter_written = True
                         if param_name in self.flight_controller.fc_parameters:
-                            logging_info(_("Parameter %s changed from %f to %f, possible reset required"), param_name,
-                                         self.flight_controller.fc_parameters[param_name], param.value)
+                            logging_info(
+                                _("Parameter %s changed from %f to %f, possible reset required"),
+                                param_name,
+                                self.flight_controller.fc_parameters[param_name],
+                                param.value,
+                            )
                         else:
                             logging_info(_("Parameter %s changed to %f, possible reset required"), param_name, param.value)
                         fc_reset_unsure.append(param_name)
@@ -559,19 +651,21 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if not fc_reset_required:
             if fc_reset_unsure:
                 # Ask the user if they want to reset the ArduPilot
-                _param_list_str = (', ').join(fc_reset_unsure)
+                _param_list_str = (", ").join(fc_reset_unsure)
                 msg = _("{_param_list_str} parameter(s) potentially require a reset\nDo you want to reset the ArduPilot?")
                 fc_reset_required = messagebox.askyesno(_("Possible reset required"), msg.format(**locals()))
 
         if fc_reset_required:
-            self.reset_progress_window = ProgressWindow(self.main_frame, _("Resetting Flight Controller"),
-                                                        _("Waiting for {} of {} seconds"))
-            filesystem_boot_delay = self.local_filesystem.file_parameters[self.current_file].get('BRD_BOOT_DELAY', Par(0.0))
-            flightcontroller_boot_delay = self.flight_controller.fc_parameters.get('BRD_BOOT_DELAY', 0)
+            self.reset_progress_window = ProgressWindow(
+                self.main_frame, _("Resetting Flight Controller"), _("Waiting for {} of {} seconds")
+            )
+            filesystem_boot_delay = self.local_filesystem.file_parameters[self.current_file].get("BRD_BOOT_DELAY", Par(0.0))
+            flightcontroller_boot_delay = self.flight_controller.fc_parameters.get("BRD_BOOT_DELAY", 0)
             extra_sleep_time = max(filesystem_boot_delay.value, flightcontroller_boot_delay) // 1000 + 1  # round up
             # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
-            error_message = self.flight_controller.reset_and_reconnect(self.reset_progress_window.update_progress_bar, None,
-                                                                       extra_sleep_time)
+            error_message = self.flight_controller.reset_and_reconnect(
+                self.reset_progress_window.update_progress_bar, None, extra_sleep_time
+            )
             if error_message:
                 logging_error(error_message)
                 messagebox.showerror(_("ArduPilot methodic configurator"), error_message)
@@ -583,11 +677,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.write_changes_to_intermediate_parameter_file()
         selected_params = self.parameter_editor_table.get_upload_selected_params(self.current_file)
         if selected_params:
-            if hasattr(self.flight_controller, 'fc_parameters') and self.flight_controller.fc_parameters:
+            if hasattr(self.flight_controller, "fc_parameters") and self.flight_controller.fc_parameters:
                 self.upload_selected_params(selected_params)
             else:
-                logging_warning(_("No parameters were yet downloaded from the flight controller, "
-                                  "will not upload any parameter"))
+                logging_warning(
+                    _("No parameters were yet downloaded from the flight controller, will not upload any parameter")
+                )
                 messagebox.showwarning(_("Will not upload any parameter"), _("No flight controller connection"))
         else:
             logging_warning(_("No parameter was selected for upload, will not upload any parameter"))
@@ -606,8 +701,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             try:
                 self.flight_controller.set_param(param_name, param.value)
                 logging_info(_("Parameter %s set to %f"), param_name, param.value)
-                if param_name not in self.flight_controller.fc_parameters or \
-                   not is_within_tolerance(self.flight_controller.fc_parameters[param_name], param.value):
+                if param_name not in self.flight_controller.fc_parameters or not is_within_tolerance(
+                    self.flight_controller.fc_parameters[param_name], param.value
+                ):
                     self.at_least_one_changed_parameter_written = True
             except ValueError as _e:
                 error_msg = _("Failed to set parameter {param_name}: {_e}").format(**locals())
@@ -622,21 +718,32 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Validate that the read parameters are the same as the ones in the current_file
             param_upload_error = []
             for param_name, param in selected_params.items():
-                if param_name in self.flight_controller.fc_parameters and \
-                   param is not None and \
-                   not is_within_tolerance(self.flight_controller.fc_parameters[param_name], float(param.value)):
-                    logging_error(_("Parameter %s upload to the flight controller failed. Expected: %f, Actual: %f"),
-                                  param_name, param.value, self.flight_controller.fc_parameters[param_name])
+                if (
+                    param_name in self.flight_controller.fc_parameters
+                    and param is not None
+                    and not is_within_tolerance(self.flight_controller.fc_parameters[param_name], float(param.value))
+                ):
+                    logging_error(
+                        _("Parameter %s upload to the flight controller failed. Expected: %f, Actual: %f"),
+                        param_name,
+                        param.value,
+                        self.flight_controller.fc_parameters[param_name],
+                    )
                     param_upload_error.append(param_name)
                 if param_name not in self.flight_controller.fc_parameters:
-                    logging_error(_("Parameter %s upload to the flight controller failed. Expected: %f, Actual: N/A"),
-                                  param_name, param.value)
+                    logging_error(
+                        _("Parameter %s upload to the flight controller failed. Expected: %f, Actual: N/A"),
+                        param_name,
+                        param.value,
+                    )
                     param_upload_error.append(param_name)
 
             if param_upload_error:
-                if messagebox.askretrycancel(_("Parameter upload error"),
-                                             _("Failed to upload the following parameters to the flight controller:\n") +
-                                             f"{(', ').join(param_upload_error)}"):
+                if messagebox.askretrycancel(
+                    _("Parameter upload error"),
+                    _("Failed to upload the following parameters to the flight controller:\n")
+                    + f"{(', ').join(param_upload_error)}",
+                ):
                     self.upload_selected_params(selected_params)
             else:
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
@@ -672,47 +779,59 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if self.parameter_editor_table.get_at_least_one_param_edited():
             msg = _("Do you want to write the changes to the {self.current_file} file?")
             if messagebox.askyesno(_("One or more parameters have been edited"), msg.format(**locals())):
-                self.local_filesystem.export_to_param(self.local_filesystem.file_parameters[self.current_file],
-                                                      self.current_file, annotate_doc=self.annotate_params_into_files.get())
+                self.local_filesystem.export_to_param(
+                    self.local_filesystem.file_parameters[self.current_file],
+                    self.current_file,
+                    annotate_doc=self.annotate_params_into_files.get(),
+                )
         self.parameter_editor_table.set_at_least_one_param_edited(False)
 
     def write_summary_files(self):  # pylint: disable=too-many-locals
-        if not hasattr(self.flight_controller, 'fc_parameters') or self.flight_controller.fc_parameters is None:
+        if not hasattr(self.flight_controller, "fc_parameters") or self.flight_controller.fc_parameters is None:
             return
         annotated_fc_parameters = self.local_filesystem.annotate_intermediate_comments_to_param_dict(
-            self.flight_controller.fc_parameters)
-        non_default__read_only_params, non_default__writable_calibrations, non_default__writable_non_calibrations = \
+            self.flight_controller.fc_parameters
+        )
+        non_default__read_only_params, non_default__writable_calibrations, non_default__writable_non_calibrations = (
             self.local_filesystem.categorize_parameters(annotated_fc_parameters)
+        )
 
         nr_total_params = len(annotated_fc_parameters)
         nr_non_default__read_only_params = len(non_default__read_only_params)
         nr_non_default__writable_calibrations = len(non_default__writable_calibrations)
         nr_non_default__writable_non_calibrations = len(non_default__writable_non_calibrations)
-        _nr_unchanged_params = nr_total_params - nr_non_default__read_only_params - \
-            nr_non_default__writable_calibrations - nr_non_default__writable_non_calibrations
+        _nr_unchanged_params = (
+            nr_total_params
+            - nr_non_default__read_only_params
+            - nr_non_default__writable_calibrations
+            - nr_non_default__writable_non_calibrations
+        )
         # If there are no more files, present a summary message box
-        summary_message = _("Methodic configuration of {nr_total_params} parameters complete:\n\n" \
-            "{_nr_unchanged_params} kept their default value\n\n" \
-            "{nr_non_default__read_only_params} non-default read-only parameters - " \
-            "ignore these, you can not change them\n\n" \
-            "{nr_non_default__writable_calibrations} non-default writable sensor-calibrations - " \
-            "non-reusable between vehicles\n\n" \
-            "{nr_non_default__writable_non_calibrations} non-default writable non-sensor-calibrations - " \
-            "these can be reused between similar vehicles")
+        summary_message = _(
+            "Methodic configuration of {nr_total_params} parameters complete:\n\n"
+            "{_nr_unchanged_params} kept their default value\n\n"
+            "{nr_non_default__read_only_params} non-default read-only parameters - "
+            "ignore these, you can not change them\n\n"
+            "{nr_non_default__writable_calibrations} non-default writable sensor-calibrations - "
+            "non-reusable between vehicles\n\n"
+            "{nr_non_default__writable_non_calibrations} non-default writable non-sensor-calibrations - "
+            "these can be reused between similar vehicles"
+        )
         messagebox.showinfo(_("Last parameter file processed"), summary_message.format(**locals()))
-        wrote_complete = self.write_summary_file(annotated_fc_parameters,
-                                                 "complete.param", False)
-        wrote_read_only = self.write_summary_file(non_default__read_only_params,
-                                                  "non-default_read-only.param", False)
-        wrote_calibrations = self.write_summary_file(non_default__writable_calibrations,
-                                                     "non-default_writable_calibrations.param", False)
-        wrote_non_calibrations = self.write_summary_file(non_default__writable_non_calibrations,
-                                                         "non-default_writable_non-calibrations.param", False)
+        wrote_complete = self.write_summary_file(annotated_fc_parameters, "complete.param", False)
+        wrote_read_only = self.write_summary_file(non_default__read_only_params, "non-default_read-only.param", False)
+        wrote_calibrations = self.write_summary_file(
+            non_default__writable_calibrations, "non-default_writable_calibrations.param", False
+        )
+        wrote_non_calibrations = self.write_summary_file(
+            non_default__writable_non_calibrations, "non-default_writable_non-calibrations.param", False
+        )
         files_to_zip = [
             (wrote_complete, "complete.param"),
             (wrote_read_only, "non-default_read-only.param"),
             (wrote_calibrations, "non-default_writable_calibrations.param"),
-            (wrote_non_calibrations, "non-default_writable_non-calibrations.param")]
+            (wrote_non_calibrations, "non-default_writable_non-calibrations.param"),
+        ]
         self.write_zip_file(files_to_zip)
 
     def write_summary_file(self, param_dict: dict, filename: str, annotate_doc: bool):
@@ -734,16 +853,18 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             should_write_file = messagebox.askyesno(_("Overwrite existing file"), msg.format(zip_file_path))
         if should_write_file:
             self.local_filesystem.zip_files(files_to_zip)
-            msg = _("All relevant files have been zipped into the \n"
-                    "{zip_file_path} file.\n\nYou can now upload this file to the ArduPilot Methodic\n"
-                    "Configuration Blog post on discuss.ardupilot.org.")
+            msg = _(
+                "All relevant files have been zipped into the \n"
+                "{zip_file_path} file.\n\nYou can now upload this file to the ArduPilot Methodic\n"
+                "Configuration Blog post on discuss.ardupilot.org."
+            )
             messagebox.showinfo(_("Parameter files zipped"), msg.format(**locals()))
         return should_write_file
 
     def close_connection_and_quit(self):
         self.parameter_editor_table.generate_edit_widgets_focus_out()
         self.write_changes_to_intermediate_parameter_file()
-        self.root.quit() # Then stop the Tkinter event loop
+        self.root.quit()  # Then stop the Tkinter event loop
 
     @staticmethod
     def add_argparse_arguments(parser):
@@ -759,8 +880,12 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = ArgumentParser(description=_('A GUI for editing ArduPilot param files. '
-                            'Not to be used directly, but through the main ArduPilot methodic configurator script.'))
+    parser = ArgumentParser(
+        description=_(
+            "A GUI for editing ArduPilot param files. "
+            "Not to be used directly, but through the main ArduPilot methodic configurator script."
+        )
+    )
     parser = FlightController.add_argparse_arguments(parser)
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ParameterEditorWindow.add_argparse_arguments(parser)
@@ -770,8 +895,8 @@ def argument_parser():
 if __name__ == "__main__":
     args = argument_parser()
 
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
+    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
     fc = FlightController(args.reboot_time)
     filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, None, args.allow_editing_template_files)
-    ParameterEditorWindow('04_board_orientation.param', fc, filesystem)
+    ParameterEditorWindow("04_board_orientation.param", fc, filesystem)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-'''
+"""
 Create temperature calibration parameters for IMUs based on log data.
 
 The original (python2) version of this file is part of the Ardupilot project.
@@ -10,7 +10,7 @@ This file is part of Ardupilot methodic configurator. https://github.com/ArduPil
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
-'''
+"""
 
 import math
 import os
@@ -36,18 +36,19 @@ TEMP_REF = 35.0
 # use exponential notation
 SCALE_FACTOR = 1.0e6
 
-AXES = ['X', 'Y', 'Z']
-AXEST = ['X', 'Y', 'Z', 'T', 'time']
+AXES = ["X", "Y", "Z"]
+AXEST = ["X", "Y", "Z", "T", "time"]
 
 
 class Coefficients:  # pylint: disable=too-many-instance-attributes
-    '''class representing a set of coefficients'''
+    """class representing a set of coefficients"""
+
     def __init__(self):
         self.acoef = {}
         self.gcoef = {}
-        self.enable = [0]*3
-        self.tmin = [-100]*3
-        self.tmax = [-100]*3
+        self.enable = [0] * 3
+        self.tmin = [-100] * 3
+        self.tmax = [-100] * 3
         self.gtcal = {}
         self.atcal = {}
         self.gofs = {}
@@ -67,15 +68,15 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
         if imu not in self.acoef:
             self.acoef[imu] = {}
         if axis not in self.acoef[imu]:
-            self.acoef[imu][axis] = [0]*4
-        self.acoef[imu][axis][POLY_ORDER-order] = value
+            self.acoef[imu][axis] = [0] * 4
+        self.acoef[imu][axis][POLY_ORDER - order] = value
 
     def set_gcoeff(self, imu, axis, order, value):
         if imu not in self.gcoef:
             self.gcoef[imu] = {}
         if axis not in self.gcoef[imu]:
-            self.gcoef[imu][axis] = [0]*4
-        self.gcoef[imu][axis][POLY_ORDER-order] = value
+            self.gcoef[imu][axis] = [0] * 4
+        self.gcoef[imu][axis][POLY_ORDER - order] = value
 
     def set_aoffset(self, imu, axis, value):
         if imu not in self.aofs:
@@ -103,7 +104,7 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
         self.enable[imu] = value
 
     def correction(self, coeff, imu, temperature, axis, cal_temp):  # pylint: disable=too-many-arguments
-        '''calculate correction from temperature calibration from log data using parameters'''
+        """calculate correction from temperature calibration from log data using parameters"""
         if self.enable[imu] != 1.0:
             return 0.0
         if cal_temp < -80:
@@ -116,37 +117,42 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
         return poly(cal_temp - TEMP_REF) - poly(temperature - TEMP_REF)
 
     def correction_accel(self, imu, temperature):
-        '''calculate accel correction from temperature calibration from
-        log data using parameters'''
+        """calculate accel correction from temperature calibration from
+        log data using parameters"""
         cal_temp = self.atcal.get(imu, TEMP_REF)
-        return Vector3(self.correction(self.acoef[imu], imu, temperature, 'X', cal_temp),
-                       self.correction(self.acoef[imu], imu, temperature, 'Y', cal_temp),
-                       self.correction(self.acoef[imu], imu, temperature, 'Z', cal_temp))
+        return Vector3(
+            self.correction(self.acoef[imu], imu, temperature, "X", cal_temp),
+            self.correction(self.acoef[imu], imu, temperature, "Y", cal_temp),
+            self.correction(self.acoef[imu], imu, temperature, "Z", cal_temp),
+        )
 
     def correction_gyro(self, imu, temperature):
-        '''calculate gyro correction from temperature calibration from
-        log data using parameters'''
+        """calculate gyro correction from temperature calibration from
+        log data using parameters"""
         cal_temp = self.gtcal.get(imu, TEMP_REF)
-        return Vector3(self.correction(self.gcoef[imu], imu, temperature, 'X', cal_temp),
-                       self.correction(self.gcoef[imu], imu, temperature, 'Y', cal_temp),
-                       self.correction(self.gcoef[imu], imu, temperature, 'Z', cal_temp))
+        return Vector3(
+            self.correction(self.gcoef[imu], imu, temperature, "X", cal_temp),
+            self.correction(self.gcoef[imu], imu, temperature, "Y", cal_temp),
+            self.correction(self.gcoef[imu], imu, temperature, "Z", cal_temp),
+        )
 
     def param_string(self, imu):
-        params = ''
-        params += f'INS_TCAL{imu+1}_ENABLE 1\n'
-        params += f'INS_TCAL{imu+1}_TMIN {self.tmin[imu]:.1f}\n'
-        params += f'INS_TCAL{imu+1}_TMAX {self.tmax[imu]:.1f}\n'
+        params = ""
+        params += f"INS_TCAL{imu+1}_ENABLE 1\n"
+        params += f"INS_TCAL{imu+1}_TMIN {self.tmin[imu]:.1f}\n"
+        params += f"INS_TCAL{imu+1}_TMAX {self.tmax[imu]:.1f}\n"
         for p in range(POLY_ORDER):
             for axis in AXES:
-                params += f'INS_TCAL{imu+1}_ACC{p+1}_{axis} {self.acoef[imu][axis][POLY_ORDER-(p+1)]*SCALE_FACTOR:.9f}\n'
+                params += f"INS_TCAL{imu+1}_ACC{p+1}_{axis} {self.acoef[imu][axis][POLY_ORDER-(p+1)]*SCALE_FACTOR:.9f}\n"
         for p in range(POLY_ORDER):
             for axis in AXES:
-                params += f'INS_TCAL{imu+1}_GYR{p+1}_{axis} {self.gcoef[imu][axis][POLY_ORDER-(p+1)]*SCALE_FACTOR:.9f}\n'
+                params += f"INS_TCAL{imu+1}_GYR{p+1}_{axis} {self.gcoef[imu][axis][POLY_ORDER-(p+1)]*SCALE_FACTOR:.9f}\n"
         return params
 
 
 class OnlineIMUfit:
-    '''implement the online learning used in ArduPilot'''
+    """implement the online learning used in ArduPilot"""
+
     def __init__(self):
         self.porder = None
         self.mat = None
@@ -155,14 +161,14 @@ class OnlineIMUfit:
     def update(self, x, y):
         temp = 1.0
 
-        for i in range(2*(self.porder - 1), -1, -1):
+        for i in range(2 * (self.porder - 1), -1, -1):
             k = 0 if (i < self.porder) else (i - self.porder + 1)
-            for j in range(i - k, k-1, -1):
-                self.mat[j][i-j] += temp
+            for j in range(i - k, k - 1, -1):
+                self.mat[j][i - j] += temp
             temp *= x
 
         temp = 1.0
-        for i in range(self.porder-1, -1, -1):
+        for i in range(self.porder - 1, -1, -1):
             self.vec[i] += y * temp
             temp *= x
 
@@ -191,12 +197,13 @@ class IMUData:
     This class provides methods to add acceleration and gyroscope data, apply
     moving average filters, and retrieve data for specific IMUs and temperatures.
     """
+
     def __init__(self):
         self.accel = {}
         self.gyro = {}
 
     def IMUs(self):
-        '''return list of IMUs'''
+        """return list of IMUs"""
         if len(self.accel.keys()) != len(self.gyro.keys()):
             print("accel and gyro data doesn't match")
             sys.exit(1)
@@ -207,33 +214,33 @@ class IMUData:
             self.accel[imu] = {}
             for axis in AXEST:
                 self.accel[imu][axis] = np.zeros(0, dtype=float)
-        self.accel[imu]['T'] = np.append(self.accel[imu]['T'], temperature)
-        self.accel[imu]['X'] = np.append(self.accel[imu]['X'], value.x)
-        self.accel[imu]['Y'] = np.append(self.accel[imu]['Y'], value.y)
-        self.accel[imu]['Z'] = np.append(self.accel[imu]['Z'], value.z)
-        self.accel[imu]['time'] = np.append(self.accel[imu]['time'], time)
+        self.accel[imu]["T"] = np.append(self.accel[imu]["T"], temperature)
+        self.accel[imu]["X"] = np.append(self.accel[imu]["X"], value.x)
+        self.accel[imu]["Y"] = np.append(self.accel[imu]["Y"], value.y)
+        self.accel[imu]["Z"] = np.append(self.accel[imu]["Z"], value.z)
+        self.accel[imu]["time"] = np.append(self.accel[imu]["time"], time)
 
     def add_gyro(self, imu, temperature, time, value):
         if imu not in self.gyro:
             self.gyro[imu] = {}
             for axis in AXEST:
                 self.gyro[imu][axis] = np.zeros(0, dtype=float)
-        self.gyro[imu]['T'] = np.append(self.gyro[imu]['T'], temperature)
-        self.gyro[imu]['X'] = np.append(self.gyro[imu]['X'], value.x)
-        self.gyro[imu]['Y'] = np.append(self.gyro[imu]['Y'], value.y)
-        self.gyro[imu]['Z'] = np.append(self.gyro[imu]['Z'], value.z)
-        self.gyro[imu]['time'] = np.append(self.gyro[imu]['time'], time)
+        self.gyro[imu]["T"] = np.append(self.gyro[imu]["T"], temperature)
+        self.gyro[imu]["X"] = np.append(self.gyro[imu]["X"], value.x)
+        self.gyro[imu]["Y"] = np.append(self.gyro[imu]["Y"], value.y)
+        self.gyro[imu]["Z"] = np.append(self.gyro[imu]["Z"], value.z)
+        self.gyro[imu]["time"] = np.append(self.gyro[imu]["time"], time)
 
     def moving_average(self, data, w):
-        '''apply a moving average filter over a window of width w'''
+        """apply a moving average filter over a window of width w"""
         ret = np.cumsum(data)
         ret[w:] = ret[w:] - ret[:-w]
-        return ret[w - 1:] / w
+        return ret[w - 1 :] / w
 
     def FilterArray(self, data, width_s):
-        '''apply moving average filter of width width_s seconds'''
-        nseconds = data['time'][-1] - data['time'][0]
-        nsamples = len(data['time'])
+        """apply moving average filter of width width_s seconds"""
+        nseconds = data["time"][-1] - data["time"][0]
+        nsamples = len(data["time"])
         window = int(nsamples / nseconds) * width_s
         if window > 1:
             for axis in AXEST:
@@ -241,33 +248,33 @@ class IMUData:
         return data
 
     def Filter(self, width_s):
-        '''apply moving average filter of width width_s seconds'''
+        """apply moving average filter of width width_s seconds"""
         for imu in self.IMUs():
             self.accel[imu] = self.FilterArray(self.accel[imu], width_s)
             self.gyro[imu] = self.FilterArray(self.gyro[imu], width_s)
 
     def accel_at_temp(self, imu, axis, temperature):
-        '''return the accel value closest to the given temperature'''
-        if temperature < self.accel[imu]['T'][0]:
+        """return the accel value closest to the given temperature"""
+        if temperature < self.accel[imu]["T"][0]:
             return self.accel[imu][axis][0]
-        for i in range(len(self.accel[imu]['T'])-1):
-            if self.accel[imu]['T'][i] <= temperature <= self.accel[imu]['T'][i+1]:
+        for i in range(len(self.accel[imu]["T"]) - 1):
+            if self.accel[imu]["T"][i] <= temperature <= self.accel[imu]["T"][i + 1]:
                 v1 = self.accel[imu][axis][i]
-                v2 = self.accel[imu][axis][i+1]
-                p = (temperature - self.accel[imu]['T'][i]) / (self.accel[imu]['T'][i+1]-self.accel[imu]['T'][i])
-                return v1 + (v2-v1) * p
+                v2 = self.accel[imu][axis][i + 1]
+                p = (temperature - self.accel[imu]["T"][i]) / (self.accel[imu]["T"][i + 1] - self.accel[imu]["T"][i])
+                return v1 + (v2 - v1) * p
         return self.accel[imu][axis][-1]
 
     def gyro_at_temp(self, imu, axis, temperature):
-        '''return the gyro value closest to the given temperature'''
-        if temperature < self.gyro[imu]['T'][0]:
+        """return the gyro value closest to the given temperature"""
+        if temperature < self.gyro[imu]["T"][0]:
             return self.gyro[imu][axis][0]
-        for i in range(len(self.gyro[imu]['T'])-1):
-            if self.gyro[imu]['T'][i] <= temperature <= self.gyro[imu]['T'][i+1]:
+        for i in range(len(self.gyro[imu]["T"]) - 1):
+            if self.gyro[imu]["T"][i] <= temperature <= self.gyro[imu]["T"][i + 1]:
                 v1 = self.gyro[imu][axis][i]
-                v2 = self.gyro[imu][axis][i+1]
-                p = (temperature - self.gyro[imu]['T'][i]) / (self.gyro[imu]['T'][i+1]-self.gyro[imu]['T'][i])
-                return v1 + (v2-v1) * p
+                v2 = self.gyro[imu][axis][i + 1]
+                p = (temperature - self.gyro[imu]["T"][i]) / (self.gyro[imu]["T"][i + 1] - self.gyro[imu]["T"][i])
+                return v1 + (v2 - v1) * p
         return self.gyro[imu][axis][-1]
 
 
@@ -278,11 +285,17 @@ def constrain(value, minv, maxv):
     return value
 
 
-def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments
-           no_graph, log_parm,
-           online, tclr, figpath,
-           progress_callback):
-    '''find IMU calibration parameters from a log file'''
+def IMUfit(  # pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments
+    logfile,
+    outfile,
+    no_graph,
+    log_parm,
+    online,
+    tclr,
+    figpath,
+    progress_callback,
+):
+    """find IMU calibration parameters from a log file"""
     print(f"Processing log {logfile}")
     mlog = mavutil.mavlink_connection(logfile, progress_callback=progress_callback)
 
@@ -294,9 +307,9 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
     stop_capture = [False] * 3
 
     if tclr:
-        messages = ['PARM', 'TCLR']
+        messages = ["PARM", "TCLR"]
     else:
-        messages = ['PARM', 'IMU']
+        messages = ["PARM", "IMU"]
 
     # Pre-compile regular expressions used frequently inside the loop
     enable_pattern = re.compile(r"^INS_TCAL(\d)_ENABLE$")
@@ -324,16 +337,16 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
             msgcnt += 1
             new_pct = (100 * msgcnt) // total_msgs
             if new_pct != pct:
-                progress_callback(100+new_pct)
+                progress_callback(100 + new_pct)
                 pct = new_pct
 
         msg_type = msg.get_type()
-        if msg_type == 'PARM':
+        if msg_type == "PARM":
             # build up the old coefficients so we can remove the impact of
             # existing coefficients from the data
             m = enable_pattern.match(msg.Name)
             if m:
-                imu = int(m.group(1))-1
+                imu = int(m.group(1)) - 1
                 if stop_capture[imu]:
                     continue
                 if msg.Value == 1 and c.enable[imu] == 2:
@@ -348,41 +361,41 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
                 continue
             m = coeff_pattern.match(msg.Name)
             if m:
-                imu = int(m.group(1))-1
+                imu = int(m.group(1)) - 1
                 stype = m.group(2)
                 p = int(m.group(3))
                 axis = m.group(4)
                 if stop_capture[imu]:
                     continue
-                if stype == 'ACC':
-                    c.set_acoeff(imu, axis, p, msg.Value/SCALE_FACTOR)
-                if stype == 'GYR':
-                    c.set_gcoeff(imu, axis, p, msg.Value/SCALE_FACTOR)
+                if stype == "ACC":
+                    c.set_acoeff(imu, axis, p, msg.Value / SCALE_FACTOR)
+                if stype == "GYR":
+                    c.set_gcoeff(imu, axis, p, msg.Value / SCALE_FACTOR)
                 continue
             m = tmin_pattern.match(msg.Name)
             if m:
-                imu = int(m.group(1))-1
+                imu = int(m.group(1)) - 1
                 if stop_capture[imu]:
                     continue
                 c.set_tmin(imu, msg.Value)
                 continue
             m = tmax_pattern.match(msg.Name)
             if m:
-                imu = int(m.group(1))-1
+                imu = int(m.group(1)) - 1
                 if stop_capture[imu]:
                     continue
                 c.set_tmax(imu, msg.Value)
                 continue
             m = gyr_caltemp_pattern.match(msg.Name)
             if m:
-                imu = int(m.group(1))-1
+                imu = int(m.group(1)) - 1
                 if stop_capture[imu]:
                     continue
                 c.set_gyro_tcal(imu, msg.Value)
                 continue
             m = acc_caltemp_pattern.match(msg.Name)
             if m:
-                imu = int(m.group(1))-1
+                imu = int(m.group(1)) - 1
                 if stop_capture[imu]:
                     continue
                 c.set_accel_tcal(imu, msg.Value)
@@ -393,37 +406,37 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
                 if m.group(2) == "":
                     imu = 0
                 else:
-                    imu = int(m.group(2))-1
+                    imu = int(m.group(2)) - 1
                 axis = m.group(3)
                 if stop_capture[imu]:
                     continue
-                if stype == 'ACC':
+                if stype == "ACC":
                     c.set_aoffset(imu, axis, msg.Value)
-                if stype == 'GYR':
+                if stype == "GYR":
                     c.set_goffset(imu, axis, msg.Value)
                 continue
-            if msg.Name == 'AHRS_ORIENTATION':
+            if msg.Name == "AHRS_ORIENTATION":
                 orientation = int(msg.Value)
                 print(f"Using orientation {orientation}")
                 continue
 
-        if msg_type == 'TCLR' and tclr:
+        if msg_type == "TCLR" and tclr:
             imu = msg.I
 
             T = msg.Temp
             if msg.SType == 0:
                 # accel
                 acc = Vector3(msg.X, msg.Y, msg.Z)
-                time = msg.TimeUS*1.0e-6
+                time = msg.TimeUS * 1.0e-6
                 data.add_accel(imu, T, time, acc)
             elif msg.SType == 1:
                 # gyro
                 gyr = Vector3(msg.X, msg.Y, msg.Z)
-                time = msg.TimeUS*1.0e-6
+                time = msg.TimeUS * 1.0e-6
                 data.add_gyro(imu, T, time, gyr)
             continue
 
-        if msg_type == 'IMU' and not tclr:
+        if msg_type == "IMU" and not tclr:
             imu = msg.I
 
             if stop_capture[imu]:
@@ -445,7 +458,7 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
                 acc -= c.correction_accel(imu, T)
                 gyr -= c.correction_gyro(imu, T)
 
-            time = msg.TimeUS*1.0e-6
+            time = msg.TimeUS * 1.0e-6
             data.add_accel(imu, T, time, acc)
             data.add_gyro(imu, T, time, gyr)
 
@@ -479,6 +492,7 @@ def IMUfit(logfile, outfile,     # pylint: disable=too-many-locals, too-many-bra
 
     pyplot.show()
 
+
 def generate_calibration_file(outfile, online, progress_callback, data, c):  # pylint: disable=too-many-locals
     clog = c
     c = Coefficients()
@@ -487,10 +501,10 @@ def generate_calibration_file(outfile, online, progress_callback, data, c):  # p
         progress = 220
         progress_callback(progress)
         progress_delta = 60 / (len(data.IMUs()) * len(AXES))
-    with open(outfile, "w", encoding='utf-8') as calfile:
+    with open(outfile, "w", encoding="utf-8") as calfile:
         for imu in data.IMUs():
-            tmin = np.amin(data.accel[imu]['T'])
-            tmax = np.amax(data.accel[imu]['T'])
+            tmin = np.amin(data.accel[imu]["T"])
+            tmax = np.amax(data.accel[imu]["T"])
 
             c.set_tmin(imu, tmin)
             c.set_tmax(imu, tmax)
@@ -498,19 +512,19 @@ def generate_calibration_file(outfile, online, progress_callback, data, c):  # p
             for axis in AXES:
                 if online:
                     fit = OnlineIMUfit()
-                    trel = data.accel[imu]['T'] - TEMP_REF
+                    trel = data.accel[imu]["T"] - TEMP_REF
                     ofs = data.accel_at_temp(imu, axis, clog.atcal[imu])
                     c.set_accel_poly(imu, axis, fit.polyfit(trel, data.accel[imu][axis] - ofs, POLY_ORDER))
-                    trel = data.gyro[imu]['T'] - TEMP_REF
+                    trel = data.gyro[imu]["T"] - TEMP_REF
                     c.set_gyro_poly(imu, axis, fit.polyfit(trel, data.gyro[imu][axis], POLY_ORDER))
                 else:
-                    trel = data.accel[imu]['T'] - TEMP_REF
+                    trel = data.accel[imu]["T"] - TEMP_REF
                     if imu in clog.atcal:
                         ofs = data.accel_at_temp(imu, axis, clog.atcal[imu])
                     else:
                         ofs = np.mean(data.accel[imu][axis])
                     c.set_accel_poly(imu, axis, np.polyfit(trel, data.accel[imu][axis] - ofs, POLY_ORDER))
-                    trel = data.gyro[imu]['T'] - TEMP_REF
+                    trel = data.gyro[imu]["T"] - TEMP_REF
                     c.set_gyro_poly(imu, axis, np.polyfit(trel, data.gyro[imu][axis], POLY_ORDER))
                 if progress_callback:
                     progress += progress_delta
@@ -523,6 +537,7 @@ def generate_calibration_file(outfile, online, progress_callback, data, c):  # p
     print(f"Calibration written to {outfile}")
     return c, clog
 
+
 def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus):  # pylint: disable=too-many-arguments
     _fig, axs = pyplot.subplots(len(data.IMUs()), 1, sharex=True)
     if num_imus == 1:
@@ -531,29 +546,31 @@ def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus):  
     for imu in data.IMUs():
         scale = math.degrees(1)
         for axis in AXES:
-            axs[imu].plot(data.gyro[imu]['time'], data.gyro[imu][axis]*scale, label=f'Uncorrected {axis}')
+            axs[imu].plot(data.gyro[imu]["time"], data.gyro[imu][axis] * scale, label=f"Uncorrected {axis}")
         for axis in AXES:
             poly = np.poly1d(c.gcoef[imu][axis])
-            trel = data.gyro[imu]['T'] - TEMP_REF
+            trel = data.gyro[imu]["T"] - TEMP_REF
             correction = poly(trel)
-            axs[imu].plot(data.gyro[imu]['time'], (data.gyro[imu][axis] - correction)*scale, label=f'Corrected {axis}')
+            axs[imu].plot(data.gyro[imu]["time"], (data.gyro[imu][axis] - correction) * scale, label=f"Corrected {axis}")
         if log_parm:
             for axis in AXES:
                 if clog.enable[imu] == 0.0:
                     print(f"IMU[{imu}] disabled in log parms")
                     continue
                 poly = np.poly1d(clog.gcoef[imu][axis])
-                correction = poly(data.gyro[imu]['T'] - TEMP_REF) - poly(clog.gtcal[imu] - TEMP_REF) + clog.gofs[imu][axis]
-                axs[imu].plot(data.gyro[imu]['time'], (data.gyro[imu][axis] - correction)*scale,
-                              label=f'Corrected {axis} (log parm)')
+                correction = poly(data.gyro[imu]["T"] - TEMP_REF) - poly(clog.gtcal[imu] - TEMP_REF) + clog.gofs[imu][axis]
+                axs[imu].plot(
+                    data.gyro[imu]["time"], (data.gyro[imu][axis] - correction) * scale, label=f"Corrected {axis} (log parm)"
+                )
         ax2 = axs[imu].twinx()
-        ax2.plot(data.gyro[imu]['time'], data.gyro[imu]['T'], label='Temperature(C)', color='black')
-        ax2.legend(loc='upper right')
-        axs[imu].legend(loc='upper left')
-        axs[imu].set_title(f'IMU[{imu}] Gyro (deg/s)')
+        ax2.plot(data.gyro[imu]["time"], data.gyro[imu]["T"], label="Temperature(C)", color="black")
+        ax2.legend(loc="upper right")
+        axs[imu].legend(loc="upper left")
+        axs[imu].set_title(f"IMU[{imu}] Gyro (deg/s)")
 
     if figpath:
-        _fig.savefig(os.path.join(figpath, 'tempcal_gyro.png'))
+        _fig.savefig(os.path.join(figpath, "tempcal_gyro.png"))
+
 
 def generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus):  # pylint: disable=too-many-arguments
     _fig, axs = pyplot.subplots(num_imus, 1, sharex=True)
@@ -563,14 +580,13 @@ def generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus): 
     for imu in data.IMUs():
         for axis in AXES:
             ofs = data.accel_at_temp(imu, axis, clog.atcal.get(imu, TEMP_REF))
-            axs[imu].plot(data.accel[imu]['time'], data.accel[imu][axis] - ofs, label=f'Uncorrected {axis}')
+            axs[imu].plot(data.accel[imu]["time"], data.accel[imu][axis] - ofs, label=f"Uncorrected {axis}")
         for axis in AXES:
             poly = np.poly1d(c.acoef[imu][axis])
-            trel = data.accel[imu]['T'] - TEMP_REF
+            trel = data.accel[imu]["T"] - TEMP_REF
             correction = poly(trel)
             ofs = data.accel_at_temp(imu, axis, clog.atcal.get(imu, TEMP_REF))
-            axs[imu].plot(data.accel[imu]['time'], (data.accel[imu][axis] - ofs) - correction,
-                          label=f'Corrected {axis}')
+            axs[imu].plot(data.accel[imu]["time"], (data.accel[imu][axis] - ofs) - correction, label=f"Corrected {axis}")
         if log_parm:
             for axis in AXES:
                 if clog.enable[imu] == 0.0:
@@ -578,31 +594,31 @@ def generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus): 
                     continue
                 poly = np.poly1d(clog.acoef[imu][axis])
                 ofs = data.accel_at_temp(imu, axis, clog.atcal[imu])
-                correction = poly(data.accel[imu]['T'] - TEMP_REF) - poly(clog.atcal[imu] - TEMP_REF)
-                axs[imu].plot(data.accel[imu]['time'], (data.accel[imu][axis] - ofs) - correction,
-                              label=f'Corrected {axis} (log parm)')
+                correction = poly(data.accel[imu]["T"] - TEMP_REF) - poly(clog.atcal[imu] - TEMP_REF)
+                axs[imu].plot(
+                    data.accel[imu]["time"], (data.accel[imu][axis] - ofs) - correction, label=f"Corrected {axis} (log parm)"
+                )
         ax2 = axs[imu].twinx()
-        ax2.plot(data.accel[imu]['time'], data.accel[imu]['T'], label='Temperature(C)', color='black')
-        ax2.legend(loc='upper right')
-        axs[imu].legend(loc='upper left')
-        axs[imu].set_title(f'IMU[{imu}] Accel (m/s^2)')
+        ax2.plot(data.accel[imu]["time"], data.accel[imu]["T"], label="Temperature(C)", color="black")
+        ax2.legend(loc="upper right")
+        axs[imu].legend(loc="upper left")
+        axs[imu].set_title(f"IMU[{imu}] Accel (m/s^2)")
 
     if figpath:
-        _fig.savefig(os.path.join(figpath, 'tempcal_acc.png'))
+        _fig.savefig(os.path.join(figpath, "tempcal_acc.png"))
 
 
 def main():
     parser = ArgumentParser(description=__doc__)
-    parser.add_argument("--outfile", default="tcal.parm",
-                        help='set output file')
-    parser.add_argument("--no-graph", action='store_true', default=False,
-                        help='disable graph display')
-    parser.add_argument("--log-parm", action='store_true', default=False,
-                        help='show corrections using coefficients from log file')
-    parser.add_argument("--online", action='store_true', default=False,
-                        help='use online polynomial fitting')
-    parser.add_argument("--tclr", action='store_true', default=False,
-                        help='use TCLR messages from log instead of IMU messages')
+    parser.add_argument("--outfile", default="tcal.parm", help="set output file")
+    parser.add_argument("--no-graph", action="store_true", default=False, help="disable graph display")
+    parser.add_argument(
+        "--log-parm", action="store_true", default=False, help="show corrections using coefficients from log file"
+    )
+    parser.add_argument("--online", action="store_true", default=False, help="use online polynomial fitting")
+    parser.add_argument(
+        "--tclr", action="store_true", default=False, help="use TCLR messages from log instead of IMU messages"
+    )
     parser.add_argument("log", metavar="LOG")
 
     args = parser.parse_args()

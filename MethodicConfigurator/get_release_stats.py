@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Based on https://pagure.io/github-release-stats/blob/master/f/get_release_stats.py by Clement Verna
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
@@ -8,7 +8,7 @@ This file is part of Ardupilot methodic configurator. https://github.com/ArduPil
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
-'''
+"""
 
 import itertools
 import re

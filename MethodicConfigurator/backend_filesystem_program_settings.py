@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-'''
+"""
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
-'''
+"""
 
 from json import dump as json_dump
 from json import load as json_load
@@ -34,18 +34,19 @@ class ProgramSettings:
     templates, and user preferences. It also manages the creation of new vehicle directories and
     validation of directory names according to specific rules.
     """
+
     def __init__(self):
         pass
 
     @staticmethod
     def application_icon_filepath():
         script_dir = os_path.dirname(os_path.abspath(__file__))
-        return os_path.join(script_dir, 'ArduPilot_icon.png')
+        return os_path.join(script_dir, "ArduPilot_icon.png")
 
     @staticmethod
     def application_logo_filepath():
         script_dir = os_path.dirname(os_path.abspath(__file__))
-        return os_path.join(script_dir, 'ArduPilot_logo.png')
+        return os_path.join(script_dir, "ArduPilot_logo.png")
 
     @staticmethod
     def create_new_vehicle_dir(new_vehicle_dir: str):
@@ -77,7 +78,7 @@ class ProgramSettings:
         - bool: True if the directory name matches the allowed pattern, False otherwise.
         """
         # Include os.sep in the pattern
-        pattern = r'^[\w' + re_escape(os_sep) + '-]+$'
+        pattern = r"^[\w" + re_escape(os_sep) + "-]+$"
         return re_match(pattern, dir_name) is not None
 
     @staticmethod
@@ -95,8 +96,9 @@ class ProgramSettings:
 
     @staticmethod
     def __site_config_dir():
-        site_config_directory = site_config_dir(".ardupilot_methodic_configurator", False, version=None, multipath=False,
-                                                ensure_exists=True)
+        site_config_directory = site_config_dir(
+            ".ardupilot_methodic_configurator", False, version=None, multipath=False, ensure_exists=True
+        )
 
         if not os_path.exists(site_config_directory):
             error_msg = _("The site configuration directory '{site_config_directory}' does not exist.")
@@ -114,7 +116,7 @@ class ProgramSettings:
         settings = {}
 
         try:
-            with open(settings_path, "r", encoding='utf-8') as settings_file:
+            with open(settings_path, "r", encoding="utf-8") as settings_file:
                 settings = json_load(settings_file)
         except FileNotFoundError:
             # If the file does not exist, it will be created later
@@ -139,7 +141,7 @@ class ProgramSettings:
     def __set_settings_from_dict(settings):
         settings_path = os_path.join(ProgramSettings.__user_config_dir(), "settings.json")
 
-        with open(settings_path, "w", encoding='utf-8') as settings_file:
+        with open(settings_path, "w", encoding="utf-8") as settings_file:
             json_dump(settings, settings_file, indent=4)
 
     @staticmethod
@@ -150,7 +152,7 @@ class ProgramSettings:
         pattern = r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)"
 
         # Replacement string
-        if platform_system() == 'Windows':
+        if platform_system() == "Windows":
             replacement = r"\\"
         else:
             replacement = r"/"
@@ -161,10 +163,12 @@ class ProgramSettings:
         settings, pattern, replacement = ProgramSettings.__get_settings_config()
 
         # Update the settings with the new values
-        settings["directory_selection"].update({
-            "template_dir": re_sub(pattern, replacement, template_dir),
-            "new_base_dir": re_sub(pattern, replacement, new_base_dir)
-        })
+        settings["directory_selection"].update(
+            {
+                "template_dir": re_sub(pattern, replacement, template_dir),
+                "new_base_dir": re_sub(pattern, replacement, new_base_dir),
+            }
+        )
 
         ProgramSettings.__set_settings_from_dict(settings)
 
@@ -175,9 +179,7 @@ class ProgramSettings:
         template_dir = os_path.join(ProgramSettings.get_templates_base_dir(), relative_template_dir)
 
         # Update the settings with the new values
-        settings["directory_selection"].update({
-            "template_dir": re_sub(pattern, replacement, template_dir)
-        })
+        settings["directory_selection"].update({"template_dir": re_sub(pattern, replacement, template_dir)})
 
         ProgramSettings.__set_settings_from_dict(settings)
 
@@ -186,23 +188,20 @@ class ProgramSettings:
         settings, pattern, replacement = ProgramSettings.__get_settings_config()
 
         # Update the settings with the new values
-        settings["directory_selection"].update({
-            "vehicle_dir": re_sub(pattern, replacement, vehicle_dir)
-        })
+        settings["directory_selection"].update({"vehicle_dir": re_sub(pattern, replacement, vehicle_dir)})
 
         ProgramSettings.__set_settings_from_dict(settings)
-
 
     @staticmethod
     def get_templates_base_dir():
         current_dir = os_path.dirname(os_path.abspath(__file__))
-        if platform_system() == 'Windows':
+        if platform_system() == "Windows":
             current_dir = current_dir.replace("\\_internal", "")
         elif "site-packages" not in current_dir:
             current_dir = current_dir.replace("/MethodicConfigurator", "")
         program_dir = current_dir
 
-        if platform_system() == 'Windows':
+        if platform_system() == "Windows":
             site_directory = ProgramSettings.__site_config_dir()
         else:
             site_directory = program_dir
@@ -210,8 +209,9 @@ class ProgramSettings:
 
     @staticmethod
     def get_recently_used_dirs():
-        template_default_dir = os_path.join(ProgramSettings.get_templates_base_dir(),
-                                            "ArduCopter", "diatone_taycan_mxc", "4.5.x-params")
+        template_default_dir = os_path.join(
+            ProgramSettings.get_templates_base_dir(), "ArduCopter", "diatone_taycan_mxc", "4.5.x-params"
+        )
 
         settings_directory = ProgramSettings.__user_config_dir()
         vehicles_default_dir = os_path.join(settings_directory, "vehicles")

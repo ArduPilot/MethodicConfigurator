@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-'''
+"""
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
-'''
+"""
 
 import tkinter as tk
 from argparse import ArgumentParser
@@ -40,8 +40,12 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
-    parser = ArgumentParser(description=_('A GUI for editing JSON files that contain vehicle component configurations. '
-                            'Not to be used directly, but through the main ArduPilot methodic configurator script.'))
+    parser = ArgumentParser(
+        description=_(
+            "A GUI for editing JSON files that contain vehicle component configurations. "
+            "Not to be used directly, but through the main ArduPilot methodic configurator script."
+        )
+    )
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindowBase.add_argparse_arguments(parser)
     return add_common_arguments_and_parse(parser)
@@ -55,20 +59,21 @@ class ComponentEditorWindowBase(BaseWindow):
     contain vehicle component configurations. It inherits from the BaseWindow
     class, which provides basic window functionality.
     """
-    def __init__(self, version, local_filesystem: LocalFilesystem=None):
+
+    def __init__(self, version, local_filesystem: LocalFilesystem = None):
         super().__init__()
         self.local_filesystem = local_filesystem
 
         self.root.title(_("Amilcar Lucas's - ArduPilot methodic configurator ") + version + _(" - Vehicle Component Editor"))
-        self.root.geometry("880x600") # Set the window width
+        self.root.geometry("880x600")  # Set the window width
 
         self.data = local_filesystem.load_vehicle_components_json_data(local_filesystem.vehicle_dir)
         if len(self.data) < 1:
             # Schedule the window to be destroyed after the mainloop has started
-            self.root.after(100, self.root.destroy) # Adjust the delay as needed
+            self.root.after(100, self.root.destroy)  # Adjust the delay as needed
             return
 
-        self.entry_widgets = {} # Dictionary for entry widgets
+        self.entry_widgets = {}  # Dictionary for entry widgets
 
         intro_frame = ttk.Frame(self.main_frame)
         intro_frame.pack(side=tk.TOP, fill="x", expand=False)
@@ -114,8 +119,9 @@ class ComponentEditorWindowBase(BaseWindow):
         usage_popup_window = BaseWindow(parent)
         style = ttk.Style()
 
-        instructions_text = RichText(usage_popup_window.main_frame, wrap=tk.WORD, height=5, bd=0,
-                                     background=style.lookup("TLabel", "background"))
+        instructions_text = RichText(
+            usage_popup_window.main_frame, wrap=tk.WORD, height=5, bd=0, background=style.lookup("TLabel", "background")
+        )
         instructions_text.insert(tk.END, _("1. Describe "))
         instructions_text.insert(tk.END, _("all"), "bold")
         instructions_text.insert(tk.END, _(" vehicle component properties in the window below\n"))
@@ -130,15 +136,21 @@ class ComponentEditorWindowBase(BaseWindow):
         instructions_text.insert(tk.END, _(" only after all information is correct"))
         instructions_text.config(state=tk.DISABLED)
 
-        UsagePopupWindow.display(parent, usage_popup_window, _("How to use the component editor window"),
-                                 "component_editor", "690x200", instructions_text)
+        UsagePopupWindow.display(
+            parent,
+            usage_popup_window,
+            _("How to use the component editor window"),
+            "component_editor",
+            "690x200",
+            instructions_text,
+        )
 
     def update_json_data(self):  # should be overwritten in child classes
-        if 'Format version' not in self.data:
-            self.data['Format version'] = 1
+        if "Format version" not in self.data:
+            self.data["Format version"] = 1
 
     def _set_component_value_and_update_ui(self, path: tuple, value: str):
-        data_path = self.data['Components']
+        data_path = self.data["Components"]
         for key in path[:-1]:
             data_path = data_path[key]
         data_path[path[-1]] = value
@@ -165,7 +177,7 @@ class ComponentEditorWindowBase(BaseWindow):
         value (dict): The value associated with the key.
         path (list): The path to the current key in the JSON data.
         """
-        if isinstance(value, dict):             # JSON non-leaf elements, add LabelFrame widget
+        if isinstance(value, dict):  # JSON non-leaf elements, add LabelFrame widget
             frame = ttk.LabelFrame(parent, text=key)
             is_toplevel = parent == self.scroll_frame.view_port
             side = tk.TOP if is_toplevel else tk.LEFT
@@ -175,7 +187,7 @@ class ComponentEditorWindowBase(BaseWindow):
             for sub_key, sub_value in value.items():
                 # recursively add child elements
                 self.__add_widget(frame, sub_key, sub_value, [*path, key])
-        else:                                   # JSON leaf elements, add Entry widget
+        else:  # JSON leaf elements, add Entry widget
             entry_frame = ttk.Frame(parent)
             entry_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
 
@@ -192,10 +204,12 @@ class ComponentEditorWindowBase(BaseWindow):
         """
         Saves the edited JSON data back to the file.
         """
-        confirm_message = _("ArduPilot Methodic Configurator only operates correctly if all component properties are correct."
-                            " ArduPilot parameter values depend on the components used and their connections."
-                            " Have you used the scrollbar on the right side of the window and "
-                            "entered the correct values for all components?")
+        confirm_message = _(
+            "ArduPilot Methodic Configurator only operates correctly if all component properties are correct."
+            " ArduPilot parameter values depend on the components used and their connections."
+            " Have you used the scrollbar on the right side of the window and "
+            "entered the correct values for all components?"
+        )
         user_confirmation = messagebox.askyesno(_("Confirm that all component properties are correct"), confirm_message)
 
         if not user_confirmation:
@@ -237,17 +251,21 @@ class ComponentEditorWindowBase(BaseWindow):
 
     @staticmethod
     def add_argparse_arguments(parser):
-        parser.add_argument('--skip-component-editor',
-                            action='store_true',
-                            help=_('Skip the component editor window. Only use this if all components have been configured. '
-                            'Default to false'))
+        parser.add_argument(
+            "--skip-component-editor",
+            action="store_true",
+            help=_(
+                "Skip the component editor window. Only use this if all components have been configured. "
+                "Defaults to %(default)s"
+            ),
+        )
         return parser
 
 
 if __name__ == "__main__":
     args = argument_parser()
 
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format='%(asctime)s - %(levelname)s - %(message)s')
+    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
     filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, None, args.allow_editing_template_files)
     app = ComponentEditorWindowBase(VERSION, filesystem)

@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 
-'''
+"""
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
-'''
+"""
 
-#from logging import debug as logging_debug
+# from logging import debug as logging_debug
 import tkinter as tk
 from logging import info as logging_info
 from tkinter import ttk
 
 from MethodicConfigurator.backend_flightcontroller import FlightController
 
-#from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
-#from MethodicConfigurator.frontend_tkinter_base import show_tooltip
+# from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
+# from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ProgressWindow
 from MethodicConfigurator.internationalization import _
 from MethodicConfigurator.version import VERSION
@@ -26,6 +26,7 @@ class FlightControllerInfoWindow(BaseWindow):
     """
     Display flight controller hardware, firmware and parameter information
     """
+
     def __init__(self, flight_controller: FlightController):
         super().__init__()
         self.root.title(_("ArduPilot methodic configurator ") + VERSION + _(" - Flight Controller Info"))
@@ -64,14 +65,16 @@ class FlightControllerInfoWindow(BaseWindow):
         logging_info(_("Flight Controller USB vendor ID: %s"), flight_controller.info.vendor)
         logging_info(_("Flight Controller USB product ID: %s"), flight_controller.info.product)
 
-        self.root.after(50, self.download_flight_controller_parameters()) # 50 milliseconds
+        self.root.after(50, self.download_flight_controller_parameters())  # 50 milliseconds
         self.root.mainloop()
 
     def download_flight_controller_parameters(self):
-        param_download_progress_window = ProgressWindow(self.root, _("Downloading FC parameters"),
-                                                        _("Downloaded {} of {} parameters"))
+        param_download_progress_window = ProgressWindow(
+            self.root, _("Downloading FC parameters"), _("Downloaded {} of {} parameters")
+        )
         self.flight_controller.fc_parameters, self.param_default_values = self.flight_controller.download_params(
-            param_download_progress_window.update_progress_bar)
+            param_download_progress_window.update_progress_bar
+        )
         param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
         self.root.destroy()
 
