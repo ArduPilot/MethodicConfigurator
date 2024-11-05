@@ -22,21 +22,18 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import argparse
+import glob
+import logging
+import re
 from os import path as os_path
 from os import popen as os_popen
-
-import glob
-import re
 from sys import exc_info as sys_exc_info
 from sys import exit as sys_exit
 from typing import Any, Dict, List, Optional, Tuple
+from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 
-import argparse
-import logging
-
-from xml.etree import ElementTree as ET # no parsing, just data-structure manipulation
-from defusedxml import ElementTree as DET # just parsing, no data-structure manipulation
-
+from defusedxml import ElementTree as DET  # just parsing, no data-structure manipulation
 
 # URL of the XML file
 BASE_URL = "https://autotest.ardupilot.org/Parameters/"
@@ -330,8 +327,8 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
     else:
         # No locally cached file exists, get it from the internet
         try:
-            from requests import get as requests_get  # pylint: disable=import-outside-toplevel
             from requests import exceptions as requests_exceptions  # pylint: disable=import-outside-toplevel
+            from requests import get as requests_get  # pylint: disable=import-outside-toplevel
         except ImportError as exc:
             logging.critical("The requests package was not found")
             logging.critical("Please install it by running 'pip install requests' in your terminal.")

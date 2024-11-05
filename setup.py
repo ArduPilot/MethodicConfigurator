@@ -10,11 +10,10 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-import shutil
 import os
+import shutil
 
-from setuptools import setup
-from setuptools import find_packages
+from setuptools import find_packages, setup
 
 from MethodicConfigurator.version import VERSION
 

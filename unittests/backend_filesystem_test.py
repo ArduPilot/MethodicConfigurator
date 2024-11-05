@@ -11,10 +11,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # pylint: skip-file
 
 import unittest
-# import os
-from unittest.mock import patch
-from unittest.mock import MagicMock
 
+# import os
+from unittest.mock import MagicMock, patch
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 

@@ -8,10 +8,11 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-import unittest
 import re
+import unittest
 
 from MethodicConfigurator.version import VERSION
+
 
 class TestVersion(unittest.TestCase):
     """

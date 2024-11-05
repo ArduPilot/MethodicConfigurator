@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import os
 import subprocess
 
+
 def extract_strings(directory, output_dir):
     file_paths = []
     for root, _dirs, files in os.walk(directory):

@@ -9,9 +9,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
 import argparse
+import builtins
 import gettext
 from os import path as os_path
-import builtins
 
 # Do not import nor use logging functions in this file.
 # Logging is not yet configured when these functions are called

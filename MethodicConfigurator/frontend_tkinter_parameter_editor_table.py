@@ -8,39 +8,28 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-from sys import exit as sys_exit
-
 import tkinter as tk
-from tkinter import messagebox
-from tkinter import ttk
 
-from logging import debug as logging_debug
-from logging import info as logging_info
 #from logging import warning as logging_warning
 #from logging import error as logging_error
 from logging import critical as logging_critical
-
+from logging import debug as logging_debug
+from logging import info as logging_info
 from platform import system as platform_system
+from sys import exit as sys_exit
+from tkinter import messagebox, ttk
+
+from MethodicConfigurator.annotate_params import Par
 
 #from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_filesystem import is_within_tolerance
 
 #from MethodicConfigurator.backend_flightcontroller import FlightController
-
-from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 #from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
-from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
-from MethodicConfigurator.frontend_tkinter_base import get_widget_font
-from MethodicConfigurator.frontend_tkinter_base import BaseWindow
-
-from MethodicConfigurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
-
+from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ScrollFrame, get_widget_font, show_tooltip
 from MethodicConfigurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
-
+from MethodicConfigurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 from MethodicConfigurator.internationalization import _
-
-from MethodicConfigurator.annotate_params import Par
-
 
 NEW_VALUE_WIDGET_WIDTH = 9
 
@@ -331,13 +320,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             sys_exit(1)
         if present_as_forced:
             new_value_entry.config(state='disabled', background='light grey')
+        elif bitmask_dict:
+            new_value_entry.bind("<FocusIn>", lambda event:
+                                self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value))
         else:
-            if bitmask_dict:
-                new_value_entry.bind("<FocusIn>", lambda event:
-                                    self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value))
-            else:
-                new_value_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
-                                        self.__on_parameter_value_change(event, current_file, param_name))
+            new_value_entry.bind("<FocusOut>", lambda event, current_file=self.current_file, param_name=param_name:
+                                    self.__on_parameter_value_change(event, current_file, param_name))
         if doc_tooltip:
             show_tooltip(new_value_entry, doc_tooltip)
         return new_value_entry

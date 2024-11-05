@@ -8,33 +8,26 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
+import tkinter as tk
 from argparse import ArgumentParser
-
 from logging import basicConfig as logging_basicConfig
-from logging import getLevelName as logging_getLevelName
+
 # from logging import debug as logging_debug
 #from logging import info as logging_info
 from logging import error as logging_error
-
-import tkinter as tk
-from tkinter import ttk
+from logging import getLevelName as logging_getLevelName
 from math import log2
-
-from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
+from tkinter import ttk
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
-
 from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
-
 from MethodicConfigurator.battery_cell_voltages import BatteryCell
-
-from MethodicConfigurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
+from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 
 #from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import show_error_message
-
+from MethodicConfigurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
 from MethodicConfigurator.internationalization import _
-
 from MethodicConfigurator.version import VERSION
 
 
@@ -419,13 +412,12 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             protocols = ['DroneCAN']
         elif len(esc_connection_type) > 6 and esc_connection_type[:6] == 'SERIAL':
             protocols = [value['protocol'] for value in serial_protocols_dict.values() if value['component'] == 'ESC']
+        elif 'MOT_PWM_TYPE' in self.local_filesystem.doc_dict:
+            protocols = list(self.local_filesystem.doc_dict['MOT_PWM_TYPE']["values"].values())
+        elif 'Q_M_PWM_TYPE' in self.local_filesystem.doc_dict:
+            protocols = list(self.local_filesystem.doc_dict['Q_M_PWM_TYPE']["values"].values())
         else:
-            if 'MOT_PWM_TYPE' in self.local_filesystem.doc_dict:
-                protocols = list(self.local_filesystem.doc_dict['MOT_PWM_TYPE']["values"].values())
-            elif 'Q_M_PWM_TYPE' in self.local_filesystem.doc_dict:
-                protocols = list(self.local_filesystem.doc_dict['Q_M_PWM_TYPE']["values"].values())
-            else:
-                protocols = []
+            protocols = []
 
         protocol_path = ('ESC', 'FC Connection', 'Protocol')
         if protocol_path in self.entry_widgets:

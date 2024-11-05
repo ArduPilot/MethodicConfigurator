@@ -10,11 +10,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # pylint: skip-file
 
-import unittest
-from unittest.mock import patch, MagicMock
 import tkinter as tk
-from MethodicConfigurator.frontend_tkinter_base import show_error_message
-from MethodicConfigurator.frontend_tkinter_base import show_tooltip
+import unittest
+from unittest.mock import MagicMock, patch
+
+from MethodicConfigurator.frontend_tkinter_base import show_error_message, show_tooltip
 
 
 class TestShowErrorMessage(unittest.TestCase):  # pylint: disable=missing-class-docstring

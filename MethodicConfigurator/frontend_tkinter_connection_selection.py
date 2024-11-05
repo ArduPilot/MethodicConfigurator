@@ -8,30 +8,19 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-from sys import exit as sys_exit
-
-from argparse import ArgumentParser
-
-from logging import basicConfig as logging_basicConfig
-from logging import getLevelName as logging_getLevelName
-from logging import debug as logging_debug
-from logging import warning as logging_warning
-
 import tkinter as tk
-from tkinter import ttk
-from tkinter import simpledialog
-
-from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
+from argparse import ArgumentParser
+from logging import basicConfig as logging_basicConfig
+from logging import debug as logging_debug
+from logging import getLevelName as logging_getLevelName
+from logging import warning as logging_warning
+from sys import exit as sys_exit
+from tkinter import simpledialog, ttk
 
 from MethodicConfigurator.backend_flightcontroller import FlightController
-
-from MethodicConfigurator.frontend_tkinter_base import show_no_connection_error
-from MethodicConfigurator.frontend_tkinter_base import show_tooltip
-from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
-from MethodicConfigurator.frontend_tkinter_base import BaseWindow
-
+from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
+from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ProgressWindow, show_no_connection_error, show_tooltip
 from MethodicConfigurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
-
 from MethodicConfigurator.internationalization import _
 
 
@@ -137,11 +126,10 @@ class ConnectionSelectionWindow(BaseWindow):
         # Explain why we are here
         if flight_controller.comport is None:
             introduction_text = _("No ArduPilot flight controller was auto-detected detected yet.")
+        elif ":" in connection_result_string:
+            introduction_text = connection_result_string.replace(":", ":\n")
         else:
-            if ":" in connection_result_string:
-                introduction_text = connection_result_string.replace(":", ":\n")
-            else:
-                introduction_text = connection_result_string
+            introduction_text = connection_result_string
         self.introduction_label = ttk.Label(self.main_frame, anchor=tk.CENTER, justify=tk.CENTER,
                                             text=introduction_text + _("\nChoose one of the following three options:"))
         self.introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)

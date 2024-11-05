@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import os
 import subprocess
 
+
 def process_locale_directory(locale_dir):
     """Process a single locale directory."""
     po_file = os.path.join(locale_dir, 'MethodicConfigurator.po')

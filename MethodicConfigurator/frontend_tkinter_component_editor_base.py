@@ -8,30 +8,26 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
+import tkinter as tk
 from argparse import ArgumentParser
-
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
+
 # from logging import debug as logging_debug
 from logging import info as logging_info
-
-import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
-
-from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
+from tkinter import messagebox, ttk
 
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
-
-from MethodicConfigurator.frontend_tkinter_base import show_tooltip
-from MethodicConfigurator.frontend_tkinter_base import show_error_message
-from MethodicConfigurator.frontend_tkinter_base import ScrollFrame
-from MethodicConfigurator.frontend_tkinter_base import BaseWindow
-from MethodicConfigurator.frontend_tkinter_base import RichText
-from MethodicConfigurator.frontend_tkinter_base import UsagePopupWindow
-
+from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
+from MethodicConfigurator.frontend_tkinter_base import (
+    BaseWindow,
+    RichText,
+    ScrollFrame,
+    UsagePopupWindow,
+    show_error_message,
+    show_tooltip,
+)
 from MethodicConfigurator.internationalization import _
-
 from MethodicConfigurator.version import VERSION
 
 

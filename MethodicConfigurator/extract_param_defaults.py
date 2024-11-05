@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import re
 from typing import Dict, Tuple
+
 from pymavlink import mavutil
 
 NO_DEFAULT_VALUES_MESSAGE = "The .bin file contained no parameter default values. Update to a newer ArduPilot firmware version"
@@ -86,7 +87,7 @@ def extract_parameter_values(logfile: str, param_type: str = 'defaults') -> Dict
     try:
         mlog = mavutil.mavlink_connection(logfile)
     except Exception as e:
-        raise SystemExit(f"Error opening the {logfile} logfile: {str(e)}") from e
+        raise SystemExit(f"Error opening the {logfile} logfile: {e!s}") from e
     values = {}
     while True:
         m = mlog.recv_match(type=['PARM'])

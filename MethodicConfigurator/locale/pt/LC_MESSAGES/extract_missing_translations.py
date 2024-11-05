@@ -8,8 +8,9 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
-import os
 import gettext
+import os
+
 
 def extract_missing_translations(po_file, output_file):
     # Set up the translation catalog

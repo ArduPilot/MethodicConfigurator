@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import itertools
 import re
-
 from operator import itemgetter
 
 from github import Github

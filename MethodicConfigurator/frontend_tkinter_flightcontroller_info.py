@@ -9,20 +9,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
 #from logging import debug as logging_debug
-from logging import info as logging_info
-
 import tkinter as tk
+from logging import info as logging_info
 from tkinter import ttk
 
 from MethodicConfigurator.backend_flightcontroller import FlightController
+
 #from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
-
 #from MethodicConfigurator.frontend_tkinter_base import show_tooltip
-from MethodicConfigurator.frontend_tkinter_base import ProgressWindow
-from MethodicConfigurator.frontend_tkinter_base import BaseWindow
-
+from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ProgressWindow
 from MethodicConfigurator.internationalization import _
-
 from MethodicConfigurator.version import VERSION
 
 

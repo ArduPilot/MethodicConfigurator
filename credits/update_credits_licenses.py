@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import requests
 
-
 # List of direct_dependencies and their license URLs
 direct_dependencies = [
     # {"name": "tkinter", "license_url": "https://docs.python.org/3/license.html"},

@@ -10,18 +10,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 
 import unittest
-from unittest.mock import patch
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
-from MethodicConfigurator.extract_param_defaults import extract_parameter_values
-from MethodicConfigurator.extract_param_defaults import missionplanner_sort
-from MethodicConfigurator.extract_param_defaults import mavproxy_sort
-from MethodicConfigurator.extract_param_defaults import sort_params
-from MethodicConfigurator.extract_param_defaults import output_params
-from MethodicConfigurator.extract_param_defaults import parse_arguments
-from MethodicConfigurator.extract_param_defaults import NO_DEFAULT_VALUES_MESSAGE
-from MethodicConfigurator.extract_param_defaults import MAVLINK_SYSID_MAX
-from MethodicConfigurator.extract_param_defaults import MAVLINK_COMPID_MAX
+from MethodicConfigurator.extract_param_defaults import (
+    MAVLINK_COMPID_MAX,
+    MAVLINK_SYSID_MAX,
+    NO_DEFAULT_VALUES_MESSAGE,
+    extract_parameter_values,
+    mavproxy_sort,
+    missionplanner_sort,
+    output_params,
+    parse_arguments,
+    sort_params,
+)
 
 
 class TestArgParseParameters(unittest.TestCase):  # pylint: disable=missing-class-docstring

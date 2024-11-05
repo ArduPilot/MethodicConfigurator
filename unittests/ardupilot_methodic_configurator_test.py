@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import unittest
 from unittest.mock import patch
+
 # from unittest.mock import MagicMock
 # from unittest.mock import mock_open
 from MethodicConfigurator.ardupilot_methodic_configurator import argument_parser

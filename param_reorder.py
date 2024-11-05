@@ -15,9 +15,9 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import json
 import os
 import re
-import json
 
 SEQUENCE_FILENAME = "configuration_steps_ArduCopter.json"
 PYTHON_FILES = ["param_pid_adjustment_update.py", "param_pid_adjustment_update_test.py",

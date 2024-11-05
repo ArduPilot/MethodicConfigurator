@@ -10,38 +10,44 @@ SPDX-FileCopyrightText: 2024 Amilcar Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 '''
 
+import logging
 import unittest
+
 #from unittest.mock import patch
 from io import StringIO
-import logging
-from pymavlink import mavutil
-from MethodicConfigurator.backend_mavftp import FTP_OP, MAVFTP, MAVFTPReturn
 
-from MethodicConfigurator.backend_mavftp import OP_ListDirectory
-from MethodicConfigurator.backend_mavftp import OP_ReadFile
-from MethodicConfigurator.backend_mavftp import OP_Ack
-from MethodicConfigurator.backend_mavftp import OP_Nack
-from MethodicConfigurator.backend_mavftp import ERR_None
-from MethodicConfigurator.backend_mavftp import ERR_Fail
-from MethodicConfigurator.backend_mavftp import ERR_FailErrno
-from MethodicConfigurator.backend_mavftp import ERR_InvalidDataSize
-from MethodicConfigurator.backend_mavftp import ERR_InvalidSession
-from MethodicConfigurator.backend_mavftp import ERR_NoSessionsAvailable
-from MethodicConfigurator.backend_mavftp import ERR_EndOfFile
-from MethodicConfigurator.backend_mavftp import ERR_UnknownCommand
-from MethodicConfigurator.backend_mavftp import ERR_FileExists
-from MethodicConfigurator.backend_mavftp import ERR_FileProtected
-from MethodicConfigurator.backend_mavftp import ERR_FileNotFound
+from pymavlink import mavutil
+
 #from MethodicConfigurator.backend_mavftp import ERR_NoErrorCodeInPayload
 #from MethodicConfigurator.backend_mavftp import ERR_NoErrorCodeInNack
 #from MethodicConfigurator.backend_mavftp import ERR_NoFilesystemErrorInPayload
-from MethodicConfigurator.backend_mavftp import ERR_InvalidErrorCode
 #from MethodicConfigurator.backend_mavftp import ERR_PayloadTooLarge
 #from MethodicConfigurator.backend_mavftp import ERR_InvalidOpcode
-from MethodicConfigurator.backend_mavftp import ERR_InvalidArguments
-from MethodicConfigurator.backend_mavftp import ERR_PutAlreadyInProgress
-from MethodicConfigurator.backend_mavftp import ERR_FailToOpenLocalFile
-from MethodicConfigurator.backend_mavftp import ERR_RemoteReplyTimeout
+from MethodicConfigurator.backend_mavftp import (
+    FTP_OP,
+    MAVFTP,
+    ERR_EndOfFile,
+    ERR_Fail,
+    ERR_FailErrno,
+    ERR_FailToOpenLocalFile,
+    ERR_FileExists,
+    ERR_FileNotFound,
+    ERR_FileProtected,
+    ERR_InvalidArguments,
+    ERR_InvalidDataSize,
+    ERR_InvalidErrorCode,
+    ERR_InvalidSession,
+    ERR_None,
+    ERR_NoSessionsAvailable,
+    ERR_PutAlreadyInProgress,
+    ERR_RemoteReplyTimeout,
+    ERR_UnknownCommand,
+    MAVFTPReturn,
+    OP_Ack,
+    OP_ListDirectory,
+    OP_Nack,
+    OP_ReadFile,
+)
 
 
 class TestMAVFTPPayloadDecoding(unittest.TestCase):
