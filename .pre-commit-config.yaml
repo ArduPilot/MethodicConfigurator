@@ -1,12 +1,18 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.1
+    rev: v0.7.2
     hooks:
       - id: ruff
-        args: [ --fix ]
+        args: [ --select=F,E,W,I,PL,RUF,PERF --line-length=127 --ignore=E501,PLR0911,PLR0912,PLR0913,PLR0915,PLR2004,PLW0603,PERF401,PLW2901,PERF203,RUF005 --fix ]
         language: system
         types: [python]
         stages: [pre-commit]
+      # Run the formatter.
+      - id: ruff-format
+        args: [ --line-length=127 ]
+        types_or: [ python ]
+        stages: [pre-commit]
+
   - repo: local
     hooks:
       - id: pylint
