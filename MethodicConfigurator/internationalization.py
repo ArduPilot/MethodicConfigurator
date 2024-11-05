@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import argparse
-import builtins
 import gettext
 from os import path as os_path
 
@@ -24,7 +23,7 @@ def identity_function(s):
 
 
 def load_translation() -> callable:
-    default_language = "en"
+    default_language = LANGUAGE_CHOICES[0]
 
     # First, pre-parse to find the --language argument
     pre_parser = argparse.ArgumentParser(add_help=False)
@@ -44,15 +43,10 @@ def load_translation() -> callable:
         translation.install()
         # Do not use logging functions here the logging system has not been configured yet
         # Do not translate this message, the translation will not work here anyways
-        print("Loaded %s translation.", pre_args.language)
+        print(f"Loaded {pre_args.language} translation files.")
         return translation.gettext
     except FileNotFoundError:
         # Do not use logging functions here the logging system has not been configured yet
         # Do not translate this message, the translation will not work here anyways
-        print("Translation files not found for the selected language. Falling back to default.")
+        print(f"{pre_args.language} translation files not found. Using default {default_language} language.")
         return identity_function  # Return identity function on error
-
-
-# Default to identity function if _ is not already defined
-if "_" not in globals() and "_" not in locals() and "_" not in builtins.__dict__:
-    _ = load_translation()

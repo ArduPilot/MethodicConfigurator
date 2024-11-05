@@ -40,7 +40,7 @@ from MethodicConfigurator.annotate_params import (
 from MethodicConfigurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 
 TOOLTIP_MAX_LENGTH = 105
 

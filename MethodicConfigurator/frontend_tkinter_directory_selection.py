@@ -24,7 +24,7 @@ from MethodicConfigurator.backend_filesystem_program_settings import ProgramSett
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow, show_no_param_files_error, show_tooltip
 from MethodicConfigurator.frontend_tkinter_template_overview import TemplateOverviewWindow
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 from MethodicConfigurator.version import VERSION
 
 

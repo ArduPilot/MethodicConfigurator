@@ -27,7 +27,7 @@ from MethodicConfigurator.frontend_tkinter_base import (
     show_error_message,
     show_tooltip,
 )
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 from MethodicConfigurator.version import VERSION
 
 

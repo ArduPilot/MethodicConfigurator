@@ -23,7 +23,7 @@ from re import sub as re_sub
 
 from platformdirs import site_config_dir, user_config_dir
 
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 
 
 class ProgramSettings:

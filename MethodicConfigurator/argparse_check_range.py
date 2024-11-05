@@ -13,7 +13,7 @@ https://gist.github.com/dmitriykovalev/2ab1aa33a8099ef2d514925d84aa89e7
 from argparse import Action, ArgumentError
 from operator import ge, gt, le, lt
 
-from MethodicConfigurator.internationalization import _
+from MethodicConfigurator import _
 
 
 class CheckRange(Action):
