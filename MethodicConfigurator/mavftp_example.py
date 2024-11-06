@@ -194,7 +194,7 @@ def upload_script(mav_ftp, remote_directory, local_filename, timeout):
 
 def debug_class_member_variable_changes(instance):
     return
-    global old_mavftp_member_variable_values  # pylint: disable=global-statement, unreachable
+    global old_mavftp_member_variable_values  # noqa PLW0603 pylint: disable=global-statement, unreachable
     new_mavftp_member_variable_values = instance.__dict__
     if old_mavftp_member_variable_values and instance.ftp_settings.debug > 1:  # pylint: disable=too-many-nested-blocks
         logging_info(f"{instance.__class__.__name__} member variable changes:")  # noqa G004

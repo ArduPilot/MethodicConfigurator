@@ -34,8 +34,8 @@ def main():
     last_5_releases = itertools.islice(repo.get_releases(), 5)
     overall_issues = []
     unique_issues = set()
-    for release in last_5_releases:
-        release = repo.get_release(release.id)
+    for repo_release in last_5_releases:
+        release = repo.get_release(repo_release.id)
         # Date of the release
         release_date = release.created_at
         # Find all the issue references in the release notes

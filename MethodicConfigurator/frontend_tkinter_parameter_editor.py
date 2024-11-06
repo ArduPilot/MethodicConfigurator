@@ -641,7 +641,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                         else:
                             logging_info(_("Parameter %s changed to %f, possible reset required"), param_name, param.value)
                         fc_reset_unsure.append(param_name)
-            except ValueError as _e:
+            except ValueError as _e:  # noqa PERF203
                 error_msg = _("Failed to set parameter {param_name}: {_e}").format(**locals())
                 logging_error(error_msg)
                 messagebox.showerror(_("ArduPilot methodic configurator"), error_msg)
@@ -705,7 +705,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     self.flight_controller.fc_parameters[param_name], param.value
                 ):
                     self.at_least_one_changed_parameter_written = True
-            except ValueError as _e:
+            except ValueError as _e:  # noqa PERF203
                 error_msg = _("Failed to set parameter {param_name}: {_e}").format(**locals())
                 logging_error(error_msg)
                 messagebox.showerror(_("ArduPilot methodic configurator"), error_msg)

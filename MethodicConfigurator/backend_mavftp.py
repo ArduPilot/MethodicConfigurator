@@ -358,7 +358,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(FTP_OP(self.seq, self.session, OP_ResetSessions, 0, 0, 0, 0, None))
         self.process_ftp_reply("ResetSessions")
 
-    def cmd_ftp(self, args) -> MAVFTPReturn:  # pylint: disable=too-many-return-statements, too-many-branches
+    def cmd_ftp(self, args) -> MAVFTPReturn:  # noqa PRL0911 pylint: disable=too-many-return-statements, too-many-branches
         """FTP operations"""
         usage = "Usage: ftp <list|set|get|getparams|put|rm|rmdir|rename|mkdir|status|cancel|crc>"
         if len(args) < 1:
@@ -467,7 +467,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                     continue
                 self.dir_offset += 1
                 try:
-                    d = str(d, "ascii")
+                    d = str(d, "ascii")  # noqa PLW2901
                 except Exception:  # noqa: S112 pylint: disable=broad-exception-caught
                     continue
                 if d[0] == "D":
@@ -527,7 +527,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 if self.callback is not None or self.filename == "-":
                     self.fh = SIO()
                 else:
-                    self.fh = open(self.filename, "wb")  # pylint: disable=consider-using-with
+                    self.fh = open(self.filename, "wb")  # noqa SIM115 pylint: disable=consider-using-with
             except Exception as ex:  # pylint: disable=broad-except
                 logging.error("FTP: Failed to open local file %s: %s", self.filename, ex)
                 self.__terminate_session()
@@ -578,7 +578,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         if self.callback_progress is not None and self.remote_file_size:
             self.callback_progress(self.read_total / self.remote_file_size)
 
-    def __handle_burst_read(self, op, _m) -> MAVFTPReturn:  # pylint: disable=too-many-branches, too-many-statements, too-many-return-statements
+    def __handle_burst_read(self, op, _m) -> MAVFTPReturn:  # noqa PRL0911 pylint: disable=too-many-branches, too-many-statements, too-many-return-statements
         """handle OP_BurstReadFile reply"""
         if self.ftp_settings.pkt_loss_tx > 0 and random.uniform(0, 100) < self.ftp_settings.pkt_loss_tx:  # noqa: S311
             if self.ftp_settings.debug > 0:
@@ -726,7 +726,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.fh = fh
         if self.fh is None:
             try:
-                self.fh = open(fname, "rb")  # pylint: disable=consider-using-with
+                self.fh = open(fname, "rb")  # noqa SIM115 pylint: disable=consider-using-with
             except Exception as ex:  # pylint: disable=broad-exception-caught
                 logging.error("FTP: Failed to open %s: %s", fname, ex)
                 return MAVFTPReturn("CreateFile", ERR_FailToOpenLocalFile)
@@ -960,7 +960,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         payload = bytearray(m.payload[12:])[:size]
         return FTP_OP(seq, session, opcode, size, req_opcode, burst_complete, offset, payload)
 
-    def __mavlink_packet(self, m) -> MAVFTPReturn:  # pylint: disable=too-many-branches, too-many-return-statements
+    def __mavlink_packet(self, m) -> MAVFTPReturn:  # noqa PRL0911 pylint: disable=too-many-branches, too-many-return-statements
         """handle a mavlink packet"""
         operation_name = "mavlink_packet"
         mtype = m.get_type()
