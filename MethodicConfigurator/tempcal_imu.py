@@ -19,7 +19,7 @@ import sys
 from argparse import ArgumentParser
 
 import numpy as np
-from matplotlib import pyplot
+from matplotlib import pyplot as plt
 from pymavlink import mavutil
 from pymavlink.rotmat import Vector3
 
@@ -484,7 +484,7 @@ def IMUfit(  # pylint: disable=too-many-locals, too-many-branches, too-many-stat
     if progress_callback:
         progress_callback(300)
 
-    pyplot.show()
+    plt.show()
 
 
 def generate_calibration_file(outfile, online, progress_callback, data, c):  # pylint: disable=too-many-locals
@@ -533,7 +533,7 @@ def generate_calibration_file(outfile, online, progress_callback, data, c):  # p
 
 
 def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus):  # pylint: disable=too-many-arguments
-    _fig, axs = pyplot.subplots(len(data.IMUs()), 1, sharex=True)
+    _fig, axs = plt.subplots(len(data.IMUs()), 1, sharex=True)
     if num_imus == 1:
         axs = [axs]
 
@@ -567,7 +567,7 @@ def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus):  
 
 
 def generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus):  # pylint: disable=too-many-arguments
-    _fig, axs = pyplot.subplots(num_imus, 1, sharex=True)
+    _fig, axs = plt.subplots(num_imus, 1, sharex=True)
     if num_imus == 1:
         axs = [axs]
 

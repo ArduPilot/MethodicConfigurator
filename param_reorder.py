@@ -85,7 +85,7 @@ def update_file_contents(renames, root, file, steps):
     if file.startswith("TUNING_GUIDE_") and file.endswith(".md"):
         for old_filename in renames.values():
             if old_filename not in file_content:
-                print(f"Error: The intermediate parameter file '{old_filename}'" f" is not mentioned in the {file} file")
+                print(f"Error: The intermediate parameter file '{old_filename}' is not mentioned in the {file} file")
     for new_name, old_name in renames.items():
         if "configuration_steps" in file and file.endswith(".json"):
             file_content = update_configuration_steps_json_file_contents(steps, file_content, new_name, old_name)

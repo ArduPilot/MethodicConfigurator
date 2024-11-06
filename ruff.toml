@@ -17,11 +17,17 @@ lint.select = [
     "RUF",  # Ruff-specific codes
     "PERF", # Performance-related issues
     "SIM",  # flake8-simplify
-    "LOG",  # Logging issues
+    "LOG",  # flake8-logging
+    "G",    #  flake8-logging-format
     #"C901", # maccabe
     "S",    # flake8-bandit
     "TID",  # flake8-tidy-imports
+    "TCH",  # flake8-type-checking
     "INT",  # flake8-gettext
+    "FLY002", # flynt
+    #"FURB", # refurb
+    "ISC",  # flake8-implicit-str-concat
+    "ICN",  # flake8-import-conventions
 ]
 
 lint.ignore = [
