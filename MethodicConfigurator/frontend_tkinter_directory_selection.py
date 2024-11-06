@@ -487,6 +487,7 @@ def argument_parser():
     return add_common_arguments_and_parse(parser)
 
 
+# pylint: disable=duplicate-code
 def main():
     args = argument_parser()
 
@@ -498,6 +499,7 @@ def main():
             " called from another script"
         )
     )
+    # pylint: enable=duplicate-code
 
     local_filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, None, args.allow_editing_template_files)
 
