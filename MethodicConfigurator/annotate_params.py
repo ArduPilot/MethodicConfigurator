@@ -246,7 +246,7 @@ class Par:
                 if isinstance(parameter, Par):
                     if parameter.comment:
                         formatted_params.append(
-                            f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}" f"  # {parameter.comment}"
+                            f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}  # {parameter.comment}"
                         )
                     else:
                         formatted_params.append(f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}")
