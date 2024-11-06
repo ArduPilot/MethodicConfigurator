@@ -225,7 +225,7 @@ def main():
     import string  # pylint: disable=import-outside-toplevel
 
     random_strings = [
-        "".join(random.choices(string.ascii_letters + string.digits, k=random.randint(4, 70)))  # noqa S311
+        "".join(random.choices(string.ascii_letters + string.digits, k=random.randint(4, 70)))  # noqa: S311
         for _ in range(20)
     ]
 

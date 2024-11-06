@@ -57,8 +57,8 @@ def main():
         if issues_date:
             print(f"Number of issues : {len(issues_date)}")
             print(f"Days to release issue (Average) : {compute_average(issues_date)}")
-            print(f"Days to release issue (Maximun) : {max(issues_date,key=itemgetter(1))[1]}")
-            print(f"Days to release issue (Minimun) : {min(issues_date,key=itemgetter(1))[1]}")
+            print(f"Days to release issue (Maximun) : {max(issues_date, key=itemgetter(1))[1]}")
+            print(f"Days to release issue (Minimun) : {min(issues_date, key=itemgetter(1))[1]}")
 
         total_downloads = sum(asset.download_count for asset in release.get_assets())
         print(f"Total downloads : {total_downloads}")
@@ -66,7 +66,7 @@ def main():
         print("---------------------------------\n")
         # print(issues_date)
     if overall_issues:
-        print(f"Average of days to release an issue over 5 releases : {sum(overall_issues)/len(overall_issues)}")
+        print(f"Average of days to release an issue over 5 releases : {sum(overall_issues) / len(overall_issues)}")
 
 
 if __name__ == "__main__":

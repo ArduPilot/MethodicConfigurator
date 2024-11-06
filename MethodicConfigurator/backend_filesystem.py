@@ -196,7 +196,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             ]
             prefix_parts += param_info["documentation"]
             for key, value in param_info["fields"].items():
-                if key not in ["Units", "UnitText"]:
+                if key not in {"Units", "UnitText"}:
                     prefix_parts += split_into_lines(f"{key}: {value}", TOOLTIP_MAX_LENGTH)
             prefix_parts += format_columns(param_info["values"], TOOLTIP_MAX_LENGTH)
             if param_name in self.param_default_dict:
@@ -223,7 +223,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
             for filename in sorted(os_listdir(self.vehicle_dir)):
                 if pattern.match(filename):
-                    if filename in ["00_default.param", "01_ignore_readonly.param"]:
+                    if filename in {"00_default.param", "01_ignore_readonly.param"}:
                         continue
                     parameters[filename] = Par.load_param_file_into_dict(os_path.join(self.vehicle_dir, filename))
         else:
@@ -441,7 +441,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def copy_template_files_to_new_vehicle_dir(self, template_dir: str, new_vehicle_dir: str):
         # Copy the template files to the new vehicle directory
         for item in os_listdir(template_dir):
-            if item in ["apm.pdef.xml", "vehicle.jpg", "last_uploaded_filename.txt", "tempcal_acc.png", "tempcal_gyro.png"]:
+            if item in {"apm.pdef.xml", "vehicle.jpg", "last_uploaded_filename.txt", "tempcal_acc.png", "tempcal_gyro.png"}:
                 continue
             s = os_path.join(template_dir, item)
             d = os_path.join(new_vehicle_dir, item)

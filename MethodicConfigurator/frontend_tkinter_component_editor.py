@@ -255,11 +255,11 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             self._set_component_value_and_update_ui(("Flight Controller", "Firmware", "Version"), version)
 
     def set_fc_manufacturer(self, manufacturer: str):
-        if manufacturer and manufacturer != "Unknown" and manufacturer != "ArduPilot":
+        if manufacturer and manufacturer not in ("Unknown", "ArduPilot"):
             self._set_component_value_and_update_ui(("Flight Controller", "Product", "Manufacturer"), manufacturer)
 
     def set_fc_model(self, model: str):
-        if model and model != "Unknown" and model != "MAVLink":
+        if model and model not in ("Unknown", "MAVLink"):
             self._set_component_value_and_update_ui(("Flight Controller", "Product", "Model"), model)
 
     def set_vehicle_configuration_template(self, configuration_template: str):
@@ -401,7 +401,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         main_out_functions = [fc_parameters.get("SERVO" + str(i) + "_FUNCTION", 0) for i in range(1, 9)]
 
         # if any element of main_out_functions is in [33, 34, 35, 36] then ESC is connected to main_out
-        if any(servo_function in [33, 34, 35, 36] for servo_function in main_out_functions):
+        if any(servo_function in {33, 34, 35, 36} for servo_function in main_out_functions):
             self.data["Components"]["ESC"]["FC Connection"]["Type"] = "Main Out"
         else:
             self.data["Components"]["ESC"]["FC Connection"]["Type"] = "AIO"
@@ -511,7 +511,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
             cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))
 
-            if path == ("ESC", "FC Connection", "Type"):  #  immediate update of ESC Protocol upon ESC Type selection
+            if path == ("ESC", "FC Connection", "Type"):  # immediate update of ESC Protocol upon ESC Type selection
                 cb.bind("<<ComboboxSelected>>", lambda event, path=path: self.update_esc_protocol_combobox_entries(cb.get()))
 
             cb.set(value)
@@ -677,17 +677,17 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     invalid_values = True
                     continue
                 if "FC Connection" in path and "Type" in path:
-                    if value in fc_serial_connection and value not in ["CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4"]:
-                        if path[0] in ["Telemetry", "RC Receiver"] and fc_serial_connection[value] in [
+                    if value in fc_serial_connection and value not in {"CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4"}:
+                        if path[0] in {"Telemetry", "RC Receiver"} and fc_serial_connection[value] in {
                             "Telemetry",
                             "RC Receiver",
-                        ]:
+                        }:
                             entry.configure(style="comb_input_valid.TCombobox")
                             continue  # Allow telemetry and RC Receiver connections using the same SERIAL port
                         if (
                             self.data["Components"]["Battery Monitor"]["FC Connection"]["Protocol"] == "ESC"
-                            and path[0] in ["Battery Monitor", "ESC"]
-                            and fc_serial_connection[value] in ["Battery Monitor", "ESC"]
+                            and path[0] in {"Battery Monitor", "ESC"}
+                            and fc_serial_connection[value] in {"Battery Monitor", "ESC"}
                         ):
                             entry.configure(style="comb_input_valid.TCombobox")
                             continue  # Allow 'Battery Monitor' and 'ESC' connections using the same SERIAL port
@@ -704,11 +704,11 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 mock_focus_out_event = type("", (), {"type": "10"})()
                 if not validate_function(mock_focus_out_event):
                     invalid_values = True
-            if path in [
+            if path in {
                 ("Battery", "Specifications", "Volt per cell max"),
                 ("Battery", "Specifications", "Volt per cell low"),
                 ("Battery", "Specifications", "Volt per cell crit"),
-            ] and not self.validate_cell_voltage(None, entry, path):
+            } and not self.validate_cell_voltage(None, entry, path):
                 invalid_values = True
             if (
                 path == ("Battery", "Specifications", "Volt per cell low")

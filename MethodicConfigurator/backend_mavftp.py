@@ -467,7 +467,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                     continue
                 self.dir_offset += 1
                 try:
-                    d = str(d, "ascii")  # noqa PLW2901
+                    d = str(d, "ascii")  # noqa: PLW2901
                 except Exception:  # noqa: S112 pylint: disable=broad-exception-caught
                     continue
                 if d[0] == "D":
@@ -527,7 +527,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 if self.callback is not None or self.filename == "-":
                     self.fh = SIO()
                 else:
-                    self.fh = open(self.filename, "wb")  # noqa SIM115 pylint: disable=consider-using-with
+                    self.fh = open(self.filename, "wb")  # noqa: SIM115 pylint: disable=consider-using-with
             except Exception as ex:  # pylint: disable=broad-except
                 logging.error("FTP: Failed to open local file %s: %s", self.filename, ex)
                 self.__terminate_session()
@@ -656,7 +656,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 self.__send(more)
         elif op.opcode == OP_Nack:
             ecode = op.payload[0]
-            if ecode in (ERR_EndOfFile, 0):
+            if ecode in {ERR_EndOfFile, 0}:
                 if not self.reached_eof and op.offset > self.fh.tell():
                     # we lost the last part of the burst
                     if self.ftp_settings.debug > 0:
@@ -726,7 +726,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.fh = fh
         if self.fh is None:
             try:
-                self.fh = open(fname, "rb")  # noqa SIM115 pylint: disable=consider-using-with
+                self.fh = open(fname, "rb")  # noqa: SIM115 pylint: disable=consider-using-with
             except Exception as ex:  # pylint: disable=broad-exception-caught
                 logging.error("FTP: Failed to open %s: %s", fname, ex)
                 return MAVFTPReturn("CreateFile", ERR_FailToOpenLocalFile)
@@ -1000,13 +1000,13 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             return self.__handle_burst_read(op, m)
         if op.req_opcode == OP_ResetSessions:
             return self.__handle_reset_sessions_reply(op, m)
-        if op.req_opcode in [OP_None, OP_TerminateSession]:
+        if op.req_opcode in {OP_None, OP_TerminateSession}:
             return MAVFTPReturn(operation_name, ERR_None)  # ignore reply
         if op.req_opcode == OP_CreateFile:
             return self.__handle_create_file_reply(op, m)
         if op.req_opcode == OP_WriteFile:
             return self.__handle_write_reply(op, m)
-        if op.req_opcode in [OP_RemoveFile, OP_RemoveDirectory]:
+        if op.req_opcode in {OP_RemoveFile, OP_RemoveDirectory}:
             return self.__handle_remove_reply(op, m)
         if op.req_opcode == OP_Rename:
             return self.__handle_rename_reply(op, m)
@@ -1172,7 +1172,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             OP_CalcFileCRC32: "CalcFileCRC32",
             OP_BurstReadFile: "BurstReadFile",
         }
-        op_ret_name = operation_name if operation_name else operation_name_dict.get(op.req_opcode, "Unknown")
+        op_ret_name = operation_name or operation_name_dict.get(op.req_opcode, "Unknown")
         len_payload = len(op.payload) if op.payload is not None else 0
         if op.opcode == OP_Ack:
             error_code = ERR_None
@@ -1185,7 +1185,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                     error_code = ERR_NoErrorCodeInNack
                 elif error_code == ERR_FailErrno:
                     error_code = ERR_NoFilesystemErrorInPayload
-                elif error_code not in [
+                elif error_code not in {
                     ERR_Fail,
                     ERR_InvalidDataSize,
                     ERR_InvalidSession,
@@ -1195,7 +1195,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                     ERR_FileExists,
                     ERR_FileProtected,
                     ERR_FileNotFound,
-                ]:
+                }:
                     invalid_error_code = error_code
                     error_code = ERR_InvalidErrorCode
             elif op.payload[0] == ERR_FailErrno and len_payload == 2:
@@ -1225,7 +1225,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             logging.error("paramftp: Not enough data do decode, only %u bytes", len(data))
             return None
         magic2, _num_params, total_params = struct.unpack("<HHH", data[0:6])
-        if magic2 not in (magic, magic_defaults):
+        if magic2 not in {magic, magic_defaults}:
             logging.error("paramftp: bad magic 0x%x expected 0x%x", magic2, magic)
             return None
         with_defaults = magic2 == magic_defaults
@@ -1336,7 +1336,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             for name, (value, datatype) in pdict.items():
                 if sort_type == "missionplanner":
                     f.write(f"{name},{format(value, '.6f').rstrip('0').rstrip('.')}")
-                elif sort_type in ["mavproxy", "none"]:
+                elif sort_type in {"mavproxy", "none"}:
                     f.write(f"{name:<16} {value:<8.6f}")
 
                 if add_datatype_comments:
@@ -1625,7 +1625,7 @@ if __name__ == "__main__":
 
         ret = mav_ftp.cmd_ftp(cmd_ftp_args)
 
-        if args.command in ["get", "put", "getparams"]:
+        if args.command in {"get", "put", "getparams"}:
             ret = mav_ftp.process_ftp_reply(args.command, timeout=500)
 
         if isinstance(ret, str):

@@ -49,7 +49,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
             raise ValueError(_("List_of_items can't be 'None'"))
         self._list_of_items = list_of_items
 
-        self.filter_function = custom_filter_function if custom_filter_function else self.default_filter_function
+        self.filter_function = custom_filter_function or self.default_filter_function
 
         self._listbox_width = listbox_width
         self._listbox_height = int(listbox_height)
@@ -145,7 +145,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         x = -self.cget("borderwidth") - self.cget("highlightthickness")
         y = self.winfo_height() - self.cget("borderwidth") - self.cget("highlightthickness")
 
-        width = self._listbox_width if self._listbox_width else self.winfo_width()
+        width = self._listbox_width or self.winfo_width()
 
         listbox_frame.place(in_=self, x=x, y=y, width=width)
 
