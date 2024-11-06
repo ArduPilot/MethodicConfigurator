@@ -478,7 +478,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     def __read_last_uploaded_filename(self) -> str:
         try:
-            with open(os_path.join(self.vehicle_dir, "last_uploaded_filename.txt"), "r", encoding="utf-8") as file:
+            with open(os_path.join(self.vehicle_dir, "last_uploaded_filename.txt"), encoding="utf-8") as file:
                 return file.read().strip()
         except FileNotFoundError as e:
             logging_debug(_("last_uploaded_filename.txt not found: %s"), e)

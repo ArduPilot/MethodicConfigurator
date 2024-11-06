@@ -41,7 +41,7 @@ class VehicleComponents:
         data = {}
         try:
             filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
-            with open(filepath, "r", encoding="utf-8") as file:
+            with open(filepath, encoding="utf-8") as file:
                 data = json_load(file)
         except FileNotFoundError:
             # Normal users do not need this information

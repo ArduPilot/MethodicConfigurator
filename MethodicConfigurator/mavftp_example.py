@@ -147,7 +147,7 @@ def get_file(mav_ftp, remote_filename, local_filename, timeout=5):
 
 def get_last_log(mav_ftp):
     try:
-        with open("LASTLOG.TXT", "r", encoding="UTF-8") as file:
+        with open("LASTLOG.TXT", encoding="UTF-8") as file:
             file_contents = file.readline()
             remote_filenumber = int(file_contents.strip())
     except FileNotFoundError:

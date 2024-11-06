@@ -28,7 +28,7 @@ if not os.path.exists(source_file_path):
     sys.exit(1)
 
 # Traverse the source directory and copy the file to each subdirectory
-for root, dirs, files in os.walk(BASE_TARGET_DIR):
+for root, dirs, _files in os.walk(BASE_TARGET_DIR):
     for directory in dirs:
         target_dir = os.path.join(root, directory)
         target_file_path = os.path.join(target_dir, FILE_TO_COPY)

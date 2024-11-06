@@ -51,7 +51,7 @@ class ConfigurationSteps:
         file_found = False
         for i, directory in enumerate(search_directories):
             try:
-                with open(os_path.join(directory, self.configuration_steps_filename), "r", encoding="utf-8") as file:
+                with open(os_path.join(directory, self.configuration_steps_filename), encoding="utf-8") as file:
                     self.configuration_steps = json_load(file)
                     file_found = True
                     if self.log_loaded_file:
@@ -123,7 +123,7 @@ class ConfigurationSteps:
         if parameter_type + "_parameters" not in file_info or not variables:
             return ""
         destination = self.forced_parameters if parameter_type == "forced" else self.derived_parameters
-        for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():  # pylint: disable=too-many-nested-blocks
+        for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():
             try:
                 if ("fc_parameters" in str(parameter_info["New Value"])) and (
                     "fc_parameters" not in variables or variables["fc_parameters"] == {}

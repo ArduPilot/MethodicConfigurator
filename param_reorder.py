@@ -80,7 +80,7 @@ def uplate_old_filenames(renames, steps):
 
 
 def update_file_contents(renames, root, file, steps):
-    with open(os.path.join(root, file), "r", encoding="utf-8") as handle:
+    with open(os.path.join(root, file), encoding="utf-8") as handle:
         file_content = handle.read()
     if file.startswith("TUNING_GUIDE_") and file.endswith(".md"):
         for old_filename in renames.values():
@@ -148,7 +148,7 @@ def change_line_endings_for_md_files():
 
 
 def main():
-    with open(os.path.join("MethodicConfigurator", SEQUENCE_FILENAME), "r", encoding="utf-8") as f:
+    with open(os.path.join("MethodicConfigurator", SEQUENCE_FILENAME), encoding="utf-8") as f:
         steps = json.load(f)
     renames = reorder_param_files(steps)
     param_dirs = loop_relevant_files(renames, steps)
