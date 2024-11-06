@@ -468,7 +468,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 self.dir_offset += 1
                 try:
                     d = str(d, "ascii")
-                except Exception:  # pylint: disable=broad-exception-caught
+                except Exception:  # noqa: S112 pylint: disable=broad-exception-caught
                     continue
                 if d[0] == "D":
                     logging.info(" D %s", d[1:])
@@ -580,7 +580,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
     def __handle_burst_read(self, op, _m) -> MAVFTPReturn:  # pylint: disable=too-many-branches, too-many-statements, too-many-return-statements
         """handle OP_BurstReadFile reply"""
-        if self.ftp_settings.pkt_loss_tx > 0 and random.uniform(0, 100) < self.ftp_settings.pkt_loss_tx:
+        if self.ftp_settings.pkt_loss_tx > 0 and random.uniform(0, 100) < self.ftp_settings.pkt_loss_tx:  # noqa: S311
             if self.ftp_settings.debug > 0:
                 logging.warning("FTP: dropping TX")
             return MAVFTPReturn("BurstReadFile", ERR_Fail)
@@ -984,7 +984,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 logging.warning("FTP: wrong session replied %u expected %u. Will discard message", op.session, self.session)
             return MAVFTPReturn(operation_name, ERR_InvalidSession)
         self.last_op_time = now
-        if self.ftp_settings.pkt_loss_rx > 0 and random.uniform(0, 100) < self.ftp_settings.pkt_loss_rx:
+        if self.ftp_settings.pkt_loss_rx > 0 and random.uniform(0, 100) < self.ftp_settings.pkt_loss_rx:  # noqa: S311
             if self.ftp_settings.debug > 1:
                 logging.warning("FTP: dropping packet RX")
             return MAVFTPReturn(operation_name, ERR_Fail)
@@ -1065,7 +1065,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
     def __idle_task(self) -> bool:
         """check for file gaps and lost requests"""
         now = time.time()
-        assert (
+        assert (  # noqa: S101
             self.ftp_settings.idle_detection_time > self.ftp_settings.read_retry_time
         ), "settings.idle_detection_time must be > settings.read_retry_time"
 
@@ -1129,10 +1129,10 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         start_time = time.time()
         ret = MAVFTPReturn(operation_name, ERR_Fail)
         recv_timeout = 0.1
-        assert (
+        assert (  # noqa: S101
             timeout == 0 or timeout > self.ftp_settings.idle_detection_time
         ), "timeout must be > settings.idle_detection_time"
-        assert recv_timeout < self.ftp_settings.retry_time, "recv_timeout must be < settings.retry_time"
+        assert recv_timeout < self.ftp_settings.retry_time, "recv_timeout must be < settings.retry_time"  # noqa: S101
 
         while True:  # an FTP operation can have multiple responses
             m = self.master.recv_match(type=["FILE_TRANSFER_PROTOCOL"], timeout=recv_timeout)

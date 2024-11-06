@@ -305,7 +305,7 @@ class Par:
         rows = 100
         # Get the size of the terminal
         if __name__ == "__main__":
-            rows, _columns = os_popen("stty size", "r").read().split()
+            rows, _columns = os_popen("stty size", "r").read().split()  # noqa S607
 
         # Convert rows to integer
         rows = int(rows) - 2  # -2 for the next print and the input line
@@ -315,7 +315,7 @@ class Par:
         for i, line in enumerate(formatted_params):
             if i % rows == 0 and __name__ == "__main__":
                 input(f"\n{name} list is long hit enter to continue")
-                rows, _columns = os_popen("stty size", "r").read().split()
+                rows, _columns = os_popen("stty size", "r").read().split()  # noqa S607
                 rows = int(rows) - 2  # -2 for the next print and the input line
             print(line)
 

@@ -20,7 +20,7 @@ def process_locale_directory(locale_dir):
     try:
         # Run msgfmt command
         cmd = ["msgfmt", "-o", mo_file, po_file]
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
         print(f"Successfully processed {locale_dir}")
     except subprocess.CalledProcessError as e:
         print(f"Error processing {locale_dir}: {e}")

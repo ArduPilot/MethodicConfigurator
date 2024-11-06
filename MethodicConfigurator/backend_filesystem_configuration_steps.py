@@ -138,7 +138,7 @@ class ConfigurationSteps:
                         return error_msg
                     logging_warning(error_msg)
                     continue
-                result = eval(str(parameter_info["New Value"]), {}, variables)  # pylint: disable=eval-used
+                result = eval(str(parameter_info["New Value"]), {}, variables)  # noqa S307 pylint: disable=eval-used
 
                 # convert (combobox) string text to (parameter value) string int or float
                 if isinstance(result, str) and parameter in variables["doc_dict"]:

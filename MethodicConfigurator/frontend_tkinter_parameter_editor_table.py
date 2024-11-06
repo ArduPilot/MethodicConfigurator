@@ -147,7 +147,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         renames = {}
         if "rename_connection" in self.local_filesystem.configuration_steps[selected_file]:
             new_connection_prefix = self.local_filesystem.configuration_steps[selected_file]["rename_connection"]
-            new_connection_prefix = eval(str(new_connection_prefix), {}, self.variables)  # pylint: disable=eval-used
+            new_connection_prefix = eval(str(new_connection_prefix), {}, self.variables)  # noqa: S307 pylint: disable=eval-used
             for param_name in self.local_filesystem.file_parameters[selected_file]:
                 new_prefix = new_connection_prefix
                 old_prefix = param_name.split("_")[0]

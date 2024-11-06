@@ -43,7 +43,7 @@ def extract_strings(directory, output_dir):
     cmd += file_paths
 
     try:
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
         print(result.stdout)
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while running pygettext3:\n{e}")

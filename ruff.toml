@@ -11,12 +11,17 @@ lint.select = [
     "W",    # Warnings
     "U",    # pyupgrade
     "I",    # isort
+    "N",    # pep8-naming
     "PL",   # Pylint
     "B",    # flake8-bugbear
     "RUF",  # Ruff-specific codes
     "PERF", # Performance-related issues
     "SIM",  # flake8-simplify
     "LOG",  # Logging issues
+    #"C901", # maccabe
+    "S",    # flake8-bandit
+    "TID",  # flake8-tidy-imports
+    "INT",  # flake8-gettext
 ]
 
 lint.ignore = [
@@ -29,6 +34,13 @@ lint.ignore = [
     "PLW2901",  # `for` loop variable `X` overwritten by assignment target
     "PERF203",  # `try`-`except` within a loop incurs performance overhead
     "SIM115",  # Use context handler for opening files
+    "N801",    # Class name `FTP_OP` should use CapWords convention
+    "N802",    # Function name `X` should be lowercase
+    "N806",    # Variable name `X` should be lowercase
+    "N812",    # Lowercase `x` imported as non-lowercase `X`
+    "N814",    # Camelcase `X` imported as constant `Y`
+    "N817",    # CamelCase `X` imported as acronym `Y`
+    "N999",    # Invalid module name: 'MethodicConfigurator'
 ]
 
 line-length = 127

@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 try:  # noqa: SIM105
     from pymavlink import mavutil
     # import pymavlink.dialects.v20.ardupilotmega
-except Exception:  # pylint: disable=broad-exception-caught
+except Exception:  # noqa S110 pylint: disable=broad-exception-caught
     pass
 
 
