@@ -10,10 +10,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 
 def insert_translations(po_file, translations_file, output_file):
-    with open(po_file, "r", encoding="utf-8") as f:
+    with open(po_file, encoding="utf-8") as f:
         lines = f.readlines()
 
-    with open(translations_file, "r", encoding="utf-8") as f:
+    with open(translations_file, encoding="utf-8") as f:
         translations_data = f.read().strip().split("\n")
 
     # Prepare to insert translations

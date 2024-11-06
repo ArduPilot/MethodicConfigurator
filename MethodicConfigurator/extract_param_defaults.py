@@ -186,7 +186,7 @@ def sort_params(params: Dict[str, float], sort_type: str = "none") -> Dict[str, 
     return params
 
 
-def output_params(  # pylint: disable=too-many-branches
+def output_params(
     params: Dict[str, float],
     format_type: str = "missionplanner",
     sysid: int = -1,

@@ -41,7 +41,7 @@ for file in extra_scripts:
 os.chmod("MethodicConfigurator/ardupilot_methodic_configurator.py", 0o755)
 
 # Read the long description from the README file
-with open("README.md", "r", encoding="utf-8") as f:
+with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
     # Use Absolute links so that the pyPI page renders correctly
     long_description = long_description.replace("(USERMANUAL.md", f"({PRJ_URL}/blob/master/USERMANUAL.md")

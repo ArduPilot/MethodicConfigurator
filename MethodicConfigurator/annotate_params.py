@@ -193,7 +193,7 @@ class Par:
             parameter_dict[parameter] = Par(fvalue, comment)
         except ValueError as exc:
             raise SystemExit(f"Invalid parameter value {value} in {param_file} line {i}") from exc
-        except IOError as exc:
+        except OSError as exc:
             _exc_type, exc_value, exc_traceback = sys_exc_info()
             fname = os_path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
             logging.critical("in line %s of file %s: %s", exc_traceback.tb_lineno, fname, exc_value)
@@ -282,7 +282,7 @@ class Par:
             with open(filename_out, "w", encoding="utf-8", newline="\n") as output_file:
                 for line in formatted_params:
                     output_file.write(line + "\n")
-        except IOError as e:
+        except OSError as e:
             raise SystemExit(f"ERROR: writing to file {filename_out}: {e}") from e
 
     @staticmethod
@@ -337,11 +337,11 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
     # Check if the locally cached file exists
     if os_path.isfile(file_path):
         # Load the file content relative to the script location
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(file_path, encoding="utf-8") as file:
             xml_data = file.read()
     elif os_path.isfile(filename):
         # Load the file content from the current directory
-        with open(filename, "r", encoding="utf-8") as file:
+        with open(filename, encoding="utf-8") as file:
             xml_data = file.read()
     else:
         # No locally cached file exists, get it from the internet
@@ -618,7 +618,7 @@ def update_parameter_documentation(
             continue
 
         # Read the entire file contents
-        with open(param_file, "r", encoding="utf-8") as file:
+        with open(param_file, encoding="utf-8") as file:
             lines = file.readlines()
 
         update_parameter_documentation_file(
@@ -766,7 +766,7 @@ def main():
         else:
             logging.warning("No LUA MAGfit XML documentation found, skipping annotation of %s", target)
 
-    except (IOError, OSError, SystemExit) as exp:
+    except (OSError, SystemExit) as exp:
         logging.fatal(exp)
         sys_exit(1)
 

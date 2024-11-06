@@ -6,14 +6,16 @@ exclude = [
 ]
 
 lint.select = [
-    "F",    # Formatting
-    "E",    # Errors
+    "F",    # pycodestyle
+    "E",    # Pyflakes
     "W",    # Warnings
-    "I",    # Informational
+    "U",    # pyupgrade
+    "I",    # isort
     "PL",   # Pylint
+    "B",    # flake8-bugbear
     "RUF",  # Ruff-specific codes
     "PERF", # Performance-related issues
-    "SIM",  # Simplicity issues
+    "SIM",  # flake8-simplify
     "LOG",  # Logging issues
 ]
 
@@ -30,3 +32,6 @@ lint.ignore = [
 ]
 
 line-length = 127
+indent-width = 4
+
+target-version = "py38"

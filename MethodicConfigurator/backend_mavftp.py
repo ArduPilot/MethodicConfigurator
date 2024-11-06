@@ -293,21 +293,23 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         master,
         target_system,
         target_component,
-        settings=MAVFTPSettings(
-            [
-                ("debug", int, 0),
-                ("pkt_loss_tx", int, 0),
-                ("pkt_loss_rx", int, 0),
-                ("max_backlog", int, 5),
-                ("burst_read_size", int, 80),
-                ("write_size", int, 80),
-                ("write_qsize", int, 5),
-                ("idle_detection_time", float, 3.7),
-                ("read_retry_time", float, 1.0),
-                ("retry_time", float, 0.5),
-            ]
-        ),
+        settings=None,
     ):
+        if settings is None:
+            settings = MAVFTPSettings(
+                [
+                    ("debug", int, 0),
+                    ("pkt_loss_tx", int, 0),
+                    ("pkt_loss_rx", int, 0),
+                    ("max_backlog", int, 5),
+                    ("burst_read_size", int, 80),
+                    ("write_size", int, 80),
+                    ("write_qsize", int, 5),
+                    ("idle_detection_time", float, 3.7),
+                    ("read_retry_time", float, 1.0),
+                    ("retry_time", float, 0.5),
+                ]
+            )
         self.ftp_settings = settings
         self.seq = 0
         self.session = 0
@@ -1239,7 +1241,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
         count = 0
         pad_byte = 0
-        last_name = bytes()
+        last_name = b""
         while True:
             while len(data) > 0 and data[0] == pad_byte:
                 data = data[1:]  # skip pad bytes
@@ -1358,7 +1360,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 return
             try:
                 data = fh.read()
-            except IOError as exp:
+            except OSError as exp:
                 logging.error("FTP: Failed to read file param.pck: %s", exp)
                 sys.exit(1)
             pdata = MAVFTP.ftp_param_decode(data)

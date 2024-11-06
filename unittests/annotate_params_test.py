@@ -14,10 +14,10 @@ import contextlib
 import os
 import tempfile
 import unittest
+from unittest import mock
 from unittest.mock import Mock, mock_open, patch
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 
-import mock
 import requests
 from defusedxml import ElementTree as DET  # just parsing, no data-structure manipulation
 
@@ -84,7 +84,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         self.assertIsInstance(result, ET.Element)
 
         # Assert that the file was opened correctly
-        mock_open.assert_called_once_with(os.path.join(".", "test.xml"), "r", encoding="utf-8")
+        mock_open.assert_called_once_with(os.path.join(".", "test.xml"), encoding="utf-8")
 
     @patch("requests.get")
     def test_get_xml_data_remote_file(self, mock_get):
@@ -127,7 +127,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         self.assertIsInstance(result, ET.Element)
 
         # Assert that the file was opened correctly
-        mock_open.assert_called_once_with(os.path.join(".", PARAM_DEFINITION_XML_FILE), "r", encoding="utf-8")
+        mock_open.assert_called_once_with(os.path.join(".", PARAM_DEFINITION_XML_FILE), encoding="utf-8")
 
     def test_get_xml_data_no_requests_package(self):
         # Temporarily remove the requests module
@@ -323,7 +323,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         update_parameter_documentation(self.doc_dict, self.temp_file.name)
 
         # Read the updated content from the temporary file
-        with open(self.temp_file.name, "r", encoding="utf-8") as file:
+        with open(self.temp_file.name, encoding="utf-8") as file:
             updated_content = file.read()
 
         # Check if the file has been updated correctly
@@ -344,7 +344,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         update_parameter_documentation(self.doc_dict, self.temp_file.name)
 
         # Read the updated content from the temporary file
-        with open(self.temp_file.name, "r", encoding="utf-8") as file:
+        with open(self.temp_file.name, encoding="utf-8") as file:
             updated_content = file.read()
 
         expected_content = """# Param 2
@@ -385,7 +385,7 @@ PARAM1 100
         update_parameter_documentation(self.doc_dict, self.temp_file.name, "missionplanner")
 
         # Read the updated content from the temporary file
-        with open(self.temp_file.name, "r", encoding="utf-8") as file:
+        with open(self.temp_file.name, encoding="utf-8") as file:
             updated_content = file.read()
 
         expected_content = """# Param _ 1
@@ -423,7 +423,7 @@ PARAM2 100 # ignore, me
         update_parameter_documentation(self.doc_dict, self.temp_file.name, "mavproxy")
 
         # Read the updated content from the temporary file
-        with open(self.temp_file.name, "r", encoding="utf-8") as file:
+        with open(self.temp_file.name, encoding="utf-8") as file:
             updated_content = file.read()
 
         expected_content = """# Param 1
@@ -542,7 +542,7 @@ PARAM_1\t100
         update_parameter_documentation(self.doc_dict, self.temp_file.name)
 
         # Read the updated content from the temporary file
-        with open(self.temp_file.name, "r", encoding="utf-8") as file:
+        with open(self.temp_file.name, encoding="utf-8") as file:
             updated_content = file.read()
 
         # Check if the file is still empty
@@ -589,7 +589,7 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
         mock_arg_parser.return_value = Mock(
             vehicle_type="ArduCopter", target=".", sort="none", delete_documentation_annotations=False, verbose=False
         )
-        mock_file.side_effect = IOError("Mocked IO Error")
+        mock_file.side_effect = OSError("Mocked IO Error")
 
         with self.assertRaises(SystemExit) as cm:
             main()

@@ -184,7 +184,7 @@ class TestExportToParam(unittest.TestCase):
         Par.export_to_param(params, "output.param")
 
         # Check the contents of the output file
-        with open("output.param", "r", encoding="utf-8") as f:
+        with open("output.param", encoding="utf-8") as f:
             output = f.read()
         self.assertEqual(output, "PARAM1,1\nPARAM2,2\nPARAM3,3  # Comment\n")
 
@@ -203,7 +203,7 @@ class TestExportToParam(unittest.TestCase):
         Par.export_to_param(params, "output.param", ["# HEADER"])
 
         # Check the contents of the output file
-        with open("output.param", "r", encoding="utf-8") as f:
+        with open("output.param", encoding="utf-8") as f:
             output = f.read()
         self.assertEqual(output, "# HEADER\nPARAM1,1\nPARAM2,2\nPARAM3,3\n")
 

@@ -17,7 +17,7 @@ def extract_missing_translations(po_file, output_file):
     language = gettext.translation("messages", localedir=os.path.dirname(po_file), languages=["zh_CN"], fallback=True)
 
     # Read the .po file entries
-    with open(po_file, "r", encoding="utf-8") as f:
+    with open(po_file, encoding="utf-8") as f:
         lines = f.readlines()
 
     missing_translations = []

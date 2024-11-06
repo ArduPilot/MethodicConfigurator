@@ -9,7 +9,6 @@ repos:
         stages: [pre-commit]
       # Run the formatter.
       - id: ruff-format
-        args: [ --line-length=127 ]
         types_or: [ python ]
         stages: [pre-commit]
 

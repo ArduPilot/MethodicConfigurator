@@ -116,7 +116,7 @@ class ProgramSettings:
         settings = {}
 
         try:
-            with open(settings_path, "r", encoding="utf-8") as settings_file:
+            with open(settings_path, encoding="utf-8") as settings_file:
                 settings = json_load(settings_file)
         except FileNotFoundError:
             # If the file does not exist, it will be created later
