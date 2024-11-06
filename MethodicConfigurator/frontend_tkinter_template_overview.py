@@ -14,11 +14,11 @@ from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from tkinter import ttk
 
+from MethodicConfigurator import _
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
-from MethodicConfigurator import _
 from MethodicConfigurator.middleware_template_overview import TemplateOverview
 from MethodicConfigurator.version import VERSION
 
@@ -89,7 +89,7 @@ class TemplateOverviewWindow(BaseWindow):
         # Populate the Treeview with data from the template overview
         for key, template_overview in VehicleComponents.get_vehicle_components_overviews().items():
             attribute_names = template_overview.attributes()
-            values = (key,) + tuple(getattr(template_overview, attr, "") for attr in attribute_names)
+            values = (key, *(getattr(template_overview, attr, "") for attr in attribute_names))
             self.tree.insert("", "end", text=key, values=values)
 
         self.__adjust_treeview_column_widths()

@@ -56,9 +56,8 @@ def loop_relevant_files(renames, steps):
     # and replace all occurrences of the old names with the new names
     for root, _dirs, files in os.walk("."):
         for file in files:
-            if file.endswith(".param"):
-                if root not in param_dirs:
-                    param_dirs.append(root)
+            if file.endswith(".param") and root not in param_dirs:
+                param_dirs.append(root)
             if file == "LICENSE.md":
                 continue
             if file == "vehicle_components.json":

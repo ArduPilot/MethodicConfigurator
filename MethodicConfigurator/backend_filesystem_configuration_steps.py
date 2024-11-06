@@ -19,8 +19,8 @@ from logging import warning as logging_warning
 from os import path as os_path
 from typing import Tuple
 
-from MethodicConfigurator.annotate_params import Par
 from MethodicConfigurator import _
+from MethodicConfigurator.annotate_params import Par
 
 
 class ConfigurationSteps:
@@ -141,15 +141,14 @@ class ConfigurationSteps:
                 result = eval(str(parameter_info["New Value"]), {}, variables)  # pylint: disable=eval-used
 
                 # convert (combobox) string text to (parameter value) string int or float
-                if isinstance(result, str):
-                    if parameter in variables["doc_dict"]:
-                        values = variables["doc_dict"][parameter]["values"]
-                        if values:
-                            result = next(key for key, value in values.items() if value == result)
-                        else:
-                            bitmasks = variables["doc_dict"][parameter]["Bitmask"]
-                            if bitmasks:
-                                result = 2 ** next(key for key, bitmask in bitmasks.items() if bitmask == result)
+                if isinstance(result, str) and parameter in variables["doc_dict"]:
+                    values = variables["doc_dict"][parameter]["values"]
+                    if values:
+                        result = next(key for key, value in values.items() if value == result)
+                    else:
+                        bitmasks = variables["doc_dict"][parameter]["Bitmask"]
+                        if bitmasks:
+                            result = 2 ** next(key for key, bitmask in bitmasks.items() if bitmask == result)
 
                 if filename not in destination:
                     destination[filename] = {}

@@ -23,15 +23,15 @@ import serial.tools.list_ports
 import serial.tools.list_ports_common
 from serial.serialutil import SerialException
 
+from MethodicConfigurator import _
 from MethodicConfigurator.annotate_params import Par
 from MethodicConfigurator.argparse_check_range import CheckRange
 from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
 from MethodicConfigurator.backend_mavftp import MAVFTP
-from MethodicConfigurator import _
 
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules
-try:
+try:  # noqa: SIM105
     from pymavlink import mavutil
     # import pymavlink.dialects.v20.ardupilotmega
 except Exception:  # pylint: disable=broad-exception-caught
@@ -480,7 +480,6 @@ class FlightController:
 
     # pylint: disable=duplicate-code
     def __auto_detect_serial(self):
-        serial_list = []
         preferred_ports = [
             "*FTDI*",
             "*Arduino_Mega_2560*",
@@ -497,9 +496,11 @@ class FlightController:
             "*CubePilot*",
             "*Qiotek*",
         ]
-        for connection in self.__connection_tuples:
-            if connection[1] and "mavlink" in connection[1].lower():
-                serial_list.append(mavutil.SerialPort(device=connection[0], description=connection[1]))
+        serial_list = [
+            mavutil.SerialPort(device=connection[0], description=connection[1])
+            for connection in self.__connection_tuples
+            if connection[1] and "mavlink" in connection[1].lower()
+        ]
         if len(serial_list) == 1:
             # selected automatically if unique
             return serial_list
@@ -508,9 +509,12 @@ class FlightController:
         serial_list.sort(key=lambda x: x.device)
 
         # remove OTG2 ports for dual CDC
-        if len(serial_list) == 2 and serial_list[0].device.startswith("/dev/serial/by-id"):
-            if serial_list[0].device[:-1] == serial_list[1].device[0:-1]:
-                serial_list.pop(1)
+        if (
+            len(serial_list) == 2
+            and serial_list[0].device.startswith("/dev/serial/by-id")
+            and serial_list[0].device[:-1] == serial_list[1].device[0:-1]
+        ):
+            serial_list.pop(1)
 
         return serial_list
 

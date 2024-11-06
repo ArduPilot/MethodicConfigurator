@@ -152,10 +152,7 @@ class ProgramSettings:
         pattern = r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)"
 
         # Replacement string
-        if platform_system() == "Windows":
-            replacement = r"\\"
-        else:
-            replacement = r"/"
+        replacement = r"\\" if platform_system() == "Windows" else r"/"
         return settings, pattern, replacement
 
     @staticmethod
@@ -201,10 +198,7 @@ class ProgramSettings:
             current_dir = current_dir.replace("/MethodicConfigurator", "")
         program_dir = current_dir
 
-        if platform_system() == "Windows":
-            site_directory = ProgramSettings.__site_config_dir()
-        else:
-            site_directory = program_dir
+        site_directory = ProgramSettings.__site_config_dir() if platform_system() == "Windows" else program_dir
         return os_path.join(site_directory, "vehicle_templates")
 
     @staticmethod

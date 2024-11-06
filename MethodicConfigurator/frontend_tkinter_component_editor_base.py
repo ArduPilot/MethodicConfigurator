@@ -17,6 +17,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from tkinter import messagebox, ttk
 
+from MethodicConfigurator import _
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 from MethodicConfigurator.frontend_tkinter_base import (
@@ -27,7 +28,6 @@ from MethodicConfigurator.frontend_tkinter_base import (
     show_error_message,
     show_tooltip,
 )
-from MethodicConfigurator import _
 from MethodicConfigurator.version import VERSION
 
 

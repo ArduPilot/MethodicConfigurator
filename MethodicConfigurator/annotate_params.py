@@ -312,9 +312,7 @@ class Par:
 
         # Convert rows
         print(f"\n{name} has {len(formatted_params)} parameters:")
-        i = 0
-        for line in formatted_params:
-            i += 1
+        for i, line in enumerate(formatted_params):
             if i % rows == 0 and __name__ == "__main__":
                 input(f"\n{name} list is long hit enter to continue")
                 rows, _columns = os_popen("stty size", "r").read().split()
@@ -727,10 +725,9 @@ def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
     except KeyError as e:
         raise ValueError(f"Vehicle type '{vehicle_type}' is not supported.") from e
 
-    if firmware_version:
-        xml_url = BASE_URL + vehicle_subdir + "/"
-    else:
-        xml_url = BASE_URL + vehicle_type + "/"
+    xml_url = BASE_URL
+    xml_url += vehicle_subdir if firmware_version else vehicle_type
+    xml_url += "/"
     return xml_url
 
 

@@ -52,16 +52,14 @@ class TestArgParseParameters(unittest.TestCase):  # pylint: disable=missing-clas
         self.assertEqual(args.sort, "none")
 
         # Assert that a SystemExit is raised when --sysid is used without --format set to qgcs
-        with self.assertRaises(SystemExit):
-            with patch("builtins.print") as mock_print:
-                parse_arguments(["-f", "mavproxy", "-i", "7", "dummy.bin"])
-                mock_print.assert_called_once_with("--sysid parameter is only relevant if --format is qgcs")
+        with self.assertRaises(SystemExit), patch("builtins.print") as mock_print:
+            parse_arguments(["-f", "mavproxy", "-i", "7", "dummy.bin"])
+            mock_print.assert_called_once_with("--sysid parameter is only relevant if --format is qgcs")
 
         # Assert that a SystemExit is raised when --compid is used without --format set to qgcs
-        with self.assertRaises(SystemExit):
-            with patch("builtins.print") as mock_print:
-                parse_arguments(["-f", "missionplanner", "-c", "3", "dummy.bin"])
-                mock_print.assert_called_once_with("--compid parameter is only relevant if --format is qgcs")
+        with self.assertRaises(SystemExit), patch("builtins.print") as mock_print:
+            parse_arguments(["-f", "missionplanner", "-c", "3", "dummy.bin"])
+            mock_print.assert_called_once_with("--compid parameter is only relevant if --format is qgcs")
 
         # Assert that a valid sysid and compid are parsed correctly
         args = parse_arguments(["-f", "qgcs", "-i", "7", "-c", "3", "dummy.bin"])

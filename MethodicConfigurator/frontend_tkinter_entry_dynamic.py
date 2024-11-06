@@ -145,10 +145,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         x = -self.cget("borderwidth") - self.cget("highlightthickness")
         y = self.winfo_height() - self.cget("borderwidth") - self.cget("highlightthickness")
 
-        if self._listbox_width:
-            width = self._listbox_width
-        else:
-            width = self.winfo_width()
+        width = self._listbox_width if self._listbox_width else self.winfo_width()
 
         listbox_frame.place(in_=self, x=x, y=y, width=width)
 

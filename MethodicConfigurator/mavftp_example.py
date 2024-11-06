@@ -77,9 +77,12 @@ def auto_detect_serial():
     serial_list.sort(key=lambda x: x.device)
 
     # remove OTG2 ports for dual CDC
-    if len(serial_list) == 2 and serial_list[0].device.startswith("/dev/serial/by-id"):
-        if serial_list[0].device[:-1] == serial_list[1].device[0:-1]:
-            serial_list.pop(1)
+    if (
+        len(serial_list) == 2
+        and serial_list[0].device.startswith("/dev/serial/by-id")
+        and serial_list[0].device[:-1] == serial_list[1].device[0:-1]
+    ):
+        serial_list.pop(1)
 
     return serial_list
 

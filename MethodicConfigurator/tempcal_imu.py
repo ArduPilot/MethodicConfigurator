@@ -306,10 +306,7 @@ def IMUfit(  # pylint: disable=too-many-locals, too-many-branches, too-many-stat
 
     stop_capture = [False] * 3
 
-    if tclr:
-        messages = ["PARM", "TCLR"]
-    else:
-        messages = ["PARM", "IMU"]
+    messages = ["PARM", "TCLR"] if tclr else ["PARM", "IMU"]
 
     # Pre-compile regular expressions used frequently inside the loop
     enable_pattern = re.compile(r"^INS_TCAL(\d)_ENABLE$")
@@ -403,10 +400,7 @@ def IMUfit(  # pylint: disable=too-many-locals, too-many-branches, too-many-stat
             m = offset_pattern.match(msg.Name)
             if m:
                 stype = m.group(1)
-                if m.group(2) == "":
-                    imu = 0
-                else:
-                    imu = int(m.group(2)) - 1
+                imu = 0 if m.group(2) == "" else int(m.group(2)) - 1
                 axis = m.group(3)
                 if stop_capture[imu]:
                     continue

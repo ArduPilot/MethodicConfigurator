@@ -26,6 +26,7 @@ from zipfile import ZipFile
 
 from requests import get as requests_get
 
+from MethodicConfigurator import _
 from MethodicConfigurator.annotate_params import (
     PARAM_DEFINITION_XML_FILE,
     Par,
@@ -40,7 +41,6 @@ from MethodicConfigurator.annotate_params import (
 from MethodicConfigurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
-from MethodicConfigurator import _
 
 TOOLTIP_MAX_LENGTH = 105
 
@@ -571,27 +571,27 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             Par.export_to_param(Par.format_params(self.param_default_dict), os_path.join(self.vehicle_dir, filename))
 
     def get_download_url_and_local_filename(self, selected_file: str) -> Tuple[str, str]:
-        if selected_file in self.configuration_steps:
-            if (
-                "download_file" in self.configuration_steps[selected_file]
-                and self.configuration_steps[selected_file]["download_file"]
-            ):
-                src = self.configuration_steps[selected_file]["download_file"].get("source_url", "")
-                dst = self.configuration_steps[selected_file]["download_file"].get("dest_local", "")
-                if self.vehicle_dir and src and dst:
-                    return src, os_path.join(self.vehicle_dir, dst)
+        if (
+            selected_file in self.configuration_steps
+            and "download_file" in self.configuration_steps[selected_file]
+            and self.configuration_steps[selected_file]["download_file"]
+        ):
+            src = self.configuration_steps[selected_file]["download_file"].get("source_url", "")
+            dst = self.configuration_steps[selected_file]["download_file"].get("dest_local", "")
+            if self.vehicle_dir and src and dst:
+                return src, os_path.join(self.vehicle_dir, dst)
         return "", ""
 
     def get_upload_local_and_remote_filenames(self, selected_file: str) -> Tuple[str, str]:
-        if selected_file in self.configuration_steps:
-            if (
-                "upload_file" in self.configuration_steps[selected_file]
-                and self.configuration_steps[selected_file]["upload_file"]
-            ):
-                src = self.configuration_steps[selected_file]["upload_file"].get("source_local", "")
-                dst = self.configuration_steps[selected_file]["upload_file"].get("dest_on_fc", "")
-                if self.vehicle_dir and src and dst:
-                    return os_path.join(self.vehicle_dir, src), dst
+        if (
+            selected_file in self.configuration_steps
+            and "upload_file" in self.configuration_steps[selected_file]
+            and self.configuration_steps[selected_file]["upload_file"]
+        ):
+            src = self.configuration_steps[selected_file]["upload_file"].get("source_local", "")
+            dst = self.configuration_steps[selected_file]["upload_file"].get("dest_on_fc", "")
+            if self.vehicle_dir and src and dst:
+                return os_path.join(self.vehicle_dir, src), dst
         return "", ""
 
     @staticmethod
