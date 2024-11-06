@@ -225,7 +225,7 @@ class ProgramSettings:
 
     @staticmethod
     def set_display_usage_popup(ptype: str, value: bool):
-        if ptype in ["component_editor", "parameter_editor"]:
+        if ptype in {"component_editor", "parameter_editor"}:
             settings, _, _ = ProgramSettings.__get_settings_config()
             settings["display_usage_popup"][ptype] = value
             ProgramSettings.__set_settings_from_dict(settings)

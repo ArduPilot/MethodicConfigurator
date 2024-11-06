@@ -53,7 +53,7 @@ def download_license(package_name, license_url):
         response = requests.get(license_url, timeout=10)
         response.raise_for_status()  # Raise an exception if the request failed
         # Use a fixed filename for the Mozilla Public License version 2.0
-        if package_name in ["Scrollable_TK_frame", "Python_Tkinter_ComboBox"]:
+        if package_name in {"Scrollable_TK_frame", "Python_Tkinter_ComboBox"}:
             filename = f"{package_name}-Mozilla_Public_License_version_2.0.html"
         else:
             filename = f"{package_name}-{license_url.split('/')[-1]}"

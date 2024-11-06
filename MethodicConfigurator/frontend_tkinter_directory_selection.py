@@ -366,7 +366,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         last_dir = DirectorySelectionWidgets(
             self,
             option3_label_frame,
-            last_vehicle_dir if last_vehicle_dir else "",
+            last_vehicle_dir or "",
             _("Last used vehicle configuration directory:"),
             False,
             _("Last used vehicle configuration directory"),

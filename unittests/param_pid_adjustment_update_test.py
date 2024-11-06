@@ -68,7 +68,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
 
     def test_empty_file(self):
         # Create an empty temporary file
-        with open("temp.param", "w", encoding="utf-8") as f:  # noqa F841
+        with open("temp.param", "w", encoding="utf-8") as f:  # noqa: F841
             pass
 
         # Call the function and check the result
@@ -242,7 +242,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
 
         # Assert that the error message is as expected
         self.assertEqual(
-            cm.exception.args[0], f"Parameter PARAM2 is not present in {os.path.join('test_directory','00_default.param')}"
+            cm.exception.args[0], f"Parameter PARAM2 is not present in {os.path.join('test_directory', '00_default.param')}"
         )
 
     def test_parameter_missing_from_default_file(self):
@@ -252,7 +252,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         self.assertEqual(
-            cm.exception.args[0], f"Parameter PARAM2 is not present in {os.path.join('test_directory','00_default.param')}"
+            cm.exception.args[0], f"Parameter PARAM2 is not present in {os.path.join('test_directory', '00_default.param')}"
         )
 
     def test_parameter_missing_from_optimized_file(self):
@@ -263,51 +263,53 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         self.assertEqual(
             cm.exception.args[0],
-            f"Parameter PARAM2 is not present in {os.path.join('test_directory','optimized_parameter_file.param')}",
+            f"Parameter PARAM2 is not present in {os.path.join('test_directory', 'optimized_parameter_file.param')}",
         )
 
     def test_empty_files(self):
         # Both the default and optimized parameter files are empty
         with open(self.default_param_file, "w", encoding="utf-8") as f:  # F841
             pass
-        with open(self.optimized_param_file, "w", encoding="utf-8") as f:  # noqa F841
+        with open(self.optimized_param_file, "w", encoding="utf-8") as f:  # noqa: F841
             pass
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         self.assertEqual(
-            cm.exception.args[0], f"Failed to load default parameters from {os.path.join('test_directory','00_default.param')}"
+            cm.exception.args[0],
+            f"Failed to load default parameters from {os.path.join('test_directory', '00_default.param')}",
         )
 
     def test_empty_default_file(self):
         # Create an empty default parameter file
-        with open(self.default_param_file, "w", encoding="utf-8") as f:  # noqa F841
+        with open(self.default_param_file, "w", encoding="utf-8") as f:  # noqa: F841
             pass
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         self.assertEqual(
-            cm.exception.args[0], f"Failed to load default parameters from {os.path.join('test_directory','00_default.param')}"
+            cm.exception.args[0],
+            f"Failed to load default parameters from {os.path.join('test_directory', '00_default.param')}",
         )
 
     def test_empty_optimized_file(self):
         # Create an empty optimized parameter file
-        with open(self.optimized_param_file, "w", encoding="utf-8") as f:  # noqa F841
+        with open(self.optimized_param_file, "w", encoding="utf-8") as f:  # noqa: F841
             pass
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         self.assertEqual(
             cm.exception.args[0],
-            f"Failed to load optimized parameters from {os.path.join('test_directory','optimized_parameter_file.param')}",
+            f"Failed to load optimized parameters from {os.path.join('test_directory', 'optimized_parameter_file.param')}",
         )
 
     def test_empty_adjustment_file(self):
         # Create an empty adjustment parameter file
-        with open(self.adjustment_param_file, "w", encoding="utf-8") as f:  # noqa F841
+        with open(self.adjustment_param_file, "w", encoding="utf-8") as f:  # noqa: F841
             pass
         with self.assertRaises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         self.assertEqual(
             cm.exception.args[0],
-            f"Failed to load PID adjustment parameters from {os.path.join('test_directory','16_pid_adjustment.param')}",
+            f"Failed to load PID adjustment parameters from {os.path.join('test_directory', '16_pid_adjustment.param')}",
         )
 
     def test_zero_default_value(self):

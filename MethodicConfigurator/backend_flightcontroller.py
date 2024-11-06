@@ -31,10 +31,10 @@ from MethodicConfigurator.backend_mavftp import MAVFTP
 
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules
-try:  # noqa SIM105
+try:  # noqa: SIM105
     from pymavlink import mavutil
     # import pymavlink.dialects.v20.ardupilotmega
-except Exception:  # noqa S110 pylint: disable=broad-exception-caught
+except Exception:  # noqa: S110 pylint: disable=broad-exception-caught
     pass
 
 

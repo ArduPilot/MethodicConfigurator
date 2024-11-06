@@ -522,7 +522,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         instruction_label = ttk.Label(add_parameter_window.main_frame, text=_(_("Enter the parameter name to add:")))
         instruction_label.pack(pady=5)
 
-        param_dict = self.local_filesystem.doc_dict if self.local_filesystem.doc_dict else fc_parameters
+        param_dict = self.local_filesystem.doc_dict or fc_parameters
 
         if not param_dict:
             messagebox.showerror(

@@ -156,7 +156,7 @@ def get_last_log(mav_ftp):
     except ValueError:
         logging_error("Could not extract last log file number from LASTLOG.TXT contants %s", file_contents)
         return
-    remote_filenumber = remote_filenumber - 1  # we do not want the very last log
+    remote_filenumber -= 1  # we do not want the very last log
     remote_filename = f"/APM/LOGS/{remote_filenumber:08}.BIN"
     get_file(mav_ftp, remote_filename, "LASTLOG.BIN", 0)
 
@@ -194,10 +194,10 @@ def upload_script(mav_ftp, remote_directory, local_filename, timeout):
 
 def debug_class_member_variable_changes(instance):
     return
-    global old_mavftp_member_variable_values  # noqa PLW0603 pylint: disable=global-statement, unreachable
+    global old_mavftp_member_variable_values  # noqa: PLW0603 pylint: disable=global-statement, unreachable
     new_mavftp_member_variable_values = instance.__dict__
     if old_mavftp_member_variable_values and instance.ftp_settings.debug > 1:  # pylint: disable=too-many-nested-blocks
-        logging_info(f"{instance.__class__.__name__} member variable changes:")  # noqa G004
+        logging_info(f"{instance.__class__.__name__} member variable changes:")  # noqa: G004
         for key, value in new_mavftp_member_variable_values.items():
             if old_mavftp_member_variable_values[key] != value:
                 old_value = old_mavftp_member_variable_values[key]
@@ -208,9 +208,9 @@ def debug_class_member_variable_changes(instance):
                     for op_key, op_value in new_op_dict.items():
                         old_op_value = old_op_dict.get(op_key)
                         if old_op_value != op_value:
-                            logging_info(f"CHANGED {key}.{op_key}: {old_op_value} -> {op_value}")  # noqa G004
+                            logging_info(f"CHANGED {key}.{op_key}: {old_op_value} -> {op_value}")  # noqa: G004
                 else:
-                    logging_info(f"CHANGED {key}: {old_mavftp_member_variable_values[key]} -> {value}")  # noqa G004
+                    logging_info(f"CHANGED {key}: {old_mavftp_member_variable_values[key]} -> {value}")  # noqa: G004
     old_mavftp_member_variable_values = new_mavftp_member_variable_values.copy()
 
 
