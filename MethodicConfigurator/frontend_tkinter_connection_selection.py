@@ -181,6 +181,7 @@ class ConnectionSelectionWindow(BaseWindow):
         option2_label = ttk.Label(text=_("Manual connection"), style="Bold.TLabel")
         option2_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option2_label, borderwidth=2, relief="solid")
         option2_label_frame.pack(expand=False, fill=tk.X, padx=6, pady=6)
+        # pylint: disable=duplicate-code
         option2_label = ttk.Label(
             option2_label_frame,
             anchor=tk.CENTER,
@@ -191,6 +192,7 @@ class ConnectionSelectionWindow(BaseWindow):
                 "manually select the fight controller connection or add a new one"
             ),
         )
+        # pylint: enable=duplicate-code
         option2_label.pack(expand=False, fill=tk.X, padx=6)
         self.connection_selection_widgets = ConnectionSelectionWidgets(
             self, option2_label_frame, flight_controller, destroy_parent_on_connect=True, download_params_on_connect=False
@@ -257,6 +259,7 @@ def argument_parser():
     return add_common_arguments_and_parse(parser)
 
 
+# pylint: disable=duplicate-code
 def main():
     args = argument_parser()
 
@@ -268,6 +271,7 @@ def main():
             "another script"
         )
     )
+    # pylint: enable=duplicate-code
 
     flight_controller = FlightController(args.reboot_time)  # Initialize your FlightController instance
     result = flight_controller.connect(device=args.device)  # Connect to the flight controller

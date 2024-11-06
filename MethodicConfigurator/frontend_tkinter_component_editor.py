@@ -40,6 +40,7 @@ def argument_parser():
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
     """
+    # pylint: disable=duplicate-code
     parser = ArgumentParser(
         description=_(
             "A GUI for editing JSON files that contain vehicle component configurations. "
@@ -49,6 +50,7 @@ def argument_parser():
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindow.add_argparse_arguments(parser)
     return add_common_arguments_and_parse(parser)
+    # pylint: enable=duplicate-code
 
 
 class VoltageTooLowError(Exception):
