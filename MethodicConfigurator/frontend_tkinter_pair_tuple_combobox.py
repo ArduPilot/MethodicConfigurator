@@ -225,7 +225,8 @@ def main():
     import string  # pylint: disable=import-outside-toplevel
 
     random_strings = [
-        "".join(random.choices(string.ascii_letters + string.digits, k=random.randint(4, 70))) for _ in range(20)
+        "".join(random.choices(string.ascii_letters + string.digits, k=random.randint(4, 70)))  # noqa S311
+        for _ in range(20)
     ]
 
     # Create the PairTupleCombobox2 instance

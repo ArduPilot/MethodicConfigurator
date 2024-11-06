@@ -221,7 +221,7 @@ def main():
     # export the updated PID adjust parameters to a file, preserving the first eight header lines
     Par.export_to_param(pid_adjustment_params_dict, pid_adjustment_file_path, content_header)
     # annotate each parameter with up-to date documentation
-    subprocess.run(["./annotate_params.py", os.path.join(args.directory, "16_pid_adjustment.param")], check=True)
+    subprocess.run(["./annotate_params.py", os.path.join(args.directory, "16_pid_adjustment.param")], check=True)  # noqa: S603
 
 
 if __name__ == "__main__":
