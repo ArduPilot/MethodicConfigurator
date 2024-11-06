@@ -285,7 +285,7 @@ def constrain(value, minv, maxv):
     return value
 
 
-def IMUfit(  # pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments
+def IMUfit(  # noqa PLR0915 pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments
     logfile,
     outfile,
     no_graph,
