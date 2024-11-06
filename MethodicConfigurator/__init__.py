@@ -11,5 +11,4 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from MethodicConfigurator.internationalization import load_translation
 
-
 _ = load_translation()

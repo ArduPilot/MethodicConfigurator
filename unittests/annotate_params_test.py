@@ -10,6 +10,7 @@ Author: Amilcar do Carmo Lucas
 
 # pylint: skip-file
 
+import contextlib
 import os
 import tempfile
 import unittest
@@ -92,10 +93,8 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         mock_get.return_value.text = "<root></root>"
 
         # Remove the test.xml file if it exists
-        try:
+        with contextlib.suppress(FileNotFoundError):
             os.remove("test.xml")
-        except FileNotFoundError:
-            pass
 
         # Call the function with a remote file
         result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
@@ -134,10 +133,8 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         # Temporarily remove the requests module
         with patch.dict("sys.modules", {"requests": None}):
             # Remove the test.xml file if it exists
-            try:
+            with contextlib.suppress(FileNotFoundError):
                 os.remove("test.xml")
-            except FileNotFoundError:
-                pass
 
             # Call the function with a remote file
             with self.assertRaises(SystemExit):
@@ -149,10 +146,8 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         mock_get.side_effect = requests.exceptions.RequestException
 
         # Remove the test.xml file if it exists
-        try:
+        with contextlib.suppress(FileNotFoundError):
             os.remove("test.xml")
-        except FileNotFoundError:
-            pass
 
         # Call the function with a remote file
         with self.assertRaises(SystemExit):
@@ -177,10 +172,8 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         mock_get.return_value.text = "<root><invalid></root>"
 
         # Remove the test.xml file if it exists
-        try:
+        with contextlib.suppress(FileNotFoundError):
             os.remove("test.xml")
-        except FileNotFoundError:
-            pass
 
         # Call the function with a remote file
         with self.assertRaises(ET.ParseError):
@@ -195,10 +188,8 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         mock_get.side_effect = FileNotFoundError
 
         # Remove the test.xml file if it exists
-        try:
+        with contextlib.suppress(FileNotFoundError):
             os.remove("test.xml")
-        except FileNotFoundError:
-            pass
 
         # Call the function with a local file
         with self.assertRaises(FileNotFoundError):
@@ -571,21 +562,18 @@ class AnnotateParamsTest(unittest.TestCase):
 
     def test_arg_parser_invalid_vehicle_type(self):
         test_args = ["annotate_params", "--vehicle-type", "InvalidType", "--sort", "none", "parameters"]
-        with patch("sys.argv", test_args):
-            with self.assertRaises(SystemExit):
-                arg_parser()
+        with patch("sys.argv", test_args), self.assertRaises(SystemExit):
+            arg_parser()
 
     def test_arg_parser_invalid_sort_option(self):
         test_args = ["annotate_params", "--vehicle-type", "ArduCopter", "--sort", "invalid", "parameters"]
-        with patch("sys.argv", test_args):
-            with self.assertRaises(SystemExit):
-                arg_parser()
+        with patch("sys.argv", test_args), self.assertRaises(SystemExit):
+            arg_parser()
 
     def test_arg_parser_invalid_line_length_option(self):
         test_args = ["annotate_params", "--vehicle-type", "ArduCopter", "--sort", "none", "-m", "invalid", "parameters"]
-        with patch("sys.argv", test_args):
-            with self.assertRaises(SystemExit):
-                arg_parser()
+        with patch("sys.argv", test_args), self.assertRaises(SystemExit):
+            arg_parser()
 
 
 class TestAnnotateParamsExceptionHandling(unittest.TestCase):

@@ -23,9 +23,9 @@ from typing import Optional
 
 from PIL import Image, ImageTk
 
+from MethodicConfigurator import _
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
-from MethodicConfigurator import _
 
 
 def show_error_message(title: str, message: str):

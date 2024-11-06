@@ -21,14 +21,13 @@ class CheckRange(Action):
     Check if the Argparse argument value is within the specified range
     """
 
-    ops = {"inf": gt, "min": ge, "sup": lt, "max": le}
-
     def __init__(self, *args, **kwargs):
         if "min" in kwargs and "inf" in kwargs:
             raise ValueError(_("either min or inf, but not both"))
         if "max" in kwargs and "sup" in kwargs:
             raise ValueError(_("either max or sup, but not both"))
 
+        self.ops = {"inf": gt, "min": ge, "sup": lt, "max": le}
         for name in self.ops:
             if name in kwargs:
                 setattr(self, name, kwargs.pop(name))

@@ -507,9 +507,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.duplicates = 0
         self.reached_eof = False
         self.burst_size = self.ftp_settings.burst_read_size
-        if self.burst_size < 1:
-            self.burst_size = 239
-        elif self.burst_size > 239:
+        if self.burst_size < 1 or self.burst_size > 239:
             self.burst_size = 239
         self.remote_file_size = None
         enc_fname = bytearray(fname, "ascii")
@@ -580,11 +578,10 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
     def __handle_burst_read(self, op, _m) -> MAVFTPReturn:  # pylint: disable=too-many-branches, too-many-statements, too-many-return-statements
         """handle OP_BurstReadFile reply"""
-        if self.ftp_settings.pkt_loss_tx > 0:
-            if random.uniform(0, 100) < self.ftp_settings.pkt_loss_tx:
-                if self.ftp_settings.debug > 0:
-                    logging.warning("FTP: dropping TX")
-                return MAVFTPReturn("BurstReadFile", ERR_Fail)
+        if self.ftp_settings.pkt_loss_tx > 0 and random.uniform(0, 100) < self.ftp_settings.pkt_loss_tx:
+            if self.ftp_settings.debug > 0:
+                logging.warning("FTP: dropping TX")
+            return MAVFTPReturn("BurstReadFile", ERR_Fail)
         if self.fh is None or self.filename is None:
             if op.session != self.session:
                 # old session
@@ -803,10 +800,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             return
 
         now = time.time()
-        if self.write_last_send is not None:
-            if now - self.write_last_send > max(min(10 * self.rtt, 1), 0.2):
-                # we seem to have lost a block of replies
-                self.write_pending = max(0, self.write_pending - 1)
+        if self.write_last_send is not None and now - self.write_last_send > max(min(10 * self.rtt, 1), 0.2):
+            # we seem to have lost a block of replies
+            self.write_pending = max(0, self.write_pending - 1)
 
         n = min(self.ftp_settings.write_qsize - self.write_pending, len(self.write_list))
         for _i in range(n):
@@ -986,11 +982,10 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 logging.warning("FTP: wrong session replied %u expected %u. Will discard message", op.session, self.session)
             return MAVFTPReturn(operation_name, ERR_InvalidSession)
         self.last_op_time = now
-        if self.ftp_settings.pkt_loss_rx > 0:
-            if random.uniform(0, 100) < self.ftp_settings.pkt_loss_rx:
-                if self.ftp_settings.debug > 1:
-                    logging.warning("FTP: dropping packet RX")
-                return MAVFTPReturn(operation_name, ERR_Fail)
+        if self.ftp_settings.pkt_loss_rx > 0 and random.uniform(0, 100) < self.ftp_settings.pkt_loss_rx:
+            if self.ftp_settings.debug > 1:
+                logging.warning("FTP: dropping packet RX")
+            return MAVFTPReturn(operation_name, ERR_Fail)
 
         if op.req_opcode == self.last_op.opcode and op.seq == (self.last_op.seq + 1) % 256:
             self.rtt = max(min(self.rtt, dt), 0.01)
@@ -1175,10 +1170,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             OP_CalcFileCRC32: "CalcFileCRC32",
             OP_BurstReadFile: "BurstReadFile",
         }
-        if operation_name:
-            op_ret_name = operation_name
-        else:
-            op_ret_name = operation_name_dict.get(op.req_opcode, "Unknown")
+        op_ret_name = operation_name if operation_name else operation_name_dict.get(op.req_opcode, "Unknown")
         len_payload = len(op.payload) if op.payload is not None else 0
         if op.opcode == OP_Ack:
             error_code = ERR_None
@@ -1550,9 +1542,12 @@ if __name__ == "__main__":
         serial_list.sort(key=lambda x: x.device)
 
         # remove OTG2 ports for dual CDC
-        if len(serial_list) == 2 and serial_list[0].device.startswith("/dev/serial/by-id"):
-            if serial_list[0].device[:-1] == serial_list[1].device[0:-1]:
-                serial_list.pop(1)
+        if (
+            len(serial_list) == 2
+            and serial_list[0].device.startswith("/dev/serial/by-id")
+            and serial_list[0].device[:-1] == serial_list[1].device[0:-1]
+        ):
+            serial_list.pop(1)
 
         return serial_list
 

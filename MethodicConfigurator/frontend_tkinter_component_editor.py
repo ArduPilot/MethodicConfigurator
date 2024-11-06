@@ -19,6 +19,7 @@ from logging import getLevelName as logging_getLevelName
 from math import log2
 from tkinter import ttk
 
+from MethodicConfigurator import _
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
 from MethodicConfigurator.battery_cell_voltages import BatteryCell
@@ -27,7 +28,6 @@ from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 # from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import show_error_message
 from MethodicConfigurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
-from MethodicConfigurator import _
 from MethodicConfigurator.version import VERSION
 
 
@@ -301,7 +301,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         self.__set_motor_poles_from_fc_parameters(fc_parameters)
 
     def __set_gnss_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
-        gps1_type = fc_parameters["GPS_TYPE"] if "GPS_TYPE" in fc_parameters else 0
+        gps1_type = fc_parameters.get("GPS_TYPE", 0)
         try:
             gps1_type = int(gps1_type)
         except ValueError:
@@ -392,7 +392,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         return esc >= 2
 
     def __set_esc_type_and_protocol_from_fc_parameters(self, fc_parameters: dict, doc: dict):
-        mot_pwm_type = fc_parameters["MOT_PWM_TYPE"] if "MOT_PWM_TYPE" in fc_parameters else 0
+        mot_pwm_type = fc_parameters.get("MOT_PWM_TYPE", 0)
         try:
             mot_pwm_type = int(mot_pwm_type)
         except ValueError:
@@ -555,7 +555,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             entry=entry,
             path=path: self.validate_entry_limits(event, entry, float, (0.3, 400), "Propeller Diameter", path),
         }
-        return validate_functions.get(path, None)
+        return validate_functions.get(path)
 
     def validate_combobox(self, event, path) -> bool:
         """
@@ -708,19 +708,22 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 ("Battery", "Specifications", "Volt per cell max"),
                 ("Battery", "Specifications", "Volt per cell low"),
                 ("Battery", "Specifications", "Volt per cell crit"),
-            ]:
-                if not self.validate_cell_voltage(None, entry, path):
-                    invalid_values = True
-            if path == ("Battery", "Specifications", "Volt per cell low"):
-                if value >= self.entry_widgets[("Battery", "Specifications", "Volt per cell max")].get():
-                    show_error_message(_("Error"), _("Battery Cell Low voltage must be lower than max voltage"))
-                    entry.configure(style="entry_input_invalid.TEntry")
-                    invalid_values = True
-            if path == ("Battery", "Specifications", "Volt per cell crit"):
-                if value >= self.entry_widgets[("Battery", "Specifications", "Volt per cell low")].get():
-                    show_error_message(_("Error"), _("Battery Cell Crit voltage must be lower than low voltage"))
-                    entry.configure(style="entry_input_invalid.TEntry")
-                    invalid_values = True
+            ] and not self.validate_cell_voltage(None, entry, path):
+                invalid_values = True
+            if (
+                path == ("Battery", "Specifications", "Volt per cell low")
+                and value >= self.entry_widgets[("Battery", "Specifications", "Volt per cell max")].get()
+            ):
+                show_error_message(_("Error"), _("Battery Cell Low voltage must be lower than max voltage"))
+                entry.configure(style="entry_input_invalid.TEntry")
+                invalid_values = True
+            if (
+                path == ("Battery", "Specifications", "Volt per cell crit")
+                and value >= self.entry_widgets[("Battery", "Specifications", "Volt per cell low")].get()
+            ):
+                show_error_message(_("Error"), _("Battery Cell Crit voltage must be lower than low voltage"))
+                entry.configure(style="entry_input_invalid.TEntry")
+                invalid_values = True
 
         return not (invalid_values or duplicated_connections)
 

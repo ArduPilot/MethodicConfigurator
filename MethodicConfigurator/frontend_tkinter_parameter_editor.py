@@ -23,6 +23,7 @@ from tkinter import filedialog, messagebox, ttk
 from typing import List, Tuple
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
+from MethodicConfigurator import _
 from MethodicConfigurator.annotate_params import Par
 from MethodicConfigurator.backend_filesystem import LocalFilesystem, is_within_tolerance
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
@@ -39,7 +40,6 @@ from MethodicConfigurator.frontend_tkinter_base import (
 )
 from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from MethodicConfigurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
-from MethodicConfigurator import _
 from MethodicConfigurator.tempcal_imu import IMUfit
 from MethodicConfigurator.version import VERSION
 
@@ -521,10 +521,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if self.local_filesystem.vehicle_configuration_file_exists(local_filename):
                 return  # file already exists in the vehicle directory, no need to download it
             msg = _("Should the {local_filename} file be downloaded from the URL\n{url}?")
-            if messagebox.askyesno(_("Download file from URL"), msg.format(**locals())):
-                if not self.local_filesystem.download_file_from_url(url, local_filename):
-                    error_msg = _("Failed to download {local_filename} from {url}, please download it manually")
-                    messagebox.showerror(_("Download failed"), error_msg.format(**locals()))
+            if messagebox.askyesno(
+                _("Download file from URL"), msg.format(**locals())
+            ) and not self.local_filesystem.download_file_from_url(url, local_filename):
+                error_msg = _("Failed to download {local_filename} from {url}, please download it manually")
+                messagebox.showerror(_("Download failed"), error_msg.format(**locals()))
 
     def __should_upload_file_to_fc(self, selected_file: str):
         local_filename, remote_filename = self.local_filesystem.get_upload_local_and_remote_filenames(selected_file)
@@ -648,12 +649,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.__reset_and_reconnect(fc_reset_required, fc_reset_unsure)
 
     def __reset_and_reconnect(self, fc_reset_required, fc_reset_unsure):
-        if not fc_reset_required:
-            if fc_reset_unsure:
-                # Ask the user if they want to reset the ArduPilot
-                _param_list_str = (", ").join(fc_reset_unsure)
-                msg = _("{_param_list_str} parameter(s) potentially require a reset\nDo you want to reset the ArduPilot?")
-                fc_reset_required = messagebox.askyesno(_("Possible reset required"), msg.format(**locals()))
+        if not fc_reset_required and fc_reset_unsure:
+            # Ask the user if they want to reset the ArduPilot
+            _param_list_str = (", ").join(fc_reset_unsure)
+            msg = _("{_param_list_str} parameter(s) potentially require a reset\nDo you want to reset the ArduPilot?")
+            fc_reset_required = messagebox.askyesno(_("Possible reset required"), msg.format(**locals()))
 
         if fc_reset_required:
             self.reset_progress_window = ProgressWindow(

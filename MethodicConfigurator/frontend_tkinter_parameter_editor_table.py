@@ -19,6 +19,7 @@ from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
 
+from MethodicConfigurator import _
 from MethodicConfigurator.annotate_params import Par
 
 # from MethodicConfigurator.backend_filesystem import LocalFilesystem
@@ -29,7 +30,6 @@ from MethodicConfigurator.backend_filesystem import is_within_tolerance
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ScrollFrame, get_widget_font, show_tooltip
 from MethodicConfigurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from MethodicConfigurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
-from MethodicConfigurator import _
 
 NEW_VALUE_WIDGET_WIDTH = 9
 
@@ -148,7 +148,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         if "rename_connection" in self.local_filesystem.configuration_steps[selected_file]:
             new_connection_prefix = self.local_filesystem.configuration_steps[selected_file]["rename_connection"]
             new_connection_prefix = eval(str(new_connection_prefix), {}, self.variables)  # pylint: disable=eval-used
-            for param_name in self.local_filesystem.file_parameters[selected_file].keys():
+            for param_name in self.local_filesystem.file_parameters[selected_file]:
                 new_prefix = new_connection_prefix
                 old_prefix = param_name.split("_")[0]
 
@@ -522,10 +522,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         instruction_label = ttk.Label(add_parameter_window.main_frame, text=_(_("Enter the parameter name to add:")))
         instruction_label.pack(pady=5)
 
-        if self.local_filesystem.doc_dict:
-            param_dict = self.local_filesystem.doc_dict
-        else:
-            param_dict = fc_parameters
+        param_dict = self.local_filesystem.doc_dict if self.local_filesystem.doc_dict else fc_parameters
 
         if not param_dict:
             messagebox.showerror(
@@ -600,10 +597,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def __on_parameter_value_change(self, event, current_file, param_name):
         # Get the new value from the Entry widget
-        if isinstance(event.widget, PairTupleCombobox):
-            new_value = event.widget.get_selected_key()
-        else:
-            new_value = event.widget.get()
+        new_value = event.widget.get_selected_key() if isinstance(event.widget, PairTupleCombobox) else event.widget.get()
         try:
             old_value = self.local_filesystem.file_parameters[current_file][param_name].value
         except KeyError as e:

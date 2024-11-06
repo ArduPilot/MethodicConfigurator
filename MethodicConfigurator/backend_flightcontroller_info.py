@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # adding all this allows pyinstaller to build a working windows executable
 # note that using --hidden-import does not work for these modules
-try:
+try:  # noqa: SIM105
     from pymavlink import mavutil
     # import pymavlink.dialects.v20.ardupilotmega
 except Exception:  # pylint: disable=broad-exception-caught
@@ -228,7 +228,7 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         }
 
         # Return the classified vehicle type based on the MAV_TYPE enum
-        return mav_type_to_vehicle_type.get(mav_type_int, None)
+        return mav_type_to_vehicle_type.get(mav_type_int)
 
     @staticmethod
     def __list_ardupilot_supported_usb_pid_vid():

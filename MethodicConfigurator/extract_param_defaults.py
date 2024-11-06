@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import argparse
+import contextlib
 import re
 from typing import Dict, Tuple
 
@@ -203,10 +204,8 @@ def output_params(  # pylint: disable=too-many-branches
     """
     if format_type == "qgcs":
         if sysid == -1:
-            if "SYSID_THISMAV" in params:
-                sysid = int(params["SYSID_THISMAV"])
-            else:
-                sysid = 1  # if unspecified, default to 1
+            # if unspecified, default to 1
+            sysid = int(params["SYSID_THISMAV"]) if "SYSID_THISMAV" in params else 1
         if compid == -1:
             compid = 1  # if unspecified, default to 1
         if sysid < 0:
@@ -224,10 +223,9 @@ def output_params(  # pylint: disable=too-many-branches
 
     for param_name, param_value in params.items():
         if format_type == "missionplanner":
-            try:
+            # preserve non-floating point strings, if present
+            with contextlib.suppress(ValueError):
                 param_value = format(param_value, ".6f").rstrip("0").rstrip(".")
-            except ValueError:
-                pass  # preserve non-floating point strings, if present
             print(f"{param_name},{param_value}")
         elif format_type == "mavproxy":
             print(f"{param_name:<15} {param_value:.6f}")

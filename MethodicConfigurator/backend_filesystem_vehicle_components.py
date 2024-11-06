@@ -22,8 +22,8 @@ from os import path as os_path
 from os import walk as os_walk
 from re import match as re_match
 
-from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 from MethodicConfigurator import _
+from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 from MethodicConfigurator.middleware_template_overview import TemplateOverview
 
 

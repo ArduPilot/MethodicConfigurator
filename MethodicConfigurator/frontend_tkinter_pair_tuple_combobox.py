@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import contextlib
 import tkinter as tk
 import tkinter.font as tkfont
 from argparse import ArgumentParser
@@ -20,9 +21,9 @@ from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import Label, Toplevel, ttk
 
+from MethodicConfigurator import _
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 from MethodicConfigurator.frontend_tkinter_base import get_widget_font, update_combobox_width
-from MethodicConfigurator import _
 
 
 # https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb
@@ -101,10 +102,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         # create an unique style name using widget's id
         unique_name = f"Combobox{combo.winfo_id()}"
         # the new style must inherit from current widget style (unless it's our custom style!)
-        if unique_name in current_combo_style:
-            style_name = current_combo_style
-        else:
-            style_name = f"{unique_name}.{current_combo_style}"
+        style_name = current_combo_style if unique_name in current_combo_style else f"{unique_name}.{current_combo_style}"
 
         style.configure(style_name, postoffset=(0, 0, width, 0))
         combo.configure(style=style_name)
@@ -161,10 +159,8 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
         self.create_tooltip_from_index(int(index))
 
     def create_tooltip_from_index(self, index):
-        try:
+        with contextlib.suppress(IndexError):
             self.create_tooltip(f"{self.list_keys[index]}: {self.list_shows[index]}")
-        except IndexError:
-            pass
 
     def create_tooltip(self, text):
         self.destroy_tooltip()
