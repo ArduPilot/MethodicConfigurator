@@ -44,7 +44,7 @@ class TemplateOverviewWindow(BaseWindow):
         super().__init__(parent)
         title = _("Amilcar Lucas's - ArduPilot methodic configurator {} - Template Overview and selection")
         self.root.title(title.format(VERSION))
-        self.root.geometry("1200x300")
+        self.root.geometry("1200x600")
 
         instruction_text = _("Please double-click the template below that most resembles your own vehicle components")
         instruction_label = ttk.Label(self.main_frame, text=instruction_text, font=("Arial", 12))

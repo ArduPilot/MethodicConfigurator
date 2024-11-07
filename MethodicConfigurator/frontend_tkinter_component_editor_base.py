@@ -124,14 +124,8 @@ class ComponentEditorWindowBase(BaseWindow):
         instructions_text = RichText(
             usage_popup_window.main_frame, wrap=tk.WORD, height=5, bd=0, background=style.lookup("TLabel", "background")
         )
-        instructions_text.insert(tk.END, _("1. Describe "))
-        instructions_text.insert(tk.END, _("all"), "bold")
-        instructions_text.insert(tk.END, _(" vehicle component properties in the window below\n"))
-        instructions_text.insert(tk.END, _("2. Scroll "))
-        instructions_text.insert(tk.END, _("all the way down"), "bold")
-        instructions_text.insert(tk.END, _(" and make sure to edit "))
-        instructions_text.insert(tk.END, _("all"), "bold")
-        instructions_text.insert(tk.END, _(" fields\n"))
+        instructions_text.insert(tk.END, _("1. Describe all vehicle component properties in the window below\n"))
+        instructions_text.insert(tk.END, _("2. Scroll all the way down and make sure to edit all properties\n"))
         instructions_text.insert(tk.END, _("3. Do not be lazy, collect the required information and enter it\n"))
         instructions_text.insert(tk.END, _("4. Press the "))
         instructions_text.insert(tk.END, _("Save data and start configuration"), "italic")
@@ -180,7 +174,7 @@ class ComponentEditorWindowBase(BaseWindow):
         path (list): The path to the current key in the JSON data.
         """
         if isinstance(value, dict):  # JSON non-leaf elements, add LabelFrame widget
-            frame = ttk.LabelFrame(parent, text=key)
+            frame = ttk.LabelFrame(parent, text=_(key))
             is_toplevel = parent == self.scroll_frame.view_port
             side = tk.TOP if is_toplevel else tk.LEFT
             pady = 5 if is_toplevel else 3
@@ -193,7 +187,7 @@ class ComponentEditorWindowBase(BaseWindow):
             entry_frame = ttk.Frame(parent)
             entry_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
 
-            label = ttk.Label(entry_frame, text=key)
+            label = ttk.Label(entry_frame, text=_(key))
             label.pack(side=tk.LEFT)
 
             entry = self.add_entry_or_combobox(value, entry_frame, tuple([*path, key]))

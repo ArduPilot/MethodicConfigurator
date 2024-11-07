@@ -8,6 +8,8 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from MethodicConfigurator import _
+
 
 class TemplateOverview:  # pylint: disable=too-many-instance-attributes
     """
@@ -35,16 +37,16 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
     def columns():
         # Must match the order in the __init__() function above
         return (
-            "Template path",
-            "FC\nManufacturer",
-            "FC\nModel",
-            "TOW Max\n[KG]",
-            "Prop Diameter\n[inches]",
-            "RC\nProtocol",
-            "Telemetry\nModel",
-            "ESC\nProtocol",
-            "GNSS\nModel",
-            "GNSS\nConnection",
+            _("Template path"),
+            _("FC\nManufacturer"),
+            _("FC\nModel"),
+            _("TOW Max\n[Kg]"),
+            _("Prop Diameter\n[inches]"),
+            _("RC\nProtocol"),
+            _("Telemetry\nModel"),
+            _("ESC\nProtocol"),
+            _("GNSS\nModel"),
+            _("GNSS\nConnection"),
         )
 
     def attributes(self):
