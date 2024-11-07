@@ -120,3 +120,112 @@ They can also be exchanged, for instance, [tkinter-frontend](https://docs.python
 
 In the future, we might port the entire application into a client-based web application.
 That way the users would not need to install the software and will always use the latest version.
+
+## Adding a translation
+
+To add a new translation language to the Ardupilot Methodic Configurator, follow the steps below. This process involves creating a new language folder in the locale directory and generating the necessary translation files. You will use the `create_pot_file.py` script to extract the strings that need translation and create a `.pot` file, which serves as a template for the translation.
+
+### 1. Set Up Your Locale Directory
+
+Navigate to the `locale` directory inside your project:
+
+```bash
+cd MethodicConfigurator/locale
+```
+
+### 2. Create a New Language Directory
+
+Create a new folder for the language you want to add. The name of the folder should follow the standard language code format (e.g., de for German, fr for French).
+
+```bash
+mkdir <language_code>
+```
+
+For example, to add support for German:
+
+```bash
+mkdir de
+```
+
+### 3. Generate a Template POT File
+
+If you haven't already generated a `.pot` file, you can do so by running the `create_pot_file.py` script.
+This script will extract all translatable strings from the project files and create a `.pot` file.
+
+Ensure you are in the root directory of your project, and execute the following command:
+
+```bash
+python3 create_pot_file.py
+```
+
+This will create a file named `MethodicConfigurator.pot` inside the `MethodicConfigurator/locale` directory.
+
+### 4. Create a New PO File
+
+Inside your newly created language directory, create a new `.po` file using the `.pot` template:
+
+```bash
+cd de
+cp ../MethodicConfigurator.pot MethodicConfigurator.po
+```
+
+### 5. Translate the Strings
+
+Open the `MethodicConfigurator.po` file in a text editor or a specialist translation tool (e.g., [Poedit](https://poedit.net/)). You will see the extracted strings, which you can begin translating.
+
+Each entry will look like this:
+
+```text
+msgid "Original English String"
+msgstr ""
+```
+
+Fill in the `msgstr` lines with your translations:
+
+```text
+msgid "Original English String"
+msgstr "Translated String"
+```
+
+### 6. Compile the PO File
+
+Once you have completed your translations, you will need to compile the `.po` file into a binary `.mo` file. This can be done using the command:
+
+```bash
+python3 create_mo_files.py
+```
+
+Make sure you have `msgfmt` installed, which is part of the *GNU gettext* package.
+
+### 7. Test the New Language
+
+Now add the language to the end of the `LANGUAGE_CHOICES` array in the `MethodicConfigurator/internationalization.py` file.
+
+```python
+LANGUAGE_CHOICES = ['en', 'zh_CN', 'pt', 'de']
+```
+
+And add it also to the `[Languages]` and `[Icons]` sections of the `windows/ardupilot_methodic_configurator.iss` file.
+
+```text
+[Languages]
+ Name: "en"; MessagesFile: "compiler:Default.isl"
+ Name: "zh_CN"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+ Name: "pt"; MessagesFile: "compiler:Languages\Portuguese.isl"
+ Name: "de"; MessagesFile: "compiler:Languages\German.isl"
+...
+
+[Icons]
+...
+Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; IconFilename: "{app}\MethodicConfigurator.ico"; Parameters: "--language {language}"; Languages: zh_CN pt de
+...
+```
+
+With the new `.mo` file created, you should ensure the software correctly loads the new language.
+Update the software's configuration to set the desired language and run the application to test your translations.
+
+### 8. Review and Refine
+
+Once the new language is running in the software, review the translations within the application for clarity and correctness. Make adjustments as needed in the `.po` file and recompile to an `.mo` file.
+
+Following these steps should enable you to successfully add support for any new translation language within the Ardupilot Methodic Configurator.
