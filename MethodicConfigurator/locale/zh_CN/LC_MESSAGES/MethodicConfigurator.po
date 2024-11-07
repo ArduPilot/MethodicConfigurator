@@ -5,9 +5,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.9\n"
-"POT-Creation-Date: 2024-11-07 18:13+0100\n"
-"PO-Revision-Date: 2024-11-07 19:03+0100\n"
 "Last-Translator: SakuraRC_Yang <35626190+BloodSakura3774@users.noreply.github.com>\n"
+"POT-Creation-Date: 2024-11-07 20:57+0100\n"
+"PO-Revision-Date: 2024-11-07 21:02+0100\n"
 "Language-Team: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -504,44 +504,180 @@ msgstr ""
 "一个用于编辑包含载具组件配置的 JSON 文件的用户界面。此工具不应被直接使用，而"
 "应通过 ArduPilot 调参助手来使用。"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:272
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:222
+#, fuzzy
+#| msgid " - Flight Controller Info"
+msgid "Flight Controller"
+msgstr " - 飞控信息"
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:223
+msgid "Product"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:224
+msgid "Manufacturer"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:225
+msgid "Model"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:226
+msgid "URL"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:227
+msgid "Version"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:228
+msgid "Firmware"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:229
+msgid "Type"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:230
+msgid "Notes"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:231
+msgid "Frame"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:232
+msgid "Specifications"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:233
+msgid "TOW min Kg"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:234
+msgid "TOW max Kg"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:235
+msgid "RC Controller"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:236
+msgid "RC Transmitter"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:237
+msgid "RC Receiver"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:238
+#, fuzzy
+#| msgid "No connection"
+msgid "FC Connection"
+msgstr "无连接"
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:239
+msgid "Protocol"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:240
+msgid "Telemetry"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:241
+msgid "Battery Monitor"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:242
+msgid "Battery"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:243
+msgid "Chemistry"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:244
+msgid "Volt per cell max"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:245
+msgid "Volt per cell low"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:246
+msgid "Volt per cell crit"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:247
+msgid "Number of cells"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:248
+msgid "Capacity mAh"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:249
+msgid "ESC"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:250
+msgid "Motors"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:251
+msgid "Poles"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:252
+msgid "Propellers"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:253
+msgid "Diameter_inches"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:254
+msgid "GNSS Receiver"
+msgstr ""
+
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:306
 msgid "Length of values %u and fallbacks %u differ for %s"
 msgstr "%u 值的长度和回退值 %u 与 %s 不一致"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:275
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:466
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:309
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:500
 msgid "No values found for %s in the metadata"
 msgstr "元数据中未找到 %s"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:285
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:319
 msgid "Protocol %s does not match %s in %s metadata"
 msgstr "协议 %s 与 %s 不匹配, 后者源自 %s 元数据"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:287
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:321
 msgid "Protocol %s not found in %s metadata"
 msgstr "协议 %s 未在元数据 %s 找到"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:308
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:342
 msgid "Invalid non-integer value for GPS_TYPE %f"
 msgstr "GPS_TYPE 的 %f 为无效的非整数值"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:336
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:370
 msgid "Invalid CAN_Dx_PROTOCOL %s and CAN_Px_DRIVER %s for GNSS Receiver"
 msgstr "无效的 CAN_Dx_PROTOCOL %s 和 CAN_Px_DRIVER %s 对于 GNSS 接收器"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:370
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:404
 msgid "Invalid non-integer value for {serial}_PROTOCOL {serial_protocol_nr}"
 msgstr "{serial}_PROTOCOL {serial_protocol_nr} 的非整数值无效。"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:399
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:433
 msgid "Invalid non-integer value for MOT_PWM_TYPE %f"
 msgstr "MOT_PWM_TYPE %f 为无效的非整数值"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:469
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:503
 msgid "No fallback values found for %s"
 msgstr "没找到 %s 的回退值"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:572
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:606
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "Allowed values are: {_allowed_str}"
@@ -549,26 +685,26 @@ msgstr ""
 "无效的值 '{value}' 对于 {_paths_str}\n"
 "允许的值为：{_allowed_str}"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:573
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:596
 #: MethodicConfigurator/frontend_tkinter_component_editor.py:607
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:633
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:640
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:675
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:695
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:717
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:724
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:243
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:630
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:641
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:667
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:674
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:709
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:729
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:751
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:758
+#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:237
 msgid "Error"
 msgstr "错误"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:590
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:624
 msgid ""
 "{_name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}"
 msgstr ""
 "{_name} 必须是介于 {limits[0]} 和 {limits[1]} 之间的 {data_type.__name__}"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:595
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:629
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "{e}"
@@ -576,19 +712,19 @@ msgstr ""
 "无效的值 '{value}' 对于 {_paths_str}\n"
 "{e}"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:607
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:641
 msgid "Battery Chemistry not set. Will default to Lipo."
 msgstr "电池类型未设置，将默认使用 Lipo。"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:621
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:655
 msgid "is below the {chemistry} minimum limit of {volt_limit}"
 msgstr "低于 {chemistry} 的最小电压限制 {volt_limit}"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:628
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:662
 msgid "is above the {chemistry} maximum limit of {volt_limit}"
 msgstr "高于 {chemistry} 的最大电压限制 {volt_limit}"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:632
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:666
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "{_e}"
@@ -596,7 +732,7 @@ msgstr ""
 "无效的值 '{value}' 对于 {_path_str}\n"
 "{_e}"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:639
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:673
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "{_e}\n"
@@ -606,7 +742,7 @@ msgstr ""
 "{_e}\n"
 "将设置为推荐值。"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:674
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:708
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "Allowed values are: {_values_str}"
@@ -614,15 +750,15 @@ msgstr ""
 "无效的值 '{value}' 对于 {_path_str}\n"
 "允许的值为：{_values_str}"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:694
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:728
 msgid "Duplicate FC connection type '{value}' for {_path_str}"
 msgstr "对于 {_path_str} 存在重复的飞控连接类型 '{value}'"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:717
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:751
 msgid "Battery Cell Low voltage must be lower than max voltage"
 msgstr "电池单芯的低电压必须低于最大电压"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor.py:724
+#: MethodicConfigurator/frontend_tkinter_component_editor.py:758
 msgid "Battery Cell Crit voltage must be lower than low voltage"
 msgstr "电池单芯的临界电压必须低于低电压"
 
@@ -659,7 +795,7 @@ msgid "Add a 'vehicle.jpg' image file to the vehicle directory."
 msgstr "将 'vehicle.jpg' 图像文件添加到载具目录。"
 
 #: MethodicConfigurator/frontend_tkinter_component_editor_base.py:113
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:137
+#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:131
 msgid "Save data and start configuration"
 msgstr "保存数据并开始配置"
 
@@ -668,53 +804,35 @@ msgid "Save component data and start parameter value configuration and tuning."
 msgstr "保存组件数据并开始参数值配置和调试。"
 
 #: MethodicConfigurator/frontend_tkinter_component_editor_base.py:127
-msgid "1. Describe "
-msgstr "1. 描述 "
-
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:128
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:133
-#: MethodicConfigurator/frontend_tkinter_parameter_editor.py:420
-msgid "all"
-msgstr "所有"
-
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:129
-msgid " vehicle component properties in the window below\n"
+#, fuzzy
+#| msgid " vehicle component properties in the window below\n"
+msgid "1. Describe all vehicle component properties in the window below\n"
 msgstr "在下面窗口中描述载具组件属性\n"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:130
-msgid "2. Scroll "
-msgstr "2. 向下 "
+#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:128
+#, fuzzy
+#| msgid "Scroll down and make sure you do not miss a property.\n"
+msgid "2. Scroll all the way down and make sure to edit all properties\n"
+msgstr "向下滚动，确保没有遗漏任何属性。\n"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:131
-msgid "all the way down"
-msgstr "一直滚动到底部"
-
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:132
-msgid " and make sure to edit "
-msgstr "并确保编辑 "
-
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:134
-msgid " fields\n"
-msgstr "字段\n"
-
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:135
+#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:129
 msgid "3. Do not be lazy, collect the required information and enter it\n"
 msgstr "3. 不要偷懒，收集所需的信息并输入\n"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:136
+#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:130
 #: MethodicConfigurator/frontend_tkinter_parameter_editor.py:432
 msgid "4. Press the "
 msgstr "4. 按下 "
 
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:138
+#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:132
 msgid " only after all information is correct"
 msgstr " 仅在所有信息正确后"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:144
+#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:138
 msgid "How to use the component editor window"
 msgstr ""
 
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:209
+#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:203
 msgid ""
 "ArduPilot Methodic Configurator only operates correctly if all component "
 "properties are correct. ArduPilot parameter values depend on the components "
@@ -724,19 +842,19 @@ msgstr ""
 "只有当所有组件属性正确时，ArduPilot调参助手才能正常工作。参数值取决于使用的组"
 "件及其连接。请确保使用了窗口右侧的滚动条并输入了所有组件的正确值"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:215
+#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:209
 msgid "Confirm that all component properties are correct"
 msgstr "确认所有组件属性正确"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:243
+#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:237
 msgid "Failed to save data to file. Is the destination write protected?"
 msgstr "保存数据到文件失败。目标文件是否启用了写保护？"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:245
+#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:239
 msgid "Vehicle component data saved successfully."
 msgstr "载具组件数据保存成功。"
 
-#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:259
+#: MethodicConfigurator/frontend_tkinter_component_editor_base.py:253
 msgid ""
 "Skip the component editor window. Only use this if all components have been "
 "configured. Defaults to %(default)s"
@@ -1428,6 +1546,10 @@ msgstr ""
 msgid "1. Read "
 msgstr "1. 阅读 "
 
+#: MethodicConfigurator/frontend_tkinter_parameter_editor.py:420
+msgid "all"
+msgstr "所有"
+
 #: MethodicConfigurator/frontend_tkinter_parameter_editor.py:421
 msgid " the documentation on top of the parameter table\n"
 msgstr " 参数表上方的文档\n"
@@ -2055,3 +2177,62 @@ msgstr ""
 "化。它使用户能够浏览各种载具模板，编辑参数文件，并将更改直接应用于飞控。该工"
 "具旨在通过提供清晰和直观的参数管理界面，半自动化无人机的 ArduPilot 配置过程。"
 
+#: MethodicConfigurator/middleware_template_overview.py:40
+msgid "Template path"
+msgstr ""
+
+#: MethodicConfigurator/middleware_template_overview.py:41
+msgid ""
+"FC\n"
+"Manufacturer"
+msgstr ""
+
+#: MethodicConfigurator/middleware_template_overview.py:42
+msgid ""
+"FC\n"
+"Model"
+msgstr ""
+
+#: MethodicConfigurator/middleware_template_overview.py:43
+msgid ""
+"TOW Max\n"
+"[Kg]"
+msgstr ""
+
+#: MethodicConfigurator/middleware_template_overview.py:44
+msgid ""
+"Prop Diameter\n"
+"[inches]"
+msgstr ""
+
+#: MethodicConfigurator/middleware_template_overview.py:45
+msgid ""
+"RC\n"
+"Protocol"
+msgstr ""
+
+#: MethodicConfigurator/middleware_template_overview.py:46
+msgid ""
+"Telemetry\n"
+"Model"
+msgstr ""
+
+#: MethodicConfigurator/middleware_template_overview.py:47
+msgid ""
+"ESC\n"
+"Protocol"
+msgstr ""
+
+#: MethodicConfigurator/middleware_template_overview.py:48
+msgid ""
+"GNSS\n"
+"Model"
+msgstr ""
+
+#: MethodicConfigurator/middleware_template_overview.py:49
+#, fuzzy
+#| msgid "No connection"
+msgid ""
+"GNSS\n"
+"Connection"
+msgstr "无连接"
