@@ -39,7 +39,7 @@ class TestTemplateOverview(unittest.TestCase):  # pylint: disable=missing-class-
             "Template path",
             "FC\nManufacturer",
             "FC\nModel",
-            "TOW Max\n[KG]",
+            "TOW Max\n[Kg]",
             "Prop Diameter\n[inches]",
             "RC\nProtocol",
             "Telemetry\nModel",
