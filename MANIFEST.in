@@ -1,9 +1,0 @@
-# SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
-#
-# SPDX-License-Identifier: GPL-3.0-or-later
-recursive-include MethodicConfigurator/vehicle_templates *.param
-recursive-include MethodicConfigurator/vehicle_templates *.json
-recursive-include MethodicConfigurator/vehicle_templates *.jpg
-recursive-include MethodicConfigurator/vehicle_templates *.xml
-include MethodicConfigurator/ArduPilot_icon.png
-include MethodicConfigurator/ArduPilot_logo.png
