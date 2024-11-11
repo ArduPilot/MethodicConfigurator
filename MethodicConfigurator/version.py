@@ -8,4 +8,4 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-VERSION = "0.9.9"
+VERSION = "0.9.10"
