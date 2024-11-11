@@ -53,6 +53,9 @@ with open("README.md", encoding="utf-8") as f:
     long_description = long_description.replace("(USECASES.md", f"({PRJ_URL}/blob/master/USECASES.md")
     long_description = long_description.replace("(credits/CREDITS.md", f"({PRJ_URL}/blob/master/credits/CREDITS.md")
     long_description = long_description.replace(
+        "images/when_to_use_amc.png", f"{PRJ_URL}/raw/master/images/when_to_use_amc.png"
+    )
+    long_description = long_description.replace(
         "images/App_screenshot1.png", f"{PRJ_URL}/raw/master/images/App_screenshot1.png"
     )
 
