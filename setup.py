@@ -65,7 +65,7 @@ with open("README.md", encoding="utf-8") as f:
 # recursively find all files that match the globs and return tuples with their directory and a list of relative paths
 def find_data_files(path: str, globs: List[str]) -> Tuple[str, List[str]]:
     data_files_path = os.path.join("MethodicConfigurator", path)
-    data_files_path_base = os.path.join(os.path.dirname(__file__), "MethodicConfigurator")
+    data_files_path_base = os.path.dirname(__file__)
     ret = []
     for dirpath, _dirnames, filenames in os.walk(data_files_path):
         data_files = []

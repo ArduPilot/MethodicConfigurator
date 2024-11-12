@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import gettext
 from os import path as os_path
+from platform import system as platform_system
 
 # Do not import nor use logging functions in this file.
 # Logging is not yet configured when these functions are called
@@ -36,6 +37,11 @@ def load_translation() -> callable:
     # Load the correct language ASAP based on the command line argument
     try:
         script_dir = os_path.dirname(os_path.abspath(__file__))
+        if platform_system() != "Windows":
+            if "site-packages" in script_dir:
+                script_dir = os_path.join(os_path.expanduser("~"), ".local", "MethodicConfigurator")
+            elif "dist-packages" in script_dir:
+                script_dir = os_path.join("/usr", "local", "MethodicConfigurator")
         locale_dir = os_path.join(script_dir, "locale")
         translation = gettext.translation(
             "MethodicConfigurator", localedir=locale_dir, languages=[pre_args.language], fallback=False

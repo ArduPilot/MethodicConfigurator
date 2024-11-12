@@ -12,6 +12,7 @@ from json import dump as json_dump
 from json import load as json_load
 
 # from sys import exit as sys_exit
+from logging import debug as logging_debug
 from logging import error as logging_error
 from os import makedirs as os_makedirs
 from os import path as os_path
@@ -193,13 +194,17 @@ class ProgramSettings:
     def get_templates_base_dir():
         current_dir = os_path.dirname(os_path.abspath(__file__))
         if platform_system() == "Windows":
-            current_dir = current_dir.replace("\\_internal", "")
-        elif "site-packages" not in current_dir:
-            current_dir = current_dir.replace("/MethodicConfigurator", "")
-            current_dir = current_dir.replace("/bin", "")
-        program_dir = current_dir
+            site_directory = ProgramSettings.__site_config_dir()
+        else:
+            site_directory = current_dir
+            if "site-packages" in site_directory:
+                site_directory = os_path.join(os_path.expanduser("~"), ".local", "MethodicConfigurator")
+            elif "dist-packages" in site_directory:
+                site_directory = os_path.join("/usr", "local", "MethodicConfigurator")
+            else:
+                site_directory = site_directory.replace("/MethodicConfigurator", "")
 
-        site_directory = ProgramSettings.__site_config_dir() if platform_system() == "Windows" else program_dir
+        logging_debug(_("site_directory: %s"), site_directory)
         return os_path.join(site_directory, "vehicle_templates")
 
     @staticmethod
