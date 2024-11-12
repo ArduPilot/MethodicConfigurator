@@ -527,6 +527,9 @@ def generate_calibration_file(outfile, online, progress_callback, data, c):  # p
             params = c.param_string(imu)
             print(params)
             calfile.write(params)
+        # ensure all data is written to disk, so that other processes can safely read the result without race conditions
+        calfile.flush()
+        os.fdatasync(calfile.fileno())
 
     print(f"Calibration written to {outfile}")
     return c, clog
