@@ -196,6 +196,7 @@ class ProgramSettings:
             current_dir = current_dir.replace("\\_internal", "")
         elif "site-packages" not in current_dir:
             current_dir = current_dir.replace("/MethodicConfigurator", "")
+            current_dir = current_dir.replace("/bin", "")
         program_dir = current_dir
 
         site_directory = ProgramSettings.__site_config_dir() if platform_system() == "Windows" else program_dir
