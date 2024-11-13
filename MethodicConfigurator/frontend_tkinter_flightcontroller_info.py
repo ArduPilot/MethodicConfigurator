@@ -13,13 +13,12 @@ import tkinter as tk
 from logging import info as logging_info
 from tkinter import ttk
 
-from MethodicConfigurator import _
+from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_flightcontroller import FlightController
 
 # from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
 # from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ProgressWindow
-from MethodicConfigurator.version import VERSION
 
 
 class FlightControllerInfoWindow(BaseWindow):
@@ -29,7 +28,7 @@ class FlightControllerInfoWindow(BaseWindow):
 
     def __init__(self, flight_controller: FlightController):
         super().__init__()
-        self.root.title(_("ArduPilot methodic configurator ") + VERSION + _(" - Flight Controller Info"))
+        self.root.title(_("ArduPilot methodic configurator ") + __version__ + _(" - Flight Controller Info"))
         self.root.geometry("500x350")  # Adjust the window size as needed
         self.flight_controller = flight_controller
         self.param_default_values = {}

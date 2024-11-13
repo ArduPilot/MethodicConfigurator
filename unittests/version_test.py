@@ -11,19 +11,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import re
 import unittest
 
-from MethodicConfigurator.version import VERSION
+from MethodicConfigurator import __version__
 
 
 class TestVersion(unittest.TestCase):
     """
-    Test that the VERSION constant is a string and follows semantic versioning.
+    Test that the __version__ constant is a string and follows semantic versioning.
     """
 
     def test_version_format(self):
         # Semantic versioning pattern
         semver_pattern = r"^\d+\.\d+\.\d+$"
-        match = re.match(semver_pattern, VERSION)
-        msg = f"VERSION string '{VERSION}' does not follow semantic versioning"
+        match = re.match(semver_pattern, __version__)
+        msg = f"__version__ string '{__version__}' does not follow semantic versioning"
         self.assertIsNotNone(match, msg)
 
 

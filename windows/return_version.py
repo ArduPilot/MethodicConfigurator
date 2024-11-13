@@ -12,15 +12,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 # It assumes there is a line like this:
-# VERSION = "12344"
-
-# from ..MethodicConfigurator.version import VERSION
-# print(VERSION)
+# __version__ = "12344"
 
 # glob supports Unix style pathname extensions
-with open("../MethodicConfigurator/version.py", encoding="utf-8") as f:
+with open("../MethodicConfigurator/__init__.py", encoding="utf-8") as f:
     searchlines = f.readlines()
     for line in searchlines:
-        if "VERSION = " in line:
-            print(line[11 : len(line) - 2])
+        if "__version__ = " in line:
+            print(line[15 : len(line) - 2])
             break

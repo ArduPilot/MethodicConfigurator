@@ -19,13 +19,12 @@ from logging import warning as logging_warning
 from sys import exit as sys_exit
 from tkinter import filedialog, messagebox, ttk
 
-from MethodicConfigurator import _
+from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow, show_no_param_files_error, show_tooltip
 from MethodicConfigurator.frontend_tkinter_template_overview import TemplateOverviewWindow
-from MethodicConfigurator.version import VERSION
 
 
 class DirectorySelectionWidgets:
@@ -228,7 +227,9 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         super().__init__()
         self.local_filesystem = local_filesystem
         self.root.title(
-            _("Amilcar Lucas's - ArduPilot methodic configurator ") + VERSION + _(" - Select vehicle configuration directory")
+            _("Amilcar Lucas's - ArduPilot methodic configurator ")
+            + __version__
+            + _(" - Select vehicle configuration directory")
         )
         self.root.geometry("800x625")  # Set the window size
         self.use_fc_params = tk.BooleanVar(value=False)

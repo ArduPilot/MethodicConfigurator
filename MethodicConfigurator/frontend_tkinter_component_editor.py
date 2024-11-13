@@ -19,7 +19,7 @@ from logging import getLevelName as logging_getLevelName
 from math import log2
 from tkinter import ttk
 
-from MethodicConfigurator import _
+from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
 from MethodicConfigurator.battery_cell_voltages import BatteryCell
@@ -28,7 +28,6 @@ from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 # from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import show_error_message
 from MethodicConfigurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
-from MethodicConfigurator.version import VERSION
 
 
 def argument_parser():
@@ -281,7 +280,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if "GNSS receiver" in self.data["Components"]:
             self.data["Components"]["GNSS Receiver"] = self.data["Components"].pop("GNSS receiver")
 
-        self.data["Program version"] = VERSION
+        self.data["Program version"] = __version__
 
     def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
         self._set_component_value_and_update_ui(("Flight Controller", "Firmware", "Type"), vehicle_type)
@@ -768,5 +767,5 @@ if __name__ == "__main__":
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
     filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, None, args.allow_editing_template_files)
-    app = ComponentEditorWindow(VERSION, filesystem)
+    app = ComponentEditorWindow(__version__, filesystem)
     app.root.mainloop()

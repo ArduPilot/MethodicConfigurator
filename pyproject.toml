@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "MethodicConfigurator"
+authors = [
+    {name = "Amilcar do Carmo Lucas", email = "amilcar.lucas@iav.de"},
+]
+maintainers = [
+    {name = "Amilcar do Carmo Lucas", email = "amilcar.lucas@iav.de"},
+]
+description = "A clear configuration sequence for ArduPilot vehicles"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.6"
+keywords = ["ArduPilot", "Configuration", "SCM", "Methodic", "ArduCopter", "ArduPlane", "ArduRover", "ArduSub"]
+license = {text = "GPLv3"}
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+
+dependencies = [
+    "defusedxml",
+    "matplotlib",
+    "numpy",
+    "platformdirs",
+    "pymavlink",
+    "pyserial",
+    "pillow",
+    "setuptools",
+    "requests",
+]
+
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "mock",
+]
+
+[project.scripts]
+ardupilot_methodic_configurator = "MethodicConfigurator.ardupilot_methodic_configurator:main"
+extract_param_defaults = "MethodicConfigurator.extract_param_defaults:main"
+annotate_params = "MethodicConfigurator.annotate_params:main"
+param_pid_adjustment_update = "MethodicConfigurator.param_pid_adjustment_update:main"
+
+[project.urls]
+homepage = "https://github.com/ArduPilot/MethodicConfigurator"
+documentation = "https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"
+issues = "https://github.com/ArduPilot/MethodicConfigurator/issues"
+source = "https://github.com/ArduPilot/MethodicConfigurator"
+forum = "https://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/"
+chat = "https://discord.com/invite/ArduPilot"
+download = "https://github.com/ArduPilot/MethodicConfigurator/releases"
+changelog = "https://github.com/ArduPilot/MethodicConfigurator/releases"
+
+[tool.setuptools]
+packages = ["MethodicConfigurator"]
+package-data = {MethodicConfigurator = ["*.param", "*.jpg", "*.json", "*.xml", "*.mo", "*.png"]}
+exclude-package-data = {MethodicConfigurator = ["test.xml"]}
+include-package-data = false
+
+[tool.setuptools.dynamic]
+version = {attr = "MethodicConfigurator.__version__"}
