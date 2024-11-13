@@ -17,7 +17,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from tkinter import messagebox, ttk
 
-from MethodicConfigurator import _
+from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 from MethodicConfigurator.frontend_tkinter_base import (
@@ -28,7 +28,6 @@ from MethodicConfigurator.frontend_tkinter_base import (
     show_error_message,
     show_tooltip,
 )
-from MethodicConfigurator.version import VERSION
 
 
 def argument_parser():
@@ -264,5 +263,5 @@ if __name__ == "__main__":
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
     filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, None, args.allow_editing_template_files)
-    app = ComponentEditorWindowBase(VERSION, filesystem)
+    app = ComponentEditorWindowBase(__version__, filesystem)
     app.root.mainloop()

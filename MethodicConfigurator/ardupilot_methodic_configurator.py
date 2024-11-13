@@ -18,7 +18,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from sys import exit as sys_exit
 
-from MethodicConfigurator import _
+from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_flightcontroller import FlightController
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
@@ -28,7 +28,6 @@ from MethodicConfigurator.frontend_tkinter_connection_selection import Connectio
 from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
 from MethodicConfigurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 from MethodicConfigurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
-from MethodicConfigurator.version import VERSION
 
 
 def argument_parser():
@@ -83,7 +82,7 @@ def connect_to_fc_and_read_parameters(args):
 
 
 def component_editor(args, flight_controller, vehicle_type, local_filesystem, vehicle_dir_window):
-    component_editor_window = ComponentEditorWindow(VERSION, local_filesystem)
+    component_editor_window = ComponentEditorWindow(__version__, local_filesystem)
     if (
         vehicle_dir_window
         and vehicle_dir_window.configuration_template is not None

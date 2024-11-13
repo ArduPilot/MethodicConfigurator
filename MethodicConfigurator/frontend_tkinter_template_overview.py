@@ -14,13 +14,12 @@ from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from tkinter import ttk
 
-from MethodicConfigurator import _
+from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 from MethodicConfigurator.backend_filesystem_vehicle_components import VehicleComponents
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow
 from MethodicConfigurator.middleware_template_overview import TemplateOverview
-from MethodicConfigurator.version import VERSION
 
 
 class TemplateOverviewWindow(BaseWindow):
@@ -43,7 +42,7 @@ class TemplateOverviewWindow(BaseWindow):
     def __init__(self, parent: tk.Tk):
         super().__init__(parent)
         title = _("Amilcar Lucas's - ArduPilot methodic configurator {} - Template Overview and selection")
-        self.root.title(title.format(VERSION))
+        self.root.title(title.format(__version__))
         self.root.geometry("1200x600")
 
         instruction_text = _("Please double-click the template below that most resembles your own vehicle components")

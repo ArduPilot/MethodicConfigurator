@@ -23,7 +23,7 @@ from tkinter import filedialog, messagebox, ttk
 from typing import List, Tuple
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
-from MethodicConfigurator import _
+from MethodicConfigurator import _, __version__
 from MethodicConfigurator.annotate_params import Par
 from MethodicConfigurator.backend_filesystem import LocalFilesystem, is_within_tolerance
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
@@ -41,7 +41,6 @@ from MethodicConfigurator.frontend_tkinter_base import (
 from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from MethodicConfigurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 from MethodicConfigurator.tempcal_imu import IMUfit
-from MethodicConfigurator.version import VERSION
 
 
 class DocumentationFrame:  # pylint: disable=too-few-public-methods
@@ -230,7 +229,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.file_upload_progress_window = None
 
         self.root.title(
-            _("Amilcar Lucas's - ArduPilot methodic configurator ") + VERSION + _(" - Parameter file editor and uploader")
+            _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
         )
         self.root.geometry("990x550")  # Set the window width
 
@@ -246,7 +245,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         style.map("default_v.TCombobox", selectforeground=[("readonly", "black")])
         style.configure("default_v.TEntry", fieldbackground="light blue")
 
-        self.__create_conf_widgets(VERSION)
+        self.__create_conf_widgets(__version__)
 
         # Create a DocumentationFrame object for the Documentation Content
         self.documentation_frame = DocumentationFrame(self.main_frame, self.local_filesystem, self.current_file)
