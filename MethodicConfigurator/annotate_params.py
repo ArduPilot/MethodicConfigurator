@@ -445,13 +445,17 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
     # Use the findall method with an XPath expression to find all "param" elements
     for param in root.findall(".//param"):
         name = param.get("name")
+        if name is None:
+            continue
         if vehicle_type == "Heli":
             vehicle_type = "Helicopter"
         # Remove the <vehicle_type>: prefix from the name if it exists
         name = remove_prefix(name, vehicle_type + ":")
 
         human_name = param.get("humanName")
-        documentation = split_into_lines(param.get("documentation"), max_line_length)
+        documentation = param.get("documentation")
+        if documentation:
+            documentation = split_into_lines(documentation, max_line_length)
         # the keys are the "name" attribute of the "field" sub-elements
         # the values are the text content of the "field" sub-elements
         fields = {field.get("name"): field.text for field in param.findall("field")}
@@ -756,9 +760,9 @@ def main():
 
         # Annotate lua MAGfit XML documentation into the respective parameter file
         xml_file = LUA_PARAM_DEFINITION_XML_FILE
+        target = os_path.join(os_path.dirname(args.target), "24_inflight_magnetometer_fit_setup.param")
         if os_path.isfile(os_path.join(os_path.dirname(args.target), xml_file)):
             doc_dict = parse_parameter_metadata(xml_url, xml_dir, xml_file, args.vehicle_type, args.max_line_length)
-            target = os_path.join(os_path.dirname(args.target), "24_inflight_magnetometer_fit_setup.param")
             param_default_dict = load_default_param_file(xml_dir)
             update_parameter_documentation(
                 doc_dict, target, args.sort, param_default_dict, args.delete_documentation_annotations

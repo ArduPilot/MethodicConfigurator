@@ -50,7 +50,7 @@ with open("README.md", encoding="utf-8") as f:
 
 
 # recursively find all files that match the globs and return tuples with their directory and a list of relative paths
-def find_data_files(path: str, globs: List[str]) -> Tuple[str, List[str]]:
+def find_data_files(path: str, globs: List[str]) -> List[Tuple[str, List[str]]]:
     # move vehicle_templates into the MethodicConfigurator directory
     data_files_path_base = "MethodicConfigurator" if "MethodicConfigurator" in path else "."
     ret = []

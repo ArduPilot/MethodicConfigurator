@@ -82,7 +82,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     """
 
     def __init__(self, vehicle_dir: str, vehicle_type: str, fw_version: str, allow_editing_template_files: bool):
-        self.file_parameters = None
+        self.file_parameters = {}
         VehicleComponents.__init__(self)
         ConfigurationSteps.__init__(self, vehicle_dir, vehicle_type)
         ProgramSettings.__init__(self)
@@ -100,7 +100,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         if not self.load_vehicle_components_json_data(vehicle_dir):
             return
 
-        if self.fw_version is None:
+        if not self.fw_version:
             self.fw_version = self.get_fc_fw_version_from_vehicle_components_json()
 
         if vehicle_type == "":
@@ -320,7 +320,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             ret[param] = Par(float(value), ip_comments.get(param, ""))
         return ret
 
-    def categorize_parameters(self, param: Dict[str, "Par"]) -> List[Dict[str, "Par"]]:
+    def categorize_parameters(self, param: Dict[str, "Par"]) -> Tuple[Dict[str, "Par"], Dict[str, "Par"], Dict[str, "Par"]]:
         """
         Categorize parameters into three categories based on their default values and documentation attributes.
 
@@ -333,7 +333,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         - param (Dict[str, 'Par']): A dictionary mapping parameter names to their 'Par' objects.
 
         Returns:
-        - List[Dict[str, 'Par']]: A list containing three dictionaries.
+        - Tuple[Dict[str, "Par"], Dict[str, "Par"], Dict[str, "Par"]]: A tuple of three dictionaries.
                                   Each dictionary represents one of the categories mentioned above.
         """
         non_default__read_only_params = {}

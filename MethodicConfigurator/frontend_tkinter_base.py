@@ -19,6 +19,7 @@ from logging import warning as logging_warning
 from platform import system as platform_system
 from tkinter import BooleanVar, messagebox, ttk
 from tkinter import font as tkFont
+from tkinter.font import _FontDict
 from typing import Optional
 
 from PIL import Image, ImageTk
@@ -217,15 +218,9 @@ class ProgressWindow:
     a task. It includes a progress bar and a label to display the progress message.
     """
 
-    def __init__(self, parent, title, message: str = "", width: int = 300, height: int = 80):  # pylint: disable=too-many-arguments
+    def __init__(self, parent, title: str, message: str = "", width: int = 300, height: int = 80):  # pylint: disable=too-many-arguments
         self.parent = parent
         self.message = message
-        self.progress_window = None
-        self.progress_bar = None
-        self.progress_label = None
-        self.__create_progress_window(title, message, width, height)
-
-    def __create_progress_window(self, title: str, message, width, height):
         self.progress_window = tk.Toplevel(self.parent)
         self.progress_window.title(title)
         self.progress_window.geometry(f"{width}x{height}")
@@ -250,7 +245,7 @@ class ProgressWindow:
 
     def update_progress_bar_300_pct(self, percent: int):
         self.message = _("Please be patient, {:.1f}% of {}% complete")
-        self.update_progress_bar(percent / 3, max_value=100)
+        self.update_progress_bar(int(percent / 3), max_value=100)
 
     def update_progress_bar(self, current_value: int, max_value: int):
         """
@@ -326,7 +321,7 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
         self.tag_configure("h1", font=h1_font, spacing3=default_size)
 
 
-def get_widget_font(widget: tk.Widget) -> dict:
+def get_widget_font(widget: tk.Widget) -> _FontDict | None:
     style = ttk.Style()
     widget_style = widget.cget("style")  # Get the style used by the widget
     font_name = style.lookup(widget_style, "font")
