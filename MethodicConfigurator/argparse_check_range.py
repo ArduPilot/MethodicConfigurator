@@ -53,7 +53,12 @@ class CheckRange(Action):
         return msg.format(**locals())
 
     def __call__(self, parser, namespace, values, option_string=None):
+        if not isinstance(values, (int, float)):
+            raise ArgumentError(self, _("Value must be a number."))
+
         for name, op in self.ops.items():
-            if hasattr(self, name) and not op(values, getattr(self, name)):
-                raise ArgumentError(self, self.interval())
+            if hasattr(self, name):
+                check_value = getattr(self, name)
+                if check_value is not None and not op(values, check_value):
+                    raise ArgumentError(self, self.interval())
         setattr(namespace, self.dest, values)

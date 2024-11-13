@@ -39,8 +39,8 @@ class VehicleComponents:
 
     def load_vehicle_components_json_data(self, vehicle_dir: str):
         data = {}
+        filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
         try:
-            filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
             with open(filepath, encoding="utf-8") as file:
                 data = json_load(file)
         except FileNotFoundError:
@@ -86,7 +86,7 @@ class VehicleComponents:
                 return version_str
             error_msg = _("FW version string {version_str} on {self.vehicle_components_json_filename} is invalid")
             logging_error(error_msg.format(**locals()))
-        return None
+        return ""
 
     @staticmethod
     def supported_vehicles():

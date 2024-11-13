@@ -170,7 +170,7 @@ class FlightController:
                 self.comport = autodetect_serial[0]
                 # Add the detected serial port to the list of available connections if it is not there
                 if self.comport.device not in [t[0] for t in self.__connection_tuples]:
-                    self.__connection_tuples.insert(-1, (self.comport.device, self.comport.description))
+                    self.__connection_tuples.insert(-1, (self.comport.device, getattr(self.comport, "description", "")))
             else:
                 return _("No serial ports found. Please connect a flight controller and try again.")
         return self.__create_connection_with_retry(progress_callback=progress_callback, log_errors=log_errors)
@@ -178,25 +178,26 @@ class FlightController:
     def __request_banner(self):
         """Request banner information from the flight controller"""
         # https://mavlink.io/en/messages/ardupilotmega.html#MAV_CMD_DO_SEND_BANNER
-        self.master.mav.command_long_send(
-            self.master.target_system,
-            self.master.target_component,
-            mavutil.mavlink.MAV_CMD_DO_SEND_BANNER,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-        )
+        if self.master is not None:
+            self.master.mav.command_long_send(
+                self.master.target_system,
+                self.master.target_component,
+                mavutil.mavlink.MAV_CMD_DO_SEND_BANNER,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            )
 
     def __receive_banner_text(self) -> List[str]:
         """Starts listening for STATUS_TEXT MAVLink messages."""
         start_time = time_time()
         banner_msgs = []
-        while True:
+        while self.master:
             msg = self.master.recv_match(type="STATUSTEXT", blocking=False)
             if msg:
                 if banner_msgs:
@@ -209,19 +210,20 @@ class FlightController:
         return banner_msgs
 
     def __request_message(self, message_id: int):
-        self.master.mav.command_long_send(
-            self.info.system_id,
-            self.info.component_id,
-            mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
-            0,  # confirmation
-            message_id,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-        )
+        if self.master is not None:
+            self.master.mav.command_long_send(
+                self.info.system_id,
+                self.info.component_id,
+                mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
+                0,  # confirmation
+                message_id,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            )
 
     def __create_connection_with_retry(
         self, progress_callback, retries: int = 3, timeout: int = 5, log_errors: bool = True
@@ -341,24 +343,30 @@ class FlightController:
             return {k: v.value for k, v in par_dict_with_comments.items()}, {}
 
         if self.master is None:
-            return None
+            return {}, {}
 
         # Check if MAVFTP is supported
+        comport_device = getattr(self.comport, "device", "")
         if self.info.is_mavftp_supported:
-            logging_info(_("MAVFTP is supported by the %s flight controller"), self.comport.device)
+            logging_info(_("MAVFTP is supported by the %s flight controller"), comport_device)
 
             return self.download_params_via_mavftp(progress_callback)
 
-        logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), self.comport.device)
+        logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), comport_device)
         return self.__download_params_via_mavlink(progress_callback), {}
 
     def __download_params_via_mavlink(self, progress_callback=None) -> Dict[str, float]:
-        logging_debug(_("Will fetch all parameters from the %s flight controller"), self.comport.device)
-        # Request all parameters
-        self.master.mav.param_request_list_send(self.master.target_system, self.master.target_component)
+        comport_device = getattr(self.comport, "device", "")
+        logging_debug(_("Will fetch all parameters from the %s flight controller"), comport_device)
 
         # Dictionary to store parameters
         parameters = {}
+
+        # Request all parameters
+        if self.master is None:
+            return parameters
+
+        self.master.mav.param_request_list_send(self.master.target_system, self.master.target_component)
 
         # Loop to receive all parameters
         while True:
@@ -376,7 +384,7 @@ class FlightController:
                     progress_callback(len(parameters), m.param_count)
                 if m.param_count == len(parameters):
                     logging_debug(
-                        _("Fetched %d parameter values from the %s flight controller"), m.param_count, self.comport.device
+                        _("Fetched %d parameter values from the %s flight controller"), m.param_count, comport_device
                     )
                     break
             except Exception as error:  # pylint: disable=broad-except
@@ -385,6 +393,8 @@ class FlightController:
         return parameters
 
     def download_params_via_mavftp(self, progress_callback=None) -> Tuple[Dict[str, float], Dict[str, "Par"]]:
+        if self.master is None:
+            return {}, {}
         mavftp = MAVFTP(self.master, target_system=self.master.target_system, target_component=self.master.target_component)
 
         def get_params_progress_callback(completion: float):

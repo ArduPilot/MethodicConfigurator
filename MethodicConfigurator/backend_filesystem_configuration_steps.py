@@ -183,9 +183,9 @@ class ConfigurationSteps:
                 "No intermediate parameter configuration steps available"
             )
             text = text.format(**locals())
-            url = None
+            url = ""
         else:
             text = _("No documentation available for {selected_file} in the {self.configuration_steps_filename} file")
             text = documentation.get(prefix_key + "_text", text.format(**locals()))
-            url = documentation.get(prefix_key + "_url", None)
+            url = documentation.get(prefix_key + "_url", "")
         return text, url
