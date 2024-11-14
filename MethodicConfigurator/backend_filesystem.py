@@ -150,24 +150,25 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return False
 
     def rename_parameter_files(self):
+        if self.vehicle_dir is None or self.configuration_steps is None:
+            return
         # Rename parameter files if some new files got added to the vehicle directory
-        if self.vehicle_dir is not None and self.configuration_steps is not None:
-            for new_filename in self.configuration_steps:
-                if "old_filenames" in self.configuration_steps[new_filename]:
-                    for old_filename in self.configuration_steps[new_filename]["old_filenames"]:
-                        if self.vehicle_configuration_file_exists(old_filename) and old_filename != new_filename:
-                            if self.vehicle_configuration_file_exists(new_filename):
-                                logging_error(
-                                    _("File %s already exists. Will not rename file %s to %s."),
-                                    new_filename,
-                                    old_filename,
-                                    new_filename,
-                                )
-                                continue
-                            new_filename_path = os_path.join(self.vehicle_dir, new_filename)
-                            old_filename_path = os_path.join(self.vehicle_dir, old_filename)
-                            os_rename(old_filename_path, new_filename_path)
-                            logging_info("Renamed %s to %s", old_filename, new_filename)
+        for new_filename in self.configuration_steps:
+            if "old_filenames" in self.configuration_steps[new_filename]:
+                for old_filename in self.configuration_steps[new_filename]["old_filenames"]:
+                    if self.vehicle_configuration_file_exists(old_filename) and old_filename != new_filename:
+                        if self.vehicle_configuration_file_exists(new_filename):
+                            logging_error(
+                                _("File %s already exists. Will not rename file %s to %s."),
+                                new_filename,
+                                old_filename,
+                                new_filename,
+                            )
+                            continue
+                        new_filename_path = os_path.join(self.vehicle_dir, new_filename)
+                        old_filename_path = os_path.join(self.vehicle_dir, old_filename)
+                        os_rename(old_filename_path, new_filename_path)
+                        logging_info("Renamed %s to %s", old_filename, new_filename)
 
     def __extend_and_reformat_parameter_documentation_metadata(self):  # pylint: disable=too-many-branches
         for param_name, param_info in self.doc_dict.items():

@@ -132,3 +132,36 @@ line-length = 127
 indent-width = 4
 
 target-version = "py38"
+
+[tool.mypy]
+ignore_missing_imports = true
+disallow_any_unimported = false
+disallow_any_expr = false
+disallow_any_decorated = false
+disallow_any_generics = false
+disallow_any_explicit = false
+disallow_subclassing_any = false
+
+# Disallow untyped definitions and calls
+disallow_untyped_calls = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = true
+
+# None and optional handling
+no_implicit_optional = true
+
+# Configuring warnings
+warn_unused_ignores = true
+warn_no_return = false
+warn_return_any = false
+warn_redundant_casts = true
+
+# Misc things
+strict_equality = true
+
+# Config file
+warn_unused_configs = true
+
+files = ["MethodicConfigurator/*.py"]
