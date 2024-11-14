@@ -12,6 +12,7 @@ import argparse
 import gettext
 from os import path as os_path
 from platform import system as platform_system
+from typing import Callable
 
 # Do not import nor use logging functions in this file.
 # Logging is not yet configured when these functions are called
@@ -23,7 +24,7 @@ def identity_function(s):
     return s
 
 
-def load_translation() -> callable:
+def load_translation() -> Callable:
     default_language = LANGUAGE_CHOICES[0]
 
     # First, pre-parse to find the --language argument

@@ -61,7 +61,7 @@ class ComponentEditorWindowBase(BaseWindow):
     class, which provides basic window functionality.
     """
 
-    def __init__(self, version, local_filesystem: LocalFilesystem = None):
+    def __init__(self, version, local_filesystem: LocalFilesystem):
         super().__init__()
         self.local_filesystem = local_filesystem
 
@@ -74,7 +74,7 @@ class ComponentEditorWindowBase(BaseWindow):
             self.root.after(100, self.root.destroy)  # Adjust the delay as needed
             return
 
-        self.entry_widgets = {}  # Dictionary for entry widgets
+        self.entry_widgets: dict[tuple, ttk.Entry | ttk.Combobox] = {}
 
         intro_frame = ttk.Frame(self.main_frame)
         intro_frame.pack(side=tk.TOP, fill="x", expand=False)
@@ -175,10 +175,10 @@ class ComponentEditorWindowBase(BaseWindow):
         if isinstance(value, dict):  # JSON non-leaf elements, add LabelFrame widget
             frame = ttk.LabelFrame(parent, text=_(key))
             is_toplevel = parent == self.scroll_frame.view_port
-            side = tk.TOP if is_toplevel else tk.LEFT
             pady = 5 if is_toplevel else 3
-            anchor = tk.NW if is_toplevel else tk.N
-            frame.pack(fill=tk.X, side=side, pady=pady, padx=5, anchor=anchor)
+            frame.pack(
+                fill=tk.X, side=tk.TOP if is_toplevel else tk.LEFT, pady=pady, padx=5, anchor=tk.NW if is_toplevel else tk.N
+            )
             for sub_key, sub_value in value.items():
                 # recursively add child elements
                 self.__add_widget(frame, sub_key, sub_value, [*path, key])
@@ -239,7 +239,7 @@ class ComponentEditorWindowBase(BaseWindow):
         self.root.destroy()
 
     # This function will be overwritten in child classes
-    def add_entry_or_combobox(self, value, entry_frame, path):  # pylint: disable=unused-argument
+    def add_entry_or_combobox(self, value, entry_frame, _path) -> ttk.Entry | ttk.Combobox:
         entry = ttk.Entry(entry_frame)
         entry.insert(0, str(value))
         return entry
@@ -262,6 +262,6 @@ if __name__ == "__main__":
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
-    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, None, args.allow_editing_template_files)
+    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files)
     app = ComponentEditorWindowBase(__version__, filesystem)
     app.root.mainloop()

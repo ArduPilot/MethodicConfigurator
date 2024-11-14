@@ -21,6 +21,9 @@ from typing import Dict, List, Optional, Tuple
 
 import serial.tools.list_ports
 import serial.tools.list_ports_common
+
+# import pymavlink.dialects.v20.ardupilotmega
+from pymavlink import mavutil
 from serial.serialutil import SerialException
 
 from MethodicConfigurator import _
@@ -28,14 +31,6 @@ from MethodicConfigurator.annotate_params import Par
 from MethodicConfigurator.argparse_check_range import CheckRange
 from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
 from MethodicConfigurator.backend_mavftp import MAVFTP
-
-# adding all this allows pyinstaller to build a working windows executable
-# note that using --hidden-import does not work for these modules
-try:  # noqa: SIM105
-    from pymavlink import mavutil
-    # import pymavlink.dialects.v20.ardupilotmega
-except Exception:  # noqa: S110 pylint: disable=broad-exception-caught
-    pass
 
 
 class FakeSerialForUnitTests:
@@ -84,11 +79,11 @@ class FlightController:
             logging_warning(_("You should uninstall ModemManager as it conflicts with ArduPilot"))
 
         self.__reboot_time = reboot_time
-        self.__connection_tuples = []
+        self.__connection_tuples: list[tuple[str, str]] = []
         self.discover_connections()
-        self.master = None
-        self.comport = None
-        self.fc_parameters = {}
+        self.master: mavutil.mavlink_connection | None = None
+        self.comport: mavutil.SerialPort | None = None
+        self.fc_parameters: dict[str, float] = {}
         self.info = BackendFlightcontrollerInfo()
 
     def discover_connections(self):
@@ -169,7 +164,7 @@ class FlightController:
                         pass  # Not a soft link, proceed with the original device path
                 self.comport = autodetect_serial[0]
                 # Add the detected serial port to the list of available connections if it is not there
-                if self.comport.device not in [t[0] for t in self.__connection_tuples]:
+                if self.comport and self.comport.device not in [t[0] for t in self.__connection_tuples]:
                     self.__connection_tuples.insert(-1, (self.comport.device, getattr(self.comport, "description", "")))
             else:
                 return _("No serial ports found. Please connect a flight controller and try again.")
@@ -196,7 +191,7 @@ class FlightController:
     def __receive_banner_text(self) -> List[str]:
         """Starts listening for STATUS_TEXT MAVLink messages."""
         start_time = time_time()
-        banner_msgs = []
+        banner_msgs: list[str] = []
         while self.master:
             msg = self.master.recv_match(type="STATUSTEXT", blocking=False)
             if msg:
@@ -255,6 +250,8 @@ class FlightController:
                 device=self.comport.device, timeout=timeout, retries=retries, progress_callback=progress_callback
             )
             logging_debug(_("Waiting for MAVLink heartbeat"))
+            if not self.master:
+                raise ConnectionError(f"Failed to create mavlink connect to {self.comport.device}")
             m = self.master.wait_heartbeat(timeout=timeout)
             if m is None:
                 return _("No MAVLink heartbeat received, connection failed.")
@@ -360,7 +357,7 @@ class FlightController:
         logging_debug(_("Will fetch all parameters from the %s flight controller"), comport_device)
 
         # Dictionary to store parameters
-        parameters = {}
+        parameters: dict[str, float] = {}
 
         # Request all parameters
         if self.master is None:

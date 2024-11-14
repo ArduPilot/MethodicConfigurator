@@ -521,7 +521,7 @@ def generate_calibration_file(outfile, online, progress_callback, data, c):  # p
                     trel = data.gyro[imu]["T"] - TEMP_REF
                     c.set_gyro_poly(imu, axis, np.polyfit(trel, data.gyro[imu][axis], POLY_ORDER))
                 if progress_callback:
-                    progress += progress_delta
+                    progress += int(progress_delta)
                     progress_callback(progress)
 
             params = c.param_string(imu)
@@ -529,7 +529,10 @@ def generate_calibration_file(outfile, online, progress_callback, data, c):  # p
             calfile.write(params)
         # ensure all data is written to disk, so that other processes can safely read the result without race conditions
         calfile.flush()
-        os.fdatasync(calfile.fileno())
+        if hasattr(os, "fdatasync"):
+            os.fdatasync(calfile.fileno())
+        else:
+            os.fsync(calfile.fileno())  # Use fsync as a fallback
 
     print(f"Calibration written to {outfile}")
     return c, clog

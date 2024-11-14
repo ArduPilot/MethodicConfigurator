@@ -57,8 +57,8 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         self.root = root
         self.local_filesystem = local_filesystem
         self.current_file = current_file
-        self.documentation_frame = None
-        self.documentation_labels = {}
+        self.documentation_frame: ttk.LabelFrame
+        self.documentation_labels: dict[str, ttk.Label] = {}
         self.__create_documentation_frame()
 
     def __create_documentation_frame(self):
@@ -219,14 +219,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.local_filesystem = local_filesystem
 
         self.at_least_one_changed_parameter_written = False
-        self.file_selection_combobox = None
-        self.show_only_differences = None
-        self.annotate_params_into_files = None
-        self.parameter_editor_table = None
-        self.reset_progress_window = None
-        self.param_download_progress_window = None
-        self.tempcal_imu_progress_window = None
-        self.file_upload_progress_window = None
+        self.file_selection_combobox: AutoResizeCombobox
+        self.show_only_differences: tk.BooleanVar
+        self.annotate_params_into_files: tk.BooleanVar
+        self.parameter_editor_table: ParameterEditorTable
+        self.reset_progress_window: ProgressWindow
+        self.param_download_progress_window: ProgressWindow
+        self.tempcal_imu_progress_window: ProgressWindow
+        self.file_upload_progress_window: ProgressWindow
 
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
@@ -663,7 +663,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             extra_sleep_time = max(filesystem_boot_delay.value, flightcontroller_boot_delay) // 1000 + 1  # round up
             # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
             error_message = self.flight_controller.reset_and_reconnect(
-                self.reset_progress_window.update_progress_bar, None, extra_sleep_time
+                self.reset_progress_window.update_progress_bar, None, int(extra_sleep_time)
             )
             if error_message:
                 logging_error(error_message)
@@ -897,5 +897,5 @@ if __name__ == "__main__":
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
     fc = FlightController(args.reboot_time)
-    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, None, args.allow_editing_template_files)
+    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files)
     ParameterEditorWindow("04_board_orientation.param", fc, filesystem)

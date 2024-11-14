@@ -30,6 +30,7 @@ from os import path as os_path
 from os import popen as os_popen
 from sys import exc_info as sys_exc_info
 from sys import exit as sys_exit
+from types import TracebackType
 from typing import Any, Dict, List, Optional, Tuple
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 
@@ -150,7 +151,7 @@ class Par:
         Returns:
         dict: A dictionary containing the parameters from the file.
         """
-        parameter_dict = {}
+        parameter_dict: Dict[str, Par] = {}
         try:
             with open(param_file, encoding="utf-8") as f_handle:
                 for i, f_line in enumerate(f_handle, start=1):
@@ -195,9 +196,10 @@ class Par:
             raise SystemExit(f"Invalid parameter value {value} in {param_file} line {i}") from exc
         except OSError as exc:
             _exc_type, exc_value, exc_traceback = sys_exc_info()
-            fname = os_path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
-            logging.critical("in line %s of file %s: %s", exc_traceback.tb_lineno, fname, exc_value)
-            raise SystemExit(f"Caused by line {i} of file {param_file}: {original_line}") from exc
+            if isinstance(exc_traceback, TracebackType):
+                fname = os_path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
+                logging.critical("in line %s of file %s: %s", exc_traceback.tb_lineno, fname, exc_value)
+                raise SystemExit(f"Caused by line {i} of file {param_file}: {original_line}") from exc
 
     @staticmethod
     def missionplanner_sort(item: str) -> Tuple[str, ...]:
@@ -302,21 +304,22 @@ class Par:
         if not formatted_params:
             return
 
-        rows = 100
+        rows_str = "100"  # number of lines to display before waiting for user input
+
         # Get the size of the terminal
         if __name__ == "__main__":
-            rows, _columns = os_popen("stty size", "r").read().split()  # noqa S607
+            rows_str, _columns = os_popen("stty size", "r").read().split()  # noqa S607
 
         # Convert rows to integer
-        rows = int(rows) - 2  # -2 for the next print and the input line
+        rows = int(rows_str) - 2  # -2 for the next print and the input line
 
         # Convert rows
         print(f"\n{name} has {len(formatted_params)} parameters:")
         for i, line in enumerate(formatted_params):
             if i % rows == 0 and __name__ == "__main__":
                 input(f"\n{name} list is long hit enter to continue")
-                rows, _columns = os_popen("stty size", "r").read().split()  # noqa S607
-                rows = int(rows) - 2  # -2 for the next print and the input line
+                rows_str, _columns = os_popen("stty size", "r").read().split()  # noqa S607
+                rows = int(rows_str) - 2  # -2 for the next print and the input line
             print(line)
 
 
@@ -386,14 +389,14 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
     return DET.fromstring(xml_data)
 
 
-def load_default_param_file(directory: str) -> Dict[str, Any]:
+def load_default_param_file(directory: str) -> Dict[str, "Par"]:
+    param_default_dict: Dict[str, Par] = {}
     # Load parameter default values if the 00_default.param file exists
     try:
         param_default_dict = Par.load_param_file_into_dict(os_path.join(directory, "00_default.param"))
     except FileNotFoundError:
         logging.warning("Default parameter file 00_default.param not found. No default values will be annotated.")
         logging.warning("Create one by using the command ./extract_param_defaults.py log_file.bin > 00_default.param")
-        param_default_dict = {}
     return param_default_dict
 
 
@@ -454,8 +457,9 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
 
         human_name = param.get("humanName")
         documentation = param.get("documentation")
+        documentation_lst: List[str] = []
         if documentation:
-            documentation = split_into_lines(documentation, max_line_length)
+            documentation_lst = split_into_lines(documentation, max_line_length)
         # the keys are the "name" attribute of the "field" sub-elements
         # the values are the text content of the "field" sub-elements
         fields = {field.get("name"): field.text for field in param.findall("field")}
@@ -476,7 +480,7 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
         # "fields", "values" sub-elements.
         doc[name] = {
             "humanName": human_name,
-            "documentation": documentation,
+            "documentation": documentation_lst,
             "fields": fields,
             "values": values,
         }
@@ -505,6 +509,7 @@ def format_columns(values: Dict[str, Any], max_width: int = 105, max_columns: in
     # Calculate the maximum length of the strings
     max_len = max(len(s) for s in strings)
 
+    num_cols = 1  # At least one column, no matter what max_columns is
     # Determine the number of columns
     # Column distribution will only happen if it results in more than 5 rows
     # The strings will be distributed evenly across up-to max_columns columns.

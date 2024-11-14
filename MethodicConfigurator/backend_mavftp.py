@@ -1326,10 +1326,10 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             return
         with open(filename, "w", encoding="utf-8") as f:
             parameter_data_types = {
-                1: "8-bit",
-                2: "16-bit",
-                3: "32-bit integer",
-                4: "32-bit float",
+                "1": "8-bit",
+                "2": "16-bit",
+                "3": "32-bit integer",
+                "4": "32-bit float",
             }
             if add_timestamp_comment:
                 f.write(f"# Parameters saved at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")

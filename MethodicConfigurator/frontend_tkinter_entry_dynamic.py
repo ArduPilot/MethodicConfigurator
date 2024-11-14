@@ -214,7 +214,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
                 self._listbox.selection_set(0)
                 self._listbox.activate(0)
             else:
-                index = int(current_selection[0])
+                index: int = int(current_selection[0])
                 self._listbox.selection_clear(index)
 
                 if index == 0:

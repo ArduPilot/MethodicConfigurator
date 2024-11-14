@@ -20,6 +20,10 @@ from MethodicConfigurator.backend_flightcontroller import FlightController
 # from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ProgressWindow
 
+# type-checking block
+if False:
+    from MethodicConfigurator.annotate_params import Par
+
 
 class FlightControllerInfoWindow(BaseWindow):
     """
@@ -31,7 +35,7 @@ class FlightControllerInfoWindow(BaseWindow):
         self.root.title(_("ArduPilot methodic configurator ") + __version__ + _(" - Flight Controller Info"))
         self.root.geometry("500x350")  # Adjust the window size as needed
         self.flight_controller = flight_controller
-        self.param_default_values = {}
+        self.param_default_values: dict[str, Par] = {}
 
         # Create a frame to hold all the labels and text fields
         self.info_frame = ttk.Frame(self.main_frame)
