@@ -20,7 +20,6 @@ from logging import warning as logging_warning
 from tkinter import filedialog, messagebox, ttk
 
 # from logging import critical as logging_critical
-from typing import List, Tuple
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
 from MethodicConfigurator import _, __version__
@@ -844,7 +843,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 logging_info(_("Summary file %s written"), filename)
         return should_write_file
 
-    def write_zip_file(self, files_to_zip: List[Tuple[bool, str]]):
+    def write_zip_file(self, files_to_zip: list[tuple[bool, str]]):
         should_write_file = True
         zip_file_path = self.local_filesystem.zip_file_path()
         if self.local_filesystem.zip_file_exists():

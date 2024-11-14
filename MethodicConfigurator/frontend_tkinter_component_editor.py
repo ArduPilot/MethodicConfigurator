@@ -18,7 +18,7 @@ from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from math import log2
 from tkinter import ttk
-from typing import Any, Tuple
+from typing import Any, Union
 
 from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
@@ -481,7 +481,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 protocol_combobox.set(protocols[0] if protocols else "")
             protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
 
-    def add_entry_or_combobox(self, value, entry_frame, path: Tuple[str, str, str]) -> ttk.Entry | ttk.Combobox:
+    def add_entry_or_combobox(self, value, entry_frame, path: tuple[str, str, str]) -> Union[ttk.Entry, ttk.Combobox]:
         # Default values for comboboxes in case the apm.pdef.xml metadata is not available
         fallbacks = {
             "RC_PROTOCOLS": [value["protocol"] for value in rc_protocols_dict.values()],
@@ -591,7 +591,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         }
         return validate_functions.get(path)
 
-    def validate_combobox(self, event: tk.Event, path: Tuple[str, ...]) -> bool:
+    def validate_combobox(self, event: tk.Event, path: tuple[str, ...]) -> bool:
         """
         Validates the value of a combobox.
         """

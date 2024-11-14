@@ -20,7 +20,6 @@ import time
 from argparse import ArgumentParser
 from datetime import datetime
 from io import BytesIO as SIO
-from typing import Dict, Tuple
 
 from pymavlink import mavutil
 
@@ -1291,14 +1290,14 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         return pdata
 
     @staticmethod
-    def missionplanner_sort(item: str) -> Tuple[str, ...]:
+    def missionplanner_sort(item: str) -> tuple[str, ...]:
         """
         Sorts a parameter name according to the rules defined in the Mission Planner software.
         """
         return tuple(item.split("_"))
 
     @staticmethod
-    def extract_params(pdata, sort_type) -> Dict[str, Tuple[float, str]]:
+    def extract_params(pdata, sort_type) -> dict[str, tuple[float, str]]:
         """extract parameter values to an optionally sorted dictionary of name->(value, type)"""
         pdict = {}
         if pdata:
@@ -1315,7 +1314,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
     @staticmethod
     def save_params(
-        pdict: Dict[str, Tuple[float, str]],
+        pdict: dict[str, tuple[float, str]],
         filename: str,
         sort_type: str,
         add_datatype_comments: bool,

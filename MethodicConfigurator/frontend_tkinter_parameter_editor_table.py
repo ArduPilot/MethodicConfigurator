@@ -18,6 +18,7 @@ from logging import info as logging_info
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
+from typing import Union
 
 from MethodicConfigurator import _
 from MethodicConfigurator.annotate_params import Par
@@ -326,7 +327,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         bitmask_dict = None
         value_str = format(param.value, ".6f").rstrip("0").rstrip(".")
-        new_value_entry: PairTupleCombobox | ttk.Entry
+        new_value_entry: Union[PairTupleCombobox, ttk.Entry]
         if (
             param_metadata
             and "values" in param_metadata

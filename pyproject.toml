@@ -12,7 +12,7 @@ maintainers = [
 ]
 description = "A clear configuration sequence for ArduPilot vehicles"
 readme = {file = "README.md", content-type = "text/markdown"}
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 keywords = ["ArduPilot", "Configuration", "SCM", "Methodic", "ArduCopter", "ArduPlane", "ArduRover", "ArduSub"]
 license = {text = "GPLv3"}
 
@@ -22,9 +22,6 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -131,7 +128,7 @@ lint.ignore = [
 line-length = 127
 indent-width = 4
 
-target-version = "py38"
+target-version = "py39"
 
 [tool.mypy]
 ignore_missing_imports = true

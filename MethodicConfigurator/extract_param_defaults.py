@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import contextlib
 import re
-from typing import Dict, Tuple
+from typing import Union
 
 from pymavlink import mavutil
 
@@ -95,7 +95,7 @@ def parse_arguments(args=None):
     return args
 
 
-def extract_parameter_values(logfile: str, param_type: str = "defaults") -> Dict[str, float]:  # pylint: disable=too-many-branches
+def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict[str, float]:  # pylint: disable=too-many-branches
     """
     Extracts the parameter values from an ArduPilot .bin log file.
 
@@ -138,7 +138,7 @@ def extract_parameter_values(logfile: str, param_type: str = "defaults") -> Dict
             raise SystemExit(f"Invalid type {param_type}")
 
 
-def missionplanner_sort(item: str) -> Tuple[str, ...]:
+def missionplanner_sort(item: str) -> tuple[str, ...]:
     """
     Sorts a parameter name according to the rules defined in the Mission Planner software.
 
@@ -166,7 +166,7 @@ def mavproxy_sort(item: str) -> str:
     return item
 
 
-def sort_params(params: Dict[str, float], sort_type: str = "none") -> Dict[str, float]:
+def sort_params(params: dict[str, float], sort_type: str = "none") -> dict[str, float]:
     """
     Sorts parameter names according to sort_type
 
@@ -187,7 +187,7 @@ def sort_params(params: Dict[str, float], sort_type: str = "none") -> Dict[str, 
 
 
 def output_params(
-    params: Dict[str, float],
+    params: dict[str, float],
     format_type: str = "missionplanner",
     sysid: int = -1,
     compid: int = -1,
@@ -223,7 +223,7 @@ def output_params(
 
     for param_name, param_value in params.items():
         if format_type == "missionplanner":
-            param_value_conv: float | str = param_value
+            param_value_conv: Union[float, str] = param_value
             # preserve non-floating point strings, if present
             with contextlib.suppress(ValueError):
                 param_value_conv = format(param_value, ".6f").rstrip("0").rstrip(".")

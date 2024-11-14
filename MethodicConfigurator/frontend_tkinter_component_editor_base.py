@@ -16,6 +16,7 @@ from logging import getLevelName as logging_getLevelName
 # from logging import debug as logging_debug
 from logging import info as logging_info
 from tkinter import messagebox, ttk
+from typing import Union
 
 from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
@@ -74,7 +75,7 @@ class ComponentEditorWindowBase(BaseWindow):
             self.root.after(100, self.root.destroy)  # Adjust the delay as needed
             return
 
-        self.entry_widgets: dict[tuple, ttk.Entry | ttk.Combobox] = {}
+        self.entry_widgets: dict[tuple, Union[ttk.Entry, ttk.Combobox]] = {}
 
         intro_frame = ttk.Frame(self.main_frame)
         intro_frame.pack(side=tk.TOP, fill="x", expand=False)
@@ -213,7 +214,7 @@ class ComponentEditorWindowBase(BaseWindow):
 
         # User confirmed, proceed with saving the data
         for path, entry in self.entry_widgets.items():
-            value: str | int | float = entry.get()
+            value: Union[str, int, float] = entry.get()
             # Navigate through the nested dictionaries using the elements of the path
             current_data = self.data["Components"]
             for key in path[:-1]:
@@ -239,7 +240,7 @@ class ComponentEditorWindowBase(BaseWindow):
         self.root.destroy()
 
     # This function will be overwritten in child classes
-    def add_entry_or_combobox(self, value, entry_frame, _path) -> ttk.Entry | ttk.Combobox:
+    def add_entry_or_combobox(self, value, entry_frame, _path) -> Union[ttk.Entry, ttk.Combobox]:
         entry = ttk.Entry(entry_frame)
         entry.insert(0, str(value))
         return entry
