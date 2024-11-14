@@ -82,14 +82,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     """
 
     def __init__(self, vehicle_dir: str, vehicle_type: str, fw_version: str, allow_editing_template_files: bool):
-        self.file_parameters = {}
+        self.file_parameters: Dict[str, Dict[str, Par]] = {}
         VehicleComponents.__init__(self)
         ConfigurationSteps.__init__(self, vehicle_dir, vehicle_type)
         ProgramSettings.__init__(self)
         self.vehicle_type = vehicle_type
         self.fw_version = fw_version
         self.allow_editing_template_files = allow_editing_template_files
-        self.param_default_dict = {}
+        self.param_default_dict: Dict[str, Par] = {}
         if vehicle_dir is not None:
             self.re_init(vehicle_dir, vehicle_type)
 
@@ -204,7 +204,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 prefix_parts += [f"Default: {default_value}"]
             param_info["doc_tooltip"] = ("\n").join(prefix_parts)
 
-    def read_params_from_files(self):
+    def read_params_from_files(self) -> Dict[str, Dict[str, "Par"]]:
         """
         Reads intermediate parameter files from a directory and stores their contents in a dictionary.
 
@@ -216,7 +216,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         - Dict[str, Dict[str, 'Par']]: A dictionary with filenames as keys and as values
                                        a dictionary with (parameter names, values) pairs.
         """
-        parameters = {}
+        parameters: Dict[str, Dict[str, Par]] = {}
         if os_path.isdir(self.vehicle_dir):
             # Regular expression pattern for filenames starting with two digits followed by an underscore and ending in .param
             pattern = re_compile(r"^\d{2}_.*\.param$")
@@ -542,7 +542,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             variables["doc_dict"] = self.doc_dict
         return variables
 
-    def copy_fc_params_values_to_template_created_vehicle_files(self, fc_parameters: Dict[str, "Par"]):
+    def copy_fc_params_values_to_template_created_vehicle_files(self, fc_parameters: Dict[str, float]):
         eval_variables = self.get_eval_variables()
         for param_filename, param_dict in self.file_parameters.items():
             for param_name, param in param_dict.items():

@@ -48,7 +48,7 @@ class DirectorySelectionWidgets:
         is_template_selection: bool,
     ):
         self.parent = parent
-        self.directory = deepcopy(initialdir)
+        self.directory: str = deepcopy(initialdir)
         self.label_text = label_text
         self.autoresize_width = autoresize_width
         self.is_template_selection = is_template_selection
@@ -106,7 +106,7 @@ class DirectorySelectionWidgets:
             return True
         return False
 
-    def get_selected_directory(self):
+    def get_selected_directory(self) -> str:
         return self.directory
 
 
@@ -147,7 +147,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        parent: ttk,
+        parent: tk.Widget,
         parent_frame: ttk.Frame,
         local_filesystem: LocalFilesystem,
         initial_dir: str,
@@ -233,7 +233,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         )
         self.root.geometry("800x625")  # Set the window size
         self.use_fc_params = tk.BooleanVar(value=False)
-        self.configuration_template = None  # will be set to a string if a template was used
+        self.configuration_template: str = ""  # will be set to a string if a template was used
 
         # Explain why we are here
         if local_filesystem.vehicle_dir == LocalFilesystem.getcwd():
@@ -502,7 +502,7 @@ def main():
     )
     # pylint: enable=duplicate-code
 
-    local_filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, None, args.allow_editing_template_files)
+    local_filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files)
 
     # Get the list of intermediate parameter files files that will be processed sequentially
     files = list(local_filesystem.file_parameters.keys())

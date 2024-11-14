@@ -18,6 +18,7 @@ from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from math import log2
 from tkinter import ttk
+from typing import Any
 
 from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
@@ -67,7 +68,7 @@ i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
 pwm_ports = ["Main Out", "AIO"]
 rc_ports = ["RCin/SBUS"]
 
-serial_protocols_dict = {
+serial_protocols_dict: dict[str, dict[str, Any]] = {
     "-1": {"type": serial_ports, "protocol": "None", "component": None},
     "1": {"type": serial_ports, "protocol": "MAVLink1", "component": "Telemetry"},
     "2": {"type": serial_ports, "protocol": "MAVLink2", "component": "Telemetry"},
@@ -116,7 +117,7 @@ serial_protocols_dict = {
 }
 
 
-batt_monitor_connection = {
+batt_monitor_connection: dict[str, dict[str, str]] = {
     "0": {"type": "None", "protocol": "Disabled"},
     "3": {"type": "Analog", "protocol": "Analog Voltage Only"},
     "4": {"type": "Analog", "protocol": "Analog Voltage and Current"},
@@ -148,7 +149,7 @@ batt_monitor_connection = {
 }
 
 
-gnss_receiver_connection = {
+gnss_receiver_connection: dict[str, Any] = {
     "0": {"type": None, "protocol": "None"},
     "1": {"type": "serial", "protocol": "AUTO"},
     "2": {"type": "serial", "protocol": "uBlox"},
@@ -175,7 +176,7 @@ gnss_receiver_connection = {
     "26": {"type": "serial", "protocol": "SBF-DualAntenna"},
 }
 
-mot_pwm_type_dict = {
+mot_pwm_type_dict: dict[str, dict[str, Any]] = {
     "0": {"type": "Main Out", "protocol": "Normal", "is_dshot": False},
     "1": {"type": "Main Out", "protocol": "OneShot", "is_dshot": True},
     "2": {"type": "Main Out", "protocol": "OneShot125", "is_dshot": True},
@@ -186,7 +187,7 @@ mot_pwm_type_dict = {
     "7": {"type": "Main Out", "protocol": "DShot1200", "is_dshot": True},
     "8": {"type": "Main Out", "protocol": "PWMRange", "is_dshot": False},
 }
-rc_protocols_dict = {
+rc_protocols_dict: dict[str, dict[str, str]] = {
     "0": {"type": "RCin/SBUS", "protocol": "All"},
     "1": {"type": "RCin/SBUS", "protocol": "PPM"},
     "2": {"type": "RCin/SBUS", "protocol": "IBUS"},
@@ -212,7 +213,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     for editing component configurations in the ArduPilot Methodic Configurator.
     """
 
-    def __init__(self, version, local_filesystem: LocalFilesystem = None):
+    def __init__(self, version, local_filesystem: LocalFilesystem):
         self.serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
         self.can_ports = ["CAN1", "CAN2"]
         self.i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
@@ -476,11 +477,11 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if protocol_path in self.entry_widgets:
             protocol_combobox = self.entry_widgets[protocol_path]
             protocol_combobox["values"] = protocols  # Update the combobox entries
-            if protocol_combobox.get() not in protocols:
+            if protocol_combobox.get() not in protocols and isinstance(protocol_combobox, ttk.Combobox):
                 protocol_combobox.set(protocols[0] if protocols else "")
             protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
 
-    def add_entry_or_combobox(self, value, entry_frame, path):
+    def add_entry_or_combobox(self, value, entry_frame, path) -> ttk.Entry | ttk.Combobox:
         # Default values for comboboxes in case the apm.pdef.xml metadata is not available
         fallbacks = {
             "RC_PROTOCOLS": [value["protocol"] for value in rc_protocols_dict.values()],
@@ -693,7 +694,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     def validate_data(self):  # pylint: disable=too-many-branches
         invalid_values = False
         duplicated_connections = False
-        fc_serial_connection = {}
+        fc_serial_connection: dict[str, str] = {}
 
         for path, entry in self.entry_widgets.items():
             value = entry.get()
@@ -766,6 +767,6 @@ if __name__ == "__main__":
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
-    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, None, args.allow_editing_template_files)
+    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files)
     app = ComponentEditorWindow(__version__, filesystem)
     app.root.mainloop()

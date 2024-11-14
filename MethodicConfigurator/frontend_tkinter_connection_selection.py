@@ -45,9 +45,11 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         self.destroy_parent_on_connect = destroy_parent_on_connect
         self.download_params_on_connect = download_params_on_connect
         self.previous_selection = (
-            flight_controller.comport.device if hasattr(self.flight_controller.comport, "device") else None
+            flight_controller.comport.device
+            if flight_controller.comport and hasattr(flight_controller.comport, "device")
+            else None
         )
-        self.connection_progress_window = None
+        self.connection_progress_window: ProgressWindow
 
         # Create a new frame for the flight controller connection selection label and combobox
         self.container_frame = ttk.Frame(parent_frame)
@@ -121,7 +123,8 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             return True
         self.connection_progress_window.destroy()
         # Store the current connection as the previous selection
-        self.previous_selection = self.flight_controller.comport.device
+        if self.flight_controller.comport and hasattr(self.flight_controller.comport, "device"):
+            self.previous_selection = self.flight_controller.comport.device
         if self.destroy_parent_on_connect:
             self.parent.root.destroy()
         if self.download_params_on_connect and hasattr(self.parent, _("download_flight_controller_parameters")):

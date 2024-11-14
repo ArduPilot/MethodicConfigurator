@@ -8,13 +8,9 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-# adding all this allows pyinstaller to build a working windows executable
-# note that using --hidden-import does not work for these modules
-try:  # noqa: SIM105
-    from pymavlink import mavutil
-    # import pymavlink.dialects.v20.ardupilotmega
-except Exception:  # noqa: S110 pylint: disable=broad-exception-caught
-    pass
+from pymavlink import mavutil
+
+# import pymavlink.dialects.v20.ardupilotmega
 
 
 class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attributes
@@ -26,23 +22,23 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
     """
 
     def __init__(self):
-        self.system_id = None
-        self.component_id = None
-        self.autopilot = None
-        self.vehicle_type = None
-        self.mav_type = None
-        self.flight_sw_version = ""
-        self.flight_sw_version_and_type = None
-        self.board_version = None
-        self.flight_custom_version = None
-        self.os_custom_version = None
-        self.vendor = None
-        self.vendor_id = None
-        self.vendor_and_vendor_id = None
-        self.product = None
-        self.product_id = None
-        self.product_and_product_id = None
-        self.capabilities = None
+        self.system_id: str = ""
+        self.component_id: str = ""
+        self.autopilot: str = ""
+        self.vehicle_type: str = ""
+        self.mav_type: str = ""
+        self.flight_sw_version: str = ""
+        self.flight_sw_version_and_type: str = ""
+        self.board_version: str = ""
+        self.flight_custom_version: str = ""
+        self.os_custom_version: str = ""
+        self.vendor: str = ""
+        self.vendor_id: str = ""
+        self.vendor_and_vendor_id: str = ""
+        self.product: str = ""
+        self.product_id: str = ""
+        self.product_and_product_id: str = ""
+        self.capabilities: str = ""
 
         self.is_supported = False
         self.is_mavftp_supported = False
@@ -137,7 +133,7 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         """Decode 32 bit flight controller capabilities bitmask mavlink parameter.
         Returns a dict of concise English descriptions of each active capability.
         """
-        capabilities_dict = {}
+        capabilities_dict: dict[str, str] = {}
 
         # Iterate through each bit in the capabilities bitmask
         for bit in range(32):

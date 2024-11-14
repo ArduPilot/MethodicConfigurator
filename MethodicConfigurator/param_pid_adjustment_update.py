@@ -17,7 +17,7 @@ import argparse
 import os
 import re
 import subprocess
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
 PARAM_NAME_MAX_LEN = 16
@@ -105,7 +105,7 @@ class Par:
         self.comment = comment
 
     @staticmethod
-    def load_param_file_into_dict(param_file: str) -> Dict[str, "Par"]:
+    def load_param_file_into_dict(param_file: str) -> Tuple[dict[str, "Par"], List[str]]:
         parameter_dict = {}
         content = []
         with open(param_file, encoding="utf-8") as f_handle:
@@ -153,7 +153,9 @@ class Par:
                 output_file.write(line + "\n")
 
 
-def update_pid_adjustment_params(directory: str, optimized_param_file: str, adjustment_factor: float) -> None:
+def update_pid_adjustment_params(
+    directory: str, optimized_param_file: str, adjustment_factor: float
+) -> Tuple[Dict[str, "Par"], str, List[str]]:
     """
     Updates the PID adjustment parameters values based on the given adjustment factor.
 

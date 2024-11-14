@@ -110,7 +110,7 @@ def extract_parameter_values(logfile: str, param_type: str = "defaults") -> Dict
         mlog = mavutil.mavlink_connection(logfile)
     except Exception as e:
         raise SystemExit(f"Error opening the {logfile} logfile: {e!s}") from e
-    values = {}
+    values: dict[str, float] = {}
     while True:
         m = mlog.recv_match(type=["PARM"])
         if m is None:

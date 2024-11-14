@@ -8,6 +8,8 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from typing import List, Tuple
+
 
 def insert_translations(po_file, translations_file, output_file):
     with open(po_file, encoding="utf-8") as f:
@@ -17,10 +19,10 @@ def insert_translations(po_file, translations_file, output_file):
         translations_data = f.read().strip().split("\n")
 
     # Prepare to insert translations
-    translations = []
+    translations: List[Tuple[int, str]] = []
     for data in translations_data:
-        index, translation = data.split(":", 1)  # Split the index and the translation
-        translations.append((int(index), translation.strip()))  # Store index and translation as tuple
+        index_str, translation = data.split(":", 1)  # Split the index and the translation
+        translations.append((int(index_str), translation.strip()))  # Store index and translation as tuple
 
     insertion_offset = 0  # To track how many lines we've inserted
     # To insert the translations correctly
