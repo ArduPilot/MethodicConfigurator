@@ -17,7 +17,7 @@ from os import path as os_path
 from os import readlink as os_readlink
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import Dict, List, Optional, Tuple
+from typing import Optional, Union
 
 import serial.tools.list_ports
 import serial.tools.list_ports_common
@@ -81,8 +81,8 @@ class FlightController:
         self.__reboot_time = reboot_time
         self.__connection_tuples: list[tuple[str, str]] = []
         self.discover_connections()
-        self.master: mavutil.mavlink_connection | None = None
-        self.comport: mavutil.SerialPort | None = None
+        self.master: Union[mavutil.mavlink_connection, None] = None
+        self.comport: Union[mavutil.SerialPort, None] = None
         self.fc_parameters: dict[str, float] = {}
         self.info = BackendFlightcontrollerInfo()
 
@@ -188,7 +188,7 @@ class FlightController:
                 0,
             )
 
-    def __receive_banner_text(self) -> List[str]:
+    def __receive_banner_text(self) -> list[str]:
         """Starts listening for STATUS_TEXT MAVLink messages."""
         start_time = time_time()
         banner_msgs: list[str] = []
@@ -324,7 +324,7 @@ class FlightController:
             self.info.product = fc_product  # force the one from the banner because it is more reliable
         return ""
 
-    def download_params(self, progress_callback=None) -> Tuple[Dict[str, float], Dict[str, "Par"]]:
+    def download_params(self, progress_callback=None) -> tuple[dict[str, float], dict[str, "Par"]]:
         """
         Requests all flight controller parameters from a MAVLink connection.
 
@@ -352,7 +352,7 @@ class FlightController:
         logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), comport_device)
         return self.__download_params_via_mavlink(progress_callback), {}
 
-    def __download_params_via_mavlink(self, progress_callback=None) -> Dict[str, float]:
+    def __download_params_via_mavlink(self, progress_callback=None) -> dict[str, float]:
         comport_device = getattr(self.comport, "device", "")
         logging_debug(_("Will fetch all parameters from the %s flight controller"), comport_device)
 
@@ -389,7 +389,7 @@ class FlightController:
                 break
         return parameters
 
-    def download_params_via_mavftp(self, progress_callback=None) -> Tuple[Dict[str, float], Dict[str, "Par"]]:
+    def download_params_via_mavftp(self, progress_callback=None) -> tuple[dict[str, float], dict[str, "Par"]]:
         if self.master is None:
             return {}, {}
         mavftp = MAVFTP(self.master, target_system=self.master.target_system, target_component=self.master.target_component)

@@ -17,7 +17,6 @@ from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from sys import exit as sys_exit
-from typing import Tuple
 
 from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
@@ -61,7 +60,7 @@ def argument_parser():
     return add_common_arguments_and_parse(parser)
 
 
-def connect_to_fc_and_read_parameters(args) -> Tuple[FlightController, str]:
+def connect_to_fc_and_read_parameters(args) -> tuple[FlightController, str]:
     flight_controller = FlightController(args.reboot_time)
 
     error_str = flight_controller.connect(args.device, log_errors=False)

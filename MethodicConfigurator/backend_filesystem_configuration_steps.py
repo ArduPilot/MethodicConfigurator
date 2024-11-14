@@ -17,7 +17,6 @@ from logging import error as logging_error
 from logging import info as logging_info
 from logging import warning as logging_warning
 from os import path as os_path
-from typing import Tuple
 
 from MethodicConfigurator import _
 from MethodicConfigurator.annotate_params import Par
@@ -175,7 +174,7 @@ class ConfigurationSteps:
             return self.configuration_steps[selected_file].get("jump_possible", {})
         return {}
 
-    def get_documentation_text_and_url(self, selected_file: str, prefix_key: str) -> Tuple[str, str]:
+    def get_documentation_text_and_url(self, selected_file: str, prefix_key: str) -> tuple[str, str]:
         documentation = self.configuration_steps.get(selected_file, {}) if self.configuration_steps else None
         if documentation is None:
             text = _(

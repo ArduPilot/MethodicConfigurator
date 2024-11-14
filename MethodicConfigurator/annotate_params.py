@@ -31,7 +31,7 @@ from os import popen as os_popen
 from sys import exc_info as sys_exc_info
 from sys import exit as sys_exit
 from types import TracebackType
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 
 from defusedxml import ElementTree as DET  # just parsing, no data-structure manipulation
@@ -141,7 +141,7 @@ class Par:
         return False
 
     @staticmethod
-    def load_param_file_into_dict(param_file: str) -> Dict[str, "Par"]:
+    def load_param_file_into_dict(param_file: str) -> dict[str, "Par"]:
         """
         Loads an ArduPilot parameter file into a dictionary with name, value pairs.
 
@@ -151,7 +151,7 @@ class Par:
         Returns:
         dict: A dictionary containing the parameters from the file.
         """
-        parameter_dict: Dict[str, Par] = {}
+        parameter_dict: dict[str, Par] = {}
         try:
             with open(param_file, encoding="utf-8") as f_handle:
                 for i, f_line in enumerate(f_handle, start=1):
@@ -202,7 +202,7 @@ class Par:
                 raise SystemExit(f"Caused by line {i} of file {param_file}: {original_line}") from exc
 
     @staticmethod
-    def missionplanner_sort(item: str) -> Tuple[str, ...]:
+    def missionplanner_sort(item: str) -> tuple[str, ...]:
         """
         Sorts a parameter name according to the rules defined in the Mission Planner software.
 
@@ -217,7 +217,7 @@ class Par:
         return tuple(parts)
 
     @staticmethod
-    def format_params(param_dict: Dict[str, "Par"], file_format: str = "missionplanner") -> List[str]:  # pylint: disable=too-many-branches
+    def format_params(param_dict: dict[str, "Par"], file_format: str = "missionplanner") -> list[str]:  # pylint: disable=too-many-branches
         """
         Formats the parameters in the provided dictionary into a list of strings.
 
@@ -266,7 +266,7 @@ class Par:
         return formatted_params
 
     @staticmethod
-    def export_to_param(formatted_params: List[str], filename_out: str) -> None:
+    def export_to_param(formatted_params: list[str], filename_out: str) -> None:
         """
         Exports a list of formatted parameters to an ArduPilot parameter file.
 
@@ -288,7 +288,7 @@ class Par:
             raise SystemExit(f"ERROR: writing to file {filename_out}: {e}") from e
 
     @staticmethod
-    def print_out(formatted_params: List[str], name: str) -> None:
+    def print_out(formatted_params: list[str], name: str) -> None:
         """
         Print out the contents of the provided list.
         If the list is too large, print only the ones that fit on the screen and
@@ -389,8 +389,8 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
     return DET.fromstring(xml_data)
 
 
-def load_default_param_file(directory: str) -> Dict[str, "Par"]:
-    param_default_dict: Dict[str, Par] = {}
+def load_default_param_file(directory: str) -> dict[str, "Par"]:
+    param_default_dict: dict[str, Par] = {}
     # Load parameter default values if the 00_default.param file exists
     try:
         param_default_dict = Par.load_param_file_into_dict(os_path.join(directory, "00_default.param"))
@@ -416,7 +416,7 @@ def remove_prefix(text: str, prefix: str) -> str:
     return text
 
 
-def split_into_lines(string_to_split: str, maximum_line_length: int) -> List[str]:
+def split_into_lines(string_to_split: str, maximum_line_length: int) -> list[str]:
     """
     Splits a string into lines of a maximum length.
 
@@ -432,7 +432,7 @@ def split_into_lines(string_to_split: str, maximum_line_length: int) -> List[str
     return [line.rstrip() for line in doc_lines]
 
 
-def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 100) -> Dict[str, Any]:
+def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 100) -> dict[str, Any]:
     """
     Create a dictionary of parameter documentation from the root element of the parsed XML data.
 
@@ -443,7 +443,7 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
         Dict[str, Any]: A dictionary of parameter documentation.
     """
     # Dictionary to store the parameter documentation
-    doc: Dict[str, Any] = {}
+    doc: dict[str, Any] = {}
 
     # Use the findall method with an XPath expression to find all "param" elements
     for param in root.findall(".//param"):
@@ -457,7 +457,7 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
 
         human_name = param.get("humanName")
         documentation = param.get("documentation")
-        documentation_lst: List[str] = []
+        documentation_lst: list[str] = []
         if documentation:
             documentation_lst = split_into_lines(documentation, max_line_length)
         # the keys are the "name" attribute of the "field" sub-elements
@@ -488,7 +488,7 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
     return doc
 
 
-def format_columns(values: Dict[str, Any], max_width: int = 105, max_columns: int = 4) -> List[str]:
+def format_columns(values: dict[str, Any], max_width: int = 105, max_columns: int = 4) -> list[str]:
     """
     Formats a dictionary of values into column-major horizontally aligned columns.
     It uses at most max_columns columns
@@ -545,7 +545,7 @@ def extract_parameter_name(item: str) -> str:
     return match.group(0) if match else item
 
 
-def missionplanner_sort(item: str) -> Tuple[str, ...]:
+def missionplanner_sort(item: str) -> tuple[str, ...]:
     """
     MissionPlanner parameter sorting function
     """
@@ -584,10 +584,10 @@ def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) 
 
 
 def update_parameter_documentation(
-    doc: Dict[str, Any],
+    doc: dict[str, Any],
     target: str = ".",
     sort_type: str = "none",
-    param_default_dict: Optional[Dict] = None,
+    param_default_dict: Optional[dict] = None,
     delete_documentation_annotations=False,
 ) -> None:
     """
@@ -742,7 +742,7 @@ def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
 
 def parse_parameter_metadata(
     xml_url: str, xml_dir: str, xml_file: str, vehicle_type: str, max_line_length: int
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     xml_root = get_xml_data(xml_url, xml_dir, xml_file, vehicle_type)
     return create_doc_dict(xml_root, vehicle_type, max_line_length)
 

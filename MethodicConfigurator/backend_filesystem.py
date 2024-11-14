@@ -21,7 +21,7 @@ from platform import system as platform_system
 from re import compile as re_compile
 from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
-from typing import Any, Dict, List, Tuple
+from typing import Any
 from zipfile import ZipFile
 
 from requests import get as requests_get
@@ -82,16 +82,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     """
 
     def __init__(self, vehicle_dir: str, vehicle_type: str, fw_version: str, allow_editing_template_files: bool):
-        self.file_parameters: Dict[str, Dict[str, Par]] = {}
+        self.file_parameters: dict[str, dict[str, Par]] = {}
         VehicleComponents.__init__(self)
         ConfigurationSteps.__init__(self, vehicle_dir, vehicle_type)
         ProgramSettings.__init__(self)
         self.vehicle_type = vehicle_type
         self.fw_version = fw_version
         self.allow_editing_template_files = allow_editing_template_files
-        self.param_default_dict: Dict[str, Par] = {}
+        self.param_default_dict: dict[str, Par] = {}
         self.vehicle_dir = vehicle_dir
-        self.doc_dict: Dict[str, Any] = {}
+        self.doc_dict: dict[str, Any] = {}
         if vehicle_dir is not None:
             self.re_init(vehicle_dir, vehicle_type)
 
@@ -215,7 +215,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 prefix_parts += [f"Default: {default_value}"]
             param_info["doc_tooltip"] = ("\n").join(prefix_parts)
 
-    def read_params_from_files(self) -> Dict[str, Dict[str, "Par"]]:
+    def read_params_from_files(self) -> dict[str, dict[str, "Par"]]:
         """
         Reads intermediate parameter files from a directory and stores their contents in a dictionary.
 
@@ -227,7 +227,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         - Dict[str, Dict[str, 'Par']]: A dictionary with filenames as keys and as values
                                        a dictionary with (parameter names, values) pairs.
         """
-        parameters: Dict[str, Dict[str, Par]] = {}
+        parameters: dict[str, dict[str, Par]] = {}
         if os_path.isdir(self.vehicle_dir):
             # Regular expression pattern for filenames starting with two digits followed by an underscore and ending in .param
             pattern = re_compile(r"^\d{2}_.*\.param$")
@@ -261,7 +261,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return False
         return None
 
-    def export_to_param(self, params: Dict[str, "Par"], filename_out: str, annotate_doc: bool = True) -> None:
+    def export_to_param(self, params: dict[str, "Par"], filename_out: str, annotate_doc: bool = True) -> None:
         """
         Exports a dictionary of parameters to a .param file and optionally annotates the documentation.
 
@@ -293,7 +293,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             os_path.join(self.vehicle_dir, filename)
         )
 
-    def __all_intermediate_parameter_file_comments(self) -> Dict[str, str]:
+    def __all_intermediate_parameter_file_comments(self) -> dict[str, str]:
         """
         Retrieves all comments associated with parameters from intermediate parameter files.
 
@@ -311,7 +311,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     ret[param] = info.comment
         return ret
 
-    def annotate_intermediate_comments_to_param_dict(self, param_dict: Dict[str, float]) -> Dict[str, "Par"]:
+    def annotate_intermediate_comments_to_param_dict(self, param_dict: dict[str, float]) -> dict[str, "Par"]:
         """
         Annotates comments from intermediate parameter files to a parameter value-only dictionary.
 
@@ -331,7 +331,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             ret[param] = Par(float(value), ip_comments.get(param, ""))
         return ret
 
-    def categorize_parameters(self, param: Dict[str, "Par"]) -> Tuple[Dict[str, "Par"], Dict[str, "Par"], Dict[str, "Par"]]:
+    def categorize_parameters(self, param: dict[str, "Par"]) -> tuple[dict[str, "Par"], dict[str, "Par"], dict[str, "Par"]]:
         """
         Categorize parameters into three categories based on their default values and documentation attributes.
 
@@ -393,7 +393,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         if self.vehicle_configuration_file_exists(filename):
             zipf.write(os_path.join(self.vehicle_dir, filename), arcname=filename)
 
-    def zip_files(self, files_to_zip: List[Tuple[bool, str]]):
+    def zip_files(self, files_to_zip: list[tuple[bool, str]]):
         """
         Zips the intermediate parameter files that were written to, including specific summary files.
 
@@ -469,7 +469,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         tempcal_imu_result_param_filename = "03_imu_temperature_calibration_results.param"
         return [tempcal_imu_result_param_filename, os_path.join(self.vehicle_dir, tempcal_imu_result_param_filename)]
 
-    def copy_fc_values_to_file(self, selected_file: str, params: Dict[str, float]):
+    def copy_fc_values_to_file(self, selected_file: str, params: dict[str, float]):
         ret = 0
         if selected_file in self.file_parameters:
             for param, v in self.file_parameters[selected_file].items():
@@ -553,7 +553,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             variables["doc_dict"] = self.doc_dict
         return variables
 
-    def copy_fc_params_values_to_template_created_vehicle_files(self, fc_parameters: Dict[str, float]):
+    def copy_fc_params_values_to_template_created_vehicle_files(self, fc_parameters: dict[str, float]):
         eval_variables = self.get_eval_variables()
         for param_filename, param_dict in self.file_parameters.items():
             for param_name, param in param_dict.items():
@@ -570,18 +570,18 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             Par.export_to_param(Par.format_params(param_dict), os_path.join(self.vehicle_dir, param_filename))
         return ""
 
-    def write_param_default_values(self, param_default_values: Dict[str, "Par"]) -> bool:
+    def write_param_default_values(self, param_default_values: dict[str, "Par"]) -> bool:
         param_default_values = dict(sorted(param_default_values.items()))
         if self.param_default_dict != param_default_values:
             self.param_default_dict = param_default_values
             return True
         return False
 
-    def write_param_default_values_to_file(self, param_default_values: Dict[str, "Par"], filename: str = "00_default.param"):
+    def write_param_default_values_to_file(self, param_default_values: dict[str, "Par"], filename: str = "00_default.param"):
         if self.write_param_default_values(param_default_values):
             Par.export_to_param(Par.format_params(self.param_default_dict), os_path.join(self.vehicle_dir, filename))
 
-    def get_download_url_and_local_filename(self, selected_file: str) -> Tuple[str, str]:
+    def get_download_url_and_local_filename(self, selected_file: str) -> tuple[str, str]:
         if (
             selected_file in self.configuration_steps
             and "download_file" in self.configuration_steps[selected_file]
@@ -593,7 +593,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 return src, os_path.join(self.vehicle_dir, dst)
         return "", ""
 
-    def get_upload_local_and_remote_filenames(self, selected_file: str) -> Tuple[str, str]:
+    def get_upload_local_and_remote_filenames(self, selected_file: str) -> tuple[str, str]:
         if (
             selected_file in self.configuration_steps
             and "upload_file" in self.configuration_steps[selected_file]
