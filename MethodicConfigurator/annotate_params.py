@@ -443,7 +443,7 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
         Dict[str, Any]: A dictionary of parameter documentation.
     """
     # Dictionary to store the parameter documentation
-    doc = {}
+    doc: Dict[str, Any] = {}
 
     # Use the findall method with an XPath expression to find all "param" elements
     for param in root.findall(".//param"):
