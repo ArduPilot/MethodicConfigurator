@@ -21,7 +21,7 @@ from platform import system as platform_system
 from re import compile as re_compile
 from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 from zipfile import ZipFile
 
 from requests import get as requests_get
@@ -90,6 +90,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self.fw_version = fw_version
         self.allow_editing_template_files = allow_editing_template_files
         self.param_default_dict: Dict[str, Par] = {}
+        self.vehicle_dir = vehicle_dir
+        self.doc_dict: Dict[str, Any] = {}
         if vehicle_dir is not None:
             self.re_init(vehicle_dir, vehicle_type)
 
@@ -154,6 +156,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 if "old_filenames" in self.configuration_steps[new_filename]:
                     for old_filename in self.configuration_steps[new_filename]["old_filenames"]:
                         if self.vehicle_configuration_file_exists(old_filename) and old_filename != new_filename:
+                            if self.vehicle_configuration_file_exists(new_filename):
+                                logging_error(
+                                    _("File %s already exists. Will not rename file %s to %s."),
+                                    new_filename,
+                                    old_filename,
+                                    new_filename,
+                                )
+                                continue
                             new_filename_path = os_path.join(self.vehicle_dir, new_filename)
                             old_filename_path = os_path.join(self.vehicle_dir, old_filename)
                             os_rename(old_filename_path, new_filename_path)
