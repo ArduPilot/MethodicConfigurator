@@ -326,6 +326,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         bitmask_dict = None
         value_str = format(param.value, ".6f").rstrip("0").rstrip(".")
+        new_value_entry: PairTupleCombobox | ttk.Entry
         if (
             param_metadata
             and "values" in param_metadata

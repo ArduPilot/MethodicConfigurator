@@ -18,7 +18,7 @@ from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from math import log2
 from tkinter import ttk
-from typing import Any
+from typing import Any, Tuple
 
 from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
@@ -460,7 +460,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             elif "SERVO_FTW_MASK" in fc_parameters and fc_parameters["SERVO_FTW_MASK"] and "SERVO_FTW_POLES" in fc_parameters:
                 self.data["Components"]["Motors"]["Specifications"]["Poles"] = fc_parameters["SERVO_FTW_POLES"]
 
-    def update_esc_protocol_combobox_entries(self, esc_connection_type):
+    def update_esc_protocol_combobox_entries(self, esc_connection_type: str):
         """Updates the ESC Protocol combobox entries based on the selected ESC Type."""
         if len(esc_connection_type) > 3 and esc_connection_type[:3] == "CAN":
             protocols = ["DroneCAN"]
@@ -481,7 +481,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 protocol_combobox.set(protocols[0] if protocols else "")
             protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
 
-    def add_entry_or_combobox(self, value, entry_frame, path) -> ttk.Entry | ttk.Combobox:
+    def add_entry_or_combobox(self, value, entry_frame, path: Tuple[str, str, str]) -> ttk.Entry | ttk.Combobox:
         # Default values for comboboxes in case the apm.pdef.xml metadata is not available
         fallbacks = {
             "RC_PROTOCOLS": [value["protocol"] for value in rc_protocols_dict.values()],
@@ -542,8 +542,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         config = combobox_config.get(path)
         if config:
             cb = ttk.Combobox(entry_frame, values=config["values"])
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))
-            cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore
+            cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore
 
             if path == ("ESC", "FC Connection", "Type"):  # immediate update of ESC Protocol upon ESC Type selection
                 cb.bind("<<ComboboxSelected>>", lambda event, path=path: self.update_esc_protocol_combobox_entries(cb.get()))
@@ -591,7 +591,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         }
         return validate_functions.get(path)
 
-    def validate_combobox(self, event, path) -> bool:
+    def validate_combobox(self, event: tk.Event, path: Tuple[str, ...]) -> bool:
         """
         Validates the value of a combobox.
         """

@@ -218,7 +218,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
                 self._listbox.selection_clear(index)
 
                 if index == 0:
-                    index = END
+                    index = END  # type: ignore
                 else:
                     index -= 1
 

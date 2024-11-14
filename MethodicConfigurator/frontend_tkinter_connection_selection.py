@@ -77,7 +77,12 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         selected_connection = self.conn_selection_combobox.get_selected_key()
         error_msg = _("Connection combobox changed to: {selected_connection}")
         logging_debug(error_msg.format(**locals()))
-        if self.flight_controller.master is None or selected_connection != self.flight_controller.comport.device:
+        comport_device = (
+            self.flight_controller.comport.device
+            if self.flight_controller.comport and hasattr(self.flight_controller.comport, "device")
+            else None
+        )
+        if self.flight_controller.master is None or selected_connection != comport_device:
             if selected_connection == "Add another":
                 if not self.add_connection() and self.previous_selection:
                     # nothing got selected revert to the current connection
@@ -216,7 +221,7 @@ class ConnectionSelectionWindow(BaseWindow):
         skip_fc_connection_button = ttk.Button(
             option3_label_frame,
             text=_("Skip FC connection, just edit the .param files on disk"),
-            command=lambda flight_controller=flight_controller: self.skip_fc_connection(flight_controller),
+            command=lambda flight_controller=flight_controller: self.skip_fc_connection(flight_controller),  # type: ignore
         )
         skip_fc_connection_button.pack(expand=False, fill=tk.X, padx=15, pady=6)
         show_tooltip(

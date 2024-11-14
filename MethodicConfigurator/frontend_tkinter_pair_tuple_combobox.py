@@ -138,9 +138,9 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
         # Bind events related to the dropdown
         pd = self.tk.call("ttk::combobox::PopdownWindow", self)
         lb = pd + ".f.l"
-        self._bind(("bind", lb), "<KeyRelease>", self.on_key_release, None)
-        self._bind(("bind", lb), "<Motion>", self.on_motion, None)
-        self._bind(("bind", lb), "<Escape>", self.on_escape_press, None)
+        self._bind(("bind", lb), "<KeyRelease>", self.on_key_release, None)  # type: ignore
+        self._bind(("bind", lb), "<Motion>", self.on_motion, None)  # type: ignore
+        self._bind(("bind", lb), "<Escape>", self.on_escape_press, None)  # type: ignore
         self.bind("<<ComboboxSelected>>", self.on_combobox_selected, None)
 
     def on_key_release(self, _event):

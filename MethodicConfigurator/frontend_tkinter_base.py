@@ -336,11 +336,14 @@ class BaseWindow:
     creating a progress window and centering a window on its parent.
     """
 
-    def __init__(self, root_tk: Optional[tk.Tk] = None):
+    def __init__(self, root_tk: Optional[tk.Toplevel] = None):
         if root_tk:
             self.root = tk.Toplevel(root_tk)
         else:
             self.root = tk.Tk()
+            # Set the application icon for the window and all child windows
+            # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
+            self.root.iconphoto(True, tk.PhotoImage(file=LocalFilesystem.application_icon_filepath()))
 
         # Set the theme to 'alt'
         style = ttk.Style()
@@ -350,19 +353,14 @@ class BaseWindow:
         self.main_frame = ttk.Frame(self.root)
         self.main_frame.pack(expand=True, fill=tk.BOTH)
 
-        # Set the application icon for the window and all child windows
-        # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
-        if root_tk is None:
-            self.root.iconphoto(True, tk.PhotoImage(file=LocalFilesystem.application_icon_filepath()))
-
     @staticmethod
-    def center_window(window, parent):
+    def center_window(window: tk.Toplevel, parent: tk.Toplevel):
         """
         Center a window on its parent window.
 
         Args:
             window (tk.Toplevel): The window to center.
-            parent (tk.Tk): The parent window.
+            parent (tk.Toplevel): The parent window.
         """
         window.update_idletasks()
         parent_width = parent.winfo_width()
@@ -387,7 +385,8 @@ class BaseWindow:
 
         # Create a label with the resized image
         image_label = ttk.Label(parent, image=photo)
-        image_label.image = photo  # Keep a reference to the image to prevent it from being garbage collected
+        # Keep a reference to the image to prevent it from being garbage collected
+        image_label.image = photo  # type: ignore
         return image_label
 
 
@@ -408,7 +407,7 @@ class UsagePopupWindow:
 
     @staticmethod
     def display(  # pylint: disable=too-many-arguments
-        parent: tk.Tk,
+        parent: tk.Toplevel,
         usage_popup_window: BaseWindow,
         title: str,
         ptype: str,
@@ -450,7 +449,7 @@ class UsagePopupWindow:
         usage_popup_window.root.protocol("WM_DELETE_WINDOW", lambda: UsagePopupWindow.close(usage_popup_window, parent))
 
     @staticmethod
-    def close(usage_popup_window, parent):
+    def close(usage_popup_window: BaseWindow, parent: tk.Toplevel):
         usage_popup_window.root.destroy()
         if platform_system() == "Windows":
             parent.attributes("-disabled", False)  # Re-enable the parent window

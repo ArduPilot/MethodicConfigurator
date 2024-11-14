@@ -116,7 +116,7 @@ class ComponentEditorWindowBase(BaseWindow):
             self.root.after(10, self.__display_component_editor_usage_instructions(self.root))
 
     @staticmethod
-    def __display_component_editor_usage_instructions(parent: tk.Tk):
+    def __display_component_editor_usage_instructions(parent: tk.Toplevel):
         usage_popup_window = BaseWindow(parent)
         style = ttk.Style()
 
@@ -213,7 +213,7 @@ class ComponentEditorWindowBase(BaseWindow):
 
         # User confirmed, proceed with saving the data
         for path, entry in self.entry_widgets.items():
-            value = entry.get()
+            value: str | int | float = entry.get()
             # Navigate through the nested dictionaries using the elements of the path
             current_data = self.data["Components"]
             for key in path[:-1]:

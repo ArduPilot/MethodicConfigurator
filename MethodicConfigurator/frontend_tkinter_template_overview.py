@@ -13,6 +13,7 @@ import tkinter as tk
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from tkinter import ttk
+from typing import Optional
 
 from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
@@ -32,14 +33,14 @@ class TemplateOverviewWindow(BaseWindow):
     manner, making it easier for users to navigate and select the desired template for configuration.
 
     Attributes:
-        window (tk.Tk): The root Tkinter window object for the GUI.
+        window (tk.Toplevel): The root Tkinter window object for the GUI.
 
     Methods:
         on_row_double_click(event): Handles the event triggered when a row in the Treeview is double-clicked, allowing the user
                                      to store the corresponding template directory.
     """
 
-    def __init__(self, parent: tk.Tk):
+    def __init__(self, parent: Optional[tk.Toplevel] = None):
         super().__init__(parent)
         title = _("Amilcar Lucas's - ArduPilot methodic configurator {} - Template Overview and selection")
         self.root.title(title.format(__version__))
@@ -49,7 +50,7 @@ class TemplateOverviewWindow(BaseWindow):
         instruction_label = ttk.Label(self.main_frame, text=instruction_text, font=("Arial", 12))
         instruction_label.pack(pady=(10, 20))
 
-        self.sort_column = None
+        self.sort_column: str
 
         style = ttk.Style(self.root)
         # Add padding to Treeview heading style
@@ -97,7 +98,8 @@ class TemplateOverviewWindow(BaseWindow):
         self.tree.pack(fill=tk.BOTH, expand=True)
 
         for col in self.tree["columns"]:
-            self.tree.heading(col, text=col, command=lambda col=col: self.__sort_by_column(col, False))
+            col_str = str(col)
+            self.tree.heading(col_str, text=col_str, command=lambda col=col_str: self.__sort_by_column(col, False))
 
         if isinstance(self.root, tk.Toplevel):
             try:
@@ -135,8 +137,8 @@ class TemplateOverviewWindow(BaseWindow):
             ProgramSettings.store_template_dir(selected_template_relative_path)
             self.root.destroy()
 
-    def __sort_by_column(self, col, reverse: bool):
-        if self.sort_column and self.sort_column != col:
+    def __sort_by_column(self, col: str, reverse: bool):
+        if hasattr(self, "sort_column") and self.sort_column and self.sort_column != col:
             self.tree.heading(self.sort_column, text=self.sort_column)
         self.tree.heading(col, text=col + (" ▼" if reverse else " ▲"))
         self.sort_column = col

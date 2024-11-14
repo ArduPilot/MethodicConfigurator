@@ -53,7 +53,7 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
     functionality to open these links in a web browser.
     """
 
-    def __init__(self, root: tk.Tk, local_filesystem, current_file: str):
+    def __init__(self, root: tk.Widget, local_filesystem, current_file: str):
         self.root = root
         self.local_filesystem = local_filesystem
         self.current_file = current_file
@@ -116,7 +116,7 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         label = self.documentation_labels[label_key]
         if url:
             label.config(text=text, foreground="blue", cursor="hand2", underline=True)
-            label.bind("<Button-1>", lambda event, url=url: webbrowser_open(url))
+            label.bind("<Button-1>", lambda event, url=url: webbrowser_open(url))  # type: ignore
             show_tooltip(label, url)
         else:
             label.config(text=text, foreground="black", cursor="arrow", underline=False)
@@ -270,7 +270,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Create a new frame inside the config_subframe for the intermediate parameter file directory selection labels
         # and directory selection button
         directory_selection_frame = VehicleDirectorySelectionWidgets(
-            self, config_subframe, self.local_filesystem, self.local_filesystem.vehicle_dir, destroy_parent_on_open=False
+            self.root, config_subframe, self.local_filesystem, self.local_filesystem.vehicle_dir, destroy_parent_on_open=False
         )
         directory_selection_frame.container_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(4, 6))
 
@@ -408,7 +408,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
 
     @staticmethod
-    def __display_usage_popup_window(parent: tk.Tk):
+    def __display_usage_popup_window(parent: tk.Toplevel):
         usage_popup_window = BaseWindow(parent)
         style = ttk.Style()
 

@@ -147,8 +147,8 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        parent: tk.Widget,
-        parent_frame: ttk.Frame,
+        parent: tk.Toplevel,
+        parent_frame: ttk.Widget,
         local_filesystem: LocalFilesystem,
         initial_dir: str,
         destroy_parent_on_open: bool,
@@ -354,7 +354,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         )
         option2_label.pack(expand=False, fill=tk.X, padx=6)
         self.connection_selection_widgets = VehicleDirectorySelectionWidgets(
-            self, option2_label_frame, self.local_filesystem, initial_dir, destroy_parent_on_open=True
+            self.root, option2_label_frame, self.local_filesystem, initial_dir, destroy_parent_on_open=True
         )
         self.connection_selection_widgets.container_frame.pack(expand=True, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
