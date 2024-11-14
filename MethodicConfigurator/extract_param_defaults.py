@@ -223,10 +223,11 @@ def output_params(
 
     for param_name, param_value in params.items():
         if format_type == "missionplanner":
+            param_value_conv: float | str = param_value
             # preserve non-floating point strings, if present
             with contextlib.suppress(ValueError):
-                param_value = format(param_value, ".6f").rstrip("0").rstrip(".")  # noqa: PLW2901
-            print(f"{param_name},{param_value}")
+                param_value_conv = format(param_value, ".6f").rstrip("0").rstrip(".")
+            print(f"{param_name},{param_value_conv}")
         elif format_type == "mavproxy":
             print(f"{param_name:<15} {param_value:.6f}")
         elif format_type == "qgcs":
