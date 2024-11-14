@@ -80,3 +80,55 @@ include-package-data = false
 
 [tool.setuptools.dynamic]
 version = {attr = "MethodicConfigurator.__version__"}
+
+[tool.ruff]
+exclude = [
+    ".git",
+    "__pycache__",
+    "__target__",
+    "dist",
+]
+
+lint.select = [
+    "F",    # pycodestyle
+    "E",    # Pyflakes
+    "W",    # Warnings
+    "U",    # pyupgrade
+    "I",    # isort
+    "N",    # pep8-naming
+    "PL",   # Pylint
+    "B",    # flake8-bugbear
+    "RUF",  # Ruff-specific codes
+    "PERF", # Performance-related issues
+    "SIM",  # flake8-simplify
+    "LOG",  # flake8-logging
+    "G",    # flake8-logging-format
+    #"C901", # maccabe
+    "S",    # flake8-bandit
+    "TID",  # flake8-tidy-imports
+    "TCH",  # flake8-type-checking
+    "INT",  # flake8-gettext
+    "FLY002", # flynt
+    #"FURB", # refurb
+    "ISC",  # flake8-implicit-str-concat
+    "ICN",  # flake8-import-conventions
+]
+
+lint.ignore = [
+    "PLR0912",  # too many branches
+    "PLR0913",  # too many arguments
+    "PLR2004",  # Magic value used in comparison, consider replacing `X` with a constant variable
+    "N801",    # Class name `FTP_OP` should use CapWords convention
+    "N802",    # Function name `X` should be lowercase
+    "N806",    # Variable name `X` should be lowercase
+    "N812",    # Lowercase `x` imported as non-lowercase `X`
+    "N814",    # Camelcase `X` imported as constant `Y`
+    "N817",    # CamelCase `X` imported as acronym `Y`
+    "N999",    # Invalid module name: 'MethodicConfigurator'
+    "ISC001",  # to let formatter run
+]
+
+line-length = 127
+indent-width = 4
+
+target-version = "py38"
