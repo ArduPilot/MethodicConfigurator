@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
@@ -866,11 +866,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.root.quit()  # Then stop the Tkinter event loop
 
     @staticmethod
-    def add_argparse_arguments(parser):
+    def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
         return parser
 
 
-def argument_parser():
+def argument_parser() -> Namespace:
     """
     Parses command-line arguments for the script.
 

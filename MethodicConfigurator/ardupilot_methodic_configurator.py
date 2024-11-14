@@ -17,6 +17,7 @@ from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from sys import exit as sys_exit
+from typing import Tuple
 
 from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
@@ -60,7 +61,7 @@ def argument_parser():
     return add_common_arguments_and_parse(parser)
 
 
-def connect_to_fc_and_read_parameters(args):
+def connect_to_fc_and_read_parameters(args) -> Tuple[FlightController, str]:
     flight_controller = FlightController(args.reboot_time)
 
     error_str = flight_controller.connect(args.device, log_errors=False)
@@ -82,8 +83,12 @@ def connect_to_fc_and_read_parameters(args):
 
 
 def component_editor(
-    args, flight_controller: FlightController, vehicle_type: str, local_filesystem: LocalFilesystem, vehicle_dir_window
-):
+    args: argparse.Namespace,
+    flight_controller: FlightController,
+    vehicle_type: str,
+    local_filesystem: LocalFilesystem,
+    vehicle_dir_window,
+) -> None:
     component_editor_window = ComponentEditorWindow(__version__, local_filesystem)
     if (
         vehicle_dir_window
@@ -113,7 +118,7 @@ def component_editor(
             sys_exit(1)
 
 
-def main():
+def main() -> None:
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")

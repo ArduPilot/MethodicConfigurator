@@ -21,7 +21,7 @@ from MethodicConfigurator.backend_flightcontroller import FlightController
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ProgressWindow
 
 # type-checking block
-if False:
+if False:  # pylint: disable=using-constant-test
     from MethodicConfigurator.annotate_params import Par
 
 
