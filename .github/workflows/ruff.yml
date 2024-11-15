@@ -5,6 +5,7 @@ on:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
       - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
+      - 'workflows/ruff.yml'
   workflow_dispatch:
 
 #concurrency:
