@@ -44,6 +44,7 @@ Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\ve
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Chimera7";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\ReadyToSkyZD550";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\FETtec-5";
+Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Tarot_X4";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\GazeboIrisWithTargetFollow";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Heli\Allister";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Heli\OMP_M4";
