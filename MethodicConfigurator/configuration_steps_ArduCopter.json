@@ -271,8 +271,8 @@
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#motor-thrust-scaling-mot_thst_expo-mot_spin_min-and-mot_spin_max",
         "wiki_text": "Motor Thrust Scaling",
         "wiki_url": "https://ardupilot.org/copter/docs/motor-thrust-scaling.html",
-        "external_tool_text": "",
-        "external_tool_url": "",
+        "external_tool_text": "ArduPilot Thrust Expo",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/ThrustExpo/",
         "mandatory_text": "40% mandatory (60% optional)",
         "auto_changed_by": "",
         "old_filenames": ["14_motor.param"]
