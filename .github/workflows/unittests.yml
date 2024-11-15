@@ -2,7 +2,12 @@ name: Pytest unittests
 
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#packaging-workflow-data-as-artifacts
 
-on: [push]
+on:
+  push:
+    paths:
+      - '**/*.py'        # Watch for changes in any Python files
+      - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
+  workflow_dispatch:
 
 jobs:
   build:
