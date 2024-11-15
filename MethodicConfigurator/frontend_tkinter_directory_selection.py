@@ -383,7 +383,9 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         open_last_vehicle_directory_button = ttk.Button(
             option3_label_frame,
             text=_("Open Last Used Vehicle Configuration Directory"),
-            command=lambda last_vehicle_dir=last_vehicle_dir: self.open_last_vehicle_directory(last_vehicle_dir),
+            command=lambda last_vehicle_dir=last_vehicle_dir: self.open_last_vehicle_directory(  # type: ignore[misc]
+                last_vehicle_dir
+            ),
             state=button_state,
         )
         open_last_vehicle_directory_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)

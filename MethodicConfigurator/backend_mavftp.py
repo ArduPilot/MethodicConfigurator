@@ -25,6 +25,8 @@ from pymavlink import mavutil
 
 # pylint: disable=too-many-lines
 # pylint: disable=invalid-name
+# mypy: disable-error-code="union-attr,operator, arg-type"
+
 # opcodes
 OP_None = 0
 OP_TerminateSession = 1
@@ -323,7 +325,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.total_size = 0
         self.read_gaps = []
         self.read_gap_times = {}
-        self.last_gap_send = 0
+        self.last_gap_send = 0.0
         self.read_retries = 0
         self.read_total = 0
         self.remote_file_size = None

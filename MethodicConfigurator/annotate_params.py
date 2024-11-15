@@ -47,6 +47,8 @@ PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*"
 PARAM_NAME_MAX_LEN = 16
 VERSION = "1.0"
 
+# mypy: disable-error-code="unused-ignore"
+
 
 def arg_parser():
     parser = argparse.ArgumentParser(
@@ -349,8 +351,10 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
     else:
         # No locally cached file exists, get it from the internet
         try:
-            from requests import exceptions as requests_exceptions  # pylint: disable=import-outside-toplevel
-            from requests import get as requests_get  # pylint: disable=import-outside-toplevel
+            # pylint: disable=import-outside-toplevel
+            from requests import exceptions as requests_exceptions  # type: ignore[import-untyped]
+            from requests import get as requests_get
+            # pylint: enable=import-outside-toplevel
         except ImportError as exc:
             logging.critical("The requests package was not found")
             logging.critical("Please install it by running 'pip install requests' in your terminal.")

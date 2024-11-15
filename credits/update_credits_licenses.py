@@ -10,7 +10,7 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import requests
+import requests  # type: ignore[import-untyped]
 
 # List of direct_dependencies and their license URLs
 direct_dependencies = [
