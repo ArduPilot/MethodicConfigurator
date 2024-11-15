@@ -5,11 +5,13 @@ on:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
       - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
+      - 'workflows/codecov.yml'
   workflow_dispatch:
 
 jobs:
   run:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4

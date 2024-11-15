@@ -7,6 +7,7 @@ on:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
       - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
+      - 'workflows/unittests.yml'
   workflow_dispatch:
 
 jobs:
@@ -19,6 +20,7 @@ jobs:
         # python-version: ["3.9", "3.10", "3.11", "3.12", "pypy3.9", "pypy3.10"]
         os: [ubuntu-latest]
         python-version: ["3.9", "3.13"]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
