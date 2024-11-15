@@ -546,7 +546,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore
 
             if path == ("ESC", "FC Connection", "Type"):  # immediate update of ESC Protocol upon ESC Type selection
-                cb.bind("<<ComboboxSelected>>", lambda event, path=path: self.update_esc_protocol_combobox_entries(cb.get()))
+                cb.bind(
+                    "<<ComboboxSelected>>",
+                    lambda event, path=path: self.update_esc_protocol_combobox_entries(cb.get()),  # type: ignore[misc]
+                )
 
             cb.set(value)
             return cb

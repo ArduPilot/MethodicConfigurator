@@ -150,15 +150,15 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
         return params
 
 
-class OnlineIMUfit:
+class OnlineIMUfit:  # pylint: disable=too-few-public-methods
     """implement the online learning used in ArduPilot"""
 
     def __init__(self):
-        self.porder = None
-        self.mat = None
-        self.vec = None
+        self.porder: int = 0
+        self.mat = np.zeros((1, 1))
+        self.vec = np.zeros(1)
 
-    def update(self, x, y):
+    def __update(self, x, y):
         temp = 1.0
 
         for i in range(2 * (self.porder - 1), -1, -1):
@@ -172,7 +172,7 @@ class OnlineIMUfit:
             self.vec[i] += y * temp
             temp *= x
 
-    def get_polynomial(self):
+    def __get_polynomial(self):
         inv_mat = np.linalg.inv(self.mat)
         res = np.zeros(self.porder)
         for i in range(self.porder):
@@ -185,8 +185,8 @@ class OnlineIMUfit:
         self.mat = np.zeros((self.porder, self.porder))
         self.vec = np.zeros(self.porder)
         for i, value in enumerate(x):
-            self.update(value, y[i])
-        return self.get_polynomial()
+            self.__update(value, y[i])
+        return self.__get_polynomial()
 
 
 # pylint: disable=invalid-name

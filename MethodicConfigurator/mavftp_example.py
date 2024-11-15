@@ -16,14 +16,15 @@ from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
+from typing import Any
 
 import backend_mavftp as mavftp
 
 # import time
-import requests
+import requests  # type: ignore[import-untyped]
 from pymavlink import mavutil
 
-old_mavftp_member_variable_values = {}
+old_mavftp_member_variable_values: dict[str, Any] = {}
 
 
 # pylint: disable=duplicate-code

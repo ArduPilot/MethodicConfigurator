@@ -99,7 +99,11 @@ class TemplateOverviewWindow(BaseWindow):
 
         for col in self.tree["columns"]:
             col_str = str(col)
-            self.tree.heading(col_str, text=col_str, command=lambda col=col_str: self.__sort_by_column(col, False))
+            self.tree.heading(
+                col_str,
+                text=col_str,
+                command=lambda col=col_str: self.__sort_by_column(col, False),  # type: ignore[misc]
+            )
 
         if isinstance(self.root, tk.Toplevel):
             try:

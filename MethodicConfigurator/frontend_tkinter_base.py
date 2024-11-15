@@ -307,9 +307,9 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
         default_font = tkFont.nametofont(self.cget("font"))
         default_size = default_font.cget("size")
 
-        bold_font = tkFont.Font(**default_font.configure())
-        italic_font = tkFont.Font(**default_font.configure())
-        h1_font = tkFont.Font(**default_font.configure())
+        bold_font = tkFont.Font(**default_font.configure())  # type: ignore[arg-type]
+        italic_font = tkFont.Font(**default_font.configure())  # type: ignore[arg-type]
+        h1_font = tkFont.Font(**default_font.configure())  # type: ignore[arg-type]
 
         bold_font.configure(weight="bold")
         italic_font.configure(slant="italic")
@@ -340,7 +340,7 @@ class BaseWindow:
         if root_tk:
             self.root = tk.Toplevel(root_tk)
         else:
-            self.root = tk.Tk()
+            self.root = tk.Tk()  # type: ignore[assignment]
             # Set the application icon for the window and all child windows
             # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
             self.root.iconphoto(True, tk.PhotoImage(file=LocalFilesystem.application_icon_filepath()))

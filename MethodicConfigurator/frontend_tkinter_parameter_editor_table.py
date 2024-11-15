@@ -372,12 +372,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 "<FocusIn>", lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value)
             )
         else:
+            # pylint: disable=line-too-long
             new_value_entry.bind(
                 "<FocusOut>",
-                lambda event, current_file=self.current_file, param_name=param_name: self.__on_parameter_value_change(
+                lambda event, current_file=self.current_file, param_name=param_name: self.__on_parameter_value_change(  # type: ignore[misc]
                     event, current_file, param_name
                 ),
             )
+            # pylint: enable=line-too-long
         if doc_tooltip:
             show_tooltip(new_value_entry, doc_tooltip)
         return new_value_entry
@@ -490,12 +492,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         if present_as_forced:
             change_reason_entry.config(state="disabled", background="light grey")
         else:
+            # pylint: disable=line-too-long
             change_reason_entry.bind(
                 "<FocusOut>",
-                lambda event, current_file=self.current_file, param_name=param_name: self.__on_parameter_change_reason_change(
+                lambda event, current_file=self.current_file, param_name=param_name: self.__on_parameter_change_reason_change(  # type: ignore[misc]
                     event, current_file, param_name
                 ),
             )
+            # pylint: enable=line-too-long
         _value = new_value_entry.get()
         msg = _("Reason why {param_name} should change to {_value}")
         show_tooltip(change_reason_entry, msg.format(**locals()))
