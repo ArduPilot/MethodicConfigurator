@@ -1,6 +1,11 @@
 name: Ruff
 
-on: [push, workflow_dispatch]
+on:
+  push:
+    paths:
+      - '**/*.py'        # Watch for changes in any Python files
+      - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
+  workflow_dispatch:
 
 #concurrency:
 #  group: ci-${{github.workflow}}-${{ github.ref }}

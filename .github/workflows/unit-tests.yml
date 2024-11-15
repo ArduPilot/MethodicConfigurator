@@ -1,6 +1,11 @@
 name: Python unit-tests
 
-on: [push]
+on:
+  push:
+    paths:
+      - '**/*.py'        # Watch for changes in any Python files
+      - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
+  workflow_dispatch:
 
 jobs:
   build:
