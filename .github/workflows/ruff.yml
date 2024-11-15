@@ -30,4 +30,4 @@ jobs:
 
       - name: Lint with Ruff
         run: |
-          ruff check --output-format=github .
+          ruff check --target-version ${{ matrix.python-version }} --output-format=github
