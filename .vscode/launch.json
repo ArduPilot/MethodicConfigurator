@@ -32,7 +32,7 @@
                 "--allow-editing-template-files",
                 "--device=test",
                 "--skip-component-editor",
-                "--vehicle-dir=C:\\Users\\amilc\\Documents\\iav\\ardupilot_methodic_configurator\\vehicle_templates\\ArduCopter\\FETtec-5"
+                "--vehicle-dir=C:\\Users\\amilc\\Documents\\iav\\ardupilot_methodic_configurator\\MethodicConfigurator\\vehicle_templates\\ArduCopter\\FETtec-5"
             ],
         }
     ]

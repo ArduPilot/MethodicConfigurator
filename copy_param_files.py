@@ -12,13 +12,13 @@ import os
 import shutil
 
 # Source directory containing the files to copy
-SOURCE_DIR = "ArduCopter\\diatone_taycan_mxc\\4.6.x-params"
+SOURCE_DIR = os.path.join("ArduCopter", "diatone_taycan_mxc", "4.6.x-params")
 
 # Files to copy
 files_to_copy = ["50_optical_flow_setup.param", "51_optical_flow_results.param", "52_use_optical_flow_instead_of_gnss.param"]
 
 # Base directory for vehicle templates
-BASE_DIR = "vehicle_templates"
+BASE_DIR = os.path.join("MethodicConfigurator", "vehicle_templates")
 
 
 # Function to get all subdirectories excluding the source (do not copy onto itself)

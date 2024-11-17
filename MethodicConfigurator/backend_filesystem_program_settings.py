@@ -202,8 +202,6 @@ class ProgramSettings:
                 site_directory = os_path.join(os_path.expanduser("~"), ".local", "MethodicConfigurator")
             elif "dist-packages" in site_directory:
                 site_directory = os_path.join("/usr", "local", "MethodicConfigurator")
-            else:
-                site_directory = site_directory.replace("/MethodicConfigurator", "")
 
         logging_debug(_("site_directory: %s"), site_directory)
         return os_path.join(site_directory, "vehicle_templates")
