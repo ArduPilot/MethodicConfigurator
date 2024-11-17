@@ -162,3 +162,4 @@ strict_equality = true
 warn_unused_configs = true
 
 files = ["MethodicConfigurator/*.py"]
+exclude = ["unittests"]

@@ -23,9 +23,9 @@ jobs:
         run: |
           python -m pip install -U mypy
 
-      - name: lint the code with mypy
-        uses: tsuyoshicho/action-mypy@v4
+      - name: Lint the code with mypy
+        uses: sasanquaneuf/mypy-github-action@releases/v1.3
         with:
-          github_token: ${{ secrets.github_token }}
-          # Change reviewdog reporter if you need [github-pr-check,github-check,github-pr-review].
-          reporter: github-pr-review
+          checkName: 'mypy'   # NOTE: this needs to be the same as the job name
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
