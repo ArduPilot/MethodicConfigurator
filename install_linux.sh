@@ -58,7 +58,7 @@ git config --local sequence.editor "code --wait"
 pre-commit install
 
 # setuptools has a bug and refuses to install these files, so do it manually
-cp vehicle_templates ~/.local/lib/python3.12/site-packages/MethodicConfigurator/
+cp MethodicConfigurator/vehicle_templates ~/.local/lib/python3.12/site-packages/MethodicConfigurator/
 
 echo "Installation complete."
 echo ""

@@ -50,8 +50,7 @@ with open("README.md", encoding="utf-8") as f:
 
 # recursively find all files that match the globs and return tuples with their directory and a list of relative paths
 def find_data_files(path: str, globs: list[str]) -> list[tuple[str, list[str]]]:
-    # move vehicle_templates into the MethodicConfigurator directory
-    data_files_path_base = "MethodicConfigurator" if "MethodicConfigurator" in path else "."
+    data_files_path_base = "MethodicConfigurator"
     ret = []
     for dirpath, _dirnames, filenames in os.walk(path):
         data_files = []
@@ -71,7 +70,7 @@ setup(
     # long_description_content_type="text/markdown",
     # this is used by bdist
     data_files=[
-        *find_data_files("vehicle_templates", ["*.param", "*.jpg", "*.json", "*.xml"]),
+        *find_data_files(os.path.join("MethodicConfigurator", "vehicle_templates"), ["*.param", "*.jpg", "*.json", "*.xml"]),
         *find_data_files(os.path.join("MethodicConfigurator", "locale"), ["*.mo"]),
     ],
 )

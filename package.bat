@@ -12,11 +12,11 @@ copy configuration_steps_ArduCopter.json dist
 copy configuration_steps_ArduPlane.json dist
 copy configuration_steps_Heli.json dist
 copy configuration_steps_Rover.json dist
-xcopy /E /I /Y vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params dist\4.3.8-params
-xcopy /E /I /Y vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params dist\4.4.4-params
+xcopy /E /I /Y MethodicConfigurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params dist\4.3.8-params
+xcopy /E /I /Y MethodicConfigurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params dist\4.4.4-params
 xcopy /E /I /Y 4.4.4-test-params dist\4.4.4-test-params
-xcopy /E /I /Y vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.x-params dist\4.5.x-params
-xcopy /E /I /Y vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.x-params dist\4.6.x-params
+xcopy /E /I /Y MethodicConfigurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.x-params dist\4.5.x-params
+xcopy /E /I /Y MethodicConfigurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.6.x-params dist\4.6.x-params
 xcopy /E /I /Y images dist\images
 copy *.md dist
 copy MethodicConfigurator\*.png dist

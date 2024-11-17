@@ -1,0 +1,10 @@
+ATC_ACCEL_P_MAX,363812.1875  # Autotuned in a windless hangar
+ATC_ACCEL_R_MAX,495292.5625  # Autotuned in a windless hangar
+ATC_ANG_PIT_P,36  # higher value mean a tighter tune
+ATC_ANG_RLL_P,36  # higher value mean a tighter tune
+ATC_RAT_PIT_D,0.003774  # Autotuned in a windless hangar
+ATC_RAT_PIT_I,0.193122  # Autotuned in a windless hangar
+ATC_RAT_PIT_P,0.193122  # Autotuned in a windless hangar
+ATC_RAT_RLL_D,0.00242  # Autotuned in a windless hangar
+ATC_RAT_RLL_I,0.12357  # Autotuned in a windless hangar
+ATC_RAT_RLL_P,0.12357  # Autotuned in a windless hangar

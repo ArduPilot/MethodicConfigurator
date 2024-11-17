@@ -1,0 +1,5 @@
+EK3_DRAG_BCOEF_X,54.6857  # 0.600 kg / 0.01097 m²
+EK3_DRAG_BCOEF_Y,41.2284  # 0.600 kg / 0.01455 m²
+EK3_DRAG_MCOEF,0.5195
+LOG_DISARMED,1  # allow post flight tuning with Replay
+LOG_REPLAY,1  # allow post flight tuning with Replay
