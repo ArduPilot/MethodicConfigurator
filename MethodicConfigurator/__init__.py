@@ -13,4 +13,4 @@ from MethodicConfigurator.internationalization import load_translation
 
 _ = load_translation()
 
-__version__ = "0.9.12"
+__version__ = "0.9.13"
