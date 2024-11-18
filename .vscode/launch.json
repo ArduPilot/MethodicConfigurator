@@ -30,9 +30,10 @@
             "program": "MethodicConfigurator/ardupilot_methodic_configurator.py",
             "args": [
                 "--allow-editing-template-files",
-                "--device=test",
+                "--device=none",
                 "--skip-component-editor",
-                "--vehicle-dir=C:\\Users\\amilc\\Documents\\iav\\ardupilot_methodic_configurator\\MethodicConfigurator\\vehicle_templates\\ArduCopter\\FETtec-5"
+                "--n=7",
+                "--vehicle-dir=D:\\Projekte\\Multicopter\\MethodicConfigurator\\MethodicConfigurator\\vehicle_templates\\ArduCopter\\diatone_taycan_mxc\\4.6.x-params"
             ],
         }
     ]
