@@ -450,17 +450,28 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def directory_exists(directory: str) -> bool:
         return os_path.exists(directory) and os_path.isdir(directory)
 
-    def copy_template_files_to_new_vehicle_dir(self, template_dir: str, new_vehicle_dir: str) -> None:
+    def copy_template_files_to_new_vehicle_dir(self, template_dir: str, new_vehicle_dir: str) -> str:
         # Copy the template files to the new vehicle directory
-        for item in os_listdir(template_dir):
-            if item in {"apm.pdef.xml", "vehicle.jpg", "last_uploaded_filename.txt", "tempcal_acc.png", "tempcal_gyro.png"}:
-                continue
-            s = os_path.join(template_dir, item)
-            d = os_path.join(new_vehicle_dir, item)
-            if os_path.isdir(s):
-                shutil_copytree(s, d)
-            else:
-                shutil_copy2(s, d)
+        try:
+            for item in os_listdir(template_dir):
+                if item in {
+                    "apm.pdef.xml",
+                    "vehicle.jpg",
+                    "last_uploaded_filename.txt",
+                    "tempcal_acc.png",
+                    "tempcal_gyro.png",
+                }:
+                    continue
+                s = os_path.join(template_dir, item)
+                d = os_path.join(new_vehicle_dir, item)
+                if os_path.isdir(s):
+                    shutil_copytree(s, d)
+                else:
+                    shutil_copy2(s, d)
+        except Exception as _e:  # pylint: disable=broad-except
+            error_msg = _("Error copying template files to new vehicle directory: {_e}")
+            return error_msg.format(**locals())
+        return ""
 
     @staticmethod
     def getcwd() -> str:
