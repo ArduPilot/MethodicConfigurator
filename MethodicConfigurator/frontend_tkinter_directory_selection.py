@@ -354,7 +354,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         )
         option2_label.pack(expand=False, fill=tk.X, padx=6)
         self.connection_selection_widgets = VehicleDirectorySelectionWidgets(
-            self.root, option2_label_frame, self.local_filesystem, initial_dir, destroy_parent_on_open=True
+            self, option2_label_frame, self.local_filesystem, initial_dir, destroy_parent_on_open=True
         )
         self.connection_selection_widgets.container_frame.pack(expand=True, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
