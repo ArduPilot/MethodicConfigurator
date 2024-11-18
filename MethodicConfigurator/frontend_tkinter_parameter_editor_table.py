@@ -49,7 +49,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.local_filesystem = local_filesystem
         self.parameter_editor = parameter_editor
         self.current_file = ""
-        self.upload_checkbutton_var = {}
+        self.upload_checkbutton_var: dict[str, tk.BooleanVar] = {}
         self.at_least_one_param_edited = False
 
         style = ttk.Style()

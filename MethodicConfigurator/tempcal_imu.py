@@ -44,15 +44,15 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
     """class representing a set of coefficients"""
 
     def __init__(self) -> None:
-        self.acoef = {}
-        self.gcoef = {}
+        self.acoef: dict = {}
+        self.gcoef: dict = {}
         self.enable = [0] * 3
         self.tmin = [-100] * 3
         self.tmax = [-100] * 3
-        self.gtcal = {}
-        self.atcal = {}
-        self.gofs = {}
-        self.aofs = {}
+        self.gtcal: dict = {}
+        self.atcal: dict = {}
+        self.gofs: dict = {}
+        self.aofs: dict = {}
 
     def set_accel_poly(self, imu, axis, values) -> None:
         if imu not in self.acoef:
@@ -199,8 +199,8 @@ class IMUData:
     """
 
     def __init__(self) -> None:
-        self.accel = {}
-        self.gyro = {}
+        self.accel: dict = {}
+        self.gyro: dict = {}
 
     def IMUs(self):
         """return list of IMUs"""

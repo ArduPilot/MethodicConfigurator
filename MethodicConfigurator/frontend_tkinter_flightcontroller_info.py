@@ -68,7 +68,7 @@ class FlightControllerInfoWindow(BaseWindow):
         logging_info(_("Flight Controller USB vendor ID: %s"), flight_controller.info.vendor)
         logging_info(_("Flight Controller USB product ID: %s"), flight_controller.info.product)
 
-        self.root.after(50, self.download_flight_controller_parameters())  # 50 milliseconds
+        self.root.after(50, self.download_flight_controller_parameters())  # type: ignore[func-returns-value]
         self.root.mainloop()
 
     def download_flight_controller_parameters(self) -> None:

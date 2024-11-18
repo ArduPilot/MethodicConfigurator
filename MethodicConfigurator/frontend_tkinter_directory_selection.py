@@ -38,7 +38,7 @@ class DirectorySelectionWidgets:
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        parent: tk.Toplevel,
+        parent: BaseWindow,
         parent_frame: tk.Widget,
         initialdir: str,
         label_text: str,
@@ -147,7 +147,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        parent: tk.Toplevel,
+        parent: BaseWindow,
         parent_frame: ttk.Widget,
         local_filesystem: LocalFilesystem,
         initial_dir: str,

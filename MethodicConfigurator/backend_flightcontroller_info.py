@@ -157,11 +157,13 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
     # pymavlink.dialects.v20.ardupilotmega.enums["MAV_TYPE"]
     @staticmethod
     def __decode_mav_type(mav_type) -> str:
-        return mavutil.mavlink.enums["MAV_TYPE"].get(mav_type, mavutil.mavlink.EnumEntry("None", "Unknown type")).description
+        return str(
+            mavutil.mavlink.enums["MAV_TYPE"].get(mav_type, mavutil.mavlink.EnumEntry("None", "Unknown type")).description
+        )
 
     @staticmethod
     def __decode_mav_autopilot(mav_autopilot) -> str:
-        return (
+        return str(
             mavutil.mavlink.enums["MAV_AUTOPILOT"]
             .get(mav_autopilot, mavutil.mavlink.EnumEntry("None", "Unknown type"))
             .description

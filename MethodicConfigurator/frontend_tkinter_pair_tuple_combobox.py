@@ -20,6 +20,7 @@ from logging import warning as logging_warning
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import Label, Toplevel, ttk
+from typing import Union
 
 from MethodicConfigurator import _
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
@@ -37,8 +38,8 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
     def __init__(self, container, list_pair_tuple, selected_element, cb_name, *args, **kwargs) -> None:
         super().__init__(container, *args, **kwargs)
         self.cb_name = cb_name
-        self.list_keys = []
-        self.list_shows = []
+        self.list_keys: list[str] = []
+        self.list_shows: list[str] = []
         self.set_entries_tupple(list_pair_tuple, selected_element)
         self.bind("<Configure>", self.on_combo_configure, add="+")
 
@@ -133,7 +134,7 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
 
     def __init__(self, container, list_pair_tuple, selected_element, cb_name, *args, **kwargs) -> None:
         super().__init__(container, list_pair_tuple, selected_element, cb_name, *args, **kwargs)
-        self.tooltip = None
+        self.tooltip: Union[None, Toplevel] = None
 
         # Bind events related to the dropdown
         pd = self.tk.call("ttk::combobox::PopdownWindow", self)

@@ -477,7 +477,7 @@ class FlightController:
         comports = serial.tools.list_ports.comports()
         # for port in comports:
         #     logging_debug("ComPort - %s, Description: %s", port.device, port.description)
-        return comports
+        return comports  # type: ignore[no-any-return]
 
     @staticmethod
     def __list_network_ports() -> list[str]:

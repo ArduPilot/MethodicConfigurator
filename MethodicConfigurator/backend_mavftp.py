@@ -19,7 +19,9 @@ import sys
 import time
 from argparse import ArgumentParser
 from datetime import datetime
+from io import BufferedReader, BufferedWriter
 from io import BytesIO as SIO
+from typing import Union
 
 from pymavlink import mavutil
 
@@ -91,8 +93,8 @@ class FTP_OP:  # pylint: disable=invalid-name, too-many-instance-attributes
         opcode,
         size,
         req_opcode,
-        burst_complete,
-        offset,
+        burst_complete: bool,
+        offset: int,
         payload,
     ) -> None:
         self.seq = seq  # Sequence number for the operation.
@@ -100,8 +102,8 @@ class FTP_OP:  # pylint: disable=invalid-name, too-many-instance-attributes
         self.opcode = opcode  # Operation code indicating the type of FTP operation.
         self.size = size  # Size of the operation.
         self.req_opcode = req_opcode  # Request operation code.
-        self.burst_complete = burst_complete  # (bool) Flag indicating if the burst transfer is complete.
-        self.offset = offset  # Offset for read/write operations.
+        self.burst_complete: bool = burst_complete  # (bool) Flag indicating if the burst transfer is complete.
+        self.offset: int = offset  # Offset for read/write operations.
         self.payload = payload  # (bytes) Payload for the operation.
 
     def pack(self):
@@ -157,8 +159,8 @@ class ParamData:
     """
 
     def __init__(self) -> None:
-        self.params = []  # params as (name, value, ptype)
-        self.defaults = None  # defaults as (name, value, ptype)
+        self.params: list[tuple[str, float, type]] = []  # params as (name, value, ptype)
+        self.defaults: Union[None, list[tuple[str, float, type]]] = None  # defaults as (name, value, ptype)
 
     def add_param(self, name, value, ptype) -> None:
         self.params.append((name, value, ptype))
@@ -183,7 +185,7 @@ class MAVFTPSettings:
     """A collection of MAVFTP settings."""
 
     def __init__(self, s_vars) -> None:
-        self._vars = {}
+        self._vars: dict[str, MAVFTPSetting] = {}
         for v in s_vars:
             self.append(v)
 
@@ -315,24 +317,24 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.seq = 0
         self.session = 0
         self.network = 0
-        self.last_op = None
-        self.fh = None
-        self.filename = None
+        self.last_op: Union[None, FTP_OP] = None
+        self.fh: Union[None, SIO, BufferedReader, BufferedWriter] = None
+        self.filename: Union[None, str] = None
         self.callback = None
         self.callback_progress = None
         self.put_callback = None
         self.put_callback_progress = None
         self.total_size = 0
-        self.read_gaps = []
-        self.read_gap_times = {}
+        self.read_gaps: list[tuple[int, int]] = []
+        self.read_gap_times: dict[tuple[int, int], float] = {}
         self.last_gap_send = 0.0
         self.read_retries = 0
         self.read_total = 0
         self.remote_file_size = None
         self.duplicates = 0
         self.last_read = None
-        self.last_burst_read = None
-        self.op_start = None
+        self.last_burst_read: Union[None, float] = None
+        self.op_start: Union[None, float] = None
         self.dir_offset = 0
         self.last_op_time = time.time()
         self.last_send_time = time.time()
@@ -340,7 +342,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.reached_eof = False
         self.backlog = 0
         self.burst_size = self.ftp_settings.burst_read_size
-        self.write_list = None
+        self.write_list: Union[None, set[int]] = None
         self.write_block_size = 0
         self.write_acks = 0
         self.write_total = 0
@@ -348,7 +350,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.write_idx = 0
         self.write_recv_idx = -1
         self.write_pending = 0
-        self.write_last_send = None
+        self.write_last_send: Union[None, float] = None
         self.open_retries = 0
 
         self.master = master
@@ -1217,7 +1219,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         )
 
     @staticmethod
-    def ftp_param_decode(data) -> ParamData:  # pylint: disable=too-many-locals
+    def ftp_param_decode(data) -> Union[None, ParamData]:  # pylint: disable=too-many-locals
         """decode parameter data, returning ParamData"""
         pdata = ParamData()
 

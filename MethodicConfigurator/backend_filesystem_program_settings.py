@@ -250,7 +250,7 @@ class ProgramSettings:
     @staticmethod
     def get_setting(setting: str) -> Union[int, bool]:
         if setting in SETTINGS_DEFAULTS:
-            return ProgramSettings.__get_settings_as_dict().get(setting, SETTINGS_DEFAULTS[setting])
+            return ProgramSettings.__get_settings_as_dict().get(setting, SETTINGS_DEFAULTS[setting])  # type: ignore[no-any-return]
         return False
 
     @staticmethod

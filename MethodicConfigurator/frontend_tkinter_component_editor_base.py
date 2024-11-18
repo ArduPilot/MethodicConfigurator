@@ -114,7 +114,7 @@ class ComponentEditorWindowBase(BaseWindow):
         show_tooltip(self.save_button, _("Save component data and start parameter value configuration and tuning."))
         self.save_button.pack(pady=7)
         if UsagePopupWindow.should_display("component_editor"):
-            self.root.after(10, self.__display_component_editor_usage_instructions(self.root))
+            self.root.after(10, self.__display_component_editor_usage_instructions(self.root))  # type: ignore[arg-type]
 
     @staticmethod
     def __display_component_editor_usage_instructions(parent: tk.Toplevel) -> None:

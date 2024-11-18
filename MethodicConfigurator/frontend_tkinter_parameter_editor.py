@@ -284,11 +284,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.__create_parameter_area_widgets()
 
         # trigger a table update to ask the user what to do in the case this file needs special actions
-        self.root.after(10, self.on_param_file_combobox_change(None, True))
+        self.root.after(10, self.on_param_file_combobox_change(None, True))  # type: ignore[func-returns-value]
 
         # this one should be on top of the previous one hence the longer time
         if UsagePopupWindow.should_display("parameter_editor"):
-            self.root.after(100, self.__display_usage_popup_window(self.root))
+            self.root.after(100, self.__display_usage_popup_window(self.root))  # type: ignore[arg-type]
         self.root.mainloop()
 
     def __create_conf_widgets(self, version: str) -> None:
@@ -301,7 +301,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Create a new frame inside the config_subframe for the intermediate parameter file directory selection labels
         # and directory selection button
         directory_selection_frame = VehicleDirectorySelectionWidgets(
-            self.root, config_subframe, self.local_filesystem, self.local_filesystem.vehicle_dir, destroy_parent_on_open=False
+            self, config_subframe, self.local_filesystem, self.local_filesystem.vehicle_dir, destroy_parent_on_open=False
         )
         directory_selection_frame.container_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(4, 6))
 

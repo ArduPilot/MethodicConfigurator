@@ -21,6 +21,7 @@ from logging import error as logging_error
 from os import path as os_path
 from os import walk as os_walk
 from re import match as re_match
+from typing import Any, Union
 
 from MethodicConfigurator import _
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
@@ -35,7 +36,7 @@ class VehicleComponents:
 
     def __init__(self) -> None:
         self.vehicle_components_json_filename = "vehicle_components.json"
-        self.vehicle_components = None
+        self.vehicle_components: Union[None, dict[Any, Any]] = None
 
     def load_vehicle_components_json_data(self, vehicle_dir: str):
         data = {}
