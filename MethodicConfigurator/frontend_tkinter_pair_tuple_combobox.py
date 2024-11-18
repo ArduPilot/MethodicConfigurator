@@ -34,7 +34,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
     of a tuple based on its key.
     """
 
-    def __init__(self, container, list_pair_tuple, selected_element, cb_name, *args, **kwargs):
+    def __init__(self, container, list_pair_tuple, selected_element, cb_name, *args, **kwargs) -> None:
         super().__init__(container, *args, **kwargs)
         self.cb_name = cb_name
         self.list_keys = []
@@ -42,7 +42,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         self.set_entries_tupple(list_pair_tuple, selected_element)
         self.bind("<Configure>", self.on_combo_configure, add="+")
 
-    def set_entries_tupple(self, list_pair_tuple, selected_element):
+    def set_entries_tupple(self, list_pair_tuple, selected_element) -> None:
         if isinstance(list_pair_tuple, list):
             for tpl in list_pair_tuple:
                 self.list_keys.append(tpl[0])
@@ -82,7 +82,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
             return None
 
     # https://stackoverflow.com/questions/39915275/change-width-of-dropdown-listbox-of-a-ttk-combobox
-    def on_combo_configure(self, event):
+    def on_combo_configure(self, event) -> None:
         combo = event.widget
         style = ttk.Style()
         # check if the combobox already has the "postoffset" property
@@ -131,7 +131,7 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
       b) The dropdown is closed (either by selection or pressing Esc)
     """
 
-    def __init__(self, container, list_pair_tuple, selected_element, cb_name, *args, **kwargs):
+    def __init__(self, container, list_pair_tuple, selected_element, cb_name, *args, **kwargs) -> None:
         super().__init__(container, list_pair_tuple, selected_element, cb_name, *args, **kwargs)
         self.tooltip = None
 
@@ -143,7 +143,7 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
         self._bind(("bind", lb), "<Escape>", self.on_escape_press, None)  # type: ignore
         self.bind("<<ComboboxSelected>>", self.on_combobox_selected, None)
 
-    def on_key_release(self, _event):
+    def on_key_release(self, _event) -> None:
         """Get the keyboard highlighted index and create a tooltip for it"""
         pd = self.tk.call("ttk::combobox::PopdownWindow", self)
         lb = pd + ".f.l"
@@ -151,18 +151,18 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
             highlighted_index = int(self.tk.call(lb, "curselection")[0])
             self.create_tooltip_from_index(highlighted_index)
 
-    def on_motion(self, event):
+    def on_motion(self, event) -> None:
         """Get the mouse highlighted index and create a tooltip for it"""
         pd = self.tk.call("ttk::combobox::PopdownWindow", self)
         lb = pd + ".f.l"
         index = self.tk.call(lb, "index", f"@{event.x},{event.y}")
         self.create_tooltip_from_index(int(index))
 
-    def create_tooltip_from_index(self, index):
+    def create_tooltip_from_index(self, index) -> None:
         with contextlib.suppress(IndexError):
             self.create_tooltip(f"{self.list_keys[index]}: {self.list_shows[index]}")
 
-    def create_tooltip(self, text):
+    def create_tooltip(self, text) -> None:
         self.destroy_tooltip()
         try:
             if self.tooltip is None or self.tooltip.winfo_exists():
@@ -177,13 +177,13 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
             # If there's no active item, we don't need to update the tooltip
             pass
 
-    def on_combobox_selected(self, _event):
+    def on_combobox_selected(self, _event) -> None:
         self.destroy_tooltip()
 
-    def on_escape_press(self, _event):
+    def on_escape_press(self, _event) -> None:
         self.destroy_tooltip()
 
-    def destroy_tooltip(self):
+    def destroy_tooltip(self) -> None:
         if hasattr(self, "tooltip") and self.tooltip and self.tooltip.winfo_exists():
             self.tooltip.destroy()
             self.tooltip = None
@@ -207,7 +207,7 @@ def argument_parser():
     return add_common_arguments_and_parse(parser)
 
 
-def main():
+def main() -> None:
     argsp = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(argsp.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")

@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 # from sys import exit as sys_exit
+from argparse import ArgumentParser
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -21,7 +22,7 @@ from platform import system as platform_system
 from re import compile as re_compile
 from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
-from typing import Any
+from typing import Any, Optional
 from zipfile import ZipFile
 
 from requests import get as requests_get  # type: ignore[import-untyped]
@@ -81,7 +82,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         doc_dict (dict): A dictionary containing documentation for each parameter.
     """
 
-    def __init__(self, vehicle_dir: str, vehicle_type: str, fw_version: str, allow_editing_template_files: bool):
+    def __init__(self, vehicle_dir: str, vehicle_type: str, fw_version: str, allow_editing_template_files: bool) -> None:
         self.file_parameters: dict[str, dict[str, Par]] = {}
         VehicleComponents.__init__(self)
         ConfigurationSteps.__init__(self, vehicle_dir, vehicle_type)
@@ -95,7 +96,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         if vehicle_dir is not None:
             self.re_init(vehicle_dir, vehicle_type)
 
-    def re_init(self, vehicle_dir: str, vehicle_type: str):
+    def re_init(self, vehicle_dir: str, vehicle_type: str) -> None:
         self.vehicle_dir = vehicle_dir
         self.doc_dict = {}
 
@@ -149,7 +150,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 return True
         return False
 
-    def rename_parameter_files(self):
+    def rename_parameter_files(self) -> None:
         if self.vehicle_dir is None or self.configuration_steps is None:
             return
         # Rename parameter files if some new files got added to the vehicle directory
@@ -170,7 +171,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                         os_rename(old_filename_path, new_filename_path)
                         logging_info("Renamed %s to %s", old_filename, new_filename)
 
-    def __extend_and_reformat_parameter_documentation_metadata(self):  # pylint: disable=too-many-branches
+    def __extend_and_reformat_parameter_documentation_metadata(self) -> None:  # pylint: disable=too-many-branches
         for param_name, param_info in self.doc_dict.items():
             if "fields" in param_info:
                 param_fields = param_info["fields"]
@@ -242,7 +243,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return parameters
 
     @staticmethod
-    def str_to_bool(s):
+    def str_to_bool(s) -> Optional[bool]:
         """
         Converts a string representation of a boolean value to a boolean.
 
@@ -389,11 +390,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         zip_file_path = self.zip_file_path()
         return os_path.exists(zip_file_path) and os_path.isfile(zip_file_path)
 
-    def add_configuration_file_to_zip(self, zipf, filename):
+    def add_configuration_file_to_zip(self, zipf, filename) -> None:
         if self.vehicle_configuration_file_exists(filename):
             zipf.write(os_path.join(self.vehicle_dir, filename), arcname=filename)
 
-    def zip_files(self, files_to_zip: list[tuple[bool, str]]):
+    def zip_files(self, files_to_zip: list[tuple[bool, str]]) -> None:
         """
         Zips the intermediate parameter files that were written to, including specific summary files.
 
@@ -442,14 +443,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return os_path.exists(self.vehicle_image_filepath()) and os_path.isfile(self.vehicle_image_filepath())
 
     @staticmethod
-    def new_vehicle_dir(base_dir: str, new_dir: str):
+    def new_vehicle_dir(base_dir: str, new_dir: str) -> str:
         return os_path.join(base_dir, new_dir)
 
     @staticmethod
     def directory_exists(directory: str) -> bool:
         return os_path.exists(directory) and os_path.isdir(directory)
 
-    def copy_template_files_to_new_vehicle_dir(self, template_dir: str, new_vehicle_dir: str):
+    def copy_template_files_to_new_vehicle_dir(self, template_dir: str, new_vehicle_dir: str) -> None:
         # Copy the template files to the new vehicle directory
         for item in os_listdir(template_dir):
             if item in {"apm.pdef.xml", "vehicle.jpg", "last_uploaded_filename.txt", "tempcal_acc.png", "tempcal_gyro.png"}:
@@ -462,7 +463,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 shutil_copy2(s, d)
 
     @staticmethod
-    def getcwd():
+    def getcwd() -> str:
         return os_getcwd()
 
     def tempcal_imu_result_param_tuple(self):
@@ -480,7 +481,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     logging_warning(_("Parameter %s not found in the current parameter file"), param)
         return ret
 
-    def write_last_uploaded_filename(self, current_file: str):
+    def write_last_uploaded_filename(self, current_file: str) -> None:
         try:
             with open(os_path.join(self.vehicle_dir, "last_uploaded_filename.txt"), "w", encoding="utf-8") as file:
                 file.write(current_file)
@@ -577,7 +578,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return True
         return False
 
-    def write_param_default_values_to_file(self, param_default_values: dict[str, "Par"], filename: str = "00_default.param"):
+    def write_param_default_values_to_file(
+        self, param_default_values: dict[str, "Par"], filename: str = "00_default.param"
+    ) -> None:
         if self.write_param_default_values(param_default_values):
             Par.export_to_param(Par.format_params(self.param_default_dict), os_path.join(self.vehicle_dir, filename))
 
@@ -622,7 +625,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return False
 
     @staticmethod
-    def add_argparse_arguments(parser):
+    def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
         parser.add_argument(
             "-t",
             "--vehicle-type",

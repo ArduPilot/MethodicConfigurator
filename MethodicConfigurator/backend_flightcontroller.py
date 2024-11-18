@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from argparse import ArgumentParser
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -17,7 +18,7 @@ from os import path as os_path
 from os import readlink as os_readlink
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import Optional, Union
+from typing import NoReturn, Optional, Union
 
 import serial.tools.list_ports
 import serial.tools.list_ports_common
@@ -43,19 +44,19 @@ class FakeSerialForUnitTests:
     number of bytes in the input buffer, as well as closing the connection.
     """
 
-    def __init__(self, device: str):
+    def __init__(self, device: str) -> None:
         self.device = device
 
-    def read(self, _len):
+    def read(self, _len) -> str:
         return ""
 
-    def write(self, _buf):
+    def write(self, _buf) -> NoReturn:
         raise Exception("write always fails")  # pylint: disable=broad-exception-raised
 
-    def inWaiting(self):  # pylint: disable=invalid-name
+    def inWaiting(self) -> int:  # pylint: disable=invalid-name
         return 0
 
-    def close(self):
+    def close(self) -> None:
         pass
 
 
@@ -69,7 +70,7 @@ class FlightController:
         fc_parameters (Dict[str, float]): A dictionary of flight controller parameters.
     """
 
-    def __init__(self, reboot_time: int):
+    def __init__(self, reboot_time: int) -> None:
         """
         Initialize the FlightController communication object.
 
@@ -86,7 +87,7 @@ class FlightController:
         self.fc_parameters: dict[str, float] = {}
         self.info = BackendFlightcontrollerInfo()
 
-    def discover_connections(self):
+    def discover_connections(self) -> None:
         comports = FlightController.__list_serial_ports()
         netports = FlightController.__list_network_ports()
         # list of tuples with the first element being the port name and the second element being the port description
@@ -97,7 +98,7 @@ class FlightController:
         # now that it is logged, add the 'Add another' tuple
         self.__connection_tuples += [(_("Add another"), _("Add another"))]
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """
         Close the connection to the flight controller.
         """
@@ -107,7 +108,7 @@ class FlightController:
         self.fc_parameters = {}
         self.info = BackendFlightcontrollerInfo()
 
-    def add_connection(self, connection_string: str):
+    def add_connection(self, connection_string: str) -> bool:
         """
         Add a new connection to the list of available connections.
         """
@@ -170,7 +171,7 @@ class FlightController:
                 return _("No serial ports found. Please connect a flight controller and try again.")
         return self.__create_connection_with_retry(progress_callback=progress_callback, log_errors=log_errors)
 
-    def __request_banner(self):
+    def __request_banner(self) -> None:
         """Request banner information from the flight controller"""
         # https://mavlink.io/en/messages/ardupilotmega.html#MAV_CMD_DO_SEND_BANNER
         if self.master is not None:
@@ -204,7 +205,7 @@ class FlightController:
                 break  # Exit the loop if 1 seconds have elapsed
         return banner_msgs
 
-    def __request_message(self, message_id: int):
+    def __request_message(self, message_id: int) -> None:
         if self.master is not None:
             self.master.mav.command_long_send(
                 self.info.system_id,
@@ -394,7 +395,7 @@ class FlightController:
             return {}, {}
         mavftp = MAVFTP(self.master, target_system=self.master.target_system, target_component=self.master.target_component)
 
-        def get_params_progress_callback(completion: float):
+        def get_params_progress_callback(completion: float) -> None:
             if progress_callback is not None and completion is not None:
                 progress_callback(int(completion * 100), 100)
 
@@ -469,7 +470,7 @@ class FlightController:
         return self.__create_connection_with_retry(connection_progress_callback)
 
     @staticmethod
-    def __list_serial_ports():
+    def __list_serial_ports() -> list[serial.tools.list_ports_common.ListPortInfo]:
         """
         List all available serial ports.
         """
@@ -479,7 +480,7 @@ class FlightController:
         return comports
 
     @staticmethod
-    def __list_network_ports():
+    def __list_network_ports() -> list[str]:
         """
         List all available network ports.
         """
@@ -539,7 +540,7 @@ class FlightController:
             return False
         mavftp = MAVFTP(self.master, target_system=self.master.target_system, target_component=self.master.target_component)
 
-        def put_progress_callback(completion: float):
+        def put_progress_callback(completion: float) -> None:
             if progress_callback is not None and completion is not None:
                 progress_callback(int(completion * 100), 100)
 
@@ -550,7 +551,7 @@ class FlightController:
         return ret.error_code == 0
 
     @staticmethod
-    def add_argparse_arguments(parser):
+    def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
         parser.add_argument(
             "--device",
             type=str,

@@ -14,7 +14,7 @@ from MethodicConfigurator.middleware_template_overview import TemplateOverview
 
 
 class TestTemplateOverview(unittest.TestCase):  # pylint: disable=missing-class-docstring
-    def setUp(self):
+    def setUp(self) -> None:
         # Define sample data to be used in tests
         self.sample_data = {
             "Flight Controller": {"Product": {"Manufacturer": "ArduPilot", "Model": "Pixhawk4"}},
@@ -22,7 +22,7 @@ class TestTemplateOverview(unittest.TestCase):  # pylint: disable=missing-class-
             # ... add other components as per your structure
         }
 
-    def test_template_overview_initialization(self):
+    def test_template_overview_initialization(self) -> None:
         # Initialize the TemplateOverview with sample data
         template_overview = TemplateOverview(self.sample_data)
 
@@ -32,7 +32,7 @@ class TestTemplateOverview(unittest.TestCase):  # pylint: disable=missing-class-
         self.assertEqual(template_overview.tow_max_kg, "5")
         # .. similarly test other attributes
 
-    def test_template_overview_column_labels(self):
+    def test_template_overview_column_labels(self) -> None:
         # Check if the column labels match the required order
         # pylint: disable=duplicate-code
         expected_columns = (
@@ -50,7 +50,7 @@ class TestTemplateOverview(unittest.TestCase):  # pylint: disable=missing-class-
         # pylint: enable=duplicate-code
         self.assertEqual(TemplateOverview.columns(), expected_columns)
 
-    def test_template_overview_attributes_method(self):
+    def test_template_overview_attributes_method(self) -> None:
         # Initialize the TemplateOverview with the sample data
         template_overview = TemplateOverview(self.sample_data)
 

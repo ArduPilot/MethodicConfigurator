@@ -25,7 +25,7 @@ from MethodicConfigurator.extract_param_defaults import (
 
 
 class TestArgParseParameters(unittest.TestCase):  # pylint: disable=missing-class-docstring
-    def test_command_line_arguments_combinations(self):
+    def test_command_line_arguments_combinations(self) -> None:
         # Check the 'format' and 'sort' default parameters
         args = parse_arguments(["dummy.bin"])
         self.assertEqual(args.format, "missionplanner")
@@ -71,7 +71,7 @@ class TestArgParseParameters(unittest.TestCase):  # pylint: disable=missing-clas
 
 class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=missing-class-docstring
     @patch("extract_param_defaults.mavutil.mavlink_connection")
-    def test_logfile_does_not_exist(self, mock_mavlink_connection):
+    def test_logfile_does_not_exist(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to raise an exception
         mock_mavlink_connection.side_effect = Exception("Test exception")
 
@@ -83,7 +83,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         self.assertEqual(str(cm.exception), "Error opening the dummy.bin logfile: Test exception")
 
     @patch("extract_param_defaults.mavutil.mavlink_connection")
-    def test_extract_parameter_default_values(self, mock_mavlink_connection):
+    def test_extract_parameter_default_values(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection and the messages it returns
         mock_mlog = MagicMock()
         mock_mavlink_connection.return_value = mock_mlog
@@ -100,7 +100,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         self.assertEqual(defaults, {"PARAM1": 1.1, "PARAM2": 2.0})
 
     @patch("extract_param_defaults.mavutil.mavlink_connection")
-    def test_no_parameters(self, mock_mavlink_connection):
+    def test_no_parameters(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to return no parameter messages
         mock_mlog = MagicMock()
         mock_mavlink_connection.return_value = mock_mlog
@@ -112,7 +112,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         self.assertEqual(str(cm.exception), NO_DEFAULT_VALUES_MESSAGE)
 
     @patch("extract_param_defaults.mavutil.mavlink_connection")
-    def test_no_parameter_defaults(self, mock_mavlink_connection):
+    def test_no_parameter_defaults(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to simulate no parameter default values in the .bin file
         mock_mlog = MagicMock()
         mock_mavlink_connection.return_value = mock_mlog
@@ -124,7 +124,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         self.assertEqual(str(cm.exception), NO_DEFAULT_VALUES_MESSAGE)
 
     @patch("extract_param_defaults.mavutil.mavlink_connection")
-    def test_invalid_parameter_name(self, mock_mavlink_connection):
+    def test_invalid_parameter_name(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to simulate an invalid parameter name
         mock_mlog = MagicMock()
         mock_mavlink_connection.return_value = mock_mlog
@@ -135,7 +135,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
             extract_parameter_values("dummy.bin")
 
     @patch("extract_param_defaults.mavutil.mavlink_connection")
-    def test_long_parameter_name(self, mock_mavlink_connection):
+    def test_long_parameter_name(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to simulate a too long parameter name
         mock_mlog = MagicMock()
         mock_mavlink_connection.return_value = mock_mlog
@@ -147,7 +147,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
 
 
 class TestSortFunctions(unittest.TestCase):  # pylint: disable=missing-class-docstring
-    def test_missionplanner_sort(self):
+    def test_missionplanner_sort(self) -> None:
         # Define a list of parameter names
         params = ["PARAM_GROUP1_PARAM1", "PARAM_GROUP2_PARAM2", "PARAM_GROUP1_PARAM2"]
 
@@ -162,7 +162,7 @@ class TestSortFunctions(unittest.TestCase):  # pylint: disable=missing-class-doc
         sorted_params = sorted(params, key=missionplanner_sort)
         self.assertEqual(sorted_params, ["PARAM1", "PARAM2", "PARAM3"])
 
-    def test_mavproxy_sort(self):
+    def test_mavproxy_sort(self) -> None:
         # Define a list of parameter names
         params = ["PARAM_GROUP1_PARAM1", "PARAM_GROUP2_PARAM2", "PARAM_GROUP1_PARAM2"]
 
@@ -180,7 +180,7 @@ class TestSortFunctions(unittest.TestCase):  # pylint: disable=missing-class-doc
 
 class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docstring
     @patch("builtins.print")
-    def test_output_params(self, mock_print):
+    def test_output_params(self, mock_print) -> None:
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 1.0, "PARAM1": 2.0}
 
@@ -194,7 +194,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_missionplanner_non_numeric(self, mock_print):
+    def test_output_params_missionplanner_non_numeric(self, mock_print) -> None:
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM1": "non-numeric"}
 
@@ -206,7 +206,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_mavproxy(self, mock_print):
+    def test_output_params_mavproxy(self, mock_print) -> None:
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0}
 
@@ -222,7 +222,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_qgcs(self, mock_print):
+    def test_output_params_qgcs(self, mock_print) -> None:
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0}
 
@@ -239,7 +239,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_qgcs_2_4(self, mock_print):
+    def test_output_params_qgcs_2_4(self, mock_print) -> None:
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0}
 
@@ -256,7 +256,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_qgcs_SYSID_THISMAV(self, mock_print):  # pylint: disable=invalid-name
+    def test_output_params_qgcs_SYSID_THISMAV(self, mock_print) -> None:  # pylint: disable=invalid-name
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0, "SYSID_THISMAV": 3.0}
 
@@ -274,7 +274,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_qgcs_SYSID_INVALID(self, _mock_print):  # pylint: disable=invalid-name
+    def test_output_params_qgcs_SYSID_INVALID(self, _mock_print) -> None:  # pylint: disable=invalid-name
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0, "SYSID_THISMAV": -1.0}
 
@@ -291,7 +291,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         self.assertEqual(str(cm.exception), f"Invalid system ID parameter 16777218 must be smaller than {MAVLINK_SYSID_MAX}")
 
     @patch("builtins.print")
-    def test_output_params_qgcs_COMPID_INVALID(self, _mock_print):  # pylint: disable=invalid-name
+    def test_output_params_qgcs_COMPID_INVALID(self, _mock_print) -> None:  # pylint: disable=invalid-name
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0}
 
@@ -308,7 +308,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         self.assertEqual(str(cm.exception), f"Invalid component ID parameter 259 must be smaller than {MAVLINK_COMPID_MAX}")
 
     @patch("builtins.print")
-    def test_output_params_integer(self, mock_print):
+    def test_output_params_integer(self, mock_print) -> None:
         # Prepare a dummy defaults dictionary with an integer value
         defaults = {"PARAM1": 1.01, "PARAM2": 2.00}
 

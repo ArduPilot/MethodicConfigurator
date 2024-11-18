@@ -30,7 +30,7 @@ class FlightControllerInfoWindow(BaseWindow):
     Display flight controller hardware, firmware and parameter information
     """
 
-    def __init__(self, flight_controller: FlightController):
+    def __init__(self, flight_controller: FlightController) -> None:
         super().__init__()
         self.root.title(_("ArduPilot methodic configurator ") + __version__ + _(" - Flight Controller Info"))
         self.root.geometry("500x350")  # Adjust the window size as needed
@@ -71,7 +71,7 @@ class FlightControllerInfoWindow(BaseWindow):
         self.root.after(50, self.download_flight_controller_parameters())  # 50 milliseconds
         self.root.mainloop()
 
-    def download_flight_controller_parameters(self):
+    def download_flight_controller_parameters(self) -> None:
         param_download_progress_window = ProgressWindow(
             self.root, _("Downloading FC parameters"), _("Downloaded {} of {} parameters")
         )

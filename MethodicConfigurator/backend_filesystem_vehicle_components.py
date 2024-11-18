@@ -33,7 +33,7 @@ class VehicleComponents:
     vehicle components configurations from a JSON file.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.vehicle_components_json_filename = "vehicle_components.json"
         self.vehicle_components = None
 
@@ -89,11 +89,11 @@ class VehicleComponents:
         return ""
 
     @staticmethod
-    def supported_vehicles():
+    def supported_vehicles() -> list[str]:
         return ["AP_Periph", "AntennaTracker", "ArduCopter", "ArduPlane", "ArduSub", "Blimp", "Heli", "Rover", "SITL"]
 
     @staticmethod
-    def get_vehicle_components_overviews():
+    def get_vehicle_components_overviews() -> dict[str, TemplateOverview]:
         """
         Finds all subdirectories of base_dir containing a "vehicle_components.json" file,
         creates a dictionary where the keys are the subdirectory names (relative to base_dir)

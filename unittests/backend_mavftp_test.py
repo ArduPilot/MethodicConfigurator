@@ -53,7 +53,7 @@ from MethodicConfigurator.backend_mavftp import (
 class TestMAVFTPPayloadDecoding(unittest.TestCase):
     """Test MAVFTP payload decoding"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.log_stream = StringIO()
         handler = logging.StreamHandler(self.log_stream)
         formatter = logging.Formatter("%(levelname)s: %(message)s")
@@ -68,11 +68,11 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         # Initialize MAVFTP instance for testing
         self.mav_ftp = MAVFTP(self.mock_master, target_system=1, target_component=1)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.log_stream.seek(0)
         self.log_stream.truncate(0)
 
-    def test_logging(self):
+    def test_logging(self) -> None:
         # Code that triggers logging
         logging.info("This is a test log message")
 
@@ -88,7 +88,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
             seq=seq, session=1, opcode=opcode, size=0, req_opcode=req_opcode, burst_complete=0, offset=0, payload=payload
         )
 
-    def test_decode_ftp_ack_and_nack(self):
+    def test_decode_ftp_ack_and_nack(self) -> None:
         # Test cases grouped by expected outcome
         test_cases = [
             {

@@ -48,7 +48,7 @@ indirect_dependencies = [
 ]
 
 
-def download_license(package_name, license_url):
+def download_license(package_name, license_url) -> None:
     try:
         response = requests.get(license_url, timeout=10)
         response.raise_for_status()  # Raise an exception if the request failed

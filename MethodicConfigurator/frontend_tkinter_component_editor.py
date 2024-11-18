@@ -213,7 +213,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     for editing component configurations in the ArduPilot Methodic Configurator.
     """
 
-    def __init__(self, version, local_filesystem: LocalFilesystem):
+    def __init__(self, version, local_filesystem: LocalFilesystem) -> None:
         self.serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
         self.can_ports = ["CAN1", "CAN2"]
         self.i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
@@ -253,7 +253,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         _vehicle_components_strings = _("Diameter_inches")
         _vehicle_components_strings = _("GNSS Receiver")
 
-    def update_json_data(self):
+    def update_json_data(self) -> None:
         super().update_json_data()
         # To update old JSON files that do not have these new fields
         if "Components" not in self.data:
@@ -283,20 +283,20 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         self.data["Program version"] = __version__
 
-    def set_vehicle_type_and_version(self, vehicle_type: str, version: str):
+    def set_vehicle_type_and_version(self, vehicle_type: str, version: str) -> None:
         self._set_component_value_and_update_ui(("Flight Controller", "Firmware", "Type"), vehicle_type)
         if version:
             self._set_component_value_and_update_ui(("Flight Controller", "Firmware", "Version"), version)
 
-    def set_fc_manufacturer(self, manufacturer: str):
+    def set_fc_manufacturer(self, manufacturer: str) -> None:
         if manufacturer and manufacturer not in ("Unknown", "ArduPilot"):
             self._set_component_value_and_update_ui(("Flight Controller", "Product", "Manufacturer"), manufacturer)
 
-    def set_fc_model(self, model: str):
+    def set_fc_model(self, model: str) -> None:
         if model and model not in ("Unknown", "MAVLink"):
             self._set_component_value_and_update_ui(("Flight Controller", "Product", "Model"), model)
 
-    def set_vehicle_configuration_template(self, configuration_template: str):
+    def set_vehicle_configuration_template(self, configuration_template: str) -> None:
         self.data["Configuration template"] = configuration_template
 
     @staticmethod
@@ -309,7 +309,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         logging_error(_("No values found for %s in the metadata"), param_name)
         return fallbacks
 
-    def __assert_dict_is_uptodate(self, doc: dict, dict_to_check: dict, doc_key: str, doc_dict: str):
+    def __assert_dict_is_uptodate(self, doc: dict, dict_to_check: dict, doc_key: str, doc_dict: str) -> None:
         """Asserts that the given dictionary is up-to-date with the apm.pdef.xml documentation metadata."""
         if doc and doc_key in doc and doc[doc_key] and doc_dict in doc[doc_key]:
             for key, doc_protocol in doc[doc_key][doc_dict].items():
@@ -320,7 +320,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 else:
                     logging_error(_("Protocol %s not found in %s metadata"), doc_protocol, doc_key)
 
-    def set_values_from_fc_parameters(self, fc_parameters: dict, doc: dict):
+    def set_values_from_fc_parameters(self, fc_parameters: dict, doc: dict) -> None:
         self.__assert_dict_is_uptodate(doc, serial_protocols_dict, "SERIAL1_PROTOCOL", "values")
         self.__assert_dict_is_uptodate(doc, batt_monitor_connection, "BATT_MONITOR", "values")
         self.__assert_dict_is_uptodate(doc, gnss_receiver_connection, "GPS_TYPE", "values")
@@ -334,7 +334,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         self.__set_battery_type_and_protocol_from_fc_parameters(fc_parameters)
         self.__set_motor_poles_from_fc_parameters(fc_parameters)
 
-    def __set_gnss_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
+    def __set_gnss_type_and_protocol_from_fc_parameters(self, fc_parameters: dict) -> None:
         gps1_type = fc_parameters.get("GPS_TYPE", 0)
         try:
             gps1_type = int(gps1_type)
@@ -425,7 +425,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         return esc >= 2
 
-    def __set_esc_type_and_protocol_from_fc_parameters(self, fc_parameters: dict, doc: dict):
+    def __set_esc_type_and_protocol_from_fc_parameters(self, fc_parameters: dict, doc: dict) -> None:
         mot_pwm_type = fc_parameters.get("MOT_PWM_TYPE", 0)
         try:
             mot_pwm_type = int(mot_pwm_type)
@@ -441,7 +441,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             self.data["Components"]["ESC"]["FC Connection"]["Type"] = "AIO"
         self.data["Components"]["ESC"]["FC Connection"]["Protocol"] = doc["MOT_PWM_TYPE"]["values"][str(mot_pwm_type)]
 
-    def __set_battery_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
+    def __set_battery_type_and_protocol_from_fc_parameters(self, fc_parameters: dict) -> None:
         if "BATT_MONITOR" in fc_parameters:
             batt_monitor = int(fc_parameters["BATT_MONITOR"])
             self.data["Components"]["Battery Monitor"]["FC Connection"]["Type"] = batt_monitor_connection[
@@ -451,7 +451,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 str(batt_monitor)
             ].get("protocol")
 
-    def __set_motor_poles_from_fc_parameters(self, fc_parameters: dict):
+    def __set_motor_poles_from_fc_parameters(self, fc_parameters: dict) -> None:
         if "MOT_PWM_TYPE" in fc_parameters:
             mot_pwm_type_str = str(fc_parameters["MOT_PWM_TYPE"])
             if mot_pwm_type_str in mot_pwm_type_dict and mot_pwm_type_dict[mot_pwm_type_str].get("is_dshot", False):
@@ -460,7 +460,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             elif "SERVO_FTW_MASK" in fc_parameters and fc_parameters["SERVO_FTW_MASK"] and "SERVO_FTW_POLES" in fc_parameters:
                 self.data["Components"]["Motors"]["Specifications"]["Poles"] = fc_parameters["SERVO_FTW_POLES"]
 
-    def update_esc_protocol_combobox_entries(self, esc_connection_type: str):
+    def update_esc_protocol_combobox_entries(self, esc_connection_type: str) -> None:
         """Updates the ESC Protocol combobox entries based on the selected ESC Type."""
         if len(esc_connection_type) > 3 and esc_connection_type[:3] == "CAN":
             protocols = ["DroneCAN"]
@@ -617,7 +617,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         combobox.configure(style="comb_input_valid.TCombobox")
         return True
 
-    def validate_entry_limits(self, event, entry, data_type, limits, _name, path):  # pylint: disable=too-many-arguments
+    def validate_entry_limits(self, event, entry, data_type, limits, _name, path) -> bool:  # pylint: disable=too-many-arguments
         is_focusout_event = event and event.type == "10"
         try:
             value = entry.get()  # make sure value is defined to prevent exception in the except block
@@ -635,7 +635,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         entry.configure(style="entry_input_valid.TEntry")
         return True
 
-    def validate_cell_voltage(self, event, entry, path):  # pylint: disable=too-many-branches
+    def validate_cell_voltage(self, event, entry, path) -> bool:  # pylint: disable=too-many-branches
         """
         Validates the value of a battery cell voltage entry.
         """
@@ -690,11 +690,11 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         entry.configure(style="entry_input_valid.TEntry")
         return True
 
-    def save_data(self):
+    def save_data(self) -> None:
         if self.validate_data():
             ComponentEditorWindowBase.save_data(self)
 
-    def validate_data(self):  # pylint: disable=too-many-branches
+    def validate_data(self) -> bool:  # pylint: disable=too-many-branches
         invalid_values = False
         duplicated_connections = False
         fc_serial_connection: dict[str, str] = {}

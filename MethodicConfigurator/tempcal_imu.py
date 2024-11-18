@@ -43,7 +43,7 @@ AXEST = ["X", "Y", "Z", "T", "time"]
 class Coefficients:  # pylint: disable=too-many-instance-attributes
     """class representing a set of coefficients"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.acoef = {}
         self.gcoef = {}
         self.enable = [0] * 3
@@ -54,53 +54,53 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
         self.gofs = {}
         self.aofs = {}
 
-    def set_accel_poly(self, imu, axis, values):
+    def set_accel_poly(self, imu, axis, values) -> None:
         if imu not in self.acoef:
             self.acoef[imu] = {}
         self.acoef[imu][axis] = values
 
-    def set_gyro_poly(self, imu, axis, values):
+    def set_gyro_poly(self, imu, axis, values) -> None:
         if imu not in self.gcoef:
             self.gcoef[imu] = {}
         self.gcoef[imu][axis] = values
 
-    def set_acoeff(self, imu, axis, order, value):
+    def set_acoeff(self, imu, axis, order, value) -> None:
         if imu not in self.acoef:
             self.acoef[imu] = {}
         if axis not in self.acoef[imu]:
             self.acoef[imu][axis] = [0] * 4
         self.acoef[imu][axis][POLY_ORDER - order] = value
 
-    def set_gcoeff(self, imu, axis, order, value):
+    def set_gcoeff(self, imu, axis, order, value) -> None:
         if imu not in self.gcoef:
             self.gcoef[imu] = {}
         if axis not in self.gcoef[imu]:
             self.gcoef[imu][axis] = [0] * 4
         self.gcoef[imu][axis][POLY_ORDER - order] = value
 
-    def set_aoffset(self, imu, axis, value):
+    def set_aoffset(self, imu, axis, value) -> None:
         if imu not in self.aofs:
             self.aofs[imu] = {}
         self.aofs[imu][axis] = value
 
-    def set_goffset(self, imu, axis, value):
+    def set_goffset(self, imu, axis, value) -> None:
         if imu not in self.gofs:
             self.gofs[imu] = {}
         self.gofs[imu][axis] = value
 
-    def set_tmin(self, imu, tmin):
+    def set_tmin(self, imu, tmin) -> None:
         self.tmin[imu] = tmin
 
-    def set_tmax(self, imu, tmax):
+    def set_tmax(self, imu, tmax) -> None:
         self.tmax[imu] = tmax
 
-    def set_gyro_tcal(self, imu, value):
+    def set_gyro_tcal(self, imu, value) -> None:
         self.gtcal[imu] = value
 
-    def set_accel_tcal(self, imu, value):
+    def set_accel_tcal(self, imu, value) -> None:
         self.atcal[imu] = value
 
-    def set_enable(self, imu, value):
+    def set_enable(self, imu, value) -> None:
         self.enable[imu] = value
 
     def correction(self, coeff, imu, temperature, axis, cal_temp):  # pylint: disable=too-many-arguments
@@ -153,12 +153,12 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
 class OnlineIMUfit:  # pylint: disable=too-few-public-methods
     """implement the online learning used in ArduPilot"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.porder: int = 0
         self.mat = np.zeros((1, 1))
         self.vec = np.zeros(1)
 
-    def __update(self, x, y):
+    def __update(self, x, y) -> None:
         temp = 1.0
 
         for i in range(2 * (self.porder - 1), -1, -1):
@@ -198,7 +198,7 @@ class IMUData:
     moving average filters, and retrieve data for specific IMUs and temperatures.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.accel = {}
         self.gyro = {}
 
@@ -209,7 +209,7 @@ class IMUData:
             sys.exit(1)
         return self.accel.keys()
 
-    def add_accel(self, imu, temperature, time, value):
+    def add_accel(self, imu, temperature, time, value) -> None:
         if imu not in self.accel:
             self.accel[imu] = {}
             for axis in AXEST:
@@ -220,7 +220,7 @@ class IMUData:
         self.accel[imu]["Z"] = np.append(self.accel[imu]["Z"], value.z)
         self.accel[imu]["time"] = np.append(self.accel[imu]["time"], time)
 
-    def add_gyro(self, imu, temperature, time, value):
+    def add_gyro(self, imu, temperature, time, value) -> None:
         if imu not in self.gyro:
             self.gyro[imu] = {}
             for axis in AXEST:
@@ -247,7 +247,7 @@ class IMUData:
                 data[axis] = self.moving_average(data[axis], window)
         return data
 
-    def Filter(self, width_s):
+    def Filter(self, width_s) -> None:
         """apply moving average filter of width width_s seconds"""
         for imu in self.IMUs():
             self.accel[imu] = self.FilterArray(self.accel[imu], width_s)
@@ -294,7 +294,7 @@ def IMUfit(  # noqa: PLR0915 pylint: disable=too-many-locals, too-many-branches,
     tclr,
     figpath,
     progress_callback,
-):
+) -> None:
     """find IMU calibration parameters from a log file"""
     print(f"Processing log {logfile}")
     mlog = mavutil.mavlink_connection(logfile, progress_callback=progress_callback)
@@ -538,7 +538,7 @@ def generate_calibration_file(outfile, online, progress_callback, data, c):  # p
     return c, clog
 
 
-def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus):  # pylint: disable=too-many-arguments
+def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus) -> None:  # pylint: disable=too-many-arguments
     _fig, axs = plt.subplots(len(data.IMUs()), 1, sharex=True)
     if num_imus == 1:
         axs = [axs]
@@ -572,7 +572,7 @@ def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus):  
         _fig.savefig(os.path.join(figpath, "tempcal_gyro.png"))
 
 
-def generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus):  # pylint: disable=too-many-arguments
+def generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus) -> None:  # pylint: disable=too-many-arguments
     _fig, axs = plt.subplots(num_imus, 1, sharex=True)
     if num_imus == 1:
         axs = [axs]
@@ -608,7 +608,7 @@ def generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus): 
         _fig.savefig(os.path.join(figpath, "tempcal_acc.png"))
 
 
-def main():
+def main() -> None:
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--outfile", default="tcal.parm", help="set output file")
     parser.add_argument("--no-graph", action="store_true", default=False, help="disable graph display")

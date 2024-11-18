@@ -19,7 +19,7 @@ class TestVersion(unittest.TestCase):
     Test that the __version__ constant is a string and follows semantic versioning.
     """
 
-    def test_version_format(self):
+    def test_version_format(self) -> None:
         # Semantic versioning pattern
         semver_pattern = r"^\d+\.\d+\.\d+$"
         match = re.match(semver_pattern, __version__)

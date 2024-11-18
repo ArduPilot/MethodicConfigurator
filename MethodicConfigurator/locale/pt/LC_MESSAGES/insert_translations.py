@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 
-def insert_translations(po_file, translations_file, output_file):
+def insert_translations(po_file, translations_file, output_file) -> None:
     with open(po_file, encoding="utf-8") as f:
         lines = f.readlines()
 

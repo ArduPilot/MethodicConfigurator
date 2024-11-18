@@ -28,7 +28,7 @@ from MethodicConfigurator.backend_filesystem import LocalFilesystem
 from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 
 
-def show_error_message(title: str, message: str):
+def show_error_message(title: str, message: str) -> None:
     root = tk.Tk()
     # Set the theme to 'alt'
     style = ttk.Style()
@@ -38,7 +38,7 @@ def show_error_message(title: str, message: str):
     root.destroy()
 
 
-def show_no_param_files_error(_dirname: str):
+def show_no_param_files_error(_dirname: str) -> None:
     error_message = _(
         "No intermediate parameter files found in the selected '{_dirname}' vehicle directory.\n"
         "Please select and step inside a vehicle directory containing valid ArduPilot intermediate parameter files.\n\n"
@@ -47,20 +47,20 @@ def show_no_param_files_error(_dirname: str):
     show_error_message(_("No Parameter Files Found"), error_message.format(**locals()))
 
 
-def show_no_connection_error(_error_string: str):
+def show_no_connection_error(_error_string: str) -> None:
     error_message = _("{_error_string}\n\nPlease connect a flight controller to the PC,\nwait at least 7 seconds and retry.")
     show_error_message(_("No Connection to the Flight Controller"), error_message.format(**locals()))
 
 
-def show_tooltip(widget, text):
-    def enter(_event):
+def show_tooltip(widget, text) -> None:
+    def enter(_event) -> None:
         # Calculate the position of the tooltip based on the widget's position
         x = widget.winfo_rootx() + widget.winfo_width() // 2
         y = widget.winfo_rooty() + widget.winfo_height()
         tooltip.geometry(f"+{x}+{y}")
         tooltip.deiconify()
 
-    def leave(_event):
+    def leave(_event) -> None:
         tooltip.withdraw()
 
     tooltip = tk.Toplevel(widget)
@@ -74,7 +74,7 @@ def show_tooltip(widget, text):
     widget.bind("<Leave>", leave)
 
 
-def update_combobox_width(combobox):
+def update_combobox_width(combobox) -> None:
     # Calculate the maximum width needed for the content
     max_width = max(len(value) for value in combobox["values"])
     # Set a minimum width for the combobox
@@ -98,11 +98,11 @@ class AutoResizeCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         tooltip: A string representing the tooltip text to display when hovering over the widget.
     """
 
-    def __init__(self, container, values, selected_element, tooltip, *args, **kwargs):
+    def __init__(self, container, values, selected_element, tooltip, *args, **kwargs) -> None:
         super().__init__(container, *args, **kwargs)
         self.set_entries_tupple(values, selected_element, tooltip)
 
-    def set_entries_tupple(self, values, selected_element, tooltip=None):
+    def set_entries_tupple(self, values, selected_element, tooltip=None) -> None:
         self["values"] = tuple(values)
         if selected_element:
             if selected_element in values:
@@ -126,7 +126,7 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
     scrollable areas within your application's GUI.
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent) -> None:
         super().__init__(parent)  # create a frame (self)
 
         # place canvas on self, copy ttk.background to tk.background
@@ -163,7 +163,7 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         # perform an initial stretch on render, otherwise the scroll region has a tiny border until the first resize
         self.on_frame_configure(None)
 
-    def on_frame_configure(self, _event):
+    def on_frame_configure(self, _event) -> None:
         """Reset the scroll region to encompass the inner frame"""
         # Whenever the size of the frame changes, alter the scroll region respectively.
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
@@ -174,13 +174,13 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         #     bbox = (bbox[0], bbox[1] + self.canvas.winfo_reqheight(), bbox[2], bbox[3])
         #     self.canvas.configure(scrollregion=bbox)
 
-    def on_canvas_configure(self, event):
+    def on_canvas_configure(self, event) -> None:
         """Reset the canvas window to encompass inner frame when required"""
         canvas_width = event.width
         # Whenever the size of the canvas changes alter the window region respectively.
         self.canvas.itemconfig(self.canvas_window, width=canvas_width)
 
-    def on_mouse_wheel(self, event):  # cross platform scroll wheel event
+    def on_mouse_wheel(self, event) -> None:  # cross platform scroll wheel event
         canvas_height = self.canvas.winfo_height()
         rows_height = self.canvas.bbox("all")[3]
 
@@ -194,14 +194,14 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
             elif event.num == 5:
                 self.canvas.yview_scroll(1, "units")
 
-    def on_enter(self, _event):  # bind wheel events when the cursor enters the control
+    def on_enter(self, _event) -> None:  # bind wheel events when the cursor enters the control
         if platform_system() == "Linux":
             self.canvas.bind_all("<Button-4>", self.on_mouse_wheel)
             self.canvas.bind_all("<Button-5>", self.on_mouse_wheel)
         else:
             self.canvas.bind_all("<MouseWheel>", self.on_mouse_wheel)
 
-    def on_leave(self, _event):  # unbind wheel events when the cursor leaves the control
+    def on_leave(self, _event) -> None:  # unbind wheel events when the cursor leaves the control
         if platform_system() == "Linux":
             self.canvas.unbind_all("<Button-4>")
             self.canvas.unbind_all("<Button-5>")
@@ -217,7 +217,7 @@ class ProgressWindow:
     a task. It includes a progress bar and a label to display the progress message.
     """
 
-    def __init__(self, parent, title: str, message: str = "", width: int = 300, height: int = 80):  # pylint: disable=too-many-arguments
+    def __init__(self, parent, title: str, message: str = "", width: int = 300, height: int = 80) -> None:  # pylint: disable=too-many-arguments
         self.parent = parent
         self.message = message
         self.progress_window = tk.Toplevel(self.parent)
@@ -242,11 +242,11 @@ class ProgressWindow:
 
         self.progress_bar.update()
 
-    def update_progress_bar_300_pct(self, percent: int):
+    def update_progress_bar_300_pct(self, percent: int) -> None:
         self.message = _("Please be patient, {:.1f}% of {}% complete")
         self.update_progress_bar(int(percent / 3), max_value=100)
 
-    def update_progress_bar(self, current_value: int, max_value: int):
+    def update_progress_bar(self, current_value: int, max_value: int) -> None:
         """
         Update the progress bar and the progress message with the current progress.
 
@@ -273,7 +273,7 @@ class ProgressWindow:
         if current_value == max_value:
             self.progress_window.destroy()
 
-    def destroy(self):
+    def destroy(self) -> None:
         self.progress_window.destroy()
 
 
@@ -301,7 +301,7 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
         and configure the appearance accordingly.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         default_font = tkFont.nametofont(self.cget("font"))
@@ -336,7 +336,7 @@ class BaseWindow:
     creating a progress window and centering a window on its parent.
     """
 
-    def __init__(self, root_tk: Optional[tk.Toplevel] = None):
+    def __init__(self, root_tk: Optional[tk.Toplevel] = None) -> None:
         if root_tk:
             self.root = tk.Toplevel(root_tk)
         else:
@@ -354,7 +354,7 @@ class BaseWindow:
         self.main_frame.pack(expand=True, fill=tk.BOTH)
 
     @staticmethod
-    def center_window(window: tk.Toplevel, parent: tk.Toplevel):
+    def center_window(window: tk.Toplevel, parent: tk.Toplevel) -> None:
         """
         Center a window on its parent window.
 
@@ -398,7 +398,7 @@ class UsagePopupWindow:
     usage popups with instructions and options to show them again or dismiss.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @staticmethod
@@ -413,7 +413,7 @@ class UsagePopupWindow:
         ptype: str,
         geometry: str,
         instructions_text: RichText,
-    ):
+    ) -> None:
         usage_popup_window.root.title(title)
         usage_popup_window.root.geometry(geometry)
 
@@ -422,7 +422,7 @@ class UsagePopupWindow:
         show_again_var = BooleanVar()
         show_again_var.set(True)
 
-        def update_show_again():
+        def update_show_again() -> None:
             ProgramSettings.set_display_usage_popup(ptype, show_again_var.get())
 
         show_again_checkbox = ttk.Checkbutton(
@@ -449,7 +449,7 @@ class UsagePopupWindow:
         usage_popup_window.root.protocol("WM_DELETE_WINDOW", lambda: UsagePopupWindow.close(usage_popup_window, parent))
 
     @staticmethod
-    def close(usage_popup_window: BaseWindow, parent: tk.Toplevel):
+    def close(usage_popup_window: BaseWindow, parent: tk.Toplevel) -> None:
         usage_popup_window.root.destroy()
         if platform_system() == "Windows":
             parent.attributes("-disabled", False)  # Re-enable the parent window

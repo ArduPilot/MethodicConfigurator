@@ -23,7 +23,7 @@ class TestArgumentParser(unittest.TestCase):  # pylint: disable=missing-class-do
     @patch(
         "argparse.ArgumentParser.parse_args", return_value=argparse.Namespace(conn="tcp:127.0.0.1:5760", params="params_dir")
     )
-    def test_argument_parser(self, mock_args):
+    def test_argument_parser(self, mock_args) -> None:
         args = argument_parser()
         self.assertEqual(args.conn, "tcp:127.0.0.1:5760")
         self.assertEqual(args.params, "params_dir")

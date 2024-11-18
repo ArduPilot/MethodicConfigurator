@@ -16,7 +16,7 @@ from MethodicConfigurator import common_arguments
 
 
 class TestCommonArguments(unittest.TestCase):  # pylint: disable=missing-class-docstring
-    def test_add_common_arguments_and_parse_loglevel(self):
+    def test_add_common_arguments_and_parse_loglevel(self) -> None:
         # Test that loglevel choices are added correctly
         parser = ArgumentParser()
         parser.parse_args = MagicMock(return_value=MagicMock(loglevel="INFO"))
@@ -28,7 +28,7 @@ class TestCommonArguments(unittest.TestCase):  # pylint: disable=missing-class-d
         updated_parser.parse_args(["--loglevel", "INFO"])
         updated_parser.parse_args.assert_called_with(["--loglevel", "INFO"])
 
-    def test_version_argument(self):
+    def test_version_argument(self) -> None:
         # Test that version argument displays correct version
         parser = ArgumentParser()
         # Mock the parse_args to just print the version string

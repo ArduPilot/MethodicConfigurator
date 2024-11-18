@@ -109,6 +109,7 @@ lint.select = [
     #"FURB", # refurb
     "ISC",  # flake8-implicit-str-concat
     "ICN",  # flake8-import-conventions
+    "ANN",  # flake8-annotations
 ]
 
 lint.ignore = [
@@ -123,6 +124,13 @@ lint.ignore = [
     "N817",    # CamelCase `X` imported as acronym `Y`
     "N999",    # Invalid module name: 'MethodicConfigurator'
     "ISC001",  # to let formatter run
+    "ANN001",  # Missing type annotation for function argument
+    "ANN002",
+    "ANN003",
+    "ANN101",  # Missing type annotation for self in method
+    "ANN201",
+    "ANN202",
+    "ANN204",
 ]
 
 line-length = 127
@@ -151,7 +159,7 @@ no_implicit_optional = true
 
 # Configuring warnings
 warn_unused_ignores = true
-warn_no_return = false
+warn_no_return = true
 warn_return_any = true
 warn_redundant_casts = true
 

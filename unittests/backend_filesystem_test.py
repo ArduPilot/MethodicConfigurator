@@ -21,7 +21,7 @@ from MethodicConfigurator.backend_filesystem import LocalFilesystem
 class TestLocalFilesystem:
     @patch("os.path.isdir")
     @patch("os.listdir")
-    def test_read_params_from_files(self, mock_listdir, mock_isdir):
+    def test_read_params_from_files(self, mock_listdir, mock_isdir) -> None:
         # Setup
         mock_isdir.return_value = True
         mock_listdir.return_value = ["00_default.param", "01_ignore_readonly.param", "02_test.param"]
@@ -39,7 +39,7 @@ class TestLocalFilesystem:
         mock_listdir.assert_called_once_with("vehicle_dir")
         mock_load_param_file_into_dict.assert_called_once_with("vehicle_dir/02_test.param")
 
-    def test_str_to_bool(self):
+    def test_str_to_bool(self) -> None:
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, False)
         self.assertTrue(lfs.str_to_bool("true"))
         self.assertTrue(lfs.str_to_bool("yes"))
@@ -52,7 +52,7 @@ class TestLocalFilesystem:
     @patch("os.path.isdir")
     @patch("os.listdir")
     @patch("backend_filesystem.LocalFilesystem.read_params_from_files")
-    def test_re_init(self, mock_read_params_from_files, mock_listdir, mock_isdir):
+    def test_re_init(self, mock_read_params_from_files, mock_listdir, mock_isdir) -> None:
         mock_isdir.return_value = True
         mock_listdir.return_value = ["00_default.param", "01_ignore_readonly.param", "02_test.param"]
         mock_read_params_from_files.return_value = {"02_test.param": {"TEST_PARAM": "value"}}
@@ -66,7 +66,7 @@ class TestLocalFilesystem:
         mock_listdir.assert_called_once_with("new_vehicle_dir")
         mock_read_params_from_files.assert_called_once()
 
-    def test_write_summary_files(self):
+    def test_write_summary_files(self) -> None:
         # Initialize LocalFilesystem with the test directory
         # lfs = LocalFilesystem(self.test_dir, "vehicle_type", None, False)
 
@@ -88,7 +88,7 @@ class TestCopyTemplateFilesToNewVehicleDir:
     @patch("os.path.join")
     @patch("shutil.copytree")
     @patch("shutil.copy2")
-    def test_copy_template_files_to_new_vehicle_dir(self, mock_copy2, mock_copytree, mock_join, mock_listdir):
+    def test_copy_template_files_to_new_vehicle_dir(self, mock_copy2, mock_copytree, mock_join, mock_listdir) -> None:
         # Ensure the mock for os.listdir returns the expected items
         mock_listdir.return_value = ["file1", "dir1"]
         # Simulate os.path.join behavior to ensure paths are constructed as expected

@@ -69,7 +69,7 @@ def loop_relevant_files(renames, steps):
     return param_dirs
 
 
-def uplate_old_filenames(renames, steps):
+def uplate_old_filenames(renames, steps) -> None:
     for new_name, old_name in renames.items():
         if old_name != new_name:
             if "old_filenames" in steps[old_name]:
@@ -79,7 +79,7 @@ def uplate_old_filenames(renames, steps):
                 steps[old_name]["old_filenames"] = [old_name]
 
 
-def update_file_contents(renames, root, file, steps):
+def update_file_contents(renames, root, file, steps) -> None:
     with open(os.path.join(root, file), encoding="utf-8") as handle:
         file_content = handle.read()
     if file.startswith("TUNING_GUIDE_") and file.endswith(".md"):
@@ -117,7 +117,7 @@ def update_configuration_steps_json_file_contents(steps, file_content, new_name,
     return new_file_content
 
 
-def rename_file(old_name, new_name, param_dir):
+def rename_file(old_name, new_name, param_dir) -> None:
     """Rename a single file."""
     old_name_path = os.path.join(param_dir, old_name)
     new_name_path = os.path.join(param_dir, new_name)
@@ -127,14 +127,14 @@ def rename_file(old_name, new_name, param_dir):
         print(f"Error: Could not rename file {old_name_path}, file not found")
 
 
-def reorder_actual_files(renames, param_dirs):
+def reorder_actual_files(renames, param_dirs) -> None:
     # Rename the actual files on disk based on renames re-ordering
     for param_dir in param_dirs:
         for new_name, old_name in renames.items():
             rename_file(old_name, new_name, param_dir)
 
 
-def change_line_endings_for_md_files():
+def change_line_endings_for_md_files() -> None:
     # Change line endings of TUNING_GUIDE_*.md, README.md files to CRLF
     for root, _dirs, files in os.walk("."):
         for file in files:
@@ -147,7 +147,7 @@ def change_line_endings_for_md_files():
                     handle.write(content)
 
 
-def main():
+def main() -> None:
     with open(os.path.join("MethodicConfigurator", SEQUENCE_FILENAME), encoding="utf-8") as f:
         steps = json.load(f)
     renames = reorder_param_files(steps)

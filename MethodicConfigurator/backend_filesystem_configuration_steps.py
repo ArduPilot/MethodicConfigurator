@@ -34,14 +34,14 @@ class ConfigurationSteps:
         configuration_steps (dict): A dictionary containing the configuration steps.
     """
 
-    def __init__(self, _vehicle_dir: str, vehicle_type: str):
+    def __init__(self, _vehicle_dir: str, vehicle_type: str) -> None:
         self.configuration_steps_filename = "configuration_steps_" + vehicle_type + ".json"
         self.configuration_steps: dict[str, dict] = {}
         self.forced_parameters: dict[str, dict] = {}
         self.derived_parameters: dict[str, dict] = {}
         self.log_loaded_file = False
 
-    def re_init(self, vehicle_dir: str, vehicle_type: str):
+    def re_init(self, vehicle_dir: str, vehicle_type: str) -> None:
         if vehicle_type == "":
             return
         self.configuration_steps_filename = "configuration_steps_" + vehicle_type + ".json"

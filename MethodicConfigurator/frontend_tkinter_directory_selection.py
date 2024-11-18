@@ -46,7 +46,7 @@ class DirectorySelectionWidgets:
         dir_tooltip: str,
         button_tooltip: str,
         is_template_selection: bool,
-    ):
+    ) -> None:
         self.parent = parent
         self.directory: str = deepcopy(initialdir)
         self.label_text = label_text
@@ -83,7 +83,7 @@ class DirectorySelectionWidgets:
         else:
             self.directory_entry.xview_moveto(1.0)
 
-    def on_select_directory(self):
+    def on_select_directory(self) -> bool:
         if self.is_template_selection:
             TemplateOverviewWindow(self.parent.root)
             selected_directory = ProgramSettings.get_recently_used_dirs()[0]
@@ -118,7 +118,7 @@ class DirectoryNameWidgets:  # pylint: disable=too-few-public-methods
     including a label and an entry field for displaying the selected directory name.
     """
 
-    def __init__(self, parent_frame, initial_dir: str, label_text: str, dir_tooltip: str):
+    def __init__(self, parent_frame, initial_dir: str, label_text: str, dir_tooltip: str) -> None:
         # Create a new frame for the directory name selection label
         self.container_frame = ttk.Frame(parent_frame)
 
@@ -175,7 +175,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
         self.local_filesystem = local_filesystem
         self.destroy_parent_on_open = destroy_parent_on_open
 
-    def on_select_directory(self):
+    def on_select_directory(self) -> None:
         # Call the base class method to open the directory selection dialog
         if super().on_select_directory():
             if "vehicle_templates" in self.directory and not self.local_filesystem.allow_editing_template_files:
@@ -223,7 +223,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
     vehicle configuration directory.
     """
 
-    def __init__(self, local_filesystem: LocalFilesystem, fc_connected: bool = False):
+    def __init__(self, local_filesystem: LocalFilesystem, fc_connected: bool = False) -> None:
         super().__init__()
         self.local_filesystem = local_filesystem
         self.root.title(
@@ -255,12 +255,12 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_and_quit)
 
-    def close_and_quit(self):
+    def close_and_quit(self) -> None:
         sys_exit(0)
 
     def create_option1_widgets(
         self, initial_template_dir: str, initial_base_dir: str, initial_new_dir: str, fc_connected: bool
-    ):
+    ) -> None:
         # Option 1 - Create a new vehicle configuration directory based on an existing template
         option1_label = ttk.Label(text=_("New"), style="Bold.TLabel")
         option1_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option1_label, borderwidth=2, relief="solid")
@@ -338,7 +338,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             ),
         )
 
-    def create_option2_widgets(self, initial_dir: str):
+    def create_option2_widgets(self, initial_dir: str) -> None:
         # Option 2 - Use an existing vehicle configuration directory
         option2_label = ttk.Label(text=_("Open"), style="Bold.TLabel")
         option2_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option2_label, borderwidth=2, relief="solid")
@@ -358,7 +358,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         )
         self.connection_selection_widgets.container_frame.pack(expand=True, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
-    def create_option3_widgets(self, last_vehicle_dir: str):
+    def create_option3_widgets(self, last_vehicle_dir: str) -> None:
         # Option 3 - Open the last used vehicle configuration directory
         option3_label = ttk.Label(text=_("Re-Open"), style="Bold.TLabel")
         option3_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option3_label, borderwidth=2, relief="solid")
@@ -394,7 +394,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             _("Directly open the last used vehicle configuration directory for configuring and tuning the vehicle"),
         )
 
-    def create_new_vehicle_from_template(self):
+    def create_new_vehicle_from_template(self) -> None:
         # Get the selected template directory and new vehicle configuration directory name
         template_dir = self.template_dir.get_selected_directory()
         new_base_dir = self.new_base_dir.get_selected_directory()
@@ -443,7 +443,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             show_no_param_files_error(template_dir)
         self.configuration_template = LocalFilesystem.get_directory_name_from_full_path(template_dir)
 
-    def open_last_vehicle_directory(self, last_vehicle_dir: str):
+    def open_last_vehicle_directory(self, last_vehicle_dir: str) -> None:
         # Attempt to open the last opened vehicle configuration directory
         if last_vehicle_dir:
             # If a last opened directory is found, proceed as if the user had manually selected it
@@ -491,7 +491,7 @@ def argument_parser():
 
 
 # pylint: disable=duplicate-code
-def main():
+def main() -> None:
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")

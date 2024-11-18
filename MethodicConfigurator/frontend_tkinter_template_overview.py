@@ -40,7 +40,7 @@ class TemplateOverviewWindow(BaseWindow):
                                      to store the corresponding template directory.
     """
 
-    def __init__(self, parent: Optional[tk.Toplevel] = None):
+    def __init__(self, parent: Optional[tk.Toplevel] = None) -> None:
         super().__init__(parent)
         title = _("Amilcar Lucas's - ArduPilot methodic configurator {} - Template Overview and selection")
         self.root.title(title.format(__version__))
@@ -115,7 +115,7 @@ class TemplateOverviewWindow(BaseWindow):
         else:
             self.root.mainloop()
 
-    def __adjust_treeview_column_widths(self):
+    def __adjust_treeview_column_widths(self) -> None:
         """
         Adjusts the column widths of the Treeview to fit the contents of each column.
         """
@@ -133,7 +133,7 @@ class TemplateOverviewWindow(BaseWindow):
             # Update the column's width property to accommodate the largest text width
             self.tree.column(col, width=int(max_width * 0.6 + 10))
 
-    def __on_row_double_click(self, event):
+    def __on_row_double_click(self, event) -> None:
         """Handle row double-click event."""
         item_id = self.tree.identify_row(event.y)
         if item_id:
@@ -141,7 +141,7 @@ class TemplateOverviewWindow(BaseWindow):
             ProgramSettings.store_template_dir(selected_template_relative_path)
             self.root.destroy()
 
-    def __sort_by_column(self, col: str, reverse: bool):
+    def __sort_by_column(self, col: str, reverse: bool) -> None:
         if hasattr(self, "sort_column") and self.sort_column and self.sort_column != col:
             self.tree.heading(self.sort_column, text=self.sort_column)
         self.tree.heading(col, text=col + (" ▼" if reverse else " ▲"))
@@ -183,7 +183,7 @@ def argument_parser():
     return add_common_arguments_and_parse(parser)
 
 
-def main():
+def main() -> None:
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")

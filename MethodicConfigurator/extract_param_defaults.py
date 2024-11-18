@@ -234,7 +234,7 @@ def output_params(
             print(f"{sysid} {compid} {param_name:<15} {param_value:.6f} {MAV_PARAM_TYPE_REAL32}")
 
 
-def main():
+def main() -> None:
     args = parse_arguments()
     parameter_values = extract_parameter_values(args.bin_file, args.type)
     parameter_values = sort_params(parameter_values, args.sort)

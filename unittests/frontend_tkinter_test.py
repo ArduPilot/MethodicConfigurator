@@ -21,7 +21,7 @@ class TestShowErrorMessage(unittest.TestCase):  # pylint: disable=missing-class-
     @patch("tkinter.messagebox.showerror")
     @patch("tkinter.Tk")
     @patch("tkinter.ttk.Style")  # Mock the ttk.Style class
-    def test_show_error_message(self, mock_style, mock_tk, mock_showerror):
+    def test_show_error_message(self, mock_style, mock_tk, mock_showerror) -> None:
         # Mock the Tkinter Tk class to prevent it from actually creating a window
         mock_tk.return_value.withdraw.return_value = None
         mock_tk.return_value.destroy.return_value = None
@@ -45,7 +45,7 @@ class TestShowErrorMessage(unittest.TestCase):  # pylint: disable=missing-class-
 class TestShowTooltip(unittest.TestCase):
     @patch("tkinter.Toplevel")
     @patch("tkinter.ttk.Label")
-    def test_show_tooltip(self, mock_label, mock_toplevel):
+    def test_show_tooltip(self, mock_label, mock_toplevel) -> None:
         # Mock the Tkinter Toplevel class to prevent it from actually creating a window
         mock_toplevel.return_value.deiconify.return_value = None
         mock_toplevel.return_value.withdraw.return_value = None

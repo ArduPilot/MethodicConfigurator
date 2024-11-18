@@ -34,7 +34,7 @@ def get_subdirectories(base_dir, exclude_source=True):
 
 
 # Function to copy files
-def copy_files(source, target):
+def copy_files(source, target) -> None:
     for file in files_to_copy:
         source_path = os.path.join(source, file)
         target_path = os.path.join(target, file)

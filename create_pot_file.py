@@ -12,7 +12,7 @@ import os
 import subprocess
 
 
-def extract_strings(directory, output_dir):
+def extract_strings(directory, output_dir) -> None:
     file_paths = []
     for root, _dirs, files in os.walk(directory):
         for file in files:
@@ -53,7 +53,7 @@ def extract_strings(directory, output_dir):
     print(f"POT file created successfully for {filenames}")
 
 
-def main():
+def main() -> None:
     directory_to_scan = "MethodicConfigurator"
     output_directory = os.path.join(directory_to_scan, "locale")
 

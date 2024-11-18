@@ -37,21 +37,21 @@ class ProgramSettings:
     validation of directory names according to specific rules.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     @staticmethod
-    def application_icon_filepath():
+    def application_icon_filepath() -> str:
         script_dir = os_path.dirname(os_path.abspath(__file__))
         return os_path.join(script_dir, "ArduPilot_icon.png")
 
     @staticmethod
-    def application_logo_filepath():
+    def application_logo_filepath() -> str:
         script_dir = os_path.dirname(os_path.abspath(__file__))
         return os_path.join(script_dir, "ArduPilot_logo.png")
 
     @staticmethod
-    def create_new_vehicle_dir(new_vehicle_dir: str):
+    def create_new_vehicle_dir(new_vehicle_dir: str) -> str:
         # Check if the new vehicle directory already exists
         if os_path.exists(new_vehicle_dir):
             return _("Directory already exists, choose a different one")
@@ -64,7 +64,7 @@ class ProgramSettings:
         return ""
 
     @staticmethod
-    def valid_directory_name(dir_name: str):
+    def valid_directory_name(dir_name: str) -> bool:
         """
         Check if a given directory name contains only alphanumeric characters, underscores, hyphens,
         and the OS directory separator.
@@ -84,7 +84,7 @@ class ProgramSettings:
         return re_match(pattern, dir_name) is not None
 
     @staticmethod
-    def __user_config_dir():
+    def __user_config_dir() -> str:
         user_config_directory = user_config_dir(".ardupilot_methodic_configurator", False, roaming=True, ensure_exists=True)
 
         if not os_path.exists(user_config_directory):
@@ -97,7 +97,7 @@ class ProgramSettings:
         return user_config_directory
 
     @staticmethod
-    def __site_config_dir():
+    def __site_config_dir() -> str:
         site_config_directory = site_config_dir(
             ".ardupilot_methodic_configurator", False, version=None, multipath=False, ensure_exists=True
         )
@@ -140,14 +140,14 @@ class ProgramSettings:
         return settings
 
     @staticmethod
-    def __set_settings_from_dict(settings):
+    def __set_settings_from_dict(settings) -> None:
         settings_path = os_path.join(ProgramSettings.__user_config_dir(), "settings.json")
 
         with open(settings_path, "w", encoding="utf-8") as settings_file:
             json_dump(settings, settings_file, indent=4)
 
     @staticmethod
-    def __get_settings_config():
+    def __get_settings_config() -> tuple[dict[str, Any], str, str]:
         settings = ProgramSettings.__get_settings_as_dict()
 
         # Regular expression pattern to match single backslashes
@@ -158,7 +158,7 @@ class ProgramSettings:
         return settings, pattern, replacement
 
     @staticmethod
-    def store_recently_used_template_dirs(template_dir: str, new_base_dir: str):
+    def store_recently_used_template_dirs(template_dir: str, new_base_dir: str) -> None:
         settings, pattern, replacement = ProgramSettings.__get_settings_config()
 
         # Update the settings with the new values
@@ -172,7 +172,7 @@ class ProgramSettings:
         ProgramSettings.__set_settings_from_dict(settings)
 
     @staticmethod
-    def store_template_dir(relative_template_dir: str):
+    def store_template_dir(relative_template_dir: str) -> None:
         settings, pattern, replacement = ProgramSettings.__get_settings_config()
 
         template_dir = os_path.join(ProgramSettings.get_templates_base_dir(), relative_template_dir)
@@ -183,7 +183,7 @@ class ProgramSettings:
         ProgramSettings.__set_settings_from_dict(settings)
 
     @staticmethod
-    def store_recently_used_vehicle_dir(vehicle_dir: str):
+    def store_recently_used_vehicle_dir(vehicle_dir: str) -> None:
         settings, pattern, replacement = ProgramSettings.__get_settings_config()
 
         # Update the settings with the new values
@@ -192,7 +192,7 @@ class ProgramSettings:
         ProgramSettings.__set_settings_from_dict(settings)
 
     @staticmethod
-    def get_templates_base_dir():
+    def get_templates_base_dir() -> str:
         current_dir = os_path.dirname(os_path.abspath(__file__))
         if platform_system() == "Windows":
             site_directory = ProgramSettings.__site_config_dir()
@@ -209,7 +209,7 @@ class ProgramSettings:
         return os_path.join(site_directory, "vehicle_templates")
 
     @staticmethod
-    def get_recently_used_dirs():
+    def get_recently_used_dirs() -> tuple[str, str, str]:
         template_default_dir = os_path.join(
             ProgramSettings.get_templates_base_dir(), "ArduCopter", "diatone_taycan_mxc", "4.5.x-params"
         )
@@ -232,7 +232,7 @@ class ProgramSettings:
         return bool(display_usage_popup_settings.get(ptype, True))
 
     @staticmethod
-    def set_display_usage_popup(ptype: str, value: bool):
+    def set_display_usage_popup(ptype: str, value: bool) -> None:
         if ptype in {"component_editor", "parameter_editor"}:
             settings, _, _ = ProgramSettings.__get_settings_config()
             settings["display_usage_popup"][ptype] = value

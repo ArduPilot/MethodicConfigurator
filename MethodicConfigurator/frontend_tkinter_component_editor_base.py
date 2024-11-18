@@ -62,7 +62,7 @@ class ComponentEditorWindowBase(BaseWindow):
     class, which provides basic window functionality.
     """
 
-    def __init__(self, version, local_filesystem: LocalFilesystem):
+    def __init__(self, version, local_filesystem: LocalFilesystem) -> None:
         super().__init__()
         self.local_filesystem = local_filesystem
 
@@ -117,7 +117,7 @@ class ComponentEditorWindowBase(BaseWindow):
             self.root.after(10, self.__display_component_editor_usage_instructions(self.root))
 
     @staticmethod
-    def __display_component_editor_usage_instructions(parent: tk.Toplevel):
+    def __display_component_editor_usage_instructions(parent: tk.Toplevel) -> None:
         usage_popup_window = BaseWindow(parent)
         style = ttk.Style()
 
@@ -141,11 +141,11 @@ class ComponentEditorWindowBase(BaseWindow):
             instructions_text,
         )
 
-    def update_json_data(self):  # should be overwritten in child classes
+    def update_json_data(self) -> None:  # should be overwritten in child classes
         if "Format version" not in self.data:
             self.data["Format version"] = 1
 
-    def _set_component_value_and_update_ui(self, path: tuple, value: str):
+    def _set_component_value_and_update_ui(self, path: tuple, value: str) -> None:
         data_path = self.data["Components"]
         for key in path[:-1]:
             data_path = data_path[key]
@@ -155,7 +155,7 @@ class ComponentEditorWindowBase(BaseWindow):
         entry.insert(0, value)
         entry.config(state="disabled")
 
-    def populate_frames(self):
+    def populate_frames(self) -> None:
         """
         Populates the ScrollFrame with widgets based on the JSON data.
         """
@@ -163,7 +163,7 @@ class ComponentEditorWindowBase(BaseWindow):
             for key, value in self.data["Components"].items():
                 self.__add_widget(self.scroll_frame.view_port, key, value, [])
 
-    def __add_widget(self, parent, key, value, path):
+    def __add_widget(self, parent, key, value, path) -> None:
         """
         Adds a widget to the parent widget with the given key and value.
 
@@ -196,7 +196,7 @@ class ComponentEditorWindowBase(BaseWindow):
             # Store the entry widget in the entry_widgets dictionary for later retrieval
             self.entry_widgets[tuple([*path, key])] = entry
 
-    def save_data(self):
+    def save_data(self) -> None:
         """
         Saves the edited JSON data back to the file.
         """
@@ -246,7 +246,7 @@ class ComponentEditorWindowBase(BaseWindow):
         return entry
 
     @staticmethod
-    def add_argparse_arguments(parser):
+    def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
         parser.add_argument(
             "--skip-component-editor",
             action="store_true",

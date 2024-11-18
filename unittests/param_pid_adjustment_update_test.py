@@ -24,11 +24,11 @@ from MethodicConfigurator.param_pid_adjustment_update import Par, ranged_type, u
 
 
 class TestRangedType(unittest.TestCase):
-    def test_valid_input(self):
+    def test_valid_input(self) -> None:
         self.assertEqual(ranged_type(int, 1, 10)(5), 5)
         self.assertEqual(ranged_type(float, 0.1, 0.8)(0.5), 0.5)
 
-    def test_invalid_input(self):
+    def test_invalid_input(self) -> None:
         with self.assertRaises(argparse.ArgumentTypeError) as cm:
             ranged_type(int, 1, 10)(15)
         self.assertEqual(cm.exception.args[0], "must be within [1, 10]")
@@ -41,7 +41,7 @@ class TestRangedType(unittest.TestCase):
 
 
 class TestLoadParamFileIntoDict(unittest.TestCase):
-    def test_valid_input(self):
+    def test_valid_input(self) -> None:
         # Create a temporary file with valid parameter data
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("PARAM1 1.0\n")
@@ -54,7 +54,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
         self.assertEqual(params["PARAM1"].value, 1.0)
         self.assertEqual(params["PARAM3"].value, 3.0)
 
-    def test_invalid_input(self):
+    def test_invalid_input(self) -> None:
         # Create a temporary file with invalid parameter data
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("PARAM1 1.0\n")
@@ -66,7 +66,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             Par.load_param_file_into_dict("temp.param")
         self.assertEqual(cm.exception.args[0], "Missing parameter-value separator: PARAM2 in temp.param line 2")
 
-    def test_empty_file(self):
+    def test_empty_file(self) -> None:
         # Create an empty temporary file
         with open("temp.param", "w", encoding="utf-8") as f:  # noqa: F841
             pass
@@ -75,7 +75,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
         params, _ = Par.load_param_file_into_dict("temp.param")
         self.assertEqual(len(params), 0)
 
-    def test_only_comments(self):
+    def test_only_comments(self) -> None:
         # Create a temporary file with only comments
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("# Comment 1\n")
@@ -85,7 +85,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
         params, _ = Par.load_param_file_into_dict("temp.param")
         self.assertEqual(len(params), 0)
 
-    def test_missing_value(self):
+    def test_missing_value(self) -> None:
         # Create a temporary file with a missing value
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("PARAM1\n")
@@ -95,7 +95,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             Par.load_param_file_into_dict("temp.param")
         self.assertEqual(cm.exception.args[0], "Missing parameter-value separator: PARAM1 in temp.param line 1")
 
-    def test_space_separator(self):
+    def test_space_separator(self) -> None:
         # Create a temporary file with a space as the separator
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("PARAM1 1.0\n")
@@ -104,7 +104,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
         params, _ = Par.load_param_file_into_dict("temp.param")
         self.assertEqual(params["PARAM1"].value, 1.0)
 
-    def test_comma_separator(self):
+    def test_comma_separator(self) -> None:
         # Create a temporary file with a comma as the separator
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("PARAM1,1.0\n")
@@ -113,7 +113,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
         params, _ = Par.load_param_file_into_dict("temp.param")
         self.assertEqual(params["PARAM1"].value, 1.0)
 
-    def test_tab_separator(self):
+    def test_tab_separator(self) -> None:
         # Create a temporary file with a tab as the separator
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("PARAM1\t1.0\n")
@@ -122,7 +122,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
         params, _ = Par.load_param_file_into_dict("temp.param")
         self.assertEqual(params["PARAM1"].value, 1.0)
 
-    def test_invalid_characters(self):
+    def test_invalid_characters(self) -> None:
         # Create a temporary file with invalid characters in the parameter name
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("PARAM-1 1.0\n")
@@ -132,7 +132,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             Par.load_param_file_into_dict("temp.param")
         self.assertEqual(cm.exception.args[0], "Invalid characters in parameter name PARAM-1 in temp.param line 1")
 
-    def test_long_parameter_name(self):
+    def test_long_parameter_name(self) -> None:
         # Create a temporary file with a too long parameter name
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("PARAMETER_THAT_IS_TOO_LONG 1.0\n")
@@ -142,7 +142,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             Par.load_param_file_into_dict("temp.param")
         self.assertEqual(cm.exception.args[0], "Too long parameter name: PARAMETER_THAT_IS_TOO_LONG in temp.param line 1")
 
-    def test_invalid_value(self):
+    def test_invalid_value(self) -> None:
         # Create a temporary file with an invalid value
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("PARAM1 VALUE\n")
@@ -152,7 +152,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             Par.load_param_file_into_dict("temp.param")
         self.assertEqual(cm.exception.args[0], "Invalid parameter value VALUE in temp.param line 1")
 
-    def test_duplicated_parameter(self):
+    def test_duplicated_parameter(self) -> None:
         # Create a temporary file with duplicated parameters
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("PARAM1 1.0\n")
@@ -163,14 +163,14 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             Par.load_param_file_into_dict("temp.param")
         self.assertEqual(cm.exception.args[0], "Duplicated parameter PARAM1 in temp.param line 2")
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         # Remove the temporary file after each test
         if os.path.exists("temp.param"):
             os.remove("temp.param")
 
 
 class TestExportToParam(unittest.TestCase):
-    def test_valid_input(self):
+    def test_valid_input(self) -> None:
         # Create a temporary file with valid parameter data
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("PARAM1 1.0\n")
@@ -188,7 +188,7 @@ class TestExportToParam(unittest.TestCase):
             output = f.read()
         self.assertEqual(output, "PARAM1,1\nPARAM2,2\nPARAM3,3  # Comment\n")
 
-    def test_with_header(self):
+    def test_with_header(self) -> None:
         # Create a temporary file with valid parameter data
         with open("temp.param", "w", encoding="utf-8") as f:
             f.write("# HEADER\n")
@@ -207,7 +207,7 @@ class TestExportToParam(unittest.TestCase):
             output = f.read()
         self.assertEqual(output, "# HEADER\nPARAM1,1\nPARAM2,2\nPARAM3,3\n")
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         # Remove the temporary files after each test
         if os.path.exists("temp.param"):
             os.remove("temp.param")
@@ -216,7 +216,7 @@ class TestExportToParam(unittest.TestCase):
 
 
 class TestUpdatePidAdjustmentParams(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         # Create a directory for the test files
         self.test_dir = "test_directory"
         os.mkdir(self.test_dir)
@@ -231,7 +231,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         with open(self.optimized_param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1,1.5\nPARAM2,2.5\nPARAM3,3.5\n")
 
-    def test_all_parameters_present(self):
+    def test_all_parameters_present(self) -> None:
         # Remove a parameter from the default parameter file
         with open(self.default_param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1,1.0\nPARAM3,3.0\n")
@@ -245,7 +245,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             cm.exception.args[0], f"Parameter PARAM2 is not present in {os.path.join('test_directory', '00_default.param')}"
         )
 
-    def test_parameter_missing_from_default_file(self):
+    def test_parameter_missing_from_default_file(self) -> None:
         # A parameter is missing from the default parameter file
         with open(self.default_param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1,1.0\nPARAM3,3.0\n")
@@ -255,7 +255,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             cm.exception.args[0], f"Parameter PARAM2 is not present in {os.path.join('test_directory', '00_default.param')}"
         )
 
-    def test_parameter_missing_from_optimized_file(self):
+    def test_parameter_missing_from_optimized_file(self) -> None:
         # A parameter is missing from the optimized parameter file
         with open(self.optimized_param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1,1.5\nPARAM3,3.5\n")
@@ -266,7 +266,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             f"Parameter PARAM2 is not present in {os.path.join('test_directory', 'optimized_parameter_file.param')}",
         )
 
-    def test_empty_files(self):
+    def test_empty_files(self) -> None:
         # Both the default and optimized parameter files are empty
         with open(self.default_param_file, "w", encoding="utf-8") as f:  # F841
             pass
@@ -279,7 +279,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             f"Failed to load default parameters from {os.path.join('test_directory', '00_default.param')}",
         )
 
-    def test_empty_default_file(self):
+    def test_empty_default_file(self) -> None:
         # Create an empty default parameter file
         with open(self.default_param_file, "w", encoding="utf-8") as f:  # noqa: F841
             pass
@@ -290,7 +290,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             f"Failed to load default parameters from {os.path.join('test_directory', '00_default.param')}",
         )
 
-    def test_empty_optimized_file(self):
+    def test_empty_optimized_file(self) -> None:
         # Create an empty optimized parameter file
         with open(self.optimized_param_file, "w", encoding="utf-8") as f:  # noqa: F841
             pass
@@ -301,7 +301,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             f"Failed to load optimized parameters from {os.path.join('test_directory', 'optimized_parameter_file.param')}",
         )
 
-    def test_empty_adjustment_file(self):
+    def test_empty_adjustment_file(self) -> None:
         # Create an empty adjustment parameter file
         with open(self.adjustment_param_file, "w", encoding="utf-8") as f:  # noqa: F841
             pass
@@ -312,7 +312,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             f"Failed to load PID adjustment parameters from {os.path.join('test_directory', '16_pid_adjustment.param')}",
         )
 
-    def test_zero_default_value(self):
+    def test_zero_default_value(self) -> None:
         # Set a parameter in the default parameter file to zero
         with open(self.default_param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1,0.0\nPARAM2,2.0\nPARAM3,3.0\n")
@@ -325,7 +325,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         # Assert that the PID adjustment parameter value is zero
         self.assertEqual(pid_adjustment_params_dict["PARAM1"].value, 0)
 
-    def test_update_comment(self):
+    def test_update_comment(self) -> None:
         # Set a parameter in the default parameter file
         with open(self.default_param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1,1.0\nPARAM2,2.0\nPARAM3,3.0\n")
@@ -338,7 +338,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         # Assert that the comment is updated correctly
         self.assertEqual(pid_adjustment_params_dict["PARAM1"].comment, " = 0.75 * (1 default)")
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         # Remove the test directory after each test
         shutil.rmtree(self.test_dir)
 

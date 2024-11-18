@@ -52,7 +52,7 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
     functionality to open these links in a web browser.
     """
 
-    def __init__(self, root: tk.Widget, local_filesystem, current_file: str):
+    def __init__(self, root: tk.Widget, local_filesystem, current_file: str) -> None:
         self.root = root
         self.local_filesystem = local_filesystem
         self.current_file = current_file
@@ -60,7 +60,7 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         self.documentation_labels: dict[str, ttk.Label] = {}
         self.__create_documentation_frame()
 
-    def __create_documentation_frame(self):
+    def __create_documentation_frame(self) -> None:
         self.documentation_frame = ttk.LabelFrame(self.root, text=_("Documentation"))
         self.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 4), padx=(4, 4))
 
@@ -91,7 +91,7 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         # Dynamically update the documentation text and URL links
         self.update_documentation_labels(self.current_file)
 
-    def update_documentation_labels(self, current_file: str):
+    def update_documentation_labels(self, current_file: str) -> None:
         self.current_file = current_file
         if current_file:
             title = _("{current_file} Documentation")
@@ -111,7 +111,7 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         mandatory_text, mandatory_url = self.local_filesystem.get_documentation_text_and_url(current_file, "mandatory")
         self.__update_documentation_label(_("Mandatory:"), mandatory_text, mandatory_url, False)
 
-    def __update_documentation_label(self, label_key, text, url, url_expected=True):
+    def __update_documentation_label(self, label_key, text, url, url_expected=True) -> None:
         label = self.documentation_labels[label_key]
         if url:
             label.config(text=text, foreground="blue", cursor="hand2", underline=True)
@@ -124,7 +124,7 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
                 show_tooltip(label, _("Documentation URL not available"))
 
 
-def show_about_window(root, _version: str):  # pylint: disable=too-many-locals
+def show_about_window(root, _version: str) -> None:  # pylint: disable=too-many-locals
     # Create a new window for the custom "About" message
     about_window = tk.Toplevel(root)
     about_window.title(_("About"))
@@ -211,7 +211,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     parameters, documentation, and flight controller connection settings.
     """
 
-    def __init__(self, current_file: str, flight_controller: FlightController, local_filesystem: LocalFilesystem):
+    def __init__(self, current_file: str, flight_controller: FlightController, local_filesystem: LocalFilesystem) -> None:
         super().__init__()
         self.current_file = current_file
         self.flight_controller = flight_controller
@@ -259,7 +259,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.root.after(100, self.__display_usage_popup_window(self.root))
         self.root.mainloop()
 
-    def __create_conf_widgets(self, version: str):
+    def __create_conf_widgets(self, version: str) -> None:
         config_frame = ttk.Frame(self.main_frame)
         config_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0))  # Pack the frame at the top of the window
 
@@ -306,7 +306,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         image_label.bind("<Button-1>", lambda event: show_about_window(self.main_frame, version))
         show_tooltip(image_label, _("User Manual, Support Forum, Report a Bug, Licenses, Source Code"))
 
-    def legend_frame(self, config_subframe: ttk.Frame, font_family: str):
+    def legend_frame(self, config_subframe: ttk.Frame, font_family: str) -> None:
         style = ttk.Style()
         style.configure("Legend.TLabelframe", font=(font_family, 9))
         legend_frame = ttk.LabelFrame(config_subframe, text=_("Legend"), style="Legend.TLabelframe")
@@ -333,7 +333,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         ne_label.pack(side=tk.TOP, anchor=tk.NW)
         legend_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(2, 2))
 
-    def __create_parameter_area_widgets(self):
+    def __create_parameter_area_widgets(self) -> None:
         self.show_only_differences = tk.BooleanVar(value=False)
         self.annotate_params_into_files = tk.BooleanVar(value=False)
 
@@ -407,7 +407,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
 
     @staticmethod
-    def __display_usage_popup_window(parent: tk.Toplevel):
+    def __display_usage_popup_window(parent: tk.Toplevel) -> None:
         usage_popup_window = BaseWindow(parent)
         style = ttk.Style()
 
@@ -442,7 +442,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             instructions_text,
         )
 
-    def __do_tempcal_imu(self, selected_file: str):
+    def __do_tempcal_imu(self, selected_file: str) -> None:
         tempcal_imu_result_param_filename, tempcal_imu_result_param_fullpath = (
             self.local_filesystem.tempcal_imu_result_param_tuple()
         )
@@ -486,7 +486,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                         raise
                     self.parameter_editor_table.set_at_least_one_param_edited(True)  # force writing doc annotations to file
 
-    def __should_copy_fc_values_to_file(self, selected_file: str):
+    def __should_copy_fc_values_to_file(self, selected_file: str) -> None:
         auto_changed_by = self.local_filesystem.auto_changed_by(selected_file)
         if auto_changed_by and self.flight_controller.fc_parameters:
             msg = _(
@@ -513,7 +513,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 return dest_file
         return selected_file
 
-    def __should_download_file_from_url(self, selected_file: str):
+    def __should_download_file_from_url(self, selected_file: str) -> None:
         url, local_filename = self.local_filesystem.get_download_url_and_local_filename(selected_file)
         if url and local_filename:
             if self.local_filesystem.vehicle_configuration_file_exists(local_filename):
@@ -525,7 +525,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 error_msg = _("Failed to download {local_filename} from {url}, please download it manually")
                 messagebox.showerror(_("Download failed"), error_msg.format(**locals()))
 
-    def __should_upload_file_to_fc(self, selected_file: str):
+    def __should_upload_file_to_fc(self, selected_file: str) -> None:
         local_filename, remote_filename = self.local_filesystem.get_upload_local_and_remote_filenames(selected_file)
         if local_filename and remote_filename:
             if not self.local_filesystem.vehicle_configuration_file_exists(local_filename):
@@ -548,7 +548,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 logging_warning(_("No flight controller connection, will not upload any file"))
                 messagebox.showwarning(_("Will not upload any file"), _("No flight controller connection"))
 
-    def on_param_file_combobox_change(self, _event, forced: bool = False):
+    def on_param_file_combobox_change(self, _event, forced: bool = False) -> None:
         if not self.file_selection_combobox["values"]:
             return
         self.parameter_editor_table.generate_edit_widgets_focus_out()
@@ -567,7 +567,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.documentation_frame.update_documentation_labels(selected_file)
             self.repopulate_parameter_table(selected_file)
 
-    def download_flight_controller_parameters(self, redownload: bool = False):
+    def download_flight_controller_parameters(self, redownload: bool = False) -> None:
         operation_string = _("Re-downloading FC parameters") if redownload else _("Downloading FC parameters")
         self.param_download_progress_window = ProgressWindow(
             self.main_frame, operation_string, _("Downloaded {} of {} parameters")
@@ -582,7 +582,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if not redownload:
             self.on_param_file_combobox_change(None, True)  # the initial param read will trigger a table update
 
-    def repopulate_parameter_table(self, selected_file):
+    def repopulate_parameter_table(self, selected_file) -> None:
         if not selected_file:
             return  # no file was yet selected, so skip it
         if hasattr(self.flight_controller, "fc_parameters") and self.flight_controller.fc_parameters:
@@ -592,10 +592,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Re-populate the table with the new parameters
         self.parameter_editor_table.repopulate(selected_file, fc_parameters, self.show_only_differences.get())
 
-    def on_show_only_changed_checkbox_change(self):
+    def on_show_only_changed_checkbox_change(self) -> None:
         self.repopulate_parameter_table(self.current_file)
 
-    def upload_params_that_require_reset(self, selected_params: dict):
+    def upload_params_that_require_reset(self, selected_params: dict) -> None:
         """
         Write the selected parameters to the flight controller that require a reset.
 
@@ -646,7 +646,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.__reset_and_reconnect(fc_reset_required, fc_reset_unsure)
 
-    def __reset_and_reconnect(self, fc_reset_required, fc_reset_unsure):
+    def __reset_and_reconnect(self, fc_reset_required, fc_reset_unsure) -> None:
         if not fc_reset_required and fc_reset_unsure:
             # Ask the user if they want to reset the ArduPilot
             _param_list_str = (", ").join(fc_reset_unsure)
@@ -669,7 +669,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 messagebox.showerror(_("ArduPilot methodic configurator"), error_message)
             self.reset_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
 
-    def on_upload_selected_click(self):
+    def on_upload_selected_click(self) -> None:
         self.parameter_editor_table.generate_edit_widgets_focus_out()
 
         self.write_changes_to_intermediate_parameter_file()
@@ -689,7 +689,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.on_skip_click(force_focus_out_event=False)
 
     # This function can recurse multiple times if there is an upload error
-    def upload_selected_params(self, selected_params):
+    def upload_selected_params(self, selected_params) -> None:
         logging_info(_("Uploading %d selected %s parameters to flight controller..."), len(selected_params), self.current_file)
 
         self.upload_params_that_require_reset(selected_params)
@@ -747,7 +747,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
         self.local_filesystem.write_last_uploaded_filename(self.current_file)
 
-    def on_skip_click(self, _event=None, force_focus_out_event=True):
+    def on_skip_click(self, _event=None, force_focus_out_event=True) -> None:
         if force_focus_out_event:
             self.parameter_editor_table.generate_edit_widgets_focus_out()
         self.write_changes_to_intermediate_parameter_file()
@@ -773,7 +773,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Close the application and the connection
             self.close_connection_and_quit()
 
-    def write_changes_to_intermediate_parameter_file(self):
+    def write_changes_to_intermediate_parameter_file(self) -> None:
         if self.parameter_editor_table.get_at_least_one_param_edited():
             msg = _("Do you want to write the changes to the {self.current_file} file?")
             if messagebox.askyesno(_("One or more parameters have been edited"), msg.format(**locals())):
@@ -784,7 +784,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 )
         self.parameter_editor_table.set_at_least_one_param_edited(False)
 
-    def write_summary_files(self):  # pylint: disable=too-many-locals
+    def write_summary_files(self) -> None:  # pylint: disable=too-many-locals
         if not hasattr(self.flight_controller, "fc_parameters") or self.flight_controller.fc_parameters is None:
             return
         annotated_fc_parameters = self.local_filesystem.annotate_intermediate_comments_to_param_dict(
@@ -859,7 +859,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             messagebox.showinfo(_("Parameter files zipped"), msg.format(**locals()))
         return should_write_file
 
-    def close_connection_and_quit(self):
+    def close_connection_and_quit(self) -> None:
         self.parameter_editor_table.generate_edit_widgets_focus_out()
         self.write_changes_to_intermediate_parameter_file()
         self.root.quit()  # Then stop the Tkinter event loop

@@ -21,7 +21,7 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
     attributes, enabling the GUI to display and select the templates in a structured format.
     """
 
-    def __init__(self, components_data: dict):
+    def __init__(self, components_data: dict) -> None:
         # The declaration order of these parameters determines the column order in the GUI
         self.fc_manufacturer = components_data.get("Flight Controller", {}).get("Product", {}).get("Manufacturer", "")
         self.fc_model = components_data.get("Flight Controller", {}).get("Product", {}).get("Model", "")
@@ -34,7 +34,7 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
         self.gnss_connection = components_data.get("GNSS Receiver", {}).get("FC Connection", {}).get("Type", "")
 
     @staticmethod
-    def columns():
+    def columns() -> tuple[str, ...]:
         # Must match the order in the __init__() function above
         return (
             _("Template path"),

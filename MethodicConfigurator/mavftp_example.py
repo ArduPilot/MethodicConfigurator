@@ -115,7 +115,7 @@ def auto_connect(device):
     return comport
 
 
-def wait_heartbeat(m):
+def wait_heartbeat(m) -> None:
     """wait for a heartbeat so we know the target system IDs"""
     logging_info("Waiting for flight controller heartbeat")
     m.wait_heartbeat()
@@ -125,18 +125,18 @@ def wait_heartbeat(m):
 # pylint: enable=duplicate-code
 
 
-def delete_local_file_if_exists(filename):
+def delete_local_file_if_exists(filename) -> None:
     if os.path.exists(filename):
         os.remove(filename)
 
 
-def get_list_dir(mav_ftp, directory):
+def get_list_dir(mav_ftp, directory) -> None:
     ret = mav_ftp.cmd_list([directory])
     ret.display_message()
     debug_class_member_variable_changes(mav_ftp)
 
 
-def get_file(mav_ftp, remote_filename, local_filename, timeout=5):
+def get_file(mav_ftp, remote_filename, local_filename, timeout=5) -> None:
     # session = mav_ftp.session # save the session to restore it after the file transfer
     mav_ftp.cmd_get([remote_filename, local_filename])
     ret = mav_ftp.process_ftp_reply("OpenFileRO", timeout=timeout)
@@ -146,7 +146,7 @@ def get_file(mav_ftp, remote_filename, local_filename, timeout=5):
     # time.sleep(0.2)
 
 
-def get_last_log(mav_ftp):
+def get_last_log(mav_ftp) -> None:
     try:
         with open("LASTLOG.TXT", encoding="UTF-8") as file:
             file_contents = file.readline()
@@ -162,7 +162,7 @@ def get_last_log(mav_ftp):
     get_file(mav_ftp, remote_filename, "LASTLOG.BIN", 0)
 
 
-def download_script(url, local_filename):
+def download_script(url, local_filename) -> None:
     # Download the script from the internet to the PC
     response = requests.get(url, timeout=5)
 
@@ -173,19 +173,19 @@ def download_script(url, local_filename):
         logging_error("Failed to download the file")
 
 
-def create_directory(mav_ftp, remote_directory):
+def create_directory(mav_ftp, remote_directory) -> None:
     ret = mav_ftp.cmd_mkdir([remote_directory])
     ret.display_message()
     debug_class_member_variable_changes(mav_ftp)
 
 
-def remove_directory(mav_ftp, remote_directory):
+def remove_directory(mav_ftp, remote_directory) -> None:
     ret = mav_ftp.cmd_rmdir([remote_directory])
     ret.display_message()
     debug_class_member_variable_changes(mav_ftp)
 
 
-def upload_script(mav_ftp, remote_directory, local_filename, timeout):
+def upload_script(mav_ftp, remote_directory, local_filename, timeout) -> None:
     # Upload it from the PC to the flight controller
     mav_ftp.cmd_put([local_filename, remote_directory + "/" + local_filename])
     ret = mav_ftp.process_ftp_reply("CreateFile", timeout=timeout)
@@ -193,7 +193,7 @@ def upload_script(mav_ftp, remote_directory, local_filename, timeout):
     debug_class_member_variable_changes(mav_ftp)
 
 
-def debug_class_member_variable_changes(instance):
+def debug_class_member_variable_changes(instance) -> None:
     return
     global old_mavftp_member_variable_values  # noqa: PLW0603 pylint: disable=global-statement, unreachable
     new_mavftp_member_variable_values = instance.__dict__
@@ -215,7 +215,7 @@ def debug_class_member_variable_changes(instance):
     old_mavftp_member_variable_values = new_mavftp_member_variable_values.copy()
 
 
-def main():
+def main() -> None:
     """for testing/example purposes only"""
     args = argument_parser()
 

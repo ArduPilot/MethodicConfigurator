@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0
 https://gist.github.com/dmitriykovalev/2ab1aa33a8099ef2d514925d84aa89e7
 """
 
-from argparse import Action, ArgumentError
+from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from operator import ge, gt, le, lt
 
 from MethodicConfigurator import _
@@ -21,7 +21,7 @@ class CheckRange(Action):
     Check if the Argparse argument value is within the specified range
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         if "min" in kwargs and "inf" in kwargs:
             raise ValueError(_("either min or inf, but not both"))
         if "max" in kwargs and "sup" in kwargs:
@@ -52,7 +52,7 @@ class CheckRange(Action):
         msg = _("valid range: {_lo}, {_up}")
         return msg.format(**locals())
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: ArgumentParser, namespace: Namespace, values, option_string=None) -> None:
         if not isinstance(values, (int, float)):
             raise ArgumentError(self, _("Value must be a number."))
 

@@ -133,7 +133,7 @@ class Par:
         comment (Optional[str]): An optional comment associated with the parameter.
     """
 
-    def __init__(self, value: float, comment: Optional[str] = None):
+    def __init__(self, value: float, comment: Optional[str] = None) -> None:
         self.value = value
         self.comment = comment
 
@@ -184,7 +184,7 @@ class Par:
         return parameter_dict
 
     @staticmethod
-    def validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value):  # pylint: disable=too-many-arguments
+    def validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value) -> None:  # pylint: disable=too-many-arguments
         if len(parameter) > PARAM_NAME_MAX_LEN:
             raise SystemExit(f"Too long parameter name: {parameter} in {param_file} line {i}")
         if not re.match(PARAM_NAME_REGEX, parameter):
@@ -646,7 +646,7 @@ def update_parameter_documentation_file(  # pylint: disable=too-many-locals, too
     param_file,
     lines,
     delete_documentation_annotations: bool,
-):
+) -> None:
     new_lines = []
     if os_path.basename(param_file).endswith("16_pid_adjustment.param"):
         new_lines.extend(lines[0:5])  # copy the first 6 lines verbatim
@@ -703,7 +703,7 @@ def update_parameter_documentation_file(  # pylint: disable=too-many-locals, too
         file.writelines(new_lines)
 
 
-def print_read_only_params(doc):
+def print_read_only_params(doc) -> None:
     """
     Print the names of read-only parameters.
 
@@ -751,7 +751,7 @@ def parse_parameter_metadata(
     return create_doc_dict(xml_root, vehicle_type, max_line_length)
 
 
-def main():
+def main() -> None:
     args = arg_parser()
     try:
         xml_url = get_xml_url(args.vehicle_type, args.firmware_version)

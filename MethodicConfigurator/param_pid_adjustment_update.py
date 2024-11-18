@@ -100,7 +100,7 @@ class Par:
         comment (str): An optional comment describing the parameter.
     """
 
-    def __init__(self, value: float, comment: Optional[str] = None):
+    def __init__(self, value: float, comment: Optional[str] = None) -> None:
         self.value = value
         self.comment = comment
 
@@ -214,7 +214,7 @@ def update_pid_adjustment_params(
     return pid_adjustment_params_dict, pid_adjustment_file_path, content[0:7]
 
 
-def main():
+def main() -> None:
     args = parse_arguments()
     # calculate the parameter values and their comments
     pid_adjustment_params_dict, pid_adjustment_file_path, content_header = update_pid_adjustment_params(

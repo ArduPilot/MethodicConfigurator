@@ -13,11 +13,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from tkinter import Entry, Listbox, StringVar, ttk
 from tkinter.constants import END, HORIZONTAL, SINGLE, VERTICAL, E, N, S, W
+from typing import Union
 
 from MethodicConfigurator import _
 
 
-def autoscroll(sbar, first, last):
+def autoscroll(sbar, first, last) -> None:
     """Hide and show scrollbar as needed."""
     first, last = float(first), float(last)
     if first <= 0 and last >= 1:
@@ -44,7 +45,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         vscrollbar=True,
         hscrollbar=True,
         **kwargs,
-    ):
+    ) -> None:
         if list_of_items is None:
             raise ValueError(_("List_of_items can't be 'None'"))
         self._list_of_items = list_of_items
@@ -69,7 +70,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
         self._trace_id = self._entry_var.trace_add("write", self._on_change_entry_var)
 
-        self._listbox = None
+        self._listbox: Union[None, Listbox] = None
 
         self.bind("<Up>", self._previous)
         self.bind("<Down>", self._next)
@@ -88,7 +89,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
             return [item for item in self._list_of_items if item.startswith(entry_data)]
         return [item for item in self._list_of_items if entry_data in item]
 
-    def _on_change_entry_var(self, _name, _index, _mode):
+    def _on_change_entry_var(self, _name, _index, _mode) -> None:
         entry_data = self._entry_var.get()
 
         if entry_data == "":
@@ -112,7 +113,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
                 self.unpost_listbox()
                 self.focus()
 
-    def _build_listbox(self, values):
+    def _build_listbox(self, values) -> None:
         listbox_frame = ttk.Frame(self.master)
 
         self._listbox = Listbox(
@@ -155,7 +156,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         for item in values:
             self._listbox.insert(END, item)
 
-    def post_listbox(self):
+    def post_listbox(self) -> None:
         if self._listbox is not None:
             return
 
@@ -167,7 +168,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         if values:
             self._build_listbox(values)
 
-    def unpost_listbox(self):
+    def unpost_listbox(self) -> None:
         if self._listbox is not None:
             self._listbox.master.destroy()
             self._listbox = None
@@ -175,7 +176,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
     def get_value(self):
         return self._entry_var.get()
 
-    def set_value(self, text, close_dialog=False):
+    def set_value(self, text, close_dialog=False) -> None:
         self._set_var(text)
 
         if close_dialog:
@@ -184,12 +185,12 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         self.icursor(END)
         self.xview_moveto(1.0)
 
-    def _set_var(self, text):
+    def _set_var(self, text) -> None:
         self._entry_var.trace_remove("write", self._trace_id)
         self._entry_var.set(text)
         self._trace_id = self._entry_var.trace_add("write", self._on_change_entry_var)
 
-    def update_entry_from_listbox(self, _event):
+    def update_entry_from_listbox(self, _event) -> str:
         if self._listbox is not None:
             current_selection = self._listbox.curselection()
 
@@ -206,7 +207,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
         return "break"
 
-    def _previous(self, _event):
+    def _previous(self, _event) -> str:
         if self._listbox is not None:
             current_selection = self._listbox.curselection()
 
@@ -228,7 +229,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
         return "break"
 
-    def _next(self, _event):
+    def _next(self, _event) -> str:
         if self._listbox is not None:
             current_selection = self._listbox.curselection()
             if len(current_selection) == 0:
@@ -251,7 +252,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
 if __name__ == "__main__":
 
-    def main():
+    def main() -> None:
         list_of_items = [
             "Cordell Cannata",
             "Lacey Naples",

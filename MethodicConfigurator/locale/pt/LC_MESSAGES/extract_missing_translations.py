@@ -12,7 +12,7 @@ import gettext
 import os
 
 
-def extract_missing_translations(po_file, output_file):
+def extract_missing_translations(po_file, output_file) -> None:
     # Set up the translation catalog
     language = gettext.translation("messages", localedir=os.path.dirname(po_file), languages=["zh_CN"], fallback=True)
 

@@ -94,7 +94,7 @@ class FTP_OP:  # pylint: disable=invalid-name, too-many-instance-attributes
         burst_complete,
         offset,
         payload,
-    ):
+    ) -> None:
         self.seq = seq  # Sequence number for the operation.
         self.session = session  # Session identifier.
         self.opcode = opcode  # Operation code indicating the type of FTP operation.
@@ -114,7 +114,7 @@ class FTP_OP:  # pylint: disable=invalid-name, too-many-instance-attributes
         ret = bytearray(ret)
         return ret
 
-    def __str__(self):
+    def __str__(self) -> str:
         plen = 0
         if self.payload is not None:
             plen = len(self.payload)
@@ -145,7 +145,7 @@ class WriteQueue:  # pylint: disable=too-few-public-methods
     Keeps track of offsets and sizes for pending write operations to ensure orderly processing.
     """
 
-    def __init__(self, ofs: int, size: int):
+    def __init__(self, ofs: int, size: int) -> None:
         self.ofs = ofs  # Offset where the write operation starts.
         self.size = size  # Size of the data to be written.
         self.last_send = 0  # Timestamp of the last send operation.
@@ -156,14 +156,14 @@ class ParamData:
     A class to manage parameter values and defaults for ArduPilot configuration.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.params = []  # params as (name, value, ptype)
         self.defaults = None  # defaults as (name, value, ptype)
 
-    def add_param(self, name, value, ptype):
+    def add_param(self, name, value, ptype) -> None:
         self.params.append((name, value, ptype))
 
-    def add_default(self, name, value, ptype):
+    def add_default(self, name, value, ptype) -> None:
         if self.defaults is None:
             self.defaults = []
         self.defaults.append((name, value, ptype))
@@ -172,7 +172,7 @@ class ParamData:
 class MAVFTPSetting:  # pylint: disable=too-few-public-methods
     """A single MAVFTP setting with a name, type, value and default value."""
 
-    def __init__(self, name, s_type, default):
+    def __init__(self, name, s_type, default) -> None:
         self.name = name
         self.type = s_type
         self.default = default
@@ -182,12 +182,12 @@ class MAVFTPSetting:  # pylint: disable=too-few-public-methods
 class MAVFTPSettings:
     """A collection of MAVFTP settings."""
 
-    def __init__(self, s_vars):
+    def __init__(self, s_vars) -> None:
         self._vars = {}
         for v in s_vars:
             self.append(v)
 
-    def append(self, v):
+    def append(self, v) -> None:
         if isinstance(v, MAVFTPSetting):
             setting = v
         else:
@@ -201,7 +201,7 @@ class MAVFTPSettings:
         except Exception as exc:
             raise AttributeError from exc
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name, value) -> None:
         if name[0] == "_":
             self.__dict__[name] = value
             return
@@ -222,7 +222,7 @@ class MAVFTPReturn:
         invalid_error_code: int = 0,
         invalid_opcode: int = 0,
         invalid_payload_size: int = 0,
-    ):
+    ) -> None:
         self.operation_name = operation_name
         self.error_code = error_code
         self.system_error = system_error
@@ -230,7 +230,7 @@ class MAVFTPReturn:
         self.invalid_opcode = invalid_opcode
         self.invalid_payload_size = invalid_payload_size
 
-    def display_message(self):  # pylint: disable=too-many-branches
+    def display_message(self) -> None:  # pylint: disable=too-many-branches
         if self.error_code == ERR_None:
             logging.info("%s succeeded", self.operation_name)
         elif self.error_code == ERR_Fail:
@@ -295,7 +295,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         target_system,
         target_component,
         settings=None,
-    ):
+    ) -> None:
         if settings is None:
             settings = MAVFTPSettings(
                 [
@@ -393,7 +393,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         logging.error(usage)
         return MAVFTPReturn("FTP command", ERR_InvalidArguments)
 
-    def __send(self, op):
+    def __send(self, op) -> None:
         """send a request"""
         op.seq = self.seq
         payload = op.pack()
@@ -409,7 +409,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.last_op_time = time.time()
         self.last_send_time = now
 
-    def __terminate_session(self):
+    def __terminate_session(self) -> None:
         """terminate current session"""
         self.__send(FTP_OP(self.seq, self.session, OP_TerminateSession, 0, 0, 0, 0, None))
         self.fh = None
@@ -551,7 +551,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__terminate_session()
         return ret
 
-    def __check_read_finished(self):
+    def __check_read_finished(self) -> bool:
         """check if download has completed"""
         # logging.debug("FTP: check_read_finished: %s %s", self.reached_eof, self.read_gaps)
         if self.reached_eof and len(self.read_gaps) == 0:
@@ -572,7 +572,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             return True
         return False
 
-    def __write_payload(self, op):
+    def __write_payload(self, op) -> None:
         """write payload from a read op"""
         self.fh.seek(op.offset)
         self.fh.write(op.payload)
@@ -769,7 +769,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return MAVFTPReturn("CreateFile", ERR_None)
 
-    def __put_finished(self, flen):
+    def __put_finished(self, flen) -> None:
         """finish a put"""
         if self.put_callback_progress:
             self.put_callback_progress(1.0)
@@ -795,7 +795,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             return ret
         return MAVFTPReturn("CreateFile", ERR_None)
 
-    def __send_more_writes(self):
+    def __send_more_writes(self) -> None:
         """send some more writes"""
         if len(self.write_list) == 0:
             # all done
@@ -1022,7 +1022,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         logging.info("FTP Unknown %s", str(op))
         return MAVFTPReturn(operation_name, ERR_InvalidOpcode)
 
-    def __send_gap_read(self, g):
+    def __send_gap_read(self, g) -> None:
         """send a read for a gap"""
         (offset, length) = g
         if self.ftp_settings.debug > 0:
@@ -1035,7 +1035,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.read_gap_times[g] = self.last_gap_send
         self.backlog += 1
 
-    def __check_read_send(self):
+    def __check_read_send(self) -> None:
         """see if we should send another gap read"""
         if len(self.read_gaps) == 0:
             return
@@ -1217,7 +1217,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         )
 
     @staticmethod
-    def ftp_param_decode(data):  # pylint: disable=too-many-locals
+    def ftp_param_decode(data) -> ParamData:  # pylint: disable=too-many-locals
         """decode parameter data, returning ParamData"""
         pdata = ParamData()
 
@@ -1582,13 +1582,13 @@ if __name__ == "__main__":
                 sys.exit(1)
         return comport
 
-    def wait_heartbeat(m):
+    def wait_heartbeat(m) -> None:
         """wait for a heartbeat so we know the target system IDs"""
         logging.info("Waiting for flight controller heartbeat")
         m.wait_heartbeat(timeout=5)
         logging.info("Heartbeat from system %u, component %u", m.target_system, m.target_system)
 
-    def main():
+    def main() -> None:
         """for testing/example purposes only"""
         args = argument_parser()
 

@@ -39,7 +39,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         flight_controller: FlightController,
         destroy_parent_on_connect: bool,
         download_params_on_connect: bool,
-    ):
+    ) -> None:
         self.parent = parent
         self.flight_controller = flight_controller
         self.destroy_parent_on_connect = destroy_parent_on_connect
@@ -73,7 +73,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             _("Select the flight controller connection\nYou can add a custom connection to the existing ones"),
         )
 
-    def on_select_connection_combobox_change(self, _event):
+    def on_select_connection_combobox_change(self, _event) -> None:
         selected_connection = self.conn_selection_combobox.get_selected_key()
         error_msg = _("Connection combobox changed to: {selected_connection}")
         logging_debug(error_msg.format(**locals()))
@@ -116,7 +116,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             logging_debug(error_msg.format(**locals()))
         return selected_connection
 
-    def reconnect(self, selected_connection: str = ""):  # defaults to auto-connect
+    def reconnect(self, selected_connection: str = "") -> bool:  # defaults to auto-connect
         self.connection_progress_window = ProgressWindow(
             self.parent.root, _("Connecting with the FC"), _("Connection step {} of {}")
         )
@@ -146,7 +146,7 @@ class ConnectionSelectionWindow(BaseWindow):
     the UI elements related to connection selection.
     """
 
-    def __init__(self, flight_controller: FlightController, connection_result_string: str):
+    def __init__(self, flight_controller: FlightController, connection_result_string: str) -> None:
         super().__init__()
         self.root.title(_("Flight controller connection"))
         self.root.geometry("460x450")  # Set the window size
@@ -235,13 +235,13 @@ class ConnectionSelectionWindow(BaseWindow):
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_and_quit)
 
-    def close_and_quit(self):
+    def close_and_quit(self) -> None:
         sys_exit(0)
 
-    def fc_autoconnect(self):
+    def fc_autoconnect(self) -> None:
         self.connection_selection_widgets.reconnect()
 
-    def skip_fc_connection(self, flight_controller: FlightController):
+    def skip_fc_connection(self, flight_controller: FlightController) -> None:
         logging_warning(_("Will proceed without FC connection. FC parameters will not be downloaded nor uploaded"))
         logging_warning(_("Only the intermediate '.param' files on the PC disk will be edited"))
         flight_controller.disconnect()
@@ -268,7 +268,7 @@ def argument_parser():
 
 
 # pylint: disable=duplicate-code
-def main():
+def main() -> None:
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
