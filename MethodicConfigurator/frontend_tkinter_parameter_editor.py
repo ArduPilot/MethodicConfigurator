@@ -349,18 +349,30 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         font_size = 8
         font = (font_family, font_size)
         np_label = ttk.Label(legend_left, text=_("Normal parameter"), font=font)
+        show_tooltip(np_label, _("Normal parameter - reusable in similar vehicles"))
         np_label.pack(side=tk.TOP, anchor=tk.NW)
         cal_label = ttk.Label(legend_left, text=_("Calibration param"), background="yellow", font=font)
+        show_tooltip(cal_label, _("Calibration parameter - not-reusable, even in similar vehicles"))
         cal_label.pack(side=tk.TOP, anchor=tk.NW)
         readonly_label = ttk.Label(legend_left, text=_("Read-only param"), background="red", font=font)
+        show_tooltip(readonly_label, _("Read-only parameter - not writable nor changeable"))
         readonly_label.pack(side=tk.TOP, anchor=tk.NW)
         legend_right = ttk.Frame(legend_frame)
         legend_right.pack(side=tk.RIGHT, anchor=tk.NE)
         default_label = ttk.Label(legend_right, text=_("Default value"), background="lightblue", font=font)
+        show_tooltip(default_label, _("This is the default value of this parameter"))
         default_label.pack(side=tk.TOP, anchor=tk.NW)
         na_label = ttk.Label(legend_right, text=_("Not available"), background="orange", font=font)
+        show_tooltip(na_label, _("This parameter is not available on the connected flight controller"))
         na_label.pack(side=tk.TOP, anchor=tk.NW)
         ne_label = ttk.Label(legend_right, text=_("Not editable"), font=font)
+        show_tooltip(
+            ne_label,
+            _(
+                "This value has been automatically calculated by the software using data\n"
+                "from the component editor window or from the 'configuration_steps.json' file"
+            ),
+        )
         ne_label.configure(state="disabled")
         ne_label.pack(side=tk.TOP, anchor=tk.NW)
         legend_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(2, 2))
