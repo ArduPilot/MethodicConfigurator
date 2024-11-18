@@ -380,7 +380,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             logging_error("GPS_TYPE %u not in gnss_receiver_connection", gps1_type)
             self.data["Components"]["GNSS Receiver"]["FC Connection"]["Type"] = "None"
 
-    def __set_serial_type_and_protocol_from_fc_parameters(self, fc_parameters: dict):
+    def __set_serial_type_and_protocol_from_fc_parameters(self, fc_parameters: dict) -> bool:
         if "RC_PROTOCOLS" in fc_parameters:
             rc_protocols_nr = int(fc_parameters["RC_PROTOCOLS"])
             # check if rc_protocols_nr is a power of two (only one bit set)

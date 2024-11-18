@@ -487,7 +487,7 @@ class FlightController:
         return ["tcp:127.0.0.1:5760", "udp:127.0.0.1:14550"]
 
     # pylint: disable=duplicate-code
-    def __auto_detect_serial(self):
+    def __auto_detect_serial(self) -> list[mavutil.SerialPort]:
         preferred_ports = [
             "*FTDI*",
             "*Arduino_Mega_2560*",
@@ -534,7 +534,7 @@ class FlightController:
         """
         return self.__connection_tuples
 
-    def upload_file(self, local_filename: str, remote_filename: str, progress_callback=None):
+    def upload_file(self, local_filename: str, remote_filename: str, progress_callback=None) -> bool:
         """Upload a file to the flight controller."""
         if self.master is None:
             return False

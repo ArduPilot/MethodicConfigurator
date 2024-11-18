@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -28,7 +28,7 @@ old_mavftp_member_variable_values: dict[str, Any] = {}
 
 
 # pylint: disable=duplicate-code
-def argument_parser():
+def argument_parser() -> Namespace:
     """
     Parses command-line arguments for the script.
     """
@@ -58,7 +58,7 @@ def argument_parser():
     return parser.parse_args()
 
 
-def auto_detect_serial():
+def auto_detect_serial() -> list:
     preferred_ports = [
         "*FTDI*",
         "*3D*",
@@ -85,10 +85,10 @@ def auto_detect_serial():
     ):
         serial_list.pop(1)
 
-    return serial_list
+    return serial_list  # type: ignore[no-any-return]
 
 
-def auto_connect(device):
+def auto_connect(device) -> mavutil.SerialPort:
     comport = None
     if device:
         comport = mavutil.SerialPort(device=device, description=device)

@@ -22,7 +22,7 @@ BASE_DIR = os.path.join("MethodicConfigurator", "vehicle_templates")
 
 
 # Function to get all subdirectories excluding the source (do not copy onto itself)
-def get_subdirectories(base_dir, exclude_source=True):
+def get_subdirectories(base_dir, exclude_source=True) -> list[str]:
     subdirs = []
     for root, dirs, _ in os.walk(base_dir):
         rel_dir = os.path.relpath(root, base_dir)

@@ -197,9 +197,9 @@ class MAVFTPSettings:
             setting = MAVFTPSetting(name, s_type, default)
         self._vars[setting.name] = setting
 
-    def __getattr__(self, name):
+    def __getattr__(self, name) -> Union[int, float]:
         try:
-            return self._vars[name].value
+            return self._vars[name].value  # type: ignore
         except Exception as exc:
             raise AttributeError from exc
 
@@ -957,7 +957,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             )
         return MAVFTPReturn("Status", ERR_None)
 
-    def __op_parse(self, m):
+    def __op_parse(self, m) -> FTP_OP:
         """parse a FILE_TRANSFER_PROTOCOL msg"""
         hdr = bytearray(m.payload[0:12])
         (seq, session, opcode, size, req_opcode, burst_complete, _pad, offset) = struct.unpack("<HBBBBBBI", hdr)

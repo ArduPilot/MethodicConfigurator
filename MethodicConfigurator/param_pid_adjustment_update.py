@@ -17,14 +17,14 @@ import argparse
 import os
 import re
 import subprocess
-from typing import Optional
+from typing import Callable, Optional, Union
 
 PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
 PARAM_NAME_MAX_LEN = 16
 VERSION = "1.0"
 
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""
@@ -68,7 +68,7 @@ explaining how their new value relates to the default parameter value.
     return args
 
 
-def ranged_type(value_type, min_value, max_value):
+def ranged_type(value_type: type, min_value, max_value) -> Callable:
     """
     Return function handle of an argument type function for ArgumentParser checking a range:
         min_value <= arg <= max_value
@@ -78,14 +78,14 @@ def ranged_type(value_type, min_value, max_value):
         max_value   - maximum acceptable argument value
     """
 
-    def range_checker(arg: str):
+    def range_checker(arg: str) -> Union[int, float]:
         try:
             f = value_type(arg)
         except ValueError as exc:
             raise argparse.ArgumentTypeError(f"must be a valid {value_type}") from exc
         if f < min_value or f > max_value:
             raise argparse.ArgumentTypeError(f"must be within [{min_value}, {max_value}]")
-        return f
+        return f  # type: ignore
 
     # Return function handle to checking function
     return range_checker

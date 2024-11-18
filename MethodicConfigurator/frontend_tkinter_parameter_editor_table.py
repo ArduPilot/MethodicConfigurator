@@ -195,7 +195,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                     else _("No documentation available in apm.pdef.xml for this parameter")
                 )
 
-                column = []
+                column: list[tk.Widget] = []
                 column.append(self.__create_delete_button(param_name))
                 column.append(self.__create_parameter_name(param_name, param_metadata, doc_tooltip))
                 column.append(self.__create_flightcontroller_value(fc_parameters, param_name, param_default, doc_tooltip))
@@ -233,7 +233,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.view_port.columnconfigure(5, weight=0)  # Upload to FC
         self.view_port.columnconfigure(6, weight=1)  # Change Reason
 
-    def __create_delete_button(self, param_name):
+    def __create_delete_button(self, param_name) -> ttk.Button:
         delete_button = ttk.Button(
             self.view_port, text=_("Del"), style="narrow.TButton", command=lambda: self.__on_parameter_delete(param_name)
         )
@@ -241,7 +241,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         show_tooltip(delete_button, tooltip_msg.format(**locals()))
         return delete_button
 
-    def __create_parameter_name(self, param_name, param_metadata, doc_tooltip):
+    def __create_parameter_name(self, param_name, param_metadata, doc_tooltip) -> ttk.Label:
         is_calibration = param_metadata.get("Calibration", False) if param_metadata else False
         is_readonly = param_metadata.get("ReadOnly", False) if param_metadata else False
         parameter_label = ttk.Label(
@@ -257,7 +257,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(parameter_label, doc_tooltip)
         return parameter_label
 
-    def __create_flightcontroller_value(self, fc_parameters, param_name, param_default, doc_tooltip):
+    def __create_flightcontroller_value(self, fc_parameters, param_name, param_default, doc_tooltip) -> ttk.Label:
         if param_name in fc_parameters:
             value_str = format(fc_parameters[param_name], ".6f").rstrip("0").rstrip(".")
             if param_default is not None and is_within_tolerance(fc_parameters[param_name], param_default.value):
@@ -302,7 +302,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         param_metadata,
         param_default,
         doc_tooltip,
-    ):
+    ) -> Union[PairTupleCombobox, ttk.Entry]:
         present_as_forced = False
         if (
             self.current_file in self.local_filesystem.forced_parameters
@@ -449,7 +449,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         window.wait_window()  # Wait for the window to be closed
 
-    def __create_unit_label(self, param_metadata):
+    def __create_unit_label(self, param_metadata) -> ttk.Label:
         unit_label = ttk.Label(self.view_port, text=param_metadata.get("unit") if param_metadata else "")
         unit_tooltip = (
             param_metadata.get("unit_tooltip")
@@ -460,7 +460,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(unit_label, unit_tooltip)
         return unit_label
 
-    def __create_upload_checkbutton(self, param_name, fc_connected):
+    def __create_upload_checkbutton(self, param_name, fc_connected) -> ttk.Checkbutton:
         self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=fc_connected)
         upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
         upload_checkbutton.configure(state="normal" if fc_connected else "disabled")
@@ -468,7 +468,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         show_tooltip(upload_checkbutton, msg.format(**locals()))
         return upload_checkbutton
 
-    def __create_change_reason_entry(self, param_name, param, new_value_entry):
+    def __create_change_reason_entry(self, param_name, param, new_value_entry) -> ttk.Entry:
         present_as_forced = False
         if (
             self.current_file in self.local_filesystem.forced_parameters

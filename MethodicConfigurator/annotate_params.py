@@ -113,7 +113,7 @@ def arg_parser():
         logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
     # Custom validation for --max-line-length
-    def check_max_line_length(value):
+    def check_max_line_length(value: int) -> int:
         if value < 50 or value > 300:
             logging.critical("--max-line-length must be in the interval 50 .. 300, not %d", value)
             raise SystemExit("Correct it and try again")

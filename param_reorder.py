@@ -33,7 +33,7 @@ file_renames = {}
 file_renames["00_Default_Parameters.param"] = "00_default.param"
 
 
-def reorder_param_files(steps):
+def reorder_param_files(steps) -> dict[str, str]:
     """Reorder parameters and prepare renaming rules."""
     # Iterate over the param_files and rename the keys to be in two-digit prefix ascending order
     param_files = list(steps)
@@ -50,7 +50,7 @@ def reorder_param_files(steps):
     return renames
 
 
-def loop_relevant_files(renames, steps):
+def loop_relevant_files(renames, steps) -> list[str]:
     param_dirs = ["."]
     # Search all *.py, *.json and *.md files in the current directory
     # and replace all occurrences of the old names with the new names
@@ -95,7 +95,7 @@ def update_file_contents(renames, root, file, steps) -> None:
         handle.write(file_content)
 
 
-def update_configuration_steps_json_file_contents(steps, file_content, new_name, old_name):
+def update_configuration_steps_json_file_contents(steps, file_content, new_name, old_name) -> str:
     new_file_content = ""
     curr_filename = ""
     for line in file_content.splitlines(keepends=True):

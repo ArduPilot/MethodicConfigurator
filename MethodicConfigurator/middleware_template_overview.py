@@ -49,5 +49,5 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
             _("GNSS\nConnection"),
         )
 
-    def attributes(self):
-        return self.__dict__.keys()
+    def attributes(self) -> list[str]:
+        return self.__dict__.keys()  # type: ignore

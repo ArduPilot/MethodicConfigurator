@@ -17,7 +17,7 @@ from operator import itemgetter
 from github import Github
 
 
-def compute_average(issues_date):
+def compute_average(issues_date) -> float:
     sum_of_issues = sum(days for _issue, days in issues_date)
 
     if len(issues_date):

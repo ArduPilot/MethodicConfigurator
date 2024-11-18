@@ -161,7 +161,7 @@ class TemplateOverviewWindow(BaseWindow):
         self.tree.heading(col, command=lambda: self.__sort_by_column(col, not reverse))
 
 
-def argument_parser():
+def argument_parser() -> argparse.Namespace:
     """
     Parses command-line arguments for the script.
 
