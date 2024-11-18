@@ -140,14 +140,26 @@ class ConfigurationSteps:
                 result = eval(str(parameter_info["New Value"]), {}, variables)  # noqa: S307 pylint: disable=eval-used
 
                 # convert (combobox) string text to (parameter value) string int or float
-                if isinstance(result, str) and parameter in variables["doc_dict"]:
-                    values = variables["doc_dict"][parameter]["values"]
-                    if values:
-                        result = next(key for key, value in values.items() if value == result)
+                if isinstance(result, str):
+                    if parameter in variables["doc_dict"]:
+                        values = variables["doc_dict"][parameter]["values"]
+                        if values:
+                            result = next(key for key, value in values.items() if value == result)
+                        else:
+                            bitmasks = variables["doc_dict"][parameter]["Bitmask"]
+                            if bitmasks:
+                                result = 2 ** next(key for key, bitmask in bitmasks.items() if bitmask == result)
                     else:
-                        bitmasks = variables["doc_dict"][parameter]["Bitmask"]
-                        if bitmasks:
-                            result = 2 ** next(key for key, bitmask in bitmasks.items() if bitmask == result)
+                        error_msg = _(
+                            "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
+                            "parameter '{parameter}' could not be computed, no documentation metadata available for it"
+                        )
+                        error_msg = error_msg.format(**locals())
+                        if parameter_type == "forced":
+                            logging_error(error_msg)
+                            return error_msg
+                        logging_warning(error_msg)
+                        continue
 
                 if filename not in destination:
                     destination[filename] = {}
