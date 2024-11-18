@@ -367,7 +367,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def __create_parameter_area_widgets(self) -> None:
         self.show_only_differences = tk.BooleanVar(value=False)
-        self.annotate_params_into_files = tk.BooleanVar(value=False)
+        self.annotate_params_into_files = tk.BooleanVar(
+            value=bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
+        )
 
         # Create a Scrollable parameter editor table
         self.parameter_editor_table = ParameterEditorTable(self.main_frame, self.local_filesystem, self)
@@ -400,6 +402,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             text=_("Annotate docs into .param files"),
             state="normal" if self.local_filesystem.doc_dict else "disabled",
             variable=self.annotate_params_into_files,
+            command=lambda: ProgramSettings.set_setting(
+                "annotate_docs_into_param_files", self.annotate_params_into_files.get()
+            ),
         )
         annotate_params_checkbox.pack(side=tk.TOP, anchor=tk.NW)
         show_tooltip(
