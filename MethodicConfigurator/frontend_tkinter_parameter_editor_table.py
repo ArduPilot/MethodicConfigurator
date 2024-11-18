@@ -48,7 +48,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.root = root
         self.local_filesystem = local_filesystem
         self.parameter_editor = parameter_editor
-        self.current_file = None
+        self.current_file = ""
         self.upload_checkbutton_var = {}
         self.at_least_one_param_edited = False
 

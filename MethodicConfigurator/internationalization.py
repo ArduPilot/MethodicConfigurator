@@ -20,11 +20,11 @@ from typing import Callable
 LANGUAGE_CHOICES = ["en", "zh_CN", "pt"]
 
 
-def identity_function(s):
+def identity_function(s: str) -> str:
     return s
 
 
-def load_translation() -> Callable:
+def load_translation() -> Callable[[str], str]:
     default_language = LANGUAGE_CHOICES[0]
 
     # First, pre-parse to find the --language argument

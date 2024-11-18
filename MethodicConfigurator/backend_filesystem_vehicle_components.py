@@ -67,7 +67,7 @@ class VehicleComponents:
         else:
             components = None
         if components:
-            fw_type = components.get("Flight Controller", {}).get("Firmware", {}).get("Type", "")
+            fw_type: str = components.get("Flight Controller", {}).get("Firmware", {}).get("Type", "")
             if fw_type in self.supported_vehicles():
                 return fw_type
             error_msg = _("Firmware type {fw_type} in {self.vehicle_components_json_filename} is not supported")
@@ -80,7 +80,7 @@ class VehicleComponents:
         else:
             components = None
         if components:
-            version_str = components.get("Flight Controller", {}).get("Firmware", {}).get("Version", "")
+            version_str: str = components.get("Flight Controller", {}).get("Firmware", {}).get("Version", "")
             version_str = version_str.lstrip().split(" ")[0] if version_str else ""
             if re_match(r"^\d+\.\d+\.\d+$", version_str):
                 return version_str

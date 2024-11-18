@@ -390,7 +390,7 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
             raise SystemExit("permission denied to write online XML documentation to file") from e
 
     # Parse the XML data
-    return DET.fromstring(xml_data)
+    return DET.fromstring(xml_data)  # type: ignore[no-any-return]
 
 
 def load_default_param_file(directory: str) -> dict[str, "Par"]:

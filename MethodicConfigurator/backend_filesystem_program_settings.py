@@ -21,6 +21,7 @@ from platform import system as platform_system
 from re import escape as re_escape
 from re import match as re_match
 from re import sub as re_sub
+from typing import Any
 
 from platformdirs import site_config_dir, user_config_dir
 
@@ -111,7 +112,7 @@ class ProgramSettings:
         return site_config_directory
 
     @staticmethod
-    def __get_settings_as_dict():
+    def __get_settings_as_dict() -> dict[str, Any]:
         settings_path = os_path.join(ProgramSettings.__user_config_dir(), "settings.json")
 
         settings = {}
@@ -226,8 +227,9 @@ class ProgramSettings:
         return template_dir, new_base_dir, vehicle_dir
 
     @staticmethod
-    def display_usage_popup(ptype: str):
-        return ProgramSettings.__get_settings_as_dict()["display_usage_popup"].get(ptype, True)
+    def display_usage_popup(ptype: str) -> bool:
+        display_usage_popup_settings = ProgramSettings.__get_settings_as_dict().get("display_usage_popup", {})
+        return bool(display_usage_popup_settings.get(ptype, True))
 
     @staticmethod
     def set_display_usage_popup(ptype: str, value: bool):

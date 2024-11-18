@@ -368,7 +368,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         if args[0] == "list":
             return self.cmd_list(args[1:])
         if args[0] == "set":
-            return self.ftp_settings.command(args[1:])
+            self.ftp_settings.command(args[1:])
+            return MAVFTPReturn("FTP command", ERR_None)
         if args[0] == "get":
             return self.cmd_get(args[1:])
         if args[0] == "getparams":
@@ -859,7 +860,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return self.process_ftp_reply("RemoveFile")
 
-    def cmd_rmdir(self, args):
+    def cmd_rmdir(self, args) -> MAVFTPReturn:
         """remove directory"""
         if len(args) != 1:
             logging.error("Usage: rmdir [DIRECTORYNAME]")
@@ -871,7 +872,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return self.process_ftp_reply("RemoveDirectory")
 
-    def __handle_remove_reply(self, op, _m):
+    def __handle_remove_reply(self, op, _m) -> MAVFTPReturn:
         """handle remove reply"""
         return self.__decode_ftp_ack_and_nack(op)
 
@@ -890,7 +891,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return self.process_ftp_reply("Rename")
 
-    def __handle_rename_reply(self, op, _m):
+    def __handle_rename_reply(self, op, _m) -> MAVFTPReturn:
         """handle rename reply"""
         return self.__decode_ftp_ack_and_nack(op)
 
@@ -906,7 +907,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return self.process_ftp_reply("CreateDirectory")
 
-    def __handle_mkdir_reply(self, op, _m):
+    def __handle_mkdir_reply(self, op, _m) -> MAVFTPReturn:
         """handle mkdir reply"""
         return self.__decode_ftp_ack_and_nack(op)
 
@@ -924,7 +925,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return self.process_ftp_reply("CalcFileCRC32")
 
-    def __handle_crc_reply(self, op, _m):
+    def __handle_crc_reply(self, op, _m) -> MAVFTPReturn:
         """handle crc reply"""
         if op.opcode == OP_Ack and op.size == 4:
             (crc,) = struct.unpack("<I", op.payload)
@@ -1119,9 +1120,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         return self.__last_send_time_was_more_than_idle_detection_time_ago(now)
 
     def __last_send_time_was_more_than_idle_detection_time_ago(self, now: float) -> bool:
-        return self.last_send_time is not None and now - self.last_send_time > self.ftp_settings.idle_detection_time
+        return self.last_send_time is not None and now - self.last_send_time > float(self.ftp_settings.idle_detection_time)
 
-    def __handle_reset_sessions_reply(self, op, _m):
+    def __handle_reset_sessions_reply(self, op, _m) -> MAVFTPReturn:
         """handle reset sessions reply"""
         return self.__decode_ftp_ack_and_nack(op)
 
@@ -1352,13 +1353,13 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         sort_type: str = "missionplanner",
         add_datatype_comments: bool = False,
         add_timestamp_comment: bool = False,
-    ):
+    ) -> MAVFTPReturn:
         """Decode the parameter file and save the values and defaults to disk"""
 
-        def decode_and_save_params(fh):
+        def decode_and_save_params(fh) -> MAVFTPReturn:
             if fh is None:
                 logging.error("FTP: no parameter file handler")
-                return
+                return MAVFTPReturn("GetParams", ERR_Fail)
             try:
                 data = fh.read()
             except OSError as exp:
@@ -1383,8 +1384,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                         logging.info("%-16s %f (default %f)", name, value, param_defaults[name][0])
                     else:
                         logging.info("%-16s %f", name, value)
+            return MAVFTPReturn("GetParams", ERR_None)
 
-        self.cmd_get(
+        return self.cmd_get(
             ["@PARAM/param.pck?withdefaults=1" if len(args) > 1 else "@PARAM/param.pck"],
             callback=decode_and_save_params,
             progress_callback=progress_callback,

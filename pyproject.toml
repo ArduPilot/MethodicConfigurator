@@ -152,7 +152,7 @@ no_implicit_optional = true
 # Configuring warnings
 warn_unused_ignores = true
 warn_no_return = false
-warn_return_any = false
+warn_return_any = true
 warn_redundant_casts = true
 
 # Misc things

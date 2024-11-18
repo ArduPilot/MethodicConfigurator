@@ -169,9 +169,9 @@ class ConfigurationSteps:
             return self.configuration_steps[selected_file].get("auto_changed_by", "")
         return ""
 
-    def jump_possible(self, selected_file: str):
+    def jump_possible(self, selected_file: str) -> dict[str, str]:
         if selected_file in self.configuration_steps:
-            return self.configuration_steps[selected_file].get("jump_possible", {})
+            return dict(self.configuration_steps[selected_file].get("jump_possible", {}))
         return {}
 
     def get_documentation_text_and_url(self, selected_file: str, prefix_key: str) -> tuple[str, str]:

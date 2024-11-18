@@ -95,7 +95,7 @@ class FlightController:
         for port in self.__connection_tuples:
             logging_info("%s - %s", port[0], port[1])
         # now that it is logged, add the 'Add another' tuple
-        self.__connection_tuples += [tuple([_("Add another"), _("Add another")])]
+        self.__connection_tuples += [(_("Add another"), _("Add another"))]
 
     def disconnect(self):
         """
@@ -222,7 +222,7 @@ class FlightController:
 
     def __create_connection_with_retry(
         self, progress_callback, retries: int = 3, timeout: int = 5, log_errors: bool = True
-    ) -> mavutil.mavlink_connection:
+    ) -> str:
         """
         Attempts to create a connection to the flight controller with retries.
 
