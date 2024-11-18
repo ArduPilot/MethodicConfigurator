@@ -21,11 +21,17 @@ from platform import system as platform_system
 from re import escape as re_escape
 from re import match as re_match
 from re import sub as re_sub
-from typing import Any
+from typing import Any, Union
 
 from platformdirs import site_config_dir, user_config_dir
 
 from MethodicConfigurator import _
+
+SETTINGS_DEFAULTS: dict[str, Union[int, bool]] = {
+    "Format version": 1,
+    "auto_open_doc_in_browser": True,
+    "annotate_docs_into_param_files": False,
+}
 
 
 class ProgramSettings:
@@ -125,7 +131,7 @@ class ProgramSettings:
             pass
 
         if "Format version" not in settings:
-            settings["Format version"] = 1
+            settings["Format version"] = SETTINGS_DEFAULTS["Format version"]
 
         if "directory_selection" not in settings:
             settings["directory_selection"] = {}
@@ -136,6 +142,11 @@ class ProgramSettings:
             settings["display_usage_popup"]["component_editor"] = True
         if "parameter_editor" not in settings["display_usage_popup"]:
             settings["display_usage_popup"]["parameter_editor"] = True
+
+        if "auto_open_doc_in_browser" not in settings:
+            settings["auto_open_doc_in_browser"] = SETTINGS_DEFAULTS["auto_open_doc_in_browser"]
+        if "annotate_docs_into_param_files" not in settings:
+            settings["annotate_docs_into_param_files"] = SETTINGS_DEFAULTS["annotate_docs_into_param_files"]
 
         return settings
 
@@ -234,4 +245,17 @@ class ProgramSettings:
         if ptype in {"component_editor", "parameter_editor"}:
             settings, _, _ = ProgramSettings.__get_settings_config()
             settings["display_usage_popup"][ptype] = value
+            ProgramSettings.__set_settings_from_dict(settings)
+
+    @staticmethod
+    def get_setting(setting: str) -> Union[int, bool]:
+        if setting in SETTINGS_DEFAULTS:
+            return ProgramSettings.__get_settings_as_dict().get(setting, SETTINGS_DEFAULTS[setting])
+        return False
+
+    @staticmethod
+    def set_setting(setting: str, value: Union[int, bool]) -> None:
+        if setting in SETTINGS_DEFAULTS:
+            settings, _, _ = ProgramSettings.__get_settings_config()
+            settings[setting] = value
             ProgramSettings.__set_settings_from_dict(settings)
