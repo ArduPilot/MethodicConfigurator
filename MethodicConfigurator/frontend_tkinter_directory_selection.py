@@ -38,8 +38,8 @@ class DirectorySelectionWidgets:
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        parent,
-        parent_frame,
+        parent: tk.Toplevel,
+        parent_frame: tk.Widget,
         initialdir: str,
         label_text: str,
         autoresize_width: bool,
@@ -175,7 +175,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
         self.local_filesystem = local_filesystem
         self.destroy_parent_on_open = destroy_parent_on_open
 
-    def on_select_directory(self) -> None:
+    def on_select_directory(self) -> bool:
         # Call the base class method to open the directory selection dialog
         if super().on_select_directory():
             if "vehicle_templates" in self.directory and not self.local_filesystem.allow_editing_template_files:
@@ -186,14 +186,14 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
                         "as those are used as a template for new vehicles"
                     ),
                 )
-                return
+                return False
             self.local_filesystem.vehicle_dir = self.directory
 
             if not self.local_filesystem.vehicle_configuration_files_exist(self.directory):
                 _filename = self.local_filesystem.vehicle_components_json_filename
                 error_msg = _("Selected directory must contain files matching \\d\\d_*\\.param and a {_filename} file")
                 messagebox.showerror(_("Invalid Vehicle Directory Selected"), error_msg.format(**locals()))
-                return
+                return False
 
             try:
                 self.local_filesystem.re_init(self.directory, self.local_filesystem.vehicle_type)
@@ -207,9 +207,11 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
                     LocalFilesystem.store_recently_used_vehicle_dir(self.directory)
                     if self.destroy_parent_on_open:
                         self.parent.root.destroy()
-                    return
+                    return True
             # No files were found in the selected directory
             show_no_param_files_error(self.directory)
+            return True
+        return False
 
 
 class VehicleDirectorySelectionWindow(BaseWindow):
