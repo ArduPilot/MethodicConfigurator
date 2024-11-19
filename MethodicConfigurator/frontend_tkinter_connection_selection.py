@@ -32,7 +32,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
     allowing the user to select a connection, and handling the connection process.
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         parent,
         parent_frame,

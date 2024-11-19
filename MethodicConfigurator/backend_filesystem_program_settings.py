@@ -100,7 +100,7 @@ class ProgramSettings:
             error_msg = _("The path '{user_config_directory}' is not a directory.")
             raise NotADirectoryError(error_msg.format(**locals()))
 
-        return user_config_directory
+        return user_config_directory  # type: ignore[no-any-return] # workaround a mypy bug
 
     @staticmethod
     def __site_config_dir() -> str:
@@ -115,7 +115,7 @@ class ProgramSettings:
             error_msg = _("The path '{site_config_directory}' is not a directory.")
             raise NotADirectoryError(error_msg.format(**locals()))
 
-        return site_config_directory
+        return site_config_directory  # type: ignore[no-any-return] # workaround a mypy bug
 
     @staticmethod
     def __get_settings_as_dict() -> dict[str, Any]:
@@ -250,7 +250,8 @@ class ProgramSettings:
     @staticmethod
     def get_setting(setting: str) -> Union[int, bool]:
         if setting in SETTINGS_DEFAULTS:
-            return ProgramSettings.__get_settings_as_dict().get(setting, SETTINGS_DEFAULTS[setting])  # type: ignore[no-any-return]
+            setting_default = SETTINGS_DEFAULTS[setting]
+            return ProgramSettings.__get_settings_as_dict().get(setting, setting_default)  # type: ignore[no-any-return]
         return False
 
     @staticmethod

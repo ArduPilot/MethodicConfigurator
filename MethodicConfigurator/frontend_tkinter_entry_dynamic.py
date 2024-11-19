@@ -33,7 +33,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
     Entry with dynamicaly filtered ListBox to emulate an inteligent combobox widget
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         master,
         list_of_items=None,

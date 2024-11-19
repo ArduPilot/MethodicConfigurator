@@ -21,7 +21,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install -U mypy
+          python -m pip install -U mypy types-requests
 
       - name: Lint the code with mypy
         uses: sasanquaneuf/mypy-github-action@releases/v1.3

@@ -112,7 +112,7 @@ class ConfigurationSteps:
                         parameter,
                     )
 
-    def compute_parameters(self, filename: str, file_info: dict, parameter_type: str, variables: dict) -> str:
+    def compute_parameters(self, filename: str, file_info: dict, parameter_type: str, variables: dict) -> str:  # pylint: disable=too-many-branches
         """
         Computes the forced or derived parameters for a given configuration file.
 
@@ -122,7 +122,7 @@ class ConfigurationSteps:
         if parameter_type + "_parameters" not in file_info or not variables:
             return ""
         destination = self.forced_parameters if parameter_type == "forced" else self.derived_parameters
-        for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():
+        for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():  # pylint: disable=too-many-nested-blocks
             try:
                 if ("fc_parameters" in str(parameter_info["New Value"])) and (
                     "fc_parameters" not in variables or variables["fc_parameters"] == {}

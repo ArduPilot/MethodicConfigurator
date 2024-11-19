@@ -617,7 +617,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         combobox.configure(style="comb_input_valid.TCombobox")
         return True
 
-    def validate_entry_limits(self, event, entry, data_type, limits, _name, path) -> bool:  # pylint: disable=too-many-arguments
+    def validate_entry_limits(self, event, entry, data_type, limits, _name, path) -> bool:  # pylint: disable=too-many-arguments, too-many-positional-arguments
         is_focusout_event = event and event.type == "10"
         try:
             value = entry.get()  # make sure value is defined to prevent exception in the except block

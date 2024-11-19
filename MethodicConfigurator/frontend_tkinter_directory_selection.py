@@ -36,7 +36,7 @@ class DirectorySelectionWidgets:
     directory selection dialog.
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         parent: BaseWindow,
         parent_frame: tk.Widget,
@@ -145,7 +145,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
     selected vehicle directory and re-initializing the filesystem with the new directory.
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         parent: BaseWindow,
         parent_frame: ttk.Widget,

@@ -184,7 +184,7 @@ class Par:
         return parameter_dict
 
     @staticmethod
-    def validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value) -> None:  # pylint: disable=too-many-arguments
+    def validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value) -> None:  # pylint: disable=too-many-arguments, too-many-positional-arguments
         if len(parameter) > PARAM_NAME_MAX_LEN:
             raise SystemExit(f"Too long parameter name: {parameter} in {param_file} line {i}")
         if not re.match(PARAM_NAME_REGEX, parameter):
@@ -639,7 +639,7 @@ def update_parameter_documentation(
         )
 
 
-def update_parameter_documentation_file(  # pylint: disable=too-many-locals, too-many-arguments
+def update_parameter_documentation_file(  # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
     doc,
     sort_type,
     param_default_dict,

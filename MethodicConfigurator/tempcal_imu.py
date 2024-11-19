@@ -104,7 +104,7 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
     def set_enable(self, imu, value) -> None:
         self.enable[imu] = value
 
-    def correction(self, coeff, imu, temperature, axis, cal_temp) -> float:  # pylint: disable=too-many-arguments
+    def correction(self, coeff, imu, temperature, axis, cal_temp) -> float:  # pylint: disable=too-many-arguments, too-many-positional-arguments
         """calculate correction from temperature calibration from log data using parameters"""
         if self.enable[imu] != 1.0:
             return 0.0
@@ -286,7 +286,7 @@ def constrain(value, minv, maxv) -> Union[float, int]:
     return value  # type: ignore
 
 
-def IMUfit(  # noqa: PLR0915 pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments
+def IMUfit(  # noqa: PLR0915 pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments, too-many-positional-arguments
     logfile,
     outfile,
     no_graph,
@@ -539,7 +539,7 @@ def generate_calibration_file(outfile, online, progress_callback, data, c) -> tu
     return c, clog
 
 
-def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus) -> None:  # pylint: disable=too-many-arguments
+def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus) -> None:  # pylint: disable=too-many-arguments, too-many-positional-arguments
     _fig, axs = plt.subplots(len(data.IMUs()), 1, sharex=True)
     if num_imus == 1:
         axs = [axs]
@@ -573,7 +573,7 @@ def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus) ->
         _fig.savefig(os.path.join(figpath, "tempcal_gyro.png"))
 
 
-def generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus) -> None:  # pylint: disable=too-many-arguments
+def generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus) -> None:  # pylint: disable=too-many-arguments, too-many-positional-arguments
     _fig, axs = plt.subplots(num_imus, 1, sharex=True)
     if num_imus == 1:
         axs = [axs]

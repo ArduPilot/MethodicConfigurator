@@ -217,7 +217,7 @@ class ProgressWindow:
     a task. It includes a progress bar and a label to display the progress message.
     """
 
-    def __init__(self, parent, title: str, message: str = "", width: int = 300, height: int = 80) -> None:  # pylint: disable=too-many-arguments
+    def __init__(self, parent, title: str, message: str = "", width: int = 300, height: int = 80) -> None:  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self.parent = parent
         self.message = message
         self.progress_window = tk.Toplevel(self.parent)
@@ -384,7 +384,7 @@ class BaseWindow:
         photo = ImageTk.PhotoImage(resized_image)
 
         # Create a label with the resized image
-        image_label = ttk.Label(parent, image=photo)  # type: ignore[arg-type]
+        image_label = ttk.Label(parent, image=photo)
         # Keep a reference to the image to prevent it from being garbage collected
         image_label.image = photo  # type: ignore
         return image_label
@@ -406,7 +406,7 @@ class UsagePopupWindow:
         return ProgramSettings.display_usage_popup(ptype)
 
     @staticmethod
-    def display(  # pylint: disable=too-many-arguments
+    def display(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         parent: tk.Toplevel,
         usage_popup_window: BaseWindow,
         title: str,

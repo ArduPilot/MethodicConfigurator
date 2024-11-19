@@ -21,7 +21,7 @@ from typing import Any
 import backend_mavftp as mavftp
 
 # import time
-import requests  # type: ignore[import-untyped]
+import requests
 from pymavlink import mavutil
 
 old_mavftp_member_variable_values: dict[str, Any] = {}

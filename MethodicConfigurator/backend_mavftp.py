@@ -86,7 +86,7 @@ class FTP_OP:  # pylint: disable=invalid-name, too-many-instance-attributes
     including the necessary parameters and payload for the operation.
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         seq,
         session,
@@ -216,7 +216,7 @@ class MAVFTPSettings:
 class MAVFTPReturn:
     """The result of a MAVFTP operation."""
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         operation_name: str,
         error_code: int,
@@ -1348,7 +1348,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 f.write("\n")
         logging.info("Outputted %u parameters to %s", len(pdict), filename)
 
-    def cmd_getparams(  # pylint: disable=too-many-arguments
+    def cmd_getparams(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         args,
         progress_callback=None,

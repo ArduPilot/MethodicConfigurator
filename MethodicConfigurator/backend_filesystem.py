@@ -25,7 +25,7 @@ from shutil import copytree as shutil_copytree
 from typing import Any, Optional
 from zipfile import ZipFile
 
-from requests import get as requests_get  # type: ignore[import-untyped]
+from requests import get as requests_get
 
 from MethodicConfigurator import _
 from MethodicConfigurator.annotate_params import (
