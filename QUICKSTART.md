@@ -17,6 +17,7 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 
 - while [choosing an Autopilot](https://ardupilot.org/copter/docs/common-autopilots.html) and [other hardware](https://ardupilot.org/copter/docs/common-optional-hardware.html) components [avoid these components](https://discuss.ardupilot.org/t/hardware-to-avoid-when-building-your-first-multirotor/114014/1)
 - Use [ecalc for multirotor](https://www.ecalc.ch/index.htm) to select the propulsion system.
+- follow [hardware best practices](TUNING_GUIDE_ArduCopter.md#11-multicopter-hardware-best-practices)
 
 ### 1.2 Install Software
 
@@ -161,14 +162,16 @@ the *ArduPilot Methodic Configurator* needs connection exclusivity.
 1. Open the *ArduPilot Methodic Configurator* software.
 1. The software should now automatically detect and connect to your flight controller.
 ![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
-1. Select the vehicle template that better resembles your vehicle.
+1. Select source template directory to use.
 ![AMC template selection1](images/App_screenshot_Vehicle_directory1.png)
+1. Select the vehicle template that better resembles your vehicle, it does not need to fully match your vehicle.
 ![AMC template selection2](images/App_screenshot_Vehicle_overview.png)
 1. Give a name to your vehicle.
 ![AMC new vehicle name](images/App_screenshot_Vehicle_directory2.png)
 1. Press *Create vehicle configuration from template*.
 ![AMC new vehicle create](images/App_screenshot_Vehicle_directory3.png)
 1. Edit all the components of your vehicle to match your own in the *Vehicle Component Editor* window.
+Please scroll down and make sure you do not miss a property.
 ![AMC component editor](images/App_screenshot_Component_Editor.png)
 1. Press *Save data and start configuration*.
 1. The application will validate your input.
@@ -194,11 +197,14 @@ Now do this in a loop until the software automatically closes or you are asked t
     - allows for someone else to see if you know what you are doing
     - allows for someone else (or yourself after a few weeks) to understand your rationale
 - Press *Del* and/or *Add* buttons to delete or add parameters respectively (marked with the big red number 5),
+- If necessary scroll down using the scroll bar on the right and make sure you edit all parameters,
 - Press *Upload selected params to FC, and advance to next param file* (marked with the big red number 7),
 - Repeat from the top until the program automatically closes.
 
 ## 7. Use the *ArduPilot Methodic Configurator* software after having created a vehicle from a template
 
+1. Close all other GCS software (MissionPlanner, QGroundControl, MAVProxy, DroneKit-Python, APM Planner 2.0, UgCS, LOGOS, Tower, AndroPilot, etc)
+the *ArduPilot Methodic Configurator* needs connection exclusivity.
 1. Connect the flight controller to the computer using a USB cable.
 1. Wait at least 7 seconds.
 1. Open the *ArduPilot Methodic Configurator* software.
@@ -208,6 +214,7 @@ Now do this in a loop until the software automatically closes or you are asked t
 ![AMC open vehicle configuration](images/App_screenshot_Vehicle_directory4.png)
 double-click and step inside the directory that you want to use, not just select it
 1. Edit all the components of your vehicle to match your own.
+Please scroll down and make sure you do not miss a property.
 ![AMC component editor](images/App_screenshot_Component_Editor.png)
 1. Press *Save data and start configuration*.
 1. You should now see the *Parameter file editor and uploader* window.
