@@ -10,7 +10,7 @@ on:
   
 jobs:
   mypy:
-    name: runner / mypy
+    name: mypy
     runs-on: ubuntu-latest
 
     steps:
