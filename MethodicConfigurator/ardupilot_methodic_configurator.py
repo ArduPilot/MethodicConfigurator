@@ -11,15 +11,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
-
-# from logging import warning as logging_warning
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from sys import exit as sys_exit
+from webbrowser import open as webbrowser_open
 
 from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
+from MethodicConfigurator.backend_filesystem_program_settings import ProgramSettings
 from MethodicConfigurator.backend_flightcontroller import FlightController
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
 from MethodicConfigurator.frontend_tkinter_base import show_error_message
@@ -121,6 +121,13 @@ def main() -> None:
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+
+    if bool(ProgramSettings.get_setting("auto_open_doc_in_browser")):
+        url = (
+            "https://ardupilot.github.io/MethodicConfigurator/QUICKSTART.html"
+            "#5-use-the-ardupilot-methodic-configurator-software-for-the-first-time"
+        )
+        webbrowser_open(url=url, new=0, autoraise=True)
 
     # Connect to the flight controller and read the parameters
     flight_controller, vehicle_type = connect_to_fc_and_read_parameters(args)
