@@ -11,6 +11,7 @@ If you are reading this page, you are possibly interested in contributing to our
 We have a very active (and friendly) developer group and would love to have the help!
 Possible ways you can help:
 
+* [Translating the software into your language](ARCHITECTURE.md#adding-a-translation)
 * Testing the code
 * Filing issues on github, when you see a problem (or adding detail to existing issues that affect you)
 * Fixing issues

@@ -202,7 +202,7 @@ class ComponentEditorWindowBase(BaseWindow):
         """
         confirm_message = _(
             "ArduPilot Methodic Configurator only operates correctly if all component properties are correct."
-            " ArduPilot parameter values depend on the components used and their connections."
+            " ArduPilot parameter values depend on the components used and their connections.\n\n"
             " Have you used the scrollbar on the right side of the window and "
             "entered the correct values for all components?"
         )
