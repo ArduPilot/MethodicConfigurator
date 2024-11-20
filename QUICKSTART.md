@@ -154,6 +154,8 @@ The following sections describe each step of the procedure in more detail.
 
 ## 5. Use the *ArduPilot Methodic Configurator* software for the first time
 
+1. Close all other GCS software (MissionPlanner, QGroundControl, MAVProxy, DroneKit-Python, APM Planner 2.0, UgCS, LOGOS, Tower, AndroPilot, etc)
+the *ArduPilot Methodic Configurator* needs connection exclusivity.
 1. Connect the flight controller to the computer using a USB cable.
 1. Wait at least 7 seconds.
 1. Open the *ArduPilot Methodic Configurator* software.
