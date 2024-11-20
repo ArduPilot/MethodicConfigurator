@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.9\n"
-"POT-Creation-Date: 2024-11-20 18:33+0100\n"
-"PO-Revision-Date: 2024-11-20 19:23+0100\n"
+"POT-Creation-Date: 2024-11-20 21:54+0100\n"
+"PO-Revision-Date: 2024-11-20 21:55+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
 "Language: pt\n"
@@ -997,10 +997,6 @@ msgstr "Conectando com o FC"
 msgid "Connection step {} of {}"
 msgstr "Passo de conexão {} de {}"
 
-#: MethodicConfigurator/frontend_tkinter_connection_selection.py:135
-msgid "download_flight_controller_parameters"
-msgstr "download_flight_controller_parameters"
-
 #: MethodicConfigurator/frontend_tkinter_connection_selection.py:151
 msgid "Flight controller connection"
 msgstr "Conexão do controlador de voo"
@@ -1573,7 +1569,7 @@ msgstr "Não disponível"
 
 #: MethodicConfigurator/frontend_tkinter_parameter_editor.py:253
 msgid "This parameter is not available on the connected flight controller"
-msgstr "Este parâmetro não está dísponivel no controlador de voo conectado."
+msgstr "Este parâmetro não está dísponivel no controlador de voo conectado"
 
 #: MethodicConfigurator/frontend_tkinter_parameter_editor.py:255
 msgid "Not editable"
@@ -1693,7 +1689,7 @@ msgstr "3. Use "
 #: MethodicConfigurator/frontend_tkinter_parameter_editor.py:362
 #: MethodicConfigurator/frontend_tkinter_parameter_editor_table.py:238
 msgid "Del"
-msgstr "Del"
+msgstr "Rem"
 
 #: MethodicConfigurator/frontend_tkinter_parameter_editor.py:363
 msgid " and "

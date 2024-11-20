@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-11-20 18:33+0100\n"
+"POT-Creation-Date: 2024-11-20 21:54+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -819,10 +819,6 @@ msgstr ""
 
 #: MethodicConfigurator/frontend_tkinter_connection_selection.py:121
 msgid "Connection step {} of {}"
-msgstr ""
-
-#: MethodicConfigurator/frontend_tkinter_connection_selection.py:135
-msgid "download_flight_controller_parameters"
 msgstr ""
 
 #: MethodicConfigurator/frontend_tkinter_connection_selection.py:151

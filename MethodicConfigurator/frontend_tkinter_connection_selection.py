@@ -132,7 +132,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             self.previous_selection = self.flight_controller.comport.device
         if self.destroy_parent_on_connect:
             self.parent.root.destroy()
-        if self.download_params_on_connect and hasattr(self.parent, _("download_flight_controller_parameters")):
+        if self.download_params_on_connect and hasattr(self.parent, "download_flight_controller_parameters"):
             self.parent.download_flight_controller_parameters(redownload=False)
         return False
 
