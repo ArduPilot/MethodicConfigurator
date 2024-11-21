@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import getLevelName as logging_getLevelName
@@ -88,9 +88,9 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
                     # nothing got selected revert to the current connection
                     self.conn_selection_combobox.set(self.previous_selection)
                 return
-            self.reconnect(selected_connection)
+            self.reconnect(selected_connection)  # type: ignore[arg-type] # workaround for mypy issue
 
-    def add_connection(self):
+    def add_connection(self) -> str:
         # Open the connection selection dialog
         selected_connection = simpledialog.askstring(
             _("Flight Controller Connection"),
@@ -114,6 +114,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         else:
             error_msg = _("Add connection canceled or string empty {selected_connection}")
             logging_debug(error_msg.format(**locals()))
+            selected_connection = ""
         return selected_connection
 
     def reconnect(self, selected_connection: str = "") -> bool:  # defaults to auto-connect
@@ -248,7 +249,7 @@ class ConnectionSelectionWindow(BaseWindow):
         self.root.destroy()
 
 
-def argument_parser():
+def argument_parser() -> Namespace:
     """
     Parses command-line arguments for the script.
 

@@ -416,7 +416,7 @@ class FlightController:
 
         return pdict, defdict
 
-    def set_param(self, param_name: str, param_value: float):
+    def set_param(self, param_name: str, param_value: float) -> None:
         """
         Set a parameter on the flight controller.
 
@@ -425,8 +425,8 @@ class FlightController:
             param_value (float): The value to set the parameter to.
         """
         if self.master is None:  # FIXME for testing only pylint: disable=fixme
-            return None
-        return self.master.param_set_send(param_name, param_value)
+            return
+        self.master.param_set_send(param_name, param_value)
 
     def reset_and_reconnect(
         self, reset_progress_callback=None, connection_progress_callback=None, extra_sleep_time: Optional[int] = None
@@ -528,7 +528,7 @@ class FlightController:
 
     # pylint: enable=duplicate-code
 
-    def get_connection_tuples(self):
+    def get_connection_tuples(self) -> list[tuple[str, str]]:
         """
         Get all available connections.
         """

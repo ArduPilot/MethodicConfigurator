@@ -128,7 +128,6 @@ lint.ignore = [
     "ANN002",
     "ANN003",
     "ANN101",  # Missing type annotation for self in method
-    "ANN201",
 ]
 
 line-length = 127

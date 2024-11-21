@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 
@@ -31,7 +31,7 @@ from MethodicConfigurator.frontend_tkinter_base import (
 )
 
 
-def argument_parser():
+def argument_parser() -> Namespace:
     """
     Parses command-line arguments for the script.
 

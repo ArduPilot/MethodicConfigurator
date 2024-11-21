@@ -384,7 +384,7 @@ class BaseWindow:
         photo = ImageTk.PhotoImage(resized_image)
 
         # Create a label with the resized image
-        image_label = ttk.Label(parent, image=photo)
+        image_label = ttk.Label(parent, image=photo)  # type: ignore[arg-type] # workaround a mypy issue
         # Keep a reference to the image to prevent it from being garbage collected
         image_label.image = photo  # type: ignore
         return image_label

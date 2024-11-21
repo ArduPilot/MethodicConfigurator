@@ -34,7 +34,7 @@ class CheckRange(Action):
 
         super().__init__(*args, **kwargs)
 
-    def interval(self):
+    def interval(self) -> str:
         if hasattr(self, "min"):
             _lo = f"[{self.min}"
         elif hasattr(self, "inf"):

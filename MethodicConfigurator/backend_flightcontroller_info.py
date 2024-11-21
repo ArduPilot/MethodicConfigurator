@@ -8,7 +8,7 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from typing import Any
+from typing import Any, Union
 
 from pymavlink import mavutil
 
@@ -45,7 +45,7 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         self.is_supported = False
         self.is_mavftp_supported = False
 
-    def get_info(self):
+    def get_info(self) -> dict[str, Union[str, dict[str, str]]]:
         return {
             "Vendor": self.vendor_and_vendor_id,
             "Product": self.product_and_product_id,

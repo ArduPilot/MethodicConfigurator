@@ -14,15 +14,14 @@ from logging import info as logging_info
 from tkinter import ttk
 
 from MethodicConfigurator import _, __version__
+
+# type-checking block
+from MethodicConfigurator.annotate_params import Par
 from MethodicConfigurator.backend_flightcontroller import FlightController
 
 # from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
 # from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ProgressWindow
-
-# type-checking block
-if False:  # pylint: disable=using-constant-test
-    from MethodicConfigurator.annotate_params import Par
 
 
 class FlightControllerInfoWindow(BaseWindow):
@@ -81,5 +80,5 @@ class FlightControllerInfoWindow(BaseWindow):
         param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
         self.root.destroy()
 
-    def get_param_default_values(self):
+    def get_param_default_values(self) -> dict[str, Par]:
         return self.param_default_values

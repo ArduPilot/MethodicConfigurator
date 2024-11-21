@@ -176,9 +176,9 @@ class ConfigurationSteps:
                 logging_warning(error_msg)
         return ""
 
-    def auto_changed_by(self, selected_file: str):
+    def auto_changed_by(self, selected_file: str) -> str:
         if selected_file in self.configuration_steps:
-            return self.configuration_steps[selected_file].get("auto_changed_by", "")
+            return str(self.configuration_steps[selected_file].get("auto_changed_by", ""))
         return ""
 
     def jump_possible(self, selected_file: str) -> dict[str, str]:

@@ -50,7 +50,7 @@ VERSION = "1.0"
 # mypy: disable-error-code="unused-ignore"
 
 
-def arg_parser():
+def arg_parser() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Fetches on-line ArduPilot parameter documentation and adds it to the "
         "specified file or to all *.param and *.parm files in the specified directory."

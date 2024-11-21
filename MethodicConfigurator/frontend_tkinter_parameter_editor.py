@@ -768,7 +768,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         ]
         self.write_zip_file(files_to_zip)
 
-    def write_summary_file(self, param_dict: dict, filename: str, annotate_doc: bool):
+    def write_summary_file(self, param_dict: dict, filename: str, annotate_doc: bool) -> bool:
         should_write_file = True
         if param_dict:
             if self.local_filesystem.vehicle_configuration_file_exists(filename):
@@ -779,7 +779,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 logging_info(_("Summary file %s written"), filename)
         return should_write_file
 
-    def write_zip_file(self, files_to_zip: list[tuple[bool, str]]):
+    def write_zip_file(self, files_to_zip: list[tuple[bool, str]]) -> bool:
         should_write_file = True
         zip_file_path = self.local_filesystem.zip_file_path()
         if self.local_filesystem.zip_file_exists():

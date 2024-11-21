@@ -382,11 +382,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def get_vehicle_directory_name(self) -> str:
         return self.get_directory_name_from_full_path(self.vehicle_dir)
 
-    def zip_file_path(self):
+    def zip_file_path(self) -> str:
         vehicle_name = self.get_vehicle_directory_name()
         return os_path.join(self.vehicle_dir, f"{vehicle_name}.zip")
 
-    def zip_file_exists(self):
+    def zip_file_exists(self) -> bool:
         zip_file_path = self.zip_file_path()
         return os_path.exists(zip_file_path) and os_path.isfile(zip_file_path)
 
@@ -436,10 +436,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         logging_info(_("Intermediate parameter files and summary files zipped to %s"), zip_file_path)
 
-    def vehicle_image_filepath(self):
+    def vehicle_image_filepath(self) -> str:
         return os_path.join(self.vehicle_dir, "vehicle.jpg")
 
-    def vehicle_image_exists(self):
+    def vehicle_image_exists(self) -> bool:
         return os_path.exists(self.vehicle_image_filepath()) and os_path.isfile(self.vehicle_image_filepath())
 
     @staticmethod
@@ -477,11 +477,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def getcwd() -> str:
         return os_getcwd()
 
-    def tempcal_imu_result_param_tuple(self):
+    def tempcal_imu_result_param_tuple(self) -> tuple[str, str]:
         tempcal_imu_result_param_filename = "03_imu_temperature_calibration_results.param"
-        return [tempcal_imu_result_param_filename, os_path.join(self.vehicle_dir, tempcal_imu_result_param_filename)]
+        return tempcal_imu_result_param_filename, os_path.join(self.vehicle_dir, tempcal_imu_result_param_filename)
 
-    def copy_fc_values_to_file(self, selected_file: str, params: dict[str, float]):
+    def copy_fc_values_to_file(self, selected_file: str, params: dict[str, float]) -> int:
         ret = 0
         if selected_file in self.file_parameters:
             for param, v in self.file_parameters[selected_file].items():
@@ -557,7 +557,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             start_file_index = len(files) - 1
         return files[start_file_index]
 
-    def get_eval_variables(self):
+    def get_eval_variables(self) -> dict[str, dict[str, Any]]:
         variables = {}
         if hasattr(self, "vehicle_components") and self.vehicle_components and "Components" in self.vehicle_components:
             variables["vehicle_components"] = self.vehicle_components["Components"]
@@ -565,7 +565,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             variables["doc_dict"] = self.doc_dict
         return variables
 
-    def copy_fc_params_values_to_template_created_vehicle_files(self, fc_parameters: dict[str, float]):
+    def copy_fc_params_values_to_template_created_vehicle_files(self, fc_parameters: dict[str, float]) -> str:
         eval_variables = self.get_eval_variables()
         for param_filename, param_dict in self.file_parameters.items():
             for param_name, param in param_dict.items():

@@ -27,7 +27,7 @@ MAVLINK_COMPID_MAX = 2**8
 MAV_PARAM_TYPE_REAL32 = 9
 
 
-def parse_arguments(args=None):
+def parse_arguments(args=None) -> argparse.Namespace:
     """
     Parses command line arguments for the script.
 
@@ -92,7 +92,7 @@ def parse_arguments(args=None):
         if args.compid != -1:
             raise SystemExit("--compid parameter is only relevant if --format is qgcs")
 
-    return args
+    return args  # type: ignore # mypy bug
 
 
 def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict[str, float]:  # pylint: disable=too-many-branches

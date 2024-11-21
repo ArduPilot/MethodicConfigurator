@@ -38,7 +38,7 @@ class VehicleComponents:
         self.vehicle_components_json_filename = "vehicle_components.json"
         self.vehicle_components: Union[None, dict[Any, Any]] = None
 
-    def load_vehicle_components_json_data(self, vehicle_dir: str):
+    def load_vehicle_components_json_data(self, vehicle_dir: str) -> dict[Any, Any]:
         data = {}
         filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
         try:

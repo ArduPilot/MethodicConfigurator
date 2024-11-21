@@ -80,7 +80,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         self.bind("<Return>", self.update_entry_from_listbox)
         self.bind("<Escape>", lambda event: self.unpost_listbox())
 
-    def default_filter_function(self, entry_data):
+    def default_filter_function(self, entry_data) -> list[str]:
         if self._ignorecase_match:
             if self._startswith_match:
                 return [item for item in self._list_of_items if item.lower().startswith(entry_data.lower())]
@@ -173,8 +173,8 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
             self._listbox.master.destroy()
             self._listbox = None
 
-    def get_value(self):
-        return self._entry_var.get()
+    def get_value(self) -> str:
+        return self._entry_var.get()  # type: ignore[no-any-return] # mypy bug
 
     def set_value(self, text, close_dialog=False) -> None:
         self._set_var(text)

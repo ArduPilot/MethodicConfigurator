@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from copy import deepcopy
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_error
@@ -133,7 +133,7 @@ class DirectoryNameWidgets:  # pylint: disable=too-few-public-methods
         directory_entry.pack(side=tk.LEFT, fill="x", expand=True, anchor=tk.NW, pady=(4, 0))
         show_tooltip(directory_entry, dir_tooltip)
 
-    def get_selected_directory(self):
+    def get_selected_directory(self) -> str:
         return self.dir_var.get()
 
 
@@ -473,7 +473,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             )
 
 
-def argument_parser():
+def argument_parser() -> Namespace:
     """
     Parses command-line arguments for the script.
 

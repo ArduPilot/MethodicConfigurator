@@ -612,7 +612,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         valid = True
         # Check if the input is a valid float
         try:
-            p = float(new_value)
+            p = float(new_value)  # type: ignore[arg-type] # workaround a mypy bug
             changed = not is_within_tolerance(old_value, p)
             param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
             p_min = param_metadata.get("min", None) if param_metadata else None
@@ -669,7 +669,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         # Update the params dictionary with the new value
         self.local_filesystem.file_parameters[current_file][param_name].comment = new_value
 
-    def get_upload_selected_params(self, current_file: str):
+    def get_upload_selected_params(self, current_file: str) -> dict[str, Par]:
         selected_params = {}
         for param_name, checkbutton_state in self.upload_checkbutton_var.items():
             if checkbutton_state.get():
@@ -682,7 +682,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if isinstance(widget, ttk.Entry):
                 widget.event_generate("<FocusOut>", when="now")
 
-    def get_at_least_one_param_edited(self):
+    def get_at_least_one_param_edited(self) -> bool:
         return self.at_least_one_param_edited
 
     def set_at_least_one_param_edited(self, value) -> None:

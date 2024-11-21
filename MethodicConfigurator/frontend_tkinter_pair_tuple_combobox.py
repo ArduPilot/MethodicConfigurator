@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import contextlib
 import tkinter as tk
 import tkinter.font as tkfont
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import critical as logging_critical
 from logging import debug as logging_debug
@@ -75,7 +75,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         else:
             logging_debug(_("No %s combobox element selected"), self.cb_name)
 
-    def get_selected_key(self):
+    def get_selected_key(self) -> Union[str, None]:
         try:
             i_index = self.current()
             return self.list_keys[i_index]
@@ -190,7 +190,7 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
             self.tooltip = None
 
 
-def argument_parser():
+def argument_parser() -> Namespace:
     """
     Parses command-line arguments for the script.
 

@@ -30,7 +30,7 @@ from MethodicConfigurator.frontend_tkinter_flightcontroller_info import FlightCo
 from MethodicConfigurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 
 
-def argument_parser():
+def argument_parser() -> argparse.Namespace:
     """
     Parses command-line arguments for the script.
 

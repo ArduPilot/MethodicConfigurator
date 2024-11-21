@@ -232,11 +232,11 @@ class IMUData:
         self.gyro[imu]["Z"] = np.append(self.gyro[imu]["Z"], value.z)
         self.gyro[imu]["time"] = np.append(self.gyro[imu]["time"], time)
 
-    def moving_average(self, data, w):
+    def moving_average(self, data, w) -> np.ndarray:
         """apply a moving average filter over a window of width w"""
         ret = np.cumsum(data)
         ret[w:] = ret[w:] - ret[:-w]
-        return ret[w - 1 :] / w
+        return ret[w - 1 :] / w  # type: ignore[no-any-return] # mypy bug
 
     def FilterArray(self, data: dict[str, np.ndarray], width_s) -> dict[str, np.ndarray]:
         """apply moving average filter of width width_s seconds"""

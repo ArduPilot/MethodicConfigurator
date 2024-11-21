@@ -17,7 +17,8 @@ import random
 import struct
 import sys
 import time
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
+from collections.abc import Generator
 from datetime import datetime
 from io import BufferedReader, BufferedWriter
 from io import BytesIO as SIO
@@ -106,7 +107,7 @@ class FTP_OP:  # pylint: disable=invalid-name, too-many-instance-attributes
         self.offset: int = offset  # Offset for read/write operations.
         self.payload = payload  # (bytes) Payload for the operation.
 
-    def pack(self):
+    def pack(self) -> bytearray:
         """pack message"""
         ret = struct.pack(
             "<HBBBBBBI", self.seq, self.session, self.opcode, self.size, self.req_opcode, self.burst_complete, 0, self.offset
@@ -128,7 +129,7 @@ class FTP_OP:  # pylint: disable=invalid-name, too-many-instance-attributes
             ret += f" [{self.payload[0]}]"
         return ret
 
-    def items(self):
+    def items(self) -> Generator[tuple[str, Union[int, bool, bytes]]]:
         """Yield each attribute and its value for the FTP_OP instance. For debugging purposes."""
         yield "seq", self.seq
         yield "session", self.session
@@ -280,7 +281,7 @@ class MAVFTPReturn:
             logging.error("%s failed, unknown error %u in display_message()", self.operation_name, self.error_code)
 
     @property
-    def return_code(self):
+    def return_code(self) -> int:
         return self.error_code
 
 
@@ -1397,7 +1398,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
 if __name__ == "__main__":
 
-    def argument_parser():
+    def argument_parser() -> Namespace:
         """
         Parses command-line arguments for the script.
 
@@ -1529,7 +1530,7 @@ if __name__ == "__main__":
         # Add other subparsers commands as needed
         return parser.parse_args()
 
-    def auto_detect_serial():
+    def auto_detect_serial() -> list[mavutil.SerialPort]:
         preferred_ports = [
             "*FTDI*",
             "*3D*",
@@ -1545,7 +1546,7 @@ if __name__ == "__main__":
             "*CubePilot*",
             "*Qiotek*",
         ]
-        serial_list = mavutil.auto_detect_serial(preferred_list=preferred_ports)
+        serial_list: list[mavutil.SerialPort] = mavutil.auto_detect_serial(preferred_list=preferred_ports)
         serial_list.sort(key=lambda x: x.device)
 
         # remove OTG2 ports for dual CDC
@@ -1558,7 +1559,7 @@ if __name__ == "__main__":
 
         return serial_list
 
-    def auto_connect(device):
+    def auto_connect(device) -> mavutil.SerialPort:
         comport = None
         if device:
             comport = mavutil.SerialPort(device=device, description=device)

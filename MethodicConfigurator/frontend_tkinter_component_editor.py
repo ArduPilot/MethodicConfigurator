@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 
 # from logging import debug as logging_debug
@@ -18,7 +18,7 @@ from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from math import log2
 from tkinter import ttk
-from typing import Any, Union
+from typing import Any, Callable, Union
 
 from MethodicConfigurator import _, __version__
 from MethodicConfigurator.backend_filesystem import LocalFilesystem
@@ -31,7 +31,7 @@ from MethodicConfigurator.frontend_tkinter_base import show_error_message
 from MethodicConfigurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
 
 
-def argument_parser():
+def argument_parser() -> Namespace:
     """
     Parses command-line arguments for the script.
 
@@ -562,7 +562,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         entry.insert(0, str(value))
         return entry
 
-    def get_validate_function(self, entry, path):
+    def get_validate_function(self, entry, path) -> Union[Callable[[tk.Event[tk.Entry]], object], None]:  # pylint: disable=unsubscriptable-object
         validate_functions = {
             ("Frame", "Specifications", "TOW min Kg"): lambda event, entry=entry, path=path: self.validate_entry_limits(
                 event, entry, float, (0.01, 600), "Takeoff Weight", path
