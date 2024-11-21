@@ -36,14 +36,14 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         master,
-        list_of_items=None,
+        list_of_items: Union[None, list[str]] = None,
         custom_filter_function=None,
-        listbox_width=None,
-        listbox_height=12,
-        ignorecase_match=False,
-        startswith_match=True,
-        vscrollbar=True,
-        hscrollbar=True,
+        listbox_width: Union[None, int] = None,
+        listbox_height: int = 12,
+        ignorecase_match: bool = False,
+        startswith_match: bool = True,
+        vscrollbar: bool = True,
+        hscrollbar: bool = True,
         **kwargs,
     ) -> None:
         if list_of_items is None:
@@ -176,7 +176,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
     def get_value(self) -> str:
         return self._entry_var.get()  # type: ignore[no-any-return] # mypy bug
 
-    def set_value(self, text, close_dialog=False) -> None:
+    def set_value(self, text: str, close_dialog: bool = False) -> None:
         self._set_var(text)
 
         if close_dialog:
@@ -185,12 +185,12 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         self.icursor(END)
         self.xview_moveto(1.0)
 
-    def _set_var(self, text) -> None:
+    def _set_var(self, text: str) -> None:
         self._entry_var.trace_remove("write", self._trace_id)
         self._entry_var.set(text)
         self._trace_id = self._entry_var.trace_add("write", self._on_change_entry_var)
 
-    def update_entry_from_listbox(self, _event) -> str:
+    def update_entry_from_listbox(self, _event: Union[None, tk.Event]) -> str:
         if self._listbox is not None:
             current_selection = self._listbox.curselection()
 
@@ -207,7 +207,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
         return "break"
 
-    def _previous(self, _event) -> str:
+    def _previous(self, _event: Union[None, tk.Event]) -> str:
         if self._listbox is not None:
             current_selection = self._listbox.curselection()
 
@@ -229,7 +229,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
         return "break"
 
-    def _next(self, _event) -> str:
+    def _next(self, _event: Union[None, tk.Event]) -> str:
         if self._listbox is not None:
             current_selection = self._listbox.curselection()
             if len(current_selection) == 0:

@@ -18,6 +18,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
 from tkinter import filedialog, messagebox, ttk
+from typing import Union
 
 # from logging import critical as logging_critical
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
@@ -43,7 +44,7 @@ from MethodicConfigurator.frontend_tkinter_parameter_editor_table import Paramet
 from MethodicConfigurator.tempcal_imu import IMUfit
 
 
-def show_about_window(root, _version: str) -> None:  # pylint: disable=too-many-locals
+def show_about_window(root: ttk.Frame, _version: str) -> None:  # pylint: disable=too-many-locals
     # Create a new window for the custom "About" message
     about_window = tk.Toplevel(root)
     about_window.title(_("About"))
@@ -484,7 +485,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 logging_warning(_("No flight controller connection, will not upload any file"))
                 messagebox.showwarning(_("Will not upload any file"), _("No flight controller connection"))
 
-    def on_param_file_combobox_change(self, _event, forced: bool = False) -> None:
+    def on_param_file_combobox_change(self, _event: Union[None, tk.Event], forced: bool = False) -> None:
         if not self.file_selection_combobox["values"]:
             return
         self.parameter_editor_table.generate_edit_widgets_focus_out()
@@ -518,7 +519,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if not redownload:
             self.on_param_file_combobox_change(None, True)  # the initial param read will trigger a table update
 
-    def repopulate_parameter_table(self, selected_file) -> None:
+    def repopulate_parameter_table(self, selected_file: Union[None, str]) -> None:
         if not selected_file:
             return  # no file was yet selected, so skip it
         if hasattr(self.flight_controller, "fc_parameters") and self.flight_controller.fc_parameters:
@@ -582,7 +583,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.__reset_and_reconnect(fc_reset_required, fc_reset_unsure)
 
-    def __reset_and_reconnect(self, fc_reset_required, fc_reset_unsure) -> None:
+    def __reset_and_reconnect(self, fc_reset_required: bool, fc_reset_unsure: list[str]) -> None:
         if not fc_reset_required and fc_reset_unsure:
             # Ask the user if they want to reset the ArduPilot
             _param_list_str = (", ").join(fc_reset_unsure)
@@ -625,7 +626,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.on_skip_click(force_focus_out_event=False)
 
     # This function can recurse multiple times if there is an upload error
-    def upload_selected_params(self, selected_params) -> None:
+    def upload_selected_params(self, selected_params: dict) -> None:
         logging_info(_("Uploading %d selected %s parameters to flight controller..."), len(selected_params), self.current_file)
 
         self.upload_params_that_require_reset(selected_params)
@@ -683,7 +684,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
         self.local_filesystem.write_last_uploaded_filename(self.current_file)
 
-    def on_skip_click(self, _event=None, force_focus_out_event=True) -> None:
+    def on_skip_click(self, _event: Union[None, tk.Event] = None, force_focus_out_event: bool = True) -> None:
         if force_focus_out_event:
             self.parameter_editor_table.generate_edit_widgets_focus_out()
         self.write_changes_to_intermediate_parameter_file()

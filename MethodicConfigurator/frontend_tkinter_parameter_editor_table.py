@@ -18,13 +18,11 @@ from logging import info as logging_info
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
-from typing import Union
+from typing import Any, Union
 
 from MethodicConfigurator import _
 from MethodicConfigurator.annotate_params import Par
-
-# from MethodicConfigurator.backend_filesystem import LocalFilesystem
-from MethodicConfigurator.backend_filesystem import is_within_tolerance
+from MethodicConfigurator.backend_filesystem import LocalFilesystem, is_within_tolerance
 
 # from MethodicConfigurator.backend_flightcontroller import FlightController
 # from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
@@ -43,7 +41,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     managing, and updating the table that displays parameters for editing.
     """
 
-    def __init__(self, root, local_filesystem, parameter_editor) -> None:
+    def __init__(self, root, local_filesystem: LocalFilesystem, parameter_editor) -> None:
         super().__init__(root)
         self.root = root
         self.local_filesystem = local_filesystem
@@ -73,7 +71,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 # if error_msg:
                 #    messagebox.showerror("Error in derived parameters", error_msg)
 
-    def add_forced_or_derived_parameters(self, filename, new_parameters, fc_parameters=None) -> None:
+    def add_forced_or_derived_parameters(
+        self, filename: str, new_parameters: dict[str, dict[str, Par]], fc_parameters: Union[dict[str, float], None] = None
+    ) -> None:
         """Add forced parameters not yet in the parameter list to the parameter list"""
         if filename in new_parameters:
             for param_name, param in new_parameters[filename].items():
@@ -144,7 +144,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         # Scroll to the top of the parameter table
         self.canvas.yview("moveto", 0)
 
-    def rename_fc_connection(self, selected_file) -> None:
+    def rename_fc_connection(self, selected_file: str) -> None:
         renames = {}
         if "rename_connection" in self.local_filesystem.configuration_steps[selected_file]:
             new_connection_prefix = self.local_filesystem.configuration_steps[selected_file]["rename_connection"]
@@ -184,7 +184,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                     )
                     messagebox.showinfo(_("Parameter Renamed"), info_msg.format(**locals()))
 
-    def __update_table(self, params, fc_parameters) -> None:
+    def __update_table(self, params: dict[str, Par], fc_parameters: dict[str, float]) -> None:
         try:
             for i, (param_name, param) in enumerate(params.items(), 1):
                 param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
@@ -202,7 +202,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 column.append(self.__create_new_value_entry(param_name, param, param_metadata, param_default, doc_tooltip))
                 column.append(self.__create_unit_label(param_metadata))
                 column.append(self.__create_upload_checkbutton(param_name, bool(fc_parameters)))
-                column.append(self.__create_change_reason_entry(param_name, param, column[3]))
+                # workaround a mypy issue
+                column.append(self.__create_change_reason_entry(param_name, param, column[3]))  # type: ignore[arg-type]
 
                 column[0].grid(row=i, column=0, sticky="w", padx=0)
                 column[1].grid(row=i, column=1, sticky="w", padx=0)
@@ -233,7 +234,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.view_port.columnconfigure(5, weight=0)  # Upload to FC
         self.view_port.columnconfigure(6, weight=1)  # Change Reason
 
-    def __create_delete_button(self, param_name) -> ttk.Button:
+    def __create_delete_button(self, param_name: str) -> ttk.Button:
         delete_button = ttk.Button(
             self.view_port, text=_("Del"), style="narrow.TButton", command=lambda: self.__on_parameter_delete(param_name)
         )
@@ -241,7 +242,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         show_tooltip(delete_button, tooltip_msg.format(**locals()))
         return delete_button
 
-    def __create_parameter_name(self, param_name, param_metadata, doc_tooltip) -> ttk.Label:
+    def __create_parameter_name(self, param_name: str, param_metadata: dict[str, Any], doc_tooltip: str) -> ttk.Label:
         is_calibration = param_metadata.get("Calibration", False) if param_metadata else False
         is_readonly = param_metadata.get("ReadOnly", False) if param_metadata else False
         parameter_label = ttk.Label(
@@ -257,7 +258,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(parameter_label, doc_tooltip)
         return parameter_label
 
-    def __create_flightcontroller_value(self, fc_parameters, param_name, param_default, doc_tooltip) -> ttk.Label:
+    def __create_flightcontroller_value(
+        self, fc_parameters: dict[str, float], param_name: str, param_default: Union[None, Par], doc_tooltip: str
+    ) -> ttk.Label:
         if param_name in fc_parameters:
             value_str = format(fc_parameters[param_name], ".6f").rstrip("0").rstrip(".")
             if param_default is not None and is_within_tolerance(fc_parameters[param_name], param_default.value):
@@ -272,9 +275,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(flightcontroller_value, doc_tooltip)
         return flightcontroller_value
 
-    def __update_combobox_style_on_selection(self, combobox_widget, param_default, event) -> None:
+    def __update_combobox_style_on_selection(
+        self, combobox_widget: PairTupleCombobox, param_default: Union[None, Par], event: tk.Event
+    ) -> None:
         try:
-            current_value = float(combobox_widget.get_selected_key())
+            # we want None to raise an exception
+            current_value = float(combobox_widget.get_selected_key())  # type: ignore[arg-type]
             has_default_value = param_default is not None and is_within_tolerance(current_value, param_default.value)
             combobox_widget.configure(style="default_v.TCombobox" if has_default_value else "readonly.TCombobox")
             event.width = NEW_VALUE_WIDGET_WIDTH
@@ -284,7 +290,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             logging_info(msg.format(**locals()))
 
     @staticmethod
-    def __update_new_value_entry_text(new_value_entry: ttk.Entry, value: float, param_default) -> None:
+    def __update_new_value_entry_text(new_value_entry: ttk.Entry, value: float, param_default: Union[None, Par]) -> None:
         if isinstance(new_value_entry, PairTupleCombobox):
             return
         new_value_entry.delete(0, tk.END)
@@ -297,11 +303,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def __create_new_value_entry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        param_name,
-        param,
-        param_metadata,
-        param_default,
-        doc_tooltip,
+        param_name: str,
+        param: Par,
+        param_metadata: dict[str, Any],
+        param_default: Union[None, Par],
+        doc_tooltip: str,
     ) -> Union[PairTupleCombobox, ttk.Entry]:
         present_as_forced = False
         if (
@@ -351,7 +357,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             font = get_widget_font(new_value_entry)
             font["size"] -= 2 if platform_system() == "Windows" else 1
             new_value_entry.config(state="readonly", width=NEW_VALUE_WIDGET_WIDTH, font=(font["family"], font["size"]))
-            new_value_entry.bind(
+            new_value_entry.bind(  # type: ignore[call-overload] # workaround a mypy issue
                 "<<ComboboxSelected>>",
                 lambda event: self.__update_combobox_style_on_selection(new_value_entry, param_default, event),
                 "+",
@@ -359,7 +365,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         else:
             new_value_entry = ttk.Entry(self.view_port, width=NEW_VALUE_WIDGET_WIDTH + 1, justify=tk.RIGHT)
             ParameterEditorTable.__update_new_value_entry_text(new_value_entry, param.value, param_default)
-            bitmask_dict = param_metadata.get("Bitmask", None) if param_metadata else None
+            bitmask_dict = param_metadata.get("Bitmask") if param_metadata else None
         try:
             old_value = self.local_filesystem.file_parameters[self.current_file][param_name].value
         except KeyError as e:
@@ -384,7 +390,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(new_value_entry, doc_tooltip)
         return new_value_entry
 
-    def __open_bitmask_selection_window(self, event, param_name, bitmask_dict, old_value) -> None:  # pylint: disable=too-many-locals
+    def __open_bitmask_selection_window(self, event: tk.Event, param_name: str, bitmask_dict: dict, old_value: float) -> None:  # pylint: disable=too-many-locals
         def on_close() -> None:
             checked_keys = [key for key, var in checkbox_vars.items() if var.get()]
             # Convert checked keys back to a decimal value
@@ -406,7 +412,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 "<FocusIn>", lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value)
             )
 
-        def get_param_value_msg(_param_name, checked_keys) -> str:
+        def get_param_value_msg(_param_name: str, checked_keys) -> str:
             _new_decimal_value = sum(1 << key for key in checked_keys)
             text = _("{_param_name} Value: {_new_decimal_value}")
             return text.format(**locals())
@@ -449,8 +455,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         window.wait_window()  # Wait for the window to be closed
 
-    def __create_unit_label(self, param_metadata) -> ttk.Label:
-        unit_label = ttk.Label(self.view_port, text=param_metadata.get("unit") if param_metadata else "")
+    def __create_unit_label(self, param_metadata: dict[str, Union[float, str]]) -> ttk.Label:
+        unit_label = ttk.Label(self.view_port, text=param_metadata.get("unit", "") if param_metadata else "")
         unit_tooltip = (
             param_metadata.get("unit_tooltip")
             if param_metadata
@@ -460,7 +466,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(unit_label, unit_tooltip)
         return unit_label
 
-    def __create_upload_checkbutton(self, param_name, fc_connected) -> ttk.Checkbutton:
+    def __create_upload_checkbutton(self, param_name: str, fc_connected: bool) -> ttk.Checkbutton:
         self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=fc_connected)
         upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
         upload_checkbutton.configure(state="normal" if fc_connected else "disabled")
@@ -468,7 +474,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         show_tooltip(upload_checkbutton, msg.format(**locals()))
         return upload_checkbutton
 
-    def __create_change_reason_entry(self, param_name, param, new_value_entry) -> ttk.Entry:
+    def __create_change_reason_entry(
+        self, param_name: str, param: Par, new_value_entry: Union[ttk.Entry, PairTupleCombobox]
+    ) -> ttk.Entry:
         present_as_forced = False
         if (
             self.current_file in self.local_filesystem.forced_parameters
@@ -505,7 +513,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         show_tooltip(change_reason_entry, msg.format(**locals()))
         return change_reason_entry
 
-    def __on_parameter_delete(self, param_name) -> None:
+    def __on_parameter_delete(self, param_name: str) -> None:
         msg = _("Are you sure you want to delete the {param_name} parameter?")
         if messagebox.askyesno(f"{self.current_file}", msg.format(**locals())):
             # Capture current vertical scroll position
@@ -519,7 +527,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             # Restore the scroll position
             self.canvas.yview_moveto(current_scroll_position)
 
-    def __on_parameter_add(self, fc_parameters) -> None:
+    def __on_parameter_add(self, fc_parameters: dict[str, float]) -> None:
         add_parameter_window = BaseWindow(self.root)
         add_parameter_window.root.title(_("Add Parameter to ") + self.current_file)
         add_parameter_window.root.geometry("450x300")
@@ -559,7 +567,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         BaseWindow.center_window(add_parameter_window.root, self.root)
         parameter_name_combobox.focus()
 
-        def custom_selection_handler(event) -> None:
+        def custom_selection_handler(event: tk.Event) -> None:
             parameter_name_combobox.update_entry_from_listbox(event)
             if self.__confirm_parameter_addition(parameter_name_combobox.get().upper(), fc_parameters):
                 add_parameter_window.root.destroy()
@@ -570,7 +578,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         parameter_name_combobox.bind("<Return>", custom_selection_handler)
         parameter_name_combobox.bind("<<ComboboxSelected>>", custom_selection_handler)
 
-    def __confirm_parameter_addition(self, param_name: str, fc_parameters: dict) -> bool:
+    def __confirm_parameter_addition(self, param_name: str, fc_parameters: dict[str, float]) -> bool:
         if not param_name:
             messagebox.showerror(_("Invalid parameter name."), _("Parameter name can not be empty."))
             return False
@@ -601,7 +609,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             )
         return False
 
-    def __on_parameter_value_change(self, event, current_file, param_name) -> None:
+    def __on_parameter_value_change(self, event: tk.Event, current_file: str, param_name: str) -> None:
         # Get the new value from the Entry widget
         new_value = event.widget.get_selected_key() if isinstance(event.widget, PairTupleCombobox) else event.widget.get()
         try:
@@ -646,7 +654,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             p = old_value
         self.__update_new_value_entry_text(event.widget, p, self.local_filesystem.param_default_dict.get(param_name, None))
 
-    def __on_parameter_change_reason_change(self, event, current_file, param_name) -> None:
+    def __on_parameter_change_reason_change(self, event: tk.Event, current_file: str, param_name: str) -> None:
         # Get the new value from the Entry widget
         new_value = event.widget.get()
         try:
@@ -685,5 +693,5 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     def get_at_least_one_param_edited(self) -> bool:
         return self.at_least_one_param_edited
 
-    def set_at_least_one_param_edited(self, value) -> None:
+    def set_at_least_one_param_edited(self, value: bool) -> None:
         self.at_least_one_param_edited = value

@@ -16,6 +16,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
 from sys import exit as sys_exit
 from tkinter import simpledialog, ttk
+from typing import Union
 
 from MethodicConfigurator import _
 from MethodicConfigurator.backend_flightcontroller import FlightController
@@ -44,7 +45,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         self.flight_controller = flight_controller
         self.destroy_parent_on_connect = destroy_parent_on_connect
         self.download_params_on_connect = download_params_on_connect
-        self.previous_selection = (
+        self.previous_selection: Union[None, str] = (
             flight_controller.comport.device
             if flight_controller.comport and hasattr(flight_controller.comport, "device")
             else None

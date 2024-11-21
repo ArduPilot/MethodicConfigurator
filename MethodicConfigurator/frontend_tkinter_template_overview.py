@@ -133,7 +133,7 @@ class TemplateOverviewWindow(BaseWindow):
             # Update the column's width property to accommodate the largest text width
             self.tree.column(col, width=int(max_width * 0.6 + 10))
 
-    def __on_row_double_click(self, event) -> None:
+    def __on_row_double_click(self, event: tk.Event) -> None:
         """Handle row double-click event."""
         item_id = self.tree.identify_row(event.y)
         if item_id:

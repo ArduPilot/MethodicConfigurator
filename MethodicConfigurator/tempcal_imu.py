@@ -17,7 +17,7 @@ import os
 import re
 import sys
 from argparse import ArgumentParser
-from typing import Union
+from typing import Callable, Union
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -47,64 +47,64 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
     def __init__(self) -> None:
         self.acoef: dict = {}
         self.gcoef: dict = {}
-        self.enable = [0] * 3
-        self.tmin = [-100] * 3
-        self.tmax = [-100] * 3
+        self.enable: list[int] = [0] * 3
+        self.tmin: list[float] = [-100] * 3
+        self.tmax: list[float] = [-100] * 3
         self.gtcal: dict = {}
         self.atcal: dict = {}
         self.gofs: dict = {}
         self.aofs: dict = {}
 
-    def set_accel_poly(self, imu, axis, values) -> None:
+    def set_accel_poly(self, imu: int, axis: str, values) -> None:
         if imu not in self.acoef:
             self.acoef[imu] = {}
         self.acoef[imu][axis] = values
 
-    def set_gyro_poly(self, imu, axis, values) -> None:
+    def set_gyro_poly(self, imu: int, axis: str, values) -> None:
         if imu not in self.gcoef:
             self.gcoef[imu] = {}
         self.gcoef[imu][axis] = values
 
-    def set_acoeff(self, imu, axis, order, value) -> None:
+    def set_acoeff(self, imu: int, axis: str, order: int, value: dict) -> None:
         if imu not in self.acoef:
             self.acoef[imu] = {}
         if axis not in self.acoef[imu]:
             self.acoef[imu][axis] = [0] * 4
         self.acoef[imu][axis][POLY_ORDER - order] = value
 
-    def set_gcoeff(self, imu, axis, order, value) -> None:
+    def set_gcoeff(self, imu: int, axis: str, order: int, value: dict) -> None:
         if imu not in self.gcoef:
             self.gcoef[imu] = {}
         if axis not in self.gcoef[imu]:
             self.gcoef[imu][axis] = [0] * 4
         self.gcoef[imu][axis][POLY_ORDER - order] = value
 
-    def set_aoffset(self, imu, axis, value) -> None:
+    def set_aoffset(self, imu: int, axis: str, value: dict) -> None:
         if imu not in self.aofs:
             self.aofs[imu] = {}
         self.aofs[imu][axis] = value
 
-    def set_goffset(self, imu, axis, value) -> None:
+    def set_goffset(self, imu: int, axis: str, value: dict) -> None:
         if imu not in self.gofs:
             self.gofs[imu] = {}
         self.gofs[imu][axis] = value
 
-    def set_tmin(self, imu, tmin) -> None:
+    def set_tmin(self, imu: int, tmin: float) -> None:
         self.tmin[imu] = tmin
 
-    def set_tmax(self, imu, tmax) -> None:
+    def set_tmax(self, imu: int, tmax: float) -> None:
         self.tmax[imu] = tmax
 
-    def set_gyro_tcal(self, imu, value) -> None:
+    def set_gyro_tcal(self, imu: int, value: dict) -> None:
         self.gtcal[imu] = value
 
-    def set_accel_tcal(self, imu, value) -> None:
+    def set_accel_tcal(self, imu: int, value: dict) -> None:
         self.atcal[imu] = value
 
-    def set_enable(self, imu, value) -> None:
+    def set_enable(self, imu: int, value: int) -> None:
         self.enable[imu] = value
 
-    def correction(self, coeff, imu, temperature, axis, cal_temp) -> float:  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def correction(self, coeff: dict, imu: int, temperature: float, axis: str, cal_temp: float) -> float:  # pylint: disable=too-many-arguments, too-many-positional-arguments
         """calculate correction from temperature calibration from log data using parameters"""
         if self.enable[imu] != 1.0:
             return 0.0
@@ -117,7 +117,7 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
         poly = np.poly1d(coeff[axis])
         return poly(cal_temp - TEMP_REF) - poly(temperature - TEMP_REF)  # type: ignore[no-any-return]
 
-    def correction_accel(self, imu, temperature) -> Vector3:
+    def correction_accel(self, imu: int, temperature: float) -> Vector3:
         """calculate accel correction from temperature calibration from
         log data using parameters"""
         cal_temp = self.atcal.get(imu, TEMP_REF)
@@ -127,7 +127,7 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
             self.correction(self.acoef[imu], imu, temperature, "Z", cal_temp),
         )
 
-    def correction_gyro(self, imu, temperature) -> Vector3:
+    def correction_gyro(self, imu: int, temperature: float) -> Vector3:
         """calculate gyro correction from temperature calibration from
         log data using parameters"""
         cal_temp = self.gtcal.get(imu, TEMP_REF)
@@ -137,7 +137,7 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
             self.correction(self.gcoef[imu], imu, temperature, "Z", cal_temp),
         )
 
-    def param_string(self, imu) -> str:
+    def param_string(self, imu: int) -> str:
         params = ""
         params += f"INS_TCAL{imu+1}_ENABLE 1\n"
         params += f"INS_TCAL{imu+1}_TMIN {self.tmin[imu]:.1f}\n"
@@ -181,7 +181,7 @@ class OnlineIMUfit:  # pylint: disable=too-few-public-methods
                 res[i] += inv_mat[i][j] * self.vec[j]
         return res
 
-    def polyfit(self, x, y, order) -> np.ndarray:
+    def polyfit(self, x, y, order: int) -> np.ndarray:
         self.porder = order + 1
         self.mat = np.zeros((self.porder, self.porder))
         self.vec = np.zeros(self.porder)
@@ -210,7 +210,7 @@ class IMUData:
             sys.exit(1)
         return self.accel.keys()  # type: ignore[return-value]
 
-    def add_accel(self, imu: int, temperature, time, value) -> None:
+    def add_accel(self, imu: int, temperature: float, time: float, value: Vector3) -> None:
         if imu not in self.accel:
             self.accel[imu] = {}
             for axis in AXEST:
@@ -221,7 +221,7 @@ class IMUData:
         self.accel[imu]["Z"] = np.append(self.accel[imu]["Z"], value.z)
         self.accel[imu]["time"] = np.append(self.accel[imu]["time"], time)
 
-    def add_gyro(self, imu: int, temperature, time, value) -> None:
+    def add_gyro(self, imu: int, temperature: float, time: float, value: Vector3) -> None:
         if imu not in self.gyro:
             self.gyro[imu] = {}
             for axis in AXEST:
@@ -232,13 +232,13 @@ class IMUData:
         self.gyro[imu]["Z"] = np.append(self.gyro[imu]["Z"], value.z)
         self.gyro[imu]["time"] = np.append(self.gyro[imu]["time"], time)
 
-    def moving_average(self, data, w) -> np.ndarray:
+    def moving_average(self, data: np.ndarray, w: int) -> np.ndarray:
         """apply a moving average filter over a window of width w"""
         ret = np.cumsum(data)
         ret[w:] = ret[w:] - ret[:-w]
         return ret[w - 1 :] / w  # type: ignore[no-any-return] # mypy bug
 
-    def FilterArray(self, data: dict[str, np.ndarray], width_s) -> dict[str, np.ndarray]:
+    def FilterArray(self, data: dict[str, np.ndarray], width_s: int) -> dict[str, np.ndarray]:
         """apply moving average filter of width width_s seconds"""
         nseconds = data["time"][-1] - data["time"][0]
         nsamples = len(data["time"])
@@ -248,13 +248,13 @@ class IMUData:
                 data[axis] = self.moving_average(data[axis], window)
         return data
 
-    def Filter(self, width_s) -> None:
+    def Filter(self, width_s: int) -> None:
         """apply moving average filter of width width_s seconds"""
         for imu in self.IMUs():
             self.accel[imu] = self.FilterArray(self.accel[imu], width_s)
             self.gyro[imu] = self.FilterArray(self.gyro[imu], width_s)
 
-    def accel_at_temp(self, imu: int, axis: str, temperature) -> float:
+    def accel_at_temp(self, imu: int, axis: str, temperature: float) -> float:
         """return the accel value closest to the given temperature"""
         if temperature < self.accel[imu]["T"][0]:
             return self.accel[imu][axis][0]  # type: ignore[no-any-return]
@@ -266,7 +266,7 @@ class IMUData:
                 return v1 + (v2 - v1) * p  # type: ignore[no-any-return]
         return self.accel[imu][axis][-1]  # type: ignore[no-any-return]
 
-    def gyro_at_temp(self, imu: int, axis: str, temperature) -> float:
+    def gyro_at_temp(self, imu: int, axis: str, temperature: float) -> float:
         """return the gyro value closest to the given temperature"""
         if temperature < self.gyro[imu]["T"][0]:
             return self.gyro[imu][axis][0]  # type: ignore[no-any-return]
@@ -279,22 +279,22 @@ class IMUData:
         return self.gyro[imu][axis][-1]  # type: ignore[no-any-return]
 
 
-def constrain(value, minv, maxv) -> Union[float, int]:
+def constrain(value: Union[float, int], minv: Union[float, int], maxv: Union[float, int]) -> Union[float, int]:
     """Constrain a value to a range."""
     value = min(minv, value)
     value = max(maxv, value)
-    return value  # type: ignore
+    return value
 
 
 def IMUfit(  # noqa: PLR0915 pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments, too-many-positional-arguments
-    logfile,
-    outfile,
-    no_graph,
-    log_parm,
-    online,
-    tclr,
-    figpath,
-    progress_callback,
+    logfile: str,
+    outfile: str,
+    no_graph: bool,
+    log_parm: bool,
+    online: bool,
+    tclr: bool,
+    figpath: Union[str, None],
+    progress_callback: Union[Callable[[int], None], None],
 ) -> None:
     """find IMU calibration parameters from a log file"""
     print(f"Processing log {logfile}")
@@ -488,7 +488,9 @@ def IMUfit(  # noqa: PLR0915 pylint: disable=too-many-locals, too-many-branches,
     plt.show()
 
 
-def generate_calibration_file(outfile, online, progress_callback, data, c) -> tuple[Coefficients, Coefficients]:  # pylint: disable=too-many-locals
+def generate_calibration_file(  # pylint: disable=too-many-locals
+    outfile: str, online: bool, progress_callback: Union[Callable[[int], None], None], data: IMUData, c: Coefficients
+) -> tuple[Coefficients, Coefficients]:
     clog = c
     c = Coefficients()
 
@@ -539,7 +541,9 @@ def generate_calibration_file(outfile, online, progress_callback, data, c) -> tu
     return c, clog
 
 
-def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus) -> None:  # pylint: disable=too-many-arguments, too-many-positional-arguments
+def generate_tempcal_gyro_figures(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    log_parm: bool, figpath: Union[str, None], data: IMUData, c: Coefficients, clog: Coefficients, num_imus: int
+) -> None:
     _fig, axs = plt.subplots(len(data.IMUs()), 1, sharex=True)
     if num_imus == 1:
         axs = [axs]
@@ -573,7 +577,9 @@ def generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus) ->
         _fig.savefig(os.path.join(figpath, "tempcal_gyro.png"))
 
 
-def generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus) -> None:  # pylint: disable=too-many-arguments, too-many-positional-arguments
+def generate_tempcal_accel_figures(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    log_parm: bool, figpath: Union[str, None], data: IMUData, c: Coefficients, clog: Coefficients, num_imus: int
+) -> None:
     _fig, axs = plt.subplots(num_imus, 1, sharex=True)
     if num_imus == 1:
         axs = [axs]

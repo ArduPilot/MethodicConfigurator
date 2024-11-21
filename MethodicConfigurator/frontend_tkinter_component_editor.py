@@ -562,7 +562,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         entry.insert(0, str(value))
         return entry
 
-    def get_validate_function(self, entry, path) -> Union[Callable[[tk.Event[tk.Entry]], object], None]:  # pylint: disable=unsubscriptable-object
+    def get_validate_function(self, entry, path) -> Union[Callable[[tk.Event], object], None]:
         validate_functions = {
             ("Frame", "Specifications", "TOW min Kg"): lambda event, entry=entry, path=path: self.validate_entry_limits(
                 event, entry, float, (0.01, 600), "Takeoff Weight", path

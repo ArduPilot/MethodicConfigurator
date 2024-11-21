@@ -124,7 +124,7 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
             if blog_url:
                 webbrowser_open(url=blog_url, new=0, autoraise=True)
 
-    def __update_documentation_label(self, label_key, text, url, url_expected=True) -> None:
+    def __update_documentation_label(self, label_key: str, text: str, url: str, url_expected: bool = True) -> None:
         label = self.documentation_labels[label_key]
         if url:
             label.config(text=text, foreground="blue", cursor="hand2", underline=True)

@@ -68,7 +68,7 @@ explaining how their new value relates to the default parameter value.
     return args
 
 
-def ranged_type(value_type: type, min_value, max_value) -> Callable:
+def ranged_type(value_type: type, min_value: Union[int, float], max_value: Union[int, float]) -> Callable:
     """
     Return function handle of an argument type function for ArgumentParser checking a range:
         min_value <= arg <= max_value
