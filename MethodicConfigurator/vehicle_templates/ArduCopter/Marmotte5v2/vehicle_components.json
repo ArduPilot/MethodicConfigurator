@@ -133,10 +133,10 @@
                 "Version": "32.10"
             },
             "FC Connection": {
-                "Type": "SERIAL6",
+                "Type": "Main Out",
                 "Protocol": "DShot600"
             },
-            "Notes": "Runs BDshot600"
+            "Notes": "Runs BDshot600 on Main out and uses SERIAL6 as extra connection for low rate telemetry"
         },
         "Motors": {
             "Product": {
