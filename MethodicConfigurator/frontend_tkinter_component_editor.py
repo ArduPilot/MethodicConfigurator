@@ -380,7 +380,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             logging_error("GPS_TYPE %u not in gnss_receiver_connection", gps1_type)
             self.data["Components"]["GNSS Receiver"]["FC Connection"]["Type"] = "None"
 
-    def __set_serial_type_and_protocol_from_fc_parameters(self, fc_parameters: dict) -> bool:
+    def __set_serial_type_and_protocol_from_fc_parameters(self, fc_parameters: dict[str, float]) -> bool:
         if "RC_PROTOCOLS" in fc_parameters:
             rc_protocols_nr = int(fc_parameters["RC_PROTOCOLS"])
             # check if rc_protocols_nr is a power of two (only one bit set)
@@ -397,9 +397,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         for serial in self.serial_ports:
             if serial + "_PROTOCOL" not in fc_parameters:
                 continue
-            serial_protocol_nr = fc_parameters[serial + "_PROTOCOL"]
             try:
-                serial_protocol_nr = int(serial_protocol_nr)
+                serial_protocol_nr = int(fc_parameters[serial + "_PROTOCOL"])
             except ValueError:
                 msg = _("Invalid non-integer value for {serial}_PROTOCOL {serial_protocol_nr}")
                 logging_error(msg.format(**locals()))

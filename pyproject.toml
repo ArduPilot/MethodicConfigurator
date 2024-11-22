@@ -21,7 +21,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -133,7 +132,8 @@ lint.ignore = [
 line-length = 127
 indent-width = 4
 
-target-version = "py39"
+[tool.ruff.lint.per-file-ignores]
+"unittests/*" = ["UP031"]
 
 [tool.mypy]
 ignore_missing_imports = true
