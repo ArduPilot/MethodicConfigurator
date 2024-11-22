@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Based on https://pagure.io/github-release-stats/blob/master/f/get_release_stats.py by Clement Verna
+Based on https://pagure.io/github-release-stats/blob/master/f/get_release_stats.py by Clement Verna.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -17,7 +17,7 @@ from operator import itemgetter
 from github import Github
 
 
-def compute_average(issues_date) -> float:
+def compute_average(issues_date: list[tuple[int, int]]) -> float:
     sum_of_issues = sum(days for _issue, days in issues_date)
 
     if len(issues_date):

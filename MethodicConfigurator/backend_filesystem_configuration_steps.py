@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+Manages configuration steps at the filesystem level.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -32,6 +32,7 @@ class ConfigurationSteps:
     Attributes:
         configuration_steps_filename (str): The name of the file containing documentation for the configuration files.
         configuration_steps (dict): A dictionary containing the configuration steps.
+
     """
 
     def __init__(self, _vehicle_dir: str, vehicle_type: str) -> None:

@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+Flight controller interface.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -18,13 +18,12 @@ from os import path as os_path
 from os import readlink as os_readlink
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import NoReturn, Optional, Union
+from typing import Callable, NoReturn, Optional, Union
 
 import serial.tools.list_ports
 import serial.tools.list_ports_common
-
-# import pymavlink.dialects.v20.ardupilotmega
 from pymavlink import mavutil
+from pymavlink.dialects.v20.ardupilotmega import MAVLink_autopilot_version_message
 from serial.serialutil import SerialException
 
 from MethodicConfigurator import _
@@ -47,11 +46,12 @@ class FakeSerialForUnitTests:
     def __init__(self, device: str) -> None:
         self.device = device
 
-    def read(self, _len) -> str:
+    def read(self, _len) -> str:  # noqa: ANN001
         return ""
 
-    def write(self, _buf) -> NoReturn:
-        raise Exception("write always fails")  # pylint: disable=broad-exception-raised
+    def write(self, _buf) -> NoReturn:  # noqa: ANN001
+        msg = "write always fails"
+        raise Exception(msg)  # pylint: disable=broad-exception-raised
 
     def inWaiting(self) -> int:  # pylint: disable=invalid-name
         return 0
@@ -68,13 +68,11 @@ class FlightController:
         device (str): The connection string to the flight controller.
         master (mavutil.mavlink_connection): The MAVLink connection object.
         fc_parameters (Dict[str, float]): A dictionary of flight controller parameters.
+
     """
 
     def __init__(self, reboot_time: int) -> None:
-        """
-        Initialize the FlightController communication object.
-
-        """
+        """Initialize the FlightController communication object."""
         # warn people about ModemManager which interferes badly with ArduPilot
         if os_path.exists("/usr/sbin/ModemManager"):
             logging_warning(_("You should uninstall ModemManager as it conflicts with ArduPilot"))
@@ -99,9 +97,7 @@ class FlightController:
         self.__connection_tuples += [(_("Add another"), _("Add another"))]
 
     def disconnect(self) -> None:
-        """
-        Close the connection to the flight controller.
-        """
+        """Close the connection to the flight controller."""
         if self.master is not None:
             self.master.close()
             self.master = None
@@ -109,9 +105,7 @@ class FlightController:
         self.info = BackendFlightcontrollerInfo()
 
     def add_connection(self, connection_string: str) -> bool:
-        """
-        Add a new connection to the list of available connections.
-        """
+        """Add a new connection to the list of available connections."""
         if connection_string:
             # Check if connection_string is not the first element of any tuple in self.other_connection_tuples
             if all(connection_string != t[0] for t in self.__connection_tuples):
@@ -123,7 +117,9 @@ class FlightController:
             logging_debug(_("Did not add empty connection"))
         return False
 
-    def connect(self, device: str, progress_callback=None, log_errors: bool = True) -> str:
+    def connect(
+        self, device: str, progress_callback: Union[None, Callable[[int, int], None]] = None, log_errors: bool = True
+    ) -> str:
         """
         Establishes a connection to the FlightController using a specified device.
 
@@ -137,10 +133,12 @@ class FlightController:
                         is provided, the method attempts to auto-detect a serial port.
             progress_callback (callable, optional): A callback function to report the progress
                                                     of the connection attempt. Defaults to None.
+            log_errors: log errors
 
         Returns:
             str: An error message if the connection fails, otherwise an empty string indicating
                 a successful connection.
+
         """
         if device:
             if device == "none":
@@ -172,7 +170,7 @@ class FlightController:
         return self.__create_connection_with_retry(progress_callback=progress_callback, log_errors=log_errors)
 
     def __request_banner(self) -> None:
-        """Request banner information from the flight controller"""
+        """Request banner information from the flight controller."""
         # https://mavlink.io/en/messages/ardupilotmega.html#MAV_CMD_DO_SEND_BANNER
         if self.master is not None:
             self.master.mav.command_long_send(
@@ -222,7 +220,11 @@ class FlightController:
             )
 
     def __create_connection_with_retry(
-        self, progress_callback, retries: int = 3, timeout: int = 5, log_errors: bool = True
+        self,
+        progress_callback: Union[None, Callable[[int, int], None]],
+        retries: int = 3,
+        timeout: int = 5,
+        log_errors: bool = True,
     ) -> str:
         """
         Attempts to create a connection to the flight controller with retries.
@@ -237,10 +239,12 @@ class FlightController:
                                                     of the connection attempt. Defaults to None.
             retries (int, optional): The number of retries before giving up. Defaults to 3.
             timeout (int, optional): The timeout in seconds for each connection attempt. Defaults to 5.
+            log_errors (bool): log errors.
 
         Returns:
             str: An error message if the connection fails after all retries, otherwise an empty string
                 indicating a successful connection.
+
         """
         if self.comport is None or self.comport.device == "test":  # FIXME for testing only pylint: disable=fixme
             return ""
@@ -252,7 +256,8 @@ class FlightController:
             )
             logging_debug(_("Waiting for MAVLink heartbeat"))
             if not self.master:
-                raise ConnectionError(f"Failed to create mavlink connect to {self.comport.device}")
+                msg = f"Failed to create mavlink connect to {self.comport.device}"
+                raise ConnectionError(msg)
             m = self.master.wait_heartbeat(timeout=timeout)
             if m is None:
                 return _("No MAVLink heartbeat received, connection failed.")
@@ -285,7 +290,7 @@ class FlightController:
                 logging_error(_("Failed to connect after %d attempts."), retries)
             return str(e)
 
-    def __process_autopilot_version(self, m, banner_msgs) -> str:
+    def __process_autopilot_version(self, m: MAVLink_autopilot_version_message, banner_msgs: list[str]) -> str:
         if m is None:
             return _(
                 "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n"
@@ -325,13 +330,16 @@ class FlightController:
             self.info.product = fc_product  # force the one from the banner because it is more reliable
         return ""
 
-    def download_params(self, progress_callback=None) -> tuple[dict[str, float], dict[str, "Par"]]:
+    def download_params(
+        self, progress_callback: Union[None, Callable[[int, int], None]] = None
+    ) -> tuple[dict[str, float], dict[str, "Par"]]:
         """
         Requests all flight controller parameters from a MAVLink connection.
 
         Returns:
             Dict[str, float]: A dictionary of flight controller parameters.
             Dict[str, Par]: A dictionary of flight controller default parameters.
+
         """
         # FIXME this entire if statement is for testing only, remove it later pylint: disable=fixme
         if self.master is None and self.comport is not None and self.comport.device == "test":
@@ -353,7 +361,9 @@ class FlightController:
         logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), comport_device)
         return self.__download_params_via_mavlink(progress_callback), {}
 
-    def __download_params_via_mavlink(self, progress_callback=None) -> dict[str, float]:
+    def __download_params_via_mavlink(
+        self, progress_callback: Union[None, Callable[[int, int], None]] = None
+    ) -> dict[str, float]:
         comport_device = getattr(self.comport, "device", "")
         logging_debug(_("Will fetch all parameters from the %s flight controller"), comport_device)
 
@@ -390,7 +400,9 @@ class FlightController:
                 break
         return parameters
 
-    def download_params_via_mavftp(self, progress_callback=None) -> tuple[dict[str, float], dict[str, "Par"]]:
+    def download_params_via_mavftp(
+        self, progress_callback: Union[None, Callable[[int, int], None]] = None
+    ) -> tuple[dict[str, float], dict[str, "Par"]]:
         if self.master is None:
             return {}, {}
         mavftp = MAVFTP(self.master, target_system=self.master.target_system, target_component=self.master.target_component)
@@ -423,19 +435,26 @@ class FlightController:
         Args:
             param_name (str): The name of the parameter to set.
             param_value (float): The value to set the parameter to.
+
         """
         if self.master is None:  # FIXME for testing only pylint: disable=fixme
             return
         self.master.param_set_send(param_name, param_value)
 
     def reset_and_reconnect(
-        self, reset_progress_callback=None, connection_progress_callback=None, extra_sleep_time: Optional[int] = None
+        self,
+        reset_progress_callback: Union[None, Callable[[int, int], None]] = None,
+        connection_progress_callback: Union[None, Callable[[int, int], None]] = None,
+        extra_sleep_time: Optional[int] = None,
     ) -> str:
         """
         Reset the flight controller and reconnect.
 
         Args:
-            sleep_time (int, optional): The time in seconds to wait before reconnecting.
+            reset_progress_callback: reset callback function
+            connection_progress_callback: connection callback function
+            extra_sleep_time (int, optional): The time in seconds to wait before reconnecting.
+
         """
         if self.master is None:  # FIXME for testing only pylint: disable=fixme
             return ""
@@ -471,19 +490,15 @@ class FlightController:
 
     @staticmethod
     def __list_serial_ports() -> list[serial.tools.list_ports_common.ListPortInfo]:
-        """
-        List all available serial ports.
-        """
+        """List all available serial ports."""
         comports = serial.tools.list_ports.comports()
-        # for port in comports:
-        #     logging_debug("ComPort - %s, Description: %s", port.device, port.description)
+        for port in comports:
+            logging_debug("ComPort - %s, Description: %s", port.device, port.description)
         return comports  # type: ignore[no-any-return]
 
     @staticmethod
     def __list_network_ports() -> list[str]:
-        """
-        List all available network ports.
-        """
+        """List all available network ports."""
         return ["tcp:127.0.0.1:5760", "udp:127.0.0.1:14550"]
 
     # pylint: disable=duplicate-code
@@ -529,12 +544,12 @@ class FlightController:
     # pylint: enable=duplicate-code
 
     def get_connection_tuples(self) -> list[tuple[str, str]]:
-        """
-        Get all available connections.
-        """
+        """Get all available connections."""
         return self.__connection_tuples
 
-    def upload_file(self, local_filename: str, remote_filename: str, progress_callback=None) -> bool:
+    def upload_file(
+        self, local_filename: str, remote_filename: str, progress_callback: Union[None, Callable[[int, int], None]] = None
+    ) -> bool:
         """Upload a file to the flight controller."""
         if self.master is None:
             return False

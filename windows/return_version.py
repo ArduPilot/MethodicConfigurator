@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """
-This script returns the current version number
+Returns python package current version number.
+
 Used as part of building the Windows setup file (MethodicConfiguratorWinBuild.bat)
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator

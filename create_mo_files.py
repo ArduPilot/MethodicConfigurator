@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Create .mo files from the .po files.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -12,7 +14,7 @@ import os
 import subprocess
 
 
-def process_locale_directory(locale_dir) -> None:
+def process_locale_directory(locale_dir: str) -> None:
     """Process a single locale directory."""
     po_file = os.path.join(locale_dir, "MethodicConfigurator.po")
     mo_file = os.path.join(locale_dir, "MethodicConfigurator.mo")

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Copy 24_inflight_magnetometer_fit_setup.pdef.xml file to all vehicle template subdirectories.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>

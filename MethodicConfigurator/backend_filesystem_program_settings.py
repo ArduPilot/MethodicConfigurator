@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+Manages program settings at the filesystem level.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -79,11 +79,12 @@ class ProgramSettings:
         invalid for directory names in many operating systems. It does not guarantee that the name
         is valid in all contexts or operating systems, as directory name validity can vary.
 
-        Parameters:
-        - dir_name (str): The directory name to check.
+        Args:
+          dir_name (str): The directory name to check.
 
         Returns:
-        - bool: True if the directory name matches the allowed pattern, False otherwise.
+          bool: True if the directory name matches the allowed pattern, False otherwise.
+
         """
         # Include os.sep in the pattern
         pattern = r"^[\w" + re_escape(os_sep) + "-]+$"
@@ -100,7 +101,7 @@ class ProgramSettings:
             error_msg = _("The path '{user_config_directory}' is not a directory.")
             raise NotADirectoryError(error_msg.format(**locals()))
 
-        return user_config_directory  # type: ignore[no-any-return] # workaround a mypy bug
+        return user_config_directory
 
     @staticmethod
     def __site_config_dir() -> str:
@@ -115,7 +116,7 @@ class ProgramSettings:
             error_msg = _("The path '{site_config_directory}' is not a directory.")
             raise NotADirectoryError(error_msg.format(**locals()))
 
-        return site_config_directory  # type: ignore[no-any-return] # workaround a mypy bug
+        return site_config_directory
 
     @staticmethod
     def __get_settings_as_dict() -> dict[str, Any]:
@@ -151,7 +152,7 @@ class ProgramSettings:
         return settings
 
     @staticmethod
-    def __set_settings_from_dict(settings) -> None:
+    def __set_settings_from_dict(settings: dict) -> None:
         settings_path = os_path.join(ProgramSettings.__user_config_dir(), "settings.json")
 
         with open(settings_path, "w", encoding="utf-8") as settings_file:

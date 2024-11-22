@@ -42,7 +42,7 @@ AXEST = ["X", "Y", "Z", "T", "time"]
 
 
 class Coefficients:  # pylint: disable=too-many-instance-attributes
-    """class representing a set of coefficients"""
+    """class representing a set of coefficients."""
 
     def __init__(self) -> None:
         self.acoef: dict = {}
@@ -105,7 +105,7 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
         self.enable[imu] = value
 
     def correction(self, coeff: dict, imu: int, temperature: float, axis: str, cal_temp: float) -> float:  # pylint: disable=too-many-arguments, too-many-positional-arguments
-        """calculate correction from temperature calibration from log data using parameters"""
+        """Calculate correction from temperature calibration from log data using parameters."""
         if self.enable[imu] != 1.0:
             return 0.0
         if cal_temp < -80:
@@ -118,8 +118,10 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
         return poly(cal_temp - TEMP_REF) - poly(temperature - TEMP_REF)  # type: ignore[no-any-return]
 
     def correction_accel(self, imu: int, temperature: float) -> Vector3:
-        """calculate accel correction from temperature calibration from
-        log data using parameters"""
+        """
+        calculate accel correction from temperature calibration from
+        log data using parameters.
+        """
         cal_temp = self.atcal.get(imu, TEMP_REF)
         return Vector3(
             self.correction(self.acoef[imu], imu, temperature, "X", cal_temp),
@@ -128,8 +130,10 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
         )
 
     def correction_gyro(self, imu: int, temperature: float) -> Vector3:
-        """calculate gyro correction from temperature calibration from
-        log data using parameters"""
+        """
+        calculate gyro correction from temperature calibration from
+        log data using parameters.
+        """
         cal_temp = self.gtcal.get(imu, TEMP_REF)
         return Vector3(
             self.correction(self.gcoef[imu], imu, temperature, "X", cal_temp),
@@ -152,7 +156,7 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
 
 
 class OnlineIMUfit:  # pylint: disable=too-few-public-methods
-    """implement the online learning used in ArduPilot"""
+    """implement the online learning used in ArduPilot."""
 
     def __init__(self) -> None:
         self.porder: int = 0
@@ -204,7 +208,7 @@ class IMUData:
         self.gyro: dict[int, dict[str, np.ndarray]] = {}
 
     def IMUs(self) -> list[int]:
-        """return list of IMUs"""
+        """Return list of IMUs."""
         if len(self.accel.keys()) != len(self.gyro.keys()):
             print("accel and gyro data doesn't match")
             sys.exit(1)
@@ -233,13 +237,13 @@ class IMUData:
         self.gyro[imu]["time"] = np.append(self.gyro[imu]["time"], time)
 
     def moving_average(self, data: np.ndarray, w: int) -> np.ndarray:
-        """apply a moving average filter over a window of width w"""
+        """Apply a moving average filter over a window of width w."""
         ret = np.cumsum(data)
         ret[w:] = ret[w:] - ret[:-w]
-        return ret[w - 1 :] / w  # type: ignore[no-any-return] # mypy bug
+        return ret[w - 1 :] / w
 
     def FilterArray(self, data: dict[str, np.ndarray], width_s: int) -> dict[str, np.ndarray]:
-        """apply moving average filter of width width_s seconds"""
+        """Apply moving average filter of width width_s seconds."""
         nseconds = data["time"][-1] - data["time"][0]
         nsamples = len(data["time"])
         window = int(nsamples / nseconds) * width_s
@@ -249,13 +253,13 @@ class IMUData:
         return data
 
     def Filter(self, width_s: int) -> None:
-        """apply moving average filter of width width_s seconds"""
+        """Apply moving average filter of width width_s seconds."""
         for imu in self.IMUs():
             self.accel[imu] = self.FilterArray(self.accel[imu], width_s)
             self.gyro[imu] = self.FilterArray(self.gyro[imu], width_s)
 
     def accel_at_temp(self, imu: int, axis: str, temperature: float) -> float:
-        """return the accel value closest to the given temperature"""
+        """Return the accel value closest to the given temperature."""
         if temperature < self.accel[imu]["T"][0]:
             return self.accel[imu][axis][0]  # type: ignore[no-any-return]
         for i in range(len(self.accel[imu]["T"]) - 1):
@@ -267,7 +271,7 @@ class IMUData:
         return self.accel[imu][axis][-1]  # type: ignore[no-any-return]
 
     def gyro_at_temp(self, imu: int, axis: str, temperature: float) -> float:
-        """return the gyro value closest to the given temperature"""
+        """Return the gyro value closest to the given temperature."""
         if temperature < self.gyro[imu]["T"][0]:
             return self.gyro[imu][axis][0]  # type: ignore[no-any-return]
         for i in range(len(self.gyro[imu]["T"]) - 1):
@@ -279,11 +283,10 @@ class IMUData:
         return self.gyro[imu][axis][-1]  # type: ignore[no-any-return]
 
 
-def constrain(value: Union[float, int], minv: Union[float, int], maxv: Union[float, int]) -> Union[float, int]:
+def constrain(value: float, minv: float, maxv: float) -> Union[float, int]:
     """Constrain a value to a range."""
     value = min(minv, value)
-    value = max(maxv, value)
-    return value
+    return max(maxv, value)
 
 
 def IMUfit(  # noqa: PLR0915 pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments, too-many-positional-arguments
@@ -296,7 +299,7 @@ def IMUfit(  # noqa: PLR0915 pylint: disable=too-many-locals, too-many-branches,
     figpath: Union[str, None],
     progress_callback: Union[Callable[[int], None], None],
 ) -> None:
-    """find IMU calibration parameters from a log file"""
+    """Find IMU calibration parameters from a log file."""
     print(f"Processing log {logfile}")
     mlog = mavutil.mavlink_connection(logfile, progress_callback=progress_callback)
 

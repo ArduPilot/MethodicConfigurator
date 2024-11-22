@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+Filesystem operations.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -54,14 +54,15 @@ def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1
     the sum of the absolute tolerance (`atol`) and the product of the relative tolerance (`rtol`)
     and the absolute value of `y`.
 
-    Parameters:
-    - x (float): The first number to compare.
-    - y (float): The second number to compare.
-    - atol (float, optional): The absolute tolerance. Defaults to 1e-08.
-    - rtol (float, optional): The relative tolerance. Defaults to 1e-03.
+    Args:
+      x (float): The first number to compare.
+      y (float): The second number to compare.
+      atol (float, optional): The absolute tolerance. Defaults to 1e-08.
+      rtol (float, optional): The relative tolerance. Defaults to 1e-03.
 
     Returns:
-    - bool: True if the difference is within the tolerance, False otherwise.
+      bool: True if the difference is within the tolerance, False otherwise.
+
     """
     return abs(x - y) <= atol + (rtol * abs(y))
 
@@ -74,12 +75,13 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     reading parameters from files, and handling configuration steps. It is designed to simplify
     the interaction with the local filesystem for managing ArduPilot configuration files.
 
-    Attributes:
+    Args:
         vehicle_dir (str): The directory path where the vehicle configuration files are stored.
         vehicle_type (str): The type of the vehicle (e.g., "ArduCopter", "Rover").
         file_parameters (dict): A dictionary of parameters read from intermediate parameter files.
         param_default_dict (dict): A dictionary of default parameter values.
         doc_dict (dict): A dictionary containing documentation for each parameter.
+
     """
 
     def __init__(self, vehicle_dir: str, vehicle_type: str, fw_version: str, allow_editing_template_files: bool) -> None:
@@ -227,6 +229,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         Returns:
         - Dict[str, Dict[str, 'Par']]: A dictionary with filenames as keys and as values
                                        a dictionary with (parameter names, values) pairs.
+
         """
         parameters: dict[str, dict[str, Par]] = {}
         if os_path.isdir(self.vehicle_dir):
@@ -243,18 +246,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return parameters
 
     @staticmethod
-    def str_to_bool(s) -> Optional[bool]:
+    def str_to_bool(s: str) -> Optional[bool]:
         """
         Converts a string representation of a boolean value to a boolean.
 
         This function interprets the string 'true', 'yes', '1' as True, and 'false', 'no', '0' as False.
         Any other input will return None.
 
-        Parameters:
-        - s (str): The string to convert.
+        Args:
+          s (str): The string to convert.
 
         Returns:
-        - Optional[bool]: True, False, or None if the string does not match any known boolean representation.
+          Optional[bool]: True, False, or None if the string does not match any known boolean representation.
+
         """
         if s.lower() == "true" or s.lower() == "yes" or s.lower() == "1":
             return True
@@ -269,10 +273,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         This function formats the provided parameters into a string suitable for a .param file,
         writes the string to the specified output file, and optionally updates the parameter documentation.
 
-        Parameters:
-        - params (Dict[str, 'Par']): A dictionary of parameters to export.
-        - filename_out (str): The name of the output file.
-        - annotate_doc (bool, optional): Whether to update the parameter documentation. Defaults to True.
+        Args:
+          params (Dict[str, 'Par']): A dictionary of parameters to export.
+          filename_out (str): The name of the output file.
+          annotate_doc (bool, optional): Whether to update the parameter documentation. Defaults to True.
+
         """
         Par.export_to_param(Par.format_params(params), os_path.join(self.vehicle_dir, filename_out))
         if annotate_doc:
@@ -284,11 +289,12 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         """
         Check if a vehicle configuration file exists in the vehicle directory.
 
-        Parameters:
-        - filename (str): The name of the file to check.
+        Args:
+          filename (str): The name of the file to check.
 
         Returns:
-        - bool: True if the file exists and is a file (not a directory), False otherwise.
+          bool: True if the file exists and is a file (not a directory), False otherwise.
+
         """
         return os_path.exists(os_path.join(self.vehicle_dir, filename)) and os_path.isfile(
             os_path.join(self.vehicle_dir, filename)
@@ -304,6 +310,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         Returns:
         - Dict[str, str]: A dictionary mapping parameter names to their comments.
+
         """
         ret = {}
         for params in self.file_parameters.values():
@@ -320,11 +327,12 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         intermediate parameter files to create a new dictionary where each parameter is represented
         by a 'Par' object containing both the value and the comment.
 
-        Parameters:
-        - param_dict (Dict[str, float]): A dictionary of parameters with only values.
+        Args:
+          param_dict (Dict[str, float]): A dictionary of parameters with only values.
 
         Returns:
-        - Dict[str, 'Par']: A dictionary of parameters with intermediate parameter file comments.
+          Dict[str, 'Par']: A dictionary of parameters with intermediate parameter file comments.
+
         """
         ret = {}
         ip_comments = self.__all_intermediate_parameter_file_comments()
@@ -341,12 +349,13 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         - Non-default, writable calibrations
         - Non-default, writable non-calibrations
 
-        Parameters:
-        - param (Dict[str, 'Par']): A dictionary mapping parameter names to their 'Par' objects.
+        Args:
+          param (Dict[str, 'Par']): A dictionary mapping parameter names to their 'Par' objects.
 
         Returns:
-        - Tuple[Dict[str, "Par"], Dict[str, "Par"], Dict[str, "Par"]]: A tuple of three dictionaries.
+          Tuple[Dict[str, "Par"], Dict[str, "Par"], Dict[str, "Par"]]: A tuple of three dictionaries.
                                   Each dictionary represents one of the categories mentioned above.
+
         """
         non_default__read_only_params = {}
         non_default__writable_calibrations = {}
@@ -374,9 +383,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         normalized_path = os_path.normpath(full_path)
 
         # Split the path into head and tail, then get the basename of the tail
-        directory_name = os_path.basename(os_path.split(normalized_path)[1])
-
-        return directory_name
+        return os_path.basename(os_path.split(normalized_path)[1])
 
     # Extract the vehicle name from the directory path
     def get_vehicle_directory_name(self) -> str:
@@ -390,7 +397,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         zip_file_path = self.zip_file_path()
         return os_path.exists(zip_file_path) and os_path.isfile(zip_file_path)
 
-    def add_configuration_file_to_zip(self, zipf, filename) -> None:
+    def add_configuration_file_to_zip(self, zipf: ZipFile, filename: str) -> None:
         if self.vehicle_configuration_file_exists(filename):
             zipf.write(os_path.join(self.vehicle_dir, filename), arcname=filename)
 
@@ -403,9 +410,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         intermediate parameter files. The method checks for the existence of each file before
         attempting to add it to the zip archive.
 
-        Parameters:
-        - files_to_zip (List[Tuple[bool, str]]): A list of tuples, where each tuple contains a boolean
+        Args:
+          files_to_zip (List[Tuple[bool, str]]): A list of tuples, where each tuple contains a boolean
                                             indicating if the file was written and a string for the filename.
+
         """
         zip_file_path = self.zip_file_path()
         with ZipFile(zip_file_path, "w") as zipf:

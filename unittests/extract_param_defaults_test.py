@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
 """
-Extracts parameter default values from an ArduPilot .bin log file. Unittests.
+Unittests for the extract_param_defaults.py file.
+
+Extracts parameter default values from an ArduPilot .bin log file.
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

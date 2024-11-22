@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+GUI entry Widget with autocompletion features.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 https://code.activestate.com/recipes/580770-combobox-autocomplete/
@@ -13,12 +15,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from tkinter import Entry, Listbox, StringVar, ttk
 from tkinter.constants import END, HORIZONTAL, SINGLE, VERTICAL, E, N, S, W
-from typing import Union
+from typing import Callable, Union
 
 from MethodicConfigurator import _
 
 
-def autoscroll(sbar, first, last) -> None:
+def autoscroll(sbar: ttk.Scrollbar, first: float, last: float) -> None:
     """Hide and show scrollbar as needed."""
     first, last = float(first), float(last)
     if first <= 0 and last >= 1:
@@ -29,15 +31,13 @@ def autoscroll(sbar, first, last) -> None:
 
 
 class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-ancestors, too-many-instance-attributes
-    """
-    Entry with dynamicaly filtered ListBox to emulate an inteligent combobox widget
-    """
+    """Entry with dynamicaly filtered ListBox to emulate an inteligent combobox widget."""
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        master,
+        master: Union[tk.Tk, ttk.Frame],
         list_of_items: Union[None, list[str]] = None,
-        custom_filter_function=None,
+        custom_filter_function: Union[None, Callable[[str], list[str]]] = None,
         listbox_width: Union[None, int] = None,
         listbox_height: int = 12,
         ignorecase_match: bool = False,
@@ -78,9 +78,9 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         self.bind("<Control-p>", self._previous)
 
         self.bind("<Return>", self.update_entry_from_listbox)
-        self.bind("<Escape>", lambda event: self.unpost_listbox())
+        self.bind("<Escape>", lambda event: self.unpost_listbox)  # noqa: ARG005
 
-    def default_filter_function(self, entry_data) -> list[str]:
+    def default_filter_function(self, entry_data: str) -> list[str]:
         if self._ignorecase_match:
             if self._startswith_match:
                 return [item for item in self._list_of_items if item.lower().startswith(entry_data.lower())]
@@ -89,7 +89,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
             return [item for item in self._list_of_items if item.startswith(entry_data)]
         return [item for item in self._list_of_items if entry_data in item]
 
-    def _on_change_entry_var(self, _name, _index, _mode) -> None:
+    def _on_change_entry_var(self, _name, _index, _mode) -> None:  # noqa: ANN001
         entry_data = self._entry_var.get()
 
         if entry_data == "":
@@ -113,7 +113,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
                 self.unpost_listbox()
                 self.focus()
 
-    def _build_listbox(self, values) -> None:
+    def _build_listbox(self, values: list[str]) -> None:
         listbox_frame = ttk.Frame(self.master)
 
         self._listbox = Listbox(
@@ -123,7 +123,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
         self._listbox.bind("<ButtonRelease-1>", self.update_entry_from_listbox)
         self._listbox.bind("<Return>", self.update_entry_from_listbox)
-        self._listbox.bind("<Escape>", lambda event: self.unpost_listbox())
+        self._listbox.bind("<Escape>", lambda event: self.unpost_listbox())  # noqa: ARG005
 
         self._listbox.bind("<Control-n>", self._next)
         self._listbox.bind("<Control-p>", self._previous)
@@ -168,10 +168,11 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         if values:
             self._build_listbox(values)
 
-    def unpost_listbox(self) -> None:
+    def unpost_listbox(self, _event: Union[None, tk.Event] = None) -> str:
         if self._listbox is not None:
             self._listbox.master.destroy()
             self._listbox = None
+        return ""
 
     def get_value(self) -> str:
         return self._entry_var.get()  # type: ignore[no-any-return] # mypy bug
@@ -219,7 +220,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
                 self._listbox.selection_clear(index)
 
                 if index == 0:
-                    index = END  # type: ignore
+                    index = END  # type: ignore[assignment]
                 else:
                     index -= 1
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+The main application file. calls four sub-applications.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -15,6 +17,7 @@ from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from sys import exit as sys_exit
+from typing import Union
 from webbrowser import open as webbrowser_open
 
 from MethodicConfigurator import _, __version__
@@ -38,6 +41,7 @@ def argument_parser() -> argparse.Namespace:
 
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
+
     """
     parser = argparse.ArgumentParser(
         description=_(
@@ -60,7 +64,7 @@ def argument_parser() -> argparse.Namespace:
     return add_common_arguments_and_parse(parser)
 
 
-def connect_to_fc_and_read_parameters(args) -> tuple[FlightController, str]:
+def connect_to_fc_and_read_parameters(args: argparse.Namespace) -> tuple[FlightController, str]:
     flight_controller = FlightController(args.reboot_time)
 
     error_str = flight_controller.connect(args.device, log_errors=False)
@@ -86,7 +90,7 @@ def component_editor(
     flight_controller: FlightController,
     vehicle_type: str,
     local_filesystem: LocalFilesystem,
-    vehicle_dir_window,
+    vehicle_dir_window: Union[None, VehicleDirectorySelectionWindow],
 ) -> None:
     component_editor_window = ComponentEditorWindow(__version__, local_filesystem)
     if (

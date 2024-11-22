@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Extract missing translations from a .po file.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>

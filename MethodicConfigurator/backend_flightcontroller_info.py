@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+Manages FC information using FC interface.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Sequence
 from typing import Any, Union
 
 from pymavlink import mavutil
@@ -61,33 +62,33 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
             "Component ID": self.component_id,
         }
 
-    def set_system_id_and_component_id(self, system_id, component_id) -> None:
+    def set_system_id_and_component_id(self, system_id: str, component_id: str) -> None:
         self.system_id = system_id
         self.component_id = component_id
 
-    def set_autopilot(self, autopilot) -> None:
+    def set_autopilot(self, autopilot: int) -> None:
         self.autopilot = self.__decode_mav_autopilot(autopilot)
         self.is_supported = autopilot == mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
 
-    def set_type(self, mav_type) -> None:
+    def set_type(self, mav_type: int) -> None:
         self.vehicle_type = self.__classify_vehicle_type(mav_type)
         self.mav_type = self.__decode_mav_type(mav_type)
 
-    def set_flight_sw_version(self, version) -> None:
+    def set_flight_sw_version(self, version: int) -> None:
         v_major, v_minor, v_patch, v_fw_type = self.__decode_flight_sw_version(version)
         self.flight_sw_version = f"{v_major}.{v_minor}.{v_patch}"
         self.flight_sw_version_and_type = self.flight_sw_version + " " + v_fw_type
 
-    def set_board_version(self, board_version) -> None:
-        self.board_version = board_version
+    def set_board_version(self, board_version: int) -> None:
+        self.board_version = str(board_version)
 
-    def set_flight_custom_version(self, flight_custom_version) -> None:
+    def set_flight_custom_version(self, flight_custom_version: Sequence[int]) -> None:
         self.flight_custom_version = "".join(chr(c) for c in flight_custom_version)
 
-    def set_os_custom_version(self, os_custom_version) -> None:
+    def set_os_custom_version(self, os_custom_version: Sequence[int]) -> None:
         self.os_custom_version = "".join(chr(c) for c in os_custom_version)
 
-    def set_vendor_id_and_product_id(self, vendor_id, product_id) -> None:
+    def set_vendor_id_and_product_id(self, vendor_id: int, product_id: int) -> None:
         pid_vid_dict = self.__list_ardupilot_supported_usb_pid_vid()
 
         self.vendor_id = f"0x{vendor_id:04X}" if vendor_id else "Unknown"
@@ -104,14 +105,16 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
             self.product = "Unknown"
         self.product_and_product_id = f"{self.product} ({self.product_id})"
 
-    def set_capabilities(self, capabilities) -> None:
+    def set_capabilities(self, capabilities: int) -> None:
         self.capabilities = self.__decode_flight_capabilities(capabilities)
         self.is_mavftp_supported = capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP
 
     @staticmethod
-    def __decode_flight_sw_version(flight_sw_version) -> tuple[int, int, int, str]:
-        """decode 32 bit flight_sw_version mavlink parameter
-        corresponds to ArduPilot encoding in  GCS_MAVLINK::send_autopilot_version"""
+    def __decode_flight_sw_version(flight_sw_version: int) -> tuple[int, int, int, str]:
+        """
+        decode 32 bit flight_sw_version mavlink parameter
+        corresponds to ArduPilot encoding in  GCS_MAVLINK::send_autopilot_version.
+        """
         fw_type_id = (flight_sw_version >> 0) % 256  # E221, E222
         patch = (flight_sw_version >> 8) % 256  # E221, E222
         minor = (flight_sw_version >> 16) % 256  # E221
@@ -131,8 +134,9 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         return major, minor, patch, fw_type
 
     @staticmethod
-    def __decode_flight_capabilities(capabilities) -> dict[str, str]:
-        """Decode 32 bit flight controller capabilities bitmask mavlink parameter.
+    def __decode_flight_capabilities(capabilities: int) -> dict[str, str]:
+        """
+        Decode 32 bit flight controller capabilities bitmask mavlink parameter.
         Returns a dict of concise English descriptions of each active capability.
         """
         capabilities_dict: dict[str, str] = {}
@@ -156,13 +160,13 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
     # import pymavlink.dialects.v20.ardupilotmega
     # pymavlink.dialects.v20.ardupilotmega.enums["MAV_TYPE"]
     @staticmethod
-    def __decode_mav_type(mav_type) -> str:
+    def __decode_mav_type(mav_type: int) -> str:
         return str(
             mavutil.mavlink.enums["MAV_TYPE"].get(mav_type, mavutil.mavlink.EnumEntry("None", "Unknown type")).description
         )
 
     @staticmethod
-    def __decode_mav_autopilot(mav_autopilot) -> str:
+    def __decode_mav_autopilot(mav_autopilot: int) -> str:
         return str(
             mavutil.mavlink.enums["MAV_AUTOPILOT"]
             .get(mav_autopilot, mavutil.mavlink.EnumEntry("None", "Unknown type"))
@@ -170,18 +174,19 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         )
 
     @staticmethod
-    def __classify_vehicle_type(mav_type_int) -> str:
+    def __classify_vehicle_type(mav_type_int: int) -> str:
         """
         Classify the vehicle type based on the MAV_TYPE enum.
 
-        Parameters:
-        mav_type_int (int): The MAV_TYPE enum value.
+        Args:
+            mav_type_int (int): The MAV_TYPE enum value.
 
         Returns:
-        str: The classified vehicle type.
+            str: The classified vehicle type.
+
         """
         # Define the mapping from MAV_TYPE_* integer to vehicle type category
-        mav_type_to_vehicle_type = {
+        mav_type_to_vehicle_type: dict[int, str] = {
             mavutil.mavlink.MAV_TYPE_FIXED_WING: "ArduPlane",
             mavutil.mavlink.MAV_TYPE_QUADROTOR: "ArduCopter",
             mavutil.mavlink.MAV_TYPE_COAXIAL: "Heli",

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Vehicle template overview GUI.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -38,6 +40,7 @@ class TemplateOverviewWindow(BaseWindow):
     Methods:
         on_row_double_click(event): Handles the event triggered when a row in the Treeview is double-clicked, allowing the user
                                      to store the corresponding template directory.
+
     """
 
     def __init__(self, parent: Optional[tk.Toplevel] = None) -> None:
@@ -116,9 +119,7 @@ class TemplateOverviewWindow(BaseWindow):
             self.root.mainloop()
 
     def __adjust_treeview_column_widths(self) -> None:
-        """
-        Adjusts the column widths of the Treeview to fit the contents of each column.
-        """
+        """Adjusts the column widths of the Treeview to fit the contents of each column."""
         for col in self.tree["columns"]:
             max_width = 0
             for subtitle in col.title().split("\n"):
@@ -169,6 +170,7 @@ def argument_parser() -> argparse.Namespace:
 
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
+
     """
     parser = argparse.ArgumentParser(
         description=_(

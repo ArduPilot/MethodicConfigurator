@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+Flight controller information GUI.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -8,26 +8,20 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-# from logging import debug as logging_debug
 import tkinter as tk
+
+# from logging import debug as logging_debug
 from logging import info as logging_info
 from tkinter import ttk
 
 from MethodicConfigurator import _, __version__
-
-# type-checking block
 from MethodicConfigurator.annotate_params import Par
 from MethodicConfigurator.backend_flightcontroller import FlightController
-
-# from MethodicConfigurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
-# from MethodicConfigurator.frontend_tkinter_base import show_tooltip
 from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ProgressWindow
 
 
 class FlightControllerInfoWindow(BaseWindow):
-    """
-    Display flight controller hardware, firmware and parameter information
-    """
+    """Display flight controller hardware, firmware and parameter information."""
 
     def __init__(self, flight_controller: FlightController) -> None:
         super().__init__()

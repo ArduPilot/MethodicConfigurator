@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Data-dependent part of the component editor GUI.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -39,6 +41,7 @@ def argument_parser() -> Namespace:
 
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
+
     """
     # pylint: disable=duplicate-code
     parser = ArgumentParser(
@@ -213,7 +216,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     for editing component configurations in the ArduPilot Methodic Configurator.
     """
 
-    def __init__(self, version, local_filesystem: LocalFilesystem) -> None:
+    def __init__(self, version: str, local_filesystem: LocalFilesystem) -> None:
         self.serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
         self.can_ports = ["CAN1", "CAN2"]
         self.i2c_ports = ["I2C1", "I2C2", "I2C3", "I2C4"]
@@ -480,7 +483,9 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 protocol_combobox.set(protocols[0] if protocols else "")
             protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
 
-    def add_entry_or_combobox(self, value, entry_frame, path: tuple[str, str, str]) -> Union[ttk.Entry, ttk.Combobox]:
+    def add_entry_or_combobox(
+        self, value: float, entry_frame: ttk.Frame, path: tuple[str, str, str]
+    ) -> Union[ttk.Entry, ttk.Combobox]:
         # Default values for comboboxes in case the apm.pdef.xml metadata is not available
         fallbacks = {
             "RC_PROTOCOLS": [value["protocol"] for value in rc_protocols_dict.values()],
@@ -541,13 +546,13 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         config = combobox_config.get(path)
         if config:
             cb = ttk.Combobox(entry_frame, values=config["values"])
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore
-            cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore
+            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore[misc]
+            cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore[misc]
 
             if path == ("ESC", "FC Connection", "Type"):  # immediate update of ESC Protocol upon ESC Type selection
                 cb.bind(
                     "<<ComboboxSelected>>",
-                    lambda event, path=path: self.update_esc_protocol_combobox_entries(cb.get()),  # type: ignore[misc]
+                    lambda event: self.update_esc_protocol_combobox_entries(cb.get()),  # noqa: ARG005
                 )
 
             cb.set(value)
@@ -561,7 +566,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         entry.insert(0, str(value))
         return entry
 
-    def get_validate_function(self, entry, path) -> Union[Callable[[tk.Event], object], None]:
+    def get_validate_function(self, entry: ttk.Entry, path: tuple[str, str, str]) -> Union[Callable[[tk.Event], object], None]:
         validate_functions = {
             ("Frame", "Specifications", "TOW min Kg"): lambda event, entry=entry, path=path: self.validate_entry_limits(
                 event, entry, float, (0.01, 600), "Takeoff Weight", path
@@ -594,9 +599,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         return validate_functions.get(path)
 
     def validate_combobox(self, event: tk.Event, path: tuple[str, ...]) -> bool:
-        """
-        Validates the value of a combobox.
-        """
+        """Validates the value of a combobox."""
         combobox = event.widget  # Get the combobox widget that triggered the event
         value = combobox.get()  # Get the current value of the combobox
         allowed_values = combobox.cget("values")  # Get the list of allowed values
@@ -616,12 +619,20 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         combobox.configure(style="comb_input_valid.TCombobox")
         return True
 
-    def validate_entry_limits(self, event, entry, data_type, limits, _name, path) -> bool:  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def validate_entry_limits(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        event: Union[None, tk.Event],
+        entry: ttk.Entry,
+        data_type: type,
+        limits: tuple[float, float],
+        _name: str,
+        path: tuple[str, str, str],
+    ) -> bool:
         is_focusout_event = event and event.type == "10"
         try:
             value = entry.get()  # make sure value is defined to prevent exception in the except block
             value = data_type(value)
-            if value < limits[0] or value > limits[1]:
+            if value < limits[0] or value > limits[1]:  # type: ignore[operator]
                 entry.configure(style="entry_input_invalid.TEntry")
                 error_msg = _("{_name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}")
                 raise ValueError(error_msg.format(**locals()))
@@ -634,10 +645,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         entry.configure(style="entry_input_valid.TEntry")
         return True
 
-    def validate_cell_voltage(self, event, entry, path) -> bool:  # pylint: disable=too-many-branches
-        """
-        Validates the value of a battery cell voltage entry.
-        """
+    def validate_cell_voltage(self, event: Union[None, tk.Event], entry: ttk.Entry, path: tuple[str, str, str]) -> bool:  # pylint: disable=too-many-branches
+        """Validates the value of a battery cell voltage entry."""
         chemistry_path = ("Battery", "Specifications", "Chemistry")
         if chemistry_path not in self.entry_widgets:
             show_error_message(_("Error"), _("Battery Chemistry not set. Will default to Lipo."))
@@ -653,14 +662,14 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             if voltage < volt_limit:
                 if is_focusout_event:
                     entry.delete(0, tk.END)
-                    entry.insert(0, volt_limit)
+                    entry.insert(0, str(volt_limit))
                 error_msg = _("is below the {chemistry} minimum limit of {volt_limit}")
                 raise VoltageTooLowError(error_msg.format(**locals()))
             volt_limit = BatteryCell.limit_max_voltage(chemistry)
             if voltage > volt_limit:
                 if is_focusout_event:
                     entry.delete(0, tk.END)
-                    entry.insert(0, volt_limit)
+                    entry.insert(0, str(volt_limit))
                 error_msg = _("is above the {chemistry} maximum limit of {volt_limit}")
                 raise VoltageTooHighError(error_msg.format(**locals()))
         except (VoltageTooLowError, VoltageTooHighError) as _e:

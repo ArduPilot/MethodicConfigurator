@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-MAVLink File Transfer Protocol support example
+MAVLink File Transfer Protocol support example.
 
 SPDX-FileCopyrightText: 2024 Amilcar Lucas
 
@@ -29,9 +29,7 @@ old_mavftp_member_variable_values: dict[str, Any] = {}
 
 # pylint: disable=duplicate-code
 def argument_parser() -> Namespace:
-    """
-    Parses command-line arguments for the script.
-    """
+    """Parses command-line arguments for the script."""
     parser = ArgumentParser(description="This main is just an example, adapt it to your needs")
     parser.add_argument("--baudrate", type=int, default=115200, help="master port baud rate. Defaults to %(default)s")
     parser.add_argument(
@@ -88,7 +86,7 @@ def auto_detect_serial() -> list:
     return serial_list  # type: ignore[no-any-return]
 
 
-def auto_connect(device) -> mavutil.SerialPort:
+def auto_connect(device) -> mavutil.SerialPort:  # noqa: ANN001
     comport = None
     if device:
         comport = mavutil.SerialPort(device=device, description=device)
@@ -115,8 +113,8 @@ def auto_connect(device) -> mavutil.SerialPort:
     return comport
 
 
-def wait_heartbeat(m) -> None:
-    """wait for a heartbeat so we know the target system IDs"""
+def wait_heartbeat(m) -> None:  # noqa: ANN001
+    """Wait for a heartbeat so we know the target system IDs."""
     logging_info("Waiting for flight controller heartbeat")
     m.wait_heartbeat()
     logging_info("Got heartbeat from system %u, component %u", m.target_system, m.target_system)
@@ -193,7 +191,7 @@ def upload_script(mav_ftp: mavftp, remote_directory: str, local_filename: str, t
     debug_class_member_variable_changes(mav_ftp)
 
 
-def debug_class_member_variable_changes(instance) -> None:
+def debug_class_member_variable_changes(instance) -> None:  # noqa: ANN001
     return
     global old_mavftp_member_variable_values  # noqa: PLW0603 pylint: disable=global-statement, unreachable
     new_mavftp_member_variable_values = instance.__dict__
@@ -216,7 +214,7 @@ def debug_class_member_variable_changes(instance) -> None:
 
 
 def main() -> None:
-    """for testing/example purposes only"""
+    """For testing/example purposes only."""
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(levelname)s - %(message)s")
