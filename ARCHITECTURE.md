@@ -149,13 +149,13 @@ mkdir de
 
 ### 3. Generate a Template POT File
 
-If you haven't already generated a `.pot` file, you can do so by running the `create_pot_file.py` script.
+If you haven't already generated a `.pot` file, you can do so by running the `create_pot_file.py` script in the project root directory.
 This script will extract all translatable strings from the project files and create a `.pot` file.
 
 Ensure you are in the root directory of your project, and execute the following command:
 
 ```bash
-python3 create_pot_file.py
+python create_pot_file.py
 ```
 
 This will create a file named `MethodicConfigurator.pot` inside the `MethodicConfigurator/locale` directory.
@@ -166,10 +166,27 @@ Inside your newly created language directory, create a new `.po` file using the 
 
 ```bash
 cd de
-cp ../MethodicConfigurator.pot MethodicConfigurator.po
+mkdir LC_MESSAGES
+cp ../MethodicConfigurator.pot LC_MESSAGES/MethodicConfigurator.po
 ```
 
-### 5. Translate the Strings
+### 5. Bulk translate the strings (optional)
+
+You can bootstrap your translation using translation services that translate full files.
+To do so navigate to the project root and issue:
+
+```bash
+python extract_missing_translations.py --lang-code=de
+```
+
+Store the result of the bulk translations into a `translations.txt` file.
+Insert the translations into the .po file:
+
+```bash
+python insert_translations.py --lang-code=de
+```
+
+### 6. Translate the Strings
 
 Open the `MethodicConfigurator.po` file in a text editor or a specialist translation tool (e.g., [Poedit](https://poedit.net/)). You will see the extracted strings, which you can begin translating.
 
@@ -187,17 +204,17 @@ msgid "Original English String"
 msgstr "Translated String"
 ```
 
-### 6. Compile the PO File
+### 7. Compile the PO File
 
 Once you have completed your translations, you will need to compile the `.po` file into a binary `.mo` file. This can be done using the command:
 
 ```bash
-python3 create_mo_files.py
+wsl python3 create_mo_files.py
 ```
 
 Make sure you have `msgfmt` installed, which is part of the *GNU gettext* package.
 
-### 7. Test the New Language
+### 8. Test the New Language
 
 Now add the language to the end of the `LANGUAGE_CHOICES` array in the `MethodicConfigurator/internationalization.py` file.
 
@@ -209,10 +226,10 @@ And add it also to the `[Languages]` and `[Icons]` sections of the `windows/ardu
 
 ```text
 [Languages]
- Name: "en"; MessagesFile: "compiler:Default.isl"
- Name: "zh_CN"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
- Name: "pt"; MessagesFile: "compiler:Languages\Portuguese.isl"
- Name: "de"; MessagesFile: "compiler:Languages\German.isl"
+Name: "en"; MessagesFile: "compiler:Default.isl"
+Name: "zh_CN"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+Name: "pt"; MessagesFile: "compiler:Languages\Portuguese.isl"
+Name: "de"; MessagesFile: "compiler:Languages\German.isl"
 ...
 
 [Icons]
@@ -224,7 +241,7 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Working
 With the new `.mo` file created, you should ensure the software correctly loads the new language.
 Update the software's configuration to set the desired language and run the application to test your translations.
 
-### 8. Review and Refine
+### 9. Review and Refine
 
 Once the new language is running in the software, review the translations within the application for clarity and correctness. Make adjustments as needed in the `.po` file and recompile to an `.mo` file.
 

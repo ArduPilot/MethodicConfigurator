@@ -79,7 +79,8 @@ def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:
         if in_msgid and line.startswith("msgstr "):
             in_msgid = False
             # escape \ characters in a string
-            msgid_escaped = msgid.replace("\\", "\\\\")
+            # msgid_escaped = msgid.replace("\\", "\\\\")
+            msgid_escaped = msgid
             # Check if the translation exists
             if language.gettext(msgid_escaped) == msgid:  # If translation is the same as msgid, it's missing
                 missing_translations.append((i - 1, msgid))
