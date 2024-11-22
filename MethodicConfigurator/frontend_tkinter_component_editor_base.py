@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Component editor GUI that is not data dependent.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -39,6 +41,7 @@ def argument_parser() -> Namespace:
 
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
+
     """
     # pylint: disable=duplicate-code
     parser = ArgumentParser(
@@ -62,7 +65,7 @@ class ComponentEditorWindowBase(BaseWindow):
     class, which provides basic window functionality.
     """
 
-    def __init__(self, version, local_filesystem: LocalFilesystem) -> None:
+    def __init__(self, version: str, local_filesystem: LocalFilesystem) -> None:
         super().__init__()
         self.local_filesystem = local_filesystem
 
@@ -156,22 +159,21 @@ class ComponentEditorWindowBase(BaseWindow):
         entry.config(state="disabled")
 
     def populate_frames(self) -> None:
-        """
-        Populates the ScrollFrame with widgets based on the JSON data.
-        """
+        """Populates the ScrollFrame with widgets based on the JSON data."""
         if "Components" in self.data:
             for key, value in self.data["Components"].items():
                 self.__add_widget(self.scroll_frame.view_port, key, value, [])
 
-    def __add_widget(self, parent, key, value, path) -> None:
+    def __add_widget(self, parent: tk.Widget, key: str, value: dict, path: list) -> None:
         """
         Adds a widget to the parent widget with the given key and value.
 
-        Parameters:
-        parent (tkinter.Widget): The parent widget to which the LabelFrame/Entry will be added.
-        key (str): The key for the LabelFrame/Entry.
-        value (dict): The value associated with the key.
-        path (list): The path to the current key in the JSON data.
+        Args:
+            parent (tkinter.Widget): The parent widget to which the LabelFrame/Entry will be added.
+            key (str): The key for the LabelFrame/Entry.
+            value (dict): The value associated with the key.
+            path (list): The path to the current key in the JSON data.
+
         """
         if isinstance(value, dict):  # JSON non-leaf elements, add LabelFrame widget
             frame = ttk.LabelFrame(parent, text=_(key))
@@ -190,16 +192,14 @@ class ComponentEditorWindowBase(BaseWindow):
             label = ttk.Label(entry_frame, text=_(key))
             label.pack(side=tk.LEFT)
 
-            entry = self.add_entry_or_combobox(value, entry_frame, tuple([*path, key]))
+            entry = self.add_entry_or_combobox(value, entry_frame, (*path, key))
             entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 5))
 
             # Store the entry widget in the entry_widgets dictionary for later retrieval
-            self.entry_widgets[tuple([*path, key])] = entry
+            self.entry_widgets[(*path, key)] = entry
 
     def save_data(self) -> None:
-        """
-        Saves the edited JSON data back to the file.
-        """
+        """Saves the edited JSON data back to the file."""
         confirm_message = _(
             "ArduPilot Methodic Configurator only operates correctly if all component properties are correct."
             " ArduPilot parameter values depend on the components used and their connections.\n\n"
@@ -240,7 +240,9 @@ class ComponentEditorWindowBase(BaseWindow):
         self.root.destroy()
 
     # This function will be overwritten in child classes
-    def add_entry_or_combobox(self, value, entry_frame, _path) -> Union[ttk.Entry, ttk.Combobox]:
+    def add_entry_or_combobox(
+        self, value: float, entry_frame: ttk.Frame, _path: tuple[str, str, str]
+    ) -> Union[ttk.Entry, ttk.Combobox]:
         entry = ttk.Entry(entry_frame)
         entry.insert(0, str(value))
         return entry

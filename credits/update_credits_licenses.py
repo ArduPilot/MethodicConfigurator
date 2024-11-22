@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-This script downloads the licenses of the direct and indirect dependencies of the project
+Downloads the licenses of the direct and indirect dependencies of the project.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -10,7 +10,7 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import requests  # type: ignore[import-untyped]
+import requests
 
 # List of direct_dependencies and their license URLs
 direct_dependencies = [
@@ -48,7 +48,7 @@ indirect_dependencies = [
 ]
 
 
-def download_license(package_name, license_url) -> None:
+def download_license(package_name: str, license_url: str) -> None:
     try:
         response = requests.get(license_url, timeout=10)
         response.raise_for_status()  # Raise an exception if the request failed

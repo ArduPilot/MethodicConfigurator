@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-This script creates the MethodicConfigurator pip python package
+Creates the MethodicConfigurator pip python package.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 

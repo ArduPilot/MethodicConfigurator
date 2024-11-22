@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+Parameter editor table GUI.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -26,7 +26,7 @@ from MethodicConfigurator.backend_filesystem import LocalFilesystem, is_within_t
 
 # from MethodicConfigurator.backend_flightcontroller import FlightController
 # from MethodicConfigurator.frontend_tkinter_base import AutoResizeCombobox
-from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ScrollFrame, get_widget_font, show_tooltip
+from MethodicConfigurator.frontend_tkinter_base import BaseWindow, ScrollFrame, get_widget_font_family_and_size, show_tooltip
 from MethodicConfigurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from MethodicConfigurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 
@@ -41,9 +41,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     managing, and updating the table that displays parameters for editing.
     """
 
-    def __init__(self, root, local_filesystem: LocalFilesystem, parameter_editor) -> None:
-        super().__init__(root)
-        self.root = root
+    def __init__(self, master, local_filesystem: LocalFilesystem, parameter_editor) -> None:  # noqa: ANN001
+        super().__init__(master)
+        self.root = master
         self.local_filesystem = local_filesystem
         self.parameter_editor = parameter_editor
         self.current_file = ""
@@ -74,7 +74,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     def add_forced_or_derived_parameters(
         self, filename: str, new_parameters: dict[str, dict[str, Par]], fc_parameters: Union[dict[str, float], None] = None
     ) -> None:
-        """Add forced parameters not yet in the parameter list to the parameter list"""
+        """Add forced parameters not yet in the parameter list to the parameter list."""
         if filename in new_parameters:
             for param_name, param in new_parameters[filename].items():
                 if filename not in self.local_filesystem.file_parameters:
@@ -301,7 +301,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         else:
             new_value_entry.configure(style="TEntry")
 
-    def __create_new_value_entry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __create_new_value_entry(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals
         self,
         param_name: str,
         param: Par,
@@ -354,9 +354,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 else "readonly.TCombobox",
             )
             new_value_entry.set(selected_value)
-            font = get_widget_font(new_value_entry)
-            font["size"] -= 2 if platform_system() == "Windows" else 1
-            new_value_entry.config(state="readonly", width=NEW_VALUE_WIDGET_WIDTH, font=(font["family"], font["size"]))
+            font_family, font_size = get_widget_font_family_and_size(new_value_entry)
+            font_size -= 2 if platform_system() == "Windows" else 1
+            new_value_entry.config(state="readonly", width=NEW_VALUE_WIDGET_WIDTH, font=(font_family, font_size))
             new_value_entry.bind(  # type: ignore[call-overload] # workaround a mypy issue
                 "<<ComboboxSelected>>",
                 lambda event: self.__update_combobox_style_on_selection(new_value_entry, param_default, event),
@@ -412,13 +412,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 "<FocusIn>", lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value)
             )
 
-        def get_param_value_msg(_param_name: str, checked_keys) -> str:
+        def get_param_value_msg(_param_name: str, checked_keys: set) -> str:
             _new_decimal_value = sum(1 << key for key in checked_keys)
             text = _("{_param_name} Value: {_new_decimal_value}")
             return text.format(**locals())
 
         def update_label() -> None:
-            checked_keys = [key for key, var in checkbox_vars.items() if var.get()]
+            checked_keys = {key for key, var in checkbox_vars.items() if var.get()}
             close_label.config(text=get_param_value_msg(param_name, checked_keys))
 
         # Temporarily unbind the FocusIn event to prevent triggering the window again
@@ -457,7 +457,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def __create_unit_label(self, param_metadata: dict[str, Union[float, str]]) -> ttk.Label:
         unit_label = ttk.Label(self.view_port, text=param_metadata.get("unit", "") if param_metadata else "")
-        unit_tooltip = (
+        unit_tooltip = str(
             param_metadata.get("unit_tooltip")
             if param_metadata
             else _("No documentation available in apm.pdef.xml for this parameter")

@@ -85,37 +85,67 @@ exclude = [
     "dist",
 ]
 
+# https://docs.astral.sh/ruff/rules/
 lint.select = [
-    "F",    # pycodestyle
-    "E",    # Pyflakes
-    "W",    # Warnings
-    "U",    # pyupgrade
+    "F",    # Pyflakes
+    "E",    # pycodestyle -Error
+    "W",    # pycodestyle - Warning
+    #"C901", # maccabe
     "I",    # isort
     "N",    # pep8-naming
-    "PL",   # Pylint
-    "B",    # flake8-bugbear
-    "RUF",  # Ruff-specific codes
-    "PERF", # Performance-related issues
-    "SIM",  # flake8-simplify
-    "LOG",  # flake8-logging
-    "G",    # flake8-logging-format
-    #"C901", # maccabe
+    "D",    # pydocstyle
+    "UP",   # pyupgrade
+    "YTT",  # flake8-2020
+    "ANN",  # flake8-annotations
+    "ASYNC",# flake8-async
     "S",    # flake8-bandit
-    "TID",  # flake8-tidy-imports
-    "TCH",  # flake8-type-checking
-    "INT",  # flake8-gettext
-    "FLY002", # flynt
-    #"FURB", # refurb
+    #"BLE",  # flake8-blind-except
+    #"FBT",  # flake8-boolean-trap
+    "B",    # flake8-bugbear
+    "A",    # flake8-builtins
+    "COM",  # flake8-commas
+    "C4",   # flake8-comprehensions
+    "DTZ",  # flake8-datetimez
+    "T10",  # flake8-debugger
+    "EM",   # flake8-errmsg
+    "EXE",  # flake8-executable
     "ISC",  # flake8-implicit-str-concat
     "ICN",  # flake8-import-conventions
-    "ANN",  # flake8-annotations
+    "LOG",  # flake8-logging
+    "G",    # flake8-logging-format
+    "INP",  # flake8-no-pep420
+    "PIE",  # flake8-pie
+    #"T20",  # flake8-print (T20)
+    "PYI",  # flake8-pyi (PYI)
+    #"PT",   # flake8-pytest-style (PT)
+    "Q",    # flake8-quotes (Q)
+    "RSE",  # flake8-raise (RSE)
+    "RET",  # flake8-return (RET)
+    "SLF",  # flake8-self (SLF)
+    "SLOT", # flake8-slots (SLOT)
+    "SIM",  # flake8-simplify
+    "TID",  # flake8-tidy-imports
+    "TC",   # flake8-type-checking
+    "INT",  # flake8-gettext
+    "ARG",  # flake8-unused-arguments
+    #"PTH",  # flake8-use-pathlib
+    #"TD",   # flake8-todos
+    #"FIX",  # flake8-fixme
+    #"ERA",  # eradicate
+    "PD",   # pandas-vet
+    "PGH",  # pygrep-hooks
+    "PL",   # Pylint
+    "FLY002", # flynt
+    "PERF", # Performance-related issues
+    "FURB", # refurb
+    "DOC",  # pydoclint
+    "RUF",  # Ruff-specific codes
 ]
 
 lint.ignore = [
     "PLR0912",  # too many branches
     "PLR0913",  # too many arguments
     "PLR2004",  # Magic value used in comparison, consider replacing `X` with a constant variable
-    "N801",    # Class name `FTP_OP` should use CapWords convention
     "N802",    # Function name `X` should be lowercase
     "N806",    # Variable name `X` should be lowercase
     "N812",    # Lowercase `x` imported as non-lowercase `X`
@@ -123,17 +153,28 @@ lint.ignore = [
     "N817",    # CamelCase `X` imported as acronym `Y`
     "N999",    # Invalid module name: 'MethodicConfigurator'
     "ISC001",  # to let formatter run
-    "ANN001",  # Missing type annotation for function argument
     "ANN002",
     "ANN003",
-    "ANN101",  # Missing type annotation for self in method
+    "D102",    # Missing docstring in public method
+    "D103",    # Missing docstring in public function
+    "D107",    # Missing docstring in `__init__`
+    "D203",    # 
+    "D205",    # 1 blank line required between summary line and description
+    "D212",    # Multi-line docstring summary should start at the first line
+    "D404",    # First word of the docstring should not be "This"
+    "D401",    # First line of docstring should be in imperative mood
+    "COM812",
+    "DTZ005",  # `tz=None` passed to `datetime.datetime.now()`
 ]
 
 line-length = 127
 indent-width = 4
 
 [tool.ruff.lint.per-file-ignores]
-"unittests/*" = ["UP031"]
+"unittests/*" = ["D101","UP031", "ARG002", "ANN001"]
+"MethodicConfigurator/backend_mavftp.py" = ["PGH004", "N801", "ANN001"]
+"MethodicConfigurator/backend_mavftp_example.py" = ["ANN001"]
+"MethodicConfigurator/tempcal_imu.py" = ["ANN001"]
 
 [tool.mypy]
 ignore_missing_imports = true

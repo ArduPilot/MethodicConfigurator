@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+GUI to select the directory to store the vehicle configuration files.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -118,9 +120,9 @@ class DirectoryNameWidgets:  # pylint: disable=too-few-public-methods
     including a label and an entry field for displaying the selected directory name.
     """
 
-    def __init__(self, parent_frame, initial_dir: str, label_text: str, dir_tooltip: str) -> None:
+    def __init__(self, master: ttk.Labelframe, initial_dir: str, label_text: str, dir_tooltip: str) -> None:
         # Create a new frame for the directory name selection label
-        self.container_frame = ttk.Frame(parent_frame)
+        self.container_frame = ttk.Frame(master)
 
         # Create a description label for the directory name entry
         directory_selection_label = ttk.Label(self.container_frame, text=label_text)
@@ -481,6 +483,7 @@ def argument_parser() -> Namespace:
 
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
+
     """
     parser = ArgumentParser(
         description=_(

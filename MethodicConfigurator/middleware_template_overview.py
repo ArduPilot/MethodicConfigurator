@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+Middleware between the flight controller information backend and the GUI fronted.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -50,4 +50,4 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
         )
 
     def attributes(self) -> list[str]:
-        return self.__dict__.keys()  # type: ignore
+        return self.__dict__.keys()  # type: ignore[return-value]

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+GUI to select the connection to the FC.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -35,8 +37,8 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        parent,
-        parent_frame,
+        parent,  # noqa: ANN001 ConnectionSelectionWindow can not add it here, otherwise a dependency loop will be created
+        parent_frame: ttk.Labelframe,
         flight_controller: FlightController,
         destroy_parent_on_connect: bool,
         download_params_on_connect: bool,
@@ -74,7 +76,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             _("Select the flight controller connection\nYou can add a custom connection to the existing ones"),
         )
 
-    def on_select_connection_combobox_change(self, _event) -> None:
+    def on_select_connection_combobox_change(self, _event: tk.Event) -> None:
         selected_connection = self.conn_selection_combobox.get_selected_key()
         error_msg = _("Connection combobox changed to: {selected_connection}")
         logging_debug(error_msg.format(**locals()))
@@ -223,7 +225,7 @@ class ConnectionSelectionWindow(BaseWindow):
         skip_fc_connection_button = ttk.Button(
             option3_label_frame,
             text=_("Skip FC connection, just edit the .param files on disk"),
-            command=lambda flight_controller=flight_controller: self.skip_fc_connection(flight_controller),  # type: ignore
+            command=lambda fc=flight_controller: self.skip_fc_connection(fc),  # type: ignore[misc]
         )
         skip_fc_connection_button.pack(expand=False, fill=tk.X, padx=15, pady=6)
         show_tooltip(
@@ -258,6 +260,7 @@ def argument_parser() -> Namespace:
 
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
+
     """
     parser = ArgumentParser(
         description=_(

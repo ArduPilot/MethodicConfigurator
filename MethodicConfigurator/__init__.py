@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+Python package initialization file. Loads translations and declares version information.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>

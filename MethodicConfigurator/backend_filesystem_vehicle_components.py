@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+Manages vehicle components at the filesystem level.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -52,7 +52,7 @@ class VehicleComponents:
         self.vehicle_components = data
         return data
 
-    def save_vehicle_components_json_data(self, data, vehicle_dir: str) -> bool:
+    def save_vehicle_components_json_data(self, data: dict, vehicle_dir: str) -> bool:
         filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
         try:
             with open(filepath, "w", encoding="utf-8") as file:

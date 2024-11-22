@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+A combobox GUI with support for complex lists.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -24,7 +26,7 @@ from typing import Union
 
 from MethodicConfigurator import _
 from MethodicConfigurator.common_arguments import add_common_arguments_and_parse
-from MethodicConfigurator.frontend_tkinter_base import get_widget_font, update_combobox_width
+from MethodicConfigurator.frontend_tkinter_base import get_widget_font_family_and_size, update_combobox_width
 
 
 # https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb
@@ -36,7 +38,13 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
     """
 
     def __init__(
-        self, master, list_pair_tuple: list[tuple[str, str]], selected_element: Union[None, str], cb_name: str, *args, **kwargs
+        self,
+        master,  # noqa: ANN001
+        list_pair_tuple: list[tuple[str, str]],
+        selected_element: Union[None, str],
+        cb_name: str,
+        *args,
+        **kwargs,
     ) -> None:
         super().__init__(master, *args, **kwargs)
         self.cb_name = cb_name
@@ -45,7 +53,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         self.set_entries_tupple(list_pair_tuple, selected_element)
         self.bind("<Configure>", self.on_combo_configure, add="+")
 
-    def set_entries_tupple(self, list_pair_tuple, selected_element: Union[None, str]) -> None:
+    def set_entries_tupple(self, list_pair_tuple: list[tuple[str, str]], selected_element: Union[None, str]) -> None:
         if isinstance(list_pair_tuple, list):
             for tpl in list_pair_tuple:
                 self.list_keys.append(tpl[0])
@@ -135,7 +143,13 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
     """
 
     def __init__(
-        self, master, list_pair_tuple: list[tuple[str, str]], selected_element: Union[None, str], cb_name: str, *args, **kwargs
+        self,
+        master,  # noqa: ANN001
+        list_pair_tuple: list[tuple[str, str]],
+        selected_element: Union[None, str],
+        cb_name: str,
+        *args,
+        **kwargs,
     ) -> None:
         super().__init__(master, list_pair_tuple, selected_element, cb_name, *args, **kwargs)
         self.tooltip: Union[None, Toplevel] = None
@@ -143,13 +157,13 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
         # Bind events related to the dropdown
         pd = self.tk.call("ttk::combobox::PopdownWindow", self)
         lb = pd + ".f.l"
-        self._bind(("bind", lb), "<KeyRelease>", self.on_key_release, None)  # type: ignore
-        self._bind(("bind", lb), "<Motion>", self.on_motion, None)  # type: ignore
-        self._bind(("bind", lb), "<Escape>", self.on_escape_press, None)  # type: ignore
+        self._bind(("bind", lb), "<KeyRelease>", self.on_key_release, None)  # type: ignore[attr-defined]
+        self._bind(("bind", lb), "<Motion>", self.on_motion, None)  # type: ignore[attr-defined]
+        self._bind(("bind", lb), "<Escape>", self.on_escape_press, None)  # type: ignore[attr-defined]
         self.bind("<<ComboboxSelected>>", self.on_combobox_selected, None)
 
     def on_key_release(self, _event: Union[None, tk.Event]) -> None:
-        """Get the keyboard highlighted index and create a tooltip for it"""
+        """Get the keyboard highlighted index and create a tooltip for it."""
         pd = self.tk.call("ttk::combobox::PopdownWindow", self)
         lb = pd + ".f.l"
         if self.tk.call(lb, "curselection"):
@@ -157,7 +171,7 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
             self.create_tooltip_from_index(highlighted_index)
 
     def on_motion(self, event: tk.Event) -> None:
-        """Get the mouse highlighted index and create a tooltip for it"""
+        """Get the mouse highlighted index and create a tooltip for it."""
         pd = self.tk.call("ttk::combobox::PopdownWindow", self)
         lb = pd + ".f.l"
         index = self.tk.call(lb, "index", f"@{event.x},{event.y}")
@@ -202,6 +216,7 @@ def argument_parser() -> Namespace:
 
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
+
     """
     parser = ArgumentParser(
         description=_(
@@ -238,9 +253,9 @@ def main() -> None:
     tuple_pairs = [(str(i), random_string) for i, random_string in enumerate(random_strings)]
     combobox = PairTupleCombobox(root, tuple_pairs, None, "Random Strings")
 
-    font = get_widget_font(combobox)
-    font["size"] -= 2 if platform_system() == "Windows" else 1
-    combobox.config(state="readonly", width=9, font=(font["family"], font["size"]))
+    font_family, font_size = get_widget_font_family_and_size(combobox)
+    font_size -= 2 if platform_system() == "Windows" else 1
+    combobox.config(state="readonly", width=9, font=(font_family, font_size))
 
     # Pack the combobox into the main window
     combobox.pack(pady=10, padx=10)

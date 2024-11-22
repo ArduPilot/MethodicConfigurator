@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
 """
+Unittest for the annotate_params.py script.
+
 These are the unit tests for the python script that fetches online ArduPilot
 parameter documentation (if not cached) and adds it to the specified file or
 to all *.param and *.parm files in the specified directory.
@@ -109,7 +111,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
     @patch("annotate_params.Par.load_param_file_into_dict")
     def test_get_xml_data_script_dir_file(self, mock_load_param, mock_isfile) -> None:
         # Mock the isfile function to return False for the current directory and True for the script directory
-        def side_effect(filename) -> bool:
+        def side_effect(filename) -> bool:  # noqa: ARG001
             return True
 
         mock_isfile.side_effect = side_effect

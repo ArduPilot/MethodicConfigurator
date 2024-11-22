@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+Check the range of an Argparse parameter.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Dmitriy Kovalev
@@ -11,15 +11,15 @@ https://gist.github.com/dmitriykovalev/2ab1aa33a8099ef2d514925d84aa89e7
 """
 
 from argparse import Action, ArgumentError, ArgumentParser, Namespace
+from collections.abc import Sequence
 from operator import ge, gt, le, lt
+from typing import Any, Union
 
 from MethodicConfigurator import _
 
 
 class CheckRange(Action):
-    """
-    Check if the Argparse argument value is within the specified range
-    """
+    """Check if the Argparse argument value is within the specified range."""
 
     def __init__(self, *args, **kwargs) -> None:
         if "min" in kwargs and "inf" in kwargs:
@@ -52,7 +52,13 @@ class CheckRange(Action):
         msg = _("valid range: {_lo}, {_up}")
         return msg.format(**locals())
 
-    def __call__(self, parser: ArgumentParser, namespace: Namespace, values, option_string=None) -> None:
+    def __call__(
+        self,
+        parser: ArgumentParser,  # noqa: ARG002
+        namespace: Namespace,
+        values: Union[str, Sequence[Any], None],
+        option_string: Union[None, str] = None,  # noqa: ARG002
+    ) -> None:
         if not isinstance(values, (int, float)):
             raise ArgumentError(self, _("Value must be a number."))
 

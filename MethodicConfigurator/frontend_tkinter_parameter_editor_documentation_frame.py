@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+The documentation frame containing the documentation for the current configuration step.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -128,10 +128,10 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         label = self.documentation_labels[label_key]
         if url:
             label.config(text=text, foreground="blue", cursor="hand2", underline=True)
-            label.bind("<Button-1>", lambda event, url=url: webbrowser_open(url))  # type: ignore
+            label.bind("<Button-1>", lambda url=url: webbrowser_open(url))  # type: ignore[misc]
             show_tooltip(label, url)
         else:
             label.config(text=text, foreground="black", cursor="arrow", underline=False)
-            label.bind("<Button-1>", lambda event: None)
+            label.bind("<Button-1>", None)
             if url_expected:
                 show_tooltip(label, _("Documentation URL not available"))

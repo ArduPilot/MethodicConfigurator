@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+TKinter base classes reused in multiple parts of the code.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -19,7 +19,7 @@ from logging import warning as logging_warning
 from platform import system as platform_system
 from tkinter import BooleanVar, messagebox, ttk
 from tkinter import font as tkFont
-from typing import Optional
+from typing import Optional, Union
 
 from PIL import Image, ImageTk
 
@@ -52,15 +52,15 @@ def show_no_connection_error(_error_string: str) -> None:
     show_error_message(_("No Connection to the Flight Controller"), error_message.format(**locals()))
 
 
-def show_tooltip(widget, text) -> None:
-    def enter(_event) -> None:
+def show_tooltip(widget: tk.Widget, text: str) -> None:
+    def enter(_event: tk.Event) -> None:
         # Calculate the position of the tooltip based on the widget's position
         x = widget.winfo_rootx() + widget.winfo_width() // 2
         y = widget.winfo_rooty() + widget.winfo_height()
         tooltip.geometry(f"+{x}+{y}")
         tooltip.deiconify()
 
-    def leave(_event) -> None:
+    def leave(_event: tk.Event) -> None:
         tooltip.withdraw()
 
     tooltip = tk.Toplevel(widget)
@@ -74,7 +74,7 @@ def show_tooltip(widget, text) -> None:
     widget.bind("<Leave>", leave)
 
 
-def update_combobox_width(combobox) -> None:
+def update_combobox_width(combobox: ttk.Combobox) -> None:
     # Calculate the maximum width needed for the content
     max_width = max(len(value) for value in combobox["values"])
     # Set a minimum width for the combobox
@@ -92,17 +92,20 @@ class AutoResizeCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
     values. It also supports displaying a tooltip when hovering over the widget.
 
     Attributes:
-        container: The parent container in which the Combobox is placed.
+        master: The parent container in which the Combobox is placed.
         values: A tuple of strings representing the entries in the Combobox.
         selected_element: The initially selected element in the Combobox.
         tooltip: A string representing the tooltip text to display when hovering over the widget.
+
     """
 
-    def __init__(self, container, values, selected_element, tooltip, *args, **kwargs) -> None:
-        super().__init__(container, *args, **kwargs)
+    def __init__(
+        self, master: ttk.Frame, values: list[str], selected_element: str, tooltip: Union[None, str], *args, **kwargs
+    ) -> None:
+        super().__init__(master, *args, **kwargs)
         self.set_entries_tupple(values, selected_element, tooltip)
 
-    def set_entries_tupple(self, values, selected_element, tooltip=None) -> None:
+    def set_entries_tupple(self, values: list[str], selected_element: str, tooltip: Union[None, str] = None) -> None:
         self["values"] = tuple(values)
         if selected_element:
             if selected_element in values:
@@ -126,11 +129,11 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
     scrollable areas within your application's GUI.
     """
 
-    def __init__(self, parent) -> None:
-        super().__init__(parent)  # create a frame (self)
+    def __init__(self, master) -> None:  # noqa: ANN001
+        super().__init__(master)  # create a frame (self)
 
         # place canvas on self, copy ttk.background to tk.background
-        self.canvas = tk.Canvas(self, borderwidth=0, background=ttk.Style(parent).lookup("TFrame", "background"))
+        self.canvas = tk.Canvas(self, borderwidth=0, background=ttk.Style(master).lookup("TFrame", "background"))
 
         # place a frame on the canvas, this frame will hold the child widgets
         self.view_port = ttk.Frame(self.canvas)
@@ -163,8 +166,8 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         # perform an initial stretch on render, otherwise the scroll region has a tiny border until the first resize
         self.on_frame_configure(None)
 
-    def on_frame_configure(self, _event) -> None:
-        """Reset the scroll region to encompass the inner frame"""
+    def on_frame_configure(self, _event) -> None:  # noqa: ANN001
+        """Reset the scroll region to encompass the inner frame."""
         # Whenever the size of the frame changes, alter the scroll region respectively.
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         # Calculate the bounding box for the scroll region, starting from the second row
@@ -174,13 +177,13 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         #     bbox = (bbox[0], bbox[1] + self.canvas.winfo_reqheight(), bbox[2], bbox[3])
         #     self.canvas.configure(scrollregion=bbox)
 
-    def on_canvas_configure(self, event) -> None:
-        """Reset the canvas window to encompass inner frame when required"""
+    def on_canvas_configure(self, event: tk.Event) -> None:
+        """Reset the canvas window to encompass inner frame when required."""
         canvas_width = event.width
         # Whenever the size of the canvas changes alter the window region respectively.
         self.canvas.itemconfig(self.canvas_window, width=canvas_width)
 
-    def on_mouse_wheel(self, event) -> None:  # cross platform scroll wheel event
+    def on_mouse_wheel(self, event: tk.Event) -> None:  # cross platform scroll wheel event
         canvas_height = self.canvas.winfo_height()
         rows_height = self.canvas.bbox("all")[3]
 
@@ -194,14 +197,14 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
             elif event.num == 5:
                 self.canvas.yview_scroll(1, "units")
 
-    def on_enter(self, _event) -> None:  # bind wheel events when the cursor enters the control
+    def on_enter(self, _event: tk.Event) -> None:  # bind wheel events when the cursor enters the control
         if platform_system() == "Linux":
             self.canvas.bind_all("<Button-4>", self.on_mouse_wheel)
             self.canvas.bind_all("<Button-5>", self.on_mouse_wheel)
         else:
             self.canvas.bind_all("<MouseWheel>", self.on_mouse_wheel)
 
-    def on_leave(self, _event) -> None:  # unbind wheel events when the cursor leaves the control
+    def on_leave(self, _event: tk.Event) -> None:  # unbind wheel events when the cursor leaves the control
         if platform_system() == "Linux":
             self.canvas.unbind_all("<Button-4>")
             self.canvas.unbind_all("<Button-5>")
@@ -217,8 +220,8 @@ class ProgressWindow:
     a task. It includes a progress bar and a label to display the progress message.
     """
 
-    def __init__(self, parent, title: str, message: str = "", width: int = 300, height: int = 80) -> None:  # pylint: disable=too-many-arguments, too-many-positional-arguments
-        self.parent = parent
+    def __init__(self, master, title: str, message: str = "", width: int = 300, height: int = 80) -> None:  # noqa: ANN001, pylint: disable=too-many-arguments, too-many-positional-arguments
+        self.parent = master
         self.message = message
         self.progress_window = tk.Toplevel(self.parent)
         self.progress_window.title(title)
@@ -253,6 +256,7 @@ class ProgressWindow:
         Args:
             current_value (int): The current progress value.
             max_value (int): The maximum progress value, if 0 uses percentage.
+
         """
         try:
             self.progress_window.lift()
@@ -299,6 +303,7 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
         To use this widget, simply replace instances of the standard Tkinter Text widget with
         RichText in your UI definitions. Apply tags to text segments using the tag_add method
         and configure the appearance accordingly.
+
     """
 
     def __init__(self, *args, **kwargs) -> None:
@@ -320,11 +325,14 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
         self.tag_configure("h1", font=h1_font, spacing3=default_size)
 
 
-def get_widget_font(widget: tk.Widget):
+def get_widget_font_family_and_size(widget: tk.Widget) -> tuple[str, int]:
     style = ttk.Style()
     widget_style = widget.cget("style")  # Get the style used by the widget
     font_name = style.lookup(widget_style, "font")
-    return tkFont.nametofont(font_name).config()
+    font_dict = tkFont.nametofont(font_name).config()
+    if font_dict is None:
+        return "Segoe UI", 9
+    return font_dict.get("family", "Segoe UI"), font_dict.get("size", 9)
 
 
 class BaseWindow:
@@ -361,6 +369,7 @@ class BaseWindow:
         Args:
             window (tk.Toplevel): The window to center.
             parent (tk.Toplevel): The parent window.
+
         """
         window.update_idletasks()
         parent_width = parent.winfo_width()
@@ -384,9 +393,9 @@ class BaseWindow:
         photo = ImageTk.PhotoImage(resized_image)
 
         # Create a label with the resized image
-        image_label = ttk.Label(parent, image=photo)  # type: ignore[arg-type] # workaround a mypy issue
+        image_label = ttk.Label(parent, image=photo)
         # Keep a reference to the image to prevent it from being garbage collected
-        image_label.image = photo  # type: ignore
+        image_label.image = photo  # type: ignore[attr-defined]
         return image_label
 
 

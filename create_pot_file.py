@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Create the .pot file by extracting strings from the python source code files.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -12,7 +14,7 @@ import os
 import subprocess
 
 
-def extract_strings(directory, output_dir) -> None:
+def extract_strings(directory: str, output_dir: str) -> None:
     file_paths = []
     for root, _dirs, files in os.walk(directory):
         for file in files:

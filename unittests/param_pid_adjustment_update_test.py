@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
 """
-This script updates the PID adjustment parameters to be factor of the corresponding autotuned or optimized parameters.
+Unittests for the para_pid_adjustment_update.py file.
+
+Updates the PID adjustment parameters to be factor of the corresponding autotuned or optimized parameters.
 
 Usage:
     ./param_pid_adjustment_update.py -d /path/to/directory optimized_parameter_file.param

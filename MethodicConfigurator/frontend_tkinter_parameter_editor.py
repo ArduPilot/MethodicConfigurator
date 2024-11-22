@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Parameter editor GUI.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -35,7 +37,7 @@ from MethodicConfigurator.frontend_tkinter_base import (
     ProgressWindow,
     RichText,
     UsagePopupWindow,
-    get_widget_font,
+    get_widget_font_family_and_size,
     show_tooltip,
 )
 from MethodicConfigurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
@@ -219,11 +221,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.file_selection_combobox.bind("<<ComboboxSelected>>", self.on_param_file_combobox_change)
         self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
-        self.legend_frame(config_subframe, get_widget_font(file_selection_label)["family"])
+        font_family, _font_size = get_widget_font_family_and_size(file_selection_label)
+        self.legend_frame(config_subframe, font_family)
 
         image_label = BaseWindow.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
-        image_label.bind("<Button-1>", lambda event: show_about_window(self.main_frame, version))
+        image_label.bind("<Button-1>", lambda event: show_about_window(self.main_frame, version))  # noqa: ARG005
         show_tooltip(image_label, _("User Manual, Support Forum, Report a Bug, Licenses, Source Code"))
 
     def legend_frame(self, config_subframe: ttk.Frame, font_family: str) -> None:
@@ -814,6 +817,7 @@ def argument_parser() -> Namespace:
 
     Returns:
     argparse.Namespace: An object containing the parsed arguments.
+
     """
     parser = ArgumentParser(
         description=_(

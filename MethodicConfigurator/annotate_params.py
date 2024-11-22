@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 
 """
-This script fetches online ArduPilot parameter documentation (if not cached) and adds it to the specified file
- or to all *.param and *.parm files in the specified directory.
+Fetches online ArduPilot parameter documentation (if not cached) locally.
+
+and adds it to the specified file or to all *.param and *.parm files in the specified directory.
 
 1. Checks if a local cache of the apm.pdef.xml file exists in the target directory or on the directory of the target file:
  - If it does, the script loads the file content.
@@ -31,7 +32,7 @@ from os import popen as os_popen
 from sys import exc_info as sys_exc_info
 from sys import exit as sys_exit
 from types import TracebackType
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 
 from defusedxml import ElementTree as DET  # just parsing, no data-structure manipulation
@@ -116,7 +117,8 @@ def arg_parser() -> argparse.Namespace:
     def check_max_line_length(value: int) -> int:
         if value < 50 or value > 300:
             logging.critical("--max-line-length must be in the interval 50 .. 300, not %d", value)
-            raise SystemExit("Correct it and try again")
+            msg = "Correct it and try again"
+            raise SystemExit(msg)
         return value
 
     args.max_line_length = check_max_line_length(args.max_line_length)
@@ -131,6 +133,7 @@ class Par:
     Attributes:
         value (float): The value of the parameter.
         comment (Optional[str]): An optional comment associated with the parameter.
+
     """
 
     def __init__(self, value: float, comment: Optional[str] = None) -> None:
@@ -138,6 +141,7 @@ class Par:
         self.comment = comment
 
     def __eq__(self, other: object) -> bool:
+        """Equality operation."""
         if isinstance(other, Par):
             return self.value == other.value and self.comment == other.comment
         return False
@@ -147,11 +151,12 @@ class Par:
         """
         Loads an ArduPilot parameter file into a dictionary with name, value pairs.
 
-        Parameters:
-        parm_file (str): The name of the parameter file to load.
+        Args:
+            param_file (str): The name of the parameter file to load.
 
         Returns:
-        dict: A dictionary containing the parameters from the file.
+            dict: A dictionary containing the parameters from the file.
+
         """
         parameter_dict: dict[str, Par] = {}
         try:
@@ -176,32 +181,47 @@ class Par:
                     elif "\t" in line:
                         parameter, value = line.split("\t", 1)
                     else:
-                        raise SystemExit(f"Missing parameter-value separator: {line} in {param_file} line {i}")
+                        msg = f"Missing parameter-value separator: {line} in {param_file} line {i}"
+                        raise SystemExit(msg)
                     parameter = parameter.strip()
                     Par.validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value)
         except UnicodeDecodeError as exp:
-            raise SystemExit(f"Fatal error reading {param_file}: {exp}") from exp
+            msg = f"Fatal error reading {param_file}: {exp}"
+            raise SystemExit(msg) from exp
         return parameter_dict
 
     @staticmethod
-    def validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value) -> None:  # pylint: disable=too-many-arguments, too-many-positional-arguments
-        if len(parameter) > PARAM_NAME_MAX_LEN:
-            raise SystemExit(f"Too long parameter name: {parameter} in {param_file} line {i}")
-        if not re.match(PARAM_NAME_REGEX, parameter):
-            raise SystemExit(f"Invalid characters in parameter name {parameter} in {param_file} line {i}")
-        if parameter in parameter_dict:
-            raise SystemExit(f"Duplicated parameter {parameter} in {param_file} line {i}")
+    def validate_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        param_file: str,
+        parameter_dict: dict[str, "Par"],
+        i: int,
+        original_line: str,
+        comment: Union[None, str],
+        parameter_name: str,
+        value: str,
+    ) -> None:
+        if len(parameter_name) > PARAM_NAME_MAX_LEN:
+            msg = f"Too long parameter name: {parameter_name} in {param_file} line {i}"
+            raise SystemExit(msg)
+        if not re.match(PARAM_NAME_REGEX, parameter_name):
+            msg = f"Invalid characters in parameter name {parameter_name} in {param_file} line {i}"
+            raise SystemExit(msg)
+        if parameter_name in parameter_dict:
+            msg = f"Duplicated parameter {parameter_name} in {param_file} line {i}"
+            raise SystemExit(msg)
         try:
             fvalue = float(value.strip())
-            parameter_dict[parameter] = Par(fvalue, comment)
+            parameter_dict[parameter_name] = Par(fvalue, comment)
         except ValueError as exc:
-            raise SystemExit(f"Invalid parameter value {value} in {param_file} line {i}") from exc
+            msg = f"Invalid parameter value {value} in {param_file} line {i}"
+            raise SystemExit(msg) from exc
         except OSError as exc:
             _exc_type, exc_value, exc_traceback = sys_exc_info()
             if isinstance(exc_traceback, TracebackType):
                 fname = os_path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
                 logging.critical("in line %s of file %s: %s", exc_traceback.tb_lineno, fname, exc_value)
-                raise SystemExit(f"Caused by line {i} of file {param_file}: {original_line}") from exc
+                msg = f"Caused by line {i} of file {param_file}: {original_line}"
+                raise SystemExit(msg) from exc
 
     @staticmethod
     def missionplanner_sort(item: str) -> tuple[str, ...]:
@@ -213,6 +233,7 @@ class Par:
 
         Returns:
             A tuple representing the sorted parameter name.
+
         """
         parts = item.split("_")  # Split the parameter name by underscore
         # Compare the parts separately
@@ -227,22 +248,24 @@ class Par:
         consisting of the parameter's name, its value, and optionally its comment.
         The comment is included if it is present in the parameter's 'Par' object.
 
-        Parameters:
-        param_dict (Dict[str, 'Par']): A dictionary of 'Par' objects.
-                                       Each key is a parameter name and each value is a 'Par' object.
-                                       Par can be a simple float or a Par object with a comment.
-        file_format (str): Can be "missionplanner" or "mavproxy"
+        Args:
+            param_dict (Dict[str, 'Par']): A dictionary of 'Par' objects.
+                                           Each key is a parameter name and each value is a 'Par' object.
+                                           Par can be a simple float or a Par object with a comment.
+            file_format (str): Can be "missionplanner" or "mavproxy"
 
         Returns:
-        List[str]: A list of strings, each string representing a parameter from the input dictionary
-                   in the format "name,value # comment".
+            List[str]: A list of strings, each string representing a parameter from the input dictionary
+                       in the format "name,value # comment".
+
         """
         if file_format == "missionplanner":
             param_dict = dict(sorted(param_dict.items(), key=lambda x: Par.missionplanner_sort(x[0])))  # sort alphabetically
         elif file_format == "mavproxy":
             param_dict = dict(sorted(param_dict.items()))  # sort in ASCIIbetical order
         else:
-            raise SystemExit(f"ERROR: Unsupported file format {file_format}")
+            msg = f"ERROR: Unsupported file format {file_format}"
+            raise SystemExit(msg)
 
         formatted_params = []
         if file_format == "missionplanner":
@@ -272,12 +295,13 @@ class Par:
         """
         Exports a list of formatted parameters to an ArduPilot parameter file.
 
-        Parameters:
-        formatted_params (List[str]): The list of formatted parameters to export.
-        filename_out (str): The output filename.
+        Args:
+            formatted_params (List[str]): The list of formatted parameters to export.
+            filename_out (str): The output filename.
 
         Returns:
-        None
+            None
+
         """
         if not formatted_params:
             return
@@ -287,7 +311,8 @@ class Par:
                 for line in formatted_params:
                     output_file.write(line + "\n")
         except OSError as e:
-            raise SystemExit(f"ERROR: writing to file {filename_out}: {e}") from e
+            msg = f"ERROR: writing to file {filename_out}: {e}"
+            raise SystemExit(msg) from e
 
     @staticmethod
     def print_out(formatted_params: list[str], name: str) -> None:
@@ -296,12 +321,13 @@ class Par:
         If the list is too large, print only the ones that fit on the screen and
         wait for user input to continue.
 
-        Parameters:
-        formatted_params (List[str]): The list of formatted parameters to print.
-        name (str): A descriptive string for the list contents
+        Args:
+            formatted_params (List[str]): The list of formatted parameters to print.
+            name (str): A descriptive string for the list contents
 
         Returns:
-        None
+            None
+
         """
         if not formatted_params:
             return
@@ -310,7 +336,7 @@ class Par:
 
         # Get the size of the terminal
         if __name__ == "__main__":
-            rows_str, _columns = os_popen("stty size", "r").read().split()  # noqa S607
+            rows_str, _columns = os_popen("stty size", "r").read().split()  # noqa: S605, S607
 
         # Convert rows to integer
         rows = int(rows_str) - 2  # -2 for the next print and the input line
@@ -320,7 +346,7 @@ class Par:
         for i, line in enumerate(formatted_params):
             if i % rows == 0 and __name__ == "__main__":
                 input(f"\n{name} list is long hit enter to continue")
-                rows_str, _columns = os_popen("stty size", "r").read().split()  # noqa S607
+                rows_str, _columns = os_popen("stty size", "r").read().split()  # noqa: S605, S607
                 rows = int(rows_str) - 2  # -2 for the next print and the input line
             print(line)
 
@@ -337,6 +363,7 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
 
     Returns:
         ET.Element: The root element of the parsed XML data.
+
     """
     file_path = os_path.join(directory, filename)
     # Check if the locally cached file exists
@@ -358,14 +385,16 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
         except ImportError as exc:
             logging.critical("The requests package was not found")
             logging.critical("Please install it by running 'pip install requests' in your terminal.")
-            raise SystemExit("requests package is not installed") from exc
+            msg = "requests package is not installed"
+            raise SystemExit(msg) from exc
         try:
             # Send a GET request to the URL
             url = base_url + filename
             response = requests_get(url, timeout=5)
             if response.status_code != 200:
                 logging.warning("Remote URL: %s", url)
-                raise requests_exceptions.RequestException(f"HTTP status code {response.status_code}")
+                msg = f"HTTP status code {response.status_code}"
+                raise requests_exceptions.RequestException(msg)
         except requests_exceptions.RequestException as e:
             logging.warning("Unable to fetch XML data: %s", e)
             # Send a GET request to the URL to the fallback (DEV) URL
@@ -375,10 +404,12 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
                 response = requests_get(url, timeout=5)
                 if response.status_code != 200:
                     logging.critical("Remote URL: %s", url)
-                    raise requests_exceptions.RequestException(f"HTTP status code {response.status_code}")
+                    msg = f"HTTP status code {response.status_code}"
+                    raise requests_exceptions.RequestException(msg)
             except requests_exceptions.RequestException as exp:
                 logging.critical("Unable to fetch XML data: %s", exp)
-                raise SystemExit("unable to fetch online XML documentation") from exp
+                msg = "unable to fetch online XML documentation"
+                raise SystemExit(msg) from exp
         # Get the text content of the response
         xml_data = response.text
         try:
@@ -387,7 +418,8 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
                 file.write(xml_data)
         except PermissionError as e:
             logging.critical("Permission denied to write XML data to file: %s", e)
-            raise SystemExit("permission denied to write online XML documentation to file") from e
+            msg = "permission denied to write online XML documentation to file"
+            raise SystemExit(msg) from e
 
     # Parse the XML data
     return DET.fromstring(xml_data)  # type: ignore[no-any-return]
@@ -414,6 +446,7 @@ def remove_prefix(text: str, prefix: str) -> str:
 
     Returns:
         str: The string without the prefix.
+
     """
     if text.startswith(prefix):
         return text[len(prefix) :]
@@ -430,6 +463,7 @@ def split_into_lines(string_to_split: str, maximum_line_length: int) -> list[str
 
     Returns:
         List[str]: The list of lines.
+
     """
     doc_lines = re.findall(r".{1," + str(maximum_line_length) + r"}(?:\s|$)", string_to_split)
     # Remove trailing whitespace from each line
@@ -442,9 +476,12 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
 
     Args:
         root (ET.Element): The root element of the parsed XML data.
+        vehicle_type (str): vehicle type string.
+        max_line_length (int): max line length
 
     Returns:
         Dict[str, Any]: A dictionary of parameter documentation.
+
     """
     # Dictionary to store the parameter documentation
     doc: dict[str, Any] = {}
@@ -495,14 +532,16 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
 def format_columns(values: dict[str, Any], max_width: int = 105, max_columns: int = 4) -> list[str]:
     """
     Formats a dictionary of values into column-major horizontally aligned columns.
-    It uses at most max_columns columns
+    It uses at most max_columns columns.
 
     Args:
         values (Dict[str, Any]): The dictionary of values to format.
         max_width (int, optional): The maximum number of characters on all columns. Defaults to 105.
+        max_columns (int): Maximum number of columns
 
     Returns:
         List[str]: The list of formatted strings.
+
     """
     # Convert the dictionary into a list of strings
     strings = [f"{k}: {v}" for k, v in values.items()]
@@ -541,18 +580,14 @@ def format_columns(values: dict[str, Any], max_width: int = 105, max_columns: in
 
 
 def extract_parameter_name(item: str) -> str:
-    """
-    Extract the parameter name from a line. Very simple to use in sorting
-    """
+    """Extract the parameter name from a line. Very simple to use in sorting."""
     item = item.strip()
     match = re.match(PARAM_NAME_REGEX, item)
     return match.group(0) if match else item
 
 
 def missionplanner_sort(item: str) -> tuple[str, ...]:
-    """
-    MissionPlanner parameter sorting function
-    """
+    """MissionPlanner parameter sorting function."""
     # Split the parameter name by underscore
     parts = extract_parameter_name(item).split("_")
     # Compare the parts separately
@@ -562,12 +597,18 @@ def missionplanner_sort(item: str) -> tuple[str, ...]:
 def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) -> str:
     """
     Extracts the parameter name from a line and validates it.
+
     Args:
         line (str): The line to extract the parameter name from.
+        filename (str): filename.
+        line_nr (int): line number.
+
     Returns:
         str: The extracted parameter name.
+
     Raises:
         SystemExit: If the line is invalid or the parameter name is too long or invalid.
+
     """
     # Extract the parameter name
     match = re.match(PARAM_NAME_REGEX, line)
@@ -575,15 +616,18 @@ def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) 
         param_name = match.group(0)
     else:
         logging.critical("Invalid line %d in file %s: %s", line_nr, filename, line)
-        raise SystemExit("Invalid line in input file")
+        msg = "Invalid line in input file"
+        raise SystemExit(msg)
     param_len = len(param_name)
     param_sep = line[param_len]  # the character following the parameter name must be a separator
     if param_sep not in {",", " ", "\t"}:
         logging.critical("Invalid parameter name %s on line %d in file %s", param_name, line_nr, filename)
-        raise SystemExit("Invalid parameter name")
+        msg = "Invalid parameter name"
+        raise SystemExit(msg)
     if param_len > PARAM_NAME_MAX_LEN:
         logging.critical("Too long parameter name on line %d in file %s", line_nr, filename)
-        raise SystemExit("Too long parameter name")
+        msg = "Too long parameter name"
+        raise SystemExit(msg)
     return param_name
 
 
@@ -592,7 +636,7 @@ def update_parameter_documentation(
     target: str = ".",
     sort_type: str = "none",
     param_default_dict: Optional[dict] = None,
-    delete_documentation_annotations=False,
+    delete_documentation_annotations: bool = False,
 ) -> None:
     """
     Updates the parameter documentation in the target file or in all *.param,*.parm files of the target directory.
@@ -611,6 +655,8 @@ def update_parameter_documentation(
                                    Can be 'none', 'missionplanner', or 'mavproxy'. Defaults to 'none'.
         param_default_dict (Dict, optional): A dictionary of default parameter values. Defaults to None.
                                               If None, an empty dictionary is used.
+        delete_documentation_annotations (bool): delete documentation annotations from file.
+
     """
     # Check if the target is a file or a directory
     if os_path.isfile(target):
@@ -620,7 +666,8 @@ def update_parameter_documentation(
         # If it's a directory, process all .param and .parm files in that directory
         param_files = glob.glob(os_path.join(target, "*.param")) + glob.glob(os_path.join(target, "*.parm"))
     else:
-        raise ValueError(f"Target '{target}' is neither a file nor a directory.")
+        msg = f"Target '{target}' is neither a file nor a directory."
+        raise ValueError(msg)
 
     if param_default_dict is None:
         param_default_dict = {}
@@ -640,11 +687,11 @@ def update_parameter_documentation(
 
 
 def update_parameter_documentation_file(  # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
-    doc,
-    sort_type,
-    param_default_dict,
-    param_file,
-    lines,
+    doc: dict,
+    sort_type: str,
+    param_default_dict: dict,
+    param_file: str,
+    lines: list[str],
     delete_documentation_annotations: bool,
 ) -> None:
     new_lines = []
@@ -703,12 +750,13 @@ def update_parameter_documentation_file(  # pylint: disable=too-many-locals, too
         file.writelines(new_lines)
 
 
-def print_read_only_params(doc) -> None:
+def print_read_only_params(doc: dict) -> None:
     """
     Print the names of read-only parameters.
 
     Args:
         doc (dict): A dictionary of parameter documentation.
+
     """
     logging.info("ReadOnly parameters:")
     for param_name, param_value in doc.items():
@@ -736,7 +784,8 @@ def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
     try:
         vehicle_subdir = vehicle_parm_subdir[vehicle_type] + firmware_version
     except KeyError as e:
-        raise ValueError(f"Vehicle type '{vehicle_type}' is not supported.") from e
+        msg = f"Vehicle type '{vehicle_type}' is not supported."
+        raise ValueError(msg) from e
 
     xml_url = BASE_URL
     xml_url += vehicle_subdir if firmware_version else vehicle_type

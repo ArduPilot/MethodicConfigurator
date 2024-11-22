@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Unittests for the __init__.py file.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -15,9 +17,7 @@ from MethodicConfigurator import __version__
 
 
 class TestVersion(unittest.TestCase):
-    """
-    Test that the __version__ constant is a string and follows semantic versioning.
-    """
+    """Test that the __version__ constant is a string and follows semantic versioning."""
 
     def test_version_format(self) -> None:
         # Semantic versioning pattern

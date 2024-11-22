@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 """
+Common arguments used by all sub applications.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Copy some parameter files. For dev only.
+
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -22,7 +24,7 @@ BASE_DIR = os.path.join("MethodicConfigurator", "vehicle_templates")
 
 
 # Function to get all subdirectories excluding the source (do not copy onto itself)
-def get_subdirectories(base_dir, exclude_source=True) -> list[str]:
+def get_subdirectories(base_dir: str, exclude_source: bool = True) -> list[str]:
     subdirs = []
     for root, dirs, _ in os.walk(base_dir):
         rel_dir = os.path.relpath(root, base_dir)
@@ -34,7 +36,7 @@ def get_subdirectories(base_dir, exclude_source=True) -> list[str]:
 
 
 # Function to copy files
-def copy_files(source, target) -> None:
+def copy_files(source: str, target: str) -> None:
     for file in files_to_copy:
         source_path = os.path.join(source, file)
         target_path = os.path.join(target, file)

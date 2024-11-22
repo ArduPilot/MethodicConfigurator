@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 
 """
-This script inserts and/or removes parameter files in the configuration sequence
-defined in the configuration_steps_ArduCopter.json file.
+Inserts and/or removes parameter files in the configuration sequence defined in the configuration_steps_ArduCopter.json file.
 
 It also replaces all occurrences of the old names with the new names
  in all *.py and *.md files in the current directory.
@@ -33,7 +32,7 @@ file_renames = {}
 file_renames["00_Default_Parameters.param"] = "00_default.param"
 
 
-def reorder_param_files(steps) -> dict[str, str]:
+def reorder_param_files(steps: dict) -> dict[str, str]:
     """Reorder parameters and prepare renaming rules."""
     # Iterate over the param_files and rename the keys to be in two-digit prefix ascending order
     param_files = list(steps)
@@ -50,7 +49,7 @@ def reorder_param_files(steps) -> dict[str, str]:
     return renames
 
 
-def loop_relevant_files(renames, steps) -> list[str]:
+def loop_relevant_files(renames: dict[str, str], steps: dict) -> list[str]:
     param_dirs = ["."]
     # Search all *.py, *.json and *.md files in the current directory
     # and replace all occurrences of the old names with the new names
@@ -64,12 +63,12 @@ def loop_relevant_files(renames, steps) -> list[str]:
                 continue
             if file == SEQUENCE_FILENAME:
                 uplate_old_filenames(renames, steps)
-            if file in PYTHON_FILES or file.endswith(".md") or file.endswith(".json"):
+            if file in PYTHON_FILES or file.endswith((".md", ".json")):
                 update_file_contents(renames, root, file, steps)
     return param_dirs
 
 
-def uplate_old_filenames(renames, steps) -> None:
+def uplate_old_filenames(renames: dict[str, str], steps: dict) -> None:
     for new_name, old_name in renames.items():
         if old_name != new_name:
             if "old_filenames" in steps[old_name]:
@@ -79,7 +78,7 @@ def uplate_old_filenames(renames, steps) -> None:
                 steps[old_name]["old_filenames"] = [old_name]
 
 
-def update_file_contents(renames, root, file, steps) -> None:
+def update_file_contents(renames: dict[str, str], root: str, file: str, steps: dict) -> None:
     with open(os.path.join(root, file), encoding="utf-8") as handle:
         file_content = handle.read()
     if file.startswith("TUNING_GUIDE_") and file.endswith(".md"):
@@ -95,7 +94,7 @@ def update_file_contents(renames, root, file, steps) -> None:
         handle.write(file_content)
 
 
-def update_configuration_steps_json_file_contents(steps, file_content, new_name, old_name) -> str:
+def update_configuration_steps_json_file_contents(steps: dict, file_content: str, new_name: str, old_name: str) -> str:
     new_file_content = ""
     curr_filename = ""
     for line in file_content.splitlines(keepends=True):
@@ -117,7 +116,7 @@ def update_configuration_steps_json_file_contents(steps, file_content, new_name,
     return new_file_content
 
 
-def rename_file(old_name, new_name, param_dir) -> None:
+def rename_file(old_name: str, new_name: str, param_dir: str) -> None:
     """Rename a single file."""
     old_name_path = os.path.join(param_dir, old_name)
     new_name_path = os.path.join(param_dir, new_name)
@@ -127,7 +126,7 @@ def rename_file(old_name, new_name, param_dir) -> None:
         print(f"Error: Could not rename file {old_name_path}, file not found")
 
 
-def reorder_actual_files(renames, param_dirs) -> None:
+def reorder_actual_files(renames: dict[str, str], param_dirs: list[str]) -> None:
     # Rename the actual files on disk based on renames re-ordering
     for param_dir in param_dirs:
         for new_name, old_name in renames.items():
@@ -138,7 +137,7 @@ def change_line_endings_for_md_files() -> None:
     # Change line endings of TUNING_GUIDE_*.md, README.md files to CRLF
     for root, _dirs, files in os.walk("."):
         for file in files:
-            if (file.startswith("README") or file.startswith("TUNING_GUIDE_")) and file.endswith(".md"):
+            if (file.startswith(("README", "TUNING_GUIDE_"))) and file.endswith(".md"):
                 file_path = os.path.join(root, file)
                 with open(file_path, "rb") as handle:
                     content = handle.read()

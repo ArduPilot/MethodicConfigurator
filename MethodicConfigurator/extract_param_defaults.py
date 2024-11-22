@@ -27,7 +27,7 @@ MAVLINK_COMPID_MAX = 2**8
 MAV_PARAM_TYPE_REAL32 = 9
 
 
-def parse_arguments(args=None) -> argparse.Namespace:
+def parse_arguments(args: Union[None, argparse.Namespace] = None) -> argparse.Namespace:
     """
     Parses command line arguments for the script.
 
@@ -36,6 +36,7 @@ def parse_arguments(args=None) -> argparse.Namespace:
 
     Returns:
         Namespace object containing the parsed arguments.
+
     """
     parser = argparse.ArgumentParser(description="Extracts parameter default values from an ArduPilot .bin log file.")
     parser.add_argument(
@@ -81,18 +82,24 @@ def parse_arguments(args=None) -> argparse.Namespace:
         help="Type of parameter values to extract. Defaults to %(default)s.",
     )
     parser.add_argument("bin_file", help="The ArduPilot .bin log file to read")
-    args, _ = parser.parse_known_args(args)
+    args, _ = parser.parse_known_args(args)  # type: ignore[arg-type]
+
+    if args is None:
+        msg = "No arguments provided"
+        raise ValueError(msg)
 
     if args.sort == "":
         args.sort = args.format
 
     if args.format != "qgcs":
         if args.sysid != -1:
-            raise SystemExit("--sysid parameter is only relevant if --format is qgcs")
+            msg = "--sysid parameter is only relevant if --format is qgcs"
+            raise SystemExit(msg)
         if args.compid != -1:
-            raise SystemExit("--compid parameter is only relevant if --format is qgcs")
+            msg = "--compid parameter is only relevant if --format is qgcs"
+            raise SystemExit(msg)
 
-    return args  # type: ignore # mypy bug
+    return args
 
 
 def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict[str, float]:  # pylint: disable=too-many-branches
@@ -105,11 +112,13 @@ def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict
 
     Returns:
         A dictionary with parameter names as keys and their values as float.
+
     """
     try:
         mlog = mavutil.mavlink_connection(logfile)
     except Exception as e:
-        raise SystemExit(f"Error opening the {logfile} logfile: {e!s}") from e
+        msg = f"Error opening the {logfile} logfile: {e!s}"
+        raise SystemExit(msg) from e
     values: dict[str, float] = {}
     while True:
         m = mlog.recv_match(type=["PARM"])
@@ -119,9 +128,11 @@ def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict
             return values
         pname = m.Name
         if len(pname) > PARAM_NAME_MAX_LEN:
-            raise SystemExit(f"Too long parameter name: {pname}")
+            msg = f"Too long parameter name: {pname}"
+            raise SystemExit(msg)
         if not re.match(PARAM_NAME_REGEX, pname):
-            raise SystemExit(f"Invalid parameter name {pname}")
+            msg = f"Invalid parameter name {pname}"
+            raise SystemExit(msg)
         # parameter names are supposed to be unique
         if pname in values:
             continue
@@ -135,7 +146,8 @@ def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict
             if hasattr(m, "Value") and hasattr(m, "Default") and m.Value != m.Default:
                 values[pname] = m.Value
         else:
-            raise SystemExit(f"Invalid type {param_type}")
+            msg = f"Invalid type {param_type}"
+            raise SystemExit(msg)
 
 
 def missionplanner_sort(item: str) -> tuple[str, ...]:
@@ -147,6 +159,7 @@ def missionplanner_sort(item: str) -> tuple[str, ...]:
 
     Returns:
         A tuple representing the sorted parameter name.
+
     """
     parts = item.split("_")  # Split the parameter name by underscore
     # Compare the parts separately
@@ -162,13 +175,14 @@ def mavproxy_sort(item: str) -> str:
 
     Returns:
         The sorted parameter name.
+
     """
     return item
 
 
 def sort_params(params: dict[str, float], sort_type: str = "none") -> dict[str, float]:
     """
-    Sorts parameter names according to sort_type
+    Sorts parameter names according to sort_type.
 
     Args:
         params: A dictionary with parameter names as keys and their values as float.
@@ -176,6 +190,7 @@ def sort_params(params: dict[str, float], sort_type: str = "none") -> dict[str, 
 
     Returns:
         A dictionary with parameter names as keys and their values as float.
+
     """
     if sort_type == "missionplanner":
         params = dict(sorted(params.items(), key=lambda x: missionplanner_sort(x[0])))
@@ -193,14 +208,17 @@ def output_params(
     compid: int = -1,
 ) -> None:
     """
-    Outputs parameters names and their values to the console
+    Outputs parameters names and their values to the console.
 
     Args:
         params: A dictionary with parameter names as keys and their values as float.
         format_type: The output file format. Can be 'missionplanner', 'mavproxy' or 'qgcs'.
+        sysid: MAVLink System ID
+        compid: MAVLink component ID
 
     Returns:
         None
+
     """
     if format_type == "qgcs":
         if sysid == -1:
@@ -209,13 +227,17 @@ def output_params(
         if compid == -1:
             compid = 1  # if unspecified, default to 1
         if sysid < 0:
-            raise SystemExit(f"Invalid system ID parameter {sysid} must not be negative")
+            msg = f"Invalid system ID parameter {sysid} must not be negative"
+            raise SystemExit(msg)
         if sysid > MAVLINK_SYSID_MAX - 1:
-            raise SystemExit(f"Invalid system ID parameter {sysid} must be smaller than {MAVLINK_SYSID_MAX}")
+            msg = f"Invalid system ID parameter {sysid} must be smaller than {MAVLINK_SYSID_MAX}"
+            raise SystemExit(msg)
         if compid < 0:
-            raise SystemExit(f"Invalid component ID parameter {compid} must not be negative")
+            msg = f"Invalid component ID parameter {compid} must not be negative"
+            raise SystemExit(msg)
         if compid > MAVLINK_COMPID_MAX - 1:
-            raise SystemExit(f"Invalid component ID parameter {compid} must be smaller than {MAVLINK_COMPID_MAX}")
+            msg = f"Invalid component ID parameter {compid} must be smaller than {MAVLINK_COMPID_MAX}"
+            raise SystemExit(msg)
         # see https://dev.qgroundcontrol.com/master/en/file_formats/parameters.html
         print("""
 # # Vehicle-Id Component-Id Name Value Type
