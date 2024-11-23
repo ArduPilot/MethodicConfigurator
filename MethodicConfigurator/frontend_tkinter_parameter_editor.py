@@ -174,7 +174,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.__create_parameter_area_widgets()
 
         # trigger a table update to ask the user what to do in the case this file needs special actions
-        self.root.after(10, self.on_param_file_combobox_change(None, True))  # type: ignore[func-returns-value]
+        self.root.after(10, self.on_param_file_combobox_change(None, forced=True))  # type: ignore[func-returns-value]
 
         # this one should be on top of the previous one hence the longer time
         if UsagePopupWindow.should_display("parameter_editor"):
@@ -409,14 +409,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     )
                     # Pass the selected filename to the IMUfit class
                     IMUfit(
-                        filename,
-                        tempcal_imu_result_param_fullpath,
-                        False,
-                        False,
-                        False,
-                        False,
-                        self.local_filesystem.vehicle_dir,
-                        self.tempcal_imu_progress_window.update_progress_bar_300_pct,
+                        logfile=filename,
+                        outfile=tempcal_imu_result_param_fullpath,
+                        no_graph=False,
+                        log_parm=False,
+                        online=False,
+                        tclr=False,
+                        figpath=self.local_filesystem.vehicle_dir,
+                        progress_callback=self.tempcal_imu_progress_window.update_progress_bar_300_pct,
                     )
                     self.tempcal_imu_progress_window.destroy()
                     try:
@@ -520,7 +520,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.local_filesystem.write_param_default_values_to_file(param_default_values)
         self.param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
         if not redownload:
-            self.on_param_file_combobox_change(None, True)  # the initial param read will trigger a table update
+            self.on_param_file_combobox_change(None, forced=True)  # the initial param read will trigger a table update
 
     def repopulate_parameter_table(self, selected_file: Union[None, str]) -> None:
         if not selected_file:
@@ -650,7 +650,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         if self.at_least_one_changed_parameter_written:
             # Re-download all parameters, in case one of them changed, and validate that all uploads were successful
-            self.download_flight_controller_parameters(True)
+            self.download_flight_controller_parameters(redownload=True)
             logging_info(_("Re-download all parameters from the flight controller"))
 
             # Validate that the read parameters are the same as the ones in the current_file
@@ -756,13 +756,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             "these can be reused between similar vehicles"
         )
         messagebox.showinfo(_("Last parameter file processed"), summary_message.format(**locals()))
-        wrote_complete = self.write_summary_file(annotated_fc_parameters, "complete.param", False)
-        wrote_read_only = self.write_summary_file(non_default__read_only_params, "non-default_read-only.param", False)
+        wrote_complete = self.write_summary_file(annotated_fc_parameters, "complete.param", annotate_doc=False)
+        wrote_read_only = self.write_summary_file(
+            non_default__read_only_params, "non-default_read-only.param", annotate_doc=False
+        )
         wrote_calibrations = self.write_summary_file(
-            non_default__writable_calibrations, "non-default_writable_calibrations.param", False
+            non_default__writable_calibrations, "non-default_writable_calibrations.param", annotate_doc=False
         )
         wrote_non_calibrations = self.write_summary_file(
-            non_default__writable_non_calibrations, "non-default_writable_non-calibrations.param", False
+            non_default__writable_non_calibrations, "non-default_writable_non-calibrations.param", annotate_doc=False
         )
         files_to_zip = [
             (wrote_complete, "complete.param"),

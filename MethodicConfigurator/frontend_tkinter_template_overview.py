@@ -105,7 +105,7 @@ class TemplateOverviewWindow(BaseWindow):
             self.tree.heading(
                 col_str,
                 text=col_str,
-                command=lambda col=col_str: self.__sort_by_column(col, False),  # type: ignore[misc]
+                command=lambda col=col_str: self.__sort_by_column(col, reverse=False),  # type: ignore[misc]
             )
 
         if isinstance(self.root, tk.Toplevel):

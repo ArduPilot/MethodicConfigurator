@@ -186,7 +186,7 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
         try:
             if self.tooltip is None or self.tooltip.winfo_exists():
                 self.tooltip = Toplevel(self.master)
-                self.tooltip.wm_overrideredirect(True)
+                self.tooltip.wm_overrideredirect(boolean=True)
                 x = self.winfo_rootx() + 150  # Adjust width as needed
                 y = self.winfo_rooty()
                 self.tooltip.wm_geometry(f"+{x}+{y}")

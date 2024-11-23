@@ -114,7 +114,7 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         )
         self.__update_documentation_label(_("External tool:"), external_tool_text, external_tool_url)
         mandatory_text, mandatory_url = self.local_filesystem.get_documentation_text_and_url(current_file, "mandatory")
-        self.__update_documentation_label(_("Mandatory:"), mandatory_text, mandatory_url, False)
+        self.__update_documentation_label(_("Mandatory:"), mandatory_text, mandatory_url, url_expected=False)
 
         if self.auto_open_var.get():
             if wiki_url:
