@@ -157,22 +157,22 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
     ) -> None:
         # Call the parent constructor with the necessary arguments
         super().__init__(
-            parent,
-            parent_frame,
-            initial_dir,
-            _("Vehicle configuration directory:"),
-            False,
-            _(
+            parent=parent,
+            parent_frame=parent_frame,
+            initialdir=initial_dir,
+            label_text=_("Vehicle configuration directory:"),
+            autoresize_width=False,
+            dir_tooltip=_(
                 "Vehicle-specific directory containing the intermediate\n"
                 "parameter files to be uploaded to the flight controller"
             ),
-            _(
+            button_tooltip=_(
                 "Select the vehicle-specific configuration directory containing the\n"
                 "intermediate parameter files to be uploaded to the flight controller"
             )
             if destroy_parent_on_open
             else "",
-            False,
+            is_template_selection=False,
         )
         self.local_filesystem = local_filesystem
         self.destroy_parent_on_open = destroy_parent_on_open
@@ -278,17 +278,16 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             "parameter files to be copied to the new vehicle configuration directory"
         )
         self.template_dir = DirectorySelectionWidgets(
-            self,
-            option1_label_frame,
-            initial_template_dir,
-            _("Source Template directory:"),
-            False,
-            template_dir_edit_tooltip,
-            template_dir_btn_tooltip,
-            True,
+            parent=self,
+            parent_frame=option1_label_frame,
+            initialdir=initial_template_dir,
+            label_text=_("Source Template directory:"),
+            autoresize_width=False,
+            dir_tooltip=template_dir_edit_tooltip,
+            button_tooltip=template_dir_btn_tooltip,
+            is_template_selection=True,
         )
         self.template_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
-
         use_fc_params_checkbox = ttk.Checkbutton(
             option1_label_frame,
             variable=self.use_fc_params,
@@ -310,14 +309,14 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         new_base_dir_edit_tooltip = _("Existing directory where the new vehicle configuration directory will be created")
         new_base_dir_btn_tooltip = _("Select the directory where the new vehicle configuration directory will be created")
         self.new_base_dir = DirectorySelectionWidgets(
-            self,
-            option1_label_frame,
-            initial_base_dir,
-            _("Destination base directory:"),
-            False,
-            new_base_dir_edit_tooltip,
-            new_base_dir_btn_tooltip,
-            False,
+            parent=self,
+            parent_frame=option1_label_frame,
+            initialdir=initial_base_dir,
+            label_text=_("Destination base directory:"),
+            autoresize_width=False,
+            dir_tooltip=new_base_dir_edit_tooltip,
+            button_tooltip=new_base_dir_btn_tooltip,
+            is_template_selection=False,
         )
         self.new_base_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
         new_dir_edit_tooltip = _(
@@ -369,14 +368,14 @@ class VehicleDirectorySelectionWindow(BaseWindow):
         option3_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
 
         last_dir = DirectorySelectionWidgets(
-            self,
-            option3_label_frame,
-            last_vehicle_dir or "",
-            _("Last used vehicle configuration directory:"),
-            False,
-            _("Last used vehicle configuration directory"),
-            "",
-            False,
+            parent=self,
+            parent_frame=option3_label_frame,
+            initialdir=last_vehicle_dir or "",
+            label_text=_("Last used vehicle configuration directory:"),
+            autoresize_width=False,
+            dir_tooltip=_("Last used vehicle configuration directory"),
+            button_tooltip="",
+            is_template_selection=False,
         )
         last_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 

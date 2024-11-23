@@ -32,7 +32,7 @@ class TestLocalFilesystem:
         LocalFilesystem.load_param_file_into_dict = mock_load_param_file_into_dict
 
         # Call the method under test
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, False)
+        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
         result = lfs.read_params_from_files()
 
         # Assertions
@@ -42,7 +42,7 @@ class TestLocalFilesystem:
         mock_load_param_file_into_dict.assert_called_once_with("vehicle_dir/02_test.param")
 
     def test_str_to_bool(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, False)
+        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
         self.assertTrue(lfs.str_to_bool("true"))
         self.assertTrue(lfs.str_to_bool("yes"))
         self.assertTrue(lfs.str_to_bool("1"))
@@ -59,7 +59,7 @@ class TestLocalFilesystem:
         mock_listdir.return_value = ["00_default.param", "01_ignore_readonly.param", "02_test.param"]
         mock_read_params_from_files.return_value = {"02_test.param": {"TEST_PARAM": "value"}}
 
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, False)
+        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
         lfs.re_init("new_vehicle_dir", "new_vehicle_type")
 
         self.assertEqual(lfs.vehicle_dir, "new_vehicle_dir")
@@ -97,7 +97,7 @@ class TestCopyTemplateFilesToNewVehicleDir:
         mock_join.side_effect = lambda *args: "/".join(args)
 
         # Initialize LocalFilesystem
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, False)
+        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
 
         # Call the method under test
         lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir")

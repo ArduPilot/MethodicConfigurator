@@ -92,7 +92,9 @@ class ProgramSettings:
 
     @staticmethod
     def __user_config_dir() -> str:
-        user_config_directory = user_config_dir(".ardupilot_methodic_configurator", False, roaming=True, ensure_exists=True)
+        user_config_directory = user_config_dir(
+            ".ardupilot_methodic_configurator", appauthor=False, roaming=True, ensure_exists=True
+        )
 
         if not os_path.exists(user_config_directory):
             error_msg = _("The user configuration directory '{user_config_directory}' does not exist.")
@@ -106,7 +108,7 @@ class ProgramSettings:
     @staticmethod
     def __site_config_dir() -> str:
         site_config_directory = site_config_dir(
-            ".ardupilot_methodic_configurator", False, version=None, multipath=False, ensure_exists=True
+            ".ardupilot_methodic_configurator", appauthor=False, version=None, multipath=False, ensure_exists=True
         )
 
         if not os_path.exists(site_config_directory):

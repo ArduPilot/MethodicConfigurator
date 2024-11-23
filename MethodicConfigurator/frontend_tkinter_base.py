@@ -64,7 +64,7 @@ def show_tooltip(widget: tk.Widget, text: str) -> None:
         tooltip.withdraw()
 
     tooltip = tk.Toplevel(widget)
-    tooltip.wm_overrideredirect(True)
+    tooltip.wm_overrideredirect(boolean=True)
     tooltip_label = ttk.Label(tooltip, text=text, background="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT)
     tooltip_label.pack()
     tooltip.withdraw()  # Initially hide the tooltip
@@ -351,7 +351,7 @@ class BaseWindow:
             self.root = tk.Tk()  # type: ignore[assignment]
             # Set the application icon for the window and all child windows
             # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
-            self.root.iconphoto(True, tk.PhotoImage(file=LocalFilesystem.application_icon_filepath()))
+            self.root.iconphoto(True, tk.PhotoImage(file=LocalFilesystem.application_icon_filepath()))  # noqa: FBT003
 
         # Set the theme to 'alt'
         style = ttk.Style()
@@ -450,10 +450,10 @@ class UsagePopupWindow:
         dismiss_button.pack(pady=10)
 
         BaseWindow.center_window(usage_popup_window.root, parent)
-        usage_popup_window.root.attributes("-topmost", True)
+        usage_popup_window.root.attributes("-topmost", True)  # noqa: FBT003
 
         if platform_system() == "Windows":
-            parent.attributes("-disabled", True)  # Disable parent window input
+            parent.attributes("-disabled", True)  # noqa: FBT003  # Disable parent window input
 
         usage_popup_window.root.protocol("WM_DELETE_WINDOW", lambda: UsagePopupWindow.close(usage_popup_window, parent))
 
@@ -461,5 +461,5 @@ class UsagePopupWindow:
     def close(usage_popup_window: BaseWindow, parent: tk.Toplevel) -> None:
         usage_popup_window.root.destroy()
         if platform_system() == "Windows":
-            parent.attributes("-disabled", False)  # Re-enable the parent window
+            parent.attributes("-disabled", False)  # noqa: FBT003  # Re-enable the parent window
         parent.focus_set()
