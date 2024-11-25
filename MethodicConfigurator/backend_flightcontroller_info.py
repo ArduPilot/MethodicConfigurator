@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Sequence
-from typing import Any, Union
+from typing import Union
 
 from pymavlink import mavutil
 
@@ -236,7 +236,7 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         return mav_type_to_vehicle_type.get(mav_type_int, "")
 
     @staticmethod
-    def __list_ardupilot_supported_usb_pid_vid() -> dict[int, dict[str, Any]]:
+    def __list_ardupilot_supported_usb_pid_vid() -> dict[int, dict[str, Union[str, dict[int, str]]]]:
         """
         List all ArduPilot supported USB vendor ID (VID) and product ID (PID).
 
