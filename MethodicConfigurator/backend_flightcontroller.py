@@ -299,10 +299,10 @@ class FlightController:
             )
         self.info.set_capabilities(m.capabilities)
         self.info.set_flight_sw_version(m.flight_sw_version)
+        self.info.set_usb_vendor_and_product_ids(m.vendor_id, m.product_id)  # must be done before set_board_version()
         self.info.set_board_version(m.board_version)
         self.info.set_flight_custom_version(m.flight_custom_version)
         self.info.set_os_custom_version(m.os_custom_version)
-        self.info.set_vendor_id_and_product_id(m.vendor_id, m.product_id)
 
         os_custom_version = ""
         os_custom_version_index = None
@@ -320,14 +320,16 @@ class FlightController:
             logging_info("FC banner %s", msg)
 
         # the banner message after the ChibiOS one contains the FC type
-        fc_product = ""
+        firmware_type = ""
         if os_custom_version_index is not None and os_custom_version_index + 1 < len(banner_msgs):
-            fc_product_banner_substrings = banner_msgs[os_custom_version_index + 1].split(" ")
-            if len(fc_product_banner_substrings) >= 3:
-                fc_product = fc_product_banner_substrings[0]
-        if fc_product != self.info.product:
-            logging_warning(_("FC product mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"), fc_product, self.info.product)
-            self.info.product = fc_product  # force the one from the banner because it is more reliable
+            firmware_type_banner_substrings = banner_msgs[os_custom_version_index + 1].split(" ")
+            if len(firmware_type_banner_substrings) >= 3:
+                firmware_type = firmware_type_banner_substrings[0]
+        if firmware_type and firmware_type != self.info.firmware_type:
+            logging_warning(
+                _("FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"), firmware_type, self.info.firmware_type
+            )
+            self.info.firmware_type = firmware_type  # force the one from the banner because it is more reliable
         return ""
 
     def download_params(
