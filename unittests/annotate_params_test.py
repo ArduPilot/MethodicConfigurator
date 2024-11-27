@@ -23,7 +23,7 @@ from xml.etree import ElementTree as ET  # no parsing, just data-structure manip
 import requests  # type: ignore[import-untyped]
 from defusedxml import ElementTree as DET  # noqa: N814, just parsing, no data-structure manipulation
 
-from MethodicConfigurator.annotate_params import (
+from ardupilot_methodic_configurator.annotate_params import (
     BASE_URL,
     PARAM_DEFINITION_XML_FILE,
     arg_parser,
@@ -71,7 +71,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
 
     @patch("builtins.open", new_callable=mock_open, read_data="<root></root>")
     @patch("os.path.isfile")
-    @patch("annotate_params.Par.load_param_file_into_dict")
+    @patch("ardupilot_methodic_configurator.annotate_params.Par.load_param_file_into_dict")
     def test_get_xml_data_local_file(self, mock_load_param, mock_isfile, mock_open) -> None:
         # Mock the isfile function to return True
         mock_isfile.return_value = True
@@ -108,7 +108,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5)
 
     @patch("os.path.isfile")
-    @patch("annotate_params.Par.load_param_file_into_dict")
+    @patch("ardupilot_methodic_configurator.annotate_params.Par.load_param_file_into_dict")
     def test_get_xml_data_script_dir_file(self, mock_load_param, mock_isfile) -> None:
         # Mock the isfile function to return False for the current directory and True for the script directory
         def side_effect(filename) -> bool:  # noqa: ARG001
@@ -579,11 +579,11 @@ class AnnotateParamsTest(unittest.TestCase):
 
 
 class TestAnnotateParamsExceptionHandling(unittest.TestCase):
-    @patch("annotate_params.arg_parser")
-    @patch("annotate_params.get_xml_url")
-    @patch("annotate_params.get_xml_dir")
-    @patch("annotate_params.parse_parameter_metadata")
-    @patch("annotate_params.update_parameter_documentation")
+    @patch("ardupilot_methodic_configurator.annotate_params.arg_parser")
+    @patch("ardupilot_methodic_configurator.annotate_params.get_xml_url")
+    @patch("ardupilot_methodic_configurator.annotate_params.get_xml_dir")
+    @patch("ardupilot_methodic_configurator.annotate_params.parse_parameter_metadata")
+    @patch("ardupilot_methodic_configurator.annotate_params.update_parameter_documentation")
     @patch("builtins.open", new_callable=mock_open)
     def test_main_ioerror(
         self, mock_file, mock_update, mock_parse_metadata, mock_get_xml_dir, mock_get_xml_url, mock_arg_parser
@@ -598,11 +598,11 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
 
         self.assertIn(cm.exception.code, [1, 2])
 
-    @patch("annotate_params.arg_parser")
-    @patch("annotate_params.get_xml_url")
-    @patch("annotate_params.get_xml_dir")
-    @patch("annotate_params.parse_parameter_metadata")
-    @patch("annotate_params.update_parameter_documentation")
+    @patch("ardupilot_methodic_configurator.annotate_params.arg_parser")
+    @patch("ardupilot_methodic_configurator.annotate_params.get_xml_url")
+    @patch("ardupilot_methodic_configurator.annotate_params.get_xml_dir")
+    @patch("ardupilot_methodic_configurator.annotate_params.parse_parameter_metadata")
+    @patch("ardupilot_methodic_configurator.annotate_params.update_parameter_documentation")
     @patch("builtins.open", new_callable=mock_open)
     def test_main_oserror(
         self, mock_file, mock_update, mock_parse_metadata, mock_get_xml_dir, mock_get_xml_url, mock_arg_parser
@@ -617,7 +617,7 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
 
         self.assertIn(cm.exception.code, [1, 2])
 
-    @patch("annotate_params.get_xml_url")
+    @patch("ardupilot_methodic_configurator.annotate_params.get_xml_url")
     def test_get_xml_url_exception(self, mock_get_xml_url) -> None:
         mock_get_xml_url.side_effect = ValueError("Mocked Value Error")
         with self.assertRaises(ValueError):

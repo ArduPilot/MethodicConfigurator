@@ -5,21 +5,21 @@ from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 import os
 
 
-MethodicConfiguratorAny = Analysis(['ardupilot_methodic_configurator.py'],
+ardupilot_methodic_configuratorAny = Analysis(['ardupilot_methodic_configurator.py'],
              pathex=[os.path.abspath('.')],
              # for some unknown reason these hidden imports don't pull in
              # all the needed pieces, so we also import them in ardupilot_methodic_configurator.py
              hiddenimports=['packaging', 'packaging.version', 'packaging.specifiers'] +
-                            collect_submodules('MethodicConfigurator.modules') +
+                            collect_submodules('ardupilot_methodic_configurator.modules') +
                             collect_submodules('pymavlink'),
              datas= [],
              hookspath=None,
              runtime_hooks=None)
 
-MethodicConfigurator_pyz = PYZ(MethodicConfiguratorAny.pure)
+ardupilot_methodic_configurator_pyz = PYZ(ardupilot_methodic_configuratorAny.pure)
 
-MethodicConfigurator_exe = EXE(MethodicConfigurator_pyz,
-          MethodicConfiguratorAny.scripts,
+ardupilot_methodic_configurator_exe = EXE(ardupilot_methodic_configurator_pyz,
+          ardupilot_methodic_configuratorAny.scripts,
           exclude_binaries=True,
           name='ardupilot_methodic_configurator.exe',
           debug=False,
@@ -27,10 +27,10 @@ MethodicConfigurator_exe = EXE(MethodicConfigurator_pyz,
           upx=True,
           console=True)
 
-MethodicConfigurator_coll = COLLECT(MethodicConfigurator_exe,
-               MethodicConfiguratorAny.binaries,
-               MethodicConfiguratorAny.zipfiles,
-               MethodicConfiguratorAny.datas,
+ardupilot_methodic_configurator_coll = COLLECT(ardupilot_methodic_configurator_exe,
+               ardupilot_methodic_configuratorAny.binaries,
+               ardupilot_methodic_configuratorAny.zipfiles,
+               ardupilot_methodic_configuratorAny.datas,
                strip=None,
                upx=True,
                name='ardupilot_methodic_configurator')

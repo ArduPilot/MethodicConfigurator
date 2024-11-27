@@ -1,6 +1,6 @@
 {
     "grammarly.files.include": ["**/*.md", "**/*.txt", "**/*.json", "**/*.py"],
-    "python.testing.cwd": "${workspaceFolder}/MethodicConfigurator",
+    "python.testing.cwd": "${workspaceFolder}/ardupilot_methodic_configurator",
     "python.testing.unittestArgs": [
         "-v",
         "-s",

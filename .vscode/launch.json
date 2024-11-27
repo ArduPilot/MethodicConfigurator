@@ -27,13 +27,13 @@
             "name": "Python Debugger: ardupilot_methodic_configurator.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "MethodicConfigurator/ardupilot_methodic_configurator.py",
+            "program": "ardupilot_methodic_configurator/ardupilot_methodic_configurator.py",
             "args": [
                 "--allow-editing-template-files",
                 "--device=none",
                 "--skip-component-editor",
                 "--n=7",
-                "--vehicle-dir=D:\\Projekte\\Multicopter\\MethodicConfigurator\\MethodicConfigurator\\vehicle_templates\\ArduCopter\\diatone_taycan_mxc\\4.6.x-params"
+                "--vehicle-dir=D:\\Projekte\\Multicopter\\MethodicConfigurator\\ardupilot_methodic_configurator\\vehicle_templates\\ArduCopter\\diatone_taycan_mxc\\4.6.x-params"
             ],
         }
     ]

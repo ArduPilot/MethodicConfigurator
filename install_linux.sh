@@ -21,16 +21,16 @@ echo "Installing project dependencies..."
 python3 -m pip install -e .[dev]
 
 # Get the directory of the script
-prog_dir=$(realpath "$(dirname "$0")")/MethodicConfigurator
+prog_dir=$(realpath "$(dirname "$0")")/ardupilot_methodic_configurator
 
 # Check if the system is Debian-based
 if [ -f /etc/debian_version ] || [ -f /etc/os-release ] && grep -q 'ID_LIKE=.*debian.*' /etc/os-release; then
-    echo "Creating MethodicConfigurator.desktop for Debian-based systems..."
+    echo "Creating ardupilot_methodic_configurator.desktop for Debian-based systems..."
     # Define the desktop entry content
     desktop_entry="[Desktop Entry]\nName=ArduPilot Methodic Configurator\nComment=A clear ArduPilot configuration sequence\nExec=bash -c 'cd $prog_dir && python3 ardupilot_methodic_configurator.py'\nIcon=$prog_dir/ArduPilot_icon.png\nTerminal=true\nType=Application\nCategories=Development;\nKeywords=ardupilot;arducopter;drone;copter;scm"
     # Create the .desktop file in the appropriate directory
-    echo -e "$desktop_entry" > "/home/$USER/.local/share/applications/MethodicConfigurator.desktop"
-    echo "MethodicConfigurator.desktop created successfully."
+    echo -e "$desktop_entry" > "/home/$USER/.local/share/applications/ardupilot_methodic_configurator.desktop"
+    echo "ardupilot_methodic_configurator.desktop created successfully."
 else
     echo "This system is not Debian-based. Skipping .desktop file creation."
 fi
@@ -38,10 +38,10 @@ fi
 # Check if the ~/Desktop directory exists
 if [ -d "$HOME/Desktop" ]; then
     # Copy the .desktop file to the ~/Desktop directory
-    cp "/home/$USER/.local/share/applications/MethodicConfigurator.desktop" "$HOME/Desktop/"
+    cp "/home/$USER/.local/share/applications/ardupilot_methodic_configurator.desktop" "$HOME/Desktop/"
     # Mark it as thrusted
-    chmod 755 "$HOME/Desktop/MethodicConfigurator.desktop"
-    echo "MethodicConfigurator.desktop copied to ~/Desktop."
+    chmod 755 "$HOME/Desktop/ardupilot_methodic_configurator.desktop"
+    echo "ardupilot_methodic_configurator.desktop copied to ~/Desktop."
 else
     echo "~/Desktop directory does not exist. Skipping copy to Desktop."
 fi
@@ -58,12 +58,12 @@ git config --local sequence.editor "code --wait"
 pre-commit install
 
 # setuptools has a bug and refuses to install these files, so do it manually
-cp MethodicConfigurator/vehicle_templates ~/.local/lib/python3.12/site-packages/MethodicConfigurator/
+cp ardupilot_methodic_configurator/vehicle_templates ~/.local/lib/python3.12/site-packages/ardupilot_methodic_configurator/
 
 echo "Installation complete."
 echo ""
 echo "You can run the ArduPilot methodic configurator GUI by executing:"
-echo "cd MethodicConfigurator"
+echo "cd ardupilot_methodic_configurator"
 echo "python3 ardupilot_methodic_configurator.py"
 echo ""
 echo "For more detailed usage instructions, please refer to the USERMANUAL.md file."

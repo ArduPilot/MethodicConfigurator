@@ -14,7 +14,7 @@ import unittest
 from argparse import ArgumentParser
 from unittest.mock import MagicMock
 
-from MethodicConfigurator import common_arguments
+from ardupilot_methodic_configurator import common_arguments
 
 
 class TestCommonArguments(unittest.TestCase):  # pylint: disable=missing-class-docstring

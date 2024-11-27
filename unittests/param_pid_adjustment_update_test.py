@@ -22,7 +22,7 @@ import os
 import shutil
 import unittest
 
-from MethodicConfigurator.param_pid_adjustment_update import Par, ranged_type, update_pid_adjustment_params
+from ardupilot_methodic_configurator.param_pid_adjustment_update import Par, ranged_type, update_pid_adjustment_params
 
 
 class TestRangedType(unittest.TestCase):

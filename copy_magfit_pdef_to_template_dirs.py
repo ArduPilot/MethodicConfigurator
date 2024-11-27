@@ -15,7 +15,7 @@ import shutil
 import sys
 
 # Define the source directory and the file to be copied
-BASE_TARGET_DIR = os.path.join("MethodicConfigurator", "vehicle_templates")
+BASE_TARGET_DIR = os.path.join("ardupilot_methodic_configurator", "vehicle_templates")
 FILE_TO_COPY = "24_inflight_magnetometer_fit_setup.pdef.xml"
 
 # Ensure the base target directory exists

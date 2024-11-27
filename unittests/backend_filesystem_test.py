@@ -17,7 +17,7 @@ import unittest
 # import os
 from unittest.mock import MagicMock, patch
 
-from MethodicConfigurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 
 
 class TestLocalFilesystem:

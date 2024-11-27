@@ -49,9 +49,14 @@ def parse_arguments() -> argparse.Namespace:
 
 def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:
     # Set up the translation catalog
-    po_file = os.path.join("MethodicConfigurator", "locale", lang_code, "LC_MESSAGES", "MethodicConfigurator.po")
+    po_file = os.path.join(
+        "ardupilot_methodic_configurator", "locale", lang_code, "LC_MESSAGES", "ardupilot_methodic_configurator.po"
+    )
     language = gettext.translation(
-        "MethodicConfigurator", localedir="MethodicConfigurator\\locale", languages=[lang_code], fallback=True
+        "ardupilot_methodic_configurator",
+        localedir="ardupilot_methodic_configurator\\locale",
+        languages=[lang_code],
+        fallback=True,
     )
 
     # Read the .po file entries

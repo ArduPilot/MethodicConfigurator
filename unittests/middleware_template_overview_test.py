@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 
-from MethodicConfigurator.middleware_template_overview import TemplateOverview
+from ardupilot_methodic_configurator.middleware_template_overview import TemplateOverview
 
 
 class TestTemplateOverview(unittest.TestCase):  # pylint: disable=missing-class-docstring

@@ -40,14 +40,14 @@ jobs:
       - name: Install Inno Setup
         run: ./installer.exe /verysilent /allusers /dir=inst
 
-      - name: Build MethodicConfigurator
+      - name: Build ardupilot_methodic_configurator
         run: |
           python -m pip install . --user
           python -m pip list
 
       - name: Prepare installer
         run: |
-          cd MethodicConfigurator
+          cd ardupilot_methodic_configurator
           copy ..\\windows\\ardupilot_methodic_configurator.spec
           pyinstaller --clean ardupilot_methodic_configurator.spec
           del ardupilot_methodic_configurator.spec
@@ -64,7 +64,7 @@ jobs:
       - name: Archive build
         uses: actions/upload-artifact@v4
         with:
-           name: MethodicConfiguratorInstaller
+           name: ardupilot_methodic_configuratorInstaller
            path: windows/Output
            retention-days: 7
 

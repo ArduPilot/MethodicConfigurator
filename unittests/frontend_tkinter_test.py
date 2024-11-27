@@ -16,7 +16,7 @@ import tkinter as tk
 import unittest
 from unittest.mock import MagicMock, patch
 
-from MethodicConfigurator.frontend_tkinter_base import show_error_message, show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_base import show_error_message, show_tooltip
 
 
 class TestShowErrorMessage(unittest.TestCase):  # pylint: disable=missing-class-docstring

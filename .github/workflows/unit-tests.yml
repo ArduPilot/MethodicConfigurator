@@ -40,7 +40,7 @@ jobs:
       - name: Set PYTHONPATH
         run: |
           echo "$PYTHONPATH"
-          echo "PYTHONPATH=/home/runner/work/MethodicConfigurator/MethodicConfigurator/MethodicConfigurator" >> $GITHUB_ENV
+          echo "PYTHONPATH=/home/runner/work/MethodicConfigurator/ardupilot_methodic_configurator/ardupilot_methodic_configurator" >> $GITHUB_ENV
           echo "$PYTHONPATH"
 
       - name: Test with unittest

@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import re
 import unittest
 
-from MethodicConfigurator import __version__
+from ardupilot_methodic_configurator import __version__
 
 
 class TestVersion(unittest.TestCase):

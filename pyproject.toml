@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "MethodicConfigurator"
+name = "ardupilot_methodic_configurator"
 authors = [
     {name = "Amilcar do Carmo Lucas", email = "amilcar.lucas@iav.de"},
 ]
@@ -25,6 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
 ]
 
@@ -50,13 +51,16 @@ dev = [
     "pytest-cov",
     "coverage",
     "mock",
+    "pyinstaller",
+    "mypy",
+    "github",
 ]
 
 [project.scripts]
-ardupilot_methodic_configurator = "MethodicConfigurator.ardupilot_methodic_configurator:main"
-extract_param_defaults = "MethodicConfigurator.extract_param_defaults:main"
-annotate_params = "MethodicConfigurator.annotate_params:main"
-param_pid_adjustment_update = "MethodicConfigurator.param_pid_adjustment_update:main"
+ardupilot_methodic_configurator = "ardupilot_methodic_configurator.ardupilot_methodic_configurator:main"
+extract_param_defaults = "ardupilot_methodic_configurator.extract_param_defaults:main"
+annotate_params = "ardupilot_methodic_configurator.annotate_params:main"
+param_pid_adjustment_update = "ardupilot_methodic_configurator.param_pid_adjustment_update:main"
 
 [project.urls]
 homepage = "https://github.com/ArduPilot/MethodicConfigurator"
@@ -69,13 +73,13 @@ download = "https://github.com/ArduPilot/MethodicConfigurator/releases"
 changelog = "https://github.com/ArduPilot/MethodicConfigurator/releases"
 
 [tool.setuptools]
-packages = ["MethodicConfigurator"]
-package-data = {MethodicConfigurator = ["*.param", "*.jpg", "*.json", "*.xml", "*.mo", "*.png"]}
-exclude-package-data = {MethodicConfigurator = ["test.xml"]}
+packages = ["ardupilot_methodic_configurator"]
+package-data = {ardupilot_methodic_configurator = ["*.param", "*.jpg", "*.json", "*.xml", "*.mo", "*.png"]}
+exclude-package-data = {ardupilot_methodic_configurator = ["test.xml"]}
 include-package-data = false
 
 [tool.setuptools.dynamic]
-version = {attr = "MethodicConfigurator.__version__"}
+version = {attr = "ardupilot_methodic_configurator.__version__"}
 
 [tool.ruff]
 exclude = [
@@ -146,7 +150,6 @@ lint.ignore = [
     "PLR0912",  # too many branches
     "PLR0913",  # too many arguments
     "PLR2004",  # Magic value used in comparison, consider replacing `X` with a constant variable
-    "N999",    # Invalid module name: 'MethodicConfigurator'
     "ISC001",  # to let formatter run
     "ANN002",
     "ANN003",
@@ -169,9 +172,9 @@ indent-width = 4
 
 [tool.ruff.lint.per-file-ignores]
 "unittests/*" = ["D101","UP031", "ARG002", "ANN001"]
-"MethodicConfigurator/backend_mavftp.py" = ["PGH004", "N801", "ANN001"]
-"MethodicConfigurator/backend_mavftp_example.py" = ["ANN001"]
-"MethodicConfigurator/tempcal_imu.py" = ["ANN001"]
+"ardupilot_methodic_configurator/backend_mavftp.py" = ["PGH004", "N801", "ANN001"]
+"ardupilot_methodic_configurator/backend_mavftp_example.py" = ["ANN001"]
+"ardupilot_methodic_configurator/tempcal_imu.py" = ["ANN001"]
 
 [tool.mypy]
 ignore_missing_imports = true
@@ -204,5 +207,5 @@ strict_equality = true
 # Config file
 warn_unused_configs = true
 
-files = ["MethodicConfigurator/*.py"]
+files = ["ardupilot_methodic_configurator/*.py"]
 exclude = ["unittests"]

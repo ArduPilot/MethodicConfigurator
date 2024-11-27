@@ -159,7 +159,7 @@ def write_to_file(
     apj_board_id_name_dict: dict[int, str],
     apj_board_id_vendor_dict: dict[int, str],
 ) -> None:
-    directory = "MethodicConfigurator"
+    directory = "ardupilot_methodic_configurator"
     os.makedirs(directory, exist_ok=True)  # Create the directory if it doesn't exist
     file_path = os.path.join(directory, "middleware_fc_ids.py")
 

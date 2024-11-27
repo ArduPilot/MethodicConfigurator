@@ -40,7 +40,7 @@ def extract_strings(directory: str, output_dir: str) -> None:
                 file_paths.append(file_path)
 
     # Construct the command
-    output_pot = os.path.join(output_dir, "MethodicConfigurator.pot")
+    output_pot = os.path.join(output_dir, "ardupilot_methodic_configurator.pot")
     cmd = ["pygettext3", "--keyword=_", f"--output={output_pot}"]
     cmd += file_paths
 
@@ -56,7 +56,7 @@ def extract_strings(directory: str, output_dir: str) -> None:
 
 
 def main() -> None:
-    directory_to_scan = "MethodicConfigurator"
+    directory_to_scan = "ardupilot_methodic_configurator"
     output_directory = os.path.join(directory_to_scan, "locale")
 
     extract_strings(directory_to_scan, output_directory)

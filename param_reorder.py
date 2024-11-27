@@ -147,7 +147,7 @@ def change_line_endings_for_md_files() -> None:
 
 
 def main() -> None:
-    with open(os.path.join("MethodicConfigurator", SEQUENCE_FILENAME), encoding="utf-8") as f:
+    with open(os.path.join("ardupilot_methodic_configurator", SEQUENCE_FILENAME), encoding="utf-8") as f:
         steps = json.load(f)
     renames = reorder_param_files(steps)
     param_dirs = loop_relevant_files(renames, steps)

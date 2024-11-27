@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Creates the MethodicConfigurator pip python package.
+Creates the ardupilot_methodic_configurator pip python package.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -16,9 +16,9 @@ import os
 from setuptools import setup
 
 extra_scripts = [
-    "MethodicConfigurator/annotate_params.py",
-    "MethodicConfigurator/extract_param_defaults.py",
-    "MethodicConfigurator/param_pid_adjustment_update.py",
+    "ardupilot_methodic_configurator/annotate_params.py",
+    "ardupilot_methodic_configurator/extract_param_defaults.py",
+    "ardupilot_methodic_configurator/param_pid_adjustment_update.py",
 ]
 
 PRJ_URL = "https://github.com/ArduPilot/MethodicConfigurator"
@@ -26,7 +26,7 @@ PRJ_URL = "https://github.com/ArduPilot/MethodicConfigurator"
 for file in extra_scripts:
     os.chmod(file, 0o755)  # noqa: S103
 
-os.chmod("MethodicConfigurator/ardupilot_methodic_configurator.py", 0o755)  # noqa: S103
+os.chmod("ardupilot_methodic_configurator/ardupilot_methodic_configurator.py", 0o755)  # noqa: S103
 
 # Read the long description from the README file
 with open("README.md", encoding="utf-8") as f:
@@ -50,7 +50,7 @@ with open("README.md", encoding="utf-8") as f:
 
 # recursively find all files that match the globs and return tuples with their directory and a list of relative paths
 def find_data_files(path: str, globs: list[str]) -> list[tuple[str, list[str]]]:
-    data_files_path_base = "MethodicConfigurator"
+    data_files_path_base = "ardupilot_methodic_configurator"
     ret = []
     for dirpath, _dirnames, filenames in os.walk(path):
         data_files = []
@@ -65,12 +65,14 @@ def find_data_files(path: str, globs: list[str]) -> list[tuple[str, list[str]]]:
 
 
 setup(
-    packages=["MethodicConfigurator"],
+    packages=["ardupilot_methodic_configurator"],
     # long_description=long_description,
     # long_description_content_type="text/markdown",
     # this is used by bdist
     data_files=[
-        *find_data_files(os.path.join("MethodicConfigurator", "vehicle_templates"), ["*.param", "*.jpg", "*.json", "*.xml"]),
-        *find_data_files(os.path.join("MethodicConfigurator", "locale"), ["*.mo"]),
+        *find_data_files(
+            os.path.join("ardupilot_methodic_configurator", "vehicle_templates"), ["*.param", "*.jpg", "*.json", "*.xml"]
+        ),
+        *find_data_files(os.path.join("ardupilot_methodic_configurator", "locale"), ["*.mo"]),
     ],
 )
