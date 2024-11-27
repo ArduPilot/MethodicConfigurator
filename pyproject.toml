@@ -146,11 +146,6 @@ lint.ignore = [
     "PLR0912",  # too many branches
     "PLR0913",  # too many arguments
     "PLR2004",  # Magic value used in comparison, consider replacing `X` with a constant variable
-    "N802",    # Function name `X` should be lowercase
-    "N806",    # Variable name `X` should be lowercase
-    "N812",    # Lowercase `x` imported as non-lowercase `X`
-    "N814",    # Camelcase `X` imported as constant `Y`
-    "N817",    # CamelCase `X` imported as acronym `Y`
     "N999",    # Invalid module name: 'MethodicConfigurator'
     "ISC001",  # to let formatter run
     "ANN002",

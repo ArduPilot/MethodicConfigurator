@@ -258,7 +258,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_qgcs_SYSID_THISMAV(self, mock_print) -> None:  # pylint: disable=invalid-name
+    def test_output_params_qgcs_SYSID_THISMAV(self, mock_print) -> None:  # noqa: N802, pylint: disable=invalid-name
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0, "SYSID_THISMAV": 3.0}
 
@@ -276,7 +276,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_qgcs_SYSID_INVALID(self, _mock_print) -> None:  # pylint: disable=invalid-name
+    def test_output_params_qgcs_SYSID_INVALID(self, _mock_print) -> None:  # noqa: N802, pylint: disable=invalid-name
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0, "SYSID_THISMAV": -1.0}
 
@@ -293,7 +293,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         self.assertEqual(str(cm.exception), f"Invalid system ID parameter 16777218 must be smaller than {MAVLINK_SYSID_MAX}")
 
     @patch("builtins.print")
-    def test_output_params_qgcs_COMPID_INVALID(self, _mock_print) -> None:  # pylint: disable=invalid-name
+    def test_output_params_qgcs_COMPID_INVALID(self, _mock_print) -> None:  # noqa: N802, pylint: disable=invalid-name
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0}
 

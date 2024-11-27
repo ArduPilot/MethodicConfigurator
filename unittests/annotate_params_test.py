@@ -21,7 +21,7 @@ from unittest.mock import Mock, mock_open, patch
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 
 import requests  # type: ignore[import-untyped]
-from defusedxml import ElementTree as DET  # just parsing, no data-structure manipulation
+from defusedxml import ElementTree as DET  # noqa: N814, just parsing, no data-structure manipulation
 
 from MethodicConfigurator.annotate_params import (
     BASE_URL,

@@ -53,7 +53,7 @@ class FakeSerialForUnitTests:
         msg = "write always fails"
         raise Exception(msg)  # pylint: disable=broad-exception-raised
 
-    def inWaiting(self) -> int:  # pylint: disable=invalid-name
+    def inWaiting(self) -> int:  # noqa: N802, pylint: disable=invalid-name
         return 0
 
     def close(self) -> None:

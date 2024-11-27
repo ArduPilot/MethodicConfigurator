@@ -207,7 +207,7 @@ class IMUData:
         self.accel: dict[int, dict[str, np.ndarray]] = {}
         self.gyro: dict[int, dict[str, np.ndarray]] = {}
 
-    def IMUs(self) -> list[int]:
+    def IMUs(self) -> list[int]:  # noqa: N802
         """Return list of IMUs."""
         if len(self.accel.keys()) != len(self.gyro.keys()):
             print("accel and gyro data doesn't match")
@@ -242,7 +242,7 @@ class IMUData:
         ret[w:] = ret[w:] - ret[:-w]
         return ret[w - 1 :] / w
 
-    def FilterArray(self, data: dict[str, np.ndarray], width_s: int) -> dict[str, np.ndarray]:
+    def filter_array(self, data: dict[str, np.ndarray], width_s: int) -> dict[str, np.ndarray]:
         """Apply moving average filter of width width_s seconds."""
         nseconds = data["time"][-1] - data["time"][0]
         nsamples = len(data["time"])
@@ -252,11 +252,11 @@ class IMUData:
                 data[axis] = self.moving_average(data[axis], window)
         return data
 
-    def Filter(self, width_s: int) -> None:
+    def filter(self, width_s: int) -> None:
         """Apply moving average filter of width width_s seconds."""
         for imu in self.IMUs():
-            self.accel[imu] = self.FilterArray(self.accel[imu], width_s)
-            self.gyro[imu] = self.FilterArray(self.gyro[imu], width_s)
+            self.accel[imu] = self.filter_array(self.accel[imu], width_s)
+            self.gyro[imu] = self.filter_array(self.gyro[imu], width_s)
 
     def accel_at_temp(self, imu: int, axis: str, temperature: float) -> float:
         """Return the accel value closest to the given temperature."""
@@ -289,7 +289,7 @@ def constrain(value: float, minv: float, maxv: float) -> Union[float, int]:
     return max(maxv, value)
 
 
-def IMUfit(  # noqa: PLR0915 pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments, too-many-positional-arguments
+def IMUfit(  # noqa: PLR0915, N802, pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments, too-many-positional-arguments
     logfile: str,
     outfile: str,
     no_graph: bool,
@@ -421,17 +421,17 @@ def IMUfit(  # noqa: PLR0915 pylint: disable=too-many-locals, too-many-branches,
         if msg_type == "TCLR" and tclr:
             imu = msg.I
 
-            T = msg.Temp
+            temp = msg.Temp
             if msg.SType == 0:
                 # accel
                 acc = Vector3(msg.X, msg.Y, msg.Z)
                 time = msg.TimeUS * 1.0e-6
-                data.add_accel(imu, T, time, acc)
+                data.add_accel(imu, temp, time, acc)
             elif msg.SType == 1:
                 # gyro
                 gyr = Vector3(msg.X, msg.Y, msg.Z)
                 time = msg.TimeUS * 1.0e-6
-                data.add_gyro(imu, T, time, gyr)
+                data.add_gyro(imu, temp, time, gyr)
             continue
 
         if msg_type == "IMU" and not tclr:
@@ -440,7 +440,7 @@ def IMUfit(  # noqa: PLR0915 pylint: disable=too-many-locals, too-many-branches,
             if stop_capture[imu]:
                 continue
 
-            T = msg.T
+            temp = msg.T
             acc = Vector3(msg.AccX, msg.AccY, msg.AccZ)
             gyr = Vector3(msg.GyrX, msg.GyrY, msg.GyrZ)
 
@@ -453,12 +453,12 @@ def IMUfit(  # noqa: PLR0915 pylint: disable=too-many-locals, too-many-branches,
                 sys.exit(1)
 
             if c.enable[imu] == 1:
-                acc -= c.correction_accel(imu, T)
-                gyr -= c.correction_gyro(imu, T)
+                acc -= c.correction_accel(imu, temp)
+                gyr -= c.correction_gyro(imu, temp)
 
             time = msg.TimeUS * 1.0e-6
-            data.add_accel(imu, T, time, acc)
-            data.add_gyro(imu, T, time, gyr)
+            data.add_accel(imu, temp, time, acc)
+            data.add_gyro(imu, temp, time, gyr)
 
     if len(data.IMUs()) == 0:
         print("No data found")
@@ -470,7 +470,7 @@ def IMUfit(  # noqa: PLR0915 pylint: disable=too-many-locals, too-many-branches,
         progress_callback(210)
     if not tclr:
         # apply moving average filter with 2s width
-        data.Filter(2)
+        data.filter(2)
 
     c, clog = generate_calibration_file(outfile, online, progress_callback, data, c)
 

@@ -18,7 +18,7 @@ from logging import error as logging_error
 from logging import warning as logging_warning
 from platform import system as platform_system
 from tkinter import BooleanVar, messagebox, ttk
-from tkinter import font as tkFont
+from tkinter import font as tkFont  # noqa: N812
 from typing import Optional, Union
 
 from PIL import Image, ImageTk
