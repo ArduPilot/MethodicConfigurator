@@ -14,6 +14,13 @@ from typing import Union
 from pymavlink import mavutil
 
 # import pymavlink.dialects.v20.ardupilotmega
+from MethodicConfigurator import _
+from MethodicConfigurator.middleware_fc_ids import (
+    APJ_BOARD_ID_NAME_DICT,
+    APJ_BOARD_ID_VENDOR_DICT,
+    VID_PID_PRODUCT_DICT,
+    VID_VENDOR_DICT,
+)
 
 
 class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attributes
@@ -29,10 +36,12 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         self.component_id: str = ""
         self.autopilot: str = ""
         self.vehicle_type: str = ""
+        self.firmware_type: str = ""
         self.mav_type: str = ""
         self.flight_sw_version: str = ""
         self.flight_sw_version_and_type: str = ""
         self.board_version: str = ""
+        self.apj_board_id: str = ""
         self.flight_custom_version: str = ""
         self.os_custom_version: str = ""
         self.vendor: str = ""
@@ -48,18 +57,20 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
 
     def get_info(self) -> dict[str, Union[str, dict[str, str]]]:
         return {
-            "Vendor": self.vendor_and_vendor_id,
-            "Product": self.product_and_product_id,
-            "Hardware Version": self.board_version,
-            "Autopilot Type": self.autopilot,
-            "ArduPilot FW Type": self.vehicle_type,
-            "MAV Type": self.mav_type,
-            "Firmware Version": self.flight_sw_version_and_type,
-            "Git Hash": self.flight_custom_version,
-            "OS Git Hash": self.os_custom_version,
-            "Capabilities": self.capabilities,
-            "System ID": self.system_id,
-            "Component ID": self.component_id,
+            _("USB Vendor"): self.vendor_and_vendor_id,
+            _("USB Product"): self.product_and_product_id,
+            _("Board Type"): self.apj_board_id,
+            _("Hardware Version"): self.board_version,
+            _("Autopilot Type"): self.autopilot,
+            _("ArduPilot Vehicle Type"): self.vehicle_type,
+            _("ArduPilot FW Type"): self.firmware_type,
+            _("MAV Type"): self.mav_type,
+            _("Firmware Version"): self.flight_sw_version_and_type,
+            _("Git Hash"): self.flight_custom_version,
+            _("OS Git Hash"): self.os_custom_version,
+            _("Capabilities"): self.capabilities,
+            _("System ID"): self.system_id,
+            _("Component ID"): self.component_id,
         }
 
     def set_system_id_and_component_id(self, system_id: str, component_id: str) -> None:
@@ -80,7 +91,14 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         self.flight_sw_version_and_type = self.flight_sw_version + " " + v_fw_type
 
     def set_board_version(self, board_version: int) -> None:
-        self.board_version = str(board_version)
+        self.board_version = str(board_version & 0x0FFFF)
+        apj_board_id = board_version >> 16
+        self.apj_board_id = str(apj_board_id)
+        self.firmware_type = str(APJ_BOARD_ID_NAME_DICT.get(apj_board_id, _("Unknown")))
+
+        vendor_derived_from_apj_board_id = str(APJ_BOARD_ID_VENDOR_DICT.get(apj_board_id, "ArduPilot"))
+        if vendor_derived_from_apj_board_id != "ArduPilot" and self.vendor in ["ArduPilot", _("Unknown")]:
+            self.vendor = vendor_derived_from_apj_board_id
 
     def set_flight_custom_version(self, flight_custom_version: Sequence[int]) -> None:
         self.flight_custom_version = "".join(chr(c) for c in flight_custom_version)
@@ -88,21 +106,13 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
     def set_os_custom_version(self, os_custom_version: Sequence[int]) -> None:
         self.os_custom_version = "".join(chr(c) for c in os_custom_version)
 
-    def set_vendor_id_and_product_id(self, vendor_id: int, product_id: int) -> None:
-        pid_vid_dict = self.__list_ardupilot_supported_usb_pid_vid()
-
-        self.vendor_id = f"0x{vendor_id:04X}" if vendor_id else "Unknown"
-        if vendor_id and vendor_id in pid_vid_dict:
-            self.vendor = f"{pid_vid_dict[vendor_id]['vendor']}"
-        elif vendor_id:
-            self.vendor = "Unknown"
+    def set_usb_vendor_and_product_ids(self, vendor_id: int, product_id: int) -> None:
+        self.vendor_id = f"0x{vendor_id:04X}" if vendor_id else _("Unknown")
+        self.vendor = str(VID_VENDOR_DICT.get(vendor_id, _("Unknown")))
         self.vendor_and_vendor_id = f"{self.vendor} ({self.vendor_id})"
 
-        self.product_id = f"0x{product_id:04X}" if product_id else "Unknown"
-        if vendor_id and product_id and product_id in pid_vid_dict[vendor_id]["PID"]:
-            self.product = f"{pid_vid_dict[vendor_id]['PID'][product_id]}"
-        elif product_id:
-            self.product = "Unknown"
+        self.product_id = f"0x{product_id:04X}" if product_id else _("Unknown")
+        self.product = str(VID_PID_PRODUCT_DICT.get((vendor_id, product_id), _("Unknown")))
         self.product_and_product_id = f"{self.product} ({self.product_id})"
 
     def set_capabilities(self, capabilities: int) -> None:
@@ -234,49 +244,3 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
 
         # Return the classified vehicle type based on the MAV_TYPE enum
         return mav_type_to_vehicle_type.get(mav_type_int, "")
-
-    @staticmethod
-    def __list_ardupilot_supported_usb_pid_vid() -> dict[int, dict[str, Union[str, dict[int, str]]]]:
-        """
-        List all ArduPilot supported USB vendor ID (VID) and product ID (PID).
-
-        source: https://ardupilot.org/dev/docs/USB-IDs.html
-        """
-        return {
-            0x0483: {"vendor": "ST Microelectronics", "PID": {0x5740: "ChibiOS"}},
-            0x1209: {
-                "vendor": "ArduPilot",
-                "PID": {
-                    0x5740: "MAVLink",
-                    0x5741: "Bootloader",
-                },
-            },
-            0x16D0: {"vendor": "ArduPilot", "PID": {0x0E65: "MAVLink"}},
-            0x26AC: {"vendor": "3D Robotics", "PID": {}},
-            0x2DAE: {
-                "vendor": "CubePilot",
-                "PID": {
-                    0x1001: "CubeBlack bootloader",
-                    0x1011: "CubeBlack",
-                    0x1101: "CubeBlack+",
-                    0x1002: "CubeYellow bootloader",
-                    0x1012: "CubeYellow",
-                    0x1005: "CubePurple bootloader",
-                    0x1015: "CubePurple",
-                    0x1016: "CubeOrange",
-                    0x1058: "CubeOrange+",
-                    0x1059: "CubeRed",
-                },
-            },
-            0x3162: {"vendor": "Holybro", "PID": {0x004B: "Durandal"}},
-            0x27AC: {
-                "vendor": "Laser Navigation",
-                "PID": {
-                    0x1151: "VRBrain-v51",
-                    0x1152: "VRBrain-v52",
-                    0x1154: "VRBrain-v54",
-                    0x1910: "VRCore-v10",
-                    0x1351: "VRUBrain-v51",
-                },
-            },
-        }

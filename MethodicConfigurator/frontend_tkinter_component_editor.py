@@ -292,11 +292,11 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             self._set_component_value_and_update_ui(("Flight Controller", "Firmware", "Version"), version)
 
     def set_fc_manufacturer(self, manufacturer: str) -> None:
-        if manufacturer and manufacturer not in ("Unknown", "ArduPilot"):
+        if manufacturer and manufacturer not in (_("Unknown"), "ArduPilot"):
             self._set_component_value_and_update_ui(("Flight Controller", "Product", "Manufacturer"), manufacturer)
 
     def set_fc_model(self, model: str) -> None:
-        if model and model not in ("Unknown", "MAVLink"):
+        if model and model not in (_("Unknown"), "MAVLink"):
             self._set_component_value_and_update_ui(("Flight Controller", "Product", "Model"), model)
 
     def set_vehicle_configuration_template(self, configuration_template: str) -> None:

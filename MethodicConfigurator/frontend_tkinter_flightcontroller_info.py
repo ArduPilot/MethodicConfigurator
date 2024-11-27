@@ -49,7 +49,7 @@ class FlightControllerInfoWindow(BaseWindow):
                 else:
                     text_field.insert(tk.END, attr_value)
             else:
-                text_field.insert(tk.END, "N/A")  # Insert "Not Available" if the attribute is missing or empty
+                text_field.insert(tk.END, _("N/A"))  # Insert "Not Available" if the attribute is missing or empty
             text_field.configure(state="readonly")
 
         self.info_frame.columnconfigure(1, weight=1)
@@ -57,6 +57,11 @@ class FlightControllerInfoWindow(BaseWindow):
         logging_info(_("Firmware Version: %s"), flight_controller.info.flight_sw_version_and_type)
         logging_info(_("Firmware first 8 hex bytes of the FC git hash: %s"), flight_controller.info.flight_custom_version)
         logging_info(_("Firmware first 8 hex bytes of the ChibiOS git hash: %s"), flight_controller.info.os_custom_version)
+        logging_info(
+            _("Flight Controller firmware type: %s (%s)"),
+            flight_controller.info.firmware_type,
+            flight_controller.info.apj_board_id,
+        )
         logging_info(_("Flight Controller HW / board version: %s"), flight_controller.info.board_version)
         logging_info(_("Flight Controller USB vendor ID: %s"), flight_controller.info.vendor)
         logging_info(_("Flight Controller USB product ID: %s"), flight_controller.info.product)

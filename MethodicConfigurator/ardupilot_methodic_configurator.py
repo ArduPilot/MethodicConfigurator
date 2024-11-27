@@ -104,11 +104,19 @@ def component_editor(
     component_editor_window.populate_frames()
     component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.info.flight_sw_version_and_type)
     component_editor_window.set_fc_manufacturer(flight_controller.info.vendor)
-    component_editor_window.set_fc_model(flight_controller.info.product)
+    component_editor_window.set_fc_model(flight_controller.info.firmware_type)
     if vehicle_dir_window and vehicle_dir_window.configuration_template:
         component_editor_window.set_vehicle_configuration_template(vehicle_dir_window.configuration_template)
     if args.skip_component_editor:
         component_editor_window.root.after(10, component_editor_window.root.destroy)
+    elif bool(ProgramSettings.get_setting("auto_open_doc_in_browser")) and flight_controller.info.firmware_type != _(
+        "Unknown"
+    ):
+        url = (
+            "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_HAL_ChibiOS/hwdef/"
+            f"{flight_controller.info.firmware_type}/README.md"
+        )
+        webbrowser_open(url=url, new=0, autoraise=True)
     component_editor_window.root.mainloop()
 
     if vehicle_dir_window and vehicle_dir_window.configuration_template and vehicle_dir_window.use_fc_params.get():
