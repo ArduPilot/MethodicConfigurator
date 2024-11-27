@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import unittest
 from unittest.mock import MagicMock, patch
 
-from MethodicConfigurator.extract_param_defaults import (
+from ardupilot_methodic_configurator.extract_param_defaults import (
     MAVLINK_COMPID_MAX,
     MAVLINK_SYSID_MAX,
     NO_DEFAULT_VALUES_MESSAGE,
@@ -72,7 +72,7 @@ class TestArgParseParameters(unittest.TestCase):  # pylint: disable=missing-clas
 
 
 class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=missing-class-docstring
-    @patch("extract_param_defaults.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.extract_param_defaults.mavutil.mavlink_connection")
     def test_logfile_does_not_exist(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to raise an exception
         mock_mavlink_connection.side_effect = Exception("Test exception")
@@ -84,7 +84,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         # Check the error message
         self.assertEqual(str(cm.exception), "Error opening the dummy.bin logfile: Test exception")
 
-    @patch("extract_param_defaults.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.extract_param_defaults.mavutil.mavlink_connection")
     def test_extract_parameter_default_values(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection and the messages it returns
         mock_mlog = MagicMock()
@@ -101,7 +101,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         # Check if the defaults dictionary contains the correct parameters and values
         self.assertEqual(defaults, {"PARAM1": 1.1, "PARAM2": 2.0})
 
-    @patch("extract_param_defaults.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.extract_param_defaults.mavutil.mavlink_connection")
     def test_no_parameters(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to return no parameter messages
         mock_mlog = MagicMock()
@@ -113,7 +113,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
             extract_parameter_values("dummy.bin")
         self.assertEqual(str(cm.exception), NO_DEFAULT_VALUES_MESSAGE)
 
-    @patch("extract_param_defaults.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.extract_param_defaults.mavutil.mavlink_connection")
     def test_no_parameter_defaults(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to simulate no parameter default values in the .bin file
         mock_mlog = MagicMock()
@@ -125,7 +125,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
             extract_parameter_values("dummy.bin")
         self.assertEqual(str(cm.exception), NO_DEFAULT_VALUES_MESSAGE)
 
-    @patch("extract_param_defaults.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.extract_param_defaults.mavutil.mavlink_connection")
     def test_invalid_parameter_name(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to simulate an invalid parameter name
         mock_mlog = MagicMock()
@@ -136,7 +136,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         with self.assertRaises(SystemExit):
             extract_parameter_values("dummy.bin")
 
-    @patch("extract_param_defaults.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.extract_param_defaults.mavutil.mavlink_connection")
     def test_long_parameter_name(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to simulate a too long parameter name
         mock_mlog = MagicMock()

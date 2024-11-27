@@ -29,7 +29,7 @@ for %%f in (
     4.6.x-params
 ) do (
     set "src=apm.pdef.%%f.xml"
-    set "dest=MethodicConfigurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\%%f\apm.pdef.xml"
+    set "dest=ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\%%f\apm.pdef.xml"
     rem remove the old linux softlinks
     del !dest!
     rem echo Copying !src! to !dest!
@@ -42,13 +42,13 @@ echo Hard links creation complete
 echo.
 echo To run the ArduPilot methodic configurator GUI, execute the following command:
 echo.
-echo cd MethodicConfigurator
+echo cd ardupilot_methodic_configurator
 echo python3 ardupilot_methodic_configurator.py
 echo.
 echo If you encounter issues with auto-connecting to the wrong device on MS Windows,
 echo you can explicitly set the device with the --device command line option:
 echo.
-echo cd MethodicConfigurator
+echo cd ardupilot_methodic_configurator
 echo python3 ardupilot_methodic_configurator.py --device COMX
 echo.
 echo Replace COMX with the correct COM port for your device.

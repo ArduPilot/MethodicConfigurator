@@ -1,0 +1,833 @@
+{
+    "02_imu_temperature_calibration_setup.param": {
+        "what": "InertialMeasurementUnit Temperature Calibration setup",
+        "why": "The IMU drift is temperature dependent and can cause gyro and/or accel inconsistent errors",
+        "why_now": "You need to cool down the FC to perform this calibration. It is easier to do before the FC is mounted in the vehicle",
+        "blog_text": "Contains setup parameters for IMU temperature calibration, part of the initial calibration process.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#41-setup-imu-temperature-calibration",
+        "wiki_text": "IMU Temperature Calibration",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-imutempcal.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "INS_TCAL1_ENABLE": { "New Value": 2, "Change Reason": "Activates the temperature calibration for IMU 1 at the next start" },
+            "LOG_BITMASK": { "New Value": 524416, "Change Reason": "Only for IMU and Raw-IMU" },
+            "LOG_DISARMED": { "New Value": 1, "Change Reason": "Gather data for the offline IMU temperature calibration while the FC is disarmed" }
+        },
+        "derived_parameters": {
+            "INS_LOG_BAT_MASK": { "New Value": "15 if 'INS_TCAL4_ENABLE' in fc_parameters else 7 if 'INS_TCAL3_ENABLE' in fc_parameters else 3 if 'INS_TCAL2_ENABLE' in fc_parameters else 1", "Change Reason": "Calculate IMU calibration for all IMUs, irrespective of their usage in a future step. Saves the trouble of recalibrating an inactive IMU if you later decide to activate it" },
+            "INS_TCAL2_ENABLE": { "New Value": "2", "Change Reason": "Activates the temperature calibration for IMU 2 at the next start" },
+            "INS_TCAL3_ENABLE": { "New Value": "2", "Change Reason": "Activates the temperature calibration for IMU 3 at the next start" },
+            "BRD_HEAT_TARG": { "New Value": "65", "Change Reason": "Reasonable for most places on this planet" }
+        },
+        "jump_possible": {"04_board_orientation.param": "IMU temperature calibration reduces the number of possible 'Accel inconsistent' and 'Gyro inconsistent' errors.\nIMU temperature calibration is optional.\n\nDo you want to skip it?"},
+        "old_filenames": []
+    },
+    "03_imu_temperature_calibration_results.param": {
+        "what": "InertialMeasurementUnit Temperature Calibration results",
+        "why": "The IMU drift is temperature dependent and can cause gyro and/or accel inconsistent errors",
+        "why_now": "Requires the setup step. It is easier to do before the FC is mounted in the vehicle",
+        "blog_text": "Records the results of the IMU temperature calibration, providing data for analysis and adjustment.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#42-calculate-imu-temperature-calibration",
+        "wiki_text": "IMU Temperature Calibration",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-imutempcal.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "",
+        "old_filenames": []
+    },
+    "04_board_orientation.param": {
+        "what": "Defines the orientation of the flight controller board relative to the vehicle's body frame",
+        "why": "Correct orientation ensures that the flight controller accurately interprets the vehicle's movements and orientation, which is fundamental for stable flight and navigation.",
+        "why_now": "The following steps require that the orientation is correctly set",
+        "blog_text": "Defines the orientation of the flight controller board relative to the vehicle's body frame, crucial for accurate navigation and stabilization.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#61-configure-flight-controller-orientation",
+        "wiki_text": "Mounting the Autopilot - AHRS_ORIENTATION parameter",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-mounting-the-flight-controller.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "LOG_DISARMED": { "New Value": 0, "Change Reason": "Log disarmed was only required for offline IMU temperature calibration" }
+        },
+        "derived_parameters": {
+            "BRD_HEAT_TARG": { "New Value": "45", "Change Reason": "Reset to default after offline IMU temperature calibration" }
+        },
+        "old_filenames": []
+    },
+    "05_remote_controller.param": {
+        "what": "Configures remote controller connection, protocol and settings, including channel mapping and flight modes",
+        "why": "Remote controller is mandatory in the initial configuration and tunning phases. Later might be required for operation and/or safety",
+        "why_now": "It is a pre-requirement for configuring some telemetry systems and ESCs",
+        "blog_text": "Configures settings related to the remote controller, including channel mapping and control modes.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#62-configure-the-rc-receiver",
+        "wiki_text": "Radio Control Systems",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-rc-systems.html",
+        "external_tool_text": "EdgeTX Companion",
+        "external_tool_url": "https://edgetx.org/getedgetx/",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "derived_parameters": {
+            "RC_PROTOCOLS": { "New Value": "vehicle_components['RC Receiver']['FC Connection']['Protocol']", "Change Reason": "Selected in the component editor" }
+        },
+        "rename_connection": "vehicle_components['RC Receiver']['FC Connection']['Type']",
+        "old_filenames": []
+    },
+    "06_telemetry.param": {
+        "what": "Configures telemetry connection, data protocol and settings between the autopilot and the ground control station(s)",
+        "why": "Telemetry allows the ground control station to monitor the vehicle's status in real-time, providing flight information for safe and efficient operation.",
+        "why_now": "Sometimes it depends on the remote controller. Configuring telemetry early allows vehicle configuration and sensor calibration in later steps without requiring a USB cable connection to the autopilot",
+        "blog_text": "Sets up telemetry parameters for data transmission, including GPS, altitude, and other flight metrics.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#63-configure-telemetry",
+        "wiki_text": "Telemetry (landing page)",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-telemetry-landingpage.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "rename_connection": "vehicle_components['Telemetry']['FC Connection']['Type']",
+        "old_filenames": []
+    },
+    "07_esc.param": {
+        "what": "Configures settings for the Electronic Speed Controllers (ESCs), including PWM range and failsafe behavior.",
+        "why": "Proper ESC configuration is crucial for accurate motor control, affecting vehicle performance and safety. It ensures motors respond correctly to control signals and fail safely in various flight conditions.",
+        "why_now": "Pre-requires remote control configuration. Uses GCS telemetry if available. Setting up ESCs early allows for initial motor tests and ensures a stable base for further tuning and flight testing without risking damage to the vehicle.",
+        "blog_text": "Configures settings for the Electronic Speed Controllers (ESCs), including PWM range and failsafe behavior.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#64-configure-the-esc",
+        "wiki_text": "ESC (Electronic Speed Controls)",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-esc-guide.html",
+        "external_tool_text": "BLHeliSuite32",
+        "external_tool_url": "https://www.mediafire.com/file/fj1p9qlbzo5bl5g/BLHeliSuite32_32.9.0.6.zip/file",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "MOT_HOVER_LEARN": { "New Value": 2, "Change Reason": "So that it can tune the throttle controller on 20_throttle_controller.param file" }
+        },
+        "derived_parameters": {
+            "MOT_PWM_TYPE": { "New Value": "vehicle_components['ESC']['FC Connection']['Protocol']", "Change Reason": "Specified in component editor window" },
+            "SERVO_BLH_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
+            "SERVO_FTW_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" }
+        },
+        "rename_connection": "vehicle_components['ESC']['FC Connection']['Type']",
+        "old_filenames": []
+    },
+    "08_batt1.param": {
+        "what": "Configure parameters for the first battery, including health monitoring thresholds and failsafe behavior",
+        "why": "Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge",
+        "why_now": "The failsafe configuration step requires this. During flight tests PID scaling depends on the battery voltage",
+        "blog_text": "Contains parameters for the first battery, including voltage thresholds and failsafe behavior.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#65-configure-the-primary-battery-monitor",
+        "wiki_text": "Battery Monitors (aka Power Monitors/Modules) - BATT_* parameters",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-powermodule-landingpage.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "BATT_FS_CRT_ACT": { "New Value": 1, "Change Reason": "Land ASAP" },
+            "BATT_FS_LOW_ACT": { "New Value": 2, "Change Reason": "Return and land at home or rally point" }
+        },
+        "derived_parameters": {
+            "BATT_ARM_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Number of cells']-1)*0.1+(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.3)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Don’t allow arming below this voltage" },
+            "BATT_CAPACITY": { "New Value": "(vehicle_components['Battery']['Specifications']['Capacity mAh'])", "Change Reason": "Total battery capacity specified in the component editor" },
+            "BATT_CRT_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" },
+            "BATT_LOW_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell low'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Low voltage + 0.0) x no. of cells" },
+            "BATT_MONITOR": { "New Value": "vehicle_components['Battery Monitor']['FC Connection']['Protocol']", "Change Reason": "Selected in component editor window" },
+            "BATT_I2C_BUS": { "New Value": "0 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C1' else 1 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C2' else 2 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C3' else 4", "Change Reason": "Selected in component editor window" },
+            "MOT_BATT_VOLT_MAX": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell max']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Max voltage + 0.0) x no. of cells" },
+            "MOT_BATT_VOLT_MIN": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" }
+        },
+        "rename_connection": "vehicle_components['Battery Monitor']['FC Connection']['Type']",
+        "old_filenames": []
+    },
+    "09_batt2.param": {
+        "what": "Configure parameters for the first battery, including health monitoring thresholds and failsafe behavior",
+        "why": "Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge",
+        "why_now": "The failsafe configuration step requires this. Controller PID scaling depends on the battery voltage",
+        "blog_text": "Contains parameters for the second battery, including voltage thresholds and failsafe behavior.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#66-configure-the-redundant-secondary-battery-monitor-optional",
+        "wiki_text": "Battery Monitors (aka Power Monitors/Modules) - BATT2_* parameters",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-powermodule-landingpage.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": "",
+        "old_filenames": []
+    },
+    "10_gnss.param": {
+        "what": "Configures the Global Navigation Satellite System (GNSS) connection and settings, including antenna phase center location and constellation selection for optimal update rates",
+        "why": "GNSS positioning is required to compensate for the IMU drift. This is required by the configuration and tuning steps. After configuration and tuning are complete the GNSS can be replaced by other positioning system",
+        "why_now": "Needs to be done before compass calibration",
+        "blog_text": "Configures settings for the Global Navigation Satellite System (GNSS), including positioning and velocity estimation.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#67-configure-the-gnss-receivers",
+        "wiki_text": "GPS/Compass (landing page) - GPS* parameters",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-positioning-landing-page.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "derived_parameters": {
+            "GPS_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
+        },
+        "rename_connection": "vehicle_components['GNSS Receiver']['FC Connection']['Type']",
+        "old_filenames": []
+    },
+    "11_initial_atc.param": {
+        "what": "Configures parameters depending on the vehicle's propeller size",
+        "why": "Propeller size has a big influence on the vehicle dynamics, this adapts controller response to it",
+        "why_now": "Done before sensor calibration in Mission Planner to minimize the changes the uses has to do in mission planner",
+        "blog_text": "Initial attitude controller configuration",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#68-initial-attitude-pid-gains-vehicle-size-dependent",
+        "wiki_text": "Initial parameters calculator",
+        "wiki_url": "https://discuss.ardupilot.org/t/initial-parameters-calculator-plugin/56909/61",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "ATC_RAT_PIT_FLTE": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
+            "ATC_RAT_RLL_FLTE": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
+            "ATC_RAT_YAW_FLTD": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
+            "ATC_RAT_YAW_FLTE": { "New Value": "2", "Change Reason": "Initial value, will be improved at a later step" },
+            "ATC_THR_MIX_MAN":  { "New Value": "0.1", "Change Reason": "Value for the first couple of flights will be changed later once MOT_THST_HOVER is learned" },
+            "INS_ACCEL_FILTER": { "New Value": "10", "Change Reason": "The default is 20Hz but that is too high in most situations" },
+            "MOT_THST_HOVER":   { "New Value": "0.2", "Change Reason": "Hover learn will improve this initial guess" }
+        },
+        "derived_parameters": {
+            "ATC_ANG_YAW_P":    { "New Value": "round(0.5*max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))/3000, 1)", "Change Reason": "Derived from vehicle component editor propeller size" },
+            "ATC_ACCEL_P_MAX":  { "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))", "Change Reason": "Derived from vehicle component editor propeller size" },
+            "ATC_ACCEL_R_MAX":  { "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))", "Change Reason": "Derived from vehicle component editor propeller size" },
+            "ATC_ACCEL_Y_MAX":  { "New Value": "max(8000, round(-900*vehicle_components['Propellers']['Specifications']['Diameter_inches']+36000, -2))", "Change Reason": "Derived from vehicle component editor propeller size" },
+            "ATC_RAT_PIT_FLTD": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
+            "ATC_RAT_PIT_FLTT": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
+            "ATC_RAT_RLL_FLTD": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
+            "ATC_RAT_RLL_FLTT": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
+            "ATC_RAT_YAW_FLTT": { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0))) / 2", "Change Reason": "INS_GYRO_FILTER / 2" },
+            "INS_GYRO_FILTER":  { "New Value": "max(20, (round(289.22*vehicle_components['Propellers']['Specifications']['Diameter_inches']**-0.838, 0)))", "Change Reason": "Derived from vehicle component editor propeller size" },
+            "MOT_THST_EXPO":    { "New Value": "min(0.8, round(0.15686*__import__('math').log(vehicle_components['Propellers']['Specifications']['Diameter_inches'])+0.23693, 2))", "Change Reason": "Derived from vehicle component editor propeller size" }
+        },
+        "old_filenames": []
+    },
+    "12_mp_setup_mandatory_hardware.param": {
+        "what": "accelerometer, gyroscope, compass and RC calibration using Mission Planner",
+        "why": "Sensors need to be calibrated once before they can be used",
+        "why_now": "this can only be done effectively after all the preceding steps because it uses their results",
+        "blog_text": "Sets up mandatory hardware components, ensuring all necessary sensors and systems are correctly configured.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#69-configure-mandatory-hardware-parameters",
+        "wiki_text": "Follow the blog instructions and use Mission Planner instead of this tool to configure the mandatory hardware parameters.",
+        "wiki_url": "",
+        "external_tool_text": "Mission Planner",
+        "external_tool_url": "https://github.com/ArduPilot/MethodicConfigurator/blob/latest/TUNING_GUIDE_ArduCopter.md#212-configure-mandatory-hardware-parameters-17",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "Mission Planner. If you have not done this step in Mission Planner yet, close this application and use Mission Planner",
+        "old_filenames": ["11_mp_setup_mandatory_hardware.param"]
+    },
+    "13_general_configuration.param": {
+        "what": "General configuration parameters for the vehicle, including flight modes and safety settings.",
+        "why": "The parameter defaults of some parameters are not sutable for the flight tests that will follow",
+        "why_now": "Most parameters have been configured in previous steps. These are parameters that did not fit in any of the categories of the previous steps.",
+        "blog_text": "General configuration parameters for the vehicle, including flight modes and safety settings.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#610-general-configuration",
+        "wiki_text": "",
+        "wiki_url": "",
+        "external_tool_text": "ArduPilot Hardware report",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/HardwareReport/",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "ARMING_CHECK": { "New Value": 1, "Change Reason": "Perform all arming checks. If you have a problem fix its source. Do NOT change this" },
+            "SCR_ENABLE": { "New Value": 1, "Change Reason": "Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation" }
+        },
+        "old_filenames": ["12_general_configuration.param"]
+    },
+    "14_logging.param": {
+        "what": "Configures logging parameters, including what data is logged and how it's stored.",
+        "why": "parameter values at later steps depend on data that is gathered by means of logging",
+        "why_now": "All the previous steps did not require logging, but the following ones do",
+        "blog_text": "Configures logging parameters, including what data is logged and how it's stored.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#612-configure-logging",
+        "wiki_text": "Downloading and Analyzing Data Logs in Mission Planner",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html",
+        "external_tool_text": "Motor/Propeller order and direction test",
+        "external_tool_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#613-motorpropeller-order-and-direction-test",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "INS_LOG_BAT_OPT": { "New Value": 4, "Change Reason": "Logs measured data both before and after the filters for Filter Review Webtool usage" },
+            "LOG_BITMASK": { "New Value": 2242524, "Change Reason": "Logs Notch filter data and other control signals" },
+            "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" }
+        },
+        "old_filenames": ["13_logging.param"]
+    },
+    "15_motor.param": {
+        "what": "ESC, Motor and propeller configurations",
+        "why": "The motor thrust linearization is crucial for the throttle controller tuning, and throttle-based notch filter operation",
+        "why_now": "The notch filter setup step requires this, and the safety of the vehicle depends on the ESC and motor configuration",
+        "blog_text": "ESC, Motor and propeller configurations.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#motor-thrust-scaling-mot_thst_expo-mot_spin_min-and-mot_spin_max",
+        "wiki_text": "Motor Thrust Scaling",
+        "wiki_url": "https://ardupilot.org/copter/docs/motor-thrust-scaling.html",
+        "external_tool_text": "ArduPilot Thrust Expo",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/ThrustExpo/",
+        "mandatory_text": "40% mandatory (60% optional)",
+        "auto_changed_by": "",
+        "old_filenames": ["14_motor.param"]
+    },
+    "16_pid_adjustment.param": {
+        "what": "Adjusting the Proportional-Integral-Derivative (PID) controllers based on the vehicle size before the first flight",
+        "why": "With very large or very small vehicles the default PID values are not suitable for the first flight",
+        "why_now": "Most other parameters are done and these need to be corrected (depending on the vehicle size) before the first flight",
+        "blog_text": "Contains parameters for adjusting the Proportional-Integral-Derivative (PID) controllers, crucial for tuning the vehicle's flight characteristics.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#614-optional-pid-adjustment",
+        "wiki_text": "Manual tuning of Roll and Pitch",
+        "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
+        "external_tool_text": "param_pid_adjustment_update.py",
+        "external_tool_url": "https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/param_pid_adjustment_update.py",
+        "mandatory_text": "20% mandatory (80% optional)",
+        "auto_changed_by": "",
+        "old_filenames": ["15_pid_adjustment.param"]
+    },
+    "17_remote_id.param": {
+        "what": "Set the remote ID for the vehicle, to comply with local laws if applicable.",
+        "why": "Some countries require a remote ID for drones to be flown legally.",
+        "why_now": "Remote ID requires GNSS and air pressure to be configured before, and it must be set up before the first flight",
+        "blog_text": "Sets the remote ID for the vehicle, allowing it to comply with local laws.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#615-remote-id-aka-drone-id",
+        "wiki_text": "Remote ID (aka Drone ID)",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-remoteid.html",
+        "external_tool_text": "Dronetag BS user manual",
+        "external_tool_url": "https://help.dronetag.cz/dronetag-bs",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": "",
+        "old_filenames": ["16_remote_id.param"]
+    },
+    "18_notch_filter_setup.param": {
+        "what": "Configures the notch filter settings, used to reduce noise in the gyroscope signal caused by the motors",
+        "why": "When the gyroscope signal is less noisy the PID gains can be higher without causing motor output oscillations",
+        "why_now": "Before the first flight so that it can gather data and safeguard the vehicle from some of the noise",
+        "blog_text": "Configures the notch filter settings, used to reduce noise in the signal from the gyroscope.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#616-notch-filters-setup",
+        "wiki_text": "Managing Gyro Noise with the Dynamic Harmonic Notch Filters",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-imu-notch-filtering.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "INS_HNTCH_ENABLE": { "New Value": 1, "Change Reason": "Use the first notch filter to filter the noise created by the motors/propellers" }
+        },
+        "derived_parameters": {
+            "INS_HNTCH_FREQ": { "New Value": "1.4*fc_parameters['INS_GYRO_FILTER']", "Change Reason": "Use 1.4 * INS_GYRO_FILTER as a first guess" }
+        },
+        "old_filenames": ["17_notch_filter_setup.param"]
+    },
+    "19_notch_filter_results.param": {
+        "what": "Configures the notch filter(s) based on the data collected from the first flight.",
+        "why": "The notch filter(s) configuration depends on real-flight data.",
+        "why_now": "real-flight data is only available after the first flight",
+        "blog_text": "Records the results of the notch filter setup, providing data for analysis and adjustment.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#81-notch-filter-calibration",
+        "wiki_text": "Managing Gyro Noise with the Dynamic Harmonic Notch Filters",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-imu-notch-filtering.html",
+        "external_tool_text": "Ardupilot Filter Review tool",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/FilterReview/",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "old_filenames": ["18_notch_filter_results.param"]
+    },
+    "20_throttle_controller.param": {
+        "what": "Uses MOT_THST_HOVER value calculated during the first flight to set altitude controller PIDs.",
+        "why": "The throttle controller is crucial for maintaining altitude and controlling the vehicle's vertical movement.",
+        "why_now": "After the first flight because it depends on the MOT_THST_HOVER parameter, before the second flight so that it can safely use the altitude controller",
+        "blog_text": "Configures settings for the throttle controller, including throttle curve and failsafe behavior.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#82-configure-the-throttle-controller",
+        "wiki_text": "Test AltHold",
+        "wiki_url": "https://ardupilot.org/copter/docs/initial-tuning-flight.html#test-althold",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "derived_parameters": {
+            "PSC_ACCZ_I": { "New Value": "2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
+            "PSC_ACCZ_P": { "New Value": "fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" }
+        },
+        "old_filenames": ["19_throttle_controller.param"]
+    },
+    "21_ekf_config.param": {
+        "what": "Configure Extended Kalman Filter (EKF) noise weights.",
+        "why": "Sometimes the weights of the barometer vs. GNSS altitude need to be adjusted.",
+        "why_now": "Before the second flight so that the EKF can be used to estimate the vehicle's position",
+        "blog_text": "Configure EKF noise weights.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#83-configure-the-ekf-altitude-source-weights",
+        "wiki_text": "Extended Kalman filter tuning",
+        "wiki_url": "https://ardupilot.org/dev/docs/extended-kalman-filter.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "old_filenames": ["20_ekf_config.param"]
+    },
+    "22_quick_tune_setup.param": {
+        "what": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs before the MAGFit flight.",
+        "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
+        "why_now": "Before the second flight so that the vehicle can be safely tuned.",
+        "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs before the MAGFit flight.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#84-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune",
+        "wiki_text": "If lua scripting is not possible, do a manual tune instead",
+        "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
+        "external_tool_text": "VTOL-quicktune lua script",
+        "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/VTOL-quicktune.md",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "QUIK_ENABLE": { "New Value": 1, "Change Reason": "Use VTOL-Quicktune lua script to estimate a good PID starting values" }
+        },
+        "old_filenames": ["20_quick_tune_setup.param"],
+        "download_file": { "source_url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/Copter-4.5/libraries/AP_Scripting/applets/VTOL-quicktune.lua", "dest_local": "VTOL-quicktune.lua" },
+        "upload_file": { "source_local": "VTOL-quicktune.lua", "dest_on_fc": "/APM/Scripts/VTOL-quicktune.lua" }
+    },
+    "23_quick_tune_results.param": {
+        "what": "Records the results of the in-flight VTOL-quicktune lua script PIDs before the MAGFit flight.",
+        "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
+        "why_now": "Before the second flight so that the vehicle can be safely tuned.",
+        "blog_text": "Results of the in-flight VTOL-quicktune lua script PIDs before the MAGFit flight.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#84-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune",
+        "wiki_text": "If lua scripting is not possible, do a manual tune instead",
+        "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
+        "external_tool_text": "VTOL-quicktune lua script",
+        "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/VTOL-quicktune.md",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "VTOL-quicktune lua script",
+        "old_filenames": ["21_quick_tune_results.param"]
+    },
+    "24_inflight_magnetometer_fit_setup.param": {
+        "what": "Sets up parameters for the in-flight magnetometer calibration.",
+        "why": "The compass heading is crucial for the vehicle's navigation and the calibration is very accurate if done during a special flight path.",
+        "why_now": "Requires a basic tune (provided by the previous step) in order to be able to safely navigate in a figure eight flight path.",
+        "blog_text": "Sets up parameters for the in-flight magnetometer calibration, ensuring accurate compass heading.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#911-setup-inflight-magfit-calibration",
+        "wiki_text": "If lua scripting is not possible do compassmot instead",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-compass-setup-advanced.html#compassmot-compensation-for-interference-from-the-power-wires-escs-and-motors",
+        "external_tool_text": "ArduPilot MAGFit in flight compass calibration",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/MAGFit/",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "MAGH_LOG_ENABLE": { "New Value": 1, "Change Reason": "Activates the logging of the MAGH.Active message" }
+        },
+        "jump_possible": {"53_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '53_everyday_use.param' file?"},
+        "old_filenames": ["22_inflight_magnetometer_fit_setup.param"],
+        "download_file": { "source_url": "https://discuss.ardupilot.org/uploads/short-url/4pyrl7PcfqiMEaRItUhljuAqLSs.lua", "dest_local": "copter-magfit-helper.lua" },
+        "upload_file": { "source_local": "copter-magfit-helper.lua", "dest_on_fc": "/APM/Scripts/copter-magfit-helper.lua" }
+    },
+    "25_inflight_magnetometer_fit_results.param": {
+        "what": "Records the results of the in-flight magnetometer calibration.",
+        "why": "The compass heading is crucial for the vehicle's navigation and the calibration is very accurate if done during a special flight path.",
+        "why_now": "Requires the setup (provided by the previous step) and should be done before the second quicktune.",
+        "blog_text": "Records the results of the in-flight magnetometer calibration, providing data for analysis and adjustment.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#912-calculate-inflight-magfit-calibration",
+        "wiki_text": "If lua scripting is not possible do compassmot instead",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-compass-setup-advanced.html#compassmot-compensation-for-interference-from-the-power-wires-escs-and-motors",
+        "external_tool_text": "ArduPilot MAGFit in flight compass calibration",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/MAGFit/",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "MAGFit Webtool and YOU manually uploaded the result to the FC already",
+        "old_filenames": ["23_inflight_magnetometer_fit_results.param"]
+    },
+    "26_quick_tune_setup.param": {
+        "what": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs after the MAGFit flight.",
+        "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
+        "why_now": "Now that MagFit has been performed the quicktune will work even better",
+        "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs after the MAGFit flight.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#921-setup-quicktune",
+        "wiki_text": "If lua scripting is not possible, do a manual tune instead",
+        "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
+        "external_tool_text": "VTOL-quicktune lua script",
+        "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/VTOL-quicktune.md",
+        "mandatory_text": "30% mandatory (70% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "QUIK_ENABLE": { "New Value": 1, "Change Reason": "Use VTOL-Quicktune lua script to estimate a good PID starting values" }
+        },
+        "old_filenames": ["24_quick_tune_setup.param"]
+    },
+    "27_quick_tune_results.param": {
+        "what": "Records the results of the in-flight VTOL-quicktune lua script PIDs after the MAGFit flight.",
+        "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
+        "why_now": "We need a good tune before autotune.",
+        "blog_text": "Results of the in-flight VTOL-quicktune lua script PIDs after the MAGFit flight.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#922-store-quicktune-results-to-file",
+        "wiki_text": "If lua scripting is not possible, do a manual tune instead",
+        "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
+        "external_tool_text": "VTOL-quicktune lua script",
+        "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/VTOL-quicktune.md",
+        "mandatory_text": "30% mandatory (70% optional)",
+        "auto_changed_by": "VTOL-quicktune lua script",
+        "old_filenames": ["25_quick_tune_results.param"]
+    },
+    "28_evaluate_the_aircraft_tune_ff_disable.param": {
+        "what": "Contains parameters for evaluating the aircraft's tuning with feed-forward control disabled",
+        "why": "Evaluate the aircraft's PID tuning and flight characteristics.",
+        "why_now": "Before the autotune process to estimate if autotune can safely operate the vehicle",
+        "blog_text": "Contains parameters for evaluating the aircraft's tuning with feed-forward control disabled, useful for comparison.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#93-fifth-flight-evaluate-the-aircraft-tune---part-1",
+        "wiki_text": "Evaluating the aircraft tune",
+        "wiki_url": "https://ardupilot.org/copter/docs/evaluating-the-aircraft-tune.html#evaluating-the-aircraft-tune",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "ATC_RATE_FF_ENAB": { "New Value": 0, "Change Reason": "test the stabilization loops independent of the input shaping" }
+        },
+        "old_filenames": ["26_evaluate_the_aircraft_tune_ff_disable.param"]
+    },
+    "29_evaluate_the_aircraft_tune_ff_enable.param": {
+        "what": "Contains parameters for evaluating the aircraft's tuning with feed-forward control enabled",
+        "why": "Evaluate the aircraft's PID tuning and flight characteristics.",
+        "why_now": "Before the autotune process to estimate if autotune can safely operate the vehicle",
+        "blog_text": "Contains parameters for evaluating the aircraft's tuning with feed-forward control enabled, for optimal performance.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#94-sixth-flight-evaluate-the-aircraft-tune---part-2",
+        "wiki_text": "Evaluating the aircraft tune",
+        "wiki_url": "https://ardupilot.org/copter/docs/evaluating-the-aircraft-tune.html#evaluating-the-aircraft-tune",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "ATC_RATE_FF_ENAB": { "New Value": 1, "Change Reason": "re-enable normal operation, activate input shaping" }
+        },
+        "old_filenames": ["27_evaluate_the_aircraft_tune_ff_enable.param"]
+    },
+    "30_autotune_roll_setup.param": {
+        "what": "Sets up parameters for the roll axis autotuning process",
+        "why": "To optimize roll step response.",
+        "why_now": "Because roll is usually the axis that has the highest dynamic, and we start with the highest dynamic axis",
+        "blog_text": "Sets up parameters for the roll axis autotuning process, aiming to optimize roll response.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#951-roll-axis-autotune",
+        "wiki_text": "AutoTune",
+        "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "AUTOTUNE_AXES": { "New Value": 1, "Change Reason": "Autotune roll axis" }
+        },
+        "old_filenames": ["28_autotune_roll_setup.param"]
+    },
+    "31_autotune_roll_results.param": {
+        "what": "Records the results of the roll axis autotuning",
+        "why": "To optimize roll step response.",
+        "why_now": "Because roll is usually the axis that has the highest dynamic, and we start with the highest dynamic axis",
+        "blog_text": "Records the results of the roll axis autotuning, providing data for analysis and adjustment.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#951-roll-axis-autotune",
+        "wiki_text": "AutoTune",
+        "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+        "external_tool_text": "ArduPilot PID Review Tool",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "ArduPilot autotune",
+        "old_filenames": ["29_autotune_roll_results.param"]
+    },
+    "32_autotune_pitch_setup.param": {
+        "what": "Sets up parameters for the pitch axis autotuning process",
+        "why": "To optimize pitch step response.",
+        "why_now": "Because pitch is usually the axis that has the second highest dynamic, and we continue with the second highest dynamic axis",
+        "blog_text": "Sets up parameters for the pitch axis autotuning process, aiming to optimize pitch response.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#952-pitch-axis-autotune",
+        "wiki_text": "AutoTune",
+        "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "AUTOTUNE_AXES": { "New Value": 2, "Change Reason": "Autotune pitch axis" }
+        },
+        "old_filenames": ["30_autotune_pitch_setup.param"]
+    },
+    "33_autotune_pitch_results.param": {
+        "what": "Records the results of the pitch axis autotuning",
+        "why": "To optimize pitch step response.",
+        "why_now": "Because pitch is usually the axis that has the second highest dynamic, and we continue with the second highest dynamic axis",
+        "blog_text": "Records the results of the pitch axis autotuning, providing data for analysis and adjustment.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#952-pitch-axis-autotune",
+        "wiki_text": "AutoTune",
+        "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+        "external_tool_text": "ArduPilot PID Review Tool",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "ArduPilot autotune",
+        "old_filenames": ["31_autotune_pitch_results.param"]
+    },
+    "34_autotune_yaw_setup.param": {
+        "what": "Sets up parameters for the yaw axis autotuning process",
+        "why": "To optimize yaw step response.",
+        "why_now": "Because yaw is usually the axis that has the third highest dynamic, and we continue with the third highest dynamic axis",
+        "blog_text": "Sets up parameters for the yaw axis autotuning process, aiming to optimize yaw response.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#953-yaw-axis-autotune",
+        "wiki_text": "AutoTune",
+        "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "AUTOTUNE_AXES": { "New Value": 4, "Change Reason": "Autotune yaw axis" }
+        },
+        "derived_parameters": {
+            "ATC_RAT_YAW_FLTD": { "New Value": "fc_parameters['INS_GYRO_FILTER'] / 4", "Change Reason": "Use INS_GYRO_FILTER / 4 as a first guess" }
+        },
+        "old_filenames": ["32_autotune_yaw_setup.param"]
+    },
+    "35_autotune_yaw_results.param": {
+        "what": "Records the results of the yaw axis autotuning",
+        "why": "To optimize yaw response.",
+        "why_now": "Because yaw is usually the axis that has the third highest dynamic, and we continue with the third highest dynamic axis",
+        "blog_text": "Records the results of the yaw axis autotuning, providing data for analysis and adjustment.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#953-yaw-axis-autotune",
+        "wiki_text": "AutoTune",
+        "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+        "external_tool_text": "ArduPilot PID Review Tool",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "ArduPilot autotune",
+        "old_filenames": ["33_autotune_yaw_results.param"]
+    },
+    "36_autotune_yawd_setup.param": {
+        "what": "Sets up parameters for the yaw D autotuning process",
+        "why": "To optimize yaw D step response.",
+        "why_now": "Because yaw D can only be done after yaw",
+        "blog_text": "Sets up parameters for the yaw rate autotuning process, aiming to optimize yaw rate response.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#954-yaw-d-axis-autotune-optional",
+        "wiki_text": "AutoTune",
+        "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "AUTOTUNE_AXES": { "New Value": 8, "Change Reason": "Autotune yaw D axis" }
+        },
+        "old_filenames": ["34_autotune_yawd_setup.param"]
+    },
+    "37_autotune_yawd_results.param": {
+        "what": "Records the results of the yaw D autotuning",
+        "why": "To optimize yaw D step response.",
+        "why_now": "Because yaw D can only be done after yaw",
+        "blog_text": "Records the results of the yaw rate autotuning, providing data for analysis and adjustment.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#954-yaw-d-axis-autotune-optional",
+        "wiki_text": "AutoTune",
+        "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+        "external_tool_text": "ArduPilot PID Review Tool",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "ArduPilot autotune",
+        "old_filenames": ["35_autotune_yawd_results.param"]
+    },
+    "38_autotune_roll_pitch_retune_setup.param": {
+        "blog_text": "Sets up parameters for the roll and pitch axis retuning process, refining the vehicle's flight characteristics.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#955-roll-and-pitch-axis-re-autotune",
+        "wiki_text": "AutoTune",
+        "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "AUTOTUNE_AXES": { "New Value": 3, "Change Reason": "Autotune roll and pitch axis" }
+        },
+        "old_filenames": ["36_autotune_roll_pitch_retune_setup.param"]
+    },
+    "39_autotune_roll_pitch_retune_results.param": {
+        "blog_text": "Records the results of the roll and pitch axis retuning, providing data for analysis and adjustment.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#955-roll-and-pitch-axis-re-autotune",
+        "wiki_text": "AutoTune",
+        "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+        "external_tool_text": "ArduPilot PID Review Tool",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
+        "mandatory_text": "80% mandatory (20% optional)",
+        "auto_changed_by": "ArduPilot autotune",
+        "old_filenames": ["37_autotune_roll_pitch_retune_results.param"]
+    },
+    "40_windspeed_estimation.param": {
+        "blog_text": "Configures parameters for wind speed estimation, crucial for accurate navigation and stabilization in windy conditions.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#101-windspeed-estimation-flights",
+        "wiki_text": "Windspeed Estimation",
+        "wiki_url": "https://ardupilot.org/copter/docs/airspeed-estimation.html",
+        "external_tool_text": "free online tool to overlay a grid over an image",
+        "external_tool_url": "https://yomotherboard.com/add-grid-to-image/",
+        "mandatory_text": "60% mandatory (40% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "LOG_DISARMED": { "New Value": 1, "Change Reason": "allow post flight tuning with Replay" },
+            "LOG_REPLAY": { "New Value": 1, "Change Reason": "allow post flight tuning with Replay" }
+        },
+        "old_filenames": ["38_windspeed_estimation.param"]
+    },
+    "41_barometer_compensation.param": {
+        "blog_text": "Sets up parameters for barometer compensation, ensuring accurate altitude estimation.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#102-baro-compensation-flights",
+        "wiki_text": "Barometer Position Error Compensation",
+        "wiki_url": "https://ardupilot.org/copter/docs/airspeed-estimation.html#barometer-position-error-compensation",
+        "external_tool_text": "Lua script provided by Yuri",
+        "external_tool_url": "https://discuss.ardupilot.org/t/scripting-copter-wind-estimation-baro-compensation-tuning/98470/1",
+        "mandatory_text": "60% mandatory (40% optional)",
+        "auto_changed_by": "",
+        "jump_possible": {"47_position_controller.param": "If you do not want an analytical PID optimization\nyou can skip some steps now.\n\nJump to '47_position_controller.param' file?"},
+        "old_filenames": ["39_barometer_compensation.param"]
+    },
+    "42_system_id_roll.param": {
+        "blog_text": "Configures parameters for the roll axis system identification, part of the tuning process.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#11-system-identification-for-analytical-pid-optimization-optional",
+        "wiki_text": "Matlab and Simulink IAV scripts for system identification",
+        "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
+        "external_tool_text": "ArduCopter Simulink Model",
+        "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/simulink/arducopter/README.md",
+        "mandatory_text": "20% mandatory (80% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "LOG_DISARMED": { "New Value": 0, "Change Reason": "was only needed for wind speed estimation" },
+            "LOG_REPLAY": { "New Value": 0, "Change Reason": "was only needed for wind speed estimation" },
+            "SID_AXIS": { "New Value": 10, "Change Reason": "Inject chip on the mixer roll signal" }
+        },
+        "old_filenames": ["40_system_id_roll.param"]
+    },
+    "43_system_id_pitch.param": {
+        "blog_text": "Configures parameters for the pitch axis system identification, part of the tuning process.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#1112-pitch-rate-mathematical-model",
+        "wiki_text": "Matlab and Simulink IAV scripts for system identification",
+        "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
+        "external_tool_text": "ArduCopter Simulink Model",
+        "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/simulink/arducopter/README.md",
+        "mandatory_text": "20% mandatory (80% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "SID_AXIS": { "New Value": 11, "Change Reason": "Inject chip on the mixer pitch signal" }
+        },
+        "old_filenames": ["41_system_id_pitch.param"]
+    },
+    "44_system_id_yaw.param": {
+        "blog_text": "Configures parameters for the yaw axis system identification, part of the tuning process.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#1113-yaw-rate-mathematical-model",
+        "wiki_text": "Matlab and Simulink IAV scripts for system identification",
+        "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
+        "external_tool_text": "ArduCopter Simulink Model",
+        "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/simulink/arducopter/README.md",
+        "mandatory_text": "20% mandatory (80% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "SID_AXIS": { "New Value": 12, "Change Reason": "Inject chip on the mixer yaw signal" }
+        },
+        "old_filenames": ["42_system_id_yaw.param"]
+    },
+    "45_system_id_thrust.param": {
+        "blog_text": "Configures parameters for the thrust axis system identification, part of the tuning process.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#1114-thrust-mathematical-model",
+        "wiki_text": "Matlab and Simulink IAV scripts for system identification",
+        "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
+        "external_tool_text": "ArduCopter Simulink Model",
+        "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/simulink/arducopter/README.md",
+        "mandatory_text": "20% mandatory (80% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "SID_AXIS": { "New Value": 13, "Change Reason": "Inject chip on the mixer thrust signal" }
+        },
+        "old_filenames": ["43_system_id_thrust.param"]
+    },
+    "46_analytical_pid_optimization.param": {
+        "blog_text": "Contains parameters for analytical PID optimization, aiming to find the optimal PID values for the vehicle.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#112-analytical-multicopter-flight-controller-pid-optimization",
+        "wiki_text": "IAV analytical PID model optimization",
+        "wiki_url": "https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759",
+        "external_tool_text": "ArduCopter Analytic Tune Tool",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/AnalyticTune/",
+        "mandatory_text": "20% mandatory (80% optional)",
+        "auto_changed_by": "",
+        "forced_parameters": {
+            "ARMING_CHECK": { "New Value": 1, "Change Reason": "Normal state for everyday use" },
+            "ATC_RATE_FF_ENAB": { "New Value": 1, "Change Reason": "Restore value now that system identification is done" },
+            "SID_AXIS": { "New Value": 0, "Change Reason": "No more system identification chip injections" }
+        },
+        "old_filenames": ["44_analytical_pid_optimization.param"]
+    },
+    "47_position_controller.param": {
+        "blog_text": "Sets up parameters for the position controller, crucial for waypoint navigation and precision flying.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#121-position-controller",
+        "wiki_text": "",
+        "wiki_url": "",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "40% mandatory (60% optional)",
+        "auto_changed_by": "",
+        "old_filenames": ["46_position_controller.param", "48_position_controller.param"]
+    },
+    "48_guided_operation.param": {
+        "blog_text": "Sets up parameters for guided operation, including waypoint navigation and obstacle avoidance.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#122-guided-operation-without-rc-transmitter",
+        "wiki_text": "Guided Mode",
+        "wiki_url": "https://ardupilot.org/copter/docs/ac2_guidedmode.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": "",
+        "old_filenames": ["48_guided_operation.param", "50_guided_operation.param"]
+    },
+    "49_precision_land.param": {
+        "blog_text": "Configures parameters for precision landing, ensuring accurate and safe landing of the vehicle.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#123-precision-land",
+        "wiki_text": "Precision Landing and Loiter",
+        "wiki_url": "https://ardupilot.org/copter/docs/precision-landing-with-irlock.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": "",
+        "old_filenames": ["47_precision_land.param"]
+    },
+    "50_optical_flow_setup.param": {
+        "blog_text": "Setup optical flow sensor calibration, needed before using it.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#13-productive-configuration",
+        "wiki_text": "optical flow sensor setup",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
+        "external_tool_text": "optical flow sensors",
+        "external_tool_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensors-landingpage.html",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": "",
+        "jump_possible": {"53_everyday_use.param": "If you do not use optical flow\nyou can skip some steps now.\n\nJump to '53_everyday_use.param' file?"}
+    },
+    "51_optical_flow_results.param": {
+        "blog_text": "Optical flow sensor calibration results, needed before using it.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#13-productive-configuration",
+        "wiki_text": "optical flow sensor setup",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
+        "external_tool_text": "FlowCal",
+        "external_tool_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": "FlowCal"
+    },
+    "52_use_optical_flow_instead_of_gnss.param": {
+        "blog_text": "Optical flow sensor calibration results, needed before using it.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#13-productive-configuration",
+        "wiki_text": "optical flow sensor setup",
+        "wiki_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "0% mandatory (100% optional)",
+        "auto_changed_by": ""
+    },
+    "53_everyday_use.param": {
+        "blog_text": "Configures parameters for everyday use, ensuring the vehicle is safe and stable for routine flying.",
+        "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#13-productive-configuration",
+        "wiki_text": "",
+        "wiki_url": "",
+        "external_tool_text": "",
+        "external_tool_url": "",
+        "mandatory_text": "100% mandatory (0% optional)",
+        "auto_changed_by": "",
+        "old_filenames": ["45_everyday_use.param", "47_everyday_use.param", "50_everyday_use.param"]
+    }
+}

@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import unittest
 from math import nan
 
-from MethodicConfigurator.battery_cell_voltages import BatteryCell, battery_cell_voltages
+from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell, battery_cell_voltages
 
 
 class TestBatteryCell(unittest.TestCase):  # pylint: disable=missing-class-docstring

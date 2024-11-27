@@ -30,7 +30,7 @@ jobs:
           pip install -U .
         
       - name: Run tests and collect coverage
-        # run: pytest --cov MethodicConfigurator
+        # run: pytest --cov ardupilot_methodic_configurator
         run: |
           coverage run -m pytest
           coverage xml -o unittests/coverage.xml

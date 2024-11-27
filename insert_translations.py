@@ -36,7 +36,7 @@ def parse_arguments() -> argparse.Namespace:
     # Add argument for output file
     parser.add_argument(
         "--output-file",
-        default="updated_MethodicConfigurator.po",
+        default="updated_ardupilot_methodic_configurator.po",
         type=str,
         help="The name of the .po file where the translations will be written. "
         "This file will contain lines in the .po (GNU gettext) format. Defaults to %(default)s",
@@ -46,7 +46,9 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def insert_translations(lang_code: str, translations_file: str, output_file_name: str) -> None:
-    po_file = os.path.join("MethodicConfigurator", "locale", lang_code, "LC_MESSAGES", "MethodicConfigurator.po")
+    po_file = os.path.join(
+        "ardupilot_methodic_configurator", "locale", lang_code, "LC_MESSAGES", "ardupilot_methodic_configurator.po"
+    )
     with open(po_file, encoding="utf-8") as f:
         lines = f.readlines()
 
@@ -75,7 +77,7 @@ def insert_translations(lang_code: str, translations_file: str, output_file_name
             insertion_offset += 1  # Increment the offset for each insertion
 
     # Writing back to a new output file
-    output_file = os.path.join("MethodicConfigurator", "locale", lang_code, "LC_MESSAGES", output_file_name)
+    output_file = os.path.join("ardupilot_methodic_configurator", "locale", lang_code, "LC_MESSAGES", output_file_name)
     with open(output_file, "w", encoding="utf-8") as f:
         f.writelines(lines)
 

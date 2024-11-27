@@ -20,12 +20,12 @@ from io import StringIO
 
 from pymavlink import mavutil
 
-# from MethodicConfigurator.backend_mavftp import ERR_NoErrorCodeInPayload
-# from MethodicConfigurator.backend_mavftp import ERR_NoErrorCodeInNack
-# from MethodicConfigurator.backend_mavftp import ERR_NoFilesystemErrorInPayload
-# from MethodicConfigurator.backend_mavftp import ERR_PayloadTooLarge
-# from MethodicConfigurator.backend_mavftp import ERR_InvalidOpcode
-from MethodicConfigurator.backend_mavftp import (
+# from ardupilot_methodic_configurator.backend_mavftp import ERR_NoErrorCodeInPayload
+# from ardupilot_methodic_configurator.backend_mavftp import ERR_NoErrorCodeInNack
+# from ardupilot_methodic_configurator.backend_mavftp import ERR_NoFilesystemErrorInPayload
+# from ardupilot_methodic_configurator.backend_mavftp import ERR_PayloadTooLarge
+# from ardupilot_methodic_configurator.backend_mavftp import ERR_InvalidOpcode
+from ardupilot_methodic_configurator.backend_mavftp import (
     FTP_OP,
     MAVFTP,
     ERR_EndOfFile,

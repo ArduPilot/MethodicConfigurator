@@ -18,7 +18,7 @@ from unittest.mock import patch
 
 # from unittest.mock import MagicMock
 # from unittest.mock import mock_open
-from MethodicConfigurator.ardupilot_methodic_configurator import argument_parser
+from ardupilot_methodic_configurator.ardupilot_methodic_configurator import argument_parser
 
 
 class TestArgumentParser(unittest.TestCase):  # pylint: disable=missing-class-docstring
