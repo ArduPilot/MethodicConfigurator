@@ -22,7 +22,7 @@ from argparse import ArgumentParser, Namespace
 from collections.abc import Generator
 from datetime import datetime
 from io import BufferedReader, BufferedWriter
-from io import BytesIO as SIO
+from io import BytesIO as SIO  # noqa: N814
 from typing import Union
 
 from pymavlink import mavutil

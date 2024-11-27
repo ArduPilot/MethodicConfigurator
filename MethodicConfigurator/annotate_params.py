@@ -35,7 +35,7 @@ from types import TracebackType
 from typing import Any, Optional, Union
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 
-from defusedxml import ElementTree as DET  # just parsing, no data-structure manipulation
+from defusedxml import ElementTree as DET  # noqa: N814, just parsing, no data-structure manipulation
 
 # URL of the XML file
 BASE_URL = "https://autotest.ardupilot.org/Parameters/"
