@@ -26,3 +26,8 @@ repos:
             "--rcfile=.pylintrc", # Link to your config file
           ]
         stages: [pre-push]
+
+  # - repo: https://github.com/RobertCraigie/pyright-python
+  #   rev: v1.1.389
+  #   hooks:
+  #     - id: pyright
