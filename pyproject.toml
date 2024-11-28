@@ -53,6 +53,7 @@ dev = [
     "mock",
     "pyinstaller",
     "mypy",
+    "pyright",
     "github",
 ]
 
@@ -209,3 +210,9 @@ warn_unused_configs = true
 
 files = ["ardupilot_methodic_configurator/*.py"]
 exclude = ["unittests"]
+
+[tool.pyright]
+exclude = [".venv"]
+pythonVersion = "3.9"
+venvPath = "."
+venv = ".venv"
