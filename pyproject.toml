@@ -57,7 +57,7 @@ dev = [
 ]
 
 [project.scripts]
-ardupilot_methodic_configurator = "ardupilot_methodic_configurator.ardupilot_methodic_configurator:main"
+ardupilot_methodic_configurator = "ardupilot_methodic_configurator.__main__:main"
 extract_param_defaults = "ardupilot_methodic_configurator.extract_param_defaults:main"
 annotate_params = "ardupilot_methodic_configurator.annotate_params:main"
 param_pid_adjustment_update = "ardupilot_methodic_configurator.param_pid_adjustment_update:main"

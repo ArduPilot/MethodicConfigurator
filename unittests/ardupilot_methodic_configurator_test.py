@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Unittests for the ardupilot_methodic_configurator.py file.
+Unittests for the __main__.py file.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -18,7 +18,7 @@ from unittest.mock import patch
 
 # from unittest.mock import MagicMock
 # from unittest.mock import mock_open
-from ardupilot_methodic_configurator.ardupilot_methodic_configurator import argument_parser
+from ardupilot_methodic_configurator.__main__ import argument_parser
 
 
 class TestArgumentParser(unittest.TestCase):  # pylint: disable=missing-class-docstring

@@ -17,7 +17,6 @@ python3 -m pip install .
 echo "Installation complete."
 echo ""
 echo "You can run the ArduPilot methodic configurator GUI by executing:"
-echo "cd ardupilot_methodic_configurator"
-echo "python3 ./ardupilot_methodic_configurator.py"
+echo "python3 -m ardupilot_methodic_configurator"
 echo ""
 echo "For more detailed usage instructions, please refer to the USERMANUAL.md file."

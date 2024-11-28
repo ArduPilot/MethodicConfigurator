@@ -1,7 +1,7 @@
 del /Q dist\*
 
-rem python3.11.exe -m PyInstaller --onefile --noconfirm --add-data "4.4.4-test-params\00_default.param;4.4.4-test-params" --add-data "apm.pdef.xml;." --add-data "apm.pdef.4.3.8-params.xml;." --add-data "apm.pdef.4.4.4-params.xml;." --add-data "apm.pdef.4.5.x-params.xml;." --add-data "apm.pdef.4.6.x-params.xml;." --add-data "ArduPilot_icon.png;." --add-data "configuration_steps_ArduCopter.json;." ardupilot_methodic_configurator.py
-python3.11.exe -m PyInstaller --onefile --noconfirm ardupilot_methodic_configurator\ardupilot_methodic_configurator.py
+rem python3.11.exe -m PyInstaller --onefile --noconfirm --add-data "4.4.4-test-params\00_default.param;4.4.4-test-params" --add-data "apm.pdef.xml;." --add-data "apm.pdef.4.3.8-params.xml;." --add-data "apm.pdef.4.4.4-params.xml;." --add-data "apm.pdef.4.5.x-params.xml;." --add-data "apm.pdef.4.6.x-params.xml;." --add-data "ArduPilot_icon.png;." --add-data "configuration_steps_ArduCopter.json;." __main__.py
+python3 -m PyInstaller --onefile --noconfirm ardupilot_methodic_configurator\__main__.py
 md dist\4.4.4-test-params
 copy 4.4.4-test-params\00_default.param dist\4.4.4-test-params
 copy apm.pdef.4.3.8-params.xml dist
