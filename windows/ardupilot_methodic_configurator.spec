@@ -5,10 +5,10 @@ from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 import os
 
 
-ardupilot_methodic_configuratorAny = Analysis(['ardupilot_methodic_configurator.py'],
+ardupilot_methodic_configuratorAny = Analysis(['__main__.py'],
              pathex=[os.path.abspath('.')],
              # for some unknown reason these hidden imports don't pull in
-             # all the needed pieces, so we also import them in ardupilot_methodic_configurator.py
+             # all the needed pieces, so we also import them in __main__.py
              hiddenimports=['packaging', 'packaging.version', 'packaging.specifiers'] +
                             collect_submodules('ardupilot_methodic_configurator.modules') +
                             collect_submodules('pymavlink'),

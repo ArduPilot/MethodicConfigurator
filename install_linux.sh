@@ -27,7 +27,7 @@ prog_dir=$(realpath "$(dirname "$0")")/ardupilot_methodic_configurator
 if [ -f /etc/debian_version ] || [ -f /etc/os-release ] && grep -q 'ID_LIKE=.*debian.*' /etc/os-release; then
     echo "Creating ardupilot_methodic_configurator.desktop for Debian-based systems..."
     # Define the desktop entry content
-    desktop_entry="[Desktop Entry]\nName=ArduPilot Methodic Configurator\nComment=A clear ArduPilot configuration sequence\nExec=bash -c 'cd $prog_dir && python3 ardupilot_methodic_configurator.py'\nIcon=$prog_dir/ArduPilot_icon.png\nTerminal=true\nType=Application\nCategories=Development;\nKeywords=ardupilot;arducopter;drone;copter;scm"
+    desktop_entry="[Desktop Entry]\nName=ArduPilot Methodic Configurator\nComment=A clear ArduPilot configuration sequence\nExec=bash -c 'cd $prog_dir && python3 -m ardupilot_methodic_configurator'\nIcon=$prog_dir/ArduPilot_icon.png\nTerminal=true\nType=Application\nCategories=Development;\nKeywords=ardupilot;arducopter;drone;copter;scm"
     # Create the .desktop file in the appropriate directory
     echo -e "$desktop_entry" > "/home/$USER/.local/share/applications/ardupilot_methodic_configurator.desktop"
     echo "ardupilot_methodic_configurator.desktop created successfully."
@@ -63,7 +63,6 @@ cp ardupilot_methodic_configurator/vehicle_templates ~/.local/lib/python3.12/sit
 echo "Installation complete."
 echo ""
 echo "You can run the ArduPilot methodic configurator GUI by executing:"
-echo "cd ardupilot_methodic_configurator"
-echo "python3 ardupilot_methodic_configurator.py"
+echo "python3 -m ardupilot_methodic_configurator"
 echo ""
 echo "For more detailed usage instructions, please refer to the USERMANUAL.md file."

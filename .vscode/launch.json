@@ -24,10 +24,10 @@
             "args": "--loglevel DEBUG --debug 2 rmdir lkvn"
         },
         {
-            "name": "Python Debugger: ardupilot_methodic_configurator.py",
+            "name": "Python Debugger: __main__.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "ardupilot_methodic_configurator/ardupilot_methodic_configurator.py",
+            "program": "ardupilot_methodic_configurator/__main__.py",
             "args": [
                 "--allow-editing-template-files",
                 "--device=none",
