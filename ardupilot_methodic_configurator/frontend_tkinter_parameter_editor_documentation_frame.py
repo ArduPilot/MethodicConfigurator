@@ -126,10 +126,10 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
         label = self.documentation_labels[label_key]
         if url:
             label.config(text=text, foreground="blue", cursor="hand2", underline=True)
-            label.bind("<Button-1>", lambda url=url: webbrowser_open(url))  # type: ignore[misc]
+            label.bind("<Button-1>", lambda event: webbrowser_open(url))  # noqa: ARG005
             show_tooltip(label, url)
         else:
             label.config(text=text, foreground="black", cursor="arrow", underline=False)
-            label.bind("<Button-1>", None)
+            label.bind("<Button-1>", lambda event: None)  # noqa: ARG005
             if url_expected:
                 show_tooltip(label, _("Documentation URL not available"))
