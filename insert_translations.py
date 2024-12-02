@@ -28,7 +28,7 @@ def parse_arguments() -> argparse.Namespace:
     # Add argument for translations file
     parser.add_argument(
         "--translations-file",
-        default="translations.txt",
+        default="missing_translations.txt",
         type=str,
         help="The path to the file containing translations. Defaults to %(default)s.",
     )
