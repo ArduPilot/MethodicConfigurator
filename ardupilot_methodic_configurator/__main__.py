@@ -109,8 +109,10 @@ def component_editor(
         component_editor_window.set_vehicle_configuration_template(vehicle_dir_window.configuration_template)
     if args.skip_component_editor:
         component_editor_window.root.after(10, component_editor_window.root.destroy)
-    elif bool(ProgramSettings.get_setting("auto_open_doc_in_browser")) and flight_controller.info.firmware_type != _(
-        "Unknown"
+    elif (
+        bool(ProgramSettings.get_setting("auto_open_doc_in_browser"))
+        and flight_controller.info.firmware_type != _("Unknown")
+        and flight_controller.info.firmware_type != ""
     ):
         url = (
             "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_HAL_ChibiOS/hwdef/"
