@@ -103,7 +103,7 @@ def show_about_window(root: ttk.Frame, _version: str) -> None:  # pylint: disabl
     report_bug_button = ttk.Button(
         main_frame,
         text=_("Report a Bug"),
-        command=lambda: webbrowser_open("https://github.com/ArduPilot/MethodicConfigurator/issues/new"),
+        command=lambda: webbrowser_open("https://github.com/ArduPilot/MethodicConfigurator/issues/new/choose"),
     )
     licenses_button = ttk.Button(
         main_frame,
