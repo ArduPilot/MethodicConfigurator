@@ -949,8 +949,8 @@ and the side area looks like this:
 Divided by 1,000,000 to convert from mm² to m², the frontal area is 0.01097 m² and the side area is 0.01455 m².
 The weight of our drone is 560g, therefore the ballistic coefficients are
 
-- [EK3_DRAG_BCOEF_X](https://ardupilot.org/copter/docs/parameters.html#ek3-drag-bcoef-x) = 0.56 kg / 0.01097 m² = 51.0399
-- [EK3_DRAG_BCOEF_Y](https://ardupilot.org/copter/docs/parameters.html#ek3-drag-bcoef-y) = 0.56 kg / 0.01455 m² = 38.4798
+> [EK3_DRAG_BCOEF_X](https://ardupilot.org/copter/docs/parameters.html#ek3-drag-bcoef-x) = 0.56 kg / 0.01097 m² = 51.0399 <br>
+> [EK3_DRAG_BCOEF_Y](https://ardupilot.org/copter/docs/parameters.html#ek3-drag-bcoef-y) = 0.56 kg / 0.01455 m² = 38.4798 <br>
 
 Use *ArduPilot Methodic Configurator* to edit and upload the `40_windspeed_estimation.param` file to the FC.
 
@@ -971,45 +971,45 @@ It should look like this:
 Get the current wind speed, that is the GPS speed when AccY reaches zero and the GPS speed has stabilized.
 In this case, it is:
 
-- windspeed = 2.35 [m/s]
+> windspeed = 2.35 [m/s]
 
 Next, get the groundspeed at the start of the test.
 That is the GPS speed when the vehicle starts to decelerate after the little bit of jitter is over.
 In this case, it is:
 
-- groundspeed = 3.9 [m/s]
+> groundspeed = 3.9 [m/s]
 
 With this information, you can calculate the vehicle's airspeed, which is:
 
-- airspeed = windspeed + groundspeed = 6.25 [m/s]
+> airspeed = windspeed + groundspeed = 6.25 [m/s]
 
 Next get the maximum acceleration during the test, which is the acceleration at the time of the groundspeed measurement.
 In this case, it is:
 
-- max_accel = 4.2 [m/s²]
+> max_accel = 4.2 [m/s²]
 
 With the air density at the time of testing and the previously calculated ballistic drag coefficient (`EK3_DRAG_BCOEF_X` for front and back, `EK3_DRAG_BCOEF_Y` for left and right side) you can now calculate the bluff body drag, which is 1/2 * air density * airspeed^2 / BCOEF.
 In this case, it is:
 
-- Bluff body drag = 0.5 * 1.260 [kg/m³] * (6.25 [m/s])² / 38.4798 [kg/m²] = 0.6395 [m/s²]
+> Bluff body drag = 0.5 * 1.260 [kg/m³] * (6.25 [m/s])² / 38.4798 [kg/m²] = 0.6395 [m/s²]
 
 With that, you can now calculate the momentum drag, which is max_accel - bluff body drag.
 In this case, it is:
 
-- Momentum drag = 4.2 [m/s²] - 0.6395 [m/s²] = 3.5605 [m/s²]
+> Momentum drag = 4.2 [m/s²] - 0.6395 [m/s²] = 3.5605 [m/s²]
 
 Now you can calculate the momentum drag coefficient `EK3_DRAG_MCOEF`, which is momentum drag / airspeed.
 In this case, it is:
 
-- [EK3_DRAG_MCOEF](https://ardupilot.org/copter/docs/parameters.html#ek3-drag-mcoef) = 3.5605 [m/s²] / 6.25 [m/s] = 0.5697 [1/s]
+> [EK3_DRAG_MCOEF](https://ardupilot.org/copter/docs/parameters.html#ek3-drag-mcoef) = 3.5605 [m/s²] / 6.25 [m/s] = 0.5697 [1/s]
 
 For better accuracy, you should do that for all directions and take the average. In our case, we got:
 
-- front: 0.4628 [1/s]
-- back: 0.4757 [1/s]
-- left: 0.5426 [1/s]
-- right: 0.5697 [1/s]
-- average: 0.5127 [1/s]
+> front: 0.4628 [1/s] <br>
+> back: 0.4757 [1/s] <br>
+> left: 0.5426 [1/s] <br>
+> right: 0.5697 [1/s] <br>
+> average: 0.5127 [1/s] <br>
 
 Note that these are quite high values due to the ducts around the props.
 For a normal copter with open propellers, it should be in the range of 0.1 to 0.2.
