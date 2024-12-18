@@ -19,18 +19,18 @@ Amilcar Lucas's ArduPilot Methodic Configurator is a software that semi-automate
 - **proven**: the software has been used by hundreds of ArduPilot developers and users. From beginners to advanced. On big and small vehicles.
 - **safe**: the sequence reduces trial-and-error and aims at reducing the amount of flights required to configure the vehicle
 
-![When to use ArduPilot Methodic Configurator](images/when_to_use_amc.png)
+![When to use ArduPilot Methodic Configurator](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/when_to_use_amc.png?raw=true)
 
 It provides a graphical user interface (GUI) for managing and visualizing ArduPilot parameters, parameter files and documentation.
 
-![Application Screenshot](images/App_screenshot1.png)
+![Application Screenshot](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/App_screenshot1.png?raw=true)
 
 We are working on extending it to [ArduPlane](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane), [Heli](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli) and [Rover](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover) vehicles.
 But for those it is still very incomplete.
 
 ## Usage
 
-There is a [Quick-start guide](QUICKSTART.md) and a more detailed [Usermanual](USERMANUAL.md)
+There is a [Quick-start guide](https://ardupilot.github.io/MethodicConfigurator/QUICKSTART.html) and a more detailed [Usermanual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html)
 
 ## MS Windows Installation
 
@@ -80,17 +80,17 @@ cd MethodicConfigurator
 
 ## Support and Contributing
 
-Please feel free to submit [issues](https://github.com/ArduPilot/MethodicConfigurator/issues) or [pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls). More information is available on the [contributing and support](CONTRIBUTING.md) page.
+Please feel free to submit [issues](https://github.com/ArduPilot/MethodicConfigurator/issues) or [pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls). More information is available on the [contributing and support](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md) page.
 
 ## Software architecture
 
-To meet the [Software requirements](ARCHITECTURE.md#software-requirements) a [software architecture](ARCHITECTURE.md#the-software-architecture) was designed and implemented.
+To meet the [Software requirements](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#software-requirements) a [software architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#the-software-architecture) was designed and implemented.
 
 ## Code of conduct
 
-To use and develop this software you must obey the [ArduPilot Methodic Configurator Code of Conduct](CODE_OF_CONDUCT.md).
+To use and develop this software you must obey the [ArduPilot Methodic Configurator Code of Conduct](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CODE_OF_CONDUCT.md).
 
 ## License
 
-This project is licensed under the [GNU General Public License v3.0](LICENSE.md).
-It builds upon other [open-source software packages](credits/CREDITS.md)
+This project is licensed under the [GNU General Public License v3.0](https://github.com/ArduPilot/MethodicConfigurator/blob/master/LICENSE.md).
+It builds upon other [open-source software packages](https://ardupilot.github.io/MethodicConfigurator/credits/CREDITS.html)
