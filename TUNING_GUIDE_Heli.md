@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ![Cinewhoop Diatone Taycan MX-C](images/blog/cinewhoop.png)
 
-For illustrative purposes, we will use the small 3'' multicopter depicted above, but the tuning sequence we developed at [IAV GmbH](https://www.iav.com/) will work on almost any other multicopter. 
+For illustrative purposes, we will use the small 3'' multicopter depicted above, but the tuning sequence we developed at [IAV GmbH](https://www.iav.com/) will work on almost any other multicopter.
 Parts of Section 1 and Sections 2 to 6 apply to **all ArduPilot vehicles**: ArduPlane, ArduRover, ArduBoat, ArduSub, ArduBlimp ...
 
 This method uses the latest available [ArduPilot WebTools](https://firmware.ardupilot.org/Tools/WebTools/), some of the new features of ArduCopter 4.3 and above and best practices from the [ArduPilot Community](https://discuss.ardupilot.org/).
@@ -43,7 +43,7 @@ Use tools like [ecalc for heli](https://www.ecalc.ch/index.htm) to find a suitab
 ## 1.1 Helicopter hardware best-practices
 
 1. **Robust frame construction:** A stable and rigid frame is crucial for stable and safe flight behavior. Carbon frames are recommended but not essential, and remember carbon is an electrical conductor.
-2. **ESC Governors:** Using ESCs that provide an internal governor can simplify setup. It maintains a stable rotor speed which makes it easy to apply a notch filter to reduce rotor noise in the control signals.  
+2. **ESC Governors:** Using ESCs that provide an internal governor can simplify setup. It maintains a stable rotor speed which makes it easy to apply a notch filter to reduce rotor noise in the control signals.
 3. **Vibration reduction:** Vibrations reduce the efficiency, stability and lifespan of the drone. The rotor system and motors are the source of most of the vibrations. All components must be securely fastened to minimize vibrations and avoid damage caused by vibrations. Stiff frames reduce vibrations.
     - X and Y vibrations are caused by rotor system and/or motor imbalance - The rotor system must be carefully balanced.
     - Z vibrations are caused by the downwash of each blade hitting the arm and the forward traveling propeller hitting the oncoming air when moving.

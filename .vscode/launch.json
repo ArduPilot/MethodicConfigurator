@@ -34,7 +34,7 @@
                 "--skip-component-editor",
                 "--n=7",
                 "--vehicle-dir=D:\\Projekte\\Multicopter\\MethodicConfigurator\\ardupilot_methodic_configurator\\vehicle_templates\\ArduCopter\\diatone_taycan_mxc\\4.6.x-params"
-            ],
+            ]
         }
     ]
 }

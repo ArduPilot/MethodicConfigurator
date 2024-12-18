@@ -112,7 +112,7 @@ begin
   { Pos() returns 0 if not found }
   Result :=
     (Pos(';' + UpperCase(Param) + ';', ';' + UpperCase(OrigPath) + ';') = 0) and
-    (Pos(';' + UpperCase(Param) + '\;', ';' + UpperCase(OrigPath) + ';') = 0); 
+    (Pos(';' + UpperCase(Param) + '\;', ';' + UpperCase(OrigPath) + ';') = 0);
 end;
 
 var
@@ -132,7 +132,7 @@ type
 function SendTextMessageTimeout(hWnd: HWND; Msg: UINT;
   wParam: WPARAM; lParam: PAnsiChar; fuFlags: UINT;
   uTimeout: UINT; out lpdwResult: DWORD): LRESULT;
-  external 'SendMessageTimeoutA@user32.dll stdcall';  
+  external 'SendMessageTimeoutA@user32.dll stdcall';
 
 procedure SaveOldPath();
 begin

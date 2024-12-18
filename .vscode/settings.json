@@ -21,7 +21,7 @@
         "source.fixAll": "explicit",
         "source.organizeImports": "explicit"
       },
-      "editor.defaultFormatter": "charliermarsh.ruff",
+      "editor.defaultFormatter": "charliermarsh.ruff"
     },
-    "ruff.lint.run": "onSave",
+    "ruff.lint.run": "onSave"
 }

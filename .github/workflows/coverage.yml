@@ -31,13 +31,13 @@ jobs:
           python -m pip install -U pymavlink pytest pytest-cov coverage mock
           pip install build
           pip install -U .
-  
+
       - name: Test with unittest
         run: |
           coverage run -m pytest
           coverage xml -o unittests/coverage.xml
 
-      - name: Get Cover 
+      - name: Get Cover
         uses: andraghetti/coverage@v3.2
         with:
             coverageFile: unittests/coverage.xml

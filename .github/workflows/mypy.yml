@@ -7,7 +7,7 @@ on:
       - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
       - 'workflows/mypy.yml'
   workflow_dispatch:
-  
+
 jobs:
   mypy:
     name: mypy

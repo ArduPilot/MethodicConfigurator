@@ -28,7 +28,7 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install pymavlink pytest pytest-cov coverage mock
           pip install -U .
-        
+
       - name: Run tests and collect coverage
         # run: pytest --cov ardupilot_methodic_configurator
         run: |

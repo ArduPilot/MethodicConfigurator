@@ -36,7 +36,7 @@ jobs:
           python -m pip install -U platformdirs pymavlink mock coverage
           pip install build
           pip install -U .
-  
+
       - name: Set PYTHONPATH
         run: |
           echo "$PYTHONPATH"

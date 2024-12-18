@@ -18,7 +18,7 @@ rem Install all dependencies defined in setup.py
 python3 -m pip install .
 
 echo.
-echo On MS Windows softlinks require admin privileges and have other problems so we will 
+echo On MS Windows softlinks require admin privileges and have other problems so we will
 echo replace the linux parameter metadata/documentation files softlinks with MS Windows hardlinks
 
 setlocal enabledelayedexpansion

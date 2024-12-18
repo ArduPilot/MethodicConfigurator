@@ -1,3 +1,5 @@
+#!/bin/bash
+
 sudo pip uninstall -y ardupilot_methodic_configurator
 pip uninstall -y ardupilot_methodic_configurator
 sudo rm -Rf /usr/local/ardupilot_methodic_configurator/
