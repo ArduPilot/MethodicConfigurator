@@ -1,4 +1,4 @@
-# How to methodically tune any ArduCopter
+# How to methodically tune any ArduPlane
 <!--
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
