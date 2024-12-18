@@ -13,7 +13,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 | [![mypy](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/mypy.yml/badge.svg)](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/mypy.yml) | [![Known Vulnerabilities](https://snyk.io/test/github/amilcarlucas/MethodicConfigurator/badge.svg)](https://snyk.io/test/github/amilcarlucas/MethodicConfigurator) | [![codecov](https://codecov.io/github/amilcarlucas/MethodicConfigurator/graph/badge.svg?token=76P928EOL2)](https://codecov.io/github/amilcarlucas/MethodicConfigurator) | [![Windows Build](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/windows_build.yml/badge.svg)](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/windows_build.yml) | |
 | | [![Code Climate](https://codeclimate.com/github/amilcarlucas/MethodicConfigurator.png)](https://codeclimate.com/github/amilcarlucas/MethodicConfigurator) | [![Coverity Scan Build Status](https://scan.coverity.com/projects/30346/badge.svg)](https://scan.coverity.com/projects/ardupilot-methodic-configurator) | | |
 
-Amilcar Lucas's ArduPilot Methodic Configurator is a software that semi-automates a [clear, proven and safe configuration sequence for ArduCopter drones](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter).
+Amilcar Lucas's ArduPilot Methodic Configurator is a software that semi-automates a
+[clear, proven and safe configuration sequence for ArduCopter drones](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter).
 
 - **clear**: the sequence is linear, executed one step at the time with no hidden complex dependencies
 - **proven**: the software has been used by hundreds of ArduPilot developers and users. From beginners to advanced. On big and small vehicles.
@@ -25,7 +26,9 @@ It provides a graphical user interface (GUI) for managing and visualizing ArduPi
 
 ![Application Screenshot](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/App_screenshot1.png?raw=true)
 
-We are working on extending it to [ArduPlane](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane), [Heli](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli) and [Rover](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover) vehicles.
+We are working on extending it to [ArduPlane](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane),
+[Heli](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli) and
+[Rover](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover) vehicles.
 But for those it is still very incomplete.
 
 ## Usage
@@ -80,11 +83,14 @@ cd MethodicConfigurator
 
 ## Support and Contributing
 
-Please feel free to submit [issues](https://github.com/ArduPilot/MethodicConfigurator/issues) or [pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls). More information is available on the [contributing and support](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md) page.
+Please feel free to submit [issues](https://github.com/ArduPilot/MethodicConfigurator/issues) or
+[pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls).
+More information is available on the [contributing and support](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md) page.
 
 ## Software architecture
 
-To meet the [Software requirements](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#software-requirements) a [software architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#the-software-architecture) was designed and implemented.
+To meet the [Software requirements](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#software-requirements) a
+[software architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#the-software-architecture) was designed and implemented.
 
 ## Code of conduct
 

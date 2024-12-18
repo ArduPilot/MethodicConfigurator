@@ -5,6 +5,8 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
+<!-- markdownlint-disable MD013 MD025 MD034 -->
+
 ![Cinewhoop Diatone Taycan MX-C](images/blog/cinewhoop.png)
 
 For illustrative purposes, we will use the small 3'' multicopter depicted above, but the tuning sequence we developed at [IAV GmbH](https://www.iav.com/) will work on almost any other multicopter.
@@ -202,7 +204,6 @@ The figure excludes the LiPo battery and the PM02 BEC with a voltage/current mon
 |TBS Crossfire Nano RX se | `G`, `5V`, `Rx6`, `Tx6` |
 
 ![Matek H743, Holobro F9p, T-Motor F45 4in1 ESC and TBS Crossfire Nano rx se connections](images/blog/matek_h743_schaltplan.png)
-
 
 # 6. Basic mandatory configuration
 
@@ -1047,10 +1048,10 @@ In this case, it is:
 
 > max_accel = 4.2 [m/s²]
 
-With the air density at the time of testing and the previously calculated ballistic drag coefficient (`EK3_DRAG_BCOEF_X` for front and back, `EK3_DRAG_BCOEF_Y` for left and right side) you can now calculate the bluff body drag, which is 1/2 * air density * airspeed^2 / BCOEF.
+With the air density at the time of testing and the previously calculated ballistic drag coefficient (`EK3_DRAG_BCOEF_X` for front and back, `EK3_DRAG_BCOEF_Y` for left and right side) you can now calculate the bluff body drag, which is 1/2 \* air density \* airspeed^2 / BCOEF.
 In this case, it is:
 
-> Bluff body drag = 0.5 * 1.260 [kg/m³] * (6.25 [m/s])² / 38.4798 [kg/m²] = 0.6395 [m/s²]
+> Bluff body drag = 0.5 \* 1.260 [kg/m³] \* (6.25 [m/s])² / 38.4798 [kg/m²] = 0.6395 [m/s²]
 
 With that, you can now calculate the momentum drag, which is max_accel - bluff body drag.
 In this case, it is:

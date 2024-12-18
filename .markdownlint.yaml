@@ -1,0 +1,27 @@
+---
+default: true
+line-length: false
+fix: true
+no-trailing-punctuation: false
+no-inline-html:
+  enabled: false
+MD013:
+  line_length: 500
+  code_blocks: false
+  tables: false
+  headers: false
+MD033:
+  allowed_elements:
+    - "span"
+    - "i"
+    - "a"
+    - "b"
+    - "br"
+    - "caption"
+    - "figure"
+    - "img"
+    - "ins"
+    - "table"
+    - "td"
+    - "th"
+    - "tr"

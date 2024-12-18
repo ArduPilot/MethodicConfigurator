@@ -5,6 +5,8 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
+<!-- markdownlint-disable MD013 MD025 MD034 -->
+
 ![Cinewhoop Diatone Taycan MX-C](images/blog/cinewhoop.png)
 
 For illustrative purposes, we will use the small 3'' multicopter depicted above, but the tuning sequence we developed at [IAV GmbH](https://www.iav.com/) will work on almost any other multicopter.
@@ -23,7 +25,7 @@ You will be able to tune multiple vehicles (think production line) using this me
 4. [Perform IMU temperature calibration before assembling the autopilot into the vehicle](#4-perform-imu-temperature-calibration-before-assembling-the-autopilot-into-the-vehicle-optional) (optional)
 5. [Assemble all components except the propellers](#5-assemble-all-components-except-the-propellers)
 6. [Basic mandatory configuration](#6-basic-mandatory-configuration)
-7. [Assemble propellers and perform the first flight](#7-assemble-propellers-and-perform-the-first-flight)
+7. [Install rotor blades and perform the first flight](#7-install-rotor-blades-and-perform-the-first-flight)
 8. [Minimalistic mandatory tuning](#8-minimalistic-mandatory-tuning)
 9. [Standard tuning](#9-standard-tuning-optional) (optional)
 10. [Improve altitude under windy conditions](#10-improve-altitude-under-windy-conditions-optional) (optional)
@@ -181,7 +183,7 @@ After the calibration, temperature changes will cause no significant acceleromet
 
 Now that the optional IMU temperature calibration is done we must assemble and connect all components except the propellers.
 
-Read the [Helicopter hardware best-practices](#11-Helicopter-hardware-best-practices) section again before assembling the vehicle.
+Read the [Helicopter hardware best-practices](#11-helicopter-hardware-best-practices) section again before assembling the vehicle.
 
 If you changed the way the components are connected to the flight controller (FC), re-enter the updated information into ArduPilot Methodic Configurator [component editor window](USERMANUAL.md#vehicle-component-editor-interface).
 
@@ -201,7 +203,6 @@ The figure excludes the LiPo battery and the PM02 BEC with a voltage/current mon
 |TBS Crossfire Nano RX se | `G`, `5V`, `Rx6`, `Tx6` |
 
 ![Insert Heli example of connections](images/blog/matek_h743_schaltplan.png)
-
 
 # 6. Basic mandatory configuration
 
@@ -510,8 +511,6 @@ The table below explains which bit is responsible for which `.bin` dataflash log
 
 <tr><td>WINC</td><td>Winch</td><td>10Hz</td><td>Any</td><td>any</td><td>any</td></tr>
 </table>
-
-
 
 ## 6.14 Optional PID adjustment (not sure how this applies to helicopters)
 
@@ -988,10 +987,10 @@ In this case, it is:
 
 > max_accel = 4.2 [m/s²]
 
-With the air density at the time of testing and the previously calculated ballistic drag coefficient (`EK3_DRAG_BCOEF_X` for front and back, `EK3_DRAG_BCOEF_Y` for left and right side) you can now calculate the bluff body drag, which is 1/2 * air density * airspeed^2 / BCOEF.
+With the air density at the time of testing and the previously calculated ballistic drag coefficient (`EK3_DRAG_BCOEF_X` for front and back, `EK3_DRAG_BCOEF_Y` for left and right side) you can now calculate the bluff body drag, which is 1/2 \* air density \* airspeed^2 / BCOEF.
 In this case, it is:
 
-> Bluff body drag = 0.5 * 1.260 [kg/m³] * (6.25 [m/s])² / 38.4798 [kg/m²] = 0.6395 [m/s²]
+> Bluff body drag = 0.5 \* 1.260 [kg/m³] \* (6.25 [m/s])² / 38.4798 [kg/m²] = 0.6395 [m/s²]
 
 With that, you can now calculate the momentum drag, which is max_accel - bluff body drag.
 In this case, it is:

@@ -5,8 +5,9 @@
 #SPDX-License-Identifier: GPL-3.0-or-later
 
 # Use venv if you use python3 due to the PEP668
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv .venv
+# shellcheck source=/dev/null
+source .venv/bin/activate
 
 # Uninstall serial and pyserial to avoid conflicts
 python3 -m pip uninstall -y serial pyserial

@@ -15,7 +15,9 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 
 ### 1.1 Select the vehicle components
 
-- while [choosing an Autopilot](https://ardupilot.org/copter/docs/common-autopilots.html) and [other hardware](https://ardupilot.org/copter/docs/common-optional-hardware.html) components [avoid these components](https://discuss.ardupilot.org/t/hardware-to-avoid-when-building-your-first-multirotor/114014/1)
+- while [choosing an Autopilot](https://ardupilot.org/copter/docs/common-autopilots.html) and
+  [other hardware](https://ardupilot.org/copter/docs/common-optional-hardware.html) components
+  [avoid these components](https://discuss.ardupilot.org/t/hardware-to-avoid-when-building-your-first-multirotor/114014/1)
 - Use [ecalc for multirotor](https://www.ecalc.ch/index.htm) to select the propulsion system.
 - follow [hardware best practices](TUNING_GUIDE_ArduCopter.md#11-multicopter-hardware-best-practices)
 

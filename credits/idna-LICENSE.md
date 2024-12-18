@@ -1,4 +1,4 @@
-BSD 3-Clause License
+# BSD 3-Clause License
 
 Copyright (c) 2013-2024, Kim Davies and contributors.
 All rights reserved.

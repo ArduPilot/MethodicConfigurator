@@ -43,7 +43,7 @@ if [ -d "$HOME/Desktop" ]; then
     chmod 755 "$HOME/Desktop/ardupilot_methodic_configurator.desktop"
     echo "ardupilot_methodic_configurator.desktop copied to ~/Desktop."
 else
-    echo "~/Desktop directory does not exist. Skipping copy to Desktop."
+    echo "$HOME/Desktop directory does not exist. Skipping copy to Desktop."
 fi
 
 update-desktop-database ~/.local/share/applications/

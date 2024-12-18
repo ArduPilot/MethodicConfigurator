@@ -142,7 +142,9 @@ ARMING_RUDDER,0 # We find it safer to use only a switch to arm instead of throug
 
 If you are working with multiple vehicles, create a separate directory for each vehicle with a descriptive identifiable name. Copy the aprox. 50 *intermediate parameter files* into them. Edit the files to match the specific requirements of each vehicle. Now you have traceable documentation records for every parameter change on each of your vehicles.
 
-If you are in the business of manufacturing multicopters and maintain **high-quality standards that result in the production of multiple, nearly identical vehicles**, you can reuse most intermediate parameter files across these vehicles. Only three intermediate parameter files: `03_imu_temperature_calibration_results.param`, `12_mp_setup_mandatory_hardware.param` and `25_inflight_magnetometer_fit_results.param` are specific to each vehicle instance. All other intermediate parameter files can be used without modifications across all instances (or serial numbers) of the same product model.
+If you are in the business of manufacturing multicopters and maintain **high-quality standards that result in the production of multiple, nearly identical vehicles**, you can reuse most intermediate parameter files across these vehicles.
+Only three intermediate parameter files: `03_imu_temperature_calibration_results.param`, `12_mp_setup_mandatory_hardware.param` and `25_inflight_magnetometer_fit_results.param` are specific to each vehicle instance.
+All other intermediate parameter files can be used without modifications across all instances (or serial numbers) of the same product model.
 
 #### 1. See the Current Vehicle Directory (optional)
 
@@ -250,7 +252,6 @@ After the summary message box is displayed, the application will write the summa
 - `non-default_read-only.param`: Contains all non-default read-only 🟥 parameters. You can ignore these.
 - `non-default_writable_calibrations.param`: Contains all non-default writable sensor calibration 🟨 parameters. These are non-reusable.
 - `non-default_writable_non-calibrations.param`: Contains all non-default writable non-sensor-calibration parameters. These are reusable across similar vehicles.
-
 
 The summary files provide a clear overview of the changes made.
 

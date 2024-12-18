@@ -1,11 +1,11 @@
-# Contributing
+# How to contribute to the ArduPilot Methodic Configurator project?
 <!--
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
-## How to contribute to the ArduPilot Methodic Configurator project?
+<!-- markdownlint-disable MD025 -->
 
 If you are reading this page, you are possibly interested in contributing to our project.
 We have a very active (and friendly) developer group and would love to have the help!
