@@ -15,18 +15,7 @@ import os
 
 from setuptools import setup
 
-extra_scripts = [
-    "ardupilot_methodic_configurator/annotate_params.py",
-    "ardupilot_methodic_configurator/extract_param_defaults.py",
-    "ardupilot_methodic_configurator/param_pid_adjustment_update.py",
-]
-
 PRJ_URL = "https://github.com/ArduPilot/MethodicConfigurator"
-
-for file in extra_scripts:
-    os.chmod(file, 0o755)  # noqa: S103
-
-os.chmod("ardupilot_methodic_configurator/__main__.py", 0o755)  # noqa: S103
 
 # Read the long description from the README file
 with open("README.md", encoding="utf-8") as f:
