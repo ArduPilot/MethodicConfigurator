@@ -130,5 +130,29 @@ IF %ERRORLEVEL% NEQ 0 (
         exit /b
     )
 
+    echo Installing code spellcheker extension...
+    cmd /c code --install-extension streetsidesoftware.code-spell-checker
+    IF %ERRORLEVEL% NEQ 0 (
+        echo Failed to install code spellcheker extension.
+        pause
+        exit /b
+    )
+
+    echo Installing the Python VSCode extension...
+    cmd /c code --install-extension ms-python.python
+    IF %ERRORLEVEL% NEQ 0 (
+        echo Failed to install Python VSCode extension.
+        pause
+        exit /b
+    )
+
+    echo Installing ruff extension...
+    cmd /c code --install-extension charliermarsh.ruff
+    IF %ERRORLEVEL% NEQ 0 (
+        echo Failed to install ruff extension.
+        pause
+        exit /b
+    )
+
 )
 goto :eof
