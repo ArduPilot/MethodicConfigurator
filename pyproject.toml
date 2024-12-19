@@ -191,13 +191,13 @@ indent-width = 4
 ignore_missing_imports = true
 disallow_any_unimported = false
 disallow_any_expr = false
-disallow_any_decorated = false
+disallow_any_decorated = true
 disallow_any_generics = false
 disallow_any_explicit = false
-disallow_subclassing_any = false
+disallow_subclassing_any = true
 
 # Disallow untyped definitions and calls
-disallow_untyped_calls = false
+disallow_untyped_calls = true
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
 check_untyped_defs = true

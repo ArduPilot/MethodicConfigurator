@@ -66,7 +66,7 @@ class BatteryCell:
     """
 
     @staticmethod
-    def chemistries() -> list:
+    def chemistries() -> list[str]:
         return list(battery_cell_voltages.keys())
 
     @staticmethod

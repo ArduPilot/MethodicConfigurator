@@ -24,9 +24,10 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
+      # these extra packages are required by pylint to validate the python imports
       run: |
         python -m pip install --upgrade pip
-        pip install 'pylint>=3.3.1'
+        pip install 'pylint>=3.3.2' defusedxml requests pymavlink pillow numpy matplotlib pyserial
 
     - name: Analysing the code with pylint
       run: |
