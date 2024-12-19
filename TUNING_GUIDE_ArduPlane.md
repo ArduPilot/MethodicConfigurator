@@ -69,6 +69,7 @@ Use tools like [ecalc for multirotor](https://www.ecalc.ch/index.htm) to find a 
 To demonstrate how to methodically tune a ArduCopter vehicle we selected a small copter that we could fly and tune indoors.
 It uses the following components:
 
+<!-- markdown-link-check-disable -->
 | Type | Part |
 |:---|:----|
 |Frame | [Diatone Taycan MX-C](https://www.diatone.us/products/diatone-mxc-taycan-duct-3-inch-cinewhoop-fpv-drone) |
@@ -83,6 +84,7 @@ It uses the following components:
 |RC Receiver | [TBS Crossfire Nano RX se](https://www.team-blacksheep.com/products/prod:crossfire_nano_se) |
 |RC Transmitter | [Radiomaster TX16S](https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller) with [EdgeTx](https://edgetx.org/) and [Yaapu scripts](https://github.com/yaapu/FrskyTelemetryScript/wiki/Passthrough-over-CRSF-and-ExpressLRS) |
 | Remote ID transmitter | [Holybro Remote ID transmitter](https://holybro.com/products/remote-id) |
+<!-- markdown-link-check-enable -->
 
 Your vehicle will be different as your application will have different requirements.
 
@@ -94,7 +96,7 @@ To configure and operate your vehicle you need at least these software:
 - [Install Mission Planner](QUICKSTART.md#3-install-mission-planner-software-on-a-pc-or-mac)
 - [Install ArduPilot](QUICKSTART.md#4-install-ardupilot-firmware-on-the-flight-controller)
 
-Use Mission Planner to flash the latest stable [ArduCopter](https://firmware.ardupilot.org/Copter/stable/), [ArduPlane](https://firmware.ardupilot.org/Plane/stable/), [ArduRover](https://firmware.ardupilot.org/Rover/stable/), [ArduSub](https://firmware.ardupilot.org/Sub/stable/) or [ArduBlimp](https://firmware.ardupilot.org/Blimp/stable/) firmware for your flight controller.
+Use Mission Planner to flash the latest stable [ArduCopter](https://firmware.ardupilot.org/Copter/stable/), [ArduPlane](https://firmware.ardupilot.org/Plane/stable/), [ArduRover](https://firmware.ardupilot.org/Rover/stable/), [ArduSub](https://firmware.ardupilot.org/Sub/stable/) or [ArduBlimp](https://firmware.ardupilot.org/Blimp/latest/) firmware for your flight controller.
 
 ## 2.1 Used software summary
 
