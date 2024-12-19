@@ -18,11 +18,11 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from typing import Any
 
-import backend_mavftp as mavftp
-
 # import time
 import requests
 from pymavlink import mavutil
+
+import ardupilot_methodic_configurator.backend_mavftp as mavftp
 
 old_mavftp_member_variable_values: dict[str, Any] = {}
 
@@ -128,13 +128,13 @@ def delete_local_file_if_exists(filename: str) -> None:
         os.remove(filename)
 
 
-def get_list_dir(mav_ftp: mavftp, directory: str) -> None:
+def get_list_dir(mav_ftp: mavftp.MAVFTP, directory: str) -> None:
     ret = mav_ftp.cmd_list([directory])
     ret.display_message()
     debug_class_member_variable_changes(mav_ftp)
 
 
-def get_file(mav_ftp: mavftp, remote_filename: str, local_filename: str, timeout: float = 5) -> None:
+def get_file(mav_ftp: mavftp.MAVFTP, remote_filename: str, local_filename: str, timeout: float = 5) -> None:
     # session = mav_ftp.session # save the session to restore it after the file transfer
     mav_ftp.cmd_get([remote_filename, local_filename])
     ret = mav_ftp.process_ftp_reply("OpenFileRO", timeout=timeout)
@@ -144,7 +144,7 @@ def get_file(mav_ftp: mavftp, remote_filename: str, local_filename: str, timeout
     # time.sleep(0.2)
 
 
-def get_last_log(mav_ftp: mavftp) -> None:
+def get_last_log(mav_ftp: mavftp.MAVFTP) -> None:
     try:
         with open("LASTLOG.TXT", encoding="UTF-8") as file:
             file_contents = file.readline()
@@ -171,19 +171,19 @@ def download_script(url: str, local_filename: str) -> None:
         logging_error("Failed to download the file")
 
 
-def create_directory(mav_ftp: mavftp, remote_directory: str) -> None:
+def create_directory(mav_ftp: mavftp.MAVFTP, remote_directory: str) -> None:
     ret = mav_ftp.cmd_mkdir([remote_directory])
     ret.display_message()
     debug_class_member_variable_changes(mav_ftp)
 
 
-def remove_directory(mav_ftp: mavftp, remote_directory: str) -> None:
+def remove_directory(mav_ftp: mavftp.MAVFTP, remote_directory: str) -> None:
     ret = mav_ftp.cmd_rmdir([remote_directory])
     ret.display_message()
     debug_class_member_variable_changes(mav_ftp)
 
 
-def upload_script(mav_ftp: mavftp, remote_directory: str, local_filename: str, timeout: float) -> None:
+def upload_script(mav_ftp: mavftp.MAVFTP, remote_directory: str, local_filename: str, timeout: float) -> None:
     # Upload it from the PC to the flight controller
     mav_ftp.cmd_put([local_filename, remote_directory + "/" + local_filename])
     ret = mav_ftp.process_ftp_reply("CreateFile", timeout=timeout)

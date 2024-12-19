@@ -159,13 +159,13 @@ class ParamData:
     """A class to manage parameter values and defaults for ArduPilot configuration."""
 
     def __init__(self) -> None:
-        self.params: list[tuple[str, float, type]] = []  # params as (name, value, ptype)
-        self.defaults: Union[None, list[tuple[str, float, type]]] = None  # defaults as (name, value, ptype)
+        self.params: list[tuple[bytes, float, type]] = []  # params as (name, value, ptype)
+        self.defaults: Union[None, list[tuple[bytes, float, type]]] = None  # defaults as (name, value, ptype)
 
-    def add_param(self, name, value, ptype) -> None:
+    def add_param(self, name: bytes, value: float, ptype: type) -> None:
         self.params.append((name, value, ptype))
 
-    def add_default(self, name, value, ptype) -> None:
+    def add_default(self, name: bytes, value: float, ptype: type) -> None:
         if self.defaults is None:
             self.defaults = []
         self.defaults.append((name, value, ptype))
@@ -1221,7 +1221,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         )
 
     @staticmethod
-    def ftp_param_decode(data) -> Union[None, ParamData]:  # pylint: disable=too-many-locals
+    def ftp_param_decode(data: bytes) -> Union[None, ParamData]:  # pylint: disable=too-many-locals
         """Decode parameter data, returning ParamData."""
         pdata = ParamData()
 
@@ -1302,7 +1302,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         return tuple(item.split("_"))
 
     @staticmethod
-    def extract_params(pdata, sort_type) -> dict[str, tuple[float, str]]:
+    def extract_params(pdata: list[tuple[bytes, float, type]], sort_type: str) -> dict[str, tuple[float, type]]:
         """Extract parameter values to an optionally sorted dictionary of name->(value, type)."""
         pdict = {}
         if pdata:

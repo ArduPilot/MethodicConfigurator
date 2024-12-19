@@ -193,7 +193,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
     def update_entry_from_listbox(self, _event: Union[None, tk.Event]) -> str:
         if self._listbox is not None:
-            current_selection = self._listbox.curselection()
+            current_selection = self._listbox.curselection()  # type: ignore[no-untyped-call]
 
             if current_selection:
                 text = self._listbox.get(current_selection)
@@ -210,7 +210,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
     def _previous(self, _event: Union[None, tk.Event]) -> str:
         if self._listbox is not None:
-            current_selection = self._listbox.curselection()
+            current_selection = self._listbox.curselection()  # type: ignore[no-untyped-call]
 
             if len(current_selection) == 0:
                 self._listbox.selection_set(0)
@@ -232,7 +232,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
     def _next(self, _event: Union[None, tk.Event]) -> str:
         if self._listbox is not None:
-            current_selection = self._listbox.curselection()
+            current_selection = self._listbox.curselection()  # type: ignore[no-untyped-call]
             if len(current_selection) == 0:
                 self._listbox.selection_set(0)
                 self._listbox.activate(0)
