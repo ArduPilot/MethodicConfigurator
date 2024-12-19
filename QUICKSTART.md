@@ -31,7 +31,8 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 
 The software needs this information to automatically pre-select configuration settings relevant to your specific vehicle
 
-- [Start the ArduPilot Methodic Configurator and input select a vehicle that resembles yours](#5-use-the-ardupilot-methodic-configurator-software-for-the-first-time) and input vehicle components and component connections information into the ArduPilot Methodic Configurator *component editor window*
+- [Start the ArduPilot Methodic Configurator and input select a vehicle that resembles yours](#5-use-the-ardupilot-methodic-configurator-software-for-the-first-time)
+  and input vehicle components and component connections information into the ArduPilot Methodic Configurator *component editor window*
 
 ### 1.4 Perform IMU temperature calibration before assembling the autopilot into the vehicle (optional)
 
@@ -48,7 +49,8 @@ Assemble and connect all components. Make sure you [follow best practices](TUNIN
 
 ### 1.6 Basic mandatory configuration
 
-Again using the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template) perform the following steps:
+Again using the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template)
+perform the following steps:
 
 - [04_board_orientation.param](TUNING_GUIDE_ArduCopter.md#61-configure-flight-controller-orientation) flight controller orientation
 - [05_remote_controller.param](TUNING_GUIDE_ArduCopter.md#62-configure-the-rc-receiver) remote controller connections and protocol
@@ -82,9 +84,12 @@ These are the very [minimum tuning steps](TUNING_GUIDE_ArduCopter.md#8-minimalis
 
 - Load the `.bin` log file from the first flight into [Notch filter webtool](https://firmware.ardupilot.org/Tools/WebTools/FilterReview/)
 - [19_notch_filter_results.param](TUNING_GUIDE_ArduCopter.md#81-notch-filter-calibration) use the webtool information to configure the notch filter(s)
-- [20_throttle_controller.param](TUNING_GUIDE_ArduCopter.md#82-configure-the-throttle-controller) the altitude controller depends on the power-to-thrust ratio found in the first flight
+- [20_throttle_controller.param](TUNING_GUIDE_ArduCopter.md#82-configure-the-throttle-controller) the altitude controller depends on the
+  power-to-thrust ratio found in the first flight
 - [21_ekf_config.param](TUNING_GUIDE_ArduCopter.md#83-configure-the-ekf-altitude-source-weights) sometimes the EKF3 needs a tune to maintain altitude
-- [22_quick_tune_setup.param](TUNING_GUIDE_ArduCopter.md#84-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune) and [23_quick_tune_results.param](TUNING_GUIDE_ArduCopter.md#84-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune) You need lua scripting support to do this if not available you can tune manually.
+- [22_quick_tune_setup.param](TUNING_GUIDE_ArduCopter.md#84-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune) and
+  [23_quick_tune_results.param](TUNING_GUIDE_ArduCopter.md#84-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune),
+  you need lua scripting support to do this if not available you can tune manually.
 
 That is it, if you are impatient and do not want an optimized vehicle you can skip to [everyday use](#113-everyday-use).
 
@@ -92,14 +97,23 @@ That is it, if you are impatient and do not want an optimized vehicle you can sk
 
 These are the [standard tuning steps](TUNING_GUIDE_ArduCopter.md#9-standard-tuning-optional) required for an optimized flight:
 
-- [24_inflight_magnetometer_fit_setup.param](TUNING_GUIDE_ArduCopter.md#91-third-flight-magfit) Use lua scripted flight path or fly manually and  [25_inflight_magnetometer_fit_results.param](TUNING_GUIDE_ArduCopter.md#912-calculate-inflight-magfit-calibration) Use the [magfit webtool](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) to calculate a file that the ardupilot methodic configurator can use
-- [26_quick_tune_setup.param](TUNING_GUIDE_ArduCopter.md#921-setup-quicktune) and [27_quick_tune_results.param](TUNING_GUIDE_ArduCopter.md#922-store-quicktune-results-to-file) Redo quick-tune now that the compass magnetic interference is fully calibrated
-- [28_evaluate_the_aircraft_tune_ff_disable.param](TUNING_GUIDE_ArduCopter.md#93-fifth-flight-evaluate-the-aircraft-tune---part-1) and [29_evaluate_the_aircraft_tune_ff_enable.param](TUNING_GUIDE_ArduCopter.md#94-sixth-flight-evaluate-the-aircraft-tune---part-2)
-- [30_autotune_roll_setup.param](TUNING_GUIDE_ArduCopter.md#95-autotune-flights) and [31_autotune_roll_results.param](TUNING_GUIDE_ArduCopter.md#951-roll-axis-autotune) tune roll axis rate and angle PIDs
-- [32_autotune_pitch_setup.param](TUNING_GUIDE_ArduCopter.md#952-pitch-axis-autotune) and [33_autotune_pitch_results.param](TUNING_GUIDE_ArduCopter.md#952-pitch-axis-autotune) tune pitch axis rate and angle PIDs
-- [34_autotune_yaw_setup.param](TUNING_GUIDE_ArduCopter.md#953-yaw-axis-autotune) and [35_autotune_yaw_results.param](TUNING_GUIDE_ArduCopter.md#953-yaw-axis-autotune) tune yaw axis rate and angle PIDs
-- [36_autotune_yawd_setup.param](TUNING_GUIDE_ArduCopter.md#954-yaw-d-axis-autotune-optional) and [37_autotune_yawd_results.param](TUNING_GUIDE_ArduCopter.md#954-yaw-d-axis-autotune-optional) tune yawd axis rate and angle PIDs
-- [38_autotune_roll_pitch_retune_setup.param](TUNING_GUIDE_ArduCopter.md#955-roll-and-pitch-axis-re-autotune) and [39_autotune_roll_pitch_retune_results.param](TUNING_GUIDE_ArduCopter.md#955-roll-and-pitch-axis-re-autotune) re-tune roll and pitch pitch axis rate and angle PIDs
+- [24_inflight_magnetometer_fit_setup.param](TUNING_GUIDE_ArduCopter.md#91-third-flight-magfit), use lua scripted flight path or fly manually, store the results using
+  [25_inflight_magnetometer_fit_results.param](TUNING_GUIDE_ArduCopter.md#912-calculate-inflight-magfit-calibration), use the
+  [magfit webtool](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) to calculate a file that the ardupilot methodic configurator can use
+- [26_quick_tune_setup.param](TUNING_GUIDE_ArduCopter.md#921-setup-quicktune) and
+  [27_quick_tune_results.param](TUNING_GUIDE_ArduCopter.md#922-store-quicktune-results-to-file) Redo quick-tune now that the compass magnetic interference is fully calibrated
+- [28_evaluate_the_aircraft_tune_ff_disable.param](TUNING_GUIDE_ArduCopter.md#93-fifth-flight-evaluate-the-aircraft-tune---part-1) and
+  [29_evaluate_the_aircraft_tune_ff_enable.param](TUNING_GUIDE_ArduCopter.md#94-sixth-flight-evaluate-the-aircraft-tune---part-2)
+- [30_autotune_roll_setup.param](TUNING_GUIDE_ArduCopter.md#95-autotune-flights) and
+  [31_autotune_roll_results.param](TUNING_GUIDE_ArduCopter.md#951-roll-axis-autotune) tune roll axis rate and angle PIDs
+- [32_autotune_pitch_setup.param](TUNING_GUIDE_ArduCopter.md#952-pitch-axis-autotune) and
+  [33_autotune_pitch_results.param](TUNING_GUIDE_ArduCopter.md#952-pitch-axis-autotune) tune pitch axis rate and angle PIDs
+- [34_autotune_yaw_setup.param](TUNING_GUIDE_ArduCopter.md#953-yaw-axis-autotune) and
+  [35_autotune_yaw_results.param](TUNING_GUIDE_ArduCopter.md#953-yaw-axis-autotune) tune yaw axis rate and angle PIDs
+- [36_autotune_yawd_setup.param](TUNING_GUIDE_ArduCopter.md#954-yaw-d-axis-autotune-optional) and
+  [37_autotune_yawd_results.param](TUNING_GUIDE_ArduCopter.md#954-yaw-d-axis-autotune-optional) tune yawd axis rate and angle PIDs
+- [38_autotune_roll_pitch_retune_setup.param](TUNING_GUIDE_ArduCopter.md#955-roll-and-pitch-axis-re-autotune) and
+  [39_autotune_roll_pitch_retune_results.param](TUNING_GUIDE_ArduCopter.md#955-roll-and-pitch-axis-re-autotune) re-tune roll and pitch pitch axis rate and angle PIDs
 
 Now the standard tuning is complete you can skip to [everyday use](#113-everyday-use)
 

@@ -9,9 +9,10 @@ Hence the two main use cases are:
 
 But there are other use cases as well:
 
-1. [Create a vehicle configuration based on a correctly configured vehicle](#create-a-vehicle-configuration-based-on-a-correctly-configured-vehicle)
-1. [Review and or edit configuration files without having the vehicle FC](#review-and-or-edit-configuration-files-without-having-the-vehicle-fc)
-1. [Use the correct default values](#use-the-correct-default-values)
+- [Ardupilot Methodic Configurator use cases](#ardupilot-methodic-configurator-use-cases)
+  - [Create a vehicle configuration based on a correctly configured vehicle](#create-a-vehicle-configuration-based-on-a-correctly-configured-vehicle)
+  - [Review and or edit configuration files without having the vehicle FC](#review-and-or-edit-configuration-files-without-having-the-vehicle-fc)
+  - [Use the correct default values](#use-the-correct-default-values)
 
 ## Create a vehicle configuration based on a correctly configured vehicle
 
@@ -56,7 +57,8 @@ If something is not clear, read the [ArduPilot Methodic Configurator user manual
 If issues are found the problematic fields' background will be marked in red color.
 Correct those entries and press the `Save data and start configuration` button again.
 1. You should now see the *Parameter file editor and uploader* window.
-![AMC parameter file editor and uploader](images/App_screenshot2.png) the `Upload selected params to FC, and advance to next param file` button will be grayed out because there is no FC connected.
+![AMC parameter file editor and uploader](images/App_screenshot2.png) the `Upload selected params to FC, and advance to next param file`
+button will be grayed out because there is no FC connected.
 1. Follow the procedure to [configure the vehicle parameters](QUICKSTART.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)

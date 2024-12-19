@@ -32,7 +32,8 @@ It provides three main options for connecting to a flight controller:
 
 #### Option 1: Auto-connect to flight controller
 
-This option automatically attempts to connect to a flight controller that has been connected to the PC. The user must wait for at least 7 seconds for the flight controller to fully boot before attempting the connection.
+This option automatically attempts to connect to a flight controller that has been connected to the PC.
+The user must wait for at least 7 seconds for the flight controller to fully boot before attempting the connection.
 
 #### Option 2: Select flight controller connection
 
@@ -60,7 +61,8 @@ The information is presented in the corresponding window and at the same time al
 
 ### Vehicle Configuration Directory Selection Interface
 
-This interface allows users to select a vehicle directory that contains intermediate parameter files for ArduPilot **if one was not specified with the `--vehicle-dir` command line parameter**.
+This interface allows users to select a vehicle directory that contains intermediate parameter files for ArduPilot
+**if one was not specified with the `--vehicle-dir` command line parameter**.
 
 ![Vehicle Selection Window](images/App_screenshot_Vehicle_directory.png)
 <figure align="center">
@@ -75,9 +77,12 @@ It provides three main options for selecting a vehicle directory:
 Create a new vehicle configuration directory by copying files from an existing template directory.
 It's useful for setting up a new vehicle configuration quickly.
 
-- Use the "Source template directory" `...` button to select the existing vehicle template directory containing the intermediate parameter files to be copied. Use the overview window to select the template that better matches the components of your vehicle.
+- Use the "Source template directory" `...` button to select the existing vehicle template directory containing the intermediate parameter files to be copied.
+  Use the overview window to select the template that better matches the components of your vehicle.
 ![Vehicle template overview](images/App_screenshot_Vehicle_overview.png)
-- By default, the new vehicle parameter values are taken from the source template. But if your connected vehicle has already been correctly configured, checking the `Use parameter values from connected FC, not from template files` will use the parameter values from the FC instead.
+- By default, the new vehicle parameter values are taken from the source template.
+  But if your connected vehicle has already been correctly configured, checking the `Use parameter values from connected FC, not from template files`
+  will use the parameter values from the FC instead.
 - Use the "Destination base directory" `...` button to select the existing directory where the new vehicle directory will be created.
 - Enter the name for the new vehicle directory in the "Destination new vehicle name" field.
 - Click the "Create vehicle directory from template" button to create the new vehicle directory on the base directory and copy the template files to it.
@@ -124,8 +129,12 @@ For reproducibility and quality purposes, we configure the vehicle with a well-d
 
 Each file modifies just a small set of the [over 1200 parameters on the flight controller](https://ardupilot.org/copter/docs/parameters.html).
 By splitting the process into small manageable steps, we reduce the probability of making a mistake or missing a step and allow interleaving parameter changes with test flights.
-Each intermediate parameter file is a text file, editable in any common text editor (excluding MS Word) like [Notepad++](https://notepad-plus-plus.org/), [nano](https://www.nano-editor.org/) or [code](https://code.visualstudio.com/). It contains the *official ArduPilot parameter documentation* in the form of comments in the lines preceding the parameter. By using this you save the time of looking up the online documentation for each parameter.
-It contains the **reason why we changed the parameter** in a comment on the same line as the parameter and is used to trace each parameter change to the reason for that parameter change.
+Each intermediate parameter file is a text file, editable in any common text editor (excluding MS Word) like [Notepad++](https://notepad-plus-plus.org/),
+[nano](https://www.nano-editor.org/) or [code](https://code.visualstudio.com/).
+It contains the *official ArduPilot parameter documentation* in the form of comments in the lines preceding the parameter.
+By using this you save the time of looking up the online documentation for each parameter.
+It contains the **reason why we changed the parameter** in a comment on the same line as the parameter and is used to
+trace each parameter change to the reason for that parameter change.
 
 Comments start with the '#' character.
 A small example with a single parameter is shown below:
@@ -140,10 +149,15 @@ A small example with a single parameter is shown below:
 ARMING_RUDDER,0 # We find it safer to use only a switch to arm instead of through rudder inputs
 ```
 
-If you are working with multiple vehicles, create a separate directory for each vehicle with a descriptive identifiable name. Copy the aprox. 50 *intermediate parameter files* into them. Edit the files to match the specific requirements of each vehicle. Now you have traceable documentation records for every parameter change on each of your vehicles.
+If you are working with multiple vehicles, create a separate directory for each vehicle with a descriptive identifiable name.
+Copy the aprox. 50 *intermediate parameter files* into them.
+Edit the files to match the specific requirements of each vehicle.
+Now you have traceable documentation records for every parameter change on each of your vehicles.
 
-If you are in the business of manufacturing multicopters and maintain **high-quality standards that result in the production of multiple, nearly identical vehicles**, you can reuse most intermediate parameter files across these vehicles.
-Only three intermediate parameter files: `03_imu_temperature_calibration_results.param`, `12_mp_setup_mandatory_hardware.param` and `25_inflight_magnetometer_fit_results.param` are specific to each vehicle instance.
+If you are in the business of manufacturing multicopters and maintain **high-quality standards that result in the production of multiple, nearly identical vehicles**,
+you can reuse most intermediate parameter files across these vehicles.
+Only three intermediate parameter files: `03_imu_temperature_calibration_results.param`, `12_mp_setup_mandatory_hardware.param` and
+`25_inflight_magnetometer_fit_results.param` are specific to each vehicle instance.
 All other intermediate parameter files can be used without modifications across all instances (or serial numbers) of the same product model.
 
 #### 1. See the Current Vehicle Directory (optional)
@@ -179,13 +193,16 @@ When you click the ArduPilot logo the following window will appear:
 - The parameter table presents the parameters in the current intermediate parameter file
 - The first column is a `Del` button that deletes the parameter in this row from the current intermediate parameter file.
 - The second column is the ArduPilot parameter name used in that row.
-  - ReadOnly parameters are presented on a *red background*🟥, they should not be present in an intermediate configuration file because under normal conditions they can not be changed
+  - ReadOnly parameters are presented on a *red background*🟥, they should not be present in an intermediate configuration file because
+    under normal conditions they can not be changed
   - Sensor calibration parameters are presented on a *yellow background*🟨, they are vehicle-instance dependent and can NOT be reused between similar vehicles
 - The current parameter value downloaded from your FC is in the `Current Value` column.
   - Not available parameter values are presented as `N/A` on an *orange background*🟧
   - Parameters that have the default parameter value are presented on a *light blue background* 🟦
-- The new value is the value in the intermediate file and will be uploaded to the flight controller. **You MUST change the value to meet your needs**. The provided values in the `vehicle_template` directory are just examples.
-  - parameters that should not be changed by the users, or are derived from information in the [*component editor*](#vehicle-component-editor-interface) are greyed out and can not be edited
+- The new value is the value in the intermediate file and will be uploaded to the flight controller.
+  **You MUST change the value to meet your needs**. The provided values in the `vehicle_template` directory are just examples.
+  - parameters that should not be changed by the users, or are derived from information in the [*component editor*](#vehicle-component-editor-interface)
+    are greyed out and can not be edited
 - **In the parameter table, you can edit the `New Value` and `Change Reason` entries for each parameter.**
 - **You MUST edit the `Change Reason` so that other users understand why you changed the parameter to that particular `New value`**
 - Check the `Upload` checkbox to select parameters to be uploaded to the flight controller
@@ -206,7 +223,8 @@ It will create bigger and harder-to-compare parameter files but is more suitable
 #### 7. Uploading Parameters to the Flight Controller
 
 - You can also jump to a particular file using the Combobox as explained in [2. Select an intermediate parameter file](#2-select-an-intermediate-parameter-file-optional)
-- **After editing parameters, click the `Upload selected params to FC, and advance to next param file` button to upload the (`Upload` checkbox) selected parameters to the flight controller.**
+- **After editing parameters, click the `Upload selected params to FC, and advance to next param file`**
+  **button to upload the (`Upload` checkbox) selected parameters to the flight controller.**
 - All parameter' `New Value` and `Change Reason` will be written to the current intermediate parameter file, irrespective of the `Upload` checkboxes
 - The application will then:
   - upload the selected and changed parameters to the flight controller
@@ -223,8 +241,11 @@ It will create bigger and harder-to-compare parameter files but is more suitable
 #### 9. Completing the Configuration Process
 
 Once all the intermediate parameter files have been processed, the ArduPilot Methodic Configurator will display a summary message box.
-In other words when the last available intermediate parameter file is selected (see [2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file-optional)) and either `Upload selected params to FC, and advance to next param file` or `Skip parameter file` button is pressed.
-This message box provides a comprehensive overview of the configuration process, including the number of parameters that were kept at their default values, the number of non-default read-only parameters that were ignored, and the number of non-default writable parameters that were updated.
+In other words when the last available intermediate parameter file is selected (see
+[2. Select an Intermediate Parameter File](#2-select-an-intermediate-parameter-file-optional)) and either
+`Upload selected params to FC, and advance to next param file` or `Skip parameter file` button is pressed.
+This message box provides a comprehensive overview of the configuration process, including the number of parameters that were kept at their default values,
+the number of non-default read-only parameters that were ignored, and the number of non-default writable parameters that were updated.
 
 ![Configuration summary message box](images/Last_parameter_file_processed.png)
 
@@ -240,11 +261,14 @@ pie title Summary files example
 
 - **Unchanged parameters**: These parameters are left unchanged and are displayed on a light blue background 🟦.
 
-- **Non-default read-only parameters**: These parameters are read-only and cannot be changed. They are typically related to system configurations that can not be modified and are displayed on a red background 🟥.
+- **Non-default read-only parameters**: These parameters are read-only and cannot be changed.
+  They are typically related to system configurations that can not be modified and are displayed on a red background 🟥.
 
-- **Non-default writable sensor calibrations**: These parameters are vehicle-instance dependent and cannot be reused between similar vehicles. They are typically related to sensor calibration and should be adjusted for each vehicle and are displayed on a yellow background 🟨.
+- **Non-default writable sensor calibrations**: These parameters are vehicle-instance dependent and cannot be reused between similar vehicles.
+  They are typically related to sensor calibration and should be adjusted for each vehicle and are displayed on a yellow background 🟨.
 
-- **Non-default writable non-sensor calibrations**: These parameters can be reused between similar vehicles. They are not related to sensor calibration and are generally applicable to a range of vehicles with the same configuration.
+- **Non-default writable non-sensor calibrations**: These parameters can be reused between similar vehicles.
+  They are not related to sensor calibration and are generally applicable to a range of vehicles with the same configuration.
 
 After the summary message box is displayed, the application will write the summary information into separate files for easy reference and documentation. These files include:
 
@@ -269,25 +293,38 @@ Once the summary files are written, the application will close the connection to
 
 Most users will not need to configure the tool, but if you do want to do it you can.
 
-The ArduPilot Methodic Configurator uses several configuration files to manage and visualize drone parameters. These files are crucial for the tool's operation and are organized in a specific directory structure.
+The ArduPilot Methodic Configurator uses several configuration files to manage and visualize drone parameters.
+These files are crucial for the tool's operation and are organized in a specific directory structure.
 
-- **Intermediate Parameter Files**: These files are located in the vehicle-specific directory and are named with two digits followed by an underscore, ending in `.param`. They contain the parameters that need to be configured for the drone. Each file corresponds to a specific configuration step or aspect of the drone's setup.
+- **Intermediate Parameter Files**: These files are located in the vehicle-specific directory and are named with two digits followed by an underscore, ending in `.param`.
+  They contain the parameters that need to be configured for the drone. Each file corresponds to a specific configuration step or aspect of the drone's setup.
 
-- **Documentation File**: This file provides documentation for each intermediate parameter file. It is used to display relevant information about the parameters and their configuration process. The `configuration_steps_ArduCopter.json` documentation file is first searched in the selected vehicle-specific directory, and if not found, in the directory where the script is located.
+- **Documentation File**: This file provides documentation for each intermediate parameter file.
+  It is used to display relevant information about the parameters and their configuration process.
+  The `configuration_steps_ArduCopter.json` documentation file is first searched in the selected vehicle-specific directory,
+  and if not found, in the directory where the script is located.
 
 - **Default Parameter Values File**: The `00_defaults.param` file is located in the vehicle-specific directory.
-If the file does not exist or is invalid, use this command to regenerate it
+  If the file does not exist or is invalid, use this command to regenerate it
 
 ```bash
 ./extract_param_defaults.py bin_log_file.bin > 00_default.param
 ```
 
 - **ArduPilot parameter documentation File**: The `apm.pdef.xml` contains documentation and metadata for each ArduPilot parameter in an XML format.
-The file is first searched in the selected vehicle-specific directory, and if not found, in the directory where the script is located, and if not found automatically downloaded from the internet.
-The only version available on the internet is the latest 4.6.x.
-So until that changes you need to generate this file yourself for the firmware version that you want to use.
+  The file is first searched in the selected vehicle-specific directory, and if not found, in the directory where the script is located,
+  and if not found automatically downloaded [from the internet](https://autotest.ardupilot.org/Parameters/versioned/).
+  If the vehicle/version combination does not exist you need to generate this file yourself using the ardupilot source code for the firmware version that you want to use:
 
-The tool uses these files to manage the configuration process, allowing users to select and edit parameters, and upload the changes back to the flight controller. The intermediate parameter files are the primary focus of the user interface, as they contain the parameters that the user can modify. The documentation files provide context and guidance for each parameter.
+```bash
+cd ardupilot
+./Tools/autotest/param_metadata/param_parse.py --vehicle ArduCopter --format xml
+cp apm.pdef.xml /path/to/your/vehicle/directory
+```
+
+The tool uses these files to manage the configuration process, allowing users to select and edit parameters, and upload the changes back to the flight controller.
+The intermediate parameter files are the primary focus of the user interface, as they contain the parameters that the user can modify.
+The documentation files provide context and guidance for each parameter.
 
 ## Command Line Usage
 
@@ -302,7 +339,8 @@ Here is a list of command line options:
 - **`--vehicle-dir`**: The directory containing intermediate parameter files. Defaults to the current working directory directory.
 - **`--n`**: Start directly on the nth intermediate parameter file (skip previous files). The default is 0.
 - **`--loglevel`**: The logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). The default is INFO.
-- **`-t` or `--vehicle-type`**: The type of the vehicle. Choices are 'AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane', 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'. Defaults to 'ArduCopter'.
+- **`-t` or `--vehicle-type`**: The type of the vehicle.
+  Choices are 'AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane', 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'. Defaults to 'ArduCopter'.
 - **`-r` or `--reboot-time`**: Flight controller reboot time. The default is 7.
 - **`-v` or `--version`**: Display version information and exit.
 
@@ -312,7 +350,8 @@ Example usage:
 python ardupilot_methodic_configurator.py --device="tcp:127.0.0.1:5760" --vehicle-dir="/path/to/params" --n=0 --loglevel=INFO -t=ArduCopter
 ```
 
-This command will connect to the flight controller at `tcp:127.0.0.1:5760`, use the parameter files in the specified directory, start with the first parameter file, set the logging level to INFO, and target the ArduCopter vehicle type.
+This command will connect to the flight controller at `tcp:127.0.0.1:5760`, use the parameter files in the specified directory,
+start with the first parameter file, set the logging level to INFO, and target the ArduCopter vehicle type.
 
 For more detailed information on the command line options, you can run the script with the `-h` or `--help` flag to display the help message:
 
