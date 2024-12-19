@@ -1,6 +1,12 @@
 name: Markdown
 
-on: push
+on:
+  push:
+    paths:
+      - '**/*.md'        # Watch for changes in any markdown files
+  workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
   lint:
