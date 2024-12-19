@@ -13,7 +13,11 @@ It was augmented with [DevOps](https://en.wikipedia.org/wiki/DevOps) and [CI/CD 
 
 ### Requirements analysis
 
-We collected and analyzed the needs of the ArduPilot users:
+We collected and analyzed the needs of the ArduPilot users by
+[reading 108K+ forum posts](https://discuss.ardupilot.org/u?order=likes_received&period=all),
+by reading [Ardupilot FW issues on github](https://github.com/ArduPilot/ardupilot/issues),
+by reading the [ArduPilot documentation](https://ardupilot.org/ardupilot/),
+by attending the weekly ArduPilot developers meeting and by participating in forum discussions:
 
 - guidelines on how to correctly build the vehicle, many users are not aware of the hardware basics.
 - a non-trial and error approach to set the [1300 ArduPilot parameters](https://ardupilot.org/copter/docs/parameters.html)
@@ -25,7 +29,7 @@ We collected and analyzed the needs of the ArduPilot users:
   - to understand why decisions where made and their implications
 
 Then we developed, documented and tested the *clear sequence of steps to take to configure the vehicle* in the
-[How to methodically tune any ArduCopter](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter) guide.
+[How to methodically tune any ArduCopter](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter) guide in Dec 2023.
 Once that was mostly done we proceeded with *system design* the next step of the V-model.
 
 ### System design
@@ -41,7 +45,8 @@ the following system design requirements were derived:
 - The "partial/intermediate" parameter files must have meaningful names
 - The sequence of the "partial/intermediate" parameter files must be clear
 - Users should be able to upload all parameters from a "partial/intermediate" parameter file to the flight controller and advance to the next intermediate parameter file.
-- Users should be able to upload a subset of parameters from a "partial/intermediate" parameter file to the flight controller and advance to the next intermediate parameter file.
+- Users should be able to upload a subset of parameters from a "partial/intermediate" parameter file to the flight controller
+  and advance to the next "partial/intermediate" parameter file in the configuration sequence.
 - Users should be able to select a "partial/intermediate" parameter file from a list of available files and select the one to be used.
 - The software must display a table of parameters with columns for:
   - the parameter name,
@@ -55,8 +60,9 @@ the following system design requirements were derived:
 
 #### 2. Communication Protocols
 
-- The software must support communication with the drone's flight controller using [MAVlink](https://mavlink.io/en/).
-- Use either [parameter protocol](https://mavlink.io/en/services/parameter.html) or [FTP-over-MAVLink](https://mavlink.io/en/services/ftp.html) protocols.
+- The software must support communication with the drone's flight controller using [MAVlink](https://mavlink.io/en/):
+  - [parameter protocol](https://mavlink.io/en/services/parameter.html) or
+  - [FTP-over-MAVLink](https://mavlink.io/en/services/ftp.html) protocols.
 - The software must automatically reset the ArduPilot if required by the changes made to the parameters.
   - parameters ending in "_TYPE", "_EN", "_ENABLE", "SID_AXIS" require a reset after being changed
 - The software must automatically validate if the parameter was correctly uploaded to the flight controller
@@ -155,7 +161,8 @@ It consists of four main components:
 ![Software Architecture diagram](images/Architecture.drawio.png)
 
 The parts can be individually tested, and do have unit tests.
-They can also be exchanged, for instance, [tkinter-frontend](https://docs.python.org/3/library/tkinter.html) can be replaced with [wxWidgets](https://www.wxwidgets.org/) or [pyQt](https://riverbankcomputing.com/software/pyqt/intro).
+They can also be exchanged, for instance, [tkinter-frontend](https://docs.python.org/3/library/tkinter.html) can be replaced with
+[wxWidgets](https://www.wxwidgets.org/) or [pyQt](https://riverbankcomputing.com/software/pyqt/intro).
 
 In the future, we might port the entire application into a client-based web application.
 That way the users would not need to install the software and will always use the latest version.
@@ -268,7 +275,8 @@ python insert_translations.py --lang-code=de
 
 ### 6. Translate the Strings
 
-Open the `ardupilot_methodic_configurator.po` file in a text editor or a specialist translation tool (e.g., [Poedit](https://poedit.net/)). You will see the extracted strings, which you can begin translating.
+Open the `ardupilot_methodic_configurator.po` file in a text editor or a specialist translation tool (e.g., [Poedit](https://poedit.net/)).
+You will see the extracted strings, which you can begin translating.
 
 Each entry will look like this:
 
@@ -323,6 +331,7 @@ Update the software's configuration to set the desired language and run the appl
 
 ### 9. Review and Refine
 
-Once the new language is running in the software, review the translations within the application for clarity and correctness. Make adjustments as needed in the `.po` file and recompile to an `.mo` file.
+Once the new language is running in the software, review the translations within the application for clarity and correctness.
+Make adjustments as needed in the `.po` file and recompile to an `.mo` file.
 
 Following these steps should enable you to successfully add support for any new translation language within the Ardupilot Methodic Configurator.
