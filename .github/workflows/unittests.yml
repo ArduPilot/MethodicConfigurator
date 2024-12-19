@@ -1,4 +1,4 @@
-name: Pytest unittests
+name: Pytest
 
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#packaging-workflow-data-as-artifacts
 
