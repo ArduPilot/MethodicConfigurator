@@ -303,7 +303,9 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         self.data["Configuration template"] = configuration_template
 
     @staticmethod
-    def reverse_key_search(doc: dict, param_name: str, values: list, fallbacks: list) -> list:
+    def reverse_key_search(
+        doc: dict[str, dict[str, dict[str, float]]], param_name: str, values: list[float], fallbacks: list[int]
+    ) -> list[int]:
         retv = [int(key) for key, value in doc[param_name]["values"].items() if value in values]
         if len(values) != len(fallbacks):
             logging_error(_("Length of values %u and fallbacks %u differ for %s"), len(values), len(fallbacks), param_name)

@@ -491,7 +491,7 @@ class FlightController:
         return self.__create_connection_with_retry(connection_progress_callback)
 
     @staticmethod
-    def __list_serial_ports() -> list[serial.tools.list_ports_common.ListPortInfo]:
+    def __list_serial_ports() -> list[serial.tools.list_ports_common.ListPortInfo]:  # type: ignore[misc]
         """List all available serial ports."""
         comports = serial.tools.list_ports.comports()
         for port in comports:

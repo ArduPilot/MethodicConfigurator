@@ -390,7 +390,7 @@ class BaseWindow:
         resized_image = image.resize((new_width, image_height))
 
         # Convert the image to a format that can be used by Tkinter
-        photo = ImageTk.PhotoImage(resized_image)
+        photo = ImageTk.PhotoImage(resized_image)  # type: ignore[no-untyped-call]
 
         # Create a label with the resized image
         image_label = ttk.Label(parent, image=photo)
