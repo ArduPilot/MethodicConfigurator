@@ -145,10 +145,9 @@ It consists of four main components:
    2. [`backend_filesystem_vehicle_components.py`](ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py)
    3. [`backend_filesystem_configuration_steps.py`](ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py)
 3. the flight controller backend communicates with the flight controller
-   1. [`backend_flight_controller.py`](ardupilot_methodic_configurator/backend_flight_controller.py)
+   1. [`backend_flightcontroller.py`](ardupilot_methodic_configurator/backend_flightcontroller.py)
    2. [`backend_mavftp.py`](ardupilot_methodic_configurator/backend_mavftp.py)
-   3. [`param_ftp.py`](ardupilot_methodic_configurator/param_ftp.py)
-   4. [`battery_cell_voltages.py`](ardupilot_methodic_configurator/battery_cell_voltages.py)
+   3. [`battery_cell_voltages.py`](ardupilot_methodic_configurator/battery_cell_voltages.py)
 4. the tkinter frontend, which is the GUI the user interacts with
    1. [`frontend_tkinter_base.py`](ardupilot_methodic_configurator/frontend_tkinter_base.py)
    2. [`frontend_tkinter_connection_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py)
@@ -169,7 +168,7 @@ That way the users would not need to install the software and will always use th
 
 ### Module design
 
-To assure code quality we decided to use Microsoft VS code with a [lot of extensions](SetupDeveloperPc.bat) to lint the code as you type.
+To assure code quality we decided to use Microsoft VS code with a [lot of extensions](SetupDeveloperPC.bat) to lint the code as you type.
 We use git [pre-commit](https://pre-commit.com/) hooks to [check the code](.pre-commit-config.yaml) before it is committed to the repository.
 
 ### Unit testing
