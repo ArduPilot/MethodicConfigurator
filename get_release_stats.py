@@ -14,7 +14,7 @@ import itertools
 import re
 from operator import itemgetter
 
-from github import Github
+from github import Github  # pylint: disable=import-error
 
 
 def compute_average(issues_date: list[tuple[int, int]]) -> float:
