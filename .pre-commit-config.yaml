@@ -55,7 +55,7 @@ repos:
     rev: v0.43.0
     hooks:
       - id: markdownlint
-        args: ['--config', '.markdownlint.yaml', '--ignore', 'MD025']
+        args: ['--config', '.markdownlint.yaml']
 
   # - repo: https://github.com/RobertCraigie/pyright-python
   #   rev: v1.1.389

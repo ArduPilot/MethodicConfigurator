@@ -5,7 +5,6 @@ on:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
       - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
-      - 'workflows/ruff.yml'
   workflow_dispatch:
 
 #concurrency:
@@ -22,8 +21,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       # Ruff does not need a specific python version installed
       - name: Install dependencies

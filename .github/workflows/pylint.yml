@@ -5,7 +5,6 @@ on:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
       - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
-      - 'workflows/pylint.yml'
   workflow_dispatch:
 
 jobs:
@@ -18,8 +17,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5

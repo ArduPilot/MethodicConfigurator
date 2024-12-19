@@ -5,7 +5,6 @@ on:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
       - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
-      - 'workflows/mypy.yml'
   workflow_dispatch:
 
 jobs:
@@ -16,8 +15,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Install dependencies
         run: |
