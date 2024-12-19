@@ -1,6 +1,9 @@
 name: gitavscan
 
-on: [push]
+on:
+  push:
+  release:
+    types: [published]
 
 jobs:
   gitavscan:
