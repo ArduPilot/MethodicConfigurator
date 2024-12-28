@@ -44,3 +44,34 @@ It indirectly uses:
 | [idna](https://github.com/kjd/idna) | [BSD License](https://github.com/kjd/idna/blob/master/LICENSE.md) |
 
 Their licenses are linked above and are available in [this directory](https://github.com/ArduPilot/MethodicConfigurator/tree/master/credits).
+
+Credits also go to these other software projects that helped in developing ArduPilot Methodic Configurator:
+
+- [github](https://github.com/): A platform for version control and collaboration.
+- [git extensions](https://gitextensions.github.io/): A graphical user interface for Git.
+- [ruff](https://docs.astral.sh/ruff/): A fast Python linter.
+- [pylint](https://www.pylint.org/): A Python static code analysis tool.
+- [mypy](https://mypy-lang.org/): A static type checker for Python.
+- [uv](https://docs.astral.sh/uv/): An extremely fast Python package and project manager.
+- [grammarly](https://www.grammarly.com/): An AI-powered writing assistant.
+- [markdown-lint-cli2](https://github.com/DavidAnson/markdownlint-cli2): A command-line tool for linting Markdown files.
+- [markdown-link-check](https://github.com/tcort/markdown-link-check): A tool to check for broken links in Markdown files.
+- [codacy](https://www.codacy.com/): A code quality and code review tool.
+- [snyk](https://snyk.io/): A security tool for finding and fixing vulnerabilities.
+- [codeclimate](https://codeclimate.com/): A platform for automated code review.
+- [codecov.io](https://about.codecov.io/): A tool for measuring code coverage.
+- [pypi.org](https://pypi.org/): The Python Package Index, a repository of software for the Python programming language.
+- [inno setup](https://jrsoftware.org/isinfo.php): A free installer for Windows programs.
+- [bestpractices.dev](https://www.bestpractices.dev/en): A site for checking best practices in software development.
+- [isitmaintained.com](https://isitmaintained.com/): A service to check the maintenance status of open-source projects.
+
+Using these softwares allowed a small group of programmers to produce better code faster.
+
+Thanks to the users for testing and suggesting features and improvements.
+
+The books helped shape this software
+
+- [Clean Code by Robert C. Martin](https://www.oreilly.com/library/view/clean-code/9780136083238/)
+- [Clean Architecture by Robert C. Martin](https://www.oreilly.com/library/view/clean-architecture/9780134494272/)
+- [Modern Software Engineering by David Farley](https://www.oreilly.com/library/view/modern-software-engineering/9780137314942/)
+- [The DevOps Handbook by Gene Kim, Patrick Debois, John Willis, and Jez Humble](https://www.oreilly.com/library/view/the-devsecops-handbook/9781098182281/)

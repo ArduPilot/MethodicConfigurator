@@ -1,0 +1,7 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^https://www.mediafire.com/file/fj1p9qlbzo5bl5g/BLHeliSuite32_32.9.0.6.zip/file"
+    }
+  ]
+}
