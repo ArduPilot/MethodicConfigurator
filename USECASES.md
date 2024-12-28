@@ -71,3 +71,38 @@ To get the correct default values for your board (if it does not support MAVFTP)
 cd VehicleConfigurarationDirectory
 extract_param_defaults bin_log_file.bin > 00_default.param
 ```
+
+## Re-run the procedure after changing a vehicle component
+
+1. Connect the flight controller to the computer using a USB cable.
+1. Wait at least 7 seconds.
+1. Open the *ArduPilot Methodic Configurator* software.
+1. The software should now automatically detect and connect to your flight controller.
+![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
+1. Open the vehicle configuration directory that you want to edit or review.
+![AMC open vehicle configuration](images/App_screenshot_Vehicle_directory4.png)
+**double-click and step inside the directory that you want to use, not just select it**
+1. Edit all the components of your vehicle to match the component and/or connections changes you made in the *Vehicle Component Editor* window.
+![AMC component editor](images/App_screenshot_Component_Editor.png)
+1. Press *Save data and start configuration*.
+1. The application will validate your input.
+If issues are found the problematic fields' background will be marked in red color.
+Correct those entries and press the `Save data and start configuration` button again.
+1. You should now see the *Parameter file editor and uploader* window.
+![AMC parameter file editor and uploader](images/App_screenshot2.png)
+1. Now depending of the changes you made you will need to re-do some steps and can skip some others:
+   - FC changed - Need to redo all steps
+   - Frame and/or Take-off-weight - redo steps 19 and above
+   - RC Controller - redo step 05 and the RC parts of step 12
+   - RC Transmitter - Redo step 05 and the RC parts of step 12
+   - RC Receiver - redo step 05 and the RC parts of step 12
+   - Telemetry - redo step 06
+   - Battery Monitor - redo step 08
+   - Battery - redo step 08 and 19 and above if the weight changed
+   - ESC - redo step 07 and 19 and above
+   - motors - redo step 07 and 19 and above
+   - props - redo step 07, and 11 and above
+   - GNSS receiver - redo step 10
+1. Follow the procedure to [configure the vehicle parameters](QUICKSTART.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
+
+If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
