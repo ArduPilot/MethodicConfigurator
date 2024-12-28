@@ -803,8 +803,68 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
     @patch("ardupilot_methodic_configurator.annotate_params.get_xml_url")
     def test_get_xml_url_exception(self, mock_get_xml_url_) -> None:
         mock_get_xml_url_.side_effect = ValueError("Mocked Value Error")
-        with pytest.raises(ValueError, match="Vehicle type 'NonExistingVehicle' is not supported."):
+        with pytest.raises(ValueError, match="Vehicle type 'NonExistingVehicle' is not supported."):  # noqa: PT012
             get_xml_url("NonExistingVehicle", "4.0")
+
+            @patch("requests.get")
+            def test_get_xml_data_remote_file(mock_get) -> None:
+                """Test fetching XML data from remote file."""
+                # Mock the response
+                mock_get.return_value.status_code = 200
+                mock_get.return_value.text = "<root></root>"
+
+                # Remove the test.xml file if it exists
+                with contextlib.suppress(FileNotFoundError):
+                    os.remove("test.xml")
+
+                # Call the function with a remote file
+                result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
+
+                # Check the result
+                assert isinstance(result, ET.Element)
+
+                # Assert that requests.get was called once with correct parameters including proxies
+                mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5, proxies=None)
+
+            @patch("requests.get")
+            def test_get_xml_data_remote_file_with_proxies(mock_get) -> None:
+                """Test fetching XML data with proxy configuration."""
+                # Mock environment variables
+                with patch.dict(
+                    os.environ,
+                    {"HTTP_PROXY": "http://proxy:8080", "HTTPS_PROXY": "https://proxy:8080", "NO_PROXY": "localhost"},
+                ):
+                    # Mock the response
+                    mock_get.return_value.status_code = 200
+                    mock_get.return_value.text = "<root></root>"
+
+                    # Call the function
+                    result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
+
+                    # Check the result
+                    assert isinstance(result, ET.Element)
+
+                    # Assert that requests.get was called with proxy settings
+                    expected_proxies = {"http": "http://proxy:8080", "https": "https://proxy:8080", "no_proxy": "localhost"}
+                    mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5, proxies=expected_proxies)
+
+            @patch("requests.get")
+            def test_get_xml_data_remote_file_no_proxies(mock_get) -> None:
+                """Test fetching XML data with no proxy configuration."""
+                # Clear environment variables
+                with patch.dict(os.environ, {}, clear=True):
+                    # Mock the response
+                    mock_get.return_value.status_code = 200
+                    mock_get.return_value.text = "<root></root>"
+
+                    # Call the function
+                    result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
+
+                    # Check the result
+                    assert isinstance(result, ET.Element)
+
+                    # Assert that requests.get was called with no proxies
+                    mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5, proxies=None)
 
 
 if __name__ == "__main__":

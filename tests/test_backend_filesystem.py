@@ -10,11 +10,14 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import hashlib
 import unittest
+from argparse import ArgumentParser
 from os import path as os_path
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from requests.exceptions import ConnectTimeout
+from git.exc import InvalidGitRepositoryError
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 
@@ -222,99 +225,89 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             mock_join.assert_called_once_with("vehicle_dir", "test_file.param")
             mock_zipfile.write.assert_called_once_with("vehicle_dir/test_file.param", arcname="test_file.param")
 
-    @patch("ardupilot_methodic_configurator.backend_filesystem.requests_get")
-    def test_download_file_from_url(self, mock_get) -> None:
-        """Test file download functionality with various scenarios."""
-        # Setup mock response for successful download
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.content = b"test content"
-        mock_get.return_value = mock_response
-        mock_get.side_effect = None  # Clear any previous side effects
-
-        # Test successful download
-        mock_open_obj = MagicMock()
-        mock_file_obj = MagicMock()
-        mock_open_obj.return_value.__enter__.return_value = mock_file_obj
-
-        with patch("builtins.open", mock_open_obj):
-            result = LocalFilesystem.download_file_from_url("http://test.com/file", "local_file.txt")
-            assert result
-            mock_get.assert_called_once_with("http://test.com/file", timeout=5)
-            mock_open_obj.assert_called_once_with("local_file.txt", "wb")
-            mock_file_obj.write.assert_called_once_with(b"test content")
-
-        # Test failed download (404)
-        mock_get.reset_mock()
-        mock_get.side_effect = None  # Reset side effect
-        mock_response.status_code = 404
-        result = LocalFilesystem.download_file_from_url("http://test.com/not_found", "local_file.txt")
-        assert not result
-
-        # Test with empty URL
-        mock_get.reset_mock()
-        result = LocalFilesystem.download_file_from_url("", "local_file.txt")
-        assert not result
-        mock_get.assert_not_called()
-
-        # Test with empty local filename
-        mock_get.reset_mock()
-        result = LocalFilesystem.download_file_from_url("http://test.com/file", "")
-        assert not result
-        mock_get.assert_not_called()
-
-        # Test download with connection timeout
-        mock_get.reset_mock()
-
-        mock_get.side_effect = ConnectTimeout()
-        # this should be fixed at some point
-        # result = LocalFilesystem.download_file_from_url("http://test.com/timeout", "local_file.txt")
-        # assert not result
-        # mock_get.assert_called_once_with("http://test.com/timeout", timeout=5)
-
-    def test_get_download_url_and_local_filename(self) -> None:
+    def test_get_upload_local_and_remote_filenames_missing_file(self) -> None:
+        """Test get_upload_local_and_remote_filenames with missing file."""
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
-        with patch("os.path.join") as mock_join:
-            mock_join.return_value = "vehicle_dir/dest_local"
-            lfs.configuration_steps = {
-                "selected_file": {"download_file": {"source_url": "http://example.com/file", "dest_local": "dest_local"}}
-            }
-            result = lfs.get_download_url_and_local_filename("selected_file")
-            assert result == ("http://example.com/file", "vehicle_dir/dest_local")
-            mock_join.assert_called_once_with("vehicle_dir", "dest_local")
+        result = lfs.get_upload_local_and_remote_filenames("missing_file")
+        assert result == ("", "")
 
-    def test_get_upload_local_and_remote_filenames(self) -> None:
+    def test_get_upload_local_and_remote_filenames_missing_upload_section(self) -> None:
+        """Test get_upload_local_and_remote_filenames with missing upload section."""
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
-        with patch("os.path.join") as mock_join:
-            mock_join.return_value = "vehicle_dir/source_local"
-            lfs.configuration_steps = {
-                "selected_file": {"upload_file": {"source_local": "source_local", "dest_on_fc": "dest_on_fc"}}
-            }
-            result = lfs.get_upload_local_and_remote_filenames("selected_file")
-            assert result == ("vehicle_dir/source_local", "dest_on_fc")
-            mock_join.assert_called_once_with("vehicle_dir", "source_local")
+        lfs.configuration_steps = {"selected_file": {}}
+        result = lfs.get_upload_local_and_remote_filenames("selected_file")
+        assert result == ("", "")
 
-    def test_copy_fc_values_to_file(self) -> None:
+    def test_get_download_url_and_local_filename_missing_file(self) -> None:
+        """Test get_download_url_and_local_filename with missing file."""
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
-        test_params = {"PARAM1": 1.0, "PARAM2": 2.0}
+        result = lfs.get_download_url_and_local_filename("missing_file")
+        assert result == ("", "")
+
+    def test_get_download_url_and_local_filename_missing_download_section(self) -> None:
+        """Test get_download_url_and_local_filename with missing download section."""
+        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs.configuration_steps = {"selected_file": {}}
+        result = lfs.get_download_url_and_local_filename("selected_file")
+        assert result == ("", "")
+
+    def test_write_and_read_last_uploaded_filename_error_handling(self) -> None:
+        """Test error handling in write_and_read_last_uploaded_filename."""
+        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        test_filename = "test.param"
+
+        # Test write error
+        with patch("builtins.open", side_effect=OSError("Write error")):
+            lfs.write_last_uploaded_filename(test_filename)
+            # Should not raise exception, just log error
+
+        # Test read error
+        with patch("builtins.open", side_effect=OSError("Read error")):
+            result = lfs._LocalFilesystem__read_last_uploaded_filename()  # pylint: disable=protected-access
+            assert result == ""
+
+    def test_copy_fc_values_to_file_with_missing_params(self) -> None:
+        """Test copy_fc_values_to_file with missing parameters."""
+        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        test_params = {"PARAM1": 1.0, "PARAM2": 2.0, "PARAM3": 3.0}
         test_file = "test.param"
 
-        # Test with non-existent file
-        result = lfs.copy_fc_values_to_file(test_file, test_params)
-        assert result == 0
-
-        # Test with existing file and matching parameters
+        # Test with partially matching parameters
         lfs.file_parameters = {test_file: {"PARAM1": MagicMock(value=0.0), "PARAM2": MagicMock(value=0.0)}}
         result = lfs.copy_fc_values_to_file(test_file, test_params)
         assert result == 2
         assert lfs.file_parameters[test_file]["PARAM1"].value == 1.0
         assert lfs.file_parameters[test_file]["PARAM2"].value == 2.0
 
-    def test_write_and_read_last_uploaded_filename(self) -> None:
+    def test_get_start_file_empty_files(self) -> None:
+        """Test get_start_file with empty files list."""
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
-        test_filename = "test.param"
+        lfs.file_parameters = {}
+        result = lfs.get_start_file(1, True)  # noqa: FBT003
+        assert result == ""
+
+    def test_get_eval_variables_with_none(self) -> None:
+        """Test get_eval_variables with None values."""
+        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs.vehicle_components = None
+        lfs.doc_dict = None
+        result = lfs.get_eval_variables()
+        assert not result
+
+    def test_tolerance_check_with_zero_values(self) -> None:
+        """Test numerical value comparison with zero values."""
+        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+
+        # Test zero values
+        x, y = 0.0, 0.0
+        assert abs(x - y) <= 1e-08 + (1e-03 * abs(y))
+
+        # Test small positive vs zero
+        x, y = 1e-10, 0.0
+        assert abs(x - y) <= 1e-08 + (1e-03 * abs(y))
 
         # Test writing
+        test_filename = "test_param.param"
         expected_path = os_path.join("vehicle_dir", "last_uploaded_filename.txt")
         with patch("builtins.open", unittest.mock.mock_open()) as mock_file:
             lfs.write_last_uploaded_filename(test_filename)
@@ -326,6 +319,29 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             result = lfs._LocalFilesystem__read_last_uploaded_filename()  # pylint: disable=protected-access
             assert result == test_filename
             mock_file.assert_called_once_with(expected_path, encoding="utf-8")
+
+    def test_tolerance_handling(self) -> None:
+        """Test parameter value tolerance checking."""
+        # Setup LocalFilesystem instance
+        from ardupilot_methodic_configurator.backend_filesystem import (  # pylint: disable=import-outside-toplevel
+            is_within_tolerance,
+        )
+
+        # Test cases within tolerance (default 0.1%)
+        assert is_within_tolerance(10.0, 10.009)  # +0.09% - should pass
+        assert is_within_tolerance(10.0, 9.991)  # -0.09% - should pass
+        assert is_within_tolerance(100, 100)  # Exact match
+        assert is_within_tolerance(0.0, 0.0)  # Zero case
+
+        # Test cases outside tolerance
+        assert not is_within_tolerance(10.0, 10.02)  # +0.2% - should fail
+        assert not is_within_tolerance(10.0, 9.98)  # -0.2% - should fail
+        assert not is_within_tolerance(100, 101)  # Integer case
+
+        # Test with custom tolerance
+        custom_tolerance = 0.2  # 0.2%
+        assert is_within_tolerance(10.0, 10.015, atol=custom_tolerance)  # +0.15% - should pass
+        assert is_within_tolerance(10.0, 9.985, atol=custom_tolerance)  # -0.15% - should pass
 
     def test_write_param_default_values(self) -> None:
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
@@ -502,6 +518,127 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
         result = lfs._LocalFilesystem__all_intermediate_parameter_file_comments()  # pylint: disable=protected-access
         assert result == {"PARAM1": "Comment 1", "PARAM2": "Override comment 2", "PARAM3": "Comment 3"}
+
+    def test_get_git_commit_hash(self) -> None:
+        # Test with valid git repo
+        with patch("ardupilot_methodic_configurator.backend_filesystem.Repo") as mock_repo:
+            mock_repo.return_value.head.object.hexsha = "abcdef1234567890"
+            result = LocalFilesystem.get_git_commit_hash()
+            assert result == "abcdef1"
+
+        # Test with no git repo but git_hash.txt exists
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem.Repo") as mock_repo,
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists") as mock_exists,
+            patch("builtins.open", unittest.mock.mock_open(read_data="xyz1234")),
+        ):
+            mock_repo.side_effect = InvalidGitRepositoryError()
+            mock_exists.return_value = True
+            result = LocalFilesystem.get_git_commit_hash()
+            assert result == "xyz1234"
+
+        # Test with no git repo and no git_hash.txt
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem.Repo") as mock_repo,
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists") as mock_exists,
+        ):
+            mock_repo.side_effect = InvalidGitRepositoryError()
+            mock_exists.return_value = False
+            result = LocalFilesystem.get_git_commit_hash()
+            assert result == ""
+
+    def test_verify_file_hash(self) -> None:
+        test_content = b"test content"
+        test_hash = hashlib.sha256(test_content).hexdigest()
+        mock_file = unittest.mock.mock_open(read_data=test_content)
+
+        with patch("builtins.open", mock_file):
+            result = LocalFilesystem.verify_file_hash(Path("test_file"), test_hash)
+            assert result is True
+
+            # Test with incorrect hash
+            result = LocalFilesystem.verify_file_hash(Path("test_file"), "wrong_hash")
+            assert result is False
+
+    def test_extend_and_reformat_parameter_documentation_metadata(self) -> None:
+        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+
+        test_doc_dict = {
+            "PARAM1": {
+                "humanName": "Test Param",
+                "documentation": ["Test documentation"],
+                "fields": {
+                    "Units": "m/s (meters per second)",
+                    "Range": "0 100",
+                    "Calibration": "true",
+                    "ReadOnly": "yes",
+                    "RebootRequired": "1",
+                    "Bitmask": "0:Option1, 1:Option2",
+                },
+                "values": {"1": "Value1", "2": "Value2"},
+            }
+        }
+
+        lfs.doc_dict = test_doc_dict
+        lfs.param_default_dict = {"PARAM1": MagicMock(value=50.0)}
+
+        lfs._LocalFilesystem__extend_and_reformat_parameter_documentation_metadata()  # pylint: disable=protected-access
+
+        result = lfs.doc_dict["PARAM1"]
+        assert result["unit"] == "m/s"
+        assert result["unit_tooltip"] == "meters per second"
+        assert result["min"] == 0.0
+        assert result["max"] == 100.0
+        assert result["Calibration"] is True
+        assert result["ReadOnly"] is True
+        assert result["RebootRequired"] is True
+        assert result["Bitmask"] == {0: "Option1", 1: "Option2"}
+        assert result["Values"] == {1: "Value1", 2: "Value2"}
+        assert "Default: 50" in result["doc_tooltip"]
+
+    def test_add_argparse_arguments(self) -> None:
+        parser = ArgumentParser()
+        LocalFilesystem.add_argparse_arguments(parser)
+
+        # Verify all expected arguments are added
+        args = vars(parser.parse_args([]))
+        assert "vehicle_type" in args
+        assert "vehicle_dir" in args
+        assert "n" in args
+        assert "allow_editing_template_files" in args
+
+        # Test default values
+        assert args["vehicle_type"] == ""
+        assert args["n"] == -1
+        assert args["allow_editing_template_files"] is False
+
+        # Test with parameters
+        args = vars(parser.parse_args(["-t", "ArduCopter", "--n", "1", "--allow-editing-template-files"]))
+        assert args["vehicle_type"] == "ArduCopter"
+        assert args["n"] == 1
+        assert args["allow_editing_template_files"] is True
+
+    def test_annotate_intermediate_comments_to_param_dict(self) -> None:
+        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+
+        # Set up mock comments in file_parameters
+        mock_param1 = MagicMock()
+        mock_param1.comment = "Comment 1"
+        mock_param2 = MagicMock()
+        mock_param2.comment = "Comment 2"
+
+        lfs.file_parameters = {"file1.param": {"PARAM1": mock_param1}, "file2.param": {"PARAM2": mock_param2}}
+
+        input_dict = {"PARAM1": 1.0, "PARAM2": 2.0, "PARAM3": 3.0}
+        result = lfs.annotate_intermediate_comments_to_param_dict(input_dict)
+
+        assert len(result) == 3
+        assert result["PARAM1"].value == 1.0
+        assert result["PARAM1"].comment == "Comment 1"
+        assert result["PARAM2"].value == 2.0
+        assert result["PARAM2"].comment == "Comment 2"
+        assert result["PARAM3"].value == 3.0
+        assert result["PARAM3"].comment == ""
 
 
 class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):

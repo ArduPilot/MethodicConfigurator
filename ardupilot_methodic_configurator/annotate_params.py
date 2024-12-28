@@ -392,7 +392,7 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
         url = base_url + filename
         proxies = get_env_proxies()
         try:
-            response = requests_get(url, timeout=5, proxies=proxies)
+            response = requests_get(url, timeout=5, proxies=proxies) if proxies else requests_get(url, timeout=5)
             if response.status_code != 200:
                 logging.warning("Remote URL: %s", url)
                 msg = f"HTTP status code {response.status_code}"

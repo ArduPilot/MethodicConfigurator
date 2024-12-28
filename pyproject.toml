@@ -50,6 +50,7 @@ dependencies = [
     "pillow",
     "setuptools",
     "requests",
+    "GitPython",
 ]
 
 dynamic = ["version"]

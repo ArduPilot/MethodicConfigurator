@@ -30,6 +30,7 @@ from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, is_within_tolerance
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_internet import download_file_from_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments_and_parse
 from ardupilot_methodic_configurator.frontend_tkinter_base import (
     AutoResizeCombobox,
@@ -459,9 +460,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if self.local_filesystem.vehicle_configuration_file_exists(local_filename):
                 return  # file already exists in the vehicle directory, no need to download it
             msg = _("Should the {local_filename} file be downloaded from the URL\n{url}?")
-            if messagebox.askyesno(
-                _("Download file from URL"), msg.format(**locals())
-            ) and not self.local_filesystem.download_file_from_url(url, local_filename):
+            if messagebox.askyesno(_("Download file from URL"), msg.format(**locals())) and not download_file_from_url(
+                url, local_filename
+            ):
                 error_msg = _("Failed to download {local_filename} from {url}, please download it manually")
                 messagebox.showerror(_("Download failed"), error_msg.format(**locals()))
 
