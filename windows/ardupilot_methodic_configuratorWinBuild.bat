@@ -42,7 +42,7 @@ del ardupilot_methodic_configurator.spec
 
 rem -----Create version Info-----
 @echo off
-@echo %VERSION%> ..\windows\version.txt
+echo $(git rev-parse HEAD) > git_hash.txt
 @echo on
 
 rem -----Build the Installer-----

@@ -6,4 +6,4 @@ ardupilot_methodic_configurator.egg-info/
 ardupilot_methodic_configurator/test.xml
 build/
 dist/
-windows/version.txt
+git_hash.txt
