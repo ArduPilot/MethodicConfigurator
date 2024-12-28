@@ -4,6 +4,7 @@ __target__/
 .mypy_cache/
 ardupilot_methodic_configurator.egg-info/
 ardupilot_methodic_configurator/test.xml
+ardupilot_methodic_configurator_setup_*.exe
 build/
 dist/
 git_hash.txt
