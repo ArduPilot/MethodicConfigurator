@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 # from sys import exit as sys_exit
+import hashlib
 from argparse import ArgumentParser
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -18,6 +19,7 @@ from os import getcwd as os_getcwd
 from os import listdir as os_listdir
 from os import path as os_path
 from os import rename as os_rename
+from pathlib import Path
 from platform import system as platform_system
 from re import compile as re_compile
 from shutil import copy2 as shutil_copy2
@@ -25,14 +27,14 @@ from shutil import copytree as shutil_copytree
 from typing import Any, Optional
 from zipfile import ZipFile
 
-from requests import get as requests_get
+from git import Repo
+from git.exc import InvalidGitRepositoryError
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import (
     PARAM_DEFINITION_XML_FILE,
     Par,
     format_columns,
-    get_env_proxies,
     get_xml_dir,
     get_xml_url,
     load_default_param_file,
@@ -639,20 +641,25 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return "", ""
 
     @staticmethod
-    def download_file_from_url(url: str, local_filename: str, timeout: int = 5) -> bool:
-        if not url or not local_filename:
-            logging_error(_("URL or local filename not provided."))
-            return False
-        logging_info(_("Downloading %s from %s"), local_filename, url)
-        response = requests_get(url, timeout=timeout, proxies=get_env_proxies())
+    def get_git_commit_hash() -> str:
+        try:
+            repo = Repo(search_parent_directories=True)
+            return str(repo.head.object.hexsha[:7])
+        except InvalidGitRepositoryError:
+            # Fallback to reading the git_hash.txt file
+            git_hash_file = os_path.join(os_path.dirname(__file__), "git_hash.txt")
+            if os_path.exists(git_hash_file):
+                with open(git_hash_file, encoding="utf-8") as file:
+                    return file.read().strip()
+        return ""
 
-        if response.status_code == 200:
-            with open(local_filename, "wb") as file:
-                file.write(response.content)
-            return True
-
-        logging_error(_("Failed to download the file"))
-        return False
+    @staticmethod
+    def verify_file_hash(file_path: Path, expected_hash: str) -> bool:
+        sha256_hash = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest() == expected_hash
 
     @staticmethod
     def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:

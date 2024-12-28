@@ -124,7 +124,7 @@ jobs:
 
       - name: Check coverage
         run: |
-          coverage report --fail-under=32
+          coverage report --fail-under=40
 
   add_coverage_to_pullrequest:
     if: github.event_name == 'pull_request' && (success() || failure())
