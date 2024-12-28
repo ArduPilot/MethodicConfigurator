@@ -67,7 +67,7 @@ jobs:
            retention-days: 7
 
       - name: Pre Release
-        uses: "marvinpinto/action-automatic-releases@latest"
+        uses: "0xDylan/auto-releases@v1.1"
         if: github.ref == 'refs/heads/master'
         with:
           automatic_release_tag: "latest"
@@ -77,7 +77,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Release
-        uses: "marvinpinto/action-automatic-releases@latest"
+        uses: "0xDylan/auto-releases@v1.1"
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           prerelease: false
