@@ -69,7 +69,7 @@ Using these softwares allowed a small group of programmers to produce better cod
 
 Thanks to the users for testing and suggesting features and improvements.
 
-The books helped shape this software
+These books helped shape this software:
 
 - [Clean Code by Robert C. Martin](https://www.oreilly.com/library/view/clean-code/9780136083238/)
 - [Clean Architecture by Robert C. Martin](https://www.oreilly.com/library/view/clean-architecture/9780134494272/)
