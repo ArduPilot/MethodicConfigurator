@@ -1,4 +1,4 @@
-# Everyone should be able to configure ArduPilot for their vehicles
+# Everyone will be able to configure ArduPilot for their vehicles on their first attempt
 
 <!--
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
