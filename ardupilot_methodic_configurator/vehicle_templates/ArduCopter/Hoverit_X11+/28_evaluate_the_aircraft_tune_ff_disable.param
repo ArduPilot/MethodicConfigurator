@@ -1,0 +1,2 @@
+INS_RAW_LOG_OPT,0  # The notch filter is fully tuned now, we no longer need to log this
+ATC_RATE_FF_ENAB,0 # test the stabilization loops independent of the input shaping

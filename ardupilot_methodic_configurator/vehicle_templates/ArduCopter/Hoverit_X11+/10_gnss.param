@@ -1,0 +1,10 @@
+BRD_SAFETY_DEFLT,1  # Use a safety switch
+GPS_GNSS_MODE,65  # BEST OVER INDIA -> limit the constellations to ensure an update rate higher than 5Hz
+GPS_POS1_X,0.02  # Here3 GPS antenna is little bit forward.
+GPS_POS1_Y,-0.035  # Here3 GPS antenna is little bit in left.
+GPS_POS1_Z,-0.09  # Here3 GPS antenna is little bit higher.
+GPS_TYPE,9  # Defined in component editor
+NTF_LED_TYPES,231  # Enable DRONECAN LED
+SERIAL3_PROTOCOL,-1  # GNSS receiver is connected to CAN1
+SERIAL4_PROTOCOL,-1  # No GNSS connected to serial4, so disable it
+WPNAV_RADIUS,200  # we have a good GNSS receiver so we can afford to fly precisely

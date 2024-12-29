@@ -1,0 +1,10 @@
+ARMING_RUDDER,0  # It's was arming method from begin so I keep it
+BRD_ALT_CONFIG,0  # I choose 0 to be default.
+RC_OPTIONS,32  # I choose 32 to be default.
+RC_PROTOCOLS,16  # Selected in the component editor
+RC6_OPTION,0  # I don't use.
+RC7_OPTION,0  # I don't use.
+RC8_OPTION,0  # I have only 10 channels
+RC9_OPTION,99  # I use 99 to AUTO RTL.
+RC10_OPTION,17
+RSSI_TYPE,0  # radio without RSSI

@@ -1,0 +1,3 @@
+ATC_RAT_YAW_FLTD,28.75  # INS_GYRO_FILTER / 4
+AUTOTUNE_AGGR,0.1  # Use the default for now
+AUTOTUNE_AXES,4  # Autotune yaw axis

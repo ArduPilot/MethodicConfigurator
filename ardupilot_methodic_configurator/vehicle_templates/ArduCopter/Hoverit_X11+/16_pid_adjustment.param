@@ -1,0 +1,18 @@
+# If you have a very small, or a very large vehicle that requires non-default PID values for a safe flight, change them here
+#
+# Usually, smaller vehicles require lower than default PID rate values.
+# Larger vehicles usually require higher than default PID rate values.
+
+ATC_ANG_PIT_P,6.0
+ATC_ANG_RLL_P,5.2
+ATC_ANG_YAW_P,3.0
+ATC_INPUT_TC,0.17  # Make the RC feel a bit slower than default
+ATC_RAT_PIT_D,0.002781  #  (0.0036 default)
+ATC_RAT_PIT_I,0.085568  #  = 1.283176 * (0.135 default)
+ATC_RAT_PIT_P,0.085568  #  = 1.283176 * (0.135 default)
+ATC_RAT_RLL_D,0.00309  #  = 0.690593 * (0.0036 default)
+ATC_RAT_RLL_I,0.095506  #  = 1.061015 * (0.135 default)
+ATC_RAT_RLL_P,0.095506  #  = 1.061015 * (0.135 default)
+ATC_RAT_YAW_D,0  #  = 1 * (0 default)
+ATC_RAT_YAW_I,0.025  #  = 2.514026 * (0.018 default)
+ATC_RAT_YAW_P,0.25  #  = 2.514026 * (0.18 default)

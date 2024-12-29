@@ -1,0 +1,185 @@
+{
+    "Format version": 1,
+    "Components": {
+        "Flight Controller": {
+            "Product": {
+                "Manufacturer": "Hex/ProfiCNC",
+                "Model": "CubeOrangePlus",
+                "URL": "https://www.robotshop.com/products/cubepilot-the-cube-orange-standard-set-ads-b-carrier-board",
+                "Version": "1.0"
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.5.7 official"
+            },
+            "Notes": "This is CubeOrange with 94.5mm x 44.3mm x 17.3mm"
+        },
+        "Frame": {
+            "Product": {
+                "Manufacturer": "HOVERIT",
+                "Model": "",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "TOW min Kg": 30,
+                "TOW max Kg": 50
+            },
+            "Notes": "Frame is custom, X type frame, the middle is welded. Arm length is 1950mm."
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "RadioLink",
+                "Model": "",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "RCin/SBUS",
+                "Protocol": "SBUS_NI"
+            },
+            "Notes": ""
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": "High range and strength telemetry."
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "HOBBYWING",
+                "Model": "ESC X11+",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "CAN1",
+                "Protocol": "ESC"
+            },
+            "Notes": "Voltage and current are monitored via the ESC."
+        },
+        "Battery": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "Chemistry": "LiIonSS",
+                "Volt per cell max": 4.2,
+                "Volt per cell low": 3.6,
+                "Volt per cell crit": 3.55,
+                "Number of cells": 14,
+                "Capacity mAh": 80000
+            },
+            "Notes": "Normal battery 12Kg"
+        },
+        "ESC": {
+            "Product": {
+                "Manufacturer": "HOBBYWING",
+                "Model": "X11 Plus",
+                "URL": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm",
+                "Version": "1"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "Main Out",
+                "Protocol": "Normal"
+            },
+            "Notes": ""
+        },
+        "Motors": {
+            "Product": {
+                "Manufacturer": "HOBBYWING",
+                "Model": "X11  Plus 1118-85KV",
+                "URL": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm",
+                "Version": ""
+            },
+            "Specifications": {
+                "Poles": 14
+            },
+            "Notes": "High thrust and powerfull motors"
+        },
+        "Propellers": {
+            "Product": {
+                "Manufacturer": "HOBBYWING",
+                "Model": "43\"",
+                "URL": "https://www.amazon.com/HAWEWE-Hobbywing-Plastics-Propeller-Agricultural/dp/B0CH7WLPCG",
+                "Version": ""
+            },
+            "Specifications": {
+                "Diameter_inches": 43
+            },
+            "Notes": "Hobbywing high-quality propellers"
+        },
+        "GNSS Receiver": {
+            "Product": {
+                "Manufacturer": "CubePilot",
+                "Model": "Here 3",
+                "URL": "https://docs.cubepilot.org/user-guides/here-3/here-3-manual",
+                "Version": "1"
+            },
+            "Firmware": {
+                "Type": "UBlox",
+                "Version": "1.13.2"
+            },
+            "FC Connection": {
+                "Type": "CAN1",
+                "Protocol": "DroneCAN"
+            },
+            "Notes": "uBlox M8P GNSS with a patch antenna."
+        }
+    },
+    "Program version": "1.0.2",
+    "Configuration template": "X11_plus"
+}

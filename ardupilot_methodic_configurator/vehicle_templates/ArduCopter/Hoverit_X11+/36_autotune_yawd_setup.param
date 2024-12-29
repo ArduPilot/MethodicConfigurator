@@ -1,0 +1,3 @@
+AUTOTUNE_AGGR,0.10 # Use the default for now
+AUTOTUNE_AXES,8 # Autotune on yaw D axis
+AUTOTUNE_MIN_D,0.0001 # small copters need small D parameters

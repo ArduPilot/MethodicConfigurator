@@ -1,0 +1,18 @@
+ATC_ACCEL_P_MAX,14300  # Derived from vehicle component editor propeller size
+ATC_ACCEL_R_MAX,14300  # Derived from vehicle component editor propeller size
+ATC_ACCEL_Y_MAX,8000  # Derived from vehicle component editor propeller size
+ATC_ANG_YAW_P,1.3  # Derived from vehicle component editor propeller size
+ATC_RAT_PIT_FLTD,10  # INS_GYRO_FILTER / 2
+ATC_RAT_PIT_FLTE,0  # Initial value, will be improved at a later step
+ATC_RAT_PIT_FLTT,10  # INS_GYRO_FILTER / 2
+ATC_RAT_RLL_FLTD,10  # INS_GYRO_FILTER / 2
+ATC_RAT_RLL_FLTE,0  # Initial value, will be improved at a later step
+ATC_RAT_RLL_FLTT,10  # INS_GYRO_FILTER / 2
+ATC_RAT_YAW_FLTD,0  # Initial value, will be improved at a later step
+ATC_RAT_YAW_FLTE,2  # Initial value, will be improved at a later step
+ATC_RAT_YAW_FLTT,10  # INS_GYRO_FILTER / 2
+ATC_THR_MIX_MAN,0.1  # Value for the first couple of flights will be changed later once MOT_THST_HOVER is learned
+INS_ACCEL_FILTER,10  # The default is 20Hz but that is too high in most situations
+INS_GYRO_FILTER,20  # Derived from vehicle component editor propeller size
+MOT_THST_EXPO,0.83  # Derived from vehicle component editor propeller size
+MOT_THST_HOVER,0.2  # Hover learn will improve this initial guess

@@ -1,0 +1,4 @@
+MOT_SPIN_ARM,0.06  # X11 plus dead zone is 0.05
+MOT_SPIN_MAX,0.95  # Upper dead zone of the X11 plus
+MOT_SPIN_MIN,0.09  # MOT_SPIN_ARM + 0.03
+MOT_THST_EXPO,0.82  # I don't have thrust stand so use Ardupilot suggestion.

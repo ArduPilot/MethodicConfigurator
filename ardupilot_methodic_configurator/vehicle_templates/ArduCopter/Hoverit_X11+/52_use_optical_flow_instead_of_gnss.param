@@ -1,0 +1,8 @@
+EK3_SRC_OPTIONS,0  # Disable FuseAllVelocities
+EK3_SRC1_POSXY,0  # 0 for optical flow only or 3 to fallback to GNSS
+EK3_SRC1_POSZ,1  # Baro, we will not use GNSS here
+EK3_SRC1_VELXY,5  # Optical flow is now calibrated, use it
+EK3_SRC1_VELZ,0  # None, optical flow will not provide Z velocity
+EK3_SRC1_YAW,1  # Use magnetometer as a yaw reference
+RC8_OPTION,0  # Disable RC8 switch for safety reasons
+RC9_OPTION,0  # Disable RC9 switch for safety reasons

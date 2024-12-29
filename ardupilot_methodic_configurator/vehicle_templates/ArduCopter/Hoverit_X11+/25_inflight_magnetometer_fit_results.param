@@ -1,0 +1,14 @@
+COMPASS_DIA_X,1.033 # Diagonal X component for static compensation of metal in the frame
+COMPASS_DIA_Y,1.032 # Diagonal Y component for static compensation of metal in the frame
+COMPASS_DIA_Z,0.842 # Diagonal Z component for static compensation of metal in the frame
+COMPASS_MOT_X,0.195 # Correction value for motor currents in X direction
+COMPASS_MOT_Y,0.394 # Correction value for motor currents in Y direction
+COMPASS_MOT_Z,-1.366 # Correction value for motor currents in Z direction
+COMPASS_MOTCT,2 # Type of interference compensation; two means current-based compensation
+COMPASS_ODI_X,0.001 # Off-diagonal X component for static compensation of metal in the frame
+COMPASS_ODI_Y,-0.070 # Off-diagonal Y component for static compensation of metal in the frame
+COMPASS_ODI_Z,0.083 # Off-diagonal Z component for static compensation of metal in the frame
+COMPASS_OFS_X,313 # Lateral compass offset to the X axis for static compensation of metal in the frame
+COMPASS_OFS_Y,-42 # Lateral compass offset to the Y axis for static compensation of metal in the frame
+COMPASS_OFS_Z,214 # Lateral compass offset to the Z axis for static compensation of metal in the frame
+COMPASS_SCALE,1.00 # Scaling factor for compensation

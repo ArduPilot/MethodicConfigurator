@@ -1,0 +1,4 @@
+DID_CANDRIVER,0
+DID_ENABLE,0  # Our RemoteID module does not communicate with ArduPilot
+DID_MAVPORT,2  # The serial port attached to the OpenDroneID module
+DID_OPTIONS,0
