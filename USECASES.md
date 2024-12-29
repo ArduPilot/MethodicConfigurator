@@ -1,4 +1,9 @@
 # Ardupilot Methodic Configurator use cases
+<!--
+SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
 
 The software is meant to guide you a in sequence of procedural steps to configure and tune your vehicle in a safe and time-efficient way.
 
@@ -13,6 +18,7 @@ But there are other use cases as well:
   - [Create a vehicle configuration based on a correctly configured vehicle](#create-a-vehicle-configuration-based-on-a-correctly-configured-vehicle)
   - [Review and or edit configuration files without having the vehicle FC](#review-and-or-edit-configuration-files-without-having-the-vehicle-fc)
   - [Use the correct default values](#use-the-correct-default-values)
+  - [Re-run the procedure after changing a vehicle component](#re-run-the-procedure-after-changing-a-vehicle-component)
 
 ## Create a vehicle configuration based on a correctly configured vehicle
 

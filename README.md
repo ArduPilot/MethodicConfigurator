@@ -34,7 +34,8 @@ But for those it is still very incomplete.
 
 ## Usage
 
-There is a [Quick-start guide](https://ardupilot.github.io/MethodicConfigurator/QUICKSTART.html) and a more detailed [Usermanual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html)
+There is a [Quick-start guide](https://ardupilot.github.io/MethodicConfigurator/QUICKSTART.html) and a more detailed [Usermanual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html).
+Most [common usecases are also documented in detail](https://ardupilot.github.io/MethodicConfigurator/USECASES.html).
 
 ## MS Windows Installation
 

@@ -50,6 +50,7 @@ class TemplateOverviewWindow(BaseWindow):
         self.root.geometry("1200x600")
 
         instruction_text = _("Please double-click the template below that most resembles your own vehicle components")
+        instruction_text += _("\nit does not need to exactly match your vehicle's components.")
         instruction_label = ttk.Label(self.main_frame, text=instruction_text, font=("Arial", 12))
         instruction_label.pack(pady=(10, 20))
 
