@@ -21,7 +21,7 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.frontend_tkinter_base import show_tooltip
 
 
-class DocumentationFrame:  # pylint: disable=too-few-public-methods
+class DocumentationFrame:
     """
     A class to manage and display documentation within the GUI.
 
@@ -93,6 +93,18 @@ class DocumentationFrame:  # pylint: disable=too-few-public-methods
 
         # Dynamically update the documentation text and URL links
         self.update_documentation_labels(self.current_file)
+        self.update_why_why_now_tooltip(self.current_file)
+
+    def update_why_why_now_tooltip(self, current_file: str) -> None:
+        why_tooltip_text = self.local_filesystem.get_seq_tooltip_text(current_file, "why")
+        why_now_tooltip_text = self.local_filesystem.get_seq_tooltip_text(current_file, "why_now")
+        tooltip_text = ""
+        if why_tooltip_text:
+            tooltip_text += _("Why: ") + why_tooltip_text + "\n"
+        if why_now_tooltip_text:
+            tooltip_text += _("Why now: ") + why_now_tooltip_text
+        if tooltip_text:
+            show_tooltip(self.documentation_frame, tooltip_text)
 
     def update_documentation_labels(self, current_file: str) -> None:
         self.current_file = current_file

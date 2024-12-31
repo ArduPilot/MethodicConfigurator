@@ -201,3 +201,16 @@ class ConfigurationSteps:
             text = documentation.get(prefix_key + "_text", text.format(**locals()))
             url = documentation.get(prefix_key + "_url", "")
         return text, url
+
+    def get_seq_tooltip_text(self, selected_file: str, tooltip_key: str) -> str:
+        documentation = self.configuration_steps.get(selected_file, {}) if self.configuration_steps else None
+        if documentation is None:
+            text = _(
+                "File '{self.configuration_steps_filename}' not found. "
+                "No intermediate parameter configuration steps available"
+            )
+            text = text.format(**locals())
+        else:
+            text = _("No documentation available for {selected_file} in the {self.configuration_steps_filename} file")
+            text = documentation.get(tooltip_key, text.format(**locals()))
+        return text

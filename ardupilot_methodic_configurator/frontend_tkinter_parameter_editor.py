@@ -505,6 +505,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.current_file = selected_file
             self.at_least_one_changed_parameter_written = False
             self.documentation_frame.update_documentation_labels(selected_file)
+            self.documentation_frame.update_why_why_now_tooltip(selected_file)
             self.repopulate_parameter_table(selected_file)
 
     def download_flight_controller_parameters(self, redownload: bool = False) -> None:
