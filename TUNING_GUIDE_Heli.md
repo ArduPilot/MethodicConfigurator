@@ -69,6 +69,7 @@ To demonstrate how to methodically tune a ArduCopter vehicle we selected a small
 It uses the following components:
 
 <!-- markdown-link-check-disable -->
+
 | Type | Part |
 |:---|:----|
 |Frame | [T-Rex 500](https://www.diatone.us/products/diatone-mxc-taycan-duct-3-inch-cinewhoop-fpv-drone) |
@@ -83,6 +84,7 @@ It uses the following components:
 |RC Receiver | [Futaba 7603](https://www.team-blacksheep.com/products/prod:crossfire_nano_se) |
 |RC Transmitter | [Futaba 9C](https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller) |
 | Remote ID transmitter | [Remote ID transmitter](https://holybro.com/products/remote-id) |
+
 <!-- markdown-link-check-enable -->
 
 Your vehicle will be different as your application will have different requirements.
