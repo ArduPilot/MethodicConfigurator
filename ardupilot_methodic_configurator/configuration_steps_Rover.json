@@ -1,9 +1,8 @@
 {
     "02_imu_temperature_calibration_setup.param": {
-        "what": "InertialMeasurementUnit Temperature Calibration setup",
         "why": "The IMU drift is temperature dependent and can cause gyro and/or accel inconsistent errors",
         "why_now": "You need to cool down the FC to perform this calibration. It is easier to do before the FC is mounted in the vehicle",
-        "blog_text": "Contains setup parameters for IMU temperature calibration, part of the initial calibration process.",
+        "blog_text": "IMU (Inertial Measurement Unit) temperature calibration setup",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#41-setup-imu-temperature-calibration",
         "wiki_text": "IMU Temperature Calibration",
         "wiki_url": "https://ardupilot.org/copter/docs/common-imutempcal.html",
@@ -26,10 +25,9 @@
         "old_filenames": []
     },
     "03_imu_temperature_calibration_results.param": {
-        "what": "InertialMeasurementUnit Temperature Calibration results",
         "why": "The IMU drift is temperature dependent and can cause gyro and/or accel inconsistent errors",
         "why_now": "Requires the setup step. It is easier to do before the FC is mounted in the vehicle",
-        "blog_text": "Records the results of the IMU temperature calibration, providing data for analysis and adjustment.",
+        "blog_text": "IMU (Inertial Measurement Unit) temperature calibration results",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#42-calculate-imu-temperature-calibration",
         "wiki_text": "IMU Temperature Calibration",
         "wiki_url": "https://ardupilot.org/copter/docs/common-imutempcal.html",
@@ -40,10 +38,9 @@
         "old_filenames": []
     },
     "04_board_orientation.param": {
-        "what": "Defines the orientation of the flight controller board relative to the vehicle's body frame",
         "why": "Correct orientation ensures that the flight controller accurately interprets the vehicle's movements and orientation, which is fundamental for stable flight and navigation.",
         "why_now": "The following steps require that the orientation is correctly set",
-        "blog_text": "Defines the orientation of the flight controller board relative to the vehicle's body frame, crucial for accurate navigation and stabilization.",
+        "blog_text": "Define the orientation of the flight controller board relative to the vehicle's body frame",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#61-configure-flight-controller-orientation",
         "wiki_text": "Mounting the Autopilot - AHRS_ORIENTATION parameter",
         "wiki_url": "https://ardupilot.org/copter/docs/common-mounting-the-flight-controller.html",
@@ -60,10 +57,9 @@
         "old_filenames": []
     },
     "05_remote_controller.param": {
-        "what": "Configures remote controller connection, protocol and settings, including channel mapping and flight modes",
         "why": "Remote controller is mandatory in the initial configuration and tunning phases. Later might be required for operation and/or safety",
         "why_now": "It is a pre-requirement for configuring some telemetry systems and ESCs",
-        "blog_text": "Configures settings related to the remote controller, including channel mapping and control modes.",
+        "blog_text": "Configure remote controller connection, protocol and settings, including channel mapping and flight modes",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#62-configure-the-rc-receiver",
         "wiki_text": "Radio Control Systems",
         "wiki_url": "https://ardupilot.org/copter/docs/common-rc-systems.html",
@@ -78,10 +74,9 @@
         "old_filenames": []
     },
     "06_telemetry.param": {
-        "what": "Configures telemetry connection, data protocol and settings between the autopilot and the ground control station(s)",
         "why": "Telemetry allows the ground control station to monitor the vehicle's status in real-time, providing flight information for safe and efficient operation.",
         "why_now": "Sometimes it depends on the remote controller. Configuring telemetry early allows vehicle configuration and sensor calibration in later steps without requiring a USB cable connection to the autopilot",
-        "blog_text": "Sets up telemetry parameters for data transmission, including GPS, altitude, and other flight metrics.",
+        "blog_text": "Configure telemetry connection, data protocol and settings between the autopilot and the ground control station(s)",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#63-configure-telemetry",
         "wiki_text": "Telemetry (landing page)",
         "wiki_url": "https://ardupilot.org/copter/docs/common-telemetry-landingpage.html",
@@ -93,10 +88,9 @@
         "old_filenames": []
     },
     "07_esc.param": {
-        "what": "Configures settings for the Electronic Speed Controllers (ESCs), including PWM range and failsafe behavior.",
         "why": "Proper ESC configuration is crucial for accurate motor control, affecting vehicle performance and safety. It ensures motors respond correctly to control signals and fail safely in various flight conditions.",
         "why_now": "Pre-requires remote control configuration. Uses GCS telemetry if available. Setting up ESCs early allows for initial motor tests and ensures a stable base for further tuning and flight testing without risking damage to the vehicle.",
-        "blog_text": "Configures settings for the Electronic Speed Controllers (ESCs), including PWM range and failsafe behavior.",
+        "blog_text": "Configure settings for the Electronic Speed Controllers (ESCs), including PWM range and failsafe behavior",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#64-configure-the-esc",
         "wiki_text": "ESC (Electronic Speed Controls)",
         "wiki_url": "https://ardupilot.org/copter/docs/common-esc-guide.html",
@@ -116,10 +110,9 @@
         "old_filenames": []
     },
     "08_batt1.param": {
-        "what": "Configure parameters for the first battery, including health monitoring thresholds and failsafe behavior",
         "why": "Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge",
         "why_now": "The failsafe configuration step requires this. During flight tests PID scaling depends on the battery voltage",
-        "blog_text": "Contains parameters for the first battery, including voltage thresholds and failsafe behavior.",
+        "blog_text": "Configure parameters for the first battery, including health monitoring thresholds and failsafe behavior",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#65-configure-the-primary-battery-monitor",
         "wiki_text": "Battery Monitors (aka Power Monitors/Modules) - BATT_* parameters",
         "wiki_url": "https://ardupilot.org/copter/docs/common-powermodule-landingpage.html",
@@ -145,10 +138,9 @@
         "old_filenames": []
     },
     "09_batt2.param": {
-        "what": "Configure parameters for the first battery, including health monitoring thresholds and failsafe behavior",
         "why": "Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge",
         "why_now": "The failsafe configuration step requires this. Controller PID scaling depends on the battery voltage",
-        "blog_text": "Contains parameters for the second battery, including voltage thresholds and failsafe behavior.",
+        "blog_text": "Configure parameters for the second battery, including health monitoring thresholds and failsafe behavior",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#66-configure-the-redundant-secondary-battery-monitor-optional",
         "wiki_text": "Battery Monitors (aka Power Monitors/Modules) - BATT2_* parameters",
         "wiki_url": "https://ardupilot.org/copter/docs/common-powermodule-landingpage.html",
@@ -159,10 +151,9 @@
         "old_filenames": []
     },
     "10_gnss.param": {
-        "what": "Configures the Global Navigation Satellite System (GNSS) connection and settings, including antenna phase center location and constellation selection for optimal update rates",
         "why": "GNSS positioning is required to compensate for the IMU drift. This is required by the configuration and tuning steps. After configuration and tuning are complete the GNSS can be replaced by other positioning system",
         "why_now": "Needs to be done before compass calibration",
-        "blog_text": "Configures settings for the Global Navigation Satellite System (GNSS), including positioning and velocity estimation.",
+        "blog_text": "Configure the GNSS (Global Navigation Satellite System) connection and settings, including antenna phase center location and constellation selection for optimal update rates",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#67-configure-the-gnss-receivers",
         "wiki_text": "GPS/Compass (landing page) - GPS* parameters",
         "wiki_url": "https://ardupilot.org/copter/docs/common-positioning-landing-page.html",
@@ -177,10 +168,9 @@
         "old_filenames": []
     },
     "11_initial_atc.param": {
-        "what": "Configures parameters depending on the vehicle's propeller size",
-        "why": "Propeller size has a big influence on the vehicle dynamics, this adapts controller response to it",
-        "why_now": "Done before sensor calibration in Mission Planner to minimize the changes the uses has to do in mission planner",
-        "blog_text": "Initial attitude controller configuration",
+        "why": "Propeller size has a big influence on the vehicle dynamics, this adapts the attitude controller response to it",
+        "why_now": "Done before sensor calibration in Mission Planner to minimize the changes the user has to do in mission planner",
+        "blog_text": "Initial attitude controller configuration depends on the vehicle's propeller size defined in the component editor window",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#68-initial-attitude-pid-gains-vehicle-size-dependent",
         "wiki_text": "Initial parameters calculator",
         "wiki_url": "https://discuss.ardupilot.org/t/initial-parameters-calculator-plugin/56909/61",
@@ -213,10 +203,9 @@
         "old_filenames": []
     },
     "12_mp_setup_mandatory_hardware.param": {
-        "what": "accelerometer, gyroscope, compass and RC calibration using Mission Planner",
-        "why": "Sensors need to be calibrated once before they can be used",
-        "why_now": "this can only be done effectively after all the preceding steps because it uses their results",
-        "blog_text": "Sets up mandatory hardware components, ensuring all necessary sensors and systems are correctly configured.",
+        "why": "Sensors need to be calibrated once, before they can be used",
+        "why_now": "Can only be done after the connections and device drivers have been configured in the preceding steps",
+        "blog_text": "Set up mandatory hardware components using Mission Planner",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#69-configure-mandatory-hardware-parameters",
         "wiki_text": "Follow the blog instructions and use Mission Planner instead of this tool to configure the mandatory hardware parameters.",
         "wiki_url": "",
@@ -227,10 +216,9 @@
         "old_filenames": ["11_mp_setup_mandatory_hardware.param"]
     },
     "13_general_configuration.param": {
-        "what": "General configuration parameters for the vehicle, including flight modes and safety settings.",
-        "why": "The parameter defaults of some parameters are not sutable for the flight tests that will follow",
+        "why": "The parameter defaults of some parameters are not suitable for the flight tests that will follow",
         "why_now": "Most parameters have been configured in previous steps. These are parameters that did not fit in any of the categories of the previous steps.",
-        "blog_text": "General configuration parameters for the vehicle, including flight modes and safety settings.",
+        "blog_text": "General configuration parameters for the vehicle, including flight modes and safety settings",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#610-general-configuration",
         "wiki_text": "",
         "wiki_url": "",
@@ -245,10 +233,9 @@
         "old_filenames": ["12_general_configuration.param"]
     },
     "14_logging.param": {
-        "what": "Configures logging parameters, including what data is logged and how it's stored.",
         "why": "parameter values at later steps depend on data that is gathered by means of logging",
         "why_now": "All the previous steps did not require logging, but the following ones do",
-        "blog_text": "Configures logging parameters, including what data is logged and how it's stored.",
+        "blog_text": "Configure logging parameters, including what data is logged and how it's stored",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#612-configure-logging",
         "wiki_text": "Downloading and Analyzing Data Logs in Mission Planner",
         "wiki_url": "https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html",
@@ -264,10 +251,9 @@
         "old_filenames": ["13_logging.param"]
     },
     "15_motor.param": {
-        "what": "ESC, Motor and propeller configurations",
         "why": "The motor thrust linearization is crucial for the throttle controller tuning, and throttle-based notch filter operation",
         "why_now": "The notch filter setup step requires this, and the safety of the vehicle depends on the ESC and motor configuration",
-        "blog_text": "ESC, Motor and propeller configurations.",
+        "blog_text": "ESC, Motor and propeller configurations",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#motor-thrust-scaling-mot_thst_expo-mot_spin_min-and-mot_spin_max",
         "wiki_text": "Motor Thrust Scaling",
         "wiki_url": "https://ardupilot.org/copter/docs/motor-thrust-scaling.html",
@@ -278,10 +264,9 @@
         "old_filenames": ["14_motor.param"]
     },
     "16_pid_adjustment.param": {
-        "what": "Adjusting the Proportional-Integral-Derivative (PID) controllers based on the vehicle size before the first flight",
         "why": "With very large or very small vehicles the default PID values are not suitable for the first flight",
         "why_now": "Most other parameters are done and these need to be corrected (depending on the vehicle size) before the first flight",
-        "blog_text": "Contains parameters for adjusting the Proportional-Integral-Derivative (PID) controllers, crucial for tuning the vehicle's flight characteristics.",
+        "blog_text": "Adjust the Proportional-Integral-Derivative (PID) controllers based on the vehicle size before the first flight",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#614-optional-pid-adjustment",
         "wiki_text": "Manual tuning of Roll and Pitch",
         "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
@@ -292,10 +277,9 @@
         "old_filenames": ["15_pid_adjustment.param"]
     },
     "17_remote_id.param": {
-        "what": "Set the remote ID for the vehicle, to comply with local laws if applicable.",
         "why": "Some countries require a remote ID for drones to be flown legally.",
         "why_now": "Remote ID requires GNSS and air pressure to be configured before, and it must be set up before the first flight",
-        "blog_text": "Sets the remote ID for the vehicle, allowing it to comply with local laws.",
+        "blog_text": "Set the remote ID for the vehicle, to comply with local laws if applicable",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#615-remote-id-aka-drone-id",
         "wiki_text": "Remote ID (aka Drone ID)",
         "wiki_url": "https://ardupilot.org/copter/docs/common-remoteid.html",
@@ -306,10 +290,9 @@
         "old_filenames": ["16_remote_id.param"]
     },
     "18_notch_filter_setup.param": {
-        "what": "Configures the notch filter settings, used to reduce noise in the gyroscope signal caused by the motors",
         "why": "When the gyroscope signal is less noisy the PID gains can be higher without causing motor output oscillations",
         "why_now": "Before the first flight so that it can gather data and safeguard the vehicle from some of the noise",
-        "blog_text": "Configures the notch filter settings, used to reduce noise in the signal from the gyroscope.",
+        "blog_text": "Configure the notch filter settings, used to reduce gyroscope signal noise caused by the motors rotation",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#616-notch-filters-setup",
         "wiki_text": "Managing Gyro Noise with the Dynamic Harmonic Notch Filters",
         "wiki_url": "https://ardupilot.org/copter/docs/common-imu-notch-filtering.html",
@@ -326,24 +309,22 @@
         "old_filenames": ["17_notch_filter_setup.param"]
     },
     "19_notch_filter_results.param": {
-        "what": "Configures the notch filter(s) based on the data collected from the first flight.",
         "why": "The notch filter(s) configuration depends on real-flight data.",
         "why_now": "real-flight data is only available after the first flight",
-        "blog_text": "Records the results of the notch filter setup, providing data for analysis and adjustment.",
+        "blog_text": "Configure the notch filter(s) based on the data collected from the first flight",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#81-notch-filter-calibration",
         "wiki_text": "Managing Gyro Noise with the Dynamic Harmonic Notch Filters",
         "wiki_url": "https://ardupilot.org/copter/docs/common-imu-notch-filtering.html",
-        "external_tool_text": "Ardupilot Filter Review tool 100",
+        "external_tool_text": "Ardupilot Filter Review tool",
         "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/FilterReview/",
         "mandatory_text": "100% mandatory (0% optional)",
         "auto_changed_by": "",
         "old_filenames": ["18_notch_filter_results.param"]
     },
     "20_throttle_controller.param": {
-        "what": "Uses MOT_THST_HOVER value calculated during the first flight to set altitude controller PIDs.",
         "why": "The throttle controller is crucial for maintaining altitude and controlling the vehicle's vertical movement.",
         "why_now": "After the first flight because it depends on the MOT_THST_HOVER parameter, before the second flight so that it can safely use the altitude controller",
-        "blog_text": "Configures settings for the throttle controller, including throttle curve and failsafe behavior.",
+        "blog_text": "Use MOT_THST_HOVER value calculated during the first flight to set throttle controller PIDs",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#82-configure-the-throttle-controller",
         "wiki_text": "Test AltHold",
         "wiki_url": "https://ardupilot.org/copter/docs/initial-tuning-flight.html#test-althold",
@@ -358,10 +339,9 @@
         "old_filenames": ["19_throttle_controller.param"]
     },
     "21_ekf_config.param": {
-        "what": "Configure Extended Kalman Filter (EKF) noise weights.",
         "why": "Sometimes the weights of the barometer vs. GNSS altitude need to be adjusted.",
         "why_now": "Before the second flight so that the EKF can be used to estimate the vehicle's position",
-        "blog_text": "Configure EKF noise weights.",
+        "blog_text": "Configure Extended Kalman Filter (EKF) noise weights",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#83-configure-the-ekf-altitude-source-weights",
         "wiki_text": "Extended Kalman filter tuning",
         "wiki_url": "https://ardupilot.org/dev/docs/extended-kalman-filter.html",
@@ -371,10 +351,9 @@
         "old_filenames": ["20_ekf_config.param"]
     },
     "22_quick_tune_setup.param": {
-        "what": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs before the MAGFit flight.",
         "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
         "why_now": "Before the second flight so that the vehicle can be safely tuned.",
-        "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs before the MAGFit flight.",
+        "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs before the MAGFit flight",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#84-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune",
         "wiki_text": "If lua scripting is not possible, do a manual tune instead",
         "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
@@ -390,7 +369,6 @@
         "upload_file": { "source_local": "VTOL-quicktune.lua", "dest_on_fc": "/APM/Scripts/VTOL-quicktune.lua" }
     },
     "23_quick_tune_results.param": {
-        "what": "Records the results of the in-flight VTOL-quicktune lua script PIDs before the MAGFit flight.",
         "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
         "why_now": "Before the second flight so that the vehicle can be safely tuned.",
         "blog_text": "Results of the in-flight VTOL-quicktune lua script PIDs before the MAGFit flight.",
@@ -404,10 +382,9 @@
         "old_filenames": ["21_quick_tune_results.param"]
     },
     "24_inflight_magnetometer_fit_setup.param": {
-        "what": "Sets up parameters for the in-flight magnetometer calibration.",
         "why": "The compass heading is crucial for the vehicle's navigation and the calibration is very accurate if done during a special flight path.",
         "why_now": "Requires a basic tune (provided by the previous step) in order to be able to safely navigate in a figure eight flight path.",
-        "blog_text": "Sets up parameters for the in-flight magnetometer calibration, ensuring accurate compass heading.",
+        "blog_text": "Set up parameters for the in-flight magnetometer calibration",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#911-setup-inflight-magfit-calibration",
         "wiki_text": "If lua scripting is not possible do compassmot instead",
         "wiki_url": "https://ardupilot.org/copter/docs/common-compass-setup-advanced.html#compassmot-compensation-for-interference-from-the-power-wires-escs-and-motors",
@@ -424,10 +401,9 @@
         "upload_file": { "source_local": "copter-magfit-helper.lua", "dest_on_fc": "/APM/Scripts/copter-magfit-helper.lua" }
     },
     "25_inflight_magnetometer_fit_results.param": {
-        "what": "Records the results of the in-flight magnetometer calibration.",
         "why": "The compass heading is crucial for the vehicle's navigation and the calibration is very accurate if done during a special flight path.",
         "why_now": "Requires the setup (provided by the previous step) and should be done before the second quicktune.",
-        "blog_text": "Records the results of the in-flight magnetometer calibration, providing data for analysis and adjustment.",
+        "blog_text": "Record the results of the in-flight magnetometer calibration",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#912-calculate-inflight-magfit-calibration",
         "wiki_text": "If lua scripting is not possible do compassmot instead",
         "wiki_url": "https://ardupilot.org/copter/docs/common-compass-setup-advanced.html#compassmot-compensation-for-interference-from-the-power-wires-escs-and-motors",
@@ -438,10 +414,9 @@
         "old_filenames": ["23_inflight_magnetometer_fit_results.param"]
     },
     "26_quick_tune_setup.param": {
-        "what": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs after the MAGFit flight.",
         "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
         "why_now": "Now that MagFit has been performed the quicktune will work even better",
-        "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs after the MAGFit flight.",
+        "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs after the MAGFit flight",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#921-setup-quicktune",
         "wiki_text": "If lua scripting is not possible, do a manual tune instead",
         "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
@@ -455,10 +430,9 @@
         "old_filenames": ["24_quick_tune_setup.param"]
     },
     "27_quick_tune_results.param": {
-        "what": "Records the results of the in-flight VTOL-quicktune lua script PIDs after the MAGFit flight.",
         "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
         "why_now": "We need a good tune before autotune.",
-        "blog_text": "Results of the in-flight VTOL-quicktune lua script PIDs after the MAGFit flight.",
+        "blog_text": "Results of the in-flight VTOL-quicktune lua script PIDs after the MAGFit flight",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#922-store-quicktune-results-to-file",
         "wiki_text": "If lua scripting is not possible, do a manual tune instead",
         "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
@@ -469,10 +443,9 @@
         "old_filenames": ["25_quick_tune_results.param"]
     },
     "28_evaluate_the_aircraft_tune_ff_disable.param": {
-        "what": "Contains parameters for evaluating the aircraft's tuning with feed-forward control disabled",
-        "why": "Evaluate the aircraft's PID tuning and flight characteristics.",
+        "why": "Evaluating the aircraft's PID tuning and flight characteristics is best done with feed-forward disabled",
         "why_now": "Before the autotune process to estimate if autotune can safely operate the vehicle",
-        "blog_text": "Contains parameters for evaluating the aircraft's tuning with feed-forward control disabled, useful for comparison.",
+        "blog_text": "Evaluate the aircraft's tuning with feed-forward control disabled",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#93-fifth-flight-evaluate-the-aircraft-tune---part-1",
         "wiki_text": "Evaluating the aircraft tune",
         "wiki_url": "https://ardupilot.org/copter/docs/evaluating-the-aircraft-tune.html#evaluating-the-aircraft-tune",
@@ -486,10 +459,9 @@
         "old_filenames": ["26_evaluate_the_aircraft_tune_ff_disable.param"]
     },
     "29_evaluate_the_aircraft_tune_ff_enable.param": {
-        "what": "Contains parameters for evaluating the aircraft's tuning with feed-forward control enabled",
-        "why": "Evaluate the aircraft's PID tuning and flight characteristics.",
+        "why": "Evaluate the aircraft's PID tuning and flight characteristics with feed-forward enable to test faster dynamics",
         "why_now": "Before the autotune process to estimate if autotune can safely operate the vehicle",
-        "blog_text": "Contains parameters for evaluating the aircraft's tuning with feed-forward control enabled, for optimal performance.",
+        "blog_text": "Evaluate the aircraft's tuning with feed-forward control enabled",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#94-sixth-flight-evaluate-the-aircraft-tune---part-2",
         "wiki_text": "Evaluating the aircraft tune",
         "wiki_url": "https://ardupilot.org/copter/docs/evaluating-the-aircraft-tune.html#evaluating-the-aircraft-tune",
@@ -503,10 +475,9 @@
         "old_filenames": ["27_evaluate_the_aircraft_tune_ff_enable.param"]
     },
     "30_autotune_roll_setup.param": {
-        "what": "Sets up parameters for the roll axis autotuning process",
         "why": "To optimize roll step response.",
         "why_now": "Because roll is usually the axis that has the highest dynamic, and we start with the highest dynamic axis",
-        "blog_text": "Sets up parameters for the roll axis autotuning process, aiming to optimize roll response.",
+        "blog_text": "Set up parameters for the roll axis autotuning process",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#951-roll-axis-autotune",
         "wiki_text": "AutoTune",
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
@@ -520,10 +491,9 @@
         "old_filenames": ["28_autotune_roll_setup.param"]
     },
     "31_autotune_roll_results.param": {
-        "what": "Records the results of the roll axis autotuning",
-        "why": "To optimize roll step response.",
+        "why": "To record autotune results after roll step response optimization",
         "why_now": "Because roll is usually the axis that has the highest dynamic, and we start with the highest dynamic axis",
-        "blog_text": "Records the results of the roll axis autotuning, providing data for analysis and adjustment.",
+        "blog_text": "Record the results of the roll axis autotuning, providing data for analysis and adjustment.",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#951-roll-axis-autotune",
         "wiki_text": "AutoTune",
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
@@ -534,10 +504,9 @@
         "old_filenames": ["29_autotune_roll_results.param"]
     },
     "32_autotune_pitch_setup.param": {
-        "what": "Sets up parameters for the pitch axis autotuning process",
         "why": "To optimize pitch step response.",
         "why_now": "Because pitch is usually the axis that has the second highest dynamic, and we continue with the second highest dynamic axis",
-        "blog_text": "Sets up parameters for the pitch axis autotuning process, aiming to optimize pitch response.",
+        "blog_text": "Set up parameters for the pitch axis autotuning process",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#952-pitch-axis-autotune",
         "wiki_text": "AutoTune",
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
@@ -551,10 +520,9 @@
         "old_filenames": ["30_autotune_pitch_setup.param"]
     },
     "33_autotune_pitch_results.param": {
-        "what": "Records the results of the pitch axis autotuning",
-        "why": "To optimize pitch step response.",
+        "why": "To record autotune results after pitch step response optimization",
         "why_now": "Because pitch is usually the axis that has the second highest dynamic, and we continue with the second highest dynamic axis",
-        "blog_text": "Records the results of the pitch axis autotuning, providing data for analysis and adjustment.",
+        "blog_text": "Record the results of the pitch axis autotuning",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#952-pitch-axis-autotune",
         "wiki_text": "AutoTune",
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
@@ -565,10 +533,9 @@
         "old_filenames": ["31_autotune_pitch_results.param"]
     },
     "34_autotune_yaw_setup.param": {
-        "what": "Sets up parameters for the yaw axis autotuning process",
         "why": "To optimize yaw step response.",
         "why_now": "Because yaw is usually the axis that has the third highest dynamic, and we continue with the third highest dynamic axis",
-        "blog_text": "Sets up parameters for the yaw axis autotuning process, aiming to optimize yaw response.",
+        "blog_text": "Set up parameters for the yaw axis autotuning process",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#953-yaw-axis-autotune",
         "wiki_text": "AutoTune",
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
@@ -585,10 +552,9 @@
         "old_filenames": ["32_autotune_yaw_setup.param"]
     },
     "35_autotune_yaw_results.param": {
-        "what": "Records the results of the yaw axis autotuning",
-        "why": "To optimize yaw response.",
+        "why": "To record autotune results after yaw step response optimization",
         "why_now": "Because yaw is usually the axis that has the third highest dynamic, and we continue with the third highest dynamic axis",
-        "blog_text": "Records the results of the yaw axis autotuning, providing data for analysis and adjustment.",
+        "blog_text": "Record the results of the yaw axis autotuning, providing data for analysis and adjustment.",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#953-yaw-axis-autotune",
         "wiki_text": "AutoTune",
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
@@ -599,10 +565,9 @@
         "old_filenames": ["33_autotune_yaw_results.param"]
     },
     "36_autotune_yawd_setup.param": {
-        "what": "Sets up parameters for the yaw D autotuning process",
         "why": "To optimize yaw D step response.",
         "why_now": "Because yaw D can only be done after yaw",
-        "blog_text": "Sets up parameters for the yaw rate autotuning process, aiming to optimize yaw rate response.",
+        "blog_text": "Set up parameters for the yaw rate autotuning process",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#954-yaw-d-axis-autotune-optional",
         "wiki_text": "AutoTune",
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
@@ -616,10 +581,9 @@
         "old_filenames": ["34_autotune_yawd_setup.param"]
     },
     "37_autotune_yawd_results.param": {
-        "what": "Records the results of the yaw D autotuning",
-        "why": "To optimize yaw D step response.",
+        "why": "To record autotune results after yaw D step response optimization",
         "why_now": "Because yaw D can only be done after yaw",
-        "blog_text": "Records the results of the yaw rate autotuning, providing data for analysis and adjustment.",
+        "blog_text": "Record the results of the yaw rate autotuning",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#954-yaw-d-axis-autotune-optional",
         "wiki_text": "AutoTune",
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
@@ -630,7 +594,9 @@
         "old_filenames": ["35_autotune_yawd_results.param"]
     },
     "38_autotune_roll_pitch_retune_setup.param": {
-        "blog_text": "Sets up parameters for the roll and pitch axis retuning process, refining the vehicle's flight characteristics.",
+        "why": "An even better result for roll and pitch will be achieved by re-autotuning an already (in all axis) autonuned vehicle",
+        "why_now": "Because it needs an initial autotune of all axis",
+        "blog_text": "Set up parameters for the roll and pitch axis retuning process",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#955-roll-and-pitch-axis-re-autotune",
         "wiki_text": "AutoTune",
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
@@ -644,7 +610,9 @@
         "old_filenames": ["36_autotune_roll_pitch_retune_setup.param"]
     },
     "39_autotune_roll_pitch_retune_results.param": {
-        "blog_text": "Records the results of the roll and pitch axis retuning, providing data for analysis and adjustment.",
+        "why": "To record autotune roll-pitch results",
+        "why_now": "Because it can only be done after the respective autotune flight",
+        "blog_text": "Record the results of the roll and pitch axis retuning, providing data for analysis and adjustment.",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#955-roll-and-pitch-axis-re-autotune",
         "wiki_text": "AutoTune",
         "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
@@ -655,7 +623,9 @@
         "old_filenames": ["37_autotune_roll_pitch_retune_results.param"]
     },
     "40_windspeed_estimation.param": {
-        "blog_text": "Configures parameters for wind speed estimation, crucial for accurate navigation and stabilization in windy conditions.",
+        "why": "For accurate navigation and stabilization at high speeds and/or in windy conditions",
+        "why_now": "Because it can only be done after PID tunning is complete",
+        "blog_text": "Configure parameters for wind speed estimation",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#101-windspeed-estimation-flights",
         "wiki_text": "Windspeed Estimation",
         "wiki_url": "https://ardupilot.org/copter/docs/airspeed-estimation.html",
@@ -670,7 +640,9 @@
         "old_filenames": ["38_windspeed_estimation.param"]
     },
     "41_barometer_compensation.param": {
-        "blog_text": "Sets up parameters for barometer compensation, ensuring accurate altitude estimation.",
+        "why": "For accurate altitude estimation",
+        "why_now": "Because it depends on windspedd estimation",
+        "blog_text": "Set up parameters for barometer compensation",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#102-baro-compensation-flights",
         "wiki_text": "Barometer Position Error Compensation",
         "wiki_url": "https://ardupilot.org/copter/docs/airspeed-estimation.html#barometer-position-error-compensation",
@@ -682,7 +654,9 @@
         "old_filenames": ["39_barometer_compensation.param"]
     },
     "42_system_id_roll.param": {
-        "blog_text": "Configures parameters for the roll axis system identification, part of the tuning process.",
+        "why": "System identification is required to create a mathematical model of the vehicle",
+        "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
+        "blog_text": "Configure parameters for the roll axis system identification to create a mathematical model of the vehicle",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#11-system-identification-for-analytical-pid-optimization-optional",
         "wiki_text": "Matlab and Simulink IAV scripts for system identification",
         "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
@@ -698,7 +672,9 @@
         "old_filenames": ["40_system_id_roll.param"]
     },
     "43_system_id_pitch.param": {
-        "blog_text": "Configures parameters for the pitch axis system identification, part of the tuning process.",
+        "why": "System identification is required to create a mathematical model of the vehicle",
+        "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
+        "blog_text": "Configure parameters for the pitch axis system identification to create a mathematical model of the vehicle",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#1112-pitch-rate-mathematical-model",
         "wiki_text": "Matlab and Simulink IAV scripts for system identification",
         "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
@@ -712,7 +688,9 @@
         "old_filenames": ["41_system_id_pitch.param"]
     },
     "44_system_id_yaw.param": {
-        "blog_text": "Configures parameters for the yaw axis system identification, part of the tuning process.",
+        "why": "System identification is required to create a mathematical model of the vehicle",
+        "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
+        "blog_text": "Configure parameters for the yaw axis system identification to create a mathematical model of the vehicle",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#1113-yaw-rate-mathematical-model",
         "wiki_text": "Matlab and Simulink IAV scripts for system identification",
         "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
@@ -726,7 +704,9 @@
         "old_filenames": ["42_system_id_yaw.param"]
     },
     "45_system_id_thrust.param": {
-        "blog_text": "Configures parameters for the thrust axis system identification, part of the tuning process.",
+        "why": "System identification is required to create a mathematical model of the vehicle",
+        "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
+        "blog_text": "Configure parameters for the thrust axis system identification to create a mathematical model of the vehicle",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#1114-thrust-mathematical-model",
         "wiki_text": "Matlab and Simulink IAV scripts for system identification",
         "wiki_url": "https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter",
@@ -740,12 +720,14 @@
         "old_filenames": ["43_system_id_thrust.param"]
     },
     "46_analytical_pid_optimization.param": {
-        "blog_text": "Contains parameters for analytical PID optimization, aiming to find the optimal PID values for the vehicle.",
+        "why": "Beacuse the mathematical model of the vehicle allows for analytical PID optimization",
+        "why_now": "Because we first needed system identification flights to create the mathematical model",
+        "blog_text": "Parameters for analytical PID optimization",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#analytical-multicopter-flight-controller-pid-optimization",
-        "wiki_text": "",
-        "wiki_url": "",
-        "external_tool_text": "IAV analytical PID model optimization",
-        "external_tool_url": "https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759",
+        "wiki_text": "IAV analytical PID model optimization",
+        "wiki_url": "https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759",
+        "external_tool_text": "Rover Analytic Tune Tool",
+        "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/AnalyticTune/",
         "mandatory_text": "20% mandatory (80% optional)",
         "auto_changed_by": "",
         "forced_parameters": {
@@ -756,7 +738,9 @@
         "old_filenames": ["44_analytical_pid_optimization.param"]
     },
     "47_position_controller.param": {
-        "blog_text": "Sets up parameters for the position controller, crucial for waypoint navigation and precision flying.",
+        "why": "Position controller parameters are crucial for waypoint navigation and precision flying",
+        "why_now": "Because the position controller PIDs depend on the attitide and attitude-rate PIDs tunned in previous steps",
+        "blog_text": "Configure the position controller(s)",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#121-position-controller",
         "wiki_text": "",
         "wiki_url": "",
@@ -767,7 +751,9 @@
         "old_filenames": ["46_position_controller.param", "48_position_controller.param"]
     },
     "48_guided_operation.param": {
-        "blog_text": "Sets up parameters for guided operation, including waypoint navigation and obstacle avoidance.",
+        "why": "Guided mode is used for waypoint navigation and precision flying",
+        "why_now": "Because guided mode requires a tunned position controller",
+        "blog_text": "Set up parameters for guided operation, including waypoint navigation and obstacle avoidance",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#122-guided-operation-without-rc-transmitter",
         "wiki_text": "Guided Mode",
         "wiki_url": "https://ardupilot.org/copter/docs/ac2_guidedmode.html",
@@ -778,7 +764,9 @@
         "old_filenames": ["48_guided_operation.param", "50_guided_operation.param"]
     },
     "49_precision_land.param": {
-        "blog_text": "Configures parameters for precision landing, ensuring accurate and safe landing of the vehicle.",
+        "why": "Precision landing ensures accurate and safe landing and has many parameters",
+        "why_now": "Because precision landing requires guided mode",
+        "blog_text": "Configure parameters for precision landing",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#123-precision-land",
         "wiki_text": "Precision Landing and Loiter",
         "wiki_url": "https://ardupilot.org/copter/docs/precision-landing-with-irlock.html",
@@ -789,7 +777,9 @@
         "old_filenames": ["47_precision_land.param"]
     },
     "50_optical_flow_setup.param": {
-        "blog_text": "Setup optical flow sensor calibration, needed before using it.",
+        "why": "Optical flow sensor calibration is needed before using it",
+        "why_now": "Because it is optional and should only be done after most other configurations are complete",
+        "blog_text": "Setup optical flow sensor calibration",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#13-productive-configuration",
         "wiki_text": "optical flow sensor setup",
         "wiki_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
@@ -800,7 +790,9 @@
         "jump_possible": {"53_everyday_use.param": "If you do not use optical flow\nyou can skip some steps now.\n\nJump to '53_everyday_use.param' file?"}
     },
     "51_optical_flow_results.param": {
-        "blog_text": "Optical flow sensor calibration results, needed before using it.",
+        "why": "Optical flow sensor calibration is needed before using it",
+        "why_now": "It con only be done after optical flow sensor calibration setup",
+        "blog_text": "Store optical flow sensor calibration results",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#13-productive-configuration",
         "wiki_text": "optical flow sensor setup",
         "wiki_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
@@ -810,7 +802,9 @@
         "auto_changed_by": "FlowCal"
     },
     "52_use_optical_flow_instead_of_gnss.param": {
-        "blog_text": "Optical flow sensor calibration results, needed before using it.",
+        "why": "If optical flow is to be used instead of GNSS for positioning",
+        "why_now": "It con only be done after optical flow sensor calibration setup",
+        "blog_text": "Use optical flow sensor instead of GNSS sensor for positioning",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#13-productive-configuration",
         "wiki_text": "optical flow sensor setup",
         "wiki_url": "https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html",
@@ -820,7 +814,9 @@
         "auto_changed_by": ""
     },
     "53_everyday_use.param": {
-        "blog_text": "Configures parameters for everyday use, ensuring the vehicle is safe and stable for routine flying.",
+        "why": "To ensure the vehicle is safe and stable for routine flying",
+        "why_now": "This is the last step in the tuning process",
+        "blog_text": "Configure parameters for everyday use",
         "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#13-productive-configuration",
         "wiki_text": "",
         "wiki_url": "",
