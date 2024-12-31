@@ -55,7 +55,7 @@ def show_no_connection_error(_error_string: str) -> None:
 def show_tooltip(widget: tk.Widget, text: str) -> None:
     def enter(_event: tk.Event) -> None:
         # Calculate the position of the tooltip based on the widget's position
-        x = widget.winfo_rootx() + widget.winfo_width() // 2
+        x = widget.winfo_rootx() + min(widget.winfo_width() // 2, 100)
         y = widget.winfo_rooty() + widget.winfo_height()
         tooltip.geometry(f"+{x}+{y}")
         tooltip.deiconify()
