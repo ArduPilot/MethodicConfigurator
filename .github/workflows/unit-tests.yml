@@ -36,14 +36,19 @@ jobs:
           pip install build
           pip install -U .
 
+      - name: Install apt packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+
       - name: Set PYTHONPATH
         run: |
-          echo "$PYTHONPATH"
           echo "PYTHONPATH=/home/runner/work/MethodicConfigurator/ardupilot_methodic_configurator/ardupilot_methodic_configurator" >> $GITHUB_ENV
-          echo "$PYTHONPATH"
 
       - name: Test with unittest
         run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1024x768x16 &
           python -m unittest discover -s ./unittests -p '*_test.py'
 
       - name: Unittest coverage report
