@@ -38,8 +38,15 @@ jobs:
           pip install build
           pip install -U .
 
+      - name: Install apt packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+
       - name: Test with pytest
         run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1024x768x16 &
           pytest --junitxml=unittests/test-results-${{ matrix.python-version }}.xml
 
       - name: Upload pytest test results
