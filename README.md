@@ -1,4 +1,4 @@
-# Everyone will be able to configure ArduPilot for their vehicles on their first attempt
+# Correctly configure ArduPilot for your vehicles on your first attempt
 
 <!--
 SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -19,7 +19,7 @@ Amilcar Lucas's ArduPilot Methodic Configurator is a software that semi-automate
 
 - **clear**: the sequence is linear, executed one step at the time with no hidden complex dependencies
 - **proven**: the software has been used by hundreds of ArduPilot developers and users. From beginners to advanced. On big and small vehicles.
-- **safe**: the sequence reduces trial-and-error and aims at reducing the amount of flights required to configure the vehicle
+- **safe**: the sequence reduces trial-and-error and reduces the amount of flights required to configure the vehicle
 
 ![When to use ArduPilot Methodic Configurator](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/when_to_use_amc.png?raw=true)
 
@@ -89,7 +89,7 @@ Please feel free to submit [issues](https://github.com/ArduPilot/MethodicConfigu
 [pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls).
 More information is available on the [contributing and support](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md) page.
 
-## Software architecture
+## Software design and development
 
 To meet the [Software requirements](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#software-requirements) a
 [software architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#the-software-architecture) was designed and implemented.
@@ -100,5 +100,9 @@ To use and develop this software you must obey the [ArduPilot Methodic Configura
 
 ## License
 
+This software is cost free.
 This project is licensed under the [GNU General Public License v3.0](https://github.com/ArduPilot/MethodicConfigurator/blob/master/LICENSE.md).
+
+## Credits
+
 It builds upon other [open-source software packages](https://ardupilot.github.io/MethodicConfigurator/credits/CREDITS.html)
