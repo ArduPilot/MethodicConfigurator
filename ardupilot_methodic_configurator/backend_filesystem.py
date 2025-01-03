@@ -461,6 +461,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def copy_template_files_to_new_vehicle_dir(self, template_dir: str, new_vehicle_dir: str) -> str:
         # Copy the template files to the new vehicle directory
         try:
+            if not os_path.exists(template_dir):
+                error_msg = _("Template directory does not exist: {template_dir}")
+                logging_error(error_msg)
+                return error_msg.format(**locals())
+
+            if not os_path.exists(new_vehicle_dir):
+                error_msg = _("New vehicle directory does not exist: {new_vehicle_dir}")
+                logging_error(error_msg)
+                return error_msg.format(**locals())
+
             for item in os_listdir(template_dir):
                 if item in {
                     "apm.pdef.xml",
