@@ -14,8 +14,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 | [![markdown](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/markdown-lint.yml/badge.svg)](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/markdown-lint.yml) | [![Code Climate](https://codeclimate.com/github/amilcarlucas/MethodicConfigurator.png)](https://codeclimate.com/github/amilcarlucas/MethodicConfigurator) | [![Coverity Scan Build Status](https://scan.coverity.com/projects/30346/badge.svg)](https://scan.coverity.com/projects/ardupilot-methodic-configurator) | | |
 | [![md-link-check](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/markdown-link-check.yml/badge.svg)](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/markdown-link-check.yml) | | | | |
 
-Amilcar Lucas's ArduPilot Methodic Configurator is a software that semi-automates a
-[clear, proven and safe configuration sequence for ArduCopter drones](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter).
+*ArduPilot Methodic Configurator* is a software, developed by ArduPilot developers, that semi-automates a
+[clear, proven and safe configuration sequence](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter) for ArduCopter drones.
+We are working on extending it to [ArduPlane](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane),
+[Heli](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli) and
+[Rover](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover) vehicles.
+But for those it is still very incomplete.
 
 - **clear**: the sequence is linear, executed one step at the time with no hidden complex dependencies
 - **proven**: the software has been used by hundreds of ArduPilot developers and users. From beginners to advanced. On big and small vehicles.
@@ -23,14 +27,9 @@ Amilcar Lucas's ArduPilot Methodic Configurator is a software that semi-automate
 
 ![When to use ArduPilot Methodic Configurator](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/when_to_use_amc.png?raw=true)
 
-It provides a graphical user interface (GUI) for managing and visualizing ArduPilot parameters, parameter files and documentation.
+It's graphical user interface (GUI) manages and visualizes ArduPilot parameters, parameter files and documentation.
 
 ![Application Screenshot](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/App_screenshot1.png?raw=true)
-
-We are working on extending it to [ArduPlane](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane),
-[Heli](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli) and
-[Rover](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover) vehicles.
-But for those it is still very incomplete.
 
 ## Usage
 
