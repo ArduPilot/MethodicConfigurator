@@ -342,13 +342,13 @@ class Par:
         rows = int(rows_str) - 2  # -2 for the next print and the input line
 
         # Convert rows
-        print(f"\n{name} has {len(formatted_params)} parameters:")
+        print(f"\n{name} has {len(formatted_params)} parameters:")  # noqa: T201
         for i, line in enumerate(formatted_params):
             if i % rows == 0 and __name__ == "__main__":
                 input(f"\n{name} list is long hit enter to continue")
                 rows_str, _columns = os_popen("stty size", "r").read().split()  # noqa: S605, S607
                 rows = int(rows_str) - 2  # -2 for the next print and the input line
-            print(line)
+            print(line)  # noqa: T201
 
 
 def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str) -> ET.Element:

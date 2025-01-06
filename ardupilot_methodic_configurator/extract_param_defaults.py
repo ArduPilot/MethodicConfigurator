@@ -241,7 +241,7 @@ def output_params(
         # see https://dev.qgroundcontrol.com/master/en/file_formats/parameters.html
         print("""
 # # Vehicle-Id Component-Id Name Value Type
-""")
+""")  # noqa: T201
 
     for param_name, param_value in params.items():
         if format_type == "missionplanner":
@@ -249,11 +249,11 @@ def output_params(
             # preserve non-floating point strings, if present
             with contextlib.suppress(ValueError):
                 param_value_conv = format(param_value, ".6f").rstrip("0").rstrip(".")
-            print(f"{param_name},{param_value_conv}")
+            print(f"{param_name},{param_value_conv}")  # noqa: T201
         elif format_type == "mavproxy":
-            print(f"{param_name:<15} {param_value:.6f}")
+            print(f"{param_name:<15} {param_value:.6f}")  # noqa: T201
         elif format_type == "qgcs":
-            print(f"{sysid} {compid} {param_name:<15} {param_value:.6f} {MAV_PARAM_TYPE_REAL32}")
+            print(f"{sysid} {compid} {param_name:<15} {param_value:.6f} {MAV_PARAM_TYPE_REAL32}")  # noqa: T201
 
 
 def main() -> None:

@@ -20,5 +20,5 @@ with open("../ardupilot_methodic_configurator/__init__.py", encoding="utf-8") as
     searchlines = f.readlines()
     for line in searchlines:
         if "__version__ = " in line:
-            print(line[15 : len(line) - 2])
+            print(line[15 : len(line) - 2])  # noqa: T201
             break

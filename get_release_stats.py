@@ -52,21 +52,23 @@ def main() -> None:
                 unique_issues.add(issue)
                 overall_issues.append(number_days.days)
 
-        print(f"{release.title} ({release_date})")
-        print("---------------------------------")
+        print(f"{release.title} ({release_date})")  # noqa: T201
+        print("---------------------------------")  # noqa: T201
         if issues_date:
-            print(f"Number of issues : {len(issues_date)}")
-            print(f"Days to release issue (Average) : {compute_average(issues_date)}")
-            print(f"Days to release issue (Maximun) : {max(issues_date, key=itemgetter(1))[1]}")
-            print(f"Days to release issue (Minimun) : {min(issues_date, key=itemgetter(1))[1]}")
+            print(f"Number of issues : {len(issues_date)}")  # noqa: T201
+            print(f"Days to release issue (Average) : {compute_average(issues_date)}")  # noqa: T201
+            print(f"Days to release issue (Maximun) : {max(issues_date, key=itemgetter(1))[1]}")  # noqa: T201
+            print(f"Days to release issue (Minimun) : {min(issues_date, key=itemgetter(1))[1]}")  # noqa: T201
 
         total_downloads = sum(asset.download_count for asset in release.get_assets())
-        print(f"Total downloads : {total_downloads}")
+        print(f"Total downloads : {total_downloads}")  # noqa: T201
 
-        print("---------------------------------\n")
+        print("---------------------------------\n")  # noqa: T201
         # print(issues_date)
     if overall_issues:
-        print(f"Average of days to release an issue over 5 releases : {sum(overall_issues) / len(overall_issues)}")
+        print(  # noqa: T201
+            f"Average of days to release an issue over 5 releases : {sum(overall_issues) / len(overall_issues)}"
+        )
 
 
 if __name__ == "__main__":

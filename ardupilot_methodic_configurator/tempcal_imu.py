@@ -12,6 +12,7 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import logging
 import math
 import os
 import re
@@ -210,7 +211,7 @@ class IMUData:
     def IMUs(self) -> list[int]:  # noqa: N802
         """Return list of IMUs."""
         if len(self.accel.keys()) != len(self.gyro.keys()):
-            print("accel and gyro data doesn't match")
+            logging.critical("accel and gyro data doesn't match")
             sys.exit(1)
         return self.accel.keys()  # type: ignore[return-value]
 
@@ -300,7 +301,7 @@ def IMUfit(  # noqa: PLR0915, N802, pylint: disable=too-many-locals, too-many-br
     progress_callback: Union[Callable[[int], None], None],
 ) -> None:
     """Find IMU calibration parameters from a log file."""
-    print(f"Processing log {logfile}")
+    logging.info("Processing log %s", logfile)
     mlog = mavutil.mavlink_connection(logfile, progress_callback=progress_callback)
 
     data = IMUData()
@@ -325,7 +326,7 @@ def IMUfit(  # noqa: PLR0915, N802, pylint: disable=too-many-locals, too-many-br
     for mtype in messages:
         total_msgs += mlog.counts[mlog.name_to_id[mtype]]
 
-    print(f"Found {total_msgs} messages")
+    logging.info("Found %d messages", total_msgs)
 
     pct = 0
     msgcnt = 0
@@ -351,11 +352,11 @@ def IMUfit(  # noqa: PLR0915, N802, pylint: disable=too-many-locals, too-many-br
                 if stop_capture[imu]:
                     continue
                 if msg.Value == 1 and c.enable[imu] == 2:
-                    print(f"TCAL[{imu}] enabled")
+                    logging.info("TCAL[%d] enabled", imu)
                     stop_capture[imu] = True
                     continue
                 if msg.Value == 0 and c.enable[imu] == 1:
-                    print(f"TCAL[{imu}] disabled")
+                    logging.info("TCAL[%d] disabled", imu)
                     stop_capture[imu] = True
                     continue
                 c.set_enable(imu, msg.Value)
@@ -415,7 +416,7 @@ def IMUfit(  # noqa: PLR0915, N802, pylint: disable=too-many-locals, too-many-br
                 continue
             if msg.Name == "AHRS_ORIENTATION":
                 orientation = int(msg.Value)
-                print(f"Using orientation {orientation}")
+                logging.info("Using orientation %d", orientation)
                 continue
 
         if msg_type == "TCLR" and tclr:
@@ -449,7 +450,7 @@ def IMUfit(  # noqa: PLR0915, N802, pylint: disable=too-many-locals, too-many-br
                 acc = acc.rotate_by_inverse_id(orientation)
                 gyr = gyr.rotate_by_inverse_id(orientation)
             if acc is None or gyr is None:
-                print(f"Invalid AHRS_ORIENTATION {orientation}")
+                logging.critical("Invalid AHRS_ORIENTATION %d", orientation)
                 sys.exit(1)
 
             if c.enable[imu] == 1:
@@ -461,10 +462,11 @@ def IMUfit(  # noqa: PLR0915, N802, pylint: disable=too-many-locals, too-many-br
             data.add_gyro(imu, temp, time, gyr)
 
     if len(data.IMUs()) == 0:
-        print("No data found")
+        logging.critical("No data found")
         sys.exit(1)
 
-    print(f"Loaded {len(data.accel[0]['T'])} accel and {len(data.gyro[0]['T'])} gyro samples")
+    info_msg = f"Loaded {len(data.accel[0]['T'])} accel and {len(data.gyro[0]['T'])} gyro samples"
+    logging.info(info_msg)
 
     if progress_callback:
         progress_callback(210)
@@ -531,7 +533,7 @@ def generate_calibration_file(  # pylint: disable=too-many-locals
                     progress_callback(progress)
 
             params = c.param_string(imu)
-            print(params)
+            print(params)  # noqa: T201
             calfile.write(params)
         # ensure all data is written to disk, so that other processes can safely read the result without race conditions
         calfile.flush()
@@ -540,7 +542,7 @@ def generate_calibration_file(  # pylint: disable=too-many-locals
         else:
             os.fsync(calfile.fileno())  # Use fsync as a fallback
 
-    print(f"Calibration written to {outfile}")
+    logging.info("Calibration written to %s", outfile)
     return c, clog
 
 
@@ -563,7 +565,7 @@ def generate_tempcal_gyro_figures(  # pylint: disable=too-many-arguments, too-ma
         if log_parm:
             for axis in AXES:
                 if clog.enable[imu] == 0.0:
-                    print(f"IMU[{imu}] disabled in log parms")
+                    logging.info("IMU[%d] disabled in log parms", imu)
                     continue
                 poly = np.poly1d(clog.gcoef[imu][axis])
                 correction = poly(data.gyro[imu]["T"] - TEMP_REF) - poly(clog.gtcal[imu] - TEMP_REF) + clog.gofs[imu][axis]
@@ -600,7 +602,7 @@ def generate_tempcal_accel_figures(  # pylint: disable=too-many-arguments, too-m
         if log_parm:
             for axis in AXES:
                 if clog.enable[imu] == 0.0:
-                    print(f"IMU[{imu}] disabled in log parms")
+                    logging.info("IMU[%d] disabled in log parms", imu)
                     continue
                 poly = np.poly1d(clog.acoef[imu][axis])
                 ofs = data.accel_at_temp(imu, axis, clog.atcal[imu])
@@ -633,6 +635,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
     IMUfit(args.log, args.outfile, args.no_graph, args.log_parm, args.online, args.tclr, None, None)
 
 

@@ -10,6 +10,8 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import logging
+
 import requests
 
 # List of direct_dependencies and their license URLs
@@ -59,10 +61,14 @@ def download_license(package_name: str, license_url: str) -> None:
             filename = f"{package_name}-{license_url.split('/')[-1]}"
         with open(filename, "wb") as f:
             f.write(response.content)
-        print(f"Downloaded {filename}")
+        msg = f"Downloaded {filename}"
+        logging.info(msg)
     except requests.exceptions.RequestException as e:
-        print(f"Failed to download {package_name} license: {e}")
+        msg = f"Failed to download {package_name} license: {e}"
+        logging.error(msg)
 
+
+logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Download each package's license
 for package in direct_dependencies + indirect_dependencies:
