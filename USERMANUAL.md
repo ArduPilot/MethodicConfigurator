@@ -7,8 +7,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## Overview
 
-*ArduPilot Methodic Configurator* is a Python tool designed to simplify the configuration of ArduPilot drones.
-It provides a graphical user interface (GUI) for managing, editing and visualizing drone parameter files, as well as uploading parameters to the vehicle.
+*ArduPilot Methodic Configurator* is a PC software designed by ArduPilot developers to simplify the configuration of ArduPilot drones.
+It's graphical user interface (GUI) manages, edits and visualizes drone parameter files, as well as uploads parameters to the vehicle.
 It automates the tasks described in the [How to methodically tune any ArduCopter](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter) tuning guide.
 
 This user manual gives a general overview of the Software functionality.
