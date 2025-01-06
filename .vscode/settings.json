@@ -11,7 +11,9 @@
     "python.testing.pytestEnabled": false,
     "python.testing.unittestEnabled": true,
     "cSpell.words": [
-        "multicopter"
+      "configurator",
+      "multicopter",
+      "venv"
     ],
 
     "//": "Ruff Settings",
