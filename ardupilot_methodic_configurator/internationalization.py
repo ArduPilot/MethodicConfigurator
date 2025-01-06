@@ -50,10 +50,10 @@ def load_translation() -> Callable[[str], str]:
         translation.install()
         # Do not use logging functions here the logging system has not been configured yet
         # Do not translate this message, the translation will not work here anyways
-        print(f"Loaded {pre_args.language} translation files.")
+        print(f"Loaded {pre_args.language} translation files.")  # noqa: T201
         return translation.gettext
     except FileNotFoundError:
         # Do not use logging functions here the logging system has not been configured yet
         # Do not translate this message, the translation will not work here anyways
-        print(f"{pre_args.language} translation files not found. Using default {default_language} language.")
+        print(f"{pre_args.language} translation files not found. Using default {default_language} language.")  # noqa: T201
         return identity_function  # Return identity function on error

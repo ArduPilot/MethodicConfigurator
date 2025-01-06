@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import logging
 import os
 import shutil
 
@@ -43,17 +44,19 @@ def copy_files(source: str, target: str) -> None:
 
         try:
             shutil.copy2(source_path, target_path)
-            print(f"Copied {file} to {target}")
+            logging.info("Copied %s to %s", file, target)
         except Exception as e:  # pylint: disable=broad-except
-            print(f"Error copying {file} to {target}: {e!s}")
+            logging.error("Error copying %s to %s: %s", file, target, e)
 
+
+logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Get all ArduCopter subdirectories
 target_dirs = get_subdirectories(BASE_DIR)
-print(f"Found {len(target_dirs)} {BASE_DIR} leaf subdirectories: {target_dirs}")
+logging.info("Found %d %s leaf subdirectories: %s", len(target_dirs), BASE_DIR, target_dirs)
 
 # Copy files to all target directories
 for target_dir in target_dirs:
     full_target_dir = os.path.join(BASE_DIR, target_dir)
-    print(f"Copying files to {full_target_dir}")
+    logging.info("Copying files to %s", full_target_dir)
     copy_files(os.path.join(BASE_DIR, SOURCE_DIR), full_target_dir)

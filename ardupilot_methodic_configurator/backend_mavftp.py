@@ -568,7 +568,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 self.callback = None
             elif self.filename == "-":
                 self.fh.seek(0)
-                print(self.fh.read().decode("utf-8"))
+                print(self.fh.read().decode("utf-8"))  # noqa: T201
             else:
                 logging.info("Got %u bytes from %s in %.2fs %.1fkByte/s", ofs, self.filename, dt, rate)
                 self.remote_file_size = None

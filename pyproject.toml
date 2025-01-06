@@ -130,7 +130,7 @@ lint.select = [
     "G",    # flake8-logging-format
     "INP",  # flake8-no-pep420
     "PIE",  # flake8-pie
-    #"T20",  # flake8-print (T20)
+    "T20",  # flake8-print (T20)
     "PYI",  # flake8-pyi (PYI)
     #"PT",   # flake8-pytest-style (PT)
     "Q",    # flake8-quotes (Q)

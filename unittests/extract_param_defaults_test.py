@@ -191,8 +191,6 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
 
         # Check if the print function was called with the correct parameters
         expected_calls = [unittest.mock.call("PARAM2,1"), unittest.mock.call("PARAM1,2")]
-        print(mock_print.mock_calls)
-        print(expected_calls)
         mock_print.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")

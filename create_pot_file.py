@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import logging
 import os
 import subprocess
 
@@ -46,21 +47,25 @@ def extract_strings(directory: str, output_dir: str) -> None:
 
     try:
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
-        print(result.stdout)
+        print(result.stdout)  # noqa: T201
     except subprocess.CalledProcessError as e:
-        print(f"An error occurred while running pygettext3:\n{e}")
+        msg = f"An error occurred while running pygettext3:\n{e}"
+        logging.error(msg)
         raise
 
     filenames = " ".join(file_paths).replace(directory + os.pathsep, "")
-    print(f"POT file created successfully for {filenames}")
+    msg = f"POT file created successfully for {filenames}"
+    logging.info(msg)
 
 
 def main() -> None:
+    logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
     directory_to_scan = "ardupilot_methodic_configurator"
     output_directory = os.path.join(directory_to_scan, "locale")
 
     extract_strings(directory_to_scan, output_directory)
-    print(f"Internationalization strings extracted and saved to {output_directory}")
+    msg = f"Internationalization strings extracted and saved to {output_directory}"
+    logging.info(msg)
 
 
 if __name__ == "__main__":

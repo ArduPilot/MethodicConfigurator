@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import logging
 import os
 import subprocess
 
@@ -23,12 +24,16 @@ def process_locale_directory(locale_dir: str) -> None:
         # Run msgfmt command
         cmd = ["msgfmt", "-o", mo_file, po_file]
         subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
-        print(f"Successfully processed {locale_dir}")
+        msg = f"Successfully processed {locale_dir}"
+        logging.info(msg)
     except subprocess.CalledProcessError as e:
-        print(f"Error processing {locale_dir}: {e}")
+        msg = f"Error processing {locale_dir}: {e}"
+        logging.error(msg)
 
 
 def main() -> None:
+    logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
+
     # Walk through all locale directories
     for root, dirs, _files in os.walk(os.path.join("ardupilot_methodic_configurator", "locale")):
         if "LC_MESSAGES" in dirs:

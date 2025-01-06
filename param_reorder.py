@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import json
+import logging
 import os
 import re
 
@@ -45,7 +46,8 @@ def reorder_param_files(steps: dict) -> dict[str, str]:
         new_key = file_renames.get(new_key, new_key)
         renames[new_key] = old_key
         if old_key != new_key:
-            print(f"Info: Will rename {old_key} to {new_key}")
+            msg = f"Info: Will rename {old_key} to {new_key}"
+            logging.info(msg)
     return renames
 
 
@@ -84,7 +86,8 @@ def update_file_contents(renames: dict[str, str], root: str, file: str, steps: d
     if file.startswith("TUNING_GUIDE_") and file.endswith(".md"):
         for old_filename in renames.values():
             if old_filename not in file_content:
-                print(f"Error: The intermediate parameter file '{old_filename}' is not mentioned in the {file} file")
+                msg = f"The intermediate parameter file '{old_filename}' is not mentioned in the {file} file"
+                logging.error(msg)
     for new_name, old_name in renames.items():
         if "configuration_steps" in file and file.endswith(".json"):
             file_content = update_configuration_steps_json_file_contents(steps, file_content, new_name, old_name)
@@ -123,7 +126,8 @@ def rename_file(old_name: str, new_name: str, param_dir: str) -> None:
     if os.path.exists(old_name_path):
         os.rename(old_name_path, new_name_path)
     else:
-        print(f"Error: Could not rename file {old_name_path}, file not found")
+        msg = f"Could not rename file {old_name_path}, file not found"
+        logging.error(msg)
 
 
 def reorder_actual_files(renames: dict[str, str], param_dirs: list[str]) -> None:
@@ -147,6 +151,7 @@ def change_line_endings_for_md_files() -> None:
 
 
 def main() -> None:
+    logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
     with open(os.path.join("ardupilot_methodic_configurator", SEQUENCE_FILENAME), encoding="utf-8") as f:
         steps = json.load(f)
     renames = reorder_param_files(steps)

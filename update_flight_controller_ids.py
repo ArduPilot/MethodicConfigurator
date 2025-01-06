@@ -11,11 +11,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import io  # Import io for StringIO
+import logging
 import os
 import sys
 
 # Define the base directory to crawl
 BASE_DIR = "../ardupilot/libraries/AP_HAL_ChibiOS/hwdef/"
+
+logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Add ../ardupilot/libraries/AP_HAL_ChibiOS/hwdef/scripts to the PYTHON path
 scripts_path = os.path.abspath(os.path.join(BASE_DIR, "scripts"))
@@ -26,17 +29,17 @@ if not os.path.exists(init_file_path):
     # Create the __init__.py file
     with open(init_file_path, "w", encoding="utf-8") as init_file:
         init_file.write("# This __init__.py was created automatically\n")
-    print(f"Created __init__.py at: {init_file_path}")
+    logging.info("Created __init__.py at: %s", init_file_path)
 else:
-    print(f"__init__.py already exists at: {init_file_path}")
+    logging.info("__init__.py already exists at: %s", init_file_path)
 sys.path.append(scripts_path)
 
 try:
     import chibios_hwdef
 
-    print("Module imported successfully.")
+    logging.info("Module imported successfully.")
 except ImportError as e:
-    print(f"ImportError: {e}")
+    logging.info("ImportError: %s", e)
 
 
 def remove_suffixes(base_dirname: str, suffixes: list) -> str:
@@ -91,7 +94,7 @@ def create_dicts(
             if vid_name != vid_vendor_dict[vid]:
                 msg = f"VID 0x{vid:04X} has different vendor names: {vid_vendor_dict[vid]} and {vid_name}"
                 # raise ValueError(msg)
-                print(msg)
+                logging.error(msg)
         else:
             vid_vendor_dict[vid] = vid_name
 
@@ -103,7 +106,7 @@ def create_dicts(
                     f" {vid_pid_product_dict[(vid, pid)]} and {pid_name}"
                 )
                 # raise ValueError(msg)
-                print(msg)
+                logging.error(msg)
         else:
             vid_pid_product_dict[(vid, pid)] = pid_name
 
@@ -115,7 +118,7 @@ def create_dicts(
                     f" {board_name} and {apj_board_id_name_dict[numeric_board_id]}"
                 )
                 # raise ValueError(msg)
-                print(msg)
+                logging.error(msg)
         else:
             apj_board_id_name_dict[numeric_board_id] = board_name
             apj_board_id_vendor_dict[numeric_board_id] = vid_name

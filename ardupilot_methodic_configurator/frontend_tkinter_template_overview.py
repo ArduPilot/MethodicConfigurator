@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import tkinter as tk
 from logging import basicConfig as logging_basicConfig
+from logging import debug as logging_debug
 from logging import getLevelName as logging_getLevelName
 from tkinter import ttk
 from typing import Optional
@@ -193,7 +194,7 @@ def main() -> None:
 
     TemplateOverviewWindow(None)
 
-    print(ProgramSettings.get_recently_used_dirs()[0])
+    logging_debug(ProgramSettings.get_recently_used_dirs()[0])
 
 
 if __name__ == "__main__":

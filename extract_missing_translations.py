@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import gettext
 import glob
+import logging
 import os
 
 
@@ -80,7 +81,8 @@ def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:
             if len(line_split) > 1:
                 msgid += '"'.join(line_split[1:-1])  # Get the msgid string
             else:
-                print(f"Error on line {i}")
+                msg = f"On line {i}"
+                logging.error(msg)
             continue
 
         if in_msgid and line.startswith("msgstr "):
@@ -125,6 +127,7 @@ def output_to_files(missing_translations: list[tuple[int, str]], output_file_bas
 
 def main() -> None:
     args = parse_arguments()
+    logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
     missing_translations = extract_missing_translations(args.lang_code)
     output_to_files(missing_translations, args.output_file, args.max_translations)
 
