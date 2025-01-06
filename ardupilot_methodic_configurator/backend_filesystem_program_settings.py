@@ -207,11 +207,12 @@ class ProgramSettings:
 
     @staticmethod
     def get_templates_base_dir() -> str:
-        current_dir = os_path.dirname(os_path.abspath(__file__))
+        current_script_dir = os_path.dirname(os_path.abspath(__file__))
         if platform_system() == "Windows":
             site_directory = ProgramSettings.__site_config_dir()
         else:
-            site_directory = current_dir
+            logging_debug("current script directory: %s", current_script_dir)
+            site_directory = current_script_dir
             if "site-packages" in site_directory:
                 site_directory = os_path.join(os_path.expanduser("~"), ".local", "ardupilot_methodic_configurator")
             elif "dist-packages" in site_directory:
