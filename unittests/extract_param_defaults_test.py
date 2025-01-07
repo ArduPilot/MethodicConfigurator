@@ -11,7 +11,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from ardupilot_methodic_configurator.extract_param_defaults import (
     MAVLINK_COMPID_MAX,
@@ -26,49 +28,55 @@ from ardupilot_methodic_configurator.extract_param_defaults import (
 )
 
 
+@pytest.fixture
+def mock_print() -> Mock:
+    with patch("builtins.print") as mock:
+        yield mock
+
+
 class TestArgParseParameters(unittest.TestCase):  # pylint: disable=missing-class-docstring
     def test_command_line_arguments_combinations(self) -> None:
         # Check the 'format' and 'sort' default parameters
         args = parse_arguments(["dummy.bin"])
-        self.assertEqual(args.format, "missionplanner")
-        self.assertEqual(args.sort, "missionplanner")
+        assert args.format == "missionplanner"
+        assert args.sort == "missionplanner"
 
         # Check the 'format' and 'sort' parameters to see if 'sort' can be explicitly overwritten
         args = parse_arguments(["-s", "none", "dummy.bin"])
-        self.assertEqual(args.format, "missionplanner")
-        self.assertEqual(args.sort, "none")
+        assert args.format == "missionplanner"
+        assert args.sort == "none"
 
         # Check the 'format' and 'sort' parameters to see if 'sort' can be implicitly overwritten (mavproxy)
         args = parse_arguments(["-f", "mavproxy", "dummy.bin"])
-        self.assertEqual(args.format, "mavproxy")
-        self.assertEqual(args.sort, "mavproxy")
+        assert args.format == "mavproxy"
+        assert args.sort == "mavproxy"
 
         # Check the 'format' and 'sort' parameters to see if 'sort' can be implicitly overwritten (qgcs)
         args = parse_arguments(["-f", "qgcs", "dummy.bin"])
-        self.assertEqual(args.format, "qgcs")
-        self.assertEqual(args.sort, "qgcs")
+        assert args.format == "qgcs"
+        assert args.sort == "qgcs"
 
         # Check the 'format' and 'sort' parameters
         args = parse_arguments(["-f", "mavproxy", "-s", "none", "dummy.bin"])
-        self.assertEqual(args.format, "mavproxy")
-        self.assertEqual(args.sort, "none")
+        assert args.format == "mavproxy"
+        assert args.sort == "none"
 
         # Assert that a SystemExit is raised when --sysid is used without --format set to qgcs
-        with self.assertRaises(SystemExit), patch("builtins.print") as mock_print:
+        with pytest.raises(SystemExit) as excinfo:
             parse_arguments(["-f", "mavproxy", "-i", "7", "dummy.bin"])
-            mock_print.assert_called_once_with("--sysid parameter is only relevant if --format is qgcs")
+        assert str(excinfo.value) == "--sysid parameter is only relevant if --format is qgcs"
 
         # Assert that a SystemExit is raised when --compid is used without --format set to qgcs
-        with self.assertRaises(SystemExit), patch("builtins.print") as mock_print:
+        with pytest.raises(SystemExit) as excinfo:
             parse_arguments(["-f", "missionplanner", "-c", "3", "dummy.bin"])
-            mock_print.assert_called_once_with("--compid parameter is only relevant if --format is qgcs")
+        assert str(excinfo.value) == "--compid parameter is only relevant if --format is qgcs"
 
         # Assert that a valid sysid and compid are parsed correctly
         args = parse_arguments(["-f", "qgcs", "-i", "7", "-c", "3", "dummy.bin"])
-        self.assertEqual(args.format, "qgcs")
-        self.assertEqual(args.sort, "qgcs")
-        self.assertEqual(args.sysid, 7)
-        self.assertEqual(args.compid, 3)
+        assert args.format == "qgcs"
+        assert args.sort == "qgcs"
+        assert args.sysid == 7
+        assert args.compid == 3
 
 
 class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=missing-class-docstring
@@ -78,11 +86,11 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         mock_mavlink_connection.side_effect = Exception("Test exception")
 
         # Call the function with a dummy logfile path
-        with self.assertRaises(SystemExit) as cm:
+        with pytest.raises(SystemExit) as cm:
             extract_parameter_values("dummy.bin")
 
         # Check the error message
-        self.assertEqual(str(cm.exception), "Error opening the dummy.bin logfile: Test exception")
+        assert str(cm.value) == "Error opening the dummy.bin logfile: Test exception"
 
     @patch("ardupilot_methodic_configurator.extract_param_defaults.mavutil.mavlink_connection")
     def test_extract_parameter_default_values(self, mock_mavlink_connection) -> None:
@@ -99,7 +107,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         defaults = extract_parameter_values("dummy.bin")
 
         # Check if the defaults dictionary contains the correct parameters and values
-        self.assertEqual(defaults, {"PARAM1": 1.1, "PARAM2": 2.0})
+        assert defaults == {"PARAM1": 1.1, "PARAM2": 2.0}
 
     @patch("ardupilot_methodic_configurator.extract_param_defaults.mavutil.mavlink_connection")
     def test_no_parameters(self, mock_mavlink_connection) -> None:
@@ -109,9 +117,9 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         mock_mlog.recv_match.return_value = None  # No PARM messages
 
         # Call the function with a dummy logfile path and assert SystemExit is raised with the correct message
-        with self.assertRaises(SystemExit) as cm:
+        with pytest.raises(SystemExit) as cm:
             extract_parameter_values("dummy.bin")
-        self.assertEqual(str(cm.exception), NO_DEFAULT_VALUES_MESSAGE)
+        assert str(cm.value) == NO_DEFAULT_VALUES_MESSAGE
 
     @patch("ardupilot_methodic_configurator.extract_param_defaults.mavutil.mavlink_connection")
     def test_no_parameter_defaults(self, mock_mavlink_connection) -> None:
@@ -121,9 +129,9 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         mock_mlog.recv_match.return_value = None  # No PARM messages
 
         # Call the function with a dummy logfile path and assert SystemExit is raised with the correct message
-        with self.assertRaises(SystemExit) as cm:
+        with pytest.raises(SystemExit) as cm:
             extract_parameter_values("dummy.bin")
-        self.assertEqual(str(cm.exception), NO_DEFAULT_VALUES_MESSAGE)
+        assert str(cm.value) == NO_DEFAULT_VALUES_MESSAGE
 
     @patch("ardupilot_methodic_configurator.extract_param_defaults.mavutil.mavlink_connection")
     def test_invalid_parameter_name(self, mock_mavlink_connection) -> None:
@@ -133,7 +141,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         mock_mlog.recv_match.return_value = MagicMock(Name="INVALID_NAME%", Default=1.0)
 
         # Call the function with a dummy logfile path
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             extract_parameter_values("dummy.bin")
 
     @patch("ardupilot_methodic_configurator.extract_param_defaults.mavutil.mavlink_connection")
@@ -144,7 +152,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         mock_mlog.recv_match.return_value = MagicMock(Name="TOO_LONG_PARAMETER_NAME", Default=1.0)
 
         # Call the function with a dummy logfile path
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             extract_parameter_values("dummy.bin")
 
 
@@ -157,12 +165,12 @@ class TestSortFunctions(unittest.TestCase):  # pylint: disable=missing-class-doc
         sorted_params = sorted(params, key=missionplanner_sort)
 
         # Check if the parameters were sorted correctly
-        self.assertEqual(sorted_params, ["PARAM_GROUP1_PARAM1", "PARAM_GROUP1_PARAM2", "PARAM_GROUP2_PARAM2"])
+        assert sorted_params == ["PARAM_GROUP1_PARAM1", "PARAM_GROUP1_PARAM2", "PARAM_GROUP2_PARAM2"]
 
         # Test with a parameter name that doesn't contain an underscore
         params = ["PARAM1", "PARAM3", "PARAM2"]
         sorted_params = sorted(params, key=missionplanner_sort)
-        self.assertEqual(sorted_params, ["PARAM1", "PARAM2", "PARAM3"])
+        assert sorted_params == ["PARAM1", "PARAM2", "PARAM3"]
 
     def test_mavproxy_sort(self) -> None:
         # Define a list of parameter names
@@ -172,17 +180,18 @@ class TestSortFunctions(unittest.TestCase):  # pylint: disable=missing-class-doc
         sorted_params = sorted(params, key=mavproxy_sort)
 
         # Check if the parameters were sorted correctly
-        self.assertEqual(sorted_params, ["PARAM_GROUP1_PARAM1", "PARAM_GROUP1_PARAM2", "PARAM_GROUP2_PARAM2"])
+        assert sorted_params == ["PARAM_GROUP1_PARAM1", "PARAM_GROUP1_PARAM2", "PARAM_GROUP2_PARAM2"]
 
         # Test with a parameter name that doesn't contain an underscore
         params = ["PARAM1", "PARAM3", "PARAM2"]
         sorted_params = sorted(params, key=mavproxy_sort)
-        self.assertEqual(sorted_params, ["PARAM1", "PARAM2", "PARAM3"])
+        assert sorted_params == ["PARAM1", "PARAM2", "PARAM3"]
 
 
+@pytest.mark.usefixtures("mock_print")
 class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docstring
     @patch("builtins.print")
-    def test_output_params(self, mock_print) -> None:
+    def test_output_params(self, mock_print_) -> None:
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 1.0, "PARAM1": 2.0}
 
@@ -191,10 +200,10 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
 
         # Check if the print function was called with the correct parameters
         expected_calls = [unittest.mock.call("PARAM2,1"), unittest.mock.call("PARAM1,2")]
-        mock_print.assert_has_calls(expected_calls, any_order=False)
+        mock_print_.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_missionplanner_non_numeric(self, mock_print) -> None:
+    def test_output_params_missionplanner_non_numeric(self, mock_print_) -> None:
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM1": "non-numeric"}
 
@@ -203,10 +212,10 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
 
         # Check if the print function was called with the correct parameters
         expected_calls = [unittest.mock.call("PARAM1,non-numeric")]
-        mock_print.assert_has_calls(expected_calls, any_order=False)
+        mock_print_.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_mavproxy(self, mock_print) -> None:
+    def test_output_params_mavproxy(self, mock_print_) -> None:
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0}
 
@@ -219,10 +228,10 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
             unittest.mock.call("%-15s %.6f" % ("PARAM1", 1.0)),  # pylint: disable=consider-using-f-string
             unittest.mock.call("%-15s %.6f" % ("PARAM2", 2.0)),  # pylint: disable=consider-using-f-string
         ]
-        mock_print.assert_has_calls(expected_calls, any_order=False)
+        mock_print_.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_qgcs(self, mock_print) -> None:
+    def test_output_params_qgcs(self, mock_print_) -> None:
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0}
 
@@ -236,10 +245,10 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
             unittest.mock.call("%u %u %-15s %.6f %u" % (1, 1, "PARAM1", 1.0, 9)),  # pylint: disable=consider-using-f-string
             unittest.mock.call("%u %u %-15s %.6f %u" % (1, 1, "PARAM2", 2.0, 9)),  # pylint: disable=consider-using-f-string
         ]
-        mock_print.assert_has_calls(expected_calls, any_order=False)
+        mock_print_.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_qgcs_2_4(self, mock_print) -> None:
+    def test_output_params_qgcs_2_4(self, mock_print_) -> None:
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0}
 
@@ -253,10 +262,10 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
             unittest.mock.call("%u %u %-15s %.6f %u" % (2, 4, "PARAM1", 1.0, 9)),  # pylint: disable=consider-using-f-string
             unittest.mock.call("%u %u %-15s %.6f %u" % (2, 4, "PARAM2", 2.0, 9)),  # pylint: disable=consider-using-f-string
         ]
-        mock_print.assert_has_calls(expected_calls, any_order=False)
+        mock_print_.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
-    def test_output_params_qgcs_SYSID_THISMAV(self, mock_print) -> None:  # noqa: N802, pylint: disable=invalid-name
+    def test_output_params_qgcs_SYSID_THISMAV(self, mock_print_) -> None:  # noqa: N802, pylint: disable=invalid-name
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0, "SYSID_THISMAV": 3.0}
 
@@ -271,44 +280,40 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
             unittest.mock.call("%u %u %-15s %.6f %u" % (3, 7, "PARAM2", 2.0, 9)),  # pylint: disable=consider-using-f-string
             unittest.mock.call("%u %u %-15s %.6f %u" % (3, 7, "SYSID_THISMAV", 3.0, 9)),  # pylint: disable=consider-using-f-string
         ]
-        mock_print.assert_has_calls(expected_calls, any_order=False)
+        mock_print_.assert_has_calls(expected_calls, any_order=False)
 
-    @patch("builtins.print")
-    def test_output_params_qgcs_SYSID_INVALID(self, _mock_print) -> None:  # noqa: N802, pylint: disable=invalid-name
+    def test_output_params_qgcs_SYSID_INVALID(self) -> None:  # noqa: N802, pylint: disable=invalid-name
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0, "SYSID_THISMAV": -1.0}
 
         # Assert that a SystemExit is raised with the correct message when an invalid sysid is used
-        with self.assertRaises(SystemExit) as cm:
-            defaults = sort_params(defaults, "qgcs")
+        defaults = sort_params(defaults, "qgcs")
+        with pytest.raises(SystemExit) as cm:
             output_params(defaults, "qgcs", -1, 7)
-        self.assertEqual(str(cm.exception), "Invalid system ID parameter -1 must not be negative")
+        assert str(cm.value) == "Invalid system ID parameter -1 must not be negative"
 
         # Assert that a SystemExit is raised with the correct message when an invalid sysid is used
-        with self.assertRaises(SystemExit) as cm:
-            defaults = sort_params(defaults, "qgcs")
+        with pytest.raises(SystemExit) as cm:
             output_params(defaults, "qgcs", MAVLINK_SYSID_MAX + 2, 7)
-        self.assertEqual(str(cm.exception), f"Invalid system ID parameter 16777218 must be smaller than {MAVLINK_SYSID_MAX}")
+        assert str(cm.value) == f"Invalid system ID parameter 16777218 must be smaller than {MAVLINK_SYSID_MAX}"
 
-    @patch("builtins.print")
-    def test_output_params_qgcs_COMPID_INVALID(self, _mock_print) -> None:  # noqa: N802, pylint: disable=invalid-name
+    def test_output_params_qgcs_COMPID_INVALID(self) -> None:  # noqa: N802, pylint: disable=invalid-name
         # Prepare a dummy defaults dictionary
         defaults = {"PARAM2": 2.0, "PARAM1": 1.0}
 
         # Assert that a SystemExit is raised with the correct message when an invalid compid is used
-        with self.assertRaises(SystemExit) as cm:
-            defaults = sort_params(defaults, "qgcs")
+        defaults = sort_params(defaults, "qgcs")
+        with pytest.raises(SystemExit) as cm:
             output_params(defaults, "qgcs", -1, -3)
-        self.assertEqual(str(cm.exception), "Invalid component ID parameter -3 must not be negative")
+        assert str(cm.value) == "Invalid component ID parameter -3 must not be negative"
 
         # Assert that a SystemExit is raised with the correct message when an invalid compid is used
-        with self.assertRaises(SystemExit) as cm:
-            defaults = sort_params(defaults, "qgcs")
+        with pytest.raises(SystemExit) as cm:
             output_params(defaults, "qgcs", 1, MAVLINK_COMPID_MAX + 3)
-        self.assertEqual(str(cm.exception), f"Invalid component ID parameter 259 must be smaller than {MAVLINK_COMPID_MAX}")
+        assert str(cm.value) == f"Invalid component ID parameter 259 must be smaller than {MAVLINK_COMPID_MAX}"
 
     @patch("builtins.print")
-    def test_output_params_integer(self, mock_print) -> None:
+    def test_output_params_integer(self, mock_print_) -> None:
         # Prepare a dummy defaults dictionary with an integer value
         defaults = {"PARAM1": 1.01, "PARAM2": 2.00}
 
@@ -318,7 +323,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
 
         # Check if the print function was called with the correct parameters
         expected_calls = [unittest.mock.call("PARAM1,1.01"), unittest.mock.call("PARAM2,2")]
-        mock_print.assert_has_calls(expected_calls, any_order=False)
+        mock_print_.assert_has_calls(expected_calls, any_order=False)
 
 
 if __name__ == "__main__":

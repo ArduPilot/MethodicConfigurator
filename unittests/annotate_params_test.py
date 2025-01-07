@@ -10,16 +10,15 @@ to all *.param and *.parm files in the specified directory.
 Author: Amilcar do Carmo Lucas
 """
 
-# pylint: skip-file
-
 import contextlib
 import os
 import tempfile
 import unittest
 from unittest import mock
-from unittest.mock import Mock, mock_open, patch
+from unittest.mock import patch
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 
+import pytest
 import requests  # type: ignore[import-untyped]
 from defusedxml import ElementTree as DET  # noqa: N814, just parsing, no data-structure manipulation
 
@@ -39,13 +38,33 @@ from ardupilot_methodic_configurator.annotate_params import (
 )
 
 
-class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-docstring
+@pytest.fixture
+def mock_update() -> mock.Mock:
+    with patch("ardupilot_methodic_configurator.annotate_params.update_parameter_documentation") as mock_fun:
+        yield mock_fun
+
+
+@pytest.fixture
+def mock_get_xml_dir() -> mock.Mock:
+    with patch("ardupilot_methodic_configurator.annotate_params.get_xml_dir") as mock_fun:
+        yield mock_fun
+
+
+@pytest.fixture
+def mock_get_xml_url() -> mock.Mock:
+    with patch("ardupilot_methodic_configurator.annotate_params.get_xml_url") as mock_fun:
+        yield mock_fun
+
+
+class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-docstring, too-many-public-methods
     def setUp(self) -> None:
         # Create a temporary directory
         self.temp_dir = tempfile.mkdtemp()
 
         # Create a temporary file
+        # pylint: disable=consider-using-with
         self.temp_file = tempfile.NamedTemporaryFile(delete=False)  # noqa: SIM115
+        # pylint: enable=consider-using-with
 
         # Create a dictionary of parameter documentation
         self.doc_dict = {
@@ -69,10 +88,10 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
             },
         }
 
-    @patch("builtins.open", new_callable=mock_open, read_data="<root></root>")
+    @patch("builtins.open", new_callable=mock.mock_open, read_data="<root></root>")
     @patch("os.path.isfile")
     @patch("ardupilot_methodic_configurator.annotate_params.Par.load_param_file_into_dict")
-    def test_get_xml_data_local_file(self, mock_load_param, mock_isfile, mock_open) -> None:
+    def test_get_xml_data_local_file(self, mock_load_param, mock_isfile, mock_open_) -> None:
         # Mock the isfile function to return True
         mock_isfile.return_value = True
 
@@ -83,10 +102,10 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         result = get_xml_data("/path/to/local/file/", ".", "test.xml", "ArduCopter")
 
         # Check the result
-        self.assertIsInstance(result, ET.Element)
+        assert isinstance(result, ET.Element)
 
         # Assert that the file was opened correctly
-        mock_open.assert_called_once_with(os.path.join(".", "test.xml"), encoding="utf-8")
+        mock_open_.assert_called_once_with(os.path.join(".", "test.xml"), encoding="utf-8")
 
     @patch("requests.get")
     def test_get_xml_data_remote_file(self, mock_get) -> None:
@@ -102,7 +121,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
         # Check the result
-        self.assertIsInstance(result, ET.Element)
+        assert isinstance(result, ET.Element)
 
         # Assert that the requests.get function was called once
         mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5)
@@ -111,7 +130,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
     @patch("ardupilot_methodic_configurator.annotate_params.Par.load_param_file_into_dict")
     def test_get_xml_data_script_dir_file(self, mock_load_param, mock_isfile) -> None:
         # Mock the isfile function to return False for the current directory and True for the script directory
-        def side_effect(filename) -> bool:  # noqa: ARG001
+        def side_effect(_filename) -> bool:
             return True
 
         mock_isfile.side_effect = side_effect
@@ -126,7 +145,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
             result = get_xml_data(BASE_URL, ".", PARAM_DEFINITION_XML_FILE, "ArduCopter")
 
         # Check the result
-        self.assertIsInstance(result, ET.Element)
+        assert isinstance(result, ET.Element)
 
         # Assert that the file was opened correctly
         mock_open.assert_called_once_with(os.path.join(".", PARAM_DEFINITION_XML_FILE), encoding="utf-8")
@@ -139,7 +158,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
                 os.remove("test.xml")
 
             # Call the function with a remote file
-            with self.assertRaises(SystemExit):
+            with pytest.raises(SystemExit):
                 get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
     @patch("requests.get")
@@ -152,7 +171,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
             os.remove("test.xml")
 
         # Call the function with a remote file
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
     @patch("requests.get")
@@ -165,7 +184,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
         # Check the result
-        self.assertIsInstance(result, ET.Element)
+        assert isinstance(result, ET.Element)
 
     @patch("requests.get")
     def test_get_xml_data_invalid_xml(self, mock_get) -> None:
@@ -178,7 +197,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
             os.remove("test.xml")
 
         # Call the function with a remote file
-        with self.assertRaises(ET.ParseError):
+        with pytest.raises(ET.ParseError):
             get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
     @patch("requests.get")
@@ -194,7 +213,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
             os.remove("test.xml")
 
         # Call the function with a local file
-        with self.assertRaises(FileNotFoundError):
+        with pytest.raises(FileNotFoundError):
             get_xml_data("/path/to/local/file/", ".", "test.xml", "ArduCopter")
 
     @patch("requests.get")
@@ -203,37 +222,37 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         mock_get.side_effect = requests.exceptions.ConnectionError
 
         # Call the function with a remote file
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
     def test_remove_prefix(self) -> None:
         # Test case 1: Normal operation
-        self.assertEqual(remove_prefix("prefix_test", "prefix_"), "test")
+        assert remove_prefix("prefix_test", "prefix_") == "test"
 
         # Test case 2: Prefix not present
-        self.assertEqual(remove_prefix("test", "prefix_"), "test")
+        assert remove_prefix("test", "prefix_") == "test"
 
         # Test case 3: Empty string
-        self.assertEqual(remove_prefix("", "prefix_"), "")
+        assert remove_prefix("", "prefix_") == ""
 
     def test_split_into_lines(self) -> None:
         # Test case 1: Normal operation
         string_to_split = "This is a test string. It should be split into several lines."
         maximum_line_length = 12
         expected_output = ["This is a", "test string.", "It should be", "split into", "several", "lines."]
-        self.assertEqual(split_into_lines(string_to_split, maximum_line_length), expected_output)
+        assert split_into_lines(string_to_split, maximum_line_length) == expected_output
 
         # Test case 2: String shorter than maximum line length
         string_to_split = "Short"
         maximum_line_length = 10
         expected_output = ["Short"]
-        self.assertEqual(split_into_lines(string_to_split, maximum_line_length), expected_output)
+        assert split_into_lines(string_to_split, maximum_line_length) == expected_output
 
         # Test case 3: Empty string
         string_to_split = ""
         maximum_line_length = 10
         expected_output = []
-        self.assertEqual(split_into_lines(string_to_split, maximum_line_length), expected_output)
+        assert split_into_lines(string_to_split, maximum_line_length) == expected_output
 
     def test_create_doc_dict(self) -> None:
         # Mock XML data
@@ -279,7 +298,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         result = create_doc_dict(root, "VehicleType")
 
         # Check the result
-        self.assertEqual(result, expected_output)
+        assert result == expected_output
 
     def test_format_columns(self) -> None:
         # Define the input
@@ -312,9 +331,9 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         result = format_columns(values)
 
         # Check the result
-        self.assertEqual(result, expected_output)
+        assert result == expected_output
 
-        self.assertEqual(format_columns({}), [])
+        assert not format_columns({})
 
     def test_update_parameter_documentation(self) -> None:
         # Write some initial content to the temporary file
@@ -329,12 +348,12 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
             updated_content = file.read()
 
         # Check if the file has been updated correctly
-        self.assertIn("Param 1", updated_content)
-        self.assertIn("Documentation for Param 1", updated_content)
-        self.assertIn("Field1: Value1", updated_content)
-        self.assertIn("Field2: Value2", updated_content)
-        self.assertIn("Code1: Value1", updated_content)
-        self.assertIn("Code2: Value2", updated_content)
+        assert "Param 1" in updated_content
+        assert "Documentation for Param 1" in updated_content
+        assert "Field1: Value1" in updated_content
+        assert "Field2: Value2" in updated_content
+        assert "Code1: Value1" in updated_content
+        assert "Code2: Value2" in updated_content
 
     def test_update_parameter_documentation_sorting_none(self) -> None:
         # Write some initial content to the temporary file
@@ -376,7 +395,7 @@ PARAM5 5
 # Code2: Value2
 PARAM1 100
 """
-        self.assertEqual(updated_content, expected_content)
+        assert updated_content == expected_content
 
     def test_update_parameter_documentation_sorting_missionplanner(self) -> None:
         # Write some initial content to the temporary file
@@ -414,7 +433,7 @@ PARAM1,100
 # Code4: Value4
 PARAM2 100 # ignore, me
 """
-        self.assertEqual(updated_content, expected_content)
+        assert updated_content == expected_content
 
     def test_update_parameter_documentation_sorting_mavproxy(self) -> None:
         # Write some initial content to the temporary file
@@ -452,7 +471,7 @@ PARAM2 100
 # Code_2: Value_2
 PARAM_1\t100
 """
-        self.assertEqual(updated_content, expected_content)
+        assert updated_content == expected_content
 
     def test_update_parameter_documentation_invalid_line_format(self) -> None:
         # Write some initial content to the temporary file with an invalid line format
@@ -460,11 +479,11 @@ PARAM_1\t100
             file.write("%INVALID_LINE_FORMAT\n")
 
         # Call the function with the temporary file
-        with self.assertRaises(SystemExit) as cm:
+        with pytest.raises(SystemExit) as cm:
             update_parameter_documentation(self.doc_dict, self.temp_file.name)
 
         # Check if the SystemExit exception contains the expected message
-        self.assertEqual(cm.exception.code, "Invalid line in input file")
+        assert cm.value.code == "Invalid line in input file"
 
     @patch("logging.Logger.info")
     def test_print_read_only_params(self, mock_info) -> None:
@@ -500,8 +519,7 @@ PARAM_1\t100
         mock_info.assert_has_calls([mock.call("ReadOnly parameters:"), mock.call("PARAM1")])
 
     def test_update_parameter_documentation_invalid_target(self) -> None:
-        # Call the function with an invalid target
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="Target 'invalid_target' is neither a file nor a directory."):
             update_parameter_documentation(self.doc_dict, "invalid_target")
 
     def test_invalid_parameter_name(self) -> None:
@@ -510,7 +528,7 @@ PARAM_1\t100
             file.write("INVALID_$PARAM 100\n")
 
         # Call the function with the temporary file
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             update_parameter_documentation(self.doc_dict, self.temp_file.name)
 
     def test_update_parameter_documentation_too_long_parameter_name(self) -> None:
@@ -519,7 +537,7 @@ PARAM_1\t100
             file.write("TOO_LONG_PARAMETER_NAME 100\n")
 
         # Call the function with the temporary file
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             update_parameter_documentation(self.doc_dict, self.temp_file.name)
 
     @patch("logging.Logger.warning")
@@ -548,79 +566,83 @@ PARAM_1\t100
             updated_content = file.read()
 
         # Check if the file is still empty
-        self.assertEqual(updated_content, "")
+        assert updated_content == ""
 
 
 class AnnotateParamsTest(unittest.TestCase):
+    """Test annotate parameters."""
+
     def test_arg_parser_valid_arguments(self) -> None:
         test_args = ["annotate_params", "--vehicle-type", "ArduCopter", "--sort", "none", "parameters"]
         with patch("sys.argv", test_args):
             args = arg_parser()
-            self.assertEqual(args.vehicle_type, "ArduCopter")
-            self.assertEqual(args.sort, "none")
-            self.assertEqual(args.target, "parameters")
-            self.assertEqual(args.verbose, False)
-            self.assertEqual(args.max_line_length, 100)
+            assert args.vehicle_type == "ArduCopter"
+            assert args.sort == "none"
+            assert args.target == "parameters"
+            assert args.verbose is False
+            assert args.max_line_length == 100
 
     def test_arg_parser_invalid_vehicle_type(self) -> None:
         test_args = ["annotate_params", "--vehicle-type", "InvalidType", "--sort", "none", "parameters"]
-        with patch("sys.argv", test_args), self.assertRaises(SystemExit):
+        with patch("sys.argv", test_args), pytest.raises(SystemExit):
             arg_parser()
 
     def test_arg_parser_invalid_sort_option(self) -> None:
         test_args = ["annotate_params", "--vehicle-type", "ArduCopter", "--sort", "invalid", "parameters"]
-        with patch("sys.argv", test_args), self.assertRaises(SystemExit):
+        with patch("sys.argv", test_args), pytest.raises(SystemExit):
             arg_parser()
 
     def test_arg_parser_invalid_line_length_option(self) -> None:
         test_args = ["annotate_params", "--vehicle-type", "ArduCopter", "--sort", "none", "-m", "invalid", "parameters"]
-        with patch("sys.argv", test_args), self.assertRaises(SystemExit):
+        with patch("sys.argv", test_args), pytest.raises(SystemExit):
             arg_parser()
 
 
 class TestAnnotateParamsExceptionHandling(unittest.TestCase):
-    @patch("ardupilot_methodic_configurator.annotate_params.arg_parser")
+    """Test parameter exception handling."""
+
+    @pytest.mark.usefixtures("mock_update", "mock_get_xml_dir", "mock_get_xml_url")
+    @patch("builtins.open", new_callable=mock.mock_open)
+    def test_main_ioerror(self, mock_file) -> None:
+        with patch("ardupilot_methodic_configurator.annotate_params.arg_parser") as mock_arg_parser:
+            mock_arg_parser.return_value = mock.Mock(
+                vehicle_type="ArduCopter",
+                firmware_version="4.0",
+                target=".",
+                sort="none",
+                delete_documentation_annotations=False,
+                verbose=False,
+            )
+            mock_file.side_effect = OSError("Mocked IO Error")
+
+            with pytest.raises(SystemExit) as cm:
+                main()
+
+            assert cm.value.code in [1, 2]
+
+    @pytest.mark.usefixtures("mock_update", "mock_get_xml_dir", "mock_get_xml_url")
+    @patch("builtins.open", new_callable=mock.mock_open)
+    def test_main_oserror(self, mock_file) -> None:
+        with patch("ardupilot_methodic_configurator.annotate_params.arg_parser") as mock_arg_parser:
+            mock_arg_parser.return_value = mock.Mock(
+                vehicle_type="ArduCopter",
+                firmware_version="4.0",
+                target=".",
+                sort="none",
+                delete_documentation_annotations=False,
+                verbose=False,
+            )
+            mock_file.side_effect = OSError("Mocked OS Error")
+
+            with pytest.raises(SystemExit) as cm:
+                main()
+
+            assert cm.value.code in [1, 2]
+
     @patch("ardupilot_methodic_configurator.annotate_params.get_xml_url")
-    @patch("ardupilot_methodic_configurator.annotate_params.get_xml_dir")
-    @patch("ardupilot_methodic_configurator.annotate_params.parse_parameter_metadata")
-    @patch("ardupilot_methodic_configurator.annotate_params.update_parameter_documentation")
-    @patch("builtins.open", new_callable=mock_open)
-    def test_main_ioerror(
-        self, mock_file, mock_update, mock_parse_metadata, mock_get_xml_dir, mock_get_xml_url, mock_arg_parser
-    ) -> None:
-        mock_arg_parser.return_value = Mock(
-            vehicle_type="ArduCopter", target=".", sort="none", delete_documentation_annotations=False, verbose=False
-        )
-        mock_file.side_effect = OSError("Mocked IO Error")
-
-        with self.assertRaises(SystemExit) as cm:
-            main()
-
-        self.assertIn(cm.exception.code, [1, 2])
-
-    @patch("ardupilot_methodic_configurator.annotate_params.arg_parser")
-    @patch("ardupilot_methodic_configurator.annotate_params.get_xml_url")
-    @patch("ardupilot_methodic_configurator.annotate_params.get_xml_dir")
-    @patch("ardupilot_methodic_configurator.annotate_params.parse_parameter_metadata")
-    @patch("ardupilot_methodic_configurator.annotate_params.update_parameter_documentation")
-    @patch("builtins.open", new_callable=mock_open)
-    def test_main_oserror(
-        self, mock_file, mock_update, mock_parse_metadata, mock_get_xml_dir, mock_get_xml_url, mock_arg_parser
-    ) -> None:
-        mock_arg_parser.return_value = Mock(
-            vehicle_type="ArduCopter", target=".", sort="none", delete_documentation_annotations=False, verbose=False
-        )
-        mock_file.side_effect = OSError("Mocked OS Error")
-
-        with self.assertRaises(SystemExit) as cm:
-            main()
-
-        self.assertIn(cm.exception.code, [1, 2])
-
-    @patch("ardupilot_methodic_configurator.annotate_params.get_xml_url")
-    def test_get_xml_url_exception(self, mock_get_xml_url) -> None:
-        mock_get_xml_url.side_effect = ValueError("Mocked Value Error")
-        with self.assertRaises(ValueError):
+    def test_get_xml_url_exception(self, mock_get_xml_url_) -> None:
+        mock_get_xml_url_.side_effect = ValueError("Mocked Value Error")
+        with pytest.raises(ValueError, match="Vehicle type 'NonExistingVehicle' is not supported."):
             get_xml_url("NonExistingVehicle", "4.0")
 
 

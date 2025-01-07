@@ -27,8 +27,8 @@ class TestArgumentParser(unittest.TestCase):  # pylint: disable=missing-class-do
     )
     def test_argument_parser(self, mock_args) -> None:
         args = argument_parser()
-        self.assertEqual(args.conn, "tcp:127.0.0.1:5760")
-        self.assertEqual(args.params, "params_dir")
+        assert args.conn == "tcp:127.0.0.1:5760"
+        assert args.params == "params_dir"
 
 
 if __name__ == "__main__":
