@@ -29,9 +29,9 @@ class TestTemplateOverview(unittest.TestCase):  # pylint: disable=missing-class-
         template_overview = TemplateOverview(self.sample_data)
 
         # Check if attributes are set correctly
-        self.assertEqual(template_overview.fc_manufacturer, "ArduPilot")
-        self.assertEqual(template_overview.fc_model, "Pixhawk4")
-        self.assertEqual(template_overview.tow_max_kg, "5")
+        assert template_overview.fc_manufacturer == "ArduPilot"
+        assert template_overview.fc_model == "Pixhawk4"
+        assert template_overview.tow_max_kg == "5"
         # .. similarly test other attributes
 
     def test_template_overview_column_labels(self) -> None:
@@ -50,7 +50,7 @@ class TestTemplateOverview(unittest.TestCase):  # pylint: disable=missing-class-
             "GNSS\nConnection",
         )
         # pylint: enable=duplicate-code
-        self.assertEqual(TemplateOverview.columns(), expected_columns)
+        assert TemplateOverview.columns() == expected_columns
 
     def test_template_overview_attributes_method(self) -> None:
         # Initialize the TemplateOverview with the sample data
@@ -71,7 +71,7 @@ class TestTemplateOverview(unittest.TestCase):  # pylint: disable=missing-class-
             "gnss_model",
             "gnss_connection",
         }
-        self.assertEqual(expected_attributes, set(attribute_keys))
+        assert expected_attributes == set(attribute_keys)
 
 
 if __name__ == "__main__":

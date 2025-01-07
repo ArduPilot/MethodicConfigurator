@@ -82,7 +82,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         log_output = self.log_stream.getvalue()
 
         # Assert to check if the expected log is in log_output
-        self.assertIn("This is a test log message", log_output)
+        assert "This is a test log message" in log_output
 
     @staticmethod
     def ftp_operation(seq: int, opcode: int, req_opcode: int, payload: bytearray) -> FTP_OP:
@@ -229,11 +229,9 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
             ret = self.mav_ftp._MAVFTP__decode_ftp_ack_and_nack(case["op"])  # noqa: SLF001, pylint: disable=protected-access
             ret.display_message()
             log_output = self.log_stream.getvalue().strip()
-            self.assertIn(
-                case["expected_message"],
-                log_output,
-                f"Test {case['name']}: Expected {case['expected_message']} but got {log_output}",
-            )
+            assert (
+                case["expected_message"] in log_output
+            ), f"Test {case['name']}: Expected {case['expected_message']} but got {log_output}"
             self.log_stream.seek(0)
             self.log_stream.truncate(0)
 
@@ -241,7 +239,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         ret = MAVFTPReturn("Command arguments", ERR_InvalidArguments)
         ret.display_message()
         log_output = self.log_stream.getvalue().strip()
-        self.assertIn("Command arguments failed, invalid arguments", log_output, "Expected invalid arguments message")
+        assert "Command arguments failed, invalid arguments" in log_output, "Expected invalid arguments message"
         self.log_stream.seek(0)
         self.log_stream.truncate(0)
 
@@ -251,11 +249,9 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         ret.error_code = 125  # Set error code to 125 to trigger unknown error message
         ret.display_message()
         log_output = self.log_stream.getvalue().strip()
-        self.assertIn(
-            "ListDirectory failed, unknown error 125 in display_message()",
-            log_output,
-            "Expected unknown error message for unknown error code",
-        )
+        assert (
+            "ListDirectory failed, unknown error 125 in display_message()" in log_output
+        ), "Expected unknown error message for unknown error code"
         self.log_stream.seek(0)
         self.log_stream.truncate(0)
 
@@ -263,7 +259,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         ret = MAVFTPReturn("Put", ERR_PutAlreadyInProgress)
         ret.display_message()
         log_output = self.log_stream.getvalue().strip()
-        self.assertIn("Put failed, put already in progress", log_output, "Expected put already in progress message")
+        assert "Put failed, put already in progress" in log_output, "Expected put already in progress message"
         self.log_stream.seek(0)
         self.log_stream.truncate(0)
 
@@ -271,7 +267,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         ret = MAVFTPReturn("Put", ERR_FailToOpenLocalFile)
         ret.display_message()
         log_output = self.log_stream.getvalue().strip()
-        self.assertIn("Put failed, failed to open local file", log_output, "Expected fail to open local file message")
+        assert "Put failed, failed to open local file" in log_output, "Expected fail to open local file message"
         self.log_stream.seek(0)
         self.log_stream.truncate(0)
 
@@ -279,7 +275,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         ret = MAVFTPReturn("Put", ERR_RemoteReplyTimeout)
         ret.display_message()
         log_output = self.log_stream.getvalue().strip()
-        self.assertIn("Put failed, remote reply timeout", log_output, "Expected remote reply timeout message")
+        assert "Put failed, remote reply timeout" in log_output, "Expected remote reply timeout message"
         self.log_stream.seek(0)
         self.log_stream.truncate(0)
 

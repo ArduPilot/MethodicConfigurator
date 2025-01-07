@@ -24,7 +24,7 @@ class TestVersion(unittest.TestCase):
         semver_pattern = r"^\d+\.\d+\.\d+$"
         match = re.match(semver_pattern, __version__)
         msg = f"__version__ string '{__version__}' does not follow semantic versioning"
-        self.assertIsNotNone(match, msg)
+        assert match is not None, msg
 
 
 if __name__ == "__main__":
