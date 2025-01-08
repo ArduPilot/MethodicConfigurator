@@ -43,19 +43,3 @@ You can also join the
 
 Note that these are NOT for user tech support, and are moderated
 for new users to prevent off-topic discussion.
-
-# Support
-
-## How to make a good bug report
-
-* Make sure your bug is not a support issue.
-  Support issues should go to [the support forums](http://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/1) and
-  include a `.bin` log file and a `.zip` file with all the intermediate `.param` files if possible.
-  If you're not sure you have a bug, you should seek support first.
-* Search for your bug, and make sure it is [not already reported](https://github.com/ArduPilot/MethodicConfigurator/issues).
-  If it is already reported, comment on that issue.
-* Only report one bug per issue report.
-* Write a clear and concise summary. Be specific about what component of the software you are writing about, and follow the convention: "Copter: blah blah blah"
-* Write a clear and concise description, with **particularly clear steps** to reproduce the problem.
-  Include logs that display the bug. **Try to report only facts in your issue report, keeping your assumptions out of it.**
-* The majority of issues open now are good or acceptable by these guidelines. Please refer to them for examples.
