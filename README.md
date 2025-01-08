@@ -1,7 +1,7 @@
 # Correctly configure ArduPilot for your vehicles on your first attempt
 
 <!--
-SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -25,6 +25,25 @@ But for those it is still very incomplete.
 - **proven**: the software has been used by hundreds of ArduPilot developers and users. From beginners to advanced. On big and small vehicles.
 - **safe**: the sequence reduces trial-and-error and reduces the amount of flights required to configure the vehicle
 
+Let's compare it with the traditional tool used to configure ArduPilot: a generalistic Ground Control Station (GCS) software.
+
+| Feature | Mission Planner, QGroundControl, ... etc | ArduPilot Methodic Configurator |
+| ------- | ---------------------------------------- | ------------------------------- |
+| configuration type | manual [^1]  | semi-automated [^2] |
+| explains what to do | :-1: | :+1:  |
+| explains when to do something | :-1: leaves you lost | :+1: explains the path |
+| explains why do something | :-1: | :+1: |
+| configuration method | a different menu for each task, some taks have no menu, so you need to dig into the 1200 parameters | each task only presents you a relevant subset of parameters |
+| parameter documentation | :+1: only on the full-parameter tree view | :+1: |
+| displays relevant documentation | :-1: | :+1: |
+| makes sure you do not forget a step | :-1: | :+1: |
+| checks that parameters get correctly uploaded | :-1: | :+1: |
+| reuse params in other vehicles | :-1: unless you hand edit files | :+1: out-of-the-box |
+| documents why you changed each parameter | :-1: | :+1: |
+
+[^1]: you need to know what/when/why you are doing
+[^2]: it explains what you should do, when you should do it and why
+
 ![When to use ArduPilot Methodic Configurator](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/when_to_use_amc.png?raw=true)
 
 It's graphical user interface (GUI) manages and visualizes ArduPilot parameters, parameter files and documentation.
@@ -36,57 +55,17 @@ It's graphical user interface (GUI) manages and visualizes ArduPilot parameters,
 There is a [Quick-start guide](https://ardupilot.github.io/MethodicConfigurator/QUICKSTART.html) and a more detailed [Usermanual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html).
 Most [common usecases are also documented in detail](https://ardupilot.github.io/MethodicConfigurator/USECASES.html).
 
-## MS Windows Installation
+## Install
 
-Download the [latest MethodicConfiguratorSetup-x.x.x.exe installer file](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/latest).
+See the [install instructions](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html)
 
-## Linux Installation
+## Support
 
-### Older distros without venv
+Need [help or support](https://ardupilot.github.io/MethodicConfigurator/SUPPORT.html)
 
-Install [python pip](https://pypi.org/project/pip/). Then do:
+## Contributing
 
-```bash
-pip install -U ardupilot_methodic_configurator
-```
-
-To run it do:
-
-```bash
-ardupilot_methodic_configurator
-```
-
-### Newer distros with venv
-
-```bash
-python -m venv .ardupilot_methodic_configurator_venv
-source .ardupilot_methodic_configurator_venv/bin/activate
-python -m pip install --upgrade pip
-pip install ardupilot_methodic_configurator
-```
-
-To run it do:
-
-```bash
-source .ardupilot_methodic_configurator_venv/bin/activate
-ardupilot_methodic_configurator
-```
-
-## MacOS Installation
-
-Install [git](https://git-scm.com/) and [python](https://www.python.org/downloads/). Then do:
-
-```bash
-git clone https://github.com/ArduPilot/MethodicConfigurator.git
-cd MethodicConfigurator
-./install_macos.sh
-```
-
-## Support and Contributing
-
-Please feel free to submit [issues](https://github.com/ArduPilot/MethodicConfigurator/issues) or
-[pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls).
-More information is available on the [contributing and support](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md) page.
+Want [to help us and contribute](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md)?
 
 ## Software design and development
 
