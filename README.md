@@ -25,7 +25,7 @@ But for those it is still very incomplete.
 - **proven**: the software has been used by hundreds of ArduPilot developers and users. From beginners to advanced. On big and small vehicles.
 - **safe**: the sequence reduces trial-and-error and reduces the amount of flights required to configure the vehicle
 
-Let's compare it with the traditional tool used to configure ArduPilot: a generalistic Ground Control Station (GCS) software.
+Let's compare it with the traditional tool used to configure ArduPilot: a generalist Ground Control Station (GCS) software.
 
 | Feature | Mission Planner, QGroundControl, ... etc | ArduPilot Methodic Configurator |
 | ------- | ---------------------------------------- | ------------------------------- |
@@ -33,13 +33,14 @@ Let's compare it with the traditional tool used to configure ArduPilot: a genera
 | explains what to do | :-1: | :+1:  |
 | explains when to do something | :-1: leaves you lost | :+1: explains the path |
 | explains why do something | :-1: | :+1: |
-| configuration method | a different menu for each task, some taks have no menu, so you need to dig into the 1200 parameters | each task only presents you a relevant subset of parameters |
+| configuration method | a different menu for each task, some tasks have no menu, so you need to dig into the 1200 parameters | each task only presents you a relevant subset of parameters |
 | parameter documentation | :+1: only on the full-parameter tree view | :+1: |
 | displays relevant documentation | :-1: | :+1: |
 | makes sure you do not forget a step | :-1: | :+1: |
 | checks that parameters get correctly uploaded | :-1: | :+1: |
 | reuse params in other vehicles | :-1: unless you hand edit files | :+1: out-of-the-box |
 | documents why you changed each parameter | :-1: | :+1: |
+| tutorials and learning resources | :-1: scattered and not integrated | :+1: context-aware help integrated |
 
 [^1]: you need to know what/when/why you are doing
 [^2]: it explains what you should do, when you should do it and why
@@ -59,7 +60,7 @@ Most [common usecases are also documented in detail](https://ardupilot.github.io
 
 See the [install instructions](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html)
 
-## Support
+## Documentation and Support
 
 Need [help or support](https://ardupilot.github.io/MethodicConfigurator/SUPPORT.html)
 

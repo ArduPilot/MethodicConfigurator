@@ -365,4 +365,4 @@ This will show a list of all available command line options along with a brief d
 
 If you encounter any issues during the configuration process, refer to the error messages provided by the application.
 These messages can guide you to the specific problem and suggest possible solutions.
-If the issue persists, consider consulting Amilcar Lucas at ArduPilot community forums or re-read this documentation.
+If the issue persists, consult the [documentation and support page](https://ardupilot.github.io/MethodicConfigurator/SUPPORT.html)

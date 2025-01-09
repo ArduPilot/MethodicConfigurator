@@ -11,7 +11,7 @@ If you are reading this page, you are possibly interested in contributing to our
 We have a very active (and friendly) developer group and would love to have the help!
 Possible ways you can help:
 
-* [Translating the software into your language](ARCHITECTURE.md#adding-a-translation)
+* [Translating the software into your language](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#adding-a-translation)
 * Testing the code
 * Filing issues on github, when you see a problem (or adding detail to existing issues that affect you)
 * Fixing issues
@@ -24,6 +24,8 @@ Get the code with:
 git clone https://github.com/ArduPilot/MethodicConfigurator.git
 cd MethodicConfigurator
 ```
+
+and read [our architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html) to get a better understanding of the project.
 
 ## Submitting patches
 
