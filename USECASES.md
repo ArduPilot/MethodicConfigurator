@@ -68,7 +68,7 @@ Please scroll down and make sure you do not miss a property.
 1. Press *Save data and start configuration*.
 1. You should now see the *Parameter file editor and uploader* window.
 ![AMC parameter file editor and uploader](images/App_screenshot2.png)
-1. Proceed as explained in [Section 6](QUICKSTART.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
+1. Proceed as explained in [Section 6](README.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
 
@@ -96,7 +96,7 @@ If issues are found the problematic fields' background will be marked in red col
 Correct those entries and press the `Save data and start configuration` button again.
 1. You should now see the *Parameter file editor and uploader* window.
 ![AMC parameter file editor and uploader](images/App_screenshot2.png)
-1. Follow the procedure to [configure the vehicle parameters](QUICKSTART.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
+1. Follow the procedure to [configure the vehicle parameters](README.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
 
@@ -117,7 +117,7 @@ Correct those entries and press the `Save data and start configuration` button a
 1. You should now see the *Parameter file editor and uploader* window.
 ![AMC parameter file editor and uploader](images/App_screenshot2.png) the `Upload selected params to FC, and advance to next param file`
 button will be grayed out because there is no FC connected.
-1. Follow the procedure to [configure the vehicle parameters](QUICKSTART.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
+1. Follow the procedure to [configure the vehicle parameters](README.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
 
@@ -161,6 +161,6 @@ Correct those entries and press the `Save data and start configuration` button a
    - motors - redo step 07 and 19 and above
    - props - redo step 07, and 11 and above
    - GNSS receiver - redo step 10
-1. Follow the procedure to [configure the vehicle parameters](QUICKSTART.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
+1. Follow the procedure to [configure the vehicle parameters](README.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)

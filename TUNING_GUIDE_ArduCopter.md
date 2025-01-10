@@ -94,9 +94,9 @@ Your vehicle will be different as your application will have different requireme
 
 To configure and operate your vehicle you need at least these software:
 
-- [Install ArduPilot Methodic Configurator](QUICKSTART.md#2-install-ardupilot-methodic-configurator-software-on-a-pc-or-mac)
-- [Install Mission Planner](QUICKSTART.md#3-install-mission-planner-software-on-a-pc-or-mac)
-- [Install ArduPilot](QUICKSTART.md#4-install-ardupilot-firmware-on-the-flight-controller)
+- [Install ArduPilot Methodic Configurator](README.md#install-ardupilot-methodic-configurator-software-on-a-pc-or-mac)
+- [Install Mission Planner](README.md#3-install-mission-planner-software-on-a-pc-or-mac)
+- [Install ArduPilot](README.md#4-install-ardupilot-firmware-on-the-flight-controller)
 
 Use Mission Planner to flash the latest stable [ArduCopter](https://firmware.ardupilot.org/Copter/stable/), [ArduPlane](https://firmware.ardupilot.org/Plane/stable/), [ArduRover](https://firmware.ardupilot.org/Rover/stable/), [ArduSub](https://firmware.ardupilot.org/Sub/stable/) or [ArduBlimp](https://firmware.ardupilot.org/Blimp/latest/) firmware for your flight controller.
 
@@ -132,7 +132,7 @@ The table bellow summarizes the software used in this guide. Download and instal
 The ArduPilot Methodic Configurator needs to know which components you used/plan to use and how you connected/plan to connect them to the flight controller (autopilot).
 It uses this information to automatically pre-select configuration settings relevant to your specific vehicle.
 
-So, [start the ArduPilot Methodic Configurator and input select a vehicle that resembles yours](QUICKSTART.md#5-use-the-ardupilot-methodic-configurator-software-for-the-first-time) and input vehicle components and component connections information into the ArduPilot Methodic Configurator *component editor window*:
+So, [start the ArduPilot Methodic Configurator and input select a vehicle that resembles yours](README.md#use-the-ardupilot-methodic-configurator-software-for-the-first-time) and input vehicle components and component connections information into the ArduPilot Methodic Configurator *component editor window*:
 
 1. Close Mission Planner, if it is open on the PC.
 1. Connect the flight controller to the PC via a USB cable and wait 7 seconds.
@@ -157,7 +157,7 @@ That is harder to do once the autopilot is assembled inside the vehicle, hence i
 
 ## 4.1 Setup IMU temperature calibration
 
-1. [Start the software](QUICKSTART.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
+1. [Start the software](README.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
 1. On *ArduPilot Methodic Configurator* select `02_imu_temperature_calibration_setup.param` on the *Current intermediate parameter file:* Combobox if not already selected.
 1. Read the *Forum Blog:* and *Wiki:* documentation by pressing on the blue URL links.
 1. Edit the `02_imu_temperature_calibration_setup.param` parameters' `New Value` and `Change Reason` using the *ArduPilot Methodic Configurator* parameter editor and press `Upload selected params to FC, and advance to next file`.

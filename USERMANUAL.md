@@ -12,7 +12,7 @@ It's graphical user interface (GUI) manages, edits and visualizes drone paramete
 It automates the tasks described in the [How to methodically tune any ArduCopter](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter) tuning guide.
 
 This user manual gives a general overview of the Software functionality.
-There are also [quick start instructions](QUICKSTART.md) and [specific use case instructions](USECASES.md).
+There are also [quick start instructions](README.md) and [specific use case instructions](USECASES.md).
 
 ## Usage
 
