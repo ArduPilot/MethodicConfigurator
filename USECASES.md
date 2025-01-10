@@ -9,16 +9,68 @@ The software is meant to guide you a in sequence of procedural steps to configur
 
 Hence the two main use cases are:
 
-1. [Create a vehicle configuration based on a pre-existing template](QUICKSTART.md#5-use-the-ardupilot-methodic-configurator-software-for-the-first-time)
-1. [Edit existing vehicle configuration files to configure and tune a vehicle](QUICKSTART.md#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template)
+1. [Use the *ArduPilot Methodic Configurator* software for the first time](#use-the-ardupilot-methodic-configurator-software-for-the-first-time)
+   to create a vehicle configuration based on a pre-existing template
+1. [Use the *ArduPilot Methodic Configurator* software after having created a vehicle from a template](#use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template))
+   to edit existing vehicle configuration files to configure and tune a vehicle
 
 But there are other use cases as well:
 
-- [Ardupilot Methodic Configurator use cases](#ardupilot-methodic-configurator-use-cases)
-  - [Create a vehicle configuration based on a correctly configured vehicle](#create-a-vehicle-configuration-based-on-a-correctly-configured-vehicle)
-  - [Review and or edit configuration files without having the vehicle FC](#review-and-or-edit-configuration-files-without-having-the-vehicle-fc)
-  - [Use the correct default values](#use-the-correct-default-values)
-  - [Re-run the procedure after changing a vehicle component](#re-run-the-procedure-after-changing-a-vehicle-component)
+- [Create a vehicle configuration based on a correctly configured vehicle](#create-a-vehicle-configuration-based-on-a-correctly-configured-vehicle)
+- [Review and or edit configuration files without having the vehicle FC](#review-and-or-edit-configuration-files-without-having-the-vehicle-fc)
+- [Use the correct default values](#use-the-correct-default-values)
+- [Re-run the procedure after changing a vehicle component](#re-run-the-procedure-after-changing-a-vehicle-component)
+
+## Use the *ArduPilot Methodic Configurator* software for the first time
+
+1. Close all other GCS software (MissionPlanner, QGroundControl, MAVProxy, DroneKit-Python, APM Planner 2.0, UgCS, LOGOS, Tower, AndroPilot, etc)
+the *ArduPilot Methodic Configurator* needs connection exclusivity.
+1. Connect the flight controller to the computer using a USB cable.
+1. Wait at least 7 seconds.
+1. Open the *ArduPilot Methodic Configurator* software.
+1. The software should now automatically detect and connect to your flight controller.
+![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
+1. Select source template directory to use.
+![AMC template selection1](images/App_screenshot_Vehicle_directory1.png)
+1. Select the vehicle template that better resembles your vehicle, it does not need to fully match your vehicle.
+![AMC template selection2](images/App_screenshot_Vehicle_overview.png)
+1. Give a name to your vehicle.
+![AMC new vehicle name](images/App_screenshot_Vehicle_directory2.png)
+1. Press *Create vehicle configuration from template*.
+![AMC new vehicle create](images/App_screenshot_Vehicle_directory3.png)
+1. Edit all the components of your vehicle to match your own in the *Vehicle Component Editor* window.
+Please scroll down and make sure you do not miss a property.
+![AMC component editor](images/App_screenshot_Component_Editor.png)
+1. Press *Save data and start configuration*.
+1. The application will validate your input.
+If issues are found the problematic fields' background will be marked in red color.
+Correct those entries and press the `Save data and start configuration` button again.
+1. You should now see the *Parameter file editor and uploader* window.
+![AMC parameter file editor and uploader](images/App_screenshot2.png)
+
+If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
+
+## Use the *ArduPilot Methodic Configurator* software after having created a vehicle from a template
+
+1. Close all other GCS software (MissionPlanner, QGroundControl, MAVProxy, DroneKit-Python, APM Planner 2.0, UgCS, LOGOS, Tower, AndroPilot, etc)
+the *ArduPilot Methodic Configurator* needs connection exclusivity.
+1. Connect the flight controller to the computer using a USB cable.
+1. Wait at least 7 seconds.
+1. Open the *ArduPilot Methodic Configurator* software.
+1. The software should now automatically detect and connect to your flight controller.
+![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
+1. Open the vehicle configuration directory that you created in the [Use the *ArduPilot Methodic Configurator* software for the first time](#use-the-ardupilot-methodic-configurator-software-for-the-first-time).
+![AMC open vehicle configuration](images/App_screenshot_Vehicle_directory4.png)
+double-click and step inside the directory that you want to use, not just select it
+1. Edit all the components of your vehicle to match your own.
+Please scroll down and make sure you do not miss a property.
+![AMC component editor](images/App_screenshot_Component_Editor.png)
+1. Press *Save data and start configuration*.
+1. You should now see the *Parameter file editor and uploader* window.
+![AMC parameter file editor and uploader](images/App_screenshot2.png)
+1. Proceed as explained in [Section 6](QUICKSTART.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
+
+If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
 
 ## Create a vehicle configuration based on a correctly configured vehicle
 
