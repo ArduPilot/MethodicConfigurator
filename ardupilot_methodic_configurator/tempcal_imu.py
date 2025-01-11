@@ -144,15 +144,19 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
 
     def param_string(self, imu: int) -> str:
         params = ""
-        params += f"INS_TCAL{imu+1}_ENABLE 1\n"
-        params += f"INS_TCAL{imu+1}_TMIN {self.tmin[imu]:.1f}\n"
-        params += f"INS_TCAL{imu+1}_TMAX {self.tmax[imu]:.1f}\n"
+        params += f"INS_TCAL{imu + 1}_ENABLE 1\n"
+        params += f"INS_TCAL{imu + 1}_TMIN {self.tmin[imu]:.1f}\n"
+        params += f"INS_TCAL{imu + 1}_TMAX {self.tmax[imu]:.1f}\n"
         for p in range(POLY_ORDER):
             for axis in AXES:
-                params += f"INS_TCAL{imu+1}_ACC{p+1}_{axis} {self.acoef[imu][axis][POLY_ORDER-(p+1)]*SCALE_FACTOR:.9f}\n"
+                params += (
+                    f"INS_TCAL{imu + 1}_ACC{p + 1}_{axis} {self.acoef[imu][axis][POLY_ORDER - (p + 1)] * SCALE_FACTOR:.9f}\n"
+                )
         for p in range(POLY_ORDER):
             for axis in AXES:
-                params += f"INS_TCAL{imu+1}_GYR{p+1}_{axis} {self.gcoef[imu][axis][POLY_ORDER-(p+1)]*SCALE_FACTOR:.9f}\n"
+                params += (
+                    f"INS_TCAL{imu + 1}_GYR{p + 1}_{axis} {self.gcoef[imu][axis][POLY_ORDER - (p + 1)] * SCALE_FACTOR:.9f}\n"
+                )
         return params
 
 

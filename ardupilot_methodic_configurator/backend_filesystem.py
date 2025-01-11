@@ -667,8 +667,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             type=str,
             default=os_getcwd(),
             help=_(
-                "Directory containing vehicle-specific intermediate parameter files. "
-                "Defaults to the current working directory"
+                "Directory containing vehicle-specific intermediate parameter files. Defaults to the current working directory"
             ),
         )
         parser.add_argument(

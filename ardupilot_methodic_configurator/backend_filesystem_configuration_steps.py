@@ -191,8 +191,7 @@ class ConfigurationSteps:
         documentation = self.configuration_steps.get(selected_file, {}) if self.configuration_steps else None
         if documentation is None:
             text = _(
-                "File '{self.configuration_steps_filename}' not found. "
-                "No intermediate parameter configuration steps available"
+                "File '{self.configuration_steps_filename}' not found. No intermediate parameter configuration steps available"
             )
             text = text.format(**locals())
             url = ""
@@ -206,8 +205,7 @@ class ConfigurationSteps:
         documentation = self.configuration_steps.get(selected_file, {}) if self.configuration_steps else None
         if documentation is None:
             text = _(
-                "File '{self.configuration_steps_filename}' not found. "
-                "No intermediate parameter configuration steps available"
+                "File '{self.configuration_steps_filename}' not found. No intermediate parameter configuration steps available"
             )
             text = text.format(**locals())
         else:

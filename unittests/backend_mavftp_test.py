@@ -229,9 +229,9 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
             ret = self.mav_ftp._MAVFTP__decode_ftp_ack_and_nack(case["op"])  # noqa: SLF001, pylint: disable=protected-access
             ret.display_message()
             log_output = self.log_stream.getvalue().strip()
-            assert (
-                case["expected_message"] in log_output
-            ), f"Test {case['name']}: Expected {case['expected_message']} but got {log_output}"
+            assert case["expected_message"] in log_output, (
+                f"Test {case['name']}: Expected {case['expected_message']} but got {log_output}"
+            )
             self.log_stream.seek(0)
             self.log_stream.truncate(0)
 
@@ -249,9 +249,9 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         ret.error_code = 125  # Set error code to 125 to trigger unknown error message
         ret.display_message()
         log_output = self.log_stream.getvalue().strip()
-        assert (
-            "ListDirectory failed, unknown error 125 in display_message()" in log_output
-        ), "Expected unknown error message for unknown error code"
+        assert "ListDirectory failed, unknown error 125 in display_message()" in log_output, (
+            "Expected unknown error message for unknown error code"
+        )
         self.log_stream.seek(0)
         self.log_stream.truncate(0)
 

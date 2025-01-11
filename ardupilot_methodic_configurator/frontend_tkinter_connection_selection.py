@@ -284,10 +284,7 @@ def main() -> None:
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
     logging_warning(
-        _(
-            "This main is for testing and development only, usually the ConnectionSelectionWindow is called from "
-            "another script"
-        )
+        _("This main is for testing and development only, usually the ConnectionSelectionWindow is called from another script")
     )
     # pylint: enable=duplicate-code
 
