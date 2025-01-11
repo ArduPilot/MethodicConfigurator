@@ -1,11 +1,11 @@
-ATC_RAT_PIT_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
-ATC_RAT_RLL_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
-ATC_RAT_YAW_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_PIT_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_RLL_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_YAW_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on 20_throttle_controller.param file
 MOT_PWM_MAX,1950
 MOT_PWM_MIN,1050
 MOT_PWM_TYPE,0  # Specified in component editor window
-MOT_SPOOL_TIME,3
+MOT_SPOOL_TIME,3  # this was in previous setup also
 NTF_BUZZ_TYPES,5  # Our CubeOrange have it self buzzer.
 NTF_LED_TYPES,231  # Our HERE3 CAN gives me to change to 231
 PSC_ACCZ_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html

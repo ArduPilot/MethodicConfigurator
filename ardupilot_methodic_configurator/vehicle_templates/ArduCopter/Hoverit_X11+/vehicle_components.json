@@ -5,33 +5,33 @@
             "Product": {
                 "Manufacturer": "Hex/ProfiCNC",
                 "Model": "CubeOrangePlus",
-                "URL": "https://www.robotshop.com/products/cubepilot-the-cube-orange-standard-set-ads-b-carrier-board",
+                "URL": "https://docs.cubepilot.org/user-guides/autopilot/the-cube-module-overview",
                 "Version": "1.0"
             },
             "Firmware": {
                 "Type": "ArduCopter",
                 "Version": "4.5.7 official"
             },
-            "Notes": "This is CubeOrange with 94.5mm x 44.3mm x 17.3mm"
+            "Notes": "CubeOrange+ with 94.5mm x 44.3mm x 17.3mm"
         },
         "Frame": {
             "Product": {
                 "Manufacturer": "HOVERIT",
-                "Model": "",
-                "URL": "",
+                "Model": "BAAZ",
+                "URL": "https://hoverit.in/baaz-1",
                 "Version": ""
             },
             "Specifications": {
                 "TOW min Kg": 30,
                 "TOW max Kg": 50
             },
-            "Notes": "Frame is custom, X type frame, the middle is welded. Arm length is 1950mm."
+            "Notes": ""
         },
         "RC Controller": {
             "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
+                "Manufacturer": "SIYI",
+                "Model": "mk32",
+                "URL": "https://shop.siyi.biz/products/siyi-mk32",
                 "Version": ""
             },
             "Firmware": {
@@ -42,9 +42,9 @@
         },
         "RC Transmitter": {
             "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
+                "Manufacturer": "SIYI",
+                "Model": "mk32",
+                "URL": "https://shop.siyi.biz/products/siyi-mk32",
                 "Version": ""
             },
             "Firmware": {
@@ -55,9 +55,9 @@
         },
         "RC Receiver": {
             "Product": {
-                "Manufacturer": "RadioLink",
-                "Model": "",
-                "URL": "",
+                "Manufacturer": "SIYI",
+                "Model": "mk32",
+                "URL": "https://shop.siyi.biz/products/siyi-mk32",
                 "Version": ""
             },
             "Firmware": {
@@ -72,9 +72,9 @@
         },
         "Telemetry": {
             "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
+                "Manufacturer": "SIYI",
+                "Model": "mk32",
+                "URL": "https://shop.siyi.biz/products/siyi-mk32",
                 "Version": ""
             },
             "Firmware": {
@@ -90,8 +90,8 @@
         "Battery Monitor": {
             "Product": {
                 "Manufacturer": "HOBBYWING",
-                "Model": "ESC X11+",
-                "URL": "",
+                "Model": "X11 Plus",
+                "URL": "https://www.hobbywing.com/en/products/xrotor-x11-plus270.html",
                 "Version": ""
             },
             "Firmware": {
@@ -106,10 +106,10 @@
         },
         "Battery": {
             "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
+                "Manufacturer": "HOVERIT",
+                "Model": "80Ah",
+                "URL": "https://hoverit.in/home",
+                "Version": "BAAZ"
             },
             "Specifications": {
                 "Chemistry": "LiIonSS",
@@ -125,8 +125,8 @@
             "Product": {
                 "Manufacturer": "HOBBYWING",
                 "Model": "X11 Plus",
-                "URL": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm",
-                "Version": "1"
+                "URL": "https://www.hobbywing.com/en/products/xrotor-x11-plus270.html",
+                "Version": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm"
             },
             "Firmware": {
                 "Type": "",
@@ -141,14 +141,14 @@
         "Motors": {
             "Product": {
                 "Manufacturer": "HOBBYWING",
-                "Model": "X11  Plus 1118-85KV",
-                "URL": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm",
-                "Version": ""
+                "Model": "X11 Plus 1118-85KV",
+                "URL": "https://www.hobbywing.com/en/products/xrotor-x11-plus270.html",
+                "Version": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm"
             },
             "Specifications": {
                 "Poles": 14
             },
-            "Notes": "High thrust and powerfull motors"
+            "Notes": "High thrust and powerful motors"
         },
         "Propellers": {
             "Product": {
@@ -165,8 +165,8 @@
         "GNSS Receiver": {
             "Product": {
                 "Manufacturer": "CubePilot",
-                "Model": "Here 3",
-                "URL": "https://docs.cubepilot.org/user-guides/here-3/here-3-manual",
+                "Model": "Here 4",
+                "URL": "https://docs.cubepilot.org/user-guides/here-4/here-4-manual",
                 "Version": "1"
             },
             "Firmware": {
@@ -174,12 +174,12 @@
                 "Version": "1.13.2"
             },
             "FC Connection": {
-                "Type": "CAN1",
+                "Type": "CAN2",
                 "Protocol": "DroneCAN"
             },
-            "Notes": "uBlox M8P GNSS with a patch antenna."
+            "Notes": "RTK GNSS receiver"
         }
     },
-    "Program version": "1.0.2",
-    "Configuration template": "X11_plus"
+    "Program version": "1.0.5",
+    "Configuration template": "Hoverit_X11+"
 }

@@ -2,7 +2,6 @@
 #
 # Usually, smaller vehicles require lower than default PID rate values.
 # Larger vehicles usually require higher than default PID rate values.
-
 ATC_ANG_PIT_P,6.0
 ATC_ANG_RLL_P,5.2
 ATC_ANG_YAW_P,3.0

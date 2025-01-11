@@ -1,4 +1,4 @@
-BATT_AMP_PERVLT,17
+BATT_AMP_PERVLT,17  # not sure
 BATT_ARM_VOLT,55.2  # Don’t allow arming below this voltage
 BATT_CAPACITY,80000  # Total battery capacity specified in the component editor
 BATT_CRT_MAH,0  # No capacity based failsafes, too unreliable
