@@ -65,9 +65,11 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 
 ### 1.2 Install Software
 
-- [Install ArduPilot Methodic Configurator](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html)
-- [Install Mission Planner](#3-install-mission-planner-software-on-a-pc-or-mac)
-- [Install ArduPilot](#4-install-ardupilot-firmware-on-the-flight-controller)
+- Install ArduPilot Methodic Configurator on [MS windows](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#ms-windows-installation),
+  [linux](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#linux-installation) or
+  [MacOS](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html##macos-installation)
+- [Install the latest Mission Planner version](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#install-mission-planner-software-on-a-pc-or-mac)
+- [Install the latest ArduPilot firmware on your flight controller board](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#install-ardupilot-firmware-on-the-flight-controller)
 
 ### 1.3 Input vehicle components and component connections into ArduPilot Methodic Configurator
 
@@ -185,21 +187,17 @@ The following sections describe each step of the procedure in more detail.
 
 ## 2. Install *ArduPilot Methodic Configurator* software on a PC or Mac
 
-See the [install instructions](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html)
+Install ArduPilot Methodic Configurator on [MS windows](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#ms-windows-installation),
+[linux](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#linux-installation) or
+[MacOS](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html##macos-installation)
 
 ## 3. Install *Mission Planner* software on a PC or Mac
 
-1. Download and install [Mission Planner](https://firmware.ardupilot.org/Tools/MissionPlanner/).
-1. Make sure to install all the recommended device drivers when asked to.
+[Install the latest Mission Planner version](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#install-mission-planner-software-on-a-pc-or-mac)
 
 ## 4. Install *ArduPilot* firmware on the flight controller
 
-1. Connect the flight controller to the computer using a USB cable.
-1. Open *Mission Planner* software.
-1. Go to *SETUP* > *Install Firmware* select your vehicle type and install version 4.3.8 **or newer** of the ArduPilot firmware onto the flight controller.
-![Install ArduPilot firmware](images/MissionPlanne_install_firmware.png)
-1. Wait until the firmware download is complete.
-1. Disconnect the USB cable from the flight controller.
+[Install the latest ArduPilot firmware on your flight controller board](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#install-ardupilot-firmware-on-the-flight-controller)
 
 ## 5. Use the *ArduPilot Methodic Configurator* software for the first time
 
