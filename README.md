@@ -65,7 +65,7 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 
 ### 1.2 Install Software
 
-- [Install ArduPilot Methodic Configurator](#2-install-ardupilot-methodic-configurator-software-on-a-pc-or-mac)
+- [Install ArduPilot Methodic Configurator](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html)
 - [Install Mission Planner](#3-install-mission-planner-software-on-a-pc-or-mac)
 - [Install ArduPilot](#4-install-ardupilot-firmware-on-the-flight-controller)
 
@@ -185,7 +185,7 @@ The following sections describe each step of the procedure in more detail.
 
 ## 2. Install *ArduPilot Methodic Configurator* software on a PC or Mac
 
-See [installation instructions](INSTALL.md)
+See the [install instructions](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html)
 
 ## 3. Install *Mission Planner* software on a PC or Mac
 
