@@ -24,11 +24,23 @@ Do the steps highlighted in red.
 
 ![AMC install 01](images/AMC_install_01.png)
 
+It is available in multiple languages, select the one that better suits you.
+
+![AMC install 01b](images/AMC_install_01b.png)
+
+Accept the software license.
+
 ![AMC install 02](images/AMC_install_02.png)
+
+Create a desktop icon, so that the language setting will take effect.
 
 ![AMC install 03](images/AMC_install_03.png)
 
+Click `Install`.
+
 ![AMC install 04](images/AMC_install_04.png)
+
+Click `Finish`.
 
 ![AMC install 05](images/AMC_install_05.png)
 

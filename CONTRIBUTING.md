@@ -12,11 +12,12 @@ We have a very active (and friendly) developer group and would love to have the 
 Possible ways you can help:
 
 * [Translating the software into your language](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#adding-a-translation)
-* Testing the code
-* Filing issues on github, when you see a problem (or adding detail to existing issues that affect you)
+* Testing [the code](https://github.com/ArduPilot/MethodicConfigurator)
+* Filing [issues on github](https://github.com/ArduPilot/MethodicConfigurator/issues/new/choose), when you see a problem (or adding detail to existing issues that affect you)
 * Fixing issues
 * Adding new features
-* Reviewing existing pull requests, and notifying the maintainer if it passes your code review.
+* Reviewing [existing pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls), and notifying the maintainer if it passes your code review.
+* Finding and fixing [security issues](SECURITY.md)
 
 Get the code with:
 

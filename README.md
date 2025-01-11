@@ -250,6 +250,15 @@ Want [to help us and contribute](https://github.com/ArduPilot/MethodicConfigurat
 To meet the [Software requirements](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#software-requirements) a
 [software architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#the-software-architecture) was designed and implemented.
 
+## Internationalization
+
+The software is available in [multiple languages](https://github.com/ArduPilot/MethodicConfigurator/tree/master/ardupilot_methodic_configurator/locale).
+On MS Windows the language is selected during install and that selection is stored in the desktop icon.
+You can manually create multiple desktop icons, each will run the software in a different language.
+On linux and MacOS the language is selectable by the `--language` command line argument.
+
+See [contributing page](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md) if you want to help us translate the software into your language.
+
 ## Code of conduct
 
 To use and develop this software you must obey the [ArduPilot Methodic Configurator Code of Conduct](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CODE_OF_CONDUCT.md).
