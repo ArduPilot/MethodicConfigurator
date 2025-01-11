@@ -116,3 +116,8 @@ class VehicleComponents:
                     vehicle_components_dict[relative_path] = vehicle_components_overview
 
         return vehicle_components_dict
+
+    @staticmethod
+    def get_vehicle_image_filepath(relative_template_path: str) -> str:
+        template_default_dir = ProgramSettings.get_templates_base_dir()
+        return os_path.join(template_default_dir, relative_template_path, "vehicle.jpg")
