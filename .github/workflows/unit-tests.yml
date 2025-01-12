@@ -49,15 +49,15 @@ jobs:
         run: |
           export DISPLAY=:99
           Xvfb :99 -screen 0 1024x768x16 &
-          python -m unittest discover -s ./tests -p '*_test.py'
+          python -m unittest discover -s ./tests -p 'test_*.py'
 
       - name: Unittest coverage report
         run: |
           cd tests
-          python -m coverage run -m unittest annotate_params_test.py
-          python -m coverage run -m unittest ardupilot_methodic_configurator_test.py
-          python -m coverage run -m unittest backend_filesystem_test.py
-          python -m coverage run -m unittest extract_param_defaults_test.py
-          python -m coverage run -m unittest frontend_tkinter_test.py
-          python -m coverage run -m unittest param_pid_adjustment_update_test.py
+          python -m coverage run -m unittest test_annotate_params.py
+          python -m coverage run -m unittest test_ardupilot_methodic_configurator.py
+          python -m coverage run -m unittest test_backend_filesystem.py
+          python -m coverage run -m unittest test_extract_param_defaults.py
+          python -m coverage run -m unittest test_frontend_tkinter.py
+          python -m coverage run -m unittest test_param_pid_adjustment_update.py
           python -m coverage html

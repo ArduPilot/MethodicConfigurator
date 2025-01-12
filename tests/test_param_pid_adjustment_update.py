@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
-Tests for the para_pid_adjustment_update.py file.
+Tests for the param_pid_adjustment_update.py file.
 
 Updates the PID adjustment parameters to be factor of the corresponding autotuned or optimized parameters.
 

@@ -22,7 +22,7 @@ import re
 SEQUENCE_FILENAME = "configuration_steps_ArduCopter.json"
 PYTHON_FILES = [
     "param_pid_adjustment_update.py",
-    "param_pid_adjustment_update_test.py",
+    "test_param_pid_adjustment_update.py",
     "annotate_params.py",
     "copy_magfit_pdef_to_template_dirs.py",
 ]
