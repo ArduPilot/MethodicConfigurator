@@ -40,12 +40,12 @@ jobs:
           export DISPLAY=:99
           Xvfb :99 -screen 0 1024x768x16 &
           coverage run -m pytest
-          coverage xml -o unittests/coverage.xml
+          coverage xml -o tests/coverage.xml
 
       - name: Get Cover
         uses: andraghetti/coverage@v3.2
         with:
-            coverageFile: unittests/coverage.xml
+            coverageFile: tests/coverage.xml
             token: ${{ secrets.GITHUB_TOKEN }}
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}

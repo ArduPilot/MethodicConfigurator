@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Unittests for the middleware_template_overview.py file.
+Tests for the middleware_template_overview.py file.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 

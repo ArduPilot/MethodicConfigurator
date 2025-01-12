@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Unittests for the backend_mavftp.py file.
+Tests backend_mavftp.py file.
 
 MAVLink File Transfer Protocol support test - https://mavlink.io/en/services/ftp.html
 

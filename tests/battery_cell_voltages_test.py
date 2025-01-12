@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Unittests for the battery_cell_voltages.py file.
+Tests for the battery_cell_voltages.py file.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 

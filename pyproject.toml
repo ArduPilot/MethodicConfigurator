@@ -182,7 +182,7 @@ line-length = 127
 indent-width = 4
 
 [tool.ruff.lint.per-file-ignores]
-"unittests/*" = ["D101", "UP031", "ARG002", "ANN001", "S101"]
+"tests/*" = ["D101", "UP031", "ARG002", "ANN001", "S101"]
 "ardupilot_methodic_configurator/backend_mavftp.py" = ["PGH004", "N801", "ANN001"]
 "ardupilot_methodic_configurator/backend_mavftp_example.py" = ["ANN001"]
 "ardupilot_methodic_configurator/tempcal_imu.py" = ["ANN001"]
@@ -219,7 +219,7 @@ strict_equality = true
 warn_unused_configs = true
 
 files = ["ardupilot_methodic_configurator/*.py"]
-exclude = ["unittests"]
+exclude = ["tests"]
 
 [tool.pyright]
 exclude = [".venv"]

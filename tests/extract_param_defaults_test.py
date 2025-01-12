@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
-Unittests for the extract_param_defaults.py file.
+Tests for the extract_param_defaults.py file.
 
 Extracts parameter default values from an ArduPilot .bin log file.
 
