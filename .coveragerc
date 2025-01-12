@@ -1,5 +1,5 @@
 [run]
 omit =
-    tests/ardupilot_methodic_configurator_test.py
-    tests/backend_filesystem_test.py
-    tests/frontend_tkinter_test.py
+    tests/test_ardupilot_methodic_configurator.py
+    tests/test_backend_filesystem.py
+    tests/test_frontend_tkinter.py
