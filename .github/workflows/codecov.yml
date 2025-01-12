@@ -39,7 +39,7 @@ jobs:
           export DISPLAY=:99
           Xvfb :99 -screen 0 1024x768x16 &
           coverage run -m pytest
-          coverage xml -o unittests/coverage.xml
+          coverage xml -o tests/coverage.xml
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v4.0.1

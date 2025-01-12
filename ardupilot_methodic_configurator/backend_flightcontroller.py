@@ -33,7 +33,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_info import Backen
 from ardupilot_methodic_configurator.backend_mavftp import MAVFTP
 
 
-class FakeSerialForUnitTests:
+class FakeSerialForTests:
     """
     A mock serial class for unit testing purposes.
 

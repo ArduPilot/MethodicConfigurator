@@ -47,12 +47,12 @@ jobs:
         run: |
           export DISPLAY=:99
           Xvfb :99 -screen 0 1024x768x16 &
-          pytest --junitxml=unittests/test-results-${{ matrix.python-version }}.xml
+          pytest --junitxml=tests/test-results-${{ matrix.python-version }}.xml
 
       - name: Upload pytest test results
         uses: actions/upload-artifact@v4
         with:
             name: pytest-results-${{ matrix.python-version }}
-            path: unittests/test-results-${{ matrix.python-version }}.xml
+            path: tests/test-results-${{ matrix.python-version }}.xml
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
