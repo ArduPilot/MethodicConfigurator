@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
-Unittest for the annotate_params.py script.
+Tests for the annotate_params.py script.
 
 These are the unit tests for the python script that fetches online ArduPilot
 parameter documentation (if not cached) and adds it to the specified file or

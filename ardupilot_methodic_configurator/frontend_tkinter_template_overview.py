@@ -105,7 +105,7 @@ class TemplateOverviewWindow(BaseWindow):
             values = (key, *(getattr(template_overview, attr, "") for attr in attribute_names))
             self.tree.insert("", "end", text=key, values=values)
 
-        self.__adjust_treeview_column_widths()
+        self._adjust_treeview_column_widths()
 
         self.tree.bind("<ButtonRelease-1>", self.__on_row_selection_change)
         self.tree.bind("<Up>", self.__on_row_selection_change)
@@ -131,7 +131,7 @@ class TemplateOverviewWindow(BaseWindow):
         else:
             self.root.mainloop()
 
-    def __adjust_treeview_column_widths(self) -> None:
+    def _adjust_treeview_column_widths(self) -> None:
         """Adjusts the column widths of the Treeview to fit the contents of each column."""
         for col in self.tree["columns"]:
             max_width = 0
@@ -158,7 +158,7 @@ class TemplateOverviewWindow(BaseWindow):
             item_id = selected_item[0]
             selected_template_relative_path = self.tree.item(item_id)["text"]
             ProgramSettings.store_template_dir(selected_template_relative_path)
-            self.__display_vehicle_image(selected_template_relative_path)
+            self._display_vehicle_image(selected_template_relative_path)
 
     def __on_row_double_click(self, event: tk.Event) -> None:
         """Handle row double-click event."""
@@ -187,7 +187,7 @@ class TemplateOverviewWindow(BaseWindow):
         # reverse sort next time
         self.tree.heading(col, command=lambda: self.__sort_by_column(col, not reverse))
 
-    def __display_vehicle_image(self, template_path: str) -> None:
+    def _display_vehicle_image(self, template_path: str) -> None:
         """Display the vehicle image corresponding to the selected template."""
         # Delete the previous image
         for widget in self.top_frame.winfo_children():

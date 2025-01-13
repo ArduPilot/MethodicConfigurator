@@ -58,6 +58,5 @@ jobs:
           python -m coverage run -m unittest test_ardupilot_methodic_configurator.py
           python -m coverage run -m unittest test_backend_filesystem.py
           python -m coverage run -m unittest test_extract_param_defaults.py
-          python -m coverage run -m unittest test_frontend_tkinter.py
           python -m coverage run -m unittest test_param_pid_adjustment_update.py
           python -m coverage html

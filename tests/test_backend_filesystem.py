@@ -42,6 +42,8 @@ class TestLocalFilesystem(unittest.TestCase):
         mock_isdir.assert_called_once_with("vehicle_dir")
         mock_listdir.assert_called_once_with("vehicle_dir")
         mock_load_param_file_into_dict.assert_called_once_with("vehicle_dir/02_test.param")
+        assert "00_default.param" not in result
+        assert "01_ignore_readonly.param" not in result
 
     def test_str_to_bool(self) -> None:
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
@@ -75,6 +77,7 @@ class TestLocalFilesystem(unittest.TestCase):
         mock_listdir.assert_called_once_with("new_vehicle_dir")
         mock_read_params_from_files.assert_called_once()
         mock_load_vehicle_components_json_data.assert_called_once()
+        assert lfs.file_parameters == {"02_test.param": {"TEST_PARAM": "value"}}
 
     @patch("os.path.exists")
     @patch("os.path.isdir")
@@ -281,6 +284,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         mock_join.assert_any_call("new_vehicle_dir", "dir1")
         mock_copy2.assert_called_once_with("template_dir/file1", "new_vehicle_dir/file1")
         mock_copytree.assert_called_once_with("template_dir/dir1", "new_vehicle_dir/dir1")
+        assert mock_exists.call_count == 2
 
 
 if __name__ == "__main__":
