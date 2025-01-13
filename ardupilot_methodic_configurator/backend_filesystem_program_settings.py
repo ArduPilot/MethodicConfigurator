@@ -213,10 +213,6 @@ class ProgramSettings:
         else:
             logging_debug("current script directory: %s", current_script_dir)
             site_directory = current_script_dir
-            if "site-packages" in site_directory:
-                site_directory = os_path.join(os_path.expanduser("~"), ".local", "ardupilot_methodic_configurator")
-            elif "dist-packages" in site_directory:
-                site_directory = os_path.join("/usr", "local", "ardupilot_methodic_configurator")
 
         logging_debug(_("site_directory: %s"), site_directory)
         return os_path.join(site_directory, "vehicle_templates")
