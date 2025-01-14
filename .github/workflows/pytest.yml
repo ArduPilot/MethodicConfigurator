@@ -33,10 +33,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip wheel
-          python -m pip install -U pymavlink pytest pytest-cov mock
-          pip install build
-          pip install -U .
+          python -m pip install --upgrade pip pytest-cov pytest-md
+          pip install -e .
 
       - name: Install apt packages
         run: |
@@ -44,15 +42,32 @@ jobs:
           sudo apt-get install -y xvfb
 
       - name: Test with pytest
+        id: pytest
         run: |
           export DISPLAY=:99
           Xvfb :99 -screen 0 1024x768x16 &
-          pytest --junitxml=tests/test-results-${{ matrix.python-version }}.xml
+          pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage-${{ matrix.python-version }}.xml --md=tests/results-${{ matrix.python-version }}.md --cov-fail-under=42
+        continue-on-error: true
 
-      - name: Upload pytest test results
-        uses: actions/upload-artifact@v4
-        with:
-            name: pytest-results-${{ matrix.python-version }}
-            path: tests/test-results-${{ matrix.python-version }}.xml
+      - name: Display test results as github job summary
+        run: cat tests/results-${{ matrix.python-version }}.md >> $GITHUB_STEP_SUMMARY
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+            name: coverage-report-${{ matrix.python-version }}
+            path: tests/coverage-${{ matrix.python-version }}.xml
+        # Use always() to always run this step to publish test results when there are test failures
+        if: ${{ always() }}
+
+      - name: Upload coverage report to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          verbose: true
+          files: tests/coverage-3.9.xml
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        # Use always() to always run this step to publish test results when there are test failures
+        if: ${{ always() && matrix.python-version == '3.9' }}

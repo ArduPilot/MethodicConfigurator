@@ -1,4 +1,3 @@
 [run]
 omit =
-    tests/test_ardupilot_methodic_configurator.py
     tests/test_backend_filesystem.py
