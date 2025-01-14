@@ -1,0 +1,18 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+AUTO_OPTIONS,0
+BRD_HEAT_TARG,45  # Operate at a constant IMU temperature
+BRD_RTC_TZ_MIN,0
+EK3_SRC1_POSZ,1  # Use the default, it is safer
+FENCE_TYPE,3  # cylinder and max altitude, to obey local regulations and safety measures
+FS_EKF_ACTION,1
+INS_ACCEL_FILTER,20  # the default is 20 and that lets too much noise in
+INS_POS1_X,0
+INS_POS1_Y,0
+INS_POS2_X,0
+INS_POS2_Y,0
+LAND_ALT_LOW,1000
+RTL_ALT,1000
+RTL_LOIT_TIME,2000
+SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation
+SERIAL7_PROTOCOL,-1  # Do not use CubeOrange ADSB receiver

@@ -1,0 +1,5 @@
+ATC_ACCEL_Y_MAX,4000
+ATC_ANG_YAW_P,7  # higher value mean a tighter tune
+ATC_RAT_YAW_FLTE,2
+ATC_RAT_YAW_I,0.01
+ATC_RAT_YAW_P,0.8

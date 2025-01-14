@@ -1,0 +1,10 @@
+ARMING_RUDDER,2
+BRD_ALT_CONFIG,0
+RC_OPTIONS,1056  # Enable multiple receiver support
+RC_PROTOCOLS,1  # Selected in the component editor
+RC10_OPTION,0
+RC6_OPTION,81
+RC7_OPTION,0
+RC8_OPTION,0
+RC9_OPTION,0
+RSSI_TYPE,0

@@ -1,0 +1,11 @@
+BRD_SAFETY_DEFLT,0  # CubeOrange has no safety switch
+CAN_D1_PROTOCOL,1  # set virtual driver of CAN1 to DRONECAN for Here3
+CAN_P1_DRIVER,1  # Enable CAN1 bus for Here3
+GPS_GNSS_MODE,0  # limit the constellations to ensure an update rate higher than 5Hz
+GPS_POS1_X,-0.65  # Here3 GPS antenna is 65 cm back from CG
+GPS_POS1_Y,0  # Here3 GPS antenna is on CG
+GPS_POS1_Z,-0.85  # Here3 GPS antenna is 85 cm above CG
+GPS_TYPE,9  # Defined in component editor
+NTF_LED_TYPES,231  # Enable DRONECAN LED
+SERIAL3_PROTOCOL,5  # GNSS receiver is connected to CAN1
+WPNAV_RADIUS,200

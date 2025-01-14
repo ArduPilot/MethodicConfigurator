@@ -1,0 +1,5 @@
+ATC_ACCEL_P_MAX,25000
+ATC_ANG_PIT_P,8  # higher value mean a tighter tune
+ATC_RAT_PIT_D,0.05
+ATC_RAT_PIT_I,0.03
+ATC_RAT_PIT_P,0.19
