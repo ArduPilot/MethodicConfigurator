@@ -3,6 +3,15 @@ rem SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 rem
 rem SPDX-License-Identifier: GPL-3.0-or-later
 
+rem Check if Python 3 is installed
+where python3 >nul 2>&1
+if %errorlevel% neq 0 (
+    echo ERROR: Python 3 is not installed or not in PATH.
+    echo Please install Python 3 and ensure it's in your system PATH.
+    pause
+    exit /b 1
+)
+
 echo WARNING: If you proceed the python serial package will be uninstalled because it conflicts with pyserial.
 choice /C YN /M "Do you want to proceed? (Y/N)"
 if errorlevel 2 goto :skip_uninstall
@@ -15,30 +24,8 @@ echo python serial has been successfully uninstalled.
 echo.
 
 rem Install all dependencies defined in setup.py
-python3 -m pip install .
+python3 -m pip install -e .
 
-echo.
-echo On MS Windows softlinks require admin privileges and have other problems so we will
-echo replace the linux parameter metadata/documentation files softlinks with MS Windows hardlinks
-
-setlocal enabledelayedexpansion
-for %%f in (
-    4.3.8-params
-    4.4.4-params
-    4.5.x-params
-    4.6.x-params
-) do (
-    set "src=apm.pdef.%%f.xml"
-    set "dest=ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\%%f\apm.pdef.xml"
-    rem remove the old linux softlinks
-    del !dest!
-    rem echo Copying !src! to !dest!
-    rem copy .\!src! !dest!
-    mklink /H !dest! .\!src!
-)
-
-rem echo Copying complete.
-echo Hard links creation complete
 echo.
 echo To run the ArduPilot methodic configurator GUI, execute the following command:
 echo.
