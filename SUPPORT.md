@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 To help yourself, read the extensive documentation:
 
 * [Install instructions](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html) to know how to install and run it on your computer.
-* [Quick start guide](https://ardupilot.github.io/MethodicConfigurator/QUICKSTART.html) for a fast overview and to get you started for the first time.
+* [README](https://ardupilot.github.io/MethodicConfigurator/) for a fast overview and to get you started for the first time.
 * Move your mouse over the the software GUI elements to see a brief tooltip description of what they do.
 * [Usecases](https://ardupilot.github.io/MethodicConfigurator/USECASES.html) to learn how to use the software in different scenarios.
 * [Usermanual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html) to understand how to generally use the software.

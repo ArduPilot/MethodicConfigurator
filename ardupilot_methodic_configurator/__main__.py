@@ -138,8 +138,8 @@ def main() -> None:
 
     if bool(ProgramSettings.get_setting("auto_open_doc_in_browser")):
         url = (
-            "https://ardupilot.github.io/MethodicConfigurator/QUICKSTART.html"
-            "#5-use-the-ardupilot-methodic-configurator-software-for-the-first-time"
+            "https://ardupilot.github.io/MethodicConfigurator/USECASES.html"
+            "#use-the-ardupilot-methodic-configurator-software-for-the-first-time"
         )
         webbrowser_open(url=url, new=0, autoraise=True)
 

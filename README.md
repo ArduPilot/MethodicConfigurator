@@ -75,7 +75,7 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 
 The software needs this information to automatically pre-select configuration settings relevant to your specific vehicle
 
-- [Start the ArduPilot Methodic Configurator and input select a vehicle that resembles yours](#5-use-the-ardupilot-methodic-configurator-software-for-the-first-time)
+- [Start the ArduPilot Methodic Configurator and select a vehicle that resembles yours](#5-use-the-ardupilot-methodic-configurator-software-for-the-first-time)
   and input vehicle components and component connections information into the ArduPilot Methodic Configurator *component editor window*
 
 ### 1.4 Perform IMU temperature calibration before assembling the autopilot into the vehicle (optional)
@@ -220,7 +220,7 @@ usecase.
 ## 6. Configure the vehicle's parameters in a traceable way
 
 The following simple loop is presented as welcome instructions:
-![AMC welcome instructions](images/App_screenshot_instructions.png)
+![AMC welcome instructions](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/App_screenshot_instructions.png?raw=true)
 
 Now do this in a loop until the software automatically closes or you are asked to close the software:
 
