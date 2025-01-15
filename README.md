@@ -45,11 +45,13 @@ Let's compare it with the traditional tool used to configure ArduPilot: a genera
 [^1]: you need to know what/when/why you are doing
 [^2]: it explains what you should do, when you should do it and why
 
-![When to use ArduPilot Methodic Configurator](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/when_to_use_amc.png?raw=true)
+<!-- ![When to use ArduPilot Methodic Configurator](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/when_to_use_amc.png?raw=true) -->
 
-It's graphical user interface (GUI) manages and visualizes ArduPilot parameters, parameter files and documentation.
+It's simple graphical user interface (GUI) manages and visualizes ArduPilot parameters, parameter files and documentation.
 
 ![Application Screenshot](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/App_screenshot1.png?raw=true)
+
+No visible menus, no hidden menus, no complicated options, what you see is what gets changed.
 
 ## 1. Quick overview of the entire process
 
