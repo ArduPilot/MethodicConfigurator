@@ -245,7 +245,7 @@
         "auto_changed_by": "",
         "forced_parameters": {
             "INS_LOG_BAT_OPT": { "New Value": 4, "Change Reason": "Logs measured data both before and after the filters for Filter Review Webtool usage" },
-            "LOG_BITMASK": { "New Value": 2242524, "Change Reason": "Logs Notch filter data and other control signals" },
+            "LOG_BITMASK": { "New Value": 180222, "Change Reason": "Logs Notch filter data and other control signals" },
             "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" }
         },
         "old_filenames": ["13_logging.param"]
