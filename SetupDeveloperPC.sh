@@ -8,7 +8,7 @@ cd "$(dirname "$0")" || exit
 
 ConfigureGit() {
     echo "Configuring Git settings..."
-    git config --local commit.gpgsign true
+    git config --local commit.gpgsign false
     git config --local diff.tool meld
     git config --local diff.astextplain.textconv astextplain
     git config --local merge.tool meld
