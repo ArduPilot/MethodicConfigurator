@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <!-- markdownlint-disable MD013 MD025 MD034 -->
 
-![Cinewhoop Diatone Taycan MX-C](images/blog/cinewhoop.png)
+![Cinewhoop Diatone Taycan MX-C](images/blog/blog_title.png)
 
 For illustrative purposes, we will use the small 3'' multicopter depicted above, but the tuning sequence we developed at [IAV GmbH](https://www.iav.com/) will work on almost any other multicopter.
 Parts of Section 1 and Sections 2 to 6 apply to **all ArduPilot vehicles**: ArduPlane, ArduRover, ArduBoat, ArduSub, ArduBlimp ...
