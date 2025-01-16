@@ -3,6 +3,7 @@ name: Pytest
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#packaging-workflow-data-as-artifacts
 
 on:
+  pull_request:
   push:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
@@ -46,18 +47,96 @@ jobs:
         run: |
           export DISPLAY=:99
           Xvfb :99 -screen 0 1024x768x16 &
-          pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage-${{ matrix.python-version }}.xml --md=tests/results-${{ matrix.python-version }}.md --cov-fail-under=42
-        continue-on-error: true
+          pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md
 
       - name: Display test results as github job summary
         run: cat tests/results-${{ matrix.python-version }}.md >> $GITHUB_STEP_SUMMARY
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
 
+      - name: Upload coverage xml report
+        uses: actions/upload-artifact@v4
+        with:
+            name: coverage-${{ matrix.python-version }}-xml
+            path: tests/coverage.xml
+            retention-days: 1
+        # Use always() to always run this step to publish test results when there are test failures
+        if: ${{ always() }}
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
-            name: coverage-report-${{ matrix.python-version }}
-            path: tests/coverage-${{ matrix.python-version }}.xml
+            name: coverage-${{ matrix.python-version }}
+            path: .coverage
+            include-hidden-files: true
+            retention-days: 1
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
+
+  upload_coverage_to_codecov:
+    runs-on: ubuntu-latest
+    needs: pytest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download coverage xml report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-3.9-xml
+
+      - name: Upload coverage xml report to codecov.io
+        uses: codecov/codecov-action@v5
+        with:
+          verbose: true
+          files: coverage.xml
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      # TODO: create a badge that presents the result of the Upload coverage xml report step
+
+  check_coverage:
+    runs-on: ubuntu-latest
+    needs: pytest  # This will ensure this job runs after 'pytest'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-3.9
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'  # Match with the coverage report Python version
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip coverage
+
+      - name: Check coverage
+        run: |
+          coverage report --fail-under=32
+
+  add_coverage_to_pullrequest:
+    runs-on: ubuntu-latest
+    needs: pytest  # This will ensure this job runs after 'pytest'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download coverage xml report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-3.9-xml
+
+      - name: Get Cover
+        uses: orgoro/coverage@v3.2
+        with:
+            coverageFile: coverage.xml
+            token: ${{ secrets.GITHUB_TOKEN }}
