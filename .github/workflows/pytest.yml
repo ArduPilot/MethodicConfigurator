@@ -12,7 +12,7 @@ on:
     types: [published]
 
 jobs:
-  build:
+  pytest:
 
     runs-on: ${{ matrix.os }}
     strategy:
@@ -61,13 +61,3 @@ jobs:
             path: tests/coverage-${{ matrix.python-version }}.xml
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
-
-      - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@v4.0.1
-        with:
-          verbose: true
-          files: tests/coverage-3.9.xml
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        # Use always() to always run this step to publish test results when there are test failures
-        if: ${{ always() && matrix.python-version == '3.9' }}

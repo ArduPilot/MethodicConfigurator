@@ -10,7 +10,7 @@ on:
     types: [published]
 
 jobs:
-  build:
+  unittest:
 
     runs-on: ${{ matrix.os }}
     strategy:

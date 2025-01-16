@@ -10,7 +10,7 @@ on:
     types: [published]
 
 jobs:
-  build:
+  pylint:
     runs-on: ubuntu-latest
     strategy:
       matrix:

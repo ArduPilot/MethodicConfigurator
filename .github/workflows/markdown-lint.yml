@@ -9,7 +9,7 @@ on:
     types: [published]
 
 jobs:
-  lint:
+  markdown-lint:
     runs-on: ubuntu-latest
     steps:
 

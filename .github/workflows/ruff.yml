@@ -14,7 +14,7 @@ on:
 #  cancel-in-progress: true
 
 jobs:
-  build:
+  ruff:
     runs-on: ubuntu-latest
     strategy:
       matrix:
