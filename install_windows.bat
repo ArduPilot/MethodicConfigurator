@@ -24,7 +24,7 @@ echo python serial has been successfully uninstalled.
 echo.
 
 rem Install all dependencies defined in setup.py
-python3 -m pip install -e .
+python3 -m pip install -e .[dev]
 
 echo.
 echo To run the ArduPilot methodic configurator GUI, execute the following command:

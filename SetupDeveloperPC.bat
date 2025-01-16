@@ -75,7 +75,7 @@ goto :eof
 
 :ConfigurePreCommit
 echo Installing pre-commit tools into the Ubuntu running inside WSL2...
-wsl --exec bash -c "./wsl_install.bash"
+wsl --exec bash -c "./install_wsl.bash"
 echo Setting pre-commit...
 pip3 install pre-commit
 pre-commit install
