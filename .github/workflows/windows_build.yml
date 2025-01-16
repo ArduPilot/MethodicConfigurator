@@ -5,6 +5,8 @@ on:
      types: [published]
   workflow_dispatch:
   push:
+    paths:
+      - '**/*.py'        # Watch for changes in any Python files
 
 concurrency:
   group: ci-${{github.workflow}}-${{ github.ref }}
