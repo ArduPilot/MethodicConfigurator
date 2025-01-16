@@ -10,6 +10,7 @@ on:
   workflow_dispatch:
   release:
     types: [published]
+  workflow_call:  # allow this workflow to be called from other workflows
 
 jobs:
   pytest:
