@@ -59,12 +59,14 @@ dev = [
     "pre-commit",
     "pytest",
     "pytest-cov",
+    "pytest-md",
+    "pytest-mock",
     "coverage",
     "mock",
     "pyinstaller",
     "mypy",
     "pyright",
-    "github",
+#    "github",
 ]
 
 [project.scripts]

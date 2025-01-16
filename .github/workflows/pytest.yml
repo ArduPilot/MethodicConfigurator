@@ -34,8 +34,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip pytest-cov pytest-md
-          pip install -e .
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
 
       - name: Install apt packages
         run: |

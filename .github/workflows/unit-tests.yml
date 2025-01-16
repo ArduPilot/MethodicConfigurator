@@ -55,8 +55,13 @@ jobs:
         run: |
           cd tests
           python -m coverage run -m unittest test_annotate_params.py
-          python -m coverage run -m unittest test_ardupilot_methodic_configurator.py
+          python -m coverage run -m unittest test_argparse_check_range.py
           python -m coverage run -m unittest test_backend_filesystem.py
+          python -m coverage run -m unittest test_battery_cell_voltages.py
+          python -m coverage run -m unittest test_common_arguments.py
           python -m coverage run -m unittest test_extract_param_defaults.py
+          python -m coverage run -m unittest test_internationalization.py
+          python -m coverage run -m unittest test_middleware_template_overview.py
           python -m coverage run -m unittest test_param_pid_adjustment_update.py
+          python -m coverage run -m unittest version_test.py
           python -m coverage html
