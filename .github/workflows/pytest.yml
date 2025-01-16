@@ -4,6 +4,9 @@ name: Pytest
 
 on:
   pull_request:
+    paths:
+      - '**/*.py'        # Watch for changes in any Python files
+      - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
   push:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
@@ -14,7 +17,7 @@ on:
 
 jobs:
   pytest:
-
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
