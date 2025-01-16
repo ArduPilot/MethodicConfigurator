@@ -13,7 +13,7 @@ source .venv/bin/activate
 python3 -m pip uninstall -y serial pyserial
 
 # Install the project dependencies
-python3 -m pip install .
+python3 -m pip install -e .[dev]
 
 echo "Installation complete."
 echo ""
