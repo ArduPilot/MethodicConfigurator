@@ -1,9 +1,9 @@
-ATC_RAT_PIT_D,0.006195  # Tuned in a Hangar
-ATC_RAT_PIT_I,0.07877  # Tuned in a Hangar
-ATC_RAT_PIT_P,0.07877  # Tuned in a Hangar
-ATC_RAT_RLL_D,0.005591  # Tuned in a Hangar
-ATC_RAT_RLL_I,0.076405  # Tuned in a Hangar
-ATC_RAT_RLL_P,0.076405  # Tuned in a Hangar
+ATC_RAT_PIT_D,0.003814  # Tuned in a Hangar
+ATC_RAT_PIT_I,0.09335  # Tuned in a Hangar
+ATC_RAT_PIT_P,0.09335  # Tuned in a Hangar
+ATC_RAT_RLL_D,0.008578  # Tuned in a Hangar
+ATC_RAT_RLL_I,0.11167  # Tuned in a Hangar
+ATC_RAT_RLL_P,0.11167  # Tuned in a Hangar
 ATC_RAT_YAW_D,0.01  # Tuned in a Hangar
 ATC_RAT_YAW_FLTD,7.5  # Tuned in a Hangar
 ATC_RAT_YAW_I,0.05  # Tuned in a Hangar
