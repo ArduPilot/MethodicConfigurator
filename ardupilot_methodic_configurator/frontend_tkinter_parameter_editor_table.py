@@ -380,8 +380,17 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             new_value_entry.config(state="disabled", background="light grey")
         elif bitmask_dict:
             new_value_entry.bind(
-                "<FocusIn>", lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value)
+                "<Double-Button>",
+                lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value),
             )
+            # pylint: disable=line-too-long
+            new_value_entry.bind(
+                "<FocusOut>",
+                lambda event, current_file=self.current_file, param_name=param_name: self.__on_parameter_value_change(  # type: ignore[misc]
+                    event, current_file, param_name
+                ),
+            )
+            # pylint: enable=line-too-long
         else:
             # pylint: disable=line-too-long
             new_value_entry.bind(
@@ -414,8 +423,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             self.root.update_idletasks()
             # Re-bind the FocusIn event to new_value_entry
             event.widget.bind(
-                "<FocusIn>", lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value)
+                "<Double-Button>",
+                lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value),
             )
+
+        def focus_out_handler(event: tk.Event) -> None:
+            if not window.focus_get() or not window.focus_get().winfo_ismapped():
+                on_close()
 
         def get_param_value_msg(_param_name: str, checked_keys: set) -> str:
             _new_decimal_value = sum(1 << key for key in checked_keys)
@@ -427,7 +441,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             close_label.config(text=get_param_value_msg(param_name, checked_keys))
 
         # Temporarily unbind the FocusIn event to prevent triggering the window again
-        event.widget.unbind("<FocusIn>")
+        event.widget.unbind("<Double-Button>")
         window = tk.Toplevel(self.root)
         title = _("Select {param_name} Bitmask Options")
         window.title(title.format(**locals()))
@@ -452,6 +466,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         # Bind the on_close function to the window's WM_DELETE_WINDOW protocol
         window.protocol("WM_DELETE_WINDOW", on_close)
+        window.bind("<FocusOut>", focus_out_handler)
+        for child in window.winfo_children():
+            child.bind("<FocusOut>", focus_out_handler)
 
         # Make sure the window is visible before disabling the parent window
         window.deiconify()
