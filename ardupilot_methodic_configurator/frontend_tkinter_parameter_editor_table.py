@@ -382,6 +382,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             new_value_entry.bind(
                 "<FocusIn>", lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value)
             )
+            # pylint: disable=line-too-long
+            new_value_entry.bind(
+                "<FocusOut>",
+                lambda event, current_file=self.current_file, param_name=param_name: self.__on_parameter_value_change(  # type: ignore[misc]
+                    event, current_file, param_name
+                ),
+            )
+            # pylint: enable=line-too-long
         else:
             # pylint: disable=line-too-long
             new_value_entry.bind(
@@ -416,6 +424,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             event.widget.bind(
                 "<FocusIn>", lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value)
             )
+
+        def is_widget_visible(widget: Union[tk.Misc, None]) -> bool:
+            return bool(widget and widget.winfo_ismapped())
+
+        def focus_out_handler(_event: tk.Event) -> None:
+            if not is_widget_visible(window.focus_get()):
+                on_close()
 
         def get_param_value_msg(_param_name: str, checked_keys: set) -> str:
             _new_decimal_value = sum(1 << key for key in checked_keys)
@@ -452,6 +467,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         # Bind the on_close function to the window's WM_DELETE_WINDOW protocol
         window.protocol("WM_DELETE_WINDOW", on_close)
+        window.bind("<FocusOut>", focus_out_handler)
+        for child in window.winfo_children():
+            child.bind("<FocusOut>", focus_out_handler)
 
         # Make sure the window is visible before disabling the parent window
         window.deiconify()
