@@ -57,6 +57,7 @@ dynamic = ["version"]
 dev = [
     "ruff",
     "pre-commit",
+    "python-gettext",
     "pytest",
     "pytest-cov",
     "pytest-md",
