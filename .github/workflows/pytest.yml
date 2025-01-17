@@ -91,12 +91,10 @@ jobs:
           name: coverage-3.9-xml
 
       - name: Upload coverage xml report to codecov.io
-        uses: codecov/codecov-action@v5
+        uses: coverallsapp/github-action@v2
         with:
-          verbose: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           files: coverage.xml
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       # TODO: create a badge that presents the result of the Upload coverage xml report step
 
