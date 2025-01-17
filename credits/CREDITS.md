@@ -59,7 +59,7 @@ Credits also go to these other software projects that helped in developing ArduP
 - [codacy](https://www.codacy.com/): A code quality and code review tool.
 - [snyk](https://snyk.io/): A security tool for finding and fixing vulnerabilities.
 - [codeclimate](https://codeclimate.com/): A platform for automated code review.
-- [codecov.io](https://about.codecov.io/): A tool for measuring code coverage.
+- [coveralls.io](https://coveralls.io/): A tool for measuring code coverage.
 - [pypi.org](https://pypi.org/): The Python Package Index, a repository of software for the Python programming language.
 - [inno setup](https://jrsoftware.org/isinfo.php): A free installer for Windows programs.
 - [bestpractices.dev](https://www.bestpractices.dev/en): A site for checking best practices in software development.
