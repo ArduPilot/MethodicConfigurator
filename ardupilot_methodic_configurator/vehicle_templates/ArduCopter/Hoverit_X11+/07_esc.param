@@ -1,28 +1,27 @@
 ATC_RAT_PIT_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
-ATC_RAT_RLL_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
-ATC_RAT_YAW_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_RLL_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html 
+ATC_RAT_YAW_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html 
 MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on 20_throttle_controller.param file
-MOT_PWM_MAX,1950
-MOT_PWM_MIN,1050
+MOT_PWM_MAX,1950  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+MOT_PWM_MIN,1050  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
 MOT_PWM_TYPE,0  # Specified in component editor window
-MOT_SPOOL_TIME,3  # this was in previous setup also
-NTF_BUZZ_TYPES,5  # Our CubeOrange have it self buzzer.
-NTF_LED_TYPES,231  # Our HERE3 CAN gives me to change to 231
-PSC_ACCZ_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+MOT_SPOOL_TIME,0.5  # PREVIOUS SIMILAR DRONE HAD THIS VALUE
+NTF_BUZZ_TYPES,5  # Our CubeOrangePlus have it self buzzer.
+NTF_LED_TYPES,1  # WANT TO REDUCE LIGHTS
+PSC_ACCZ_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 SERVO_BLH_POLES,14  # Specified in component editor window
 SERVO_FTW_POLES,14  # Specified in component editor window
-SERVO1_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
-SERVO1_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
-SERVO1_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
-SERVO13_FUNCTION,0  # For matek H743Slim v3 board
-SERVO2_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
-SERVO2_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
-SERVO2_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
-SERVO3_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
-SERVO3_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
-SERVO3_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
-SERVO4_MAX,1940  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
-SERVO4_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
-SERVO4_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
-TKOFF_RPM_MIN,0  # I don't have esc telemtry to measure
-TKOFF_SLEW_TIME,4
+SERVO1_MAX,1950  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO1_MIN,1050  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO1_TRIM,1500  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO2_MAX,1950  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO2_MIN,1050  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO2_TRIM,1500  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO3_MAX,1950  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO3_MIN,1050  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO3_TRIM,1500  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO4_MAX,1950  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO4_MIN,1050  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO4_TRIM,1500  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+TKOFF_RPM_MIN,200
+TKOFF_SLEW_TIME,2

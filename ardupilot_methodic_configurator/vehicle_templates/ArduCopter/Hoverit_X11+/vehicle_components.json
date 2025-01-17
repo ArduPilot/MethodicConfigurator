@@ -19,46 +19,46 @@
                 "Manufacturer": "HOVERIT",
                 "Model": "BAAZ",
                 "URL": "https://hoverit.in/baaz-1",
-                "Version": ""
+                "Version": "v2"
             },
             "Specifications": {
-                "TOW min Kg": 30,
+                "TOW min Kg": 35,
                 "TOW max Kg": 50
             },
-            "Notes": ""
+            "Notes": "customized drone"
         },
         "RC Controller": {
             "Product": {
                 "Manufacturer": "SIYI",
-                "Model": "mk32",
+                "Model": "mk32 RADIO",
                 "URL": "https://shop.siyi.biz/products/siyi-mk32",
-                "Version": ""
+                "Version": "1"
             },
             "Firmware": {
                 "Type": "",
                 "Version": ""
             },
-            "Notes": ""
+            "Notes": "mk32 COMBO"
         },
         "RC Transmitter": {
             "Product": {
-                "Manufacturer": "SIYI",
-                "Model": "mk32",
+                "Manufacturer": "SIYI ",
+                "Model": "mk32 RADIO",
                 "URL": "https://shop.siyi.biz/products/siyi-mk32",
-                "Version": ""
+                "Version": "1"
             },
             "Firmware": {
                 "Type": "",
                 "Version": ""
             },
-            "Notes": ""
+            "Notes": "mk32 COMBO"
         },
         "RC Receiver": {
             "Product": {
                 "Manufacturer": "SIYI",
-                "Model": "mk32",
+                "Model": "mk32 RADIO",
                 "URL": "https://shop.siyi.biz/products/siyi-mk32",
-                "Version": ""
+                "Version": "1"
             },
             "Firmware": {
                 "Type": "",
@@ -66,14 +66,14 @@
             },
             "FC Connection": {
                 "Type": "RCin/SBUS",
-                "Protocol": "SBUS_NI"
+                "Protocol": "SBUS"
             },
-            "Notes": ""
+            "Notes": "MK32 RADIO COMBO "
         },
         "Telemetry": {
             "Product": {
                 "Manufacturer": "SIYI",
-                "Model": "mk32",
+                "Model": "mk32 RADIO",
                 "URL": "https://shop.siyi.biz/products/siyi-mk32",
                 "Version": ""
             },
@@ -85,7 +85,7 @@
                 "Type": "SERIAL1",
                 "Protocol": "MAVLink2"
             },
-            "Notes": "High range and strength telemetry."
+            "Notes": "mk32 COMBO RADIO "
         },
         "Battery Monitor": {
             "Product": {
@@ -109,7 +109,7 @@
                 "Manufacturer": "HOVERIT",
                 "Model": "80Ah",
                 "URL": "https://hoverit.in/home",
-                "Version": "BAAZ"
+                "Version": "80ah baaz"
             },
             "Specifications": {
                 "Chemistry": "LiIonSS",
@@ -164,22 +164,22 @@
         },
         "GNSS Receiver": {
             "Product": {
-                "Manufacturer": "CubePilot",
-                "Model": "Here 4",
+                "Manufacturer": "CubePilot HEX",
+                "Model": "com.cubepilot.here4",
                 "URL": "https://docs.cubepilot.org/user-guides/here-4/here-4-manual",
-                "Version": "1"
+                "Version": "1.12"
             },
             "Firmware": {
-                "Type": "UBlox",
-                "Version": "1.13.2"
+                "Type": "",
+                "Version": "1.12"
             },
             "FC Connection": {
                 "Type": "CAN2",
                 "Protocol": "DroneCAN"
             },
-            "Notes": "RTK GNSS receiver"
+            "Notes": "RTK GNSS receiver HERE 4 "
         }
     },
-    "Program version": "1.0.5",
+    "Program version": "1.0.7",
     "Configuration template": "Hoverit_X11+"
 }
