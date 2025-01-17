@@ -69,7 +69,7 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 
 - Install ArduPilot Methodic Configurator on [MS windows](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#ms-windows-installation),
   [linux](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#linux-installation) or
-  [MacOS](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html##macos-installation)
+  [MacOS](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#macos-installation)
 - [Install the latest Mission Planner version](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#install-mission-planner-software-on-a-pc-or-mac)
 - [Install the latest ArduPilot firmware on your flight controller board](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#install-ardupilot-firmware-on-the-flight-controller)
 
@@ -86,8 +86,8 @@ IMU temperature calibration reduces the probability of *Accel inconsistent* and 
 IMU temperature calibration requires lowering the temperature of the autopilot (flight controller) to circa -20°C.
 That is harder to do once the autopilot is assembled inside the vehicle, hence it is done now.
 
-- [start the software](#6-configure-the-vehicles-parameters-in-a-traceable-way)
-- Perform [IMU temperature calibration](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#21-configure-imu-temperature-calibration-using-the-offline-calibration-tool)
+- [start the software](https://ardupilot.github.io/MethodicConfigurator/USECASES.html#use-the-ardupilot-methodic-configurator-software-for-the-first-time)
+- Perform [IMU temperature calibration](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#41-setup-imu-temperature-calibration)
 
 ### 1.5 Assemble all components except the propellers
 
@@ -95,7 +95,7 @@ Assemble and connect all components. Make sure you [follow best practices](https
 
 ### 1.6 Basic mandatory configuration
 
-Again using the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template)
+Again using the [*ArduPilot Methodic configurator* software GUI](https://ardupilot.github.io/MethodicConfigurator/USECASES.html#use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template)
 perform the following steps:
 
 - [04_board_orientation.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#61-configure-flight-controller-orientation) flight controller orientation
@@ -112,7 +112,8 @@ Now use [Mission Planner](https://firmware.ardupilot.org/Tools/MissionPlanner/) 
 - [12_mp_setup_mandatory_hardware.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#69-configure-mandatory-hardware-parameters)
   calibrate vehicle sensors
 
-And continue with the [*ArduPilot Methodic configurator* software GUI](#7-use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template):
+And continue with the [*ArduPilot Methodic configurator* software GUI](https://ardupilot.github.io/MethodicConfigurator/USECASES.html#use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template)
+:
 
 - [13_general_configuration.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#610-general-configuration) general misc configuration
 - [Test if the hardware diagnostics are OK](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#611-ardupilot-hardware-report)
@@ -204,7 +205,7 @@ The following sections describe each step of the procedure in more detail.
 
 Install ArduPilot Methodic Configurator on [MS windows](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#ms-windows-installation),
 [linux](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#linux-installation) or
-[MacOS](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html##macos-installation)
+[MacOS](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#macos-installation)
 
 ## 3. Install *Mission Planner* software on a PC or Mac
 
@@ -216,7 +217,7 @@ Install ArduPilot Methodic Configurator on [MS windows](https://ardupilot.github
 
 ## 5. Use the *ArduPilot Methodic Configurator* software for the first time
 
-See the [Use the *ArduPilot Methodic Configurator* software for the first time](USECASES.md#use-the-ardupilot-methodic-configurator-software-for-the-first-time)
+See the [Use the *ArduPilot Methodic Configurator* software for the first time](https://ardupilot.github.io/MethodicConfigurator/USECASES.html#use-the-ardupilot-methodic-configurator-software-for-the-first-time)
 usecase.
 
 ## 6. Configure the vehicle's parameters in a traceable way
@@ -240,7 +241,7 @@ Now do this in a loop until the software automatically closes or you are asked t
 
 ## 7. Use the *ArduPilot Methodic Configurator* software after having created a vehicle from a template
 
-See the [Use the *ArduPilot Methodic Configurator* software after having created a vehicle from a template](USECASES.md#use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template)
+See the [Use the *ArduPilot Methodic Configurator* software after having created a vehicle from a template](https://ardupilot.github.io/MethodicConfigurator/USECASES.html#use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template)
 usecase.
 
 Congratulations your flight controller is now fully configured in the safest and fastest way publicly known.
