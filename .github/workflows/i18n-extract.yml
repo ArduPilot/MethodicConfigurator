@@ -1,0 +1,46 @@
+name: Extract i18n Strings
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.py'
+      - '!**/tests/**'
+
+jobs:
+  extract_strings:
+    runs-on: ubuntu-latest
+    env:
+      PYGETTEXT_DOMAIN: 'ardupilot_methodic_configurator'
+      PYGETTEXT_LOCALEDIR: '${PYGETTEXT_DOMAIN}/locale'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install requirements
+        run: |
+          python -m pip install --upgrade pip python-gettext
+
+      - name: Extract strings
+        run: |
+          pygettext3 -d ${PYGETTEXT_DOMAIN} -o ${PYGETTEXT_LOCALEDIR}/${PYGETTEXT_DOMAIN}.pot $(git ls-files '*.py')
+
+      - name: Commit changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add ${PYGETTEXT_LOCALEDIR}/${PYGETTEXT_DOMAIN}.pot
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Extracted i18n strings"
+            git push
+          else
+            echo "No changes to commit"
+          fi
