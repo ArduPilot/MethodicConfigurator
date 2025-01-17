@@ -1,4 +1,4 @@
-INS_LOG_BAT_MASK,3  # The Matek H743 Slim flight controller only has two IMUs
+INS_LOG_BAT_MASK,0  # Will not use batch logging
 INS_LOG_BAT_OPT,0  # Keep default value, use INS_RAW_LOG_OPT instead
 INS_RAW_LOG_OPT,9  # Logs measured data both before and after the filters for Filter Review Webtool usage
 LOG_BITMASK,2242524  # Logs Notch filter data and other control signals
