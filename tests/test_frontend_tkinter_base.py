@@ -22,6 +22,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base import (
     ProgressWindow,
     RichText,
     ScrollFrame,
+    UsagePopupWindow,
     get_widget_font_family_and_size,
     show_error_message,
     show_no_connection_error,
@@ -56,6 +57,18 @@ class TestShowErrorMessage(unittest.TestCase):
 
         # Assert that the Tkinter Tk instance's destroy method was called
         mock_tk.return_value.destroy.assert_called_once()
+
+    @patch("tkinter.messagebox.showerror")
+    @patch("tkinter.Tk")
+    @patch("tkinter.ttk.Style")
+    def test_show_error_message_with_special_chars(self, mock_style, mock_tk, mock_showerror) -> None:
+        """Test error message with special characters."""
+        mock_tk.return_value.withdraw.return_value = None
+        mock_tk.return_value.destroy.return_value = None
+        mock_style.return_value = MagicMock()
+
+        show_error_message("Test & Title", "Test\nMessage with & special < chars >")
+        mock_showerror.assert_called_once_with("Test & Title", "Test\nMessage with & special < chars >")
 
 
 class TestShowTooltip(unittest.TestCase):
@@ -110,6 +123,27 @@ class TestShowTooltip(unittest.TestCase):
 
         # Assert that the Tkinter Toplevel instance's withdraw method was called
         mock_toplevel.return_value.withdraw.assert_called()
+
+    def test_tooltip_positioning(self) -> None:
+        mock_widget = MagicMock()
+        mock_widget.winfo_rootx.return_value = 100
+        mock_widget.winfo_rooty.return_value = 200
+        mock_widget.winfo_width.return_value = 50
+        mock_widget.winfo_height.return_value = 30
+
+        with patch("tkinter.Toplevel") as mock_toplevel:
+            mock_toplevel_instance = MagicMock()
+            mock_toplevel.return_value = mock_toplevel_instance
+            show_tooltip(mock_widget, "Test Tooltip")
+
+            # Trigger enter event
+            enter_event = mock_widget.bind.call_args_list[0][0][1]
+            enter_event(MagicMock())
+
+            # Check tooltip positioning
+            expected_x = mock_widget.winfo_rootx() + min(mock_widget.winfo_width() // 2, 100)
+            expected_y = mock_widget.winfo_rooty() + mock_widget.winfo_height()
+            mock_toplevel_instance.geometry.assert_called_with(f"+{expected_x}+{expected_y}")
 
 
 class TestShowNoParamFilesError(unittest.TestCase):
@@ -203,6 +237,13 @@ class TestAutoResizeCombobox(unittest.TestCase):
             self.combobox.set_entries_tupple(["ten", "eleven"], "")
             mock_logging_warning.assert_called_once()
 
+    def test_set_entries_with_spaces(self) -> None:
+        """Test values with spaces."""
+        values = ["option one", "option  two", "option   three"]
+        self.combobox.set_entries_tupple(values, "option  two")
+        assert self.combobox["values"] == tuple(values)
+        assert self.combobox.get() == "option  two"
+
 
 class TestScrollFrame(unittest.TestCase):
     """Test cases for the ScrollFrame class."""
@@ -250,6 +291,28 @@ class TestScrollFrame(unittest.TestCase):
             self.scroll_frame.on_leave(None)
             mock_unbind_all.assert_called()
 
+    def test_mouse_wheel_scroll_windows(self) -> None:
+        """Test mouse wheel scrolling on Windows."""
+        with patch("platform.system", return_value="Windows"):
+            event = MagicMock()
+            event.delta = 120
+            with patch.object(self.scroll_frame.canvas, "yview_scroll") as mock_yview_scroll:
+                self.scroll_frame.on_mouse_wheel(event)
+                mock_yview_scroll.assert_called_with(-1, "units")
+
+    def test_mouse_wheel_scroll_linux(self) -> None:
+        """Test mouse wheel scrolling on Linux."""
+        with patch("platform.system", return_value="Linux"):
+            event = MagicMock()
+            event.num = 4  # Scroll up
+            # Mock canvas methods needed for scroll test
+            self.scroll_frame.canvas.bbox = MagicMock(return_value=(0, 0, 100, 1000))
+            self.scroll_frame.canvas.winfo_height = MagicMock(return_value=100)
+
+            with patch.object(self.scroll_frame.canvas, "yview_scroll") as mock_yview_scroll:
+                self.scroll_frame.on_mouse_wheel(event)
+                mock_yview_scroll.assert_called_once_with(1, "units")  # Linux scroll direction is inverted
+
 
 class TestProgressWindow(unittest.TestCase):
     """Test cases for the ProgressWindow class."""
@@ -285,6 +348,12 @@ class TestProgressWindow(unittest.TestCase):
         self.progress_window.destroy()
         # Check if the progress window has been destroyed
         assert not self.progress_window.progress_window.winfo_exists()
+
+    def test_update_progress_bar_exceeding_max(self) -> None:
+        """Test updating progress bar with value exceeding maximum."""
+        self.progress_window.update_progress_bar(150, 100)
+        assert self.progress_window.progress_bar["value"] == 150
+        assert self.progress_window.progress_bar["maximum"] == 100
 
 
 class TestRichText(unittest.TestCase):
@@ -322,6 +391,15 @@ class TestRichText(unittest.TestCase):
         assert self.rich_text.get("2.0", "2.end") == "Bold Text"
         assert self.rich_text.get("3.0", "3.end") == "Italic Text"
         assert self.rich_text.get("4.0", "4.end") == "Heading Text"
+
+    def test_multiple_tags(self) -> None:
+        """Test applying multiple tags to text."""
+        self.rich_text.insert("1.0", "Bold and Italic\n", ("bold", "italic"))
+        self.rich_text.insert("2.0", "Bold and H1\n", ("bold", "h1"))
+        assert "bold" in self.rich_text.tag_names("1.0")
+        assert "italic" in self.rich_text.tag_names("1.0")
+        assert "bold" in self.rich_text.tag_names("2.0")
+        assert "h1" in self.rich_text.tag_names("2.0")
 
 
 class TestGetWidgetFontFamilyAndSize(unittest.TestCase):
@@ -380,16 +458,82 @@ class TestBaseWindow(unittest.TestCase):
         assert style.theme_use() == "alt"
         assert style.lookup("Bold.TLabel", "font") == "TkDefaultFont 10 bold"
 
-    def test_put_image_in_label(self) -> None:
-        with patch("PIL.Image.open") as mock_open, patch("PIL.ImageTk.PhotoImage") as mock_photo:
-            mock_image = MagicMock()
-            mock_open.return_value = mock_image
-            mock_image.size = (100, 100)
-            return  # FIXME the test does not pass yet pylint: disable=fixme
-            label = BaseWindow.put_image_in_label(self.base_window.main_frame, "test_image.png", image_height=50)  # pylint: disable=unreachable
-            assert isinstance(label, ttk.Label)
-            mock_open.assert_called_once_with("test_image.png")
-            mock_photo.assert_called_once()
+    @patch("PIL.Image.open")
+    @patch("PIL.ImageTk.PhotoImage")
+    @patch("tkinter.ttk.Label")
+    def test_put_image_in_label(self, mock_label, mock_photo, mock_open) -> None:
+        """Test creating a label with an image."""
+        # Set up image mock
+        mock_image = MagicMock()
+        mock_image.size = (100, 100)
+        mock_image.resize = MagicMock(return_value=mock_image)
+        mock_open.return_value = mock_image
+
+        # Set up PhotoImage mock
+        mock_photo_instance = MagicMock()
+        mock_photo_instance._PhotoImage__photo = "photo1"  # Required for Tkinter
+        mock_photo.return_value = mock_photo_instance
+
+        # Set up Label mock
+        mock_label_instance = MagicMock()
+        mock_label.return_value = mock_label_instance
+
+        # Test the method
+        label = BaseWindow.put_image_in_label(self.base_window.main_frame, "test_image.png", image_height=50)
+
+        # Verify behavior
+        mock_open.assert_called_once_with("test_image.png")
+        mock_image.resize.assert_called_once_with((50, 50))  # Based on aspect ratio of 1:1
+        mock_photo.assert_called_once_with(mock_image)
+        mock_label.assert_called_once()
+        assert isinstance(label, MagicMock)
+
+    def test_window_title(self) -> None:
+        """Test setting window title."""
+        title = "Test Window"
+        self.base_window.root.title(title)
+        assert self.base_window.root.title() == title
+
+
+class TestUsagePopupWindow(unittest.TestCase):
+    """Test cases for the UsagePopupWindow class."""
+
+    def setUp(self) -> None:
+        self.root = tk.Tk()
+        self.root.withdraw()
+
+    def tearDown(self) -> None:
+        self.root.destroy()
+
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_base.ProgramSettings.display_usage_popup")
+    def test_should_display(self, mock_display_popup) -> None:
+        """Test should_display method."""
+        mock_display_popup.return_value = True
+        assert UsagePopupWindow.should_display("test_type") is True
+        mock_display_popup.assert_called_once_with("test_type")
+
+    @patch("tkinter.BooleanVar")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_base.ProgramSettings.set_display_usage_popup")
+    def test_display_popup(self, mock_set_display, mock_bool_var) -> None:
+        """Test display method."""
+        mock_bool_var.return_value.get.return_value = True
+        usage_window = BaseWindow(self.root)
+        instructions = RichText(usage_window.main_frame)
+
+        UsagePopupWindow.display(
+            parent=self.root,
+            usage_popup_window=usage_window,
+            title="Test Usage",
+            ptype="test_type",
+            geometry="300x200",
+            instructions_text=instructions,
+        )
+
+        assert usage_window.root.title() == "Test Usage"
+        assert usage_window.root.geometry().startswith("300x200")
+        # Test button creation and checkbox state
+        checkbuttons = [w for w in usage_window.main_frame.winfo_children() if isinstance(w, ttk.Checkbutton)]
+        assert len(checkbuttons) == 1
 
 
 if __name__ == "__main__":
