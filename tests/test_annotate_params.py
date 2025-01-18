@@ -25,8 +25,10 @@ from defusedxml import ElementTree as DET  # noqa: N814, just parsing, no data-s
 from ardupilot_methodic_configurator.annotate_params import (
     BASE_URL,
     PARAM_DEFINITION_XML_FILE,
+    Par,
     arg_parser,
     create_doc_dict,
+    extract_parameter_name_and_validate,
     format_columns,
     get_xml_data,
     get_xml_url,
@@ -567,6 +569,165 @@ PARAM_1\t100
 
         # Check if the file is still empty
         assert updated_content == ""
+
+    def test_get_xml_url_valid_vehicles(self) -> None:
+        """Test get_xml_url with all valid vehicle types."""
+        vehicle_types = ["ArduCopter", "ArduPlane", "Rover", "ArduSub", "AntennaTracker", "AP_Periph", "Blimp", "Heli", "SITL"]
+        for vehicle in vehicle_types:
+            url = get_xml_url(vehicle, "4.3")
+            assert url.startswith(BASE_URL)
+            assert "stable-4.3" in url
+            assert url.endswith("/")
+
+    def test_get_xml_url_invalid_vehicle(self) -> None:
+        """Test get_xml_url with invalid vehicle type."""
+        with pytest.raises(ValueError, match="Vehicle type 'InvalidVehicle' is not supported."):
+            get_xml_url("InvalidVehicle", "4.3")
+
+    def test_split_into_lines_edge_cases(self) -> None:
+        """Test split_into_lines with edge cases."""
+        # Test with various line lengths
+        # Function will return largest possible chunks based on max length
+        assert split_into_lines("a b c", 2) == ["a", "b", "c"]
+        assert split_into_lines("", 10) == []
+
+    def test_format_columns_edge_cases(self) -> None:
+        """Test format_columns with edge cases."""
+        # Empty dictionary
+        assert format_columns({}) == []
+
+        # Single item
+        assert format_columns({"Key": "Value"}) == ["Key: Value"]
+
+        # Test with different max widths
+        values = {"K1": "V1", "K2": "V2"}
+        assert len(format_columns(values, max_width=20)[0]) <= 20
+
+        # Test with many columns
+        many_values = {f"Key{i}": f"Value{i}" for i in range(20)}
+        result = format_columns(many_values, max_width=200, max_columns=5)
+        assert all(len(line) <= 200 for line in result)
+
+    def test_create_doc_dict_edge_cases(self) -> None:
+        """Test create_doc_dict with edge cases."""
+        # Test with empty XML
+        empty_root = ET.Element("root")
+        assert create_doc_dict(empty_root, "ArduCopter") == {}
+
+        # Test with missing attributes
+        param = ET.SubElement(empty_root, "param")
+        assert create_doc_dict(empty_root, "ArduCopter") == {}
+
+        # Test with minimal valid param
+        param.set("name", "TEST_PARAM")
+        param.set("humanName", "Test Parameter")
+        param.set("documentation", "Test documentation")
+        doc_dict = create_doc_dict(empty_root, "ArduCopter")
+        assert "TEST_PARAM" in doc_dict
+        assert doc_dict["TEST_PARAM"]["humanName"] == "Test Parameter"
+
+    @patch("os.path.isfile")
+    def test_update_parameter_documentation_sorting(self, mock_isfile) -> None:
+        """Test parameter sorting in update_parameter_documentation."""
+        # Mock file existence check
+        mock_isfile.return_value = True
+
+        test_content = "PARAM_Z 100\nPARAM_A 200\nPARAM_M 300\n"
+
+        # Create a real temporary file for testing
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
+            temp_file.write(test_content)
+            temp_file_name = temp_file.name
+
+        doc = {
+            "PARAM_Z": {"humanName": "Z", "documentation": ["Z doc"], "fields": {}, "values": {}},
+            "PARAM_A": {"humanName": "A", "documentation": ["A doc"], "fields": {}, "values": {}},
+            "PARAM_M": {"humanName": "M", "documentation": ["M doc"], "fields": {}, "values": {}},
+        }
+
+        try:
+            # Test MissionPlanner sorting
+            update_parameter_documentation(doc, temp_file_name, "missionplanner")
+
+            with open(temp_file_name, encoding="utf-8") as f:
+                content = f.read()
+
+            # Verify content and order
+            assert "PARAM_A" in content
+            assert "PARAM_M" in content
+            assert "PARAM_Z" in content
+            assert content.index("PARAM_A") < content.index("PARAM_M") < content.index("PARAM_Z")
+
+            # Test MAVProxy sorting
+            # Reset file content
+            with open(temp_file_name, "w", encoding="utf-8") as f:
+                f.write(test_content)
+
+            update_parameter_documentation(doc, temp_file_name, "mavproxy")
+
+            with open(temp_file_name, encoding="utf-8") as f:
+                content = f.read()
+
+            # Verify content for MAVProxy format
+            assert "PARAM_A" in content
+            assert "PARAM_M" in content
+            assert "PARAM_Z" in content
+
+        finally:
+            # Clean up
+            os.unlink(temp_file_name)
+
+    def test_extract_parameter_name_and_validate_invalid_cases(self) -> None:
+        """Test parameter name validation with invalid cases."""
+        # Test invalid parameter name pattern
+        with pytest.raises(SystemExit):
+            extract_parameter_name_and_validate("invalid_param 100", "test.param", 1)
+
+        # Test too long parameter name
+        with pytest.raises(SystemExit):
+            extract_parameter_name_and_validate("VERY_LONG_PARAMETER_NAME_THAT_EXCEEDS_LIMIT 100", "test.param", 1)
+
+        # Test invalid separator
+        with pytest.raises(SystemExit):
+            extract_parameter_name_and_validate("PARAM:100", "test.param", 1)
+
+    def test_par_class_methods(self) -> None:
+        """Test Par class methods."""
+        # Test equality
+        par1 = Par(100.0, "comment1")
+        par2 = Par(100.0, "comment1")
+        par3 = Par(200.0, "comment2")
+
+        assert par1 == par2
+        assert par1 != par3
+        assert par1 != "not a Par object"
+
+        # Test load_param_file with invalid values
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as tf:
+            tf.write("PARAM1 invalid_value\n")
+            tf.flush()
+
+            with pytest.raises(SystemExit):
+                Par.load_param_file_into_dict(tf.name)
+
+    def test_format_params_methods(self) -> None:
+        """Test Par.format_params method."""
+        param_dict = {"PARAM1": Par(100.0, "comment1"), "PARAM2": Par(200.0), "PARAM3": 300.0}
+
+        # Test MissionPlanner format
+        mp_format = Par.format_params(param_dict, "missionplanner")
+        assert any("PARAM1,100" in line for line in mp_format)
+        assert any("# comment1" in line for line in mp_format)
+
+        # Test MAVProxy format
+        mavproxy_format = Par.format_params(param_dict, "mavproxy")
+        # Use correct spacing format - 16 chars for name, 8 for value
+        assert any("PARAM1           100.000000" in line for line in mavproxy_format)
+        assert any("# comment1" in line for line in mavproxy_format)
+
+        # Test invalid format
+        with pytest.raises(SystemExit):
+            Par.format_params(param_dict, "invalid_format")
 
 
 class AnnotateParamsTest(unittest.TestCase):
