@@ -12,6 +12,11 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: write # to trigger the windows_build and python-publish workflows
+  # optionally:
+  # workflows: write
+
 jobs:
   bump-version:
     if: github.ref == 'refs/heads/master'

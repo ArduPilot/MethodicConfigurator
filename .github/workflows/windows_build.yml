@@ -1,12 +1,12 @@
 name: Windows Installer
 
 on:
+  release:
+     types: [published]
+  workflow_dispatch:
   push:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
-    tags:
-      - 'v*'            # Trigger on version tags
-  workflow_dispatch:
 
 concurrency:
   group: ci-${{github.workflow}}-${{ github.ref }}
