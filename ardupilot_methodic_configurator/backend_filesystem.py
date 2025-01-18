@@ -480,12 +480,12 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     "tempcal_gyro.png",
                 }:
                     continue
-                s = os_path.join(template_dir, item)
-                d = os_path.join(new_vehicle_dir, item)
-                if os_path.isdir(s):
-                    shutil_copytree(s, d)
+                source = os_path.join(template_dir, item)
+                dest = os_path.join(new_vehicle_dir, item)
+                if os_path.isdir(source):
+                    shutil_copytree(source, dest)
                 else:
-                    shutil_copy2(s, d)
+                    shutil_copy2(source, dest)
         except Exception as _e:  # pylint: disable=broad-except
             error_msg = _("Error copying template files to new vehicle directory: {_e}")
             return error_msg.format(**locals())
