@@ -23,12 +23,40 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install packaging
+
       - name: Validate version format
         run: |
           if ! [[ ${{ github.event.inputs.version }} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Invalid version format. Must be X.Y.Z"
             exit 1
           fi
+
+      - name: Get current version
+        id: current_version
+        run: |
+          CURRENT_VERSION=$(grep -oP '__version__ = "\K[^"]+' ardupilot_methodic_configurator/__init__.py)
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Compare versions
+        run: |
+          python3 - <<EOF
+          from packaging import version
+          current = version.parse("${{ steps.current_version.outputs.current_version }}")
+          new = version.parse("${{ github.event.inputs.version }}")
+          if new <= current:
+              print(f"Error: New version {new} must be greater than current version {current}")
+              exit(1)
+          print(f"Version increase valid: {current} -> {new}")
+          EOF
 
       - name: Update version in __init__.py
         run: |
