@@ -1,3 +1,2 @@
 [run]
-omit =
-    tests/test_backend_filesystem.py
+
