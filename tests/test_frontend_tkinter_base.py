@@ -16,6 +16,8 @@ from platform import system as platform_system
 from tkinter import ttk
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from ardupilot_methodic_configurator.frontend_tkinter_base import (
     AutoResizeCombobox,
     BaseWindow,
@@ -471,7 +473,7 @@ class TestBaseWindow(unittest.TestCase):
 
         # Set up PhotoImage mock
         mock_photo_instance = MagicMock()
-        mock_photo_instance._PhotoImage__photo = "photo1"  # Required for Tkinter
+        mock_photo_instance._PhotoImage__photo = "photo1"  # pylint: disable=protected-access
         mock_photo.return_value = mock_photo_instance
 
         # Set up Label mock
@@ -495,6 +497,13 @@ class TestBaseWindow(unittest.TestCase):
         assert self.base_window.root.title() == title
 
 
+@pytest.fixture
+def mock_set_display() -> MagicMock:
+    """Mock the set_display_usage_popup method."""
+    with patch("ardupilot_methodic_configurator.frontend_tkinter_base.ProgramSettings.set_display_usage_popup") as mock_fun:
+        yield mock_fun
+
+
 class TestUsagePopupWindow(unittest.TestCase):
     """Test cases for the UsagePopupWindow class."""
 
@@ -513,8 +522,8 @@ class TestUsagePopupWindow(unittest.TestCase):
         mock_display_popup.assert_called_once_with("test_type")
 
     @patch("tkinter.BooleanVar")
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_base.ProgramSettings.set_display_usage_popup")
-    def test_display_popup(self, mock_set_display, mock_bool_var) -> None:
+    @pytest.mark.usefixtures("mock_set_display")
+    def test_display_popup(self, mock_bool_var) -> None:
         """Test display method."""
         mock_bool_var.return_value.get.return_value = True
         usage_window = BaseWindow(self.root)

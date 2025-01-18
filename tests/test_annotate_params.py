@@ -594,7 +594,7 @@ PARAM_1\t100
     def test_format_columns_edge_cases(self) -> None:
         """Test format_columns with edge cases."""
         # Empty dictionary
-        assert format_columns({}) == []
+        assert not format_columns({})
 
         # Single item
         assert format_columns({"Key": "Value"}) == ["Key: Value"]
@@ -612,11 +612,11 @@ PARAM_1\t100
         """Test create_doc_dict with edge cases."""
         # Test with empty XML
         empty_root = ET.Element("root")
-        assert create_doc_dict(empty_root, "ArduCopter") == {}
+        assert not create_doc_dict(empty_root, "ArduCopter")
 
         # Test with missing attributes
         param = ET.SubElement(empty_root, "param")
-        assert create_doc_dict(empty_root, "ArduCopter") == {}
+        assert not create_doc_dict(empty_root, "ArduCopter")
 
         # Test with minimal valid param
         param.set("name", "TEST_PARAM")

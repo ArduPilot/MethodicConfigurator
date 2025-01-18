@@ -189,12 +189,16 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
 
         if rows_height > canvas_height:  # only scroll if the rows overflow the frame
             if platform_system() == "Windows":
+                # Windows: positive delta means scroll up, negative means scroll down
                 self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
             elif platform_system() == "Darwin":
+                # macOS: similar to Windows but different scaling
                 self.canvas.yview_scroll(int(-1 * event.delta), "units")
             elif event.num == 4:
+                # Linux: Button-4 means scroll up
                 self.canvas.yview_scroll(-1, "units")
             elif event.num == 5:
+                # Linux: Button-5 means scroll down
                 self.canvas.yview_scroll(1, "units")
 
     def on_enter(self, _event: tk.Event) -> None:  # bind wheel events when the cursor enters the control

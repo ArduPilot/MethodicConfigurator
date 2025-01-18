@@ -74,7 +74,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
 
     def test_empty_file(self) -> None:
         # Create an empty temporary file
-        with open("temp.param", "w", encoding="utf-8") as f:  # noqa: F841
+        with open("temp.param", "w", encoding="utf-8") as _f:
             pass
 
         # Call the function and check the result
@@ -274,9 +274,9 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
 
     def test_empty_files(self) -> None:
         # Both the default and optimized parameter files are empty
-        with open(self.default_param_file, "w", encoding="utf-8") as f:  # F841
+        with open(self.default_param_file, "w", encoding="utf-8") as _f:  # F841
             pass
-        with open(self.optimized_param_file, "w", encoding="utf-8") as f:  # noqa: F841
+        with open(self.optimized_param_file, "w", encoding="utf-8") as _f:
             pass
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
@@ -286,7 +286,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
 
     def test_empty_default_file(self) -> None:
         # Create an empty default parameter file
-        with open(self.default_param_file, "w", encoding="utf-8") as f:  # noqa: F841
+        with open(self.default_param_file, "w", encoding="utf-8") as _f:
             pass
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
@@ -296,7 +296,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
 
     def test_empty_optimized_file(self) -> None:
         # Create an empty optimized parameter file
-        with open(self.optimized_param_file, "w", encoding="utf-8") as f:  # noqa: F841
+        with open(self.optimized_param_file, "w", encoding="utf-8") as _f:
             pass
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
@@ -307,7 +307,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
 
     def test_empty_adjustment_file(self) -> None:
         # Create an empty adjustment parameter file
-        with open(self.adjustment_param_file, "w", encoding="utf-8") as f:  # noqa: F841
+        with open(self.adjustment_param_file, "w", encoding="utf-8") as _f:
             pass
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
