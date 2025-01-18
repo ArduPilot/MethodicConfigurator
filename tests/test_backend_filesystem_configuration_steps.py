@@ -77,13 +77,13 @@ class TestConfigurationSteps(unittest.TestCase):
     def test_missing_new_value(self) -> None:
         file_info = {"forced_parameters": {"PARAM1": {"Change Reason": "Test reason"}}}
         with self.assertLogs(level="ERROR") as log:
-            self.config_steps._ConfigurationSteps__validate_parameters_in_configuration_steps("test_file", file_info, "forced")  # noqa: SLF001 pylint: disable=protected-access
+            self.config_steps._ConfigurationSteps__validate_parameters_in_configuration_steps("test_file", file_info, "forced")  # pylint: disable=protected-access
             assert any("New Value" in message for message in log.output)
 
     def test_missing_change_reason(self) -> None:
         file_info = {"forced_parameters": {"PARAM1": {"New Value": "10"}}}
         with self.assertLogs(level="ERROR") as log:
-            self.config_steps._ConfigurationSteps__validate_parameters_in_configuration_steps("test_file", file_info, "forced")  # noqa: SLF001 pylint: disable=protected-access
+            self.config_steps._ConfigurationSteps__validate_parameters_in_configuration_steps("test_file", file_info, "forced")  # pylint: disable=protected-access
             assert any("Change Reason" in message for message in log.output)
 
     def test_compute_parameters_with_invalid_expression(self) -> None:
