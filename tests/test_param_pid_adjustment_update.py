@@ -15,8 +15,6 @@ SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-# pylint: skip-file
-
 import argparse
 import os
 import shutil
@@ -28,6 +26,8 @@ from ardupilot_methodic_configurator.param_pid_adjustment_update import Par, ran
 
 
 class TestRangedType(unittest.TestCase):
+    """Test cases for validating the ranged_type function."""
+
     def test_valid_input(self) -> None:
         assert ranged_type(int, 1, 10)(5) == 5
         assert ranged_type(float, 0.1, 0.8)(0.5) == 0.5
@@ -45,6 +45,8 @@ class TestRangedType(unittest.TestCase):
 
 
 class TestLoadParamFileIntoDict(unittest.TestCase):
+    """Test cases for validating the LoadParamFileIntoDict class."""
+
     def test_valid_input(self) -> None:
         # Create a temporary file with valid parameter data
         with open("temp.param", "w", encoding="utf-8") as f:
@@ -174,6 +176,8 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
 
 
 class TestExportToParam(unittest.TestCase):
+    """Test cases for validating the ExportToParam class."""
+
     def test_valid_input(self) -> None:
         # Create a temporary file with valid parameter data
         with open("temp.param", "w", encoding="utf-8") as f:
@@ -220,6 +224,8 @@ class TestExportToParam(unittest.TestCase):
 
 
 class TestUpdatePidAdjustmentParams(unittest.TestCase):
+    """Test cases for validating the UpdatePidAdjustmentParams class."""
+
     def setUp(self) -> None:
         # Create a directory for the test files
         self.test_dir = "test_directory"
