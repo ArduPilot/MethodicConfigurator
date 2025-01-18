@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, patch
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 
 
-class TestLocalFilesystem(unittest.TestCase):
+class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public-methods
     """LocalFilesystem test class."""
 
     @patch("os.path.isdir")
@@ -280,7 +280,7 @@ class TestLocalFilesystem(unittest.TestCase):
 
         # Test reading
         with patch("builtins.open", unittest.mock.mock_open(read_data=test_filename)) as mock_file:
-            result = lfs._LocalFilesystem__read_last_uploaded_filename()
+            result = lfs._LocalFilesystem__read_last_uploaded_filename()  # pylint: disable=protected-access
             assert result == test_filename
             mock_file.assert_called_once_with(expected_path, encoding="utf-8")
 
@@ -322,7 +322,7 @@ class TestLocalFilesystem(unittest.TestCase):
 
         # Test with empty components and doc_dict
         result = lfs.get_eval_variables()
-        assert result == {}
+        assert not result
 
         # Test with components and doc_dict
         lfs.vehicle_components = {"Components": {"test": "value"}}
@@ -457,7 +457,7 @@ class TestLocalFilesystem(unittest.TestCase):
             "file2.param": {"PARAM2": MagicMock(comment="Override comment 2"), "PARAM3": MagicMock(comment="Comment 3")},
         }
 
-        result = lfs._LocalFilesystem__all_intermediate_parameter_file_comments()
+        result = lfs._LocalFilesystem__all_intermediate_parameter_file_comments()  # pylint: disable=protected-access
         assert result == {"PARAM1": "Comment 1", "PARAM2": "Override comment 2", "PARAM3": "Comment 3"}
 
 
