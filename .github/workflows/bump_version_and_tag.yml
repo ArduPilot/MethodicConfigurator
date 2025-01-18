@@ -14,19 +14,17 @@ on:
 
 permissions:
   contents: write # to trigger the windows_build and python-publish workflows
-  # optionally:
-  # workflows: write
 
 jobs:
   bump-version:
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ssh-key: "${{ secrets.VERSION_BUMP_KEY }}"
 
       - name: Set up Python
         uses: actions/setup-python@v5
