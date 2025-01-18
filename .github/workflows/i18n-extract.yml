@@ -39,8 +39,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git add $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "CHORE: Extracted i18n strings"
-            git push
+            CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
+            if [ $CHANGED_LINES -gt 2 ]; then
+              git commit -m "CHORE: Extracted i18n strings to $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot"
+              git push
+            else
+              echo "Not enough changes to commit (only $CHANGED_LINES lines changed)"
+            fi
           else
             echo "No changes to commit"
           fi
