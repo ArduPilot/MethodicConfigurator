@@ -120,17 +120,17 @@ def test_download_params_via_mavftp() -> None:
 
 def test_auto_detect_serial() -> None:
     fc = FlightController(reboot_time=7)
-    serial_ports = fc._FlightController__auto_detect_serial()  # noqa: SLF001 pylint: disable=protected-access
+    serial_ports = fc._FlightController__auto_detect_serial()  # pylint: disable=protected-access
     assert isinstance(serial_ports, list)
 
 
 def test_list_serial_ports() -> None:
-    serial_ports = FlightController._FlightController__list_serial_ports()  # noqa: SLF001 pylint: disable=protected-access
+    serial_ports = FlightController._FlightController__list_serial_ports()  # pylint: disable=protected-access
     assert isinstance(serial_ports, list)
 
 
 def test_list_network_ports() -> None:
-    network_ports = FlightController._FlightController__list_network_ports()  # noqa: SLF001 pylint: disable=protected-access
+    network_ports = FlightController._FlightController__list_network_ports()  # pylint: disable=protected-access
     assert isinstance(network_ports, list)
     assert "tcp:127.0.0.1:5760" in network_ports
 
@@ -138,27 +138,27 @@ def test_list_network_ports() -> None:
 def test_request_banner() -> None:
     fc = FlightController(reboot_time=7)
     fc.connect(device="test")
-    fc._FlightController__request_banner()  # noqa: SLF001 pylint: disable=protected-access
+    fc._FlightController__request_banner()  # pylint: disable=protected-access
     # Since we cannot verify in the mock environment, we will just ensure no exceptions are raised
 
 
 def test_receive_banner_text() -> None:
     fc = FlightController(reboot_time=7)
     fc.connect(device="test")
-    banner_text = fc._FlightController__receive_banner_text()  # noqa: SLF001 pylint: disable=protected-access
+    banner_text = fc._FlightController__receive_banner_text()  # pylint: disable=protected-access
     assert isinstance(banner_text, list)
 
 
 def test_request_message() -> None:
     fc = FlightController(reboot_time=7)
     fc.connect(device="test")
-    fc._FlightController__request_message(1)  # noqa: SLF001 pylint: disable=protected-access
+    fc._FlightController__request_message(1)  # pylint: disable=protected-access
     # Since we cannot verify in the mock environment, we will just ensure no exceptions are raised
 
 
 def test_create_connection_with_retry() -> None:
     fc = FlightController(reboot_time=7)
-    result = fc._FlightController__create_connection_with_retry(progress_callback=None, retries=1, timeout=1)  # noqa: SLF001 pylint: disable=protected-access
+    result = fc._FlightController__create_connection_with_retry(progress_callback=None, retries=1, timeout=1)  # pylint: disable=protected-access
     assert result == ""
 
 
@@ -166,5 +166,5 @@ def test_process_autopilot_version() -> None:
     fc = FlightController(reboot_time=7)
     fc.connect(device="test")
     banner_msgs = ["ChibiOS: 123", "ArduPilot"]
-    result = fc._FlightController__process_autopilot_version(None, banner_msgs)  # noqa: SLF001 pylint: disable=protected-access
+    result = fc._FlightController__process_autopilot_version(None, banner_msgs)  # pylint: disable=protected-access
     assert isinstance(result, str)

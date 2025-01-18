@@ -226,7 +226,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         ]
 
         for case in test_cases:
-            ret = self.mav_ftp._MAVFTP__decode_ftp_ack_and_nack(case["op"])  # noqa: SLF001, pylint: disable=protected-access
+            ret = self.mav_ftp._MAVFTP__decode_ftp_ack_and_nack(case["op"])  # pylint: disable=protected-access
             ret.display_message()
             log_output = self.log_stream.getvalue().strip()
             assert case["expected_message"] in log_output, (
@@ -245,7 +245,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
 
         # Test for unknown error code in display_message
         op = self.ftp_operation(seq=22, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([255]))
-        ret = self.mav_ftp._MAVFTP__decode_ftp_ack_and_nack(op, "ListDirectory")  # noqa: SLF001, pylint: disable=protected-access
+        ret = self.mav_ftp._MAVFTP__decode_ftp_ack_and_nack(op, "ListDirectory")  # pylint: disable=protected-access
         ret.error_code = 125  # Set error code to 125 to trigger unknown error message
         ret.display_message()
         log_output = self.log_stream.getvalue().strip()
