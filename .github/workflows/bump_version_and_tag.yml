@@ -1,0 +1,48 @@
+name: Version Bump and Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version number (X.Y.Z format)'
+        required: true
+        type: string
+      tag_message:
+        description: 'Tag message'
+        required: true
+        type: string
+
+jobs:
+  bump-version:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate version format
+        run: |
+          if ! [[ ${{ github.event.inputs.version }} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format. Must be X.Y.Z"
+            exit 1
+          fi
+
+      - name: Update version in __init__.py
+        run: |
+          sed -i 's/__version__ = ".*"/__version__ = "${{ github.event.inputs.version }}"/' ardupilot_methodic_configurator/__init__.py
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add ardupilot_methodic_configurator/__init__.py
+          git commit -m "CHORE: Bump version info, tag and release"
+          git push
+
+      - name: Create and push tag
+        run: |
+          git tag -a "v${{ github.event.inputs.version }}" -m "${{ github.event.inputs.tag_message }}"
+          git push origin "v${{ github.event.inputs.version }}"
