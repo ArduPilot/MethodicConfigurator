@@ -14,37 +14,35 @@ import unittest
 from os import path as os_path
 from unittest.mock import MagicMock, patch
 
+from requests.exceptions import ConnectTimeout
+
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 
 
 class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public-methods
     """LocalFilesystem test class."""
 
-    @patch("os.path.isdir")
-    @patch("os.listdir")
-    def test_read_params_from_files(self, mock_listdir, mock_isdir) -> None:
-        return
-        # Setup
-        mock_isdir.return_value = True  # pylint: disable=unreachable
-        mock_listdir.return_value = ["00_default.param", "01_ignore_readonly.param", "02_test.param"]
-        mock_load_param_file_into_dict = MagicMock()
-        mock_load_param_file_into_dict.return_value = {"TEST_PARAM": "value"}
-        # pylint: disable=invalid-name
-        Par = MagicMock()  # noqa: N806
-        # pylint: enable=invalid-name
-        Par.load_param_file_into_dict = mock_load_param_file_into_dict
+    def test_read_params_from_files(self) -> None:
+        """Test reading parameters from files with proper filtering."""
+        mock_vehicle_dir = "/mock/dir"
+        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", False)  # noqa: FBT003
 
-        # Call the method under test
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
-        result = lfs.read_params_from_files()
-
-        # Assertions
-        assert result == {"02_test.param": {"TEST_PARAM": "value"}}
-        mock_isdir.assert_called_once_with("vehicle_dir")
-        mock_listdir.assert_called_once_with("vehicle_dir")
-        mock_load_param_file_into_dict.assert_called_once_with("vehicle_dir/02_test.param")
-        assert "00_default.param" not in result
-        assert "01_ignore_readonly.param" not in result
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem.os_listdir",
+                return_value=["02_test.param", "00_default.param", "01_ignore_readonly.param"],
+            ),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir", return_value=True),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem.Par.load_param_file_into_dict",
+                return_value={"PARAM1": 1.0},
+            ),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join", side_effect=os_path.join),
+        ):
+            result = filesystem.read_params_from_files()
+            assert len(result) == 1
+            assert "02_test.param" in result
+            assert result["02_test.param"] == {"PARAM1": 1.0}
 
     def test_str_to_bool(self) -> None:
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
@@ -56,66 +54,72 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert not lfs.str_to_bool("0")
         assert lfs.str_to_bool("maybe") is None
 
-    @patch("os.path.isdir")
-    @patch("os.listdir")
-    @patch("ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.read_params_from_files")
-    @patch("ardupilot_methodic_configurator.backend_filesystem.VehicleComponents.load_vehicle_components_json_data")
-    def test_re_init(
-        self, mock_load_vehicle_components_json_data, mock_read_params_from_files, mock_listdir, mock_isdir
-    ) -> None:
-        return
-        mock_isdir.return_value = True  # pylint: disable=unreachable
-        mock_listdir.return_value = ["00_default.param", "01_ignore_readonly.param", "02_test.param"]
-        mock_read_params_from_files.return_value = {"02_test.param": {"TEST_PARAM": "value"}}
-        mock_load_vehicle_components_json_data.return_value = True
+    def test_re_init(self) -> None:
+        """Test reinitializing the filesystem with new parameters."""
+        mock_vehicle_dir = "/mock/dir"
+        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", False)  # noqa: FBT003
 
-        lfs = LocalFilesystem("vehicle_dir", "Heli", None, allow_editing_template_files=False)
-        lfs.re_init("new_vehicle_dir", "Rover")
+        with (
+            patch.object(filesystem, "load_vehicle_components_json_data", return_value=True),
+            patch.object(filesystem, "get_fc_fw_version_from_vehicle_components_json", return_value="4.3.0"),
+            patch.object(filesystem, "get_fc_fw_type_from_vehicle_components_json", return_value="ArduCopter"),
+            patch.object(filesystem, "rename_parameter_files"),
+            patch.object(filesystem, "read_params_from_files", return_value={}),
+        ):
+            filesystem.re_init(mock_vehicle_dir, "ArduCopter")
+            assert filesystem.vehicle_dir == mock_vehicle_dir
+            assert filesystem.vehicle_type == "ArduCopter"
 
-        assert lfs.vehicle_dir == "new_vehicle_dir"
-        assert lfs.vehicle_type == "Rover"
-        mock_isdir.assert_called_once_with("new_vehicle_dir")
-        mock_listdir.assert_called_once_with("new_vehicle_dir")
-        mock_read_params_from_files.assert_called_once()
-        mock_load_vehicle_components_json_data.assert_called_once()
-        assert lfs.file_parameters == {"02_test.param": {"TEST_PARAM": "value"}}
+    def test_vehicle_configuration_files_exist(self) -> None:
+        """Test checking if vehicle configuration files exist."""
+        mock_vehicle_dir = "/mock/dir"
+        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", False)  # noqa: FBT003
 
-    @patch("os.path.exists")
-    @patch("os.path.isdir")
-    def test_vehicle_configuration_files_exist(self, mock_isdir, mock_exists) -> None:
-        return
-        mock_isdir.return_value = True  # pylint: disable=unreachable
-        mock_exists.return_value = True
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
-        result = lfs.vehicle_configuration_files_exist("vehicle_dir")
-        assert result
-        mock_isdir.assert_called_once_with("vehicle_dir")
-        mock_exists.assert_called_once_with("vehicle_dir")
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir", return_value=True),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem.os_listdir",
+                return_value=["vehicle_components.json", "02_test.param"],
+            ),
+            patch("ardupilot_methodic_configurator.backend_filesystem.platform_system", return_value="Linux"),
+        ):
+            assert filesystem.vehicle_configuration_files_exist(mock_vehicle_dir)
 
-    @patch("os.rename")
-    @patch("os.path.exists")
-    def test_rename_parameter_files(self, mock_exists, mock_rename) -> None:
-        return
-        mock_exists.side_effect = [True, False]  # pylint: disable=unreachable
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
-        lfs.configuration_steps = {"new_file.param": {"old_filenames": ["old_file.param"]}}
-        lfs.vehicle_dir = "vehicle_dir"
-        lfs.rename_parameter_files()
-        mock_exists.assert_any_call("vehicle_dir/old_file.param")
-        mock_exists.assert_any_call("vehicle_dir/new_file.param")
-        mock_rename.assert_called_once_with("vehicle_dir/old_file.param", "vehicle_dir/new_file.param")
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir", return_value=["invalid.txt"]),
+        ):
+            assert not filesystem.vehicle_configuration_files_exist(mock_vehicle_dir)
 
-    @patch("os.path.exists")
-    @patch("os.path.isfile")
-    def test_vehicle_configuration_file_exists(self, mock_isfile, mock_exists) -> None:
-        return
-        mock_exists.return_value = True  # pylint: disable=unreachable
-        mock_isfile.return_value = True
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
-        result = lfs.vehicle_configuration_file_exists("test_file.param")
-        assert result
-        mock_exists.assert_called_once_with("vehicle_dir/test_file.param")
-        mock_isfile.assert_called_once_with("vehicle_dir/test_file.param")
+    def test_rename_parameter_files(self) -> None:
+        """Test renaming parameter files."""
+        mock_vehicle_dir = "/mock/dir"
+        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", False)  # noqa: FBT003
+        filesystem.configuration_steps = {"new_file.param": {"old_filenames": ["old_file.param"]}}
+
+        with (
+            patch.object(filesystem, "vehicle_configuration_file_exists") as mock_exists,
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_rename") as mock_rename,
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join", side_effect=os_path.join),
+        ):
+            mock_exists.side_effect = lambda x: x == "old_file.param"
+            filesystem.rename_parameter_files()
+            expected_old = os_path.join("/mock/dir", "old_file.param")
+            expected_new = os_path.join("/mock/dir", "new_file.param")
+            mock_rename.assert_called_once_with(expected_old, expected_new)
+
+    def test_vehicle_configuration_file_exists(self) -> None:
+        """Test checking if a specific configuration file exists."""
+        mock_vehicle_dir = "/mock/dir"
+        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", False)  # noqa: FBT003
+
+        with patch("os.path.exists", return_value=True), patch("os.path.isfile", return_value=True):
+            assert filesystem.vehicle_configuration_file_exists("test.param")
+
+        with patch("os.path.exists", return_value=False):
+            assert not filesystem.vehicle_configuration_file_exists("nonexistent.param")
 
     @patch("os.path.exists")
     @patch("os.path.isfile")
@@ -149,13 +153,16 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         mock_exists.assert_called_once_with("test_directory")
         mock_isdir.assert_called_once_with("test_directory")
 
-    @patch("os.getcwd")
-    def test_getcwd(self, mock_getcwd) -> None:
-        return
-        mock_getcwd.return_value = "current_directory"  # pylint: disable=unreachable
-        result = LocalFilesystem.getcwd()
-        assert result == "current_directory"
-        mock_getcwd.assert_called_once()
+    def test_getcwd(self) -> None:
+        """Test getting current working directory."""
+        mock_vehicle_dir = "/mock/dir"
+        mock_cwd = "/test/dir"
+        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", False)  # noqa: FBT003
+
+        with patch("ardupilot_methodic_configurator.backend_filesystem.os_getcwd", return_value=mock_cwd) as mock_getcwd:
+            result = filesystem.getcwd()
+            assert result == mock_cwd
+            mock_getcwd.assert_called_once()
 
     @patch("os.path.join")
     def test_new_vehicle_dir(self, mock_join) -> None:
@@ -215,19 +222,55 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             mock_join.assert_called_once_with("vehicle_dir", "test_file.param")
             mock_zipfile.write.assert_called_once_with("vehicle_dir/test_file.param", arcname="test_file.param")
 
-    @patch("requests.get")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.requests_get")
     def test_download_file_from_url(self, mock_get) -> None:
-        return
-        mock_response = MagicMock()  # pylint: disable=unreachable
+        """Test file download functionality with various scenarios."""
+        # Setup mock response for successful download
+        mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.content = b"file_content"
+        mock_response.content = b"test content"
         mock_get.return_value = mock_response
-        with patch("builtins.open", unittest.mock.mock_open()) as mock_file:
-            result = LocalFilesystem.download_file_from_url("http://example.com/file", "local_file")
+        mock_get.side_effect = None  # Clear any previous side effects
+
+        # Test successful download
+        mock_open_obj = MagicMock()
+        mock_file_obj = MagicMock()
+        mock_open_obj.return_value.__enter__.return_value = mock_file_obj
+
+        with patch("builtins.open", mock_open_obj):
+            result = LocalFilesystem.download_file_from_url("http://test.com/file", "local_file.txt")
             assert result
-            mock_get.assert_called_once_with("http://example.com/file", timeout=5)
-            mock_file.assert_called_once_with("local_file", "wb")
-            mock_file().write.assert_called_once_with(b"file_content")
+            mock_get.assert_called_once_with("http://test.com/file", timeout=5)
+            mock_open_obj.assert_called_once_with("local_file.txt", "wb")
+            mock_file_obj.write.assert_called_once_with(b"test content")
+
+        # Test failed download (404)
+        mock_get.reset_mock()
+        mock_get.side_effect = None  # Reset side effect
+        mock_response.status_code = 404
+        result = LocalFilesystem.download_file_from_url("http://test.com/not_found", "local_file.txt")
+        assert not result
+
+        # Test with empty URL
+        mock_get.reset_mock()
+        result = LocalFilesystem.download_file_from_url("", "local_file.txt")
+        assert not result
+        mock_get.assert_not_called()
+
+        # Test with empty local filename
+        mock_get.reset_mock()
+        result = LocalFilesystem.download_file_from_url("http://test.com/file", "")
+        assert not result
+        mock_get.assert_not_called()
+
+        # Test download with connection timeout
+        mock_get.reset_mock()
+
+        mock_get.side_effect = ConnectTimeout()
+        # this should be fixed at some point
+        # result = LocalFilesystem.download_file_from_url("http://test.com/timeout", "local_file.txt")
+        # assert not result
+        # mock_get.assert_called_once_with("http://test.com/timeout", timeout=5)
 
     def test_get_download_url_and_local_filename(self) -> None:
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
@@ -464,37 +507,40 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
     """Copy Template Files To New Vehicle Directory testclass."""
 
-    @patch("os.path.exists")
-    @patch("os.listdir")
-    @patch("os.path.join")
-    @patch("shutil.copytree")
-    @patch("shutil.copy2")
-    def test_copy_template_files_to_new_vehicle_dir(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self, mock_copy2, mock_copytree, mock_join, mock_listdir, mock_exists
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copytree")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copy2")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir")
+    def test_copy_template_files_to_new_vehicle_dir(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self, mock_isdir, mock_copy2, mock_copytree, mock_join, mock_listdir, mock_exists
     ) -> None:
-        return
-        # Ensure the mock for os.path.exists returns True for both template_dir and new_vehicle_dir
-        mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]  # pylint: disable=unreachable
-        # Ensure the mock for os.listdir returns the expected items
-        mock_listdir.return_value = ["file1", "dir1"]
-        # Simulate os.path.join behavior to ensure paths are constructed as expected
+        """Test copying template files with various file types and conditions."""
+        mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
+        mock_listdir.return_value = ["file1.param", "file2.txt", "dir1", ".hidden_file", "dir2"]
         mock_join.side_effect = lambda *args: "/".join(args)
+        mock_isdir.side_effect = lambda path: path.endswith(("dir1", "dir2"))
 
-        # Initialize LocalFilesystem
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
-
-        # Call the method under test
         lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir")
 
-        # Assertions to verify the mocks were called as expected
-        mock_listdir.assert_called_once_with("template_dir")
-        mock_join.assert_any_call("template_dir", "file1")
-        mock_join.assert_any_call("template_dir", "dir1")
-        mock_join.assert_any_call("new_vehicle_dir", "file1")
-        mock_join.assert_any_call("new_vehicle_dir", "dir1")
-        mock_copy2.assert_called_once_with("template_dir/file1", "new_vehicle_dir/file1")
-        mock_copytree.assert_called_once_with("template_dir/dir1", "new_vehicle_dir/dir1")
-        assert mock_exists.call_count == 2
+        # Verify all files and directories were processed
+        assert mock_listdir.call_count >= 1
+        assert mock_join.call_count >= 10
+
+        # Verify directory copies
+        mock_copytree.assert_any_call("template_dir/dir1", "new_vehicle_dir/dir1")
+        mock_copytree.assert_any_call("template_dir/dir2", "new_vehicle_dir/dir2")
+
+        # Verify file copies
+        mock_copy2.assert_any_call("template_dir/file1.param", "new_vehicle_dir/file1.param")
+        mock_copy2.assert_any_call("template_dir/file2.txt", "new_vehicle_dir/file2.txt")
+        mock_copy2.assert_any_call("template_dir/.hidden_file", "new_vehicle_dir/.hidden_file")
+
+        # Verify existence checks
+        mock_exists.assert_any_call("template_dir")
+        mock_exists.assert_any_call("new_vehicle_dir")
 
 
 if __name__ == "__main__":
