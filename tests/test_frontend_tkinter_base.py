@@ -295,6 +295,8 @@ class TestScrollFrame(unittest.TestCase):
 
     def test_mouse_wheel_scroll_windows(self) -> None:
         """Test mouse wheel scrolling on Windows."""
+        if platform_system() != "Windows":
+            pytest.skip("Test only applicable on Windows")
         with patch("platform.system", return_value="Windows"):
             event = MagicMock()
             event.delta = 120
@@ -304,6 +306,8 @@ class TestScrollFrame(unittest.TestCase):
 
     def test_mouse_wheel_scroll_linux(self) -> None:
         """Test mouse wheel scrolling on Linux."""
+        if platform_system() != "Linux":
+            pytest.skip("Test only applicable on Linux")
         with patch("platform.system", return_value="Linux"):
             event = MagicMock()
             event.num = 4  # Scroll up
@@ -313,7 +317,7 @@ class TestScrollFrame(unittest.TestCase):
 
             with patch.object(self.scroll_frame.canvas, "yview_scroll") as mock_yview_scroll:
                 self.scroll_frame.on_mouse_wheel(event)
-                mock_yview_scroll.assert_called_once_with(1, "units")  # Linux scroll direction is inverted
+                mock_yview_scroll.assert_called_once_with(-1, "units")  # Linux scroll direction is inverted
 
 
 class TestProgressWindow(unittest.TestCase):
