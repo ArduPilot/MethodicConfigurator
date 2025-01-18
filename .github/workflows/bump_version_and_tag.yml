@@ -24,7 +24,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ssh-key: "${{ secrets.VERSION_BUMP_KEY }}"
+          ssh-key: "${{ secrets.VERSION_BUMP_KEY }}"  # This is a deploy key with write access, without it other workflows will not get triggered to run
 
       - name: Set up Python
         uses: actions/setup-python@v5
