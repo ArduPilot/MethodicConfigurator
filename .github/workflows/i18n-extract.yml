@@ -12,8 +12,8 @@ jobs:
   extract_strings:
     runs-on: ubuntu-latest
     env:
-      PYGETTEXT_DOMAIN: 'ardupilot_methodic_configurator'
-      PYGETTEXT_LOCALEDIR: '${PYGETTEXT_DOMAIN}/locale'
+      PYGETTEXT_DOMAIN: ardupilot_methodic_configurator
+      PYGETTEXT_LOCALEDIR: ardupilot_methodic_configurator/locale
 
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
 
       - name: Extract strings
         run: |
-          pygettext3 -d ${PYGETTEXT_DOMAIN} -o ${PYGETTEXT_LOCALEDIR}/${PYGETTEXT_DOMAIN}.pot $(git ls-files '*.py')
+          pygettext3 -d $PYGETTEXT_DOMAIN -o $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot $(git ls-files '*.py') || exit 1
 
       - name: Commit changes
         env:
@@ -37,7 +37,7 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add ${PYGETTEXT_LOCALEDIR}/${PYGETTEXT_DOMAIN}.pot
+          git add $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "Extracted i18n strings"
             git push
