@@ -57,8 +57,6 @@ git config --local sequence.editor "code --wait"
 # install pre-commit git hooks
 pre-commit install
 
-# setuptools has a bug and refuses to install these files, so do it manually
-cp ardupilot_methodic_configurator/vehicle_templates ~/.local/lib/python3.12/site-packages/ardupilot_methodic_configurator/
 
 echo "Installation complete."
 echo ""
