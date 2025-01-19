@@ -10,10 +10,22 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 # Uninstall serial and pyserial to avoid conflicts
+echo "Uninstalling serial and pyserial..."
 python3 -m pip uninstall -y serial pyserial
 
 # Install the project dependencies
+echo "Installing project dependencies..."
 python3 -m pip install -e .[dev]
+
+# configure git local repository settings
+git config --local pull.rebase true
+git config --local push.autoSetupRemote
+git config --local init.defaultbranch master
+git config --local sequence.editor "code --wait"
+
+# install pre-commit git hooks
+pre-commit install
+
 
 echo "Installation complete."
 echo ""

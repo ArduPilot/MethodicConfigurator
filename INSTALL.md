@@ -82,13 +82,7 @@ ardupilot_methodic_configurator
 
 ## MacOS Installation
 
-Install [git](https://git-scm.com/) and [python](https://www.python.org/downloads/). Then execute the command lines:
-
-```bash
-git clone https://github.com/ArduPilot/MethodicConfigurator.git
-cd MethodicConfigurator
-./install_macos.sh
-```
+Follow the linux installation instructions above.
 
 ## Install *Mission Planner* software on a PC or Mac
 

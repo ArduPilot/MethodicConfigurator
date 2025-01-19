@@ -93,9 +93,9 @@ Your vehicle will be different as your application will have different requireme
 
 To configure and operate your vehicle you need at least these software:
 
-- [Install ArduPilot Methodic Configurator](README.md#install-ardupilot-methodic-configurator-software-on-a-pc-or-mac)
-- [Install Mission Planner](README.md#3-install-mission-planner-software-on-a-pc-or-mac)
-- [Install ArduPilot](README.md#4-install-ardupilot-firmware-on-the-flight-controller)
+- [Install ArduPilot Methodic Configurator](INSTALL.md)
+- [Install Mission Planner](INSTALL.md#install-mission-planner-software-on-a-pc-or-mac)
+- [Install ArduPilot](INSTALL.md#install-ardupilot-firmware-on-the-flight-controller)
 
 Use Mission Planner to flash the latest stable [ArduCopter](https://firmware.ardupilot.org/Copter/stable/), [ArduPlane](https://firmware.ardupilot.org/Plane/stable/), [ArduRover](https://firmware.ardupilot.org/Rover/stable/), [ArduSub](https://firmware.ardupilot.org/Sub/stable/) or [ArduBlimp](https://firmware.ardupilot.org/Blimp/latest/) firmware for your flight controller.
 
@@ -107,7 +107,7 @@ The table bellow summarizes the software used in this guide. Download and instal
 |:----|:----|:----|
 | [Mission Planner](https://firmware.ardupilot.org/Tools/MissionPlanner/MissionPlanner-latest.msi) | latest beta | Ground control station (PC software) used for configuring and operating the vehicle |
 | [ArduPilot Methodic Configurator](https://github.com/ArduPilot/MethodicConfigurator) | latest | A clear ArduPilot configuration sequence |
-| [ArduCopter](https://firmware.ardupilot.org/Copter/stable/) | 4.4.4 or 4.5.5 | Flight controller firmware |
+| [ArduCopter](https://firmware.ardupilot.org/Copter/stable/) | 4.4.4 or 4.5.7 | Flight controller firmware |
 | [BLHeliSuite32](https://www.mediafire.com/file/fj1p9qlbzo5bl5g/BLHeliSuite32_32.9.0.6.zip/file) | 32.9.06 | PC software to flash and configure ESCs with BLHeli_32 ARM firmware |
 | [BLHeli_32 ARM](https://github.com/bitdump/BLHeli/tree/master/BLHeli_32%20ARM) | 32.8 | ESC firmware with Bidir Dshot support |
 | [EdgeTx companion](https://edgetx.org/getedgetx/) | 2.9.2 | PC software for configuring and updating EdgeTX based RC transmitters |
@@ -131,7 +131,7 @@ The table bellow summarizes the software used in this guide. Download and instal
 The ArduPilot Methodic Configurator needs to know which components you used/plan to use and how you connected/plan to connect them to the flight controller (autopilot).
 It uses this information to automatically pre-select configuration settings relevant to your specific vehicle.
 
-So, [start the ArduPilot Methodic Configurator and input select a vehicle that resembles yours](README.md#use-the-ardupilot-methodic-configurator-software-for-the-first-time) and input vehicle components and component connections information into the ArduPilot Methodic Configurator *component editor window*:
+So, [start the ArduPilot Methodic Configurator and select a vehicle that resembles yours](USECASES.md#use-the-ardupilot-methodic-configurator-software-for-the-first-time) and input vehicle components and component connections information into the ArduPilot Methodic Configurator *component editor window*:
 
 1. Close Mission Planner, if it is open on the PC.
 1. Connect the flight controller to the PC via a USB cable and wait 7 seconds.
@@ -156,7 +156,7 @@ That is harder to do once the autopilot is assembled inside the vehicle, hence i
 
 ## 4.1 Setup IMU temperature calibration
 
-1. [Start the software](README.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
+1. [Start the software](USECASES.md#use-the-ardupilot-methodic-configurator-software-for-the-first-time) if not already running.
 1. On *ArduPilot Methodic Configurator* select `02_imu_temperature_calibration_setup.param` on the *Current intermediate parameter file:* Combobox if not already selected.
 1. Read the *Forum Blog:* and *Wiki:* documentation by pressing on the blue URL links.
 1. Edit the `02_imu_temperature_calibration_setup.param` parameters' `New Value` and `Change Reason` using the *ArduPilot Methodic Configurator* parameter editor and press `Upload selected params to FC, and advance to next file`.
