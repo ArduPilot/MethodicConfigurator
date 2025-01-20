@@ -130,25 +130,45 @@ We decided to use python as programming language, and the following libraries an
 
 - [pymavlink](https://github.com/ArduPilot/pymavlink) for the flight controller communication
 - [tkinter](https://docs.python.org/3/library/tkinter.html) for the graphical user interface
-- `po` files to translate the software to other languages
+- GNU gettext `po` files to translate the software to other languages
 
-To satisfy the system design requirements described above the following software architecture was developed:
+To satisfy the system design requirements described above the following five sub-applications were developed:
 
-It consists of four main components:
+- **check for software updates**
+  - checks if there is a newer software version available, downloads and updates it
+- **FC communication**
+  - establishes connection to the flight controller, gets hardware information, downloads parameters and their default values
+- **choose project to open**
+  - either creates a new project or opens an existing one, downloads parameter documentation metadata corresponding to the FC firmware version to the project directory
+- **define vehicle components and their connections**
+  - define specifications of all vehicle components and their connections to the flight controller
+- **view documentation, edit parameters, upload them to FC**
+  - sequentially for each configuration step:
+    - view documentation relevant for the current configuration step,
+    - edit parameters relevant for the current configuration step,
+    - upload them to the flight controller,
+    - save them to file
 
-1. the application itself does the command line parsing and starts the other processes
-   1. [`__main__.py`](ardupilot_methodic_configurator/__main__.py)
-   2. [`common_arguments.py`](ardupilot_methodic_configurator/common_arguments.py)
-   3. [`__init.py__`](ardupilot_methodic_configurator/__init__.py)
-2. the local filesystem backend does file I/O on the local file system. Operates mostly on parameter files and metadata/documentation files
+Each sub-application can be run in isolation, so it is easier to test and develop them.
+
+All applications use one or more of the following libraries:
+
+1. internationalization
+   1. [`__init__.py`](ardupilot_methodic_configurator/__init__.py)
+   2. [`internationalization.py`](ardupilot_methodic_configurator/internationalization.py)
+1. command line parsing
+   1. [`common_arguments.py`](ardupilot_methodic_configurator/common_arguments.py)
+1. the local filesystem backend does file I/O on the local file system. Operates mostly on parameter files and metadata/documentation files
    1. [`backend_filesystem.py`](ardupilot_methodic_configurator/backend_filesystem.py)
    2. [`backend_filesystem_vehicle_components.py`](ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py)
    3. [`backend_filesystem_configuration_steps.py`](ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py)
-3. the flight controller backend communicates with the flight controller
+1. the internet backend communicates with the internet
+   1. [`backend_internet.py`](ardupilot_methodic_configurator/backend_internet.py)
+1. the flight controller backend communicates with the flight controller
    1. [`backend_flightcontroller.py`](ardupilot_methodic_configurator/backend_flightcontroller.py)
    2. [`backend_mavftp.py`](ardupilot_methodic_configurator/backend_mavftp.py)
    3. [`battery_cell_voltages.py`](ardupilot_methodic_configurator/battery_cell_voltages.py)
-4. the tkinter frontend, which is the GUI the user interacts with
+1. the tkinter frontend, which is the GUI the user interacts with
    1. [`frontend_tkinter_base.py`](ardupilot_methodic_configurator/frontend_tkinter_base.py)
    2. [`frontend_tkinter_connection_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py)
    3. [`frontend_tkinter_directory_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py)
@@ -156,6 +176,12 @@ It consists of four main components:
    5. [`frontend_tkinter_component_editor_base.py`](ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py)
    6. [`frontend_tkinter_parameter_editor.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py)
    7. [`frontend_tkinter_parameter_editor_table.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py)
+
+The (main) application itself does the command line parsing and starts the other sub-applications in sequence
+
+- [`__main__.py`](ardupilot_methodic_configurator/__main__.py)
+
+When all is combined it looks like this:
 
 ![Software Architecture diagram](images/Architecture.drawio.png)
 
@@ -171,15 +197,28 @@ That way the users would not need to install the software and will always use th
 To assure code quality we decided to use Microsoft VS code with a [lot of extensions](SetupDeveloperPC.bat) to lint the code as you type.
 We use git [pre-commit](https://pre-commit.com/) hooks to [check the code](.pre-commit-config.yaml) before it is committed to the repository.
 
-### Unit testing
+### Module testing
 
+We tested using **automated static tests** in both pre-commit hooks and on github CI:
+
+- ruff
+- pylint
+- mypy
+- markdown-lint
+- markdown-link-check
+- spelling, grammarly
+- shellcheck
+
+We tested using **automated dynamic tests** on github CI including automated test coverage reports.
 We use [unittest](https://docs.python.org/3/library/unittest.html) to write unit tests for the code.
-The tests are easy to run on the command line or in VS code. Tests and coverage report are run automatically in the github CI pipeline.
+The tests are easy to run on the command line or in VS code.
+When you write new code you must also write tests in the `tests/` directory, there is CI test that only passes if test coverage increases monotonicaly.
 
 ### Integration testing
 
-The four different sub-applications are first tested independently.
+The five different sub-applications are first tested independently.
 
+- software update checker
 - flight controller connection GUI
 - vehicle configuration directory selection GUI
 - vehicle component editor GUI
@@ -204,6 +243,14 @@ The software is ready for production use since November 2024.
 
 The software is feature complete and stable with a user base of hundreds of users, we switched from the V-Model to DevOps development process on November 2024.
 This provides faster response to requirements changes and additions.
+
+## Do a release
+
+The release process is automated.
+To do a release navigate to the [bump_version_and_tag workflow](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/bump_version_and_tag.yml)
+and select `Run Workflow` enter the version and the description and press the green `Run Workflow` button.
+
+![bump_version_and_tag workflow](images/bump_version_and_tag.png)
 
 ## Adding a translation
 
