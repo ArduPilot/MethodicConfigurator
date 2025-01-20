@@ -283,7 +283,7 @@ The files are also automatically zipped into a file with the same name as the ve
 
 ![Parameter files zipped message box](images/Parameter_files_zipped.png)
 
-You should upload this `.zip` file or the `non-default_writable_non-calibrations.param` file to the [How to methodically tune any ArduCopter Blog post](https://discuss.ardupilot.org/t/how-to-methodically-tune-almost-any-multicopter-using-arducopter-4-4-x/110842/1)
+You should upload this `.zip` file or the `non-default_writable_non-calibrations.param` file to the [How to methodically tune any ArduCopter Blog post](https://discuss.ardupilot.org/t/how-to-methodically-configure-and-tune-any-arducopter/110842/)
 
 Once the summary files are written, the application will close the connection to the flight controller and terminate.
 
@@ -308,7 +308,7 @@ These files are crucial for the tool's operation and are organized in a specific
   If the file does not exist or is invalid, use this command to regenerate it
 
 ```bash
-./extract_param_defaults bin_log_file.bin > 00_default.param
+extract_param_defaults bin_log_file.bin > 00_default.param
 ```
 
 - **ArduPilot parameter documentation File**: The `apm.pdef.xml` contains documentation and metadata for each ArduPilot parameter in an XML format.
