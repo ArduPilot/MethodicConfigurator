@@ -308,7 +308,7 @@ These files are crucial for the tool's operation and are organized in a specific
   If the file does not exist or is invalid, use this command to regenerate it
 
 ```bash
-./extract_param_defaults.py bin_log_file.bin > 00_default.param
+./extract_param_defaults bin_log_file.bin > 00_default.param
 ```
 
 - **ArduPilot parameter documentation File**: The `apm.pdef.xml` contains documentation and metadata for each ArduPilot parameter in an XML format.
@@ -331,7 +331,7 @@ The documentation files provide context and guidance for each parameter.
 The *ArduPilot Methodic Configurator* can be started from the command line.
 The command line interface provides several options to customize the behavior of the tool.
 
-To use the command line interface, navigate to the directory where the `ardupilot_methodic_configurator.py` script is located and run the script with the appropriate arguments.
+To use the command line interface, execute `ardupilot_methodic_configurator` on the command line.
 
 Here is a list of command line options:
 
@@ -347,7 +347,7 @@ Here is a list of command line options:
 Example usage:
 
 ```bash
-python ardupilot_methodic_configurator.py --device="tcp:127.0.0.1:5760" --vehicle-dir="/path/to/params" --n=0 --loglevel=INFO -t=ArduCopter
+ardupilot_methodic_configurator --device="tcp:127.0.0.1:5760" --vehicle-dir="/path/to/params" --n=0 --loglevel=INFO -t=ArduCopter
 ```
 
 This command will connect to the flight controller at `tcp:127.0.0.1:5760`, use the parameter files in the specified directory,
@@ -356,7 +356,7 @@ start with the first parameter file, set the logging level to INFO, and target t
 For more detailed information on the command line options, you can run the script with the `-h` or `--help` flag to display the help message:
 
 ```bash
-python ardupilot_methodic_configurator.py --help
+ardupilot_methodic_configurator --help
 ```
 
 This will show a list of all available command line options along with a brief description of each.
