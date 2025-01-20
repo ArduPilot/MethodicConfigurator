@@ -18,7 +18,7 @@ After installing it you must also:
 
 ## MS Windows Installation
 
-Download the [latest MethodicConfiguratorSetup-x.x.x.exe installer file](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/latest).
+Download the [latest ardupilot_methodic_configurator_setup_x.x.x.exe installer file](https://github.com/ArduPilot/MethodicConfigurator/releases/latest).
 
 Do the steps highlighted in red.
 
