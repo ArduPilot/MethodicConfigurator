@@ -32,6 +32,7 @@ from ardupilot_methodic_configurator.annotate_params import (
     PARAM_DEFINITION_XML_FILE,
     Par,
     format_columns,
+    get_env_proxies,
     get_xml_dir,
     get_xml_url,
     load_default_param_file,
@@ -643,7 +644,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             logging_error(_("URL or local filename not provided."))
             return False
         logging_info(_("Downloading %s from %s"), local_filename, url)
-        response = requests_get(url, timeout=timeout)
+        response = requests_get(url, timeout=timeout, proxies=get_env_proxies())
 
         if response.status_code == 200:
             with open(local_filename, "wb") as file:

@@ -27,6 +27,7 @@ import argparse
 import glob
 import logging
 import re
+from os import environ as os_environ
 from os import path as os_path
 from os import popen as os_popen
 from sys import exc_info as sys_exc_info
@@ -351,7 +352,7 @@ class Par:
             print(line)  # noqa: T201
 
 
-def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str) -> ET.Element:
+def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str) -> ET.Element:  # pylint: disable=too-many-locals
     """
     Fetches XML data from a local file or a URL.
 
@@ -387,10 +388,11 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
             logging.critical("Please install it by running 'pip install requests' in your terminal.")
             msg = "requests package is not installed"
             raise SystemExit(msg) from exc
+        # Send a GET request to the URL
+        url = base_url + filename
+        proxies = get_env_proxies()
         try:
-            # Send a GET request to the URL
-            url = base_url + filename
-            response = requests_get(url, timeout=5)
+            response = requests_get(url, timeout=5, proxies=proxies)
             if response.status_code != 200:
                 logging.warning("Remote URL: %s", url)
                 msg = f"HTTP status code {response.status_code}"
@@ -401,7 +403,7 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
             try:
                 url = BASE_URL + vehicle_type + "/" + PARAM_DEFINITION_XML_FILE
                 logging.warning("Falling back to the DEV XML file: %s", url)
-                response = requests_get(url, timeout=5)
+                response = requests_get(url, timeout=5, proxies=proxies)
                 if response.status_code != 200:
                     logging.critical("Remote URL: %s", url)
                     msg = f"HTTP status code {response.status_code}"
@@ -423,6 +425,20 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
 
     # Parse the XML data
     return DET.fromstring(xml_data)  # type: ignore[no-any-return]
+
+
+def get_env_proxies() -> Union[dict[str, str], None]:
+    proxies_env = {
+        "http": os_environ.get("HTTP_PROXY") or os_environ.get("http_proxy"),
+        "https": os_environ.get("HTTPS_PROXY") or os_environ.get("https_proxy"),
+        "no_proxy": os_environ.get("NO_PROXY") or os_environ.get("no_proxy"),
+    }
+    # Remove None values
+    proxies_dict: dict[str, str] = {k: v for k, v in proxies_env.items() if v is not None}
+    # define as None if no proxies are defined in the OS environment variables
+    proxies = proxies_dict if proxies_dict else None
+    logging.info("Proxies: %s", proxies)
+    return proxies
 
 
 def load_default_param_file(directory: str) -> dict[str, "Par"]:
