@@ -22,7 +22,7 @@ rm -Rf ~/.local/bin/ardupilot_methodic_configurator
 rm -Rf build dist/ ardupilot_methodic_configurator.egg-info/
 
 uv venv --python 3.12
-source .venv/bin/activate
+source .venv/Scripts/activate
 uv pip install -U build packaging pip setuptools wheel
 
 python -m build
