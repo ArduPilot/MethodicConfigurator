@@ -382,6 +382,11 @@ Now do some general configuration
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
 1. Press `Upload selected params to FC, and advance to next file` button.
 
+Close *ArduPilot Methodic Configurator*.
+Using [Mission Planner, manually download](https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html#downloading-logs-via-mavlink)
+the latest `.bin` file from the flight controller to your PC.
+Remember where you stored it, you will need it later.
+
 ## 6.11 ArduPilot Hardware Report
 
 For this test, you need to:
@@ -398,7 +403,7 @@ If it doesn't, go back and perform the missing calibration(s).
 
 ![MP LOG_BITMASK parameter](images/blog/mp_logging_bitmask.png)
 
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `13_Logging.param` file
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `14_Logging.param` file
 
 The table below explains which bit is responsible for which `.bin` dataflash log message(s):
 
