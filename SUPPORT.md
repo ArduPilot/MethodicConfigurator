@@ -22,7 +22,7 @@ To get help from others on how to use the software (in order of preference):
 * Use the [user support forum](http://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/1) and
   include a `.bin` log file and a `.zip` file with all the intermediate `.param` files if possible.
   If you're not sure you have a bug, you should seek support first.
-* Use the [discord channel](https://discord.com/channels/674039678562861068/859928885705965579)
+* Use the [discord channel](https://discord.com/channels/674039678562861068/1308233496535371856)
 * [Report a bug/issue/missing feature on github](https://github.com/ArduPilot/MethodicConfigurator/issues/new/choose). Only report one bug per issue report.
 
 For paid consultancy support:
