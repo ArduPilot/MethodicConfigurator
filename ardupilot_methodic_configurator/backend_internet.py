@@ -94,6 +94,55 @@ def download_file_from_url(
     return False
 
 
+def get_release_interval_info(
+    start_ver: str, end_ver: str, should_be_pre_release: bool, timeout: int = 30
+) -> dict[str, dict[str, Any]]:
+    """
+    Get release information from GitHub API.
+
+    Get release version information from all the versions starting in start_ver (exclusive) to end_ver (inclusive).
+
+    Args:
+        start_ver (str): The starting version (exclusive) for the search.
+        end_ver (str): The ending version (inclusive) for the search.
+        should_be_pre_release (bool): Whether the releases should be pre-releases.
+        timeout (int): Request timeout in seconds
+
+    Returns:
+        Release information dictionary
+
+    """
+    releases_info = {}
+
+    try:
+        url = urljoin(GITHUB_API_URL_RELEASES, "tags")
+        response = requests_get(url, timeout=timeout)
+        response.raise_for_status()
+
+        releases = response.json()
+
+        for release in releases:
+            tag_name = release.get("tag_name", "").lstrip("v")  # Remove the 'v' prefix if it exists
+
+            # Check if the tag name is within the specified range
+            if start_ver < tag_name <= end_ver:
+                if should_be_pre_release != release.get("prerelease", False):
+                    continue  # Skip if release doesn't match pre-release requirement
+
+                releases_info[tag_name] = {
+                    "id": release["id"],
+                    "name": release["name"],
+                    "published_at": release["published_at"],
+                    "prerelease": release["prerelease"],
+                }
+
+    except requests_RequestException as e:
+        logging_error(_("Failed to fetch releases: {}").format(e))
+        raise
+
+    return releases_info
+
+
 def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) -> dict[str, Any]:
     """
     Get release information from GitHub API.
