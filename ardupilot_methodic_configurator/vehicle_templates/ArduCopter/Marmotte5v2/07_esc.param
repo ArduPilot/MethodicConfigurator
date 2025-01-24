@@ -10,7 +10,7 @@ NTF_BUZZ_TYPES,3  # the 4-in-1 ESC uses this
 NTF_LED_TYPES,2305  # Built-in LED, NCP5623 External (Holybro F9P), Neopixel (Matek H743 slim v3), and DShot (4-in-1 ESC)
 PSC_ACCZ_SMAX,0  # No slew rate limit on throttle controller
 SERIAL5_BAUD,57  # bi-directional DShot telemetry data rate from T-Motor F45 4in1 ESC V2
-SERIAL5_PROTOCOL,-1  # bi-directional DShot telemetry pin is connected to SERIAL5
+SERIAL5_PROTOCOL,-1
 SERVO_BLH_AUTO,1  # Enables BLHeli pass-thru
 SERVO_BLH_BDMASK,15  # All four of our ESC support bi-directional DShot
 SERVO_BLH_POLES,14  # Specified in component editor window
