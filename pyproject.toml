@@ -37,6 +37,7 @@ classifiers = [
     "Topic :: Software Development :: Embedded Systems",
     "Topic :: System :: Installation/Setup",
     "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
 ]
 
 dependencies = [
