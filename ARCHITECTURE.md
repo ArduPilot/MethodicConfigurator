@@ -258,15 +258,36 @@ To add a new translation language to the Ardupilot Methodic Configurator, follow
 This process involves creating a new language folder in the locale directory and generating the necessary translation files.
 You will use the `create_pot_file.py` script to extract the strings that need translation and create a `.pot` file, which serves as a template for the translation.
 
-### 1. Set Up Your Locale Directory
+### 1. Set Up Your Local Code Repository
+
+If not done already navigate to a directory where you want to checkout the git repository and execute:
+
+```cmd
+git clone https://github.com/ArduPilot/MethodicConfigurator.git
+cd MethodicConfigurator
+```
+
+On windows do:
+
+```cmd
+.\SetupDeveloperPC.bat
+.\install_msgfmt.bat
+.\install_wsl.bat
+```
+
+On linux and MacOS do:
+
+```bash
+./SetupDeveloperPC.sh
+```
+
+### 2. Create a New Language Directory
 
 Navigate to the `locale` directory inside your project:
 
 ```bash
 cd ardupilot_methodic_configurator/locale
 ```
-
-### 2. Create a New Language Directory
 
 Create a new folder for the language you want to add. The name of the folder should follow the standard language code format (e.g., de for German, fr for French).
 
@@ -278,6 +299,14 @@ For example, to add support for German:
 
 ```bash
 mkdir de
+```
+
+Now add the language to the end of the `LANGUAGE_CHOICES` array in the `ardupilot_methodic_configurator/internationalization.py` file.
+
+For example, to add support for German:
+
+```python
+LANGUAGE_CHOICES = ['en', 'zh_CN', 'pt', 'de']
 ```
 
 ### 3. Generate a Template POT File
@@ -312,8 +341,10 @@ To do so navigate to the project root and issue:
 python extract_missing_translations.py --lang-code=de
 ```
 
-Store the result of the bulk translations into a `translations.txt` file.
-Insert the translations into the .po file:
+It will store the result of the bulk translations into a `translations_de.txt` file.
+
+Now translate that file(s), or feed it to on-line translation service.
+Once done, insert the translations into the `.po` file:
 
 ```bash
 python insert_translations.py --lang-code=de
@@ -342,21 +373,24 @@ msgstr "Translated String"
 
 Once you have completed your translations, you will need to compile the `.po` file into a binary `.mo` file. This can be done using the command:
 
+On windows:
+
 ```bash
-wsl python3 create_mo_files.py
+python create_mo_files.py
+```
+
+On linux or MacOS:
+
+```bash
+python3 create_mo_files.py
 ```
 
 Make sure you have `msgfmt` installed, which is part of the *GNU gettext* package.
+On windows use the `.\install_msgfmt.bat` command.
 
 ### 8. Test the New Language
 
-Now add the language to the end of the `LANGUAGE_CHOICES` array in the `ardupilot_methodic_configurator/internationalization.py` file.
-
-```python
-LANGUAGE_CHOICES = ['en', 'zh_CN', 'pt', 'de']
-```
-
-And add it also to the `[Languages]` and `[Icons]` sections of the `windows/ardupilot_methodic_configurator.iss` file.
+Add it to the `[Languages]` and `[Icons]` sections of the `windows/ardupilot_methodic_configurator.iss` file.
 
 ```text
 [Languages]
