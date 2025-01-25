@@ -1,0 +1,210 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "ruff check",
+            "type": "shell",
+            "command": "ruff check",
+            "problemMatcher": {
+                "owner": "ruff",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+): ([A-Z]\\d{3}) (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "code": 4,
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "ruff check --fix",
+            "type": "shell",
+            "command": "ruff check --fix",
+            "problemMatcher": {
+                "owner": "ruff",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+): ([A-Z]\\d{3}) (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "code": 4,
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "ruff check --fix --unsafe-fixes",
+            "type": "shell",
+            "command": "ruff check --fix --unsafe-fixes",
+            "problemMatcher": {
+                "owner": "ruff",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+): ([A-Z]\\d{3}) (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "code": 4,
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "ruff format",
+            "type": "shell",
+            "command": "ruff format"
+        },
+        {
+            "label": "pylint",
+            "type": "shell",
+            "command": "pylint $(git ls-files '*.py')",
+            "problemMatcher": {
+                "owner": "pylint",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": [
+                    {
+                        "regexp": "^(.+):(\\d+):(\\d+): ([A-Z]\\d{4}): (.+) \\(([a-z-]+)\\)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "severity": 4,
+                        "message": 5,
+                        "code": 6
+                    }
+                ],
+                "severity": {
+                    "E": "error",
+                    "W": "warning",
+                    "F": "error",
+                    "R": "info",
+                    "C": "info"
+                }
+            }
+        },
+        {
+            "label": "mypy",
+            "type": "shell",
+            "command": "mypy",
+            "problemMatcher": {
+                "owner": "mypy",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(.+):(\\d+): (error|note|warning): (.+)\\[([-\\w]+)\\]$",
+                    "file": 1,
+                    "line": 2,
+                    "severity": 3,
+                    "message": 4,
+                    "code": 5
+                }
+            }
+        },
+        {
+            "label": "Extract Missing Translations",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "extract_missing_translations.py",
+                "--lang-code",
+                "${input:languageCode}",
+                "--output-file",
+                "${input:outputFile}",
+                "--max-translations",
+                "${input:maxTranslations}"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": "build"
+        },
+        {
+            "label": "Insert Translations",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "insert_translations.py",
+                "--lang-code",
+                "${input:languageCode}",
+                "--input-file",
+                "${input:inputFile}",
+                "--output-file",
+                "${input:poOutputFile}"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": "build"
+        },
+        {
+            "label": "pytest with coverage",
+            "type": "shell",
+            "command": "pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results.md",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": {
+                "owner": "python",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": [
+                    {
+                        "regexp": "^(.+):(\\d+): (\\w+): (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "severity": 3,
+                        "message": 4
+                    },
+                    {
+                        "regexp": "^(.+):(\\d+): in (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "code": 3
+                    },
+                    {
+                        "regexp": "^E\\s+(.+)$",
+                        "message": 1
+                    }
+                ]
+            }
+        },
+    ],
+    "inputs": [
+        {
+            "id": "languageCode",
+            "type": "pickString",
+            "description": "Select language code:",
+            "options": ["en", "zh_CN", "pt", "de"],
+            "default": "zh_CN"
+        },
+        {
+            "id": "outputFile",
+            "type": "promptString",
+            "description": "Enter output file base name:",
+            "default": "missing_translations"
+        },
+        {
+            "id": "maxTranslations",
+            "type": "promptString",
+            "description": "Enter maximum translations per file:",
+            "default": "80"
+        },
+        {
+            "id": "inputFile",
+            "type": "promptString",
+            "description": "Enter input file base name:",
+            "default": "missing_translations"
+        },
+        {
+            "id": "poOutputFile",
+            "type": "promptString",
+            "description": "Enter output .po file name:",
+            "default": "ardupilot_methodic_configurator_new.po"
+        }
+    ]
+}
