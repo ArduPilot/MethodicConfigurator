@@ -5,7 +5,7 @@ Extract missing translations from a .po file.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -16,28 +16,30 @@ import glob
 import logging
 import os
 
+from ardupilot_methodic_configurator.internationalization import LANGUAGE_CHOICES
+
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Extract missing translations from a .po (GNU gettext) file.")
 
-    # Add argument for language code
+    # pylint: disable=duplicate-code
     parser.add_argument(
         "--lang-code",
         default="zh_CN",
         type=str,
-        help="The language code for which to extract missing translations (e.g., 'zh_CN', 'pt'). Defaults to %(default)s",
+        choices=LANGUAGE_CHOICES,
+        help="The language code for translations. Available choices: %(choices)s. Defaults to %(default)s",
     )
+    # pylint: enable=duplicate-code
 
-    # Add argument for output file
     parser.add_argument(
         "--output-file",
-        default="missing_translation",
+        default="missing_translations",
         type=str,
         help="The base name of the file(s) where the missing translations will be written. "
         "This file will contain lines in the format 'index:msgid'. Defaults to %(default)s",
     )
 
-    # Add argument for maximum number of translations per output file
     parser.add_argument(
         "--max-translations",
         default=80,
@@ -55,7 +57,7 @@ def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:
     )
     language = gettext.translation(
         "ardupilot_methodic_configurator",
-        localedir="ardupilot_methodic_configurator\\locale",
+        localedir=os.path.join("ardupilot_methodic_configurator", "locale"),
         languages=[lang_code],
         fallback=True,
     )
@@ -88,8 +90,8 @@ def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:
         if in_msgid and line.startswith("msgstr "):
             in_msgid = False
             # escape \ characters in a string
-            # msgid_escaped = msgid.replace("\\", "\\\\")
-            msgid_escaped = msgid
+            msgid_escaped = msgid.replace("\\", "\\\\")
+            # msgid_escaped = msgid
             # Check if the translation exists
             if language.gettext(msgid_escaped) == msgid:  # If translation is the same as msgid, it's missing
                 missing_translations.append((i - 1, msgid))
@@ -129,7 +131,7 @@ def main() -> None:
     args = parse_arguments()
     logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
     missing_translations = extract_missing_translations(args.lang_code)
-    output_to_files(missing_translations, args.output_file, args.max_translations)
+    output_to_files(missing_translations, args.output_file + "_" + args.lang_code, args.max_translations)
 
 
 if __name__ == "__main__":

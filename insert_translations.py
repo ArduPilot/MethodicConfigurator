@@ -5,7 +5,7 @@ Insert bulk translations into an existing .po file.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -13,30 +13,33 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import os
 
+from ardupilot_methodic_configurator.internationalization import LANGUAGE_CHOICES
+
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Insert bulk translations into a .po (GNU gettext) file.")
 
-    # Add argument for language code
+    # pylint: disable=duplicate-code
     parser.add_argument(
         "--lang-code",
         default="zh_CN",
         type=str,
-        help="The language code into which insert bulk translations (e.g., 'zh_CN', 'pt'). Defaults to %(default)s",
+        choices=LANGUAGE_CHOICES,
+        help="The language code for translations. Available choices: %(choices)s. Defaults to %(default)s",
     )
+    # pylint: enable=duplicate-code
 
-    # Add argument for translations file
     parser.add_argument(
-        "--translations-file",
-        default="missing_translations.txt",
+        "--input-file",
+        default="missing_translations",
         type=str,
-        help="The path to the file containing translations. Defaults to %(default)s.",
+        help="The base name of the file(s) where the missing translations will be read. "
+        "This file contains lines in the format 'index:msgid'. Defaults to %(default)s",
     )
 
-    # Add argument for output file
     parser.add_argument(
         "--output-file",
-        default="updated_ardupilot_methodic_configurator.po",
+        default="ardupilot_methodic_configurator_new.po",
         type=str,
         help="The name of the .po file where the translations will be written. "
         "This file will contain lines in the .po (GNU gettext) format. Defaults to %(default)s",
@@ -45,14 +48,14 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def insert_translations(lang_code: str, translations_file: str, output_file_name: str) -> None:
+def insert_translations(lang_code: str, translations_basename: str, output_file_name: str) -> None:
     po_file = os.path.join(
         "ardupilot_methodic_configurator", "locale", lang_code, "LC_MESSAGES", "ardupilot_methodic_configurator.po"
     )
     with open(po_file, encoding="utf-8") as f:
         lines = f.readlines()
 
-    with open(translations_file, encoding="utf-8") as f:
+    with open(translations_basename + "_" + lang_code + ".txt", encoding="utf-8") as f:
         translations_data = f.read().strip().split("\n")
 
     # Prepare to insert translations
@@ -84,7 +87,7 @@ def insert_translations(lang_code: str, translations_file: str, output_file_name
 
 def main() -> None:
     args = parse_arguments()
-    insert_translations(args.lang_code, args.translations_file, args.output_file)
+    insert_translations(args.lang_code, args.input_file, args.output_file)
 
 
 if __name__ == "__main__":
