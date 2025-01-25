@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import logging
 import os
 import subprocess
+from platform import system as platform_system
 
 
 def process_locale_directory(locale_dir: str) -> None:
@@ -22,7 +23,8 @@ def process_locale_directory(locale_dir: str) -> None:
 
     try:
         # Run msgfmt command
-        cmd = ["msgfmt", "-o", mo_file, po_file]
+        exe = "C:\\Program Files\\gettext-iconv\\bin\\msgfmt.exe" if platform_system() == "Windows" else "msgfmt"
+        cmd = [exe, "-o", mo_file, po_file]
         subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
         msg = f"Successfully processed {locale_dir}"
         logging.info(msg)
