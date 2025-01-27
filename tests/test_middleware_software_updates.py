@@ -31,6 +31,8 @@ def update_manager() -> UpdateManager:
 
 
 class TestUpdateManager:
+    """Test cases for the UpdateManager class."""
+
     def test_format_version_info(self) -> None:
         result = format_version_info("1.0.0", "2.0.0", "Test changes")
         assert "1.0.0" in result
