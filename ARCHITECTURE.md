@@ -212,17 +212,29 @@ We tested using **automated static tests** in both pre-commit hooks and on githu
 We tested using **automated dynamic tests** on github CI including automated test coverage reports.
 We use [unittest](https://docs.python.org/3/library/unittest.html) to write unit tests for the code.
 The tests are easy to run on the command line or in VS code.
-When you write new code you must also write tests in the `tests/` directory, there is CI test that only passes if test coverage increases monotonicaly.
+When you write new code you must also write tests in the `tests/` directory, there is CI test that only passes if test coverage increases monotonically.
+
+To run the tests either use the python tests plugin in visualstudio code, or execute:
+
+```bash
+pytest
+```
 
 ### Integration testing
 
 The five different sub-applications are first tested independently.
 
 - software update checker
+  - `python .\ardupilot_methodic_configurator\middleware_software_updates.py`
 - flight controller connection GUI
+  - `python .\ardupilot_methodic_configurator\frontend_tkinter_connection_selection.py`
 - vehicle configuration directory selection GUI
+  - `python .\ardupilot_methodic_configurator\frontend_tkinter_directory_selection.py`
+  - `python .\ardupilot_methodic_configurator\frontend_tkinter_template_overview.py`
 - vehicle component editor GUI
+  - `python .\ardupilot_methodic_configurator\frontend_tkinter_component_editor.py`
 - parameter editor and uploader GUI
+  - `python .\ardupilot_methodic_configurator\frontend_tkinter_parameter_editor.py`
 
 Only after each one performs 100% as expected, they are integrated and tested together.
 This speeds up the development process.
