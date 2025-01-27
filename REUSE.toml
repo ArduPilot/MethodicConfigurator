@@ -1,0 +1,22 @@
+version = 1
+
+[[annotations]]
+path = ".github/**"
+SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ".vscode/*"
+SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = "ardupilot_methodic_configurator/vehicle_templates/**"
+SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# Two computer-generated files.
+[[annotations]]
+path = "images/**"
+SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
