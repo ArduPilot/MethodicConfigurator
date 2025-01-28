@@ -7,7 +7,9 @@ These are the unit tests for the python script that fetches online ArduPilot
 parameter documentation (if not cached) and adds it to the specified file or
 to all *.param and *.parm files in the specified directory.
 
-Author: Amilcar do Carmo Lucas
+SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import contextlib

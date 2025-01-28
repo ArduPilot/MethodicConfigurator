@@ -15,8 +15,40 @@ path = "ardupilot_methodic_configurator/vehicle_templates/**"
 SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
-# Two computer-generated files.
 [[annotations]]
 path = "images/**"
+SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = [".coveragerc", ".gitignore", ".markdown-link-check.json", ".markdownlint.yaml", ".pre-commit-config.yaml", ".pylintrc"]
+SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["24_inflight_magnetometer_fit_setup.pdef.xml", "REUSE.toml", "SECURITY.md", "SetupDeveloperPC.bat", "SetupDeveloperPC.sh"]
+SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["ardupilot_methodic_configurator/*.png", "ardupilot_methodic_configurator/configuration_steps_*.json", "ardupilot_methodic_configurator/locale/*/LC_MESSAGES/ardupilot_methodic_configurator.mo"]
+SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["cliff.toml", "install_msgfmt.bat", "install_wsl.bash", "package.bat", "pyproject.toml", "pytest.ini", "test_pip_package.sh"]
+SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["credits/Python_Tkinter_ComboBox-Mozilla_Public_License_version_2.0.html", "credits/Scrollable_TK_frame-Mozilla_Public_License_version_2.0.html"]
+SPDX-License-Identifier = "MPL-2.0"
+
+[[annotations]]
+path = ["credits/certifi-LICENSE", "credits/python-certifi-LICENSE"]
+SPDX-License-Identifier = "MPL-2.0"
+
+[[annotations]]
+path = ["windows/ardupilot_methodic_configurator*", "windows/settings_template.json"]
 SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
