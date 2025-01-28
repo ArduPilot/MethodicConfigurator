@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-01-28 00:29+0000\n"
+"POT-Creation-Date: 2025-01-28 11:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -349,51 +349,51 @@ msgid ""
 "Make sure parameter SERIAL0_PROTOCOL is set to 2"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:314
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:317
 msgid "ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:330
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:333
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:349
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:352
 msgid "Testing active, will load all parameters from the %s file"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:359
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:362
 msgid "MAVFTP is supported by the %s flight controller"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:363
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:368
 msgid "MAVFTP is not supported by the %s flight controller, fallback to MAVLink"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:370
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:375
 msgid "Will fetch all parameters from the %s flight controller"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:391
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:396
 msgid "Received parameter: %s = %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:397
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:402
 msgid "Fetched %d parameter values from the %s flight controller"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:401
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:406
 msgid "Error: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:465
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:470
 msgid "Reset command sent to ArduPilot."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:576
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:581
 msgid "MAVLink connection string to the flight controller. If set to \"none\" no connection is made. Defaults to autodetection"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:590
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:595
 msgid "Flight controller reboot time. Default is %(default)s"
 msgstr ""
 
