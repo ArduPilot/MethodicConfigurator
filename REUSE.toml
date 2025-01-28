@@ -31,7 +31,7 @@ SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
-path = ["ardupilot_methodic_configurator/*.png", "ardupilot_methodic_configurator/configuration_steps_*.json", "ardupilot_methodic_configurator/locale/*/LC_MESSAGES/ardupilot_methodic_configurator.mo"]
+path = ["ardupilot_methodic_configurator/*.png", "ardupilot_methodic_configurator/configuration_steps_*.json", "ardupilot_methodic_configurator/locale/ardupilot_methodic_configurator.pot", "ardupilot_methodic_configurator/locale/*/LC_MESSAGES/ardupilot_methodic_configurator.mo", "ardupilot_methodic_configurator/locale/*/LC_MESSAGES/ardupilot_methodic_configurator.po"]
 SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
@@ -41,12 +41,63 @@ SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
-path = ["credits/Python_Tkinter_ComboBox-Mozilla_Public_License_version_2.0.html", "credits/Scrollable_TK_frame-Mozilla_Public_License_version_2.0.html"]
+path = "credits/Python_Tkinter_ComboBox-Mozilla_Public_License_version_2.0.html"
+SPDX-FileCopyrightText = "geraldew"
+SPDX-License-Identifier = "MPL-2.0"
+
+[[annotations]]
+path = "credits/Scrollable_TK_frame-Mozilla_Public_License_version_2.0.html"
+SPDX-FileCopyrightText = "Mark Pointing"
 SPDX-License-Identifier = "MPL-2.0"
 
 [[annotations]]
 path = ["credits/certifi-LICENSE", "credits/python-certifi-LICENSE"]
+SPDX-FileCopyrightText = "certifi developers"
 SPDX-License-Identifier = "MPL-2.0"
+
+[[annotations]]
+path = "credits/ArduPilot_tempcal_IMU.py-COPYING.txt"
+SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = "credits/charset-normalizer-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2019 TAHRI Ahmed R."
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/future-LICENSE.txt"
+SPDX-FileCopyrightText = "Copyright (c) 2013-2024 Python Charmers, Australia"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/idna-LICENSE.md"
+SPDX-FileCopyrightText = "Copyright (c) 2013-2024, Kim Davies and contributors"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "credits/lxml-LICENSE.txt"
+SPDX-FileCopyrightText = "Copyright (c) 2004 Infrae. All rights reserved."
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/platformdirs-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2010-202x The platformdirs developers"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/pymavlink-COPYING"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = "credits/python-future-LICENSE.txt"
+SPDX-FileCopyrightText = "Copyright (c) 2013-2024 Python Charmers, Australia"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/urllib3-LICENSE.txt"
+SPDX-FileCopyrightText = "Copyright (c) 2008-2020 Andrey Petrov and contributors."
+SPDX-License-Identifier = "MIT"
 
 [[annotations]]
 path = ["windows/ardupilot_methodic_configurator*", "windows/settings_template.json"]
