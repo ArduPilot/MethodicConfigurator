@@ -117,7 +117,7 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
 
     def set_capabilities(self, capabilities: int) -> None:
         self.capabilities = self.__decode_flight_capabilities(capabilities)
-        self.is_mavftp_supported = capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP
+        self.is_mavftp_supported = bool(capabilities & mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP)
 
     @staticmethod
     def __decode_flight_sw_version(flight_sw_version: int) -> tuple[int, int, int, str]:

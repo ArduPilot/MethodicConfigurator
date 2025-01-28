@@ -64,7 +64,7 @@ def argument_parser() -> argparse.Namespace:
     return add_common_arguments_and_parse(parser)
 
 
-def connect_to_fc_and_read_parameters(args: argparse.Namespace) -> tuple[FlightController, str]:
+def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[FlightController, str]:
     flight_controller = FlightController(args.reboot_time)
 
     error_str = flight_controller.connect(args.device, log_errors=False)
@@ -144,7 +144,7 @@ def main() -> None:
         webbrowser_open(url=url, new=0, autoraise=True)
 
     # Connect to the flight controller and read the parameters
-    flight_controller, vehicle_type = connect_to_fc_and_read_parameters(args)
+    flight_controller, vehicle_type = connect_to_fc_and_set_vehicle_type(args)
 
     param_default_values = {}
     if flight_controller.master is not None or args.device == "test":

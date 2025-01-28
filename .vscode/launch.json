@@ -30,10 +30,20 @@
             "program": "ardupilot_methodic_configurator/__main__.py",
             "args": [
                 "--allow-editing-template-files",
-                "--device=none",
+                "--device=COM6",
                 "--skip-component-editor",
                 "--n=7",
                 "--vehicle-dir=D:\\Projekte\\Multicopter\\MethodicConfigurator\\ardupilot_methodic_configurator\\vehicle_templates\\ArduCopter\\diatone_taycan_mxc\\4.6.x-params"
+            ]
+        },
+        {
+            "name": "Python Debugger: frontend_tkinter_connection_selection.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py",
+            "args": [
+                "--device=COM6",
+                "--loglevel=DEBUG"
             ]
         }
     ]

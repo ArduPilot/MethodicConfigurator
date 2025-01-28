@@ -16,7 +16,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.__main__ import argument_parser, component_editor, connect_to_fc_and_read_parameters
+from ardupilot_methodic_configurator.__main__ import argument_parser, component_editor, connect_to_fc_and_set_vehicle_type
 
 
 @pytest.fixture
@@ -49,7 +49,7 @@ class TestMainFunctions(unittest.TestCase):
         mock_fc.info.firmware_type = "type"
 
         args = argparse.Namespace(device="test_device", vehicle_type="", reboot_time=5)
-        flight_controller, vehicle_type = connect_to_fc_and_read_parameters(args)
+        flight_controller, vehicle_type = connect_to_fc_and_set_vehicle_type(args)
         assert flight_controller == mock_fc
         assert vehicle_type == "quad"
 

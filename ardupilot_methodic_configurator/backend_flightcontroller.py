@@ -309,7 +309,10 @@ class FlightController:
         for i, msg in enumerate(banner_msgs):
             if "ChibiOS:" in msg:
                 os_custom_version = msg.split(" ")[1].strip()
-                if os_custom_version != self.info.os_custom_version:
+                hash_len1 = max(7, len(os_custom_version) - 1)
+                hash_len2 = max(7, len(self.info.os_custom_version) - 1)
+                hash_len  = min(hash_len1, hash_len2)
+                if os_custom_version[:hash_len] != self.info.os_custom_version[:hash_len]:
                     logging_warning(
                         _("ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"),
                         os_custom_version,
