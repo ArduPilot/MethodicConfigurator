@@ -361,7 +361,9 @@ class FlightController:
         if self.info.is_mavftp_supported:
             logging_info(_("MAVFTP is supported by the %s flight controller"), comport_device)
 
-            return self.download_params_via_mavftp(progress_callback)
+            param_dict, default_param_dict = self.download_params_via_mavftp(progress_callback)
+            if param_dict:
+                return param_dict, default_param_dict
 
         logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), comport_device)
         return self.__download_params_via_mavlink(progress_callback), {}
