@@ -31,8 +31,19 @@ SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
-path = ["ardupilot_methodic_configurator/*.png", "ardupilot_methodic_configurator/configuration_steps_*.json", "ardupilot_methodic_configurator/locale/ardupilot_methodic_configurator.pot", "ardupilot_methodic_configurator/locale/*/LC_MESSAGES/ardupilot_methodic_configurator.mo", "ardupilot_methodic_configurator/locale/*/LC_MESSAGES/ardupilot_methodic_configurator.po"]
+path = ["ardupilot_methodic_configurator/*.png", "ardupilot_methodic_configurator/configuration_steps_*.json"]
 SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["ardupilot_methodic_configurator/locale/**"]
+SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["ardupilot_methodic_configurator/locale/zh_CN/**"]
+precedence = "override"
+SPDX-FileCopyrightText = "2024 SakuraRC_Yang <35626190+BloodSakura3774@users.noreply.github.com>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
