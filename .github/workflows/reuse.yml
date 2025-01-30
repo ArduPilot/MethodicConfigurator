@@ -1,0 +1,41 @@
+name: REUSE Compliance Check
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  reuse:
+
+    name: REUSE Compliance
+    runs-on: ubuntu-latest
+    env:
+      UV_SYSTEM_PYTHON: 1
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install uv and set the python version
+      uses: astral-sh/setup-uv@v4
+      with:
+        python-version: '3.13'
+
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install REUSE tool
+      run: |
+        uv pip install reuse
+
+    - name: Check REUSE compliance
+      run: reuse lint
+
+    - name: Upload REUSE output
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: reuse-output
+        path: .reuse/
