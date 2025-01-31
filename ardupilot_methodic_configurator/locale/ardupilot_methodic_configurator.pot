@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-01-31 01:06+0000\n"
+"POT-Creation-Date: 2025-01-31 18:44+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,23 +15,23 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: ardupilot_methodic_configurator/__main__.py:47
+#: ardupilot_methodic_configurator/__main__.py:48
 msgid "ArduPilot methodic configurator is a simple GUI with a table that lists parameters. The GUI reads intermediate parameter files from a directory and displays their parameters in a table. Each row displays the parameter name, its current value on the flight controller, its new value from the selected intermediate parameter file, and an \"Upload\" checkbox. The GUI includes \"Upload selected params to FC\" and \"Skip\" buttons at the bottom. When \"Upload Selected to FC\" is clicked, it uploads the selected parameters to the flight controller. When \"Skip\" is pressed, it skips to the next intermediate parameter file. The process gets repeated for each intermediate parameter file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:72
+#: ardupilot_methodic_configurator/__main__.py:74
 msgid "No serial ports found"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:81
+#: ardupilot_methodic_configurator/__main__.py:83
 msgid "Vehicle type not set explicitly, auto-detected %s."
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:83
+#: ardupilot_methodic_configurator/__main__.py:85
 msgid "Vehicle type explicitly set to %s."
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:114
+#: ardupilot_methodic_configurator/__main__.py:116
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:97
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:100
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:110
@@ -43,12 +43,16 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:130
+#: ardupilot_methodic_configurator/__main__.py:132
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:123
 msgid "Error in derived parameters"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:159
+#: ardupilot_methodic_configurator/__main__.py:142
+msgid "Will now exit the old software version."
+msgstr ""
+
+#: ardupilot_methodic_configurator/__main__.py:165
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:203
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:437
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:458
@@ -145,19 +149,19 @@ msgid "Last uploaded file is the last file in the list. Starting from there."
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:672
-msgid "The type of the vehicle. Defaults to ArduCopter"
+msgid "The type of the vehicle. Default is ArduCopter"
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:678
-msgid "Directory containing vehicle-specific intermediate parameter files. Defaults to the current working directory"
+msgid "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:686
-msgid "Start directly on the nth intermediate parameter file (skips previous files). Default is to start on the file next to the last that you wrote to the flight controller.If the file does not exist, it will start on the first file."
+msgid "Start directly on the nth intermediate parameter file (skips previous files). Default is to start on the file next to the last that you wrote to the flight controller. If the file does not exist, it will start on the first file."
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:695
-msgid "Allow opening and editing template files directly. Only for software developers that know what they are doing.Defaults to %(default)s"
+msgid "Allow opening and editing template files directly. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 
 #:
@@ -390,7 +394,7 @@ msgid "Reset command sent to ArduPilot."
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:581
-msgid "MAVLink connection string to the flight controller. If set to \"none\" no connection is made. Defaults to autodetection"
+msgid "MAVLink connection string to the flight controller. If set to \"none\" no connection is made. Default is autodetection"
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:595
@@ -466,6 +470,7 @@ msgid "Downloading ... {:.1f}%"
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_internet.py:78
+#: ardupilot_methodic_configurator/backend_internet.py:195
 msgid "Download complete"
 msgstr ""
 
@@ -511,6 +516,7 @@ msgid "Downloading and installing new version for Windows..."
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_internet.py:164
+#: ardupilot_methodic_configurator/backend_internet.py:190
 msgid "Starting installation..."
 msgstr ""
 
@@ -527,7 +533,7 @@ msgid "Updating via pip for Linux and MacOS..."
 msgstr ""
 
 #: ardupilot_methodic_configurator/common_arguments.py:23
-msgid "Logging level (default is %(default)s)."
+msgid "Logging level. Default is %(default)s."
 msgstr ""
 
 #: ardupilot_methodic_configurator/common_arguments.py:26
@@ -535,7 +541,7 @@ msgid "Display version information and exit."
 msgstr ""
 
 #: ardupilot_methodic_configurator/common_arguments.py:33
-msgid "User interface language (default is %(default)s)."
+msgid "User interface language. Default is %(default)s."
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:42
@@ -942,7 +948,7 @@ msgstr ""
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:255
-msgid "Skip the component editor window. Only use this if all components have been configured. Defaults to %(default)s"
+msgid "Skip the component editor window. Only use this if all components have been configured. Default is %(default)s"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:66
@@ -2242,7 +2248,7 @@ msgid "Parameter %s change reason changed from %s to %s, will later ask if chang
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:23
-msgid " - Update Software"
+msgid " - New version available"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:44
@@ -2283,57 +2289,61 @@ msgstr ""
 msgid "ArduPilot methodic configurator is a GUI-based tool designed to simplify the management and visualization of ArduPilot parameters. It enables users to browse through various vehicle templates, edit parameter files, and apply changes directly to the flight controller. The tool is built to semi-automate the configuration process of ArduPilot for drones by providing a clear and intuitive interface for parameter management."
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:36
+#: ardupilot_methodic_configurator/middleware_software_updates.py:39
 msgid "New version available!"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:38
+#: ardupilot_methodic_configurator/middleware_software_updates.py:41
 msgid "Current version: {_current_version}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:40
+#: ardupilot_methodic_configurator/middleware_software_updates.py:43
 msgid "Latest version: {_latest_release}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:42
+#: ardupilot_methodic_configurator/middleware_software_updates.py:45
 msgid ""
 "Changes:\n"
 "{_changes}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:62
+#: ardupilot_methodic_configurator/middleware_software_updates.py:65
 msgid "Error accessing release assets: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:70
+#: ardupilot_methodic_configurator/middleware_software_updates.py:76
 msgid "Already running latest version."
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:74
+#: ardupilot_methodic_configurator/middleware_software_updates.py:80
 msgid "No changes listed"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:80
+#: ardupilot_methodic_configurator/middleware_software_updates.py:89
 msgid "Key error during update process: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:83
+#: ardupilot_methodic_configurator/middleware_software_updates.py:92
 msgid "Network error during update process: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:86
+#: ardupilot_methodic_configurator/middleware_software_updates.py:95
 msgid "Value error during update process: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:94
+#: ardupilot_methodic_configurator/middleware_software_updates.py:103
+msgid "Skip check for software updates before staring the software. Default is %(default)s."
+msgstr ""
+
+#: ardupilot_methodic_configurator/middleware_software_updates.py:112
 msgid "Running version: {} (git hash: {})"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:102
+#: ardupilot_methodic_configurator/middleware_software_updates.py:120
 msgid "Update check failed: {}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:109
+#: ardupilot_methodic_configurator/middleware_software_updates.py:128
 msgid "This main is for testing and development only, usually the check_for_software_updates is called from another script"
 msgstr ""
 
