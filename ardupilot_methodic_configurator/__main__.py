@@ -31,6 +31,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_connection_selection impor
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+from ardupilot_methodic_configurator.middleware_software_updates import UpdateManager, check_for_software_updates
 
 
 def argument_parser() -> argparse.Namespace:
@@ -61,6 +62,7 @@ def argument_parser() -> argparse.Namespace:
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindow.add_argparse_arguments(parser)
     parser = ParameterEditorWindow.add_argparse_arguments(parser)
+    parser = UpdateManager.add_argparse_arguments(parser)
     return add_common_arguments_and_parse(parser)
 
 
@@ -135,6 +137,10 @@ def main() -> None:
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+
+    if not args.skip_check_for_updates and check_for_software_updates():
+        logging_info(_("Will now exit the old software version."))
+        sys_exit(0)
 
     if bool(ProgramSettings.get_setting("auto_open_doc_in_browser")):
         url = (
