@@ -20,7 +20,7 @@ def add_common_arguments_and_parse(parser: ArgumentParser) -> Namespace:
         type=str,
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help=_("Logging level (default is %(default)s)."),
+        help=_("Logging level. Default is %(default)s."),
     )
     parser.add_argument(
         "-v", "--version", action="version", version=f"%(prog)s {__version__}", help=_("Display version information and exit.")
@@ -30,6 +30,6 @@ def add_common_arguments_and_parse(parser: ArgumentParser) -> Namespace:
         type=str,
         default=LANGUAGE_CHOICES[0],
         choices=LANGUAGE_CHOICES,
-        help=_("User interface language (default is %(default)s)."),
+        help=_("User interface language. Default is %(default)s."),
     )
     return parser.parse_args()

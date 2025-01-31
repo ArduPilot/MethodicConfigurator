@@ -1408,18 +1408,18 @@ if __name__ == "__main__":
             " A tool to do file operations between a ground control station and a drone using the MAVLink"
             " protocol."
         )
-        parser.add_argument("--baudrate", type=int, default=115200, help="master port baud rate. Defaults to %(default)s")
+        parser.add_argument("--baudrate", type=int, default=115200, help="master port baud rate. Default is %(default)s")
         parser.add_argument(
             "--device",
             type=str,
             default="",
             help="serial device. For windows use COMx where x is the port number. "
-            "For Unix use /dev/ttyUSBx where x is the port number. Defaults to autodetection",
+            "For Unix use /dev/ttyUSBx where x is the port number. Default is autodetection",
         )
         parser.add_argument(
-            "--source-system", type=int, default=250, help="MAVLink source system for this GCS. Defaults to %(default)s"
+            "--source-system", type=int, default=250, help="MAVLink source system for this GCS. Default is %(default)s"
         )
-        parser.add_argument("--loglevel", default="INFO", help="log level. Defaults to %(default)s")
+        parser.add_argument("--loglevel", default="INFO", help="log level. Default is %(default)s")
 
         # MAVFTP settings
         parser.add_argument(
@@ -1427,19 +1427,19 @@ if __name__ == "__main__":
             type=int,
             default=0,
             choices=[0, 1, 2],
-            help="Debug level 0 for none, 2 for max verbosity. Defaults to %(default)s",
+            help="Debug level 0 for none, 2 for max verbosity. Default is %(default)s",
         )
-        parser.add_argument("--pkt_loss_tx", type=int, default=0, help="Packet loss on TX. Defaults to %(default)s")
-        parser.add_argument("--pkt_loss_rx", type=int, default=0, help="Packet loss on RX. Defaults to %(default)s")
-        parser.add_argument("--max_backlog", type=int, default=5, help="Max backlog. Defaults to %(default)s")
-        parser.add_argument("--burst_read_size", type=int, default=80, help="Burst read size. Defaults to %(default)s")
-        parser.add_argument("--write_size", type=int, default=80, help="Write size. Defaults to %(default)s")
-        parser.add_argument("--write_qsize", type=int, default=5, help="Write queue size. Defaults to %(default)s")
+        parser.add_argument("--pkt_loss_tx", type=int, default=0, help="Packet loss on TX. Default is %(default)s")
+        parser.add_argument("--pkt_loss_rx", type=int, default=0, help="Packet loss on RX. Default is %(default)s")
+        parser.add_argument("--max_backlog", type=int, default=5, help="Max backlog. Default is %(default)s")
+        parser.add_argument("--burst_read_size", type=int, default=80, help="Burst read size. Default is %(default)s")
+        parser.add_argument("--write_size", type=int, default=80, help="Write size. Default is %(default)s")
+        parser.add_argument("--write_qsize", type=int, default=5, help="Write queue size. Default is %(default)s")
         parser.add_argument(
-            "--idle_detection_time", type=float, default=1.2, help="Idle detection time. Defaults to %(default)s"
+            "--idle_detection_time", type=float, default=1.2, help="Idle detection time. Default is %(default)s"
         )
-        parser.add_argument("--read_retry_time", type=float, default=1.0, help="Read retry time. Defaults to %(default)s")
-        parser.add_argument("--retry_time", type=float, default=0.5, help="Retry time. Defaults to %(default)s")
+        parser.add_argument("--read_retry_time", type=float, default=1.0, help="Read retry time. Default is %(default)s")
+        parser.add_argument("--retry_time", type=float, default=0.5, help="Retry time. Default is %(default)s")
 
         subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -1471,21 +1471,21 @@ if __name__ == "__main__":
             "--sort",
             choices=["none", "missionplanner", "mavproxy"],
             default="missionplanner",
-            help="Sort the parameters in the file. Defaults to %(default)s.",
+            help="Sort the parameters in the file. Default is %(default)s.",
         )
         parser_getparams.add_argument(
             "-dtc",
             "--add_datatype_comments",
             action="store_true",
             default=False,
-            help="Add parameter datatype type comments to the outputted parameter files. Defaults to %(default)s.",
+            help="Add parameter datatype type comments to the outputted parameter files. Default is %(default)s.",
         )
         parser_getparams.add_argument(
             "-t",
             "--add_timestamp_comment",
             action="store_true",
             default=False,
-            help="Add timestamp comment at the top of the file. Defaults to %(default)s.",
+            help="Add timestamp comment at the top of the file. Default is %(default)s.",
         )
 
         # Put command

@@ -25,7 +25,7 @@ def parse_arguments() -> argparse.Namespace:
         default="zh_CN",
         type=str,
         choices=LANGUAGE_CHOICES,
-        help="The language code for translations. Available choices: %(choices)s. Defaults to %(default)s",
+        help="The language code for translations. Available choices: %(choices)s. Default is %(default)s",
     )
     # pylint: enable=duplicate-code
 
@@ -34,7 +34,7 @@ def parse_arguments() -> argparse.Namespace:
         default="missing_translations",
         type=str,
         help="The base name of the file(s) where the missing translations will be read. "
-        "This file contains lines in the format 'index:msgid'. Defaults to %(default)s",
+        "This file contains lines in the format 'index:msgid'. Default is %(default)s",
     )
 
     parser.add_argument(
@@ -42,7 +42,7 @@ def parse_arguments() -> argparse.Namespace:
         default="ardupilot_methodic_configurator_new.po",
         type=str,
         help="The name of the .po file where the translations will be written. "
-        "This file will contain lines in the .po (GNU gettext) format. Defaults to %(default)s",
+        "This file will contain lines in the .po (GNU gettext) format. Default is %(default)s",
     )
 
     return parser.parse_args()

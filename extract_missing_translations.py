@@ -28,7 +28,7 @@ def parse_arguments() -> argparse.Namespace:
         default="zh_CN",
         type=str,
         choices=LANGUAGE_CHOICES,
-        help="The language code for translations. Available choices: %(choices)s. Defaults to %(default)s",
+        help="The language code for translations. Available choices: %(choices)s. Default is %(default)s",
     )
     # pylint: enable=duplicate-code
 
@@ -37,14 +37,14 @@ def parse_arguments() -> argparse.Namespace:
         default="missing_translations",
         type=str,
         help="The base name of the file(s) where the missing translations will be written. "
-        "This file will contain lines in the format 'index:msgid'. Defaults to %(default)s",
+        "This file will contain lines in the format 'index:msgid'. Default is %(default)s",
     )
 
     parser.add_argument(
         "--max-translations",
         default=80,
         type=int,
-        help="The maximum number of missing translations to write to each output file. Defaults to %(default)s",
+        help="The maximum number of missing translations to write to each output file. Default is %(default)s",
     )
 
     return parser.parse_args()

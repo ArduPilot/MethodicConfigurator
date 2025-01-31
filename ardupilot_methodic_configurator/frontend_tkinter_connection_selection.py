@@ -125,7 +125,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             selected_connection = ""
         return selected_connection
 
-    def reconnect(self, selected_connection: str = "") -> bool:  # defaults to auto-connect
+    def reconnect(self, selected_connection: str = "") -> bool:  # Default is auto-connect
         self.connection_progress_window = ProgressWindow(
             self.parent.root, _("Connecting with the FC"), _("Connection step {} of {}")
         )

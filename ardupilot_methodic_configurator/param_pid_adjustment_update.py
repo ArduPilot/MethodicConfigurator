@@ -50,8 +50,7 @@ explaining how their new value relates to the default parameter value.
         "--adjustment_factor",
         type=ranged_type(float, 0.1, 0.8),
         default=0.5,
-        help="The adjustment factor to apply to the optimized parameters. "
-        "Must be in the interval 0.1 to 0.8. Defaults to 0.5.",
+        help="The adjustment factor to apply to the optimized parameters. Must be in the interval 0.1 to 0.8. Default is 0.5.",
     )
     parser.add_argument(
         "-v",

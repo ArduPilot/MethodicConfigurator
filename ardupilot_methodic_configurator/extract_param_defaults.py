@@ -32,7 +32,7 @@ def parse_arguments(args: Union[None, argparse.Namespace] = None) -> argparse.Na
     Parses command line arguments for the script.
 
     Args:
-        args: List of command line arguments. Defaults to None, which means it uses sys.argv.
+        args: List of command line arguments. Default is None, which means it uses sys.argv.
 
     Returns:
         Namespace object containing the parsed arguments.
@@ -44,14 +44,14 @@ def parse_arguments(args: Union[None, argparse.Namespace] = None) -> argparse.Na
         "--format",
         choices=["missionplanner", "mavproxy", "qgcs"],
         default="missionplanner",
-        help="Output file format. Defaults to %(default)s.",
+        help="Output file format. Default is %(default)s.",
     )
     parser.add_argument(
         "-s",
         "--sort",
         choices=["none", "missionplanner", "mavproxy", "qgcs"],
         default="",
-        help="Sort the parameters in the file. Defaults to the same as the format.",
+        help="Sort the parameters in the file. Default is the same as the format.",
     )
     parser.add_argument(
         "-v",
@@ -65,21 +65,21 @@ def parse_arguments(args: Union[None, argparse.Namespace] = None) -> argparse.Na
         "--sysid",
         type=int,
         default=-1,
-        help="System ID for qgcs output format. Defaults to SYSID_THISMAV if defined else 1.",
+        help="System ID for qgcs output format. Default is SYSID_THISMAV if defined else 1.",
     )
     parser.add_argument(
         "-c",
         "--compid",
         type=int,
         default=-1,
-        help="Component ID for qgcs output format. Defaults to 1.",
+        help="Component ID for qgcs output format. Default is 1.",
     )
     parser.add_argument(
         "-t",
         "--type",
         choices=["defaults", "values", "non_default_values"],
         default="defaults",
-        help="Type of parameter values to extract. Defaults to %(default)s.",
+        help="Type of parameter values to extract. Default is %(default)s.",
     )
     parser.add_argument("bin_file", help="The ArduPilot .bin log file to read")
     args, _ = parser.parse_known_args(args)  # type: ignore[arg-type]

@@ -65,39 +65,39 @@ def arg_parser() -> argparse.Namespace:
         "-d",
         "--delete-documentation-annotations",
         action="store_true",
-        help="Delete parameter documentation annotations (comments above parameters). Defaults to %(default)s",
+        help="Delete parameter documentation annotations (comments above parameters). Default is %(default)s",
     )
     parser.add_argument(
         "-f",
         "--firmware-version",
         default="latest",
-        help="Flight controller firmware version. Defaults to %(default)s.",
+        help="Flight controller firmware version. Default is %(default)s.",
     )
     parser.add_argument(
         "-s",
         "--sort",
         choices=["none", "missionplanner", "mavproxy"],
         default="none",
-        help="Sort the parameters in the file. Defaults to %(default)s.",
+        help="Sort the parameters in the file. Default is %(default)s.",
     )
     parser.add_argument(
         "-t",
         "--vehicle-type",
         choices=["AP_Periph", "AntennaTracker", "ArduCopter", "ArduPlane", "ArduSub", "Blimp", "Heli", "Rover", "SITL"],
         default="ArduCopter",
-        help="The type of the vehicle. Defaults to %(default)s.",
+        help="The type of the vehicle. Default is %(default)s.",
     )
     parser.add_argument(
         "-m",
         "--max-line-length",
         type=int,
         default=100,
-        help="Maximum documentation line length. Defaults to %(default)s.",
+        help="Maximum documentation line length. Default is %(default)s.",
     )
     parser.add_argument(
         "--verbose",
         action="store_true",
-        help="Increase output verbosity, print ReadOnly parameter list. Defaults to %(default)s.",
+        help="Increase output verbosity, print ReadOnly parameter list. Default is %(default)s.",
     )
     parser.add_argument(
         "-v",
@@ -552,7 +552,7 @@ def format_columns(values: dict[str, Any], max_width: int = 105, max_columns: in
 
     Args:
         values (Dict[str, Any]): The dictionary of values to format.
-        max_width (int, optional): The maximum number of characters on all columns. Defaults to 105.
+        max_width (int, optional): The maximum number of characters on all columns. Default is 105.
         max_columns (int): Maximum number of columns
 
     Returns:
@@ -666,10 +666,10 @@ def update_parameter_documentation(
 
     Args:
         doc (Dict[str, Any]): A dictionary of parameter documentation.
-        target (str, optional): The target directory or file. Defaults to '.'.
+        target (str, optional): The target directory or file. Default is '.'.
         sort_type (str, optional): The type of sorting to apply to the parameters.
-                                   Can be 'none', 'missionplanner', or 'mavproxy'. Defaults to 'none'.
-        param_default_dict (Dict, optional): A dictionary of default parameter values. Defaults to None.
+                                   Can be 'none', 'missionplanner', or 'mavproxy'. Default is 'none'.
+        param_default_dict (Dict, optional): A dictionary of default parameter values. Default is None.
                                               If None, an empty dictionary is used.
         delete_documentation_annotations (bool): delete documentation annotations from file.
 

@@ -132,7 +132,7 @@ class FlightController:
             device (str): The connection string to the flight controller. If an empty string
                         is provided, the method attempts to auto-detect a serial port.
             progress_callback (callable, optional): A callback function to report the progress
-                                                    of the connection attempt. Defaults to None.
+                                                    of the connection attempt. Default is None.
             log_errors: log errors
 
         Returns:
@@ -236,9 +236,9 @@ class FlightController:
 
         Args:
             progress_callback (callable, optional): A callback function to report the progress
-                                                    of the connection attempt. Defaults to None.
-            retries (int, optional): The number of retries before giving up. Defaults to 3.
-            timeout (int, optional): The timeout in seconds for each connection attempt. Defaults to 5.
+                                                    of the connection attempt. Default is None.
+            retries (int, optional): The number of retries before giving up. Default is 3.
+            timeout (int, optional): The timeout in seconds for each connection attempt. Default is 5.
             log_errors (bool): log errors.
 
         Returns:
@@ -581,7 +581,7 @@ class FlightController:
             help=_(
                 "MAVLink connection string to the flight controller. "
                 'If set to "none" no connection is made.'
-                " Defaults to autodetection"
+                " Default is autodetection"
             ),
         )
         parser.add_argument(

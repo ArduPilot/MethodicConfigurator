@@ -56,8 +56,8 @@ def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1
     Args:
       x (float): The first number to compare.
       y (float): The second number to compare.
-      atol (float, optional): The absolute tolerance. Defaults to 1e-08.
-      rtol (float, optional): The relative tolerance. Defaults to 1e-03.
+      atol (float, optional): The absolute tolerance. Default is 1e-08.
+      rtol (float, optional): The relative tolerance. Default is 1e-03.
 
     Returns:
       bool: True if the difference is within the tolerance, False otherwise.
@@ -275,7 +275,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         Args:
           params (Dict[str, 'Par']): A dictionary of parameters to export.
           filename_out (str): The name of the output file.
-          annotate_doc (bool, optional): Whether to update the parameter documentation. Defaults to True.
+          annotate_doc (bool, optional): Whether to update the parameter documentation. Default is True.
 
         """
         Par.export_to_param(Par.format_params(params), os_path.join(self.vehicle_dir, filename_out))
@@ -669,14 +669,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             "--vehicle-type",
             choices=VehicleComponents.supported_vehicles(),
             default="",
-            help=_("The type of the vehicle. Defaults to ArduCopter"),
+            help=_("The type of the vehicle. Default is ArduCopter"),
         )
         parser.add_argument(
             "--vehicle-dir",
             type=str,
             default=os_getcwd(),
             help=_(
-                "Directory containing vehicle-specific intermediate parameter files. Defaults to the current working directory"
+                "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
             ),
         )
         parser.add_argument(
@@ -685,7 +685,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             default=-1,
             help=_(
                 "Start directly on the nth intermediate parameter file (skips previous files). "
-                "Default is to start on the file next to the last that you wrote to the flight controller."
+                "Default is to start on the file next to the last that you wrote to the flight controller. "
                 "If the file does not exist, it will start on the first file."
             ),
         )
@@ -694,8 +694,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             action="store_true",
             help=_(
                 "Allow opening and editing template files directly. "
-                "Only for software developers that know what they are doing."
-                "Defaults to %(default)s"
+                "Only for software developers that know what they are doing. "
+                "Default is %(default)s"
             ),
         )
         return parser

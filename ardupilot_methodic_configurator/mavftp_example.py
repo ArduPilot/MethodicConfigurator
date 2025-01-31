@@ -31,18 +31,18 @@ old_mavftp_member_variable_values: dict[str, Any] = {}
 def argument_parser() -> Namespace:
     """Parses command-line arguments for the script."""
     parser = ArgumentParser(description="This main is just an example, adapt it to your needs")
-    parser.add_argument("--baudrate", type=int, default=115200, help="master port baud rate. Defaults to %(default)s")
+    parser.add_argument("--baudrate", type=int, default=115200, help="master port baud rate. Default is %(default)s")
     parser.add_argument(
         "--device",
         type=str,
         default="",
         help="serial device. For windows use COMx where x is the port number. "
-        "For Unix use /dev/ttyUSBx where x is the port number. Defaults to autodetection",
+        "For Unix use /dev/ttyUSBx where x is the port number. Default is autodetection",
     )
     parser.add_argument(
-        "--source-system", type=int, default=250, help="MAVLink source system for this GCS. Defaults to %(default)s"
+        "--source-system", type=int, default=250, help="MAVLink source system for this GCS. Default is %(default)s"
     )
-    parser.add_argument("--loglevel", default="INFO", help="log level. Defaults to %(default)s")
+    parser.add_argument("--loglevel", default="INFO", help="log level. Default is %(default)s")
 
     # MAVFTP settings
     parser.add_argument(
@@ -50,7 +50,7 @@ def argument_parser() -> Namespace:
         type=int,
         default=0,
         choices=[0, 1, 2],
-        help="Debug level 0 for none, 2 for max verbosity. Defaults to %(default)s",
+        help="Debug level 0 for none, 2 for max verbosity. Default is %(default)s",
     )
 
     return parser.parse_args()

@@ -254,7 +254,7 @@ class ComponentEditorWindowBase(BaseWindow):
             action="store_true",
             help=_(
                 "Skip the component editor window. Only use this if all components have been configured. "
-                "Defaults to %(default)s"
+                "Default is %(default)s"
             ),
         )
         return parser
