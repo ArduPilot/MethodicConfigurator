@@ -14,7 +14,6 @@ import tempfile
 from datetime import datetime, timezone
 from logging import error as logging_error
 from logging import info as logging_info
-from pathlib import Path
 from typing import Any, Callable, Optional
 from urllib.parse import urljoin
 
@@ -25,7 +24,6 @@ from requests import get as requests_get
 from requests.exceptions import RequestException
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 
 # Constants
 GITHUB_API_URL_RELEASES = "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/"
@@ -146,7 +144,6 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
 def download_and_install_on_windows(
     download_url: str,
     file_name: str,
-    expected_hash: Optional[str] = None,
     progress_callback: Optional[Callable[[float, str], None]] = None,
 ) -> bool:
     logging_info(_("Downloading and installing new version for Windows..."))
@@ -161,10 +158,6 @@ def download_and_install_on_windows(
                 timeout=60,  # Increased timeout for large files
                 progress_callback=progress_callback,
             ):
-                return False
-
-            if expected_hash and not LocalFilesystem.verify_file_hash(Path(temp_path), expected_hash):
-                logging_error(_("File hash verification failed"))
                 return False
 
             if progress_callback:

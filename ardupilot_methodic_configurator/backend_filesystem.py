@@ -22,17 +22,15 @@ from platform import system as platform_system
 from re import compile as re_compile
 from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
+from subprocess import SubprocessError, run
 from typing import Any, Optional
 from zipfile import ZipFile
-
-from requests import get as requests_get
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import (
     PARAM_DEFINITION_XML_FILE,
     Par,
     format_columns,
-    get_env_proxies,
     get_xml_dir,
     get_xml_url,
     load_default_param_file,
@@ -639,20 +637,30 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return "", ""
 
     @staticmethod
-    def download_file_from_url(url: str, local_filename: str, timeout: int = 5) -> bool:
-        if not url or not local_filename:
-            logging_error(_("URL or local filename not provided."))
-            return False
-        logging_info(_("Downloading %s from %s"), local_filename, url)
-        response = requests_get(url, timeout=timeout, proxies=get_env_proxies())
-
-        if response.status_code == 200:
-            with open(local_filename, "wb") as file:
-                file.write(response.content)
-            return True
-
-        logging_error(_("Failed to download the file"))
-        return False
+    def get_git_commit_hash() -> str:
+        # Try to get git hash using git command
+        try:
+            result = run(  # noqa: S603
+                ["git", "rev-parse", "HEAD"],  # noqa: S607
+                capture_output=True,
+                text=True,
+                cwd=os_path.dirname(__file__),
+                check=True,
+            )
+            if result.returncode == 0:
+                return result.stdout.strip()
+        except (SubprocessError, FileNotFoundError) as e:
+            # Log the specific error and fallback to reading the git_hash.txt file
+            msg = f"Failed to get git hash via command: {e}"
+            logging_debug(msg)
+            git_hash_file = os_path.join(os_path.dirname(__file__), "git_hash.txt")
+            try:
+                with open(git_hash_file, encoding="utf-8") as file:
+                    return file.read().strip()
+            except OSError as exp:
+                msg = f"Failed to read git hash from file: {exp}"
+                logging_debug(msg)
+        return ""
 
     @staticmethod
     def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
