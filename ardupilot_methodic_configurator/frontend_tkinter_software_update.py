@@ -20,7 +20,7 @@ class UpdateDialog:  # pylint: disable=too-many-instance-attributes
 
     def __init__(self, version_info: str, download_callback: Optional[Callable[[], bool]] = None) -> None:
         self.root = tk.Tk()
-        self.root.title(_("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Update Software"))
+        self.root.title(_("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - New version available"))
         self.download_callback = download_callback
         self.root.protocol("WM_DELETE_WINDOW", self.on_cancel)
 
@@ -69,7 +69,7 @@ class UpdateDialog:  # pylint: disable=too-many-instance-attributes
                 self.yes_btn.config(state="normal")
                 self.no_btn.config(state="normal")
                 self.result = False
-            self.root.after(2000, self.root.destroy)
+            self.root.after(4000, self.root.destroy)
 
     def on_no(self) -> None:
         self.result = False
@@ -84,7 +84,7 @@ class UpdateDialog:  # pylint: disable=too-many-instance-attributes
         Display the update dialog and return user's choice.
 
         Returns:
-            bool: True if user chose to update, False otherwise
+            bool: True if user chose to update and the update was successful, False otherwise
 
         """
         self.root.mainloop()

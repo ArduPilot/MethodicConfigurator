@@ -43,7 +43,7 @@ class TestUpdateManager:
         latest_release = {"tag_name": "v1.0.0"}
         current_version = "1.0.0"
 
-        assert update_manager.check_and_update(latest_release, current_version)
+        assert not update_manager.check_and_update(latest_release, current_version)
 
     def test_check_and_update_key_error(self, update_manager) -> None:
         latest_release = {}

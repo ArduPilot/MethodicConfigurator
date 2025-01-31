@@ -11,13 +11,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import platform
+from argparse import ArgumentParser
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
 from typing import Any, Optional
+from webbrowser import open as webbrowser_open
 
+from packaging import version
 from requests import RequestException as requests_RequestException
 
 from ardupilot_methodic_configurator import _
@@ -43,7 +46,7 @@ def format_version_info(_current_version: str, _latest_release: str, _changes: s
     ).format(**locals())
 
 
-class UpdateManager:  # pylint: disable=too-few-public-methods
+class UpdateManager:
     """Manages the software update process including user interaction and installation."""
 
     def __init__(self) -> None:
@@ -61,18 +64,24 @@ class UpdateManager:  # pylint: disable=too-few-public-methods
             except (KeyError, IndexError) as e:
                 logging_error(_("Error accessing release assets: %s"), e)
                 return False
-        return download_and_install_pip_release() == 0
+        return download_and_install_pip_release(progress_callback=self.dialog.update_progress if self.dialog else None) == 0
 
     def check_and_update(self, latest_release: dict[str, Any], current_version_str: str) -> bool:
         try:
             latest_version = latest_release["tag_name"].lstrip("v")
-            if current_version_str == latest_version:
+            latest = version.parse(latest_version)
+            current = version.parse(current_version_str)
+
+            if current >= latest:
                 logging_info(_("Already running latest version."))
-                return True
+                return False
 
             version_info = format_version_info(
                 current_version_str, latest_version, latest_release.get("body", _("No changes listed"))
             )
+            url = "https://github.com/ArduPilot/MethodicConfigurator/releases"
+            webbrowser_open(url=url, new=0, autoraise=True)
+
             self.dialog = UpdateDialog(version_info, download_callback=lambda: self._perform_download(latest_release))
             return self.dialog.show()
 
@@ -86,8 +95,17 @@ class UpdateManager:  # pylint: disable=too-few-public-methods
             logging_error(_("Value error during update process: %s"), val_ex)
             return False
 
+    @staticmethod
+    def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
+        parser.add_argument(
+            "--skip-check-for-updates",
+            action="store_true",
+            help=_("Skip check for software updates before staring the software. Default is %(default)s."),
+        )
+        return parser
 
-def check_for_software_updates() -> None:
+
+def check_for_software_updates() -> bool:
     """Main update orchestration function."""
     git_hash = LocalFilesystem.get_git_commit_hash()
 
@@ -97,10 +115,11 @@ def check_for_software_updates() -> None:
     try:
         latest_release = get_release_info("/latest", should_be_pre_release=False)
         update_manager = UpdateManager()
-        update_manager.check_and_update(latest_release, current_version)
+        return update_manager.check_and_update(latest_release, current_version)
     except (requests_RequestException, ValueError) as e:
         msg = _("Update check failed: {}")
         logging_error(msg.format(e))
+        return False
 
 
 if __name__ == "__main__":

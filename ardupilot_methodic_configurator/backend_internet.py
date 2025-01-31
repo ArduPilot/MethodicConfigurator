@@ -161,7 +161,7 @@ def download_and_install_on_windows(
                 return False
 
             if progress_callback:
-                progress_callback(100.0, _("Starting installation..."))
+                progress_callback(0.0, _("Starting installation..."))
 
             # Run installer
             result = subprocess.run(  # noqa: S603
@@ -183,6 +183,15 @@ def download_and_install_on_windows(
         return False
 
 
-def download_and_install_pip_release() -> int:
+def download_and_install_pip_release(progress_callback: Optional[Callable[[float, str], None]] = None) -> int:
     logging_info(_("Updating via pip for Linux and MacOS..."))
-    return os.system("pip install --upgrade ardupilot_methodic_configurator")  # noqa: S605, S607
+
+    if progress_callback:
+        progress_callback(0.0, _("Starting installation..."))
+
+    ret = os.system("pip install --upgrade ardupilot_methodic_configurator")  # noqa: S605, S607
+
+    if ret == 0 and progress_callback:
+        progress_callback(100.0, _("Download complete"))
+
+    return ret
