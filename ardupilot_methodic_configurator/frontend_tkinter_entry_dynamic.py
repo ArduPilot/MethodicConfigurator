@@ -7,7 +7,7 @@ This file is part of Ardupilot methodic configurator. https://github.com/ArduPil
 
 https://code.activestate.com/recipes/580770-combobox-autocomplete/
 
-SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """

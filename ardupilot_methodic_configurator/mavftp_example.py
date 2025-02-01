@@ -3,7 +3,7 @@
 """
 MAVLink File Transfer Protocol support example.
 
-SPDX-FileCopyrightText: 2024 Amilcar Lucas
+SPDX-FileCopyrightText: 2024-2025 Amilcar Lucas
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """

@@ -1,5 +1,5 @@
 # ArduPilot Methodic Configurator.
-# Copyright (C) 2024 Amilcar Lucas, ArduPilot.org
+# Copyright (C) 2024-2025 Amilcar Lucas, ArduPilot.org
 # SakuraRC_Yang <35626190+BloodSakura3774@users.noreply.github.com>, 2024.
 #
 msgid ""
@@ -1338,7 +1338,7 @@ msgid ""
 "\n"
 "A clear configuration sequence for ArduPilot vehicles.\n"
 "\n"
-"Copyright © 2024 Amilcar do Carmo Lucas and ArduPilot.org\n"
+"Copyright © 2024-2025 Amilcar do Carmo Lucas and ArduPilot.org\n"
 "\n"
 "Licensed under the GNU General Public License v3.0"
 msgstr ""
@@ -1346,13 +1346,13 @@ msgstr ""
 "\n"
 "ArduPilot 車輛的清晰配置序列。\n"
 "\n"
-"版權所有 © 2024 Amilcar do Carmo Lucas 和 ArduPilot.org\n"
+"版權所有 © 2024-2025 Amilcar do Carmo Lucas 和 ArduPilot.org\n"
 "\n"
 "根據 GNU 通用公共許可證 v3.0 授權ArduPilot 调参助手版本：{_version}\n"
 "\n"
 "为 ArduPilot 载具提供清晰的配置流程。\n"
 "\n"
-"版权所有 © 2024 Amilcar do Carmo Lucas 和 ArduPilot.org\n"
+"版权所有 © 2024-2025 Amilcar do Carmo Lucas 和 ArduPilot.org\n"
 "\n"
 "根据 GNU 通用公共许可证 v3.0 授权"
 

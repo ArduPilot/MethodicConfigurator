@@ -7,7 +7,7 @@ MAVLink File Transfer Protocol support test - https://mavlink.io/en/services/ftp
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024 Amilcar Lucas
+SPDX-FileCopyrightText: 2024-2025 Amilcar Lucas
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """

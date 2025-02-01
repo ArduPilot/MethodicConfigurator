@@ -7,7 +7,7 @@ Original from MAVProxy/MAVProxy/modules/mavproxy_ftp.py
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2011-2024 Andrew Tridgell, 2024 Amilcar Lucas
+SPDX-FileCopyrightText: 2011-2024 Andrew Tridgell, 2024-2025 Amilcar Lucas
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """

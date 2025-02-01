@@ -1,5 +1,5 @@
 # ArduPilot Methodic Configurator.
-# Copyright (C) 2024 Amilcar Lucas, ArduPilot.org
+# Copyright (C) 2024-2025 Amilcar Lucas, ArduPilot.org
 # Amilcar Lucas <amilcar.lucas@iav.de>, 2024.
 #
 msgid ""
@@ -1559,7 +1559,7 @@ msgid ""
 "\n"
 "A clear configuration sequence for ArduPilot vehicles.\n"
 "\n"
-"Copyright © 2024 Amilcar do Carmo Lucas and ArduPilot.org\n"
+"Copyright © 2024-2025 Amilcar do Carmo Lucas and ArduPilot.org\n"
 "\n"
 "Licensed under the GNU General Public License v3.0"
 msgstr ""
@@ -1567,7 +1567,7 @@ msgstr ""
 "\n"
 "Eine klare Konfigurationsreihe für ArduPilot-Fahrzeuge.\n"
 "\n"
-"Copyright © 2024 Amilcar do Carmo Lucas und ArduPilot.org\n"
+"Copyright © 2024-2025 Amilcar do Carmo Lucas und ArduPilot.org\n"
 "\n"
 "Lizenziert unter der GNU General Public License v3.0"
 

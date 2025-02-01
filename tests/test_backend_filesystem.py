@@ -5,7 +5,7 @@ Tests for the backend_filesystem.py file.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -320,9 +320,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_tolerance_handling(self) -> None:
         """Test parameter value tolerance checking."""
         # Setup LocalFilesystem instance
-        from ardupilot_methodic_configurator.backend_filesystem import (  # pylint: disable=import-outside-toplevel
-            is_within_tolerance,
-        )
+        from ardupilot_methodic_configurator.backend_filesystem import is_within_tolerance  # pylint: disable=import-outside-toplevel
 
         # Test cases within tolerance (default 0.1%)
         assert is_within_tolerance(10.0, 10.009)  # +0.09% - should pass

@@ -5,7 +5,7 @@ Parameter editor GUI.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -60,7 +60,7 @@ def show_about_window(root: ttk.Frame, _version: str) -> None:  # pylint: disabl
     about_message = _(
         "ArduPilot Methodic Configurator Version: {_version}\n\n"
         "A clear configuration sequence for ArduPilot vehicles.\n\n"
-        "Copyright © 2024 Amilcar do Carmo Lucas and ArduPilot.org\n\n"
+        "Copyright © 2024-2025 Amilcar do Carmo Lucas and ArduPilot.org\n\n"
         "Licensed under the GNU General Public License v3.0"
     )
     about_label = ttk.Label(main_frame, text=about_message.format(**locals()), wraplength=450)

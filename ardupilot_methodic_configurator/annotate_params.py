@@ -18,7 +18,7 @@ Supports sorting the parameters
 
 Has unit tests with 88% coverage
 
-SPDX-FileCopyrightText: 2024 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -382,6 +382,7 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
             # pylint: disable=import-outside-toplevel
             from requests import exceptions as requests_exceptions  # type: ignore[import-untyped]
             from requests import get as requests_get
+
             # pylint: enable=import-outside-toplevel
         except ImportError as exc:
             logging.critical("The requests package was not found")
