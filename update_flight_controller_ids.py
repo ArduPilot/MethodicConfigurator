@@ -39,7 +39,7 @@ try:
 
     logging.info("Module imported successfully.")
 except ImportError as e:
-    logging.info("ImportError: %s", e)
+    logging.error("ImportError: %s", e)
 
 
 def remove_suffixes(base_dirname: str, suffixes: list) -> str:
@@ -50,7 +50,7 @@ def remove_suffixes(base_dirname: str, suffixes: list) -> str:
 
 
 def process_hwdef_files(base_directory: str) -> dict[str, tuple[int, int, int, str, str]]:
-    hwdef_data: dict[str, tuple[int, int, int, str, str]] = {}
+    hwdef_data: dict[str, tuple[int, int, int, str, str, str]] = {}
 
     # Walk through the directory
     for dirpath, _dirnames, filenames in os.walk(base_directory):
@@ -73,21 +73,23 @@ def process_hwdef_files(base_directory: str) -> dict[str, tuple[int, int, int, s
                 vid, pid = c.get_USB_IDs()
                 vid_name = str(c.get_config("USB_STRING_MANUFACTURER", default="ArduPilot")).strip('"').strip("'")
                 pid_name = str(c.get_config("USB_STRING_PRODUCT", default=dirname)).strip('"').strip("'")
-                hwdef_data[dirname] = (numeric_board_id, vid, pid, vid_name, pid_name)
+                mcu_series = c.mcu_series
+                hwdef_data[dirname] = (numeric_board_id, vid, pid, vid_name, pid_name, mcu_series)
     return hwdef_data
 
 
 def create_dicts(
-    hwdef_data: dict[str, tuple[int, int, int, str, str]],
-) -> tuple[dict[int, str], dict[tuple[int, int], str], dict[int, str], dict[int, str]]:
+    hwdef_data: dict[str, tuple[int, int, int, str, str, str]],
+) -> tuple[dict[int, str], dict[tuple[int, int], str], dict[int, str], dict[int, str], dict[int, str]]:
     vid_vendor_dict: dict[int, str] = {}
     vid_pid_product_dict: dict[tuple[int, int], str] = {}
     apj_board_id_name_dict: dict[int, str] = {}
     apj_board_id_vendor_dict: dict[int, str] = {}
+    mcu_series_dict: dict[int, str] = {}
 
     suffixes = ["-bdshot", "-ADSB", "-GPS", "-periph", "-heavy", "-ODID", "-SimOnHardWare"]
 
-    for dirname, (numeric_board_id, vid, pid, vid_name, pid_name) in hwdef_data.items():
+    for dirname, (numeric_board_id, vid, pid, vid_name, pid_name, mcu_series) in hwdef_data.items():
         board_name = remove_suffixes(dirname, suffixes)
         # Process USB VID and store the result in it's dictionary
         if vid in vid_vendor_dict:
@@ -123,7 +125,9 @@ def create_dicts(
             apj_board_id_name_dict[numeric_board_id] = board_name
             apj_board_id_vendor_dict[numeric_board_id] = vid_name
 
-    return vid_vendor_dict, vid_pid_product_dict, apj_board_id_name_dict, apj_board_id_vendor_dict
+        mcu_series_dict[numeric_board_id] = mcu_series
+
+    return vid_vendor_dict, vid_pid_product_dict, apj_board_id_name_dict, apj_board_id_vendor_dict, mcu_series_dict
 
 
 def pretty_print_dict(d: dict, indent: int = 4, format_int_in_hex: bool = True) -> str:
@@ -161,6 +165,7 @@ def write_to_file(
     vid_pid_product_dict: dict[tuple[int, int], str],
     apj_board_id_name_dict: dict[int, str],
     apj_board_id_vendor_dict: dict[int, str],
+    mcu_series_dict: dict[int, str],
 ) -> None:
     directory = "ardupilot_methodic_configurator"
     os.makedirs(directory, exist_ok=True)  # Create the directory if it doesn't exist
@@ -197,6 +202,10 @@ def write_to_file(
         file.write("APJ_BOARD_ID_VENDOR_DICT: dict[int, str] = {\n")
         file.write(pretty_print_dict(apj_board_id_vendor_dict, format_int_in_hex=False))
         file.write("}\n")
+        file.write(f"# Maps 16-bit APJ board ID to MCU series for {len(apj_board_id_name_dict)} supported boards\n")
+        file.write("APJ_BOARD_ID_MCU_SERIES_DICT: dict[int, str] = {\n")
+        file.write(pretty_print_dict(mcu_series_dict, format_int_in_hex=False))
+        file.write("}\n")
 
 
 def main() -> None:
@@ -204,10 +213,13 @@ def main() -> None:
     vid_pid_product_dict: dict[tuple[int, int], str] = {}
     apj_board_id_name_dict: dict[int, str] = {}
     apj_board_id_vendor_dict: dict[int, str] = {}
+    mcu_series_dict: dict[int, str] = {}
 
     hwdef_data: dict[str, tuple[int, int, int, str, str]] = process_hwdef_files(BASE_DIR)
-    vid_vendor_dict, vid_pid_product_dict, apj_board_id_name_dict, apj_board_id_vendor_dict = create_dicts(hwdef_data)
-    write_to_file(vid_vendor_dict, vid_pid_product_dict, apj_board_id_name_dict, apj_board_id_vendor_dict)
+    vid_vendor_dict, vid_pid_product_dict, apj_board_id_name_dict, apj_board_id_vendor_dict, mcu_series_dict = create_dicts(
+        hwdef_data
+    )
+    write_to_file(vid_vendor_dict, vid_pid_product_dict, apj_board_id_name_dict, apj_board_id_vendor_dict, mcu_series_dict)
 
 
 if __name__ == "__main__":
