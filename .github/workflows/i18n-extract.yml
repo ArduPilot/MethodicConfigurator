@@ -40,7 +40,7 @@ jobs:
           git add $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot
           if [ -n "$(git status --porcelain)" ]; then
             CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
-            if [ $CHANGED_LINES -gt 2 ]; then
+            if [ $CHANGED_LINES -gt 4 ]; then
               git commit -m "CHORE: Extracted i18n strings to $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot"
               git push
             else
