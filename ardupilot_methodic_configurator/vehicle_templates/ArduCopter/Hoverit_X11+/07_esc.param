@@ -1,6 +1,6 @@
 ATC_RAT_PIT_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
-ATC_RAT_RLL_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html 
-ATC_RAT_YAW_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html 
+ATC_RAT_RLL_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_YAW_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on 20_throttle_controller.param file
 MOT_PWM_MAX,1950  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
 MOT_PWM_MIN,1050  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)

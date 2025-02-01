@@ -18,7 +18,7 @@ repos:
       - id: check-yaml
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.2
+    rev: v0.9.4
     hooks:
       - id: ruff
         args: [ --fix ]
@@ -31,7 +31,7 @@ repos:
         stages: [pre-commit]
 
   - repo: https://github.com/gruntwork-io/pre-commit
-    rev: v0.1.24
+    rev: v0.1.25
     hooks:
       - id: shellcheck
         entry: C:\\Windows\\System32\\wsl.exe --exec bash -c "find . -type f \( -name '*.sh' -o -name '*.bash' \) ! -name 'get-helm-3.bash' -print0 | xargs -0 printf '%q ' | xargs shellcheck --color=never"
@@ -41,7 +41,7 @@ repos:
         entry: markdown-link-check
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.43.0
+    rev: v0.44.0
     hooks:
       - id: markdownlint
         args: ['--config', '.markdownlint.yaml']
