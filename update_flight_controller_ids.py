@@ -14,6 +14,7 @@ import io  # Import io for StringIO
 import logging
 import os
 import sys
+from typing import Union
 
 # Define the base directory to crawl
 BASE_DIR = "../ardupilot/libraries/AP_HAL_ChibiOS/hwdef/"
@@ -130,7 +131,9 @@ def create_dicts(
     return vid_vendor_dict, vid_pid_product_dict, apj_board_id_name_dict, apj_board_id_vendor_dict, mcu_series_dict
 
 
-def pretty_print_dict(d: dict, indent: int = 4, format_int_in_hex: bool = True) -> str:
+def pretty_print_dict(
+    d: dict, indent: int = 4, format_int_in_hex: bool = True, board_name: Union[None, dict[int, str]] = None
+) -> str:
     """Pretty prints a dictionary, formatting integers in hexadecimal to a string."""
     output = io.StringIO()
     for key, value in d.items():
@@ -144,6 +147,10 @@ def pretty_print_dict(d: dict, indent: int = 4, format_int_in_hex: bool = True) 
             if isinstance(key, str)
             else key
         )
+        comment = ""
+        # Format the (optional) board name to be used as a comment
+        if board_name is not None:
+            comment = f"  # {board_name[key]}"
         # Format the value
         if isinstance(value, dict):
             output.write(" " * indent + f"{formatted_key}: {{\n")
@@ -153,9 +160,9 @@ def pretty_print_dict(d: dict, indent: int = 4, format_int_in_hex: bool = True) 
             formatted_value = f"0x{value:X}"
             output.write(" " * indent + f"{formatted_key}: {formatted_value},\n")
         elif isinstance(value, str):
-            output.write(" " * indent + f'{formatted_key}: "{value}",\n')
+            output.write(" " * indent + f'{formatted_key}: "{value}",{comment}\n')
         else:
-            output.write(" " * indent + f"{formatted_key}: {value},\n")
+            output.write(" " * indent + f"{formatted_key}: {value},{comment}\n")
 
     return output.getvalue()
 
@@ -200,11 +207,11 @@ def write_to_file(
         file.write("\n")
         file.write(f"# Maps 16-bit APJ board ID to board vendor for {len(apj_board_id_name_dict)} supported boards\n")
         file.write("APJ_BOARD_ID_VENDOR_DICT: dict[int, str] = {\n")
-        file.write(pretty_print_dict(apj_board_id_vendor_dict, format_int_in_hex=False))
+        file.write(pretty_print_dict(apj_board_id_vendor_dict, format_int_in_hex=False, board_name=apj_board_id_name_dict))
         file.write("}\n")
         file.write(f"# Maps 16-bit APJ board ID to MCU series for {len(apj_board_id_name_dict)} supported boards\n")
         file.write("APJ_BOARD_ID_MCU_SERIES_DICT: dict[int, str] = {\n")
-        file.write(pretty_print_dict(mcu_series_dict, format_int_in_hex=False))
+        file.write(pretty_print_dict(mcu_series_dict, format_int_in_hex=False, board_name=apj_board_id_name_dict))
         file.write("}\n")
 
 
@@ -220,6 +227,9 @@ def main() -> None:
         hwdef_data
     )
     write_to_file(vid_vendor_dict, vid_pid_product_dict, apj_board_id_name_dict, apj_board_id_vendor_dict, mcu_series_dict)
+
+    unique_series = set(mcu_series_dict.values())
+    logging.info("Unique MCU series: %s", unique_series)
 
 
 if __name__ == "__main__":

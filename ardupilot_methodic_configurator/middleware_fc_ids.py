@@ -277,459 +277,459 @@ APJ_BOARD_ID_NAME_DICT: dict[int, str] = {
 
 # Maps 16-bit APJ board ID to board vendor for 226 supported boards
 APJ_BOARD_ID_VENDOR_DICT: dict[int, str] = {
-    1124: "3DR",
-    1115: "ArduPilot",
-    1116: "ArduPilot",
-    1077: "ArduPilot",
-    1104: "ArduPilot",
-    1109: "ArduPilot",
-    7110: "ArduPilot",
-    1080: "ArduPilot",
-    2024: "AET",
-    128: "ArduPilot",
-    55: "ArduPilot",
-    5200: "Airvolute",
-    1146: "ArduPilot",
-    5210: "Aocoda-RC-H743Dual",
-    1134: "ArduPilot",
-    57: "ArduPilot",
-    83: "ArduPilot",
-    59: "ArduPilot",
-    81: "ArduPilot",
-    82: "ArduPilot",
-    1078: "ArduPilot",
-    1026: "ArduPilot",
-    1057: "ArduPilot",
-    1025: "ArduPilot",
-    1056: "ArduPilot",
-    1125: "ArduPilot",
-    1044: "ArduPilot",
-    1164: "ArduPilot",
-    1117: "ArduPilot",
-    1162: "ArduPilot",
-    1163: "ArduPilot",
-    1168: "ArduPilot",
-    1148: "ArduPilot",
-    1085: "ArduPilot",
-    1064: "ArduPilot",
-    1053: "ArduPilot",
-    1182: "ArduPilot",
-    1156: "ArduPilot",
-    1177: "ArduPilot",
-    12: "ArduPilot",
-    1158: "CSKY",
-    7000: "ArduPilot",
-    1009: "ArduPilot",
-    9: "ArduPilot",
-    1010: "ArduPilot",
-    50: "ArduPilot",
-    1001: "ArduPilot",
-    1003: "Hex/ProfiCNC",
-    1401: "Hex/ProfiCNC",
-    1079: "ArduPilot",
-    140: "Hex/ProfiCNC",
-    1033: "CubePilot",
-    10140: "Hex/ProfiCNC",
-    1400: "Hex/ProfiCNC",
-    1063: "CubePilot",
-    1069: "CubePilot",
-    1409: "CubePilot",
-    1070: "ArduPilot",
-    120: "Hex/ProfiCNC",
-    1061: "ArduPilot",
-    5800: "ArduPilot",
-    13: "ArduPilot",
-    139: "Holybro",
-    1000: "ArduPilot",
-    1004: "ArduPilot",
-    135: "ArduPilot",
-    1014: "ArduPilot",
-    20: "Swift-Flyer",
-    1530: "Swift-Flyer",
-    1067: "ArduPilot",
-    1068: "ArduPilot",
-    1112: "ArduPilot",
-    1180: "ArduPilot",
-    1137: "ArduPilot",
-    1099: "ArduPilot",
-    1027: "ArduPilot",
-    1042: "ArduPilot",
-    1181: "ArduPilot",
-    1157: "ArduPilot",
-    1089: "ArduPilot",
-    1028: "ArduPilot",
-    1501: "ArduPilot",
-    1502: "ArduPilot",
-    146: "ArduPilot",
-    1119: "ArduPilot",
-    1043: "ArduPilot",
-    1046: "ArduPilot",
-    1016: "ArduPilot",
-    5401: "ArduPilot",
-    5405: "ArduPilot",
-    1088: "ArduPilot",
-    1035: "ArduPilot",
-    1173: "ArduPilot",
-    3: "ArduPilot",
-    1084: "ArduPilot",
-    1110: "Japan Aviation Electronics Industry Ltd.",
-    1059: "ArduPilot",
-    1411: "ArduPilot",
-    1081: "ArduPilot",
-    122: "ArduPilot",
-    5406: "ArduPilot",
-    1030: "ArduPilot",
-    123: "ArduPilot",
-    145: "ArduPilot",
-    1048: "ArduPilot",
-    1105: "ArduPilot",
-    1058: "ArduPilot",
-    1315: "ArduPilot",
-    1422: "ArduPilot",
-    11: "ArduPilot",
-    1029: "ArduPilot",
-    1038: "ArduPilot",
-    1019: "ArduPilot",
-    1073: "ArduPilot",
-    125: "ArduPilot",
-    1054: "ArduPilot",
-    127: "ArduPilot",
-    143: "ArduPilot",
-    1170: "ArduPilot",
-    1013: "ArduPilot",
-    1149: "ArduPilot",
-    1062: "ArduPilot",
-    188: "ArduPilot",
-    6103: "ArduPilot",
-    6101: "ArduPilot",
-    2000: "ArduPilot",
-    1161: "ArduPilot",
-    1150: "ArduPilot",
-    1166: "ArduPilot",
-    1176: "ArduPilot",
-    1179: "ArduPilot",
-    88: "ArduPilot",
-    41775: "ArduPilot",
-    1041: "ArduPilot",
-    1098: "ArduPilot",
-    1022: "mRo",
-    141: "mRo",
-    1023: "mRo",
-    1024: "mRo",
-    1145: "ArduPilot",
-    1015: "mRo",
-    1017: "mRo",
-    136: "mRo",
-    1222: "ArduPilot",
-    1040: "ArduPilot",
-    1051: "ArduPilot",
-    1047: "ArduPilot",
-    1159: "ArduPilot",
-    1002: "ArduPilot",
-    131: "ArduPilot",
-    137: "ArduPilot",
-    121: "ArduPilot",
-    133: "ArduPilot",
-    1155: "ArduPilot",
-    1032: "Horizon31",
-    1090: "Dheeran labs",
-    1131: "Dheeran labs",
-    51: "Holybro",
-    56: "Holybro",
-    53: "ArduPilot",
-    10053: "ArduPilot",
-    1408: "ArduPilot",
-    1140: "ArduPilot",
-    1096: "ArduPilot",
-    1083: "ArduPilot",
-    1160: "ArduPilot",
-    1402: "ArduPilot",
-    1076: "ArduPilot",
-    1107: "ArduPilot",
-    1097: "ArduPilot",
-    1065: "Qiotek",
-    1021: "ArduPilot",
-    1036: "ArduPilot",
-    1008: "ArduPilot",
-    1410: "ArduPilot",
-    1118: "ArduPilot",
-    1074: "ArduPilot",
-    124: "ArduPilot",
-    1102: "ArduPilot",
-    1103: "ArduPilot",
-    1111: "ArduPilot",
-    1167: "ArduPilot",
-    1052: "ArduPilot",
-    1055: "ArduPilot",
-    1034: "ArduPilot",
-    1050: "ArduPilot",
-    1095: "Sierra Aerospace",
-    5302: "ArduPilot",
-    1091: "ArduPilot",
-    5301: "ArduPilot",
-    1093: "ArduPilot",
-    1094: "ArduPilot",
-    1123: "ArduPilot",
-    2714: "SkySakura",
-    1075: "ArduPilot",
-    130: "ArduPilot",
-    134: "ArduPilot",
-    1135: "ArduPilot",
-    1106: "ArduPilot",
-    1082: "ArduPilot",
-    1136: "ArduPilot",
-    1060: "ArduPilot",
-    1108: "ArduPilot",
-    1011: "ArduPilot",
-    6001: "ArduPilot",
-    6002: "ArduPilot",
-    6000: "ArduPilot",
-    5252: "ArduPilot",
-    5250: "ArduPilot",
-    5251: "ArduPilot",
-    212: "ThePeach",
-    213: "ThePeach",
-    1138: "ArduPilot",
-    1151: "Laser Navigation",
-    1152: "Laser Navigation",
-    1154: "Laser Navigation",
-    1910: "Laser Navigation",
-    1351: "Laser Navigation",
-    7100: "ArduPilot",
-    1174: "ArduPilot",
-    1113: "ArduPilot",
-    1127: "ArduPilot",
-    1141: "ArduPilot",
-    1144: "ArduPilot",
-    5600: "ArduPilot",
-    1005: "ArduPilot",
+    1124: "3DR",  # 3DRControlZeroG
+    1115: "ArduPilot",  # ACNS-CM4Pilot
+    1116: "ArduPilot",  # ACNS-F405AIO
+    1077: "ArduPilot",  # AeroFox-Airspeed
+    1104: "ArduPilot",  # AeroFox-Airspeed-DLVR
+    1109: "ArduPilot",  # AeroFox-GNSS_F9P
+    7110: "ArduPilot",  # AEROFOX-H7
+    1080: "ArduPilot",  # AeroFox-PMU
+    2024: "AET",  # AET-H743-Basic
+    128: "ArduPilot",  # airbotf4
+    55: "ArduPilot",  # AIRLink
+    5200: "Airvolute",  # Airvolute-DCS2
+    1146: "ArduPilot",  # AnyleafH7
+    5210: "Aocoda-RC-H743Dual",  # Aocoda-RC-H743Dual
+    1134: "ArduPilot",  # AR-F407SmartBat
+    57: "ArduPilot",  # ARKV6X
+    83: "ArduPilot",  # ARK_CANNODE
+    59: "ArduPilot",  # ARK_FPV
+    81: "ArduPilot",  # ARK_GPS
+    82: "ArduPilot",  # ARK_RTK_GPS
+    1078: "ArduPilot",  # AtomRCF405NAVI
+    1026: "ArduPilot",  # BeastF7
+    1057: "ArduPilot",  # BeastF7v2
+    1025: "ArduPilot",  # BeastH7
+    1056: "ArduPilot",  # BeastH7v2
+    1125: "ArduPilot",  # BETAFPV-F405
+    1044: "ArduPilot",  # BirdCANdy
+    1164: "ArduPilot",  # BlitzF745
+    1117: "ArduPilot",  # BlitzF745AIO
+    1162: "ArduPilot",  # BlitzH743Pro
+    1163: "ArduPilot",  # BlitzMiniF745
+    1168: "ArduPilot",  # BlitzWingH743
+    1148: "ArduPilot",  # BotBloxDroneNet
+    1085: "ArduPilot",  # C-RTK2-HP
+    1064: "ArduPilot",  # CarbonixF405
+    1053: "ArduPilot",  # CarbonixL496
+    1182: "ArduPilot",  # CBU-H7-LC-Stamp
+    1156: "ArduPilot",  # CBU-H7-Stamp
+    1177: "ArduPilot",  # CrazyF405
+    12: "ArduPilot",  # crazyflie2
+    1158: "CSKY",  # CSKY405
+    7000: "ArduPilot",  # CUAV-7-Nano
+    1009: "ArduPilot",  # CUAV-Nora
+    9: "ArduPilot",  # CUAV-Pixhack-v3
+    1010: "ArduPilot",  # CUAV-X7
+    50: "ArduPilot",  # CUAVv5
+    1001: "ArduPilot",  # CUAV_GPS
+    1003: "Hex/ProfiCNC",  # CubeBlack+
+    1401: "Hex/ProfiCNC",  # CubeBlack
+    1079: "ArduPilot",  # CubeNode
+    140: "Hex/ProfiCNC",  # CubeOrange
+    1033: "CubePilot",  # CubeOrange-joey
+    10140: "Hex/ProfiCNC",  # CubeOrange
+    1400: "Hex/ProfiCNC",  # CubeOrange
+    1063: "CubePilot",  # CubeOrangePlus
+    1069: "CubePilot",  # CubeRedPrimary
+    1409: "CubePilot",  # CubeRedPrimary-PPPGW
+    1070: "ArduPilot",  # CubeRedSecondary
+    120: "Hex/ProfiCNC",  # CubeYellow
+    1061: "ArduPilot",  # DevEBoxH7v2
+    5800: "ArduPilot",  # DroneerF405
+    13: "ArduPilot",  # DrotekP3Pro
+    139: "Holybro",  # Durandal
+    1000: "ArduPilot",  # f103
+    1004: "ArduPilot",  # f303
+    135: "ArduPilot",  # F35Lightning
+    1014: "ArduPilot",  # f405-MatekAirspeed
+    20: "Swift-Flyer",  # F4BY
+    1530: "Swift-Flyer",  # F4BY_F427
+    1067: "ArduPilot",  # FlyingMoonF407
+    1068: "ArduPilot",  # FlyingMoonF427
+    1112: "ArduPilot",  # FlyingMoonH743
+    1180: "ArduPilot",  # FlywooF405HD-AIOv2
+    1137: "ArduPilot",  # FlywooF405Pro
+    1099: "ArduPilot",  # FlywooF405S-AIO
+    1027: "ArduPilot",  # FlywooF745
+    1042: "ArduPilot",  # FlywooF745Nano
+    1181: "ArduPilot",  # FlywooH743Pro
+    1157: "ArduPilot",  # FoxeerF405v2
+    1089: "ArduPilot",  # FoxeerH743v1
+    1028: "ArduPilot",  # FreeflyRTK
+    1501: "ArduPilot",  # GEPRCF745BTHD
+    1502: "ArduPilot",  # GEPRC_TAKER_H743
+    146: "ArduPilot",  # H757I_EVAL
+    1119: "ArduPilot",  # HEEWING-F405
+    1043: "ArduPilot",  # Here4AP
+    1046: "ArduPilot",  # Hitec-Airspeed
+    1016: "ArduPilot",  # HitecMosaic
+    5401: "ArduPilot",  # HolybroF4_PMU
+    5405: "ArduPilot",  # HolybroG4_Airspeed
+    1088: "ArduPilot",  # HolybroG4_Compass
+    1035: "ArduPilot",  # HolybroGPS
+    1173: "ArduPilot",  # IFLIGHT_2RAW_H7
+    3: "ArduPilot",  # iomcu
+    1084: "ArduPilot",  # JFB100
+    1110: "Japan Aviation Electronics Industry Ltd.",  # JFB110
+    1059: "ArduPilot",  # JHEMCU-GSF405A
+    1411: "ArduPilot",  # JHEMCU-H743HD
+    1081: "ArduPilot",  # JHEM_JHEF405
+    122: "ArduPilot",  # KakuteF4
+    5406: "ArduPilot",  # KakuteF4-Wing
+    1030: "ArduPilot",  # KakuteF4Mini
+    123: "ArduPilot",  # KakuteF7
+    145: "ArduPilot",  # KakuteF7Mini
+    1048: "ArduPilot",  # KakuteH7
+    1105: "ArduPilot",  # KakuteH7-Wing
+    1058: "ArduPilot",  # KakuteH7Mini
+    1315: "ArduPilot",  # kha_eth
+    1422: "ArduPilot",  # LongBowF405WING
+    11: "ArduPilot",  # luminousbee4
+    1029: "ArduPilot",  # luminousbee5
+    1038: "ArduPilot",  # MambaF405-2022
+    1019: "ArduPilot",  # MambaF405v2
+    1073: "ArduPilot",  # MambaH743v4
+    125: "ArduPilot",  # MatekF405
+    1054: "ArduPilot",  # MatekF405-TE
+    127: "ArduPilot",  # MatekF405-Wing
+    143: "ArduPilot",  # MatekF765-SE
+    1170: "ArduPilot",  # MatekG474-DShot
+    1013: "ArduPilot",  # MatekH743
+    1149: "ArduPilot",  # MatekH7A3
+    1062: "ArduPilot",  # MatekL431
+    188: "ArduPilot",  # MazzyStarDrone
+    6103: "ArduPilot",  # MFE_AirSpeed_CAN
+    6101: "ArduPilot",  # MFE_POS3_CAN
+    2000: "ArduPilot",  # MFT-SEMA100
+    1161: "ArduPilot",  # MicoAir405Mini
+    1150: "ArduPilot",  # MicoAir405v2
+    1166: "ArduPilot",  # MicoAir743
+    1176: "ArduPilot",  # MicoAir743-AIO
+    1179: "ArduPilot",  # MicoAir743v2
+    88: "ArduPilot",  # mindpx-v2
+    41775: "ArduPilot",  # modalai_fc-v1
+    1041: "ArduPilot",  # mRo-M10095
+    1098: "ArduPilot",  # mRoCANPWM-M10126
+    1022: "mRo",  # mRoControlZeroClassic
+    141: "mRo",  # mRoControlZeroF7
+    1023: "mRo",  # mRoControlZeroH7
+    1024: "mRo",  # mRoControlZeroOEMH7
+    1145: "ArduPilot",  # mRoKitCANrevC
+    1015: "mRo",  # mRoNexus
+    1017: "mRo",  # mRoPixracerPro
+    136: "mRo",  # mRoX21-777
+    1222: "ArduPilot",  # MUPilot
+    1040: "ArduPilot",  # Nucleo-G491
+    1051: "ArduPilot",  # Nucleo-L476
+    1047: "ArduPilot",  # Nucleo-L496
+    1159: "ArduPilot",  # NxtPX4v2
+    1002: "ArduPilot",  # omnibusf4
+    131: "ArduPilot",  # omnibusf4pro
+    137: "ArduPilot",  # omnibusf4v6
+    121: "ArduPilot",  # OMNIBUSF7V2
+    133: "ArduPilot",  # OmnibusNanoV6
+    1155: "ArduPilot",  # OrqaF405Pro
+    1032: "Horizon31",  # PixC4-Jetson
+    1090: "Dheeran labs",  # PixFlamingo
+    1131: "Dheeran labs",  # PixFlamingo-F767
+    51: "Holybro",  # Pixhawk5X
+    56: "Holybro",  # Pixhawk6C
+    53: "ArduPilot",  # Pixhawk6X
+    10053: "ArduPilot",  # Pixhawk6X
+    1408: "ArduPilot",  # Pixhawk6X-PPPGW
+    1140: "ArduPilot",  # PixPilot-C3
+    1096: "ArduPilot",  # PixPilot-V3
+    1083: "ArduPilot",  # PixPilot-V6
+    1160: "ArduPilot",  # PixPilot-V6PRO
+    1402: "ArduPilot",  # Pixracer
+    1076: "ArduPilot",  # PixSurveyA1
+    1107: "ArduPilot",  # PixSurveyA1-IND
+    1097: "ArduPilot",  # PixSurveyA2
+    1065: "Qiotek",  # QioTekAdeptF407
+    1021: "ArduPilot",  # QioTekZealotF427
+    1036: "ArduPilot",  # QioTekZealotH743
+    1008: "ArduPilot",  # R9Pilot
+    1410: "ArduPilot",  # RadiolinkPIX6
+    1118: "ArduPilot",  # RADIX2HD
+    1074: "ArduPilot",  # ReaperF745
+    124: "ArduPilot",  # revo-mini
+    1102: "ArduPilot",  # rFCU
+    1103: "ArduPilot",  # rGNSS
+    1111: "ArduPilot",  # SDMODELH7V1
+    1167: "ArduPilot",  # SDMODELH7V2
+    1052: "ArduPilot",  # Sierra-F405
+    1055: "ArduPilot",  # Sierra-F412
+    1034: "ArduPilot",  # Sierra-F9P
+    1050: "ArduPilot",  # Sierra-L431
+    1095: "Sierra Aerospace",  # Sierra-PrecisionPoint
+    5302: "ArduPilot",  # Sierra-TrueNavIC
+    1091: "ArduPilot",  # Sierra-TrueNavPro
+    5301: "ArduPilot",  # Sierra-TrueNavPro-G4
+    1093: "ArduPilot",  # Sierra-TrueNorth
+    1094: "ArduPilot",  # Sierra-TrueSpeed
+    1123: "ArduPilot",  # SIYI_N7
+    2714: "SkySakura",  # SkySakuraH743
+    1075: "ArduPilot",  # SkystarsH7HD
+    130: "ArduPilot",  # sparky2
+    134: "ArduPilot",  # speedybeef4
+    1135: "ArduPilot",  # SpeedyBeeF405Mini
+    1106: "ArduPilot",  # SpeedyBeeF405WING
+    1082: "ArduPilot",  # speedybeef4v3
+    1136: "ArduPilot",  # speedybeef4v4
+    1060: "ArduPilot",  # SPRacingH7
+    1108: "ArduPilot",  # SPRacingH7RF
+    1011: "ArduPilot",  # SuccexF4
+    6001: "ArduPilot",  # sw-boom-f407
+    6002: "ArduPilot",  # sw-nav-f405
+    6000: "ArduPilot",  # sw-spar-f407
+    5252: "ArduPilot",  # TBS-L431-Airspeed
+    5250: "ArduPilot",  # TBS_LUCID_H7
+    5251: "ArduPilot",  # TBS_LUCID_PRO
+    212: "ThePeach",  # thepeach-k1
+    213: "ThePeach",  # thepeach-r1
+    1138: "ArduPilot",  # TMotorH743
+    1151: "Laser Navigation",  # VRBrain-v51
+    1152: "Laser Navigation",  # VRBrain-v52
+    1154: "Laser Navigation",  # VRBrain-v54
+    1910: "Laser Navigation",  # VRCore-v10
+    1351: "Laser Navigation",  # VRUBrain-v51
+    7100: "ArduPilot",  # VUAV-V7pro
+    1174: "ArduPilot",  # X-MAV-AP-H743v2
+    1113: "ArduPilot",  # YJUAV_A6
+    1127: "ArduPilot",  # YJUAV_A6SE
+    1141: "ArduPilot",  # YJUAV_A6SE_H743
+    1144: "ArduPilot",  # YJUAV_A6Ultra
+    5600: "ArduPilot",  # ZeroOneX6
+    1005: "ArduPilot",  # ZubaxGNSS
 }
 # Maps 16-bit APJ board ID to MCU series for 226 supported boards
 APJ_BOARD_ID_MCU_SERIES_DICT: dict[int, str] = {
-    1124: "STM32H7xx",
-    1115: "STM32F4xx",
-    1116: "STM32F4xx",
-    1077: "STM32F103",
-    1104: "STM32F103",
-    1109: "STM32L431",
-    7110: "STM32H7xx",
-    1080: "STM32L431",
-    2024: "STM32H7xx",
-    128: "STM32F4xx",
-    55: "STM32F7xx",
-    5200: "STM32H7xx",
-    1146: "STM32H7xx",
-    5210: "STM32H7xx",
-    1134: "CKS32F4xx",
-    57: "STM32H7xx",
-    83: "STM32F4xx",
-    59: "STM32H7xx",
-    81: "STM32F4xx",
-    82: "STM32F4xx",
-    1078: "STM32F4xx",
-    1026: "STM32F7xx",
-    1057: "STM32F7xx",
-    1025: "STM32H7xx",
-    1056: "STM32H7xx",
-    1125: "STM32F4xx",
-    1044: "STM32F4xx",
-    1164: "STM32F7xx",
-    1117: "STM32F7xx",
-    1162: "STM32H7xx",
-    1163: "STM32F7xx",
-    1168: "STM32H7xx",
-    1148: "STM32H7xx",
-    1085: "STM32F4xx",
-    1064: "STM32F4xx",
-    1053: "STM32G4xx",
-    1182: "STM32H7xx",
-    1156: "STM32H7xx",
-    1177: "STM32F4xx",
-    12: "STM32F4xx",
-    1158: "STM32F4xx",
-    7000: "STM32H7xx",
-    1009: "STM32H7xx",
-    9: "STM32F4xx",
-    1010: "STM32H7xx",
-    50: "STM32F7xx",
-    1001: "STM32F4xx",
-    1003: "STM32F4xx",
-    1401: "STM32F4xx",
-    1079: "STM32H7xx",
-    140: "STM32H7xx",
-    1033: "STM32H7xx",
-    10140: "STM32H7xx",
-    1400: "STM32H7xx",
-    1063: "STM32H7xx",
-    1069: "STM32H7xx",
-    1409: "STM32H7xx",
-    1070: "STM32H7xx",
-    120: "STM32F7xx",
-    1061: "STM32H7xx",
-    5800: "STM32F4xx",
-    13: "STM32F4xx",
-    139: "STM32H7xx",
-    1000: "STM32F103",
-    1004: "STM32F303",
-    135: "STM32F4xx",
-    1014: "STM32F4xx",
-    20: "STM32F4xx",
-    1530: "STM32F4xx",
-    1067: "STM32F4xx",
-    1068: "STM32F4xx",
-    1112: "STM32H7xx",
-    1180: "STM32F4xx",
-    1137: "STM32F4xx",
-    1099: "STM32F4xx",
-    1027: "STM32G474",
-    1042: "STM32F7xx",
-    1181: "STM32H7xx",
-    1157: "STM32F4xx",
-    1089: "STM32H7xx",
-    1028: "STM32F7xx",
-    1501: "STM32F7xx",
-    1502: "STM32H7xx",
-    146: "STM32H7xx",
-    1119: "STM32F4xx",
-    1043: "STM32H7xx",
-    1046: "STM32G441",
-    1016: "STM32F303",
-    5401: "STM32F4xx",
-    5405: "STM32G4xx",
-    1088: "STM32G4xx",
-    1035: "STM32F4xx",
-    1173: "STM32H7xx",
-    3: "STM32F4xx",
-    1084: "STM32F7xx",
-    1110: "STM32H7xx",
-    1059: "STM32F4xx",
-    1411: "STM32H7xx",
-    1081: "STM32F4xx",
-    122: "STM32F4xx",
-    5406: "STM32F4xx",
-    1030: "STM32F4xx",
-    123: "STM32F7xx",
-    145: "STM32F7xx",
-    1048: "STM32H7xx",
-    1105: "STM32H7xx",
-    1058: "STM32H7xx",
-    1315: "STM32H7xx",
-    1422: "STM32F4xx",
-    11: "STM32F4xx",
-    1029: "STM32H7xx",
-    1038: "STM32F4xx",
-    1019: "STM32F4xx",
-    1073: "STM32H7xx",
-    125: "STM32F4xx",
-    1054: "STM32F4xx",
-    127: "STM32F4xx",
-    143: "STM32F7xx",
-    1170: "STM32G474",
-    1013: "STM32H7xx",
-    1149: "STM32H7xx",
-    1062: "STM32L431",
-    188: "STM32F7xx",
-    6103: "STM32F103",
-    6101: "STM32F4xx",
-    2000: "STM32H7xx",
-    1161: "STM32F4xx",
-    1150: "STM32F4xx",
-    1166: "STM32H7xx",
-    1176: "STM32H7xx",
-    1179: "STM32H7xx",
-    88: "STM32F4xx",
-    41775: "STM32F7xx",
-    1041: "STM32G4xx",
-    1098: "STM32G4xx",
-    1022: "STM32H7xx",
-    141: "STM32F7xx",
-    1023: "STM32H7xx",
-    1024: "STM32H7xx",
-    1145: "STM32F303",
-    1015: "STM32H7xx",
-    1017: "STM32H7xx",
-    136: "STM32F7xx",
-    1222: "STM32F7xx",
-    1040: "STM32G491",
-    1051: "STM32L476",
-    1047: "STM32L496",
-    1159: "STM32H7xx",
-    1002: "STM32F4xx",
-    131: "STM32F4xx",
-    137: "STM32F4xx",
-    121: "STM32F7xx",
-    133: "STM32F4xx",
-    1155: "STM32F4xx",
-    1032: "STM32H7xx",
-    1090: "STM32L4xx",
-    1131: "STM32F7xx",
-    51: "STM32F7xx",
-    56: "STM32H7xx",
-    53: "STM32H7xx",
-    10053: "STM32H7xx",
-    1408: "STM32H7xx",
-    1140: "STM32F4xx",
-    1096: "STM32F4xx",
-    1083: "STM32H7xx",
-    1160: "STM32H7xx",
-    1402: "STM32F4xx",
-    1076: "STM32F4xx",
-    1107: "STM32F4xx",
-    1097: "STM32H7xx",
-    1065: "CKS32F4xx",
-    1021: "STM32F4xx",
-    1036: "STM32H7xx",
-    1008: "STM32F7xx",
-    1410: "STM32F7xx",
-    1118: "STM32H7xx",
-    1074: "STM32F7xx",
-    124: "STM32F4xx",
-    1102: "STM32H7xx",
-    1103: "STM32G4xx",
-    1111: "STM32H7xx",
-    1167: "STM32H7xx",
-    1052: "STM32F4xx",
-    1055: "STM32F4xx",
-    1034: "STM32F4xx",
-    1050: "STM32L431",
-    1095: "STM32F4xx",
-    5302: "STM32L431",
-    1091: "STM32L431",
-    5301: "STM32G4xx",
-    1093: "STM32L431",
-    1094: "STM32L431",
-    1123: "STM32H7xx",
-    2714: "STM32H7xx",
-    1075: "STM32H7xx",
-    130: "STM32F4xx",
-    134: "STM32F4xx",
-    1135: "STM32F4xx",
-    1106: "STM32F4xx",
-    1082: "STM32F4xx",
-    1136: "STM32F4xx",
-    1060: "STM32H7xx",
-    1108: "STM32H7xx",
-    1011: "STM32F4xx",
-    6001: "STM32F4xx",
-    6002: "STM32F4xx",
-    6000: "STM32F4xx",
-    5252: "STM32L431",
-    5250: "STM32H7xx",
-    5251: "STM32F4xx",
-    212: "STM32F4xx",
-    213: "STM32F4xx",
-    1138: "STM32H7xx",
-    1151: "STM32F4xx",
-    1152: "STM32F4xx",
-    1154: "STM32F4xx",
-    1910: "STM32F4xx",
-    1351: "STM32F4xx",
-    7100: "STM32H7xx",
-    1174: "STM32H7xx",
-    1113: "STM32H7xx",
-    1127: "STM32H7xx",
-    1141: "STM32H7xx",
-    1144: "STM32H7xx",
-    5600: "STM32H7xx",
-    1005: "STM32F105",
+    1124: "STM32H7xx",  # 3DRControlZeroG
+    1115: "STM32F4xx",  # ACNS-CM4Pilot
+    1116: "STM32F4xx",  # ACNS-F405AIO
+    1077: "STM32F103",  # AeroFox-Airspeed
+    1104: "STM32F103",  # AeroFox-Airspeed-DLVR
+    1109: "STM32L431",  # AeroFox-GNSS_F9P
+    7110: "STM32H7xx",  # AEROFOX-H7
+    1080: "STM32L431",  # AeroFox-PMU
+    2024: "STM32H7xx",  # AET-H743-Basic
+    128: "STM32F4xx",  # airbotf4
+    55: "STM32F7xx",  # AIRLink
+    5200: "STM32H7xx",  # Airvolute-DCS2
+    1146: "STM32H7xx",  # AnyleafH7
+    5210: "STM32H7xx",  # Aocoda-RC-H743Dual
+    1134: "CKS32F4xx",  # AR-F407SmartBat
+    57: "STM32H7xx",  # ARKV6X
+    83: "STM32F4xx",  # ARK_CANNODE
+    59: "STM32H7xx",  # ARK_FPV
+    81: "STM32F4xx",  # ARK_GPS
+    82: "STM32F4xx",  # ARK_RTK_GPS
+    1078: "STM32F4xx",  # AtomRCF405NAVI
+    1026: "STM32F7xx",  # BeastF7
+    1057: "STM32F7xx",  # BeastF7v2
+    1025: "STM32H7xx",  # BeastH7
+    1056: "STM32H7xx",  # BeastH7v2
+    1125: "STM32F4xx",  # BETAFPV-F405
+    1044: "STM32F4xx",  # BirdCANdy
+    1164: "STM32F7xx",  # BlitzF745
+    1117: "STM32F7xx",  # BlitzF745AIO
+    1162: "STM32H7xx",  # BlitzH743Pro
+    1163: "STM32F7xx",  # BlitzMiniF745
+    1168: "STM32H7xx",  # BlitzWingH743
+    1148: "STM32H7xx",  # BotBloxDroneNet
+    1085: "STM32F4xx",  # C-RTK2-HP
+    1064: "STM32F4xx",  # CarbonixF405
+    1053: "STM32G4xx",  # CarbonixL496
+    1182: "STM32H7xx",  # CBU-H7-LC-Stamp
+    1156: "STM32H7xx",  # CBU-H7-Stamp
+    1177: "STM32F4xx",  # CrazyF405
+    12: "STM32F4xx",  # crazyflie2
+    1158: "STM32F4xx",  # CSKY405
+    7000: "STM32H7xx",  # CUAV-7-Nano
+    1009: "STM32H7xx",  # CUAV-Nora
+    9: "STM32F4xx",  # CUAV-Pixhack-v3
+    1010: "STM32H7xx",  # CUAV-X7
+    50: "STM32F7xx",  # CUAVv5
+    1001: "STM32F4xx",  # CUAV_GPS
+    1003: "STM32F4xx",  # CubeBlack+
+    1401: "STM32F4xx",  # CubeBlack
+    1079: "STM32H7xx",  # CubeNode
+    140: "STM32H7xx",  # CubeOrange
+    1033: "STM32H7xx",  # CubeOrange-joey
+    10140: "STM32H7xx",  # CubeOrange
+    1400: "STM32H7xx",  # CubeOrange
+    1063: "STM32H7xx",  # CubeOrangePlus
+    1069: "STM32H7xx",  # CubeRedPrimary
+    1409: "STM32H7xx",  # CubeRedPrimary-PPPGW
+    1070: "STM32H7xx",  # CubeRedSecondary
+    120: "STM32F7xx",  # CubeYellow
+    1061: "STM32H7xx",  # DevEBoxH7v2
+    5800: "STM32F4xx",  # DroneerF405
+    13: "STM32F4xx",  # DrotekP3Pro
+    139: "STM32H7xx",  # Durandal
+    1000: "STM32F103",  # f103
+    1004: "STM32F303",  # f303
+    135: "STM32F4xx",  # F35Lightning
+    1014: "STM32F4xx",  # f405-MatekAirspeed
+    20: "STM32F4xx",  # F4BY
+    1530: "STM32F4xx",  # F4BY_F427
+    1067: "STM32F4xx",  # FlyingMoonF407
+    1068: "STM32F4xx",  # FlyingMoonF427
+    1112: "STM32H7xx",  # FlyingMoonH743
+    1180: "STM32F4xx",  # FlywooF405HD-AIOv2
+    1137: "STM32F4xx",  # FlywooF405Pro
+    1099: "STM32F4xx",  # FlywooF405S-AIO
+    1027: "STM32G474",  # FlywooF745
+    1042: "STM32F7xx",  # FlywooF745Nano
+    1181: "STM32H7xx",  # FlywooH743Pro
+    1157: "STM32F4xx",  # FoxeerF405v2
+    1089: "STM32H7xx",  # FoxeerH743v1
+    1028: "STM32F7xx",  # FreeflyRTK
+    1501: "STM32F7xx",  # GEPRCF745BTHD
+    1502: "STM32H7xx",  # GEPRC_TAKER_H743
+    146: "STM32H7xx",  # H757I_EVAL
+    1119: "STM32F4xx",  # HEEWING-F405
+    1043: "STM32H7xx",  # Here4AP
+    1046: "STM32G441",  # Hitec-Airspeed
+    1016: "STM32F303",  # HitecMosaic
+    5401: "STM32F4xx",  # HolybroF4_PMU
+    5405: "STM32G4xx",  # HolybroG4_Airspeed
+    1088: "STM32G4xx",  # HolybroG4_Compass
+    1035: "STM32F4xx",  # HolybroGPS
+    1173: "STM32H7xx",  # IFLIGHT_2RAW_H7
+    3: "STM32F4xx",  # iomcu
+    1084: "STM32F7xx",  # JFB100
+    1110: "STM32H7xx",  # JFB110
+    1059: "STM32F4xx",  # JHEMCU-GSF405A
+    1411: "STM32H7xx",  # JHEMCU-H743HD
+    1081: "STM32F4xx",  # JHEM_JHEF405
+    122: "STM32F4xx",  # KakuteF4
+    5406: "STM32F4xx",  # KakuteF4-Wing
+    1030: "STM32F4xx",  # KakuteF4Mini
+    123: "STM32F7xx",  # KakuteF7
+    145: "STM32F7xx",  # KakuteF7Mini
+    1048: "STM32H7xx",  # KakuteH7
+    1105: "STM32H7xx",  # KakuteH7-Wing
+    1058: "STM32H7xx",  # KakuteH7Mini
+    1315: "STM32H7xx",  # kha_eth
+    1422: "STM32F4xx",  # LongBowF405WING
+    11: "STM32F4xx",  # luminousbee4
+    1029: "STM32H7xx",  # luminousbee5
+    1038: "STM32F4xx",  # MambaF405-2022
+    1019: "STM32F4xx",  # MambaF405v2
+    1073: "STM32H7xx",  # MambaH743v4
+    125: "STM32F4xx",  # MatekF405
+    1054: "STM32F4xx",  # MatekF405-TE
+    127: "STM32F4xx",  # MatekF405-Wing
+    143: "STM32F7xx",  # MatekF765-SE
+    1170: "STM32G474",  # MatekG474-DShot
+    1013: "STM32H7xx",  # MatekH743
+    1149: "STM32H7xx",  # MatekH7A3
+    1062: "STM32L431",  # MatekL431
+    188: "STM32F7xx",  # MazzyStarDrone
+    6103: "STM32F103",  # MFE_AirSpeed_CAN
+    6101: "STM32F4xx",  # MFE_POS3_CAN
+    2000: "STM32H7xx",  # MFT-SEMA100
+    1161: "STM32F4xx",  # MicoAir405Mini
+    1150: "STM32F4xx",  # MicoAir405v2
+    1166: "STM32H7xx",  # MicoAir743
+    1176: "STM32H7xx",  # MicoAir743-AIO
+    1179: "STM32H7xx",  # MicoAir743v2
+    88: "STM32F4xx",  # mindpx-v2
+    41775: "STM32F7xx",  # modalai_fc-v1
+    1041: "STM32G4xx",  # mRo-M10095
+    1098: "STM32G4xx",  # mRoCANPWM-M10126
+    1022: "STM32H7xx",  # mRoControlZeroClassic
+    141: "STM32F7xx",  # mRoControlZeroF7
+    1023: "STM32H7xx",  # mRoControlZeroH7
+    1024: "STM32H7xx",  # mRoControlZeroOEMH7
+    1145: "STM32F303",  # mRoKitCANrevC
+    1015: "STM32H7xx",  # mRoNexus
+    1017: "STM32H7xx",  # mRoPixracerPro
+    136: "STM32F7xx",  # mRoX21-777
+    1222: "STM32F7xx",  # MUPilot
+    1040: "STM32G491",  # Nucleo-G491
+    1051: "STM32L476",  # Nucleo-L476
+    1047: "STM32L496",  # Nucleo-L496
+    1159: "STM32H7xx",  # NxtPX4v2
+    1002: "STM32F4xx",  # omnibusf4
+    131: "STM32F4xx",  # omnibusf4pro
+    137: "STM32F4xx",  # omnibusf4v6
+    121: "STM32F7xx",  # OMNIBUSF7V2
+    133: "STM32F4xx",  # OmnibusNanoV6
+    1155: "STM32F4xx",  # OrqaF405Pro
+    1032: "STM32H7xx",  # PixC4-Jetson
+    1090: "STM32L4xx",  # PixFlamingo
+    1131: "STM32F7xx",  # PixFlamingo-F767
+    51: "STM32F7xx",  # Pixhawk5X
+    56: "STM32H7xx",  # Pixhawk6C
+    53: "STM32H7xx",  # Pixhawk6X
+    10053: "STM32H7xx",  # Pixhawk6X
+    1408: "STM32H7xx",  # Pixhawk6X-PPPGW
+    1140: "STM32F4xx",  # PixPilot-C3
+    1096: "STM32F4xx",  # PixPilot-V3
+    1083: "STM32H7xx",  # PixPilot-V6
+    1160: "STM32H7xx",  # PixPilot-V6PRO
+    1402: "STM32F4xx",  # Pixracer
+    1076: "STM32F4xx",  # PixSurveyA1
+    1107: "STM32F4xx",  # PixSurveyA1-IND
+    1097: "STM32H7xx",  # PixSurveyA2
+    1065: "CKS32F4xx",  # QioTekAdeptF407
+    1021: "STM32F4xx",  # QioTekZealotF427
+    1036: "STM32H7xx",  # QioTekZealotH743
+    1008: "STM32F7xx",  # R9Pilot
+    1410: "STM32F7xx",  # RadiolinkPIX6
+    1118: "STM32H7xx",  # RADIX2HD
+    1074: "STM32F7xx",  # ReaperF745
+    124: "STM32F4xx",  # revo-mini
+    1102: "STM32H7xx",  # rFCU
+    1103: "STM32G4xx",  # rGNSS
+    1111: "STM32H7xx",  # SDMODELH7V1
+    1167: "STM32H7xx",  # SDMODELH7V2
+    1052: "STM32F4xx",  # Sierra-F405
+    1055: "STM32F4xx",  # Sierra-F412
+    1034: "STM32F4xx",  # Sierra-F9P
+    1050: "STM32L431",  # Sierra-L431
+    1095: "STM32F4xx",  # Sierra-PrecisionPoint
+    5302: "STM32L431",  # Sierra-TrueNavIC
+    1091: "STM32L431",  # Sierra-TrueNavPro
+    5301: "STM32G4xx",  # Sierra-TrueNavPro-G4
+    1093: "STM32L431",  # Sierra-TrueNorth
+    1094: "STM32L431",  # Sierra-TrueSpeed
+    1123: "STM32H7xx",  # SIYI_N7
+    2714: "STM32H7xx",  # SkySakuraH743
+    1075: "STM32H7xx",  # SkystarsH7HD
+    130: "STM32F4xx",  # sparky2
+    134: "STM32F4xx",  # speedybeef4
+    1135: "STM32F4xx",  # SpeedyBeeF405Mini
+    1106: "STM32F4xx",  # SpeedyBeeF405WING
+    1082: "STM32F4xx",  # speedybeef4v3
+    1136: "STM32F4xx",  # speedybeef4v4
+    1060: "STM32H7xx",  # SPRacingH7
+    1108: "STM32H7xx",  # SPRacingH7RF
+    1011: "STM32F4xx",  # SuccexF4
+    6001: "STM32F4xx",  # sw-boom-f407
+    6002: "STM32F4xx",  # sw-nav-f405
+    6000: "STM32F4xx",  # sw-spar-f407
+    5252: "STM32L431",  # TBS-L431-Airspeed
+    5250: "STM32H7xx",  # TBS_LUCID_H7
+    5251: "STM32F4xx",  # TBS_LUCID_PRO
+    212: "STM32F4xx",  # thepeach-k1
+    213: "STM32F4xx",  # thepeach-r1
+    1138: "STM32H7xx",  # TMotorH743
+    1151: "STM32F4xx",  # VRBrain-v51
+    1152: "STM32F4xx",  # VRBrain-v52
+    1154: "STM32F4xx",  # VRBrain-v54
+    1910: "STM32F4xx",  # VRCore-v10
+    1351: "STM32F4xx",  # VRUBrain-v51
+    7100: "STM32H7xx",  # VUAV-V7pro
+    1174: "STM32H7xx",  # X-MAV-AP-H743v2
+    1113: "STM32H7xx",  # YJUAV_A6
+    1127: "STM32H7xx",  # YJUAV_A6SE
+    1141: "STM32H7xx",  # YJUAV_A6SE_H743
+    1144: "STM32H7xx",  # YJUAV_A6Ultra
+    5600: "STM32H7xx",  # ZeroOneX6
+    1005: "STM32F105",  # ZubaxGNSS
 }
