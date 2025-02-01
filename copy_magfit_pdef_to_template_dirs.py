@@ -34,8 +34,8 @@ if not os.path.exists(source_file_path):
 
 # Traverse the source directory and copy the file to each subdirectory
 for root, dirs, _files in os.walk(BASE_TARGET_DIR):
-    for directory in dirs:
-        target_dir = os.path.join(root, directory)
-        target_file_path = os.path.join(target_dir, FILE_TO_COPY)
+    # If this directory has no subdirectories, copy the file
+    if not dirs:
+        target_file_path = os.path.join(root, FILE_TO_COPY)
         shutil.copy(source_file_path, target_file_path)
         logging.info("Copied %s to %s", FILE_TO_COPY, target_file_path)
