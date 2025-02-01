@@ -320,8 +320,8 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_tolerance_handling(self) -> None:
         """Test parameter value tolerance checking."""
         # Setup LocalFilesystem instance
-        from ardupilot_methodic_configurator.backend_filesystem import (
-            is_within_tolerance,  # pylint: disable=import-outside-toplevel
+        from ardupilot_methodic_configurator.backend_filesystem import (  # pylint: disable=import-outside-toplevel
+            is_within_tolerance,
         )
 
         # Test cases within tolerance (default 0.1%)

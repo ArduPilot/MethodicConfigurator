@@ -76,10 +76,11 @@ def process_hwdef_files(base_directory: str) -> dict[str, tuple[int, int, int, s
                 pid_name = str(c.get_config("USB_STRING_PRODUCT", default=dirname)).strip('"').strip("'")
                 mcu_series = c.mcu_series
                 hwdef_data[dirname] = (numeric_board_id, vid, pid, vid_name, pid_name, mcu_series)
-    return hwdef_data
+    # Sort the dictionary by the (dirname) key, so that python 3.13 produces similar results to python 3.12
+    return dict(sorted(hwdef_data.items(), key=lambda x: x[0].lower()))
 
 
-def create_dicts(
+def create_dicts(  # pylint: disable=too-many-locals
     hwdef_data: dict[str, tuple[int, int, int, str, str, str]],
 ) -> tuple[dict[int, str], dict[tuple[int, int], str], dict[int, str], dict[int, str], dict[int, str]]:
     vid_vendor_dict: dict[int, str] = {}
