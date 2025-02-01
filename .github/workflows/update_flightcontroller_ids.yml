@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ArduPilot/ardupilot
-          path: ../ardupilot
+          path: ardupilot
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -27,6 +27,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          mv ardupilot ..
 
       - name: Update flight controller IDs
         run: python update_flight_controller_ids.py
@@ -41,7 +42,7 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
             if [ $CHANGED_LINES -gt 3 ]; then
-              git commit -m "CHORE: Updated flight controller IDs [skip ci]"
+              git commit -m "CHORE: Updated ArduPilot flight controller IDs [skip ci]"
               git push
             else
               echo "Not enough changes to commit (only $CHANGED_LINES lines changed)"
