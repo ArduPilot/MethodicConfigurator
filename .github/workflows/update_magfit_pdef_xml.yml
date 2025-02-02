@@ -1,0 +1,43 @@
+name: Update 24_inflight_magnetometer_fit_setup.pdef.xml
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+    - 24_inflight_magnetometer_fit_setup.pdef.xml'
+    - ardupilot_methodic_configurator/vehicle_templates/**
+
+jobs:
+  update-magfit-pdef-xml:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout MethodicConfigurator
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Update flight controller IDs
+        run: python copy_magfit_pdef_to_template_dirs.py
+
+      - name: Commit changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add ardupilot_methodic_configurator/vehicle_templates/**/24_inflight_magnetometer_fit_setup.pdef.xml
+          if [ -n "$(git status --porcelain)" ]; then
+            CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
+            if [ $CHANGED_LINES -gt 3 ]; then
+              git commit -m "CHORE: Updated 24_inflight_magnetometer_fit_setup.pdef.xml files in the vehicle templates"
+              git push
+            else
+              echo "Not enough changes to commit (only $CHANGED_LINES lines changed)"
+            fi
+          else
+            echo "No changes to commit"
+          fi
