@@ -42,7 +42,7 @@ def parse_arguments() -> argparse.Namespace:
 
     parser.add_argument(
         "--max-translations",
-        default=80,
+        default=60,
         type=int,
         help="The maximum number of missing translations to write to each output file. Default is %(default)s",
     )

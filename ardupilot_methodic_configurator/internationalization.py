@@ -16,7 +16,7 @@ from typing import Callable
 # Do not import nor use logging functions in this file.
 # Logging is not yet configured when these functions are called
 
-LANGUAGE_CHOICES = ["en", "zh_CN", "pt", "de"]
+LANGUAGE_CHOICES = ["en", "zh_CN", "pt", "de", "it"]
 
 
 def identity_function(s: str) -> str:
