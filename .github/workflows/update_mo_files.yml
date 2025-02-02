@@ -1,0 +1,42 @@
+name: Update mo files
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+    - ardupilot_methodic_configurator/locale/**/ardupilot_methodic_configurator.po
+
+jobs:
+  update-mo-files:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout MethodicConfigurator
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install apt packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
+      - name: Update flight controller IDs
+        run: python create_mo_files.py
+
+      - name: Commit changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add ardupilot_methodic_configurator/locale/**/ardupilot_methodic_configurator.mo
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "CHORE: Updated translation .mo files from the .po files"
+            git push
+          else
+            echo "No changes to commit"
+          fi
