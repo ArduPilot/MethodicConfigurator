@@ -321,20 +321,7 @@ For example, to add support for German:
 LANGUAGE_CHOICES = ['en', 'zh_CN', 'pt', 'de']
 ```
 
-### 3. Generate a Template POT File
-
-If you haven't already generated a `.pot` file, you can do so by running the `create_pot_file.py` script in the project root directory.
-This script will extract all translatable strings from the project files and create a `.pot` file.
-
-Ensure you are in the root directory of your project, and execute the following command:
-
-```bash
-python create_pot_file.py
-```
-
-This will create a file named `ardupilot_methodic_configurator.pot` inside the `ardupilot_methodic_configurator/locale` directory.
-
-### 4. Create a New PO File
+### 3. Create a New PO File
 
 Inside your newly created language directory, create a new `.po` file using the `.pot` template:
 
@@ -344,12 +331,13 @@ mkdir LC_MESSAGES
 cp ../ardupilot_methodic_configurator.pot LC_MESSAGES/ardupilot_methodic_configurator.po
 ```
 
-### 5. Bulk translate the strings (optional)
+### 4. Bulk translate the strings (optional)
 
 You can bootstrap your translation using translation services that translate full files.
 To do so navigate to the project root and issue:
 
 ```bash
+cd ..\..\..
 python extract_missing_translations.py --lang-code=de
 ```
 
@@ -362,7 +350,7 @@ Once done, insert the translations into the `.po` file:
 python insert_translations.py --lang-code=de
 ```
 
-### 6. Translate the Strings
+### 5. Translate the Strings
 
 Open the `ardupilot_methodic_configurator.po` file in a text editor or a specialist translation tool (e.g., [Poedit](https://poedit.net/)).
 You will see the extracted strings, which you can begin translating.
@@ -381,7 +369,7 @@ msgid "Original English String"
 msgstr "Translated String"
 ```
 
-### 7. Compile the PO File
+### 6. Compile the PO File
 
 Once you have completed your translations, you will need to compile the `.po` file into a binary `.mo` file. This can be done using the command:
 
@@ -400,7 +388,7 @@ python3 create_mo_files.py
 Make sure you have `msgfmt` installed, which is part of the *GNU gettext* package.
 On windows use the `.\install_msgfmt.bat` command.
 
-### 8. Test the New Language
+### 7. Test the New Language
 
 Add it to the `[Languages]` and `[Icons]` sections of the `windows/ardupilot_methodic_configurator.iss` file.
 
@@ -421,7 +409,7 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Working
 With the new `.mo` file created, you should ensure the software correctly loads the new language.
 Update the software's configuration to set the desired language and run the application to test your translations.
 
-### 9. Review and Refine
+### 8. Review and Refine
 
 Once the new language is running in the software, review the translations within the application for clarity and correctness.
 Make adjustments as needed in the `.po` file and recompile to an `.mo` file.
