@@ -111,6 +111,7 @@ def component_editor(
     component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.info.flight_sw_version_and_type)
     component_editor_window.set_fc_manufacturer(flight_controller.info.vendor)
     component_editor_window.set_fc_model(flight_controller.info.firmware_type)
+    component_editor_window.set_mcu_series(flight_controller.info.mcu_series)
     if vehicle_dir_window and vehicle_dir_window.configuration_template:
         component_editor_window.set_vehicle_configuration_template(vehicle_dir_window.configuration_template)
     if args.skip_component_editor:
