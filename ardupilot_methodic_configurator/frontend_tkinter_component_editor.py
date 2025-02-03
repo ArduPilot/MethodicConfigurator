@@ -230,6 +230,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         _vehicle_components_strings = _("Version")
         _vehicle_components_strings = _("Firmware")
         _vehicle_components_strings = _("Type")
+        _vehicle_components_strings = _("MCU Series")
         _vehicle_components_strings = _("Notes")
         _vehicle_components_strings = _("Frame")
         _vehicle_components_strings = _("Specifications")
@@ -270,7 +271,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if "Capacity mAh" not in self.data["Components"]["Battery"]["Specifications"]:
             self.data["Components"]["Battery"]["Specifications"]["Capacity mAh"] = 0
 
-        # To update old JSON files that do not have these new fields
+        # To update old JSON files that do not have these new "Frame.Specifications.TOW * Kg" fields
         if "Frame" not in self.data["Components"]:
             self.data["Components"]["Frame"] = {}
         if "Specifications" not in self.data["Components"]["Frame"]:
@@ -286,6 +287,17 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         self.data["Program version"] = __version__
 
+        # To update old JSON files that do not have this new "Flight Controller.Specifications.MCU Series" field
+        if "Flight Controller" not in self.data["Components"]:
+            self.data["Components"]["Flight Controller"] = {}
+        if "Specifications" not in self.data["Components"]["Flight Controller"]:
+            self.data["Components"]["Flight Controller"] = {
+                "Product": self.data["Components"]["Flight Controller"]["Product"],
+                "Firmware": self.data["Components"]["Flight Controller"]["Firmware"],
+                "Specifications": {"MCU Series": "Unknown"},
+                "Notes": self.data["Components"]["Flight Controller"]["Notes"],
+            }
+
     def set_vehicle_type_and_version(self, vehicle_type: str, version: str) -> None:
         self._set_component_value_and_update_ui(("Flight Controller", "Firmware", "Type"), vehicle_type)
         if version:
@@ -298,6 +310,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     def set_fc_model(self, model: str) -> None:
         if model and model not in (_("Unknown"), "MAVLink"):
             self._set_component_value_and_update_ui(("Flight Controller", "Product", "Model"), model)
+
+    def set_mcu_series(self, mcu: str) -> None:
+        if mcu:
+            self._set_component_value_and_update_ui(("Flight Controller", "Specifications", "MCU Series"), mcu)
 
     def set_vehicle_configuration_template(self, configuration_template: str) -> None:
         self.data["Configuration template"] = configuration_template

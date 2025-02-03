@@ -16,6 +16,7 @@ from pymavlink import mavutil
 # import pymavlink.dialects.v20.ardupilotmega
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.middleware_fc_ids import (
+    APJ_BOARD_ID_MCU_SERIES_DICT,
     APJ_BOARD_ID_NAME_DICT,
     APJ_BOARD_ID_VENDOR_DICT,
     VID_PID_PRODUCT_DICT,
@@ -50,6 +51,7 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         self.product: str = ""
         self.product_id: str = ""
         self.product_and_product_id: str = ""
+        self.mcu_series: str = ""
         self.capabilities: dict[str, str] = {}
 
         self.is_supported = False
@@ -71,6 +73,7 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
             _("Capabilities"): self.capabilities,
             _("System ID"): self.system_id,
             _("Component ID"): self.component_id,
+            _("MCU Series"): self.mcu_series,
         }
 
     def set_system_id_and_component_id(self, system_id: str, component_id: str) -> None:
@@ -99,6 +102,7 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         vendor_derived_from_apj_board_id = str(",".join(APJ_BOARD_ID_VENDOR_DICT.get(apj_board_id, "ArduPilot")))
         if vendor_derived_from_apj_board_id != "ArduPilot" and self.vendor in ["ArduPilot", _("Unknown")]:
             self.vendor = vendor_derived_from_apj_board_id
+        self.mcu_series = str(APJ_BOARD_ID_MCU_SERIES_DICT.get(apj_board_id, _("Unknown")))
 
     def set_flight_custom_version(self, flight_custom_version: Sequence[int]) -> None:
         self.flight_custom_version = "".join(chr(c) for c in flight_custom_version)
