@@ -8,3 +8,5 @@ ardupilot_methodic_configurator_setup_*.exe
 build/
 dist/
 git_hash.txt
+
+/.coverage
