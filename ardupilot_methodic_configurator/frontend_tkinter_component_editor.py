@@ -305,10 +305,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 "Product": self.data["Components"]["ESC"]["Product"],
                 "Firmware": self.data["Components"]["ESC"]["Firmware"],
                 "FC Connection": self.data["Components"]["ESC"]["FC Connection"],
-                "RPM Telemetry": {
-                    "Connection": "None",
-                    "Protocol": "None"
-                },
+                "RPM Telemetry": {"Connection": "None", "Protocol": "None"},
                 "Notes": self.data["Components"]["ESC"]["Notes"],
             }
 
@@ -494,7 +491,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             elif "SERVO_FTW_MASK" in fc_parameters and fc_parameters["SERVO_FTW_MASK"] and "SERVO_FTW_POLES" in fc_parameters:
                 self.data["Components"]["Motors"]["Specifications"]["Poles"] = fc_parameters["SERVO_FTW_POLES"]
 
-    def update_esc_protocol_combobox_entries(self, esc_connection_type: str) -> None:
+    def update_esc_protocol_combobox_entries(self, esc_connection_type: str) -> None:  # noqa: PLR0915
         """Updates the ESC Protocol combobox entries based on the selected ESC Type."""
         if len(esc_connection_type) > 3 and esc_connection_type[:3] == "CAN":
             protocols = ["DroneCAN"]
@@ -538,9 +535,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 rpm_protocols = ["None", "DroneCAN"]
             elif len(esc_connection_type) > 6 and esc_connection_type[:6] == "SERIAL":
                 rpm_protocols = ["None", protocol]
-            elif "MOT_PWM_TYPE" in self.local_filesystem.doc_dict:
-                rpm_protocols = ["None", "Dshot", "BDshot"]
-            elif "Q_M_PWM_TYPE" in self.local_filesystem.doc_dict:
+            elif "MOT_PWM_TYPE" in self.local_filesystem.doc_dict or "Q_M_PWM_TYPE" in self.local_filesystem.doc_dict:
                 rpm_protocols = ["None", "Dshot", "BDshot"]
             else:
                 rpm_protocols = []
