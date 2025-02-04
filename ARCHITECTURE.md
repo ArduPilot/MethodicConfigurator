@@ -415,3 +415,45 @@ Once the new language is running in the software, review the translations within
 Make adjustments as needed in the `.po` file and recompile to an `.mo` file.
 
 Following these steps should enable you to successfully add support for any new translation language within the Ardupilot Methodic Configurator.
+
+## Update an existing translation
+
+To update an existing translation do the following steps:
+
+### 1. Install Poedit and open the .po and pot files
+
+Install [Poedit v3.5.2 or greater](https://poedit.net/download) on your PC.
+
+Open the existing `.po` file for your language.
+Either [download the file from the locale directory in github.com](https://github.com/ArduPilot/MethodicConfigurator/tree/master/ardupilot_methodic_configurator/locale)
+or if you have a local git checkout of `ardupilot_methodic_configurator/locale` use it.
+
+![Open .po file](images/Poedit_01.png)
+
+Here is an example for the italian translation:
+
+![Select .po file](images/Poedit_02.png)
+
+Update the translation by importing the latest `.pot` file.
+
+![Update translation from .pot file](images/Poedit_03.png)
+
+Either [download the file from the locale directory in github.com](https://github.com/ArduPilot/MethodicConfigurator/tree/master/ardupilot_methodic_configurator/locale)
+or if you have a local git checkout of `ardupilot_methodic_configurator/locale` use it.
+
+![Select .pot file](images/Poedit_04.png)
+
+Validate the translation
+
+![Validate translation](images/Poedit_05.png)
+
+### 2. Update and improve each translation string
+
+Search the table for strings that have not been translated yet and translate them.
+Update and improve each translation string.
+
+Save the result and either send the `.po` file to the team,
+or create a gitlab Pull request with the changes to the `.po` file.
+The github [robot will automatically convert that `.po` file into a `.mo` file](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/update_mo_files.yml)
+and create an [*ArduPilot methodic configurator* installer](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/windows_build.yml)
+that you can use to test the translations.
