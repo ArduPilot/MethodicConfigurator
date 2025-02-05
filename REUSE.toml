@@ -111,6 +111,37 @@ SPDX-FileCopyrightText = "Copyright (c) 2008-2020 Andrey Petrov and contributors
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
+path = "credits/defusedxml-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) Christian Heimes"
+SPDX-License-Identifier = "PSF-2.0"
+
+[[annotations]]
+path = "credits/matplotlib-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved"
+SPDX-License-Identifier = "PSF-2.0"
+
+[[annotations]]
+path = "credits/numpy-LICENSE.txt"
+SPDX-FileCopyrightText = "Copyright (c) 2005-2025, NumPy Developers."
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "credits/pillow-LICENSE"
+SPDX-FileCopyrightText = "Copyright © 2010 by Jeffrey A. Clark and contributors"
+SPDX-License-Identifier = "MIT-CMU"
+
+[[annotations]]
+path = "credits/requests-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) Kenneth Reitz."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "credits/setuptools-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) Setuptools developers."
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
 path = ["windows/ardupilot_methodic_configurator*", "windows/settings_template.json"]
 SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
+

@@ -28,6 +28,10 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments_and_parse
 from ardupilot_methodic_configurator.frontend_tkinter_base import get_widget_font_family_and_size, update_combobox_width
 
+# SPDX-SnippetBegin
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-SnippetCopyrightText: 2022 geraldew
+
 
 # https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb
 class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
@@ -91,6 +95,8 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
             return self.list_keys[i_index]
         except IndexError:
             return None
+
+    # SPDX-SnippetEnd
 
     # https://stackoverflow.com/questions/39915275/change-width-of-dropdown-listbox-of-a-ttk-combobox
     def on_combo_configure(self, event: tk.Event) -> None:

@@ -120,6 +120,11 @@ class AutoResizeCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
             show_tooltip(self, tooltip)
 
 
+# SPDX-SnippetBegin
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-SnippetCopyrightText: 2019 Mark Pointing
+
+
 class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
     """
     A custom Frame widget that supports scrolling.
@@ -214,6 +219,9 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
             self.canvas.unbind_all("<Button-5>")
         else:
             self.canvas.unbind_all("<MouseWheel>")
+
+
+# SPDX-SnippetEnd
 
 
 class ProgressWindow:
