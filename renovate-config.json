@@ -1,0 +1,10 @@
+{
+  "extends": ["config:base"],
+  "enabledManagers": ["pre-commit"],
+  "packageRules": [
+    {
+      "matchManagers": ["pre-commit"],
+      "automerge": true
+    }
+  ]
+}
