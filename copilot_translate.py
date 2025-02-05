@@ -55,7 +55,7 @@ class CopilotClient:  # pylint: disable=too-few-public-methods
     headers: dict[str, str]
 
     def __init__(self) -> None:
-        self.api_key = os.getenv("GITHUB_COPILOT_TOKEN")
+        self.api_key = os.getenv("GITHUB_COPILOT_TOKEN", "")
         if not self.api_key:
             msg = "GITHUB_COPILOT_TOKEN environment variable not set"
             raise ValueError(msg)

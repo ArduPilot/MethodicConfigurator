@@ -19,6 +19,8 @@ from typing import Union
 # Define the base directory to crawl
 BASE_DIR = "../ardupilot/libraries/AP_HAL_ChibiOS/hwdef/"
 
+hwdef_dict = dict[str, tuple[int, int, int, str, str, str]]
+
 logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Add ../ardupilot/libraries/AP_HAL_ChibiOS/hwdef/scripts to the PYTHON path
@@ -50,8 +52,8 @@ def remove_suffixes(base_dirname: str, suffixes: list) -> str:
     return base_dirname
 
 
-def process_hwdef_files(base_directory: str) -> dict[str, tuple[int, int, int, str, str]]:
-    hwdef_data: dict[str, tuple[int, int, int, str, str, str]] = {}
+def process_hwdef_files(base_directory: str) -> hwdef_dict:
+    hwdef_data: hwdef_dict = {}
 
     # Walk through the directory
     for dirpath, _dirnames, filenames in os.walk(base_directory):
@@ -72,16 +74,18 @@ def process_hwdef_files(base_directory: str) -> dict[str, tuple[int, int, int, s
                 dirname = os.path.basename(dirpath)
                 numeric_board_id = int(c.get_numeric_board_id())
                 vid, pid = c.get_USB_IDs()
+                vid = int(vid)
+                pid = int(pid)
                 vid_name = str(c.get_config("USB_STRING_MANUFACTURER", default="ArduPilot")).strip('"').strip("'")
                 pid_name = str(c.get_config("USB_STRING_PRODUCT", default=dirname)).strip('"').strip("'")
-                mcu_series = c.mcu_series
+                mcu_series = str(c.mcu_series)
                 hwdef_data[dirname] = (numeric_board_id, vid, pid, vid_name, pid_name, mcu_series)
     # Sort the dictionary by the (dirname) key, so that python 3.13 produces similar results to python 3.12
     return dict(sorted(hwdef_data.items(), key=lambda x: x[0].lower()))
 
 
 def create_dicts(  # pylint: disable=too-many-locals
-    hwdef_data: dict[str, tuple[int, int, int, str, str, str]],
+    hwdef_data: hwdef_dict,
 ) -> tuple[dict[int, str], dict[tuple[int, int], str], dict[int, str], dict[int, str], dict[int, str]]:
     vid_vendor_dict: dict[int, str] = {}
     vid_pid_product_dict: dict[tuple[int, int], str] = {}
@@ -223,7 +227,7 @@ def main() -> None:
     apj_board_id_vendor_dict: dict[int, str] = {}
     mcu_series_dict: dict[int, str] = {}
 
-    hwdef_data: dict[str, tuple[int, int, int, str, str]] = process_hwdef_files(BASE_DIR)
+    hwdef_data: hwdef_dict = process_hwdef_files(BASE_DIR)
     vid_vendor_dict, vid_pid_product_dict, apj_board_id_name_dict, apj_board_id_vendor_dict, mcu_series_dict = create_dicts(
         hwdef_data
     )
