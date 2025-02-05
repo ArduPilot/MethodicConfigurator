@@ -76,6 +76,7 @@ Source: "..\ardupilot_methodic_configurator\configuration_steps_*.json"; DestDir
 Source: "..\LICENSES\*.*"; DestDir: "{app}\LICENSES"; Flags: ignoreversion
 Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\locale\*.mo"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\locale"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\ardupilot_methodic_configurator\ardupilot-methodic-configurator.ArgumentCompleters.ps1"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 
 [Dirs]
 Name: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; Flags: uninsneveruninstall
@@ -90,6 +91,10 @@ Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{u
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent; Parameters: "--language {language}"
+Filename: "powershell.exe"; \
+    Parameters: "-ExecutionPolicy Bypass -Command ""Import-Module '{app}\_internal\ardupilot_methodic_configurator\ardupilot-methodic-configurator.ArgumentCompleters.ps1'"""; \
+    Flags: runhidden; \
+    StatusMsg: "Installing PowerShell completions..."
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
