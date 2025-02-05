@@ -41,35 +41,34 @@ classifiers = [
 ]
 
 dependencies = [
-    "defusedxml",
-    "matplotlib",
-    "numpy",
-    "platformdirs",
-    "pymavlink",
-    "pyserial",
-    "pillow",
-    "setuptools",
-    "requests",
+    "defusedxml==0.7.1",
+    "matplotlib==3.9.4",
+    "numpy==2.0.2",
+    "pillow==11.1.0",
+    "platformdirs==4.3.6",
+    "pymavlink==2.4.42",
+    "pyserial==3.5",
+    "requests==2.32.3",
+    "setuptools==75.8.0",
 ]
 
 dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "ruff",
-    "pre-commit",
-    "python-gettext",
-    "pytest",
-    "pytest-cov",
-    "pytest-md",
-    "pytest-mock",
-    "coverage",
-    "mock",
-    "pyinstaller",
-    "mypy",
-    "types-requests",
-    "pyright",
-#    "github",
+    "coverage==7.6.10",
+    "mock==5.1.0",
+    "mypy==1.15.0",
+    "pre-commit==4.1.0",
+    "pyinstaller==6.11.1",
+    "pyright==1.1.393",
+    "pytest==8.3.4",
+    "pytest-cov==6.0.0",
+    "pytest-md==0.2.0",
+    "pytest-mock==3.14.0",
+    "python-gettext==5.0",
+    "ruff==0.9.4",
+    "types-requests==2.32.0.20241016",
 ]
 
 [project.scripts]
