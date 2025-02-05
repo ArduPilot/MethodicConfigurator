@@ -31,6 +31,12 @@ It directly uses:
 | [Scrollable TK frame](https://gist.github.com/mp035/9f2027c3ef9172264532fcd6262f3b01) by Mark Pointing | [Mozilla Public License, v. 2.0](https://mozilla.org/MPL/2.0/) |
 | [Python Tkinter ComboBox](https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb) by geraldew | [Mozilla Public License, v. 2.0](https://mozilla.org/MPL/2.0/) |
 | [Argparse check limits](https://gist.github.com/dmitriykovalev/2ab1aa33a8099ef2d514925d84aa89e7) by Dmitriy Kovalev | [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0) |
+| [defusedxml](https://github.com/tiran/defusedxml) | [Python Software Foundation License](https://github.com/tiran/defusedxml/blob/main/LICENSE) |
+| [matplotlib](https://matplotlib.org/) | [Matplotlib License](https://github.com/matplotlib/matplotlib/blob/main/LICENSE/LICENSE) |
+| [numpy](https://numpy.org/) | [BSD License](https://github.com/numpy/numpy/blob/main/LICENSE.txt) |
+| [pillow](https://python-pillow.github.io/) | [MIT-CMU License](https://github.com/python-pillow/Pillow/blob/main/LICENSE) |
+| [requests](https://requests.readthedocs.io/) | [Apache 2.0 License](https://github.com/psf/requests/blob/main/LICENSE) |
+| [setuptools](https://setuptools.pypa.io/) | [MIT License](https://github.com/pypa/setuptools/blob/main/LICENSE) |
 
 It indirectly uses:
 
@@ -64,6 +70,7 @@ Credits also go to these other software projects that helped in developing ArduP
 - [inno setup](https://jrsoftware.org/isinfo.php): A free installer for Windows programs.
 - [bestpractices.dev](https://www.bestpractices.dev/en): A site for checking best practices in software development.
 - [isitmaintained.com](https://isitmaintained.com/): A service to check the maintenance status of open-source projects.
+- [renovate](https://github.com/renovatebot/renovate): Cross-platform Dependency Automation by Mend.io
 
 Using these softwares allowed a small group of programmers to produce better code faster.
 

@@ -14,7 +14,7 @@ import logging
 
 import requests
 
-# List of direct_dependencies and their license URLs
+# List of direct dependencies and their license URLs
 direct_dependencies = [
     # {"name": "tkinter", "license_url": "https://docs.python.org/3/license.html"},
     # {"name": "argparse", "license_url": "https://docs.python.org/3/license.html"},
@@ -24,19 +24,25 @@ direct_dependencies = [
     # {"name": "os", "license_url": "https://docs.python.org/3/license.html"},
     # {"name": "re", "license_url": "https://docs.python.org/3/license.html"},
     # {"name": "webbrowser", "license_url": "https://docs.python.org/3/license.html"},
-    {"name": "pymavlink", "license_url": "https://raw.githubusercontent.com/ArduPilot/pymavlink/master/COPYING"},
     {
         "name": "ArduPilot tempcal_IMU.py",
         "license_url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/master/COPYING.txt",
     },
-    {"name": "platformdirs", "license_url": "https://raw.githubusercontent.com/platformdirs/platformdirs/main/LICENSE"},
-    {"name": "pyserial", "license_url": "https://raw.githubusercontent.com/pyserial/pyserial/master/LICENSE.txt"},
     {"name": "Scrollable_TK_frame", "license_url": "https://mozilla.org/MPL/2.0/"},
     {"name": "Python_Tkinter_ComboBox", "license_url": "https://mozilla.org/MPL/2.0/"},
+    {"name": "defusedxml", "license_url": "https://raw.githubusercontent.com/tiran/defusedxml/main/LICENSE"},
+    {"name": "matplotlib", "license_url": "https://raw.githubusercontent.com/matplotlib/matplotlib/main/LICENSE/LICENSE"},
+    {"name": "numpy", "license_url": "https://raw.githubusercontent.com/numpy/numpy/main/LICENSE.txt"},
+    {"name": "pillow", "license_url": "https://raw.githubusercontent.com/python-pillow/Pillow/main/LICENSE"},
+    {"name": "platformdirs", "license_url": "https://raw.githubusercontent.com/platformdirs/platformdirs/main/LICENSE"},
+    {"name": "pymavlink", "license_url": "https://raw.githubusercontent.com/ArduPilot/pymavlink/master/COPYING"},
+    {"name": "pyserial", "license_url": "https://raw.githubusercontent.com/pyserial/pyserial/master/LICENSE.txt"},
+    {"name": "requests", "license_url": "https://raw.githubusercontent.com/psf/requests/main/LICENSE"},
+    {"name": "setuptools", "license_url": "https://raw.githubusercontent.com/pypa/setuptools/main/LICENSE"},
 ]
 
 
-# List of direct_dependencies and their license URLs
+# List of indirect dependencies and their license URLs
 indirect_dependencies = [
     {"name": "certifi", "license_url": "https://raw.githubusercontent.com/certifi/python-certifi/master/LICENSE"},
     {
