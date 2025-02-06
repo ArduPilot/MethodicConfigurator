@@ -16,7 +16,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.__main__ import argument_parser, component_editor, connect_to_fc_and_set_vehicle_type
+from ardupilot_methodic_configurator.__main__ import (
+    component_editor,
+    connect_to_fc_and_set_vehicle_type,
+    create_argument_parser,
+)
 
 
 @pytest.fixture
@@ -31,7 +35,7 @@ class TestArgumentParser(unittest.TestCase):
 
     @pytest.mark.usefixtures("_mock_args")
     def test_argument_parser(self) -> None:
-        args = argument_parser()
+        args = create_argument_parser().parse_args()
         assert args.conn == "tcp:127.0.0.1:5760"
         assert args.params == "params_dir"
 

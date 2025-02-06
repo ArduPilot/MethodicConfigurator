@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+# PYTHON_ARGCOMPLETE_OK
 
 """
-MAVLink File Transfer Protocol support - https://mavlink.io/en/services/ftp.html - duplicated from MACProxy code.
+MAVLink File Transfer Protocol support - https://mavlink.io/en/services/ftp.html - duplicated from MAVProxy code.
 
 Original from MAVProxy/MAVProxy/modules/mavproxy_ftp.py
 
@@ -18,13 +19,15 @@ import random
 import struct
 import sys
 import time
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from collections.abc import Generator
 from datetime import datetime
 from io import BufferedReader, BufferedWriter
 from io import BytesIO as SIO  # noqa: N814
 from typing import Union
 
+import argcomplete
+from argcomplete.completers import FilesCompleter
 from pymavlink import mavutil
 
 # pylint: disable=too-many-lines
@@ -1395,254 +1398,258 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         )
 
 
-if __name__ == "__main__":
+# ------------------------------------------------------------
+# These functions are to use this script as a standalone tool
+# ------------------------------------------------------------
 
-    def argument_parser() -> Namespace:
-        """
-        Parses command-line arguments for the script.
 
-        This function sets up an argument parser to handle the command-line arguments for the script.
-        """
-        parser = ArgumentParser(
-            description="MAVFTP - MAVLink File Transfer Protocol https://mavlink.io/en/services/ftp.html"
-            " A tool to do file operations between a ground control station and a drone using the MAVLink"
-            " protocol."
-        )
-        parser.add_argument("--baudrate", type=int, default=115200, help="master port baud rate. Default is %(default)s")
-        parser.add_argument(
-            "--device",
-            type=str,
-            default="",
-            help="serial device. For windows use COMx where x is the port number. "
-            "For Unix use /dev/ttyUSBx where x is the port number. Default is autodetection",
-        )
-        parser.add_argument(
-            "--source-system", type=int, default=250, help="MAVLink source system for this GCS. Default is %(default)s"
-        )
-        parser.add_argument("--loglevel", default="INFO", help="log level. Default is %(default)s")
+def create_argument_parser() -> ArgumentParser:
+    """
+    Parses command-line arguments for the script.
 
-        # MAVFTP settings
-        parser.add_argument(
-            "--debug",
-            type=int,
-            default=0,
-            choices=[0, 1, 2],
-            help="Debug level 0 for none, 2 for max verbosity. Default is %(default)s",
-        )
-        parser.add_argument("--pkt_loss_tx", type=int, default=0, help="Packet loss on TX. Default is %(default)s")
-        parser.add_argument("--pkt_loss_rx", type=int, default=0, help="Packet loss on RX. Default is %(default)s")
-        parser.add_argument("--max_backlog", type=int, default=5, help="Max backlog. Default is %(default)s")
-        parser.add_argument("--burst_read_size", type=int, default=80, help="Burst read size. Default is %(default)s")
-        parser.add_argument("--write_size", type=int, default=80, help="Write size. Default is %(default)s")
-        parser.add_argument("--write_qsize", type=int, default=5, help="Write queue size. Default is %(default)s")
-        parser.add_argument(
-            "--idle_detection_time", type=float, default=1.2, help="Idle detection time. Default is %(default)s"
-        )
-        parser.add_argument("--read_retry_time", type=float, default=1.0, help="Read retry time. Default is %(default)s")
-        parser.add_argument("--retry_time", type=float, default=0.5, help="Retry time. Default is %(default)s")
+    This function sets up an argument parser to handle the command-line arguments for the script.
+    """
+    parser = ArgumentParser(
+        description="MAVFTP - MAVLink File Transfer Protocol https://mavlink.io/en/services/ftp.html"
+        " A tool to do file operations between a ground control station and a drone using the MAVLink"
+        " protocol."
+    )
+    parser.add_argument("--baudrate", type=int, default=115200, help="master port baud rate. Default is %(default)s")
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="",
+        help="serial device. For windows use COMx where x is the port number. "
+        "For Unix use /dev/ttyUSBx where x is the port number. Default is autodetection",
+    ).completer = FilesCompleter(directories=False, allowednames=(".port"))  # pylint: disable=superfluous-parens
+    parser.add_argument(
+        "--source-system", type=int, default=250, help="MAVLink source system for this GCS. Default is %(default)s"
+    )
+    parser.add_argument("--loglevel", default="INFO", help="log level. Default is %(default)s")
 
-        subparsers = parser.add_subparsers(dest="command", required=True)
+    # MAVFTP settings
+    parser.add_argument(
+        "--debug",
+        type=int,
+        default=0,
+        choices=[0, 1, 2],
+        help="Debug level 0 for none, 2 for max verbosity. Default is %(default)s",
+    )
+    parser.add_argument("--pkt_loss_tx", type=int, default=0, help="Packet loss on TX. Default is %(default)s")
+    parser.add_argument("--pkt_loss_rx", type=int, default=0, help="Packet loss on RX. Default is %(default)s")
+    parser.add_argument("--max_backlog", type=int, default=5, help="Max backlog. Default is %(default)s")
+    parser.add_argument("--burst_read_size", type=int, default=80, help="Burst read size. Default is %(default)s")
+    parser.add_argument("--write_size", type=int, default=80, help="Write size. Default is %(default)s")
+    parser.add_argument("--write_qsize", type=int, default=5, help="Write queue size. Default is %(default)s")
+    parser.add_argument("--idle_detection_time", type=float, default=1.2, help="Idle detection time. Default is %(default)s")
+    parser.add_argument("--read_retry_time", type=float, default=1.0, help="Read retry time. Default is %(default)s")
+    parser.add_argument("--retry_time", type=float, default=0.5, help="Retry time. Default is %(default)s")
 
-        # Get command
-        parser_get = subparsers.add_parser("get", help="Get a file from the remote flight controller.")
-        parser_get.add_argument(
-            "arg1", type=str, metavar="remote_path", help="Path to the file on the remote flight controller."
-        )
-        parser_get.add_argument(
-            "arg2", nargs="?", type=str, metavar="local_path", help="Optional local path to save the file."
-        )
+    subparsers = parser.add_subparsers(dest="command", required=True)
 
-        # Getparams command
-        parser_getparams = subparsers.add_parser(
-            "getparams", help="Get and decode parameters from the remote flight controller."
-        )
-        parser_getparams.add_argument(
-            "arg1", type=str, metavar="param_values_path", help="Local path to save the parameter values file to."
-        )
-        parser_getparams.add_argument(
-            "arg2",
-            nargs="?",
-            type=str,
-            metavar="param_defaults_path",
-            help="Optional local path to save the parameter defaults file to.",
-        )
-        parser_getparams.add_argument(
-            "-s",
-            "--sort",
-            choices=["none", "missionplanner", "mavproxy"],
-            default="missionplanner",
-            help="Sort the parameters in the file. Default is %(default)s.",
-        )
-        parser_getparams.add_argument(
-            "-dtc",
-            "--add_datatype_comments",
-            action="store_true",
-            default=False,
-            help="Add parameter datatype type comments to the outputted parameter files. Default is %(default)s.",
-        )
-        parser_getparams.add_argument(
-            "-t",
-            "--add_timestamp_comment",
-            action="store_true",
-            default=False,
-            help="Add timestamp comment at the top of the file. Default is %(default)s.",
-        )
+    # Get command
+    parser_get = subparsers.add_parser("get", help="Get a file from the remote flight controller.")
+    parser_get.add_argument("arg1", type=str, metavar="remote_path", help="Path to the file on the remote flight controller.")
+    parser_get.add_argument(
+        "arg2", nargs="?", type=str, metavar="local_path", help="Optional local path to save the file."
+    ).completer = FilesCompleter()
 
-        # Put command
-        parser_put = subparsers.add_parser("put", help="Put a file to the remote flight controller.")
-        parser_put.add_argument(
-            "arg1", type=str, metavar="local_path", help="Local path to the file to upload to the flight controller."
-        )
-        parser_put.add_argument(
-            "arg2",
-            nargs="?",
-            type=str,
-            metavar="remote_path",
-            help="Optional remote path where the file should be uploaded on the remote flight controller.",
-        )
+    # Getparams command
+    parser_getparams = subparsers.add_parser("getparams", help="Get and decode parameters from the remote flight controller.")
+    parser_getparams.add_argument(
+        "arg1", type=str, metavar="param_values_path", help="Local path to save the parameter values file to."
+    ).completer = FilesCompleter()
+    parser_getparams.add_argument(
+        "arg2",
+        nargs="?",
+        type=str,
+        metavar="param_defaults_path",
+        help="Optional local path to save the parameter defaults file to.",
+    ).completer = FilesCompleter()
+    parser_getparams.add_argument(
+        "-s",
+        "--sort",
+        choices=["none", "missionplanner", "mavproxy"],
+        default="missionplanner",
+        help="Sort the parameters in the file. Default is %(default)s.",
+    )
+    parser_getparams.add_argument(
+        "-dtc",
+        "--add_datatype_comments",
+        action="store_true",
+        default=False,
+        help="Add parameter datatype type comments to the outputted parameter files. Default is %(default)s.",
+    )
+    parser_getparams.add_argument(
+        "-t",
+        "--add_timestamp_comment",
+        action="store_true",
+        default=False,
+        help="Add timestamp comment at the top of the file. Default is %(default)s.",
+    )
 
-        # List command
-        parser_list = subparsers.add_parser("list", help="List files in a directory on the remote flight controller.")
-        parser_list.add_argument("arg1", nargs="?", type=str, metavar="remote_path", help="Optional path to list files from.")
+    # Put command
+    parser_put = subparsers.add_parser("put", help="Put a file to the remote flight controller.")
+    parser_put.add_argument(
+        "arg1", type=str, metavar="local_path", help="Local path to the file to upload to the flight controller."
+    ).completer = FilesCompleter()
+    parser_put.add_argument(
+        "arg2",
+        nargs="?",
+        type=str,
+        metavar="remote_path",
+        help="Optional remote path where the file should be uploaded on the remote flight controller.",
+    )
 
-        # Mkdir command
-        parser_mkdir = subparsers.add_parser("mkdir", help="Create a directory on the remote flight controller.")
-        parser_mkdir.add_argument("arg1", type=str, metavar="remote_path", help="Path to the directory to create.")
+    # List command
+    parser_list = subparsers.add_parser("list", help="List files in a directory on the remote flight controller.")
+    parser_list.add_argument("arg1", nargs="?", type=str, metavar="remote_path", help="Optional path to list files from.")
 
-        # Rmdir command
-        parser_rmdir = subparsers.add_parser("rmdir", help="Remove a directory on the remote flight controller.")
-        parser_rmdir.add_argument("arg1", type=str, metavar="remote_path", help="Path to the directory to remove.")
+    # Mkdir command
+    parser_mkdir = subparsers.add_parser("mkdir", help="Create a directory on the remote flight controller.")
+    parser_mkdir.add_argument("arg1", type=str, metavar="remote_path", help="Path to the directory to create.")
 
-        # Rm command
-        parser_rm = subparsers.add_parser("rm", help="Remove a file on the remote flight controller.")
-        parser_rm.add_argument("arg1", type=str, metavar="remote_path", help="Path to the file to remove.")
+    # Rmdir command
+    parser_rmdir = subparsers.add_parser("rmdir", help="Remove a directory on the remote flight controller.")
+    parser_rmdir.add_argument("arg1", type=str, metavar="remote_path", help="Path to the directory to remove.")
 
-        # Rename command
-        parser_rename = subparsers.add_parser("rename", help="Rename a file or directory on the remote flight controller.")
-        parser_rename.add_argument("arg1", type=str, metavar="old_remote_path", help="Current path of the file/directory.")
-        parser_rename.add_argument("new_remote_path", type=str, metavar="arg2", help="New path for the file/directory.")
+    # Rm command
+    parser_rm = subparsers.add_parser("rm", help="Remove a file on the remote flight controller.")
+    parser_rm.add_argument("arg1", type=str, metavar="remote_path", help="Path to the file to remove.")
 
-        # CRC command
-        parser_crc = subparsers.add_parser("crc", help="Calculate the CRC of a file on the remote flight controller.")
-        parser_crc.add_argument("arg1", type=str, metavar="remote_path", help="Path to the file to calculate the CRC of.")
+    # Rename command
+    parser_rename = subparsers.add_parser("rename", help="Rename a file or directory on the remote flight controller.")
+    parser_rename.add_argument("arg1", type=str, metavar="old_remote_path", help="Current path of the file/directory.")
+    parser_rename.add_argument("new_remote_path", type=str, metavar="arg2", help="New path for the file/directory.")
 
-        # Add other subparsers commands as needed
-        return parser.parse_args()
+    # CRC command
+    parser_crc = subparsers.add_parser("crc", help="Calculate the CRC of a file on the remote flight controller.")
+    parser_crc.add_argument("arg1", type=str, metavar="remote_path", help="Path to the file to calculate the CRC of.")
 
-    def auto_detect_serial() -> list[mavutil.SerialPort]:
-        preferred_ports = [
-            "*FTDI*",
-            "*3D*",
-            "*USB_to_UART*",
-            "*Ardu*",
-            "*PX4*",
-            "*Hex_*",
-            "*Holybro_*",
-            "*mRo*",
-            "*FMU*",
-            "*Swift-Flyer*",
-            "*Serial*",
-            "*CubePilot*",
-            "*Qiotek*",
+    # Add other subparsers commands as needed
+    argcomplete.autocomplete(parser)
+    return parser
+
+
+def auto_detect_serial() -> list[mavutil.SerialPort]:
+    preferred_ports = [
+        "*FTDI*",
+        "*3D*",
+        "*USB_to_UART*",
+        "*Ardu*",
+        "*PX4*",
+        "*Hex_*",
+        "*Holybro_*",
+        "*mRo*",
+        "*FMU*",
+        "*Swift-Flyer*",
+        "*Serial*",
+        "*CubePilot*",
+        "*Qiotek*",
+    ]
+    serial_list: list[mavutil.SerialPort] = mavutil.auto_detect_serial(preferred_list=preferred_ports)
+    serial_list.sort(key=lambda x: x.device)
+
+    # remove OTG2 ports for dual CDC
+    if (
+        len(serial_list) == 2
+        and serial_list[0].device.startswith("/dev/serial/by-id")
+        and serial_list[0].device[:-1] == serial_list[1].device[0:-1]
+    ):
+        serial_list.pop(1)
+
+    return serial_list
+
+
+def auto_connect(device) -> mavutil.SerialPort:
+    comport = None
+    if device:
+        comport = mavutil.SerialPort(device=device, description=device)
+    else:
+        autodetect_serial = auto_detect_serial()
+        if autodetect_serial:
+            # Resolve the soft link if it's a Linux system
+            if os.name == "posix":
+                try:
+                    dev = autodetect_serial[0].device
+                    logging.debug("Auto-detected device %s", dev)
+                    # Get the directory part of the soft link
+                    softlink_dir = os.path.dirname(dev)
+                    # Resolve the soft link and join it with the directory part
+                    resolved_path = os.path.abspath(os.path.join(softlink_dir, os.readlink(dev)))
+                    autodetect_serial[0].device = resolved_path
+                    logging.debug("Resolved soft link %s to %s", dev, resolved_path)
+                except OSError:
+                    pass  # Not a soft link, proceed with the original device path
+            comport = autodetect_serial[0]
+        else:
+            logging.error("No serial ports found. Please connect a flight controller and try again.")
+            sys.exit(1)
+    return comport
+
+
+def wait_heartbeat(m) -> None:
+    """Wait for a heartbeat so we know the target system IDs."""
+    logging.info("Waiting for flight controller heartbeat")
+    m.wait_heartbeat(timeout=5)
+    logging.info("Heartbeat from system %u, component %u", m.target_system, m.target_system)
+
+
+def main() -> None:
+    """For testing/example purposes only."""
+    args = create_argument_parser().parse_args()
+
+    logging.basicConfig(level=logging.getLevelName(args.loglevel), format="%(levelname)s - %(message)s")
+
+    # create a mavlink serial instance
+    comport = auto_connect(args.device)
+    master = mavutil.mavlink_connection(comport.device, baud=args.baudrate, source_system=args.source_system)
+
+    # wait for the heartbeat msg to find the system ID
+    wait_heartbeat(master)
+
+    ftp_settings = MAVFTPSettings(
+        [
+            ("debug", int, args.debug),
+            ("pkt_loss_tx", int, args.pkt_loss_tx),
+            ("pkt_loss_rx", int, args.pkt_loss_rx),
+            ("max_backlog", int, args.max_backlog),
+            ("burst_read_size", int, args.burst_read_size),
+            ("write_size", int, args.write_size),
+            ("write_qsize", int, args.write_qsize),
+            ("idle_detection_time", float, args.idle_detection_time),
+            ("read_retry_time", float, args.read_retry_time),
+            ("retry_time", float, args.retry_time),
         ]
-        serial_list: list[mavutil.SerialPort] = mavutil.auto_detect_serial(preferred_list=preferred_ports)
-        serial_list.sort(key=lambda x: x.device)
+    )
 
-        # remove OTG2 ports for dual CDC
-        if (
-            len(serial_list) == 2
-            and serial_list[0].device.startswith("/dev/serial/by-id")
-            and serial_list[0].device[:-1] == serial_list[1].device[0:-1]
-        ):
-            serial_list.pop(1)
+    mav_ftp = MAVFTP(
+        master, target_system=master.target_system, target_component=master.target_component, settings=ftp_settings
+    )
 
-        return serial_list
+    cmd_ftp_args = [args.command]
+    if "arg1" in args and args.arg1:
+        cmd_ftp_args.append(args.arg1)
+    if "arg2" in args and args.arg2:
+        cmd_ftp_args.append(args.arg2)
 
-    def auto_connect(device) -> mavutil.SerialPort:
-        comport = None
-        if device:
-            comport = mavutil.SerialPort(device=device, description=device)
-        else:
-            autodetect_serial = auto_detect_serial()
-            if autodetect_serial:
-                # Resolve the soft link if it's a Linux system
-                if os.name == "posix":
-                    try:
-                        dev = autodetect_serial[0].device
-                        logging.debug("Auto-detected device %s", dev)
-                        # Get the directory part of the soft link
-                        softlink_dir = os.path.dirname(dev)
-                        # Resolve the soft link and join it with the directory part
-                        resolved_path = os.path.abspath(os.path.join(softlink_dir, os.readlink(dev)))
-                        autodetect_serial[0].device = resolved_path
-                        logging.debug("Resolved soft link %s to %s", dev, resolved_path)
-                    except OSError:
-                        pass  # Not a soft link, proceed with the original device path
-                comport = autodetect_serial[0]
-            else:
-                logging.error("No serial ports found. Please connect a flight controller and try again.")
-                sys.exit(1)
-        return comport
+    ret = mav_ftp.cmd_ftp(cmd_ftp_args)
 
-    def wait_heartbeat(m) -> None:
-        """Wait for a heartbeat so we know the target system IDs."""
-        logging.info("Waiting for flight controller heartbeat")
-        m.wait_heartbeat(timeout=5)
-        logging.info("Heartbeat from system %u, component %u", m.target_system, m.target_system)
+    if args.command in {"get", "put", "getparams"}:
+        ret = mav_ftp.process_ftp_reply(args.command, timeout=500)
 
-    def main() -> None:
-        """For testing/example purposes only."""
-        args = argument_parser()
+    if isinstance(ret, str):
+        logging.error("Command returned: %s, but it should return a MAVFTPReturn instead", ret)
+    elif isinstance(ret, MAVFTPReturn):
+        if ret.error_code:
+            ret.display_message()
+    elif ret is None:
+        logging.error("Command returned: None, but it should return a MAVFTPReturn instead")
+    else:
+        logging.error("Command returned: something strange, but it should return a MAVFTPReturn instead")
 
-        logging.basicConfig(level=logging.getLevelName(args.loglevel), format="%(levelname)s - %(message)s")
+    master.close()
 
-        # create a mavlink serial instance
-        comport = auto_connect(args.device)
-        master = mavutil.mavlink_connection(comport.device, baud=args.baudrate, source_system=args.source_system)
 
-        # wait for the heartbeat msg to find the system ID
-        wait_heartbeat(master)
-
-        ftp_settings = MAVFTPSettings(
-            [
-                ("debug", int, args.debug),
-                ("pkt_loss_tx", int, args.pkt_loss_tx),
-                ("pkt_loss_rx", int, args.pkt_loss_rx),
-                ("max_backlog", int, args.max_backlog),
-                ("burst_read_size", int, args.burst_read_size),
-                ("write_size", int, args.write_size),
-                ("write_qsize", int, args.write_qsize),
-                ("idle_detection_time", float, args.idle_detection_time),
-                ("read_retry_time", float, args.read_retry_time),
-                ("retry_time", float, args.retry_time),
-            ]
-        )
-
-        mav_ftp = MAVFTP(
-            master, target_system=master.target_system, target_component=master.target_component, settings=ftp_settings
-        )
-
-        cmd_ftp_args = [args.command]
-        if "arg1" in args and args.arg1:
-            cmd_ftp_args.append(args.arg1)
-        if "arg2" in args and args.arg2:
-            cmd_ftp_args.append(args.arg2)
-
-        ret = mav_ftp.cmd_ftp(cmd_ftp_args)
-
-        if args.command in {"get", "put", "getparams"}:
-            ret = mav_ftp.process_ftp_reply(args.command, timeout=500)
-
-        if isinstance(ret, str):
-            logging.error("Command returned: %s, but it should return a MAVFTPReturn instead", ret)
-        elif isinstance(ret, MAVFTPReturn):
-            if ret.error_code:
-                ret.display_message()
-        elif ret is None:
-            logging.error("Command returned: None, but it should return a MAVFTPReturn instead")
-        else:
-            logging.error("Command returned: something strange, but it should return a MAVFTPReturn instead")
-
-        master.close()
-
+if __name__ == "__main__":
     main()

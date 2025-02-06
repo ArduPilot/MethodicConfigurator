@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# PYTHON_ARGCOMPLETE_OK
 
 """
 The main application file. calls four sub-applications.
@@ -20,11 +21,13 @@ from sys import exit as sys_exit
 from typing import Union
 from webbrowser import open as webbrowser_open
 
+import argcomplete
+
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-from ardupilot_methodic_configurator.common_arguments import add_common_arguments_and_parse
+from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base import show_error_message
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
@@ -34,14 +37,12 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import Pa
 from ardupilot_methodic_configurator.middleware_software_updates import UpdateManager, check_for_software_updates
 
 
-def argument_parser() -> argparse.Namespace:
+def create_argument_parser() -> argparse.ArgumentParser:
     """
-    Parses command-line arguments for the script.
-
     This function sets up an argument parser to handle the command-line arguments for the script.
 
     Returns:
-    argparse.Namespace: An object containing the parsed arguments.
+        argparse.ArgumentParser: The argument parser object.
 
     """
     parser = argparse.ArgumentParser(
@@ -63,7 +64,10 @@ def argument_parser() -> argparse.Namespace:
     parser = ComponentEditorWindow.add_argparse_arguments(parser)
     parser = ParameterEditorWindow.add_argparse_arguments(parser)
     parser = UpdateManager.add_argparse_arguments(parser)
-    return add_common_arguments_and_parse(parser)
+    parser = add_common_arguments(parser)
+
+    argcomplete.autocomplete(parser)
+    return parser
 
 
 def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[FlightController, str]:
@@ -134,7 +138,7 @@ def component_editor(
 
 
 def main() -> None:
-    args = argument_parser()
+    args = create_argument_parser().parse_args()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 

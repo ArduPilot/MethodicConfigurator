@@ -23,7 +23,7 @@ class TestCommonArguments(unittest.TestCase):  # pylint: disable=missing-class-d
         parser = ArgumentParser()
         parser.parse_args = MagicMock(return_value=MagicMock(loglevel="INFO"))
 
-        updated_parser = common_arguments.add_common_arguments_and_parse(parser)
+        updated_parser = common_arguments.add_common_arguments(parser).parse_args()
 
         # This will raise an error if loglevel is not an argument
         # or if the choices are not set up correctly.
@@ -36,7 +36,7 @@ class TestCommonArguments(unittest.TestCase):  # pylint: disable=missing-class-d
         # Mock the parse_args to just print the version string
         parser.parse_args = MagicMock()
         common_arguments.VERSION = "1.0.0"
-        updated_parser = common_arguments.add_common_arguments_and_parse(parser)
+        updated_parser = common_arguments.add_common_arguments(parser).parse_args()
 
         # We assume the call to parse_args with --version should print the version
         # Since we cannot capture stdout here easily, we'll just confirm the method was called with --version

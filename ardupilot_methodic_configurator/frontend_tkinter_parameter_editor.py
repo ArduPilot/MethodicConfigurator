@@ -31,7 +31,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, 
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
-from ardupilot_methodic_configurator.common_arguments import add_common_arguments_and_parse
+from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base import (
     AutoResizeCombobox,
     BaseWindow,
@@ -832,7 +832,7 @@ def argument_parser() -> Namespace:
     parser = FlightController.add_argparse_arguments(parser)
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ParameterEditorWindow.add_argparse_arguments(parser)
-    return add_common_arguments_and_parse(parser)
+    return add_common_arguments(parser).parse_args()
 
 
 if __name__ == "__main__":

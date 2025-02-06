@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# PYTHON_ARGCOMPLETE_OK
 
 """
 Extracts parameter values or parameter default values from an ArduPilot .bin log file.
@@ -17,6 +18,8 @@ import contextlib
 import re
 from typing import Union
 
+import argcomplete
+from argcomplete.completers import FilesCompleter
 from pymavlink import mavutil
 
 NO_DEFAULT_VALUES_MESSAGE = "The .bin file contained no parameter default values. Update to a newer ArduPilot firmware version"
@@ -27,17 +30,7 @@ MAVLINK_COMPID_MAX = 2**8
 MAV_PARAM_TYPE_REAL32 = 9
 
 
-def parse_arguments(args: Union[None, argparse.Namespace] = None) -> argparse.Namespace:
-    """
-    Parses command line arguments for the script.
-
-    Args:
-        args: List of command line arguments. Default is None, which means it uses sys.argv.
-
-    Returns:
-        Namespace object containing the parsed arguments.
-
-    """
+def create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Extracts parameter default values from an ArduPilot .bin log file.")
     parser.add_argument(
         "-f",
@@ -81,7 +74,26 @@ def parse_arguments(args: Union[None, argparse.Namespace] = None) -> argparse.Na
         default="defaults",
         help="Type of parameter values to extract. Default is %(default)s.",
     )
-    parser.add_argument("bin_file", help="The ArduPilot .bin log file to read")
+    parser.add_argument("bin_file", help="The ArduPilot .bin log file to read").completer = FilesCompleter(
+        allowednames=(".bin")
+    )
+
+    argcomplete.autocomplete(parser)
+    return parser
+
+
+def parse_arguments(args: Union[None, argparse.Namespace] = None) -> argparse.Namespace:
+    """
+    Parses command line arguments for the script.
+
+    Args:
+        args: List of command line arguments. Default is None, which means it uses sys.argv.
+
+    Returns:
+        Namespace object containing the parsed arguments.
+
+    """
+    parser = create_argument_parser()
     args, _ = parser.parse_known_args(args)  # type: ignore[arg-type]
 
     if args is None:

@@ -583,7 +583,7 @@ class FlightController:
                 'If set to "none" no connection is made.'
                 " Default is autodetection"
             ),
-        )
+        ).completer = lambda **_: FlightController.__list_serial_ports()
         parser.add_argument(
             "-r",
             "--reboot-time",

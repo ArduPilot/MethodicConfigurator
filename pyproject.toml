@@ -41,6 +41,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "argcomplete==3.5.3",
     "defusedxml==0.7.1",
     "matplotlib==3.9.4",
     "numpy==2.0.2",
@@ -77,6 +78,13 @@ extract_param_defaults = "ardupilot_methodic_configurator.extract_param_defaults
 annotate_params = "ardupilot_methodic_configurator.annotate_params:main"
 param_pid_adjustment_update = "ardupilot_methodic_configurator.param_pid_adjustment_update:main"
 mavftp = "ardupilot_methodic_configurator.backend_mavftp:main"
+
+[project.entry-points."argcomplete.completers"]
+ardupilot_methodic_configurator = "ardupilot_methodic_configurator.__main__:create_argument_parser"
+extract_param_defaults = "ardupilot_methodic_configurator.extract_param_defaults:create_argument_parser"
+annotate_params = "ardupilot_methodic_configurator.annotate_params:create_argument_parser"
+param_pid_adjustment_update = "ardupilot_methodic_configurator.param_pid_adjustment_update:create_argument_parser"
+mavftp = "ardupilot_methodic_configurator.backend_mavftp:create_argument_parser"
 
 [project.urls]
 homepage = "https://github.com/ArduPilot/MethodicConfigurator"

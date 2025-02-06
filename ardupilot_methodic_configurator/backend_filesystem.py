@@ -26,6 +26,8 @@ from subprocess import SubprocessError, run
 from typing import Any, Optional
 from zipfile import ZipFile
 
+from argcomplete.completers import DirectoriesCompleter
+
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import (
     PARAM_DEFINITION_XML_FILE,
@@ -677,7 +679,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             help=_(
                 "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
             ),
-        )
+        ).completer = DirectoriesCompleter()
         parser.add_argument(
             "--n",
             type=int,
