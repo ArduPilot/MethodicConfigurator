@@ -57,7 +57,12 @@ class TestUpdateManager:
         latest_release = {"tag_name": "v2.0.0"}
         current_version = "1.0.0"
 
-        with patch("ardupilot_methodic_configurator.middleware_software_updates.format_version_info", side_effect=ValueError):  # noqa: SIM117
-            with patch("ardupilot_methodic_configurator.middleware_software_updates.logging_error") as mock_logging_error:
-                assert not update_manager.check_and_update(latest_release, current_version)
-                mock_logging_error.assert_called_once()
+        with (
+            patch(
+                "ardupilot_methodic_configurator.middleware_software_updates.format_version_info",
+                side_effect=ValueError,
+            ),
+            patch("ardupilot_methodic_configurator.middleware_software_updates.logging_error") as mock_logging_error,
+        ):
+            assert not update_manager.check_and_update(latest_release, current_version)
+            mock_logging_error.assert_called_once()
