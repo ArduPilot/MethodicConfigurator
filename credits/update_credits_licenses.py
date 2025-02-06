@@ -25,6 +25,10 @@ direct_dependencies = [
     # {"name": "re", "license_url": "https://docs.python.org/3/license.html"},
     # {"name": "webbrowser", "license_url": "https://docs.python.org/3/license.html"},
     {
+        "name": "argcomplete",
+        "license_url": "https://raw.githubusercontent.com/kislyuk/argcomplete/refs/heads/main/LICENSE.rst",
+    },
+    {
         "name": "ArduPilot tempcal_IMU.py",
         "license_url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/master/COPYING.txt",
     },

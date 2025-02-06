@@ -22,7 +22,7 @@ from typing import Union
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.common_arguments import add_common_arguments_and_parse
+from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base import (
     BaseWindow,
     RichText,
@@ -52,7 +52,7 @@ def argument_parser() -> Namespace:
     )
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindowBase.add_argparse_arguments(parser)
-    return add_common_arguments_and_parse(parser)
+    return add_common_arguments(parser).parse_args()
     # pylint: enable=duplicate-code
 
 
