@@ -92,9 +92,9 @@ Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{u
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent; Parameters: "--language {language}"
 Filename: "powershell.exe"; \
-    Parameters: "-ExecutionPolicy Bypass -Command ""Import-Module '{app}\_internal\ardupilot_methodic_configurator\ardupilot-methodic-configurator.ArgumentCompleters.ps1'"""; \
+    Parameters: "-ExecutionPolicy Bypass -Command ""Add-Content $PROFILE \""Import-Module '{app}\_internal\ardupilot_methodic_configurator\ardupilot-methodic-configurator.ArgumentCompleters.ps1'\""""; \
     Flags: runhidden; \
-    StatusMsg: "Installing PowerShell completions..."
+    StatusMsg: "Installing permanent PowerShell completions..."
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
