@@ -23,7 +23,12 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install requirements
+      - name: Install apt gettext package
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
+      - name: Install python-gettext requirement
         run: |
           python -m pip install --upgrade pip python-gettext
 
@@ -43,9 +48,20 @@ jobs:
             if [ $CHANGED_LINES -gt 4 ]; then
               git commit -m "CHORE: Extracted i18n strings to $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot"
               git push
+              python merge_pot_file.py
             else
               echo "Not enough changes to commit (only $CHANGED_LINES lines changed)"
             fi
           else
             echo "No changes to commit"
           fi
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: merge-i18n-po-strings
+          title: "chore(deps): merge translation string(s) to existing .po files"
+          commit-message: "chore(deps): merge translation string(s) to existing .po files"
+          body: |
+            Update .po files with string(s) from the .pot file
