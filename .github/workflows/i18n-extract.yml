@@ -14,6 +14,7 @@ jobs:
     env:
       PYGETTEXT_DOMAIN: ardupilot_methodic_configurator
       PYGETTEXT_LOCALEDIR: ardupilot_methodic_configurator/locale
+      PO_FILES_CHANGED: false
 
     steps:
       - uses: actions/checkout@v4
@@ -48,7 +49,14 @@ jobs:
             if [ $CHANGED_LINES -gt 4 ]; then
               git commit -m "CHORE: Extracted i18n strings to $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot"
               git push
+
               python merge_pot_file.py
+              # Check if any .po files were modified
+              git add $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.po
+              PO_CHANGES=$(git status --porcelain | grep -E "\.po$" | wc -l)
+              if [ $PO_CHANGES -gt 0 ]; then
+                echo "PO_FILES_CHANGED=true" >> $GITHUB_ENV
+              fi
             else
               echo "Not enough changes to commit (only $CHANGED_LINES lines changed)"
             fi
@@ -57,6 +65,7 @@ jobs:
           fi
 
       - name: Create Pull Request
+        if: env.PO_FILES_CHANGED == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
