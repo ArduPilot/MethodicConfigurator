@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-02-01 15:06+0000\n"
+"POT-Creation-Date: 2025-02-06 00:44+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -576,19 +576,19 @@ msgstr ""
 msgid "No param_file combobox element selected"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:253
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:261
 msgid "Please be patient, {:.1f}% of {}% complete"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:268
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:276
 msgid "Lifting window: {_e} on file {__file__}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:443
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:451
 msgid "Show this usage popup again"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:451
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:459
 msgid "Dismiss"
 msgstr ""
 
@@ -1368,24 +1368,24 @@ msgstr ""
 msgid "Downloaded {} of {} parameters"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:66
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:70
 msgid "list_pair_tuple must be a tuple or a dictionary, not %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:76
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:81
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:80
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:85
 msgid "%s combobox selected string '%s' not in list %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:86
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:90
 msgid "No %s combobox element selected"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:222
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:228
 msgid "A GUI for testing the PairTupleCombobox. Not to be used directly, but through the main ArduPilot methodic configurator script."
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:236
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:242
 msgid "This main is for testing and development only, usually the PairTupleCombobox is called from another script"
 msgstr ""
 
