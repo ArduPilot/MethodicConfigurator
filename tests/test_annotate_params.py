@@ -28,13 +28,13 @@ from ardupilot_methodic_configurator.annotate_params import (
     BASE_URL,
     PARAM_DEFINITION_XML_FILE,
     Par,
-    arg_parser,
     create_doc_dict,
     extract_parameter_name_and_validate,
     format_columns,
     get_xml_data,
     get_xml_url,
     main,
+    parse_arguments,
     print_read_only_params,
     remove_prefix,
     split_into_lines,
@@ -738,7 +738,7 @@ class AnnotateParamsTest(unittest.TestCase):
     def test_arg_parser_valid_arguments(self) -> None:
         test_args = ["annotate_params", "--vehicle-type", "ArduCopter", "--sort", "none", "parameters"]
         with patch("sys.argv", test_args):
-            args = arg_parser()
+            args = parse_arguments()
             assert args.vehicle_type == "ArduCopter"
             assert args.sort == "none"
             assert args.target == "parameters"
@@ -748,17 +748,17 @@ class AnnotateParamsTest(unittest.TestCase):
     def test_arg_parser_invalid_vehicle_type(self) -> None:
         test_args = ["annotate_params", "--vehicle-type", "InvalidType", "--sort", "none", "parameters"]
         with patch("sys.argv", test_args), pytest.raises(SystemExit):
-            arg_parser()
+            parse_arguments()
 
     def test_arg_parser_invalid_sort_option(self) -> None:
         test_args = ["annotate_params", "--vehicle-type", "ArduCopter", "--sort", "invalid", "parameters"]
         with patch("sys.argv", test_args), pytest.raises(SystemExit):
-            arg_parser()
+            parse_arguments()
 
     def test_arg_parser_invalid_line_length_option(self) -> None:
         test_args = ["annotate_params", "--vehicle-type", "ArduCopter", "--sort", "none", "-m", "invalid", "parameters"]
         with patch("sys.argv", test_args), pytest.raises(SystemExit):
-            arg_parser()
+            parse_arguments()
 
 
 class TestAnnotateParamsExceptionHandling(unittest.TestCase):

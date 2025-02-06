@@ -18,13 +18,14 @@ import random
 import struct
 import sys
 import time
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from collections.abc import Generator
 from datetime import datetime
 from io import BufferedReader, BufferedWriter
 from io import BytesIO as SIO  # noqa: N814
 from typing import Union
 
+import argcomplete
 from pymavlink import mavutil
 
 # pylint: disable=too-many-lines
@@ -1397,7 +1398,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
 if __name__ == "__main__":
 
-    def argument_parser() -> Namespace:
+    def create_argument_parser() -> ArgumentParser:
         """
         Parses command-line arguments for the script.
 
@@ -1527,7 +1528,8 @@ if __name__ == "__main__":
         parser_crc.add_argument("arg1", type=str, metavar="remote_path", help="Path to the file to calculate the CRC of.")
 
         # Add other subparsers commands as needed
-        return parser.parse_args()
+        argcomplete.autocomplete(parser)
+        return parser
 
     def auto_detect_serial() -> list[mavutil.SerialPort]:
         preferred_ports = [
@@ -1592,7 +1594,7 @@ if __name__ == "__main__":
 
     def main() -> None:
         """For testing/example purposes only."""
-        args = argument_parser()
+        args = create_argument_parser().parse_args()
 
         logging.basicConfig(level=logging.getLevelName(args.loglevel), format="%(levelname)s - %(message)s")
 

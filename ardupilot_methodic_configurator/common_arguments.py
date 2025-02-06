@@ -8,13 +8,13 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.internationalization import LANGUAGE_CHOICES
 
 
-def add_common_arguments_and_parse(parser: ArgumentParser) -> Namespace:
+def add_common_arguments(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--loglevel",
         type=str,
@@ -32,4 +32,4 @@ def add_common_arguments_and_parse(parser: ArgumentParser) -> Namespace:
         choices=LANGUAGE_CHOICES,
         help=_("User interface language. Default is %(default)s."),
     )
-    return parser.parse_args()
+    return parser

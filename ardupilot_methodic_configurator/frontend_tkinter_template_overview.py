@@ -21,7 +21,7 @@ from typing import Optional
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
-from ardupilot_methodic_configurator.common_arguments import add_common_arguments_and_parse
+from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base import BaseWindow
 from ardupilot_methodic_configurator.middleware_template_overview import TemplateOverview
 
@@ -225,7 +225,7 @@ def argument_parser() -> argparse.Namespace:
             "providing a clear and intuitive interface for parameter management."
         )
     )
-    return add_common_arguments_and_parse(parser)
+    return add_common_arguments(parser).parse_args()
 
 
 def main() -> None:

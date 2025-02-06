@@ -22,7 +22,7 @@ from typing import Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-from ardupilot_methodic_configurator.common_arguments import add_common_arguments_and_parse
+from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base import (
     BaseWindow,
     ProgressWindow,
@@ -274,7 +274,7 @@ def argument_parser() -> Namespace:
         )
     )
     parser = FlightController.add_argparse_arguments(parser)
-    return add_common_arguments_and_parse(parser)
+    return add_common_arguments(parser).parse_args()
 
 
 # pylint: disable=duplicate-code

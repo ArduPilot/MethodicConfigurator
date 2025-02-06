@@ -24,7 +24,7 @@ from tkinter import filedialog, messagebox, ttk
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
-from ardupilot_methodic_configurator.common_arguments import add_common_arguments_and_parse
+from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base import BaseWindow, show_no_param_files_error, show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_template_overview import TemplateOverviewWindow
 
@@ -491,7 +491,7 @@ def argument_parser() -> Namespace:
         )
     )
     parser = LocalFilesystem.add_argparse_arguments(parser)
-    return add_common_arguments_and_parse(parser)
+    return add_common_arguments(parser).parse_args()
 
 
 # pylint: disable=duplicate-code

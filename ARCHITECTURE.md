@@ -125,6 +125,7 @@ the following system design requirements were derived:
   - [DevOps](https://en.wikipedia.org/wiki/DevOps)
   - [CI/CD automation](https://en.wikipedia.org/wiki/CI/CD)
   - git pre-commit hooks for code linting and other code quality checks
+  - create command-line autocompletion for bash, zsh and powershell [PR #134](https://github.com/ArduPilot/MethodicConfigurator/pull/134)
 
 ### The Software architecture
 
@@ -467,3 +468,32 @@ or create a gitlab Pull request with the changes to the `.po` file.
 The github [robot will automatically convert that `.po` file into a `.mo` file](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/update_mo_files.yml)
 and create an [*ArduPilot methodic configurator* installer](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/windows_build.yml)
 that you can use to test the translations.
+
+## Install command line completion
+
+For Bash autocompletion, add this to your `~/.bashrc`:
+
+```bash
+eval "$(register-python-argcomplete ardupilot_methodic_configurator)"
+```
+
+For Zsh autocompletion, add these lines to your `~/.zshrc`:
+
+```zsh
+autoload -U bashcompinit
+bashcompinit
+eval "$(register-python-argcomplete ardupilot_methodic_configurator)"
+```
+
+For PowerShell autocompletion, run this command in PowerShell:
+
+```powershell
+Register-ArgumentCompleter -Native -CommandName ardupilot_methodic_configurator -ScriptBlock {
+    param($wordToComplete, $commandAst, $cursorPosition)
+    $env:COMP_LINE=$commandAst.ToString()
+    $env:COMP_POINT=$cursorPosition
+    ardupilot_methodic_configurator | ForEach-Object {
+        [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
+    }
+}
+```
