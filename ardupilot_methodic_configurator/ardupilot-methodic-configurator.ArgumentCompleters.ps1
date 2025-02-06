@@ -127,5 +127,48 @@ Register-ArgumentCompleter -CommandName @(
                 @('0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8') -like "$wordToComplete*"
             }
         }
+        'mavftp' {
+            # Main commands
+            if (-not $fakeBoundParameters.Count) {
+                @(
+                    'get',
+                    'getparams',
+                    'put',
+                    'list',
+                    'mkdir',
+                    'rmdir',
+                    'rm',
+                    'rename',
+                    'crc'
+                ) -like "$wordToComplete*"
+            }
+
+            # Global options
+            @(
+                '--help',
+                '--baudrate',
+                '--device',
+                '--source-system',
+                '--loglevel',
+                '--debug',
+                '--pkt_loss_tx',
+                '--pkt_loss_rx',
+                '--max_backlog',
+                '--burst_read_size',
+                '--write_size',
+                '--write_qsize',
+                '--idle_detection_time',
+                '--read_retry_time',
+                '--retry_time'
+            ) -like "$wordToComplete*"
+
+            # Parameter-specific completions
+            if ($fakeBoundParameters.ContainsKey('--debug')) {
+                @('0', '1', '2') -like "$wordToComplete*"
+            }
+            if ($fakeBoundParameters.ContainsKey('--loglevel')) {
+                @('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL') -like "$wordToComplete*"
+            }
+        }
     }
 }
