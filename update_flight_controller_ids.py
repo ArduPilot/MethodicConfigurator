@@ -19,7 +19,7 @@ from typing import Union
 # Define the base directory to crawl
 BASE_DIR = "../ardupilot/libraries/AP_HAL_ChibiOS/hwdef/"
 
-hwdef_dict = dict[str, tuple[int, int, int, str, str, str]]
+HwdefDict = dict[str, tuple[int, int, int, str, str, str]]
 
 logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -52,8 +52,8 @@ def remove_suffixes(base_dirname: str, suffixes: list) -> str:
     return base_dirname
 
 
-def process_hwdef_files(base_directory: str) -> hwdef_dict:
-    hwdef_data: hwdef_dict = {}
+def process_hwdef_files(base_directory: str) -> HwdefDict:
+    hwdef_data: HwdefDict = {}
 
     # Walk through the directory
     for dirpath, _dirnames, filenames in os.walk(base_directory):
@@ -85,7 +85,7 @@ def process_hwdef_files(base_directory: str) -> hwdef_dict:
 
 
 def create_dicts(  # pylint: disable=too-many-locals
-    hwdef_data: hwdef_dict,
+    hwdef_data: HwdefDict,
 ) -> tuple[dict[int, str], dict[tuple[int, int], str], dict[int, str], dict[int, str], dict[int, str]]:
     vid_vendor_dict: dict[int, str] = {}
     vid_pid_product_dict: dict[tuple[int, int], str] = {}
@@ -227,7 +227,7 @@ def main() -> None:
     apj_board_id_vendor_dict: dict[int, str] = {}
     mcu_series_dict: dict[int, str] = {}
 
-    hwdef_data: hwdef_dict = process_hwdef_files(BASE_DIR)
+    hwdef_data: HwdefDict = process_hwdef_files(BASE_DIR)
     vid_vendor_dict, vid_pid_product_dict, apj_board_id_name_dict, apj_board_id_vendor_dict, mcu_series_dict = create_dicts(
         hwdef_data
     )
