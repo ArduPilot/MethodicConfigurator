@@ -1,0 +1,7 @@
+ATC_THR_MIX_MAX,0.5  # according to autotune documentation this should be raised up-to 0.9 after the tune
+BATT_FS_LOW_ACT,2  # outdoors we want the drone to come back
+BATT2_FS_LOW_ACT,2  # outdoors we want the drone to come back
+LOG_BITMASK,176126  # 2:GPS,3:System Performance,4:Control Tuning,6:RC input,7:IMU,8:Mission Commands,9:Battery Monitor,12:PID,13:Compass,17:Motors
+MIS_OPTIONS,0
+RTL_ALT,1500  # The default is too high for the kind of flights we do. This reduces the altitude for outdoors
+RTL_CLIMB_MIN,0  # always rise at least 1 meter as a visual indicator

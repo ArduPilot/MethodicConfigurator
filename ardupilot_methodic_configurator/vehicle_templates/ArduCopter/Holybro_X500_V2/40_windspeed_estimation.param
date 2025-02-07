@@ -1,0 +1,5 @@
+EK3_DRAG_BCOEF_X,0
+EK3_DRAG_BCOEF_Y,0
+EK3_DRAG_MCOEF,0
+LOG_DISARMED,0  # allow post flight tuning with Replay
+LOG_REPLAY,0  # allow post flight tuning with Replay
