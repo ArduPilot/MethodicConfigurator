@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-02-07 01:16+0000\n"
+"POT-Creation-Date: 2025-02-07 01:44+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -672,8 +672,8 @@ msgid "Please be patient, {:.1f}% of {}% complete"
 msgstr "请耐心等待, 已完成 {:.1f}% of {}%"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:276
-msgid "Lifting window: {_e} on file {__file__}"
-msgstr "提升窗口： 在文件"
+msgid "Lifting window: {_e}"
+msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:451
 msgid "Show this usage popup again"
@@ -2668,54 +2668,3 @@ msgid ""
 msgstr ""
 "GNSS\n"
 "連接"
-
-#~ msgid "Failed to download the file"
-#~ msgstr "未能成功下载文件"
-
-#~ msgid "The type of the vehicle. Defaults to ArduCopter"
-#~ msgstr "载具的类型。默认为ArduCopter/旋翼机"
-
-#~ msgid ""
-#~ "Directory containing vehicle-specific intermediate parameter files. "
-#~ "Defaults to the current working directory"
-#~ msgstr "载具类型所对应的模版所在的目录。默认为当前选中的目录"
-
-#~ msgid ""
-#~ "Start directly on the nth intermediate parameter file (skips previous "
-#~ "files). Default is to start on the file next to the last that you wrote "
-#~ "to the flight controller.If the file does not exist, it will start on the "
-#~ "first file."
-#~ msgstr ""
-#~ "从第N项模版开始(跳过前面的配置项)。默认为继续上次的配置。如果没有历史记"
-#~ "录, 则从第一项开始。"
-
-#~ msgid ""
-#~ "Allow opening and editing template files directly. Only for software "
-#~ "developers that know what they are doing.Defaults to %(default)s"
-#~ msgstr ""
-#~ "允許直接打開和編輯模板文件。僅適用於知道自己在做什麼的軟件開發人員。默認"
-#~ "為 %(default)s"
-
-#~ msgid ""
-#~ "MAVLink connection string to the flight controller. If set to \"none\" no "
-#~ "connection is made. Defaults to autodetection"
-#~ msgstr ""
-#~ "飛行控制器的 MAVLink 連接字符串。如果設置為「無」，則不進行連接。默認為自"
-#~ "動檢測飞控的MAVLink连接字符串。如果设置为 'none'，则不会建立连接。默认为自"
-#~ "动检测"
-
-#~ msgid "Logging level (default is %(default)s)."
-#~ msgstr "记录等级 ( 默认为  %(default)s)"
-
-#~ msgid "User interface language (default is %(default)s)."
-#~ msgstr "界面语言 (默认为  %(default)s )"
-
-#~ msgid ""
-#~ "Skip the component editor window. Only use this if all components have "
-#~ "been configured. Defaults to %(default)s"
-#~ msgstr ""
-#~ "跳過組件編輯器窗口。僅在所有組件已配置的情況下使用此選項。默認為 "
-#~ "%(default)s"
-
-#~ msgid "download_flight_controller_parameters"
-#~ msgstr "下载飞控参数"

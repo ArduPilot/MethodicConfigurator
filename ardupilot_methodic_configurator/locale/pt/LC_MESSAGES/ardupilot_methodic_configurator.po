@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-02-07 01:16+0000\n"
+"POT-Creation-Date: 2025-02-07 01:44+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -692,8 +692,8 @@ msgid "Please be patient, {:.1f}% of {}% complete"
 msgstr "Por favor, seja paciente, {:.1f}% de {}% concluído"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:276
-msgid "Lifting window: {_e} on file {__file__}"
-msgstr "Levantar janela: {_e} no arquivo {__file__}"
+msgid "Lifting window: {_e}"
+msgstr "Levantar janela: {_e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:451
 msgid "Show this usage popup again"
