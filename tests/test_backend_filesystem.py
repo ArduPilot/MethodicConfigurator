@@ -110,15 +110,43 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             expected_new = os_path.join("/mock/dir", "new_file.param")
             mock_rename.assert_called_once_with(expected_old, expected_new)
 
-    def test_vehicle_configuration_file_exists(self) -> None:
-        """Test checking if a specific configuration file exists."""
+    def test_vehicle_configuration_file_exists_comprehensive(self) -> None:
+        """Test checking if a specific configuration file exists with comprehensive path and size checks."""
         mock_vehicle_dir = "/mock/dir"
-        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", False)  # noqa: FBT003
+        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", allow_editing_template_files=False)
 
-        with patch("os.path.exists", return_value=True), patch("os.path.isfile", return_value=True):
+        # Test with all conditions met (file exists, is a file, and has size > 0)
+        with (
+            patch("os.path.exists", return_value=True) as mock_exists,
+            patch("os.path.isfile", return_value=True) as mock_isfile,
+            patch("os.path.getsize", return_value=100) as mock_getsize,
+            patch("os.path.join", side_effect=os_path.join) as mock_join,
+        ):
             assert filesystem.vehicle_configuration_file_exists("test.param")
+            mock_exists.assert_called_once()
+            mock_isfile.assert_called_once()
+            mock_getsize.assert_called_once()
+            mock_join.assert_called_once_with(mock_vehicle_dir, "test.param")
 
-        with patch("os.path.exists", return_value=False):
+        # Test with file that exists but is empty
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isfile", return_value=True),
+            patch("os.path.getsize", return_value=0),
+            patch("os.path.join", side_effect=os_path.join),
+        ):
+            assert not filesystem.vehicle_configuration_file_exists("empty.param")
+
+        # Test with directory instead of file
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isfile", return_value=False),
+            patch("os.path.join", side_effect=os_path.join),
+        ):
+            assert not filesystem.vehicle_configuration_file_exists("dir.param")
+
+        # Test with nonexistent file
+        with patch("os.path.exists", return_value=False), patch("os.path.join", side_effect=os_path.join):
             assert not filesystem.vehicle_configuration_file_exists("nonexistent.param")
 
     @patch("os.path.exists")

@@ -94,6 +94,8 @@ the following system design requirements were derived:
 - The software must provide feedback to the user, such as success or error messages, after each action.
 - The software must handle errors gracefully and provide clear error messages to the user.
 - The software must log events and errors for debugging and auditing purposes to the console.
+- if files are empty flag them as non-existing [PR #135](https://github.com/ArduPilot/MethodicConfigurator/pull/135)
+- if a downloaded file is empty flag it as download failed [PR #135](https://github.com/ArduPilot/MethodicConfigurator/pull/135)
 
 #### 6. Parameter File Management
 
