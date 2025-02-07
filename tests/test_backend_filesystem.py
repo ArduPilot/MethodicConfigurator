@@ -25,7 +25,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_read_params_from_files(self) -> None:
         """Test reading parameters from files with proper filtering."""
         mock_vehicle_dir = "/mock/dir"
-        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", False)  # noqa: FBT003
+        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", allow_editing_template_files=False)
 
         with (
             patch(
@@ -57,7 +57,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_re_init(self) -> None:
         """Test reinitializing the filesystem with new parameters."""
         mock_vehicle_dir = "/mock/dir"
-        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", False)  # noqa: FBT003
+        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", allow_editing_template_files=False)
 
         with (
             patch.object(filesystem, "load_vehicle_components_json_data", return_value=True),
@@ -73,7 +73,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_vehicle_configuration_files_exist(self) -> None:
         """Test checking if vehicle configuration files exist."""
         mock_vehicle_dir = "/mock/dir"
-        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", False)  # noqa: FBT003
+        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", allow_editing_template_files=False)
 
         with (
             patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists", return_value=True),
@@ -96,7 +96,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_rename_parameter_files(self) -> None:
         """Test renaming parameter files."""
         mock_vehicle_dir = "/mock/dir"
-        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", False)  # noqa: FBT003
+        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", allow_editing_template_files=False)
         filesystem.configuration_steps = {"new_file.param": {"old_filenames": ["old_file.param"]}}
 
         with (
@@ -185,7 +185,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         """Test getting current working directory."""
         mock_vehicle_dir = "/mock/dir"
         mock_cwd = "/test/dir"
-        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", False)  # noqa: FBT003
+        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", allow_editing_template_files=False)
 
         with patch("ardupilot_methodic_configurator.backend_filesystem.os_getcwd", return_value=mock_cwd) as mock_getcwd:
             result = filesystem.getcwd()
@@ -308,7 +308,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         """Test get_start_file with empty files list."""
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
         lfs.file_parameters = {}
-        result = lfs.get_start_file(1, True)  # noqa: FBT003
+        result = lfs.get_start_file(1, tcal_available=True)
         assert result == ""
 
     def test_get_eval_variables_with_none(self) -> None:
@@ -386,19 +386,19 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         lfs.file_parameters = {"01_file.param": {}, "02_file.param": {}, "03_file.param": {}}
 
         # Test with explicit index
-        result = lfs.get_start_file(1, True)  # noqa: FBT003
+        result = lfs.get_start_file(1, tcal_available=True)
         assert result == "02_file.param"
 
         # Test with out of range index
-        result = lfs.get_start_file(5, True)  # noqa: FBT003
+        result = lfs.get_start_file(5, tcal_available=True)
         assert result == "03_file.param"
 
         # Test with tcal available
-        result = lfs.get_start_file(-1, True)  # noqa: FBT003
+        result = lfs.get_start_file(-1, tcal_available=True)
         assert result == "01_file.param"
 
         # Test with tcal not available
-        result = lfs.get_start_file(-1, False)  # noqa: FBT003
+        result = lfs.get_start_file(-1, tcal_available=False)
         assert result == "03_file.param"
 
     def test_get_eval_variables(self) -> None:
@@ -522,7 +522,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             mock_format.return_value = "formatted_params"
 
             # Test with documentation annotation
-            lfs.export_to_param(test_params, "test.param", True)  # noqa: FBT003
+            lfs.export_to_param(test_params, "test.param", annotate_doc=True)
             mock_format.assert_called_with(test_params)
             mock_export.assert_called_with("formatted_params", os_path.join("vehicle_dir", "test.param"))
             mock_update.assert_called_once()
@@ -530,7 +530,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             # Test without documentation annotation
             mock_export.reset_mock()
             mock_update.reset_mock()
-            lfs.export_to_param(test_params, "test.param", False)  # noqa: FBT003
+            lfs.export_to_param(test_params, "test.param", annotate_doc=False)
             mock_export.assert_called_once()
             mock_update.assert_not_called()
 

@@ -174,7 +174,7 @@ def test_download_file_unicode_error(mock_get) -> None:
 def test_get_release_info_invalid_release(mock_get) -> None:
     mock_get.side_effect = requests_RequestException()
     with pytest.raises(requests_RequestException):
-        get_release_info("latest", False)  # noqa: FBT003
+        get_release_info("latest", should_be_pre_release=False)
 
 
 @patch("ardupilot_methodic_configurator.backend_internet.requests_get")

@@ -48,7 +48,7 @@ class TestInternationalization(unittest.TestCase):
         assert translation_function == identity_function  # pylint: disable=comparison-with-callable
 
     def test_language_choices(self) -> None:
-        expected_languages = ["en", "zh_CN", "pt", "de"]
+        expected_languages = ["en", "zh_CN", "pt", "de", "it"]
         assert expected_languages == LANGUAGE_CHOICES
 
 
