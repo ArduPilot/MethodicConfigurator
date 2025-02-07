@@ -1,0 +1,3 @@
+AHRS_ORIENTATION,0  # Point forward in the direction of travel
+BRD_HEAT_TARG,45  # Reset to default after offline IMU temperature calibration
+LOG_DISARMED,0  # Log disarmed was only required for offline IMU temperature calibration

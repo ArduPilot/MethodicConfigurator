@@ -1,0 +1,10 @@
+ARMING_RUDDER,2  # It's was arming method from begin so I keep it
+BRD_ALT_CONFIG,0
+RC_OPTIONS,32
+RC_PROTOCOLS,1  # Selected in the component editor
+RC10_OPTION,0  # I have up until 6 available channels
+RC6_OPTION,0  # I use this for the flight mode selection at FLTMODE_CH.
+RC7_OPTION,0  # I have up until 6 available channels
+RC8_OPTION,0  # I have up until 6 available channels
+RC9_OPTION,0  # I have up until 6 available channels
+RSSI_TYPE,0  # radio without RSSI

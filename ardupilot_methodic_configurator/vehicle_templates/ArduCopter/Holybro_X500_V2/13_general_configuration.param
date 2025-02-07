@@ -1,0 +1,18 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+AUTO_OPTIONS,0
+BRD_HEAT_TARG,45  # Operate at a constant IMU temperature
+BRD_RTC_TZ_MIN,60  # Belgium time zone
+EK3_SRC1_POSZ,1  # Use the default, it is safer, only barometer will be used
+FENCE_TYPE,7  # cylinder and max altitude, to obey local regulations and safety measures
+FS_EKF_ACTION,1  # Use the default, it is safer
+INS_ACCEL_FILTER,10  # the default is 20 and that lets too much noise in
+INS_POS1_X,0  # was -0.005
+INS_POS1_Y,0  # was -0.011
+INS_POS2_X,0  # was -0.011
+INS_POS2_Y,0  # was -0.01
+LAND_ALT_LOW,1000  # GPS is only 2.0m CEP
+RTL_ALT,500  # RTL at 5m is fine.
+RTL_LOIT_TIME,5000  # The default is too long. This reduces the time
+SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation
+SERIAL7_PROTOCOL,2  # MavLink 2 is supported.

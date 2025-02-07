@@ -1,0 +1,4 @@
+MOT_SPIN_ARM,0.1  # From current 0.07A the motors start spinning.
+MOT_SPIN_MAX,0.95  # Upper dead zone of the X11 plus
+MOT_SPIN_MIN,0.15  # This should be 0.10A.
+MOT_THST_EXPO,0.65  # I don't have thrust stand so use Ardupilot suggestion.
