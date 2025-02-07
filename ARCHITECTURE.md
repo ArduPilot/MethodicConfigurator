@@ -315,12 +315,20 @@ For example, to add support for German:
 mkdir de
 ```
 
-Now add the language to the end of the `LANGUAGE_CHOICES` array in the `ardupilot_methodic_configurator/internationalization.py` file.
+Add the language to the end of the `LANGUAGE_CHOICES` array in the `ardupilot_methodic_configurator/internationalization.py` file.
 
 For example, to add support for German:
 
 ```python
 LANGUAGE_CHOICES = ['en', 'zh_CN', 'pt', 'de']
+```
+
+Add it also to the test on `tests\test_internationalization.py` file:
+
+```python
+    def test_language_choices(self) -> None:
+        expected_languages = ["en", "zh_CN", "pt", "de", "it"]
+        assert expected_languages == LANGUAGE_CHOICES
 ```
 
 ### 3. Create a New PO File
