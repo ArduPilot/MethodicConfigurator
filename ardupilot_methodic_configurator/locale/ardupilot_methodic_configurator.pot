@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-02-07 01:16+0000\n"
+"POT-Creation-Date: 2025-02-07 01:44+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -581,7 +581,7 @@ msgid "Please be patient, {:.1f}% of {}% complete"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:276
-msgid "Lifting window: {_e} on file {__file__}"
+msgid "Lifting window: {_e}"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:451
