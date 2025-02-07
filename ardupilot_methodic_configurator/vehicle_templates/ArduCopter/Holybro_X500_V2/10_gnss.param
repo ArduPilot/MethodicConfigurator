@@ -1,0 +1,11 @@
+BRD_SAFETY_DEFLT,0  # Safety switch gets disabled.
+CAN_D1_PROTOCOL,0  # Enable this when a CAN gps will be used in the future.
+CAN_P1_DRIVER,0  # No CAN drivers are required for now
+GPS_GNSS_MODE,0  # GPS will be used
+GPS_POS1_X,-0.1  # The GPS is placed 10 centimeters back.
+GPS_POS1_Y,0  # The GPS is in the center for this coördinate
+GPS_POS1_Z,-0.05  # The GPS is 5 centimers up from the origin.
+GPS_TYPE,2  # Defined in component editor
+NTF_LED_TYPES,123079  # Enable DRONECAN LED
+SERIAL3_PROTOCOL,5  # GPS will be used.
+WPNAV_RADIUS,1000  # The accuracy of the GPS is only 2.0m CEP, ranges 5 are maximum (1000 cm to waypoint)
