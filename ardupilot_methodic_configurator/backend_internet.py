@@ -76,7 +76,7 @@ def download_file_from_url(
 
         if progress_callback:
             progress_callback(100.0, _("Download complete"))
-        return True
+        return bool(downloaded > 0)
 
     except requests_Timeout:
         logging_error(_("Download timed out"))

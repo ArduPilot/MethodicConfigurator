@@ -292,12 +292,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
           filename (str): The name of the file to check.
 
         Returns:
-          bool: True if the file exists and is a file (not a directory), False otherwise.
+          bool: True if the file exists and is a file (not a directory) and is not empty, False otherwise.
 
         """
-        return os_path.exists(os_path.join(self.vehicle_dir, filename)) and os_path.isfile(
-            os_path.join(self.vehicle_dir, filename)
-        )
+        file_path = os_path.join(self.vehicle_dir, filename)
+        return os_path.exists(file_path) and os_path.isfile(file_path) and os_path.getsize(file_path) > 0
 
     def __all_intermediate_parameter_file_comments(self) -> dict[str, str]:
         """

@@ -93,7 +93,7 @@ def test_download_file_empty_response(mock_get) -> None:
     mock_response.headers = {"content-length": "0"}
     mock_response.iter_content.return_value = []
     mock_get.return_value = mock_response
-    assert download_file_from_url("http://test.com", "test.txt")
+    assert not download_file_from_url("http://test.com", "test.txt")
 
 
 @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
