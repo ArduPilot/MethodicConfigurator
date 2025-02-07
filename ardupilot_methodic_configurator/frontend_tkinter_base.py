@@ -273,7 +273,7 @@ class ProgressWindow:
         try:
             self.progress_window.lift()
         except tk.TclError as _e:
-            msg = _("Lifting window: {_e} on file {__file__}")
+            msg = _("Lifting window: {_e}")
             logging_error(msg.format(**locals()))
             return
 
