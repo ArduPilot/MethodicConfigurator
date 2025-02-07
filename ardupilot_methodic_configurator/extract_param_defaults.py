@@ -18,6 +18,7 @@ import re
 from typing import Union
 
 import argcomplete
+from argcomplete.completers import FilesCompleter
 from pymavlink import mavutil
 
 NO_DEFAULT_VALUES_MESSAGE = "The .bin file contained no parameter default values. Update to a newer ArduPilot firmware version"
@@ -36,14 +37,14 @@ def create_argument_parser() -> argparse.ArgumentParser:
         choices=["missionplanner", "mavproxy", "qgcs"],
         default="missionplanner",
         help="Output file format. Default is %(default)s.",
-    )
+    ).completer = lambda **_: ["missionplanner", "mavproxy", "qgcs"]
     parser.add_argument(
         "-s",
         "--sort",
         choices=["none", "missionplanner", "mavproxy", "qgcs"],
         default="",
         help="Sort the parameters in the file. Default is the same as the format.",
-    )
+    ).completer = lambda **_: ["none", "missionplanner", "mavproxy", "qgcs"]
     parser.add_argument(
         "-v",
         "--version",
@@ -57,22 +58,24 @@ def create_argument_parser() -> argparse.ArgumentParser:
         type=int,
         default=-1,
         help="System ID for qgcs output format. Default is SYSID_THISMAV if defined else 1.",
-    )
+    ).choices = range(1, 256)  # Valid MAVLink system IDs
     parser.add_argument(
         "-c",
         "--compid",
         type=int,
         default=-1,
         help="Component ID for qgcs output format. Default is 1.",
-    )
+    ).choices = range(1, 256)  # Valid MAVLink component IDs
     parser.add_argument(
         "-t",
         "--type",
         choices=["defaults", "values", "non_default_values"],
         default="defaults",
         help="Type of parameter values to extract. Default is %(default)s.",
+    ).completer = lambda **_: ["defaults", "values", "non_default_values"]
+    parser.add_argument("bin_file", help="The ArduPilot .bin log file to read").completer = FilesCompleter(
+        allowednames=(".bin")
     )
-    parser.add_argument("bin_file", help="The ArduPilot .bin log file to read")
 
     argcomplete.autocomplete(parser)
     return parser

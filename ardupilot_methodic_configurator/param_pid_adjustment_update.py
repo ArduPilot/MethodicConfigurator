@@ -20,6 +20,7 @@ import subprocess
 from typing import Callable, Optional, Union
 
 import argcomplete
+from argcomplete.completers import DirectoriesCompleter, FilesCompleter
 
 PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
 PARAM_NAME_MAX_LEN = 16
@@ -46,14 +47,14 @@ explaining how their new value relates to the default parameter value.
         "--directory",
         required=True,
         help="The directory where the parameter files are located.",
-    )
+    ).completer = DirectoriesCompleter()
     parser.add_argument(
         "-a",
         "--adjustment_factor",
         type=ranged_type(float, 0.1, 0.8),
         default=0.5,
         help="The adjustment factor to apply to the optimized parameters. Must be in the interval 0.1 to 0.8. Default is 0.5.",
-    )
+    ).choices = [str(x / 10.0) for x in range(1, 9)]  # Provide 0.1-0.8 range suggestions
     parser.add_argument(
         "-v",
         "--version",
@@ -64,7 +65,7 @@ explaining how their new value relates to the default parameter value.
     parser.add_argument(
         "optimized_param_file",
         help="The name of the optimized parameter file.",
-    )
+    ).completer = FilesCompleter(allowednames=(".param"))
     argcomplete.autocomplete(parser)
     return parser
 

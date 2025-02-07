@@ -21,7 +21,7 @@ def add_common_arguments(parser: ArgumentParser) -> ArgumentParser:
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help=_("Logging level. Default is %(default)s."),
-    )
+    ).completer = lambda **_: ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     parser.add_argument(
         "-v", "--version", action="version", version=f"%(prog)s {__version__}", help=_("Display version information and exit.")
     )
@@ -31,5 +31,5 @@ def add_common_arguments(parser: ArgumentParser) -> ArgumentParser:
         default=LANGUAGE_CHOICES[0],
         choices=LANGUAGE_CHOICES,
         help=_("User interface language. Default is %(default)s."),
-    )
+    ).completer = lambda **_: LANGUAGE_CHOICES
     return parser

@@ -583,7 +583,7 @@ class FlightController:
                 'If set to "none" no connection is made.'
                 " Default is autodetection"
             ),
-        )
+        ).completer = lambda **_: FlightController.__list_serial_ports()
         parser.add_argument(
             "-r",
             "--reboot-time",
@@ -593,5 +593,5 @@ class FlightController:
             action=CheckRange,
             default=7,
             help=_("Flight controller reboot time. Default is %(default)s"),
-        )
+        ).choices = range(5, 51)
         return parser
