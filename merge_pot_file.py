@@ -23,7 +23,7 @@ def process_locale_directory(locale_dir: str, pot_file: str) -> None:
     try:
         # Run msgfmt command
         exe = "C:\\Program Files\\gettext-iconv\\bin\\msgmerge.exe" if platform_system() == "Windows" else "msgmerge"
-        cmd = [exe, "--update", "--no-fuzzy-matching", po_file, pot_file]
+        cmd = [exe, "--update", "--no-fuzzy-matching", "--backup=none", po_file, pot_file]
         # pylint: disable=duplicate-code
         subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
         msg = f"Successfully processed {locale_dir}"
