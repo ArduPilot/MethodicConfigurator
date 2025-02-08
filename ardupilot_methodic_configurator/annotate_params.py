@@ -36,6 +36,8 @@ from types import TracebackType
 from typing import Any, Optional, Union
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 
+import argcomplete
+from argcomplete.completers import FilesCompleter
 from defusedxml import ElementTree as DET  # noqa: N814, just parsing, no data-structure manipulation
 
 # URL of the XML file
@@ -52,7 +54,7 @@ VERSION = "1.0"
 # mypy: disable-error-code="unused-ignore"
 
 
-def arg_parser() -> argparse.Namespace:
+def create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Fetches on-line ArduPilot parameter documentation and adds it to the "
         "specified file or to all *.param and *.parm files in the specified directory."
@@ -60,7 +62,7 @@ def arg_parser() -> argparse.Namespace:
     parser.add_argument(
         "target",
         help="The target file or directory.",
-    )
+    ).completer = FilesCompleter(allowednames=(".param", ".parm"))
     parser.add_argument(
         "-d",
         "--delete-documentation-annotations",
@@ -79,21 +81,31 @@ def arg_parser() -> argparse.Namespace:
         choices=["none", "missionplanner", "mavproxy"],
         default="none",
         help="Sort the parameters in the file. Default is %(default)s.",
-    )
+    ).completer = lambda **_: ["none", "missionplanner", "mavproxy"]
     parser.add_argument(
         "-t",
         "--vehicle-type",
         choices=["AP_Periph", "AntennaTracker", "ArduCopter", "ArduPlane", "ArduSub", "Blimp", "Heli", "Rover", "SITL"],
         default="ArduCopter",
         help="The type of the vehicle. Default is %(default)s.",
-    )
+    ).completer = lambda **_: [
+        "AP_Periph",
+        "AntennaTracker",
+        "ArduCopter",
+        "ArduPlane",
+        "ArduSub",
+        "Blimp",
+        "Heli",
+        "Rover",
+        "SITL",
+    ]
     parser.add_argument(
         "-m",
         "--max-line-length",
         type=int,
         default=100,
         help="Maximum documentation line length. Default is %(default)s.",
-    )
+    ).choices = range(80, 121)
     parser.add_argument(
         "--verbose",
         action="store_true",
@@ -106,6 +118,13 @@ def arg_parser() -> argparse.Namespace:
         version=f"%(prog)s {VERSION}",
         help="Display version information and exit.",
     )
+
+    argcomplete.autocomplete(parser)
+    return parser
+
+
+def parse_arguments() -> argparse.Namespace:
+    parser = create_argument_parser()
 
     args = parser.parse_args()
 
@@ -818,7 +837,7 @@ def parse_parameter_metadata(
 
 
 def main() -> None:
-    args = arg_parser()
+    args = parse_arguments()
     try:
         xml_url = get_xml_url(args.vehicle_type, args.firmware_version)
         xml_dir = get_xml_dir(args.target)

@@ -17,6 +17,8 @@ import contextlib
 import re
 from typing import Union
 
+import argcomplete
+from argcomplete.completers import FilesCompleter
 from pymavlink import mavutil
 
 NO_DEFAULT_VALUES_MESSAGE = "The .bin file contained no parameter default values. Update to a newer ArduPilot firmware version"
@@ -27,17 +29,7 @@ MAVLINK_COMPID_MAX = 2**8
 MAV_PARAM_TYPE_REAL32 = 9
 
 
-def parse_arguments(args: Union[None, argparse.Namespace] = None) -> argparse.Namespace:
-    """
-    Parses command line arguments for the script.
-
-    Args:
-        args: List of command line arguments. Default is None, which means it uses sys.argv.
-
-    Returns:
-        Namespace object containing the parsed arguments.
-
-    """
+def create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Extracts parameter default values from an ArduPilot .bin log file.")
     parser.add_argument(
         "-f",
@@ -45,14 +37,14 @@ def parse_arguments(args: Union[None, argparse.Namespace] = None) -> argparse.Na
         choices=["missionplanner", "mavproxy", "qgcs"],
         default="missionplanner",
         help="Output file format. Default is %(default)s.",
-    )
+    ).completer = lambda **_: ["missionplanner", "mavproxy", "qgcs"]
     parser.add_argument(
         "-s",
         "--sort",
         choices=["none", "missionplanner", "mavproxy", "qgcs"],
         default="",
         help="Sort the parameters in the file. Default is the same as the format.",
-    )
+    ).completer = lambda **_: ["none", "missionplanner", "mavproxy", "qgcs"]
     parser.add_argument(
         "-v",
         "--version",
@@ -66,22 +58,41 @@ def parse_arguments(args: Union[None, argparse.Namespace] = None) -> argparse.Na
         type=int,
         default=-1,
         help="System ID for qgcs output format. Default is SYSID_THISMAV if defined else 1.",
-    )
+    ).choices = range(1, 256)  # Valid MAVLink system IDs
     parser.add_argument(
         "-c",
         "--compid",
         type=int,
         default=-1,
         help="Component ID for qgcs output format. Default is 1.",
-    )
+    ).choices = range(1, 256)  # Valid MAVLink component IDs
     parser.add_argument(
         "-t",
         "--type",
         choices=["defaults", "values", "non_default_values"],
         default="defaults",
         help="Type of parameter values to extract. Default is %(default)s.",
+    ).completer = lambda **_: ["defaults", "values", "non_default_values"]
+    parser.add_argument("bin_file", help="The ArduPilot .bin log file to read").completer = FilesCompleter(
+        allowednames=(".bin")
     )
-    parser.add_argument("bin_file", help="The ArduPilot .bin log file to read")
+
+    argcomplete.autocomplete(parser)
+    return parser
+
+
+def parse_arguments(args: Union[None, argparse.Namespace] = None) -> argparse.Namespace:
+    """
+    Parses command line arguments for the script.
+
+    Args:
+        args: List of command line arguments. Default is None, which means it uses sys.argv.
+
+    Returns:
+        Namespace object containing the parsed arguments.
+
+    """
+    parser = create_argument_parser()
     args, _ = parser.parse_known_args(args)  # type: ignore[arg-type]
 
     if args is None:

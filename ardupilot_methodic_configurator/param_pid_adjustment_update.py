@@ -19,12 +19,15 @@ import re
 import subprocess
 from typing import Callable, Optional, Union
 
+import argcomplete
+from argcomplete.completers import DirectoriesCompleter, FilesCompleter
+
 PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
 PARAM_NAME_MAX_LEN = 16
 VERSION = "1.0"
 
 
-def parse_arguments() -> argparse.Namespace:
+def create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""
@@ -44,14 +47,14 @@ explaining how their new value relates to the default parameter value.
         "--directory",
         required=True,
         help="The directory where the parameter files are located.",
-    )
+    ).completer = DirectoriesCompleter()
     parser.add_argument(
         "-a",
         "--adjustment_factor",
         type=ranged_type(float, 0.1, 0.8),
         default=0.5,
         help="The adjustment factor to apply to the optimized parameters. Must be in the interval 0.1 to 0.8. Default is 0.5.",
-    )
+    ).choices = [str(x / 10.0) for x in range(1, 9)]  # Provide 0.1-0.8 range suggestions
     parser.add_argument(
         "-v",
         "--version",
@@ -62,8 +65,9 @@ explaining how their new value relates to the default parameter value.
     parser.add_argument(
         "optimized_param_file",
         help="The name of the optimized parameter file.",
-    )
-    return parser.parse_args()
+    ).completer = FilesCompleter(allowednames=(".param"))
+    argcomplete.autocomplete(parser)
+    return parser
 
 
 def ranged_type(value_type: type, min_value: float, max_value: float) -> Callable:
@@ -227,7 +231,7 @@ def update_pid_adjustment_params(
 
 
 def main() -> None:
-    args = parse_arguments()
+    args = create_argument_parser().parse_args()
     # calculate the parameter values and their comments
     pid_adjustment_params_dict, pid_adjustment_file_path, content_header = update_pid_adjustment_params(
         args.directory, args.optimized_param_file, args.adjustment_factor

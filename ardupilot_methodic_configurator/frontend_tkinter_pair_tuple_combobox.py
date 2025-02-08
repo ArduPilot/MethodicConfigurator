@@ -25,7 +25,7 @@ from tkinter import Label, Toplevel, ttk
 from typing import Union
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.common_arguments import add_common_arguments_and_parse
+from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base import get_widget_font_family_and_size, update_combobox_width
 
 # SPDX-SnippetBegin
@@ -230,7 +230,7 @@ def argument_parser() -> Namespace:
             "Not to be used directly, but through the main ArduPilot methodic configurator script."
         )
     )
-    return add_common_arguments_and_parse(parser)
+    return add_common_arguments(parser).parse_args()
 
 
 def main() -> None:
