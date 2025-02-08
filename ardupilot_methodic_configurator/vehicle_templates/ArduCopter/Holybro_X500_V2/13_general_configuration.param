@@ -1,0 +1,187 @@
+# Arm Checks to Perform (bitmask)
+# Checks prior to arming motor. This is a bitmask of checks that will be performed before allowing arming.
+# For most users it is recommended to leave this at the default of 1 (all checks enabled). You can select
+# whatever checks you prefer by adding together the values of each check type to set this parameter. For
+# example, to only allow arming when you have GPS lock and no RC failsafe you would set ARMING_CHECK to 72.
+# Bitmask: 0:All,1:Barometer,2:Compass,3:GPS lock,4:INS,5:Parameters,6:RC Channels,7:Board voltage,8:Battery Level,10:Logging Available,11:Hardware safety switch,12:GPS Configuration,13:System,14:Mission,15:Rangefinder,16:Camera,17:AuxAuth,18:VisualOdometry,19:FFT
+# Default: 1
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+
+# Auto mode options
+# A range of options that can be applied to change auto mode behaviour. Allow Arming allows the copter to
+# be armed in Auto. Allow Takeoff Without Raising Throttle allows takeoff without the pilot having to raise
+# the throttle. Ignore pilot yaw overrides the pilot's yaw stick being used while in auto.
+# Bitmask: 0:Allow Arming,1:Allow Takeoff Without Raising Throttle,2:Ignore pilot yaw,7:Allow weathervaning
+# Default: 0
+AUTO_OPTIONS,0
+
+# Board heater temperature target
+# Board heater target temperature for boards with controllable heating units. Set to -1 to disable the
+# heater, please reboot after setting to -1.
+# Range: -1 80
+# Units: degC (degrees Celsius)
+# Default: 45
+BRD_HEAT_TARG,45  # Operate at a constant IMU temperature
+
+# Timezone offset from UTC
+# Adds offset in +- minutes from UTC to calculate local time
+# Range: -720 +840
+# Default: 0
+BRD_RTC_TZ_MIN,60  # Belgium time zone
+
+# Position Vertical Source
+# Position Vertical Source
+# 0: None
+# 1: Baro
+# 2: RangeFinder
+# 3: GPS
+# 4: Beacon
+# 6: ExternalNav
+# Default: 1
+EK3_SRC1_POSZ,1  # Use the default, it is safer, only barometer will be used
+
+# Fence Type
+# Enabled fence types held as bitmask
+# Bitmask: 0:Max altitude,1:Circle Centered on Home,2:Inclusion/Exclusion Circles+Polygons,3:Min altitude
+# Default: 7
+FENCE_TYPE,7  # cylinder and max altitude, to obey local regulations and safety measures
+
+# EKF Failsafe Action
+# Controls the action that will be taken when an EKF failsafe is invoked
+# 1: Land
+# 2: AltHold
+# 3: Land even in Stabilize
+# Default: 1
+FS_EKF_ACTION,1  # Use the default, it is safer
+
+# Accel filter cutoff frequency
+# Filter cutoff frequency for accelerometers. This can be set to a lower value to try to cope with very
+# high vibration levels in aircraft. A value of zero means no filtering (not recommended!)
+# Units: Hz (hertz)
+# Range: 0 256
+# Default: 20
+INS_ACCEL_FILTER,10  # the default is 20 and that lets too much noise in
+
+# IMU accelerometer X position
+# X position of the first IMU Accelerometer in body frame. Positive X is forward of the origin. Attention:
+# The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter
+# is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and
+# IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU
+# can be used as the body frame origin.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+INS_POS1_X,0  # was -0.005
+
+# IMU accelerometer Y position
+# Y position of the first IMU accelerometer in body frame. Positive Y is to the right of the origin.
+# Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this
+# parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to
+# vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location
+# closer to the IMU can be used as the body frame origin.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+INS_POS1_Y,0  # was -0.011
+
+# IMU accelerometer X position
+# X position of the second IMU accelerometer in body frame. Positive X is forward of the origin. Attention:
+# The IMU should be located as close to the vehicle c.g. as practical so that the value of this parameter
+# is minimised. Failure to do so can result in noisy navigation velocity measurements due to vibration and
+# IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location closer to the IMU
+# can be used as the body frame origin.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+INS_POS2_X,0  # was -0.011
+
+# IMU accelerometer Y position
+# Y position of the second IMU accelerometer in body frame. Positive Y is to the right of the origin.
+# Attention: The IMU should be located as close to the vehicle c.g. as practical so that the value of this
+# parameter is minimised. Failure to do so can result in noisy navigation velocity measurements due to
+# vibration and IMU gyro noise. If the IMU cannot be moved and velocity noise is a problem, a location
+# closer to the IMU can be used as the body frame origin.
+# Units: m (meters)
+# Range: -5 5
+# Increment: 0.01
+# Default: 0
+INS_POS2_Y,0  # was -0.01
+
+# Land alt low
+# Altitude during Landing at which vehicle slows to LAND_SPEED
+# Units: cm (centimeters)
+# Range: 100 10000
+# Increment: 10
+# Default: 1000
+LAND_ALT_LOW,1000  # GPS is only 2.0m CEP
+
+# RTL Altitude
+# The minimum alt above home the vehicle will climb to before returning.  If the vehicle is flying higher
+# than this value it will return at its current altitude.
+# Units: cm (centimeters)
+# Range: 200 300000
+# Increment: 1
+# Default: 1500
+RTL_ALT,500  # RTL at 5m is fine.
+
+# RTL loiter time
+# Time (in milliseconds) to loiter above home before beginning final descent
+# Units: ms (milliseconds)
+# Range: 0 60000
+# Increment: 1000
+# Default: 5000
+RTL_LOIT_TIME,5000  # The default is too long. This reduces the time
+
+# Scheduling main loop rate
+# This controls the rate of the main control loop in Hz. This should only be changed by developers. This
+# only takes effect on restart. Values over 400 are considered highly experimental.
+# RebootRequired: True
+# 50: 50Hz
+# 100: 100Hz
+# 200: 200Hz
+# 250: 250Hz
+# 300: 300Hz
+# 400: 400Hz
+# Default: 400
+SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
+
+# Enable Scripting
+# Controls if scripting is enabled
+# RebootRequired: True
+# 0: None
+# 1: Lua Scripts
+# Default: 0
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation
+
+# Serial7 protocol selection
+# Control what protocol Serial7 port should be used for. Note that the Frsky options require external
+# converter hardware. See the wiki for details.
+# RebootRequired: True
+# -1: None                                             25: LTM
+# 1: MAVLink1                                          26: RunCam
+# 2: MAVLink2                                          27: HottTelem
+# 3: Frsky D                                           28: Scripting
+# 4: Frsky SPort                                       29: Crossfire VTX
+# 5: GPS                                               30: Generator
+# 7: Alexmos Gimbal Serial                             31: Winch
+# 8: Gimbal                                            32: MSP
+# 9: Rangefinder                                       33: DJI FPV
+# 10: FrSky SPort Passthrough (OpenTX)                 34: AirSpeed
+# 11: Lidar360                                         35: ADSB
+# 13: Beacon                                           36: AHRS
+# 14: Volz servo out                                   37: SmartAudio
+# 15: SBus servo out                                   38: FETtecOneWire
+# 16: ESC Telemetry                                    39: Torqeedo
+# 17: Devo Telemetry                                   40: AIS
+# 18: OpticalFlow                                      41: CoDevESC
+# 19: RobotisServo                                     42: DisplayPort
+# 20: NMEA Output                                      43: MAVLink High Latency
+# 21: WindVane                                         44: IRC Tramp
+# 22: SLCAN                                            45: DDS XRCE
+# 23: RCIN                                             46: IMUDATA
+# 24: EFI Serial
+# Default: 2
+SERIAL7_PROTOCOL,2  # MavLink 2 is supported.

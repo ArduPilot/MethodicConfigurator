@@ -1,0 +1,185 @@
+{
+    "Format version": 1,
+    "Components": {
+        "Flight Controller": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "Pixhawk6C-bdshot",
+                "URL": "https://holybro.com/products/pixhawk-6c?srsltid=AfmBOoqx6fEclM8l4wICaZcGtR5ecABosliproB7TozPMEdYY7SG0A_t",
+                "Version": "1.0"
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.5.7 official"
+            },
+            "Notes": "The Pixhawk 6C with dimensions: 84.8 * 44 * 12.4 mm"
+        },
+        "Frame": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "X500 V2",
+                "URL": "https://holybro.com/products/x500-v2-kits?srsltid=AfmBOor9p_QpA5CNDhM99OCZ4DMVM1eUJ8H_dLW4FpDZgz0VR01YJ_M8",
+                "Version": "Payload: 1500g (without Battery, 70% Throttle)"
+            },
+            "Specifications": {
+                "TOW min Kg": 1.09,
+                "TOW max Kg": 2.11
+            },
+            "Notes": "Frame is X500 V2 type. Look on holybro site for more specifications"
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "FlySky",
+                "Model": "FS-i6X",
+                "URL": "https://www.flysky-cn.com/fsi6x",
+                "Version": "1.0"
+            },
+            "Firmware": {
+                "Type": "AFHDS 2A",
+                "Version": "V1.0.52"
+            },
+            "Notes": "It has 10 channels, but only 6 can be used by the receiver."
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "FlySky",
+                "Model": "FS-i6X",
+                "URL": "ttps://www.flysky-cn.com/fsi6x",
+                "Version": "1.0"
+            },
+            "Firmware": {
+                "Type": "AFHDS 2A",
+                "Version": "V1.0.52"
+            },
+            "Notes": "integrated in RC controller"
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "FlySky",
+                "Model": "FS-IA6B",
+                "URL": "https://www.flysky-cn.com/ia6b-canshu",
+                "Version": "V1.0"
+            },
+            "Firmware": {
+                "Type": "AFHDS 2A",
+                "Version": "V1.0.52"
+            },
+            "FC Connection": {
+                "Type": "RCin/SBUS",
+                "Protocol": "PPM"
+            },
+            "Notes": "This receiver is connected to the pixhawk 6C PPM/SBUS RC entrance and uses PPM protocol"
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "SiK Telemetry Radio V3",
+                "URL": "https://holybro.com/products/sik-telemetry-radio-v3?variant=41562952270013",
+                "Version": "V3.0"
+            },
+            "Firmware": {
+                "Type": "Open-source SIK firmware",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink High Latency"
+            },
+            "Notes": "100mW at 433MHz, 13.6g without antenna + \n7.4g for 433MHz antenna"
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "PM02 V3 Power Module (12S)",
+                "URL": "https://holybro.com/products/pm02-v3-12s-power-module?srsltid=AfmBOoruyyy13wBspPFngCWD-IdOxUHiH3nfgUpN79MuVgugcMqUUxGK",
+                "Version": "V3"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "Analog",
+                "Protocol": "Solo"
+            },
+            "Notes": "Supplies 5.2V to FC, providing current consumption and battery voltage measurements"
+        },
+        "Battery": {
+            "Product": {
+                "Manufacturer": "Gens Ace",
+                "Model": "4S1P 5000mAh",
+                "URL": "https://www.rccorner.ae/gens-ace-5000mah-14-8v-45c-4s1p-lipo-battery",
+                "Version": "B-45C-5000-4S1P"
+            },
+            "Specifications": {
+                "Chemistry": "Lipo",
+                "Volt per cell max": 4.2,
+                "Volt per cell low": 3.4,
+                "Volt per cell crit": 3.3,
+                "Number of cells": 4,
+                "Capacity mAh": 5000
+            },
+            "Notes": "Normal battery 0.5 kg."
+        },
+        "ESC": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "X500 V2-BLHeli S 20A",
+                "URL": "https://www.mybotshop.de/Holybro-X500-V2-BLHeli-S-20A-ESC_1",
+                "Version": "1"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "Main Out",
+                "Protocol": "Normal"
+            },
+            "Notes": "Main Out connectie want All in one has the current and the pwm modulation for the ESC's"
+        },
+        "Motors": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "2216-920KV",
+                "URL": "https://nl.aliexpress.com/item/1005003954474597.html?gatewayAdapt=glo2nld",
+                "Version": ""
+            },
+            "Specifications": {
+                "Poles": 14
+            },
+            "Notes": "High thrust and powerfull motors"
+        },
+        "Propellers": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "Propeller 1045",
+                "URL": "https://holybro.com/collections/multicopter-kit/products/spare-parts-x500-v2-kit?variant=41591073669309",
+                "Version": ""
+            },
+            "Specifications": {
+                "Diameter_inches": 10
+            },
+            "Notes": ""
+        },
+        "GNSS Receiver": {
+            "Product": {
+                "Manufacturer": "Holybro ",
+                "Model": "M10",
+                "URL": "https://holybro.com/products/m10-gps?srsltid=AfmBOootSZi5Pc_2XhliqsKy-u3_8l8SKZ8tzd5wDuPMENtL-ZeLngUL",
+                "Version": "1"
+            },
+            "Firmware": {
+                "Type": "Ublox",
+                "Version": "M10"
+            },
+            "FC Connection": {
+                "Type": "SERIAL3",
+                "Protocol": "uBlox"
+            },
+            "Notes": "uBlox M10 GNSS "
+        }
+    },
+    "Program version": "0.9.12",
+    "Configuration template": "X11_plus"
+}
