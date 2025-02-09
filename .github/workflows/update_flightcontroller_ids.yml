@@ -42,7 +42,7 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
             if [ $CHANGED_LINES -gt 3 ]; then
-              git commit -m "CHORE: Updated ArduPilot flight controller IDs [skip ci]"
+              git commit -m "chore(flightcontroller): Updated ArduPilot flight controller IDs [skip ci]"
               git push
             else
               echo "Not enough changes to commit (only $CHANGED_LINES lines changed)"

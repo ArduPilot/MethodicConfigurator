@@ -70,7 +70,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add ardupilot_methodic_configurator/__init__.py
-          git commit -m "CHORE: Bump version info, tag and release"
+          git commit -m "chore(release): Bump version info, tag and release"
           git push
 
       - name: Create and push tag
