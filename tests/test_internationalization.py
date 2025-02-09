@@ -12,10 +12,22 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import unittest
+from os import path as os_path
 
 import pytest
 
 from ardupilot_methodic_configurator.internationalization import LANGUAGE_CHOICES, identity_function, load_translation
+
+
+@pytest.mark.usefixtures("mock_args_de")
+def test_no_logging_import() -> None:
+    """Test that logging is not imported in internationalization.py."""
+    with open(
+        os_path.join(os_path.dirname(__file__), "../ardupilot_methodic_configurator/internationalization.py"), encoding="utf-8"
+    ) as f:
+        content = f.read()
+        assert "import logging" not in content
+        assert "from logging import" not in content
 
 
 class TestInternationalization(unittest.TestCase):
