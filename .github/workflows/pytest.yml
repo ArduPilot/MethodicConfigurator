@@ -47,7 +47,7 @@ jobs:
 
       - name: Test with pytest
         id: pytest
-        continue-on-error: true
+        continue-on-error: false
         run: |
           export DISPLAY=:99
           Xvfb :99 -screen 0 1024x768x16 &
@@ -124,6 +124,11 @@ jobs:
 
       - name: Check coverage
         run: |
+          # Check if pytest job failed
+          if [ "${{ needs.pytest.result }}" == "failure" ]; then
+            echo "Pytest failed - failing coverage check"
+            exit 1
+          fi
           coverage report --fail-under=40
 
   add_coverage_to_pullrequest:
