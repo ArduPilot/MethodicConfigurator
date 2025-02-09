@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0.16\n"
-"POT-Creation-Date: 2025-02-07 01:44+0000\n"
+"POT-Creation-Date: 2025-02-09 21:32+0000\n"
 "PO-Revision-Date: 2025-02-05 01:24+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -16,7 +16,7 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.5\n"
 
-#: ardupilot_methodic_configurator/__main__.py:48
+#: ardupilot_methodic_configurator/__main__.py:49
 msgid ""
 "ArduPilot methodic configurator is a simple GUI with a table that lists "
 "parameters. The GUI reads intermediate parameter files from a directory and "
@@ -41,20 +41,20 @@ msgstr ""
 "parametri intermedio successivo. Il processo viene ripetuto per ogni file di "
 "parametri intermedio."
 
-#: ardupilot_methodic_configurator/__main__.py:74
+#: ardupilot_methodic_configurator/__main__.py:78
 msgid "No serial ports found"
 msgstr "Nessuna porta seriale trovata"
 
-#: ardupilot_methodic_configurator/__main__.py:83
+#: ardupilot_methodic_configurator/__main__.py:87
 msgid "Vehicle type not set explicitly, auto-detected %s."
 msgstr ""
 "Tipo di veicolo non impostato esplicitamente, rilevato automaticamente %s."
 
-#: ardupilot_methodic_configurator/__main__.py:85
+#: ardupilot_methodic_configurator/__main__.py:89
 msgid "Vehicle type explicitly set to %s."
 msgstr "Tipo di veicolo impostato esplicitamente a %s."
 
-#: ardupilot_methodic_configurator/__main__.py:116
+#: ardupilot_methodic_configurator/__main__.py:120
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:97
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:100
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:110
@@ -66,16 +66,16 @@ msgstr "Tipo di veicolo impostato esplicitamente a %s."
 msgid "Unknown"
 msgstr "Sconosciuto"
 
-#: ardupilot_methodic_configurator/__main__.py:132
+#: ardupilot_methodic_configurator/__main__.py:136
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:123
 msgid "Error in derived parameters"
 msgstr "Errore nei parametri derivati"
 
-#: ardupilot_methodic_configurator/__main__.py:142
+#: ardupilot_methodic_configurator/__main__.py:146
 msgid "Will now exit the old software version."
 msgstr "Ora uscirà dalla vecchia versione del software."
 
-#: ardupilot_methodic_configurator/__main__.py:165
+#: ardupilot_methodic_configurator/__main__.py:169
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:203
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:437
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:458
@@ -99,88 +99,88 @@ msgstr "intervallo valido: {_lo}, {_up}"
 msgid "Value must be a number."
 msgstr "Il valore deve essere un numero."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:114
+#: ardupilot_methodic_configurator/backend_filesystem.py:116
 msgid "Could not detect vehicle type. Defaulting to %s."
 msgstr ""
 "Impossibile rilevare il tipo di veicolo. Impostazione predefinita a %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:164
+#: ardupilot_methodic_configurator/backend_filesystem.py:166
 msgid "File %s already exists. Will not rename file %s to %s."
 msgstr "Il file %s esiste già. Non verrà rinominato il file %s in %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:244
+#: ardupilot_methodic_configurator/backend_filesystem.py:246
 msgid "Error: %s is not a directory."
 msgstr "Errore: %s non è una directory."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:443
+#: ardupilot_methodic_configurator/backend_filesystem.py:445
 msgid "Intermediate parameter files and summary files zipped to %s"
 msgstr "File dei parametri intermedi e file di riepilogo compressi in %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:463
+#: ardupilot_methodic_configurator/backend_filesystem.py:465
 msgid "Template directory does not exist: {template_dir}"
 msgstr "Directory dei modelli non esistente: {template_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:468
+#: ardupilot_methodic_configurator/backend_filesystem.py:470
 msgid "New vehicle directory does not exist: {new_vehicle_dir}"
 msgstr "La directory del nuovo veicolo non esiste: {new_vehicle_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:488
+#: ardupilot_methodic_configurator/backend_filesystem.py:490
 msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr ""
 "Errore durante la copia dei file modello nella directory del nuovo veicolo: "
 "{_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:508
+#: ardupilot_methodic_configurator/backend_filesystem.py:510
 msgid "Parameter %s not found in the current parameter file"
 msgstr "Parametro %s non trovato nel file dei parametri corrente"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:516
+#: ardupilot_methodic_configurator/backend_filesystem.py:518
 msgid "Error writing last uploaded filename: %s"
 msgstr "Errore durante la scrittura dell'ultimo nome file caricato: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:523
+#: ardupilot_methodic_configurator/backend_filesystem.py:525
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr "last_uploaded_filename.txt non trovato: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:525
+#: ardupilot_methodic_configurator/backend_filesystem.py:527
 msgid "Error reading last uploaded filename: %s"
 msgstr "Errore durante la lettura dell'ultimo nome file caricato: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:541
+#: ardupilot_methodic_configurator/backend_filesystem.py:543
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr ""
 "L'indice del file di partenza %s è fuori intervallo. Si inizia con il file "
 "%s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:549
+#: ardupilot_methodic_configurator/backend_filesystem.py:551
 msgid "Starting with the first file."
 msgstr "Inizio dal primo file."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:552
+#: ardupilot_methodic_configurator/backend_filesystem.py:554
 msgid "Starting with the first non-tcal file."
 msgstr "Inizio dal primo file non-tcal."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:556
+#: ardupilot_methodic_configurator/backend_filesystem.py:558
 msgid "Last uploaded file was %s."
 msgstr "L'ultimo file caricato era %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:558
+#: ardupilot_methodic_configurator/backend_filesystem.py:560
 msgid "No last uploaded file found. %s."
 msgstr "Nessun ultimo file caricato trovato. %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:563
+#: ardupilot_methodic_configurator/backend_filesystem.py:565
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr "Ultimo file caricato non trovato nella lista dei file. %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:572
+#: ardupilot_methodic_configurator/backend_filesystem.py:574
 msgid "Last uploaded file is the last file in the list. Starting from there."
 msgstr "L'ultimo file caricato è l'ultimo file nella lista. Si inizia da lì."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:671
+#: ardupilot_methodic_configurator/backend_filesystem.py:673
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "Il tipo del veicolo. Predefinito è ArduCopter"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:677
+#: ardupilot_methodic_configurator/backend_filesystem.py:679
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
@@ -188,7 +188,7 @@ msgstr ""
 "Directory contenente i file dei parametri intermedi specifici del veicolo. "
 "Predefinita è la directory di lavoro corrente"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:685
+#: ardupilot_methodic_configurator/backend_filesystem.py:687
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -200,7 +200,7 @@ msgstr ""
 "all'ultimo scritto sul controller di volo. Se il file non esiste, inizierà "
 "dal primo file."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:694
+#: ardupilot_methodic_configurator/backend_filesystem.py:696
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
