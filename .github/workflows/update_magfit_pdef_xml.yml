@@ -33,7 +33,7 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
             if [ $CHANGED_LINES -gt 3 ]; then
-              git commit -m "CHORE: Updated 24_inflight_magnetometer_fit_setup.pdef.xml files in the vehicle templates"
+              git commit -m "chore(parameter_metadata): Updated 24_inflight_magnetometer_fit_setup.pdef.xml files in the vehicle templates"
               git push
             else
               echo "Not enough changes to commit (only $CHANGED_LINES lines changed)"

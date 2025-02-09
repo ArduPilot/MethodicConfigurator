@@ -35,7 +35,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git add ardupilot_methodic_configurator/locale/**/ardupilot_methodic_configurator.mo
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "CHORE: Updated translation .mo files from the .po files"
+            git commit -m "chore(translation): Updated translation .mo files from the .po files"
             git push
           else
             echo "No changes to commit"
