@@ -258,6 +258,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         _vehicle_components_strings = _("Number of cells")
         _vehicle_components_strings = _("Capacity mAh")
         _vehicle_components_strings = _("ESC")
+        _vehicle_components_strings = _("RPM Telemetry")
         _vehicle_components_strings = _("Motors")
         _vehicle_components_strings = _("Poles")
         _vehicle_components_strings = _("Propellers")
@@ -303,6 +304,19 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 "Firmware": self.data["Components"]["Flight Controller"]["Firmware"],
                 "Specifications": {"MCU Series": "Unknown"},
                 "Notes": self.data["Components"]["Flight Controller"]["Notes"],
+            }
+
+        # To update old JSON files that do not have these new
+        # "ESC.RPM Telemetry.Connection" and "ESC.RPM Telemetry.Protocol" fields
+        if "ESC" not in self.data["Components"]:
+            self.data["Components"]["ESC"] = {}
+        if "RPM Telemetry" not in self.data["Components"]["ESC"]:
+            self.data["Components"]["ESC"] = {
+                "Product": self.data["Components"]["ESC"]["Product"],
+                "Firmware": self.data["Components"]["ESC"]["Firmware"],
+                "FC Connection": self.data["Components"]["ESC"]["FC Connection"],
+                "RPM Telemetry": {"Connection": "None", "Protocol": "None"},
+                "Notes": self.data["Components"]["ESC"]["Notes"],
             }
 
     def set_vehicle_type_and_version(self, vehicle_type: str, version: str) -> None:
@@ -487,19 +501,25 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             elif "SERVO_FTW_MASK" in fc_parameters and fc_parameters["SERVO_FTW_MASK"] and "SERVO_FTW_POLES" in fc_parameters:
                 self.data["Components"]["Motors"]["Specifications"]["Poles"] = fc_parameters["SERVO_FTW_POLES"]
 
-    def update_esc_protocol_combobox_entries(self, esc_connection_type: str) -> None:
+    def update_esc_protocol_combobox_entries(self, esc_connection_type: str) -> None:  # noqa: PLR0915
         """Updates the ESC Protocol combobox entries based on the selected ESC Type."""
         if len(esc_connection_type) > 3 and esc_connection_type[:3] == "CAN":
             protocols = ["DroneCAN"]
+            rpm_connections = [esc_connection_type]
         elif len(esc_connection_type) > 6 and esc_connection_type[:6] == "SERIAL":
             protocols = [value["protocol"] for value in serial_protocols_dict.values() if value["component"] == "ESC"]
+            rpm_connections = [esc_connection_type]
         elif "MOT_PWM_TYPE" in self.local_filesystem.doc_dict:
             protocols = list(self.local_filesystem.doc_dict["MOT_PWM_TYPE"]["values"].values())
+            rpm_connections = ["None", "I/O Only", *serial_ports, *can_ports]
         elif "Q_M_PWM_TYPE" in self.local_filesystem.doc_dict:
             protocols = list(self.local_filesystem.doc_dict["Q_M_PWM_TYPE"]["values"].values())
+            rpm_connections = ["None", "I/O Only", *serial_ports, *can_ports]
         else:
             protocols = []
+            rpm_connections = []
 
+        protocol = ""
         protocol_path = ("ESC", "FC Connection", "Protocol")
         if protocol_path in self.entry_widgets:
             protocol_combobox = self.entry_widgets[protocol_path]
@@ -507,6 +527,35 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             if protocol_combobox.get() not in protocols and isinstance(protocol_combobox, ttk.Combobox):
                 protocol_combobox.set(protocols[0] if protocols else "")
             protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
+            protocol = protocol_combobox.get()
+            if protocol in ["Normal", "OneShot", "OneShot125", "Brushed", "PWMRange"]:
+                rpm_connections = ["None"]
+            elif "DShot" in protocol:
+                rpm_connections = ["None", "Main Out/AIO", *serial_ports]
+
+        rpm_connection_path = ("ESC", "RPM Telemetry", "Connection")
+        if rpm_connection_path in self.entry_widgets:
+            rpm_connection_combobox = self.entry_widgets[rpm_connection_path]
+            rpm_connection_combobox["values"] = rpm_connections  # Update the combobox entries
+            if rpm_connection_combobox.get() not in rpm_connections and isinstance(rpm_connection_combobox, ttk.Combobox):
+                rpm_connection_combobox.set(rpm_connections[0] if rpm_connections else "")
+            rpm_connection_combobox.update_idletasks()  # re-draw the combobox ASAP
+
+            if len(esc_connection_type) > 3 and esc_connection_type[:3] == "CAN":
+                rpm_protocols = ["None", "DroneCAN"]
+            elif len(esc_connection_type) > 6 and esc_connection_type[:6] == "SERIAL":
+                rpm_protocols = ["None", protocol]
+            elif "MOT_PWM_TYPE" in self.local_filesystem.doc_dict or "Q_M_PWM_TYPE" in self.local_filesystem.doc_dict:
+                rpm_protocols = ["None", "Dshot", "BDshot"]
+            else:
+                rpm_protocols = []
+            rpm_protocol_path = ("ESC", "RPM Telemetry", "Protocol")
+            if rpm_protocol_path in self.entry_widgets:
+                rpm_protocol_combobox = self.entry_widgets[rpm_protocol_path]
+                rpm_protocol_combobox["values"] = rpm_protocols  # Update the combobox entries
+                if rpm_protocol_combobox.get() not in rpm_protocols and isinstance(rpm_protocol_combobox, ttk.Combobox):
+                    rpm_protocol_combobox.set(rpm_protocols[0] if rpm_protocols else "")
+                rpm_protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
 
     def add_entry_or_combobox(
         self, value: float, entry_frame: ttk.Frame, path: tuple[str, str, str]
