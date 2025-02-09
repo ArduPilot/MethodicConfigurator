@@ -89,8 +89,8 @@ class VehicleComponents:
         return ""
 
     @staticmethod
-    def supported_vehicles() -> list[str]:
-        return ["AP_Periph", "AntennaTracker", "ArduCopter", "ArduPlane", "ArduSub", "Blimp", "Heli", "Rover", "SITL"]
+    def supported_vehicles() -> tuple[str, str, str, str, str, str, str, str, str]:
+        return ("AP_Periph", "AntennaTracker", "ArduCopter", "ArduPlane", "ArduSub", "Blimp", "Heli", "Rover", "SITL")
 
     @staticmethod
     def get_vehicle_components_overviews() -> dict[str, TemplateOverview]:
