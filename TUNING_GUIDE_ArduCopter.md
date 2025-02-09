@@ -619,7 +619,13 @@ Test the initial setup on the ground in [stabilize flight mode](https://ardupilo
 At this sweet spot, inspect all axes (roll, pitch and yaw) by providing small RC transmitter stick inputs.
 If the multicopter behaves correspondingly, the setup is good to go.
 
-After some careful test maneuvers switch to `ALTHOLD` and hover for 30 to 40 seconds one to two meters above the ground. Land and disarm.
+After some careful test maneuvers switch to `ALTHOLD` and hover for 30 to 40 seconds one to two meters above the ground.
+Land and disarm.
+
+> [!IMPORTANT]
+> If your vehicle is very overpowered and requires a [MOT_THST_HOVER](https://ardupilot.org/copter/docs/parameters.html#mot-thst-hover)
+> level close to or bellow 0.2 you will need to set the [MOT_HOVER_LEARN](https://ardupilot.org/copter/docs/parameters.html#mot-hover-learn)
+> parameter to 0 (using the `Add` button on the GUI) and follow the [setting hover throttle instructions](https://ardupilot.org/copter/ocs/ac_throttlemid.html)
 
 Immediately check for hot motors.
 If the motors are too hot, check the `.bin` dataflash log, high or oscillating `RATE.*out` values indicate which PID gain you should reduce to remove the output oscillations causing the motors to heat up.
