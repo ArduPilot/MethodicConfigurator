@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 | [![md-link-check](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/markdown-link-check.yml/badge.svg)](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/markdown-link-check.yml) | | [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?logo=discord&logoColor=white)](https://discord.com/channels/674039678562861068/1308233496535371856) | ![PyPI - Downloads](https://img.shields.io/pypi/dm/ardupilot-methodic-configurator?link=https%3A%2F%2Fpypi.org%2Fproject%2Fardupilot-methodic-configurator%2F) | |
 
 *ArduPilot Methodic Configurator* is a software, developed by ArduPilot developers, that semi-automates a
-[clear, proven and safe configuration sequence](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter) for ArduCopter drones.
+[clear, proven and safe configuration sequence for ArduCopter](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter) drones.
 We are working on extending it to [ArduPlane](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane),
 [Heli](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli) and
 [Rover](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover) vehicles.
@@ -41,6 +41,7 @@ Let's compare it with the traditional tool used to configure ArduPilot: a genera
 | reuse params in other vehicles | No, unless you hand edit files | Yes, out-of-the-box |
 | documents why you changed each parameter | No | Yes |
 | tutorials and learning resources | No, scattered and not integrated | Yes, context-aware help integrated |
+| auto. install lua scripts on the FC | No | Yes |
 
 [^1]: you need to know what/when/why you are doing
 [^2]: it explains what you should do, when you should do it and why
