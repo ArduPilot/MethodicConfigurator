@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-02-09 21:32+0000\n"
+"POT-Creation-Date: 2025-02-12 17:58+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -699,15 +699,15 @@ msgstr "Kein param_file Kombobox-Element ausgewählt"
 msgid "Please be patient, {:.1f}% of {}% complete"
 msgstr "Bitte geduldig sein, {:.1f}% von {}% abgeschlossen"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:276
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:278
 msgid "Lifting window: {_e}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:451
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:453
 msgid "Show this usage popup again"
 msgstr "Dieses Nutzungspopup erneut anzeigen"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:459
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:461
 msgid "Dismiss"
 msgstr "Abweisen"
 
