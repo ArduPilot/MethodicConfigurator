@@ -767,7 +767,7 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
     @pytest.mark.usefixtures("mock_update", "mock_get_xml_dir", "mock_get_xml_url")
     @patch("builtins.open", new_callable=mock.mock_open)
     def test_main_ioerror(self, mock_file) -> None:
-        with patch("ardupilot_methodic_configurator.annotate_params.arg_parser") as mock_arg_parser:
+        with patch("ardupilot_methodic_configurator.annotate_params.parse_arguments") as mock_arg_parser:
             mock_arg_parser.return_value = mock.Mock(
                 vehicle_type="ArduCopter",
                 firmware_version="4.0",
@@ -786,7 +786,7 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
     @pytest.mark.usefixtures("mock_update", "mock_get_xml_dir", "mock_get_xml_url")
     @patch("builtins.open", new_callable=mock.mock_open)
     def test_main_oserror(self, mock_file) -> None:
-        with patch("ardupilot_methodic_configurator.annotate_params.arg_parser") as mock_arg_parser:
+        with patch("ardupilot_methodic_configurator.annotate_params.parse_arguments") as mock_arg_parser:
             mock_arg_parser.return_value = mock.Mock(
                 vehicle_type="ArduCopter",
                 firmware_version="4.0",
