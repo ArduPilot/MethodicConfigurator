@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-02-09 21:32+0000\n"
+"POT-Creation-Date: 2025-02-12 17:58+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -671,15 +671,15 @@ msgstr "没有选中参数文件中的 combobox 元素"
 msgid "Please be patient, {:.1f}% of {}% complete"
 msgstr "请耐心等待, 已完成 {:.1f}% of {}%"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:276
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:278
 msgid "Lifting window: {_e}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:451
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:453
 msgid "Show this usage popup again"
 msgstr "再次顯示此使用彈出窗口"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:459
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:461
 msgid "Dismiss"
 msgstr "关闭"
 
