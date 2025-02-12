@@ -271,6 +271,8 @@ class ProgressWindow:
 
         """
         try:
+            if hasattr(self, "progress_window") is False or self.progress_window is None:
+                return
             self.progress_window.lift()
         except tk.TclError as _e:
             msg = _("Lifting window: {_e}")
