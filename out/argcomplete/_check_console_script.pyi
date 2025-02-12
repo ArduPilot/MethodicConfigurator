@@ -1,0 +1,3 @@
+from ._check_module import ArgcompleteMarkerNotFound as ArgcompleteMarkerNotFound, find as find
+
+def main() -> None: ...
