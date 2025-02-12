@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-02-09 21:32+0000\n"
+"POT-Creation-Date: 2025-02-12 17:58+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -580,15 +580,15 @@ msgstr ""
 msgid "Please be patient, {:.1f}% of {}% complete"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:276
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:278
 msgid "Lifting window: {_e}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:451
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:453
 msgid "Show this usage popup again"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:459
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:461
 msgid "Dismiss"
 msgstr ""
 
