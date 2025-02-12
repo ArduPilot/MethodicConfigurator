@@ -1,0 +1,29 @@
+import argparse
+from .completers import BaseCompleter as BaseCompleter, ChoicesCompleter as ChoicesCompleter, FilesCompleter as FilesCompleter, SuppressCompleter as SuppressCompleter
+from .io import debug as debug, mute_stderr as mute_stderr
+from .lexers import split_line as split_line
+from .packages._argparse import IntrospectiveArgumentParser as IntrospectiveArgumentParser, action_is_greedy as action_is_greedy, action_is_open as action_is_open, action_is_satisfied as action_is_satisfied
+from _typeshed import Incomplete
+from typing import Callable, Sequence, TextIO
+
+safe_actions: Incomplete
+
+def default_validator(completion, prefix): ...
+
+class CompletionFinder:
+    always_complete_options: Incomplete
+    exclude: Incomplete
+    validator: Incomplete
+    print_suppressed: Incomplete
+    completing: bool
+    default_completer: Incomplete
+    append_space: Incomplete
+    def __init__(self, argument_parser: Incomplete | None = None, always_complete_options: bool = True, exclude: Incomplete | None = None, validator: Incomplete | None = None, print_suppressed: bool = False, default_completer=..., append_space: Incomplete | None = None) -> None: ...
+    def __call__(self, argument_parser: argparse.ArgumentParser, always_complete_options: bool | str = True, exit_method: Callable = ..., output_stream: TextIO | None = None, exclude: Sequence[str] | None = None, validator: Callable | None = None, print_suppressed: bool = False, append_space: bool | None = None, default_completer: BaseCompleter = ...) -> None: ...
+    def collect_completions(self, active_parsers: list[argparse.ArgumentParser], parsed_args: argparse.Namespace, cword_prefix: str) -> list[str]: ...
+    def filter_completions(self, completions: list[str]) -> list[str]: ...
+    def quote_completions(self, completions: list[str], cword_prequote: str, last_wordbreak_pos: int | None) -> list[str]: ...
+    def rl_complete(self, text, state): ...
+    def get_display_completions(self): ...
+
+class ExclusiveCompletionFinder(CompletionFinder): ...
