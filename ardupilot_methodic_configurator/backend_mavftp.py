@@ -1415,13 +1415,13 @@ def create_argument_parser() -> ArgumentParser:
         " protocol."
     )
     parser.add_argument("--baudrate", type=int, default=115200, help="master port baud rate. Default is %(default)s")
-    parser.add_argument(
+    parser.add_argument(  # type: ignore[attr-defined]
         "--device",
         type=str,
         default="",
         help="serial device. For windows use COMx where x is the port number. "
         "For Unix use /dev/ttyUSBx where x is the port number. Default is autodetection",
-    ).completer = FilesCompleter(directories=False, allowednames=(".port"))  # pylint: disable=superfluous-parens
+    ).completer = FilesCompleter(directories=False, allowednames=[".port"])  # type: ignore[no-untyped-call]
     parser.add_argument(
         "--source-system", type=int, default=250, help="MAVLink source system for this GCS. Default is %(default)s"
     )
@@ -1450,22 +1450,22 @@ def create_argument_parser() -> ArgumentParser:
     # Get command
     parser_get = subparsers.add_parser("get", help="Get a file from the remote flight controller.")
     parser_get.add_argument("arg1", type=str, metavar="remote_path", help="Path to the file on the remote flight controller.")
-    parser_get.add_argument(
+    parser_get.add_argument(  # type: ignore[attr-defined]
         "arg2", nargs="?", type=str, metavar="local_path", help="Optional local path to save the file."
-    ).completer = FilesCompleter()
+    ).completer = FilesCompleter()  # type: ignore[no-untyped-call]
 
     # Getparams command
     parser_getparams = subparsers.add_parser("getparams", help="Get and decode parameters from the remote flight controller.")
-    parser_getparams.add_argument(
+    parser_getparams.add_argument(  # type: ignore[attr-defined]
         "arg1", type=str, metavar="param_values_path", help="Local path to save the parameter values file to."
-    ).completer = FilesCompleter()
-    parser_getparams.add_argument(
+    ).completer = FilesCompleter()  # type: ignore[no-untyped-call]
+    parser_getparams.add_argument(  # type: ignore[attr-defined]
         "arg2",
         nargs="?",
         type=str,
         metavar="param_defaults_path",
         help="Optional local path to save the parameter defaults file to.",
-    ).completer = FilesCompleter()
+    ).completer = FilesCompleter()  # type: ignore[no-untyped-call]
     parser_getparams.add_argument(
         "-s",
         "--sort",
@@ -1490,9 +1490,9 @@ def create_argument_parser() -> ArgumentParser:
 
     # Put command
     parser_put = subparsers.add_parser("put", help="Put a file to the remote flight controller.")
-    parser_put.add_argument(
+    parser_put.add_argument(  # type: ignore[attr-defined]
         "arg1", type=str, metavar="local_path", help="Local path to the file to upload to the flight controller."
-    ).completer = FilesCompleter()
+    ).completer = FilesCompleter()  # type: ignore[no-untyped-call]
     parser_put.add_argument(
         "arg2",
         nargs="?",

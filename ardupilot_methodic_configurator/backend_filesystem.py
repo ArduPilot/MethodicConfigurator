@@ -672,14 +672,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             default="",
             help=_("The type of the vehicle. Default is ArduCopter"),
         )
-        parser.add_argument(
+        parser.add_argument(  # type: ignore[attr-defined]
             "--vehicle-dir",
             type=str,
             default=os_getcwd(),
             help=_(
                 "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
             ),
-        ).completer = DirectoriesCompleter()
+        ).completer = DirectoriesCompleter()  # type: ignore[no-untyped-call]
         parser.add_argument(
             "--n",
             type=int,

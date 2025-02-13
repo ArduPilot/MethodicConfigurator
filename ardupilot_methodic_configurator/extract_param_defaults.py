@@ -74,9 +74,10 @@ def create_argument_parser() -> argparse.ArgumentParser:
         default="defaults",
         help="Type of parameter values to extract. Default is %(default)s.",
     )
-    parser.add_argument("bin_file", help="The ArduPilot .bin log file to read").completer = FilesCompleter(
-        allowednames=(".bin")
-    )
+    parser.add_argument(
+        "bin_file",
+        help="The ArduPilot .bin log file to read",
+    ).completer = FilesCompleter(allowednames=[".bin"])  # type: ignore[attr-defined, no-untyped-call]
 
     argcomplete.autocomplete(parser)
     return parser

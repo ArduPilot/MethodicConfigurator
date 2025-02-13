@@ -489,65 +489,51 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         self, value: float, entry_frame: ttk.Frame, path: tuple[str, str, str]
     ) -> Union[ttk.Entry, ttk.Combobox]:
         # Default values for comboboxes in case the apm.pdef.xml metadata is not available
-        fallbacks = {
-            "RC_PROTOCOLS": [value["protocol"] for value in rc_protocols_dict.values()],
-            "BATT_MONITOR": [value["protocol"] for value in batt_monitor_connection.values()],
-            "MOT_PWM_TYPE": [value["protocol"] for value in mot_pwm_type_dict.values()],
-            "GPS_TYPE": [value["protocol"] for value in gnss_receiver_connection.values()],
+        fallbacks: dict[str, tuple[str, ...]] = {
+            "RC_PROTOCOLS": tuple(value["protocol"] for value in rc_protocols_dict.values()),
+            "BATT_MONITOR": tuple(value["protocol"] for value in batt_monitor_connection.values()),
+            "MOT_PWM_TYPE": tuple(value["protocol"] for value in mot_pwm_type_dict.values()),
+            "GPS_TYPE": tuple(value["protocol"] for value in gnss_receiver_connection.values()),
         }
 
-        def get_combobox_values(param_name: str) -> list:
+        def get_combobox_values(param_name: str) -> tuple[str, ...]:
             param_metadata = self.local_filesystem.doc_dict
             if param_name in param_metadata:
                 if "values" in param_metadata[param_name] and param_metadata[param_name]["values"]:
-                    return list(param_metadata[param_name]["values"].values())
+                    return tuple(param_metadata[param_name]["values"].values())
                 if "Bitmask" in param_metadata[param_name] and param_metadata[param_name]["Bitmask"]:
-                    return list(param_metadata[param_name]["Bitmask"].values())
+                    return tuple(param_metadata[param_name]["Bitmask"].values())
                 logging_error(_("No values found for %s in the metadata"), param_name)
             if param_name in fallbacks:
                 return fallbacks[param_name]
             logging_error(_("No fallback values found for %s"), param_name)
-            return []
+            return ()
 
-        combobox_config = {
-            ("Flight Controller", "Firmware", "Type"): {
-                "values": VehicleComponents.supported_vehicles(),
-            },
-            ("RC Receiver", "FC Connection", "Type"): {
-                "values": ["RCin/SBUS", *self.serial_ports, *self.can_ports],
-            },
-            ("RC Receiver", "FC Connection", "Protocol"): {
-                "values": get_combobox_values("RC_PROTOCOLS"),
-            },
-            ("Telemetry", "FC Connection", "Type"): {
-                "values": self.serial_ports + self.can_ports,
-            },
-            ("Telemetry", "FC Connection", "Protocol"): {
-                "values": ["MAVLink1", "MAVLink2", "MAVLink High Latency"],
-            },
-            ("Battery Monitor", "FC Connection", "Type"): {
-                "values": ["None", "Analog", "SPI", "PWM", *self.i2c_ports, *self.serial_ports, *self.can_ports],
-            },
-            ("Battery Monitor", "FC Connection", "Protocol"): {
-                "values": get_combobox_values("BATT_MONITOR"),
-            },
-            ("ESC", "FC Connection", "Type"): {
-                "values": ["Main Out", "AIO", *self.serial_ports, *self.can_ports],
-            },
-            ("ESC", "FC Connection", "Protocol"): {"values": get_combobox_values("MOT_PWM_TYPE")},
-            ("GNSS Receiver", "FC Connection", "Type"): {
-                "values": ["None", *self.serial_ports, *self.can_ports],
-            },
-            ("GNSS Receiver", "FC Connection", "Protocol"): {
-                "values": get_combobox_values("GPS_TYPE"),
-            },
-            ("Battery", "Specifications", "Chemistry"): {
-                "values": BatteryCell.chemistries(),
-            },
+        combobox_dict: dict[tuple[str, str, str], tuple[str, ...]] = {
+            ("Flight Controller", "Firmware", "Type"): VehicleComponents.supported_vehicles(),
+            ("RC Receiver", "FC Connection", "Type"): ("RCin/SBUS", *self.serial_ports, *self.can_ports),
+            ("RC Receiver", "FC Connection", "Protocol"): get_combobox_values("RC_PROTOCOLS"),
+            ("Telemetry", "FC Connection", "Type"): tuple(self.serial_ports + self.can_ports),
+            ("Telemetry", "FC Connection", "Protocol"): ("MAVLink1", "MAVLink2", "MAVLink High Latency"),
+            ("Battery Monitor", "FC Connection", "Type"): (
+                "None",
+                "Analog",
+                "SPI",
+                "PWM",
+                *self.i2c_ports,
+                *self.serial_ports,
+                *self.can_ports,
+            ),
+            ("Battery Monitor", "FC Connection", "Protocol"): get_combobox_values("BATT_MONITOR"),
+            ("ESC", "FC Connection", "Type"): ("Main Out", "AIO", *self.serial_ports, *self.can_ports),
+            ("ESC", "FC Connection", "Protocol"): get_combobox_values("MOT_PWM_TYPE"),
+            ("GNSS Receiver", "FC Connection", "Type"): ("None", *self.serial_ports, *self.can_ports),
+            ("GNSS Receiver", "FC Connection", "Protocol"): get_combobox_values("GPS_TYPE"),
+            ("Battery", "Specifications", "Chemistry"): BatteryCell.chemistries(),
         }
-        config = combobox_config.get(path)
-        if config:
-            cb = ttk.Combobox(entry_frame, values=config["values"])
+        combobox_values: Union[tuple[str, ...], None] = combobox_dict.get(path)
+        if combobox_values:
+            cb = ttk.Combobox(entry_frame, values=combobox_values)
             cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore[misc]
             cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore[misc]
 

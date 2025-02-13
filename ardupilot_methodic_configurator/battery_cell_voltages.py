@@ -61,13 +61,13 @@ class BatteryCell:
     """
     This class provides methods to work with battery cell voltages for different chemistries.
 
-    It includes methods to get the list of chemistries, limit voltages based on chemistry type,
+    It includes methods to get the tuple of chemistries, limit voltages based on chemistry type,
     and get recommended voltages for a given chemistry.
     """
 
     @staticmethod
-    def chemistries() -> list[str]:
-        return list(battery_cell_voltages.keys())
+    def chemistries() -> tuple[str, ...]:
+        return tuple(battery_cell_voltages.keys())
 
     @staticmethod
     def limit_max_voltage(chemistry: str) -> float:

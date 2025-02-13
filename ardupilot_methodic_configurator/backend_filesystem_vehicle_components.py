@@ -89,7 +89,7 @@ class VehicleComponents:
         return ""
 
     @staticmethod
-    def supported_vehicles() -> tuple[str, str, str, str, str, str, str, str, str]:
+    def supported_vehicles() -> tuple[str, ...]:
         return ("AP_Periph", "AntennaTracker", "ArduCopter", "ArduPlane", "ArduSub", "Blimp", "Heli", "Rover", "SITL")
 
     @staticmethod
