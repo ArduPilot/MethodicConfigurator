@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-02-12 17:58+0000\n"
+"POT-Creation-Date: 2025-02-13 19:39+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -862,7 +862,7 @@ msgstr "MOT_PWM_TYPE %f 为无效的非整数值"
 msgid "No fallback values found for %s"
 msgstr "没找到 %s 的回退值"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:613
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:599
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "Allowed values are: {_allowed_str}"
@@ -871,26 +871,26 @@ msgstr ""
 "允許的值是：无效的值 '{value}' 对于 {_paths_str}\n"
 "允许的值为：{_allowed_str}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:614
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:645
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:654
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:680
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:687
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:722
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:742
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:764
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:771
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:600
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:631
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:640
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:666
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:673
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:708
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:728
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:750
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:757
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:237
 msgid "Error"
 msgstr "错误"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:639
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:625
 msgid ""
 "{_name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}"
 msgstr ""
 "{_name} 必须是介于 {limits[0]} 和 {limits[1]} 之间的 {data_type.__name__}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:644
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:630
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "{e}"
@@ -899,19 +899,19 @@ msgstr ""
 "无效的值 '{value}' 对于 {_paths_str}\n"
 "{e}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:654
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:640
 msgid "Battery Chemistry not set. Will default to Lipo."
 msgstr "电池类型未设置，将默认使用 Lipo。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:668
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:654
 msgid "is below the {chemistry} minimum limit of {volt_limit}"
 msgstr "低于 {chemistry} 的最小电压限制 {volt_limit}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:675
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:661
 msgid "is above the {chemistry} maximum limit of {volt_limit}"
 msgstr "高于 {chemistry} 的最大电压限制 {volt_limit}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:679
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:665
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "{_e}"
@@ -920,7 +920,7 @@ msgstr ""
 "无效的值 '{value}' 对于 {_path_str}\n"
 "{_e}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:686
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:672
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "{_e}\n"
@@ -932,7 +932,7 @@ msgstr ""
 "{_e}\n"
 "将设置为推荐值。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:721
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:707
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "Allowed values are: {_values_str}"
@@ -941,15 +941,15 @@ msgstr ""
 "允許的值是：无效的值 '{value}' 对于 {_path_str}\n"
 "允许的值为：{_values_str}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:741
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:727
 msgid "Duplicate FC connection type '{value}' for {_path_str}"
 msgstr "对于 {_path_str} 存在重复的飞控连接类型 '{value}'"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:764
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:750
 msgid "Battery Cell Low voltage must be lower than max voltage"
 msgstr "电池单芯的低电压必须低于最大电压"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:771
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:757
 msgid "Battery Cell Crit voltage must be lower than low voltage"
 msgstr "电池单芯的临界电压必须低于低电压"
 

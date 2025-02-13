@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0.16\n"
-"POT-Creation-Date: 2025-02-12 17:58+0000\n"
+"POT-Creation-Date: 2025-02-13 19:39+0000\n"
 "PO-Revision-Date: 2025-02-05 01:24+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -891,7 +891,7 @@ msgstr "Valore non intero non valido per MOT_PWM_TYPE %f"
 msgid "No fallback values found for %s"
 msgstr "Nessun valore di fallback trovato per %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:613
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:599
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "Allowed values are: {_allowed_str}"
@@ -899,26 +899,26 @@ msgstr ""
 "Valore non valido '{value}' per {_paths_str}\n"
 "I valori ammessi sono: {_allowed_str}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:614
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:645
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:654
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:680
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:687
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:722
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:742
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:764
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:771
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:600
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:631
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:640
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:666
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:673
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:708
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:728
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:750
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:757
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:237
 msgid "Error"
 msgstr "Errore"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:639
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:625
 msgid ""
 "{_name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}"
 msgstr ""
 "{_name} deve essere un {data_type.__name__} tra {limits[0]} e {limits[1]}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:644
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:630
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "{e}"
@@ -926,21 +926,21 @@ msgstr ""
 "Valore non valido '{value}' per {_paths_str}\n"
 "{e}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:654
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:640
 msgid "Battery Chemistry not set. Will default to Lipo."
 msgstr ""
 "Chimica della batteria non impostata. Verrà utilizzato il valore predefinito "
 "Lipo."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:668
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:654
 msgid "is below the {chemistry} minimum limit of {volt_limit}"
 msgstr "è sotto il limite minimo di {chemistry} di {volt_limit}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:675
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:661
 msgid "is above the {chemistry} maximum limit of {volt_limit}"
 msgstr "è sopra il limite massimo di {chemistry} di {volt_limit}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:679
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:665
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "{_e}"
@@ -948,7 +948,7 @@ msgstr ""
 "Valore non valido '{value}' per {_path_str}\n"
 "{_e}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:686
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:672
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "{_e}\n"
@@ -958,7 +958,7 @@ msgstr ""
 "{_e}\n"
 "Verrà impostato il valore consigliato."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:721
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:707
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "Allowed values are: {_values_str}"
@@ -966,17 +966,17 @@ msgstr ""
 "Valore non valido '{value}' per {_path_str}\n"
 "I valori ammessi sono: {_values_str}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:741
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:727
 msgid "Duplicate FC connection type '{value}' for {_path_str}"
 msgstr "Tipo di connessione FC duplicato '{value}' per {_path_str}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:764
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:750
 msgid "Battery Cell Low voltage must be lower than max voltage"
 msgstr ""
 "La tensione bassa della cella della batteria deve essere inferiore alla "
 "tensione massima"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:771
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:757
 msgid "Battery Cell Crit voltage must be lower than low voltage"
 msgstr ""
 "La tensione critica della cella della batteria deve essere inferiore alla "
