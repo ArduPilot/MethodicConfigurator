@@ -51,7 +51,7 @@ jobs:
         run: |
           export DISPLAY=:99
           Xvfb :99 -screen 0 1024x768x16 &
-          pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md
+          pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md --junit-xml=tests/results-junit.xml
 
       - name: Display test results as github job summary
         run: cat tests/results-${{ matrix.python-version }}.md >> $GITHUB_STEP_SUMMARY
@@ -62,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
             name: coverage-${{ matrix.python-version }}-xml
-            path: tests/coverage.xml
+            path: tests/*.xml
             retention-days: 1
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
@@ -129,7 +129,7 @@ jobs:
             echo "Pytest failed - failing coverage check"
             exit 1
           fi
-          coverage report --fail-under=40
+          coverage report --fail-under=41
 
   publish-test-results:
     if: always()
@@ -152,7 +152,7 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         id: test-results
         with:
-          files: "artifacts/**/*.xml"
+          files: "artifacts/**/results-junit.xml"
 
       - name: Set badge color
         shell: bash
