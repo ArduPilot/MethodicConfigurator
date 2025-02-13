@@ -131,6 +131,62 @@ jobs:
           fi
           coverage report --fail-under=40
 
+  publish-test-results:
+    if: always()
+    name: "Publish Tests Results"
+    runs-on: ubuntu-latest
+    needs: pytest  # This will ensure this job runs after 'pytest'
+    permissions:
+      checks: write
+
+      # only needed unless run with comment_mode: off
+      pull-requests: write
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "artifacts/**/*.xml"
+
+      - name: Set badge color
+        shell: bash
+        run: |
+          case ${{ fromJSON( steps.test-results.outputs.json ).conclusion }} in
+            success)
+              echo "BADGE_COLOR=31c653" >> $GITHUB_ENV
+              ;;
+            failure)
+              echo "BADGE_COLOR=800000" >> $GITHUB_ENV
+              ;;
+            neutral)
+              echo "BADGE_COLOR=696969" >> $GITHUB_ENV
+              ;;
+          esac
+
+      - name: Create badge
+        uses: emibcn/badge-action@808173dd03e2f30c980d03ee49e181626088eee8
+        with:
+          label: Tests
+          status: '${{ fromJSON( steps.test-results.outputs.json ).formatted.stats.tests }} tests, ${{ fromJSON( steps.test-results.outputs.json ).formatted.stats.runs }} runs: ${{ fromJSON( steps.test-results.outputs.json ).conclusion }}'
+          color: ${{ env.BADGE_COLOR }}
+          path: badge.svg
+
+      - name: Upload badge to Gist
+        # Upload only for master branch
+        if: >
+          github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'master' ||
+          github.event_name != 'workflow_run' && github.ref == 'refs/heads/master'
+        uses: andymckay/append-gist-action@6e8d64427fe47cbacf4ab6b890411f1d67c07f3e
+        with:
+          token: ${{ secrets.GIST_TOKEN }}
+          gistURL: https://gist.githubusercontent.com/amilcarlucas/81b511dc0ff92b8072613d1cd100832e
+          file: badge.svg
+
   add_coverage_to_pullrequest:
     if: github.event_name == 'pull_request' && (success() || failure())
     runs-on: ubuntu-latest
