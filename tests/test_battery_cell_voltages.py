@@ -18,7 +18,7 @@ from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell, b
 
 class TestBatteryCell(unittest.TestCase):  # pylint: disable=missing-class-docstring
     def test_chemistries(self) -> None:
-        expected_chemistries = ["LiIon", "LiIonSS", "LiIonSSHV", "Lipo", "LipoHV", "LipoHVSS"]
+        expected_chemistries = ("LiIon", "LiIonSS", "LiIonSSHV", "Lipo", "LipoHV", "LipoHVSS")
         chemistries = BatteryCell.chemistries()
         assert chemistries == expected_chemistries
 

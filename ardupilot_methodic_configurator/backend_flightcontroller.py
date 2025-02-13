@@ -574,7 +574,7 @@ class FlightController:
 
     @staticmethod
     def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
-        parser.add_argument(
+        parser.add_argument(  # type: ignore[attr-defined]
             "--device",
             type=str,
             default="",

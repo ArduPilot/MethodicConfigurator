@@ -60,10 +60,10 @@ def create_argument_parser() -> argparse.ArgumentParser:
         description="Fetches on-line ArduPilot parameter documentation and adds it to the "
         "specified file or to all *.param and *.parm files in the specified directory."
     )
-    parser.add_argument(
+    parser.add_argument(  # type: ignore[attr-defined]
         "target",
         help="The target file or directory.",
-    ).completer = FilesCompleter(allowednames=(".param", ".parm"))
+    ).completer = FilesCompleter(allowednames=(".param", ".parm"))  # type: ignore[no-untyped-call]
     parser.add_argument(
         "-d",
         "--delete-documentation-annotations",

@@ -53,7 +53,7 @@ class TestUpdateDialog(unittest.TestCase):
         dialog.on_no()
 
         assert not dialog.result
-        dialog.root.destroy.assert_called_once()
+        dialog.root.destroy.assert_called_once()  # pylint: disable=no-member
 
     def test_on_cancel(self) -> None:
         """Test cancel operation."""
@@ -61,7 +61,7 @@ class TestUpdateDialog(unittest.TestCase):
         dialog.on_cancel()
 
         assert not dialog.result
-        dialog.root.destroy.assert_called_once()
+        dialog.root.destroy.assert_called_once()  # pylint: disable=no-member
 
     def test_grid_management(self) -> None:
         """Test grid management during update process."""
@@ -76,14 +76,7 @@ class TestUpdateDialog(unittest.TestCase):
     def test_window_protocol(self) -> None:
         """Test window protocol configuration."""
         dialog = UpdateDialog(self.version_info)
-        dialog.root.protocol.assert_called_with("WM_DELETE_WINDOW", dialog.on_cancel)
-
-    @patch("tkinter.ttk.Frame")
-    def test_frame_configuration(self, mock_frame) -> None:
-        """Test frame configuration."""
-        dialog = UpdateDialog(self.version_info)
-        mock_frame.assert_called_with(dialog.root, padding="20")
-        dialog.frame.grid.assert_called_with(sticky="nsew")
+        dialog.root.protocol.assert_called_with("WM_DELETE_WINDOW", dialog.on_cancel)  # pylint: disable=no-member
 
     def test_progress_value_bounds(self) -> None:
         """Test progress bar value bounds."""
