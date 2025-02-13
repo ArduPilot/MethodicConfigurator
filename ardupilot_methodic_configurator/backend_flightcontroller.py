@@ -320,7 +320,7 @@ class FlightController:
                     )
                 os_custom_version_index = i
                 continue
-            logging_info("FC banner %s", msg)
+            logging_debug("FC banner %s", msg)
 
         # the banner message after the ChibiOS one contains the FC type
         firmware_type = ""
