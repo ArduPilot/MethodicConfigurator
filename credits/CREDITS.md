@@ -7,7 +7,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # Licenses
 
 We use [REUSE software API](https://api.reuse.software/) in the form of SPDX tags in most of the files to explicitly declare Copyright and License.
-However, we do not do it for every single file and hence are [![REUSE status](https://api.reuse.software/badge/github.com/ArduPilot/MethodicConfigurator)](https://api.reuse.software/info/github.com/ArduPilot/MethodicConfigurator)
+We check compliance using pre-commit hook and enforce it via a CI job.
+Our status is [![REUSE status](https://api.reuse.software/badge/github.com/ArduPilot/MethodicConfigurator)](https://api.reuse.software/info/github.com/ArduPilot/MethodicConfigurator)
 
 This software is licensed under the [GNU General Public License v3.0](../LICENSE.md) and is built on top of (depends on) other open-source software.
 We are thankful to the developers of those software packages.
