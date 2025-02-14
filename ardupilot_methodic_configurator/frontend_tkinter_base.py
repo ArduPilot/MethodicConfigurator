@@ -64,7 +64,22 @@ def show_tooltip(widget: tk.Widget, text: str) -> None:
         tooltip.withdraw()
 
     tooltip = tk.Toplevel(widget)
-    tooltip.wm_overrideredirect(boolean=True)
+    if platform_system() == "Darwin":  # macOS
+        try:
+            tooltip.tk.call(
+                "::tk::unsupported::MacWindowStyle",
+                "style",
+                tooltip._w,  # type: ignore[attr-defined] # noqa: SLF001 # pylint: disable=protected-access
+                "help",
+                "noActivates",
+            )
+            tooltip.configure(bg="#ffffe0")
+        except AttributeError:  # Catches protected member access error
+            tooltip.wm_attributes("-alpha", 1.0)  # Ensure opacity
+            tooltip.wm_attributes("-topmost", True)  # Keep on top # noqa: FBT003
+            tooltip.configure(bg="#ffffe0")
+    else:
+        tooltip.wm_overrideredirect(boolean=True)
     tooltip_label = ttk.Label(tooltip, text=text, background="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT)
     tooltip_label.pack()
     tooltip.withdraw()  # Initially hide the tooltip
