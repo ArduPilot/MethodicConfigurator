@@ -43,7 +43,7 @@ def test_download_file_from_url_empty_params() -> None:
 def test_download_file_from_url_proxy_handling(env_vars) -> None:
     with patch.dict(os.environ, env_vars, clear=True), patch("requests.get") as mock_get:
         mock_get.return_value.status_code = 404
-        assert not download_file_from_url("http://test.com", "test.txt")
+        assert not download_file_from_url("http://test.com", "test.txt", timeout=3)
 
 
 @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
@@ -139,7 +139,7 @@ def test_download_file_proxy_configuration(mock_get, monkeypatch) -> None:
     mock_get.assert_called_once_with(
         "http://test.com",
         stream=True,
-        timeout=30,
+        timeout=3,
         proxies={"http": "http://proxy:8080", "https": "https://proxy:8080", "no_proxy": "localhost"},
         verify=True,
     )
@@ -280,6 +280,7 @@ class TestDownloadFile:
 
     def test_download_file_filesystem_operations(self, mock_get, mock_response, tmp_path) -> None:
         mock_get.return_value = mock_response
+        mock_get.configure(timeout=5)
 
         # Test directory creation
         nested_path = tmp_path / "deep" / "nested" / "path"
