@@ -78,7 +78,7 @@ class TestDocumentationFrame(unittest.TestCase):
         ) as mock_show_tooltip_:
             self.doc_frame.update_why_why_now_tooltip(self.current_file)
             mock_show_tooltip_.assert_called_once_with(
-                self.doc_frame.documentation_frame, "Why: Why text\nWhy now: Why now text"
+                self.doc_frame.documentation_frame, "Why: Why text\nWhy now: Why now text", position_below=False
             )
 
     @pytest.mark.usefixtures("mock_webbrowser_open", "mock_show_tooltip")

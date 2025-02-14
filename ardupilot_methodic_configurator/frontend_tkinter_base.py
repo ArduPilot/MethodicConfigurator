@@ -52,11 +52,11 @@ def show_no_connection_error(_error_string: str) -> None:
     show_error_message(_("No Connection to the Flight Controller"), error_message.format(**locals()))
 
 
-def show_tooltip(widget: tk.Widget, text: str) -> None:
+def show_tooltip(widget: tk.Widget, text: str, position_below: bool = True) -> None:
     def enter(_event: tk.Event) -> None:
         # Calculate the position of the tooltip based on the widget's position
         x = widget.winfo_rootx() + min(widget.winfo_width() // 2, 100)
-        y = widget.winfo_rooty() + widget.winfo_height()
+        y = widget.winfo_rooty() + (widget.winfo_height() if position_below else -10)
         tooltip.geometry(f"+{x}+{y}")
         tooltip.deiconify()
 
