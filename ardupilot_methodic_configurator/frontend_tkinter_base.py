@@ -404,12 +404,16 @@ class BaseWindow:
         resized_image = image.resize((new_width, image_height))
 
         # Convert the image to a format that can be used by Tkinter
-        photo = ImageTk.PhotoImage(resized_image)
+        try:
+            photo = ImageTk.PhotoImage(resized_image)
 
-        # Create a label with the resized image
-        image_label = ttk.Label(parent, image=photo)
-        # Keep a reference to the image to prevent it from being garbage collected
-        image_label.image = photo  # type: ignore[attr-defined]
+            # Create a label with the resized image
+            image_label = ttk.Label(parent, image=photo)
+            # Keep a reference to the image to prevent it from being garbage collected
+            image_label.image = photo  # type: ignore[attr-defined]
+        except TypeError as e:
+            logging_error(_("Error loading %s image from file: %s"), filepath, e)
+            image_label = ttk.Label(parent)
         return image_label
 
 
