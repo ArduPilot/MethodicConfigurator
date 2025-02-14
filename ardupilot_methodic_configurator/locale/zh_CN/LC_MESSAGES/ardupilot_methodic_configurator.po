@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-02-13 19:39+0000\n"
+"POT-Creation-Date: 2025-02-14 17:29+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -659,27 +659,31 @@ msgstr ""
 msgid "No Connection to the Flight Controller"
 msgstr "没有连接到飞控"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:114
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:129
 msgid "param_file combobox selected string '%s' not in list %s"
 msgstr "参数文件 combobox 选择的字符串 '%s' 不在列表 %s 中"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:116
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:131
 msgid "No param_file combobox element selected"
 msgstr "没有选中参数文件中的 combobox 元素"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:261
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:276
 msgid "Please be patient, {:.1f}% of {}% complete"
 msgstr "请耐心等待, 已完成 {:.1f}% of {}%"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:278
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:293
 msgid "Lifting window: {_e}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:453
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:430
+msgid "Error loading %s image from file: %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:472
 msgid "Show this usage popup again"
 msgstr "再次顯示此使用彈出窗口"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:461
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:480
 msgid "Dismiss"
 msgstr "关闭"
 
