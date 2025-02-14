@@ -104,7 +104,7 @@ class DocumentationFrame:
         if why_now_tooltip_text:
             tooltip_text += _("Why now: ") + why_now_tooltip_text
         if tooltip_text:
-            show_tooltip(self.documentation_frame, tooltip_text)
+            show_tooltip(self.documentation_frame, tooltip_text, position_below=False)
 
     def update_documentation_labels(self, current_file: str) -> None:
         self.current_file = current_file

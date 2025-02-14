@@ -236,7 +236,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         legend_frame = ttk.LabelFrame(config_subframe, text=_("Legend"), style="Legend.TLabelframe")
         legend_left = ttk.Frame(legend_frame)
         legend_left.pack(side=tk.LEFT, anchor=tk.NW)
-        show_tooltip(legend_frame, _("the meaning of the text background colors"))
+        show_tooltip(legend_frame, _("the meaning of the text background colors"), position_below=False)
 
         font_size = 8
         font = (font_family, font_size)
