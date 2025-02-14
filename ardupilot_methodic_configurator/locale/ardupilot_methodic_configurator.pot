@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-02-13 19:39+0000\n"
+"POT-Creation-Date: 2025-02-14 17:29+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -568,27 +568,31 @@ msgstr ""
 msgid "No Connection to the Flight Controller"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:114
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:129
 msgid "param_file combobox selected string '%s' not in list %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:116
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:131
 msgid "No param_file combobox element selected"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:261
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:276
 msgid "Please be patient, {:.1f}% of {}% complete"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:278
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:293
 msgid "Lifting window: {_e}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:453
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:430
+msgid "Error loading %s image from file: %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:472
 msgid "Show this usage popup again"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base.py:461
+#: ardupilot_methodic_configurator/frontend_tkinter_base.py:480
 msgid "Dismiss"
 msgstr ""
 
