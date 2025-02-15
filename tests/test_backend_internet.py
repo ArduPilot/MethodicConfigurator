@@ -135,7 +135,7 @@ def test_download_file_proxy_configuration(mock_get, monkeypatch) -> None:
     monkeypatch.setenv("HTTPS_PROXY", "https://proxy:8080")
     monkeypatch.setenv("NO_PROXY", "localhost")
 
-    assert download_file_from_url("http://test.com", "test.txt")
+    assert download_file_from_url("http://test.com", "test.txt", timeout=3)
     mock_get.assert_called_once_with(
         "http://test.com",
         stream=True,
