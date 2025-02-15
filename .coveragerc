@@ -1,2 +1,5 @@
 [run]
+source = ardupilot_methodic_configurator
 
+[report]
+include = ardupilot_methodic_configurator/*
