@@ -100,15 +100,26 @@ def update_file_contents(renames: dict[str, str], root: str, file: str, steps: d
 def update_configuration_steps_json_file_contents(steps: dict, file_content: str, new_name: str, old_name: str) -> str:
     new_file_content = ""
     curr_filename = ""
+    in_steps_block = False
+
     for line in file_content.splitlines(keepends=True):
-        re_search = re.search(r"^    \"(\w.+)\"", line)
-        if re_search:
-            curr_filename = re_search.group(1)
+        # Track when we enter/exit the "steps" block
+        if '"steps": {' in line:
+            in_steps_block = True
+            new_file_content += line
+            continue
+
+        # Only process filenames when inside steps block
+        if in_steps_block:
+            re_search = re.search(r"^        \"(\w.+)\"", line)
+            if re_search:
+                curr_filename = re_search.group(1)
+
         if "old_filenames" in line:
             if curr_filename in steps and "old_filenames" in steps[curr_filename]:
                 # WARNING!!! old_filenames can only used once, so we remove it after using it
                 old_filenames = str(steps[curr_filename].pop("old_filenames")).replace("'", '"')
-                new_file_content += f'        "old_filenames": {old_filenames}'
+                new_file_content += f'            "old_filenames": {old_filenames}'
                 if line.endswith(",\n"):
                     new_file_content += ","
                 new_file_content += "\n"
@@ -116,6 +127,11 @@ def update_configuration_steps_json_file_contents(steps: dict, file_content: str
                 new_file_content += line
         else:
             new_file_content += line.replace(old_name, new_name)
+
+        # Track end of steps block
+        if in_steps_block and line.strip() == "}," and curr_filename:
+            in_steps_block = False
+
     return new_file_content
 
 
@@ -153,7 +169,8 @@ def change_line_endings_for_md_files() -> None:
 def main() -> None:
     logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
     with open(os.path.join("ardupilot_methodic_configurator", SEQUENCE_FILENAME), encoding="utf-8") as f:
-        steps = json.load(f)
+        json_content = json.load(f)
+    steps = json_content["steps"]
     renames = reorder_param_files(steps)
     param_dirs = loop_relevant_files(renames, steps)
     reorder_actual_files(renames, param_dirs)

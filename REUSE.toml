@@ -152,6 +152,11 @@ SPDX-FileCopyrightText = "Copyright (c) Setuptools developers."
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
+path = "credits/jsonschema-COPYING"
+SPDX-FileCopyrightText = "Copyright (c) 2012 Julian Berman"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
 path = ["windows/ardupilot_methodic_configurator*", "windows/settings_template.json"]
 SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"

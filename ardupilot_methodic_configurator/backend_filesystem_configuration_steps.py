@@ -18,6 +18,9 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from os import path as os_path
 
+from jsonschema import validate as json_validate
+from jsonschema.exceptions import ValidationError
+
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import Par
 
@@ -42,17 +45,18 @@ class ConfigurationSteps:
         self.derived_parameters: dict[str, dict] = {}
         self.log_loaded_file = False
 
-    def re_init(self, vehicle_dir: str, vehicle_type: str) -> None:
+    def re_init(self, vehicle_dir: str, vehicle_type: str) -> None:  # pylint: disable=too-many-branches
         if vehicle_type == "":
             return
         self.configuration_steps_filename = "configuration_steps_" + vehicle_type + ".json"
         # Define a list of directories to search for the configuration_steps_filename file
         search_directories = [vehicle_dir, os_path.dirname(os_path.abspath(__file__))]
         file_found = False
+        json_content = {}
         for i, directory in enumerate(search_directories):
             try:
                 with open(os_path.join(directory, self.configuration_steps_filename), encoding="utf-8") as file:
-                    self.configuration_steps = json_load(file)
+                    json_content = json_load(file)
                     file_found = True
                     if self.log_loaded_file:
                         if i == 0:
@@ -71,7 +75,22 @@ class ConfigurationSteps:
             except JSONDecodeError as e:
                 logging_error(_("Error in file '%s': %s"), self.configuration_steps_filename, e)
                 break
+        # Validate the vehicle configuration steps file against the configuration_steps_schema.json schema
         if file_found:
+            schema_file = os_path.join(os_path.dirname(os_path.abspath(__file__)), "configuration_steps_schema.json")
+            try:
+                with open(schema_file, encoding="utf-8") as schema:
+                    schema_data = json_load(schema)
+                    json_validate(instance=json_content, schema=schema_data)
+            except FileNotFoundError:
+                logging_error(_("Schema file '%s' not found"), schema_file)
+            except ValidationError as e:
+                logging_error(_("Configuration steps validation error: %s"), str(e))
+            except JSONDecodeError as e:
+                logging_error(_("Error in schema file '%s': %s"), schema_file, e)
+
+        if file_found and "steps" in json_content:
+            self.configuration_steps = json_content["steps"]
             for filename, file_info in self.configuration_steps.items():
                 self.__validate_parameters_in_configuration_steps(filename, file_info, "forced")
                 self.__validate_parameters_in_configuration_steps(filename, file_info, "derived")

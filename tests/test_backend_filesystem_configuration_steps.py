@@ -22,7 +22,7 @@ class TestConfigurationSteps(unittest.TestCase):
     def setUp(self) -> None:
         self.config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
 
-    @patch("builtins.open", new_callable=mock_open, read_data='{"test_file": {"forced_parameters": {}}}')
+    @patch("builtins.open", new_callable=mock_open, read_data='{"steps": {"test_file": {"forced_parameters": {}}}}')
     @patch("os.path.join")
     @patch("os.path.dirname")
     @patch("os.path.abspath")
@@ -38,7 +38,13 @@ class TestConfigurationSteps(unittest.TestCase):
         mock_join.side_effect = lambda *args: "/".join(args)
         self.config_steps.re_init("vehicle_dir", "vehicle_type")
         assert self.config_steps.configuration_steps
-        mock_open2.assert_called_once_with("vehicle_dir/configuration_steps_vehicle_type.json", encoding="utf-8")
+        mock_open2.assert_has_calls(
+            [
+                unittest.mock.call("vehicle_dir/configuration_steps_vehicle_type.json", encoding="utf-8"),
+                unittest.mock.call("dir_name/configuration_steps_schema.json", encoding="utf-8"),
+            ],
+            any_order=True,
+        )
         assert "test_file" in self.config_steps.configuration_steps
 
     def test_compute_parameters(self) -> None:

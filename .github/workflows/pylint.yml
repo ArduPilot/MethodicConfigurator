@@ -37,8 +37,8 @@ jobs:
     - name: Install dependencies
       # these extra packages are required by pylint to validate the python imports
       run: |
-        uv pip install 'pylint>=3.3.2' argcomplete defusedxml requests pymavlink pillow numpy matplotlib pyserial setuptools pytest
+        uv pip install 'pylint>=3.3.2' argcomplete defusedxml requests pymavlink pillow numpy matplotlib pyserial setuptools pytest jsonschema
 
-    - name: Analysing the code with pylint
+    - name: Analyzing the code with pylint
       run: |
         pylint $(git ls-files '*.py')

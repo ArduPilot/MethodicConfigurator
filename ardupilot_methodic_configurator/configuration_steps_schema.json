@@ -1,0 +1,155 @@
+{
+  "type": "object",
+  "required": ["steps"],
+  "properties": {
+    "steps": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9]+_.+\\.param$": {
+          "type": "object",
+          "required": [
+            "why",
+            "why_now",
+            "blog_text",
+            "blog_url",
+            "wiki_text",
+            "wiki_url",
+            "external_tool_text",
+            "external_tool_url",
+            "mandatory_text"
+          ],
+          "properties": {
+            "why": {
+              "type": "string",
+              "description": "Explanation of why this step is needed"
+            },
+            "why_now": {
+              "type": "string",
+              "description": "Explanation of why this step needs to be done at this point"
+            },
+            "blog_text": {
+              "type": "string",
+              "description": "Short description for blog reference"
+            },
+            "blog_url": {
+              "type": "string",
+              "pattern": "^https://",
+              "description": "URL to blog documentation"
+            },
+            "wiki_text": {
+              "type": "string",
+              "description": "Short description for wiki reference"
+            },
+            "wiki_url": {
+              "type": "string",
+              "description": "URL to wiki documentation"
+            },
+            "external_tool_text": {
+              "type": "string",
+              "description": "Name/description of external tool needed"
+            },
+            "external_tool_url": {
+              "type": "string",
+              "description": "URL to external tool"
+            },
+            "mandatory_text": {
+              "type": "string",
+              "pattern": "^[0-9]{1,3}% mandatory \\([0-9]{1,3}% optional\\)$",
+              "description": "Text indicating if step is mandatory or optional with percentages"
+            },
+            "auto_changed_by": {
+              "type": "string",
+              "description": "Name of tool/process that automatically changes these parameters"
+            },
+            "forced_parameters": {
+              "type": "object",
+              "patternProperties": {
+                "^[A-Z0-9_]+$": {
+                  "type": "object",
+                  "required": ["New Value", "Change Reason"],
+                  "properties": {
+                    "New Value": {
+                      "type": ["number", "string"],
+                      "description": "New value for the parameter"
+                    },
+                    "Change Reason": {
+                      "type": "string",
+                      "description": "Reason for changing the parameter"
+                    }
+                  }
+                }
+              }
+            },
+            "derived_parameters": {
+              "type": "object",
+              "patternProperties": {
+                "^[A-Z0-9_]+$": {
+                  "type": "object",
+                  "required": ["New Value", "Change Reason"],
+                  "properties": {
+                    "New Value": {
+                      "type": "string",
+                      "description": "Expression to derive new parameter value"
+                    },
+                    "Change Reason": {
+                      "type": "string",
+                      "description": "Reason for the derived parameter"
+                    }
+                  }
+                }
+              }
+            },
+            "jump_possible": {
+              "type": "object",
+              "patternProperties": {
+                "^[0-9]+_.+\\.param$": {
+                  "type": "string",
+                  "description": "Message about possible jump to another step"
+                }
+              }
+            },
+            "old_filenames": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[0-9]+_.+\\.param$"
+              },
+              "description": "Previous filenames for this step"
+            },
+            "rename_connection": {
+              "type": "string",
+              "description": "Expression to rename connection"
+            },
+            "download_file": {
+              "type": "object",
+              "required": ["source_url", "dest_local"],
+              "properties": {
+                "source_url": {
+                  "type": "string",
+                  "pattern": "^https://"
+                },
+                "dest_local": {
+                  "type": "string"
+                }
+              }
+            },
+            "upload_file": {
+              "type": "object",
+              "required": ["source_local", "dest_on_fc"],
+              "properties": {
+                "source_local": {
+                  "type": "string"
+                },
+                "dest_on_fc": {
+                  "type": "string",
+                  "pattern": "^/APM/"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

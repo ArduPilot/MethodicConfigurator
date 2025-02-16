@@ -39,6 +39,7 @@ It directly uses:
 | [pillow](https://python-pillow.github.io/) | [MIT-CMU License](https://github.com/python-pillow/Pillow/blob/main/LICENSE) |
 | [requests](https://requests.readthedocs.io/) | [Apache 2.0 License](https://github.com/psf/requests/blob/main/LICENSE) |
 | [setuptools](https://setuptools.pypa.io/) | [MIT License](https://github.com/pypa/setuptools/blob/main/LICENSE) |
+| [jsonschema](https://python-jsonschema.readthedocs.io/en/stable/) | [MIT License](https://github.com/python-jsonschema/jsonschema/blob/main/COPYING) |
 
 It indirectly uses:
 

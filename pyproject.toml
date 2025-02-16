@@ -43,6 +43,7 @@ classifiers = [
 dependencies = [
     "argcomplete==3.5.3",
     "defusedxml==0.7.1",
+    "jsonschema==4.23.0",
     "matplotlib==3.9.4",
     "numpy==2.0.2",
     "pillow==11.1.0",
