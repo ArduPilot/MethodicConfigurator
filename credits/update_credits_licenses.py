@@ -35,6 +35,10 @@ direct_dependencies = [
     {"name": "Scrollable_TK_frame", "license_url": "https://mozilla.org/MPL/2.0/"},
     {"name": "Python_Tkinter_ComboBox", "license_url": "https://mozilla.org/MPL/2.0/"},
     {"name": "defusedxml", "license_url": "https://raw.githubusercontent.com/tiran/defusedxml/main/LICENSE"},
+    {
+        "name": "jsonschema",
+        "license_url": "https://raw.githubusercontent.com/python-jsonschema/jsonschema/refs/heads/main/COPYING",
+    },
     {"name": "matplotlib", "license_url": "https://raw.githubusercontent.com/matplotlib/matplotlib/main/LICENSE/LICENSE"},
     {"name": "numpy", "license_url": "https://raw.githubusercontent.com/numpy/numpy/main/LICENSE.txt"},
     {"name": "pillow", "license_url": "https://raw.githubusercontent.com/python-pillow/Pillow/main/LICENSE"},
