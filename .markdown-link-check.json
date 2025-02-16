@@ -3,5 +3,10 @@
     {
       "pattern": "^https://www.mediafire.com/file/fj1p9qlbzo5bl5g/BLHeliSuite32_32.9.0.6.zip/file"
     }
-  ]
+  ],
+  "timeout": "20s",
+  "retryOn429": true,
+  "retryCount": 3,
+  "fallbackRetryDelay": "5s",
+  "aliveStatusCodes": [200, 206]
 }
