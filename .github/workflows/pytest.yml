@@ -51,7 +51,7 @@ jobs:
         run: |
           export DISPLAY=:99
           Xvfb :99 -screen 0 1024x768x16 &
-          pytest --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md --junit-xml=tests/results-junit.xml
+          pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md --junit-xml=tests/results-junit.xml
 
       - name: Fix coverage paths
         run: |
