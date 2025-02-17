@@ -448,7 +448,10 @@ def get_env_proxies() -> Union[dict[str, str], None]:
     proxies_dict: dict[str, str] = {k: v for k, v in proxies_env.items() if v is not None}
     # define as None if no proxies are defined in the OS environment variables
     proxies = proxies_dict if proxies_dict else None
-    logging.info("Proxies: %s", proxies)
+    if proxies:
+        logging.info("Proxies: %s", proxies)
+    else:
+        logging.debug("Proxies: %s", proxies)
     return proxies
 
 
