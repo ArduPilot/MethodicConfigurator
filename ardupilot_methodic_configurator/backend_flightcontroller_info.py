@@ -94,9 +94,9 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         self.board_version = str(board_version & 0x0FFFF)
         apj_board_id = board_version >> 16
         self.apj_board_id = str(apj_board_id)
-        self.firmware_type = str(APJ_BOARD_ID_NAME_DICT.get(apj_board_id, _("Unknown")))
+        self.firmware_type = str(",".join(APJ_BOARD_ID_NAME_DICT.get(apj_board_id, _("Unknown"))))
 
-        vendor_derived_from_apj_board_id = str(APJ_BOARD_ID_VENDOR_DICT.get(apj_board_id, "ArduPilot"))
+        vendor_derived_from_apj_board_id = str(",".join(APJ_BOARD_ID_VENDOR_DICT.get(apj_board_id, "ArduPilot")))
         if vendor_derived_from_apj_board_id != "ArduPilot" and self.vendor in ["ArduPilot", _("Unknown")]:
             self.vendor = vendor_derived_from_apj_board_id
 
@@ -108,11 +108,11 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
 
     def set_usb_vendor_and_product_ids(self, vendor_id: int, product_id: int) -> None:
         self.vendor_id = f"0x{vendor_id:04X}" if vendor_id else _("Unknown")
-        self.vendor = str(VID_VENDOR_DICT.get(vendor_id, _("Unknown")))
+        self.vendor = str(",".join(VID_VENDOR_DICT.get(vendor_id, _("Unknown"))))
         self.vendor_and_vendor_id = f"{self.vendor} ({self.vendor_id})"
 
         self.product_id = f"0x{product_id:04X}" if product_id else _("Unknown")
-        self.product = str(VID_PID_PRODUCT_DICT.get((vendor_id, product_id), _("Unknown")))
+        self.product = str(",".join(VID_PID_PRODUCT_DICT.get((vendor_id, product_id), _("Unknown"))))
         self.product_and_product_id = f"{self.product} ({self.product_id})"
 
     def set_capabilities(self, capabilities: int) -> None:
