@@ -1133,13 +1133,13 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         """Handle reset sessions reply."""
         return self.__decode_ftp_ack_and_nack(op)
 
-    def process_ftp_reply(self, operation_name, timeout=5) -> MAVFTPReturn:
+    def process_ftp_reply(self, operation_name, timeout: float = 5) -> MAVFTPReturn:
         """Execute an FTP operation that requires processing a MAVLink response."""
         start_time = time.time()
         ret = MAVFTPReturn(operation_name, ERR_Fail)
         recv_timeout = 0.1
         assert (  # noqa: S101
-            timeout == 0 or timeout > self.ftp_settings.idle_detection_time
+            timeout == 0 or timeout > float(self.ftp_settings.idle_detection_time)
         ), "timeout must be > settings.idle_detection_time"
         assert recv_timeout < self.ftp_settings.retry_time, "recv_timeout must be < settings.retry_time"  # noqa: S101
 

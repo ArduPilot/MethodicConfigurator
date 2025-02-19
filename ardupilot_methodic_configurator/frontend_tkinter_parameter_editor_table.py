@@ -15,6 +15,7 @@ import tkinter as tk
 from logging import critical as logging_critical
 from logging import debug as logging_debug
 from logging import info as logging_info
+from math import nan
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
@@ -190,8 +191,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                     messagebox.showinfo(_("Parameter Renamed"), info_msg.format(**locals()))
 
     def __update_table(self, params: dict[str, Par], fc_parameters: dict[str, float]) -> None:
+        current_param_name: str = ""
         try:
             for i, (param_name, param) in enumerate(params.items(), 1):
+                current_param_name = param_name
                 param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
                 param_default = self.local_filesystem.param_default_dict.get(param_name, None)
                 doc_tooltip = (
@@ -227,7 +230,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
 
         except KeyError as e:
-            logging_critical(_("Parameter %s not found in the %s file: %s"), param_name, self.current_file, e, exc_info=True)
+            logging_critical(
+                _("Parameter %s not found in the %s file: %s"), current_param_name, self.current_file, e, exc_info=True
+            )
             sys_exit(1)
 
         # Configure the table_frame to stretch columns
@@ -640,7 +645,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         except KeyError as e:
             logging_critical(_("Parameter %s not found in the %s file: %s"), param_name, current_file, e, exc_info=True)
             sys_exit(1)
-        valid = True
+        valid: bool = True
+        changed: bool = False
+        p: float = nan
         # Check if the input is a valid float
         try:
             p = float(new_value)  # type: ignore[arg-type] # workaround a mypy bug

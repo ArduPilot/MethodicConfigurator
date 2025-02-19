@@ -1,0 +1,47 @@
+name: Pyright
+
+on:
+  pull_request:
+    paths:
+      - '**/*.py'        # Watch for changes in any Python files
+      - 'pyproject.toml' # Watch for changes in the pyproject.toml file
+  push:
+    paths:
+      - '**/*.py'        # Watch for changes in any Python files
+      - 'pyproject.toml' # Watch for changes in the pyproject.toml file
+  workflow_dispatch:
+
+jobs:
+  pyright:
+    runs-on: ubuntu-latest
+    strategy:
+        matrix:
+          python-version: ["3.9", "3.12"]
+
+    env:
+        UV_SYSTEM_PYTHON: 1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+        # https://docs.astral.sh/uv/guides/integration/github/
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v5
+        with:
+            python-version: ${{ matrix.python-version }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+            python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        # these extra packages are required by pyright to validate the python imports
+        run: |
+            uv pip install 'pyright==1.1.394' 'argcomplete==3.5.3' 'defusedxml==0.7.1' 'jsonschema==4.23.0' 'matplotlib==3.9.4' 'numpy==2.0.2' 'pillow==11.1.0' 'platformdirs==4.3.6' 'pymavlink==2.4.42' 'pyserial==3.5' 'requests==2.32.3' 'setuptools==75.8.0'
+
+      - name: Run pyright
+        uses: jakebailey/pyright-action@v2
+        with:
+          version: PATH

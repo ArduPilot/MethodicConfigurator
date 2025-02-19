@@ -210,6 +210,13 @@ rc_protocols_dict: dict[str, dict[str, str]] = {
 }
 
 
+class MockEvent(tk.Event):  # pylint: disable=too-few-public-methods
+    """A mock event object that mirrors the structure of a real tkinter event."""
+
+    def __init__(self, event_type: tk.EventType) -> None:
+        self.type = event_type
+
+
 class ComponentEditorWindow(ComponentEditorWindowBase):
     """
     This class validates the user input and handles user interactions
@@ -750,7 +757,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
             validate_function = self.get_validate_function(entry, path)
             if validate_function:
-                mock_focus_out_event = type("", (), {"type": "10"})()
+                mock_focus_out_event = MockEvent(tk.EventType.FocusOut)
                 if not validate_function(mock_focus_out_event):
                     invalid_values = True
             if path in {

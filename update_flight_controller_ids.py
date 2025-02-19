@@ -52,7 +52,7 @@ else:
 sys.path.append(scripts_path)
 
 try:
-    import chibios_hwdef
+    import chibios_hwdef  # pyright: ignore[reportMissingImports]
 
     logging.info("Module imported successfully.")
 except ImportError as e:
@@ -67,7 +67,7 @@ def process_hwdef_files(base_directory: str) -> HwdefDict:
         for filename in filenames:
             if filename == "hwdef.dat":
                 hwdef_file_path = os.path.join(dirpath, filename)
-                c = chibios_hwdef.ChibiOSHWDef(
+                c = chibios_hwdef.ChibiOSHWDef(  # pyright: ignore[reportPossiblyUnboundVariable]
                     outdir="/tmp",  # noqa: S108
                     bootloader=False,
                     signed_fw=False,
@@ -230,7 +230,7 @@ def pretty_print_dict(
             if isinstance(key, str)
             else key
         )
-        comment = ""
+        comment: str = ""
         # Format the (optional) board name to be used as a comment
         if board_name is not None:
             if key in board_name:  # key is the board ID

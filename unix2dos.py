@@ -36,7 +36,7 @@ def is_binary(filepath: Path) -> bool:
         with open(filepath, "rb") as file:
             chunk = file.read(chunk_size)
             # Check for null bytes and other binary characters
-            textchars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7F})
+            textchars = bytes({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7F})
             return bool(chunk.translate(None, textchars))
     except OSError as e:
         logger.error("Failed to read file %s: %s", filepath, str(e))
