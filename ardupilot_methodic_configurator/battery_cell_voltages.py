@@ -12,7 +12,7 @@ from math import nan
 
 battery_cell_voltages = {
     "LiIon": {
-        "absolute_max": 4.1,
+        "absolute_max": 4.2,
         "absolute_min": 2.5,
         "recommended_max": 4.1,
         "recommended_low": 3.1,
