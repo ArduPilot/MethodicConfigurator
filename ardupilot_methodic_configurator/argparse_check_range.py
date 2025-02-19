@@ -36,16 +36,16 @@ class CheckRange(Action):
 
     def interval(self) -> str:
         if hasattr(self, "min"):
-            _lo = f"[{self.min}"
+            _lo = f"[{self.min}"  # pyright: ignore[reportAttributeAccessIssue]
         elif hasattr(self, "inf"):
-            _lo = f"({self.inf}"
+            _lo = f"({self.inf}"  # pyright: ignore[reportAttributeAccessIssue]
         else:
             _lo = "(-infinity"
 
         if hasattr(self, "max"):
-            _up = f"{self.max}]"
+            _up = f"{self.max}]"  # pyright: ignore[reportAttributeAccessIssue]
         elif hasattr(self, "sup"):
-            _up = f"{self.sup})"
+            _up = f"{self.sup})"  # pyright: ignore[reportAttributeAccessIssue]
         else:
             _up = "+infinity)"
 

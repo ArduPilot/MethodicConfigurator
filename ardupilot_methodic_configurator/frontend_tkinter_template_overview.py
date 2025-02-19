@@ -136,12 +136,12 @@ class TemplateOverviewWindow(BaseWindow):
         for col in self.tree["columns"]:
             max_width = 0
             for subtitle in col.title().split("\n"):
-                max_width = max(max_width, tk.font.Font().measure(subtitle))
+                max_width = max(max_width, tk.font.Font().measure(subtitle))  # pyright: ignore[reportAttributeAccessIssue]
 
             # Iterate over all rows and update the max_width if a wider entry is found
             for item in self.tree.get_children():
                 item_text = self.tree.item(item, "values")[self.tree["columns"].index(col)]
-                text_width = tk.font.Font().measure(item_text)
+                text_width = tk.font.Font().measure(item_text)  # pyright: ignore[reportAttributeAccessIssue]
                 max_width = max(max_width, text_width)
 
             # Update the column's width property to accommodate the largest text width

@@ -80,7 +80,7 @@ class FlightController:
         self.__reboot_time = reboot_time
         self.__connection_tuples: list[tuple[str, str]] = []
         self.discover_connections()
-        self.master: Union[mavutil.mavlink_connection, None] = None
+        self.master: Union[mavutil.mavlink_connection, None] = None  # pyright: ignore[reportGeneralTypeIssues]
         self.comport: Union[mavutil.SerialPort, None] = None
         self.fc_parameters: dict[str, float] = {}
         self.info = BackendFlightcontrollerInfo()
@@ -583,7 +583,7 @@ class FlightController:
                 'If set to "none" no connection is made.'
                 " Default is autodetection"
             ),
-        ).completer = lambda **_: FlightController.__list_serial_ports()
+        ).completer = lambda **_: FlightController.__list_serial_ports()  # pyright: ignore[reportAttributeAccessIssue]
         parser.add_argument(
             "-r",
             "--reboot-time",

@@ -139,7 +139,7 @@ def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict
             if not values:
                 raise SystemExit(NO_DEFAULT_VALUES_MESSAGE)
             return values
-        pname = m.Name
+        pname = str(m.Name)
         if len(pname) > PARAM_NAME_MAX_LEN:
             msg = f"Too long parameter name: {pname}"
             raise SystemExit(msg)
@@ -150,14 +150,26 @@ def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict
         if pname in values:
             continue
         if param_type == "defaults":
-            if hasattr(m, "Default"):
-                values[pname] = m.Default
+            if hasattr(m, "Default") and m.Default is not None:
+                try:
+                    values[pname] = float(m.Default)
+                except ValueError as e:
+                    msg = f"Error converting {m.Default} to float"
+                    raise SystemExit(msg) from e
         elif param_type == "values":
-            if hasattr(m, "Value"):
-                values[pname] = m.Value
+            if hasattr(m, "Value") and m.Value is not None:
+                try:
+                    values[pname] = float(m.Value)
+                except ValueError as e:
+                    msg = f"Error converting {m.Value} to float"
+                    raise SystemExit(msg) from e
         elif param_type == "non_default_values":
-            if hasattr(m, "Value") and hasattr(m, "Default") and m.Value != m.Default:
-                values[pname] = m.Value
+            if hasattr(m, "Value") and hasattr(m, "Default") and m.Value != m.Default and m.Value is not None:
+                try:
+                    values[pname] = float(m.Value)
+                except ValueError as e:
+                    msg = f"Error converting {m.Value} to float"
+                    raise SystemExit(msg) from e
         else:
             msg = f"Invalid type {param_type}"
             raise SystemExit(msg)

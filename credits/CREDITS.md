@@ -61,6 +61,7 @@ Credits also go to these other software projects that helped in developing ArduP
 - [ruff](https://docs.astral.sh/ruff/): A fast Python linter.
 - [pylint](https://www.pylint.org/): A Python static code analysis tool.
 - [mypy](https://mypy-lang.org/): A static type checker for Python.
+- [pyright](https://github.com/microsoft/pyright): Pyright is a full-featured, standards-based static type checker for Python.
 - [uv](https://docs.astral.sh/uv/): An extremely fast Python package and project manager.
 - [grammarly](https://www.grammarly.com/): An AI-powered writing assistant.
 - [markdown-lint-cli2](https://github.com/DavidAnson/markdownlint-cli2): A command-line tool for linting Markdown files.
