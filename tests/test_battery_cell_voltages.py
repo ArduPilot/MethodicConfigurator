@@ -23,7 +23,7 @@ class TestBatteryCell(unittest.TestCase):  # pylint: disable=missing-class-docst
         assert chemistries == expected_chemistries
 
     def test_limit_max_voltage(self) -> None:
-        assert BatteryCell.limit_max_voltage("LiIon") == 4.1
+        assert BatteryCell.limit_max_voltage("LiIon") == 4.2
         assert BatteryCell.limit_max_voltage("LipoHV") == 4.35
         assert BatteryCell.limit_max_voltage("NonExistentChemistry") == 4.45
 
