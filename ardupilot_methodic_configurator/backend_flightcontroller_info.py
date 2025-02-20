@@ -102,7 +102,7 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
         vendor_derived_from_apj_board_id = str(",".join(APJ_BOARD_ID_VENDOR_DICT.get(apj_board_id, "ArduPilot")))
         if vendor_derived_from_apj_board_id != "ArduPilot" and self.vendor in ["ArduPilot", _("Unknown")]:
             self.vendor = vendor_derived_from_apj_board_id
-        self.mcu_series = str(APJ_BOARD_ID_MCU_SERIES_DICT.get(apj_board_id, _("Unknown")))
+        self.mcu_series = str(",".join(APJ_BOARD_ID_MCU_SERIES_DICT.get(apj_board_id, _("Unknown"))))
 
     def set_flight_custom_version(self, flight_custom_version: Sequence[int]) -> None:
         self.flight_custom_version = "".join(chr(c) for c in flight_custom_version)
