@@ -106,6 +106,8 @@ the following system design requirements were derived:
   - Non-default, read-only *reason changed* annotated parameters in, `non-default_read-only.param` file
   - Non-default, writable calibrations *reason changed* annotated parameters in `non-default_writable_calibrations.param` file
   - Non-default, writable non-calibrations *reason changed* annotated parameters in `non-default_writable_non-calibrations.param` file
+- automatically create a parameter backup before the first usage of the software to change parameters [PR #173](https://github.com/ArduPilot/MethodicConfigurator/pull/173)
+  - Only backs up the parameters if a backup file does not exist and only if AMC has not yet been used to write parameters to the FC
 
 #### 7. Customization and Extensibility
 
