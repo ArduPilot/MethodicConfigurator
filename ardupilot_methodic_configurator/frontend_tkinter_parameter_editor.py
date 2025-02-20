@@ -44,6 +44,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base import (
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
+from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
 
@@ -153,7 +154,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
         )
-        self.root.geometry("990x550")  # Set the window width
+        self.root.geometry("990x610")  # Set the window width
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)
@@ -169,8 +170,19 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.__create_conf_widgets(__version__)
 
+        if self.local_filesystem.configuration_phases:
+            # Get the first two characters of the last configuration step filename
+            last_step_filename = next(reversed(self.local_filesystem.file_parameters.keys()))
+            last_step_nr = int(last_step_filename[:2]) + 1 if len(last_step_filename) >= 2 else 1
+
+            self.stage_progress_bar = StageProgressBar(
+                self.main_frame, self.local_filesystem.configuration_phases, last_step_nr
+            )
+            self.stage_progress_bar.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
+
         # Create a DocumentationFrame object for the Documentation Content
         self.documentation_frame = DocumentationFrame(self.main_frame, self.local_filesystem, self.current_file)
+        self.documentation_frame.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
 
         self.__create_parameter_area_widgets()
 
@@ -333,7 +345,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 "Upload selected parameters to the flight controller and advance to the next "
                 "intermediate parameter file\nIf changes have been made to the current file it will ask if you want "
                 "to save them\nIt will reset the FC if necessary, re-download all parameters and validate their value"
-            ),
+            )
+            if self.flight_controller.master
+            else _("No flight controller connected, without it this is not available"),
         )
 
         # Create skip button
@@ -494,6 +508,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return
         self.parameter_editor_table.generate_edit_widgets_focus_out()
         selected_file = self.file_selection_combobox.get()
+        self._update_progress_bar_from_file(selected_file)
         if self.current_file != selected_file or forced:
             self.write_changes_to_intermediate_parameter_file()
             self.__do_tempcal_imu(selected_file)
@@ -508,6 +523,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.documentation_frame.update_documentation_labels(selected_file)
             self.documentation_frame.update_why_why_now_tooltip(selected_file)
             self.repopulate_parameter_table(selected_file)
+
+    def _update_progress_bar_from_file(self, selected_file: str) -> None:
+        if self.local_filesystem.configuration_phases:
+            try:
+                step_nr = int(selected_file[:2])
+                self.stage_progress_bar.update_progress(step_nr)
+            except ValueError as _e:
+                msg = _("Failed to update progress bar, {selected_file} does not start with two digits like it should: {_e}")
+                logging_error(msg.format(**locals()))
 
     def download_flight_controller_parameters(self, redownload: bool = False) -> None:
         operation_string = _("Re-downloading FC parameters") if redownload else _("Downloading FC parameters")

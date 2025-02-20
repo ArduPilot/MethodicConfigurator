@@ -42,7 +42,6 @@ class DocumentationFrame:
 
     def __create_documentation_frame(self) -> None:
         self.documentation_frame = ttk.LabelFrame(self.root, text=_("Documentation"))
-        self.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 4), padx=(4, 4))
 
         # Create a grid structure within the documentation_frame
         documentation_grid = ttk.Frame(self.documentation_frame)
