@@ -191,6 +191,14 @@ def main() -> None:
     imu_tcal_available = "INS_TCAL1_ENABLE" in flight_controller.fc_parameters or not flight_controller.fc_parameters
     start_file = local_filesystem.get_start_file(args.n, imu_tcal_available)
 
+    if flight_controller.fc_parameters:
+        local_filesystem.backup_fc_parameters_to_file(
+            flight_controller.fc_parameters,
+            "autobackup_00_before_ardupilot_methodic_configurator.param",
+            overwrite_existing_file=False,
+            even_if_last_uploaded_filename_exists=False,
+        )
+
     # Call the GUI function with the starting intermediate parameter file
     ParameterEditorWindow(start_file, flight_controller, local_filesystem)
 

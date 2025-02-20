@@ -575,6 +575,21 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             start_file_index = len(files) - 1
         return files[start_file_index]
 
+    def backup_fc_parameters_to_file(
+        self,
+        param_dict: dict[str, float],
+        filename: str,
+        overwrite_existing_file: bool = False,
+        even_if_last_uploaded_filename_exists: bool = True,
+    ) -> None:
+        if (even_if_last_uploaded_filename_exists or not self.__read_last_uploaded_filename()) and (
+            overwrite_existing_file or not self.vehicle_configuration_file_exists(filename)
+        ):
+            Par.export_to_param(
+                Par.format_params({param: Par(float(value), "") for param, value in param_dict.items()}),
+                os_path.join(self.vehicle_dir, filename),
+            )
+
     def get_eval_variables(self) -> dict[str, dict[str, Any]]:
         variables = {}
         if hasattr(self, "vehicle_components") and self.vehicle_components and "Components" in self.vehicle_components:
