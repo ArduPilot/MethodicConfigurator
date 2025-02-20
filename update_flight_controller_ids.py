@@ -18,6 +18,20 @@ from typing import Union
 
 # Define the base directory to crawl
 BASE_DIR = "../ardupilot/libraries/AP_HAL_ChibiOS/hwdef/"
+NON_FC_SUFIXES = (
+    "-ADSB",
+    "Airspeed",
+    "Compass",
+    "-ESC",
+    "-ETH",
+    "GPS",
+    "-heavy",
+    "-I2C",
+    "-ODID",
+    "-periph",
+    "-Periph",
+    "-SimOnHardWare",
+)
 
 HwdefDict = dict[str, tuple[int, int, int, str, str, str]]
 
@@ -43,14 +57,6 @@ try:
     logging.info("Module imported successfully.")
 except ImportError as e:
     logging.error("ImportError: %s", e)
-
-
-def remove_suffixes(base_dirname: str) -> str:
-    suffixes = ["-bdshot", "-ADSB", "-GPS", "-periph", "-Periph", "-heavy", "-ODID", "-SimOnHardWare", "-ETH", "-I2C"]
-    for suffix in suffixes:
-        if base_dirname.endswith(suffix):
-            return base_dirname[: -len(suffix)]
-    return base_dirname
 
 
 def process_hwdef_files(base_directory: str) -> HwdefDict:
@@ -133,6 +139,14 @@ def update_board_id_dict(
     return existing_dict
 
 
+def remove_suffixes(base_dirname: str) -> str:
+    suffixes = ["-bdshot", "-DShot"]
+    for suffix in suffixes:
+        if base_dirname.endswith(suffix):
+            return base_dirname[: -len(suffix)]
+    return base_dirname
+
+
 def create_dicts(  # pylint: disable=too-many-locals
     hwdef_data: HwdefDict,
 ) -> tuple[
@@ -145,14 +159,16 @@ def create_dicts(  # pylint: disable=too-many-locals
     apj_board_id_mcu_series_dict: dict[int, list[str]] = {}
 
     for dirname, (numeric_board_id, vid, pid, vid_name, pid_namef, mcu_series) in hwdef_data.items():
-        board_name = remove_suffixes(dirname)
-        board_name = remove_suffixes(board_name)
-        # some boards have double sufixes like CubeOrange-heavy-periph
-        pid_name = remove_suffixes(pid_namef)
-        pid_name = remove_suffixes(pid_name)
-
-        if board_name.startswith("iomcu") or mcu_series.lower().startswith(("stm32f1", "stm32f3")):
+        if (
+            dirname.startswith("iomcu")
+            or dirname.endswith(NON_FC_SUFIXES)
+            or mcu_series.lower().startswith(("stm32f1", "stm32f3"))
+            or (numeric_board_id == 1062 and dirname != "MatekL431")  # these AP_Periph are not an FC
+        ):
             continue  # Skip IOMCU boards, AP_Periph boards, GPS boards
+
+        board_name = remove_suffixes(dirname)
+        pid_name = remove_suffixes(pid_namef)
 
         # Process USB VID and store the result in it's dictionary
         if vid in vid_vendor_dict:
