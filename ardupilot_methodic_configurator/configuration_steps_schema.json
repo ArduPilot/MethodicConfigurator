@@ -1,6 +1,6 @@
 {
   "type": "object",
-  "required": ["steps"],
+  "required": ["steps", "phases"],
   "properties": {
     "steps": {
       "type": "object",
@@ -149,6 +149,31 @@
           }
         }
       }
+    },
+    "phases": {
+      "type": "object",
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "required": ["description"],
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "Description of the phase"
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "Whether this phase is optional"
+            },
+            "start": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Starting step number of this phase"
+            }
+          }
+        }
+      },
+      "description": "Phases of the configuration process"
     }
   },
   "additionalProperties": false

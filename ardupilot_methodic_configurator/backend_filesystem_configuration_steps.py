@@ -41,6 +41,7 @@ class ConfigurationSteps:
     def __init__(self, _vehicle_dir: str, vehicle_type: str) -> None:
         self.configuration_steps_filename = "configuration_steps_" + vehicle_type + ".json"
         self.configuration_steps: dict[str, dict] = {}
+        self.configuration_phases: dict[str, dict] = {}
         self.forced_parameters: dict[str, dict] = {}
         self.derived_parameters: dict[str, dict] = {}
         self.log_loaded_file = False
@@ -96,6 +97,11 @@ class ConfigurationSteps:
                 self.__validate_parameters_in_configuration_steps(filename, file_info, "derived")
         else:
             logging_warning(_("No configuration steps documentation and no forced and derived parameters will be available."))
+
+        if file_found and "phases" in json_content:
+            self.configuration_phases = json_content["phases"]
+        else:
+            logging_warning(_("No configuration phases documentation will be available."))
         self.log_loaded_file = True
 
     def __validate_parameters_in_configuration_steps(self, filename: str, file_info: dict, parameter_type: str) -> None:
