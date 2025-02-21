@@ -56,7 +56,7 @@ jobs:
       - name: Fix coverage paths
         run: |
           sed -i 's|<package name="." |<package name="ardupilot_methodic_configurator" |' tests/coverage.xml
-          sed -i 's|<source>.*</source>|<source>ardupilot_methodic_configurator</source>|' tests/coverage.xml
+          sed -i 's|<source>.*</source>|<source>.</source>|' tests/coverage.xml
           sed -i 's|filename="|filename="ardupilot_methodic_configurator/|g' tests/coverage.xml
         shell: bash
 
