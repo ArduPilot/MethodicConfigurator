@@ -6,6 +6,15 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
+<!-- Gurubase Widget -->
+<script async src="https://widget.gurubase.io/widget.latest.min.js" 
+    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
+    data-text="Ask AI"
+    data-margins='{"bottom": "1rem", "right": "1rem"}'
+    data-light-mode="true"
+    id="guru-widget-id">
+</script>
+
 | Lint | Quality | Test | Deploy | Maintain |
 | ---- | ------- | ---- | ------ | -------- |
 | [![Pylint](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pylint.yml/badge.svg)](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pylint.yml) | [![Codacy Badge](https://app.codacy.com/project/badge/Grade/720794ed54014c58b9eaf7a097a4e98e)](https://app.codacy.com/gh/amilcarlucas/MethodicConfigurator/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) | [![pytest status](https://gist.githubusercontent.com/amilcarlucas/81b511dc0ff92b8072613d1cd100832e/raw/badge.svg)](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pytest.yml) | [![pages-build-deployment](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pages/pages-build-deployment) | [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/ArduPilot/MethodicConfigurator.svg)](http://isitmaintained.com/project/ArduPilot/MethodicConfigurator) |
@@ -29,6 +38,7 @@ Let's compare it with the traditional tool used to configure ArduPilot: a genera
 
 | Feature | Mission Planner, QGroundControl, ... etc | ArduPilot Methodic Configurator |
 | ------- | ---------------------------------------- | ------------------------------- |
+| full automatic configuration | No | No |
 | configuration type | manual [^1]  | semi-automated [^2] |
 | explains what to do | No | Yes  |
 | explains when to do something | No, leaves you lost | Yes, explains the path |
@@ -42,6 +52,7 @@ Let's compare it with the traditional tool used to configure ArduPilot: a genera
 | documents why you changed each parameter | No | Yes |
 | tutorials and learning resources | No, scattered and not integrated | Yes, context-aware help integrated |
 | auto. install lua scripts on the FC | No | Yes |
+| auto. backup of parameters before changing them | No | Yes |
 
 [^1]: you need to know what/when/why you are doing
 [^2]: it explains what you should do, when you should do it and why
