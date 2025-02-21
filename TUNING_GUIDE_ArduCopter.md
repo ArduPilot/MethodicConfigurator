@@ -1,9 +1,4 @@
 # How to methodically tune any ArduCopter
-<!--
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
-
-SPDX-License-Identifier: GPL-3.0-or-later
--->
 
 <!-- markdownlint-disable MD013 MD025 MD034 -->
 

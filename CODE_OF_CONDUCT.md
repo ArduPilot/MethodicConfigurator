@@ -1,10 +1,5 @@
 ArduPilot Methodic Configurator Developer Code of Conduct
 =========================================================
-<!--
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
-
-SPDX-License-Identifier: GPL-3.0-or-later
--->
 
 Rev 1.0 Apr 3nd 2024
 

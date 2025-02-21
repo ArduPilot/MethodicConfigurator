@@ -1,9 +1,4 @@
 # Install instructions
-<!--
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
-
-SPDX-License-Identifier: GPL-3.0-or-later
--->
 
 This software is available for multiple operating systems:
 

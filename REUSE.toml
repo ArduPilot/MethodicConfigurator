@@ -58,6 +58,11 @@ SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
+path = ["*.md"]
+SPDX-FileCopyrightText = "2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
 path = "credits/Python_Tkinter_ComboBox-Mozilla_Public_License_version_2.0.html"
 SPDX-FileCopyrightText = "geraldew"
 SPDX-License-Identifier = "MPL-2.0"

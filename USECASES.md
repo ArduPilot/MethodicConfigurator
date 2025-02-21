@@ -1,9 +1,4 @@
 # Ardupilot Methodic Configurator use cases
-<!--
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
-
-SPDX-License-Identifier: GPL-3.0-or-later
--->
 
 The software is meant to guide you a in sequence of procedural steps to configure and tune your vehicle in a safe and time-efficient way.
 
