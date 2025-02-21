@@ -164,3 +164,12 @@ Correct those entries and press the `Save data and start configuration` button a
 1. Follow the procedure to [configure the vehicle parameters](README.md#6-configure-the-vehicles-parameters-in-a-traceable-way)
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
+
+<!-- Gurubase Widget -->
+<script async src="https://widget.gurubase.io/widget.latest.min.js"
+    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
+    data-text="Ask AI"
+    data-margins='{"bottom": "1rem", "right": "1rem"}'
+    data-light-mode="true"
+    id="guru-widget-id">
+</script>

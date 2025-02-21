@@ -88,6 +88,10 @@ the following system design requirements were derived:
 - The software must provide tooltips for each GUI widget.
 - The software must provide tooltips for each parameter to explain their purpose and usage.
 - Users should be able to access the blog post and other resources for more information on the software and its usage.
+- The software website should use an AI assistant, trained with ArduPilot documentation, to help users configure their
+  vehicles [PR #175](https://github.com/ArduPilot/MethodicConfigurator/pull/175)
+  - The AI assistant should be able to answer questions about the parameters and the configuration process
+  - The AI assistant should be able to provide guidance on how to resolve common issues that may arise during the configuration process
 
 #### 5. Error Handling and Logging
 
@@ -532,3 +536,12 @@ foreach ($script in $scripts) {
     }
 }
 ```
+
+<!-- Gurubase Widget -->
+<script async src="https://widget.gurubase.io/widget.latest.min.js"
+    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
+    data-text="Ask AI"
+    data-margins='{"bottom": "1rem", "right": "1rem"}'
+    data-light-mode="true"
+    id="guru-widget-id">
+</script>

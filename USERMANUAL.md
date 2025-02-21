@@ -366,3 +366,12 @@ This will show a list of all available command line options along with a brief d
 If you encounter any issues during the configuration process, refer to the error messages provided by the application.
 These messages can guide you to the specific problem and suggest possible solutions.
 If the issue persists, consult the [documentation and support page](https://ardupilot.github.io/MethodicConfigurator/SUPPORT.html)
+
+<!-- Gurubase Widget -->
+<script async src="https://widget.gurubase.io/widget.latest.min.js"
+    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
+    data-text="Ask AI"
+    data-margins='{"bottom": "1rem", "right": "1rem"}'
+    data-light-mode="true"
+    id="guru-widget-id">
+</script>
