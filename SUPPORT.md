@@ -31,3 +31,12 @@ Send a [private message to amilcarlucas at ardupilot support forum](https://disc
 and pricing of paid support services.
 Please include a brief description of your project and the kind of support you need.
 Please note that paid support is not a guarantee of success, but it will be prioritized over free support.
+
+<!-- Gurubase Widget -->
+<script async src="https://widget.gurubase.io/widget.latest.min.js"
+    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
+    data-text="Ask AI"
+    data-margins='{"bottom": "1rem", "right": "1rem"}'
+    data-light-mode="true"
+    id="guru-widget-id">
+</script>

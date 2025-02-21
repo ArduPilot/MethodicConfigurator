@@ -21,6 +21,7 @@ MD033:
     - "figure"
     - "img"
     - "ins"
+    - "script"
     - "table"
     - "td"
     - "th"

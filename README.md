@@ -6,14 +6,6 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
-<!-- Gurubase Widget -->
-<script async src="https://widget.gurubase.io/widget.latest.min.js" 
-    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
-    data-text="Ask AI"
-    data-margins='{"bottom": "1rem", "right": "1rem"}'
-    data-light-mode="true"
-    id="guru-widget-id">
-</script>
 
 | Lint | Quality | Test | Deploy | Maintain |
 | ---- | ------- | ---- | ------ | -------- |
@@ -299,3 +291,12 @@ This project is licensed under the [GNU General Public License v3.0](https://git
 ## Credits
 
 It builds upon other [open-source software packages](https://ardupilot.github.io/MethodicConfigurator/credits/CREDITS.html)
+
+<!-- Gurubase Widget -->
+<script async src="https://widget.gurubase.io/widget.latest.min.js"
+    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
+    data-text="Ask AI"
+    data-margins='{"bottom": "1rem", "right": "1rem"}'
+    data-light-mode="true"
+    id="guru-widget-id">
+</script>

@@ -97,3 +97,12 @@ Follow the linux installation instructions above.
 ![Install ArduPilot firmware](images/MissionPlanne_install_firmware.png)
 1. Wait until the firmware download is complete.
 1. Disconnect the USB cable from the flight controller.
+
+<!-- Gurubase Widget -->
+<script async src="https://widget.gurubase.io/widget.latest.min.js"
+    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
+    data-text="Ask AI"
+    data-margins='{"bottom": "1rem", "right": "1rem"}'
+    data-light-mode="true"
+    id="guru-widget-id">
+</script>
