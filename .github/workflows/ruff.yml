@@ -13,6 +13,9 @@ on:
 #  group: ci-${{github.workflow}}-${{ github.ref }}
 #  cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   ruff:
     runs-on: ubuntu-latest
