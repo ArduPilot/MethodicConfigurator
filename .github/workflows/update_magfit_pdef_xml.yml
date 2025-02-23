@@ -7,8 +7,13 @@ on:
     - 24_inflight_magnetometer_fit_setup.pdef.xml'
     - ardupilot_methodic_configurator/vehicle_templates/**
 
+permissions:
+  contents: read
+
 jobs:
   update-magfit-pdef-xml:
+    permissions:
+      contents: write  # for Git to git push
     runs-on: ubuntu-latest
 
     steps:

@@ -5,8 +5,13 @@ on:
   schedule:
     - cron: '30 1 * * 3'  # Every Wednesday at 1:30 AM
 
+permissions:
+  contents: read
+
 jobs:
   update-ids:
+    permissions:
+      contents: write  # for Git to git push
     runs-on: ubuntu-latest
 
     steps:

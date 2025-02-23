@@ -11,6 +11,9 @@ on:
     tags:
       - "v*.*.*"
 
+permissions:
+  contents: read
+
 jobs:
   pypi_upload:
 

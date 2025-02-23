@@ -8,8 +8,14 @@ on:
       - '**/*.py'
       - '!**/tests/**'
 
+permissions:
+  contents: read
+
 jobs:
   extract_strings:
+    permissions:
+      contents: write  # for Git to git push
+      pull-requests: write  # for peter-evans/create-pull-request to create a PR
     runs-on: ubuntu-latest
     env:
       PYGETTEXT_DOMAIN: ardupilot_methodic_configurator

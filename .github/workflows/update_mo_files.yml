@@ -6,8 +6,13 @@ on:
     paths:
     - ardupilot_methodic_configurator/locale/**/ardupilot_methodic_configurator.po
 
+permissions:
+  contents: read
+
 jobs:
   update-mo-files:
+    permissions:
+      contents: write  # for Git to git push
     runs-on: ubuntu-latest
 
     steps:
