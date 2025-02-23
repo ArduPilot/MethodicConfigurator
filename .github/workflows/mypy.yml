@@ -16,14 +16,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install dependencies
         run: |
           python -m pip install -U mypy types-requests
 
       - name: Lint the code with mypy
-        uses: sasanquaneuf/mypy-github-action@releases/v1.3
+        uses: sasanquaneuf/mypy-github-action@a3f3a66f97792cac0cfd11d3e5c87088e5c8f6a9 # releases/v1.3
         with:
           checkName: 'mypy'   # NOTE: this needs to be the same as the job name
         env:
