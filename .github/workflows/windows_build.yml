@@ -21,10 +21,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -64,14 +64,14 @@ jobs:
           ls Output
 
       - name: Archive build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
            name: ardupilot_methodic_configuratorInstaller
            path: windows/Output
            retention-days: 7
 
       - name: Pre Release
-        uses: "0xDylan/auto-releases@v1.1"
+        uses: "0xDylan/auto-releases@e0660c0d60165d4902ebdb4fdcc3c029e94f7215 # v1.1"
         if: github.ref == 'refs/heads/master'
         with:
           automatic_release_tag: "latest"
@@ -81,7 +81,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Release
-        uses: "0xDylan/auto-releases@v1.1"
+        uses: "0xDylan/auto-releases@e0660c0d60165d4902ebdb4fdcc3c029e94f7215 # v1.1"
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           prerelease: false
