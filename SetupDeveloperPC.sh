@@ -44,7 +44,7 @@ ConfigurePreCommit() {
         echo "pip is not installed. Please install pip before running this script."
         exit 1
     fi
-    pip install pre-commit
+    pip install 'pre-commit==4.1.0'
     pre-commit install
     echo Pre-commit done.
 }

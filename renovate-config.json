@@ -4,7 +4,12 @@
   "packageRules": [
     {
       "matchManagers": ["pre-commit"],
-      "automerge": true
+      "automerge": true,
+      "pinDigests": true,
+      "rangeStrategy": "pin"
     }
-  ]
+  ],
+  "pin": {
+    "enabled": true
+  }
 }

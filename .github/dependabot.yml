@@ -8,6 +8,7 @@ updates:
       prefix: "build(pip)"
       prefix-development: "build(pip dev)"
       include: "scope"
+    pin-versions: true
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -16,3 +17,5 @@ updates:
     commit-message:
       prefix: "ci(github-actions)"
       include: "scope"
+    pin-versions: true
+    pin-sha: true
