@@ -300,7 +300,7 @@ ArduPilot Methodic Configurator adheres to multiple compliance standards and bes
 - Uses [PEP 484](https://peps.python.org/pep-0484/) [type hints](https://docs.python.org/3/library/typing.html)
   - Enforces type checking with [MyPy](https://www.mypy-lang.org/) and [pyright](https://microsoft.github.io/pyright/#/) type checkers
 - Automated code formatting using [ruff](https://docs.astral.sh/ruff/) for consistency
-- Code and documentation are [spell checked](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker)
+- Code and documentation are [spell checked](https://streetsidesoftware.com/vscode-spell-checker/)
   and [english grammar checked](https://app.grammarly.com/)
   - [markdown-lint](https://github.com/DavidAnson/markdownlint-cli2)
   [automated workflow](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/markdown-lint.yml) and
