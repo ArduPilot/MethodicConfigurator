@@ -35,8 +35,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install -U wheel setuptools pip
-          python -m pip install -U pywin32 lxml pymavlink pyserial Pillow
+          python -m pip install -U wheel pip
+          python -m pip install -U pywin32
           python -m pip install -U pyinstaller packaging
 
       - name: Download Inno Setup installer
@@ -117,12 +117,12 @@ jobs:
       - name: Archive build
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
-           name: ardupilot_methodic_configuratorInstaller
+           name: ardupilot_methodic_configurator_setup
            path: windows/Output
            retention-days: 7
 
       - name: Pre Release
-        uses: "0xDylan/auto-releases@e0660c0d60165d4902ebdb4fdcc3c029e94f7215 # v1.1"
+        uses: "rearrangement/auto-releases@e0660c0d60165d4902ebdb4fdcc3c029e94f7215" # v1.1
         if: github.ref == 'refs/heads/master'
         with:
           automatic_release_tag: "latest"
@@ -132,7 +132,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Release
-        uses: "0xDylan/auto-releases@e0660c0d60165d4902ebdb4fdcc3c029e94f7215 # v1.1"
+        uses: "rearrangement/auto-releases@e0660c0d60165d4902ebdb4fdcc3c029e94f7215" # v1.1
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           prerelease: false
