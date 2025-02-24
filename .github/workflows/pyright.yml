@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies
         # these extra packages are required by pyright to validate the python imports
         run: |
-            uv pip install 'pyright==1.1.394' 'argcomplete==3.5.3' 'defusedxml==0.7.1' 'jsonschema==4.23.0' 'matplotlib==3.9.4' 'numpy==2.0.2' 'pillow==11.1.0' 'platformdirs==4.3.6' 'pymavlink==2.4.42' 'pyserial==3.5' 'requests==2.32.3' 'setuptools==75.8.0'
+            uv pip install .[dev]
 
       - name: Run pyright
         uses: jakebailey/pyright-action@b5d50e5cde6547546a5c4ac92e416a8c2c1a1dfe # v2.3.2
