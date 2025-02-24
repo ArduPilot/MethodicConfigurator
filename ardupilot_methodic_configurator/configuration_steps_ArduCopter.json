@@ -244,9 +244,13 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "forced_parameters": {
-                "INS_LOG_BAT_OPT": { "New Value": 4, "Change Reason": "Logs measured data both before and after the filters for Filter Review Webtool usage" },
-                "LOG_BITMASK": { "New Value": 2242558, "Change Reason": "Logs Notch filter data and other control signals" },
                 "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" }
+            },
+            "derived_parameters": {
+                "INS_LOG_BAT_MASK": { "New Value": "1 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] else 0", "Change Reason": "Use acc and gyro batch logging on F4 processors, gyro raw logging on others" },
+                "INS_LOG_BAT_OPT": { "New Value": "4 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] else 0", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors, pre-post gyro raw logging on others" },
+                "INS_RAW_LOG_OPT": { "New Value": "0 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] else 9", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors, pre-post gyro raw logging on others" },
+                "LOG_BITMASK": { "New Value": "2242556 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] else 2242558", "Change Reason": "Logs Notch filter data and other control signals" }
             },
             "old_filenames": ["13_logging.param"]
         },
