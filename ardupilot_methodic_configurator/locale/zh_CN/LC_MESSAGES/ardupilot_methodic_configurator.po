@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-02-21 00:43+0000\n"
+"POT-Creation-Date: 2025-02-25 17:00+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -982,7 +982,7 @@ msgstr " - 载具组件编辑器"
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:72
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:234
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:154
-#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:23
+#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:24
 msgid "Amilcar Lucas's - ArduPilot methodic configurator "
 msgstr "Amilcar Lucas 的 - ArduPilot 调参助手"
 
@@ -2497,23 +2497,23 @@ msgid ""
 "change(s) should be saved to file."
 msgstr "参数 %s 的更改原因从 %s 更改为 %s，稍后会询问是否将更改保存到文件。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:23
+#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:24
 msgid " - New version available"
 msgstr "- 新版本可用"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:44
+#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:63
 msgid "Update Now"
 msgstr "立即更新"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:45
+#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:64
 msgid "Not Now"
 msgstr "暂不更新"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:65
+#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:90
 msgid "Update complete! Please restart the application."
 msgstr "更新完成！请重启应用程序。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:68
+#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:93
 msgid "Update failed!"
 msgstr "更新失败！"
 
@@ -2552,63 +2552,65 @@ msgstr ""
 "化。它使用户能够浏览各种载具模板，编辑参数文件，并将更改直接应用于飞控。该工"
 "具旨在通过提供清晰和直观的参数管理界面，半自动化无人机的 ArduPilot 配置过程。"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:39
-msgid "New version available!"
-msgstr "新版本可用！"
-
-#: ardupilot_methodic_configurator/middleware_software_updates.py:41
+#: ardupilot_methodic_configurator/middleware_software_updates.py:50
+#: tests/test_middleware_software_updates.py:117
+#: tests/test_middleware_software_updates.py:131
 msgid "Current version: {_current_version}"
 msgstr "当前版本：{_current_version}"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:43
+#: ardupilot_methodic_configurator/middleware_software_updates.py:52
+#: tests/test_middleware_software_updates.py:119
+#: tests/test_middleware_software_updates.py:133
 msgid "Latest version: {_latest_release}"
 msgstr "最新版本：{_latest_release}"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:45
+#: ardupilot_methodic_configurator/middleware_software_updates.py:54
+#: tests/test_middleware_software_updates.py:121
+#: tests/test_middleware_software_updates.py:135
 msgid ""
 "Changes:\n"
-"{_changes}"
+"{changes}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:65
+#: ardupilot_methodic_configurator/middleware_software_updates.py:74
 msgid "Error accessing release assets: %s"
 msgstr "访问发布资源时出错：%s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:76
+#: ardupilot_methodic_configurator/middleware_software_updates.py:85
 msgid "Already running latest version."
 msgstr "已是最新版本。"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:80
+#: ardupilot_methodic_configurator/middleware_software_updates.py:89
 msgid "No changes listed"
 msgstr "未列出更改"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:89
+#: ardupilot_methodic_configurator/middleware_software_updates.py:98
 msgid "Key error during update process: %s"
 msgstr "更新过程中出现键值错误：%s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:92
+#: ardupilot_methodic_configurator/middleware_software_updates.py:101
 msgid "Network error during update process: %s"
 msgstr "更新过程中出现网络错误：%s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:95
+#: ardupilot_methodic_configurator/middleware_software_updates.py:104
 msgid "Value error during update process: %s"
 msgstr "更新过程中出现数值错误：%s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:103
+#: ardupilot_methodic_configurator/middleware_software_updates.py:112
 msgid ""
 "Skip check for software updates before staring the software. Default is "
 "%(default)s."
 msgstr "启动软件前跳过软件更新检查。默认为%(default)s。"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:112
+#: ardupilot_methodic_configurator/middleware_software_updates.py:121
 msgid "Running version: {} (git hash: {})"
 msgstr "运行版本：{}（git哈希：{}）"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:120
+#: ardupilot_methodic_configurator/middleware_software_updates.py:129
 msgid "Update check failed: {}"
 msgstr "更新检查失败：{}"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:128
+#: ardupilot_methodic_configurator/middleware_software_updates.py:137
 msgid ""
 "This main is for testing and development only, usually the "
 "check_for_software_updates is called from another script"
@@ -2690,3 +2692,6 @@ msgid ""
 msgstr ""
 "GNSS\n"
 "連接"
+
+#~ msgid "New version available!"
+#~ msgstr "新版本可用！"
