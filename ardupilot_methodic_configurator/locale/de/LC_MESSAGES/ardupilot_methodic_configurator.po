@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-02-21 00:43+0000\n"
+"POT-Creation-Date: 2025-02-25 17:00+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -1011,7 +1011,7 @@ msgstr " - Fahrzeugkomponenten-Editor"
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:72
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:234
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:154
-#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:23
+#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:24
 msgid "Amilcar Lucas's - ArduPilot methodic configurator "
 msgstr "Amilcar Lucas - ArduPilot methodischer Konfigurator "
 
@@ -2584,23 +2584,23 @@ msgstr ""
 "Änderungsgrund des Parameters %s wurde von %s auf %s geändert, es wird "
 "später gefragt, ob die Änderung(en) in die Datei gespeichert werden sollen."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:23
+#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:24
 msgid " - New version available"
 msgstr "- Neue Version verfügbar"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:44
+#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:63
 msgid "Update Now"
 msgstr "Jetzt aktualisieren"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:45
+#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:64
 msgid "Not Now"
 msgstr "Nicht jetzt"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:65
+#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:90
 msgid "Update complete! Please restart the application."
 msgstr "Aktualisierung abgeschlossen! Bitte starten Sie die Anwendung neu."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:68
+#: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:93
 msgid "Update failed!"
 msgstr "Aktualisierung fehlgeschlagen!"
 
@@ -2648,49 +2648,51 @@ msgstr ""
 "indem es eine klare und intuitive Benutzeroberfläche für das Parameter-"
 "Management bietet."
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:39
-msgid "New version available!"
-msgstr "Neue Version verfügbar!"
-
-#: ardupilot_methodic_configurator/middleware_software_updates.py:41
+#: ardupilot_methodic_configurator/middleware_software_updates.py:50
+#: tests/test_middleware_software_updates.py:117
+#: tests/test_middleware_software_updates.py:131
 msgid "Current version: {_current_version}"
 msgstr "Aktuelle Version: {_current_version}"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:43
+#: ardupilot_methodic_configurator/middleware_software_updates.py:52
+#: tests/test_middleware_software_updates.py:119
+#: tests/test_middleware_software_updates.py:133
 msgid "Latest version: {_latest_release}"
 msgstr "Neueste Version: {_latest_release}"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:45
+#: ardupilot_methodic_configurator/middleware_software_updates.py:54
+#: tests/test_middleware_software_updates.py:121
+#: tests/test_middleware_software_updates.py:135
 msgid ""
 "Changes:\n"
-"{_changes}"
+"{changes}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:65
+#: ardupilot_methodic_configurator/middleware_software_updates.py:74
 msgid "Error accessing release assets: %s"
 msgstr "Fehler beim Zugriff auf Release-Assets: %s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:76
+#: ardupilot_methodic_configurator/middleware_software_updates.py:85
 msgid "Already running latest version."
 msgstr "Bereits auf der neuesten Version."
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:80
+#: ardupilot_methodic_configurator/middleware_software_updates.py:89
 msgid "No changes listed"
 msgstr "Keine Änderungen aufgelistet"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:89
+#: ardupilot_methodic_configurator/middleware_software_updates.py:98
 msgid "Key error during update process: %s"
 msgstr "Schlüsselfehler während des Aktualisierungsprozesses: %s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:92
+#: ardupilot_methodic_configurator/middleware_software_updates.py:101
 msgid "Network error during update process: %s"
 msgstr "Netzwerkfehler während des Aktualisierungsprozesses: %s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:95
+#: ardupilot_methodic_configurator/middleware_software_updates.py:104
 msgid "Value error during update process: %s"
 msgstr "Wertfehler während des Aktualisierungsprozesses: %s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:103
+#: ardupilot_methodic_configurator/middleware_software_updates.py:112
 msgid ""
 "Skip check for software updates before staring the software. Default is "
 "%(default)s."
@@ -2698,15 +2700,15 @@ msgstr ""
 "Prüfung auf Softwareaktualisierungen vor dem Programmstart überspringen. "
 "Standard ist %(default)s."
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:112
+#: ardupilot_methodic_configurator/middleware_software_updates.py:121
 msgid "Running version: {} (git hash: {})"
 msgstr "Laufende Version: {} (Git Hash: {})"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:120
+#: ardupilot_methodic_configurator/middleware_software_updates.py:129
 msgid "Update check failed: {}"
 msgstr "Aktualisierungsprüfung fehlgeschlagen: {}"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:128
+#: ardupilot_methodic_configurator/middleware_software_updates.py:137
 msgid ""
 "This main is for testing and development only, usually the "
 "check_for_software_updates is called from another script"
@@ -2789,3 +2791,6 @@ msgid ""
 msgstr ""
 "GNSS\n"
 "Verbindung"
+
+#~ msgid "New version available!"
+#~ msgstr "Neue Version verfügbar!"
