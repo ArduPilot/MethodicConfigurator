@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import platform
+import re
 from argparse import ArgumentParser
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_error
@@ -34,15 +35,23 @@ from ardupilot_methodic_configurator.backend_internet import (
 from ardupilot_methodic_configurator.frontend_tkinter_software_update import UpdateDialog
 
 
-def format_version_info(_current_version: str, _latest_release: str, _changes: str) -> str:
+def format_version_info(_current_version: str, _latest_release: str, changes: str) -> str:
+    # remove pull request information from the changelog as PRs are not relevant for the end user.
+    # PRs start with "[#" and end with ")", use a non-greedy match to remove them.
+    changes = re.sub(r"\[#.*?\)", "", changes)
+
+    # remove author information from the changelog as authors are not relevant for the end user.
+    changes = re.sub(r"\(\[.*?\)\)", "", changes)
+
+    # Clean up multiple spaces within each line while preserving newlines
+    changes = "\n".join(re.sub(r"\s+", " ", line).strip() for line in changes.splitlines())
+
     return (
-        _("New version available!")
-        + "\n\n"
-        + _("Current version: {_current_version}")
+        _("Current version: {_current_version}")
         + "\n"
         + _("Latest version: {_latest_release}")
         + "\n\n"
-        + _("Changes:\n{_changes}")
+        + _("Changes:\n{changes}")
     ).format(**locals())
 
 
