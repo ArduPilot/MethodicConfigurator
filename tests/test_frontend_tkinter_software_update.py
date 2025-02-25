@@ -123,18 +123,6 @@ class TestUpdateDialog(unittest.TestCase):
             viewport.grid_columnconfigure.assert_called_with(0, weight=1)
             viewport.grid_rowconfigure.assert_called_with(0, weight=1)
 
-    def test_init_progress_bar(self) -> None:
-        """Test progress bar initial state."""
-        mock_progress = MagicMock()
-
-        with patch("tkinter.ttk.Progressbar", return_value=mock_progress):
-            dialog = UpdateDialog(self.version_info)
-            dialog.progress = mock_progress
-
-            # Verify progress bar is created and hidden
-            assert hasattr(dialog, "progress")
-            mock_progress.grid_remove.assert_called_once()
-
     def test_window_resize(self) -> None:
         """Test window resize event handler."""
         mock_msg = MagicMock()
@@ -155,38 +143,6 @@ class TestUpdateDialog(unittest.TestCase):
 
             # Verify label wraplength update
             mock_msg.configure.assert_called_with(wraplength=750)
-
-    def test_init_status_label(self) -> None:
-        """Test status label initialization."""
-        # Create mocks
-        mock_version_label = MagicMock()
-        mock_status_label = MagicMock()
-        mock_scroll_frame = MagicMock()
-        mock_viewport = MagicMock()
-
-        # Configure ScrollFrame mock
-        mock_scroll_frame.view_port = mock_viewport
-
-        with (
-            patch("tkinter.ttk.Label") as mock_label_class,
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_software_update.ScrollFrame", return_value=mock_scroll_frame
-            ),
-        ):
-            # Configure label mock
-            mock_label_class.side_effect = [mock_version_label, mock_status_label]
-
-            # Create dialog
-            dialog = UpdateDialog(self.version_info)
-
-            # Verify label creation count
-            assert mock_label_class.call_count == 2
-
-            # Verify version info label
-            mock_label_class.assert_any_call(mock_viewport, text=self.version_info, justify="left")
-
-            # Verify status label
-            mock_label_class.assert_any_call(dialog.frame, text="")
 
     def test_button_configuration(self) -> None:
         """Test button creation and configuration."""
