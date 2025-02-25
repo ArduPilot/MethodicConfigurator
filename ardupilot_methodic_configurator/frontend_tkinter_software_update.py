@@ -13,6 +13,7 @@ from tkinter import ttk
 from typing import Callable, Optional
 
 from ardupilot_methodic_configurator import _, __version__
+from ardupilot_methodic_configurator.frontend_tkinter_base import ScrollFrame
 
 
 class UpdateDialog:  # pylint: disable=too-many-instance-attributes
@@ -21,30 +22,54 @@ class UpdateDialog:  # pylint: disable=too-many-instance-attributes
     def __init__(self, version_info: str, download_callback: Optional[Callable[[], bool]] = None) -> None:
         self.root = tk.Tk()
         self.root.title(_("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - New version available"))
+        self.root.geometry("700x700")
         self.download_callback = download_callback
         self.root.protocol("WM_DELETE_WINDOW", self.on_cancel)
+
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
 
         self.frame = ttk.Frame(self.root, padding="20")
         self.frame.grid(sticky="nsew")
 
-        self.msg = ttk.Label(self.frame, text=version_info, wraplength=650, justify="left")
-        self.msg.grid(row=0, column=0, columnspan=2, pady=20)
+        # Configure main frame to expand
+        self.frame.grid_rowconfigure(0, weight=1)
+        self.frame.grid_columnconfigure(0, weight=1)
+        self.frame.grid_columnconfigure(1, weight=1)
+
+        version_info_scroll_frame = ScrollFrame(self.frame)
+        version_info_scroll_frame.grid(row=0, column=0, columnspan=2, pady=20, sticky="nsew")
+
+        viewport = version_info_scroll_frame.view_port
+        viewport.grid_columnconfigure(0, weight=1)
+        viewport.grid_rowconfigure(0, weight=1)
+
+        self.msg = ttk.Label(viewport, text=version_info, justify="left")
+        self.msg.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
         self.progress = ttk.Progressbar(self.frame, orient="horizontal", length=400, mode="determinate")
-        self.progress.grid(row=1, column=0, columnspan=2, pady=10, padx=10)
+        self.progress.grid(row=1, column=0, columnspan=2, pady=10, padx=10, sticky="ew")
         self.progress.grid_remove()
 
         self.status_label = ttk.Label(self.frame, text="")
-        self.status_label.grid(row=2, column=0, columnspan=2)
+        self.status_label.grid(row=2, column=0, columnspan=2, sticky="ew")
 
         self.result: Optional[bool] = None
         self._setup_buttons()
+
+        self.root.bind("<Configure>", self._on_window_resize)
 
     def _setup_buttons(self) -> None:
         self.yes_btn = ttk.Button(self.frame, text=_("Update Now"), command=self.on_yes)
         self.no_btn = ttk.Button(self.frame, text=_("Not Now"), command=self.on_no)
         self.yes_btn.grid(row=3, column=0, padx=5)
         self.no_btn.grid(row=3, column=1, padx=5)
+
+    def _on_window_resize(self, event: tk.Event) -> None:
+        """Update label wraplength when window is resized."""
+        # Get window width and account for padding
+        window_width = event.width - 50
+        self.msg.configure(wraplength=window_width)
 
     def update_progress(self, value: float, status: str = "") -> None:
         """Update progress directly."""

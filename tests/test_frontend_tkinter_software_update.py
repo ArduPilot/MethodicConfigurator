@@ -95,3 +95,112 @@ class TestUpdateDialog(unittest.TestCase):
 
     def test_version_info_display(self) -> None:
         """Test version info display in dialog."""
+
+    def test_init_window_config(self) -> None:
+        """Test window configuration during initialization."""
+        dialog = UpdateDialog(self.version_info)
+
+        # Window configuration
+        dialog.root.title.assert_called_once()  # pylint: disable=no-member
+        dialog.root.geometry.assert_called_with("700x700")  # pylint: disable=no-member
+
+        # Grid configuration
+        dialog.root.grid_rowconfigure.assert_called_with(0, weight=1)  # pylint: disable=no-member
+        dialog.root.grid_columnconfigure.assert_called_with(0, weight=1)  # pylint: disable=no-member
+
+    def test_init_scroll_frame(self) -> None:
+        """Test ScrollFrame setup during initialization."""
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_software_update.ScrollFrame") as mock_scroll:
+            UpdateDialog(self.version_info)
+
+            # ScrollFrame creation and configuration
+            mock_scroll.assert_called_once()
+            mock_scroll_instance = mock_scroll.return_value
+            mock_scroll_instance.grid.assert_called_with(row=0, column=0, columnspan=2, pady=20, sticky="nsew")
+
+            # Viewport configuration
+            viewport = mock_scroll_instance.view_port
+            viewport.grid_columnconfigure.assert_called_with(0, weight=1)
+            viewport.grid_rowconfigure.assert_called_with(0, weight=1)
+
+    def test_init_progress_bar(self) -> None:
+        """Test progress bar initial state."""
+        mock_progress = MagicMock()
+
+        with patch("tkinter.ttk.Progressbar", return_value=mock_progress):
+            dialog = UpdateDialog(self.version_info)
+            dialog.progress = mock_progress
+
+            # Verify progress bar is created and hidden
+            assert hasattr(dialog, "progress")
+            mock_progress.grid_remove.assert_called_once()
+
+    def test_window_resize(self) -> None:
+        """Test window resize event handler."""
+        mock_msg = MagicMock()
+
+        with patch("tkinter.ttk.Label", return_value=mock_msg):
+            dialog = UpdateDialog(self.version_info)
+            dialog.msg = mock_msg
+
+            # Create mock event
+            mock_event = MagicMock()
+            mock_event.width = 800
+
+            # Configure the mock
+            mock_msg.configure(wraplength=750)
+
+            # Trigger resize event
+            dialog._on_window_resize(mock_event)  # pylint: disable=protected-access
+
+            # Verify label wraplength update
+            mock_msg.configure.assert_called_with(wraplength=750)
+
+    def test_init_status_label(self) -> None:
+        """Test status label initialization."""
+        # Create mocks
+        mock_version_label = MagicMock()
+        mock_status_label = MagicMock()
+        mock_scroll_frame = MagicMock()
+        mock_viewport = MagicMock()
+
+        # Configure ScrollFrame mock
+        mock_scroll_frame.view_port = mock_viewport
+
+        with (
+            patch("tkinter.ttk.Label") as mock_label_class,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_software_update.ScrollFrame", return_value=mock_scroll_frame
+            ),
+        ):
+            # Configure label mock
+            mock_label_class.side_effect = [mock_version_label, mock_status_label]
+
+            # Create dialog
+            dialog = UpdateDialog(self.version_info)
+
+            # Verify label creation count
+            assert mock_label_class.call_count == 2
+
+            # Verify version info label
+            mock_label_class.assert_any_call(mock_viewport, text=self.version_info, justify="left")
+
+            # Verify status label
+            mock_label_class.assert_any_call(dialog.frame, text="")
+
+    def test_button_configuration(self) -> None:
+        """Test button creation and configuration."""
+        mock_yes_btn = MagicMock()
+        mock_no_btn = MagicMock()
+
+        with patch("tkinter.ttk.Button") as mock_button:
+            mock_button.side_effect = [mock_yes_btn, mock_no_btn]
+            dialog = UpdateDialog(self.version_info)
+
+            # Configure the mocks
+            mock_yes_btn.configure(text="Update Now", command=dialog.on_yes)
+            mock_no_btn.configure(text="Not Now", command=dialog.on_no)
+
+            # Verify configurations
+            mock_yes_btn.configure.assert_called_with(text="Update Now", command=dialog.on_yes)
+            mock_no_btn.configure.assert_called_with(text="Not Now", command=dialog.on_no)
