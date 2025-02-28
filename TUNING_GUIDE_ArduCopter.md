@@ -608,7 +608,8 @@ Now that all mandatory configuration steps are done and the props are on you can
 
 ## 7.1 First flight: Motor Thrust Hover and Harmonic Notch data collection
 
-For more detailed information visit the [First flight](https://ardupilot.org/copter/docs/flying-arducopter.html)
+For more detailed information visit the [First flight](https://ardupilot.org/copter/docs/flying-arducopter.html) and
+[Initial Tuning Flight](https://ardupilot.org/copter/docs/initial-tuning-flight.html)
 
 Test the initial setup on the ground in [stabilize flight mode](https://ardupilot.org/copter/docs/stabilize-mode.html) by using as little RC transmitter throttle as possible without taking off.
 At this sweet spot, inspect all axes (roll, pitch and yaw) by providing small RC transmitter stick inputs.
@@ -623,7 +624,10 @@ Land and disarm.
 > parameter to 0 (using the `Add` button on the GUI) and follow the [setting hover throttle instructions](https://ardupilot.org/copter/docs/ac_throttlemid.html)
 
 Immediately check for hot motors.
-If the motors are too hot, check the `.bin` dataflash log, high or oscillating `RATE.*out` values indicate which PID gain you should reduce to remove the output oscillations causing the motors to heat up.
+If the motors are excessively hot or you observe audible or visible oscillations, review the `.bin` dataflash log.
+High or fluctuating `RATE.*out` values will indicate which PID gain needs to be reduced in order to eliminate the output oscillations that are causing the motors to overheat.
+Refer to the section on [Initial tuning oscilations](https://ardupilot.org/copter/docs/initial-tuning-flight.html#initial-aircraft-tune).
+Return to the file `16_pid_adjustment.param`, make the necessary adjustments to the PID gains, upload the changes to the flight controller, and conduct another test flight.
 
 # 8. Minimalistic mandatory tuning
 
