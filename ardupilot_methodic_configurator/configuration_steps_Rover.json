@@ -826,5 +826,65 @@
             "auto_changed_by": "",
             "old_filenames": ["45_everyday_use.param", "47_everyday_use.param", "50_everyday_use.param"]
         }
+    },
+    "phases": {
+        "IMU temperature calibration": {
+            "description": "Calibrate the IMU sensors for at different temperatures",
+            "optional": true,
+            "start": 2
+        },
+        "Assemble all components except the propellers": {
+            "description": "Assemble all components except the propellers"
+        },
+        "Basic mandatory configuration": {
+            "description": "Set up the basic parameters for the vehicle",
+            "start": 4
+        },
+        "Assemble the propellers and perform the first flight": {
+            "description": "Assemble the propellers and perform the first flight"
+        },
+        "Minimalistic mandatory tuning": {
+            "description": "Minimalistic mandatory tuning using test flight data",
+            "start": 19
+        },
+        "Standard tuning": {
+            "description": "Improve tuning with more test flight data",
+            "optional": true,
+            "start": 24
+        },
+        "Improve altitude control": {
+            "description": "Improve altitude under windy conditions",
+            "optional": true,
+            "start": 40
+        },
+        "Analytical PID optimization": {
+            "description": "System identification and analytical PID optimization",
+            "optional": true,
+            "start": 42
+        },
+        "Position controller tuning": {
+            "description": "Position controller tuning",
+            "optional": true,
+            "start": 47
+        },
+        "Guided operation": {
+            "description": "Guided operation",
+            "optional": true,
+            "start": 48
+        },
+        "Precision landing": {
+            "description": "Precision landing",
+            "optional": true,
+            "start": 49
+        },
+        "Optical flow calibration": {
+            "description": "Optical flow sensor calibration",
+            "optional": true,
+            "start": 50
+        },
+        "Everyday use": {
+            "description": "Switch tests off, configure for productive work",
+            "start": 53
+        }
     }
 }

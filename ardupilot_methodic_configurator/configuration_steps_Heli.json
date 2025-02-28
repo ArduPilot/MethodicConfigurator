@@ -268,7 +268,7 @@
             "wiki_text": "Manual tuning of Roll and Pitch",
             "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
             "external_tool_text": "param_pid_adjustment_update.py",
-            "external_tool_url": "https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configuratoronfigurator/param_pid_adjustment_update.py",
+            "external_tool_url": "https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/param_pid_adjustment_update.py",
             "mandatory_text": "20% mandatory (80% optional)",
             "auto_changed_by": "",
             "old_filenames": ["15_pid_adjustment.param"]
@@ -494,8 +494,8 @@
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#951-roll-axis-autotune",
             "wiki_text": "AutoTune",
             "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
             "old_filenames": ["29_autotune_roll_results.param"]
@@ -523,8 +523,8 @@
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#952-pitch-axis-autotune",
             "wiki_text": "AutoTune",
             "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
             "old_filenames": ["31_autotune_pitch_results.param"]
@@ -555,8 +555,8 @@
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#953-yaw-axis-autotune",
             "wiki_text": "AutoTune",
             "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
             "old_filenames": ["33_autotune_yaw_results.param"]
@@ -584,8 +584,8 @@
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#954-yaw-d-axis-autotune-optional",
             "wiki_text": "AutoTune",
             "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
             "old_filenames": ["35_autotune_yawd_results.param"]
@@ -613,8 +613,8 @@
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#955-roll-and-pitch-axis-re-autotune",
             "wiki_text": "AutoTune",
             "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
             "old_filenames": ["37_autotune_roll_pitch_retune_results.param"]
@@ -822,6 +822,66 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "old_filenames": ["45_everyday_use.param", "47_everyday_use.param", "50_everyday_use.param"]
+        }
+    },
+    "phases": {
+        "IMU temperature calibration": {
+            "description": "Calibrate the IMU sensors for at different temperatures",
+            "optional": true,
+            "start": 2
+        },
+        "Assemble all components except the propellers": {
+            "description": "Assemble all components except the propellers"
+        },
+        "Basic mandatory configuration": {
+            "description": "Set up the basic parameters for the vehicle",
+            "start": 4
+        },
+        "Assemble the propellers and perform the first flight": {
+            "description": "Assemble the propellers and perform the first flight"
+        },
+        "Minimalistic mandatory tuning": {
+            "description": "Minimalistic mandatory tuning using test flight data",
+            "start": 19
+        },
+        "Standard tuning": {
+            "description": "Improve tuning with more test flight data",
+            "optional": true,
+            "start": 24
+        },
+        "Improve altitude control": {
+            "description": "Improve altitude under windy conditions",
+            "optional": true,
+            "start": 40
+        },
+        "Analytical PID optimization": {
+            "description": "System identification and analytical PID optimization",
+            "optional": true,
+            "start": 42
+        },
+        "Position controller tuning": {
+            "description": "Position controller tuning",
+            "optional": true,
+            "start": 47
+        },
+        "Guided operation": {
+            "description": "Guided operation",
+            "optional": true,
+            "start": 48
+        },
+        "Precision landing": {
+            "description": "Precision landing",
+            "optional": true,
+            "start": 49
+        },
+        "Optical flow calibration": {
+            "description": "Optical flow sensor calibration",
+            "optional": true,
+            "start": 50
+        },
+        "Everyday use": {
+            "description": "Switch tests off, configure for productive work",
+            "start": 53
         }
     }
 }
