@@ -1,6 +1,6 @@
 {
   "type": "object",
-  "required": ["steps", "phases"],
+  "required": ["steps"],
   "properties": {
     "steps": {
       "type": "object",
