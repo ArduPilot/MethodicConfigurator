@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-02-28 08:34+0000\n"
+"POT-Creation-Date: 2025-02-28 09:20+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -1815,7 +1815,7 @@ msgstr ""
 "parâmetros e validar seu valor"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:350
-msgid "No flight controller connected, without it this is not available"
+msgid "No flight controller connected, upload not available"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:354
