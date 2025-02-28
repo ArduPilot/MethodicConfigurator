@@ -421,7 +421,9 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
                     raise requests_exceptions.RequestException(msg)
             except requests_exceptions.RequestException as exp:
                 logging.critical("Unable to fetch XML data: %s", exp)
-                msg = "unable to fetch online XML documentation"
+                msg = "Unable to fetch online XML documentation."
+                msg += f"\nDownload it manually from {url} and"
+                msg += f"\nplace it in the {directory} directory"
                 raise SystemExit(msg) from exp
         # Get the text content of the response
         xml_data = response.text

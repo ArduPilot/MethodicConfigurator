@@ -347,7 +347,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 "to save them\nIt will reset the FC if necessary, re-download all parameters and validate their value"
             )
             if self.flight_controller.master
-            else _("No flight controller connected, without it this is not available"),
+            else _("No flight controller connected, upload not available"),
         )
 
         # Create skip button
