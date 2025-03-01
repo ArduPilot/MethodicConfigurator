@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-02-28 09:20+0000\n"
+"POT-Creation-Date: 2025-03-01 13:10+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1187,7 +1187,7 @@ msgid "MyVehicleName"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:269
-msgid "New"
+msgid "New vehicle"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:272
@@ -1249,7 +1249,7 @@ msgid ""
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:346
-msgid "Open"
+msgid "Open vehicle"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:353
@@ -1259,7 +1259,7 @@ msgid ""
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:366
-msgid "Re-Open"
+msgid "Re-Open vehicle"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:374
