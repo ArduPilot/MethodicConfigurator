@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0.16\n"
-"POT-Creation-Date: 2025-02-28 09:20+0000\n"
+"POT-Creation-Date: 2025-03-01 15:03+0000\n"
 "PO-Revision-Date: 2025-02-05 01:24+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -1362,8 +1362,8 @@ msgid "MyVehicleName"
 msgstr "MioNomeVeicolo"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:269
-msgid "New"
-msgstr "Nuovo"
+msgid "New vehicle"
+msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:272
 msgid ""
@@ -1453,8 +1453,8 @@ msgstr ""
 "carica i file appena creati nell'applicazione"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:346
-msgid "Open"
-msgstr "Apri"
+msgid "Open vehicle"
+msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:353
 msgid ""
@@ -1465,8 +1465,8 @@ msgstr ""
 "file di parametri intermedi, apm.pdef.xml e vehicle_components.json"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:366
-msgid "Re-Open"
-msgstr "Riapri"
+msgid "Re-Open vehicle"
+msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:374
 msgid "Last used vehicle configuration directory:"
@@ -2439,7 +2439,7 @@ msgid "Parameter Renamed"
 msgstr "Parametro Rinominato"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:203
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:491
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:494
 msgid "No documentation available in apm.pdef.xml for this parameter"
 msgstr ""
 "Nessuna documentazione disponibile in apm.pdef.xml per questo parametro"
@@ -2449,8 +2449,8 @@ msgid "Add a parameter to the {self.current_file} file"
 msgstr "Aggiungi un parametro al file {self.current_file}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:234
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:382
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:646
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:383
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:649
 msgid "Parameter %s not found in the %s file: %s"
 msgstr "Parametro %s non trovato nel file %s: %s"
 
@@ -2464,42 +2464,42 @@ msgstr ""
 "Impossibile convertire la chiave {combobox_widget} selezionata in un valore "
 "float."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:442
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:445
 msgid "{_param_name} Value: {_new_decimal_value}"
 msgstr "{_param_name} Valore: {_new_decimal_value}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:452
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:455
 msgid "Select {param_name} Bitmask Options"
 msgstr "Seleziona Opzioni Bitmask per {param_name}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:501
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:504
 msgid "When selected upload {param_name} new value to the flight controller"
 msgstr ""
 "Quando selezionato carica il nuovo valore di {param_name} sul controller di "
 "volo"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:540
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:543
 msgid "Reason why {param_name} should change to {_value}"
 msgstr "Motivo per cui {param_name} dovrebbe cambiare in {_value}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:545
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:548
 msgid "Are you sure you want to delete the {param_name} parameter?"
 msgstr "Sei sicuro di voler eliminare il parametro {param_name}?"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:560
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:563
 msgid "Add Parameter to "
 msgstr "Aggiungi Parametro a "
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:564
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:567
 msgid "Enter the parameter name to add:"
 msgstr "Inserisci il nome del parametro da aggiungere:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:571
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:635
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:574
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:638
 msgid "Operation not possible"
 msgstr "Operazione non possibile"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:572
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:575
 msgid ""
 "No apm.pdef.xml file and no FC connected. Not possible autocomplete "
 "parameter names."
@@ -2507,30 +2507,30 @@ msgstr ""
 "Nessun file apm.pdef.xml e nessun FC connesso. Impossibile completare "
 "automaticamente i nomi dei parametri."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:611
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:614
 msgid "Parameter name can not be empty."
 msgstr "Il nome del parametro non può essere vuoto."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:611
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:614
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:622
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:632
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:617
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:625
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:635
 msgid "Invalid parameter name."
 msgstr "Nome parametro non valido."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:614
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:617
 msgid "Parameter already exists, edit it instead"
 msgstr "Il parametro esiste già, modificalo invece"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:622
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:625
 msgid "Parameter name not found in the flight controller."
 msgstr "Nome parametro non trovato nel controller di volo."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:631
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:634
 msgid "'{param_name}' not found in the apm.pdef.xml file."
 msgstr "'{param_name}' non trovato nel file apm.pdef.xml."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:636
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:639
 msgid ""
 "Can not add parameter when no FC is connected and no apm.pdef.xml file "
 "exists."
@@ -2538,44 +2538,44 @@ msgstr ""
 "Impossibile aggiungere parametri quando nessun FC è connesso e nessun file "
 "apm.pdef.xml esiste."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:660
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:663
 msgid "The value for {param_name} {p} should be greater than {p_min}\n"
 msgstr "Il valore per {param_name} {p} dovrebbe essere maggiore di {p_min}\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:662
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:668
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:665
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:671
 msgid "Out-of-bounds Value"
 msgstr "Valore Fuori Limiti"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:662
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:668
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:665
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:671
 msgid "Use out-of-bounds value?"
 msgstr "Usare il valore fuori limiti?"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:666
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:669
 msgid "The value for {param_name} {p} should be smaller than {p_max}\n"
 msgstr "Il valore per {param_name} {p} dovrebbe essere minore di {p_max}\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:673
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:676
 msgid "The value for {param_name} must be a valid float."
 msgstr "Il valore per {param_name} deve essere un float valido."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:674
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:677
 msgid "Invalid Value"
 msgstr "Valore Non Valido"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:678
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:681
 msgid ""
 "Parameter %s changed, will later ask if change(s) should be saved to file."
 msgstr ""
 "Parametro %s modificato, verrà chiesto più tardi se salvare le modifiche nel "
 "file."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:696
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:699
 msgid "Parameter %s not found in the %s file %s: %s"
 msgstr "Parametro %s non trovato nel file %s %s: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:701
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:704
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if "
 "change(s) should be saved to file."
@@ -2818,6 +2818,15 @@ msgid ""
 msgstr ""
 "Connessione\n"
 "GNSS"
+
+#~ msgid "New"
+#~ msgstr "Nuovo"
+
+#~ msgid "Open"
+#~ msgstr "Apri"
+
+#~ msgid "Re-Open"
+#~ msgstr "Riapri"
 
 #~ msgid "New version available!"
 #~ msgstr "Nuova versione disponibile!"
