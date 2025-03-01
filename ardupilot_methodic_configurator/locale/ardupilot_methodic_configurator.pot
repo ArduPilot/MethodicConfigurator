@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-03-01 15:03+0000\n"
+"POT-Creation-Date: 2025-03-01 21:45+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1933,88 +1933,97 @@ msgid "A GUI for editing ArduPilot param files. Not to be used directly, but thr
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:44
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:114
-msgid "Documentation"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:50
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:118
-msgid "Forum Blog:"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:50
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:120
-msgid "Wiki:"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:50
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:124
-msgid "External tool:"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:50
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:126
-msgid "Mandatory:"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:52
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:32
 msgid "ArduPilot's forum Methodic configuration Blog post relevant for the current file"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:53
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:32
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:124
+msgid "Forum Blog:"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:33
 msgid "ArduPilot's wiki page relevant for the current file"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:54
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:33
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:126
+msgid "Wiki:"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:34
 msgid "External tool or documentation relevant for the current file"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:55
-msgid ""
-"Mandatory level of the current file,\n"
-" 100% you MUST use this file to configure the vehicle,\n"
-" 0% you can ignore this file if it does not apply to your vehicle"
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:34
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:130
+msgid "External tool:"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:74
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:36
+msgid "Mandatory:"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:37
+msgid ""
+"Mandatory level of the current file,\n"
+"100% you MUST use this file to configure the vehicle,\n"
+"0% you can ignore this file if it does not apply to your vehicle"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:56
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:120
+msgid "Documentation"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:90
 msgid "Automatically open documentation links in browser"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:80
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:96
 msgid ""
 "Automatically open all the above documentation links in a browser\n"
 "whenever the current intermediate parameter file changes"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:102
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:108
 msgid "Why: "
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:104
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:110
 msgid "Why now: "
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:111
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:117
 msgid "{current_file} Documentation"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:146
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:152
 msgid "Documentation URL not available"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:161
+msgid "This configuration step ({current_file} intermediate parameter file) is {percentage}% mandatory"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:166
+msgid "Mandatory level not available for this configuration step ({current_file})"
 msgstr ""
 
 #:
