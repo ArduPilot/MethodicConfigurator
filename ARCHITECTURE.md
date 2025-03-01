@@ -353,9 +353,10 @@ cd ..\..\..
 python extract_missing_translations.py --lang-code=de
 ```
 
-It will store the result of the bulk translations into a `translations_de.txt` file.
+It will store the result of the bulk translations into n `missing_translations_de_n.txt` file(s).
 
 Now translate that file(s), or feed it to on-line translation service.
+Put all missing translations into a single `missing_translations_de.txt`
 Once done, insert the translations into the `.po` file:
 
 ```bash
@@ -412,10 +413,6 @@ Name: "pt"; MessagesFile: "compiler:Languages\Portuguese.isl"
 Name: "de"; MessagesFile: "compiler:Languages\German.isl"
 ...
 
-[Icons]
-...
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; IconFilename: "{app}\MethodicConfigurator.ico"; Parameters: "--language {language}"; Languages: zh_CN pt de
-...
 ```
 
 With the new `.mo` file created, you should ensure the software correctly loads the new language.
