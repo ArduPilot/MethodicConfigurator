@@ -63,6 +63,7 @@ Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\ve
 ; Remove Outdated files
 Type: filesandordirs; Name: "{app}\_internal\ardupilot_methodic_configurator\ArduCopter_configuration_steps.json";
 Type: filesandordirs; Name: "{app}\_internal\ardupilot_methodic_configurator\ArduPlane_configuration_steps.json";
+Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\version.txt";
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
