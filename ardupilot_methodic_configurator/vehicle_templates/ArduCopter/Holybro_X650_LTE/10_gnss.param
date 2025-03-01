@@ -1,0 +1,11 @@
+BRD_SAFETY_DEFLT,0  # Safety switch gets disabled.
+CAN_D1_PROTOCOL,0
+CAN_P1_DRIVER,0  # No CAN drivers are required for now
+GPS_GNSS_MODE,7  # GPS and galileo
+GPS_POS1_X,0
+GPS_POS1_Y,0
+GPS_POS1_Z,0
+GPS_TYPE,2  # Defined in component editor
+NTF_LED_TYPES,123079  # Enable DRONECAN LED
+SERIAL3_PROTOCOL,5  # GPS will be used.
+WPNAV_RADIUS,200

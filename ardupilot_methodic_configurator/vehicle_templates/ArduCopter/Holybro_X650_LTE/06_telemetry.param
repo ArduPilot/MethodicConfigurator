@@ -1,0 +1,2 @@
+BRD_SER1_RTSCTS,2  # we have no RTS/CTS pins connected, telemetry was working fine already
+SERIAL1_BAUD,115  # CUAV LTE-Link SE
