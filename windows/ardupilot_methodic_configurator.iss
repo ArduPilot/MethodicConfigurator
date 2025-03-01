@@ -30,7 +30,10 @@ SolidCompression=yes
 ChangesEnvironment=yes
 
 [InstallDelete]
+; Remove main application files
 Type: filesandordirs; Name: {commonpf}\{#MyAppName}
+
+; Remove ArduCopter template files
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.3.8-params"
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.4.4-params"
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\diatone_taycan_mxc\4.5.1-params"
@@ -49,9 +52,15 @@ Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\ve
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Hoverit_X11+";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Holybro_X500_V2";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Holybro_X650_LTE";
+
+; Remove Heli template files
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Heli\Allister";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Heli\OMP_M4";
+
+; Remove Rover template files
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Rover\AION_R1";
+
+; Remove Outdated files
 Type: filesandordirs; Name: "{app}\_internal\ardupilot_methodic_configurator\ArduCopter_configuration_steps.json";
 Type: filesandordirs; Name: "{app}\_internal\ardupilot_methodic_configurator\ArduPlane_configuration_steps.json";
 
@@ -61,6 +70,7 @@ Name: "zh_CN"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Name: "pt"; MessagesFile: "compiler:Languages\Portuguese.isl"
 Name: "de"; MessagesFile: "compiler:Languages\German.isl"
 Name: "it"; MessagesFile: "compiler:Languages\Italian.isl"
+Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -83,12 +93,11 @@ Source: "..\ardupilot_methodic_configurator\locale\*.mo"; DestDir: "{app}\_inter
 Name: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; Flags: uninsneveruninstall
 
 [Icons]
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; IconFilename: "{app}\ardupilot_methodic_configurator.ico"; Languages: en
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; IconFilename: "{app}\ardupilot_methodic_configurator.ico"; Parameters: "--language {language}"; Languages: zh_CN pt de it
+Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; Tasks: desktopicon; IconFilename: "{app}\ardupilot_methodic_configurator.ico"; Parameters: "--language {language}"
 Name: "{group}\Documentation"; Filename: "https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"
 Name: "{group}\Vehicle Templates"; Filename: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates"
 Name: "{group}\ArduPilot Methodic Configurator Forum"; Filename: "https://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/"
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; IconFilename: "{app}\ardupilot_methodic_configurator.ico"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{userappdata}\.ardupilot_methodic_configurator"; IconFilename: "{app}\ardupilot_methodic_configurator.ico"; Parameters: "--language {language}"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent; Parameters: "--language {language}"
