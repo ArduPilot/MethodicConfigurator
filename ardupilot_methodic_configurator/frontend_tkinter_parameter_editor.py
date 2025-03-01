@@ -520,7 +520,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Update the current_file attribute to the selected file
             self.current_file = selected_file
             self.at_least_one_changed_parameter_written = False
-            self.documentation_frame.update_documentation_labels(selected_file)
+            self.documentation_frame.refresh_documentation_labels(selected_file)
             self.documentation_frame.update_why_why_now_tooltip(selected_file)
             self.repopulate_parameter_table(selected_file)
 
