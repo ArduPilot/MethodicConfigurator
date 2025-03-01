@@ -49,7 +49,7 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "forced_parameters": {
-                "LOG_BITMASK": { "New Value": 2242270, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
+                "LOG_BITMASK": { "New Value": 145118, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
                 "LOG_DISARMED": { "New Value": 0, "Change Reason": "Log disarmed was only required for offline IMU temperature calibration" }
             },
             "derived_parameters": {
@@ -246,7 +246,7 @@
             "auto_changed_by": "",
             "forced_parameters": {
                 "INS_LOG_BAT_OPT": { "New Value": 4, "Change Reason": "Logs measured data both before and after the filters for Filter Review Webtool usage" },
-                "LOG_BITMASK": { "New Value": 2242270, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
+                "LOG_BITMASK": { "New Value": 145118, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
                 "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" }
             },
             "old_filenames": ["13_logging.param"]
