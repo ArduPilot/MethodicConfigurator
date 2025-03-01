@@ -7,7 +7,6 @@ updates:
     commit-message:
       prefix: "build(pip)"
       prefix-development: "build(pip dev)"
-      include: "scope"
     pin-versions: true
 
   - package-ecosystem: "github-actions"
@@ -16,6 +15,5 @@ updates:
       interval: "monthly"
     commit-message:
       prefix: "ci(github-actions)"
-      include: "scope"
     pin-versions: true
     pin-sha: true
