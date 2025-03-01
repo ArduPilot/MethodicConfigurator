@@ -64,6 +64,7 @@ Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\ve
 Type: filesandordirs; Name: "{app}\_internal\ardupilot_methodic_configurator\ArduCopter_configuration_steps.json";
 Type: filesandordirs; Name: "{app}\_internal\ardupilot_methodic_configurator\ArduPlane_configuration_steps.json";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\version.txt";
+Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\git_hash.txt";
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
@@ -81,7 +82,7 @@ Source: "..\ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator
 Source: "..\ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 Source: "..\ardupilot_methodic_configurator\vehicle_templates\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\git_hash.txt"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator"; Flags: ignoreversion
+Source: "..\git_hash.txt"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\windows\ardupilot_methodic_configurator.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\ArduPilot_icon.png"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\ArduPilot_logo.png"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
