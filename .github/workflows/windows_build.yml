@@ -94,7 +94,7 @@ jobs:
           echo "exe_path=$exePath" >> $env:GITHUB_OUTPUT
 
       - name: Generate SLSA provenance
-        uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@5a775b367a56d5bd118a224a811bba288150a563
+        uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a
         with:
           path: ${{ steps.exe_path.outputs.exe_path }}
 
