@@ -319,13 +319,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         param_default: Union[None, Par],
         doc_tooltip: str,
     ) -> Union[PairTupleCombobox, ttk.Entry]:
+        is_bitmask = param_metadata and "Bitmask" in param_metadata
         present_as_forced = False
         if (
             self.current_file in self.local_filesystem.forced_parameters
             and param_name in self.local_filesystem.forced_parameters[self.current_file]
         ):
             present_as_forced = True
-            if not is_within_tolerance(
+            if is_bitmask or not is_within_tolerance(
                 param.value, self.local_filesystem.forced_parameters[self.current_file][param_name].value
             ):
                 param.value = self.local_filesystem.forced_parameters[self.current_file][param_name].value
@@ -335,7 +336,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             and param_name in self.local_filesystem.derived_parameters[self.current_file]
         ):
             present_as_forced = True
-            if not is_within_tolerance(
+            if is_bitmask or not is_within_tolerance(
                 param.value, self.local_filesystem.derived_parameters[self.current_file][param_name].value
             ):
                 param.value = self.local_filesystem.derived_parameters[self.current_file][param_name].value
