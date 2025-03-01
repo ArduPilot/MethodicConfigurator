@@ -48,9 +48,11 @@ class TestDocumentationFrame(unittest.TestCase):
         assert isinstance(self.doc_frame.documentation_frame, ttk.LabelFrame)
         assert self.doc_frame.documentation_frame.cget("text") == "test_file Documentation"
 
-        expected_labels = ["Forum Blog:", "Wiki:", "External tool:", "Mandatory:"]
+        expected_labels = ["Forum Blog:", "Wiki:", "External tool:"]
         for label in expected_labels:
             assert label in self.doc_frame.documentation_labels
+
+        assert isinstance(self.doc_frame.mandatory_level, ttk.Progressbar)
 
     @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame.webbrowser_open")
     def test_auto_open_documentation_links(self, mock_webbrowser_open_) -> None:
@@ -63,7 +65,7 @@ class TestDocumentationFrame(unittest.TestCase):
         ]
         self.doc_frame.auto_open_var.set(True)
 
-        self.doc_frame.update_documentation_labels(self.current_file)
+        self.doc_frame.refresh_documentation_labels(self.current_file)
 
         mock_webbrowser_open_.assert_any_call(url="http://wiki.url", new=0, autoraise=False)
         mock_webbrowser_open_.assert_any_call(url="http://external_tool.url", new=0, autoraise=False)
@@ -81,26 +83,52 @@ class TestDocumentationFrame(unittest.TestCase):
                 self.doc_frame.documentation_frame, "Why: Why text\nWhy now: Why now text", position_below=False
             )
 
+    @pytest.mark.usefixtures("mock_show_tooltip")
+    def test_update_why_why_now_tooltip_with_both_tooltips(self) -> None:
+        """Test the update_why_why_now_tooltip method with both tooltips present."""
+        self.local_filesystem.get_seq_tooltip_text.side_effect = ["Why text", "Why now text"]
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame.show_tooltip"
+        ) as mock_show_tooltip_:
+            self.doc_frame.update_why_why_now_tooltip(self.current_file)
+            mock_show_tooltip_.assert_called_once_with(
+                self.doc_frame.documentation_frame, "Why: Why text\nWhy now: Why now text", position_below=False
+            )
+
+    @pytest.mark.usefixtures("mock_show_tooltip")
+    def test_update_why_why_now_tooltip_with_empty_tooltips(self) -> None:
+        """Test the update_why_why_now_tooltip method with empty tooltips."""
+        self.local_filesystem.get_seq_tooltip_text.side_effect = ["", ""]
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame.show_tooltip"
+        ) as mock_show_tooltip_:
+            self.doc_frame.update_why_why_now_tooltip(self.current_file)
+            mock_show_tooltip_.assert_not_called()
+
     @pytest.mark.usefixtures("mock_webbrowser_open", "mock_show_tooltip")
-    def test_update_documentation_labels(self) -> None:
-        """Test the update_documentation_labels method."""
+    def test_refresh_documentation_labels(self) -> None:
+        """Test the refresh_documentation_labels method."""
         self.local_filesystem.get_documentation_text_and_url.side_effect = lambda _file, key: {
             "blog": ("Blog text", "http://blog.url"),
             "wiki": ("Wiki text", "http://wiki.url"),
             "external_tool": ("External tool text", "http://external_tool.url"),
-            "mandatory": ("Mandatory text", None),
+            "mandatory": ("75", None),  # Changed to numeric value for progress bar
         }[key]
 
-        self.doc_frame.update_documentation_labels(self.current_file)
+        self.doc_frame.refresh_documentation_labels(self.current_file)
 
+        # Check regular labels
         assert self.doc_frame.documentation_labels["Forum Blog:"].cget("text") == "Blog text"
         assert self.doc_frame.documentation_labels["Wiki:"].cget("text") == "Wiki text"
         assert self.doc_frame.documentation_labels["External tool:"].cget("text") == "External tool text"
-        assert self.doc_frame.documentation_labels["Mandatory:"].cget("text") == "Mandatory text"
 
+        # Check colors for clickable links
         assert str(self.doc_frame.documentation_labels["Forum Blog:"].cget("foreground")) == "blue"
         assert str(self.doc_frame.documentation_labels["Wiki:"].cget("foreground")) == "blue"
         assert str(self.doc_frame.documentation_labels["External tool:"].cget("foreground")) == "blue"
+
+        # Check mandatory level progress bar
+        assert self.doc_frame.mandatory_level.cget("value") == 75
 
     @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame.webbrowser_open")
     def test_manual_open_documentation_links(self, mock_webbrowser_open_) -> None:
@@ -112,7 +140,7 @@ class TestDocumentationFrame(unittest.TestCase):
             ("Mandatory text", None),
         ]
 
-        self.doc_frame.update_documentation_labels(self.current_file)
+        self.doc_frame.refresh_documentation_labels(self.current_file)
 
         # Simulate clicking on the labels
         self.doc_frame.documentation_labels["Forum Blog:"].event_generate("<Button-1>")
@@ -129,19 +157,23 @@ class TestDocumentationFrame(unittest.TestCase):
             ("Blog text", None),
             ("Wiki text", None),
             ("External tool text", None),
-            ("Mandatory text", None),
+            ("0", None),  # Mandatory level
         ]
 
-        self.doc_frame.update_documentation_labels(self.current_file)
+        self.doc_frame.refresh_documentation_labels(self.current_file)
 
+        # Check regular labels
         assert self.doc_frame.documentation_labels["Forum Blog:"].cget("text") == "Blog text"
         assert self.doc_frame.documentation_labels["Wiki:"].cget("text") == "Wiki text"
         assert self.doc_frame.documentation_labels["External tool:"].cget("text") == "External tool text"
-        assert self.doc_frame.documentation_labels["Mandatory:"].cget("text") == "Mandatory text"
 
+        # Check colors for non-clickable text
         assert str(self.doc_frame.documentation_labels["Forum Blog:"].cget("foreground")) == "black"
         assert str(self.doc_frame.documentation_labels["Wiki:"].cget("foreground")) == "black"
         assert str(self.doc_frame.documentation_labels["External tool:"].cget("foreground")) == "black"
+
+        # Check mandatory level progress bar
+        assert self.doc_frame.mandatory_level.cget("value") == 0
 
     @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame.show_tooltip")
     def test_tooltip_texts(self, mock_show_tooltip_) -> None:
@@ -150,15 +182,14 @@ class TestDocumentationFrame(unittest.TestCase):
             ("Blog text", "http://blog.url"),
             ("Wiki text", "http://wiki.url"),
             ("External tool text", "http://external_tool.url"),
-            ("Mandatory text", None),
+            ("50", None),
         ]
 
-        self.doc_frame.update_documentation_labels(self.current_file)
+        self.doc_frame.refresh_documentation_labels(self.current_file)
 
         assert self.doc_frame.documentation_labels["Forum Blog:"].cget("text") == "Blog text"
         assert self.doc_frame.documentation_labels["Wiki:"].cget("text") == "Wiki text"
         assert self.doc_frame.documentation_labels["External tool:"].cget("text") == "External tool text"
-        assert self.doc_frame.documentation_labels["Mandatory:"].cget("text") == "Mandatory text"
 
         assert str(self.doc_frame.documentation_labels["Forum Blog:"].cget("foreground")) == "blue"
         assert str(self.doc_frame.documentation_labels["Wiki:"].cget("foreground")) == "blue"
@@ -167,6 +198,55 @@ class TestDocumentationFrame(unittest.TestCase):
         mock_show_tooltip_.assert_any_call(self.doc_frame.documentation_labels["Forum Blog:"], "http://blog.url")
         mock_show_tooltip_.assert_any_call(self.doc_frame.documentation_labels["Wiki:"], "http://wiki.url")
         mock_show_tooltip_.assert_any_call(self.doc_frame.documentation_labels["External tool:"], "http://external_tool.url")
+        expected_tooltip = f"This configuration step ({self.current_file} intermediate parameter file) is 50% mandatory"
+        mock_show_tooltip_.assert_any_call(self.doc_frame.mandatory_level, expected_tooltip)
+
+    def test_refresh_mandatory_level_valid_percentage(self) -> None:
+        """Test refresh_mandatory_level with valid percentage."""
+        self.doc_frame._refresh_mandatory_level(self.current_file, "75% completion")  # pylint: disable=protected-access
+        assert self.doc_frame.mandatory_level.cget("value") == 75
+
+    def test_refresh_mandatory_level_invalid_percentage(self) -> None:
+        """Test refresh_mandatory_level with invalid percentage."""
+        self.doc_frame._refresh_mandatory_level(self.current_file, "invalid text")  # pylint: disable=protected-access
+        assert self.doc_frame.mandatory_level.cget("value") == 0
+
+    def test_refresh_mandatory_level_out_of_range(self) -> None:
+        """Test refresh_mandatory_level with percentage out of range."""
+        self.doc_frame._refresh_mandatory_level(self.current_file, "101% completion")  # pylint: disable=protected-access
+        assert self.doc_frame.mandatory_level.cget("value") == 0
+
+    @pytest.mark.usefixtures("mock_show_tooltip")
+    def test_refresh_documentation_label_with_url(self) -> None:
+        """Test refresh_documentation_label with valid URL."""
+        label_key = "Forum Blog:"
+        text = "Test text"
+        url = "http://test.url"
+
+        self.doc_frame._refresh_documentation_label(label_key, text, url)  # pylint: disable=protected-access
+
+        label = self.doc_frame.documentation_labels[label_key]
+        assert label.cget("text") == text
+        assert str(label.cget("foreground")) == "blue"
+        # Compare cursor string representation instead of object
+        assert str(label.cget("cursor")) == "hand2"
+        assert bool(label.cget("underline")) is True
+
+    @pytest.mark.usefixtures("mock_show_tooltip")
+    def test_refresh_documentation_label_without_url(self) -> None:
+        """Test refresh_documentation_label without URL."""
+        label_key = "Forum Blog:"
+        text = "Test text"
+        url = ""
+
+        self.doc_frame._refresh_documentation_label(label_key, text, url)  # pylint: disable=protected-access
+
+        label = self.doc_frame.documentation_labels[label_key]
+        assert label.cget("text") == text
+        assert str(label.cget("foreground")) == "black"
+        # Compare cursor string representation instead of object
+        assert str(label.cget("cursor")) == "arrow"
+        assert bool(label.cget("underline")) is False
 
 
 if __name__ == "__main__":
