@@ -1,0 +1,9 @@
+ARMING_RUDDER,2
+RC_OPTIONS,32
+RC_PROTOCOLS,1  # Selected in the component editor
+RC10_OPTION,0
+RC6_OPTION,0
+RC7_OPTION,0
+RC8_OPTION,19  # release bait
+RC9_OPTION,0
+RSSI_TYPE,0  # radio without RSSI

@@ -1,0 +1,10 @@
+INS_FAST_SAMPLE,3  # Both IMUs can run fast on the the FC
+INS_GYRO_RATE,1
+INS_HNTCH_ATT,20  # this is just a hunch, it must be improved after the first flight (by the next file)
+INS_HNTCH_BW,20  # this is just a hunch, it must be improved after the first flight (by the next file)
+INS_HNTCH_ENABLE,1  # Use the first notch filter to filter the noise created by the motors/propellers
+INS_HNTCH_FREQ,40.6  # Use 1.4 * INS_GYRO_FILTER as a first guess
+INS_HNTCH_HMNCS,1  # Harmonic notch filter to first harmonics.
+INS_HNTCH_MODE,1  # ESC telemetry mode; each motor will have a notch assigned
+INS_HNTCH_OPTS,0  # Triple overlapping notches, updating the filters at the loop rate (fast)
+INS_HNTCH_REF,0.33  # For RPM telemetry ESC notch filtering
