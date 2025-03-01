@@ -49,6 +49,7 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "forced_parameters": {
+                "LOG_BITMASK": { "New Value": 2242270, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
                 "LOG_DISARMED": { "New Value": 0, "Change Reason": "Log disarmed was only required for offline IMU temperature calibration" }
             },
             "derived_parameters": {
@@ -245,7 +246,7 @@
             "auto_changed_by": "",
             "forced_parameters": {
                 "INS_LOG_BAT_OPT": { "New Value": 4, "Change Reason": "Logs measured data both before and after the filters for Filter Review Webtool usage" },
-                "LOG_BITMASK": { "New Value": 2242558, "Change Reason": "Logs Notch filter data and other control signals" },
+                "LOG_BITMASK": { "New Value": 2242270, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
                 "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" }
             },
             "old_filenames": ["13_logging.param"]
@@ -454,7 +455,9 @@
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "",
             "forced_parameters": {
-                "ATC_RATE_FF_ENAB": { "New Value": 0, "Change Reason": "test the stabilization loops independent of the input shaping" }
+                "ATC_RATE_FF_ENAB": { "New Value": 0, "Change Reason": "test the stabilization loops independent of the input shaping" },
+                "INS_LOG_BAT_MASK": { "New Value": 0, "Change Reason": "IMU batch logging no longer required, notch filter setup is complete, this reduces processor load and log file size" },
+                "LOG_BITMASK": { "New Value": 145118, "Change Reason": "Disable fast harmonic notch logging" }
             },
             "old_filenames": ["26_evaluate_the_aircraft_tune_ff_disable.param"]
         },
@@ -748,6 +751,9 @@
             "external_tool_url": "",
             "mandatory_text": "40% mandatory (60% optional)",
             "auto_changed_by": "",
+            "forced_parameters": {
+                "LOG_BITMASK": { "New Value": 145150, "Change Reason": "Add Navigation logging" }
+            },
             "old_filenames": ["46_position_controller.param", "48_position_controller.param"]
         },
         "48_guided_operation.param": {
