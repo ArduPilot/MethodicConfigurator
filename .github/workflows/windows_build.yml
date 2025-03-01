@@ -61,7 +61,22 @@ jobs:
           del ardupilot_methodic_configurator.spec
 
       - name: Write the git commit hash to file
-        run: echo $(git rev-parse HEAD) > git_hash.txt
+        run: |
+          $hash = git rev-parse HEAD
+          $hash = $hash.Trim()
+          $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+          [System.IO.File]::WriteAllText("git_hash.txt", $hash, $utf8NoBom)
+
+      - name: Verify git hash file
+        run: |
+          Write-Host "Git hash file content:"
+          $bytes = [System.IO.File]::ReadAllBytes("git_hash.txt")
+          if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+            Write-Host "::warning::File contains UTF-8 BOM"
+          } else {
+            Write-Host "File has no BOM (good)"
+          }
+          Get-Content -Raw git_hash.txt
 
       - name: Build installer
         run: |
