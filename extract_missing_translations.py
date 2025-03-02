@@ -27,7 +27,7 @@ def parse_arguments() -> argparse.Namespace:
         "--lang-code",
         default="zh_CN",
         type=str,
-        choices=LANGUAGE_CHOICES,
+        choices=[*LANGUAGE_CHOICES, "test"],
         help="The language code for translations. Available choices: %(choices)s. Default is %(default)s",
     )
     # pylint: enable=duplicate-code
@@ -50,12 +50,30 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:
+def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:  # noqa: PLR0915 # pylint: disable=too-many-statements,too-many-branches,too-many-locals
+    """
+    Extract missing translations from a .po file.
+
+    Special handling for empty msgid (msgid "") which represents the header
+    Not require msgid to be non-empty
+    Detect the end of multiline msgstr entries
+    Malformed line detection only apply when not in msgid or msgstr blocks
+    A check for trailing untranslated entries at the end of the file
+
+    Args:
+        lang_code: The language code for translations.
+
+    Returns:
+        A list of tuples containing:
+         - line index where to insert the translated string into (msgstr)
+         - the untranslated msgid.
+
+    """
     # Set up the translation catalog
     po_file = os.path.join(
         "ardupilot_methodic_configurator", "locale", lang_code, "LC_MESSAGES", "ardupilot_methodic_configurator.po"
     )
-    language = gettext.translation(
+    gettext.translation(
         "ardupilot_methodic_configurator",
         localedir=os.path.join("ardupilot_methodic_configurator", "locale"),
         languages=[lang_code],
@@ -70,31 +88,99 @@ def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:
 
     # Iterate through lines to find untranslated msgid
     msgid = ""
+    msgstr = ""
+    msgstr_line_index = -1
     in_msgid = False
+    in_msgstr = False
+    has_malformed_line = False
+
     for i, f_line in enumerate(lines):
         line = f_line.strip()
+        error_msg = f"Error in line {i}: {line}"
 
+        # Start of a new msgid entry
         if line.startswith("msgid "):
+            # If we were in a msgstr before, check if we need to add this entry to missing translations
+            if in_msgstr and not has_malformed_line and msgstr == "" and msgid:
+                missing_translations.append((msgstr_line_index, msgid))
+
+            # Reset for new entry
             msgid = ""
+            msgstr = ""
             in_msgid = True
+            in_msgstr = False
+            has_malformed_line = False
 
-        if in_msgid and not line.startswith("msgstr "):
-            line_split = line.split('"')
-            if len(line_split) > 1:
-                msgid += '"'.join(line_split[1:-1])  # Get the msgid string
+            # Extract the content of the msgid from this line
+            if line.count('"') >= 2:  # Check if there are at least 2 quotes
+                try:
+                    content = line.split('"', 1)[1].rsplit('"', 1)[0]
+                    msgid = content
+                except IndexError:
+                    logging.error(error_msg)
+                    has_malformed_line = True
+            # Special case for empty msgid (header or start of multiline)
+            elif line == 'msgid ""':
+                msgid = ""
             else:
-                msg = f"On line {i}"
-                logging.error(msg)
-            continue
+                logging.error(error_msg)
+                has_malformed_line = True
 
-        if in_msgid and line.startswith("msgstr "):
+        # Continuation of msgid (multiline)
+        elif in_msgid and not in_msgstr and line.startswith('"'):
+            try:
+                content = line.split('"', 1)[1].rsplit('"', 1)[0]
+                msgid += content
+            except IndexError:
+                logging.error(error_msg)
+                has_malformed_line = True
+
+        # Start of msgstr
+        elif line.startswith("msgstr "):
             in_msgid = False
-            # escape \ characters in a string
-            msgid_escaped = msgid.replace("\\", "\\\\")
-            # msgid_escaped = msgid
-            # Check if the translation exists
-            if language.gettext(msgid_escaped) == msgid:  # If translation is the same as msgid, it's missing
-                missing_translations.append((i - 1, msgid))
+            in_msgstr = True
+            msgstr_line_index = i - 1
+
+            # Extract the content of msgstr from this line
+            if line.count('"') >= 2:
+                try:
+                    content = line.split('"', 1)[1].rsplit('"', 1)[0]
+                    msgstr = content
+                except IndexError:
+                    logging.error(error_msg)
+                    has_malformed_line = True
+            # Empty msgstr is OK, it's what we're looking for
+            elif line == 'msgstr ""':
+                msgstr = ""
+            else:
+                logging.error(error_msg)
+                has_malformed_line = True
+
+        # Continuation of msgstr (multiline)
+        elif in_msgstr and line.startswith('"'):
+            try:
+                content = line.split('"', 1)[1].rsplit('"', 1)[0]
+                msgstr += content
+            except IndexError:
+                logging.error(error_msg)
+                has_malformed_line = True
+
+        # End of msgstr multi-line (detected by blank line or new msgid or comment)
+        elif in_msgstr and (not line or line.startswith(("msgid ", "#"))):
+            # Check if the entry was untranslated
+            if not has_malformed_line and msgstr == "" and msgid:
+                missing_translations.append((msgstr_line_index, msgid))
+            in_msgstr = False
+
+        # Malformed line detection
+        elif not line.startswith('"') and not line.startswith("#") and line and not in_msgstr and not in_msgid:
+            if not line.startswith("msgid"):  # Only log for truly malformed lines
+                logging.error(error_msg)
+                has_malformed_line = True
+
+    # Check for any untranslated entries at the end of the file
+    if in_msgstr and not has_malformed_line and msgstr == "" and msgid:
+        missing_translations.append((msgstr_line_index, msgid))
 
     return missing_translations
 

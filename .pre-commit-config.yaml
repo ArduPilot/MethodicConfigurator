@@ -17,6 +17,11 @@ repos:
       - id: check-json
       - id: check-toml
       - id: check-yaml
+      - id: mixed-line-ending
+        name: Force LF line endings for .po files
+        args: ["--fix=lf"]
+        files: \.po$
+        description: Forces LF line endings in PO translation files
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.9.4
