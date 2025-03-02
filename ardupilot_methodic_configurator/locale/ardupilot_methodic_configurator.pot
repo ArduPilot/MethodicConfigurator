@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-03-01 21:45+0000\n"
+"POT-Creation-Date: 2025-03-02 12:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -275,23 +275,51 @@ msgstr ""
 msgid "site_directory: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:48
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:61
+msgid "Schema file '%s' not found."
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:63
+msgid "Error decoding JSON schema from file '%s'."
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:75
+msgid "Could not load validation schema"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:81
+msgid "Validation error"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:93
+msgid "Invalid vehicle components file '%s': %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:97
 msgid "File '%s' not found in %s."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:50
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:99
 msgid "Error decoding JSON data from file '%s'."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:60
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:107
+msgid "Cannot save invalid vehicle components data: %s"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:115
 msgid "Error saving JSON data to file '%s': %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:73
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:128
 msgid "Firmware type {fw_type} in {self.vehicle_components_json_filename} is not supported"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:87
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:142
 msgid "FW version string {version_str} on {self.vehicle_components_json_filename} is invalid"
 msgstr ""
 
