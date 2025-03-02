@@ -1,0 +1,211 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Vehicle Components Configuration",
+  "type": "object",
+  "required": ["Format version", "Components", "Program version", "Configuration template"],
+  "properties": {
+    "Format version": {
+      "type": "integer",
+      "description": "Schema format version"
+    },
+    "Components": {
+      "type": "object",
+      "required": [
+        "Flight Controller",
+        "Frame",
+        "Battery Monitor",
+        "Battery",
+        "ESC",
+        "Motors"
+      ],
+      "properties": {
+        "Flight Controller": {
+          "$ref": "#/definitions/flightController"
+        },
+        "Frame": {
+          "$ref": "#/definitions/frame"
+        },
+        "RC Controller": {
+          "$ref": "#/definitions/rcComponent"
+        },
+        "RC Transmitter": {
+          "$ref": "#/definitions/rcComponent"
+        },
+        "RC Receiver": {
+          "$ref": "#/definitions/connectionComponent"
+        },
+        "Telemetry": {
+          "$ref": "#/definitions/connectionComponent"
+        },
+        "Battery Monitor": {
+          "$ref": "#/definitions/connectionComponent"
+        },
+        "Battery": {
+          "$ref": "#/definitions/battery"
+        },
+        "ESC": {
+          "$ref": "#/definitions/connectionComponent"
+        },
+        "Motors": {
+          "$ref": "#/definitions/motors"
+        },
+        "Propellers": {
+          "$ref": "#/definitions/propellers"
+        },
+        "GNSS Receiver": {
+          "$ref": "#/definitions/connectionComponent"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Program version": {
+      "type": "string",
+      "description": "Version of the program"
+    },
+    "Configuration template": {
+      "type": "string",
+      "description": "Name of the configuration template"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "product": {
+      "type": "object",
+      "required": ["Manufacturer", "Model"],
+      "properties": {
+        "Manufacturer": { "type": "string" },
+        "Model": { "type": "string" },
+        "URL": { "type": "string" },
+        "Version": { "type": "string" }
+      }
+    },
+    "firmware": {
+      "type": "object",
+      "properties": {
+        "Type": { "type": "string" },
+        "Version": { "type": "string" }
+      }
+    },
+    "fcConnection": {
+      "type": "object",
+      "properties": {
+        "Type": { "type": "string" },
+        "Protocol": { "type": "string" }
+      }
+    },
+    "baseComponent": {
+      "type": "object",
+      "required": ["Product"],
+      "properties": {
+        "Product": { "$ref": "#/definitions/product" },
+        "Notes": { "type": "string" }
+      }
+    },
+    "flightController": {
+      "allOf": [
+        { "$ref": "#/definitions/baseComponent" },
+        {
+          "properties": {
+            "Firmware": { "$ref": "#/definitions/firmware" },
+            "Specifications": {
+              "type": "object",
+              "properties": {
+                "MCU Series": { "type": "string" }
+              }
+            }
+          },
+          "required": ["Firmware"]
+        }
+      ]
+    },
+    "frame": {
+      "allOf": [
+        { "$ref": "#/definitions/baseComponent" },
+        {
+          "properties": {
+            "Specifications": {
+              "type": "object",
+              "properties": {
+                "TOW min Kg": { "type": "number" },
+                "TOW max Kg": { "type": "number" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "rcComponent": {
+      "allOf": [
+        { "$ref": "#/definitions/baseComponent" },
+        {
+          "properties": {
+            "Firmware": { "$ref": "#/definitions/firmware" }
+          }
+        }
+      ]
+    },
+    "connectionComponent": {
+      "allOf": [
+        { "$ref": "#/definitions/baseComponent" },
+        {
+          "properties": {
+            "Firmware": { "$ref": "#/definitions/firmware" },
+            "FC Connection": { "$ref": "#/definitions/fcConnection" }
+          }
+        }
+      ]
+    },
+    "battery": {
+      "allOf": [
+        { "$ref": "#/definitions/baseComponent" },
+        {
+          "properties": {
+            "Specifications": {
+              "type": "object",
+              "properties": {
+                "Chemistry": { "type": "string" },
+                "Volt per cell max": { "type": "number" },
+                "Volt per cell low": { "type": "number" },
+                "Volt per cell crit": { "type": "number" },
+                "Number of cells": { "type": "integer" },
+                "Capacity mAh": { "type": "integer" }
+              },
+              "required": ["Number of cells", "Capacity mAh"]
+            }
+          },
+          "required": ["Specifications"]
+        }
+      ]
+    },
+    "motors": {
+      "allOf": [
+        { "$ref": "#/definitions/baseComponent" },
+        {
+          "properties": {
+            "Specifications": {
+              "type": "object",
+              "properties": {
+                "Poles": { "type": "integer" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "propellers": {
+      "allOf": [
+        { "$ref": "#/definitions/baseComponent" },
+        {
+          "properties": {
+            "Specifications": {
+              "type": "object",
+              "properties": {
+                "Diameter_inches": { "type": "number" }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

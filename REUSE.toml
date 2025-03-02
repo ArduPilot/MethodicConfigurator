@@ -31,7 +31,7 @@ SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
-path = ["ardupilot_methodic_configurator/*.png", "ardupilot_methodic_configurator/configuration_steps_*.json"]
+path = ["ardupilot_methodic_configurator/*.png", "ardupilot_methodic_configurator/*.json"]
 SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
@@ -165,4 +165,3 @@ SPDX-License-Identifier = "MIT"
 path = ["windows/ardupilot_methodic_configurator*", "windows/settings_template.json"]
 SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
-
