@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-03-01 15:03+0000\n"
+"POT-Creation-Date: 2025-03-02 12:06+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -326,19 +326,43 @@ msgstr "路径 '{site_config_directory}' 不是一个目录。"
 msgid "site_directory: %s"
 msgstr "站點目錄：%s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:48
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:61
+msgid "Schema file '%s' not found."
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:63
+msgid "Error decoding JSON schema from file '%s'."
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:75
+msgid "Could not load validation schema"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:81
+msgid "Validation error"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:93
+msgid "Invalid vehicle components file '%s': %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:97
 msgid "File '%s' not found in %s."
 msgstr "文件 '%s' 没有在 '%s' 中找到。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:50
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:99
 msgid "Error decoding JSON data from file '%s'."
 msgstr "解码来自 '%s' 的JSON数据时发生错误。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:60
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:107
+msgid "Cannot save invalid vehicle components data: %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:115
 msgid "Error saving JSON data to file '%s': %s"
 msgstr "保存JSON数据到文件 '%s'时发生错误: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:73
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:128
 msgid ""
 "Firmware type {fw_type} in {self.vehicle_components_json_filename} is not "
 "supported"
@@ -346,7 +370,7 @@ msgstr ""
 "在 '{self.vehicle_components_json_filename}' 中的固件类型 {fw_type} 不受支"
 "持。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:87
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:142
 msgid ""
 "FW version string {version_str} on {self.vehicle_components_json_filename} "
 "is invalid"
@@ -2207,82 +2231,87 @@ msgstr ""
 "一个用于编辑 ArduPilot 参数文件的 GUI。不应被直接使用, 而应通过主ArduPilot调"
 "参助手使用。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:44
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:114
-msgid "Documentation"
-msgstr "文档"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:50
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:118
-msgid "Forum Blog:"
-msgstr "论坛博客："
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:50
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:120
-msgid "Wiki:"
-msgstr "维基："
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:50
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:124
-msgid "External tool:"
-msgstr "外部工具："
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:50
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:126
-msgid "Mandatory:"
-msgstr "强制性："
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:52
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:32
 msgid ""
 "ArduPilot's forum Methodic configuration Blog post relevant for the current "
 "file"
 msgstr "与当前模版相关的论坛博客文章"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:53
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:32
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:124
+msgid "Forum Blog:"
+msgstr "论坛博客："
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:33
 msgid "ArduPilot's wiki page relevant for the current file"
 msgstr "与当前模版相关的维基页面"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:54
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:33
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:126
+msgid "Wiki:"
+msgstr "维基："
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:34
 msgid "External tool or documentation relevant for the current file"
 msgstr "与当前文件相关的外部工具或文档"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:55
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:34
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:130
+msgid "External tool:"
+msgstr "外部工具："
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:36
+msgid "Mandatory:"
+msgstr "强制性："
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:37
 msgid ""
 "Mandatory level of the current file,\n"
-" 100% you MUST use this file to configure the vehicle,\n"
-" 0% you can ignore this file if it does not apply to your vehicle"
+"100% you MUST use this file to configure the vehicle,\n"
+"0% you can ignore this file if it does not apply to your vehicle"
 msgstr ""
-"當前文件的強制級別，\n"
-" 100% 您必須使用此文件來配置車輛，\n"
-" 0% 如果此文件不適用於您的車輛，您可以忽略它当前文件的强制性级别，\n"
-" 100% 您必须使用此文件来配置载具，\n"
-" 0% 如果该文件不适用于您的载具，您可以忽略它"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:74
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:56
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:120
+msgid "Documentation"
+msgstr "文档"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:90
 msgid "Automatically open documentation links in browser"
 msgstr "自動在瀏覽器中打開文檔鏈接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:80
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:96
 msgid ""
 "Automatically open all the above documentation links in a browser\n"
 "whenever the current intermediate parameter file changes"
 msgstr "每當當前中間參數文件更改時，自動在瀏覽器中打開所有上述文檔鏈接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:102
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:108
 msgid "Why: "
 msgstr "原因："
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:104
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:110
 msgid "Why now: "
 msgstr "现在原因："
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:111
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:117
 msgid "{current_file} Documentation"
 msgstr "{current_file} 文档"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:146
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:152
 msgid "Documentation URL not available"
 msgstr "文档 URL 不可用"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:161
+msgid ""
+"This configuration step ({current_file} intermediate parameter file) is "
+"{percentage}% mandatory"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:166
+msgid ""
+"Mandatory level not available for this configuration step ({current_file})"
+msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:73
 msgid "Error in forced parameters"
@@ -2733,6 +2762,17 @@ msgid ""
 msgstr ""
 "GNSS\n"
 "連接"
+
+#~ msgid ""
+#~ "Mandatory level of the current file,\n"
+#~ " 100% you MUST use this file to configure the vehicle,\n"
+#~ " 0% you can ignore this file if it does not apply to your vehicle"
+#~ msgstr ""
+#~ "當前文件的強制級別，\n"
+#~ " 100% 您必須使用此文件來配置車輛，\n"
+#~ " 0% 如果此文件不適用於您的車輛，您可以忽略它当前文件的强制性级别，\n"
+#~ " 100% 您必须使用此文件来配置载具，\n"
+#~ " 0% 如果该文件不适用于您的载具，您可以忽略它"
 
 #~ msgid "New"
 #~ msgstr "新建"
