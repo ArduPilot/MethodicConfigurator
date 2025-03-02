@@ -22,6 +22,8 @@ from os import walk as os_walk
 from re import match as re_match
 from typing import Any, Union
 
+from jsonschema import ValidationError, validate
+
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.middleware_template_overview import TemplateOverview
@@ -35,14 +37,61 @@ class VehicleComponents:
 
     def __init__(self) -> None:
         self.vehicle_components_json_filename = "vehicle_components.json"
+        self.vehicle_components_schema_filename = "vehicle_components_schema.json"
         self.vehicle_components: Union[None, dict[Any, Any]] = None
+        self.schema: Union[None, dict[Any, Any]] = None
+
+    def load_schema(self) -> dict:
+        """
+        Load the JSON schema for vehicle components.
+
+        :return: The schema as a dictionary
+        """
+        if self.schema is not None:
+            return self.schema
+
+        # Determine the location of the schema file
+        schema_path = os_path.join(os_path.dirname(__file__), self.vehicle_components_schema_filename)
+
+        try:
+            with open(schema_path, encoding="utf-8") as file:
+                self.schema = json_load(file)
+            return self.schema
+        except FileNotFoundError:
+            logging_error(_("Schema file '%s' not found."), schema_path)
+        except JSONDecodeError:
+            logging_error(_("Error decoding JSON schema from file '%s'."), schema_path)
+        return {}
+
+    def validate_vehicle_components(self, data: dict) -> tuple[bool, str]:
+        """
+        Validate vehicle components data against the schema.
+
+        :param data: The vehicle components data to validate
+        :return: A tuple of (is_valid, error_message)
+        """
+        schema = self.load_schema()
+        if not schema:
+            return False, _("Could not load validation schema")
+
+        try:
+            validate(instance=data, schema=schema)
+            return True, ""
+        except ValidationError as e:
+            return False, f"{_('Validation error')}: {e.message}"
 
     def load_vehicle_components_json_data(self, vehicle_dir: str) -> dict[Any, Any]:
-        data = {}
+        data: dict[Any, Any] = {}
         filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
         try:
             with open(filepath, encoding="utf-8") as file:
                 data = json_load(file)
+
+            # Validate the loaded data against the schema
+            is_valid, error_message = self.validate_vehicle_components(data)
+            if not is_valid:
+                logging_error(_("Invalid vehicle components file '%s': %s"), filepath, error_message)
+                # We still return the data even if invalid for debugging purposes
         except FileNotFoundError:
             # Normal users do not need this information
             logging_debug(_("File '%s' not found in %s."), self.vehicle_components_json_filename, vehicle_dir)
@@ -52,6 +101,12 @@ class VehicleComponents:
         return data
 
     def save_vehicle_components_json_data(self, data: dict, vehicle_dir: str) -> bool:
+        # Validate before saving
+        is_valid, error_message = self.validate_vehicle_components(data)
+        if not is_valid:
+            logging_error(_("Cannot save invalid vehicle components data: %s"), error_message)
+            return True
+
         filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
         try:
             with open(filepath, "w", encoding="utf-8") as file:
@@ -95,12 +150,12 @@ class VehicleComponents:
     @staticmethod
     def get_vehicle_components_overviews() -> dict[str, TemplateOverview]:
         """
-        Finds all subdirectories of base_dir containing a "vehicle_components.json" file,
-        creates a dictionary where the keys are the subdirectory names (relative to base_dir)
-        and the values are instances of VehicleComponents.
+        Finds all subdirectories of the templates base directory containing a
+        "vehicle_components.json" file, creates a dictionary where the keys are
+        the subdirectory names (relative to templates base directory) and the
+        values are instances of TemplateOverview.
 
-        :param base_dir: The base directory to start searching from.
-        :return: A dictionary mapping subdirectory paths to VehicleComponents instances.
+        :return: A dictionary mapping subdirectory paths to TemplateOverview instances.
         """
         vehicle_components_dict = {}
         file_to_find = VehicleComponents().vehicle_components_json_filename

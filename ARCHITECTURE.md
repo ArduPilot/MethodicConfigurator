@@ -128,6 +128,17 @@ the following system design requirements were derived:
   - git pre-commit hooks for code linting and other code quality checks
   - create command-line autocompletion for bash, zsh and powershell [PR #134](https://github.com/ArduPilot/MethodicConfigurator/pull/134)
 
+### 9. Vehicle components and connections
+
+- Use a JSON schema to define a JSON file that describes all configuration-relevant vehicle components and
+ their connections to the flight controller.
+  - Required top-level keys are "Format version", "Components", "Program version", "Configuration template"
+  - Required components are Flight Controller, Frame, Battery Monitor, Battery, ESC, Motors
+  - Optional components are RC Controller, RC Transmitter, RC Receiver, Telemetry, Propellers, GNSS Receiver
+  - Each component follows the appropriate structure with required and optional fields
+  - Common patterns are defined as reusable definitions
+- ensure that both loaded and saved vehicle component data complies with the schema, provide useful error messages when validation fails.
+
 ### The Software architecture
 
 We decided to use python as programming language, and the following libraries and frameworks:
