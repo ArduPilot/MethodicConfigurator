@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2025-03-01 15:03+0000\n"
+"POT-Creation-Date: 2025-03-02 12:06+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -16,10 +16,28 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.5\n"
 
-
 #: ardupilot_methodic_configurator/__main__.py:49
-msgid "ArduPilot methodic configurator is a simple GUI with a table that lists parameters. The GUI reads intermediate parameter files from a directory and displays their parameters in a table. Each row displays the parameter name, its current value on the flight controller, its new value from the selected intermediate parameter file, and an \"Upload\" checkbox. The GUI includes \"Upload selected params to FC\" and \"Skip\" buttons at the bottom. When \"Upload Selected to FC\" is clicked, it uploads the selected parameters to the flight controller. When \"Skip\" is pressed, it skips to the next intermediate parameter file. The process gets repeated for each intermediate parameter file."
-msgstr "ArduPilot メソディック コンフィギュレーターは、パラメータを一覧表示するシンプルなGUIです。このGUIはディレクトリから中間パラメータファイルを読み取り、それらのパラメータをテーブルに表示します。各行にはパラメータ名、フライトコントローラー上の現在の値、選択された中間パラメータファイルからの新しい値、および「アップロード」チェックボックスが表示されます。GUI の下部には「選択したパラメータをFCにアップロード」と「スキップ」ボタンがあります。「選択したものをFCにアップロード」をクリックすると、選択したパラメータがフライトコントローラーにアップロードされます。「スキップ」を押すと、次の中間パラメータファイルにスキップします。このプロセスは各中間パラメータファイルに対して繰り返されます。"
+msgid ""
+"ArduPilot methodic configurator is a simple GUI with a table that lists "
+"parameters. The GUI reads intermediate parameter files from a directory and "
+"displays their parameters in a table. Each row displays the parameter name, "
+"its current value on the flight controller, its new value from the selected "
+"intermediate parameter file, and an \"Upload\" checkbox. The GUI includes "
+"\"Upload selected params to FC\" and \"Skip\" buttons at the bottom. When "
+"\"Upload Selected to FC\" is clicked, it uploads the selected parameters to "
+"the flight controller. When \"Skip\" is pressed, it skips to the next "
+"intermediate parameter file. The process gets repeated for each intermediate "
+"parameter file."
+msgstr ""
+"ArduPilot メソディック コンフィギュレーターは、パラメータを一覧表示するシンプ"
+"ルなGUIです。このGUIはディレクトリから中間パラメータファイルを読み取り、それ"
+"らのパラメータをテーブルに表示します。各行にはパラメータ名、フライトコント"
+"ローラー上の現在の値、選択された中間パラメータファイルからの新しい値、および"
+"「アップロード」チェックボックスが表示されます。GUI の下部には「選択したパラ"
+"メータをFCにアップロード」と「スキップ」ボタンがあります。「選択したものをFC"
+"にアップロード」をクリックすると、選択したパラメータがフライトコントローラー"
+"にアップロードされます。「スキップ」を押すと、次の中間パラメータファイルにス"
+"キップします。このプロセスは各中間パラメータファイルに対して繰り返されます。"
 
 #: ardupilot_methodic_configurator/__main__.py:78
 msgid "No serial ports found"
@@ -105,7 +123,9 @@ msgstr "新しい機体ディレクトリが存在しません: {new_vehicle_dir
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:490
 msgid "Error copying template files to new vehicle directory: {_e}"
-msgstr "テンプレートファイルを新しい機体ディレクトリにコピー中にエラーが発生しました: {_e}"
+msgstr ""
+"テンプレートファイルを新しい機体ディレクトリにコピー中にエラーが発生しまし"
+"た: {_e}"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:510
 msgid "Parameter %s not found in the current parameter file"
@@ -113,7 +133,8 @@ msgstr "パラメータ%sは現在のパラメータファイルに見つかり�
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:518
 msgid "Error writing last uploaded filename: %s"
-msgstr "最後にアップロードされたファイル名の書き込み中にエラーが発生しました: %s"
+msgstr ""
+"最後にアップロードされたファイル名の書き込み中にエラーが発生しました: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:525
 msgid "last_uploaded_filename.txt not found: %s"
@@ -121,11 +142,13 @@ msgstr "last_uploaded_filename.txtが見つかりません: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:527
 msgid "Error reading last uploaded filename: %s"
-msgstr "最後にアップロードされたファイル名の読み込み中にエラーが発生しました: %s"
+msgstr ""
+"最後にアップロードされたファイル名の読み込み中にエラーが発生しました: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:543
 msgid "Starting file index %s is out of range. Starting with file %s instead."
-msgstr "開始ファイルインデックス%sは範囲外です。代わりにファイル%sから開始します。"
+msgstr ""
+"開始ファイルインデックス%sは範囲外です。代わりにファイル%sから開始します。"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:551
 msgid "Starting with the first file."
@@ -149,105 +172,142 @@ msgstr "最後にアップロードされたファイルがファイルリスト
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:574
 msgid "Last uploaded file is the last file in the list. Starting from there."
-msgstr "最後にアップロードされたファイルはリストの最後のファイルです。そこから開始します。"
+msgstr ""
+"最後にアップロードされたファイルはリストの最後のファイルです。そこから開始し"
+"ます。"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:688
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "機体の種類。デフォルトはArduCopterです"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:694
-msgid "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
-msgstr "機体固有の中間パラメータファイルを含むディレクトリ。デフォルトは現在の作業ディレクトリです"
+msgid ""
+"Directory containing vehicle-specific intermediate parameter files. Default "
+"is the current working directory"
+msgstr ""
+"機体固有の中間パラメータファイルを含むディレクトリ。デフォルトは現在の作業"
+"ディレクトリです"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:702
-msgid "Start directly on the nth intermediate parameter file (skips previous files). Default is to start on the file next to the last that you wrote to the flight controller. If the file does not exist, it will start on the first file."
-msgstr "n番目の中間パラメータファイルから直接開始します（以前のファイルをスキップ）。デフォルトでは、フライトコントローラに書き込んだ最後のファイルの次のファイルから開始します。ファイルが存在しない場合は、最初のファイルから開始します。"
+msgid ""
+"Start directly on the nth intermediate parameter file (skips previous "
+"files). Default is to start on the file next to the last that you wrote to "
+"the flight controller. If the file does not exist, it will start on the "
+"first file."
+msgstr ""
+"n番目の中間パラメータファイルから直接開始します（以前のファイルをスキップ）。"
+"デフォルトでは、フライトコントローラに書き込んだ最後のファイルの次のファイル"
+"から開始します。ファイルが存在しない場合は、最初のファイルから開始します。"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:711
-msgid "Allow opening and editing template files directly. Only for software developers that know what they are doing. Default is %(default)s"
-msgstr "テンプレートファイルを直接開いて編集することを許可します。これは何をしているかを理解しているソフトウェア開発者のみ対象です。デフォルトは%(default)sです"
+msgid ""
+"Allow opening and editing template files directly. Only for software "
+"developers that know what they are doing. Default is %(default)s"
+msgstr ""
+"テンプレートファイルを直接開いて編集することを許可します。これは何をしている"
+"かを理解しているソフトウェア開発者のみ対象です。デフォルトは%(default)sです"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:65
-msgid "Configuration steps '%s' loaded from %s (overwriting default configuration steps)."
-msgstr "設定手順'%s'を%sから読み込みました（デフォルトの設定手順を上書きします）。"
+msgid ""
+"Configuration steps '%s' loaded from %s (overwriting default configuration "
+"steps)."
+msgstr ""
+"設定手順'%s'を%sから読み込みました（デフォルトの設定手順を上書きします）。"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:71
 msgid "Configuration steps '%s' loaded from %s."
 msgstr "設定手順'%s'を%sから読み込みました。"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:77
 msgid "Error in file '%s': %s"
 msgstr "ファイル'%s'にエラーがあります: %s"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:87
 msgid "Schema file '%s' not found"
 msgstr "スキーマファイル'%s'が見つかりません"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:89
 msgid "Configuration steps validation error: %s"
 msgstr "設定手順の検証エラー: %s"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:91
 msgid "Error in schema file '%s': %s"
 msgstr "スキーマファイル'%s'にエラーがあります: %s"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:99
-msgid "No configuration steps documentation and no forced and derived parameters will be available."
+msgid ""
+"No configuration steps documentation and no forced and derived parameters "
+"will be available."
 msgstr "設定手順のドキュメントと強制および派生パラメータは利用できません。"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:104
 msgid "No configuration phases documentation will be available."
 msgstr "設定フェーズのドキュメントは利用できません。"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:117
 msgid "Error in file '%s': '%s' %s parameter is not a dictionary"
 msgstr "ファイル'%s'にエラー: '%s' %sパラメータが辞書ではありません"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:126
-msgid "Error in file '%s': '%s' %s parameter '%s' 'New Value' attribute not found."
-msgstr "ファイル'%s'にエラー: '%s' %sパラメータ'%s'の'New Value'属性が見つかりません。"
+msgid ""
+"Error in file '%s': '%s' %s parameter '%s' 'New Value' attribute not found."
+msgstr ""
+"ファイル'%s'にエラー: '%s' %sパラメータ'%s'の'New Value'属性が見つかりませ"
+"ん。"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:134
-msgid "Error in file '%s': '%s' %s parameter '%s' 'Change Reason' attribute not found."
-msgstr "ファイル'%s'にエラー: '%s' %sパラメータ'%s'の'Change Reason'属性が見つかりません。"
+msgid ""
+"Error in file '%s': '%s' %s parameter '%s' 'Change Reason' attribute not "
+"found."
+msgstr ""
+"ファイル'%s'にエラー: '%s' %sパラメータ'%s'の'Change Reason'属性が見つかりま"
+"せん。"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:156
-msgid "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?"
-msgstr "ファイル'{self.configuration_steps_filename}'内: '{filename}' {parameter_type}パラメータ'{parameter}'を計算できませんでした: 'fc_parameters'が見つかりません。FCは接続されていますか？"
+msgid ""
+"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
+"parameter '{parameter}' could not be computed: 'fc_parameters' not found, is "
+"an FC connected?"
+msgstr ""
+"ファイル'{self.configuration_steps_filename}'内: '{filename}' "
+"{parameter_type}パラメータ'{parameter}'を計算できませんでした: "
+"'fc_parameters'が見つかりません。FCは接続されていますか？"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:179
-msgid "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' could not be computed, no documentation metadata available for it"
-msgstr "ファイル'{self.configuration_steps_filename}'内: '{filename}' {parameter_type}パラメータ'{parameter}'を計算できませんでした。利用可能なドキュメントメタデータがありません"
+msgid ""
+"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
+"parameter '{parameter}' could not be computed, no documentation metadata "
+"available for it"
+msgstr ""
+"ファイル'{self.configuration_steps_filename}'内: '{filename}' "
+"{parameter_type}パラメータ'{parameter}'を計算できませんでした。利用可能なド"
+"キュメントメタデータがありません"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:194
-msgid "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' could not be computed: {_e}"
-msgstr "ファイル'{self.configuration_steps_filename}'内: '{filename}' {parameter_type}パラメータ'{parameter}'を計算できませんでした: {_e}"
+msgid ""
+"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
+"parameter '{parameter}' could not be computed: {_e}"
+msgstr ""
+"ファイル'{self.configuration_steps_filename}'内: '{filename}' "
+"{parameter_type}パラメータ'{parameter}'を計算できませんでした: {_e}"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:218
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:232
-msgid "File '{self.configuration_steps_filename}' not found. No intermediate parameter configuration steps available"
-msgstr "ファイル'{self.configuration_steps_filename}'が見つかりません。中間パラメータ設定手順は利用できません"
+msgid ""
+"File '{self.configuration_steps_filename}' not found. No intermediate "
+"parameter configuration steps available"
+msgstr ""
+"ファイル'{self.configuration_steps_filename}'が見つかりません。中間パラメータ"
+"設定手順は利用できません"
 
-#:
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:224
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:237
-msgid "No documentation available for {selected_file} in the {self.configuration_steps_filename} file"
-msgstr "{self.configuration_steps_filename}ファイル内の{selected_file}に関するドキュメントはありません"
+msgid ""
+"No documentation available for {selected_file} in the "
+"{self.configuration_steps_filename} file"
+msgstr ""
+"{self.configuration_steps_filename}ファイル内の{selected_file}に関するドキュ"
+"メントはありません"
 
 #: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:63
 msgid "Directory already exists, choose a different one"
@@ -258,7 +318,8 @@ msgid "Error creating new vehicle directory: %s"
 msgstr "新しい機体ディレクトリの作成中にエラーが発生しました: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:100
-msgid "The user configuration directory '{user_config_directory}' does not exist."
+msgid ""
+"The user configuration directory '{user_config_directory}' does not exist."
 msgstr "ユーザー設定ディレクトリ'{user_config_directory}'は存在しません。"
 
 #: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:103
@@ -266,7 +327,8 @@ msgid "The path '{user_config_directory}' is not a directory."
 msgstr "パス'{user_config_directory}'はディレクトリではありません。"
 
 #: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:115
-msgid "The site configuration directory '{site_config_directory}' does not exist."
+msgid ""
+"The site configuration directory '{site_config_directory}' does not exist."
 msgstr "サイト設定ディレクトリ'{site_config_directory}'は存在しません。"
 
 #: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:118
@@ -277,25 +339,58 @@ msgstr "パス'{site_config_directory}'はディレクトリではありませ�
 msgid "site_directory: %s"
 msgstr "サイトディレクトリ: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:48
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:61
+msgid "Schema file '%s' not found."
+msgstr "スキーマファイル '%s' が見つかりません。"
+
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:63
+msgid "Error decoding JSON schema from file '%s'."
+msgstr "JSONスキーマファイル '%s' のデコードエラー。"
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:75
+msgid "Could not load validation schema"
+msgstr "検証スキーマを読み込めませんでした"
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:81
+msgid "Validation error"
+msgstr "検証エラー"
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:93
+msgid "Invalid vehicle components file '%s': %s"
+msgstr "無効な機体コンポーネントファイル '%s': %s"
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:97
 msgid "File '%s' not found in %s."
 msgstr "ファイル'%s'が%sに見つかりません。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:50
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:99
 msgid "Error decoding JSON data from file '%s'."
 msgstr "ファイル'%s'からのJSONデータのデコード中にエラーが発生しました。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:60
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:107
+msgid "Cannot save invalid vehicle components data: %s"
+msgstr "無効な機体コンポーネントデータを保存できません: %s"
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:115
 msgid "Error saving JSON data to file '%s': %s"
 msgstr "JSONデータをファイル'%s'に保存中にエラーが発生しました: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:73
-msgid "Firmware type {fw_type} in {self.vehicle_components_json_filename} is not supported"
-msgstr "{self.vehicle_components_json_filename}内のファームウェアタイプ{fw_type}はサポートされていません"
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:128
+msgid ""
+"Firmware type {fw_type} in {self.vehicle_components_json_filename} is not "
+"supported"
+msgstr ""
+"{self.vehicle_components_json_filename}内のファームウェアタイプ{fw_type}はサ"
+"ポートされていません"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:87
-msgid "FW version string {version_str} on {self.vehicle_components_json_filename} is invalid"
-msgstr "{self.vehicle_components_json_filename}のファームウェアバージョン文字列{version_str}は無効です"
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:142
+msgid ""
+"FW version string {version_str} on {self.vehicle_components_json_filename} "
+"is invalid"
+msgstr ""
+"{self.vehicle_components_json_filename}のファームウェアバージョン文字列"
+"{version_str}は無効です"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:78
 msgid "You should uninstall ModemManager as it conflicts with ArduPilot"
@@ -330,8 +425,11 @@ msgid "Resolved soft link %s to %s"
 msgstr "シンボリックリンク%sを%sに解決しました"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:169
-msgid "No serial ports found. Please connect a flight controller and try again."
-msgstr "シリアルポートが見つかりません。フライトコントローラーを接続して再試行してください。"
+msgid ""
+"No serial ports found. Please connect a flight controller and try again."
+msgstr ""
+"シリアルポートが見つかりません。フライトコントローラーを接続して再試行してく"
+"ださい。"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:251
 msgid "Will connect to %s"
@@ -358,8 +456,11 @@ msgid "Unsupported autopilot type {self.info.autopilot}"
 msgstr "サポートされていないオートパイロットタイプ {self.info.autopilot}"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:278
-msgid "Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"
-msgstr "機体タイプ: {self.info.mav_type}（{self.info.vehicle_type}ファームウェアを実行中）"
+msgid ""
+"Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"
+msgstr ""
+"機体タイプ: {self.info.mav_type}（{self.info.vehicle_type}ファームウェアを実"
+"行中）"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:289
 msgid "Connection failed: %s"
@@ -374,7 +475,11 @@ msgid ""
 "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n"
 "Only ArduPilot versions newer than 4.3.8 are supported.\n"
 "Make sure parameter SERIAL0_PROTOCOL is set to 2"
-msgstr "AUTOPILOT_VERSION MAVLinkメッセージを受信できませんでした、接続に失敗しました。\nArduPilotバージョン4.3.8以降のみがサポートされています。\nパラメータSERIAL0_PROTOCOLが2に設定されていることを確認してください"
+msgstr ""
+"AUTOPILOT_VERSION MAVLinkメッセージを受信できませんでした、接続に失敗しまし"
+"た。\n"
+"ArduPilotバージョン4.3.8以降のみがサポートされています。\n"
+"パラメータSERIAL0_PROTOCOLが2に設定されていることを確認してください"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:317
 msgid "ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
@@ -393,8 +498,11 @@ msgid "MAVFTP is supported by the %s flight controller"
 msgstr "MAVFTPは%sフライトコントローラでサポートされています"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:368
-msgid "MAVFTP is not supported by the %s flight controller, fallback to MAVLink"
-msgstr "MAVFTPは%sフライトコントローラでサポートされていないため、MAVLinkにフォールバックします"
+msgid ""
+"MAVFTP is not supported by the %s flight controller, fallback to MAVLink"
+msgstr ""
+"MAVFTPは%sフライトコントローラでサポートされていないため、MAVLinkにフォール"
+"バックします"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:375
 msgid "Will fetch all parameters from the %s flight controller"
@@ -417,8 +525,12 @@ msgid "Reset command sent to ArduPilot."
 msgstr "リセットコマンドがArduPilotに送信されました。"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:581
-msgid "MAVLink connection string to the flight controller. If set to \"none\" no connection is made. Default is autodetection"
-msgstr "フライトコントローラーへのMAVLink接続文字列。「none」に設定すると接続されません。デフォルトは自動検出です"
+msgid ""
+"MAVLink connection string to the flight controller. If set to \"none\" no "
+"connection is made. Default is autodetection"
+msgstr ""
+"フライトコントローラーへのMAVLink接続文字列。「none」に設定すると接続されませ"
+"ん。デフォルトは自動検出です"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:595
 msgid "Flight controller reboot time. Default is %(default)s"
@@ -574,11 +686,20 @@ msgstr "ユーザーインターフェース言語。デフォルトは%(default
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:42
 msgid ""
-"No intermediate parameter files found in the selected '{_dirname}' vehicle directory.\n"
-"Please select and step inside a vehicle directory containing valid ArduPilot intermediate parameter files.\n"
+"No intermediate parameter files found in the selected '{_dirname}' vehicle "
+"directory.\n"
+"Please select and step inside a vehicle directory containing valid ArduPilot "
+"intermediate parameter files.\n"
 "\n"
 "Make sure to step inside the directory (double-click) and not just select it."
-msgstr "選択された '{_dirname}' 機体ディレクトリに中間パラメータファイルが見つかりません。\n有効なArduPilot中間パラメータファイルを含む機体ディレクトリを選択し、そのディレクトリ内に移動してください。\n\nディレクトリを選択するだけでなく、ダブルクリックしてディレクトリ内に移動してください。"
+msgstr ""
+"選択された '{_dirname}' 機体ディレクトリに中間パラメータファイルが見つかりま"
+"せん。\n"
+"有効なArduPilot中間パラメータファイルを含む機体ディレクトリを選択し、そのディ"
+"レクトリ内に移動してください。\n"
+"\n"
+"ディレクトリを選択するだけでなく、ダブルクリックしてディレクトリ内に移動して"
+"ください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:47
 msgid "No Parameter Files Found"
@@ -590,7 +711,11 @@ msgid ""
 "\n"
 "Please connect a flight controller to the PC,\n"
 "wait at least 7 seconds and retry."
-msgstr "{_error_string}\n\nフライトコントローラーをPCに接続し、\n最低7秒待ってから再試行してください。"
+msgstr ""
+"{_error_string}\n"
+"\n"
+"フライトコントローラーをPCに接続し、\n"
+"最低7秒待ってから再試行してください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:52
 msgid "No Connection to the Flight Controller"
@@ -626,8 +751,13 @@ msgstr "閉じる"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:48
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:48
-msgid "A GUI for editing JSON files that contain vehicle component configurations. Not to be used directly, but through the main ArduPilot methodic configurator script."
-msgstr "機体コンポーネント設定を含むJSONファイルを編集するためのGUI。直接使用せず、メインのArduPilot methodic configuratorスクリプトを通して使用してください。"
+msgid ""
+"A GUI for editing JSON files that contain vehicle component configurations. "
+"Not to be used directly, but through the main ArduPilot methodic "
+"configurator script."
+msgstr ""
+"機体コンポーネント設定を含むJSONファイルを編集するためのGUI。直接使用せず、メ"
+"インのArduPilot methodic configuratorスクリプトを通して使用してください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:232
 msgid "Flight Controller"
@@ -802,7 +932,9 @@ msgstr "%sのフォールバック値が見つかりません"
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "Allowed values are: {_allowed_str}"
-msgstr "{_paths_str}の値'{value}'が無効です\n許可される値: {_allowed_str}"
+msgstr ""
+"{_paths_str}の値'{value}'が無効です\n"
+"許可される値: {_allowed_str}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:623
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:654
@@ -818,14 +950,19 @@ msgid "Error"
 msgstr "エラー"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:648
-msgid "{_name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}"
-msgstr "{_name}は{limits[0]}から{limits[1]}の間の{data_type.__name__}である必要があります"
+msgid ""
+"{_name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}"
+msgstr ""
+"{_name}は{limits[0]}から{limits[1]}の間の{data_type.__name__}である必要があり"
+"ます"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:653
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "{e}"
-msgstr "{_paths_str}の値'{value}'が無効です\n{e}"
+msgstr ""
+"{_paths_str}の値'{value}'が無効です\n"
+"{e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:663
 msgid "Battery Chemistry not set. Will default to Lipo."
@@ -843,20 +980,27 @@ msgstr "{chemistry}の最大制限{volt_limit}を超えています"
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "{_e}"
-msgstr "{_path_str}の値'{value}'が無効です\n{_e}"
+msgstr ""
+"{_path_str}の値'{value}'が無効です\n"
+"{_e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:695
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "{_e}\n"
 "Will be set to the recommended value."
-msgstr "{_path_str}の値'{value}'が無効です\n{_e}\n推奨値に設定されます。"
+msgstr ""
+"{_path_str}の値'{value}'が無効です\n"
+"{_e}\n"
+"推奨値に設定されます。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:730
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "Allowed values are: {_values_str}"
-msgstr "{_path_str}の値'{value}'が無効です\n許可される値: {_values_str}"
+msgstr ""
+"{_path_str}の値'{value}'が無効です\n"
+"許可される値: {_values_str}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:750
 msgid "Duplicate FC connection type '{value}' for {_path_str}"
@@ -870,12 +1014,10 @@ msgstr "バッテリーセルの低電圧は最大電圧より低く設定する
 msgid "Battery Cell Crit voltage must be lower than low voltage"
 msgstr "バッテリーセルの危険電圧は低電圧より低く設定する必要があります"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:72
 msgid " - Vehicle Component Editor"
 msgstr "- 機体コンポーネントエディタ"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:72
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:234
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:155
@@ -883,110 +1025,104 @@ msgstr "- 機体コンポーネントエディタ"
 msgid "Amilcar Lucas's - ArduPilot methodic configurator "
 msgstr "Amilcar Lucasの - ArduPilot方法論的コンフィギュレータ"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:93
-msgid ""
-"Please configure all vehicle component properties in this window.\n"
-msgstr "このウィンドウで全ての機体コンポーネントのプロパティを設定してください。\n"
+msgid "Please configure all vehicle component properties in this window.\n"
+msgstr ""
+"このウィンドウで全ての機体コンポーネントのプロパティを設定してください。\n"
 
-
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:94
-msgid ""
-"Scroll down and make sure you do not miss a property.\n"
+msgid "Scroll down and make sure you do not miss a property.\n"
 msgstr "スクロールダウンして、プロパティを見落とさないようにしてください。\n"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:95
 msgid "Saving the result will write to the vehicle_components.json file."
 msgstr "結果を保存すると、vehicle_components.jsonファイルに書き込まれます。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:104
-msgid "Replace the vehicle.jpg file in the vehicle directory to change the vehicle image."
-msgstr "機体画像を変更するには、機体ディレクトリのvehicle.jpgファイルを置き換えてください。"
+msgid ""
+"Replace the vehicle.jpg file in the vehicle directory to change the vehicle "
+"image."
+msgstr ""
+"機体画像を変更するには、機体ディレクトリのvehicle.jpgファイルを置き換えてくだ"
+"さい。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:106
 msgid "Add a 'vehicle.jpg' image file to the vehicle directory."
 msgstr "機体ディレクトリに'vehicle.jpg'画像ファイルを追加してください。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:116
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:134
 msgid "Save data and start configuration"
 msgstr "データを保存して設定を開始"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:117
 msgid "Save component data and start parameter value configuration and tuning."
-msgstr "コンポーネントデータを保存し、パラメータ値の設定とチューニングを開始します。"
+msgstr ""
+"コンポーネントデータを保存し、パラメータ値の設定とチューニングを開始します。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:130
-msgid ""
-"1. Describe all vehicle component properties in the window below\n"
-msgstr "1. 以下のウィンドウで全ての機体コンポーネントのプロパティを記述してください\n"
+msgid "1. Describe all vehicle component properties in the window below\n"
+msgstr ""
+"1. 以下のウィンドウで全ての機体コンポーネントのプロパティを記述してください\n"
 
-
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:131
-msgid ""
-"2. Scroll all the way down and make sure to edit all properties\n"
+msgid "2. Scroll all the way down and make sure to edit all properties\n"
 msgstr "2. 最後までスクロールし、全てのプロパティを編集してください\n"
 
-
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:132
-msgid ""
-"3. Do not be lazy, collect the required information and enter it\n"
+msgid "3. Do not be lazy, collect the required information and enter it\n"
 msgstr "3. 手を抜かず、必要な情報を収集して入力してください\n"
 
-
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:133
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:385
 msgid "4. Press the "
 msgstr "4."
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:135
 msgid " only after all information is correct"
 msgstr "はすべての情報が正しい場合のみクリックしてください"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:141
 msgid "How to use the component editor window"
 msgstr "コンポーネントエディタウィンドウの使用方法"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:203
 msgid ""
-"ArduPilot Methodic Configurator only operates correctly if all component properties are correct. ArduPilot parameter values depend on the components used and their connections.\n"
+"ArduPilot Methodic Configurator only operates correctly if all component "
+"properties are correct. ArduPilot parameter values depend on the components "
+"used and their connections.\n"
 "\n"
-" Have you used the scrollbar on the right side of the window and entered the correct values for all components?"
-msgstr "ArduPilot Methodic Configuratorは、全てのコンポーネントのプロパティが正しく設定されている場合のみ正常に動作します。ArduPilotのパラメータ値は、使用されているコンポーネントとその接続に依存します。\n\nウィンドウ右側のスクロールバーを使用して、全てのコンポーネントに正しい値を入力しましたか？"
+" Have you used the scrollbar on the right side of the window and entered the "
+"correct values for all components?"
+msgstr ""
+"ArduPilot Methodic Configuratorは、全てのコンポーネントのプロパティが正しく設"
+"定されている場合のみ正常に動作します。ArduPilotのパラメータ値は、使用されてい"
+"るコンポーネントとその接続に依存します。\n"
+"\n"
+"ウィンドウ右側のスクロールバーを使用して、全てのコンポーネントに正しい値を入"
+"力しましたか？"
 
-
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:209
 msgid "Confirm that all component properties are correct"
 msgstr "すべてのコンポーネントプロパティが正しいことを確認してください"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:237
 msgid "Failed to save data to file. Is the destination write protected?"
-msgstr "データをファイルに保存できませんでした。保存先が書き込み保護されていませんか？"
+msgstr ""
+"データをファイルに保存できませんでした。保存先が書き込み保護されていません"
+"か？"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:239
 msgid "Vehicle component data saved successfully."
 msgstr "機体コンポーネントデータが正常に保存されました。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:255
-msgid "Skip the component editor window. Only use this if all components have been configured. Default is %(default)s"
-msgstr "コンポーネントエディタウィンドウをスキップします。すべてのコンポーネントが設定済みの場合のみ使用してください。デフォルトは%(default)sです"
+msgid ""
+"Skip the component editor window. Only use this if all components have been "
+"configured. Default is %(default)s"
+msgstr ""
+"コンポーネントエディタウィンドウをスキップします。すべてのコンポーネントが設"
+"定済みの場合のみ使用してください。デフォルトは%(default)sです"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:66
 msgid "flight controller connection:"
@@ -996,19 +1132,18 @@ msgstr "フライトコントローラ接続:"
 msgid ""
 "Select the flight controller connection\n"
 "You can add a custom connection to the existing ones"
-msgstr "フライトコントローラーの接続を選択してください\n既存の接続に新しい接続を追加できます"
-
+msgstr ""
+"フライトコントローラーの接続を選択してください\n"
+"既存の接続に新しい接続を追加できます"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:86
 msgid "Connection combobox changed to: {selected_connection}"
 msgstr "接続コンボボックスが次に変更されました: {selected_connection}"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:104
 msgid "Flight Controller Connection"
 msgstr "フライトコントローラ接続"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:105
 msgid ""
 "Enter the connection string to the flight controller. Examples are:\n"
@@ -1017,128 +1152,137 @@ msgid ""
 "/dev/serial/by-id/usb-xxx (on linux)\n"
 "tcp:127.0.0.1:5761\n"
 "udp:127.0.0.1:14551"
-msgstr "フライトコントローラーへの接続文字列を入力してください。例：\n\nCOM4 (Windowsの場合)\n/dev/serial/by-id/usb-xxx (Linuxの場合)\ntcp:127.0.0.1:5761\nudp:127.0.0.1:14551"
+msgstr ""
+"フライトコントローラーへの接続文字列を入力してください。例：\n"
+"\n"
+"COM4 (Windowsの場合)\n"
+"/dev/serial/by-id/usb-xxx (Linuxの場合)\n"
+"tcp:127.0.0.1:5761\n"
+"udp:127.0.0.1:14551"
 
-
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:114
 msgid "Will add new connection: {selected_connection} if not duplicated"
 msgstr "重複していなければ新しい接続を追加します: {selected_connection}"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:118
-msgid "Updated connection tuples: {connection_tuples} with selected connection: {selected_connection}"
-msgstr "接続タプルを更新しました: {connection_tuples} 選択された接続: {selected_connection}"
+msgid ""
+"Updated connection tuples: {connection_tuples} with selected connection: "
+"{selected_connection}"
+msgstr ""
+"接続タプルを更新しました: {connection_tuples} 選択された接続: "
+"{selected_connection}"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:123
 msgid "Add connection canceled or string empty {selected_connection}"
 msgstr "接続追加がキャンセルされたか文字列が空です {selected_connection}"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:130
 msgid "Connecting with the FC"
 msgstr "FCと接続中"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:130
 msgid "Connection step {} of {}"
 msgstr "接続ステップ {} / {}"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:160
 msgid "Flight controller connection"
 msgstr "フライトコントローラ接続"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:165
 msgid "No ArduPilot flight controller was auto-detected detected yet."
 msgstr "ArduPilotフライトコントローラがまだ自動検出されていません。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:174
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:251
 msgid ""
 "\n"
 "Choose one of the following three options:"
-msgstr "\n以下の3つのオプションから選択してください:"
+msgstr ""
+"\n"
+"以下の3つのオプションから選択してください:"
 
-
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:179
 msgid "Auto connection"
 msgstr "自動接続"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:186
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
 "press the Auto-connect button below to connect to it"
-msgstr "フライトコントローラーをPCに接続し、\n完全に起動するまで7秒待ってから\n下の自動接続ボタンを押して接続してください"
+msgstr ""
+"フライトコントローラーをPCに接続し、\n"
+"完全に起動するまで7秒待ってから\n"
+"下の自動接続ボタンを押して接続してください"
 
-
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:193
 msgid "Auto-connect"
 msgstr "自動接続"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:195
 msgid "Auto-connect to a 'Mavlink'-talking serial device"
 msgstr "'Mavlink'対応のシリアルデバイスに自動接続する"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:198
 msgid "Manual connection"
 msgstr "手動接続"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:206
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
 "manually select the fight controller connection or add a new one"
-msgstr "フライトコントローラーをPCに接続し、\n完全に起動するまで7秒待ってから\nフライトコントローラーの接続を手動で選択するか、新しい接続を追加してください"
+msgstr ""
+"フライトコントローラーをPCに接続し、\n"
+"完全に起動するまで7秒待ってから\n"
+"フライトコントローラーの接続を手動で選択するか、新しい接続を追加してください"
 
-
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:220
 msgid "No connection"
 msgstr "接続なし"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:232
 msgid "Skip FC connection, just edit the .param files on disk"
 msgstr "FC接続をスキップし、ディスク上の.paramファイルのみ編集する"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:238
 msgid ""
-"No parameter values will be fetched from the FC, default parameter values from disk will be used\n"
-"instead (if '00_default.param' file is present) and just edit the intermediate '.param' files on disk"
-msgstr "FCからパラメータ値を取得せず、ディスクからのデフォルトパラメータ値が使用されます\n('00_default.param'ファイルが存在する場合)。ディスク上の中間'.param'ファイルのみを編集します"
+"No parameter values will be fetched from the FC, default parameter values "
+"from disk will be used\n"
+"instead (if '00_default.param' file is present) and just edit the "
+"intermediate '.param' files on disk"
+msgstr ""
+"FCからパラメータ値を取得せず、ディスクからのデフォルトパラメータ値が使用され"
+"ます\n"
+"('00_default.param'ファイルが存在する場合)。ディスク上の中間'.param'ファイル"
+"のみを編集します"
 
-
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:254
-msgid "Will proceed without FC connection. FC parameters will not be downloaded nor uploaded"
-msgstr "FC接続なしで続行します。FCパラメータはダウンロードもアップロードもされません"
+msgid ""
+"Will proceed without FC connection. FC parameters will not be downloaded nor "
+"uploaded"
+msgstr ""
+"FC接続なしで続行します。FCパラメータはダウンロードもアップロードもされません"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:255
 msgid "Only the intermediate '.param' files on the PC disk will be edited"
 msgstr "PC上の中間'.param'ファイルのみが編集されます"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:271
-msgid "This main is for testing and development only. Usually, the ConnectionSelectionWidgets is called from another script"
-msgstr "このメインはテストと開発専用です。通常、ConnectionSelectionWidgetsは別のスクリプトから呼び出されます"
+msgid ""
+"This main is for testing and development only. Usually, the "
+"ConnectionSelectionWidgets is called from another script"
+msgstr ""
+"このメインはテストと開発専用です。通常、ConnectionSelectionWidgetsは別のスク"
+"リプトから呼び出されます"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:287
-msgid "This main is for testing and development only, usually the ConnectionSelectionWindow is called from another script"
-msgstr "このメインはテストと開発専用です。通常、ConnectionSelectionWindowは別のスクリプトから呼び出されます"
+msgid ""
+"This main is for testing and development only, usually the "
+"ConnectionSelectionWindow is called from another script"
+msgstr ""
+"このメインはテストと開発専用です。通常、ConnectionSelectionWindowは別のスクリ"
+"プトから呼び出されます"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:92
 msgid "Selected template directory: %s"
@@ -1156,15 +1300,17 @@ msgstr "機体設定ディレクトリ:"
 msgid ""
 "Vehicle-specific directory containing the intermediate\n"
 "parameter files to be uploaded to the flight controller"
-msgstr "フライトコントローラーにアップロードする中間\nパラメータファイルを含む機体固有のディレクトリ"
-
+msgstr ""
+"フライトコントローラーにアップロードする中間\n"
+"パラメータファイルを含む機体固有のディレクトリ"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:169
 msgid ""
 "Select the vehicle-specific configuration directory containing the\n"
 "intermediate parameter files to be uploaded to the flight controller"
-msgstr "フライトコントローラーにアップロードする中間パラメータファイルを\n含む機体固有の設定ディレクトリを選択してください"
-
+msgstr ""
+"フライトコントローラーにアップロードする中間パラメータファイルを\n"
+"含む機体固有の設定ディレクトリを選択してください"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:185
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:197
@@ -1175,12 +1321,17 @@ msgstr "無効な機体ディレクトリが選択されました"
 msgid ""
 "Please do not edit the files provided 'vehicle_templates' directory\n"
 "as those are used as a template for new vehicles"
-msgstr "'vehicle_templates'ディレクトリ内のファイルは編集しないでください\nこれらは新しい機体のテンプレートとして使用されます"
-
+msgstr ""
+"'vehicle_templates'ディレクトリ内のファイルは編集しないでください\n"
+"これらは新しい機体のテンプレートとして使用されます"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:196
-msgid "Selected directory must contain files matching \\d\\d_*\\.param and a {_filename} file"
-msgstr "選択したディレクトリには、\\d\\d_*\\.paramに一致するファイルと{_filename}ファイルが含まれている必要があります"
+msgid ""
+"Selected directory must contain files matching \\d\\d_*\\.param and a "
+"{_filename} file"
+msgstr ""
+"選択したディレクトリには、\\d\\d_*\\.paramに一致するファイルと{_filename}ファ"
+"イルが含まれている必要があります"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:236
 msgid " - Select vehicle configuration directory"
@@ -1190,15 +1341,17 @@ msgstr "- 機体設定ディレクトリの選択"
 msgid ""
 "No intermediate parameter files found\n"
 "in current working directory."
-msgstr "現在の作業ディレクトリに\n中間パラメータファイルが見つかりません。"
-
+msgstr ""
+"現在の作業ディレクトリに\n"
+"中間パラメータファイルが見つかりません。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:246
 msgid ""
 "No intermediate parameter files found\n"
 "in the --vehicle-dir specified directory."
-msgstr "指定された--vehicle-dirディレクトリに\n中間パラメータファイルが見つかりません。"
-
+msgstr ""
+"指定された--vehicle-dirディレクトリに\n"
+"中間パラメータファイルが見つかりません。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:255
 msgid "MyVehicleName"
@@ -1212,15 +1365,17 @@ msgstr "新しい機体"
 msgid ""
 "Existing vehicle template directory containing the intermediate\n"
 "parameter files to be copied to the new vehicle configuration directory"
-msgstr "新しい機体設定ディレクトリにコピーする中間パラメータファイルを\n含む既存の機体テンプレートディレクトリ"
-
+msgstr ""
+"新しい機体設定ディレクトリにコピーする中間パラメータファイルを\n"
+"含む既存の機体テンプレートディレクトリ"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:276
 msgid ""
 "Select the existing vehicle template directory containing the intermediate\n"
 "parameter files to be copied to the new vehicle configuration directory"
-msgstr "新しい機体設定ディレクトリにコピーする中間パラメータファイルを\n含む既存の機体テンプレートディレクトリを選択してください"
-
+msgstr ""
+"新しい機体設定ディレクトリにコピーする中間パラメータファイルを\n"
+"含む既存の機体テンプレートディレクトリを選択してください"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:284
 msgid "Source Template directory:"
@@ -1232,27 +1387,41 @@ msgstr "テンプレートファイルではなく、接続されたFCからパ�
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:299
 msgid ""
-"Use the parameter values from the connected flight controller instead of the\n"
-"template files when creating a new vehicle configuration directory from a template.\n"
+"Use the parameter values from the connected flight controller instead of "
+"the\n"
+"template files when creating a new vehicle configuration directory from a "
+"template.\n"
 "This option is only available when a flight controller is connected"
-msgstr "テンプレートから新しい機体設定ディレクトリを作成する際に、\nテンプレートファイルの代わりに接続されたフライトコントローラーからパラメータ値を使用します。\nこのオプションはフライトコントローラーが接続されている場合のみ利用可能です"
-
+msgstr ""
+"テンプレートから新しい機体設定ディレクトリを作成する際に、\n"
+"テンプレートファイルの代わりに接続されたフライトコントローラーからパラメータ"
+"値を使用します。\n"
+"このオプションはフライトコントローラーが接続されている場合のみ利用可能です"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:309
-msgid "Existing directory where the new vehicle configuration directory will be created"
+msgid ""
+"Existing directory where the new vehicle configuration directory will be "
+"created"
 msgstr "新しい機体設定ディレクトリが作成される既存のディレクトリ"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:310
-msgid "Select the directory where the new vehicle configuration directory will be created"
-msgstr "新しい機体設定ディレクトリが作成される先のディレクトリを選択してください"
+msgid ""
+"Select the directory where the new vehicle configuration directory will be "
+"created"
+msgstr ""
+"新しい機体設定ディレクトリが作成される先のディレクトリを選択してください"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:315
 msgid "Destination base directory:"
 msgstr "宛先ベースディレクトリ:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:322
-msgid "A new vehicle configuration directory with this name will be created at the (destination) base directory"
-msgstr "この名前の新しい機体設定ディレクトリが（宛先）ベースディレクトリに作成されます"
+msgid ""
+"A new vehicle configuration directory with this name will be created at the "
+"(destination) base directory"
+msgstr ""
+"この名前の新しい機体設定ディレクトリが（宛先）ベースディレクトリに作成されま"
+"す"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:326
 msgid "Destination new vehicle name:"
@@ -1264,11 +1433,14 @@ msgstr "テンプレートから機体設定ディレクトリを作成"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:337
 msgid ""
-"Create a new vehicle configuration directory on the (destination) base directory,\n"
+"Create a new vehicle configuration directory on the (destination) base "
+"directory,\n"
 "copy the template files from the (source) template directory to it and\n"
 "load the newly created files into the application"
-msgstr "(出力先)ベースディレクトリに新しい機体設定ディレクトリを作成し、\n(入力元)テンプレートディレクトリからファイルをコピーして\nアプリケーションに新しく作成されたファイルを読み込みます"
-
+msgstr ""
+"(出力先)ベースディレクトリに新しい機体設定ディレクトリを作成し、\n"
+"(入力元)テンプレートディレクトリからファイルをコピーして\n"
+"アプリケーションに新しく作成されたファイルを読み込みます"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:346
 msgid "Open vehicle"
@@ -1278,7 +1450,9 @@ msgstr "機体を開く"
 msgid ""
 "Use an existing vehicle configuration directory with\n"
 "intermediate parameter files, apm.pdef.xml and vehicle_components.json"
-msgstr "中間パラメータファイル、apm.pdef.xml、\nvehicle_components.jsonを含む既存の機体設定ディレクトリを使用"
+msgstr ""
+"中間パラメータファイル、apm.pdef.xml、\n"
+"vehicle_components.jsonを含む既存の機体設定ディレクトリを使用"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:366
 msgid "Re-Open vehicle"
@@ -1297,8 +1471,11 @@ msgid "Open Last Used Vehicle Configuration Directory"
 msgstr "最後に使用した機体設定ディレクトリを開く"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:397
-msgid "Directly open the last used vehicle configuration directory for configuring and tuning the vehicle"
-msgstr "機体の設定とチューニングのため、最後に使用した機体設定ディレクトリを直接開く"
+msgid ""
+"Directly open the last used vehicle configuration directory for configuring "
+"and tuning the vehicle"
+msgstr ""
+"機体の設定とチューニングのため、最後に使用した機体設定ディレクトリを直接開く"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:407
 msgid "Vehicle template directory cannot be empty"
@@ -1339,16 +1516,25 @@ msgstr "最後に使用した機体ディレクトリが見つかりません"
 msgid ""
 "No last opened vehicle configuration directory was found.\n"
 "Please select a directory manually."
-msgstr "最後に開いた機体設定ディレクトリが見つかりません。\nディレクトリを手動で選択してください。"
-
+msgstr ""
+"最後に開いた機体設定ディレクトリが見つかりません。\n"
+"ディレクトリを手動で選択してください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:488
-msgid "This main is for testing and development only. Usually, the VehicleDirectorySelectionWindow is called from another script"
-msgstr "このメインはテストと開発専用です。通常、VehicleDirectorySelectionWindowは別のスクリプトから呼び出されます"
+msgid ""
+"This main is for testing and development only. Usually, the "
+"VehicleDirectorySelectionWindow is called from another script"
+msgstr ""
+"このメインはテストと開発専用です。通常、VehicleDirectorySelectionWindowは別の"
+"スクリプトから呼び出されます"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:504
-msgid "This main is for testing and development only, usually the VehicleDirectorySelectionWindow is called from another script"
-msgstr "このメインはテストと開発専用です。通常、VehicleDirectorySelectionWindowは別のスクリプトから呼び出されます"
+msgid ""
+"This main is for testing and development only, usually the "
+"VehicleDirectorySelectionWindow is called from another script"
+msgstr ""
+"このメインはテストと開発専用です。通常、VehicleDirectorySelectionWindowは別の"
+"スクリプトから呼び出されます"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:517
 msgid "No intermediate parameter files found in %s."
@@ -1358,64 +1544,52 @@ msgstr "%sに中間パラメータファイルが見つかりません。"
 msgid "List_of_items can't be 'None'"
 msgstr "List_of_itemsを'None'にすることはできません"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:28
 msgid " - Flight Controller Info"
 msgstr "- フライトコントローラ情報"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:28
 msgid "ArduPilot methodic configurator "
 msgstr "ArduPilot方法論的コンフィギュレータ"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:52
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:283
 msgid "N/A"
 msgstr "利用不可"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:57
 msgid "Firmware Version: %s"
 msgstr "ファームウェアバージョン: %s"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:58
 msgid "Firmware first 8 hex bytes of the FC git hash: %s"
 msgstr "ファームウェアFC gitハッシュの最初の8桁の16進数: %s"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:59
 msgid "Firmware first 8 hex bytes of the ChibiOS git hash: %s"
 msgstr "ファームウェアChibiOS gitハッシュの最初の8桁の16進数: %s"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:61
 msgid "Flight Controller firmware type: %s (%s)"
 msgstr "フライトコントローラファームウェアタイプ: %s (%s)"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:65
 msgid "Flight Controller HW / board version: %s"
 msgstr "フライトコントローラハードウェア/ボードバージョン: %s"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:66
 msgid "Flight Controller USB vendor ID: %s"
 msgstr "フライトコントローラUSBベンダーID: %s"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:67
 msgid "Flight Controller USB product ID: %s"
 msgstr "フライトコントローラUSB製品ID: %s"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:74
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:537
 msgid "Downloading FC parameters"
 msgstr "FCパラメータをダウンロード中"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:74
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:539
 msgid "Downloaded {} of {} parameters"
@@ -1435,12 +1609,20 @@ msgid "No %s combobox element selected"
 msgstr "%sコンボボックス要素が選択されていません"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:228
-msgid "A GUI for testing the PairTupleCombobox. Not to be used directly, but through the main ArduPilot methodic configurator script."
-msgstr "PairTupleComboboxをテストするためのGUI。直接使用せず、メインのArduPilot方法論的コンフィギュレータスクリプトを通して使用してください。"
+msgid ""
+"A GUI for testing the PairTupleCombobox. Not to be used directly, but "
+"through the main ArduPilot methodic configurator script."
+msgstr ""
+"PairTupleComboboxをテストするためのGUI。直接使用せず、メインのArduPilot方法論"
+"的コンフィギュレータスクリプトを通して使用してください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:242
-msgid "This main is for testing and development only, usually the PairTupleCombobox is called from another script"
-msgstr "このメインはテストと開発専用です。通常、PairTupleComboboxは別のスクリプトから呼び出されます"
+msgid ""
+"This main is for testing and development only, usually the PairTupleCombobox "
+"is called from another script"
+msgstr ""
+"このメインはテストと開発専用です。通常、PairTupleComboboxは別のスクリプトから"
+"呼び出されます"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:54
 msgid "About"
@@ -1455,7 +1637,7 @@ msgid ""
 "Copyright © 2024-2025 Amilcar do Carmo Lucas and ArduPilot.org\n"
 "\n"
 "Licensed under the GNU General Public License v3.0"
-msgstr ""
+msgstr "ArduPilot Methodic Configurator バージョン: {_version}\n\nArduPilot機体のための明確な設定シーケンス。\n\nCopyright © 2024-2025 Amilcar do Carmo Lucas and ArduPilot.org\n\nGNU General Public License v3.0の下でライセンスされています"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:73
 msgid "Display usage popup"
@@ -1499,13 +1681,16 @@ msgstr "現在の中間パラメータファイル:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:224
 msgid ""
-"Select the intermediate parameter file from the list of available files in the selected vehicle directory\n"
-"It will automatically advance to the next file once the current file is uploaded to the fight controller"
-msgstr ""
+"Select the intermediate parameter file from the list of available files in "
+"the selected vehicle directory\n"
+"It will automatically advance to the next file once the current file is "
+"uploaded to the fight controller"
+msgstr "選択した機体ディレクトリで利用可能なファイルリストから中間パラメータファイルを選択してください\n現在のファイルがフライトコントローラにアップロードされると自動的に次のファイルに進みます"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:243
 msgid "User Manual, Support Forum, Report a Bug, Licenses, Source Code"
-msgstr "ユーザーマニュアル、サポートフォーラム、バグの報告、ライセンス、ソースコード"
+msgstr ""
+"ユーザーマニュアル、サポートフォーラム、バグの報告、ライセンス、ソースコード"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:248
 msgid "Legend"
@@ -1563,15 +1748,19 @@ msgstr "編集不可"
 msgid ""
 "This value has been automatically calculated by the software using data\n"
 "from the component editor window or from the 'configuration_steps.json' file"
-msgstr ""
+msgstr "この値はソフトウェアがコンポーネントエディタウィンドウまたは'configuration_steps.json'ファイルの\nデータを使用して自動的に計算されたものです"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:306
 msgid "See only changed parameters"
 msgstr "変更されたパラメータのみ表示"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:313
-msgid "Toggle to show only parameters that will change if/when uploaded to the flight controller"
-msgstr "フライトコントローラにアップロードした場合に変更されるパラメータのみを表示するトグル"
+msgid ""
+"Toggle to show only parameters that will change if/when uploaded to the "
+"flight controller"
+msgstr ""
+"フライトコントローラにアップロードした場合に変更されるパラメータのみを表示す"
+"るトグル"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:318
 msgid "Annotate docs into .param files"
@@ -1579,9 +1768,11 @@ msgstr ".paramファイルにドキュメントを注釈する"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:328
 msgid ""
-"Annotate ArduPilot parameter documentation metadata into the intermediate parameter files\n"
-"The files will be bigger, but all the existing parameter documentation will be included inside"
-msgstr ""
+"Annotate ArduPilot parameter documentation metadata into the intermediate "
+"parameter files\n"
+"The files will be bigger, but all the existing parameter documentation will "
+"be included inside"
+msgstr "ArduPilotパラメータドキュメントのメタデータを中間パラメータファイルに注釈として付加します\nファイルは大きくなりますが、既存のすべてのパラメータドキュメントが内部に含まれます"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:337
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:386
@@ -1590,14 +1781,18 @@ msgstr "選択したパラメータをFCにアップロードし、次のパラ�
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:344
 msgid ""
-"Upload selected parameters to the flight controller and advance to the next intermediate parameter file\n"
-"If changes have been made to the current file it will ask if you want to save them\n"
-"It will reset the FC if necessary, re-download all parameters and validate their value"
-msgstr ""
+"Upload selected parameters to the flight controller and advance to the next "
+"intermediate parameter file\n"
+"If changes have been made to the current file it will ask if you want to "
+"save them\n"
+"It will reset the FC if necessary, re-download all parameters and validate "
+"their value"
+msgstr "選択したパラメータをフライトコントローラにアップロードし、次の中間パラメータファイルに進みます\n現在のファイルに変更が加えられている場合は、保存するかどうか確認します\n必要に応じてFCをリセットし、すべてのパラメータを再ダウンロードして値を検証します"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:350
 msgid "No flight controller connected, upload not available"
-msgstr "フライトコントローラーが接続されていません、アップロードは利用できません"
+msgstr ""
+"フライトコントローラーが接続されていません、アップロードは利用できません"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:354
 msgid "Skip parameter file"
@@ -1605,9 +1800,11 @@ msgstr "パラメータファイルをスキップ"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:358
 msgid ""
-"Skip to the next intermediate parameter file without uploading any changes to the flight controller\n"
-"If changes have been made to the current file it will ask if you want to save them"
-msgstr ""
+"Skip to the next intermediate parameter file without uploading any changes "
+"to the flight controller\n"
+"If changes have been made to the current file it will ask if you want to "
+"save them"
+msgstr "フライトコントローラに変更をアップロードせずに次の中間パラメータファイルにスキップします\n現在のファイルに変更が加えられている場合は、保存するかどうか確認します"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:372
 msgid "1. Read "
@@ -1618,9 +1815,8 @@ msgid "all"
 msgstr "すべて"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:374
-msgid ""
-" the documentation on top of the parameter table\n"
-msgstr ""
+msgid " the documentation on top of the parameter table\n"
+msgstr "パラメータテーブルの上部にドキュメントを表示する\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:375
 msgid "2. Edit the parameter "
@@ -1639,9 +1835,8 @@ msgid " their "
 msgstr "その"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:379
-msgid ""
-"Change Reason\n"
-msgstr ""
+msgid "Change Reason\n"
+msgstr "変更理由\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:380
 msgid "3. Use "
@@ -1662,14 +1857,12 @@ msgid "Add"
 msgstr "追加"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:384
-msgid ""
-" buttons to delete and add parameters if necessary\n"
-msgstr ""
+msgid " buttons to delete and add parameters if necessary\n"
+msgstr "必要に応じてパラメータを削除および追加するためのボタン\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:387
-msgid ""
-" button\n"
-msgstr ""
+msgid " button\n"
+msgstr "ボタン\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:388
 msgid "5. Repeat from the top until the program automatically closes"
@@ -1685,7 +1878,7 @@ msgid ""
 "will be overwritten with the new calibration results.\n"
 "Do you want to provide a .bin log file and\n"
 "run the IMU temperature calibration using it?"
-msgstr ""
+msgstr "続行すると{tempcal_imu_result_param_filename}が\n新しいキャリブレーション結果で上書きされます。\n.binログファイルを提供してIMU温度キャリブレーションを\n実行しますか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:411
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:416
@@ -1700,7 +1893,7 @@ msgstr "ArduPilotバイナリログファイル"
 msgid ""
 "Please wait, this can take a really long time and\n"
 "the GUI will be unresponsive until it finishes."
-msgstr ""
+msgstr "お待ちください。これは非常に時間がかかり、\n終了するまでGUIは応答しなくなります。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:423
 msgid "Please wait, this can take a long time"
@@ -1717,7 +1910,7 @@ msgid ""
 "and that should have changed the parameters on the FC.\n"
 "\n"
 "Should the FC values now be copied to the {selected_file} file?"
-msgstr ""
+msgstr "この設定ステップは、このツール外で\n{auto_changed_by}によって\n実行され、FCのパラメータが変更されているはずです。\n\nFC値を今{selected_file}ファイルにコピーしますか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:453
 msgid "Update file with values from FC?"
@@ -1731,15 +1924,18 @@ msgstr "一部のステップをスキップしますか？"
 msgid ""
 "Should the {local_filename} file be downloaded from the URL\n"
 "{url}?"
-msgstr ""
+msgstr "{local_filename}ファイルをURL\n{url}からダウンロードしますか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:477
 msgid "Download file from URL"
 msgstr "URLからファイルをダウンロード"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:480
-msgid "Failed to download {local_filename} from {url}, please download it manually"
-msgstr "{url}から{local_filename}のダウンロードに失敗しました、手動でダウンロードしてください"
+msgid ""
+"Failed to download {local_filename} from {url}, please download it manually"
+msgstr ""
+"{url}から{local_filename}のダウンロードに失敗しました、手動でダウンロードして"
+"ください"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:481
 msgid "Download failed"
@@ -1755,8 +1951,12 @@ msgid "Will not upload any file"
 msgstr "ファイルをアップロードしません"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:491
-msgid "Should the {local_filename} file be uploaded to the flight controller as {remote_filename}?"
-msgstr "{local_filename}ファイルを{remote_filename}としてフライトコントローラーにアップロードしますか？"
+msgid ""
+"Should the {local_filename} file be uploaded to the flight controller as "
+"{remote_filename}?"
+msgstr ""
+"{local_filename}ファイルを{remote_filename}としてフライトコントローラーにアッ"
+"プロードしますか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:492
 msgid "Upload file to FC"
@@ -1771,8 +1971,12 @@ msgid "Uploading file"
 msgstr "ファイルをアップロード中"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:499
-msgid "Failed to upload {local_filename} to {remote_filename}, please upload it manually"
-msgstr "{local_filename}を{remote_filename}にアップロードできませんでした、手動でアップロードしてください"
+msgid ""
+"Failed to upload {local_filename} to {remote_filename}, please upload it "
+"manually"
+msgstr ""
+"{local_filename}を{remote_filename}にアップロードできませんでした、手動でアッ"
+"プロードしてください"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:500
 msgid "Upload failed"
@@ -1788,8 +1992,12 @@ msgid "No flight controller connection"
 msgstr "フライトコントローラー接続がありません"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:533
-msgid "Failed to update progress bar, {selected_file} does not start with two digits like it should: {_e}"
-msgstr "プログレスバーの更新に失敗しました、{selected_file}は必要な二桁の数字で始まっていません: {_e}"
+msgid ""
+"Failed to update progress bar, {selected_file} does not start with two "
+"digits like it should: {_e}"
+msgstr ""
+"プログレスバーの更新に失敗しました、{selected_file}は必要な二桁の数字で始まっ"
+"ていません: {_e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:537
 msgid "Re-downloading FC parameters"
@@ -1833,7 +2041,7 @@ msgstr "ArduPilot方法論的コンフィギュレータ"
 msgid ""
 "{_param_list_str} parameter(s) potentially require a reset\n"
 "Do you want to reset the ArduPilot?"
-msgstr ""
+msgstr "{_param_list_str}個のパラメータがリセットを必要とする可能性があります\nArduPilotをリセットしますか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:620
 msgid "Possible reset required"
@@ -1848,8 +2056,12 @@ msgid "Waiting for {} of {} seconds"
 msgstr "{}秒中{}秒待機中"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:648
-msgid "No parameters were yet downloaded from the flight controller, will not upload any parameter"
-msgstr "フライトコントローラーからまだパラメータがダウンロードされていません、パラメータをアップロードしません"
+msgid ""
+"No parameters were yet downloaded from the flight controller, will not "
+"upload any parameter"
+msgstr ""
+"フライトコントローラーからまだパラメータがダウンロードされていません、パラ"
+"メータをアップロードしません"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:650
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:653
@@ -1858,7 +2070,9 @@ msgstr "パラメータをアップロードしません"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:652
 msgid "No parameter was selected for upload, will not upload any parameter"
-msgstr "アップロード用にパラメータが選択されていません、パラメータをアップロードしません"
+msgstr ""
+"アップロード用にパラメータが選択されていません、パラメータをアップロードしま"
+"せん"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:653
 msgid "No parameter was selected for upload"
@@ -1866,32 +2080,40 @@ msgstr "アップロード用にパラメータが選択されていません"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:659
 msgid "Uploading %d selected %s parameters to flight controller..."
-msgstr "選択された%d個の%sパラメータをフライトコントローラーにアップロード中..."
+msgstr ""
+"選択された%d個の%sパラメータをフライトコントローラーにアップロード中..."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:680
 msgid "Re-download all parameters from the flight controller"
 msgstr "すべてのパラメータをフライトコントローラーから再ダウンロードする"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:691
-msgid "Parameter %s upload to the flight controller failed. Expected: %f, Actual: %f"
-msgstr "パラメータ%sのフライトコントローラーへのアップロードに失敗しました。期待値: %f、実際: %f"
+msgid ""
+"Parameter %s upload to the flight controller failed. Expected: %f, Actual: %f"
+msgstr ""
+"パラメータ%sのフライトコントローラーへのアップロードに失敗しました。期待値: "
+"%f、実際: %f"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:699
-msgid "Parameter %s upload to the flight controller failed. Expected: %f, Actual: N/A"
-msgstr "パラメータ%sのフライトコントローラーへのアップロードに失敗しました。期待値: %f、実際: 利用不可"
+msgid ""
+"Parameter %s upload to the flight controller failed. Expected: %f, Actual: N/"
+"A"
+msgstr ""
+"パラメータ%sのフライトコントローラーへのアップロードに失敗しました。期待値: "
+"%f、実際: 利用不可"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:707
 msgid "Parameter upload error"
 msgstr "パラメータアップロードエラー"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:708
-msgid ""
-"Failed to upload the following parameters to the flight controller:\n"
-msgstr ""
+msgid "Failed to upload the following parameters to the flight controller:\n"
+msgstr "以下のパラメータをフライトコントローラにアップロードできませんでした:\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:713
 msgid "All parameters uploaded to the flight controller successfully"
-msgstr "すべてのパラメータがフライトコントローラーに正常にアップロードされました"
+msgstr ""
+"すべてのパラメータがフライトコントローラーに正常にアップロードされました"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:738
 msgid "Current file not found in the list of files"
@@ -1911,12 +2133,15 @@ msgid ""
 "\n"
 "{_nr_unchanged_params} kept their default value\n"
 "\n"
-"{nr_non_default__read_only_params} non-default read-only parameters - ignore these, you can not change them\n"
+"{nr_non_default__read_only_params} non-default read-only parameters - ignore "
+"these, you can not change them\n"
 "\n"
-"{nr_non_default__writable_calibrations} non-default writable sensor-calibrations - non-reusable between vehicles\n"
+"{nr_non_default__writable_calibrations} non-default writable sensor-"
+"calibrations - non-reusable between vehicles\n"
 "\n"
-"{nr_non_default__writable_non_calibrations} non-default writable non-sensor-calibrations - these can be reused between similar vehicles"
-msgstr ""
+"{nr_non_default__writable_non_calibrations} non-default writable non-sensor-"
+"calibrations - these can be reused between similar vehicles"
+msgstr "{nr_total_params}個のパラメータの体系的な設定が完了しました：\n\n{_nr_unchanged_params}個はデフォルト値のままです\n\n{nr_non_default__read_only_params}個の非デフォルト読み取り専用パラメータ - これらは変更できないため無視してください\n\n{nr_non_default__writable_calibrations}個の非デフォルト書き込み可能センサーキャリブレーション - 機体間で再利用できません\n\n{nr_non_default__writable_non_calibrations}個の非デフォルト書き込み可能非センサーキャリブレーション - これらは類似した機体間で再利用可能です"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:784
 msgid "Last parameter file processed"
@@ -1927,7 +2152,7 @@ msgstr "最後のパラメータファイルが処理されました"
 msgid ""
 "{} file already exists.\n"
 "Do you want to overwrite it?"
-msgstr ""
+msgstr "{}ファイルはすでに存在します。\n上書きしますか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:808
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:819
@@ -1945,293 +2170,261 @@ msgid ""
 "\n"
 "You can now upload this file to the ArduPilot Methodic\n"
 "Configuration Blog post on discuss.ardupilot.org."
-msgstr ""
+msgstr "すべての関連ファイルが\n{zip_file_path}ファイルにZIP圧縮されました。\n\nこのファイルをArduPilot Methodic\nConfigurationのdiscuss.ardupilot.orgのブログ投稿にアップロードできます。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:827
 msgid "Parameter files zipped"
 msgstr "パラメータファイルが圧縮されました"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:851
-msgid "A GUI for editing ArduPilot param files. Not to be used directly, but through the main ArduPilot methodic configurator script."
-msgstr "ArduPilotパラメータファイルを編集するためのGUI。直接使用せず、メインのArduPilot方法論的コンフィギュレータスクリプトを通して使用してください。"
+msgid ""
+"A GUI for editing ArduPilot param files. Not to be used directly, but "
+"through the main ArduPilot methodic configurator script."
+msgstr ""
+"ArduPilotパラメータファイルを編集するためのGUI。直接使用せず、メインの"
+"ArduPilot方法論的コンフィギュレータスクリプトを通して使用してください。"
 
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:44
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:114
-msgid "Documentation"
-msgstr "ドキュメント"
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:32
+msgid ""
+"ArduPilot's forum Methodic configuration Blog post relevant for the current "
+"file"
+msgstr "現在のファイルに関連するArduPilotフォーラムの方法論的設定ブログ記事"
 
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:50
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:118
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:32
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:124
 msgid "Forum Blog:"
 msgstr "フォーラムブログ:"
 
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:50
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:120
-msgid "Wiki:"
-msgstr "Wiki:"
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:50
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:124
-msgid "External tool:"
-msgstr "外部ツール:"
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:50
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:126
-msgid "Mandatory:"
-msgstr "必須:"
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:52
-msgid "ArduPilot's forum Methodic configuration Blog post relevant for the current file"
-msgstr "現在のファイルに関連するArduPilotフォーラムの方法論的設定ブログ記事"
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:53
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:33
 msgid "ArduPilot's wiki page relevant for the current file"
 msgstr "現在のファイルに関連するArduPilotのWikiページ"
 
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:54
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:33
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:126
+msgid "Wiki:"
+msgstr "Wiki:"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:34
 msgid "External tool or documentation relevant for the current file"
 msgstr "現在のファイルに関連する外部ツールまたはドキュメント"
 
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:55
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:34
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:130
+msgid "External tool:"
+msgstr "外部ツール:"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:36
+msgid "Mandatory:"
+msgstr "必須:"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:37
 msgid ""
 "Mandatory level of the current file,\n"
-" 100% you MUST use this file to configure the vehicle,\n"
-" 0% you can ignore this file if it does not apply to your vehicle"
-msgstr ""
+"100% you MUST use this file to configure the vehicle,\n"
+"0% you can ignore this file if it does not apply to your vehicle"
+msgstr "現在のファイルの必須レベル、\n100%はこの機体を設定するためにこのファイルを使用する必要があります、\n0%は機体に適用されない場合このファイルを無視できます"
 
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:74
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:56
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:120
+msgid "Documentation"
+msgstr "ドキュメント"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:90
 msgid "Automatically open documentation links in browser"
 msgstr "ドキュメントリンクをブラウザで自動的に開く"
 
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:80
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:96
 msgid ""
 "Automatically open all the above documentation links in a browser\n"
 "whenever the current intermediate parameter file changes"
-msgstr ""
+msgstr "現在の中間パラメータファイルが変更されるたびに\n上記のすべてのドキュメントリンクをブラウザで自動的に開きます"
 
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:102
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:108
 msgid "Why: "
 msgstr "理由:"
 
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:104
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:110
 msgid "Why now: "
 msgstr "なぜ今:"
 
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:111
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:117
 msgid "{current_file} Documentation"
 msgstr "{current_file}のドキュメント"
 
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:146
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:152
 msgid "Documentation URL not available"
 msgstr "ドキュメントURLは利用できません"
 
-#:
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:161
+msgid ""
+"This configuration step ({current_file} intermediate parameter file) is "
+"{percentage}% mandatory"
+msgstr "この設定ステップ（{current_file}中間パラメータファイル）は{percentage}%必須です"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:166
+msgid ""
+"Mandatory level not available for this configuration step ({current_file})"
+msgstr "この設定ステップ（{current_file}）では必須レベルは利用できません"
+
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:73
 msgid "Error in forced parameters"
 msgstr "強制パラメータでエラーが発生しました"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:99
 msgid "-/+"
 msgstr "-/+"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:99
 msgid "Change Reason"
 msgstr "変更理由"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:99
 msgid "Current Value"
 msgstr "現在の値"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:99
 msgid "New Value"
 msgstr "新しい値"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:99
 msgid "Parameter"
 msgstr "パラメータ"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:99
 msgid "Unit"
 msgstr "単位"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:99
 msgid "Upload"
 msgstr "アップロード"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:101
 msgid "Delete or add a parameter"
 msgstr "パラメータの削除または追加"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:102
 msgid "Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long"
 msgstr "パラメータ名は^[A-Z][A-Z_0-9]*の形式で、最大16文字である必要があります"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:103
 msgid "Current value on the flight controller "
 msgstr "フライトコントローラの現在の値"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:104
 msgid "New value from the above selected intermediate parameter file"
 msgstr "上記で選択された中間パラメータファイルからの新しい値"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:105
 msgid "Parameter Unit"
 msgstr "パラメータ単位"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:106
 msgid "When selected, upload the new value to the flight controller"
 msgstr "選択時、新しい値をフライトコントローラにアップロードします"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:107
 msgid "Reason why respective parameter changed"
 msgstr "それぞれのパラメータが変更された理由"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:143
 msgid "No different parameters found in {selected_file}. Skipping..."
 msgstr "{selected_file}に異なるパラメータが見つかりません。スキップします..."
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:177
 msgid "Removing duplicate parameter %s"
 msgstr "重複パラメータ%sを削除中"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:178
 msgid "The parameter '{old_name}' was removed due to duplication."
 msgstr "パラメータ'{old_name}'は重複のため削除されました。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:179
 msgid "Parameter Removed"
 msgstr "パラメータ削除済み"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:186
 msgid "Renaming parameter %s to %s"
 msgstr "パラメータ%sを%sに名前変更中"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:187
 msgid ""
 "The parameter '{old_name}' was renamed to '{new_name}'.\n"
-"to obey the flight controller connection defined in the component editor window."
-msgstr ""
+"to obey the flight controller connection defined in the component editor "
+"window."
+msgstr "パラメータ'{old_name}'は'{new_name}'に名前が変更されました。\nコンポーネントエディタウィンドウで定義されたフライトコントローラ接続に従うためです。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:191
 msgid "Parameter Renamed"
 msgstr "パラメータ名変更済み"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:203
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:494
 msgid "No documentation available in apm.pdef.xml for this parameter"
 msgstr "このパラメータのapm.pdef.xmlにドキュメントが利用できません"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:228
 msgid "Add a parameter to the {self.current_file} file"
 msgstr "パラメータを{self.current_file}ファイルに追加"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:234
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:383
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:649
 msgid "Parameter %s not found in the %s file: %s"
 msgstr "パラメータ%sが%sファイルに見つかりません: %s"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:251
 msgid "Delete {param_name} from the {self.current_file} file"
 msgstr "{param_name}を{self.current_file}ファイルから削除"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:299
 msgid "Could not solve the selected {combobox_widget} key to a float value."
 msgstr "選択した{combobox_widget}キーを浮動小数点値に変換できませんでした。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:445
 msgid "{_param_name} Value: {_new_decimal_value}"
 msgstr "{_param_name}の値: {_new_decimal_value}"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:455
 msgid "Select {param_name} Bitmask Options"
 msgstr "{param_name}のビットマスクオプションを選択"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:504
 msgid "When selected upload {param_name} new value to the flight controller"
 msgstr "選択時、{param_name}の新しい値をフライトコントローラにアップロード"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:543
 msgid "Reason why {param_name} should change to {_value}"
 msgstr "{param_name}を{_value}に変更する理由"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:548
 msgid "Are you sure you want to delete the {param_name} parameter?"
 msgstr "本当に{param_name}パラメータを削除しますか？"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:563
 msgid "Add Parameter to "
 msgstr "パラメータを追加"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:567
 msgid "Enter the parameter name to add:"
 msgstr "追加するパラメータ名を入力:"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:574
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:638
 msgid "Operation not possible"
 msgstr "操作できません"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:575
-msgid "No apm.pdef.xml file and no FC connected. Not possible autocomplete parameter names."
-msgstr "apm.pdef.xmlファイルがなく、FCも接続されていません。パラメータ名の自動補完はできません。"
+msgid ""
+"No apm.pdef.xml file and no FC connected. Not possible autocomplete "
+"parameter names."
+msgstr ""
+"apm.pdef.xmlファイルがなく、FCも接続されていません。パラメータ名の自動補完は"
+"できません。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:614
 msgid "Parameter name can not be empty."
 msgstr "パラメータ名を空にすることはできません。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:614
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:617
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:625
@@ -2239,74 +2432,69 @@ msgstr "パラメータ名を空にすることはできません。"
 msgid "Invalid parameter name."
 msgstr "無効なパラメータ名です。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:617
 msgid "Parameter already exists, edit it instead"
 msgstr "パラメータはすでに存在します。代わりに編集してください"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:625
 msgid "Parameter name not found in the flight controller."
 msgstr "パラメータ名がフライトコントローラに見つかりません。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:634
 msgid "'{param_name}' not found in the apm.pdef.xml file."
 msgstr "'{param_name}'がapm.pdef.xmlファイルに見つかりません。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:639
-msgid "Can not add parameter when no FC is connected and no apm.pdef.xml file exists."
-msgstr "FCが接続されておらず、apm.pdef.xmlファイルも存在しない場合、パラメータを追加できません。"
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:663
 msgid ""
-"The value for {param_name} {p} should be greater than {p_min}\n"
+"Can not add parameter when no FC is connected and no apm.pdef.xml file "
+"exists."
 msgstr ""
+"FCが接続されておらず、apm.pdef.xmlファイルも存在しない場合、パラメータを追加"
+"できません。"
 
-#:
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:663
+msgid "The value for {param_name} {p} should be greater than {p_min}\n"
+msgstr "{param_name}の値{p}は{p_min}より大きくなければなりません\n"
+
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:665
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:671
 msgid "Out-of-bounds Value"
 msgstr "範囲外の値"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:665
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:671
 msgid "Use out-of-bounds value?"
 msgstr "範囲外の値を使用しますか？"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:669
-msgid ""
-"The value for {param_name} {p} should be smaller than {p_max}\n"
-msgstr ""
+msgid "The value for {param_name} {p} should be smaller than {p_max}\n"
+msgstr "{param_name}の値{p}は{p_max}より小さくなければなりません\n"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:676
 msgid "The value for {param_name} must be a valid float."
 msgstr "{param_name}の値は有効な浮動小数点数である必要があります。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:677
 msgid "Invalid Value"
 msgstr "無効な値"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:681
-msgid "Parameter %s changed, will later ask if change(s) should be saved to file."
-msgstr "パラメータ%sが変更されました。後で変更をファイルに保存するか尋ねられます。"
+msgid ""
+"Parameter %s changed, will later ask if change(s) should be saved to file."
+msgstr ""
+"パラメータ%sが変更されました。後で変更をファイルに保存するか尋ねられます。"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:699
 msgid "Parameter %s not found in the %s file %s: %s"
 msgstr "パラメータ%sが%sファイル%sに見つかりません: %s"
 
-#:
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:704
-msgid "Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to file."
-msgstr "パラメータ%sの変更理由が%sから%sに変更されました。後で変更をファイルに保存するか尋ねられます。"
+msgid ""
+"Parameter %s change reason changed from %s to %s, will later ask if "
+"change(s) should be saved to file."
+msgstr ""
+"パラメータ%sの変更理由が%sから%sに変更されました。後で変更をファイルに保存す"
+"るか尋ねられます。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:24
 msgid " - New version available"
@@ -2333,42 +2521,75 @@ msgid "Configuration sequence progress"
 msgstr "設定シーケンスの進捗"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:70
-msgid "This bar shows your progress through the configuration phases. Each phase contains configuration steps that must be completed in sequence."
-msgstr "このバーは設定フェーズの進捗状況を示しています。各フェーズには順番に完了する必要がある設定ステップが含まれています。"
+msgid ""
+"This bar shows your progress through the configuration phases. Each phase "
+"contains configuration steps that must be completed in sequence."
+msgstr ""
+"このバーは設定フェーズの進捗状況を示しています。各フェーズには順番に完了する"
+"必要がある設定ステップが含まれています。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:140
 msgid "This phase is optional."
 msgstr "このフェーズはオプションです。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:174
-msgid "Out of expected range [0 .. {self.total_files}] current file number: {current_file}"
-msgstr "予想される範囲[0 .. {self.total_files}]外の現在のファイル番号: {current_file}"
+msgid ""
+"Out of expected range [0 .. {self.total_files}] current file number: "
+"{current_file}"
+msgstr ""
+"予想される範囲[0 .. {self.total_files}]外の現在のファイル番号: {current_file}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:211
-msgid "ArduPilot methodic configurator is a Wizard-style GUI tool to configure ArduPilot parameters. This module shows configuration sequence progress in the form of a configuration-stage-segmented progress bar."
-msgstr "ArduPilot方法論的コンフィギュレータはArduPilotパラメータを設定するためのウィザード形式のGUIツールです。このモジュールは設定ステージ区分されたプログレスバーの形式で設定シーケンスの進行状況を表示します。"
+msgid ""
+"ArduPilot methodic configurator is a Wizard-style GUI tool to configure "
+"ArduPilot parameters. This module shows configuration sequence progress in "
+"the form of a configuration-stage-segmented progress bar."
+msgstr ""
+"ArduPilot方法論的コンフィギュレータはArduPilotパラメータを設定するためのウィ"
+"ザード形式のGUIツールです。このモジュールは設定ステージ区分されたプログレス"
+"バーの形式で設定シーケンスの進行状況を表示します。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:51
-msgid "Amilcar Lucas's - ArduPilot methodic configurator {} - Template Overview and selection"
-msgstr "Amilcar Lucasの - ArduPilot方法論的コンフィギュレータ {} - テンプレート概要と選択"
+msgid ""
+"Amilcar Lucas's - ArduPilot methodic configurator {} - Template Overview and "
+"selection"
+msgstr ""
+"Amilcar Lucasの - ArduPilot方法論的コンフィギュレータ {} - テンプレート概要と"
+"選択"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:58
-msgid "Please double-click the template below that most resembles your own vehicle components"
-msgstr "あなた自身の機体コンポーネントに最も似ているテンプレートを以下からダブルクリックしてください"
+msgid ""
+"Please double-click the template below that most resembles your own vehicle "
+"components"
+msgstr ""
+"あなた自身の機体コンポーネントに最も似ているテンプレートを以下からダブルク"
+"リックしてください"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:59
 msgid ""
 "\n"
 "it does not need to exactly match your vehicle's components."
-msgstr ""
+msgstr "\n機体のコンポーネントと完全に一致する必要はありません。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:202
 msgid "No 'vehicle.jpg' image file in the vehicle directory."
 msgstr "機体ディレクトリに'vehicle.jpg'画像ファイルがありません。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:219
-msgid "ArduPilot methodic configurator is a GUI-based tool designed to simplify the management and visualization of ArduPilot parameters. It enables users to browse through various vehicle templates, edit parameter files, and apply changes directly to the flight controller. The tool is built to semi-automate the configuration process of ArduPilot for drones by providing a clear and intuitive interface for parameter management."
-msgstr "ArduPilot方法論的コンフィギュレータは、ArduPilotパラメータの管理と可視化を簡素化するために設計されたGUIベースのツールです。ユーザーは様々な機体テンプレートを閲覧し、パラメータファイルを編集し、変更をフライトコントローラーに直接適用することができます。このツールはドローン用ArduPilotの設定プロセスを半自動化するためのもので、パラメータ管理のための明確で直感的なインターフェースを提供します。"
+msgid ""
+"ArduPilot methodic configurator is a GUI-based tool designed to simplify the "
+"management and visualization of ArduPilot parameters. It enables users to "
+"browse through various vehicle templates, edit parameter files, and apply "
+"changes directly to the flight controller. The tool is built to semi-"
+"automate the configuration process of ArduPilot for drones by providing a "
+"clear and intuitive interface for parameter management."
+msgstr ""
+"ArduPilot方法論的コンフィギュレータは、ArduPilotパラメータの管理と可視化を簡"
+"素化するために設計されたGUIベースのツールです。ユーザーは様々な機体テンプレー"
+"トを閲覧し、パラメータファイルを編集し、変更をフライトコントローラーに直接適"
+"用することができます。このツールはドローン用ArduPilotの設定プロセスを半自動化"
+"するためのもので、パラメータ管理のための明確で直感的なインターフェースを提供"
+"します。"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:50
 #: tests/test_middleware_software_updates.py:117
@@ -2388,7 +2609,7 @@ msgstr "最新バージョン: {_latest_release}"
 msgid ""
 "Changes:\n"
 "{changes}"
-msgstr ""
+msgstr "変更点：\n{changes}"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:74
 msgid "Error accessing release assets: %s"
@@ -2415,8 +2636,12 @@ msgid "Value error during update process: %s"
 msgstr "更新プロセス中の値エラー: %s"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:112
-msgid "Skip check for software updates before staring the software. Default is %(default)s."
-msgstr "ソフトウェア起動前の更新チェックをスキップします。デフォルトは%(default)sです。"
+msgid ""
+"Skip check for software updates before staring the software. Default is %"
+"(default)s."
+msgstr ""
+"ソフトウェア起動前の更新チェックをスキップします。デフォルトは%(default)sで"
+"す。"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:121
 msgid "Running version: {} (git hash: {})"
@@ -2427,8 +2652,12 @@ msgid "Update check failed: {}"
 msgstr "更新チェックに失敗しました: {}"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:137
-msgid "This main is for testing and development only, usually the check_for_software_updates is called from another script"
-msgstr "このメインはテストと開発専用です。通常、check_for_software_updatesは別のスクリプトから呼び出されます"
+msgid ""
+"This main is for testing and development only, usually the "
+"check_for_software_updates is called from another script"
+msgstr ""
+"このメインはテストと開発専用です。通常、check_for_software_updatesは別のスク"
+"リプトから呼び出されます"
 
 #: ardupilot_methodic_configurator/middleware_template_overview.py:40
 msgid "Template path"
@@ -2438,52 +2667,52 @@ msgstr "テンプレートパス"
 msgid ""
 "FC\n"
 "Manufacturer"
-msgstr ""
+msgstr "FC\nメーカー"
 
 #: ardupilot_methodic_configurator/middleware_template_overview.py:42
 msgid ""
 "FC\n"
 "Model"
-msgstr ""
+msgstr "FC\nモデル"
 
 #: ardupilot_methodic_configurator/middleware_template_overview.py:43
 msgid ""
 "TOW Max\n"
 "[Kg]"
-msgstr ""
+msgstr "最大離陸重量\n[Kg]"
 
 #: ardupilot_methodic_configurator/middleware_template_overview.py:44
 msgid ""
 "Prop Diameter\n"
 "[inches]"
-msgstr ""
+msgstr "プロペラ直径\n[インチ]"
 
 #: ardupilot_methodic_configurator/middleware_template_overview.py:45
 msgid ""
 "RC\n"
 "Protocol"
-msgstr ""
+msgstr "RC\nプロトコル"
 
 #: ardupilot_methodic_configurator/middleware_template_overview.py:46
 msgid ""
 "Telemetry\n"
 "Model"
-msgstr ""
+msgstr "テレメトリー\nモデル"
 
 #: ardupilot_methodic_configurator/middleware_template_overview.py:47
 msgid ""
 "ESC\n"
 "Protocol"
-msgstr ""
+msgstr "ESC\nプロトコル"
 
 #: ardupilot_methodic_configurator/middleware_template_overview.py:48
 msgid ""
 "GNSS\n"
 "Model"
-msgstr ""
+msgstr "GNSS\nモデル"
 
 #: ardupilot_methodic_configurator/middleware_template_overview.py:49
 msgid ""
 "GNSS\n"
 "Connection"
-msgstr ""
+msgstr "GNSS\n接続"
