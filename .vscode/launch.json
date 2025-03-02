@@ -13,7 +13,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": "rmdir lkvn"
+            "args": "--lang-code test"
         },
         {
             "name": "Python Debugger: Current File with Debug Arguments",
