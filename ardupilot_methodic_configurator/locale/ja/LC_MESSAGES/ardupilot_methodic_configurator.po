@@ -19,7 +19,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/__main__.py:49
 msgid "ArduPilot methodic configurator is a simple GUI with a table that lists parameters. The GUI reads intermediate parameter files from a directory and displays their parameters in a table. Each row displays the parameter name, its current value on the flight controller, its new value from the selected intermediate parameter file, and an \"Upload\" checkbox. The GUI includes \"Upload selected params to FC\" and \"Skip\" buttons at the bottom. When \"Upload Selected to FC\" is clicked, it uploads the selected parameters to the flight controller. When \"Skip\" is pressed, it skips to the next intermediate parameter file. The process gets repeated for each intermediate parameter file."
-msgstr ""
+msgstr "ArduPilot メソディック コンフィギュレーターは、パラメータを一覧表示するシンプルなGUIです。このGUIはディレクトリから中間パラメータファイルを読み取り、それらのパラメータをテーブルに表示します。各行にはパラメータ名、フライトコントローラー上の現在の値、選択された中間パラメータファイルからの新しい値、および「アップロード」チェックボックスが表示されます。GUI の下部には「選択したパラメータをFCにアップロード」と「スキップ」ボタンがあります。「選択したものをFCにアップロード」をクリックすると、選択したパラメータがフライトコントローラーにアップロードされます。「スキップ」を押すと、次の中間パラメータファイルにスキップします。このプロセスは各中間パラメータファイルに対して繰り返されます。"
 
 #: ardupilot_methodic_configurator/__main__.py:78
 msgid "No serial ports found"
@@ -374,7 +374,7 @@ msgid ""
 "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n"
 "Only ArduPilot versions newer than 4.3.8 are supported.\n"
 "Make sure parameter SERIAL0_PROTOCOL is set to 2"
-msgstr ""
+msgstr "AUTOPILOT_VERSION MAVLinkメッセージを受信できませんでした、接続に失敗しました。\nArduPilotバージョン4.3.8以降のみがサポートされています。\nパラメータSERIAL0_PROTOCOLが2に設定されていることを確認してください"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:317
 msgid "ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
@@ -418,7 +418,7 @@ msgstr "リセットコマンドがArduPilotに送信されました。"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:581
 msgid "MAVLink connection string to the flight controller. If set to \"none\" no connection is made. Default is autodetection"
-msgstr ""
+msgstr "フライトコントローラーへのMAVLink接続文字列。「none」に設定すると接続されません。デフォルトは自動検出です"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:595
 msgid "Flight controller reboot time. Default is %(default)s"
@@ -578,7 +578,7 @@ msgid ""
 "Please select and step inside a vehicle directory containing valid ArduPilot intermediate parameter files.\n"
 "\n"
 "Make sure to step inside the directory (double-click) and not just select it."
-msgstr ""
+msgstr "選択された '{_dirname}' 機体ディレクトリに中間パラメータファイルが見つかりません。\n有効なArduPilot中間パラメータファイルを含む機体ディレクトリを選択し、そのディレクトリ内に移動してください。\n\nディレクトリを選択するだけでなく、ダブルクリックしてディレクトリ内に移動してください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:47
 msgid "No Parameter Files Found"
@@ -590,7 +590,7 @@ msgid ""
 "\n"
 "Please connect a flight controller to the PC,\n"
 "wait at least 7 seconds and retry."
-msgstr ""
+msgstr "{_error_string}\n\nフライトコントローラーをPCに接続し、\n最低7秒待ってから再試行してください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:52
 msgid "No Connection to the Flight Controller"
@@ -802,7 +802,7 @@ msgstr "%sのフォールバック値が見つかりません"
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "Allowed values are: {_allowed_str}"
-msgstr ""
+msgstr "{_paths_str}の値'{value}'が無効です\n許可される値: {_allowed_str}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:623
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:654
@@ -825,7 +825,7 @@ msgstr "{_name}は{limits[0]}から{limits[1]}の間の{data_type.__name__}で�
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "{e}"
-msgstr ""
+msgstr "{_paths_str}の値'{value}'が無効です\n{e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:663
 msgid "Battery Chemistry not set. Will default to Lipo."
@@ -843,20 +843,20 @@ msgstr "{chemistry}の最大制限{volt_limit}を超えています"
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "{_e}"
-msgstr ""
+msgstr "{_path_str}の値'{value}'が無効です\n{_e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:695
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "{_e}\n"
 "Will be set to the recommended value."
-msgstr ""
+msgstr "{_path_str}の値'{value}'が無効です\n{_e}\n推奨値に設定されます。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:730
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
 "Allowed values are: {_values_str}"
-msgstr ""
+msgstr "{_path_str}の値'{value}'が無効です\n許可される値: {_values_str}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:750
 msgid "Duplicate FC connection type '{value}' for {_path_str}"
@@ -887,13 +887,14 @@ msgstr "Amilcar Lucasの - ArduPilot方法論的コンフィギュレータ"
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:93
 msgid ""
 "Please configure all vehicle component properties in this window.\n"
-msgstr ""
+msgstr "このウィンドウで全ての機体コンポーネントのプロパティを設定してください。\n"
+
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:94
 msgid ""
 "Scroll down and make sure you do not miss a property.\n"
-msgstr ""
+msgstr "スクロールダウンして、プロパティを見落とさないようにしてください。\n"
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:95
@@ -925,19 +926,22 @@ msgstr "コンポーネントデータを保存し、パラメータ値の設定
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:130
 msgid ""
 "1. Describe all vehicle component properties in the window below\n"
-msgstr ""
+msgstr "1. 以下のウィンドウで全ての機体コンポーネントのプロパティを記述してください\n"
+
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:131
 msgid ""
 "2. Scroll all the way down and make sure to edit all properties\n"
-msgstr ""
+msgstr "2. 最後までスクロールし、全てのプロパティを編集してください\n"
+
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:132
 msgid ""
 "3. Do not be lazy, collect the required information and enter it\n"
-msgstr ""
+msgstr "3. 手を抜かず、必要な情報を収集して入力してください\n"
+
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:133
@@ -961,7 +965,8 @@ msgid ""
 "ArduPilot Methodic Configurator only operates correctly if all component properties are correct. ArduPilot parameter values depend on the components used and their connections.\n"
 "\n"
 " Have you used the scrollbar on the right side of the window and entered the correct values for all components?"
-msgstr ""
+msgstr "ArduPilot Methodic Configuratorは、全てのコンポーネントのプロパティが正しく設定されている場合のみ正常に動作します。ArduPilotのパラメータ値は、使用されているコンポーネントとその接続に依存します。\n\nウィンドウ右側のスクロールバーを使用して、全てのコンポーネントに正しい値を入力しましたか？"
+
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:209
@@ -991,7 +996,8 @@ msgstr "フライトコントローラ接続:"
 msgid ""
 "Select the flight controller connection\n"
 "You can add a custom connection to the existing ones"
-msgstr ""
+msgstr "フライトコントローラーの接続を選択してください\n既存の接続に新しい接続を追加できます"
+
 
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:86
 msgid "Connection combobox changed to: {selected_connection}"
@@ -1011,7 +1017,8 @@ msgid ""
 "/dev/serial/by-id/usb-xxx (on linux)\n"
 "tcp:127.0.0.1:5761\n"
 "udp:127.0.0.1:14551"
-msgstr ""
+msgstr "フライトコントローラーへの接続文字列を入力してください。例：\n\nCOM4 (Windowsの場合)\n/dev/serial/by-id/usb-xxx (Linuxの場合)\ntcp:127.0.0.1:5761\nudp:127.0.0.1:14551"
+
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:114
@@ -1054,7 +1061,8 @@ msgstr "ArduPilotフライトコントローラがまだ自動検出されてい
 msgid ""
 "\n"
 "Choose one of the following three options:"
-msgstr ""
+msgstr "\n以下の3つのオプションから選択してください:"
+
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:179
@@ -1067,7 +1075,8 @@ msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
 "press the Auto-connect button below to connect to it"
-msgstr ""
+msgstr "フライトコントローラーをPCに接続し、\n完全に起動するまで7秒待ってから\n下の自動接続ボタンを押して接続してください"
+
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:193
@@ -1090,7 +1099,8 @@ msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
 "manually select the fight controller connection or add a new one"
-msgstr ""
+msgstr "フライトコントローラーをPCに接続し、\n完全に起動するまで7秒待ってから\nフライトコントローラーの接続を手動で選択するか、新しい接続を追加してください"
+
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:220
@@ -1107,7 +1117,8 @@ msgstr "FC接続をスキップし、ディスク上の.paramファイルのみ�
 msgid ""
 "No parameter values will be fetched from the FC, default parameter values from disk will be used\n"
 "instead (if '00_default.param' file is present) and just edit the intermediate '.param' files on disk"
-msgstr ""
+msgstr "FCからパラメータ値を取得せず、ディスクからのデフォルトパラメータ値が使用されます\n('00_default.param'ファイルが存在する場合)。ディスク上の中間'.param'ファイルのみを編集します"
+
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:254
@@ -1145,13 +1156,15 @@ msgstr "機体設定ディレクトリ:"
 msgid ""
 "Vehicle-specific directory containing the intermediate\n"
 "parameter files to be uploaded to the flight controller"
-msgstr ""
+msgstr "フライトコントローラーにアップロードする中間\nパラメータファイルを含む機体固有のディレクトリ"
+
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:169
 msgid ""
 "Select the vehicle-specific configuration directory containing the\n"
 "intermediate parameter files to be uploaded to the flight controller"
-msgstr ""
+msgstr "フライトコントローラーにアップロードする中間パラメータファイルを\n含む機体固有の設定ディレクトリを選択してください"
+
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:185
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:197
@@ -1162,11 +1175,12 @@ msgstr "無効な機体ディレクトリが選択されました"
 msgid ""
 "Please do not edit the files provided 'vehicle_templates' directory\n"
 "as those are used as a template for new vehicles"
-msgstr ""
+msgstr "'vehicle_templates'ディレクトリ内のファイルは編集しないでください\nこれらは新しい機体のテンプレートとして使用されます"
+
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:196
 msgid "Selected directory must contain files matching \\d\\d_*\\.param and a {_filename} file"
-msgstr ""
+msgstr "選択したディレクトリには、\\d\\d_*\\.paramに一致するファイルと{_filename}ファイルが含まれている必要があります"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:236
 msgid " - Select vehicle configuration directory"
@@ -1176,13 +1190,15 @@ msgstr "- 機体設定ディレクトリの選択"
 msgid ""
 "No intermediate parameter files found\n"
 "in current working directory."
-msgstr ""
+msgstr "現在の作業ディレクトリに\n中間パラメータファイルが見つかりません。"
+
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:246
 msgid ""
 "No intermediate parameter files found\n"
 "in the --vehicle-dir specified directory."
-msgstr ""
+msgstr "指定された--vehicle-dirディレクトリに\n中間パラメータファイルが見つかりません。"
+
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:255
 msgid "MyVehicleName"
@@ -1196,13 +1212,15 @@ msgstr "新しい機体"
 msgid ""
 "Existing vehicle template directory containing the intermediate\n"
 "parameter files to be copied to the new vehicle configuration directory"
-msgstr ""
+msgstr "新しい機体設定ディレクトリにコピーする中間パラメータファイルを\n含む既存の機体テンプレートディレクトリ"
+
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:276
 msgid ""
 "Select the existing vehicle template directory containing the intermediate\n"
 "parameter files to be copied to the new vehicle configuration directory"
-msgstr ""
+msgstr "新しい機体設定ディレクトリにコピーする中間パラメータファイルを\n含む既存の機体テンプレートディレクトリを選択してください"
+
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:284
 msgid "Source Template directory:"
@@ -1217,7 +1235,8 @@ msgid ""
 "Use the parameter values from the connected flight controller instead of the\n"
 "template files when creating a new vehicle configuration directory from a template.\n"
 "This option is only available when a flight controller is connected"
-msgstr ""
+msgstr "テンプレートから新しい機体設定ディレクトリを作成する際に、\nテンプレートファイルの代わりに接続されたフライトコントローラーからパラメータ値を使用します。\nこのオプションはフライトコントローラーが接続されている場合のみ利用可能です"
+
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:309
 msgid "Existing directory where the new vehicle configuration directory will be created"
@@ -1248,7 +1267,8 @@ msgid ""
 "Create a new vehicle configuration directory on the (destination) base directory,\n"
 "copy the template files from the (source) template directory to it and\n"
 "load the newly created files into the application"
-msgstr ""
+msgstr "(出力先)ベースディレクトリに新しい機体設定ディレクトリを作成し、\n(入力元)テンプレートディレクトリからファイルをコピーして\nアプリケーションに新しく作成されたファイルを読み込みます"
+
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:346
 msgid "Open vehicle"
@@ -1258,7 +1278,7 @@ msgstr "機体を開く"
 msgid ""
 "Use an existing vehicle configuration directory with\n"
 "intermediate parameter files, apm.pdef.xml and vehicle_components.json"
-msgstr ""
+msgstr "中間パラメータファイル、apm.pdef.xml、\nvehicle_components.jsonを含む既存の機体設定ディレクトリを使用"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:366
 msgid "Re-Open vehicle"
@@ -1319,7 +1339,8 @@ msgstr "最後に使用した機体ディレクトリが見つかりません"
 msgid ""
 "No last opened vehicle configuration directory was found.\n"
 "Please select a directory manually."
-msgstr ""
+msgstr "最後に開いた機体設定ディレクトリが見つかりません。\nディレクトリを手動で選択してください。"
+
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:488
 msgid "This main is for testing and development only. Usually, the VehicleDirectorySelectionWindow is called from another script"
