@@ -6,6 +6,7 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "build"
+      include: "scope"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -13,3 +14,4 @@ updates:
       interval: "monthly"
     commit-message:
       prefix: "ci"
+      include: "scope"
