@@ -478,18 +478,18 @@ def IMUfit(  # noqa: PLR0915, N802, pylint: disable=too-many-locals, too-many-br
         # apply moving average filter with 2s width
         data.filter(2)
 
-    c, clog = generate_calibration_file(outfile, online, progress_callback, data, c)
+    c, clog = generate_calibration_file(outfile, progress_callback, data, c, online)
 
     if no_graph:
         return
     num_imus = len(data.IMUs())
 
-    generate_tempcal_gyro_figures(log_parm, figpath, data, c, clog, num_imus)
+    generate_tempcal_gyro_figures(figpath, data, c, clog, num_imus, log_parm)
 
     if progress_callback:
         progress_callback(290)
 
-    generate_tempcal_accel_figures(log_parm, figpath, data, c, clog, num_imus)
+    generate_tempcal_accel_figures(figpath, data, c, clog, num_imus, log_parm)
 
     if progress_callback:
         progress_callback(300)
@@ -498,7 +498,7 @@ def IMUfit(  # noqa: PLR0915, N802, pylint: disable=too-many-locals, too-many-br
 
 
 def generate_calibration_file(  # pylint: disable=too-many-locals
-    outfile: str, online: bool, progress_callback: Union[Callable[[int], None], None], data: IMUData, c: Coefficients
+    outfile: str, progress_callback: Union[Callable[[int], None], None], data: IMUData, c: Coefficients, online: bool
 ) -> tuple[Coefficients, Coefficients]:
     clog = c
     c = Coefficients()
@@ -551,7 +551,7 @@ def generate_calibration_file(  # pylint: disable=too-many-locals
 
 
 def generate_tempcal_gyro_figures(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-    log_parm: bool, figpath: Union[str, None], data: IMUData, c: Coefficients, clog: Coefficients, num_imus: int
+    figpath: Union[str, None], data: IMUData, c: Coefficients, clog: Coefficients, num_imus: int, log_parm: bool
 ) -> None:
     _fig, axs = plt.subplots(len(data.IMUs()), 1, sharex=True)
     if num_imus == 1:
@@ -587,7 +587,7 @@ def generate_tempcal_gyro_figures(  # pylint: disable=too-many-arguments, too-ma
 
 
 def generate_tempcal_accel_figures(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-    log_parm: bool, figpath: Union[str, None], data: IMUData, c: Coefficients, clog: Coefficients, num_imus: int
+    figpath: Union[str, None], data: IMUData, c: Coefficients, clog: Coefficients, num_imus: int, log_parm: bool
 ) -> None:
     _fig, axs = plt.subplots(num_imus, 1, sharex=True)
     if num_imus == 1:
