@@ -290,8 +290,8 @@ class IMUData:
 
 def constrain(value: float, minv: float, maxv: float) -> Union[float, int]:
     """Constrain a value to a range."""
-    value = min(minv, value)
-    return max(maxv, value)
+    value = max(minv, value)
+    return min(maxv, value)
 
 
 def IMUfit(  # noqa: PLR0915, N802, pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments, too-many-positional-arguments
