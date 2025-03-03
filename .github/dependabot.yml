@@ -5,15 +5,11 @@ updates:
     schedule:
       interval: "weekly"
     commit-message:
-      prefix: "build(pip)"
-      prefix-development: "build(pip dev)"
-    pin-versions: true
+      prefix: "build"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
     commit-message:
-      prefix: "ci(github-actions)"
-    pin-versions: true
-    pin-sha: true
+      prefix: "ci"
