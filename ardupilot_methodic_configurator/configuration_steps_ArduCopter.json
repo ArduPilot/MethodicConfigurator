@@ -245,9 +245,13 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "forced_parameters": {
-                "INS_LOG_BAT_OPT": { "New Value": 4, "Change Reason": "Logs measured data both before and after the filters for Filter Review Webtool usage" },
                 "LOG_BITMASK": { "New Value": 145118, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
                 "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" }
+            },
+            "derived_parameters": {
+                "INS_LOG_BAT_MASK": { "New Value": "1 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] < 16 else 0", "Change Reason": "Use acc and gyro batch logging on F4 processors, gyro raw logging on others" },
+                "INS_LOG_BAT_OPT": { "New Value": "4 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] < 16 else 0", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors, pre-post gyro raw logging on others" },
+                "INS_RAW_LOG_OPT": { "New Value": "0 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] < 16 else 9", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors, pre-post gyro raw logging on others" }
             },
             "old_filenames": ["13_logging.param"]
         },
@@ -457,6 +461,7 @@
             "forced_parameters": {
                 "ATC_RATE_FF_ENAB": { "New Value": 0, "Change Reason": "test the stabilization loops independent of the input shaping" },
                 "INS_LOG_BAT_MASK": { "New Value": 0, "Change Reason": "IMU batch logging no longer required, notch filter setup is complete, this reduces processor load and log file size" },
+                "INS_RAW_LOG_OPT": { "New Value": 0, "Change Reason": "Gyro raw logging no longer required, notch filter setup is complete, this reduces processor load and log file size" },
                 "LOG_BITMASK": { "New Value": 145118, "Change Reason": "Disable fast harmonic notch logging" }
             },
             "old_filenames": ["26_evaluate_the_aircraft_tune_ff_disable.param"]
