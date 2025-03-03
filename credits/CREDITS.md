@@ -51,6 +51,7 @@ It indirectly uses:
 | [urllib3](https://github.com/urllib3/urllib3) | [MIT License](https://github.com/urllib3/urllib3/blob/main/LICENSE.txt) |
 | [lxml](https://github.com/lxml/lxml) | [BSD License](https://github.com/lxml/lxml/blob/master/LICENSE.txt) |
 | [idna](https://github.com/kjd/idna) | [BSD License](https://github.com/kjd/idna/blob/master/LICENSE.md) |
+| [Inno Setup](https://jrsoftware.org/) | [Inno Setup License](https://jrsoftware.org/files/is/license.txt) |
 
 Their licenses are linked above and are available in [this directory](https://github.com/ArduPilot/MethodicConfigurator/tree/master/credits).
 
