@@ -7,7 +7,7 @@ This version has been modified to work with >= python3.6 and to pass pylint and 
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2021 Andrew Tridgell <andrew@tridgell.net>, 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -243,7 +243,7 @@ class IMUData:
 
     def moving_average(self, data: np.ndarray, w: int) -> np.ndarray:
         """Apply a moving average filter over a window of width w."""
-        ret = np.cumsum(data)
+        ret: np.ndarray = np.cumsum(data)
         ret[w:] = ret[w:] - ret[:-w]
         return ret[w - 1 :] / w
 
