@@ -17,4 +17,4 @@ jobs:
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
     - name: Git AV Scan
-      uses: djdefi/gitavscan@1d2395f926c7e5e8d333e84b8196105c17c9eee4 # main
+      uses: djdefi/gitavscan@311078fe93aa76dca5b93aa3fed1d05f057e13a0 # main
