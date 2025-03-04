@@ -19,6 +19,10 @@ But for those it is still very incomplete.
 - **proven**: the software has been used by hundreds of ArduPilot developers and users. From beginners to advanced. On big and small vehicles.
 - **safe**: the sequence reduces trial-and-error and reduces the amount of flights required to configure the vehicle
 
+Here is a presentation explaining it:
+
+[![ArduPilot methodic configurator power point presentation](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/ArduPilot_Methodic_Configurator_presentation.png?raw=true)](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/ArduPilot_Methodic_Configurator.pdf?raw=true)
+
 Let's compare it with the traditional tool used to configure ArduPilot: a generalist Ground Control Station (GCS) software.
 
 | Feature | Mission Planner, QGroundControl, ... etc | ArduPilot Methodic Configurator |
