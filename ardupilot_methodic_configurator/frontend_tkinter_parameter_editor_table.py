@@ -177,6 +177,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 logging_info(_("Removing duplicate parameter %s"), old_name)
                 info_msg = _("The parameter '{old_name}' was removed due to duplication.")
                 messagebox.showinfo(_("Parameter Removed"), info_msg.format(**locals()))
+                # will ask the user to save changes before switching to another file
+                self.at_least_one_param_edited = True
             else:
                 new_names.add(new_name)
                 if new_name != old_name:
@@ -189,6 +191,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                         "to obey the flight controller connection defined in the component editor window."
                     )
                     messagebox.showinfo(_("Parameter Renamed"), info_msg.format(**locals()))
+                    # will ask the user to save changes before switching to another file
+                    self.at_least_one_param_edited = True
 
     def __update_table(self, params: dict[str, Par], fc_parameters: dict[str, float]) -> None:
         current_param_name: str = ""
