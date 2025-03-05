@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Vehicle Components Configuration",
   "type": "object",
-  "required": ["Format version", "Components", "Program version", "Configuration template"],
+  "required": ["Format version", "Components"],
   "properties": {
     "Format version": {
       "type": "integer",
