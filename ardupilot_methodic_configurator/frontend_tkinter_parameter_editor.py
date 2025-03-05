@@ -367,7 +367,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         style = ttk.Style()
 
         instructions_text = RichText(
-            usage_popup_window.main_frame, wrap=tk.WORD, height=5, bd=0, background=style.lookup("TLabel", "background")
+            usage_popup_window.main_frame, wrap=tk.WORD, height=10, bd=0, background=style.lookup("TLabel", "background")
         )
         instructions_text.insert(tk.END, _("1. Read "))
         instructions_text.insert(tk.END, _("all"), "bold")
@@ -377,6 +377,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         instructions_text.insert(tk.END, _(" and"), "bold")
         instructions_text.insert(tk.END, _(" their "))
         instructions_text.insert(tk.END, _("Change Reason\n"), "italic")
+        instructions_text.insert(tk.END, "   " + _("Documenting change reasons is crucial because it:") + "\n")
+        instructions_text.insert(tk.END, "   " + _(" * Promotes thoughtful decisions over impulsive changes") + "\n")
+        instructions_text.insert(tk.END, "   " + _(" * Provides documentation for vehicle certification requirements") + "\n")
+        instructions_text.insert(
+            tk.END, "   " + _(" * Enables validation or suggestions from team members or AI tools") + "\n"
+        )
+        instructions_text.insert(
+            tk.END, "   " + _(" * Preserves your reasoning for future reference or troubleshooting") + "\n"
+        )
         instructions_text.insert(tk.END, _("3. Use "))
         instructions_text.insert(tk.END, _("Del"), "italic")
         instructions_text.insert(tk.END, _(" and "))
@@ -393,7 +402,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             usage_popup_window,
             _("How to use the parameter file editor and uploader window"),
             "parameter_editor",
-            "690x200",
+            "690x300",
             instructions_text,
         )
 

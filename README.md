@@ -230,11 +230,11 @@ Now do this in a loop until the software automatically closes or you are asked t
 
 - Read all the documentation links displayed at the top of the GUI (marked with the big red number 4),
 - Edit the parameter's *New value* and *Reason changed* fields to match your vehicle (marked with the big red number 5),
-  - The *Reason changed* field is extremely important because:
-    - if forces you to think, causing rational decisions instead of impulsive ones
-    - justifies your decisions on a vehicle certification process required in most countries
-    - allows for someone else to see if you know what you are doing
-    - allows for someone else (or yourself after a few weeks) to understand your rationale
+  documenting change reasons is crucial because it:
+  - Promotes thoughtful decisions over impulsive changes
+  - Provides documentation for vehicle certification requirements
+  - Enables validation or suggestions from team members or AI tools
+  - Preserves your reasoning for future reference or troubleshooting
 - Press *Del* and/or *Add* buttons to delete or add parameters respectively (marked with the big red number 5),
 - If necessary scroll down using the scroll bar on the right and make sure you edit all parameters,
 - Press *Upload selected params to FC, and advance to next param file* (marked with the big red number 7),
