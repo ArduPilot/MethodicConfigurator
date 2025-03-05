@@ -357,7 +357,7 @@ def test_extract_missing_translations_with_real_po_file() -> None:
         expected_strings = [
             (20, "ArduPilot methodic configurator is a simple GUI"),
             (24, "No serial ports found"),
-            (28, "Vehicle type not set explicitly, auto-detected %s."),
+            (27, "Vehicle type not set explicitly, auto-detected %s."),
             (32, "Vehicle type explicitly set to %s."),
             (45, "Unknown"),
             (56, "ArduPilot Methodic Configurator Version:"),

@@ -24,10 +24,10 @@ msgstr ""
 #: ardupilot_methodic_configurator/__main__.py:78
 msgid "No serial ports found"
 msgstr ""
-
 #: ardupilot_methodic_configurator/__main__.py:87
 msgid "Vehicle type not set explicitly, auto-detected %s."
 msgstr ""
+
 
 #: ardupilot_methodic_configurator/__main__.py:89
 msgid "Vehicle type explicitly set to %s."
