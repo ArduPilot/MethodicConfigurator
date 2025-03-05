@@ -15,6 +15,8 @@ import os
 
 from ardupilot_methodic_configurator.internationalization import LANGUAGE_CHOICES
 
+TRANSLATED_LANGUAGES = set(LANGUAGE_CHOICES) - {LANGUAGE_CHOICES[0]}  # Remove the default language (en) from the set
+
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Insert bulk translations into a .po (GNU gettext) file.")
@@ -22,9 +24,9 @@ def parse_arguments() -> argparse.Namespace:
     # pylint: disable=duplicate-code
     parser.add_argument(
         "--lang-code",
-        default="zh_CN",
+        default="all",
         type=str,
-        choices=LANGUAGE_CHOICES,
+        choices=[*TRANSLATED_LANGUAGES, "all"],
         help="The language code for translations. Available choices: %(choices)s. Default is %(default)s",
     )
     # pylint: enable=duplicate-code
@@ -39,7 +41,7 @@ def parse_arguments() -> argparse.Namespace:
 
     parser.add_argument(
         "--output-file",
-        default="ardupilot_methodic_configurator_new.po",
+        default="ardupilot_methodic_configurator.po",
         type=str,
         help="The name of the .po file where the translations will be written. "
         "This file will contain lines in the .po (GNU gettext) format. Default is %(default)s",
@@ -55,8 +57,11 @@ def insert_translations(lang_code: str, translations_basename: str, output_file_
     with open(po_file, encoding="utf-8") as f:
         lines = f.readlines()
 
-    with open(translations_basename + "_" + lang_code + ".txt", encoding="utf-8") as f:
-        translations_data = f.read().strip().split("\n")
+    try:
+        with open(translations_basename + "_" + lang_code + ".txt", encoding="utf-8") as f:
+            translations_data = f.read().strip().split("\n")
+    except FileNotFoundError:
+        return
 
     # Prepare to insert translations
     translations: list[tuple[int, str]] = []
@@ -87,7 +92,9 @@ def insert_translations(lang_code: str, translations_basename: str, output_file_
 
 def main() -> None:
     args = parse_arguments()
-    insert_translations(args.lang_code, args.input_file, args.output_file)
+    lang_codes = TRANSLATED_LANGUAGES if args.lang_code == "all" else [args.lang_code]
+    for lang_code in lang_codes:
+        insert_translations(lang_code, args.input_file, args.output_file)
 
 
 if __name__ == "__main__":
