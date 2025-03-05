@@ -225,15 +225,15 @@ msgstr "Erro no arquivo '%s': %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:87
 msgid "Schema file '%s' not found"
-msgstr ""
+msgstr "Ficheiro de esquema '%s' não encontrado"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:89
 msgid "Configuration steps validation error: %s"
-msgstr ""
+msgstr "Erro de validação dos passos de configuração: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:91
 msgid "Error in schema file '%s': %s"
-msgstr ""
+msgstr "Erro no ficheiro de esquema '%s': %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:99
 msgid ""
@@ -245,7 +245,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:104
 msgid "No configuration phases documentation will be available."
-msgstr ""
+msgstr "Não estará disponível documentação sobre as fases de configuração."
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:117
 msgid "Error in file '%s': '%s' %s parameter is not a dictionary"
@@ -306,11 +306,11 @@ msgstr ""
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:224
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:237
 msgid ""
-"No documentation available for {selected_file} in the {self."
-"configuration_steps_filename} file"
+"No documentation available for {selected_file} in the "
+"{self.configuration_steps_filename} file"
 msgstr ""
-"Nenhuma documentação disponível para {selected_file} no arquivo {self."
-"configuration_steps_filename}"
+"Nenhuma documentação disponível para {selected_file} no arquivo "
+"{self.configuration_steps_filename}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:63
 msgid "Directory already exists, choose a different one"
@@ -346,23 +346,23 @@ msgstr "diretório base de destino: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:61
 msgid "Schema file '%s' not found."
-msgstr ""
+msgstr "Ficheiro de esquema '%s' não encontrado."
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:63
 msgid "Error decoding JSON schema from file '%s'."
-msgstr ""
+msgstr "Erro ao descodificar esquema JSON do ficheiro '%s'."
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:75
 msgid "Could not load validation schema"
-msgstr ""
+msgstr "Não foi possível carregar o esquema de validação"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:81
 msgid "Validation error"
-msgstr ""
+msgstr "Erro de validação"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:93
 msgid "Invalid vehicle components file '%s': %s"
-msgstr ""
+msgstr "Ficheiro de componentes do veículo '%s' inválido: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:97
 msgid "File '%s' not found in %s."
@@ -374,7 +374,7 @@ msgstr "Erro ao decodificar dados JSON do arquivo '%s'."
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:107
 msgid "Cannot save invalid vehicle components data: %s"
-msgstr ""
+msgstr "Não é possível guardar dados de componentes de veículo inválidos: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:115
 msgid "Error saving JSON data to file '%s': %s"
@@ -464,8 +464,8 @@ msgstr "Tipo de piloto automático não suportado {self.info.autopilot}"
 msgid ""
 "Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"
 msgstr ""
-"Tipo de veículo: {self.info.mav_type} rodando firmware {self.info."
-"vehicle_type}"
+"Tipo de veículo: {self.info.mav_type} rodando firmware "
+"{self.info.vehicle_type}"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:289
 msgid "Connection failed: %s"
@@ -533,6 +533,8 @@ msgid ""
 "MAVLink connection string to the flight controller. If set to \"none\" no "
 "connection is made. Default is autodetection"
 msgstr ""
+"String de conexão MAVLink para o controlador de voo. Se definido como "
+"\"none\", nenhuma conexão é estabelecida. A predefinição é deteção automática"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:595
 msgid "Flight controller reboot time. Default is %(default)s"
@@ -597,7 +599,7 @@ msgstr "ID do Componente"
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:76
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:240
 msgid "MCU Series"
-msgstr ""
+msgstr "Série MCU"
 
 #: ardupilot_methodic_configurator/backend_internet.py:36
 msgid "URL or local filename not provided."
@@ -743,7 +745,7 @@ msgstr "Levantar janela: {_e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:430
 msgid "Error loading %s image from file: %s"
-msgstr ""
+msgstr "Erro ao carregar a imagem %s do ficheiro: %s"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base.py:472
 msgid "Show this usage popup again"
@@ -1343,8 +1345,8 @@ msgid ""
 "Selected directory must contain files matching \\d\\d_*\\.param and a "
 "{_filename} file"
 msgstr ""
-"O diretório selecionado deve conter arquivos correspondentes a \\d\\d_*\\."
-"param e um arquivo {_filename}"
+"O diretório selecionado deve conter arquivos correspondentes a "
+"\\d\\d_*\\.param e um arquivo {_filename}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:236
 msgid " - Select vehicle configuration directory"
@@ -1372,7 +1374,7 @@ msgstr "MeuNomeVeículo"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:269
 msgid "New vehicle"
-msgstr ""
+msgstr "Novo veículo"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:272
 msgid ""
@@ -1464,7 +1466,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:346
 msgid "Open vehicle"
-msgstr ""
+msgstr "Abrir veículo"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:353
 msgid ""
@@ -1476,7 +1478,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:366
 msgid "Re-Open vehicle"
-msgstr ""
+msgstr "Reabrir veículo"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:374
 msgid "Last used vehicle configuration directory:"
@@ -1840,7 +1842,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:350
 msgid "No flight controller connected, upload not available"
-msgstr ""
+msgstr "Nenhum controlador de voo conectado, carregamento não disponível"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:354
 msgid "Skip parameter file"
@@ -1893,27 +1895,29 @@ msgstr "Razão da Mudança\n"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:380
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:109
 msgid "Documenting change reasons is crucial because it:"
-msgstr ""
+msgstr "Documentar as razões das alterações é crucial porque:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:381
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:111
 msgid " * Promotes thoughtful decisions over impulsive changes"
-msgstr ""
+msgstr " * Promove decisões ponderadas em vez de alterações impulsivas"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:382
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:113
 msgid " * Provides documentation for vehicle certification requirements"
-msgstr ""
+msgstr " * Fornece documentação para requisitos de certificação do veículo"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:384
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:115
 msgid " * Enables validation or suggestions from team members or AI tools"
 msgstr ""
+" * Permite validação ou sugestões de membros da equipa ou ferramentas de IA"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:387
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:117
 msgid " * Preserves your reasoning for future reference or troubleshooting"
 msgstr ""
+" * Preserva o seu raciocínio para referência futura ou resolução de problemas"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:389
 msgid "3. Use "
@@ -2087,6 +2091,8 @@ msgid ""
 "Failed to update progress bar, {selected_file} does not start with two "
 "digits like it should: {_e}"
 msgstr ""
+"Falha ao atualizar a barra de progresso, {selected_file} não começa com dois "
+"dígitos como deveria: {_e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:546
 msgid "Re-downloading FC parameters"
@@ -2337,6 +2343,9 @@ msgid ""
 "100% you MUST use this file to configure the vehicle,\n"
 "0% you can ignore this file if it does not apply to your vehicle"
 msgstr ""
+"Nível de obrigatoriedade do ficheiro atual,\n"
+"100% significa que DEVE usar este ficheiro para configurar o veículo,\n"
+"0% significa que pode ignorar este ficheiro se não se aplicar ao seu veículo"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:56
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:120
@@ -2376,11 +2385,15 @@ msgid ""
 "This configuration step ({current_file} intermediate parameter file) is "
 "{percentage}% mandatory"
 msgstr ""
+"Este passo de configuração (ficheiro de parâmetros intermédio "
+"{current_file}) é {percentage}% obrigatório"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:166
 msgid ""
 "Mandatory level not available for this configuration step ({current_file})"
 msgstr ""
+"Nível de obrigatoriedade não disponível para este passo de configuração "
+"({current_file})"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:73
 msgid "Error in forced parameters"
@@ -2441,7 +2454,7 @@ msgstr "Quando selecionado, enviar o novo valor para o controlador de voo"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:107
 msgid "Reason why respective parameter changed."
-msgstr ""
+msgstr "Razão pela qual o respetivo parâmetro foi alterado."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:153
 msgid "No different parameters found in {selected_file}. Skipping..."
@@ -2642,23 +2655,27 @@ msgstr "Falha na atualização!"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:57
 msgid "Configuration sequence progress"
-msgstr ""
+msgstr "Progresso da sequência de configuração"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:70
 msgid ""
 "This bar shows your progress through the configuration phases. Each phase "
 "contains configuration steps that must be completed in sequence."
 msgstr ""
+"Esta barra mostra o seu progresso através das fases de configuração. Cada "
+"fase contém passos de configuração que devem ser concluídos em sequência."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:140
 msgid "This phase is optional."
-msgstr ""
+msgstr "Esta fase é opcional."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:174
 msgid ""
 "Out of expected range [0 .. {self.total_files}] current file number: "
 "{current_file}"
 msgstr ""
+"Fora do intervalo esperado [0 .. {self.total_files}] número do ficheiro "
+"atual: {current_file}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:211
 msgid ""
@@ -2666,6 +2683,10 @@ msgid ""
 "ArduPilot parameters. This module shows configuration sequence progress in "
 "the form of a configuration-stage-segmented progress bar."
 msgstr ""
+"O configurador metódico ArduPilot é uma ferramenta GUI estilo assistente "
+"para configurar parâmetros do ArduPilot. Este módulo mostra o progresso da "
+"sequência de configuração na forma de uma barra de progresso segmentada por "
+"fases de configuração."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:51
 msgid ""
@@ -2688,6 +2709,8 @@ msgid ""
 "\n"
 "it does not need to exactly match your vehicle's components."
 msgstr ""
+"\n"
+"não precisa de corresponder exatamente aos componentes do seu veículo."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:202
 msgid "No 'vehicle.jpg' image file in the vehicle directory."
@@ -2729,6 +2752,8 @@ msgid ""
 "Changes:\n"
 "{changes}"
 msgstr ""
+"Alterações:\n"
+"{changes}"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:74
 msgid "Error accessing release assets: %s"
@@ -2756,8 +2781,8 @@ msgstr "Erro de valor durante o processo de atualização: %s"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:112
 msgid ""
-"Skip check for software updates before staring the software. Default is "
-"%(default)s."
+"Skip check for software updates before staring the software. Default is %"
+"(default)s."
 msgstr ""
 "Ignorar verificação de atualizações de software antes de iniciar o software. "
 "Por defeito é %(default)s."
