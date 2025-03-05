@@ -18,6 +18,8 @@ import os
 
 from ardupilot_methodic_configurator.internationalization import LANGUAGE_CHOICES
 
+TRANSLATED_LANGUAGES = set(LANGUAGE_CHOICES) - {LANGUAGE_CHOICES[0]}  # Remove the default language (en) from the set
+
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Extract missing translations from a .po (GNU gettext) file.")
@@ -25,9 +27,9 @@ def parse_arguments() -> argparse.Namespace:
     # pylint: disable=duplicate-code
     parser.add_argument(
         "--lang-code",
-        default="zh_CN",
+        default="all",
         type=str,
-        choices=[*LANGUAGE_CHOICES, "test"],
+        choices=[*TRANSLATED_LANGUAGES, "test", "all"],
         help="The language code for translations. Available choices: %(choices)s. Default is %(default)s",
     )
     # pylint: enable=duplicate-code
@@ -216,8 +218,10 @@ def output_to_files(missing_translations: list[tuple[int, str]], output_file_bas
 def main() -> None:
     args = parse_arguments()
     logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
-    missing_translations = extract_missing_translations(args.lang_code)
-    output_to_files(missing_translations, args.output_file + "_" + args.lang_code, args.max_translations)
+    lang_codes = TRANSLATED_LANGUAGES if args.lang_code == "all" else [args.lang_code]
+    for lang_code in lang_codes:
+        missing_translations = extract_missing_translations(lang_code)
+        output_to_files(missing_translations, args.output_file + "_" + lang_code, args.max_translations)
 
 
 if __name__ == "__main__":
