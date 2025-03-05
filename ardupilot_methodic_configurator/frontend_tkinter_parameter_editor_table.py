@@ -96,16 +96,26 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.current_file = selected_file
 
         # Create labels for table headers
-        headers = [_("-/+"), _("Parameter"), _("Current Value"), _("New Value"), _("Unit"), _("Upload"), _("Change Reason")]
-        tooltips = [
+        headers = (_("-/+"), _("Parameter"), _("Current Value"), _("New Value"), _("Unit"), _("Upload"), _("Change Reason"))
+        tooltips = (
             _("Delete or add a parameter"),
             _("Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long"),
             _("Current value on the flight controller "),
             _("New value from the above selected intermediate parameter file"),
             _("Parameter Unit"),
             _("When selected, upload the new value to the flight controller"),
-            _("Reason why respective parameter changed"),
-        ]
+            _("Reason why respective parameter changed.")
+            + "\n\n"
+            + _("Documenting change reasons is crucial because it:")
+            + "\n"
+            + _(" * Promotes thoughtful decisions over impulsive changes")
+            + "\n"
+            + _(" * Provides documentation for vehicle certification requirements")
+            + "\n"
+            + _(" * Enables validation or suggestions from team members or AI tools")
+            + "\n"
+            + _(" * Preserves your reasoning for future reference or troubleshooting"),
+        )
 
         for i, header in enumerate(headers):
             label = ttk.Label(self.view_port, text=header)
