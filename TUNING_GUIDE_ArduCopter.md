@@ -413,6 +413,31 @@ If it doesn't, go back and perform the missing calibration(s).
 
 Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `14_Logging.param` file
 
+For vehicles with weak F4 processors, small propellers, low-speed microSDcards, **or** simply not capable of gyro raw logging,
+batch logging is recommended:
+
+```param
+INS_LOG_BAT_MASK, 1
+INS_LOG_BAT_OPT, 4
+INS_RAW_LOG_OPT, 0
+```
+
+For vehicles with F7 or H7 processors, big propellers, high-speed microSDcards, **and** capable of gyro raw logging,
+gyro raw logging is recommended:
+
+```param
+INS_LOG_BAT_MASK, 0
+INS_LOG_BAT_OPT, 0
+INS_RAW_LOG_OPT, 9
+```
+
+Raw gyro logging provides better resolution at lower frequencies, at the expense of more data and higher processor load.
+Big vehicles can benefit from better low frequency resolution.
+For small vehicles there is no real benefit.
+
+The software will automatically select the suitable values based on your vehicle components, but you can overwrite them
+by manually adding the parameters to the next intermediate parameter file as they will not get overwritten there.
+
 The table below explains which bit is responsible for which `.bin` dataflash log message(s):
 
 <table border="1px">
