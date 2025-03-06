@@ -10,21 +10,35 @@ cd /d %~dp0
 set "targetPath=%USERPROFILE%\AppData\Roaming\Python\Python312\Scripts"
 set "found=0"
 
+:: Normalize the target path by removing any trailing backslash
+if "!targetPath:~-1!"=="\" set "targetPath=!targetPath:~0,-1!"
+echo Checking if "!targetPath!" is already in PATH...
+
 :: Iterate over each entry in PATH
 for %%A in ("%PATH:;=" "%") do (
-    if /i "%%~A"=="!targetPath!" (
+    :: Remove quotes and trailing backslash for comparison
+    set "currentPath=%%~A"
+    if "!currentPath:~-1!"=="\" set "currentPath=!currentPath:~0,-1!"
+
+    :: Case-insensitive comparison for Windows paths
+    if /i "!currentPath!"=="!targetPath!" (
         set "found=1"
-        echo The path is already included in the PATH.
+        echo The path "!targetPath!" is already included in the PATH.
         goto :checkDone
     )
 )
 
 if "!found!"=="0" (
-    rem The target path is not in the PATH, so we will append it
+    echo The path "!targetPath!" is not in the PATH.
     echo Appending "!targetPath!" to the PATH...
     setx PATH "%PATH%;!targetPath!"
-    rem Update the current session PATH variable
-    set "PATH=%PATH%;!targetPath!"
+    if !ERRORLEVEL! EQU 0 (
+        echo Successfully updated system PATH.
+        rem Update the current session PATH variable
+        set "PATH=%PATH%;!targetPath!"
+    ) else (
+        echo Failed to update system PATH. Please check permissions.
+    )
 )
 
 :checkDone
@@ -44,7 +58,7 @@ exit /b
 
 :ConfigureGit
 echo Configuring Git settings...
-git config --local commit.gpgsign true
+git config --local commit.gpgsign false
 git config --local diff.tool meld
 git config --local diff.astextplain.textconv astextplain
 git config --local merge.tool meld
