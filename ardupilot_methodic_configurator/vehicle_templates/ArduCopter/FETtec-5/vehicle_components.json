@@ -153,7 +153,7 @@
         "Propellers": {
             "Product": {
                 "Manufacturer": "HQProp",
-                "Model": 5043,
+                "Model": "5043",
                 "URL": "",
                 "Version": ""
             },
