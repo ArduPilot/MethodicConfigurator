@@ -364,14 +364,14 @@ cd ..\..\..
 python extract_missing_translations.py --lang-code=de
 ```
 
-It will store the result of the bulk translations into n `missing_translations_de_n.txt` file(s).
+It will store the result of the bulk translations into n `missing_translations_de[_n].txt` file(s).
 
 Now translate that file(s), or feed it to on-line translation service.
 Put all missing translations into a single `missing_translations_de.txt`
 Once done, insert the translations into the `.po` file:
 
 ```bash
-python insert_translations.py --lang-code=de
+python insert_missing_translations.py --lang-code=de
 ```
 
 ### 5. Translate the Strings
