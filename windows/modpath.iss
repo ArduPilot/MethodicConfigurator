@@ -94,7 +94,7 @@ begin
 				i := i + 1;
 
 				// Check if current directory matches app dir
-				if pathdir[d] = pathArr[i-1] then begin
+				if (pathdir[d] = pathArr[i-1]) or (CompareText(pathdir[d], pathArr[i-1]) = 0) then begin
 					// if uninstalling, remove dir from path
 					if IsUninstaller() = true then begin
 						continue;
@@ -102,6 +102,9 @@ begin
 					end else begin
 						updatepath := false;
 					end;
+				// CHANGE: Add case-insensitive check to remove all instances during uninstall
+				end else if (IsUninstaller() = true) and (CompareText(pathdir[d], pathArr[i-1]) = 0) then begin
+					continue; // Skip adding this path (case-insensitive match)
 				end;
 
 				// Add current directory to new path
