@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 """
-Finds all configuration_steps_*.json files in the project and its subdirectories, and validates them
-against the JSON schema defined in "ardupilot_methodic_configurator/configuration_steps_schema.json".
+Finds all vehicle_components.json files in the project and its subdirectories, and validates them
+against the JSON schema defined in "ardupilot_methodic_configurator/vehicle_components_schema.json".
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -18,8 +18,9 @@ import pytest
 from jsonschema import ValidationError, exceptions, validate, validators
 
 # Path to the schema file
-SCHEMA_FILE_PATH = os.path.join("ardupilot_methodic_configurator", "configuration_steps_schema.json")
+SCHEMA_FILE_PATH = os.path.join("ardupilot_methodic_configurator", "vehicle_components_schema.json")
 
+# pylint: disable=duplicate-code
 # Load the schema
 with open(SCHEMA_FILE_PATH, encoding="utf-8") as schema_file:
     schema = json.load(schema_file)
@@ -36,15 +37,11 @@ def test_schema_validity() -> None:
 
 
 def find_json_files(directory) -> list[str]:
-    """Find all configuration_steps_*.json files in the specified directory and its subdirectories."""
+    """Find all vehicle_components.json files in the specified directory and its subdirectories."""
     json_files = []
     for root, _, files in os.walk(directory):
         for file in files:
-            if (
-                file.startswith("configuration_steps_")
-                and file.endswith(".json")
-                and file != "configuration_steps_schema.json"
-            ):
+            if file == "vehicle_components.json":
                 json_files.append(os.path.join(root, file))  # noqa: PERF401
     return json_files
 
@@ -63,3 +60,6 @@ def test_json_schema(json_file) -> None:
         error_path = e.path  # This gives the path in the JSON that caused the error
         pytest.fail(f"Validation error in {json_file} - Error Type: {error_type}, Path: {error_path}")
         # pytest.fail(f"Validation error in {json_file}: {e.message}")
+
+
+# pylint: enable=duplicate-code
