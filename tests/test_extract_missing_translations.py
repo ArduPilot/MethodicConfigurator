@@ -38,7 +38,7 @@ class TestExtractMissingTranslations(unittest.TestCase):
         # Test with actual argument parser
         with patch("sys.argv", ["extract_missing_translations.py"]):
             args = extract_missing_translations.parse_arguments()
-            assert args.lang_code == "zh_CN"  # Default value
+            assert args.lang_code == "all"  # Default value
             assert args.output_file == "missing_translations"  # Default value
             assert args.max_translations == 60  # Default value
 
