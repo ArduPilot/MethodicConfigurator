@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2025-03-05 21:25+0000\n"
+"POT-Creation-Date: 2025-03-06 23:18+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -269,8 +269,8 @@ msgid ""
 "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is "
 "an FC connected?"
 msgstr ""
-"ファイル'{self.configuration_steps_filename}'内: '{filename}' "
-"{parameter_type}パラメータ'{parameter}'を計算できませんでした: "
+"ファイル'{self.configuration_steps_filename}'内: "
+"'{filename}' {parameter_type}パラメータ'{parameter}'を計算できませんでした: "
 "'fc_parameters'が見つかりません。FCは接続されていますか？"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:179
@@ -279,17 +279,18 @@ msgid ""
 "parameter '{parameter}' could not be computed, no documentation metadata "
 "available for it"
 msgstr ""
-"ファイル'{self.configuration_steps_filename}'内: '{filename}' "
-"{parameter_type}パラメータ'{parameter}'を計算できませんでした。利用可能なド"
-"キュメントメタデータがありません"
+"ファイル'{self.configuration_steps_filename}'内: "
+"'{filename}' {parameter_type}パラメータ'{parameter}'を計算できませんでした。"
+"利用可能なドキュメントメタデータがありません"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:194
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: {_e}"
 msgstr ""
-"ファイル'{self.configuration_steps_filename}'内: '{filename}' "
-"{parameter_type}パラメータ'{parameter}'を計算できませんでした: {_e}"
+"ファイル'{self.configuration_steps_filename}'内: "
+"'{filename}' {parameter_type}パラメータ'{parameter}'を計算できませんでした: "
+"{_e}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:218
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:232
@@ -303,8 +304,8 @@ msgstr ""
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:224
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:237
 msgid ""
-"No documentation available for {selected_file} in the "
-"{self.configuration_steps_filename} file"
+"No documentation available for {selected_file} in the {self."
+"configuration_steps_filename} file"
 msgstr ""
 "{self.configuration_steps_filename}ファイル内の{selected_file}に関するドキュ"
 "メントはありません"
@@ -367,15 +368,39 @@ msgstr "ファイル'%s'が%sに見つかりません。"
 msgid "Error decoding JSON data from file '%s'."
 msgstr "ファイル'%s'からのJSONデータのデコード中にエラーが発生しました。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:107
-msgid "Cannot save invalid vehicle components data: %s"
-msgstr "無効な機体コンポーネントデータを保存できません: %s"
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:114
+msgid "Cannot save invalid vehicle components data: {}"
+msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:115
-msgid "Error saving JSON data to file '%s': %s"
-msgstr "JSONデータをファイル'%s'に保存中にエラーが発生しました: %s"
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:123
+msgid "Directory '{}' not found"
+msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:128
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:127
+msgid "Permission denied when writing to file '{}'"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:131
+msgid "Path '{}' is a directory, not a file"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:135
+msgid "OS error when writing to file '{}': {}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:139
+msgid "Type error when serializing data to JSON: {}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:143
+msgid "Value error when serializing data to JSON: {}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:148
+msgid "Unexpected error saving data to file '{}': {}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:163
 msgid ""
 "Firmware type {fw_type} in {self.vehicle_components_json_filename} is not "
 "supported"
@@ -383,7 +408,7 @@ msgstr ""
 "{self.vehicle_components_json_filename}内のファームウェアタイプ{fw_type}はサ"
 "ポートされていません"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:142
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:177
 msgid ""
 "FW version string {version_str} on {self.vehicle_components_json_filename} "
 "is invalid"
@@ -944,7 +969,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:751
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:773
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:780
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:237
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:238
 msgid "Error"
 msgstr "エラー"
 
@@ -1105,17 +1130,15 @@ msgstr ""
 msgid "Confirm that all component properties are correct"
 msgstr "すべてのコンポーネントプロパティが正しいことを確認してください"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:237
-msgid "Failed to save data to file. Is the destination write protected?"
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:238
+msgid "Failed to save data to file."
 msgstr ""
-"データをファイルに保存できませんでした。保存先が書き込み保護されていません"
-"か？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:239
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:240
 msgid "Vehicle component data saved successfully."
 msgstr "機体コンポーネントデータが正常に保存されました。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:255
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:256
 msgid ""
 "Skip the component editor window. Only use this if all components have been "
 "configured. Default is %(default)s"
@@ -2736,8 +2759,8 @@ msgstr "更新プロセス中の値エラー: %s"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:112
 msgid ""
-"Skip check for software updates before staring the software. Default is %"
-"(default)s."
+"Skip check for software updates before staring the software. Default is "
+"%(default)s."
 msgstr ""
 "ソフトウェア起動前の更新チェックをスキップします。デフォルトは%(default)sで"
 "す。"
@@ -2833,6 +2856,17 @@ msgid ""
 msgstr ""
 "GNSS\n"
 "接続"
+
+#~ msgid "Cannot save invalid vehicle components data: %s"
+#~ msgstr "無効な機体コンポーネントデータを保存できません: %s"
+
+#~ msgid "Error saving JSON data to file '%s': %s"
+#~ msgstr "JSONデータをファイル'%s'に保存中にエラーが発生しました: %s"
+
+#~ msgid "Failed to save data to file. Is the destination write protected?"
+#~ msgstr ""
+#~ "データをファイルに保存できませんでした。保存先が書き込み保護されていません"
+#~ "か？"
 
 #~ msgid "Reason why respective parameter changed"
 #~ msgstr "それぞれのパラメータが変更された理由"

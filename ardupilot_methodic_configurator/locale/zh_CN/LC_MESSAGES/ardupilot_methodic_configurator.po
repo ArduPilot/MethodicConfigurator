@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-03-05 21:25+0000\n"
+"POT-Creation-Date: 2025-03-06 23:18+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -197,8 +197,8 @@ msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
 msgstr ""
-"允许直接打开和编辑模板文件。仅供了解相关操作的软件开发人员使用。默认为%"
-"(default)s"
+"允许直接打开和编辑模板文件。仅供了解相关操作的软件开发人员使用。默认"
+"为%(default)s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:65
 msgid ""
@@ -289,8 +289,8 @@ msgstr ""
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:224
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:237
 msgid ""
-"No documentation available for {selected_file} in the "
-"{self.configuration_steps_filename} file"
+"No documentation available for {selected_file} in the {self."
+"configuration_steps_filename} file"
 msgstr ""
 "在 '{self.configuration_steps_filename}' 文件中没有 {selected_file} 的文档可"
 "用。"
@@ -354,15 +354,39 @@ msgstr "文件 '%s' 没有在 '%s' 中找到。"
 msgid "Error decoding JSON data from file '%s'."
 msgstr "解码来自 '%s' 的JSON数据时发生错误。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:107
-msgid "Cannot save invalid vehicle components data: %s"
-msgstr "无法保存无效的车辆组件数据：%s"
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:114
+msgid "Cannot save invalid vehicle components data: {}"
+msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:115
-msgid "Error saving JSON data to file '%s': %s"
-msgstr "保存JSON数据到文件 '%s'时发生错误: %s"
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:123
+msgid "Directory '{}' not found"
+msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:128
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:127
+msgid "Permission denied when writing to file '{}'"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:131
+msgid "Path '{}' is a directory, not a file"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:135
+msgid "OS error when writing to file '{}': {}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:139
+msgid "Type error when serializing data to JSON: {}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:143
+msgid "Value error when serializing data to JSON: {}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:148
+msgid "Unexpected error saving data to file '{}': {}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:163
 msgid ""
 "Firmware type {fw_type} in {self.vehicle_components_json_filename} is not "
 "supported"
@@ -370,7 +394,7 @@ msgstr ""
 "在 '{self.vehicle_components_json_filename}' 中的固件类型 {fw_type} 不受支"
 "持。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:142
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:177
 msgid ""
 "FW version string {version_str} on {self.vehicle_components_json_filename} "
 "is invalid"
@@ -932,7 +956,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:751
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:773
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:780
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:237
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:238
 msgid "Error"
 msgstr "错误"
 
@@ -1095,15 +1119,15 @@ msgstr ""
 msgid "Confirm that all component properties are correct"
 msgstr "确认所有组件属性正确"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:237
-msgid "Failed to save data to file. Is the destination write protected?"
-msgstr "保存数据到文件失败。目标文件是否启用了写保护？"
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:238
+msgid "Failed to save data to file."
+msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:239
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:240
 msgid "Vehicle component data saved successfully."
 msgstr "载具组件数据保存成功。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:255
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:256
 msgid ""
 "Skip the component editor window. Only use this if all components have been "
 "configured. Default is %(default)s"
@@ -2706,8 +2730,8 @@ msgstr "更新过程中出现数值错误：%s"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:112
 msgid ""
-"Skip check for software updates before staring the software. Default is %"
-"(default)s."
+"Skip check for software updates before staring the software. Default is "
+"%(default)s."
 msgstr "启动软件前跳过软件更新检查。默认为%(default)s。"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:121
@@ -2800,6 +2824,15 @@ msgid ""
 msgstr ""
 "GNSS\n"
 "連接"
+
+#~ msgid "Cannot save invalid vehicle components data: %s"
+#~ msgstr "无法保存无效的车辆组件数据：%s"
+
+#~ msgid "Error saving JSON data to file '%s': %s"
+#~ msgstr "保存JSON数据到文件 '%s'时发生错误: %s"
+
+#~ msgid "Failed to save data to file. Is the destination write protected?"
+#~ msgstr "保存数据到文件失败。目标文件是否启用了写保护？"
 
 #~ msgid "Reason why respective parameter changed"
 #~ msgstr "相应参数更改的原因"
