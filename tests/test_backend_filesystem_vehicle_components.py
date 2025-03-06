@@ -82,7 +82,7 @@ class TestVehicleComponents(unittest.TestCase):
     def test_save_vehicle_components_json_data_valid(self, mock_validate, mock_json_dump, mock_file) -> None:
         mock_validate.return_value = (True, "")
 
-        result = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
+        result, _msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
 
         assert not result  # False means success
         expected_path = os.path.join("/test/dir", "vehicle_components.json")
@@ -93,7 +93,7 @@ class TestVehicleComponents(unittest.TestCase):
     def test_save_vehicle_components_json_data_invalid(self, mock_validate) -> None:
         mock_validate.return_value = (False, "Validation error")
 
-        result = self.vehicle_components.save_vehicle_components_json_data(self.invalid_component_data, "/test/dir")
+        result, _msg = self.vehicle_components.save_vehicle_components_json_data(self.invalid_component_data, "/test/dir")
 
         assert result  # True means failure
 
