@@ -176,3 +176,40 @@ class VehicleComponents:
     def get_vehicle_image_filepath(relative_template_path: str) -> str:
         template_default_dir = ProgramSettings.get_templates_base_dir()
         return os_path.join(template_default_dir, relative_template_path, "vehicle.jpg")
+
+    def wipe_component_info(self) -> None:
+        """
+        Wipe the vehicle components data by clearing all data from the vehicle_components dictionary.
+
+        This resets the internal state without affecting any files.
+        Preserves the complete structure of the dictionary including all branches and leaves,
+        but sets leaf values to empty values based on their type.
+        """
+        if self.vehicle_components is not None:
+            self._recursively_clear_dict(self.vehicle_components)
+
+    def _recursively_clear_dict(self, data: Union[dict, list, float, bool, str]) -> None:
+        """
+        Recursively clear leaf values in a nested dictionary while preserving structure.
+
+        :param data: Dictionary to clear
+        """
+        if not isinstance(data, dict):
+            return
+
+        for key, value in data.items():
+            if isinstance(value, dict):
+                # If it's a dictionary, recurse deeper
+                self._recursively_clear_dict(value)
+            elif isinstance(value, list):
+                # If it's a list, preserve it but empty it
+                data[key] = []
+            elif isinstance(value, (int, float)):
+                # For numerical values, set to 0
+                data[key] = 0 if isinstance(value, int) else 0.0
+            elif isinstance(value, bool):
+                # For boolean values, set to False
+                data[key] = False
+            else:
+                # For strings and other types, set to empty string or None
+                data[key] = "" if isinstance(value, str) else None

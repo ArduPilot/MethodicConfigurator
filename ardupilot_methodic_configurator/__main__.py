@@ -99,13 +99,15 @@ def component_editor(
     vehicle_dir_window: Union[None, VehicleDirectorySelectionWindow],
 ) -> None:
     component_editor_window = ComponentEditorWindow(__version__, local_filesystem)
+    if vehicle_dir_window and vehicle_dir_window.blank_template_data.get():
+        local_filesystem.wipe_component_info()
     if (
         vehicle_dir_window
         and vehicle_dir_window.configuration_template
-        and vehicle_dir_window.use_fc_params.get()
+        and vehicle_dir_window.infer_comp_specs_and_conn_from_fc_params.get()
         and flight_controller.fc_parameters
     ):
-        # copy vehicle parameters to component editor values
+        # Infer vehicle component specifications and connections from FC parameters
         component_editor_window.set_values_from_fc_parameters(flight_controller.fc_parameters, local_filesystem.doc_dict)
     component_editor_window.populate_frames()
     component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.info.flight_sw_version_and_type)
