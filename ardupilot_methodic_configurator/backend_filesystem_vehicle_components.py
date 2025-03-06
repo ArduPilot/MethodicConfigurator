@@ -108,6 +108,9 @@ class VehicleComponents:
         :param vehicle_dir: The directory to save the file in
         :return: A tuple of (error_occurred, error_message)
         """
+        # Ensure all data matches schema types before validation
+        data = self.ensure_data_types_match_schema(data)
+
         # Validate before saving
         is_valid, error_message = self.validate_vehicle_components(data)
         if not is_valid:
@@ -248,3 +251,95 @@ class VehicleComponents:
             else:
                 # For strings and other types, set to empty string or None
                 data[key] = "" if isinstance(value, str) else None
+
+    def ensure_data_types_match_schema(self, data: dict) -> dict:  # noqa: PLR0915
+        """
+        Process the data dictionary to ensure all values match the expected types in the schema.
+        This method converts values to the correct types as defined in the schema.
+
+        :param data: The vehicle components data to process
+        :return: The processed data with corrected types
+        """
+        # Make sure schema is loaded
+        if self.schema is None:
+            self.load_schema()
+
+        if not self.schema:
+            logging_error(_("Could not load schema for type validation"))
+            return data
+
+        # Create a deep copy of data to avoid modifying it during iteration
+        import copy
+
+        processed_data = copy.deepcopy(data)
+
+        def process_object(obj_data: dict, schema_props: dict, path: str = "") -> None:
+            """Recursively process an object against schema properties."""
+            for prop_name, prop_value in list(obj_data.items()):  # Use list() to allow modification during iteration
+                current_path = f"{path}.{prop_name}" if path else prop_name
+
+                if prop_name not in schema_props:
+                    continue
+
+                prop_schema = schema_props[prop_name]
+
+                # Handle nested objects
+                if prop_schema.get("type") == "object" and isinstance(prop_value, dict):
+                    if "properties" in prop_schema:
+                        process_object(obj_data[prop_name], prop_schema["properties"], current_path)
+
+                # Handle arrays
+                elif prop_schema.get("type") == "array" and isinstance(prop_value, list):
+                    if "items" in prop_schema and prop_schema["items"].get("type") == "object":
+                        for i, item in enumerate(prop_value):
+                            if isinstance(item, dict) and "properties" in prop_schema["items"]:
+                                item_path = f"{current_path}[{i}]"
+                                process_object(item, prop_schema["items"]["properties"], item_path)
+
+                # Handle string conversions
+                elif prop_schema.get("type") == "string" and prop_value is not None:
+                    if not isinstance(prop_value, str):
+                        logging_debug(
+                            _("Converting %s from %s to string: %s"), current_path, type(prop_value).__name__, prop_value
+                        )
+                        obj_data[prop_name] = str(prop_value)
+
+                # Handle number conversions
+                elif prop_schema.get("type") == "number" and prop_value is not None:
+                    if not isinstance(prop_value, (int, float)) or isinstance(prop_value, bool):  # bool is a subclass of int
+                        try:
+                            obj_data[prop_name] = float(prop_value)
+                            logging_debug(_("Converting %s to number: %s"), current_path, prop_value)
+                        except (ValueError, TypeError):
+                            logging_error(_("Failed to convert %s to number: %s"), current_path, prop_value)
+                            obj_data[prop_name] = 0.0  # Default to 0.0 on conversion failure
+
+                # Handle integer conversions
+                elif prop_schema.get("type") == "integer" and prop_value is not None:
+                    if not isinstance(prop_value, int) or isinstance(prop_value, bool):  # Handle bool separately
+                        try:
+                            if isinstance(prop_value, bool):
+                                obj_data[prop_name] = 1 if prop_value else 0
+                            else:
+                                obj_data[prop_name] = int(float(prop_value))
+                            logging_debug(_("Converting %s to integer: %s"), current_path, prop_value)
+                        except (ValueError, TypeError):
+                            logging_error(_("Failed to convert %s to integer: %s"), current_path, prop_value)
+                            obj_data[prop_name] = 0  # Default to 0 on conversion failure
+
+                # Handle boolean conversions
+                elif prop_schema.get("type") == "boolean" and prop_value is not None and not isinstance(prop_value, bool):
+                    if isinstance(prop_value, str):
+                        obj_data[prop_name] = prop_value.lower() in ("true", "yes", "y", "1", "on")
+                    elif isinstance(prop_value, (int, float)):
+                        # 0 is False, any other number is True
+                        obj_data[prop_name] = bool(prop_value)
+                    else:
+                        obj_data[prop_name] = bool(prop_value)
+                    logging_debug(_("Converting %s to boolean: %s → %s"), current_path, prop_value, obj_data[prop_name])
+
+        # Start processing from the root object
+        if "properties" in self.schema:
+            process_object(processed_data, self.schema["properties"])
+
+        return processed_data
