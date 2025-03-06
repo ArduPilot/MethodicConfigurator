@@ -100,21 +100,56 @@ class VehicleComponents:
         self.vehicle_components = data
         return data
 
-    def save_vehicle_components_json_data(self, data: dict, vehicle_dir: str) -> bool:
+    def save_vehicle_components_json_data(self, data: dict, vehicle_dir: str) -> tuple[bool, str]:  # noqa: PLR0911 # pylint: disable=too-many-return-statements
+        """
+        Save the vehicle components data to a JSON file.
+
+        :param data: The vehicle components data to save
+        :param vehicle_dir: The directory to save the file in
+        :return: A tuple of (error_occurred, error_message)
+        """
         # Validate before saving
         is_valid, error_message = self.validate_vehicle_components(data)
         if not is_valid:
-            logging_error(_("Cannot save invalid vehicle components data: %s"), error_message)
-            return True
+            msg = _("Cannot save invalid vehicle components data: {}").format(error_message)
+            logging_error(msg)
+            return True, msg
 
         filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
         try:
             with open(filepath, "w", encoding="utf-8") as file:
                 json_dump(data, file, indent=4)
-        except Exception as e:  # pylint: disable=broad-except
-            logging_error(_("Error saving JSON data to file '%s': %s"), filepath, e)
-            return True
-        return False
+        except FileNotFoundError:
+            msg = _("Directory '{}' not found").format(vehicle_dir)
+            logging_error(msg)
+            return True, msg
+        except PermissionError:
+            msg = _("Permission denied when writing to file '{}'").format(filepath)
+            logging_error(msg)
+            return True, msg
+        except IsADirectoryError:
+            msg = _("Path '{}' is a directory, not a file").format(filepath)
+            logging_error(msg)
+            return True, msg
+        except OSError as e:
+            msg = _("OS error when writing to file '{}': {}").format(filepath, str(e))
+            logging_error(msg)
+            return True, msg
+        except TypeError as e:
+            msg = _("Type error when serializing data to JSON: {}").format(str(e))
+            logging_error(msg)
+            return True, msg
+        except ValueError as e:
+            msg = _("Value error when serializing data to JSON: {}").format(str(e))
+            logging_error(msg)
+            return True, msg
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Still have a fallback for truly unexpected errors
+            msg = _("Unexpected error saving data to file '{}': {}").format(filepath, str(e))
+            logging_error(msg)
+            return True, msg
+
+        return False, ""
 
     def get_fc_fw_type_from_vehicle_components_json(self) -> str:
         if self.vehicle_components and "Components" in self.vehicle_components:

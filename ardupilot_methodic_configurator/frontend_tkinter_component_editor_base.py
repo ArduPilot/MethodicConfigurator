@@ -233,8 +233,9 @@ class ComponentEditorWindowBase(BaseWindow):
             current_data[path[-1]] = value
 
         # Save the updated data back to the JSON file
-        if self.local_filesystem.save_vehicle_components_json_data(self.data, self.local_filesystem.vehicle_dir):
-            show_error_message(_("Error"), _("Failed to save data to file. Is the destination write protected?"))
+        failed, msg = self.local_filesystem.save_vehicle_components_json_data(self.data, self.local_filesystem.vehicle_dir)
+        if failed:
+            show_error_message(_("Error"), _("Failed to save data to file.") + "\n" + msg)
         else:
             logging_info(_("Vehicle component data saved successfully."))
         self.root.destroy()
