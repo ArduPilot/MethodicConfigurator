@@ -216,7 +216,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
         return False
 
 
-class VehicleDirectorySelectionWindow(BaseWindow):
+class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """
     A window for selecting a vehicle directory with intermediate parameter files.
 
@@ -236,6 +236,8 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             + _(" - Select vehicle configuration directory")
         )
         self.root.geometry("800x625")  # Set the window size
+        self.blank_template_data = tk.BooleanVar(value=False)
+        self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
         self.use_fc_params = tk.BooleanVar(value=False)
         self.configuration_template: str = ""  # will be set to a string if a template was used
 
@@ -262,7 +264,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):
     def close_and_quit(self) -> None:
         sys_exit(0)
 
-    def create_option1_widgets(
+    def create_option1_widgets(  # pylint: disable=too-many-locals
         self, initial_template_dir: str, initial_base_dir: str, initial_new_dir: str, fc_connected: bool
     ) -> None:
         # Option 1 - Create a new vehicle configuration directory based on an existing template
@@ -288,6 +290,32 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             is_template_selection=True,
         )
         self.template_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
+        blank_template_data_checkbox = ttk.Checkbutton(
+            option1_label_frame,
+            variable=self.blank_template_data,
+            text=_("Blank template data"),
+        )
+        blank_template_data_checkbox.pack(anchor=tk.NW)
+        show_tooltip(
+            blank_template_data_checkbox, _("Create a new blank vehicle configuration, with no data from the template.")
+        )
+        infer_comp_specs_and_conn_from_fc_params_checkbox = ttk.Checkbutton(
+            option1_label_frame,
+            variable=self.infer_comp_specs_and_conn_from_fc_params,
+            text=_("Infer component specifications and FC connections from FC parameters, not from template files"),
+        )
+        infer_comp_specs_and_conn_from_fc_params_checkbox.pack(anchor=tk.NW)
+        show_tooltip(
+            infer_comp_specs_and_conn_from_fc_params_checkbox,
+            _(
+                "When creating a new vehicle configuration, extract component specifications\n"
+                "and connection information directly from the connected flight controller\n"
+                "instead of using the specifications defined in the template files.\n"
+                "This helps ensure the configuration accurately matches your actual hardware.\n"
+                "But you will not see the information from the correctly configured vehicle template.\n\n"
+            )
+            + _("This option is only available when a flight controller is connected."),
+        )
         use_fc_params_checkbox = ttk.Checkbutton(
             option1_label_frame,
             variable=self.use_fc_params,
@@ -299,10 +327,13 @@ class VehicleDirectorySelectionWindow(BaseWindow):
             _(
                 "Use the parameter values from the connected flight controller instead of the\n"
                 "template files when creating a new vehicle configuration directory from a template.\n"
-                "This option is only available when a flight controller is connected"
-            ),
+                "Only makes sense if your FC has already been correctly configured.\n\n"
+            )
+            + _("This option is only available when a flight controller is connected."),
         )
         if not fc_connected:
+            self.infer_comp_specs_and_conn_from_fc_params.set(False)
+            infer_comp_specs_and_conn_from_fc_params_checkbox.config(state=tk.DISABLED)
             self.use_fc_params.set(False)
             use_fc_params_checkbox.config(state=tk.DISABLED)
 
