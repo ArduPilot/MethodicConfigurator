@@ -125,9 +125,10 @@ begin
   end;
   { look for the path with leading and trailing semicolon }
   { Pos() returns 0 if not found }
-  Result :=
-    (Pos(';' + UpperCase(Param) + ';', ';' + UpperCase(OrigPath) + ';') = 0) and
-    (Pos(';' + UpperCase(Param) + '\;', ';' + UpperCase(OrigPath) + ';') = 0);
+  Result := (Pos(';' + UpperCase(Param) + ';', ';' + UpperCase(OrigPath) + ';') = 0) and
+            (Pos(';' + UpperCase(Param) + '\;', ';' + UpperCase(OrigPath) + ';') = 0) and
+            (Pos(UpperCase(Param) + ';', UpperCase(OrigPath) + ';') = 0) and
+            (Pos(';' + UpperCase(Param), ';' + UpperCase(OrigPath)) = 0);
 end;
 
 var
