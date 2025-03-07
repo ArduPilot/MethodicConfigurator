@@ -153,8 +153,8 @@
         "Propellers": {
             "Product": {
                 "Manufacturer": "Gemfan",
-                "Model": "7040",
-                "URL": "",
+                "Model": "7040 7x4.2",
+                "URL": "https://www.gfprops.com/products/gemfan-flash-7042-2.html",
                 "Version": ""
             },
             "Specifications": {
