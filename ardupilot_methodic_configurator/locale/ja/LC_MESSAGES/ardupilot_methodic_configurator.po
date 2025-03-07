@@ -370,31 +370,31 @@ msgstr "ファイル'%s'からのJSONデータのデコード中にエラーが�
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:124
 msgid "Directory '{}' not found"
-msgstr ""
+msgstr "ディレクトリ '{}' が見つかりません"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:128
 msgid "Permission denied when writing to file '{}'"
-msgstr ""
+msgstr "ファイル '{}' への書き込みが許可されていません"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:132
 msgid "Path '{}' is a directory, not a file"
-msgstr ""
+msgstr "パス '{}' はファイルではなく、ディレクトリです"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:136
 msgid "OS error when writing to file '{}': {}"
-msgstr ""
+msgstr "ファイル '{}' への書き込み中にOSエラーが発生しました: {}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:140
 msgid "Type error when serializing data to JSON: {}"
-msgstr ""
+msgstr "JSONへのデータシリアライズ中に型エラーが発生しました: {}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:144
 msgid "Value error when serializing data to JSON: {}"
-msgstr ""
+msgstr "JSONへのデータシリアライズ中に値エラーが発生しました: {}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:149
 msgid "Unexpected error saving data to file '{}': {}"
-msgstr ""
+msgstr "ファイル '{}' へのデータ保存中に予期しないエラーが発生しました: {}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:164
 msgid ""
@@ -1128,7 +1128,7 @@ msgstr "すべてのコンポーネントプロパティが正しいことを確
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:238
 msgid "Failed to save data to file."
-msgstr ""
+msgstr "ファイルにデータを保存できませんでした。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:240
 msgid "Vehicle component data saved successfully."
@@ -1401,18 +1401,18 @@ msgstr "ソーステンプレートディレクトリ:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:296
 msgid "Blank template data"
-msgstr ""
+msgstr "空のテンプレートデータ"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:300
 msgid ""
 "Create a new blank vehicle configuration, with no data from the template."
-msgstr ""
+msgstr "テンプレートのデータを使用せずに、新しい空の機体構成を作成します。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:305
 msgid ""
 "Infer component specifications and FC connections from FC parameters, not "
 "from template files"
-msgstr ""
+msgstr "テンプレートファイルからではなく、FCパラメータからコンポーネントの仕様とFC接続を推測します"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:310
 msgid ""
@@ -1424,12 +1424,12 @@ msgid ""
 "But you will not see the information from the correctly configured vehicle "
 "template.\n"
 "\n"
-msgstr ""
+msgstr "新しい機体構成を作成する際、テンプレートファイルで定義された仕様を使用する代わりに、接続されたフライトコントローラーから直接コンポーネントの仕様と接続情報を抽出します。\nこれにより、構成が実際のハードウェアと正確に一致するようになります。\nただし、正しく構成された機体テンプレートの情報は表示されません。\n\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:317
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:332
 msgid "This option is only available when a flight controller is connected."
-msgstr ""
+msgstr "このオプションは、フライトコントローラーが接続されている場合にのみ使用できます。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:322
 msgid "Use parameter values from connected FC, not from template files"
@@ -1443,7 +1443,7 @@ msgid ""
 "template.\n"
 "Only makes sense if your FC has already been correctly configured.\n"
 "\n"
-msgstr ""
+msgstr "テンプレートから新しい機体構成ディレクトリを作成する際、テンプレートファイルではなく、接続されたフライトコントローラーからのパラメータ値を使用します。\nFCがすでに正しく構成されている場合にのみ意味があります。\n\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:340
 msgid ""
