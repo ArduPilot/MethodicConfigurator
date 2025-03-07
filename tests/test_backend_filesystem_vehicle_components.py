@@ -164,6 +164,93 @@ class TestVehicleComponents(unittest.TestCase):
         mock_join.assert_called_once_with("/templates", "copter", "vehicle.jpg")
         assert result == "/templates/copter/vehicle.jpg"
 
+    def test_wipe_component_info(self) -> None:
+        # Test with nested dictionary containing various data types
+        self.vehicle_components.vehicle_components = {
+            "Components": {
+                "Flight Controller": {
+                    "Firmware": {"Type": "ArduCopter", "Version": "4.3.0"},
+                    "Hardware": {"Model": "Pixhawk", "Ports": 5, "Sensors": ["GPS", "Barometer", "IMU"]},
+                    "Options": {"Enabled": True, "Value": 42.5},
+                }
+            }
+        }
+
+        # Call the method to wipe
+        self.vehicle_components.wipe_component_info()
+
+        # Verify structure is preserved but values are cleared
+        result = self.vehicle_components.vehicle_components
+        assert "Components" in result
+        assert "Flight Controller" in result["Components"]
+        assert "Firmware" in result["Components"]["Flight Controller"]
+        assert result["Components"]["Flight Controller"]["Firmware"]["Type"] == ""
+        assert result["Components"]["Flight Controller"]["Firmware"]["Version"] == ""
+        assert result["Components"]["Flight Controller"]["Hardware"]["Model"] == ""
+        assert result["Components"]["Flight Controller"]["Hardware"]["Ports"] == 0
+        assert result["Components"]["Flight Controller"]["Hardware"]["Sensors"] == []
+        assert result["Components"]["Flight Controller"]["Options"]["Enabled"] == 0
+        assert result["Components"]["Flight Controller"]["Options"]["Value"] == 0.0
+
+    @patch("builtins.open")
+    def test_save_vehicle_components_json_data_file_not_found(self, mock_open) -> None:  # pylint: disable=redefined-outer-name
+        mock_open.side_effect = FileNotFoundError()
+
+        result, msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/nonexistent/dir")
+
+        assert result  # True means error
+        assert "not found" in msg
+
+    @patch("builtins.open")
+    def test_save_vehicle_components_json_data_permission_error(self, mock_open) -> None:  # pylint: disable=redefined-outer-name
+        mock_open.side_effect = PermissionError()
+
+        result, msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
+
+        assert result  # True means error
+        assert "Permission denied" in msg
+
+    @patch("builtins.open")
+    def test_save_vehicle_components_json_data_is_a_directory_error(self, mock_open) -> None:  # pylint: disable=redefined-outer-name
+        mock_open.side_effect = IsADirectoryError()
+
+        result, msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
+
+        assert result  # True means error
+        assert "is a directory" in msg.lower()
+
+    @patch("builtins.open")
+    def test_save_vehicle_components_json_data_os_error(self, mock_open) -> None:  # pylint: disable=redefined-outer-name
+        mock_open.side_effect = OSError("Disk full")
+
+        result, msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
+
+        assert result  # True means error
+        assert "OS error" in msg
+        assert "Disk full" in msg
+
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
+    def test_save_vehicle_components_json_data_type_error(self, mock_json_dump, mock_file) -> None:  # pylint: disable=unused-argument
+        mock_json_dump.side_effect = TypeError("Invalid type")
+
+        result, msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
+
+        assert result  # True means error
+        assert "Type error" in msg
+        assert "Invalid type" in msg
+
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
+    def test_save_vehicle_components_json_data_value_error(self, mock_json_dump, mock_file) -> None:  # pylint: disable=unused-argument
+        mock_json_dump.side_effect = ValueError("Circular reference")
+
+        result, msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
+
+        assert result  # True means error
+        assert "Value error" in msg
+        assert "Circular reference" in msg
+
 
 if __name__ == "__main__":
     unittest.main()
