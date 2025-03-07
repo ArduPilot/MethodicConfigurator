@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-03-06 23:21+0000\n"
+"POT-Creation-Date: 2025-03-07 12:22+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -372,39 +372,35 @@ msgstr "Arquivo '%s' não encontrado em %s."
 msgid "Error decoding JSON data from file '%s'."
 msgstr "Erro ao decodificar dados JSON do arquivo '%s'."
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:114
-msgid "Cannot save invalid vehicle components data: {}"
-msgstr ""
-
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:123
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:124
 msgid "Directory '{}' not found"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:127
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:128
 msgid "Permission denied when writing to file '{}'"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:131
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:132
 msgid "Path '{}' is a directory, not a file"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:135
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:136
 msgid "OS error when writing to file '{}': {}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:139
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:140
 msgid "Type error when serializing data to JSON: {}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:143
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:144
 msgid "Value error when serializing data to JSON: {}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:148
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:149
 msgid "Unexpected error saving data to file '{}': {}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:163
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:164
 msgid ""
 "Firmware type {fw_type} in {self.vehicle_components_json_filename} is not "
 "supported"
@@ -412,7 +408,7 @@ msgstr ""
 "Tipo de firmware {fw_type} em {self.vehicle_components_json_filename} não é "
 "suportado"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:177
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:178
 msgid ""
 "FW version string {version_str} on {self.vehicle_components_json_filename} "
 "is invalid"
