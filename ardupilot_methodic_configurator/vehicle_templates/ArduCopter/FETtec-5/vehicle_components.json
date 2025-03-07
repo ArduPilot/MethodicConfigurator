@@ -153,9 +153,9 @@
         "Propellers": {
             "Product": {
                 "Manufacturer": "HQProp",
-                "Model": "5043",
-                "URL": "",
-                "Version": ""
+                "Model": "5043 5X4.3X3",
+                "URL": "https://www.hqprop.com/",
+                "Version": "V2S"
             },
             "Specifications": {
                 "Diameter_inches": 5
