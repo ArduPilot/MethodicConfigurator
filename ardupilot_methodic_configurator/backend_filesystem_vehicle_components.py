@@ -109,11 +109,12 @@ class VehicleComponents:
         :return: A tuple of (error_occurred, error_message)
         """
         # Validate before saving
-        is_valid, error_message = self.validate_vehicle_components(data)
-        if not is_valid:
-            msg = _("Cannot save invalid vehicle components data: {}").format(error_message)
-            logging_error(msg)
-            return True, msg
+        # commented out until https://github.com/ArduPilot/MethodicConfigurator/pull/237 gets merged
+        # is_valid, error_message = self.validate_vehicle_components(data)
+        # if not is_valid:
+        #     msg = _("Cannot save invalid vehicle components data: {}").format(error_message)
+        #     logging_error(msg)
+        #     return True, msg
 
         filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
         try:
