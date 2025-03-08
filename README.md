@@ -69,7 +69,7 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 ### 1.2 Install Software
 
 - Install ArduPilot Methodic Configurator on [MS windows](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#ms-windows-installation),
-  [linux](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#linux-installation) or
+  [Linux](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#linux-installation) or
   [macOS](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#macos-installation)
 - [Install the latest Mission Planner version](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#install-mission-planner-software-on-a-pc-or-mac)
 - [Install the latest ArduPilot firmware on your flight controller board](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#install-ardupilot-firmware-on-the-flight-controller)
@@ -205,7 +205,7 @@ The following sections describe each step of the procedure in more detail.
 ## 2. Install *ArduPilot Methodic Configurator* software on a PC or Mac
 
 Install ArduPilot Methodic Configurator on [MS windows](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#ms-windows-installation),
-[linux](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#linux-installation) or
+[Linux](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#linux-installation) or
 [macOS](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#macos-installation)
 
 ## 3. Install *Mission Planner* software on a PC or Mac
@@ -272,7 +272,7 @@ To meet the [Software requirements](https://ardupilot.github.io/MethodicConfigur
 The software is available in [multiple languages](https://github.com/ArduPilot/MethodicConfigurator/tree/master/ardupilot_methodic_configurator/locale).
 On MS Windows the language is selected during install and that selection is stored in the desktop icon.
 You can manually create multiple desktop icons, each will run the software in a different language.
-On linux and macOS the language is selectable by the `--language` command line argument.
+On Linux and macOS the language is selectable by the `--language` command line argument.
 
 See [contributing page](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md) if you want to help us translate the software into your language.
 
