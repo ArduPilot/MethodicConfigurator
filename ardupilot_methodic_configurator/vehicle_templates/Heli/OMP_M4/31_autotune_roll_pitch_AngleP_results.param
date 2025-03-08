@@ -2,4 +2,3 @@ ATC_ACCEL_P_MAX,110000
 ATC_ACCEL_R_MAX,110000
 ATC_ANG_PIT_P,8.80203  # higher value mean a tighter tune
 ATC_ANG_RLL_P,10  # higher value mean a tighter tune
-
