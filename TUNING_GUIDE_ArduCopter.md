@@ -684,8 +684,8 @@ PSC_ACCZ_I
 PSC_ACCZ_P
 ```
 
-The typical approach is to lower the rate PID's by 50% and the PSC parameters to; P=hover thrust value and I=2x hover thrust value.
-With this craft a further reduction in the Rate PID's was required to ~35%.
+The typical approach is to lower the rate PID's by 50% and the PSC parameters to, P=hover thrust value and I=2x hover thrust value.
+With this specific craft a further reduction to ~35% in the Rate PID's was required.
 And now those parameters applied:
 ![Rate and vert accel gains Parameters](images/blog/no_rcout_oscillations.jpg)
 The oscillation is gone and we now have a condition of tune that can be advanced!
