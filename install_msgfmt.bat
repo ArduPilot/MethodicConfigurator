@@ -1,4 +1,7 @@
 @echo off
+rem SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+rem
+rem SPDX-License-Identifier: GPL-3.0-or-later
 setlocal enabledelayedexpansion
 
 :: Check for admin privileges
