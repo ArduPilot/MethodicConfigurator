@@ -229,8 +229,8 @@
             "id": "languageCode",
             "type": "pickString",
             "description": "Select language code:",
-            "options": ["en", "zh_CN", "pt", "de"],
-            "default": "zh_CN"
+            "options": ["all", "zh_CN", "pt", "de", "it", "ja"],
+            "default": "all"
         },
         {
             "id": "outputFile",
@@ -254,7 +254,7 @@
             "id": "poOutputFile",
             "type": "promptString",
             "description": "Enter output .po file name:",
-            "default": "ardupilot_methodic_configurator_new.po"
+            "default": "ardupilot_methodic_configurator.po"
         }
     ]
 }
