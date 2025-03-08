@@ -333,15 +333,22 @@ Add the language to the end of the `LANGUAGE_CHOICES` array in the `ardupilot_me
 For example, to add support for German:
 
 ```python
-LANGUAGE_CHOICES = ['en', 'zh_CN', 'pt', 'de']
+LANGUAGE_CHOICES = ["en", "zh_CN", "pt", "de", "it", "ja"]
 ```
 
 Add it also to the test on `tests\test_internationalization.py` file:
 
 ```python
     def test_language_choices(self) -> None:
-        expected_languages = ["en", "zh_CN", "pt", "de", "it"]
+        expected_languages = ["en", "zh_CN", "pt", "de", "it", "ja"]
         assert expected_languages == LANGUAGE_CHOICES
+```
+
+and `.vscode\tasks.json` file:
+
+```json
+            "description": "Select language code:",
+            "options": ["all", "zh_CN", "pt", "de", "it", "ja"],
 ```
 
 ### 3. Create a New PO File
