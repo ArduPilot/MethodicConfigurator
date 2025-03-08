@@ -257,7 +257,7 @@ This speeds up the development process.
 ### System testing
 
 Here the integrated application was tested against the system requirements defined above.
-The tests were conducted on windows and linux machines using multiple different flight controllers and firmware versions.
+The tests were conducted on windows and Linux machines using multiple different flight controllers and firmware versions.
 The software is automatically build and distributed using the github CD pipeline.
 
 ### Acceptance testing
@@ -302,7 +302,7 @@ On windows do:
 .\install_wsl.bat
 ```
 
-On linux and macOS do:
+On Linux and macOS do:
 
 ```bash
 ./SetupDeveloperPC.sh
@@ -403,7 +403,7 @@ On windows:
 python create_mo_files.py
 ```
 
-On linux or macOS:
+On Linux or macOS:
 
 ```bash
 python3 create_mo_files.py
@@ -490,7 +490,7 @@ activate-global-python-argcomplete
 
 ### Fine granular python argcomplete
 
-For Bash (linux, macOS) autocompletion, add this to your `~/.bashrc`:
+For Bash (Linux, macOS) autocompletion, add this to your `~/.bashrc`:
 
 ```bash
 eval "$(register-python-argcomplete ardupilot_methodic_configurator)"
@@ -500,7 +500,7 @@ eval "$(register-python-argcomplete param_pid_adjustment_update)"
 eval "$(register-python-argcomplete mavftp)"
 ```
 
-For Zsh (linux, macOS) autocompletion, add these lines to your `~/.zshrc`:
+For Zsh (Linux, macOS) autocompletion, add these lines to your `~/.zshrc`:
 
 ```zsh
 autoload -U bashcompinit

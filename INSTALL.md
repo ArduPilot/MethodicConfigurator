@@ -43,7 +43,7 @@ To run it, double-click on the newly created desktop item.
 
 ## Linux Installation
 
-### Older linux distributions without venv
+### Older Linux distributions without venv
 
 Install [python pip](https://pypi.org/project/pip/). Then execute the command line:
 
@@ -57,7 +57,7 @@ To run it, execute the command line:
 ardupilot_methodic_configurator
 ```
 
-### Newer linux distributions with venv
+### Newer Linux distributions with venv
 
 You need to create and activate a new virtual environment before you can run the software.
 
@@ -77,7 +77,7 @@ ardupilot_methodic_configurator
 
 ## macOS Installation
 
-Follow the linux installation instructions above.
+Follow the Linux installation instructions above.
 
 ## Install *Mission Planner* software on a PC or Mac
 
