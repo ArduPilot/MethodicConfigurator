@@ -7,7 +7,12 @@ set "ORIGINAL_DIR=%CD%"
 :: Change to the directory where the script resides
 cd /d %~dp0
 
-set "targetPath=%USERPROFILE%\AppData\Roaming\Python\Python312\Scripts"
+if exist "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2544.0_x64__qbz5n2kfra8p0" (
+    set "targetPath=C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.12_3.12.2544.0_x64__qbz5n2kfra8p0"
+) else if exist "%USERPROFILE%\AppData\Roaming\Python\Python312\Scripts" (
+    set "targetPath=%USERPROFILE%\\AppData\Roaming\Python\Python312\Scripts"
+)
+
 set "found=0"
 
 :: Normalize the target path by removing any trailing backslash
@@ -43,6 +48,8 @@ if "!found!"=="0" (
 
 :checkDone
 
+
+call :ConfigureArgComplete
 call :ConfigureGit
 call :ConfigureVSCode
 call :ConfigurePreCommit
@@ -169,4 +176,34 @@ IF %ERRORLEVEL% NEQ 0 (
     )
 
 )
+goto :eof
+
+:ConfigureArgComplete
+
+:: Define paths
+set "PROFILE_PATH=%USERPROFILE%\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+set "MODULE_PATH=C:\Program^ Files^ ^(x86^)\ardupilot_methodic_configurator\ardupilot_methodic_configurator_command_line_completion.psm1"
+
+:: Create profile directory if it doesn't exist
+if not exist "%USERPROFILE%\Documents\WindowsPowerShell" (
+    mkdir "%USERPROFILE%\Documents\WindowsPowerShell"
+)
+
+:: Check if module exists
+if not exist "%MODULE_PATH%" (
+    echo Error: Module file not found at %MODULE_PATH%
+    pause
+    exit /b 1
+)
+
+:: Add import line to profile if it doesn't exist
+powershell -Command "if (-not (Test-Path '%PROFILE_PATH%')) { New-Item -Path '%PROFILE_PATH%' -Force } else { $content = Get-Content '%PROFILE_PATH%'; if ($content -notcontains 'Import-Module \"%MODULE_PATH%\"') { Add-Content '%PROFILE_PATH%' 'Import-Module \"%MODULE_PATH%\"' }}"
+
+if %errorLevel% equ 0 (
+    echo PowerShell profile updated successfully.
+    echo Please restart PowerShell for changes to take effect.
+) else (
+    echo Failed to update PowerShell profile.
+)
+
 goto :eof
