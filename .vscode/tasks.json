@@ -142,7 +142,7 @@
             "group": "build"
         },
         {
-            "label": "pytest with coverage",
+            "label": "pytest with coverage MD",
             "type": "shell",
             "command": "pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results.md",
             "group": {
@@ -173,6 +173,56 @@
                 ]
             }
         },
+        {
+            "label": "pytest with coverage HTML (Linux)",
+            "type": "shell",
+            "command": "${command:python.interpreterPath}",
+            "args": [
+                "-m",
+                "coverage",
+                "run",
+                "-m",
+                "pytest",
+                "&",
+                "${command:python.interpreterPath}",
+                "-m",
+                "coverage",
+                "html",
+                "&",
+                "firefox",
+                "htmlcov/index.html"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": {
+                "owner": "python",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": [
+                    {
+                        "regexp": "^(.+):(\\d+): (\\w+): (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "severity": 3,
+                        "message": 4
+                    }
+                ]
+            }
+        },
+        {
+            "label": "pytest with coverage HTML (Windows)",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "coverage run -m pytest; coverage html; Start-Process firefox -ArgumentList 'htmlcov/index.html'"
+            ]
+        }
     ],
     "inputs": [
         {
