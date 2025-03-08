@@ -53,7 +53,7 @@ SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas, 2025 Jonas Vermeulen"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
-path = ["pyrightconfig.json", "install_msgfmt.bat", "install_wsl.bash", "pyproject.toml", "pytest.ini", "test_pip_package.sh"]
+path = ["pyrightconfig.json", "install_msgfmt.bat", "install_wsl.bash", "pyproject.toml", "pytest.ini", "test_pip_package.sh", "ardupilot_methodic_configurator_command_line_completion.psm1"]
 SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
