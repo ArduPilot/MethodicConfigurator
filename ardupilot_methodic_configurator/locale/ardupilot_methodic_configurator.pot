@@ -608,7 +608,7 @@ msgid "File operation failed: {}"
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_internet.py:187
-msgid "Updating via pip for Linux and MacOS..."
+msgid "Updating via pip for Linux and macOS..."
 msgstr ""
 
 #: ardupilot_methodic_configurator/common_arguments.py:23
@@ -2579,4 +2579,3 @@ msgid ""
 "GNSS\n"
 "Connection"
 msgstr ""
-

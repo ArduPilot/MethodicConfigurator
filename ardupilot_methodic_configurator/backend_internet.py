@@ -184,7 +184,7 @@ def download_and_install_on_windows(
 
 
 def download_and_install_pip_release(progress_callback: Optional[Callable[[float, str], None]] = None) -> int:
-    logging_info(_("Updating via pip for Linux and MacOS..."))
+    logging_info(_("Updating via pip for Linux and macOS..."))
 
     if progress_callback:
         progress_callback(0.0, _("Starting installation..."))

@@ -697,8 +697,8 @@ msgid "File operation failed: {}"
 msgstr "Operazione sul file fallita: {}"
 
 #: ardupilot_methodic_configurator/backend_internet.py:187
-msgid "Updating via pip for Linux and MacOS..."
-msgstr "Aggiornamento tramite pip per Linux e MacOS..."
+msgid "Updating via pip for Linux and macOS..."
+msgstr "Aggiornamento tramite pip per Linux e macOS..."
 
 #: ardupilot_methodic_configurator/common_arguments.py:23
 msgid "Logging level. Default is %(default)s."

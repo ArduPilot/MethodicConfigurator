@@ -4,7 +4,7 @@ This software is available for multiple operating systems:
 
 - [Microsoft Windows](#ms-windows-installation)
 - [Linux](#linux-installation)
-- [MacOS](#macos-installation)
+- [macOS](#macos-installation)
 
 After installing it you must also:
 
@@ -75,7 +75,7 @@ source .ardupilot_methodic_configurator_venv/bin/activate
 ardupilot_methodic_configurator
 ```
 
-## MacOS Installation
+## macOS Installation
 
 Follow the linux installation instructions above.
 

@@ -302,7 +302,7 @@ On windows do:
 .\install_wsl.bat
 ```
 
-On linux and MacOS do:
+On linux and macOS do:
 
 ```bash
 ./SetupDeveloperPC.sh
@@ -403,7 +403,7 @@ On windows:
 python create_mo_files.py
 ```
 
-On linux or MacOS:
+On linux or macOS:
 
 ```bash
 python3 create_mo_files.py
@@ -490,7 +490,7 @@ activate-global-python-argcomplete
 
 ### Fine granular python argcomplete
 
-For Bash (linux, MacOS) autocompletion, add this to your `~/.bashrc`:
+For Bash (linux, macOS) autocompletion, add this to your `~/.bashrc`:
 
 ```bash
 eval "$(register-python-argcomplete ardupilot_methodic_configurator)"
@@ -500,7 +500,7 @@ eval "$(register-python-argcomplete param_pid_adjustment_update)"
 eval "$(register-python-argcomplete mavftp)"
 ```
 
-For Zsh (linux, MacOS) autocompletion, add these lines to your `~/.zshrc`:
+For Zsh (linux, macOS) autocompletion, add these lines to your `~/.zshrc`:
 
 ```zsh
 autoload -U bashcompinit
