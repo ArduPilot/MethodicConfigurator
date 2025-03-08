@@ -689,8 +689,8 @@ msgid "File operation failed: {}"
 msgstr "ファイル操作に失敗しました: {}"
 
 #: ardupilot_methodic_configurator/backend_internet.py:187
-msgid "Updating via pip for Linux and MacOS..."
-msgstr "LinuxとMacOS用にpipを使用して更新しています..."
+msgid "Updating via pip for Linux and macOS..."
+msgstr "LinuxとmacOS用にpipを使用して更新しています..."
 
 #: ardupilot_methodic_configurator/common_arguments.py:23
 msgid "Logging level. Default is %(default)s."
