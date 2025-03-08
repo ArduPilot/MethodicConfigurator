@@ -19,6 +19,6 @@ for pkg in "${REQUIRED_PKGS[@]}"; do
     fi
 done
 
-PYTHONPATH=../ardupilot_methodic_configurator python -m coverage run -m unittest test_annotate_params.py
+PYTHONPATH=../ardupilot_methodic_configurator python -m coverage run -m pytest test_annotate_params.py
 python -m coverage html
 firefox htmlcov/annotate_params_py.html
