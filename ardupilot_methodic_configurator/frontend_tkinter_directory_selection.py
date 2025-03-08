@@ -235,10 +235,11 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
             + __version__
             + _(" - Select vehicle configuration directory")
         )
-        self.root.geometry("800x625")  # Set the window size
-        self.blank_template_data = tk.BooleanVar(value=False)
+        self.root.geometry("800x655")  # Set the window size
+        self.blank_component_data = tk.BooleanVar(value=False)
         self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
         self.use_fc_params = tk.BooleanVar(value=False)
+        self.blank_change_reason = tk.BooleanVar(value=False)
         self.configuration_template: str = ""  # will be set to a string if a template was used
 
         # Explain why we are here
@@ -290,14 +291,15 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
             is_template_selection=True,
         )
         self.template_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
-        blank_template_data_checkbox = ttk.Checkbutton(
+        blank_component_data_checkbox = ttk.Checkbutton(
             option1_label_frame,
-            variable=self.blank_template_data,
-            text=_("Blank template data"),
+            variable=self.blank_component_data,
+            text=_("Blank component data"),
         )
-        blank_template_data_checkbox.pack(anchor=tk.NW)
+        blank_component_data_checkbox.pack(anchor=tk.NW)
         show_tooltip(
-            blank_template_data_checkbox, _("Create a new blank vehicle configuration, with no data from the template.")
+            blank_component_data_checkbox,
+            _("Create a new blank vehicle configuration, with no component data from the template."),
         )
         infer_comp_specs_and_conn_from_fc_params_checkbox = ttk.Checkbutton(
             option1_label_frame,
@@ -330,6 +332,16 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
                 "Only makes sense if your FC has already been correctly configured.\n\n"
             )
             + _("This option is only available when a flight controller is connected."),
+        )
+        blank_change_reason_checkbox = ttk.Checkbutton(
+            option1_label_frame,
+            variable=self.blank_change_reason,
+            text=_("Blank parameter change reason"),
+        )
+        blank_change_reason_checkbox.pack(anchor=tk.NW)
+        show_tooltip(
+            blank_change_reason_checkbox,
+            _("Do not use the parameters change reason from the template."),
         )
         if not fc_connected:
             self.infer_comp_specs_and_conn_from_fc_params.set(False)
@@ -454,7 +466,9 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
             messagebox.showerror(_("New vehicle directory"), error_msg)
             return
 
-        error_msg = self.local_filesystem.copy_template_files_to_new_vehicle_dir(template_dir, new_vehicle_dir)
+        error_msg = self.local_filesystem.copy_template_files_to_new_vehicle_dir(
+            template_dir, new_vehicle_dir, self.blank_change_reason.get()
+        )
         if error_msg:
             messagebox.showerror(_("Copying template files"), error_msg)
             return

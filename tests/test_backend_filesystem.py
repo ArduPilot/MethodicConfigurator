@@ -670,7 +670,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         mock_isdir.side_effect = lambda path: path.endswith(("dir1", "dir2"))
 
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
-        lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir")
+        lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir", blank_change_reason=False)
 
         # Verify all files and directories were processed
         assert mock_listdir.call_count >= 1
@@ -688,6 +688,50 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         # Verify existence checks
         mock_exists.assert_any_call("template_dir")
         mock_exists.assert_any_call("new_vehicle_dir")
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copytree")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copy2")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir")
+    @patch("builtins.open", new_callable=mock_open, read_data="PARAM1,1.0 # test comment\nPARAM2,2.0 # another comment\n")
+    def test_copy_template_files_with_blank_change_reason(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self, mock_open_file, mock_isdir, mock_copy2, mock_copytree, mock_join, mock_listdir, mock_exists
+    ) -> None:
+        """Test that blank_change_reason parameter correctly strips comments from parameter files."""
+        mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
+        mock_listdir.return_value = ["file1.param", "file2.txt", "dir1"]
+        mock_join.side_effect = lambda *args: "/".join(args)
+        mock_isdir.side_effect = lambda path: path.endswith("dir1")
+
+        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+
+        # Test with blank_change_reason=True
+        lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir", blank_change_reason=True)
+
+        # Verify file handling when blank_change_reason=True
+        write_calls = mock_open_file().write.call_args_list
+        # Check that comments were removed for param files
+        assert any(call[0][0] == "PARAM1,1.0\n" for call in write_calls)
+        assert any(call[0][0] == "PARAM2,2.0\n" for call in write_calls)
+
+        # Verify directory was copied with copytree
+        mock_copytree.assert_called_with("template_dir/dir1", "new_vehicle_dir/dir1")
+
+        # Verify non-param file was copied with copy2
+        mock_copy2.assert_any_call("template_dir/file2.txt", "new_vehicle_dir/file2.txt")
+
+        # Reset mocks for second test
+        mock_open_file.reset_mock()
+        mock_copy2.reset_mock()
+        mock_copytree.reset_mock()
+
+        # Test with blank_change_reason=False
+        lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir", blank_change_reason=False)
+
+        # Verify param file was copied normally
+        mock_copy2.assert_any_call("template_dir/file1.param", "new_vehicle_dir/file1.param")
 
 
 if __name__ == "__main__":
