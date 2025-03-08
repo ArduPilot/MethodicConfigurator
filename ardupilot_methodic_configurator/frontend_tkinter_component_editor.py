@@ -650,7 +650,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         except ValueError as _e:
             if is_focusout_event:
                 _paths_str = ">".join(list(path))
-                error_msg = _("Invalid value '{value}' for {_paths_str}\n{e}")
+                error_msg = _("Invalid value '{value}' for {_paths_str}\n{_e}")
                 show_error_message(_("Error"), error_msg.format(**locals()))
             return False
         entry.configure(style="entry_input_valid.TEntry")
