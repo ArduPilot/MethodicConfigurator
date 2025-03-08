@@ -91,6 +91,7 @@ Source: "..\ardupilot_methodic_configurator\vehicle_components_schema.json"; Des
 Source: "..\LICENSES\*.*"; DestDir: "{app}\LICENSES"; Flags: ignoreversion
 Source: "..\credits\*.*"; DestDir: "{app}\credits"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\locale\*.mo"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\locale"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\ardupilot_methodic_configurator_command_line_completion.psm1"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Dirs]
 Name: "{userappdata}\.ardupilot_methodic_configurator\vehicles"; Flags: uninsneveruninstall

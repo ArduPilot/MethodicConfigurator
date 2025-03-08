@@ -490,7 +490,7 @@ activate-global-python-argcomplete
 
 ### Fine granular python argcomplete
 
-For Bash autocompletion, add this to your `~/.bashrc`:
+For Bash (linux, MacOS) autocompletion, add this to your `~/.bashrc`:
 
 ```bash
 eval "$(register-python-argcomplete ardupilot_methodic_configurator)"
@@ -500,7 +500,7 @@ eval "$(register-python-argcomplete param_pid_adjustment_update)"
 eval "$(register-python-argcomplete mavftp)"
 ```
 
-For Zsh autocompletion, add these lines to your `~/.zshrc`:
+For Zsh (linux, MacOS) autocompletion, add these lines to your `~/.zshrc`:
 
 ```zsh
 autoload -U bashcompinit
@@ -512,32 +512,16 @@ eval "$(register-python-argcomplete param_pid_adjustment_update)"
 eval "$(register-python-argcomplete mavftp)"
 ```
 
-For PowerShell autocompletion, run this command in PowerShell:
+For PowerShell (MS Windows) autocompletion, run this command in PowerShell:
 
 ```powershell
-$scripts = @(
-    'ardupilot_methodic_configurator',
-    'extract_param_defaults',
-    'annotate_params',
-    'param_pid_adjustment_update',
-    'mavftp'
-)
-foreach ($script in $scripts) {
-    Register-ArgumentCompleter -Native -CommandName $script -ScriptBlock {
-        param($wordToComplete, $commandAst, $cursorPosition)
-        $command = $script
-        $env:COMP_LINE = $commandAst.ToString()
-        $env:COMP_POINT = $cursorPosition
-        $env:_ARGCOMPLETE = "1"
-        $env:_ARGCOMPLETE_COMP_WORDBREAKS = " `"`'><=;|&(:"
-        $env:COMP_WORDS = $commandAst.ToString()
-        $env:COMP_CWORD = $cursorPosition
+notepad $PROFILE
+```
 
-        (& python -m argcomplete.completers $command) | ForEach-Object {
-            [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
-        }
-    }
-}
+And add this line to the file:
+
+```powershell
+Import-Module  "C:\Program Files (x86)\ardupilot_methodic_configurator\ardupilot_methodic_configurator_command_line_completion.psm1"
 ```
 
 <!-- Gurubase Widget -->
