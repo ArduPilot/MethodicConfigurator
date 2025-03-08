@@ -182,28 +182,29 @@ goto :eof
 
 :: Define paths
 set "PROFILE_PATH=%USERPROFILE%\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
-set "MODULE_PATH=C:\Program^ Files^ ^(x86^)\ardupilot_methodic_configurator\ardupilot_methodic_configurator_command_line_completion.psm1"
+set "MODULE_PATH=C:\Program Files (x86)\ardupilot_methodic_configurator\ardupilot_methodic_configurator_command_line_completion.psm1"
 
 :: Create profile directory if it doesn't exist
-if not exist "%USERPROFILE%\Documents\WindowsPowerShell" (
-    mkdir "%USERPROFILE%\Documents\WindowsPowerShell"
+if not exist "!USERPROFILE!\Documents\WindowsPowerShell" (
+    mkdir "!USERPROFILE!\Documents\WindowsPowerShell"
 )
 
 :: Check if module exists
-if not exist "%MODULE_PATH%" (
-    echo Error: Module file not found at %MODULE_PATH%
+if not exist "!MODULE_PATH!" (
+    echo Error: Module file not found at !MODULE_PATH!
     pause
     exit /b 1
 )
 
 :: Add import line to profile if it doesn't exist
-powershell -Command "if (-not (Test-Path '%PROFILE_PATH%')) { New-Item -Path '%PROFILE_PATH%' -Force } else { $content = Get-Content '%PROFILE_PATH%'; if ($content -notcontains 'Import-Module \"%MODULE_PATH%\"') { Add-Content '%PROFILE_PATH%' 'Import-Module \"%MODULE_PATH%\"' }}"
+powershell -NoProfile -Command "$ProfilePath='!PROFILE_PATH!'.Replace('\','\\'); $ModulePath='!MODULE_PATH!'.Replace('\','\\'); if (-not (Test-Path $ProfilePath)) { New-Item -Path $ProfilePath -Force | Out-Null }; $content = Get-Content $ProfilePath -ErrorAction SilentlyContinue; if (-not ($content -contains \"Import-Module `\"$ModulePath`\"\")) { Add-Content $ProfilePath \"Import-Module `\"$ModulePath`\"\" }"
 
-if %errorLevel% equ 0 (
+if !ERRORLEVEL! equ 0 (
     echo PowerShell profile updated successfully.
     echo Please restart PowerShell for changes to take effect.
 ) else (
     echo Failed to update PowerShell profile.
+    exit /b 1
 )
 
 goto :eof
