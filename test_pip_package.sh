@@ -33,4 +33,3 @@ cd ..
 
 ardupilot_methodic_configurator --language=pt --loglevel=DEBUG
 ls -larct /usr/local
-
