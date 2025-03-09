@@ -24,14 +24,11 @@ from typing import Union
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.frontend_tkinter_base import (
-    BaseWindow,
-    RichText,
-    ScrollFrame,
-    UsagePopupWindow,
-    show_error_message,
-    show_tooltip,
-)
+from ardupilot_methodic_configurator.frontend_tkinter_base import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
+from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
+from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message, show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
 
 
 def argument_parser() -> Namespace:

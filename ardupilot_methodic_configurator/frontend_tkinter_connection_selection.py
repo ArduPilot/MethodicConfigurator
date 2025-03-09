@@ -23,13 +23,10 @@ from typing import Union
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.frontend_tkinter_base import (
-    BaseWindow,
-    ProgressWindow,
-    show_no_connection_error,
-    show_tooltip,
-)
+from ardupilot_methodic_configurator.frontend_tkinter_base import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
+from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
+from ardupilot_methodic_configurator.frontend_tkinter_show import show_no_connection_error, show_tooltip
 
 
 class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attributes
