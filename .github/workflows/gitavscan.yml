@@ -7,6 +7,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read  # Default limited permission
+
 jobs:
   gitavscan:
     runs-on: ubuntu-latest
