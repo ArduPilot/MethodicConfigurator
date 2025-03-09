@@ -1,4 +1,5 @@
 ARMING_RUDDER,2
+PILOT_THR_BHV,7
 RC_OPTIONS,32
 RC_PROTOCOLS,1  # Selected in the component editor
 RC10_OPTION,0

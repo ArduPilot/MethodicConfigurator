@@ -1,4 +1,4 @@
-DID_CANDRIVER,0  # I don't use a remote id.
-DID_ENABLE,0  # I don't use a remote id.
-DID_MAVPORT,-1  # I don't use a remote id.
-DID_OPTIONS,0  # I don't use a remote id.
+DID_CANDRIVER,0  # don't use a remote id.
+DID_ENABLE,0  # don't use a remote id.
+DID_MAVPORT,-1  # don't use a remote id.
+DID_OPTIONS,0  # don't use a remote id.
