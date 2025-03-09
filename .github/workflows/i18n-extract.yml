@@ -7,14 +7,17 @@ on:
     paths:
       - '**/*.py'
       - '!**/tests/**'
+  workflow_dispatch:
 
-permissions:
-  contents: read
+# prevent race conditions
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   extract_strings:
     permissions:
-      contents: write  # for Git to git push
+      contents: read
       pull-requests: write  # for peter-evans/create-pull-request to create a PR
     runs-on: ubuntu-latest
     env:
@@ -43,7 +46,7 @@ jobs:
         run: |
           pygettext3 -d $PYGETTEXT_DOMAIN -o $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot $(git ls-files '*.py') || exit 1
 
-      - name: Commit changes
+      - name: Stage changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -53,9 +56,6 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
             if [ $CHANGED_LINES -gt 4 ]; then
-              git commit -m "chore(translation): Extracted i18n strings to $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot"
-              git push
-
               python merge_pot_file.py
               # Check if any .po files were modified
               git add $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.po
@@ -74,9 +74,11 @@ jobs:
         if: env.PO_FILES_CHANGED == 'true'
         uses: peter-evans/create-pull-request@dd2324fc52d5d43c699a5636bcf19fceaa70c284 # v7.0.7
         with:
+          labels: i18n, automated-pr
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: merge-i18n-po-strings
-          title: "chore(deps): merge translation string(s) to existing .po files"
-          commit-message: "chore(deps): merge translation string(s) to existing .po files"
+          title: "Merge new un-translated string(s) to existing .po files"
+          commit-message: "chore(translations): merge new un-translated string(s) to existing .po files"
           body: |
-            Update .po files with string(s) from the .pot file
+            Update .pot file with new un-translated string(s) from the source code
+            Merge .pot file strings into existing .po files
