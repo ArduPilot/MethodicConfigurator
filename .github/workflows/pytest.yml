@@ -15,6 +15,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   pytest:
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && !github.event.pull_request) || github.event_name == 'workflow_dispatch'

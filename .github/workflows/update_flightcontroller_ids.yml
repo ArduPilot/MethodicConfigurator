@@ -3,7 +3,7 @@ name: Update Flight Controller IDs
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 1 * * 3'  # Every Wednesday at 1:30 AM
+    - cron: '30 3 * * 1,4'  # Every Monday and Thursday at 3:30 AM
 
 permissions:
   contents: read
@@ -12,6 +12,7 @@ jobs:
   update-ids:
     permissions:
       contents: write  # for Git to git push
+      pull-requests: write  # for creating PRs
     runs-on: ubuntu-latest
 
     steps:
@@ -37,21 +38,28 @@ jobs:
       - name: Update flight controller IDs
         run: python update_flight_controller_ids.py
 
-      - name: Commit changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Stage changes
+        id: stage_changes
         run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
           git add ardupilot_methodic_configurator/middleware_fc_ids.py
-          if [ -n "$(git status --porcelain)" ]; then
-            CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
-            if [ $CHANGED_LINES -gt 3 ]; then
-              git commit -m "chore(flightcontroller): Updated ArduPilot flight controller IDs [skip ci]"
-              git push
-            else
-              echo "Not enough changes to commit (only $CHANGED_LINES lines changed)"
-            fi
+          CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
+          echo "CHANGED_LINES=$CHANGED_LINES" >> $GITHUB_OUTPUT
+          if [ $CHANGED_LINES -gt 3 ]; then
+            echo "HAS_CHANGES=true" >> $GITHUB_OUTPUT
           else
-            echo "No changes to commit"
+            echo "Not enough changes to commit (only $CHANGED_LINES lines changed)"
+            echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Create Pull Request
+        if: steps.stage_changes.outputs.HAS_CHANGES == 'true'
+        uses: peter-evans/create-pull-request@dd2324fc52d5d43c699a5636bcf19fceaa70c284 # v7.0.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          labels: flightcontroller-IDs, automated-pr
+          branch: update/flight-controller-ids
+          title: "Update ArduPilot flight controller IDs"
+          commit-message: "chore(flightcontroller): Updated ArduPilot flight controller IDs"
+          body: |
+            This PR updates the ArduPilot flight controller IDs from the upstream ArduPilot repository.
+          delete-branch: true
