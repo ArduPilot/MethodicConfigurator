@@ -26,15 +26,13 @@ from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, is_within_tolerance
 
 # from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-# from ardupilot_methodic_configurator.frontend_tkinter_base import AutoResizeCombobox
-from ardupilot_methodic_configurator.frontend_tkinter_base import (
-    BaseWindow,
-    ScrollFrame,
-    get_widget_font_family_and_size,
-    show_tooltip,
-)
+# from ardupilot_methodic_configurator.frontend_tkinter_auto_resize_combobox import AutoResizeCombobox
+from ardupilot_methodic_configurator.frontend_tkinter_base import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
+from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
+from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
+from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
 NEW_VALUE_WIDGET_WIDTH = 9
 

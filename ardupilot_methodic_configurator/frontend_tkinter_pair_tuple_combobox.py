@@ -26,7 +26,8 @@ from typing import Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.frontend_tkinter_base import get_widget_font_family_and_size, update_combobox_width
+from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import update_combobox_width
+from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 
 # SPDX-SnippetBegin
 # SPDX-License-Identifier: MPL-2.0

@@ -13,7 +13,7 @@ from tkinter import ttk
 from typing import Callable, Optional
 
 from ardupilot_methodic_configurator import _, __version__
-from ardupilot_methodic_configurator.frontend_tkinter_base import ScrollFrame
+from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 
 
 class UpdateDialog:  # pylint: disable=too-many-instance-attributes
