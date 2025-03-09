@@ -11,11 +11,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   compile-mo-files:
     permissions:
-      contents: read
-      pull-requests: write  # for create-pull-request action
+      contents: write       # for creating branches and commits
+      pull-requests: write  # for creating PRs
     runs-on: ubuntu-latest
     env:
       MO_FILES_CHANGED: false
@@ -57,4 +60,4 @@ jobs:
           commit-message: "chore(translations): Compile translation .mo files from the .po files"
           body: |
             This PR Compiles .mo files based on the latest changes to .po translation files.
-
+          delete-branch: true

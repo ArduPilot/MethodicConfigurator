@@ -14,11 +14,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   extract_strings:
     permissions:
-      contents: read
-      pull-requests: write  # for peter-evans/create-pull-request to create a PR
+      contents: write       # for creating branches and commits
+      pull-requests: write  # for creating PRs
     runs-on: ubuntu-latest
     env:
       PYGETTEXT_DOMAIN: ardupilot_methodic_configurator
@@ -78,3 +81,4 @@ jobs:
           body: |
             Update .pot file with new un-translated string(s) from the source code
             Merge .pot file strings into existing .po files
+          delete-branch: true

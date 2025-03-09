@@ -5,9 +5,15 @@ on:
     - cron: "0 0 * * *"  # Runs daily at midnight
   workflow_dispatch:      # Allows manual trigger
 
+permissions:
+  contents: read
+
 jobs:
   renovate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # For creating branches and commits
+      pull-requests: write  # For creating pull requests
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -24,8 +30,10 @@ jobs:
         uses: peter-evans/create-pull-request@dd2324fc52d5d43c699a5636bcf19fceaa70c284 # v7.0.7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          labels: deps, automated-pr
           branch: renovate/pre-commit-hooks
           title: "chore(deps): update pre-commit hooks"
           commit-message: "chore(deps): update pre-commit hooks"
           body: |
             Updates pre-commit hook versions in .pre-commit-config.yaml
+          delete-branch: true

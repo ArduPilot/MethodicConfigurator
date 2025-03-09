@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     paths:
-    - 24_inflight_magnetometer_fit_setup.pdef.xml'
-    - ardupilot_methodic_configurator/vehicle_templates/**
+    - '24_inflight_magnetometer_fit_setup.pdef.xml'
+    - 'ardupilot_methodic_configurator/vehicle_templates/**'
 
 permissions:
   contents: read
@@ -13,7 +13,8 @@ permissions:
 jobs:
   update-magfit-pdef-xml:
     permissions:
-      contents: write  # for Git to git push
+      contents: write  # for creating branches and commits
+      pull-requests: write  # for creating PRs
     runs-on: ubuntu-latest
 
     steps:
@@ -28,21 +29,33 @@ jobs:
       - name: Update 24_inflight_magnetometer_fit_setup.pdef.xml file in all vehicle templates
         run: python copy_magfit_pdef_to_template_dirs.py
 
-      - name: Commit changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Stage changes and check if PR needed
+        id: check_changes
         run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
           git add ardupilot_methodic_configurator/vehicle_templates/**/24_inflight_magnetometer_fit_setup.pdef.xml
           if [ -n "$(git status --porcelain)" ]; then
             CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
+            echo "CHANGED_LINES=$CHANGED_LINES" >> $GITHUB_OUTPUT
             if [ $CHANGED_LINES -gt 3 ]; then
-              git commit -m "chore(parameter_metadata): Updated 24_inflight_magnetometer_fit_setup.pdef.xml files in the vehicle templates"
-              git push
+              echo "HAS_CHANGES=true" >> $GITHUB_OUTPUT
             else
-              echo "Not enough changes to commit (only $CHANGED_LINES lines changed)"
+              echo "Not enough changes to create PR (only $CHANGED_LINES lines changed)"
+              echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
             fi
           else
-            echo "No changes to commit"
+            echo "No changes detected"
+            echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.HAS_CHANGES == 'true'
+        uses: peter-evans/create-pull-request@dd2324fc52d5d43c699a5636bcf19fceaa70c284 # v7.0.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          labels: templates, automated-pr
+          branch: update/magfit-pdef-xml
+          title: "Update magfit pdef XML files"
+          commit-message: "chore(parameter_metadata): Updated 24_inflight_magnetometer_fit_setup.pdef.xml files in the vehicle templates"
+          body: |
+            This PR updates the 24_inflight_magnetometer_fit_setup.pdef.xml files in all vehicle templates.
+          delete-branch: true

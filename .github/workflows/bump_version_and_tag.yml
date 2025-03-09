@@ -13,12 +13,14 @@ on:
         type: string
 
 permissions:
-  contents: write # to trigger the windows_build and python-publish workflows
+  contents: read
 
 jobs:
   bump-version:
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # to trigger the windows_build and python-publish workflows
 
     steps:
       - name: Checkout repository
