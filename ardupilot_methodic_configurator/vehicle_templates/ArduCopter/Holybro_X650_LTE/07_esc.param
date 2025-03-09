@@ -11,9 +11,11 @@ MOT_SPOOL_TIME,0.5
 NTF_BUZZ_TYPES,5  # Our CubeOrange have it self buzzer.
 NTF_LED_TYPES,123079
 PSC_ACCZ_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
-SERVO_BLH_AUTO,1
+SERVO_BLH_AUTO,1  # To program the ESCs without disconnecting them from the flight controller
 SERVO_BLH_BDMASK,0  # DBshot is not correctly supported by the ESCs
 SERVO_BLH_POLES,14  # Specified in component editor window
+SERVO_BLH_TEST,0
+SERVO_BLH_TRATE,0  # The ESC FW does not provive voltage, current nor temperature telemetry anyway
 SERVO_DSHOT_ESC,1
 SERVO_DSHOT_RATE,2
 SERVO_FTW_POLES,14  # Specified in component editor window
