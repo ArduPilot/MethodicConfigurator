@@ -99,8 +99,6 @@ def component_editor(
     vehicle_dir_window: Union[None, VehicleDirectorySelectionWindow],
 ) -> None:
     component_editor_window = ComponentEditorWindow(__version__, local_filesystem)
-    if vehicle_dir_window and vehicle_dir_window.blank_component_data.get():
-        local_filesystem.wipe_component_info()
     if (
         vehicle_dir_window
         and vehicle_dir_window.configuration_template

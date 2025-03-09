@@ -99,12 +99,17 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         if vehicle_dir is not None:
             self.re_init(vehicle_dir, vehicle_type)
 
-    def re_init(self, vehicle_dir: str, vehicle_type: str) -> None:
+    def re_init(self, vehicle_dir: str, vehicle_type: str, blank_component_data: bool = False) -> None:
         self.vehicle_dir = vehicle_dir
         self.doc_dict = {}
 
         if not self.load_vehicle_components_json_data(vehicle_dir):
             return
+
+        if blank_component_data:
+            self.wipe_component_info()
+            if self.vehicle_components and "Components" in self.vehicle_components:
+                self.save_vehicle_components_json_data(self.vehicle_components, self.vehicle_dir)
 
         if not self.fw_version:
             self.fw_version = self.get_fc_fw_version_from_vehicle_components_json()

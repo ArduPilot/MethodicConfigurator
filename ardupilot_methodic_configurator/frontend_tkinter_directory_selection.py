@@ -477,7 +477,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         self.local_filesystem.vehicle_dir = new_vehicle_dir
 
         try:
-            self.local_filesystem.re_init(new_vehicle_dir, self.local_filesystem.vehicle_type)
+            self.local_filesystem.re_init(new_vehicle_dir, self.local_filesystem.vehicle_type, self.blank_component_data.get())
         except SystemExit as exp:
             messagebox.showerror(_("Fatal error reading parameter files"), f"{exp}")
             raise
