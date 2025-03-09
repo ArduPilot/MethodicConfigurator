@@ -117,7 +117,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             connection_tuples = self.flight_controller.get_connection_tuples()
             error_msg = _("Updated connection tuples: {connection_tuples} with selected connection: {selected_connection}")
             logging_debug(error_msg.format(**locals()))
-            self.conn_selection_combobox.set_entries_tupple(connection_tuples, selected_connection)
+            self.conn_selection_combobox.set_entries_tuple(connection_tuples, selected_connection)
             self.reconnect(selected_connection)
         else:
             error_msg = _("Add connection canceled or string empty {selected_connection}")

@@ -54,10 +54,10 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         self.cb_name = cb_name
         self.list_keys: list[str] = []
         self.list_shows: list[str] = []
-        self.set_entries_tupple(list_pair_tuple, selected_element)
+        self.set_entries_tuple(list_pair_tuple, selected_element)
         self.bind("<Configure>", self.on_combo_configure, add="+")
 
-    def set_entries_tupple(self, list_pair_tuple: list[tuple[str, str]], selected_element: Union[None, str]) -> None:
+    def set_entries_tuple(self, list_pair_tuple: list[tuple[str, str]], selected_element: Union[None, str]) -> None:
         if isinstance(list_pair_tuple, list):
             for tpl in list_pair_tuple:
                 self.list_keys.append(tpl[0])
@@ -67,7 +67,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
                 self.list_keys.append(key)
                 self.list_shows.append(value)
         else:
-            logging_critical(_("list_pair_tuple must be a tuple or a dictionary, not %s"), type(list_pair_tuple))
+            logging_critical(_("list_pair_tuple must be a list of tuples or a dictionary, not %s"), type(list_pair_tuple))
             sys_exit(1)
         self["values"] = tuple(self.list_shows)
 
