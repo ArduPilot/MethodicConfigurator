@@ -709,9 +709,9 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         entry.configure(style="entry_input_valid.TEntry")
         return True
 
-    def save_data(self) -> None:
+    def validate_and_save_component_json(self) -> None:
         if self.validate_data():
-            ComponentEditorWindowBase.save_data(self)
+            ComponentEditorWindowBase.validate_and_save_component_json(self)
 
     def validate_data(self) -> bool:  # pylint: disable=too-many-branches
         invalid_values = False
