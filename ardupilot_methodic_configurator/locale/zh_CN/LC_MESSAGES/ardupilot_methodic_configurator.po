@@ -1124,11 +1124,11 @@ msgstr "载具组件数据保存成功。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:253
 msgid "Do you want to save the changes before closing?"
-msgstr ""
+msgstr "是否在关闭前保存更改？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:253
 msgid "Save Changes?"
-msgstr ""
+msgstr "保存更改？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:277
 msgid ""
