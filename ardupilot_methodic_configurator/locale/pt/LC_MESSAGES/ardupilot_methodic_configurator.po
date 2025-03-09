@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-03-09 08:29+0000\n"
+"POT-Creation-Date: 2025-03-09 16:23+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -776,7 +776,7 @@ msgid "Dismiss"
 msgstr "Dispensar"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:48
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:48
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:49
 msgid ""
 "A GUI for editing JSON files that contain vehicle component configurations. "
 "Not to be used directly, but through the main ArduPilot methodic "
@@ -972,7 +972,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:751
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:773
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:780
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:238
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:246
 msgid "Error"
 msgstr "Erro"
 
@@ -986,7 +986,9 @@ msgstr ""
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "{_e}"
-msgstr "Valor inválido '{value}' para {_paths_str}\n{_e}"
+msgstr ""
+"Valor inválido '{value}' para {_paths_str}\n"
+"{_e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:663
 msgid "Battery Chemistry not set. Will default to Lipo."
@@ -1039,32 +1041,32 @@ msgid "Battery Cell Crit voltage must be lower than low voltage"
 msgstr ""
 "A tensão crítica da célula da bateria deve ser menor que a tensão baixa"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:72
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:73
 msgid " - Vehicle Component Editor"
 msgstr " - Editor de Componentes do Veículo"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:72
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:73
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:234
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:155
 #: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:24
 msgid "Amilcar Lucas's - ArduPilot methodic configurator "
 msgstr "Configurador metódico do ArduPilot por Amilcar Lucas "
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:93
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:96
 msgid "Please configure all vehicle component properties in this window.\n"
 msgstr ""
 "Por favor, configure todas as propriedades dos componentes do veículo nesta "
 "janela.\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:94
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:97
 msgid "Scroll down and make sure you do not miss a property.\n"
 msgstr "Role para baixo e certifique-se de não esquecer nenhuma propriedade.\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:95
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:98
 msgid "Saving the result will write to the vehicle_components.json file."
 msgstr "Salvar o resultado irá escrever no arquivo vehicle_components.json."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:104
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:107
 msgid ""
 "Replace the vehicle.jpg file in the vehicle directory to change the vehicle "
 "image."
@@ -1072,50 +1074,50 @@ msgstr ""
 "Substitua o arquivo vehicle.jpg no diretório do veículo para alterar a "
 "imagem do veículo."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:106
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:109
 msgid "Add a 'vehicle.jpg' image file to the vehicle directory."
 msgstr "Adicione um arquivo de imagem 'vehicle.jpg' ao diretório do veículo."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:116
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:134
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:120
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:139
 msgid "Save data and start configuration"
 msgstr "Salvar dados e iniciar a configuração"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:117
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:122
 msgid "Save component data and start parameter value configuration and tuning."
 msgstr ""
 "Salvar dados de componentes e iniciar a configuração e ajuste dos valores de "
 "parâmetros."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:130
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:135
 msgid "1. Describe all vehicle component properties in the window below\n"
 msgstr ""
 "1. Descreva todas as propriedades dos componentes do veículo na janela "
 "abaixo\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:131
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:136
 msgid "2. Scroll all the way down and make sure to edit all properties\n"
 msgstr "2. Role para baixo e certifique-se de editar todas as propriedades.\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:132
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:137
 msgid "3. Do not be lazy, collect the required information and enter it\n"
 msgstr ""
 "3. Não seja preguiçoso, colete as informações necessárias e insira-as\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:133
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:138
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:394
 msgid "4. Press the "
 msgstr "4. Pressione o "
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:135
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:140
 msgid " only after all information is correct"
 msgstr " somente após todas as informações estarem corretas"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:141
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:146
 msgid "How to use the component editor window"
 msgstr "Como usar a janela de editor de componentes"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:203
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:208
 msgid ""
 "ArduPilot Methodic Configurator only operates correctly if all component "
 "properties are correct. ArduPilot parameter values depend on the components "
@@ -1131,19 +1133,27 @@ msgstr ""
 "Você usou a barra de rolagem no lado direito da janela e inseriu os valores "
 "corretos para todos os componentes?"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:209
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:214
 msgid "Confirm that all component properties are correct"
 msgstr "Confirme que todas as propriedades dos componentes estão corretas"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:238
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:246
 msgid "Failed to save data to file."
 msgstr "Falha ao guardar dados no ficheiro."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:240
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:248
 msgid "Vehicle component data saved successfully."
 msgstr "Dados do componente do veículo salvos com sucesso."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:256
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:253
+msgid "Do you want to save the changes before closing?"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:253
+msgid "Save Changes?"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:277
 msgid ""
 "Skip the component editor window. Only use this if all components have been "
 "configured. Default is %(default)s"
@@ -1424,7 +1434,9 @@ msgstr "Dados do componente vazios"
 msgid ""
 "Create a new blank vehicle configuration, with no component data from the "
 "template."
-msgstr "Criar uma nova configuração de veículo vazia, sem dados de componentes do modelo."
+msgstr ""
+"Criar uma nova configuração de veículo vazia, sem dados de componentes do "
+"modelo."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:307
 msgid ""
