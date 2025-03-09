@@ -136,7 +136,7 @@ jobs:
             echo "Pytest failed - failing coverage check"
             exit 1
           fi
-          coverage report --fail-under=41
+          coverage report --fail-under=51
 
   publish-test-results:
     if: always()
