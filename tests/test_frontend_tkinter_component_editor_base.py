@@ -25,7 +25,7 @@ def editor_with_mocked_root() -> ComponentEditorWindowBase:
     """Create a mock ComponentEditorWindowBase for testing."""
     # Create the class without initialization
     with patch.object(ComponentEditorWindowBase, "__init__", return_value=None):
-        editor = ComponentEditorWindowBase()
+        editor = ComponentEditorWindowBase()  # pylint: disable=no-value-for-parameter
 
         # Set up all required attributes manually
         editor.root = MagicMock()
@@ -45,7 +45,7 @@ def editor_with_mocked_root() -> ComponentEditorWindowBase:
 
 
 @patch("tkinter.messagebox.askyesnocancel")
-def test_on_closing_save(mock_dialog, editor_with_mocked_root) -> None:
+def test_on_closing_save(mock_dialog, editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
     """Test the on_closing method when user chooses to save."""
     mock_dialog.return_value = True  # User selects "Yes"
 
@@ -63,7 +63,7 @@ def test_on_closing_save(mock_dialog, editor_with_mocked_root) -> None:
 
 
 @patch("tkinter.messagebox.askyesnocancel")
-def test_on_closing_no_save(mock_dialog, editor_with_mocked_root) -> None:
+def test_on_closing_no_save(mock_dialog, editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
     """Test the on_closing method when user chooses not to save."""
     mock_dialog.return_value = False  # User selects "No"
 
@@ -82,7 +82,7 @@ def test_on_closing_no_save(mock_dialog, editor_with_mocked_root) -> None:
 
 
 @patch("tkinter.messagebox.askyesnocancel")
-def test_on_closing_cancel(mock_dialog, editor_with_mocked_root) -> None:
+def test_on_closing_cancel(mock_dialog, editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
     """Test the on_closing method when user cancels."""
     mock_dialog.return_value = None  # User selects "Cancel"
 
@@ -98,7 +98,7 @@ def test_on_closing_cancel(mock_dialog, editor_with_mocked_root) -> None:
         mock_exit.assert_not_called()
 
 
-def test_update_json_data(editor_with_mocked_root) -> None:
+def test_update_json_data(editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
     """Test the update_json_data method."""
     # Test when Format version is not in data
     editor_with_mocked_root.data = {}
@@ -111,7 +111,7 @@ def test_update_json_data(editor_with_mocked_root) -> None:
     assert editor_with_mocked_root.data["Format version"] == 2
 
 
-def test_add_entry_or_combobox(editor_with_mocked_root) -> None:
+def test_add_entry_or_combobox(editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
     """Test the add_entry_or_combobox method."""
     with patch("tkinter.ttk.Entry") as mock_entry:
         mock_entry_instance = MagicMock()
@@ -125,7 +125,7 @@ def test_add_entry_or_combobox(editor_with_mocked_root) -> None:
         assert result == mock_entry_instance
 
 
-def test_set_component_value_and_update_ui(editor_with_mocked_root) -> None:
+def test_set_component_value_and_update_ui(editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
     """Test the _set_component_value_and_update_ui method."""
     # Setup test data
     editor_with_mocked_root.data = {"Components": {"Motor": {"Type": "old_value"}}}
@@ -133,7 +133,7 @@ def test_set_component_value_and_update_ui(editor_with_mocked_root) -> None:
     editor_with_mocked_root.entry_widgets = {("Motor", "Type"): mock_entry}
 
     # Call the method
-    editor_with_mocked_root._set_component_value_and_update_ui(("Motor", "Type"), "new_value")
+    editor_with_mocked_root._set_component_value_and_update_ui(("Motor", "Type"), "new_value")  # pylint: disable=protected-access
 
     # Assert data was updated
     assert editor_with_mocked_root.data["Components"]["Motor"]["Type"] == "new_value"
@@ -145,7 +145,7 @@ def test_set_component_value_and_update_ui(editor_with_mocked_root) -> None:
 
 
 @patch("tkinter.messagebox.askyesno")
-def test_validate_and_save_component_json_yes(mock_dialog, editor_with_mocked_root) -> None:
+def test_validate_and_save_component_json_yes(mock_dialog, editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
     """Test when user confirms saving component data."""
     mock_dialog.return_value = True
 
@@ -159,7 +159,7 @@ def test_validate_and_save_component_json_yes(mock_dialog, editor_with_mocked_ro
 
 
 @patch("tkinter.messagebox.askyesno")
-def test_validate_and_save_component_json_no(mock_dialog, editor_with_mocked_root) -> None:
+def test_validate_and_save_component_json_no(mock_dialog, editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
     """Test when user cancels saving component data."""
     mock_dialog.return_value = False
 
@@ -172,7 +172,7 @@ def test_validate_and_save_component_json_no(mock_dialog, editor_with_mocked_roo
     editor_with_mocked_root.save_component_json.assert_not_called()
 
 
-def test_save_component_json(editor_with_mocked_root) -> None:
+def test_save_component_json(editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
     """Test the save_component_json method with successful save."""
     # Setup test data
     editor_with_mocked_root.data = {"Components": {"Motor": {"Type": "brushless"}}}
@@ -195,7 +195,7 @@ def test_save_component_json(editor_with_mocked_root) -> None:
 
 
 @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.show_error_message")
-def test_save_component_json_failure(mock_error_message, editor_with_mocked_root) -> None:
+def test_save_component_json_failure(mock_error_message, editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
     """Test the save_component_json method with failed save."""
     # Setup test data
     editor_with_mocked_root.data = {"Components": {"Motor": {"Type": "brushless"}}}
