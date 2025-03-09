@@ -47,7 +47,7 @@ from typing import Union
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.frontend_tkinter_base import show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
 
 class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
