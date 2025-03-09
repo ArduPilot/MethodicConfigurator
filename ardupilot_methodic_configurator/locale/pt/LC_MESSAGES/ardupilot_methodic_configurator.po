@@ -1147,11 +1147,11 @@ msgstr "Dados do componente do veículo salvos com sucesso."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:253
 msgid "Do you want to save the changes before closing?"
-msgstr ""
+msgstr "Deseja guardar as alterações antes de fechar?"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:253
 msgid "Save Changes?"
-msgstr ""
+msgstr "Guardar alterações?"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:277
 msgid ""

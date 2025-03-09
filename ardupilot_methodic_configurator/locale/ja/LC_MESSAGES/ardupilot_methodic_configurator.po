@@ -1136,11 +1136,11 @@ msgstr "機体コンポーネントデータが正常に保存されました。
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:253
 msgid "Do you want to save the changes before closing?"
-msgstr ""
+msgstr "閉じる前に変更を保存しますか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:253
 msgid "Save Changes?"
-msgstr ""
+msgstr "変更を保存しますか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:277
 msgid ""
