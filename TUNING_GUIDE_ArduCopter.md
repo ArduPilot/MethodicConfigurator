@@ -649,10 +649,46 @@ Land and disarm.
 > parameter to 0 (using the `Add` button on the GUI) and follow the [setting hover throttle instructions](https://ardupilot.org/copter/docs/ac_throttlemid.html)
 
 Immediately check for hot motors.
-If the motors are excessively hot or you observe audible or visible oscillations, review the `.bin` dataflash log.
+If the motors are excessively hot or you observe audible or visible oscillations,
+[download and review the `.bin` dataflash log from the vehicle](https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html).
 High or fluctuating `RATE.*out` values will indicate which PID gain needs to be reduced in order to eliminate the output oscillations that are causing the motors to overheat.
 Refer to the section on [Initial tuning oscilations](https://ardupilot.org/copter/docs/initial-tuning-flight.html#initial-aircraft-tune).
 Return to the file `16_pid_adjustment.param`, make the necessary adjustments to the PID gains, upload the changes to the flight controller, and conduct another test flight.
+
+### 7.1.1 Check for Motor Output Oscillation
+
+The following are examples of Output Oscillation and how to address it.
+First, we will look at a stark example of how a typical 4" (4S) quadcopter performs on default parameters by graphing the Motor RC Outputs (RCOU-C1-C4) at Hover:
+![Default Parameters](images/blog/severe_rcout_oscillations.jpg)
+This is what Output Oscillation looks like and it's severe.
+This craft was unflyable with visual oscillation/shaking.
+Tuning cannot advance without correcting this.
+In all cases the Initial Tune Parameters, which can be found in Mission Planner under the Mandatory Hardware screens, should be entered.
+But, these are pre-1st flight parameters and will not on their own produce the best, or even good, stability.
+Here is an example of those parameters applied to this craft:
+![Default Parameters](images/blog/rcout_oscillations_with_initial_params.jpg)
+It has not improved at all but there was no visible oscillation which without reviewing the log might be assumed to be flying well. It's not the case! You cannot achieve a good tune under this condition.
+So, why is there output oscillation?
+It's a function of several factors; motor kV, prop size, battery power and thrust/weight (which resolves to hover thrust).
+A summary of the Arducopter documentation states that this is a result of the Rate PID's and the Vertical Acceleration Controller gains being too high for this craft and many like it.
+These parameters are:
+
+```params
+ATC_RAT_PIT_D
+ATC_RAT_PIT_I
+ATC_RAT_PIT_P
+ATC_RAT_RLL_D
+ATC_RAT_RLL_I
+ATC_RAT_RLL_P
+PSC_ACCZ_I
+PSC_ACCZ_P
+```
+
+The typical approach is to lower the rate PID's by 50% and the PSC parameters to, P=hover thrust value and I=2x hover thrust value.
+With this specific craft a further reduction to ~35% in the Rate PID's was required.
+And now those parameters applied:
+![Rate and vert accel gains Parameters](images/blog/no_rcout_oscillations.jpg)
+The oscillation is gone and we now have a condition of tune that can be advanced!
 
 # 8. Minimalistic mandatory tuning
 
