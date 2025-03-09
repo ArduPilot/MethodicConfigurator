@@ -15,7 +15,7 @@ from webbrowser import open as webbrowser_open  # to open the blog post document
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
-from ardupilot_methodic_configurator.frontend_tkinter_base import show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
 
 class DocumentationFrame:
