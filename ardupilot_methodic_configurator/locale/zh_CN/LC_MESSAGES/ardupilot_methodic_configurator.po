@@ -966,7 +966,7 @@ msgstr ""
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "{_e}"
-msgstr ""
+msgstr "'{value}' 对 {_paths_str} 是无效值\n{_e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:663
 msgid "Battery Chemistry not set. Will default to Lipo."
@@ -1387,13 +1387,13 @@ msgstr "源模板目录："
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:297
 msgid "Blank component data"
-msgstr ""
+msgstr "空白组件数据"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:302
 msgid ""
 "Create a new blank vehicle configuration, with no component data from the "
 "template."
-msgstr ""
+msgstr "从模板创建一个不包含组件数据的新空白车辆配置。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:307
 msgid ""
@@ -1443,11 +1443,11 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:339
 msgid "Blank parameter change reason"
-msgstr ""
+msgstr "空白参数更改原因"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:344
 msgid "Do not use the parameters change reason from the template."
-msgstr ""
+msgstr "请勿使用模板中的参数更改原因。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:352
 msgid ""
@@ -1648,7 +1648,7 @@ msgstr "已下载 {} / {} 个参数"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:70
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
-msgstr ""
+msgstr "list_pair_tuple 必须是元组列表或字典，而不是 %s"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:80
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:85

@@ -980,7 +980,7 @@ msgstr ""
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "{_e}"
-msgstr ""
+msgstr "'{value}' は {_paths_str} の無効な値です\n{_e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:663
 msgid "Battery Chemistry not set. Will default to Lipo."
@@ -1399,13 +1399,13 @@ msgstr "ソーステンプレートディレクトリ:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:297
 msgid "Blank component data"
-msgstr ""
+msgstr "コンポーネントデータが空です"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:302
 msgid ""
 "Create a new blank vehicle configuration, with no component data from the "
 "template."
-msgstr ""
+msgstr "テンプレートからコンポーネントデータを含まない新しい空の機体設定を作成します。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:307
 msgid ""
@@ -1460,11 +1460,11 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:339
 msgid "Blank parameter change reason"
-msgstr ""
+msgstr "パラメータ変更理由が空です"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:344
 msgid "Do not use the parameters change reason from the template."
-msgstr ""
+msgstr "テンプレートからパラメータ変更理由を使用しないでください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:352
 msgid ""
@@ -1665,7 +1665,7 @@ msgstr "{}パラメータ中{}をダウンロード済み"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:70
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
-msgstr ""
+msgstr "list_pair_tuple はタプルのリストまたは辞書である必要があります。%s ではありません"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:80
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:85
