@@ -17,6 +17,7 @@ from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
+from sys import exit as sys_exit
 from tkinter import messagebox, ttk
 from typing import Union
 
@@ -72,6 +73,8 @@ class ComponentEditorWindowBase(BaseWindow):
         self.root.title(_("Amilcar Lucas's - ArduPilot methodic configurator ") + version + _(" - Vehicle Component Editor"))
         self.root.geometry("880x600")  # Set the window width
 
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
         self.data = local_filesystem.load_vehicle_components_json_data(local_filesystem.vehicle_dir)
         if len(self.data) < 1:
             # Schedule the window to be destroyed after the mainloop has started
@@ -113,7 +116,9 @@ class ComponentEditorWindowBase(BaseWindow):
 
         save_frame = ttk.Frame(self.main_frame)
         save_frame.pack(side=tk.TOP, fill="x", expand=False)
-        self.save_button = ttk.Button(save_frame, text=_("Save data and start configuration"), command=self.save_data)
+        self.save_button = ttk.Button(
+            save_frame, text=_("Save data and start configuration"), command=self.validate_and_save_component_json
+        )
         show_tooltip(self.save_button, _("Save component data and start parameter value configuration and tuning."))
         self.save_button.pack(pady=7)
         if UsagePopupWindow.should_display("component_editor"):
@@ -198,7 +203,7 @@ class ComponentEditorWindowBase(BaseWindow):
             # Store the entry widget in the entry_widgets dictionary for later retrieval
             self.entry_widgets[(*path, key)] = entry
 
-    def save_data(self) -> None:
+    def validate_and_save_component_json(self) -> None:
         """Saves the edited JSON data back to the file."""
         confirm_message = _(
             "ArduPilot Methodic Configurator only operates correctly if all component properties are correct."
@@ -212,6 +217,9 @@ class ComponentEditorWindowBase(BaseWindow):
             # User chose 'No', so return and do not save data
             return
 
+        self.save_component_json()
+
+    def save_component_json(self) -> None:
         # User confirmed, proceed with saving the data
         for path, entry in self.entry_widgets.items():
             value: Union[str, int, float] = entry.get()
@@ -239,6 +247,19 @@ class ComponentEditorWindowBase(BaseWindow):
         else:
             logging_info(_("Vehicle component data saved successfully."))
         self.root.destroy()
+
+    def on_closing(self) -> None:
+        """Handle window closing event."""
+        answer = messagebox.askyesnocancel(_("Save Changes?"), _("Do you want to save the changes before closing?"))
+
+        if answer is None:  # Cancel was clicked
+            return
+
+        if answer:
+            self.save_component_json()
+        else:
+            self.root.destroy()
+        sys_exit(0)
 
     # This function will be overwritten in child classes
     def add_entry_or_combobox(
