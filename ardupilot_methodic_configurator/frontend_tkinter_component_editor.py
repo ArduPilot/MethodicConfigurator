@@ -711,7 +711,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
     def validate_and_save_component_json(self) -> None:
         if self.validate_data():
-            ComponentEditorWindowBase.validate_and_save_component_json(self)
+            super().validate_and_save_component_json()
 
     def validate_data(self) -> bool:  # pylint: disable=too-many-branches
         invalid_values = False
