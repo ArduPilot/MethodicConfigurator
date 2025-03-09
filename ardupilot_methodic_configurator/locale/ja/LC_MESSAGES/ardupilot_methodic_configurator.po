@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2025-03-09 08:29+0000\n"
+"POT-Creation-Date: 2025-03-09 16:23+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -770,7 +770,7 @@ msgid "Dismiss"
 msgstr "閉じる"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:48
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:48
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:49
 msgid ""
 "A GUI for editing JSON files that contain vehicle component configurations. "
 "Not to be used directly, but through the main ArduPilot methodic "
@@ -965,7 +965,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:751
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:773
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:780
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:238
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:246
 msgid "Error"
 msgstr "エラー"
 
@@ -980,7 +980,9 @@ msgstr ""
 msgid ""
 "Invalid value '{value}' for {_paths_str}\n"
 "{_e}"
-msgstr "'{value}' は {_paths_str} の無効な値です\n{_e}"
+msgstr ""
+"'{value}' は {_paths_str} の無効な値です\n"
+"{_e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:663
 msgid "Battery Chemistry not set. Will default to Lipo."
@@ -1032,31 +1034,31 @@ msgstr "バッテリーセルの低電圧は最大電圧より低く設定する
 msgid "Battery Cell Crit voltage must be lower than low voltage"
 msgstr "バッテリーセルの危険電圧は低電圧より低く設定する必要があります"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:72
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:73
 msgid " - Vehicle Component Editor"
 msgstr "- 機体コンポーネントエディタ"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:72
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:73
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:234
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:155
 #: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:24
 msgid "Amilcar Lucas's - ArduPilot methodic configurator "
 msgstr "Amilcar Lucasの - ArduPilot方法論的コンフィギュレータ"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:93
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:96
 msgid "Please configure all vehicle component properties in this window.\n"
 msgstr ""
 "このウィンドウで全ての機体コンポーネントのプロパティを設定してください。\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:94
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:97
 msgid "Scroll down and make sure you do not miss a property.\n"
 msgstr "スクロールダウンして、プロパティを見落とさないようにしてください。\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:95
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:98
 msgid "Saving the result will write to the vehicle_components.json file."
 msgstr "結果を保存すると、vehicle_components.jsonファイルに書き込まれます。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:104
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:107
 msgid ""
 "Replace the vehicle.jpg file in the vehicle directory to change the vehicle "
 "image."
@@ -1064,47 +1066,47 @@ msgstr ""
 "機体画像を変更するには、機体ディレクトリのvehicle.jpgファイルを置き換えてくだ"
 "さい。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:106
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:109
 msgid "Add a 'vehicle.jpg' image file to the vehicle directory."
 msgstr "機体ディレクトリに'vehicle.jpg'画像ファイルを追加してください。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:116
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:134
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:120
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:139
 msgid "Save data and start configuration"
 msgstr "データを保存して設定を開始"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:117
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:122
 msgid "Save component data and start parameter value configuration and tuning."
 msgstr ""
 "コンポーネントデータを保存し、パラメータ値の設定とチューニングを開始します。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:130
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:135
 msgid "1. Describe all vehicle component properties in the window below\n"
 msgstr ""
 "1. 以下のウィンドウで全ての機体コンポーネントのプロパティを記述してください\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:131
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:136
 msgid "2. Scroll all the way down and make sure to edit all properties\n"
 msgstr "2. 最後までスクロールし、全てのプロパティを編集してください\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:132
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:137
 msgid "3. Do not be lazy, collect the required information and enter it\n"
 msgstr "3. 手を抜かず、必要な情報を収集して入力してください\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:133
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:138
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:394
 msgid "4. Press the "
 msgstr "4."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:135
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:140
 msgid " only after all information is correct"
 msgstr "はすべての情報が正しい場合のみクリックしてください"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:141
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:146
 msgid "How to use the component editor window"
 msgstr "コンポーネントエディタウィンドウの使用方法"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:203
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:208
 msgid ""
 "ArduPilot Methodic Configurator only operates correctly if all component "
 "properties are correct. ArduPilot parameter values depend on the components "
@@ -1120,19 +1122,27 @@ msgstr ""
 "ウィンドウ右側のスクロールバーを使用して、全てのコンポーネントに正しい値を入"
 "力しましたか？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:209
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:214
 msgid "Confirm that all component properties are correct"
 msgstr "すべてのコンポーネントプロパティが正しいことを確認してください"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:238
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:246
 msgid "Failed to save data to file."
 msgstr "ファイルにデータを保存できませんでした。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:240
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:248
 msgid "Vehicle component data saved successfully."
 msgstr "機体コンポーネントデータが正常に保存されました。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:256
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:253
+msgid "Do you want to save the changes before closing?"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:253
+msgid "Save Changes?"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:277
 msgid ""
 "Skip the component editor window. Only use this if all components have been "
 "configured. Default is %(default)s"
@@ -1405,7 +1415,9 @@ msgstr "コンポーネントデータが空です"
 msgid ""
 "Create a new blank vehicle configuration, with no component data from the "
 "template."
-msgstr "テンプレートからコンポーネントデータを含まない新しい空の機体設定を作成します。"
+msgstr ""
+"テンプレートからコンポーネントデータを含まない新しい空の機体設定を作成しま"
+"す。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:307
 msgid ""
@@ -1665,7 +1677,9 @@ msgstr "{}パラメータ中{}をダウンロード済み"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:70
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
-msgstr "list_pair_tuple はタプルのリストまたは辞書である必要があります。%s ではありません"
+msgstr ""
+"list_pair_tuple はタプルのリストまたは辞書である必要があります。%s ではありま"
+"せん"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:80
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:85
