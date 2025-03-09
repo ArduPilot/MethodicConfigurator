@@ -118,9 +118,9 @@ class AutoResizeCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         self, master: ttk.Frame, values: list[str], selected_element: str, tooltip: Union[None, str], *args, **kwargs
     ) -> None:
         super().__init__(master, *args, **kwargs)
-        self.set_entries_tupple(values, selected_element, tooltip)
+        self.set_entries_tuple(values, selected_element, tooltip)
 
-    def set_entries_tupple(self, values: list[str], selected_element: str, tooltip: Union[None, str] = None) -> None:
+    def set_entries_tuple(self, values: list[str], selected_element: str, tooltip: Union[None, str] = None) -> None:
         self["values"] = tuple(values)
         if selected_element:
             if selected_element in values:

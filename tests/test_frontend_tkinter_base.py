@@ -221,28 +221,28 @@ class TestAutoResizeCombobox(unittest.TestCase):
 
     def test_tooltip(self) -> None:
         with patch("ardupilot_methodic_configurator.frontend_tkinter_base.show_tooltip") as mock_show_tooltip:
-            self.combobox.set_entries_tupple(["one", "two", "three"], "two", tooltip="Test Tooltip")
+            self.combobox.set_entries_tuple(["one", "two", "three"], "two", tooltip="Test Tooltip")
             mock_show_tooltip.assert_called_once_with(self.combobox, "Test Tooltip")
 
     def test_update_values(self) -> None:
-        self.combobox.set_entries_tupple(["four", "five", "six"], "five")
+        self.combobox.set_entries_tuple(["four", "five", "six"], "five")
         assert self.combobox.get() == "five"
         assert self.combobox["values"] == ("four", "five", "six")
 
     def test_invalid_selection(self) -> None:
         with patch("ardupilot_methodic_configurator.frontend_tkinter_base.logging_error") as mock_logging_error:
-            self.combobox.set_entries_tupple(["seven", "eight"], "nine")
+            self.combobox.set_entries_tuple(["seven", "eight"], "nine")
             mock_logging_error.assert_called_once()
 
     def test_no_selection(self) -> None:
         with patch("ardupilot_methodic_configurator.frontend_tkinter_base.logging_warning") as mock_logging_warning:
-            self.combobox.set_entries_tupple(["ten", "eleven"], "")
+            self.combobox.set_entries_tuple(["ten", "eleven"], "")
             mock_logging_warning.assert_called_once()
 
     def test_set_entries_with_spaces(self) -> None:
         """Test values with spaces."""
         values = ["option one", "option  two", "option   three"]
-        self.combobox.set_entries_tupple(values, "option  two")
+        self.combobox.set_entries_tuple(values, "option  two")
         assert self.combobox["values"] == tuple(values)
         assert self.combobox.get() == "option  two"
 
