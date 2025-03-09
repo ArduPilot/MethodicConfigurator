@@ -1,4 +1,4 @@
-name: Update .mo files
+name: Compile .mo files
 
 on:
   workflow_dispatch:
@@ -6,14 +6,19 @@ on:
     paths:
     - ardupilot_methodic_configurator/locale/**/ardupilot_methodic_configurator.po
 
-permissions:
-  contents: read
+# prevent race conditions
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  update-mo-files:
+  compile-mo-files:
     permissions:
-      contents: write  # for Git to git push
+      contents: read
+      pull-requests: write  # for create-pull-request action
     runs-on: ubuntu-latest
+    env:
+      MO_FILES_CHANGED: false
 
     steps:
       - name: Checkout MethodicConfigurator
@@ -29,19 +34,27 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gettext
 
-      - name: Update translation .mo files from the .po files
+      - name: Compile translation .mo files from the .po files
         run: python create_mo_files.py
 
-      - name: Commit changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Stage changes
         run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
           git add ardupilot_methodic_configurator/locale/**/ardupilot_methodic_configurator.mo
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "chore(translation): Updated translation .mo files from the .po files"
-            git push
+            echo "MO_FILES_CHANGED=true" >> $GITHUB_ENV
           else
             echo "No changes to commit"
           fi
+
+      - name: Create Pull Request
+        if: env.MO_FILES_CHANGED == 'true'
+        uses: peter-evans/create-pull-request@dd2324fc52d5d43c699a5636bcf19fceaa70c284 # v7.0.7
+        with:
+          labels: i18n, automated-pr
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: compile-mo-translation-files
+          title: "Compile .mo translation files"
+          commit-message: "chore(translations): Compile translation .mo files from the .po files"
+          body: |
+            This PR Compiles .mo files based on the latest changes to .po translation files.
+
