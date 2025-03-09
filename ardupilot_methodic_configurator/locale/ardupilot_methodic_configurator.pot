@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-03-09 00:30+0000\n"
+"POT-Creation-Date: 2025-03-09 08:29+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1488,7 +1488,7 @@ msgid "Downloaded {} of {} parameters"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:70
-msgid "list_pair_tuple must be a tuple or a dictionary, not %s"
+msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:80
