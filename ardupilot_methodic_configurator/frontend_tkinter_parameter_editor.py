@@ -32,19 +32,16 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.frontend_tkinter_base import (
-    AutoResizeCombobox,
-    BaseWindow,
-    ProgressWindow,
-    RichText,
-    UsagePopupWindow,
-    get_widget_font_family_and_size,
-    show_tooltip,
-)
+from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
+from ardupilot_methodic_configurator.frontend_tkinter_base import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
+from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
+from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText, get_widget_font_family_and_size
+from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
 

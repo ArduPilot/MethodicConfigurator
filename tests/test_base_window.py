@@ -67,7 +67,7 @@ class TestBaseWindow(unittest.TestCase):
 
         # Set up PhotoImage mock
         mock_photo_instance = MagicMock()
-        mock_photo_instance._PhotoImage__photo = "photo1"  # pylint: disable=protected-access
+        mock_photo_instance._PhotoImage__photo = "photo1"  # Required for Tkinter
         mock_photo.return_value = mock_photo_instance
 
         # Set up Label mock
@@ -89,7 +89,3 @@ class TestBaseWindow(unittest.TestCase):
         title = "Test Window"
         self.base_window.root.title(title)
         assert self.base_window.root.title() == title
-
-
-if __name__ == "__main__":
-    unittest.main()
