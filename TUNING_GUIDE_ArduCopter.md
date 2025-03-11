@@ -660,6 +660,7 @@ that needs to be addressed.
 - Audible vibrations/oscillations during flight
 - Visible shaking of the vehicle
 - Hard to control or sluggish behavior
+
 **If you observe any of these signs:**
 
 1. [Download the `.bin` dataflash log](https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html) from your flight
