@@ -72,23 +72,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 if error_msg:
                     messagebox.showerror(_("Error in forced parameters"), error_msg)
                 else:
-                    self.add_forced_or_derived_parameters(filename, self.local_filesystem.forced_parameters)
+                    self.local_filesystem.add_forced_or_derived_parameters(filename, self.local_filesystem.forced_parameters)
                 # error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'derived', self.variables)
                 # if error_msg:
                 #    messagebox.showerror("Error in derived parameters", error_msg)
-
-    def add_forced_or_derived_parameters(
-        self, filename: str, new_parameters: dict[str, dict[str, Par]], fc_parameters: Union[dict[str, float], None] = None
-    ) -> None:
-        """Add forced parameters not yet in the parameter list to the parameter list."""
-        if filename in new_parameters:
-            for param_name, param in new_parameters[filename].items():
-                if filename not in self.local_filesystem.file_parameters:
-                    continue
-                if param_name not in self.local_filesystem.file_parameters[filename] and (
-                    fc_parameters is None or param_name in fc_parameters
-                ):
-                    self.local_filesystem.file_parameters[filename][param_name] = param
 
     def repopulate(self, selected_file: str, fc_parameters: dict, show_only_differences: bool) -> None:
         for widget in self.view_port.winfo_children():
@@ -134,7 +121,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 messagebox.showerror(_("Error in derived parameters"), error_msg)
             else:
                 # Add derived parameters not yet in the parameter list to the parameter list
-                self.add_forced_or_derived_parameters(selected_file, self.local_filesystem.derived_parameters, fc_parameters)
+                self.local_filesystem.add_forced_or_derived_parameters(
+                    selected_file, self.local_filesystem.derived_parameters, fc_parameters
+                )
 
             self.rename_fc_connection(selected_file)
 

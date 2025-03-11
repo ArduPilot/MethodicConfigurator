@@ -629,6 +629,27 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             Par.export_to_param(Par.format_params(param_dict), os_path.join(self.vehicle_dir, param_filename))
         return ""
 
+    def add_forced_or_derived_parameters(
+        self, filename: str, new_parameters: dict[str, dict[str, Par]], fc_parameters: Optional[dict[str, float]] = None
+    ) -> None:
+        """
+        Add forced parameters not yet in the parameter list to the parameter list.
+
+        Args:
+            filename: The name of the parameter file
+            new_parameters: Dictionary of new parameters to potentially add
+            fc_parameters: Optional dictionary of flight controller parameters to check against
+
+        """
+        if new_parameters is None or filename not in new_parameters:
+            return
+
+        for param_name, param in new_parameters[filename].items():
+            if filename not in self.file_parameters:
+                continue
+            if param_name not in self.file_parameters[filename] and (fc_parameters is None or param_name in fc_parameters):
+                self.file_parameters[filename][param_name] = param
+
     def write_param_default_values(self, param_default_values: dict[str, "Par"]) -> bool:
         param_default_values = dict(sorted(param_default_values.items()))
         if self.param_default_dict != param_default_values:
