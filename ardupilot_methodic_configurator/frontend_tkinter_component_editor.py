@@ -733,7 +733,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     invalid_values = True
                     continue
                 if "FC Connection" in path and "Type" in path:
-                    if value in fc_serial_connection and value not in {"CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4"}:
+                    if value in fc_serial_connection and value not in {"CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4", "None"}:
                         if path[0] in {"Telemetry", "RC Receiver"} and fc_serial_connection[value] in {
                             "Telemetry",
                             "RC Receiver",
