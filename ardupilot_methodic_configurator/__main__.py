@@ -2,7 +2,14 @@
 # PYTHON_ARGCOMPLETE_OK
 
 """
-The main application file. calls four sub-applications.
+The main application file.
+
+Calls five sub-applications in sequence:
+  1. Check for software updates
+  2. Connect to the flight controller and read the parameters
+  3. Select the vehicle directory
+  4. Component and connection editor
+  5. Parameter editor and uploader
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -59,11 +66,11 @@ def create_argument_parser() -> argparse.ArgumentParser:
             "The process gets repeated for each intermediate parameter file."
         )
     )
+    parser = UpdateManager.add_argparse_arguments(parser)
     parser = FlightController.add_argparse_arguments(parser)
     parser = LocalFilesystem.add_argparse_arguments(parser)
     parser = ComponentEditorWindow.add_argparse_arguments(parser)
     parser = ParameterEditorWindow.add_argparse_arguments(parser)
-    parser = UpdateManager.add_argparse_arguments(parser)
     parser = add_common_arguments(parser)
 
     argcomplete.autocomplete(parser)
@@ -128,14 +135,27 @@ def component_editor(
         webbrowser_open(url=url, new=0, autoraise=True)
     component_editor_window.root.mainloop()
 
-    if vehicle_dir_window and vehicle_dir_window.configuration_template and vehicle_dir_window.use_fc_params.get():
-        error_message = local_filesystem.copy_fc_params_values_to_template_created_vehicle_files(
-            flight_controller.fc_parameters
-        )
-        if error_message:
-            logging_error(error_message)
-            show_error_message(_("Error in derived parameters"), error_message)
-            sys_exit(1)
+    source_param_values: Union[dict[str, float], None] = (
+        flight_controller.fc_parameters
+        if vehicle_dir_window and vehicle_dir_window.configuration_template and vehicle_dir_window.use_fc_params.get()
+        else None
+    )
+    existing_fc_params: list[str] = (
+        list(flight_controller.fc_parameters.keys())
+        if flight_controller.fc_parameters
+        else list(local_filesystem.param_default_dict.keys())
+        if local_filesystem.param_default_dict
+        else []
+    )
+    # if source_param_values is None, the template parameter values are used
+    # if source_param_values contains the connected FC parameters, then they are used
+    error_message = local_filesystem.update_and_export_vehicle_params_from_fc(
+        source_param_values=source_param_values, existing_fc_params=existing_fc_params
+    )
+    if error_message:
+        logging_error(error_message)
+        show_error_message(_("Error in derived parameters"), error_message)
+        sys_exit(1)
 
 
 def main() -> None:

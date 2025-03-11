@@ -55,7 +55,8 @@ class VehicleComponents:
 
         try:
             with open(schema_path, encoding="utf-8") as file:
-                self.schema = json_load(file)
+                loaded_schema: dict[Any, Any] = json_load(file)
+                self.schema = loaded_schema
             return self.schema
         except FileNotFoundError:
             logging_error(_("Schema file '%s' not found."), schema_path)

@@ -23,7 +23,7 @@ from re import compile as re_compile
 from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
 from subprocess import SubprocessError, run
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from zipfile import ZipFile
 
 from argcomplete.completers import DirectoriesCompleter
@@ -612,43 +612,75 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             variables["doc_dict"] = self.doc_dict
         return variables
 
-    def copy_fc_params_values_to_template_created_vehicle_files(self, fc_parameters: dict[str, float]) -> str:
+    def update_and_export_vehicle_params_from_fc(
+        self, source_param_values: Union[dict[str, float], None], existing_fc_params: list[str]
+    ) -> str:
+        """
+        Update parameter values from flight controller data and export to vehicle files.
+
+        This function performs several operations in sequence:
+        1. Updates parameter values using the provided source values
+        2. Computes forced parameters based on configuration steps
+        3. Computes derived parameters that depend on other parameters
+        4. Exports the updated parameters to files in the vehicle directory
+
+        Args:
+            source_param_values: Dictionary mapping parameter names to their values from the
+                                source (typically flight controller). If None, no direct updates occur.
+            existing_fc_params: List of params that exist in the FC if empty or None all parameters are+
+                                assumed to exist
+
+        Returns:
+            str: Empty string if successful, error message otherwise.
+
+        """
         eval_variables = self.get_eval_variables()
+        # the eval variables do not contain fc_parameter values
+        # and that is intentional, the fc_parameters are not to be used in here
         for param_filename, param_dict in self.file_parameters.items():
             for param_name, param in param_dict.items():
-                if param_name in fc_parameters:
-                    param.value = fc_parameters[param_name]
+                if source_param_values and param_name in source_param_values:
+                    param.value = source_param_values[param_name]
             if self.configuration_steps and param_filename in self.configuration_steps:
                 step_dict = self.configuration_steps[param_filename]
                 error_msg = self.compute_parameters(param_filename, step_dict, "forced", eval_variables)
                 if error_msg:
                     return error_msg
+                self.merge_forced_or_derived_parameters(param_filename, self.forced_parameters, existing_fc_params)
                 error_msg = self.compute_parameters(param_filename, step_dict, "derived", eval_variables)
                 if error_msg:
                     return error_msg
+                self.merge_forced_or_derived_parameters(param_filename, self.derived_parameters, existing_fc_params)
             Par.export_to_param(Par.format_params(param_dict), os_path.join(self.vehicle_dir, param_filename))
         return ""
 
-    def add_forced_or_derived_parameters(
-        self, filename: str, new_parameters: dict[str, dict[str, Par]], fc_parameters: Optional[dict[str, float]] = None
-    ) -> None:
+    def merge_forced_or_derived_parameters(
+        self, filename: str, new_parameters: dict[str, dict[str, Par]], existing_fc_params: Optional[list[str]]
+    ) -> bool:
         """
-        Add forced parameters not yet in the parameter list to the parameter list.
+        Merge forced or derived parameter values in the self.file_parameter list.
 
         Args:
             filename: The name of the parameter file
             new_parameters: Dictionary of new parameters to potentially add
-            fc_parameters: Optional dictionary of flight controller parameters to check against
+            existing_fc_params: Optional list of flight controller parameters names
 
         """
         if new_parameters is None or filename not in new_parameters:
-            return
+            return False
 
+        at_least_one_param_changed = False
         for param_name, param in new_parameters[filename].items():
             if filename not in self.file_parameters:
                 continue
-            if param_name not in self.file_parameters[filename] and (fc_parameters is None or param_name in fc_parameters):
+            if existing_fc_params is None or not existing_fc_params or param_name in existing_fc_params:
+                if param_name in self.file_parameters[filename]:
+                    if not is_within_tolerance(self.file_parameters[filename][param_name].value, param.value):
+                        at_least_one_param_changed = True
+                else:
+                    at_least_one_param_changed = True
                 self.file_parameters[filename][param_name] = param
+        return at_least_one_param_changed
 
     def write_param_default_values(self, param_default_values: dict[str, "Par"]) -> bool:
         param_default_values = dict(sorted(param_default_values.items()))

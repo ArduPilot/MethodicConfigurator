@@ -457,12 +457,12 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert "PARAM2" in calibration
         assert "PARAM3" in other
 
-    def test_copy_fc_params_values_to_template_created_vehicle_files(self) -> None:
+    def test_update_and_export_vehicle_params_from_fc(self) -> None:
         lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
         fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
 
         # Test with empty file_parameters
-        result = lfs.copy_fc_params_values_to_template_created_vehicle_files(fc_parameters)
+        result = lfs.update_and_export_vehicle_params_from_fc(fc_parameters, {})
         assert result == ""
 
         # Test with file_parameters and configuration_steps
@@ -480,7 +480,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         ):
             mock_format.return_value = "formatted_params"
 
-            result = lfs.copy_fc_params_values_to_template_created_vehicle_files(fc_parameters)
+            result = lfs.update_and_export_vehicle_params_from_fc(fc_parameters, {})
             assert result == ""
             assert param1_mock.value == 1.0
             assert param2_mock.value == 2.0
@@ -735,57 +735,84 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         mock_copy2.assert_any_call("template_dir/file1.param", "new_vehicle_dir/file1.param")
 
 
-def test_add_forced_or_derived_parameters() -> None:
-    """Test adding forced or derived parameters to file parameters."""
+def test_merge_forced_or_derived_parameters_comprehensive() -> None:
+    """Test merge_forced_or_derived_parameters with various scenarios."""
     lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
-
-    # Test with empty parameters
-    lfs.file_parameters = {"test_file": {}}
-    lfs.add_forced_or_derived_parameters("test_file", {})
-    assert lfs.file_parameters["test_file"] == {}
-
-    # Test with new parameters to add
     test_file = "test_file"
+
+    # Test 1: Empty input parameters
+    lfs.file_parameters = {test_file: {"PARAM1": Par(1.0, "original")}}
+    assert lfs.merge_forced_or_derived_parameters(test_file, {}, []) is False
+    assert len(lfs.file_parameters[test_file]) == 1
+
+    # Test 2: Value change within tolerance
+    lfs.file_parameters = {test_file: {"PARAM1": Par(1.0, "original")}}
+    new_params = {test_file: {"PARAM1": Par(1.0001, "new")}}
+    fc_parameters = ["PARAM1"]
+    assert lfs.merge_forced_or_derived_parameters(test_file, new_params, fc_parameters) is False
+    assert abs(lfs.file_parameters[test_file]["PARAM1"].value - 1.0) <= 1e-08 + (1e-03 * abs(1.0))
+
+    # Test 3: Value change outside tolerance
+    lfs.file_parameters = {test_file: {"PARAM1": Par(1.0, "original")}}
+    new_params = {test_file: {"PARAM1": Par(1.5, "new")}}
+    fc_parameters = ["PARAM1"]
+    assert lfs.merge_forced_or_derived_parameters(test_file, new_params, fc_parameters) is True
+    assert lfs.file_parameters[test_file]["PARAM1"].value == 1.5
+
+    # Test 4: Multiple parameters
+    lfs.file_parameters = {test_file: {"PARAM1": Par(1.0, "original1"), "PARAM2": Par(2.0, "original2")}}
+    new_params = {test_file: {"PARAM1": Par(1.5, "new1"), "PARAM2": Par(2.0, "new2"), "PARAM3": Par(3.0, "new3")}}
+    fc_parameters = ["PARAM1", "PARAM2", "PARAM3"]
+    assert lfs.merge_forced_or_derived_parameters(test_file, new_params, fc_parameters) is True
+    assert len(lfs.file_parameters[test_file]) == 3
+
+    # Test 5: FC parameter filtering
     lfs.file_parameters = {test_file: {}}
-    new_params = {test_file: {"PARAM1": Par(1.0, "test comment")}}
-    fc_parameters = {"PARAM1": 1.0}
-    lfs.add_forced_or_derived_parameters(test_file, new_params, fc_parameters)
+    new_params = {test_file: {"PARAM1": Par(1.0, "new1"), "PARAM2": Par(2.0, "new2")}}
+    fc_parameters = ["PARAM1"]  # Only PARAM1 exists in FC
+    assert lfs.merge_forced_or_derived_parameters(test_file, new_params, fc_parameters) is True
+    assert "PARAM1" in lfs.file_parameters[test_file]
+    assert "PARAM2" not in lfs.file_parameters[test_file]
+
+    # Test 6: Different file keys
+    lfs.file_parameters = {"other_file": {}}
+    new_params = {test_file: {"PARAM1": Par(1.0, "new")}}
+    assert lfs.merge_forced_or_derived_parameters(test_file, new_params, []) is False
+    assert len(lfs.file_parameters["other_file"]) == 0
+
+    # Test 7: Empty FC parameters list (should add all params)
+    lfs.file_parameters = {test_file: {}}
+    new_params = {test_file: {"PARAM1": Par(1.0, "new")}}
+    assert lfs.merge_forced_or_derived_parameters(test_file, new_params, []) is True
     assert "PARAM1" in lfs.file_parameters[test_file]
 
-    # Test with existing parameters
-    existing_param = Par(1.0, "existing comment")
-    lfs.file_parameters = {test_file: {"PARAM1": existing_param}}
-    new_params = {test_file: {"PARAM1": Par(2.0, "new comment")}}
-    fc_parameters = {"PARAM1": 1.0}
-    lfs.add_forced_or_derived_parameters(test_file, new_params, fc_parameters)
-    assert lfs.file_parameters[test_file]["PARAM1"] == existing_param
-
-    # Test with missing fc_parameter
+    # Test 8: None FC parameters list (should add all params)
     lfs.file_parameters = {test_file: {}}
-    new_params = {test_file: {"PARAM1": Par(1.0, "test comment")}}
-    fc_parameters = {"PARAM2": 2.0}  # PARAM1 is missing
-    lfs.add_forced_or_derived_parameters(test_file, new_params, fc_parameters)
-    assert "PARAM1" not in lfs.file_parameters[test_file]
+    new_params = {test_file: {"PARAM1": Par(1.0, "new")}}
+    assert lfs.merge_forced_or_derived_parameters(test_file, new_params, None) is True
+    assert "PARAM1" in lfs.file_parameters[test_file]
 
-    # Test with non-existent file
-    non_existent_file = "non_existent.json"
-    new_params = {non_existent_file: {"PARAM1": Par(1.0, "test")}}
-    lfs.add_forced_or_derived_parameters(non_existent_file, new_params)
-    assert non_existent_file not in lfs.file_parameters
+    # Test 9: Comment overwrite
+    original_param = Par(1.0, "original comment")
+    lfs.file_parameters = {test_file: {"PARAM1": original_param}}
+    new_params = {test_file: {"PARAM1": Par(1.5, "new comment")}}
+    fc_parameters = ["PARAM1"]
+    assert lfs.merge_forced_or_derived_parameters(test_file, new_params, fc_parameters) is True
+    assert lfs.file_parameters[test_file]["PARAM1"].comment == "new comment"
 
 
-def test_add_forced_or_derived_parameters_none_parameters() -> None:
-    """Test add_forced_or_derived_parameters handles None parameters."""
+def test_merge_forced_or_derived_parameters_none_parameters() -> None:
+    """Test merge_forced_or_derived_parameters handles None parameters."""
     lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
     test_file = "test.json"
     lfs.file_parameters = {test_file: {}}
 
     # Test with None parameters
-    lfs.add_forced_or_derived_parameters(test_file, None)
+    lfs.merge_forced_or_derived_parameters(test_file, None, [])
     assert lfs.file_parameters[test_file] == {}
 
     # Test with empty dict
-    lfs.add_forced_or_derived_parameters(test_file, {})
+    lfs.merge_forced_or_derived_parameters(test_file, {}, [])
     assert lfs.file_parameters[test_file] == {}
 
 
