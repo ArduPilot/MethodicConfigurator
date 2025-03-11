@@ -17,6 +17,7 @@ from json import load as json_load
 # from sys import exit as sys_exit
 from logging import debug as logging_debug
 from logging import error as logging_error
+from os import makedirs as os_makedirs
 from os import path as os_path
 from os import walk as os_walk
 from re import match as re_match
@@ -63,6 +64,48 @@ class VehicleComponents:
         except JSONDecodeError:
             logging_error(_("Error decoding JSON schema from file '%s'."), schema_path)
         return {}
+
+    def load_component_templates(self) -> dict[str, list[dict]]:
+        """
+        Load component templates from the templates directory.
+
+        :return: The templates as a dictionary
+        """
+        templates_filename = "vehicle_components_template.json"
+        templates_dir = ProgramSettings.get_templates_base_dir()
+        filepath = os_path.join(templates_dir, templates_filename)
+
+        templates = {}
+        try:
+            with open(filepath, encoding="utf-8") as file:
+                templates = json_load(file)
+        except FileNotFoundError:
+            logging_error(_("Templates file '%s' not found."), filepath)
+        except JSONDecodeError:
+            logging_error(_("Error decoding JSON templates from file '%s'."), filepath)
+        return templates
+
+    def save_component_templates(self, templates: dict) -> tuple[bool, str]:
+        """
+        Save component templates to the templates directory.
+
+        :param templates: The templates to save
+        :return: A tuple of (error_occurred, error_message)
+
+        """
+        templates_filename = "vehicle_components_template.json"
+        templates_dir = ProgramSettings.get_templates_base_dir()
+        filepath = os_path.join(templates_dir, templates_filename)
+
+        try:
+            os_makedirs(templates_dir, exist_ok=True)
+            with open(filepath, "w", encoding="utf-8") as file:
+                json_dump(templates, file, indent=4)
+        except FileNotFoundError:
+            msg = _("Failed to save templates to file '{}': {}").format(filepath, _("File not found"))
+            logging_error(msg)
+            return True, msg
+        return False, ""
 
     def validate_vehicle_components(self, data: dict) -> tuple[bool, str]:
         """
