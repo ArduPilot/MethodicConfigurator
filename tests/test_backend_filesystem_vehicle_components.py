@@ -86,7 +86,7 @@ class TestVehicleComponents(unittest.TestCase):
 
         assert not result  # False means success
         expected_path = os.path.join("/test/dir", "vehicle_components.json")
-        mock_file.assert_called_once_with(expected_path, "w", encoding="utf-8")
+        mock_file.assert_called_once_with(expected_path, "w", encoding="utf-8", newline="\n")
         mock_json_dump.assert_called_once()
 
     @patch.object(VehicleComponents, "validate_vehicle_components")
