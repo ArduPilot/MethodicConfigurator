@@ -12,6 +12,9 @@
                 "Type": "ArduCopter",
                 "Version": "4.5.5 official"
             },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
             "Notes": "This is a custom build with a Holybro 6X flight controller with standard carrier board."
         },
         "Frame": {
@@ -180,5 +183,5 @@
             "Notes": "Standard GPS"
         }
     },
-    "Program version": "0.9.4"
+    "Program version": "1.2.1"
 }

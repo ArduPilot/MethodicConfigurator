@@ -12,6 +12,9 @@
                 "Type": "ArduCopter",
                 "Version": "4.5.7 official"
             },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
             "Notes": "The Pixhawk 6C with dimensions: 84.8 * 44 * 12.4 mm"
         },
         "Frame": {
@@ -180,6 +183,6 @@
             "Notes": "uBlox M10 GNSS "
         }
     },
-    "Program version": "0.9.12",
+    "Program version": "1.2.1",
     "Configuration template": "X11_plus"
 }

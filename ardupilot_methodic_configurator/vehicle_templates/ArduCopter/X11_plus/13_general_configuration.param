@@ -1,5 +1,5 @@
 ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
-AUTO_OPTIONS,3.0
+AUTO_OPTIONS,3
 BRD_HEAT_TARG,48  # Operate at a constant IMU temperature
 BRD_RTC_TZ_MIN,180  # Lithuania time zone
 EK3_SRC1_POSZ,1  # Use the default, it is safer

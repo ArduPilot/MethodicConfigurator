@@ -7,6 +7,7 @@ SERVO_BLH_POLES,3  # Specified in component editor window
 SERVO_BLH_TRATE,10  # Set to a low value because the RPM telemetry uses bi-directional DShot telemetry instead of this UART telemetry
 SERVO_DSHOT_ESC,0
 SERVO_DSHOT_RATE,0
+SERVO_FTW_POLES,3  # Specified in component editor window
 SERVO1_MAX,2000  # Use the full available 1000-2000 PWM range
 SERVO1_MIN,1000  # Use the full available 1000-2000 PWM range
 SERVO1_TRIM,1500  # Use the full available 1000-2000 PWM range

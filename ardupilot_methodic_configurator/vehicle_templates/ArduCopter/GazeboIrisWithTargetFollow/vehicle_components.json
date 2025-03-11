@@ -12,6 +12,9 @@
                 "Type": "ArduCopter",
                 "Version": "4.6.0 dev"
             },
+            "Specifications": {
+                "MCU Series": "Unknown"
+            },
             "Notes": "This is iris drone with a gimbal attached, works like a servo joint. All other sensors and actuators are plugins that work in gazebo."
         },
         "Frame": {
@@ -180,6 +183,6 @@
             "Notes": "-"
         }
     },
-    "Program version": "0.9.9",
+    "Program version": "1.2.1",
     "Configuration template": "4.5.x-params"
 }

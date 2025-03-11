@@ -12,6 +12,9 @@
                 "Type": "ArduCopter",
                 "Version": "4.5.3 official"
             },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
             "Notes": ""
         },
         "Frame": {
@@ -180,5 +183,5 @@
             "Notes": ""
         }
     },
-    "Program version": "0.9.9"
+    "Program version": "1.2.1"
 }

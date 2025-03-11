@@ -12,6 +12,9 @@
                 "Type": "ArduCopter",
                 "Version": "4.6.x"
             },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
             "Notes": "This is a custom build with a Matek H743 SLIM flight controller. The board is a 20x20mm stackable board with a 400Mhz processor, 1Mb flash, 512kb RAM, and a 32-bit STM32H743 processor. The board has a built-in barometer, 6 UARTs, 8 PWM outputs, and 8 ADC inputs."
         },
         "Frame": {
@@ -179,5 +182,6 @@
             },
             "Notes": "A very good receiver with an excellent antenna https://docs.holybro.com/gps-and-rtk-system/gps-led-and-buzzer/status-led-changes"
         }
-    }
+    },
+    "Program version": "1.2.1"
 }

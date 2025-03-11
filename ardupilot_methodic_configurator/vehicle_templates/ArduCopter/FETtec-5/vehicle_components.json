@@ -12,6 +12,9 @@
                 "Type": "ArduCopter",
                 "Version": "4.5.4 official"
             },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
             "Notes": ""
         },
         "Frame": {
@@ -180,6 +183,6 @@
             "Notes": "First GNSS receiver is connected to SERIAL4 the second to CAN1"
         }
     },
-    "Program version": "0.9.8",
+    "Program version": "1.2.1",
     "Configuration template": "ReadyToSkyZD550"
 }

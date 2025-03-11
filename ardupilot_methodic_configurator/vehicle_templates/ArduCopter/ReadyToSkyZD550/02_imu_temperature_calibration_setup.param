@@ -1,4 +1,4 @@
-BRD_HEAT_TARG,65 # Cube seems to deny anything greater than 65
+BRD_HEAT_TARG,65  # Cube seems to deny anything greater than 65
 INS_TCAL1_ENABLE,2  # Activates the temperature calibration for IMU 1 at the next start
 INS_TCAL1_TMAX,64  # heated IMU
 INS_TCAL2_ENABLE,2  # Activates the temperature calibration for IMU 2 at the next start

@@ -1,4 +1,4 @@
-BATT_AMP_PERVLT,17.0
+BATT_AMP_PERVLT,17
 BATT_ARM_VOLT,23.6  # Don’t allow arming below this voltage
 BATT_CAPACITY,30000  # Using tatto 30000MAH
 BATT_CRT_MAH,0  # No capacity based failsafes, too unreliable
@@ -6,7 +6,10 @@ BATT_CRT_VOLT,21.3  # (Critical voltage + 0.0) x no. of cells
 BATT_FS_CRT_ACT,1  # Land ASAP
 BATT_FS_LOW_ACT,2  # Return to launch and land at home or rally point
 BATT_FS_VOLTSRC,1  # Use sag-compensated voltage limits
+BATT_I2C_BUS,4  # Selected in component editor window
 BATT_LOW_MAH,0  # No capacity based failsafes, too unreliable
 BATT_LOW_VOLT,21.6  # (Low voltage + 0.0) x no. of cells
 BATT_MONITOR,4
 BATT_VOLT_MULT,12.1
+MOT_BAT_VOLT_MAX,25.2  # (Max voltage + 0.0) x no. of cells
+MOT_BAT_VOLT_MIN,21.3  # (Critical voltage + 0.0) x no. of cells

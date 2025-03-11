@@ -12,6 +12,9 @@
                 "Type": "ArduCopter",
                 "Version": "4.5.7 official"
             },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
             "Notes": "CubeOrange+ with 94.5mm x 44.3mm x 17.3mm"
         },
         "Frame": {
@@ -180,6 +183,6 @@
             "Notes": "RTK GNSS receiver HERE 4 "
         }
     },
-    "Program version": "1.0.7",
+    "Program version": "1.2.1",
     "Configuration template": "Hoverit_X11+"
 }
