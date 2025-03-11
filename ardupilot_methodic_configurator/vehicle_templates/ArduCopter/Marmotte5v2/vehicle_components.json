@@ -12,6 +12,9 @@
                 "Type": "ArduCopter",
                 "Version": "4.5.3"
             },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
             "Notes": ""
         },
         "Frame": {
@@ -180,5 +183,5 @@
             "Notes": "A very good receiver with an excellent antenna https://docs.holybro.com/gps-and-rtk-system/gps-led-and-buzzer/status-led-changes"
         }
     },
-    "Program version": "0.9.9"
+    "Program version": "1.2.1"
 }

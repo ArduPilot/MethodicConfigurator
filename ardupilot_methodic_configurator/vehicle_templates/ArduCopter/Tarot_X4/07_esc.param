@@ -17,6 +17,7 @@ SERVO_BLH_POLES,28  # Specified in component editor window
 SERVO_BLH_TRATE,10  # Left default (no RPM telemetry / bi-directional DShot telemetry available)
 SERVO_DSHOT_ESC,0  # using PWM
 SERVO_DSHOT_RATE,0  # Default
+SERVO_FTW_POLES,28  # Specified in component editor window
 SERVO1_MAX,1940  # Recommended by T-Motor
 SERVO1_MIN,1100  # Recommended by T-Motor
 SERVO1_TRIM,1500

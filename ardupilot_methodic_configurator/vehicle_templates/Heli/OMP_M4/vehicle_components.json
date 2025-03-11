@@ -12,6 +12,9 @@
                 "Type": "Heli",
                 "Version": "4.5.5"
             },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
             "Notes": "This will fit on the Flybarless tray, however it needs to be reversed."
         },
         "Frame": {
@@ -180,5 +183,5 @@
             "Notes": "Installed on the tail boom.  "
         }
     },
-    "Program version": "0.9.4"
+    "Program version": "1.2.1"
 }

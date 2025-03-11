@@ -3,5 +3,6 @@ INS_TCAL1_ENABLE,2  # Activates the temperature calibration for IMU 1 at the nex
 INS_TCAL1_TMAX,70.26159  # our H7 processor acts as a heater and heats up the board to almost 60 deg
 INS_TCAL2_ENABLE,2  # Activates the temperature calibration for IMU 2 at the next start
 INS_TCAL2_TMAX,70.18773  # our H7 processor acts as a heater and heats up the board to almost 60 deg
+INS_TCAL3_ENABLE,2  # Activates the temperature calibration for IMU 3 at the next start
 LOG_BITMASK,524416  # Only for IMU and Raw-IMU
-LOG_DISARMED,1  # Gather data for the offline IMU temperature compensation while the FC is disarmed
+LOG_DISARMED,1  # Gather data for the offline IMU temperature calibration while the FC is disarmed

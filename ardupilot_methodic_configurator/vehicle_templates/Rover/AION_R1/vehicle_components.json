@@ -12,6 +12,9 @@
                 "Type": "Rover",
                 "Version": "4.5.3"
             },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
             "Notes": ""
         },
         "Frame": {
@@ -179,5 +182,6 @@
             },
             "Notes": "A very good receiver"
         }
-    }
+    },
+    "Program version": "1.2.1"
 }

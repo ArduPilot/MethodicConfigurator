@@ -18,6 +18,7 @@ SERVO_BLH_RVMASK,256  # Ch9
 SERVO_BLH_TRATE,5  # Set to a low value because the RPM telemetry uses bi-directional DShot telemetry instead of this UART telemetry
 SERVO_DSHOT_ESC,1  # BLHeli32
 SERVO_DSHOT_RATE,2  # Sends DShot control signals to the ESC twice per control loop
+SERVO_FTW_POLES,14  # Specified in component editor window
 SERVO10_FUNCTION,34
 SERVO10_MAX,2000  # Use the full available 1000-2000 DShot range
 SERVO10_MIN,1000  # Use the full available 1000-2000 DShot range

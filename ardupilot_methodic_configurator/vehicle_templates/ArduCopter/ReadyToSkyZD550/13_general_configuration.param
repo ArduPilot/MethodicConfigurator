@@ -7,9 +7,7 @@ INS_POS1_Y,0  # was -0.011
 INS_POS2_X,0  # was -0.011
 INS_POS2_Y,0  # was -0.01
 LAND_ALT_LOW,1000
-PILOT_TKOFF_ALT,300 # climb to 3m on take-off
-RTL_ALT,1500
-RTL_LOIT_TIME,5000
+PILOT_TKOFF_ALT,300  # climb to 3m on take-off
 RNGFND1_ADDR,49
 RNGFND1_FUNCTION,0
 RNGFND1_GNDCLEAR,23
@@ -26,5 +24,7 @@ RNGFND1_RMETRIC,1
 RNGFND1_SCALING,3
 RNGFND1_STOP_PIN,-1
 RNGFND1_TYPE,14
+RTL_ALT,1500
+RTL_LOIT_TIME,5000
 SCHED_LOOP_RATE,800  # On our vehicle the propellers rotate at speeds higher than 400Hz and we have a powerful STM32 H7 family processor. So we increase this for added performance.
 SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation

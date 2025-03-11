@@ -12,6 +12,9 @@
                 "Type": "ArduCopter",
                 "Version": "4.5.3"
             },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
             "Notes": "This is CubeOrange with 94.5mm x 44.3mm x 17.3mm"
         },
         "Frame": {
@@ -180,5 +183,5 @@
             "Notes": "uBlox M8P GNSS with a patch antenna."
         }
     },
-    "Program version": "0.9.9"
+    "Program version": "1.2.1"
 }

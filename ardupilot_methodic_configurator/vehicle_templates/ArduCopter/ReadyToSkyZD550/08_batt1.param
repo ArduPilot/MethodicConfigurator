@@ -6,7 +6,10 @@ BATT_CRT_VOLT,21.3  # (Critical voltage + 0.0) x no. of cells
 BATT_FS_CRT_ACT,1  # Land ASAP
 BATT_FS_LOW_ACT,2  # Return and land at home or rally point
 BATT_FS_VOLTSRC,1  # Let the firmware handle the nasty business of variable and battery dependent internal resistance
+BATT_I2C_BUS,0  # Selected in component editor window
 BATT_LOW_MAH,2000  # trigger low failsafe just below 33% remaining
 BATT_LOW_VOLT,21.6  # (Low voltage + 0.0) x no. of cells
 BATT_MONITOR,4
 BATT_VOLT_MULT,18.97948  # measured/calibrated
+MOT_BAT_VOLT_MAX,26.1  # (Max voltage + 0.0) x no. of cells
+MOT_BAT_VOLT_MIN,21.3  # (Critical voltage + 0.0) x no. of cells
