@@ -121,7 +121,7 @@ def test_compute_forced_and_derived_parameters_success(parameter_editor_table) -
     parameter_editor_table.local_filesystem.compute_parameters.return_value = None
     parameter_editor_table.local_filesystem.forced_parameters = {"test_file": {"PARAM1": Par(1.0, "test comment")}}
 
-    with patch.object(parameter_editor_table.local_filesystem, "add_forced_or_derived_parameters") as mock_add:
+    with patch.object(parameter_editor_table.local_filesystem, "merge_forced_or_derived_parameters") as mock_add:
         parameter_editor_table.compute_forced_and_derived_parameters()
         mock_add.assert_called_once_with("test_file", parameter_editor_table.local_filesystem.forced_parameters)
 
@@ -135,7 +135,7 @@ def test_compute_forced_and_derived_parameters_with_multiple_files(parameter_edi
         "test_file2": {"PARAM2": Par(2.0, "test comment")},
     }
 
-    with patch.object(parameter_editor_table.local_filesystem, "add_forced_or_derived_parameters") as mock_add:
+    with patch.object(parameter_editor_table.local_filesystem, "merge_forced_or_derived_parameters") as mock_add:
         parameter_editor_table.compute_forced_and_derived_parameters()
         assert mock_add.call_count == 2
 

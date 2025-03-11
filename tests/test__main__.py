@@ -60,22 +60,51 @@ class TestMainFunctions(unittest.TestCase):
     @patch("ardupilot_methodic_configurator.__main__.ComponentEditorWindow")
     @patch("ardupilot_methodic_configurator.__main__.LocalFilesystem")
     @patch("ardupilot_methodic_configurator.__main__.ProgramSettings")
-    def test_component_editor(self, mock_program_settings, mock_local_filesystem, mock_component_editor_window) -> None:
-        mock_program_settings = mock_program_settings.return_value
-        mock_program_settings.get_setting.return_value = True
+    @patch("ardupilot_methodic_configurator.__main__.sys_exit")
+    @patch("ardupilot_methodic_configurator.__main__.show_error_message")
+    def test_component_editor(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self, mock_show_error, mock_sys_exit, mock_program_settings, mock_local_filesystem, mock_component_editor_window
+    ) -> None:
+        # Setup mock ComponentEditorWindow
+        mock_editor = MagicMock()
+        mock_component_editor_window.return_value = mock_editor
 
-        mock_local_filesystem = mock_local_filesystem.return_value
-        mock_local_filesystem.doc_dict = {}
+        # Setup mock ProgramSettings
+        mock_program_settings.get_setting.return_value = False
 
+        # Setup mock LocalFilesystem
+        mock_local_fs = mock_local_filesystem
+        mock_local_fs.doc_dict = {}
+        mock_local_fs.update_and_export_vehicle_params_from_fc.return_value = ""  # Return success
+
+        # Setup mock FlightController
         mock_fc = MagicMock()
         mock_fc.fc_parameters = {"param1": "value1"}
         mock_fc.info.flight_sw_version_and_type = "v1.0"
         mock_fc.info.vendor = "vendor"
         mock_fc.info.firmware_type = "type"
+        mock_fc.info.mcu_series = "series"
 
-        args = argparse.Namespace(skip_component_editor=False)
-        component_editor(args, mock_fc, "quad", mock_local_filesystem, None)
+        # Test successful execution
+        args = argparse.Namespace(skip_component_editor=True)  # Skip to avoid mainloop blocking
+        component_editor(args, mock_fc, "quad", mock_local_fs, None)
+
+        # Verify correct method calls
         mock_component_editor_window.assert_called_once()
+        mock_editor.populate_frames.assert_called_once()
+        mock_editor.set_vehicle_type_and_version.assert_called_once_with("quad", "v1.0")
+        mock_local_fs.update_and_export_vehicle_params_from_fc.assert_called_once_with(
+            source_param_values=None, existing_fc_params=list(mock_fc.fc_parameters.keys())
+        )
+        mock_sys_exit.assert_not_called()
+
+        # Test error case
+        mock_local_fs.update_and_export_vehicle_params_from_fc.return_value = "Error message"
+        component_editor(args, mock_fc, "quad", mock_local_fs, None)
+
+        # Verify error handling
+        mock_show_error.assert_called_once()
+        mock_sys_exit.assert_called_once_with(1)
 
 
 if __name__ == "__main__":

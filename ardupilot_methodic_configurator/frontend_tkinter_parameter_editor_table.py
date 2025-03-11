@@ -77,7 +77,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 # if error_msg:
                 #    messagebox.showerror("Error in derived parameters", error_msg)
 
-    def repopulate(self, selected_file: str, fc_parameters: dict, show_only_differences: bool) -> None:
+    def repopulate(self, selected_file: str, fc_parameters: dict[str, float], show_only_differences: bool) -> None:
         for widget in self.view_port.winfo_children():
             widget.destroy()
         self.current_file = selected_file
@@ -120,9 +120,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if error_msg:
                 messagebox.showerror(_("Error in derived parameters"), error_msg)
             else:
-                # Add derived parameters not yet in the parameter list to the parameter list
-                self.local_filesystem.add_forced_or_derived_parameters(
-                    selected_file, self.local_filesystem.derived_parameters, fc_parameters
+                # merge derived parameter values
+                self.local_filesystem.merge_forced_or_derived_parameters(
+                    selected_file, self.local_filesystem.derived_parameters, list(fc_parameters.keys())
                 )
 
             self.rename_fc_connection(selected_file)
