@@ -16,6 +16,7 @@ from os import path as os_path
 from subprocess import SubprocessError
 from unittest.mock import MagicMock, mock_open, patch
 
+from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 
 
@@ -732,6 +733,60 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
 
         # Verify param file was copied normally
         mock_copy2.assert_any_call("template_dir/file1.param", "new_vehicle_dir/file1.param")
+
+
+def test_add_forced_or_derived_parameters() -> None:
+    """Test adding forced or derived parameters to file parameters."""
+    lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+
+    # Test with empty parameters
+    lfs.file_parameters = {"test_file": {}}
+    lfs.add_forced_or_derived_parameters("test_file", {})
+    assert lfs.file_parameters["test_file"] == {}
+
+    # Test with new parameters to add
+    test_file = "test_file"
+    lfs.file_parameters = {test_file: {}}
+    new_params = {test_file: {"PARAM1": Par(1.0, "test comment")}}
+    fc_parameters = {"PARAM1": 1.0}
+    lfs.add_forced_or_derived_parameters(test_file, new_params, fc_parameters)
+    assert "PARAM1" in lfs.file_parameters[test_file]
+
+    # Test with existing parameters
+    existing_param = Par(1.0, "existing comment")
+    lfs.file_parameters = {test_file: {"PARAM1": existing_param}}
+    new_params = {test_file: {"PARAM1": Par(2.0, "new comment")}}
+    fc_parameters = {"PARAM1": 1.0}
+    lfs.add_forced_or_derived_parameters(test_file, new_params, fc_parameters)
+    assert lfs.file_parameters[test_file]["PARAM1"] == existing_param
+
+    # Test with missing fc_parameter
+    lfs.file_parameters = {test_file: {}}
+    new_params = {test_file: {"PARAM1": Par(1.0, "test comment")}}
+    fc_parameters = {"PARAM2": 2.0}  # PARAM1 is missing
+    lfs.add_forced_or_derived_parameters(test_file, new_params, fc_parameters)
+    assert "PARAM1" not in lfs.file_parameters[test_file]
+
+    # Test with non-existent file
+    non_existent_file = "non_existent.json"
+    new_params = {non_existent_file: {"PARAM1": Par(1.0, "test")}}
+    lfs.add_forced_or_derived_parameters(non_existent_file, new_params)
+    assert non_existent_file not in lfs.file_parameters
+
+
+def test_add_forced_or_derived_parameters_none_parameters() -> None:
+    """Test add_forced_or_derived_parameters handles None parameters."""
+    lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+    test_file = "test.json"
+    lfs.file_parameters = {test_file: {}}
+
+    # Test with None parameters
+    lfs.add_forced_or_derived_parameters(test_file, None)
+    assert lfs.file_parameters[test_file] == {}
+
+    # Test with empty dict
+    lfs.add_forced_or_derived_parameters(test_file, {})
+    assert lfs.file_parameters[test_file] == {}
 
 
 if __name__ == "__main__":

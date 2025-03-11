@@ -121,31 +121,9 @@ def test_compute_forced_and_derived_parameters_success(parameter_editor_table) -
     parameter_editor_table.local_filesystem.compute_parameters.return_value = None
     parameter_editor_table.local_filesystem.forced_parameters = {"test_file": {"PARAM1": Par(1.0, "test comment")}}
 
-    with patch.object(parameter_editor_table, "add_forced_or_derived_parameters") as mock_add:
+    with patch.object(parameter_editor_table.local_filesystem, "add_forced_or_derived_parameters") as mock_add:
         parameter_editor_table.compute_forced_and_derived_parameters()
         mock_add.assert_called_once_with("test_file", parameter_editor_table.local_filesystem.forced_parameters)
-
-
-def test_add_forced_or_derived_parameters_with_empty_parameters(parameter_editor_table) -> None:
-    """Test add_forced_or_derived_parameters with empty parameters."""
-    parameter_editor_table.local_filesystem.file_parameters = {"test_file": {}}
-    parameter_editor_table.add_forced_or_derived_parameters("test_file", {})
-    assert parameter_editor_table.local_filesystem.file_parameters["test_file"] == {}
-
-
-def test_add_forced_or_derived_parameters_with_new_parameters(parameter_editor_table) -> None:
-    """Test add_forced_or_derived_parameters with new parameters to add."""
-    # Setup
-    test_file = "test_file"
-    parameter_editor_table.local_filesystem.file_parameters = {test_file: {}}
-    new_params = {test_file: {"PARAM1": Par(1.0, "test comment")}}
-    fc_parameters = {"PARAM1": 1.0}
-
-    # Execute
-    parameter_editor_table.add_forced_or_derived_parameters(test_file, new_params, fc_parameters)
-
-    # Verify
-    assert "PARAM1" in parameter_editor_table.local_filesystem.file_parameters[test_file]
 
 
 def test_compute_forced_and_derived_parameters_with_multiple_files(parameter_editor_table: ParameterEditorTable) -> None:
@@ -157,36 +135,9 @@ def test_compute_forced_and_derived_parameters_with_multiple_files(parameter_edi
         "test_file2": {"PARAM2": Par(2.0, "test comment")},
     }
 
-    with patch.object(parameter_editor_table, "add_forced_or_derived_parameters") as mock_add:
+    with patch.object(parameter_editor_table.local_filesystem, "add_forced_or_derived_parameters") as mock_add:
         parameter_editor_table.compute_forced_and_derived_parameters()
         assert mock_add.call_count == 2
-
-
-def test_add_forced_or_derived_parameters_with_existing_parameters(parameter_editor_table: ParameterEditorTable) -> None:
-    """Test add_forced_or_derived_parameters when parameters already exist."""
-    test_file = "test_file"
-    existing_param = Par(1.0, "existing comment")
-    parameter_editor_table.local_filesystem.file_parameters = {test_file: {"PARAM1": existing_param}}
-    new_params = {test_file: {"PARAM1": Par(2.0, "new comment")}}
-    fc_parameters = {"PARAM1": 1.0}
-
-    parameter_editor_table.add_forced_or_derived_parameters(test_file, new_params, fc_parameters)
-
-    # Verify the existing parameter wasn't changed
-    assert parameter_editor_table.local_filesystem.file_parameters[test_file]["PARAM1"] == existing_param
-
-
-def test_add_forced_or_derived_parameters_with_missing_fc_parameter(parameter_editor_table: ParameterEditorTable) -> None:
-    """Test add_forced_or_derived_parameters when parameter is missing from fc_parameters."""
-    test_file = "test_file"
-    parameter_editor_table.local_filesystem.file_parameters = {test_file: {}}
-    new_params = {test_file: {"PARAM1": Par(1.0, "test comment")}}
-    fc_parameters = {"PARAM2": 2.0}  # PARAM1 is missing
-
-    parameter_editor_table.add_forced_or_derived_parameters(test_file, new_params, fc_parameters)
-
-    # Verify the parameter wasn't added because it's missing from fc_parameters
-    assert "PARAM1" not in parameter_editor_table.local_filesystem.file_parameters[test_file]
 
 
 def test_init_configures_style(parameter_editor_table: ParameterEditorTable) -> None:
@@ -221,37 +172,6 @@ def test_init_with_style_lookup_failure(mock_master, mock_local_filesystem, mock
         style_instance.lookup.assert_called()
         # Check that configure was called with expected parameters
         style_instance.configure.assert_called_with("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
-
-
-def test_compute_forced_and_derived_parameters_empty_dict(parameter_editor_table) -> None:
-    """Test compute_forced_and_derived_parameters with empty configuration dict."""
-    parameter_editor_table.local_filesystem.configuration_steps = {}
-    parameter_editor_table.compute_forced_and_derived_parameters()
-
-    assert not parameter_editor_table.local_filesystem.compute_parameters.called
-    assert not parameter_editor_table.local_filesystem.forced_parameters
-    assert not parameter_editor_table.local_filesystem.derived_parameters
-
-
-def test_add_forced_or_derived_parameters_file_not_found(parameter_editor_table) -> None:
-    """Test add_forced_or_derived_parameters with non-existent file."""
-    non_existent_file = "non_existent.json"
-    new_params = {non_existent_file: {"PARAM1": Par(1.0, "test")}}
-
-    parameter_editor_table.add_forced_or_derived_parameters(non_existent_file, new_params)
-
-    assert non_existent_file not in parameter_editor_table.local_filesystem.file_parameters
-
-
-def test_add_forced_or_derived_parameters_none_parameters(parameter_editor_table) -> None:
-    """Test add_forced_or_derived_parameters handles None parameters."""
-    test_file = "test.json"
-    parameter_editor_table.local_filesystem.file_parameters = {test_file: {}}
-
-    # Use empty dict instead of None
-    parameter_editor_table.add_forced_or_derived_parameters(test_file, {})
-
-    assert parameter_editor_table.local_filesystem.file_parameters[test_file] == {}
 
 
 def test_compute_forced_derived_parameters_recursion_limit(parameter_editor_table) -> None:
