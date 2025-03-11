@@ -22,6 +22,11 @@ repos:
         args: ["--fix=lf"]
         files: \.po$
         description: Forces LF line endings in PO translation files
+      - id: mixed-line-ending
+        name: Force LF line endings for .param and .json template files
+        args: ["--fix=lf"]
+        files: ^ardupilot_methodic_configurator/vehicle_templates/.*\.(param|json)$
+        description: Forces LF line endings in .param and .json vehicle_template files
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.9.4

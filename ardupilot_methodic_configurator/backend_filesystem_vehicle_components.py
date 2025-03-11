@@ -118,7 +118,7 @@ class VehicleComponents:
 
         filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
         try:
-            with open(filepath, "w", encoding="utf-8") as file:
+            with open(filepath, "w", encoding="utf-8", newline="\n") as file:
                 json_dump(data, file, indent=4)
         except FileNotFoundError:
             msg = _("Directory '{}' not found").format(vehicle_dir)
