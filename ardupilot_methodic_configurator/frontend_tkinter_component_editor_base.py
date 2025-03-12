@@ -235,7 +235,7 @@ class ComponentEditorWindowBase(BaseWindow):
                     try:
                         value = float(value)
                     except ValueError:
-                        value = str(value)
+                        value = str(value).strip()
 
             # Update the value in the data dictionary
             current_data[path[-1]] = value
