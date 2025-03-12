@@ -249,3 +249,42 @@ class VehicleComponents:
             else:
                 # For strings and other types, set to empty string or None
                 data[key] = "" if isinstance(value, str) else None
+
+    def identify_components_optional_fields(self) -> set:
+        """
+        Identify optional fields in the JSON schema.
+
+        Returns a set of field paths (as tuples) that are optional.
+        """
+        optional_fields = set()
+
+        schema = self.load_schema()
+
+        def traverse_schema(schema_section, path=None):
+            if path is None:
+                path = []
+
+            if not isinstance(schema_section, dict):
+                return
+
+            properties = schema_section.get("properties", {})
+            required = schema_section.get("required", [])
+
+            for prop_name, prop_details in properties.items():
+                current_path = path + [prop_name]
+
+                # If property is not in required list, mark it as optional
+                if prop_name not in required:
+                    # exclude the first element of the path, which is the root schema ("components")
+                    optional_fields.add(tuple(current_path[1:]))
+
+                # Continue traversing for nested objects
+                if isinstance(prop_details, dict):
+                    traverse_schema(prop_details, current_path)
+
+        # Start traversing from the root schema (usually at 'properties' level)
+        if "properties" in schema:
+            for top_level_prop, details in schema["properties"].items():
+                traverse_schema(details, [top_level_prop])
+
+        return optional_fields

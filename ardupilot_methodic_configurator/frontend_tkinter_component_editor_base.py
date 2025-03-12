@@ -75,12 +75,14 @@ class ComponentEditorWindowBase(BaseWindow):
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-        self.data = local_filesystem.load_vehicle_components_json_data(local_filesystem.vehicle_dir)
+        self.data = local_filesystem.vehicle_components
         if len(self.data) < 1:
             # Schedule the window to be destroyed after the mainloop has started
             self.root.after(100, self.root.destroy)  # Adjust the delay as needed
             return
 
+        self.optional_fields = local_filesystem.identify_components_optional_fields()
+        print(self.optional_fields)
         self.entry_widgets: dict[tuple, Union[ttk.Entry, ttk.Combobox]] = {}
 
         intro_frame = ttk.Frame(self.main_frame)
@@ -92,6 +94,7 @@ class ComponentEditorWindowBase(BaseWindow):
         style.configure("comb_input_valid.TCombobox", fieldbackground="white")
         style.configure("entry_input_invalid.TEntry", fieldbackground="red")
         style.configure("entry_input_valid.TEntry", fieldbackground="white")
+        style.configure("optional.TLabel", foreground="gray")
 
         explanation_text = _("Please configure all vehicle component properties in this window.\n")
         explanation_text += _("Scroll down and make sure you do not miss a property.\n")
@@ -194,7 +197,12 @@ class ComponentEditorWindowBase(BaseWindow):
             entry_frame = ttk.Frame(parent)
             entry_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
 
-            label = ttk.Label(entry_frame, text=_(key))
+            current_path = tuple(path + [key])
+            # Determine if field is optional and set the appropriate style
+            is_optional = current_path in self.optional_fields
+            label_style = "optional.TLabel" if is_optional else ""
+
+            label = ttk.Label(entry_frame, text=_(key), style=label_style)
             label.pack(side=tk.LEFT)
 
             entry = self.add_entry_or_combobox(value, entry_frame, (*path, key))
