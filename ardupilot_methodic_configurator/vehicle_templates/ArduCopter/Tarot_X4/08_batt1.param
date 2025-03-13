@@ -8,6 +8,6 @@ BATT_FS_VOLTSRC,0  # Using only RAW voltage
 BATT_I2C_BUS,2  # Selected in component editor window
 BATT_LOW_MAH,0  # Energy consumption not measured
 BATT_LOW_VOLT,18.6  # (Low voltage + 0.0) x no. of cells
-BATT_MONITOR,21  # I2C based (PM02D)
+BATT_MONITOR,21  # Selected in component editor window
 MOT_BAT_VOLT_MAX,24.6  # (Max voltage + 0.0) x no. of cells
 MOT_BAT_VOLT_MIN,16.5  # (Critical voltage + 0.0) x no. of cells
