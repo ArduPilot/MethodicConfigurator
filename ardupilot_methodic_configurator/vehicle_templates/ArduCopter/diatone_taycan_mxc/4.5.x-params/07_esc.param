@@ -1,7 +1,7 @@
 ATC_RAT_PIT_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 ATC_RAT_RLL_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 ATC_RAT_YAW_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
-MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on the 20_throttle_controller.param file
+MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on 20_throttle_controller.param file
 MOT_PWM_MAX,2000
 MOT_PWM_MIN,1000
 MOT_PWM_TYPE,6  # Specified in component editor window
