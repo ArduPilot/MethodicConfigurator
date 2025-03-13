@@ -63,20 +63,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         # These variables are used by the forced_parameters and derived_parameters in configuration_steps_*.json files
         self.variables = local_filesystem.get_eval_variables()
 
-        self.compute_forced_and_derived_parameters()
-
-    def compute_forced_and_derived_parameters(self) -> None:
-        if self.local_filesystem.configuration_steps:
-            for filename, file_info in self.local_filesystem.configuration_steps.items():
-                error_msg = self.local_filesystem.compute_parameters(filename, file_info, "forced", self.variables)
-                if error_msg:
-                    messagebox.showerror(_("Error in forced parameters"), error_msg)
-                else:
-                    self.local_filesystem.add_forced_or_derived_parameters(filename, self.local_filesystem.forced_parameters)
-                # error_msg = self.local_filesystem.compute_parameters(filename, file_info, 'derived', self.variables)
-                # if error_msg:
-                #    messagebox.showerror("Error in derived parameters", error_msg)
-
     def repopulate(self, selected_file: str, fc_parameters: dict[str, float], show_only_differences: bool) -> None:
         for widget in self.view_port.winfo_children():
             widget.destroy()

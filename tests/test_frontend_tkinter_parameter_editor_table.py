@@ -98,48 +98,6 @@ def test_init_creates_instance_with_correct_attributes(
     assert parameter_editor_table.at_least_one_param_edited is False
 
 
-def test_compute_forced_and_derived_parameters_with_no_config_steps(parameter_editor_table) -> None:
-    """Test compute_forced_and_derived_parameters when no configuration steps exist."""
-    parameter_editor_table.local_filesystem.configuration_steps = {}
-    parameter_editor_table.compute_forced_and_derived_parameters()
-    parameter_editor_table.local_filesystem.compute_parameters.assert_not_called()
-
-
-def test_compute_forced_and_derived_parameters_with_error(parameter_editor_table) -> None:
-    """Test compute_forced_and_derived_parameters when compute_parameters returns an error."""
-    parameter_editor_table.local_filesystem.configuration_steps = {"test_file": {}}
-    parameter_editor_table.local_filesystem.compute_parameters.return_value = "Error message"
-
-    with patch("tkinter.messagebox.showerror") as mock_error:
-        parameter_editor_table.compute_forced_and_derived_parameters()
-        mock_error.assert_called_once()
-
-
-def test_compute_forced_and_derived_parameters_success(parameter_editor_table) -> None:
-    """Test compute_forced_and_derived_parameters successful execution."""
-    parameter_editor_table.local_filesystem.configuration_steps = {"test_file": {}}
-    parameter_editor_table.local_filesystem.compute_parameters.return_value = None
-    parameter_editor_table.local_filesystem.forced_parameters = {"test_file": {"PARAM1": Par(1.0, "test comment")}}
-
-    with patch.object(parameter_editor_table.local_filesystem, "merge_forced_or_derived_parameters") as mock_add:
-        parameter_editor_table.compute_forced_and_derived_parameters()
-        mock_add.assert_called_once_with("test_file", parameter_editor_table.local_filesystem.forced_parameters)
-
-
-def test_compute_forced_and_derived_parameters_with_multiple_files(parameter_editor_table: ParameterEditorTable) -> None:
-    """Test compute_forced_and_derived_parameters with multiple configuration files."""
-    parameter_editor_table.local_filesystem.configuration_steps = {"test_file1": {}, "test_file2": {}}
-    parameter_editor_table.local_filesystem.compute_parameters.return_value = None
-    parameter_editor_table.local_filesystem.forced_parameters = {
-        "test_file1": {"PARAM1": Par(1.0, "test comment")},
-        "test_file2": {"PARAM2": Par(2.0, "test comment")},
-    }
-
-    with patch.object(parameter_editor_table.local_filesystem, "merge_forced_or_derived_parameters") as mock_add:
-        parameter_editor_table.compute_forced_and_derived_parameters()
-        assert mock_add.call_count == 2
-
-
 def test_init_configures_style(parameter_editor_table: ParameterEditorTable) -> None:
     """Test that ParameterEditorTable properly configures ttk.Style."""
     with patch("tkinter.ttk.Style", autospec=True) as mock_style_class:
@@ -172,19 +130,6 @@ def test_init_with_style_lookup_failure(mock_master, mock_local_filesystem, mock
         style_instance.lookup.assert_called()
         # Check that configure was called with expected parameters
         style_instance.configure.assert_called_with("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
-
-
-def test_compute_forced_derived_parameters_recursion_limit(parameter_editor_table) -> None:
-    """Test compute_forced_and_derived_parameters handles recursive computation."""
-    parameter_editor_table.local_filesystem.configuration_steps = {
-        "file1": {"derived": {"PARAM1": "PARAM2"}},
-        "file2": {"derived": {"PARAM2": "PARAM1"}},
-    }
-
-    with patch("tkinter.messagebox.showerror") as mock_error:
-        parameter_editor_table.compute_forced_and_derived_parameters()
-        mock_error.assert_called()
-    assert isinstance(parameter_editor_table.upload_checkbutton_var, dict)
 
 
 def test_repopulate_empty_parameters(parameter_editor_table: ParameterEditorTable) -> None:
