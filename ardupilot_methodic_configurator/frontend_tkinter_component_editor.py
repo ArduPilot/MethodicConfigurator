@@ -27,10 +27,10 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-
-# from ardupilot_methodic_configurator.frontend_tkinter_base import show_tooltip
-from ardupilot_methodic_configurator.frontend_tkinter_base import show_error_message
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
+
+# from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message
 
 
 def argument_parser() -> Namespace:
