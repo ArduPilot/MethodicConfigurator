@@ -138,6 +138,14 @@ the following system design requirements were derived:
   - Each component follows the appropriate structure with required and optional fields
   - Common patterns are defined as reusable definitions
 - ensure that both loaded and saved vehicle component data complies with the schema, provide useful error messages when validation fails.
+- Allow the user to save a vehicle component to a template and select it directly from a pre-defined set of
+  common vehicle components. [PR 272](https://github.com/ArduPilot/MethodicConfigurator/pull/272)
+  - For each vehicle component, a dropdown arrow is present as well as a button to allow to save the current filled component.
+    - These are presented in alphabetical order
+  - A predefined set of commonly used components is included in the software as read-only
+    - These get updated and overwritten when a new SW version is installed
+  - The user can extend that using his own locally saved component templates
+    - These do not get overwritten when a new SW version is installed
 
 ### The Software architecture
 
