@@ -57,6 +57,5 @@
       },
       "editor.defaultFormatter": "charliermarsh.ruff"
     },
-    "ruff.lint.run": "onSave",
     "files.eol": "\n"
 }
