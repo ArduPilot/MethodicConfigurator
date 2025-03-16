@@ -337,6 +337,7 @@ class ComponentEditorWindowBase(BaseWindow):
 
         templates = self.template_controls["manager"].load_component_templates()
         component_templates = templates.get(component_name, [])
+        component_templates = sorted(component_templates, key=lambda x: x.get("name", "").lower())
 
         menu = Menu(self.root, tearoff=0)
 
@@ -349,7 +350,7 @@ class ComponentEditorWindowBase(BaseWindow):
 
                 menu.add_command(label=template_name, command=command_function)
         else:
-            menu.add_command(label=_("No templates available"), state="disabled")
+            menu.add_command(label=_("No component templates available"), state="disabled")
 
         x = button.winfo_rootx()
         y = button.winfo_rooty() + button.winfo_height()
