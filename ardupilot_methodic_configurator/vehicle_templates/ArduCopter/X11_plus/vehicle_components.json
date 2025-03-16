@@ -75,7 +75,7 @@
         },
         "Telemetry": {
             "Product": {
-                "Manufacturer": "HOLYBRO",
+                "Manufacturer": "Holybro",
                 "Model": "Microhard Radio P840",
                 "URL": "https://holybro.com/products/microhard-radio?variant=41473588265149",
                 "Version": ""
@@ -109,8 +109,8 @@
         },
         "Battery": {
             "Product": {
-                "Manufacturer": "gensTattu",
-                "Model": "6C 30000mAh",
+                "Manufacturer": "Gens Ace",
+                "Model": "Tattu 6C 30000mAh",
                 "URL": "https://genstattu.com/tattu-g-tech-30000mah-6s-22-2v-25c-lipo-battery-pack-with-as150u-f-plug/",
                 "Version": "AS150U-F"
             },
@@ -183,5 +183,5 @@
             "Notes": "uBlox M8P GNSS with a patch antenna."
         }
     },
-    "Program version": "1.2.1"
+    "Program version": "1.2.2"
 }

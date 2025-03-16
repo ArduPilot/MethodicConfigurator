@@ -77,7 +77,7 @@
             "Product": {
                 "Manufacturer": "mRo",
                 "Model": "SiK 915Mhz",
-                "URL": "",
+                "URL": "https://mrobotics.io/docs/mro-sik-telemetry-radio-v2/",
                 "Version": ""
             },
             "Firmware": {
@@ -128,7 +128,7 @@
             "Product": {
                 "Manufacturer": "iFlight",
                 "Model": "Blitz 4-in-1 80A",
-                "URL": "",
+                "URL": "https://shop.iflight.com/BLITZ-E80-4-IN1-Pro-ESC-G2-Pro1770",
                 "Version": ""
             },
             "Firmware": {
@@ -144,9 +144,9 @@
         "Motors": {
             "Product": {
                 "Manufacturer": "iFlight",
-                "Model": "Xing 4214 660kV",
-                "URL": "",
-                "Version": ""
+                "Model": "Xing 4214",
+                "URL": "https://shop.iflight.com/xing-x4214-2-8s-x-class-fpv-nextgen-motor-pro802",
+                "Version": "660KV"
             },
             "Specifications": {
                 "Poles": 14
@@ -183,5 +183,5 @@
             "Notes": ""
         }
     },
-    "Program version": "1.2.1"
+    "Program version": "1.2.2"
 }

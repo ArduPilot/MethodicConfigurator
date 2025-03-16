@@ -33,8 +33,8 @@
         "RC Controller": {
             "Product": {
                 "Manufacturer": "FrSky",
-                "Model": "Tx7",
-                "URL": "",
+                "Model": "Taranis Q X7",
+                "URL": "https://www.frsky-rc.com/product/taranis-q-x7-2/",
                 "Version": ""
             },
             "Firmware": {
@@ -60,7 +60,7 @@
             "Product": {
                 "Manufacturer": "TBS",
                 "Model": "Tracer Nano RX",
-                "URL": "",
+                "URL": "https://www.team-blacksheep.com/products/prod:tracer_nanorx",
                 "Version": ""
             },
             "Firmware": {
@@ -93,8 +93,8 @@
         "Battery Monitor": {
             "Product": {
                 "Manufacturer": "FETtec",
-                "Model": "65A",
-                "URL": "",
+                "Model": "4in1 ESC 65A",
+                "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-65a",
                 "Version": ""
             },
             "Firmware": {
@@ -127,8 +127,8 @@
         "ESC": {
             "Product": {
                 "Manufacturer": "FETtec",
-                "Model": "65A",
-                "URL": "",
+                "Model": "4in1 ESC 65A",
+                "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-65a",
                 "Version": ""
             },
             "Firmware": {
@@ -144,9 +144,9 @@
         "Motors": {
             "Product": {
                 "Manufacturer": "T-Motor",
-                "Model": "F80 1900 kv",
-                "URL": "",
-                "Version": ""
+                "Model": "F80",
+                "URL": "https://shop.tmotor.com/products/fpv-drones-brushless-motor-f80-pro",
+                "Version": "1900KV"
             },
             "Specifications": {
                 "Poles": 14
@@ -167,14 +167,14 @@
         },
         "GNSS Receiver": {
             "Product": {
-                "Manufacturer": "Cube",
-                "Model": "Here3",
-                "URL": "",
-                "Version": ""
+                "Manufacturer": "CubePilot",
+                "Model": "Here3/Here3+",
+                "URL": "https://docs.cubepilot.org/user-guides/here-3/here-3-manual",
+                "Version": "3.0"
             },
             "Firmware": {
-                "Type": "DroneCAN/uBlox",
-                "Version": ""
+                "Type": "uBlox",
+                "Version": "20.10"
             },
             "FC Connection": {
                 "Type": "SERIAL4",
@@ -183,6 +183,6 @@
             "Notes": "First GNSS receiver is connected to SERIAL4 the second to CAN1"
         }
     },
-    "Program version": "1.2.1",
+    "Program version": "1.2.2",
     "Configuration template": "ReadyToSkyZD550"
 }

@@ -92,7 +92,7 @@
         },
         "Battery Monitor": {
             "Product": {
-                "Manufacturer": "HolyBro",
+                "Manufacturer": "Holybro",
                 "Model": "PM02D HV Power Module",
                 "URL": "https://holybro.com/collections/power-modules-pdbs/products/pm02d-power-module",
                 "Version": "HV"
@@ -183,5 +183,5 @@
             "Notes": "Standard GPS"
         }
     },
-    "Program version": "1.2.1"
+    "Program version": "1.2.2"
 }

@@ -76,7 +76,7 @@
         "Telemetry": {
             "Product": {
                 "Manufacturer": "Holybro",
-                "Model": "SiK Telemetry Radio V3",
+                "Model": "SiK Telemetry Radio",
                 "URL": "https://holybro.com/products/sik-telemetry-radio-v3?variant=41562952270013",
                 "Version": "V3.0"
             },
@@ -93,8 +93,8 @@
         "Battery Monitor": {
             "Product": {
                 "Manufacturer": "Holybro",
-                "Model": "PM02 V3 Power Module (12S)",
-                "URL": "https://holybro.com/products/pm02-v3-12s-power-module?srsltid=AfmBOoruyyy13wBspPFngCWD-IdOxUHiH3nfgUpN79MuVgugcMqUUxGK",
+                "Model": "PM02 Power Module (12S)",
+                "URL": "https://holybro.com/collections/power-modules-pdbs/products/pm02-v3-12s-power-module",
                 "Version": "V3"
             },
             "Firmware": {
@@ -103,7 +103,7 @@
             },
             "FC Connection": {
                 "Type": "Analog",
-                "Protocol": "Solo"
+                "Protocol": "Analog Voltage and Current"
             },
             "Notes": "Supplies 5.2V to FC, providing current consumption and battery voltage measurements"
         },
@@ -167,7 +167,7 @@
         },
         "GNSS Receiver": {
             "Product": {
-                "Manufacturer": "Holybro ",
+                "Manufacturer": "Holybro",
                 "Model": "M10",
                 "URL": "https://holybro.com/products/m10-gps?srsltid=AfmBOootSZi5Pc_2XhliqsKy-u3_8l8SKZ8tzd5wDuPMENtL-ZeLngUL",
                 "Version": "1"
@@ -180,9 +180,9 @@
                 "Type": "SERIAL3",
                 "Protocol": "uBlox"
             },
-            "Notes": "uBlox M10 GNSS "
+            "Notes": "uBlox M10 GNSS"
         }
     },
-    "Program version": "1.2.1",
+    "Program version": "1.2.2",
     "Configuration template": "X11_plus"
 }
