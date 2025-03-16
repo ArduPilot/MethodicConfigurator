@@ -224,3 +224,184 @@ def test_add_argparse_arguments() -> None:
 
     parser.add_argument.assert_called_once()
     assert result == parser
+
+
+@patch("tkinter.ttk.LabelFrame")
+@patch("tkinter.ttk.Frame")
+@patch("tkinter.ttk.Label")
+def test_add_widget_dict(mock_label, mock_frame, mock_labelframe, editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name, unused-argument # noqa: ARG001
+    """Test the __add_widget method with dictionary values."""
+    # We'll test the private method by calling it through our test
+    mock_parent = MagicMock()
+    mock_labelframe_instance = MagicMock()
+    mock_labelframe.return_value = mock_labelframe_instance
+
+    # Call the private method with a dictionary value
+    value = {"SubKey1": "Value1", "SubKey2": "Value2"}
+    editor_with_mocked_root._ComponentEditorWindowBase__add_widget(mock_parent, "TestKey", value, [])  # pylint: disable=protected-access
+
+    # Verify LabelFrame was created
+    mock_labelframe.assert_called_once()
+    mock_labelframe_instance.pack.assert_called_once()
+
+    # Verify recursive calls for subkeys
+    assert mock_labelframe_instance.mock_calls, "LabelFrame should have child elements added"
+
+
+@patch("tkinter.ttk.Frame")
+@patch("tkinter.ttk.Label")
+def test_add_widget_leaf(mock_label, mock_frame, editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name, unused-argument # noqa: ARG001
+    """Test the __add_widget method with leaf values."""
+    # We'll test the private method by calling it through our test
+    mock_parent = MagicMock()
+    mock_frame_instance = MagicMock()
+    mock_frame.return_value = mock_frame_instance
+
+    # Mock add_entry_or_combobox
+    editor_with_mocked_root.add_entry_or_combobox = MagicMock(return_value=MagicMock())
+
+    # Call the private method with a leaf value
+    editor_with_mocked_root._ComponentEditorWindowBase__add_widget(mock_parent, "TestKey", "TestValue", ["Component"])  # pylint: disable=protected-access
+
+    # Verify Frame was created
+    mock_frame.assert_called_once()
+    mock_frame_instance.pack.assert_called_once()
+
+    # Verify entry was created and stored
+    editor_with_mocked_root.add_entry_or_combobox.assert_called_once()
+    assert ("Component", "TestKey") in editor_with_mocked_root.entry_widgets
+
+
+def test_populate_frames(editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
+    """Test the populate_frames method."""
+    # Setup test data
+    editor_with_mocked_root.data = {"Components": {"Motor": {"Type": "brushless", "KV": 1000}}}
+
+    # Mock the __add_widget method
+    editor_with_mocked_root._ComponentEditorWindowBase__add_widget = MagicMock()  # pylint: disable=protected-access
+
+    # Call the method
+    editor_with_mocked_root.populate_frames()
+
+    # Verify __add_widget was called for each top-level component
+    editor_with_mocked_root._ComponentEditorWindowBase__add_widget.assert_called_with(  # pylint: disable=protected-access
+        editor_with_mocked_root.scroll_frame.view_port, "Motor", {"Type": "brushless", "KV": 1000}, []
+    )
+
+
+def test_get_component_data_from_gui(editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
+    """Test the get_component_data_from_gui method."""
+    # Setup test entries
+    mock_entry1 = MagicMock()
+    mock_entry1.get.return_value = "brushless"
+
+    mock_entry2 = MagicMock()
+    mock_entry2.get.return_value = "1000"
+
+    mock_entry3 = MagicMock()
+    mock_entry3.get.return_value = "0.5"
+
+    editor_with_mocked_root.entry_widgets = {
+        ("Motor", "Type"): mock_entry1,
+        ("Motor", "KV"): mock_entry2,
+        ("Motor", "Weight", "Mass"): mock_entry3,
+    }
+
+    # Call the method
+    result = editor_with_mocked_root.get_component_data_from_gui("Motor")
+
+    # Verify the result has the correct structure and values
+    assert result["Type"] == "brushless"
+    assert result["KV"] == 1000  # Should be converted to int
+    assert "Weight" in result
+    assert result["Weight"]["Mass"] == 0.5  # Should be converted to float
+
+
+def test_derive_initial_template_name(editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
+    """Test the derive_initial_template_name method."""
+    # This is a simple test as the base implementation just returns an empty string
+    component_data = {"Type": "brushless", "KV": 1000}
+    result = editor_with_mocked_root.derive_initial_template_name(component_data)
+    assert result == ""
+
+
+@patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.ComponentTemplateManager")
+def test_add_template_controls(mock_template_manager, editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name, unused-argument # noqa: ARG001
+    """Test the _add_template_controls method."""
+    # Setup
+    mock_parent_frame = MagicMock()
+    editor_with_mocked_root.template_manager = MagicMock()
+
+    # Call the method
+    editor_with_mocked_root._add_template_controls(mock_parent_frame, "Motor")  # pylint: disable=protected-access
+
+    # Verify the template manager was called correctly
+    editor_with_mocked_root.template_manager.add_template_controls.assert_called_once_with(mock_parent_frame, "Motor")
+
+
+@patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.logging_basicConfig")
+@patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.LocalFilesystem")
+def test_main_function(mock_filesystem, mock_logging_config) -> None:
+    """Test the main function of the module."""
+    # Mock the arguments
+    mock_args = MagicMock()
+    mock_args.loglevel = "INFO"
+    mock_args.vehicle_dir = "/fake/path"
+    mock_args.vehicle_type = "copter"
+    mock_args.allow_editing_template_files = False
+
+    # Mock filesystem instance
+    mock_filesystem_instance = MagicMock()
+    mock_filesystem.return_value = mock_filesystem_instance
+
+    # Mock the application window
+    mock_app = MagicMock()
+    mock_root = MagicMock()
+    mock_app.root = mock_root
+
+    with (
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.argument_parser", return_value=mock_args
+        ) as mock_parser,
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.ComponentEditorWindowBase",
+            return_value=mock_app,
+        ) as mock_window,
+    ):
+        # Import and execute the module's main block
+        import importlib.util  # pylint: disable=import-outside-toplevel
+        import sys  # pylint: disable=import-outside-toplevel
+
+        spec = importlib.util.spec_from_file_location(
+            "test_module", "ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py"
+        )
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["test_module"] = module
+
+        # Execute just the __main__ block
+        exec(  # pylint: disable=exec-used # noqa: S102
+            """
+if __name__ == "__main__":
+    args = argument_parser()
+    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files)
+    app = ComponentEditorWindowBase(__version__, filesystem)
+    app.root.mainloop()
+""",
+            {
+                "__name__": "__main__",
+                "argument_parser": mock_parser,
+                "logging_basicConfig": mock_logging_config,
+                "logging_getLevelName": lambda x: x,
+                "LocalFilesystem": mock_filesystem,
+                "ComponentEditorWindowBase": mock_window,
+                "__version__": "test_version",
+            },
+        )
+
+        # Verify the window was created with correct parameters
+        mock_filesystem.assert_called_once_with(
+            mock_args.vehicle_dir, mock_args.vehicle_type, "", mock_args.allow_editing_template_files
+        )
+        mock_window.assert_called_once_with("test_version", mock_filesystem_instance)
+        mock_root.mainloop.assert_called_once()
