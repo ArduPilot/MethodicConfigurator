@@ -12,21 +12,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
-from collections.abc import Callable
 
 # from logging import debug as logging_debug
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from sys import exit as sys_exit
-from tkinter import Menu, messagebox, simpledialog, ttk
-from typing import Any, TypedDict, Union
+from tkinter import messagebox, ttk
+from typing import Any, Union
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_component_template_manager import ComponentTemplateManager
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message, show_tooltip
@@ -54,14 +53,6 @@ def argument_parser() -> Namespace:
     parser = ComponentEditorWindowBase.add_argparse_arguments(parser)
     return add_common_arguments(parser).parse_args()
     # pylint: enable=duplicate-code
-
-
-class TemplateControls(TypedDict):
-    """A dictionary to store template controls for a vehicle component."""
-
-    buttons: dict[str, ttk.Button]
-    current_menu: Union[Menu, None]
-    manager: VehicleComponents
 
 
 class ComponentEditorWindowBase(BaseWindow):
@@ -133,7 +124,16 @@ class ComponentEditorWindowBase(BaseWindow):
         if UsagePopupWindow.should_display("component_editor"):
             self.root.after(10, self.__display_component_editor_usage_instructions(self.root))  # type: ignore[arg-type]
 
-        self.template_controls = TemplateControls(buttons={}, current_menu=None, manager=VehicleComponents())
+        def update_data_callback(comp_name: str, template_data: dict) -> None:
+            self.data["Components"][comp_name] = template_data
+
+        self.template_manager = ComponentTemplateManager(
+            self.root,
+            self.entry_widgets,
+            self.get_component_data_from_gui,
+            update_data_callback,
+            self.derive_initial_template_name,
+        )
 
     @staticmethod
     def __display_component_editor_usage_instructions(parent: tk.Toplevel) -> None:
@@ -253,149 +253,17 @@ class ComponentEditorWindowBase(BaseWindow):
             show_tooltip(entry, _(description))
 
     def _add_template_controls(self, parent_frame: ttk.LabelFrame, component_name: str) -> None:
-        """Add "template dropdown" and "save" buttons for a component."""
-        label_frame = ttk.Frame(parent_frame)
-        label_frame.pack(side=tk.TOP, fill=tk.X)
+        """Add template controls for a component."""
+        self.template_manager.add_template_controls(parent_frame, component_name)
 
-        label = ttk.Label(label_frame, text=_("Template:"))
-        label.pack(side=tk.LEFT, padx=(5, 5))
-
-        # Create and add the template dropdown button
-        def show_template_for_component() -> None:
-            self.show_template_options(component_name)
-
-        dropdown_button = ttk.Button(label_frame, text="▼", width=2, command=show_template_for_component)
-        show_tooltip(dropdown_button, _("Select a template for this component"))
-        dropdown_button.pack(side=tk.LEFT)
-
-        # Create and add the save template button
-        def save_as_template() -> None:
-            self.save_component_as_template(component_name)
-
-        save_button = ttk.Button(label_frame, text="+", width=2, command=save_as_template)
-        show_tooltip(save_button, _("Save current configuration as template"))
-        save_button.pack(side=tk.LEFT, padx=(5, 0))
-
-        # Store the dropdown button reference
-        self.template_controls["buttons"][component_name] = dropdown_button
-
-    def save_component_as_template(self, component_name: str) -> None:
-        """Save the current component configuration as a template."""
-        component_data = self.get_component_data_from_gui(component_name)
-        if not component_data:
-            messagebox.showerror(_("Error"), _("No data for component: ") + component_name)
-            return
-        initial_template_name = self.derive_initial_template_name(component_data)
-        template_name = simpledialog.askstring(
-            _("Save Template"), _("Enter a name for this template:"), parent=self.root, initialvalue=initial_template_name
-        )
-        if not template_name:
-            return
-
-        templates = self.template_controls["manager"].load_component_templates()
-        if component_name not in templates:
-            templates[component_name] = []
-
-        new_template = {"name": template_name, "data": component_data}
-
-        for i, template in enumerate(templates[component_name]):
-            if template.get("name") == template_name:
-                confirm = messagebox.askyesno(_("Template exists"), _("A template with this name already exists. Overwrite?"))
-                if confirm:
-                    templates[component_name][i] = new_template
-                    self.template_controls["manager"].save_component_templates(templates)
-                    messagebox.showinfo(_("Template Saved"), _("Template has been updated"))
-                return
-
-        templates[component_name].append(new_template)
-        self.template_controls["manager"].save_component_templates(templates)
-        messagebox.showinfo(_("Template Saved"), _("Template has been saved"))
-
-    def derive_initial_template_name(self, component_data: dict[str, Any]) -> str:
-        """Derive an initial template name from the component data.
+    def derive_initial_template_name(self, component_data: dict[str, Any]) -> str:  # pylint: disable=unused-argument # noqa: ARG002
+        """
+        Derive an initial template name from the component data.
 
         This is a basic implementation that can be overridden in derived classes
         to provide more specific template naming logic.
         """
         return ""
-
-    def create_template_dropdown_button(self, parent: ttk.Frame, component_name: str) -> ttk.Button:
-        """Creates a dropdown button for component templates."""
-        button = ttk.Button(parent, text="▼", width=2, command=lambda: self.show_template_options(component_name))
-        show_tooltip(button, _("Select a template for this component"))
-        return button
-
-    def show_template_options(self, component_name: str) -> None:
-        """Shows a dropdown menu with template options for the component."""
-        current_menu = self.template_controls.get("current_menu")
-        if isinstance(current_menu, Menu):
-            current_menu.unpost()
-
-        button = self.template_controls["buttons"].get(component_name)
-        if not button:
-            return
-
-        templates = self.template_controls["manager"].load_component_templates()
-        component_templates = templates.get(component_name, [])
-        component_templates = sorted(component_templates, key=lambda x: x.get("name", "").lower())
-
-        menu = Menu(self.root, tearoff=0)
-
-        if component_templates:
-            for template in component_templates:
-                template_name = template.get("name", "Template")
-
-                # Create a command function with proper closure
-                command_function = self._create_template_apply_function(component_name, template)
-
-                menu.add_command(label=template_name, command=command_function)
-        else:
-            menu.add_command(label=_("No component templates available"), state="disabled")
-
-        x = button.winfo_rootx()
-        y = button.winfo_rooty() + button.winfo_height()
-        menu.post(x, y)
-
-        self.template_controls["current_menu"] = menu
-
-        def close_menu(_: tk.Event) -> None:
-            current_menu = self.template_controls.get("current_menu")
-            if isinstance(current_menu, Menu):
-                current_menu.unpost()
-                self.template_controls["current_menu"] = None
-                self.root.unbind("<Button-1>", close_handler_id)
-
-        close_handler_id = self.root.bind("<Button-1>", close_menu, add="+")
-
-    def _create_template_apply_function(self, component_name: str, template: dict) -> Callable[[], None]:
-        """Create a function that will apply a template to a component when called."""
-
-        def apply_function() -> None:
-            self.apply_component_template(component_name, template)
-
-        return apply_function
-
-    def apply_component_template(self, component_name: str, template: dict) -> None:
-        """Apply a template to a component."""
-        if "data" not in template:
-            return
-
-        template_data = template["data"]
-        self.data["Components"][component_name] = template_data
-
-        for path, entry in self.entry_widgets.items():
-            if len(path) >= 1 and path[0] == component_name:
-                value = template_data
-                try:
-                    for key in path[1:]:
-                        value = value[key]
-                    entry.delete(0, tk.END)
-                    entry.insert(0, str(value))
-                except (KeyError, TypeError):
-                    pass
-
-        template_name = template.get("name", "Template")
-        messagebox.showinfo(_("Template Applied"), _("{} has been applied to {}").format(template_name, component_name))
 
     def get_component_data_from_gui(self, component_name: str) -> dict[str, Any]:
         """Save the current component configuration as a template."""
