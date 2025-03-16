@@ -449,6 +449,55 @@ def test_populate_frames_full_integration(mock_label, mock_frame, mock_labelfram
         editor_with_mocked_root._ComponentEditorWindowBase__add_non_leaf_widget = original_add_non_leaf  # pylint: disable=protected-access
         editor_with_mocked_root._ComponentEditorWindowBase__add_leaf_widget = original_add_leaf  # pylint: disable=protected-access
 
+def test_get_component_data_from_gui(editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
+    """Test the get_component_data_from_gui method."""
+    # Setup test entries
+    mock_entry1 = MagicMock()
+    mock_entry1.get.return_value = "brushless"
+
+    mock_entry2 = MagicMock()
+    mock_entry2.get.return_value = "1000"
+
+    mock_entry3 = MagicMock()
+    mock_entry3.get.return_value = "0.5"
+
+    editor_with_mocked_root.entry_widgets = {
+        ("Motor", "Type"): mock_entry1,
+        ("Motor", "KV"): mock_entry2,
+        ("Motor", "Weight", "Mass"): mock_entry3,
+    }
+
+    # Call the method
+    result = editor_with_mocked_root.get_component_data_from_gui("Motor")
+
+    # Verify the result has the correct structure and values
+    assert result["Type"] == "brushless"
+    assert result["KV"] == 1000  # Should be converted to int
+    assert "Weight" in result
+    assert result["Weight"]["Mass"] == 0.5  # Should be converted to float
+
+
+def test_derive_initial_template_name(editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
+    """Test the derive_initial_template_name method."""
+    # This is a simple test as the base implementation just returns an empty string
+    component_data = {"Type": "brushless", "KV": 1000}
+    result = editor_with_mocked_root.derive_initial_template_name(component_data)
+    assert result == ""
+
+
+@patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.ComponentTemplateManager")
+def test_add_template_controls(mock_template_manager, editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name, unused-argument # noqa: ARG001
+    """Test the _add_template_controls method."""
+    # Setup
+    mock_parent_frame = MagicMock()
+    editor_with_mocked_root.template_manager = MagicMock()
+
+    # Call the method
+    editor_with_mocked_root._add_template_controls(mock_parent_frame, "Motor")  # pylint: disable=protected-access
+
+    # Verify the template manager was called correctly
+    editor_with_mocked_root.template_manager.add_template_controls.assert_called_once_with(mock_parent_frame, "Motor")
+
 
 @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.logging_basicConfig")
 @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.LocalFilesystem")
