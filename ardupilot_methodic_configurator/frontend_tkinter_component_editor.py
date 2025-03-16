@@ -783,6 +783,16 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         return not (invalid_values or duplicated_connections)
 
+    def derive_initial_template_name(self, component_data: dict[str, Any]) -> str:
+        """Derive an initial template name from the component data."""
+        initial_template_name: str = ""
+        product_data = component_data.get("Product")
+        if product_data:
+            manufacturer = product_data.get("Manufacturer", "")
+            model = product_data.get("Model", "")
+            initial_template_name = manufacturer + " " + model
+        return initial_template_name
+
 
 if __name__ == "__main__":
     args = argument_parser()
