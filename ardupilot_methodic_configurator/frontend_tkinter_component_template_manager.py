@@ -96,7 +96,7 @@ class ComponentTemplateManager:  # pylint: disable=too-many-instance-attributes
         if component_name not in templates:
             templates[component_name] = []
 
-        new_template = {"name": template_name, "data": component_data}
+        new_template = {"name": template_name, "data": component_data, "is_user_modified": True}
 
         for i, template in enumerate(templates[component_name]):
             if template.get("name") == template_name:
