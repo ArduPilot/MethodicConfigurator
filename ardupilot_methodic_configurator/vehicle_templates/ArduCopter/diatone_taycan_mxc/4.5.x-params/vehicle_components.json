@@ -144,9 +144,9 @@
         "Motors": {
             "Product": {
                 "Manufacturer": "T-Motor",
-                "Model": "T-Motor 15507 3800kv",
+                "Model": "F15507",
                 "URL": "https://www.fpv24.com/de/t-motor/t-motor-f-serie-f1507-cinematic-3800kv-3s-4s",
-                "Version": ""
+                "Version": "3800kv"
             },
             "Specifications": {
                 "Poles": 14
@@ -183,5 +183,5 @@
             "Notes": "A very good receiver with an excellent antenna https://docs.holybro.com/gps-and-rtk-system/gps-led-and-buzzer/status-led-changes"
         }
     },
-    "Program version": "1.2.1"
+    "Program version": "1.2.2"
 }
