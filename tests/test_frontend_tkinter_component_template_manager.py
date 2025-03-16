@@ -249,6 +249,102 @@ class TestComponentTemplateManager:
         # Entry should remain unchanged when key isn't in template
         assert entry_widgets[("Component1", "Model")].get() == "XYZ"
 
+    @patch("tkinter.simpledialog.askstring", return_value="System Template")
+    @patch("tkinter.messagebox.askyesno", return_value=True)  # Confirm overwrite
+    @patch("tkinter.messagebox.showinfo")
+    def test_save_component_as_template_override_system(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        mock_info,  # pylint: disable=unused-argument
+        mock_askyesno,  # pylint: disable=unused-argument
+        mock_askstring,  # pylint: disable=unused-argument
+        template_manager,
+        mock_callbacks,
+    ) -> None:
+        """Test overwriting a system template with a user template."""
+        get_data_callback, _, _ = mock_callbacks
+        component_data = {"Model": "Custom", "Version": "2.0"}
+        get_data_callback.return_value = component_data
+
+        # Setup mock for template manager with system template
+        # When we load templates, the system and user templates will be merged
+        merged_templates = {"TestComponent": [{"name": "System Template", "data": {"Model": "Original", "Version": "1.0"}}]}
+        template_manager.template_manager.load_component_templates.return_value = merged_templates
+
+        # Call the method
+        template_manager.save_component_as_template("TestComponent")
+
+        # Verify save was called with template marked as is_user_modified
+        template_manager.template_manager.save_component_templates.assert_called_once()
+        args = template_manager.template_manager.save_component_templates.call_args[0][0]
+
+        assert len(args["TestComponent"]) == 1
+        assert args["TestComponent"][0]["name"] == "System Template"
+        assert args["TestComponent"][0]["data"] == component_data
+        assert args["TestComponent"][0]["is_user_modified"] is True
+
+    @patch("tkinter.simpledialog.askstring", return_value="Brand New Template")
+    @patch("tkinter.messagebox.showinfo")
+    def test_save_component_as_new_user_template(
+        self,
+        mock_info,  # pylint: disable=unused-argument
+        mock_askstring,  # pylint: disable=unused-argument
+        template_manager,
+        mock_callbacks,
+    ) -> None:
+        """Test creating a new user template."""
+        get_data_callback, _, _ = mock_callbacks
+        component_data = {"Model": "New", "Version": "3.0"}
+        get_data_callback.return_value = component_data
+
+        # Setup templates - no existing template for this name
+        templates = {"TestComponent": [{"name": "Other Template", "data": {}}]}
+        template_manager.template_manager.load_component_templates.return_value = templates
+
+        # Call the method
+        template_manager.save_component_as_template("TestComponent")
+
+        # Verify template was added with is_user_modified flag
+        template_manager.template_manager.save_component_templates.assert_called_once()
+        args = template_manager.template_manager.save_component_templates.call_args[0][0]
+
+        assert len(args["TestComponent"]) == 2  # Two templates now
+        new_template = next(t for t in args["TestComponent"] if t["name"] == "Brand New Template")
+        assert new_template["data"] == component_data
+        assert new_template["is_user_modified"] is True
+
+    def test_show_template_options_combined_templates(self, template_manager) -> None:
+        """Test showing template options with both system and user templates."""
+        # Setup mock button
+        mock_button = MagicMock()
+        template_manager.buttons["TestComponent"] = mock_button
+        mock_button.winfo_rootx.return_value = 100
+        mock_button.winfo_rooty.return_value = 100
+        mock_button.winfo_height.return_value = 25
+
+        # Setup templates that would come from both system and user sources
+        merged_templates = {
+            "TestComponent": [
+                {"name": "System Template", "data": {}},
+                {"name": "User Template", "data": {}, "is_user_modified": True},
+            ]
+        }
+        template_manager.template_manager.load_component_templates.return_value = merged_templates
+
+        # Mock Menu and its add_command method
+        with (
+            patch("tkinter.Menu.post"),
+            patch("tkinter.Menu.add_command") as mock_add_command,
+        ):
+            template_manager.show_template_options("TestComponent")
+
+            # Should show two templates in alphabetical order
+            calls = mock_add_command.call_args_list
+            assert len(calls) == 2
+
+            # Check template names are shown
+            assert calls[0][1]["label"] == "System Template"  # S comes before U alphabetically
+            assert calls[1][1]["label"] == "User Template"
+
 
 if __name__ == "__main__":
     pytest.main(["-xvs", __file__])
