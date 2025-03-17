@@ -21,6 +21,7 @@ jobs:
 
     env:
       TEMPLATES_CHANGED: false
+      UV_SYSTEM_PYTHON: 1
 
     strategy:
       matrix:
@@ -30,10 +31,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      # https://docs.astral.sh/uv/guides/integration/github/
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
+        with:
+          python-version: ${{ matrix.python-version }}
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        # required by update_vehicle_templates.py
+        run: |
+            uv pip install .[dev]
 
       - name: Update vehicle templates
         run: python update_vehicle_templates.py
