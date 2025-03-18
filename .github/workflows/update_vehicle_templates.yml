@@ -53,7 +53,8 @@ jobs:
       - name: Check for changes
         shell: pwsh
         run: |
-          git add ardupilot_methodic_configurator/vehicle_templates/**/*
+          git add ardupilot_methodic_configurator/vehicle_templates/**/*.param
+          git add ardupilot_methodic_configurator/vehicle_templates/**/*.json
           if ($(git status --porcelain)) {
             "TEMPLATES_CHANGED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
           } else {
