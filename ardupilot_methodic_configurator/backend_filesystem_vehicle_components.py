@@ -12,17 +12,17 @@ from json import JSONDecodeError
 from json import dump as json_dump
 from json import load as json_load
 
-# from logging import info as logging_info
 # from logging import warning as logging_warning
 # from sys import exit as sys_exit
 from logging import debug as logging_debug
 from logging import error as logging_error
+from logging import info as logging_info
 from os import path as os_path
 from os import walk as os_walk
 from re import match as re_match
 from typing import Any, Union
 
-from jsonschema import ValidationError, validate
+from jsonschema import ValidationError, validate, validators
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
@@ -56,6 +56,19 @@ class VehicleComponents:
         try:
             with open(schema_path, encoding="utf-8") as file:
                 loaded_schema: dict[Any, Any] = json_load(file)
+
+                # Validate the schema itself against the JSON Schema meta-schema
+                try:
+                    # Get the Draft7Validator class which has the META_SCHEMA property
+                    validator_class = validators.Draft7Validator
+                    meta_schema = validator_class.META_SCHEMA
+
+                    # Validate the loaded schema against the meta-schema
+                    validate(instance=loaded_schema, schema=meta_schema)
+                    logging_debug(_("Schema file '%s' is valid."), schema_path)
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    logging_error(_("Schema file '%s' is not a valid JSON Schema: %s"), schema_path, str(e))
+
                 self.schema = loaded_schema
             return self.schema
         except FileNotFoundError:
@@ -250,3 +263,218 @@ class VehicleComponents:
             else:
                 # For strings and other types, set to empty string or None
                 data[key] = "" if isinstance(value, str) else None
+
+    def get_component_property_description(self, path: tuple[str, ...]) -> tuple[str, bool]:
+        """
+        Get description and optional status from schema using a component path.
+
+        Args:
+            path (tuple): The path to the component in the JSON data.
+
+        Returns:
+            tuple[str, bool]: A tuple containing (description, is_optional),
+                            where is_optional defaults to False if not specified.
+
+        """
+        if not path or len(path) == 0:
+            return ("", False)
+
+        try:
+            # Start with the Components node since all our editable items are under it
+            current = self.schema.get("properties", {}).get("Components", {})  # type: ignore[union-attr]
+
+            # Handle different path scenarios
+            if len(path) == 1:
+                return self._get_top_level_component_description(current, path[0])
+            if len(path) == 3 and path[1] == "Product":
+                return self._get_product_field_description(path[2])
+            return self._get_nested_property_description(current, path)
+        except Exception as _e:  # pylint: disable=broad-exception-caught
+            msg = _("Exception occurred in get_component_property_description: {}").format(str(_e))
+            logging_error(msg)
+            return ("", False)
+
+    def _get_top_level_component_description(self, current_schema: dict[str, Any], component_type: str) -> tuple[str, bool]:
+        """Get description for top-level components like 'Flight Controller'."""
+        if component_type in current_schema.get("properties", {}):
+            description = current_schema["properties"][component_type].get("description", "")
+            is_optional = current_schema["properties"][component_type].get("x-is-optional", False)
+            return (description, is_optional)
+        return ("", False)
+
+    def _get_product_field_description(self, field_name: str) -> tuple[str, bool]:
+        """Get description for product fields (Manufacturer, Model, etc.)."""
+        product_def = self.schema.get("definitions", {}).get("product", {})  # type: ignore[union-attr]
+        if "properties" in product_def and field_name in product_def["properties"]:
+            description = product_def["properties"][field_name].get("description", "")
+            is_optional = product_def["properties"][field_name].get("x-is-optional", False)
+            return (description, is_optional)
+        return ("", False)
+
+    def _get_nested_property_description(self, current_schema: dict[str, Any], path: tuple[str, ...]) -> tuple[str, bool]:
+        """Get description for nested properties in the component structure."""
+        # Get the component type (e.g., "Flight Controller")
+        component_type = path[0]
+
+        # Navigate to the specific component type
+        if component_type in current_schema.get("properties", {}):
+            current = current_schema["properties"][component_type]
+        else:
+            return ("", False)
+
+        # Resolve reference if present
+        current = self._resolve_schema_reference(current)
+
+        # Handle requests for section fields (Product, Firmware, Specifications, etc.)
+        if len(path) == 2:
+            return self._get_section_field_description(current, path[1])
+
+        # For deeper nested fields, navigate through the path
+        return self._traverse_nested_path(current, path[1:])
+
+    def _resolve_schema_reference(self, schema_obj: dict[str, Any]) -> dict[str, Any]:
+        """Resolve a schema reference in the form of {"$ref": "#/path/to/definition"}."""
+        if "$ref" in schema_obj:
+            ref_path = schema_obj["$ref"].replace("#/", "").split("/")
+            ref_obj = self.schema
+            for ref_part in ref_path:
+                ref_obj = ref_obj.get(ref_part, {})  # type: ignore[union-attr]
+            return ref_obj  # type: ignore[return-value]
+        return schema_obj
+
+    def _get_section_field_description(self, current: dict[str, Any], section: str) -> tuple[str, bool]:
+        """Get description for section fields like Product, Firmware, etc."""
+        # First check in direct properties
+        if "properties" in current and section in current["properties"]:
+            description = current["properties"][section].get("description", "")
+            is_optional = current["properties"][section].get("x-is-optional", False)
+            return (description, is_optional)
+
+        # Then check in allOf constructs
+        if "allOf" in current:
+            for allof_item in current["allOf"]:
+                # Handle reference in allOf item
+                if "$ref" in allof_item:
+                    ref_obj = self._resolve_schema_reference(allof_item)
+
+                    if "properties" in ref_obj and section in ref_obj["properties"]:
+                        description = ref_obj["properties"][section].get("description", "")
+                        is_optional = ref_obj["properties"][section].get("x-is-optional", False)
+                        return (description, is_optional)
+
+                # Direct properties check in this allOf item
+                elif "properties" in allof_item and section in allof_item["properties"]:
+                    description = allof_item["properties"][section].get("description", "")
+                    is_optional = allof_item["properties"][section].get("x-is-optional", False)
+                    return (description, is_optional)
+
+        # If not found, return empty with default optional status
+        return ("", False)
+
+    def _traverse_nested_path(self, current: dict[str, Any], path_parts: tuple[str, ...]) -> tuple[str, bool]:
+        """Traverse a nested path in the schema to find a property description."""
+        for part in path_parts:
+            found = False
+
+            # Check strategies in order: direct properties, allOf, and references
+            found, current = self._check_direct_properties(current, part)
+            if not found:
+                found, current = self._check_allof_constructs(current, part)
+            if not found:
+                found, current = self._check_references(current, part)
+
+            # If not found after all checks, return empty
+            if not found:
+                return ("", False)
+
+            # If we found a $ref in the current object, resolve it
+            current = self._resolve_schema_reference(current)
+
+        # Return the description and optional status of the final object
+        description = current.get("description", "")
+        is_optional = current.get("x-is-optional", False)
+        return (description, is_optional)
+
+    def _check_direct_properties(self, schema_obj: dict[str, Any], property_name: str) -> tuple[bool, dict]:
+        """Check if property exists directly in schema's properties."""
+        if "properties" in schema_obj and property_name in schema_obj["properties"]:
+            return True, schema_obj["properties"][property_name]
+        return False, schema_obj
+
+    def _check_allof_constructs(self, schema_obj: dict[str, Any], property_name: str) -> tuple[bool, dict]:
+        """Check if property exists in any allOf constructs."""
+        if "allOf" in schema_obj:
+            for allof_item in schema_obj["allOf"]:
+                # Handle reference in allOf item
+                if "$ref" in allof_item:
+                    ref_obj = self._resolve_schema_reference(allof_item)
+
+                    if "properties" in ref_obj and property_name in ref_obj["properties"]:
+                        return True, ref_obj["properties"][property_name]
+
+                # Direct check in this allOf item
+                elif "properties" in allof_item and property_name in allof_item["properties"]:
+                    return True, allof_item["properties"][property_name]
+
+        return False, schema_obj
+
+    def _check_references(self, schema_obj: dict[str, Any], property_name: str) -> tuple[bool, dict]:
+        """Check if property exists in referenced schema object."""
+        if "$ref" in schema_obj:
+            ref_obj = self._resolve_schema_reference(schema_obj)
+
+            # Look in the resolved reference direct properties
+            if "properties" in ref_obj and property_name in ref_obj["properties"]:
+                return True, ref_obj["properties"][property_name]
+
+            # Look in allOf constructs in the reference
+            if "allOf" in ref_obj:
+                for allof_item in ref_obj["allOf"]:
+                    if "properties" in allof_item and property_name in allof_item["properties"]:
+                        return True, allof_item["properties"][property_name]
+
+        return False, schema_obj
+
+
+def main() -> None:
+    """Main function for standalone execution."""
+    vehicle_components = VehicleComponents()
+    vehicle_components.load_schema()
+
+    component_property_paths = [
+        ("Flight Controller", "Product", "Manufacturer"),
+        ("Flight Controller", "Product", "Model"),
+        ("Flight Controller", "Product", "URL"),
+        ("Flight Controller", "Product", "Version"),
+        ("Flight Controller", "Firmware", "Type"),
+        ("Flight Controller", "Firmware", "Version"),
+        ("Flight Controller", "Specifications", "MCU Series"),
+        ("Flight Controller", "Notes"),
+        ("Flight Controller",),
+        ("Flight Controller", "Product"),
+        ("Flight Controller", "Firmware"),
+        ("Flight Controller", "Specifications"),
+        ("Frame",),
+        ("Frame", "Product"),
+        ("Frame", "Specifications"),
+        ("Frame", "Product", "Manufacturer"),
+        ("Frame", "Product", "Model"),
+        ("Frame", "Product", "URL"),
+        ("Frame", "Product", "Version"),
+        ("Frame", "Specifications", "TOW min Kg"),
+        ("Frame", "Specifications", "TOW max Kg"),
+        ("Frame", "Notes"),
+    ]
+
+    logging_info("\nTesting description lookup for sample paths:")
+    logging_info("=============================================")
+
+    for path in component_property_paths:
+        desc, is_optional = vehicle_components.get_component_property_description(path)
+        msg = f"Path: {path}\nDescription: {desc}, Optional: {is_optional}"
+        logging_info(msg)
+        logging_info("-" * 50)
+
+
+if __name__ == "__main__":
+    main()
