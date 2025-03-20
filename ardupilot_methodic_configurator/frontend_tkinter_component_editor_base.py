@@ -89,6 +89,8 @@ class ComponentEditorWindowBase(BaseWindow):
         style.configure("comb_input_valid.TCombobox", fieldbackground="white")
         style.configure("entry_input_invalid.TEntry", fieldbackground="red")
         style.configure("entry_input_valid.TEntry", fieldbackground="white")
+        style.configure("Optional.TLabelframe", borderwidth=2)
+        style.configure("Optional.TLabelframe.Label", foreground="gray")
 
         explanation_text = _("Please configure all vehicle component properties in this window.\n")
         explanation_text += _("Scroll down and make sure you do not miss a property.\n")
@@ -166,7 +168,7 @@ class ComponentEditorWindowBase(BaseWindow):
             for key, value in self.data["Components"].items():
                 self.__add_widget(self.scroll_frame.view_port, key, value, [])
 
-    def __add_widget(self, parent: tk.Widget, key: str, value: dict, path: list) -> None:
+    def __add_widget(self, parent: tk.Widget, key: str, value: dict, path: list) -> None:  # pylint: disable=too-many-locals
         """
         Adds a widget to the parent widget with the given key and value.
 
@@ -178,12 +180,29 @@ class ComponentEditorWindowBase(BaseWindow):
 
         """
         if isinstance(value, dict):  # JSON non-leaf elements, add LabelFrame widget
-            frame = ttk.LabelFrame(parent, text=_(key))
             is_toplevel = parent == self.scroll_frame.view_port
             pady = 5 if is_toplevel else 3
+
+            current_path = (*path, key)
+            description, is_optional = self.local_filesystem.get_component_property_description(current_path)
+
+            if is_optional:
+                frame = ttk.LabelFrame(parent, text=_(key), style="Optional.TLabelframe")
+            else:
+                frame = ttk.LabelFrame(parent, text=_(key))
+
             frame.pack(
                 fill=tk.X, side=tk.TOP if is_toplevel else tk.LEFT, pady=pady, padx=5, anchor=tk.NW if is_toplevel else tk.N
             )
+
+            # Enhance tooltip for optional fields
+            if is_optional and description:
+                description += _("\nThis is optional and can be left blank")
+
+            # Add tooltip based on schema description
+            if description:
+                show_tooltip(frame, _(description), position_below=False)
+
             for sub_key, sub_value in value.items():
                 # recursively add child elements
                 self.__add_widget(frame, sub_key, sub_value, [*path, key])
@@ -191,7 +210,13 @@ class ComponentEditorWindowBase(BaseWindow):
             entry_frame = ttk.Frame(parent)
             entry_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
 
-            label = ttk.Label(entry_frame, text=_(key))
+            description, is_optional = self.local_filesystem.get_component_property_description((*path, key))
+
+            if is_optional:
+                label = ttk.Label(entry_frame, text=_(key), foreground="gray")
+            else:
+                label = ttk.Label(entry_frame, text=_(key))
+
             label.pack(side=tk.LEFT)
 
             entry = self.add_entry_or_combobox(value, entry_frame, (*path, key))
@@ -199,6 +224,15 @@ class ComponentEditorWindowBase(BaseWindow):
 
             # Store the entry widget in the entry_widgets dictionary for later retrieval
             self.entry_widgets[(*path, key)] = entry
+
+            # Enhance tooltip for optional fields
+            if is_optional and description:
+                description += _("\nThis is optional and can be left blank")
+
+            # Add tooltip based on schema description
+            if description:
+                show_tooltip(label, _(description))
+                show_tooltip(entry, _(description))
 
     def validate_and_save_component_json(self) -> None:
         """Saves the edited JSON data back to the file."""

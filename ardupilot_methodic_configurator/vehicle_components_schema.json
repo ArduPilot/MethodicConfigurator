@@ -20,43 +20,56 @@
       ],
       "properties": {
         "Flight Controller": {
-          "$ref": "#/definitions/flightController"
+          "$ref": "#/definitions/flightController",
+          "description": "Flight controller that runs ArduPilot firmware"
         },
         "Frame": {
-          "$ref": "#/definitions/frame"
+          "$ref": "#/definitions/frame",
+          "description": "Physical structure of the vehicle"
         },
         "RC Controller": {
-          "$ref": "#/definitions/rcComponent"
+          "$ref": "#/definitions/rcComponent",
+          "description": "Remote control device used by the pilot"
         },
         "RC Transmitter": {
-          "$ref": "#/definitions/rcComponent"
+          "$ref": "#/definitions/rcComponent",
+          "description": "Transmitter part of the remote control system"
         },
         "RC Receiver": {
-          "$ref": "#/definitions/connectionComponent"
+          "$ref": "#/definitions/connectionComponent",
+          "description": "Receiver that connects to the flight controller"
         },
         "Telemetry": {
-          "$ref": "#/definitions/connectionComponent"
+          "$ref": "#/definitions/connectionComponent",
+          "description": "Component for wireless communication with ground station"
         },
         "Battery Monitor": {
-          "$ref": "#/definitions/connectionComponent"
+          "$ref": "#/definitions/connectionComponent",
+          "description": "Component that monitors battery voltage and current"
         },
         "Battery": {
-          "$ref": "#/definitions/battery"
+          "$ref": "#/definitions/battery",
+          "description": "Main power source for the vehicle"
         },
         "ESC": {
-          "$ref": "#/definitions/connectionComponent"
+          "$ref": "#/definitions/connectionComponent",
+          "description": "Electronic Speed Controller for the motors"
         },
         "Motors": {
-          "$ref": "#/definitions/motors"
+          "$ref": "#/definitions/motors",
+          "description": "Propulsion motors for the vehicle"
         },
         "Propellers": {
-          "$ref": "#/definitions/propellers"
+          "$ref": "#/definitions/propellers",
+          "description": "Propellers that generate thrust"
         },
         "GNSS Receiver": {
-          "$ref": "#/definitions/connectionComponent"
+          "$ref": "#/definitions/connectionComponent",
+          "description": "Global Navigation Satellite System receiver for positioning"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "Collection of all components that make up the vehicle system"
     },
     "Program version": {
       "type": "string",
@@ -73,48 +86,101 @@
       "type": "object",
       "required": ["Manufacturer", "Model"],
       "properties": {
-        "Manufacturer": { "type": "string" },
-        "Model": { "type": "string" },
-        "URL": { "type": "string" },
-        "Version": { "type": "string" }
-      }
+        "Manufacturer": {
+          "type": "string",
+          "description": "Company or brand that manufactures the component",
+          "x-is-optional": true
+        },
+        "Model": {
+          "type": "string",
+          "description": "Specific model name/number of the component",
+          "x-is-optional": true
+        },
+        "URL": {
+          "type": "string",
+          "description": "Web link to the product page or documentation",
+          "x-is-optional": true
+        },
+        "Version": {
+          "type": "string",
+          "description": "Version or revision of the hardware",
+          "x-is-optional": true
+        }
+      },
+      "description": "Basic information about a product including manufacturer and model",
+      "x-is-optional": true
     },
     "firmware": {
       "type": "object",
       "properties": {
-        "Type": { "type": "string" },
-        "Version": { "type": "string" }
-      }
+        "Type": {
+          "type": "string",
+          "description": "Type of firmware",
+          "x-is-optional": true
+        },
+        "Version": {
+          "type": "string",
+          "description": "Version number of the firmware",
+          "x-is-optional": true
+        }
+      },
+      "description": "Information about the firmware running on a component",
+      "x-is-optional": true
     },
     "fcConnection": {
       "type": "object",
       "properties": {
-        "Type": { "type": "string" },
-        "Protocol": { "type": "string" }
-      }
+        "Type": {
+          "type": "string",
+          "description": "Connection type (e.g., UART, I2C, SPI)"
+        },
+        "Protocol": {
+          "type": "string",
+          "description": "Communication protocol used (e.g., SBUS, MAVLink)"
+        }
+      },
+      "description": "Details about how a component connects to the flight controller"
     },
     "baseComponent": {
       "type": "object",
       "required": ["Product"],
       "properties": {
-        "Product": { "$ref": "#/definitions/product" },
-        "Notes": { "type": "string" }
-      }
+        "Product": {
+          "$ref": "#/definitions/product",
+          "description": "Product information including manufacturer and model",
+          "x-is-optional": true
+        },
+        "Notes": {
+          "type": "string",
+          "description": "Additional notes or comments about the component",
+          "x-is-optional": true
+        }
+      },
+      "description": "Base definition that all vehicle components inherit from"
     },
     "flightController": {
       "allOf": [
         { "$ref": "#/definitions/baseComponent" },
         {
           "properties": {
-            "Firmware": { "$ref": "#/definitions/firmware" },
+            "Firmware": {
+              "$ref": "#/definitions/firmware",
+              "description": "Flight controller firmware information",
+              "x-is-optional": true
+            },
             "Specifications": {
               "type": "object",
               "properties": {
-                "MCU Series": { "type": "string" }
-              }
+                "MCU Series": {
+                  "type": "string",
+                  "description": "Microcontroller series used in the flight controller (e.g., STM32F4)"
+                }
+              },
+              "description": "Technical specifications of the flight controller"
             }
           },
-          "required": ["Firmware"]
+          "required": ["Firmware"],
+          "description": "Flight controller component that runs the ArduPilot firmware"
         }
       ]
     },
@@ -126,11 +192,19 @@
             "Specifications": {
               "type": "object",
               "properties": {
-                "TOW min Kg": { "type": "number" },
-                "TOW max Kg": { "type": "number" }
-              }
+                "TOW min Kg": {
+                  "type": "number",
+                  "description": "Minimum take-off weight in kilograms"
+                },
+                "TOW max Kg": {
+                  "type": "number",
+                  "description": "Maximum take-off weight in kilograms"
+                }
+              },
+              "description": "Technical specifications of the vehicle frame"
             }
-          }
+          },
+          "description": "Physical frame and structure of the vehicle"
         }
       ]
     },
@@ -139,8 +213,13 @@
         { "$ref": "#/definitions/baseComponent" },
         {
           "properties": {
-            "Firmware": { "$ref": "#/definitions/firmware" }
-          }
+            "Firmware": {
+              "$ref": "#/definitions/firmware",
+              "description": "Remote control component firmware information",
+              "x-is-optional": true
+            }
+          },
+          "description": "Remote control system component"
         }
       ]
     },
@@ -149,9 +228,17 @@
         { "$ref": "#/definitions/baseComponent" },
         {
           "properties": {
-            "Firmware": { "$ref": "#/definitions/firmware" },
-            "FC Connection": { "$ref": "#/definitions/fcConnection" }
-          }
+            "Firmware": {
+              "$ref": "#/definitions/firmware",
+              "description": "Component firmware information",
+              "x-is-optional": true
+            },
+            "FC Connection": {
+              "$ref": "#/definitions/fcConnection",
+              "description": "How this component connects to the flight controller"
+            }
+          },
+          "description": "Component that connects to the flight controller"
         }
       ]
     },
@@ -163,17 +250,37 @@
             "Specifications": {
               "type": "object",
               "properties": {
-                "Chemistry": { "type": "string" },
-                "Volt per cell max": { "type": "number" },
-                "Volt per cell low": { "type": "number" },
-                "Volt per cell crit": { "type": "number" },
-                "Number of cells": { "type": "integer" },
-                "Capacity mAh": { "type": "integer" }
+                "Chemistry": {
+                  "type": "string",
+                  "description": "Battery chemistry type (e.g., LiPo, Li-Ion, LiFe)"
+                },
+                "Volt per cell max": {
+                  "type": "number",
+                  "description": "Maximum voltage per cell when fully charged (e.g., 4.2V for LiPo)"
+                },
+                "Volt per cell low": {
+                  "type": "number",
+                  "description": "Low voltage threshold per cell when battery should be changed (e.g., 3.5V)"
+                },
+                "Volt per cell crit": {
+                  "type": "number",
+                  "description": "Critical voltage per cell below which damage may occur (e.g., 3.3V)"
+                },
+                "Number of cells": {
+                  "type": "integer",
+                  "description": "Number of cells in series (e.g., 4S means 4 cells)"
+                },
+                "Capacity mAh": {
+                  "type": "integer",
+                  "description": "Battery capacity in milliampere-hours"
+                }
               },
-              "required": ["Number of cells", "Capacity mAh"]
+              "required": ["Number of cells", "Capacity mAh"],
+              "description": "Technical specifications of the battery"
             }
           },
-          "required": ["Specifications"]
+          "required": ["Specifications"],
+          "description": "Power source for the vehicle"
         }
       ]
     },
@@ -185,10 +292,15 @@
             "Specifications": {
               "type": "object",
               "properties": {
-                "Poles": { "type": "integer" }
-              }
+                "Poles": {
+                  "type": "integer",
+                  "description": "Number of magnetic pole pairs in the motor (affects RPM calculation)"
+                }
+              },
+              "description": "Technical specifications of the motors"
             }
-          }
+          },
+          "description": "Propulsion motors that power the vehicle"
         }
       ]
     },
@@ -200,10 +312,15 @@
             "Specifications": {
               "type": "object",
               "properties": {
-                "Diameter_inches": { "type": "number" }
-              }
+                "Diameter_inches": {
+                  "type": "number",
+                  "description": "Propeller diameter in inches (affects PID tuning)"
+                }
+              },
+              "description": "Technical specifications of the propellers"
             }
-          }
+          },
+          "description": "Propellers that generate thrust for the vehicle"
         }
       ]
     }
