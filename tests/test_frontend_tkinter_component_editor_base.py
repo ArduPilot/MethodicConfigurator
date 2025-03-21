@@ -545,7 +545,9 @@ def test_main_function(mock_filesystem, mock_logging_config) -> None:
 if __name__ == "__main__":
     args = argument_parser()
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
-    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files)
+    filesystem = LocalFilesystem(
+        args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates
+    )
     app = ComponentEditorWindowBase(__version__, filesystem)
     app.root.mainloop()
 """,
@@ -566,6 +568,7 @@ if __name__ == "__main__":
             mock_args.vehicle_type,
             "",
             mock_args.allow_editing_template_files,
+            mock_args.save_component_to_system_templates,
         )
         mock_window.assert_called_once_with("test_version", mock_filesystem_instance)
         mock_root.mainloop.assert_called_once()

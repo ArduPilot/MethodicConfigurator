@@ -794,11 +794,15 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         return initial_template_name
 
 
+# pylint: disable=duplicate-code
 if __name__ == "__main__":
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
-    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files)
+    filesystem = LocalFilesystem(
+        args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates
+    )
     app = ComponentEditorWindow(__version__, filesystem)
     app.root.mainloop()
+# pylint: enable=duplicate-code

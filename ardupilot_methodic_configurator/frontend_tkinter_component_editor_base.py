@@ -133,6 +133,7 @@ class ComponentEditorWindowBase(BaseWindow):
             self.get_component_data_from_gui,
             update_data_callback,
             self.derive_initial_template_name,
+            local_filesystem.save_component_to_system_templates,
         )
 
     @staticmethod
@@ -381,6 +382,8 @@ if __name__ == "__main__":
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
-    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files)
+    filesystem = LocalFilesystem(
+        args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates
+    )
     app = ComponentEditorWindowBase(__version__, filesystem)
     app.root.mainloop()
