@@ -27,6 +27,7 @@ from logging import info as logging_info
 from sys import exit as sys_exit
 from typing import Union
 from webbrowser import open as webbrowser_open
+import requests
 
 import argcomplete
 
@@ -128,11 +129,27 @@ def component_editor(
         and flight_controller.info.firmware_type != _("Unknown")
         and flight_controller.info.firmware_type != ""
     ):
-        url = (
-            "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_HAL_ChibiOS/hwdef/"
-            f"{flight_controller.info.firmware_type}/README.md"
-        )
-        webbrowser_open(url=url, new=0, autoraise=True)
+        firmware_type = flight_controller.info.firmware_type
+        url = f"https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_HAL_ChibiOS/hwdef/{firmware_type}/README.md"
+        # see if the url is found
+        url_found = False
+        try:
+            response = requests.head(url, timeout=5)
+            url_found = response.status_code == 200
+        except (requests.RequestException, ImportError):
+            # Handle connection errors or if requests is not installed
+            url_found = False
+
+        if url_found:
+            webbrowser_open(url=url, new=0, autoraise=True)
+        # if url is not found, and firmware_type id -bdshot try without -bdshot
+        elif firmware_type.endswith("-bdshot"):
+            firmware_type = firmware_type[:-7]
+            url = (
+                f"https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_HAL_ChibiOS/hwdef/{firmware_type}/README.md"
+            )
+            webbrowser_open(url=url, new=0, autoraise=True)
+
     component_editor_window.root.mainloop()
 
     source_param_values: Union[dict[str, float], None] = (
