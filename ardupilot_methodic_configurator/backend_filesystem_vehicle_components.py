@@ -17,6 +17,7 @@ from json import load as json_load
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
+from os import makedirs as os_makedirs
 from os import path as os_path
 from os import walk as os_walk
 from re import match as re_match
@@ -35,11 +36,12 @@ class VehicleComponents:
     vehicle components configurations from a JSON file.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, save_component_to_system_templates: bool = False) -> None:
         self.vehicle_components_json_filename = "vehicle_components.json"
         self.vehicle_components_schema_filename = "vehicle_components_schema.json"
         self.vehicle_components: Union[None, dict[Any, Any]] = None
         self.schema: Union[None, dict[Any, Any]] = None
+        self.save_component_to_system_templates = save_component_to_system_templates
 
     def load_schema(self) -> dict:
         """
@@ -76,6 +78,205 @@ class VehicleComponents:
         except JSONDecodeError:
             logging_error(_("Error decoding JSON schema from file '%s'."), schema_path)
         return {}
+
+    def load_component_templates(self) -> dict[str, list[dict]]:
+        """
+        Load component templates from both system and user templates directories.
+        User templates take precedence over system templates.
+
+        :return: The merged templates as a dictionary
+        """
+        # Load system templates (read-only, comes with software)
+        system_templates = self._load_system_templates()
+
+        # Load user templates (user-editable)
+        user_templates = self._load_user_templates()
+
+        # Merge templates, with user templates taking precedence
+        merged_templates = system_templates.copy()
+        for component_name, templates in user_templates.items():
+            if component_name not in merged_templates:
+                merged_templates[component_name] = []
+
+            # Add each user template, replacing system templates with the same name
+            for user_template in templates:
+                template_name = user_template.get("name")
+                if template_name:
+                    # Add a flag to mark this as a user template
+                    user_template["user_modified"] = True
+
+                    # Find index of system template with same name, if any
+                    replaced = False
+                    for i, template in enumerate(merged_templates.get(component_name, [])):
+                        if template.get("name") == template_name:
+                            merged_templates[component_name][i] = user_template
+                            replaced = True
+                            break
+
+                    if not replaced:
+                        merged_templates.setdefault(component_name, []).append(user_template)
+
+        return merged_templates
+
+    def _load_system_templates(self) -> dict[str, list[dict]]:
+        """
+        Load system component templates.
+
+        :return: The system component templates as a dictionary
+        """
+        templates_filename = "system_vehicle_components_template.json"
+        templates_dir = ProgramSettings.get_templates_base_dir()
+        filepath = os_path.join(templates_dir, templates_filename)
+
+        templates = {}
+        try:
+            with open(filepath, encoding="utf-8") as file:
+                templates = json_load(file)
+        except FileNotFoundError:
+            logging_debug(_("System component templates file '%s' not found."), filepath)
+        except JSONDecodeError:
+            logging_error(_("Error decoding JSON system component templates from file '%s'."), filepath)
+        return templates
+
+    def _load_user_templates(self) -> dict[str, list[dict]]:
+        """
+        Load user component templates.
+
+        :return: The user component templates as a dictionary
+        """
+        templates_filename = "user_vehicle_components_template.json"
+        templates_dir = ProgramSettings.get_templates_base_dir()
+        filepath = os_path.join(templates_dir, templates_filename)
+
+        templates = {}
+        try:
+            with open(filepath, encoding="utf-8") as file:
+                templates = json_load(file)
+        except FileNotFoundError:
+            logging_debug(_("User component templates file '%s' not found."), filepath)
+        except JSONDecodeError:
+            logging_error(_("Error decoding JSON user component templates from file '%s'."), filepath)
+        return templates
+
+    def save_component_templates(self, templates: dict) -> tuple[bool, str]:  # pylint: disable=too-many-branches
+        """
+        Save component templates.
+        For user templates: Only save templates that are user-modified or not present in system templates.
+        For system templates: Merge with existing system templates, adding new ones.
+
+        :param templates: The templates to save
+        :return: A tuple of (error_occurred, error_message)
+        """
+        # Load system templates to compare against
+        system_templates = self._load_system_templates()
+
+        # Determine which templates need to be saved to user file
+        templates_to_save: dict[str, list[dict[str, Any]]] = {}
+
+        if self.save_component_to_system_templates:
+            # For system templates, start with existing system templates
+            templates_to_save = system_templates.copy()
+
+            # Then add new templates that don't exist yet
+            for component_name, component_templates in templates.items():
+                if component_name not in templates_to_save:
+                    templates_to_save[component_name] = []
+
+                # Create a mapping of existing template names for this component
+                existing_template_names = {t.get("name"): True for t in templates_to_save[component_name]}
+
+                for template in component_templates:
+                    template_name = template.get("name")
+                    if not template_name:
+                        continue
+
+                    # Only add if it doesn't exist in system templates yet
+                    if template_name not in existing_template_names:
+                        template_copy = template.copy()
+                        if "user_modified" in template_copy:
+                            del template_copy["user_modified"]
+                        templates_to_save[component_name].append(template_copy)
+                        existing_template_names[template_name] = True
+        else:
+            for component_name, component_templates in templates.items():
+                templates_to_save[component_name] = []
+
+                # Create a mapping of system template names for this component
+                if component_name in system_templates:
+                    system_template_names = {t.get("name"): t for t in system_templates.get(component_name, [])}
+                else:
+                    system_template_names = {}
+
+                for template in component_templates:
+                    template_name = template.get("name")
+                    if not template_name:
+                        continue
+
+                    # If the template is marked as user-modified, save it
+                    if template.get("user_modified", False):
+                        # Remove the flag before saving
+                        template_copy = template.copy()
+                        if "user_modified" in template_copy:
+                            del template_copy["user_modified"]
+                        templates_to_save[component_name].append(template_copy)
+                        continue
+
+                    # If the template exists in system templates, check if it's different
+                    if template_name in system_template_names:
+                        system_template = system_template_names[template_name]
+
+                        # Deep comparison of data section
+                        if template.get("data") != system_template.get("data"):
+                            # Template is modified from system version
+                            template_copy = template.copy()
+                            templates_to_save[component_name].append(template_copy)
+                    else:
+                        # Template doesn't exist in system templates, so it's user-added
+                        templates_to_save[component_name].append(template.copy())
+
+                # Remove empty component entries
+                if not templates_to_save[component_name]:
+                    del templates_to_save[component_name]
+
+        return self.save_component_templates_to_file(templates_to_save)
+
+    def save_component_templates_to_file(self, templates_to_save: dict[str, list[dict[str, Any]]]) -> tuple[bool, str]:
+        if self.save_component_to_system_templates:
+            # Save to system templates file
+            templates_filename = "system_vehicle_components_template.json"
+        else:
+            # Save to user templates file
+            templates_filename = "user_vehicle_components_template.json"
+        templates_dir = ProgramSettings.get_templates_base_dir()
+
+        # Create the directory if it doesn't exist
+        try:
+            os_makedirs(templates_dir, exist_ok=True)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            msg = _("Failed to create templates directory '{}': {}").format(templates_dir, str(e))
+            logging_error(msg)
+            return True, msg
+
+        # Now create the file path and write to it
+        filepath = os_path.join(templates_dir, templates_filename)
+
+        try:
+            with open(filepath, "w", encoding="utf-8") as file:
+                json_dump(templates_to_save, file, indent=4)
+            return False, ""  # Success
+        except FileNotFoundError:
+            msg = _("File not found when writing to '{}': {}").format(filepath, _("Path not found"))
+            logging_error(msg)
+        except PermissionError:
+            msg = _("Permission denied when writing to file '{}'").format(filepath)
+            logging_error(msg)
+        except OSError as e:
+            msg = _("OS error when writing to file '{}': {}").format(filepath, str(e))
+            logging_error(msg)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            msg = _("Unexpected error saving templates to file '{}': {}").format(filepath, str(e))
+            logging_error(msg)
+        return True, msg
 
     def validate_vehicle_components(self, data: dict) -> tuple[bool, str]:
         """

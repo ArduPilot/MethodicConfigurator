@@ -19,12 +19,13 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
-from typing import Union
+from typing import Any, Union
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_component_template_manager import ComponentTemplateManager
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message, show_tooltip
@@ -123,6 +124,18 @@ class ComponentEditorWindowBase(BaseWindow):
         if UsagePopupWindow.should_display("component_editor"):
             self.root.after(10, self.__display_component_editor_usage_instructions(self.root))  # type: ignore[arg-type]
 
+        def update_data_callback(comp_name: str, template_data: dict) -> None:
+            self.data["Components"][comp_name] = template_data
+
+        self.template_manager = ComponentTemplateManager(
+            self.root,
+            self.entry_widgets,
+            self.get_component_data_from_gui,
+            update_data_callback,
+            self.derive_initial_template_name,
+            local_filesystem.save_component_to_system_templates,
+        )
+
     @staticmethod
     def __display_component_editor_usage_instructions(parent: tk.Toplevel) -> None:
         usage_popup_window = BaseWindow(parent)
@@ -203,6 +216,9 @@ class ComponentEditorWindowBase(BaseWindow):
             if description:
                 show_tooltip(frame, _(description), position_below=False)
 
+            if is_toplevel and key in self.data.get("Components", {}):
+                self._add_template_controls(frame, key)
+
             for sub_key, sub_value in value.items():
                 # recursively add child elements
                 self.__add_widget(frame, sub_key, sub_value, [*path, key])
@@ -233,6 +249,51 @@ class ComponentEditorWindowBase(BaseWindow):
             if description:
                 show_tooltip(label, _(description))
                 show_tooltip(entry, _(description))
+
+    def _add_template_controls(self, parent_frame: ttk.LabelFrame, component_name: str) -> None:
+        """Add template controls for a component."""
+        self.template_manager.add_template_controls(parent_frame, component_name)
+
+    def derive_initial_template_name(self, component_data: dict[str, Any]) -> str:  # pylint: disable=unused-argument # noqa: ARG002
+        """
+        Derive an initial template name from the component data.
+
+        This is a basic implementation that can be overridden in derived classes
+        to provide more specific template naming logic.
+        """
+        return ""
+
+    def get_component_data_from_gui(self, component_name: str) -> dict[str, Any]:
+        """Save the current component configuration as a template."""
+        # Get fresh component data from the GUI elements instead of stored data
+        component_data: dict[str, Any] = {}
+
+        # Find all entry widgets belonging to this component and extract their values
+        for path, entry in self.entry_widgets.items():
+            if len(path) >= 1 and path[0] == component_name:
+                # Get the current value from the entry widget
+                value: Union[str, int, float] = entry.get()
+
+                # Try to convert to appropriate type (int, float, or string)
+                if path[-1] != "Version":
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        try:
+                            value = float(value)
+                        except ValueError:
+                            value = str(value).strip()
+
+                # Create nested structure by navigating through the path
+                current_level = component_data
+                for key in path[1:-1]:  # Skip component_name and the last key
+                    if key not in current_level:
+                        current_level[key] = {}
+                    current_level = current_level[key]
+
+                # Set the value at the final level
+                current_level[path[-1]] = value
+        return component_data
 
     def validate_and_save_component_json(self) -> None:
         """Saves the edited JSON data back to the file."""
@@ -318,6 +379,8 @@ if __name__ == "__main__":
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
-    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files)
+    filesystem = LocalFilesystem(
+        args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates
+    )
     app = ComponentEditorWindowBase(__version__, filesystem)
     app.root.mainloop()

@@ -783,12 +783,26 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         return not (invalid_values or duplicated_connections)
 
+    def derive_initial_template_name(self, component_data: dict[str, Any]) -> str:
+        """Derive an initial template name from the component data."""
+        initial_template_name: str = ""
+        product_data = component_data.get("Product")
+        if product_data:
+            manufacturer = product_data.get("Manufacturer", "")
+            model = product_data.get("Model", "")
+            initial_template_name = manufacturer + " " + model
+        return initial_template_name
 
+
+# pylint: disable=duplicate-code
 if __name__ == "__main__":
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
-    filesystem = LocalFilesystem(args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files)
+    filesystem = LocalFilesystem(
+        args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates
+    )
     app = ComponentEditorWindow(__version__, filesystem)
     app.root.mainloop()
+# pylint: enable=duplicate-code
