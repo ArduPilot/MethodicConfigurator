@@ -107,6 +107,7 @@ def process_template_directory(template_dir: Path) -> None:
             vehicle_type="",
             fw_version=__version__,
             allow_editing_template_files=True,
+            save_component_to_system_templates=False,
         )
 
         if local_fs.vehicle_type not in str(template_dir):

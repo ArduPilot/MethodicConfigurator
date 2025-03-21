@@ -30,6 +30,7 @@ class ComponentTemplateManager:  # pylint: disable=too-many-instance-attributes
         get_component_data_callback: CollectionsCallable[[str], dict[str, Any]],
         update_data_callback: CollectionsCallable[[str, dict[str, Any]], None],
         derive_template_name_callback: CollectionsCallable[[dict[str, Any]], str],
+        save_component_to_system_templates: bool = False,
     ) -> None:
         """
         Initialize the ComponentTemplateManager.
@@ -46,7 +47,7 @@ class ComponentTemplateManager:  # pylint: disable=too-many-instance-attributes
         self.entry_widgets = entry_widgets
         self.buttons: dict[str, ttk.Button] = {}
         self.current_menu: Union[Menu, None] = None
-        self.template_manager = VehicleComponents()
+        self.template_manager = VehicleComponents(save_component_to_system_templates)
         self.get_component_data_callback = get_component_data_callback
         self.update_data_callback = update_data_callback
         self.derive_template_name_callback = derive_template_name_callback

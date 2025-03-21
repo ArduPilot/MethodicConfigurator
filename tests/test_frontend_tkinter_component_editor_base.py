@@ -349,6 +349,7 @@ def test_main_function(mock_filesystem, mock_logging_config) -> None:
     mock_args.vehicle_dir = "/fake/path"
     mock_args.vehicle_type = "copter"
     mock_args.allow_editing_template_files = False
+    mock_args.save_component_to_system_templates = False
 
     # Mock filesystem instance
     mock_filesystem_instance = MagicMock()
@@ -401,7 +402,11 @@ if __name__ == "__main__":
 
         # Verify the window was created with correct parameters
         mock_filesystem.assert_called_once_with(
-            mock_args.vehicle_dir, mock_args.vehicle_type, "", mock_args.allow_editing_template_files
+            mock_args.vehicle_dir,
+            mock_args.vehicle_type,
+            "",
+            mock_args.allow_editing_template_files,
+            mock_args.save_component_to_system_templates,
         )
         mock_window.assert_called_once_with("test_version", mock_filesystem_instance)
         mock_root.mainloop.assert_called_once()
