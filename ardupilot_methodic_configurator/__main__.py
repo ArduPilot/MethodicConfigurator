@@ -34,6 +34,7 @@ from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_internet import verify_and_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
@@ -128,11 +129,16 @@ def component_editor(
         and flight_controller.info.firmware_type != _("Unknown")
         and flight_controller.info.firmware_type != ""
     ):
-        url = (
-            "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_HAL_ChibiOS/hwdef/"
-            f"{flight_controller.info.firmware_type}/README.md"
-        )
-        webbrowser_open(url=url, new=0, autoraise=True)
+        firmware_type = flight_controller.info.firmware_type
+        url = f"https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_HAL_ChibiOS/hwdef/{firmware_type}/README.md"
+        url_found = verify_and_open_url(url)
+        if not url_found and firmware_type.endswith("-bdshot"):
+            firmware_type = firmware_type[:-7]
+            url = (
+                f"https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_HAL_ChibiOS/hwdef/{firmware_type}/README.md"
+            )
+            url_found = verify_and_open_url(url)
+
     component_editor_window.root.mainloop()
 
     source_param_values: Union[dict[str, float], None] = (

@@ -12,10 +12,12 @@ import os
 import subprocess
 import tempfile
 from datetime import datetime, timezone
+from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from typing import Any, Callable, Optional
 from urllib.parse import urljoin
+from webbrowser import open as webbrowser_open
 
 from requests import HTTPError as requests_HTTPError
 from requests import RequestException as requests_RequestException
@@ -195,3 +197,49 @@ def download_and_install_pip_release(progress_callback: Optional[Callable[[float
         progress_callback(100.0, _("Download complete"))
 
     return ret
+
+
+def verify_and_open_url(url: str) -> bool:
+    """
+    Verify if a URL is accessible and open it in the default web browser if successful.
+
+    Args:
+        url: The URL to verify and open
+
+    Returns:
+        bool: True if the URL was found and opened, False otherwise
+
+    """
+    if not url:
+        logging_error(_("URL not provided."))
+        return False
+
+    logging_debug(_("Verifying URL: %s"), url)
+    url_found: bool = False
+
+    try:
+        # Get proxy settings from environment variables
+        proxies_dict = {
+            "http": os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy"),
+            "https": os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy"),
+            "no_proxy": os.environ.get("NO_PROXY") or os.environ.get("no_proxy"),
+        }
+        # Remove None values
+        proxies = {k: v for k, v in proxies_dict.items() if v is not None}
+
+        # Use requests.get with allow_redirects to handle HTTP redirects properly
+        response = requests_get(url, timeout=5, stream=True, allow_redirects=True, proxies=proxies, verify=True)
+        url_found = response.status_code == 200
+    except (requests_RequestException, requests_Timeout) as e:
+        logging_error(_("Failed to access URL: %s. Error: %s"), url, str(e))
+        url_found = False
+
+    if url_found:
+        try:
+            logging_info(_("Opening URL in browser: %s"), url)
+            webbrowser_open(url=url, new=0, autoraise=True)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logging_error(_("Failed to open URL in browser: %s"), str(e))
+            url_found = False
+
+    return url_found

@@ -16,12 +16,14 @@ from unittest.mock import Mock, patch
 import pytest
 from requests import HTTPError as requests_HTTPError
 from requests import RequestException as requests_RequestException
+from requests import Timeout as requests_Timeout
 
 from ardupilot_methodic_configurator.backend_internet import (
     download_and_install_on_windows,
     download_and_install_pip_release,
     download_file_from_url,
     get_release_info,
+    verify_and_open_url,
 )
 
 
@@ -293,3 +295,125 @@ class TestDownloadFile:
         # Test file overwrite
         assert download_file_from_url("http://test.com", str(test_file))
         assert test_file.exists()
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+@patch("ardupilot_methodic_configurator.backend_internet.webbrowser_open")
+def test_verify_and_open_url_success(mock_webbrowser_open, mock_get) -> None:
+    """Test successful URL verification and opening."""
+    # Setup mock responses
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_get.return_value = mock_response
+    mock_webbrowser_open.return_value = True
+
+    # Call function and verify results
+    assert verify_and_open_url("https://example.com")
+    mock_get.assert_called_once()
+    mock_webbrowser_open.assert_called_once_with(url="https://example.com", new=0, autoraise=True)
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+@patch("ardupilot_methodic_configurator.backend_internet.webbrowser_open")
+def test_verify_and_open_url_empty_url(mock_webbrowser_open, mock_get) -> None:
+    """Test with empty URL."""
+    assert not verify_and_open_url("")
+    mock_get.assert_not_called()
+    mock_webbrowser_open.assert_not_called()
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+@patch("ardupilot_methodic_configurator.backend_internet.webbrowser_open")
+def test_verify_and_open_url_http_error(mock_webbrowser_open, mock_get) -> None:
+    """Test with HTTP error response."""
+    mock_response = Mock()
+    mock_response.status_code = 404
+    mock_get.return_value = mock_response
+
+    assert not verify_and_open_url("https://example.com")
+    mock_get.assert_called_once()
+    mock_webbrowser_open.assert_not_called()
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+@patch("ardupilot_methodic_configurator.backend_internet.webbrowser_open")
+def test_verify_and_open_url_request_exception(mock_webbrowser_open, mock_get) -> None:
+    """Test with request exception."""
+    mock_get.side_effect = requests_RequestException("Connection failed")
+
+    assert not verify_and_open_url("https://example.com")
+    mock_get.assert_called_once()
+    mock_webbrowser_open.assert_not_called()
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+@patch("ardupilot_methodic_configurator.backend_internet.webbrowser_open")
+def test_verify_and_open_url_timeout(mock_webbrowser_open, mock_get) -> None:
+    """Test with request timeout."""
+    mock_get.side_effect = requests_Timeout("Request timed out")
+
+    assert not verify_and_open_url("https://example.com")
+    mock_get.assert_called_once()
+    mock_webbrowser_open.assert_not_called()
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+@patch("ardupilot_methodic_configurator.backend_internet.webbrowser_open")
+def test_verify_and_open_url_browser_exception(mock_webbrowser_open, mock_get) -> None:
+    """Test with browser opening exception."""
+    # Setup successful HTTP response but browser error
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_get.return_value = mock_response
+    mock_webbrowser_open.side_effect = Exception("Browser failed to open")
+
+    assert not verify_and_open_url("https://example.com")
+    mock_get.assert_called_once()
+    mock_webbrowser_open.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "env_vars",
+    [
+        {},
+        {"HTTP_PROXY": "http://proxy:8080"},
+        {"HTTPS_PROXY": "https://proxy:8080"},
+        {"NO_PROXY": "localhost"},
+        {"HTTP_PROXY": "http://proxy:8080", "HTTPS_PROXY": "https://proxy:8080"},
+    ],
+)
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+@patch("ardupilot_methodic_configurator.backend_internet.webbrowser_open")
+def test_verify_and_open_url_proxy_handling(mock_webbrowser_open, mock_get, env_vars, monkeypatch) -> None:
+    """Test proxy handling with different environment variables."""
+    # Clear existing env vars
+    for var in ["HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy"]:
+        monkeypatch.delenv(var, raising=False)
+
+    # Set test env vars
+    for key, value in env_vars.items():
+        monkeypatch.setenv(key, value)
+
+    # Setup successful response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_get.return_value = mock_response
+    mock_webbrowser_open.return_value = True
+
+    # Call function
+    assert verify_and_open_url("https://example.com")
+
+    # Verify correct proxies were used
+    expected_proxies = {k.lower().replace("_proxy", ""): v for k, v in env_vars.items() if k.upper() != "NO_PROXY"}
+    if "NO_PROXY" in env_vars:
+        expected_proxies["no_proxy"] = env_vars["NO_PROXY"]
+
+    # Get the actual proxies passed to requests_get
+    call_args = mock_get.call_args
+    if expected_proxies:
+        assert "proxies" in call_args[1]
+        for key, value in expected_proxies.items():
+            assert call_args[1]["proxies"][key] == value
+    else:
+        # Empty dict should be passed when no proxies are configured
+        assert call_args[1]["proxies"] == {}
