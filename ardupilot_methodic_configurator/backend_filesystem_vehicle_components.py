@@ -158,7 +158,7 @@ class VehicleComponents:
             logging_error(_("Error decoding JSON user component templates from file '%s'."), filepath)
         return templates
 
-    def save_component_templates(self, templates: dict) -> tuple[bool, str]:
+    def save_component_templates(self, templates: dict) -> tuple[bool, str]:  # pylint: disable=too-many-branches
         """
         Save component templates.
         For user templates: Only save templates that are user-modified or not present in system templates.

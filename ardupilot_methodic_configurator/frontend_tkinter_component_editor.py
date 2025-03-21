@@ -794,6 +794,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         return initial_template_name
 
 
+# pylint: disable=duplicate-code
 if __name__ == "__main__":
     args = argument_parser()
 
@@ -804,3 +805,4 @@ if __name__ == "__main__":
     )
     app = ComponentEditorWindow(__version__, filesystem)
     app.root.mainloop()
+# pylint: enable=duplicate-code

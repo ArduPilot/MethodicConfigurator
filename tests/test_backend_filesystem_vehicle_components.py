@@ -737,7 +737,7 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "save_component_templates_to_file")
-    def test_save_component_templates_to_system(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_save_component_templates_to_system(  # type: ignore[misc]
         self, mock_save_to_file, mock_load_system
     ) -> None:
         """Test saving templates to system templates when save_component_to_system_templates is True."""
