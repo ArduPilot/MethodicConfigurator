@@ -190,7 +190,11 @@ def main() -> None:
 
     try:
         local_filesystem = LocalFilesystem(
-            args.vehicle_dir, vehicle_type, flight_controller.info.flight_sw_version, args.allow_editing_template_files
+            args.vehicle_dir,
+            vehicle_type,
+            flight_controller.info.flight_sw_version,
+            args.allow_editing_template_files,
+            args.save_component_to_system_templates,
         )
     except SystemExit as exp:
         show_error_message(_("Fatal error reading parameter files"), f"{exp}")

@@ -735,6 +735,48 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
         assert "Unexpected error" in msg
         assert "Cannot serialize circular reference" in msg
 
+    @patch.object(VehicleComponents, "_load_system_templates")
+    @patch.object(VehicleComponents, "save_component_templates_to_file")
+    def test_save_component_templates_to_system(  # type: ignore[misc]
+        self, mock_save_to_file, mock_load_system
+    ) -> None:
+        """Test saving templates to system templates when save_component_to_system_templates is True."""
+        # Setup system templates
+        system_templates = {"ExistingComponent": [{"name": "Existing Template", "data": {"param": "value"}}]}
+
+        # Setup new templates to save
+        new_templates = {"NewComponent": [{"name": "New Template", "data": {"param": "new_value"}}]}
+
+        # Set up the instance to save to system templates
+        self.vehicle_components.save_component_to_system_templates = True
+
+        # Mock loading system templates
+        mock_load_system.return_value = system_templates
+        mock_save_to_file.return_value = (False, "")  # No error
+
+        # Call the method
+        result, msg = self.vehicle_components.save_component_templates(new_templates)
+
+        # Verify success
+        assert not result  # False means success
+        assert msg == ""
+
+        # Capture what was passed to save_component_templates_to_file
+        saved_templates = mock_save_to_file.call_args[0][0]
+
+        # Verify that system templates and new templates were merged
+        assert "ExistingComponent" in saved_templates
+        assert "NewComponent" in saved_templates
+
+        # Verify existing component was preserved
+        assert len(saved_templates["ExistingComponent"]) == 1
+        assert saved_templates["ExistingComponent"][0]["name"] == "Existing Template"
+
+        # Verify new component was added
+        assert len(saved_templates["NewComponent"]) == 1
+        assert saved_templates["NewComponent"][0]["name"] == "New Template"
+        assert saved_templates["NewComponent"][0]["data"]["param"] == "new_value"
+
 
 if __name__ == "__main__":
     unittest.main()

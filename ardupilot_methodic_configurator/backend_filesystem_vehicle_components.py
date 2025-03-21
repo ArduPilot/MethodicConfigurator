@@ -36,11 +36,12 @@ class VehicleComponents:
     vehicle components configurations from a JSON file.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, save_component_to_system_templates: bool = False) -> None:
         self.vehicle_components_json_filename = "vehicle_components.json"
         self.vehicle_components_schema_filename = "vehicle_components_schema.json"
         self.vehicle_components: Union[None, dict[Any, Any]] = None
         self.schema: Union[None, dict[Any, Any]] = None
+        self.save_component_to_system_templates = save_component_to_system_templates
 
     def load_schema(self) -> dict:
         """
@@ -157,10 +158,11 @@ class VehicleComponents:
             logging_error(_("Error decoding JSON user component templates from file '%s'."), filepath)
         return templates
 
-    def save_component_templates(self, templates: dict) -> tuple[bool, str]:
+    def save_component_templates(self, templates: dict) -> tuple[bool, str]:  # pylint: disable=too-many-branches
         """
         Save component templates.
-        Only save templates that are user-modified or not present in system templates.
+        For user templates: Only save templates that are user-modified or not present in system templates.
+        For system templates: Merge with existing system templates, adding new ones.
 
         :param templates: The templates to save
         :return: A tuple of (error_occurred, error_message)
@@ -171,51 +173,80 @@ class VehicleComponents:
         # Determine which templates need to be saved to user file
         templates_to_save: dict[str, list[dict[str, Any]]] = {}
 
-        for component_name, component_templates in templates.items():
-            templates_to_save[component_name] = []
+        if self.save_component_to_system_templates:
+            # For system templates, start with existing system templates
+            templates_to_save = system_templates.copy()
 
-            # Create a mapping of system template names for this component
-            if component_name in system_templates:
-                system_template_names = {t.get("name"): t for t in system_templates.get(component_name, [])}
-            else:
-                system_template_names = {}
+            # Then add new templates that don't exist yet
+            for component_name, component_templates in templates.items():
+                if component_name not in templates_to_save:
+                    templates_to_save[component_name] = []
 
-            for template in component_templates:
-                template_name = template.get("name")
-                if not template_name:
-                    continue
+                # Create a mapping of existing template names for this component
+                existing_template_names = {t.get("name"): True for t in templates_to_save[component_name]}
 
-                # If the template is marked as user-modified, save it
-                if template.get("user_modified", False):
-                    # Remove the flag before saving
-                    template_copy = template.copy()
-                    if "user_modified" in template_copy:
-                        del template_copy["user_modified"]
-                    templates_to_save[component_name].append(template_copy)
-                    continue
+                for template in component_templates:
+                    template_name = template.get("name")
+                    if not template_name:
+                        continue
 
-                # If the template exists in system templates, check if it's different
-                if template_name in system_template_names:
-                    system_template = system_template_names[template_name]
-
-                    # Deep comparison of data section
-                    if template.get("data") != system_template.get("data"):
-                        # Template is modified from system version
+                    # Only add if it doesn't exist in system templates yet
+                    if template_name not in existing_template_names:
                         template_copy = template.copy()
+                        if "is_user_modified" in template_copy:
+                            del template_copy["is_user_modified"]
                         templates_to_save[component_name].append(template_copy)
-                else:
-                    # Template doesn't exist in system templates, so it's user-added
-                    templates_to_save[component_name].append(template.copy())
+                        existing_template_names[template_name] = True
+        else:
+            for component_name, component_templates in templates.items():
+                templates_to_save[component_name] = []
 
-            # Remove empty component entries
-            if not templates_to_save[component_name]:
-                del templates_to_save[component_name]
+                # Create a mapping of system template names for this component
+                if component_name in system_templates:
+                    system_template_names = {t.get("name"): t for t in system_templates.get(component_name, [])}
+                else:
+                    system_template_names = {}
+
+                for template in component_templates:
+                    template_name = template.get("name")
+                    if not template_name:
+                        continue
+
+                    # If the template is marked as user-modified, save it
+                    if template.get("is_user_modified", False):
+                        # Remove the flag before saving
+                        template_copy = template.copy()
+                        if "is_user_modified" in template_copy:
+                            del template_copy["is_user_modified"]
+                        templates_to_save[component_name].append(template_copy)
+                        continue
+
+                    # If the template exists in system templates, check if it's different
+                    if template_name in system_template_names:
+                        system_template = system_template_names[template_name]
+
+                        # Deep comparison of data section
+                        if template.get("data") != system_template.get("data"):
+                            # Template is modified from system version
+                            template_copy = template.copy()
+                            templates_to_save[component_name].append(template_copy)
+                    else:
+                        # Template doesn't exist in system templates, so it's user-added
+                        templates_to_save[component_name].append(template.copy())
+
+                # Remove empty component entries
+                if not templates_to_save[component_name]:
+                    del templates_to_save[component_name]
 
         return self.save_component_templates_to_file(templates_to_save)
 
     def save_component_templates_to_file(self, templates_to_save: dict[str, list[dict[str, Any]]]) -> tuple[bool, str]:
-        # Save to user templates file
-        templates_filename = "user_vehicle_components_template.json"
+        if self.save_component_to_system_templates:
+            # Save to system templates file
+            templates_filename = "system_vehicle_components_template.json"
+        else:
+            # Save to user templates file
+            templates_filename = "user_vehicle_components_template.json"
         templates_dir = ProgramSettings.get_templates_base_dir()
 
         # Create the directory if it doesn't exist

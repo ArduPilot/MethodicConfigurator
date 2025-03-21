@@ -26,7 +26,13 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_read_params_from_files(self) -> None:
         """Test reading parameters from files with proper filtering."""
         mock_vehicle_dir = "/mock/dir"
-        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", allow_editing_template_files=False)
+        filesystem = LocalFilesystem(
+            mock_vehicle_dir,
+            "ArduCopter",
+            "4.3.0",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
 
         with (
             patch(
@@ -46,7 +52,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             assert result["02_test.param"] == {"PARAM1": 1.0}
 
     def test_str_to_bool(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         assert lfs.str_to_bool("true")
         assert lfs.str_to_bool("yes")
         assert lfs.str_to_bool("1")
@@ -58,7 +66,13 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_re_init(self) -> None:
         """Test reinitializing the filesystem with new parameters."""
         mock_vehicle_dir = "/mock/dir"
-        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", allow_editing_template_files=False)
+        filesystem = LocalFilesystem(
+            mock_vehicle_dir,
+            "ArduCopter",
+            "4.3.0",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
 
         with (
             patch.object(filesystem, "load_vehicle_components_json_data", return_value=True),
@@ -74,7 +88,13 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_vehicle_configuration_files_exist(self) -> None:
         """Test checking if vehicle configuration files exist."""
         mock_vehicle_dir = "/mock/dir"
-        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", allow_editing_template_files=False)
+        filesystem = LocalFilesystem(
+            mock_vehicle_dir,
+            "ArduCopter",
+            "4.3.0",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
 
         with (
             patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists", return_value=True),
@@ -97,7 +117,13 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_rename_parameter_files(self) -> None:
         """Test renaming parameter files."""
         mock_vehicle_dir = "/mock/dir"
-        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", allow_editing_template_files=False)
+        filesystem = LocalFilesystem(
+            mock_vehicle_dir,
+            "ArduCopter",
+            "4.3.0",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
         filesystem.configuration_steps = {"new_file.param": {"old_filenames": ["old_file.param"]}}
 
         with (
@@ -114,7 +140,13 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_vehicle_configuration_file_exists_comprehensive(self) -> None:
         """Test checking if a specific configuration file exists with comprehensive path and size checks."""
         mock_vehicle_dir = "/mock/dir"
-        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", allow_editing_template_files=False)
+        filesystem = LocalFilesystem(
+            mock_vehicle_dir,
+            "ArduCopter",
+            "4.3.0",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
 
         # Test with all conditions met (file exists, is a file, and has size > 0)
         with (
@@ -155,7 +187,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_zip_file_exists(self, mock_isfile, mock_exists) -> None:
         mock_exists.return_value = True
         mock_isfile.return_value = True
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         result = lfs.zip_file_exists()
         assert result
         mock_exists.assert_called_once()
@@ -166,7 +200,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_vehicle_image_exists(self, mock_isfile, mock_exists) -> None:
         mock_exists.return_value = True
         mock_isfile.return_value = True
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         result = lfs.vehicle_image_exists()
         assert result
         mock_exists.assert_called_once()
@@ -186,7 +222,13 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         """Test getting current working directory."""
         mock_vehicle_dir = "/mock/dir"
         mock_cwd = "/test/dir"
-        filesystem = LocalFilesystem(mock_vehicle_dir, "ArduCopter", "4.3.0", allow_editing_template_files=False)
+        filesystem = LocalFilesystem(
+            mock_vehicle_dir,
+            "ArduCopter",
+            "4.3.0",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
 
         with patch("ardupilot_methodic_configurator.backend_filesystem.os_getcwd", return_value=mock_cwd) as mock_getcwd:
             result = filesystem.getcwd()
@@ -214,7 +256,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         mock_basename.assert_called_once_with("tail")
 
     def test_vehicle_image_filepath(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         with patch("os.path.join") as mock_join:
             mock_join.return_value = "vehicle_dir/vehicle.jpg"
             result = lfs.vehicle_image_filepath()
@@ -222,7 +266,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             mock_join.assert_called_once_with("vehicle_dir", "vehicle.jpg")
 
     def test_tempcal_imu_result_param_tuple(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         with patch("os.path.join") as mock_join:
             mock_join.return_value = "vehicle_dir/03_imu_temperature_calibration_results.param"
             result = lfs.tempcal_imu_result_param_tuple()
@@ -233,7 +279,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             mock_join.assert_called_once_with("vehicle_dir", "03_imu_temperature_calibration_results.param")
 
     def test_zip_file_path(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         with patch("os.path.join") as mock_join:
             mock_join.return_value = "vehicle_dir/vehicle_name.zip"
             lfs.get_vehicle_directory_name = MagicMock(return_value="vehicle_name")
@@ -242,7 +290,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             mock_join.assert_called_once_with("vehicle_dir", "vehicle_name.zip")
 
     def test_add_configuration_file_to_zip(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         with patch("os.path.join") as mock_join:
             mock_join.return_value = "vehicle_dir/test_file.param"
             lfs.vehicle_configuration_file_exists = MagicMock(return_value=True)
@@ -253,33 +303,43 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
     def test_get_upload_local_and_remote_filenames_missing_file(self) -> None:
         """Test get_upload_local_and_remote_filenames with missing file."""
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         result = lfs.get_upload_local_and_remote_filenames("missing_file")
         assert result == ("", "")
 
     def test_get_upload_local_and_remote_filenames_missing_upload_section(self) -> None:
         """Test get_upload_local_and_remote_filenames with missing upload section."""
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         lfs.configuration_steps = {"selected_file": {}}
         result = lfs.get_upload_local_and_remote_filenames("selected_file")
         assert result == ("", "")
 
     def test_get_download_url_and_local_filename_missing_file(self) -> None:
         """Test get_download_url_and_local_filename with missing file."""
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         result = lfs.get_download_url_and_local_filename("missing_file")
         assert result == ("", "")
 
     def test_get_download_url_and_local_filename_missing_download_section(self) -> None:
         """Test get_download_url_and_local_filename with missing download section."""
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         lfs.configuration_steps = {"selected_file": {}}
         result = lfs.get_download_url_and_local_filename("selected_file")
         assert result == ("", "")
 
     def test_write_and_read_last_uploaded_filename_error_handling(self) -> None:
         """Test error handling in write_and_read_last_uploaded_filename."""
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         test_filename = "test.param"
 
         # Test write error
@@ -294,7 +354,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
     def test_copy_fc_values_to_file_with_missing_params(self) -> None:
         """Test copy_fc_values_to_file with missing parameters."""
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         test_params = {"PARAM1": 1.0, "PARAM2": 2.0, "PARAM3": 3.0}
         test_file = "test.param"
 
@@ -307,14 +369,18 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
     def test_get_start_file_empty_files(self) -> None:
         """Test get_start_file with empty files list."""
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         lfs.file_parameters = {}
         result = lfs.get_start_file(1, tcal_available=True)
         assert result == ""
 
     def test_get_eval_variables_with_none(self) -> None:
         """Test get_eval_variables with None values."""
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         lfs.vehicle_components = None
         lfs.doc_dict = None
         result = lfs.get_eval_variables()
@@ -322,7 +388,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
     def test_tolerance_check_with_zero_values(self) -> None:
         """Test numerical value comparison with zero values."""
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
 
         # Test zero values
         x, y = 0.0, 0.0
@@ -370,7 +438,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert is_within_tolerance(10.0, 9.985, atol=custom_tolerance)  # -0.15% - should pass
 
     def test_write_param_default_values(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
 
         # Test with new values
         new_values = {"PARAM1": MagicMock(value=1.0)}
@@ -383,7 +453,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert result is False
 
     def test_get_start_file(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         lfs.file_parameters = {"01_file.param": {}, "02_file.param": {}, "03_file.param": {}}
 
         # Test with explicit index
@@ -403,7 +475,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert result == "03_file.param"
 
     def test_get_eval_variables(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
 
         # Test with empty components and doc_dict
         result = lfs.get_eval_variables()
@@ -420,7 +494,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
     def test_tolerance_check(self) -> None:
         """Test numerical value comparison with tolerances."""
-        LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
 
         # Test exact match
         x, y = 1.0, 1.0
@@ -445,7 +521,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert abs(x - y) <= 1e-08 + (1.0 * abs(y))  # rtol=1.0
 
     def test_categorize_parameters(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         lfs.param_default_dict = {"PARAM1": MagicMock(value=1.0)}
         lfs.doc_dict = {"PARAM1": {"ReadOnly": True}, "PARAM2": {"Calibration": True}, "PARAM3": {}}
 
@@ -458,7 +536,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert "PARAM3" in other
 
     def test_update_and_export_vehicle_params_from_fc(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
 
         # Test with empty file_parameters
@@ -487,7 +567,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             mock_export.assert_called_once_with("formatted_params", os_path.join("vehicle_dir", "test.param"))
 
     def test_write_param_default_values_to_file(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         param_mock = MagicMock()
         param_mock.value = 1.0
         param_default_values = {"PARAM1": param_mock}
@@ -510,7 +592,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             mock_export.assert_not_called()
 
     def test_export_to_param(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         param_mock = MagicMock()
         param_mock.value = 1.0
         test_params = {"PARAM1": param_mock}
@@ -536,7 +620,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             mock_update.assert_not_called()
 
     def test_all_intermediate_parameter_file_comments(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         lfs.file_parameters = {
             "file1.param": {"PARAM1": MagicMock(comment="Comment 1"), "PARAM2": MagicMock(comment="Comment 2")},
             "file2.param": {"PARAM2": MagicMock(comment="Override comment 2"), "PARAM3": MagicMock(comment="Comment 3")},
@@ -572,7 +658,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
                 assert result == ""
 
     def test_extend_and_reformat_parameter_documentation_metadata(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
 
         test_doc_dict = {
             "PARAM1": {
@@ -630,7 +718,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert args["allow_editing_template_files"] is True
 
     def test_annotate_intermediate_comments_to_param_dict(self) -> None:
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
 
         # Set up mock comments in file_parameters
         mock_param1 = MagicMock()
@@ -670,7 +760,9 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         mock_join.side_effect = lambda *args: "/".join(args)
         mock_isdir.side_effect = lambda path: path.endswith(("dir1", "dir2"))
 
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
         lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir", blank_change_reason=False)
 
         # Verify all files and directories were processed
@@ -706,7 +798,9 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         mock_join.side_effect = lambda *args: "/".join(args)
         mock_isdir.side_effect = lambda path: path.endswith("dir1")
 
-        lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
 
         # Test with blank_change_reason=True
         lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir", blank_change_reason=True)
@@ -737,7 +831,9 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
 
 def test_merge_forced_or_derived_parameters_comprehensive() -> None:
     """Test merge_forced_or_derived_parameters with various scenarios."""
-    lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+    lfs = LocalFilesystem(
+        "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+    )
     test_file = "test_file"
 
     # Test 1: Empty input parameters
@@ -803,7 +899,9 @@ def test_merge_forced_or_derived_parameters_comprehensive() -> None:
 
 def test_merge_forced_or_derived_parameters_none_parameters() -> None:
     """Test merge_forced_or_derived_parameters handles None parameters."""
-    lfs = LocalFilesystem("vehicle_dir", "vehicle_type", None, allow_editing_template_files=False)
+    lfs = LocalFilesystem(
+        "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+    )
     test_file = "test.json"
     lfs.file_parameters = {test_file: {}}
 

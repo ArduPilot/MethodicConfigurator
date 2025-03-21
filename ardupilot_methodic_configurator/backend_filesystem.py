@@ -85,9 +85,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     """
 
-    def __init__(self, vehicle_dir: str, vehicle_type: str, fw_version: str, allow_editing_template_files: bool) -> None:
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        vehicle_dir: str,
+        vehicle_type: str,
+        fw_version: str,
+        allow_editing_template_files: bool,
+        save_component_to_system_templates: bool,
+    ) -> None:
         self.file_parameters: dict[str, dict[str, Par]] = {}
-        VehicleComponents.__init__(self)
+        VehicleComponents.__init__(self, save_component_to_system_templates)
         ConfigurationSteps.__init__(self, vehicle_dir, vehicle_type)
         ProgramSettings.__init__(self)
         self.vehicle_type = vehicle_type
@@ -785,6 +792,15 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             action="store_true",
             help=_(
                 "Allow opening and editing template files directly. "
+                "Only for software developers that know what they are doing. "
+                "Default is %(default)s"
+            ),
+        )
+        parser.add_argument(
+            "--save-component-to-system-templates",
+            action="store_true",
+            help=_(
+                "Save the vehicle component to the system templates. "
                 "Only for software developers that know what they are doing. "
                 "Default is %(default)s"
             ),
