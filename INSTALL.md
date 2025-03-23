@@ -13,7 +13,10 @@ After installing it you must also:
 
 ## MS Windows Installation
 
-Download the [latest ardupilot_methodic_configurator_setup_x.x.x.exe installer file](https://github.com/ArduPilot/MethodicConfigurator/releases/latest).
+Download the latest [ardupilot_methodic_configurator_setup_x.x.x.exe](https://github.com/ArduPilot/MethodicConfigurator/releases/latest) installer file and execute it.
+
+Ignore the `ardupilot_methodic_configurator_setup_x.x.x.exe.bundle` and `ardupilot_methodic_configurator_setup_x.x.x.exe.sig` files
+those are just cryptographic signatures for cyber security applications.
 
 Do the steps highlighted in red.
 
