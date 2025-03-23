@@ -651,12 +651,13 @@ Land and disarm.
 ### 7.1.1 Check for Motor Output Oscillation
 
 After landing from your first hover flight, immediately check the motors for excessive heat.
-Hot motors indicate a [potential oscillation problem](https://ardupilot.org/copter/docs/initial-tuning-flight.html#initial-aircraft-tune)
+Hot motors indicate a [potential output oscillation problem](https://ardupilot.org/copter/docs/initial-tuning-flight.html#initial-aircraft-tune)
 that needs to be addressed.
 
-**Signs of oscillation issues:**
+**Signs of output oscillation issues:**
 
 - Excessively hot motors after flight
+- Excessively hot ESCs after flight
 - Audible vibrations/oscillations during flight
 - Visible shaking of the vehicle
 - Hard to control or sluggish behavior
@@ -664,7 +665,7 @@ that needs to be addressed.
 **If you observe any of these signs:**
 
 1. [Download the `.bin` dataflash log](https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html) from your flight
-2. Review the `RATE.*out` values in the log
+2. Review the `RATE.*out` values in the log and the ESC temperatures if you have ESC tememetry
 3. If you see high (> 0.15) or oscillating `RATE.*out` values:
    - Identify which PID gains need reduction to eliminate oscillations
      - typically one of these: `ATC_RAT_PIT_D`, `ATC_RAT_PIT_I`, `ATC_RAT_PIT_P`, `ATC_RAT_RLL_D`, `ATC_RAT_RLL_I`, `ATC_RAT_RLL_P`
@@ -709,7 +710,7 @@ Here's an example of corrected output:
 
 ![Rate and vert accel gains Parameters](images/blog/no_rcout_oscillations.jpg)
 
-With oscillations eliminated, you can proceed with further tuning steps.
+With output oscillations eliminated, you can proceed with further tuning steps.
 
 # 8. Minimalistic mandatory tuning
 
