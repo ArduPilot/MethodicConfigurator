@@ -294,21 +294,23 @@ class VehicleComponents:
             logging_error(msg)
             return ("", False)
 
+    def _get_component_schema_property_description(self, component_info: dict[str, Any]) -> tuple[str, bool]:
+        """Get description and optional status from a component schema property."""
+        description = component_info.get("description", "")
+        is_optional = component_info.get("x-is-optional", False)
+        return (description, is_optional)
+
     def _get_top_level_component_description(self, current_schema: dict[str, Any], component_type: str) -> tuple[str, bool]:
         """Get description for top-level components like 'Flight Controller'."""
         if component_type in current_schema.get("properties", {}):
-            description = current_schema["properties"][component_type].get("description", "")
-            is_optional = current_schema["properties"][component_type].get("x-is-optional", False)
-            return (description, is_optional)
+            return self._get_component_schema_property_description(current_schema["properties"][component_type])
         return ("", False)
 
     def _get_product_field_description(self, field_name: str) -> tuple[str, bool]:
         """Get description for product fields (Manufacturer, Model, etc.)."""
         product_def = self.schema.get("definitions", {}).get("product", {})  # type: ignore[union-attr]
         if "properties" in product_def and field_name in product_def["properties"]:
-            description = product_def["properties"][field_name].get("description", "")
-            is_optional = product_def["properties"][field_name].get("x-is-optional", False)
-            return (description, is_optional)
+            return self._get_component_schema_property_description(product_def["properties"][field_name])
         return ("", False)
 
     def _get_nested_property_description(self, current_schema: dict[str, Any], path: tuple[str, ...]) -> tuple[str, bool]:
@@ -346,9 +348,7 @@ class VehicleComponents:
         """Get description for section fields like Product, Firmware, etc."""
         # First check in direct properties
         if "properties" in current and section in current["properties"]:
-            description = current["properties"][section].get("description", "")
-            is_optional = current["properties"][section].get("x-is-optional", False)
-            return (description, is_optional)
+            return self._get_component_schema_property_description(current["properties"][section])
 
         # Then check in allOf constructs
         if "allOf" in current:
@@ -358,15 +358,11 @@ class VehicleComponents:
                     ref_obj = self._resolve_schema_reference(allof_item)
 
                     if "properties" in ref_obj and section in ref_obj["properties"]:
-                        description = ref_obj["properties"][section].get("description", "")
-                        is_optional = ref_obj["properties"][section].get("x-is-optional", False)
-                        return (description, is_optional)
+                        return self._get_component_schema_property_description(ref_obj["properties"][section])
 
                 # Direct properties check in this allOf item
                 elif "properties" in allof_item and section in allof_item["properties"]:
-                    description = allof_item["properties"][section].get("description", "")
-                    is_optional = allof_item["properties"][section].get("x-is-optional", False)
-                    return (description, is_optional)
+                    return self._get_component_schema_property_description(allof_item["properties"][section])
 
         # If not found, return empty with default optional status
         return ("", False)
@@ -391,9 +387,7 @@ class VehicleComponents:
             current = self._resolve_schema_reference(current)
 
         # Return the description and optional status of the final object
-        description = current.get("description", "")
-        is_optional = current.get("x-is-optional", False)
-        return (description, is_optional)
+        return self._get_component_schema_property_description(current)
 
     def _check_direct_properties(self, schema_obj: dict[str, Any], property_name: str) -> tuple[bool, dict]:
         """Check if property exists directly in schema's properties."""
