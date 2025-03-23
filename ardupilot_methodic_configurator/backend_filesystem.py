@@ -208,7 +208,15 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 try:
                     param_info["Values"] = {int(k): v for k, v in param_info["values"].items()}
                 except ValueError:
-                    param_info["Values"] = {float(k): v for k, v in param_info["values"].items()}
+                    try:
+                        param_info["Values"] = {float(k): v for k, v in param_info["values"].items()}
+                    except ValueError:
+                        logging_warning(_("Could not convert values to int or float for %s"), param_name)
+                        logging_warning(
+                            _("Parameter %s has invalid metadata. Please file a bug at %s"),
+                            param_name,
+                            "https://github.com/ArduPilot/ardupilot/issues",
+                        )
                 # print(param_info['Values'])
 
             prefix_parts = [
