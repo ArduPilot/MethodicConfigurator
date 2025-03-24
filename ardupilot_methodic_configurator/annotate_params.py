@@ -727,8 +727,6 @@ def update_parameter_documentation_file(  # pylint: disable=too-many-locals, too
     delete_documentation_annotations: bool,
 ) -> None:
     new_lines = []
-    if os_path.basename(param_file).endswith("16_pid_adjustment.param"):
-        new_lines.extend(lines[0:5])  # copy the first 6 lines verbatim
 
     total_params = 0
     documented_params = 0
