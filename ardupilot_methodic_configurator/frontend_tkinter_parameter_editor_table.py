@@ -103,11 +103,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             )
             if error_msg:
                 messagebox.showerror(_("Error in derived parameters"), error_msg)
-            else:
-                # merge derived parameter values
-                self.local_filesystem.merge_forced_or_derived_parameters(
-                    selected_file, self.local_filesystem.derived_parameters, list(fc_parameters.keys())
-                )
+            # merge derived parameter values
+            elif self.local_filesystem.merge_forced_or_derived_parameters(
+                selected_file, self.local_filesystem.derived_parameters, list(fc_parameters.keys())
+            ):
+                self.at_least_one_param_edited = True
 
             self.rename_fc_connection(selected_file)
 
