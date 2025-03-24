@@ -193,6 +193,7 @@ lint.ignore = [
     "DTZ005",  # `tz=None` passed to `datetime.datetime.now()`
     "FBT001",  # Boolean-typed positional argument in function definition
     "FBT002",  # Boolean default positional argument in function definition
+    "LOG015",  # `error()` call on root logger, Use own logger instead
 ]
 
 line-length = 127
