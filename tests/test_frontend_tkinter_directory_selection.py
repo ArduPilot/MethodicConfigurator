@@ -15,7 +15,7 @@ import unittest
 from tkinter import ttk
 from unittest.mock import MagicMock, patch
 
-from ardupilot_methodic_configurator.frontend_tkinter_base import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import (
     DirectoryNameWidgets,
     DirectorySelectionWidgets,

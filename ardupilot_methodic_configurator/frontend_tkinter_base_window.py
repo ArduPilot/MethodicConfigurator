@@ -16,7 +16,7 @@ import tkinter as tk
 # from logging import info as logging_info
 from logging import error as logging_error
 from tkinter import ttk
-from typing import Optional
+from typing import Optional, Union
 
 from PIL import Image, ImageTk
 
@@ -34,10 +34,11 @@ class BaseWindow:
     """
 
     def __init__(self, root_tk: Optional[tk.Toplevel] = None) -> None:
+        self.root: Union[tk.Toplevel, tk.Tk]
         if root_tk:
             self.root = tk.Toplevel(root_tk)
         else:
-            self.root = tk.Tk()  # type: ignore[assignment]
+            self.root = tk.Tk()
             # Set the application icon for the window and all child windows
             # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
             self.root.iconphoto(True, tk.PhotoImage(file=LocalFilesystem.application_icon_filepath()))  # noqa: FBT003
@@ -51,15 +52,17 @@ class BaseWindow:
         self.main_frame.pack(expand=True, fill=tk.BOTH)
 
     @staticmethod
-    def center_window(window: tk.Toplevel, parent: tk.Toplevel) -> None:
+    def center_window(window: Union[tk.Toplevel, tk.Tk], parent: tk.Toplevel) -> None:
         """
         Center a window on its parent window.
 
         Args:
-            window (tk.Toplevel): The window to center.
+            window (tk.Toplevel|tk.Tk): The window to center.
             parent (tk.Toplevel): The parent window.
 
         """
+        if isinstance(window, tk.Tk):  # this is to make mypy and pyright happy
+            return
         window.update_idletasks()
         parent_width = parent.winfo_width()
         parent_height = parent.winfo_height()

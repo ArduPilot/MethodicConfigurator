@@ -15,7 +15,7 @@ from logging import error as logging_error
 from tkinter import ttk
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.frontend_tkinter_base import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 
 
 class ProgressWindow:

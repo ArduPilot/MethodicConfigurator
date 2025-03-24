@@ -192,7 +192,7 @@ All applications use one or more of the following libraries:
    2. [`backend_mavftp.py`](ardupilot_methodic_configurator/backend_mavftp.py)
    3. [`battery_cell_voltages.py`](ardupilot_methodic_configurator/battery_cell_voltages.py)
 1. the tkinter frontend, which is the GUI the user interacts with
-   1. [`frontend_tkinter_base.py`](ardupilot_methodic_configurator/frontend_tkinter_base.py)
+   1. [`frontend_tkinter_base_window.py`](ardupilot_methodic_configurator/frontend_tkinter_base_window.py)
    2. [`frontend_tkinter_connection_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py)
    3. [`frontend_tkinter_directory_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py)
    4. [`frontend_tkinter_component_editor.py`](ardupilot_methodic_configurator/frontend_tkinter_component_editor.py)
