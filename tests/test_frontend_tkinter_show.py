@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for the frontend_tkinter_base.py file.
+Tests for the frontend_tkinter_show.py file.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 

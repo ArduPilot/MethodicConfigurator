@@ -25,7 +25,7 @@ from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.frontend_tkinter_base import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_no_param_files_error, show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_template_overview import TemplateOverviewWindow
 
@@ -88,7 +88,8 @@ class DirectorySelectionWidgets:
 
     def on_select_directory(self) -> bool:
         if self.is_template_selection:
-            TemplateOverviewWindow(self.parent.root)
+            if isinstance(self.parent.root, tk.Toplevel):  # this fixes mypy and pyright
+                TemplateOverviewWindow(self.parent.root)
             selected_directory = ProgramSettings.get_recently_used_dirs()[0]
             logging_info(_("Selected template directory: %s"), selected_directory)
         else:

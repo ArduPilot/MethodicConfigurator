@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for the frontend_tkinter_base.py file.
+Tests for the frontend_tkinter_base_window.py file.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -15,7 +15,7 @@ import unittest
 from tkinter import ttk
 from unittest.mock import MagicMock, patch
 
-from ardupilot_methodic_configurator.frontend_tkinter_base import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 
 
