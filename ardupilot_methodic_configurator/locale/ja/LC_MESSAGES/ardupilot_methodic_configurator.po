@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2025-03-24 00:05+0000\n"
+"POT-Creation-Date: 2025-03-24 14:47+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -184,11 +184,11 @@ msgstr ""
 "最後にアップロードされたファイルはリストの最後のファイルです。そこから開始し"
 "ます。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:770
+#: ardupilot_methodic_configurator/backend_filesystem.py:772
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "機体の種類。デフォルトはArduCopterです"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:776
+#: ardupilot_methodic_configurator/backend_filesystem.py:778
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
@@ -196,7 +196,7 @@ msgstr ""
 "機体固有の中間パラメータファイルを含むディレクトリ。デフォルトは現在の作業"
 "ディレクトリです"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:784
+#: ardupilot_methodic_configurator/backend_filesystem.py:786
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -207,7 +207,7 @@ msgstr ""
 "デフォルトでは、フライトコントローラに書き込んだ最後のファイルの次のファイル"
 "から開始します。ファイルが存在しない場合は、最初のファイルから開始します。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:793
+#: ardupilot_methodic_configurator/backend_filesystem.py:795
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -215,7 +215,7 @@ msgstr ""
 "テンプレートファイルを直接開いて編集することを許可します。これは何をしている"
 "かを理解しているソフトウェア開発者のみ対象です。デフォルトは%(default)sです"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:802
+#: ardupilot_methodic_configurator/backend_filesystem.py:804
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -992,8 +992,8 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:751
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:773
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:780
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:341
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:86
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:345
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
 msgid "Error"
 msgstr "エラー"
 
@@ -1074,17 +1074,16 @@ msgid "Amilcar Lucas's - ArduPilot methodic configurator "
 msgstr "Amilcar Lucasの - ArduPilot方法論的コンフィギュレータ"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:96
-msgid "Please configure all vehicle component properties in this window.\n"
+msgid "Please configure properties of the vehicle components.\n"
 msgstr ""
-"このウィンドウで全ての機体コンポーネントのプロパティを設定してください。\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:97
-msgid "Scroll down and make sure you do not miss a property.\n"
-msgstr "スクロールダウンして、プロパティを見落とさないようにしてください。\n"
+msgid "Labels for optional properties are displayed in gray text.\n"
+msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:98
-msgid "Saving the result will write to the vehicle_components.json file."
-msgstr "結果を保存すると、vehicle_components.jsonファイルに書き込まれます。"
+msgid "Scroll down to ensure that you do not overlook any properties.\n"
+msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:107
 msgid ""
@@ -1099,49 +1098,54 @@ msgid "Add a 'vehicle.jpg' image file to the vehicle directory."
 msgstr "機体ディレクトリに'vehicle.jpg'画像ファイルを追加してください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:120
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:151
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:155
 msgid "Save data and start configuration"
 msgstr "データを保存して設定を開始"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:122
-msgid "Save component data and start parameter value configuration and tuning."
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:124
+msgid ""
+"Save component data to the vehicle_components.json file\n"
+"and start parameter value configuration and tuning."
 msgstr ""
-"コンポーネントデータを保存し、パラメータ値の設定とチューニングを開始します。"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:147
-msgid "1. Describe all vehicle component properties in the window below\n"
-msgstr ""
-"1. 以下のウィンドウで全ての機体コンポーネントのプロパティを記述してください\n"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:148
-msgid "2. Scroll all the way down and make sure to edit all properties\n"
-msgstr "2. 最後までスクロールし、全てのプロパティを編集してください\n"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:149
-msgid "3. Do not be lazy, collect the required information and enter it\n"
-msgstr "3. 手を抜かず、必要な情報を収集して入力してください\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:150
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:391
-msgid "4. Press the "
-msgstr "4."
+msgid ""
+"1. Describe the properties of the vehicle components in the window below.\n"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:151
+msgid "2. Each field has mouse-over tooltips for additional guidance.\n"
+msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:152
-msgid " only after all information is correct"
-msgstr "はすべての情報が正しい場合のみクリックしてください"
+msgid "3. Optional fields are marked with gray text and can be left blank.\n"
+msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:158
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:153
+msgid ""
+"4. Scroll to the bottom of the window to ensure all properties are edited.\n"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:154
+msgid "5. Press the "
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:156
+msgid " button only after verifying that all information is correct.\n"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:162
 msgid "How to use the component editor window"
 msgstr "コンポーネントエディタウィンドウの使用方法"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:218
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:249
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:222
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:253
 msgid ""
 "\n"
 "This is optional and can be left blank"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:303
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:307
 msgid ""
 "ArduPilot Methodic Configurator only operates correctly if all component "
 "properties are correct. ArduPilot parameter values depend on the components "
@@ -1157,27 +1161,27 @@ msgstr ""
 "ウィンドウ右側のスクロールバーを使用して、全てのコンポーネントに正しい値を入"
 "力しましたか？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:309
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:313
 msgid "Confirm that all component properties are correct"
 msgstr "すべてのコンポーネントプロパティが正しいことを確認してください"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:341
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:345
 msgid "Failed to save data to file."
 msgstr "ファイルにデータを保存できませんでした。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:343
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:347
 msgid "Vehicle component data saved successfully."
 msgstr "機体コンポーネントデータが正常に保存されました。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:348
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:352
 msgid "Do you want to save the changes before closing?"
 msgstr "閉じる前に変更を保存しますか？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:348
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:352
 msgid "Save Changes?"
 msgstr "変更を保存しますか？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:372
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:376
 msgid ""
 "Skip the component editor window. Only use this if all components have been "
 "configured. Default is %(default)s"
@@ -1185,61 +1189,61 @@ msgstr ""
 "コンポーネントエディタウィンドウをスキップします。すべてのコンポーネントが設"
 "定済みの場合のみ使用してください。デフォルトは%(default)sです"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:60
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:61
 msgid "Template:"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:68
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:122
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:69
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:123
 msgid "Select a template for this component"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:76
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:77
 msgid "Save current configuration as template"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:86
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
 msgid "No data for component: "
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:91
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:92
 msgid "Enter a name for this template:"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:91
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:92
 msgid "Save Template"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:104
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:105
 msgid "A template with this name already exists. Overwrite?"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:104
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:105
 msgid "Template exists"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:108
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:109
 msgid "Template has been updated"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:108
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:113
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:109
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:114
 msgid "Template Saved"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:113
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:114
 msgid "Template has been saved"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:149
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:150
 msgid "No component templates available"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:195
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:196
 msgid "Template Applied"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:195
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:196
 msgid "{} has been applied to {}"
 msgstr ""
 
@@ -2085,6 +2089,10 @@ msgstr "追加"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:390
 msgid " buttons to delete and add parameters if necessary\n"
 msgstr "必要に応じてパラメータを削除および追加するためのボタン\n"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:391
+msgid "4. Press the "
+msgstr "4."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:393
 msgid " button\n"
@@ -3058,6 +3066,37 @@ msgid ""
 msgstr ""
 "GNSS\n"
 "接続"
+
+#~ msgid "Please configure all vehicle component properties in this window.\n"
+#~ msgstr ""
+#~ "このウィンドウで全ての機体コンポーネントのプロパティを設定してください。\n"
+
+#~ msgid "Scroll down and make sure you do not miss a property.\n"
+#~ msgstr ""
+#~ "スクロールダウンして、プロパティを見落とさないようにしてください。\n"
+
+#~ msgid "Saving the result will write to the vehicle_components.json file."
+#~ msgstr "結果を保存すると、vehicle_components.jsonファイルに書き込まれます。"
+
+#~ msgid ""
+#~ "Save component data and start parameter value configuration and tuning."
+#~ msgstr ""
+#~ "コンポーネントデータを保存し、パラメータ値の設定とチューニングを開始しま"
+#~ "す。"
+
+#~ msgid "1. Describe all vehicle component properties in the window below\n"
+#~ msgstr ""
+#~ "1. 以下のウィンドウで全ての機体コンポーネントのプロパティを記述してくださ"
+#~ "い\n"
+
+#~ msgid "2. Scroll all the way down and make sure to edit all properties\n"
+#~ msgstr "2. 最後までスクロールし、全てのプロパティを編集してください\n"
+
+#~ msgid "3. Do not be lazy, collect the required information and enter it\n"
+#~ msgstr "3. 手を抜かず、必要な情報を収集して入力してください\n"
+
+#~ msgid " only after all information is correct"
+#~ msgstr "はすべての情報が正しい場合のみクリックしてください"
 
 #~ msgid "Error in forced parameters"
 #~ msgstr "強制パラメータでエラーが発生しました"
