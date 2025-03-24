@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0.16\n"
-"POT-Creation-Date: 2025-03-21 00:50+0000\n"
+"POT-Creation-Date: 2025-03-24 00:05+0000\n"
 "PO-Revision-Date: 2025-02-05 01:24+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -16,7 +16,7 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.5\n"
 
-#: ardupilot_methodic_configurator/__main__.py:56
+#: ardupilot_methodic_configurator/__main__.py:57
 msgid ""
 "ArduPilot methodic configurator is a simple GUI with a table that lists "
 "parameters. The GUI reads intermediate parameter files from a directory and "
@@ -41,20 +41,20 @@ msgstr ""
 "parametri intermedio successivo. Il processo viene ripetuto per ogni file di "
 "parametri intermedio."
 
-#: ardupilot_methodic_configurator/__main__.py:85
+#: ardupilot_methodic_configurator/__main__.py:86
 msgid "No serial ports found"
 msgstr "Nessuna porta seriale trovata"
 
-#: ardupilot_methodic_configurator/__main__.py:94
+#: ardupilot_methodic_configurator/__main__.py:95
 msgid "Vehicle type not set explicitly, auto-detected %s."
 msgstr ""
 "Tipo di veicolo non impostato esplicitamente, rilevato automaticamente %s."
 
-#: ardupilot_methodic_configurator/__main__.py:96
+#: ardupilot_methodic_configurator/__main__.py:97
 msgid "Vehicle type explicitly set to %s."
 msgstr "Tipo di veicolo impostato esplicitamente a %s."
 
-#: ardupilot_methodic_configurator/__main__.py:128
+#: ardupilot_methodic_configurator/__main__.py:129
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:100
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:103
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:105
@@ -67,16 +67,16 @@ msgstr "Tipo di veicolo impostato esplicitamente a %s."
 msgid "Unknown"
 msgstr "Sconosciuto"
 
-#: ardupilot_methodic_configurator/__main__.py:157
+#: ardupilot_methodic_configurator/__main__.py:163
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:105
 msgid "Error in derived parameters"
 msgstr "Errore nei parametri derivati"
 
-#: ardupilot_methodic_configurator/__main__.py:167
+#: ardupilot_methodic_configurator/__main__.py:173
 msgid "Will now exit the old software version."
 msgstr "Ora uscirà dalla vecchia versione del software."
 
-#: ardupilot_methodic_configurator/__main__.py:190
+#: ardupilot_methodic_configurator/__main__.py:200
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:204
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:483
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:504
@@ -100,88 +100,96 @@ msgstr "intervallo valido: {_lo}, {_up}"
 msgid "Value must be a number."
 msgstr "Il valore deve essere un numero."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:121
+#: ardupilot_methodic_configurator/backend_filesystem.py:128
 msgid "Could not detect vehicle type. Defaulting to %s."
 msgstr ""
 "Impossibile rilevare il tipo di veicolo. Impostazione predefinita a %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:171
+#: ardupilot_methodic_configurator/backend_filesystem.py:178
 msgid "File %s already exists. Will not rename file %s to %s."
 msgstr "Il file %s esiste già. Non verrà rinominato il file %s in %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:251
+#: ardupilot_methodic_configurator/backend_filesystem.py:221
+msgid "Could not convert values to int or float for %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem.py:223
+msgid "Parameter %s has invalid metadata. Please file a bug at %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem.py:266
 msgid "Error: %s is not a directory."
 msgstr "Errore: %s non è una directory."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:450
+#: ardupilot_methodic_configurator/backend_filesystem.py:465
 msgid "Intermediate parameter files and summary files zipped to %s"
 msgstr "File dei parametri intermedi e file di riepilogo compressi in %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:472
+#: ardupilot_methodic_configurator/backend_filesystem.py:487
 msgid "Template directory does not exist: {template_dir}"
 msgstr "Directory dei modelli non esistente: {template_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:477
+#: ardupilot_methodic_configurator/backend_filesystem.py:492
 msgid "New vehicle directory does not exist: {new_vehicle_dir}"
 msgstr "La directory del nuovo veicolo non esiste: {new_vehicle_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:504
+#: ardupilot_methodic_configurator/backend_filesystem.py:519
 msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr ""
 "Errore durante la copia dei file modello nella directory del nuovo veicolo: "
 "{_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:524
+#: ardupilot_methodic_configurator/backend_filesystem.py:539
 msgid "Parameter %s not found in the current parameter file"
 msgstr "Parametro %s non trovato nel file dei parametri corrente"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:532
+#: ardupilot_methodic_configurator/backend_filesystem.py:547
 msgid "Error writing last uploaded filename: %s"
 msgstr "Errore durante la scrittura dell'ultimo nome file caricato: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:539
+#: ardupilot_methodic_configurator/backend_filesystem.py:554
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr "last_uploaded_filename.txt non trovato: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:541
+#: ardupilot_methodic_configurator/backend_filesystem.py:556
 msgid "Error reading last uploaded filename: %s"
 msgstr "Errore durante la lettura dell'ultimo nome file caricato: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:557
+#: ardupilot_methodic_configurator/backend_filesystem.py:572
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr ""
 "L'indice del file di partenza %s è fuori intervallo. Si inizia con il file "
 "%s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:565
+#: ardupilot_methodic_configurator/backend_filesystem.py:580
 msgid "Starting with the first file."
 msgstr "Inizio dal primo file."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:568
+#: ardupilot_methodic_configurator/backend_filesystem.py:583
 msgid "Starting with the first non-tcal file."
 msgstr "Inizio dal primo file non-tcal."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:572
+#: ardupilot_methodic_configurator/backend_filesystem.py:587
 msgid "Last uploaded file was %s."
 msgstr "L'ultimo file caricato era %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:574
+#: ardupilot_methodic_configurator/backend_filesystem.py:589
 msgid "No last uploaded file found. %s."
 msgstr "Nessun ultimo file caricato trovato. %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:579
+#: ardupilot_methodic_configurator/backend_filesystem.py:594
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr "Ultimo file caricato non trovato nella lista dei file. %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:588
+#: ardupilot_methodic_configurator/backend_filesystem.py:603
 msgid "Last uploaded file is the last file in the list. Starting from there."
 msgstr "L'ultimo file caricato è l'ultimo file nella lista. Si inizia da lì."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:755
+#: ardupilot_methodic_configurator/backend_filesystem.py:770
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "Il tipo del veicolo. Predefinito è ArduCopter"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:761
+#: ardupilot_methodic_configurator/backend_filesystem.py:776
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
@@ -189,7 +197,7 @@ msgstr ""
 "Directory contenente i file dei parametri intermedi specifici del veicolo. "
 "Predefinita è la directory di lavoro corrente"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:769
+#: ardupilot_methodic_configurator/backend_filesystem.py:784
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -201,7 +209,7 @@ msgstr ""
 "all'ultimo scritto sul controller di volo. Se il file non esiste, inizierà "
 "dal primo file."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:778
+#: ardupilot_methodic_configurator/backend_filesystem.py:793
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -209,6 +217,12 @@ msgstr ""
 "Consente l'apertura e la modifica diretta dei file modello. Solo per "
 "sviluppatori software che sanno cosa stanno facendo. Predefinito è "
 "%(default)s"
+
+#: ardupilot_methodic_configurator/backend_filesystem.py:802
+msgid ""
+"Save the vehicle component to the system templates. Only for software "
+"developers that know what they are doing. Default is %(default)s"
+msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:65
 msgid ""
@@ -347,71 +361,105 @@ msgstr "Il percorso '{site_config_directory}' non è una directory."
 msgid "site_directory: %s"
 msgstr "directory_sito: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:68
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:70
 msgid "Schema file '%s' is valid."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:70
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:72
 msgid "Schema file '%s' is not a valid JSON Schema: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:75
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:77
 msgid "Schema file '%s' not found."
 msgstr "File di schema '%s' non trovato."
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:77
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:79
 msgid "Error decoding JSON schema from file '%s'."
 msgstr "Errore durante la decodifica dello schema JSON dal file '%s'."
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:89
-msgid "Could not load validation schema"
-msgstr "Impossibile caricare lo schema di validazione"
-
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:95
-msgid "Validation error"
-msgstr "Errore di validazione"
-
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:107
-msgid "Invalid vehicle components file '%s': %s"
-msgstr "File dei componenti del veicolo '%s' non valido: %s"
-
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:111
-msgid "File '%s' not found in %s."
-msgstr "File '%s' non trovato in %s."
-
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:113
-msgid "Error decoding JSON data from file '%s'."
-msgstr "Errore durante la decodifica dei dati JSON dal file '%s'."
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:136
+msgid "System component templates file '%s' not found."
+msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:138
-msgid "Directory '{}' not found"
-msgstr "Directory '{}' non trovato"
+msgid "Error decoding JSON system component templates from file '%s'."
+msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:142
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:156
+msgid "User component templates file '%s' not found."
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:158
+msgid "Error decoding JSON user component templates from file '%s'."
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:256
+msgid "Failed to create templates directory '{}': {}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:268
+msgid "File not found when writing to '{}': {}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:268
+msgid "Path not found"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:271
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:343
 msgid "Permission denied when writing to file '{}'"
 msgstr "Autorizzazione negata durante la scrittura del file '{}'"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:146
-msgid "Path '{}' is a directory, not a file"
-msgstr "Il percorso '{}' è una directory, non un file"
-
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:150
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:274
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:351
 msgid "OS error when writing to file '{}': {}"
 msgstr "Errore del sistema operativo durante la scrittura del file '{}': {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:154
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:277
+msgid "Unexpected error saving templates to file '{}': {}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:290
+msgid "Could not load validation schema"
+msgstr "Impossibile caricare lo schema di validazione"
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:296
+msgid "Validation error"
+msgstr "Errore di validazione"
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:308
+msgid "Invalid vehicle components file '%s': %s"
+msgstr "File dei componenti del veicolo '%s' non valido: %s"
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:312
+msgid "File '%s' not found in %s."
+msgstr "File '%s' non trovato in %s."
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:314
+msgid "Error decoding JSON data from file '%s'."
+msgstr "Errore durante la decodifica dei dati JSON dal file '%s'."
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:339
+msgid "Directory '{}' not found"
+msgstr "Directory '{}' non trovato"
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:347
+msgid "Path '{}' is a directory, not a file"
+msgstr "Il percorso '{}' è una directory, non un file"
+
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:355
 msgid "Type error when serializing data to JSON: {}"
 msgstr "Errore di tipo durante la serializzazione dei dati in JSON: {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:158
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:359
 msgid "Value error when serializing data to JSON: {}"
 msgstr "Errore di valore durante la serializzazione dei dati in JSON: {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:163
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:364
 msgid "Unexpected error saving data to file '{}': {}"
 msgstr "Errore imprevisto durante il salvataggio dei dati nel file '{}': {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:178
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:379
 msgid ""
 "Firmware type {fw_type} in {self.vehicle_components_json_filename} is not "
 "supported"
@@ -419,7 +467,7 @@ msgstr ""
 "Tipo di firmware {fw_type} in {self.vehicle_components_json_filename} non è "
 "supportato"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:192
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:393
 msgid ""
 "FW version string {version_str} on {self.vehicle_components_json_filename} "
 "is invalid"
@@ -427,7 +475,7 @@ msgstr ""
 "Stringa versione FW {version_str} su {self.vehicle_components_json_filename} "
 "non valida"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:293
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:494
 msgid "Exception occurred in get_component_property_description: {}"
 msgstr ""
 
@@ -637,80 +685,100 @@ msgstr "ID Componente"
 msgid "MCU Series"
 msgstr "Serie MCU"
 
-#: ardupilot_methodic_configurator/backend_internet.py:36
+#: ardupilot_methodic_configurator/backend_internet.py:38
 msgid "URL or local filename not provided."
 msgstr "URL o nome file locale non fornito."
 
-#: ardupilot_methodic_configurator/backend_internet.py:39
+#: ardupilot_methodic_configurator/backend_internet.py:41
 msgid "Downloading %s from %s"
 msgstr "Download di %s da %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:74
+#: ardupilot_methodic_configurator/backend_internet.py:76
 msgid "Downloading ... {:.1f}%"
 msgstr "Download in corso ... {:.1f}%"
 
-#: ardupilot_methodic_configurator/backend_internet.py:78
-#: ardupilot_methodic_configurator/backend_internet.py:195
+#: ardupilot_methodic_configurator/backend_internet.py:80
+#: ardupilot_methodic_configurator/backend_internet.py:197
 msgid "Download complete"
 msgstr "Download completato"
 
-#: ardupilot_methodic_configurator/backend_internet.py:82
+#: ardupilot_methodic_configurator/backend_internet.py:84
 msgid "Download timed out"
 msgstr "Download scaduto"
 
-#: ardupilot_methodic_configurator/backend_internet.py:84
+#: ardupilot_methodic_configurator/backend_internet.py:86
 msgid "Network error during download: {}"
 msgstr "Errore di rete durante il download: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:86
+#: ardupilot_methodic_configurator/backend_internet.py:88
 msgid "File system error: {}"
 msgstr "Errore del file system: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:88
+#: ardupilot_methodic_configurator/backend_internet.py:90
 msgid "Invalid data received from %s: %s"
 msgstr "Dati non validi ricevuti da %s: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:121
+#: ardupilot_methodic_configurator/backend_internet.py:123
 msgid "The latest continuous delivery build must be a pre-release"
 msgstr "L'ultima build di consegna continua deve essere una pre-release"
 
-#: ardupilot_methodic_configurator/backend_internet.py:123
+#: ardupilot_methodic_configurator/backend_internet.py:125
 msgid "The latest stable release must not be a pre-release"
 msgstr "L'ultima versione stabile non deve essere una pre-release"
 
-#: ardupilot_methodic_configurator/backend_internet.py:129
-#: ardupilot_methodic_configurator/backend_internet.py:137
+#: ardupilot_methodic_configurator/backend_internet.py:131
+#: ardupilot_methodic_configurator/backend_internet.py:139
 msgid "Failed to fetch release info: {}"
 msgstr "Impossibile recuperare le informazioni sulla release: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:134
+#: ardupilot_methodic_configurator/backend_internet.py:136
 msgid "Rate limit exceeded. Please try again after: %s (UTC)"
 msgstr "Limite di frequenza superato. Riprova dopo: %s (UTC)"
 
-#: ardupilot_methodic_configurator/backend_internet.py:140
+#: ardupilot_methodic_configurator/backend_internet.py:142
 msgid "Invalid release data: {}"
 msgstr "Dati della release non validi: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:149
+#: ardupilot_methodic_configurator/backend_internet.py:151
 msgid "Downloading and installing new version for Windows..."
 msgstr "Download e installazione della nuova versione per Windows..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:164
-#: ardupilot_methodic_configurator/backend_internet.py:190
+#: ardupilot_methodic_configurator/backend_internet.py:166
+#: ardupilot_methodic_configurator/backend_internet.py:192
 msgid "Starting installation..."
 msgstr "Avvio installazione..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:179
+#: ardupilot_methodic_configurator/backend_internet.py:181
 msgid "Installation failed: {}"
 msgstr "Installazione fallita: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:182
+#: ardupilot_methodic_configurator/backend_internet.py:184
 msgid "File operation failed: {}"
 msgstr "Operazione sul file fallita: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:187
+#: ardupilot_methodic_configurator/backend_internet.py:189
 msgid "Updating via pip for Linux and macOS..."
 msgstr "Aggiornamento tramite pip per Linux e macOS..."
+
+#: ardupilot_methodic_configurator/backend_internet.py:214
+msgid "URL not provided."
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_internet.py:217
+msgid "Verifying URL: %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_internet.py:234
+msgid "Failed to access URL: %s. Error: %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_internet.py:239
+msgid "Opening URL in browser: %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_internet.py:242
+msgid "Failed to open URL in browser: %s"
+msgstr ""
 
 #: ardupilot_methodic_configurator/common_arguments.py:23
 msgid "Logging level. Default is %(default)s."
@@ -739,7 +807,7 @@ msgid "Error loading %s image from file: %s"
 msgstr "Errore durante il caricamento dell'immagine %s dal file: %s"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:48
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:46
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:47
 msgid ""
 "A GUI for editing JSON files that contain vehicle component configurations. "
 "Not to be used directly, but through the main ArduPilot methodic "
@@ -937,7 +1005,8 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:751
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:773
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:780
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:277
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:341
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:86
 msgid "Error"
 msgstr "Errore"
 
@@ -1011,33 +1080,33 @@ msgstr ""
 "La tensione critica della cella della batteria deve essere inferiore alla "
 "tensione bassa"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:70
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:71
 msgid " - Vehicle Component Editor"
 msgstr " - Editor Componenti Veicolo"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:70
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:71
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:235
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:152
 #: ardupilot_methodic_configurator/frontend_tkinter_software_update.py:24
 msgid "Amilcar Lucas's - ArduPilot methodic configurator "
 msgstr "Configuratore metodico ArduPilot di Amilcar Lucas "
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:95
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:96
 msgid "Please configure all vehicle component properties in this window.\n"
 msgstr ""
 "Configurare tutte le proprietà dei componenti del veicolo in questa "
 "finestra.\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:96
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:97
 msgid "Scroll down and make sure you do not miss a property.\n"
 msgstr ""
 "Scorri verso il basso e assicurati di non tralasciare alcuna proprietà.\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:97
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:98
 msgid "Saving the result will write to the vehicle_components.json file."
 msgstr "Il salvataggio scriverà nel file vehicle_components.json."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:106
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:107
 msgid ""
 "Replace the vehicle.jpg file in the vehicle directory to change the vehicle "
 "image."
@@ -1045,58 +1114,58 @@ msgstr ""
 "Sostituire il file vehicle.jpg nella directory del veicolo per cambiare "
 "l'immagine del veicolo."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:108
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:109
 msgid "Add a 'vehicle.jpg' image file to the vehicle directory."
 msgstr "Aggiungere un file immagine 'vehicle.jpg' alla directory del veicolo."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:119
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:138
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:120
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:151
 msgid "Save data and start configuration"
 msgstr "Salva i dati e inizia la configurazione"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:121
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:122
 msgid "Save component data and start parameter value configuration and tuning."
 msgstr ""
 "Salva i dati dei componenti e inizia la configurazione e il tuning dei "
 "parametri."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:134
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:147
 msgid "1. Describe all vehicle component properties in the window below\n"
 msgstr ""
 "1. Descrivi tutte le proprietà dei componenti del veicolo nella finestra "
 "sottostante\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:135
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:148
 msgid "2. Scroll all the way down and make sure to edit all properties\n"
 msgstr ""
 "2. Scorri fino in fondo e assicurati di modificare tutte le proprietà\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:136
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:149
 msgid "3. Do not be lazy, collect the required information and enter it\n"
 msgstr ""
 "3. Non essere pigro, raccogli le informazioni necessarie e inseriscile\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:137
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:150
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:391
 msgid "4. Press the "
 msgstr "4. Premere "
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:139
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:152
 msgid " only after all information is correct"
 msgstr " solo dopo che tutte le informazioni sono corrette"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:145
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:158
 msgid "How to use the component editor window"
 msgstr "Come utilizzare la finestra dell'editor dei componenti"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:200
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:230
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:218
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:249
 msgid ""
 "\n"
 "This is optional and can be left blank"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:239
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:303
 msgid ""
 "ArduPilot Methodic Configurator only operates correctly if all component "
 "properties are correct. ArduPilot parameter values depend on the components "
@@ -1112,33 +1181,91 @@ msgstr ""
 "Hai utilizzato la barra di scorrimento sul lato destro della finestra e "
 "inserito i valori corretti per tutti i componenti?"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:245
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:309
 msgid "Confirm that all component properties are correct"
 msgstr "Confermare che tutte le proprietà dei componenti siano corrette"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:277
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:341
 msgid "Failed to save data to file."
 msgstr "Impossibile salvare i dati nel file."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:279
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:343
 msgid "Vehicle component data saved successfully."
 msgstr "Dati dei componenti del veicolo salvati con successo."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:284
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:348
 msgid "Do you want to save the changes before closing?"
 msgstr "Vuoi salvare le modifiche prima di chiudere?"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:284
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:348
 msgid "Save Changes?"
 msgstr "Salvare le modifiche?"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:308
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:372
 msgid ""
 "Skip the component editor window. Only use this if all components have been "
 "configured. Default is %(default)s"
 msgstr ""
 "Salta la finestra dell'editor dei componenti. Usare solo se tutti i "
 "componenti sono stati configurati. Predefinito è %(default)s"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:60
+msgid "Template:"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:68
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:122
+msgid "Select a template for this component"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:76
+msgid "Save current configuration as template"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:86
+msgid "No data for component: "
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:91
+msgid "Enter a name for this template:"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:91
+msgid "Save Template"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:104
+msgid "A template with this name already exists. Overwrite?"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:104
+msgid "Template exists"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:108
+msgid "Template has been updated"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:108
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:113
+msgid "Template Saved"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:113
+msgid "Template has been saved"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:149
+msgid "No component templates available"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:195
+msgid "Template Applied"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:195
+msgid "{} has been applied to {}"
+msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:63
 msgid "flight controller connection:"
@@ -1623,7 +1750,7 @@ msgstr ""
 "Questo main è solo per test e sviluppo, solitamente "
 "VehicleDirectorySelectionWindow viene chiamato da un altro script"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:563
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:565
 msgid "No intermediate parameter files found in %s."
 msgstr "Nessun file di parametri intermedio trovato in %s."
 
