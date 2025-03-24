@@ -85,7 +85,7 @@ class ComponentEditorWindowBase(BaseWindow):
         intro_frame.pack(side=tk.TOP, fill="x", expand=False)
 
         style = ttk.Style()
-        style.configure("bigger.TLabel", font=("TkDefaultFont", 14))
+        style.configure("bigger.TLabel", font=("TkDefaultFont", 13))
         style.configure("comb_input_invalid.TCombobox", fieldbackground="red")
         style.configure("comb_input_valid.TCombobox", fieldbackground="white")
         style.configure("entry_input_invalid.TEntry", fieldbackground="red")
@@ -93,9 +93,9 @@ class ComponentEditorWindowBase(BaseWindow):
         style.configure("Optional.TLabelframe", borderwidth=2)
         style.configure("Optional.TLabelframe.Label", foreground="gray")
 
-        explanation_text = _("Please configure all vehicle component properties in this window.\n")
-        explanation_text += _("Scroll down and make sure you do not miss a property.\n")
-        explanation_text += _("Saving the result will write to the vehicle_components.json file.")
+        explanation_text = _("Please configure properties of the vehicle components.\n")
+        explanation_text += _("Labels for optional properties are displayed in gray text.\n")
+        explanation_text += _("Scroll down to ensure that you do not overlook any properties.\n")
         explanation_label = ttk.Label(intro_frame, text=explanation_text, wraplength=800, justify=tk.LEFT)
         explanation_label.configure(style="bigger.TLabel")
         explanation_label.pack(side=tk.LEFT, padx=(10, 10), pady=(10, 0), anchor=tk.NW)
@@ -119,7 +119,10 @@ class ComponentEditorWindowBase(BaseWindow):
         self.save_button = ttk.Button(
             save_frame, text=_("Save data and start configuration"), command=self.validate_and_save_component_json
         )
-        show_tooltip(self.save_button, _("Save component data and start parameter value configuration and tuning."))
+        show_tooltip(
+            self.save_button,
+            _("Save component data to the vehicle_components.json file\nand start parameter value configuration and tuning."),
+        )
         self.save_button.pack(pady=7)
         if UsagePopupWindow.should_display("component_editor"):
             self.root.after(10, self.__display_component_editor_usage_instructions(self.root))  # type: ignore[arg-type]
@@ -144,12 +147,13 @@ class ComponentEditorWindowBase(BaseWindow):
         instructions_text = RichText(
             usage_popup_window.main_frame, wrap=tk.WORD, height=5, bd=0, background=style.lookup("TLabel", "background")
         )
-        instructions_text.insert(tk.END, _("1. Describe all vehicle component properties in the window below\n"))
-        instructions_text.insert(tk.END, _("2. Scroll all the way down and make sure to edit all properties\n"))
-        instructions_text.insert(tk.END, _("3. Do not be lazy, collect the required information and enter it\n"))
-        instructions_text.insert(tk.END, _("4. Press the "))
+        instructions_text.insert(tk.END, _("1. Describe the properties of the vehicle components in the window below.\n"))
+        instructions_text.insert(tk.END, _("2. Each field has mouse-over tooltips for additional guidance.\n"))
+        instructions_text.insert(tk.END, _("3. Optional fields are marked with gray text and can be left blank.\n"))
+        instructions_text.insert(tk.END, _("4. Scroll to the bottom of the window to ensure all properties are edited.\n"))
+        instructions_text.insert(tk.END, _("5. Press the "))
         instructions_text.insert(tk.END, _("Save data and start configuration"), "italic")
-        instructions_text.insert(tk.END, _(" only after all information is correct"))
+        instructions_text.insert(tk.END, _(" button only after verifying that all information is correct.\n"))
         instructions_text.config(state=tk.DISABLED)
 
         UsagePopupWindow.display(
