@@ -674,6 +674,10 @@ that needs to be addressed.
    - if you have flown **more than 30 seconds in ALT_HOLD mode**:
      - select and upload file `20_throttle_controller.param` to correct the `PSC_ACCZ_P` and `PSC_ACCZ_I` values.
    - Conduct another test flight to verify the changes
+4. If you flew in loiter mode and noticed any oscillations in the DESIRED Pitch or Roll angles in the `.bin` log file, it indicates that the Loiter PID parameters (`PSC_POSXY_*` and `PSC_VELXY_*`) are set too high.
+   - Lower these parameters by 50% or 75% upload then to the FC and conduct another test.
+   - Additionally, after confirming that there are no oscillations in the desired Pitch/Roll during loiter hover, you should repeat the tests while
+   descending at maximum speed in loiter mode, as this is when issues are likely to arise.
 
 **Understanding Output Oscillation:**
 
