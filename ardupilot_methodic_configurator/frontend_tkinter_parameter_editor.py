@@ -746,7 +746,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.close_connection_and_quit()
 
     def write_changes_to_intermediate_parameter_file(self) -> None:
-        if self.parameter_editor_table.get_at_least_one_param_edited():
+        if self.parameter_editor_table.get_at_least_one_param_edited() or self.annotate_params_into_files.get():
             msg = _("Do you want to write the changes to the {self.current_file} file?")
             if messagebox.askyesno(_("One or more parameters have been edited"), msg.format(**locals())):
                 self.local_filesystem.export_to_param(

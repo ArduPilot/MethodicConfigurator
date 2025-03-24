@@ -666,7 +666,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 if error_msg:
                     return error_msg
                 self.merge_forced_or_derived_parameters(param_filename, self.derived_parameters, existing_fc_params)
-            Par.export_to_param(Par.format_params(param_dict), os_path.join(self.vehicle_dir, param_filename))
+            self.export_to_param(
+                param_dict, param_filename, annotate_doc=bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
+            )
         return ""
 
     def merge_forced_or_derived_parameters(
