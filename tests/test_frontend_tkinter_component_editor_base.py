@@ -449,6 +449,7 @@ def test_populate_frames_full_integration(mock_label, mock_frame, mock_labelfram
         editor_with_mocked_root._ComponentEditorWindowBase__add_non_leaf_widget = original_add_non_leaf  # pylint: disable=protected-access
         editor_with_mocked_root._ComponentEditorWindowBase__add_leaf_widget = original_add_leaf  # pylint: disable=protected-access
 
+
 def test_get_component_data_from_gui(editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
     """Test the get_component_data_from_gui method."""
     # Setup test entries

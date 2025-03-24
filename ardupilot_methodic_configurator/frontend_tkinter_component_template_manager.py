@@ -41,6 +41,7 @@ class ComponentTemplateManager:  # pylint: disable=too-many-instance-attributes
             get_component_data_callback: Callback to get component data
             update_data_callback: Callback to update data when applying template
             derive_template_name_callback: Callback to derive an initial template name from component
+            save_component_to_system_templates: Boolean save the component to the system file instead of the user file
 
         """
         self.root = root
