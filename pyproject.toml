@@ -75,6 +75,10 @@ dev = [
     "types-requests==2.32.0.20250328",
 ]
 
+scripts = [
+    "bs4",
+]
+
 [project.scripts]
 ardupilot_methodic_configurator = "ardupilot_methodic_configurator.__main__:main"
 extract_param_defaults = "ardupilot_methodic_configurator.extract_param_defaults:main"
