@@ -560,6 +560,32 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore[misc]
             cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore[misc]
 
+            # Prevent mouse wheel from changing value when dropdown is not open
+            def handle_mousewheel(event, widget=cb):
+                # Check if dropdown is open by examining the combobox's state
+                if not hasattr(widget, "_dropdown_open") or not widget._dropdown_open:
+                    return "break"  # Prevent default behavior
+                return None  # Allow default behavior when dropdown is open
+
+            # Set flag when dropdown opens or closes
+            def dropdown_opened(event, widget=cb):
+                widget._dropdown_open = True
+
+            def dropdown_closed(event, widget=cb):
+                widget._dropdown_open = False
+
+            # Initialize the flag
+            cb._dropdown_open = False
+
+            # Bind to events for dropdown opening and closing
+            cb.bind("<<ComboboxDropdown>>", dropdown_opened)
+            cb.bind("<FocusOut>", lambda e, p=path: (dropdown_closed(e), self.validate_combobox(e, p)))  # type: ignore[misc]
+
+            # Bind mouse wheel events
+            cb.bind("<MouseWheel>", handle_mousewheel)  # Windows mouse wheel
+            cb.bind("<Button-4>", handle_mousewheel)  # Linux mouse wheel up
+            cb.bind("<Button-5>", handle_mousewheel)  # Linux mouse wheel down
+
             if path == ("ESC", "FC Connection", "Type"):  # immediate update of ESC Protocol upon ESC Type selection
                 cb.bind(
                     "<<ComboboxSelected>>",
