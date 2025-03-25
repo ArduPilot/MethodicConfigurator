@@ -20,7 +20,7 @@ from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from math import log2
 from tkinter import ttk
-from typing import Any, Callable, Union
+from typing import Any, Callable, Optional, Union
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -508,7 +508,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 protocol_combobox.set(protocols[0] if protocols else "")
             protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
 
-    def add_entry_or_combobox(
+    def add_entry_or_combobox(  # pylint: disable=too-many-locals
         self, value: float, entry_frame: ttk.Frame, path: tuple[str, str, str], is_optional: bool = False
     ) -> Union[ttk.Entry, ttk.Combobox]:
         # Default values for comboboxes in case the apm.pdef.xml metadata is not available
@@ -565,26 +565,28 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore[misc]
 
             # Prevent mouse wheel from changing value when dropdown is not open
-            def handle_mousewheel(event, widget=cb):
+            def handle_mousewheel(_event: tk.Event, widget: tk.Widget = cb) -> Optional[str]:
                 # Check if dropdown is open by examining the combobox's state
-                if not hasattr(widget, "_dropdown_open") or not widget._dropdown_open:
+                if not hasattr(widget, "_dropdown_open") or not widget._dropdown_open:  # pylint: disable=protected-access,line-too-long # noqa: SLF001 # pyright: ignore[reportAttributeAccessIssue]
                     return "break"  # Prevent default behavior
                 return None  # Allow default behavior when dropdown is open
 
             # Set flag when dropdown opens or closes
-            def dropdown_opened(event, widget=cb):
-                widget._dropdown_open = True
+            def dropdown_opened(_event: tk.Event, widget: tk.Widget = cb) -> None:
+                widget._dropdown_open = True  # type: ignore[attr-defined] # pylint: disable=protected-access # noqa: SLF001
 
-            def dropdown_closed(event, widget=cb):
-                widget._dropdown_open = False
+            def dropdown_closed(_event: tk.Event, widget: tk.Widget = cb) -> None:
+                widget._dropdown_open = False  # type: ignore[attr-defined] # pylint: disable=protected-access # noqa: SLF001
 
             # Initialize the flag
-            cb._dropdown_open = False
+            cb._dropdown_open = False  # type: ignore[attr-defined] # pylint: disable=protected-access # noqa: SLF001
 
             # Bind to events for dropdown opening and closing
             cb.bind("<<ComboboxDropdown>>", dropdown_opened)
-            cb.bind("<FocusOut>", lambda e, p=path: (dropdown_closed(e), self.validate_combobox(e, p)))  # type: ignore[misc]
-
+            cb.bind(
+                "<FocusOut>",
+                lambda e, p=path: (dropdown_closed(e), self.validate_combobox(e, p)),  # type: ignore[misc, func-returns-value]
+            )
             # Bind mouse wheel events
             cb.bind("<MouseWheel>", handle_mousewheel)  # Windows mouse wheel
             cb.bind("<Button-4>", handle_mousewheel)  # Linux mouse wheel up
