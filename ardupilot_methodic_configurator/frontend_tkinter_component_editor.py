@@ -509,7 +509,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
 
     def add_entry_or_combobox(
-        self, value: float, entry_frame: ttk.Frame, path: tuple[str, str, str]
+        self, value: float, entry_frame: ttk.Frame, path: tuple[str, str, str], is_optional: bool = False
     ) -> Union[ttk.Entry, ttk.Combobox]:
         # Default values for comboboxes in case the apm.pdef.xml metadata is not available
         fallbacks: dict[str, tuple[str, ...]] = {
@@ -555,8 +555,12 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             ("Battery", "Specifications", "Chemistry"): BatteryCell.chemistries(),
         }
         combobox_values: Union[tuple[str, ...], None] = combobox_dict.get(path)
+
+        # Determine foreground color based on is_optional flag
+        fg_color = "gray" if is_optional else "black"
+
         if combobox_values:
-            cb = ttk.Combobox(entry_frame, values=combobox_values)
+            cb = ttk.Combobox(entry_frame, values=combobox_values, foreground=fg_color)
             cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore[misc]
             cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore[misc]
 
@@ -595,7 +599,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             cb.set(value)
             return cb
 
-        entry = ttk.Entry(entry_frame)
+        entry = ttk.Entry(entry_frame, foreground=fg_color)
         validate_function = self.get_validate_function(entry, path)
         if validate_function:
             entry.bind("<FocusOut>", validate_function)
