@@ -242,7 +242,7 @@ class ComponentEditorWindowBase(BaseWindow):
 
         label.pack(side=tk.LEFT)
 
-        entry = self.add_entry_or_combobox(value, entry_frame, (*path, key))
+        entry = self.add_entry_or_combobox(value, entry_frame, (*path, key), is_optional)
         entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 5))
 
         # Store the entry widget in the entry_widgets dictionary for later retrieval
@@ -362,7 +362,11 @@ class ComponentEditorWindowBase(BaseWindow):
 
     # This function will be overwritten in child classes
     def add_entry_or_combobox(
-        self, value: float, entry_frame: ttk.Frame, _path: tuple[str, str, str]
+        self,
+        value: float,
+        entry_frame: ttk.Frame,
+        _path: tuple[str, str, str],
+        is_optional: bool = False,  # pylint: disable=unused-argument # noqa: ARG002
     ) -> Union[ttk.Entry, ttk.Combobox]:
         entry = ttk.Entry(entry_frame)
         entry.insert(0, str(value))
