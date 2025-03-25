@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 
@@ -20,7 +21,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
 from tkinter import filedialog, messagebox, ttk
-from typing import Union
+from typing import Literal, Union
 
 # from logging import critical as logging_critical
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
@@ -447,16 +448,78 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                         raise
                     self.parameter_editor_table.set_at_least_one_param_edited(True)  # force writing doc annotations to file
 
-    def __should_copy_fc_values_to_file(self, selected_file: str) -> None:
+    def __should_copy_fc_values_to_file(self, selected_file: str) -> None:  # pylint: disable=too-many-locals
         auto_changed_by = self.local_filesystem.auto_changed_by(selected_file)
         if auto_changed_by and self.flight_controller.fc_parameters:
             msg = _(
-                "This configuration step should be performed outside this tool by\n"
-                "{auto_changed_by}\n"
-                "and that should have changed the parameters on the FC.\n\n"
-                "Should the FC values now be copied to the {selected_file} file?"
+                "This configuration step requires external changes by: {auto_changed_by}\n\n"
+                "The external tool experiment procedure is described in the tunning guide.\n\n"
+                "Choose an option:\n"
+                "* CLOSE - Close the application and go perform the experiment\n"
+                "* YES - Copy current FC values to {selected_file} (if you've already completed the experiment)\n"
+                "* NO - Continue without copying values (if you haven't performed the experiment yet,"
+                " but know what you are doing)"
             )
-            if messagebox.askyesno(_("Update file with values from FC?"), msg.format(**locals())):
+
+            # Create custom dialog with Yes, No, Close buttons
+            dialog = tk.Toplevel(self.root)
+            dialog.transient(self.root)
+            dialog.title(_("Update file with values from FC?"))
+            dialog.resizable(width=False, height=False)
+            dialog.protocol("WM_DELETE_WINDOW", dialog.destroy)
+
+            # Make dialog modal
+            dialog.grab_set()
+
+            # Message text
+            message_label = tk.Label(dialog, text=msg.format(**locals()), justify=tk.LEFT, padx=20, pady=10)
+            message_label.pack(padx=10, pady=10)
+
+            # Result variable
+            result: list[Literal[None, True, False]] = [None]
+
+            # Button frame
+            button_frame = tk.Frame(dialog)
+            button_frame.pack(pady=10)
+
+            # Close button (default)
+            close_button = tk.Button(
+                button_frame, text=_("Close"), width=10, command=lambda: [result.append(None), dialog.destroy()]
+            )
+            close_button.pack(side=tk.LEFT, padx=5)
+
+            # Yes button
+            yes_button = tk.Button(
+                button_frame, text=_("Yes"), width=10, command=lambda: [result.append(True), dialog.destroy()]
+            )
+            yes_button.pack(side=tk.LEFT, padx=5)
+
+            # No button
+            no_button = tk.Button(
+                button_frame, text=_("No"), width=10, command=lambda: [result.append(False), dialog.destroy()]
+            )
+            no_button.pack(side=tk.LEFT, padx=5)
+
+            close_button.focus_set()  # Give the Close button focus
+            dialog.bind("<Return>", lambda _event: [result.append(None), dialog.destroy()])
+
+            # Center the dialog on the parent window
+            dialog.update_idletasks()
+            dialog_width = dialog.winfo_width()
+            dialog_height = dialog.winfo_height()
+            parent_x = self.root.winfo_rootx()
+            parent_y = self.root.winfo_rooty()
+            parent_width = self.root.winfo_width()
+            parent_height = self.root.winfo_height()
+            x = parent_x + (parent_width - dialog_width) // 2
+            y = parent_y + (parent_height - dialog_height) // 2
+            dialog.geometry(f"+{x}+{y}")
+
+            # Wait until dialog is closed
+            self.root.wait_window(dialog)
+            response = result[-1] if len(result) > 1 else None
+
+            if response is True:  # Yes option
                 relevant_fc_params = {
                     key: value
                     for key, value in self.flight_controller.fc_parameters.items()
@@ -465,6 +528,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 params_copied = self.local_filesystem.copy_fc_values_to_file(selected_file, relevant_fc_params)
                 if params_copied:
                     self.parameter_editor_table.set_at_least_one_param_edited(True)
+            elif response is None:  # Close option
+                sys.exit(0)
+            # If response is False (No option), do nothing and continue
 
     def __should_jump_to_file(self, selected_file: str) -> str:
         jump_possible = self.local_filesystem.jump_possible(selected_file)
