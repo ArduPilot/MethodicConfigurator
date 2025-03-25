@@ -359,7 +359,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
 
     @staticmethod
-    def __display_usage_popup_window(parent: tk.Toplevel) -> None:
+    def __display_usage_popup_window(parent: tk.Tk) -> None:
         usage_popup_window = BaseWindow(parent)
         style = ttk.Style()
 

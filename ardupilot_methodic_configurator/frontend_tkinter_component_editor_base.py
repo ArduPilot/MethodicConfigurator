@@ -140,7 +140,7 @@ class ComponentEditorWindowBase(BaseWindow):
         )
 
     @staticmethod
-    def __display_component_editor_usage_instructions(parent: tk.Toplevel) -> None:
+    def __display_component_editor_usage_instructions(parent: tk.Tk) -> None:
         usage_popup_window = BaseWindow(parent)
         style = ttk.Style()
 

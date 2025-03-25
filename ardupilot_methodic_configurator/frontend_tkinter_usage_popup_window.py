@@ -40,7 +40,7 @@ class UsagePopupWindow:
 
     @staticmethod
     def display(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-        parent: tk.Toplevel,
+        parent: tk.Tk,
         usage_popup_window: BaseWindow,
         title: str,
         ptype: str,
@@ -82,7 +82,7 @@ class UsagePopupWindow:
         usage_popup_window.root.protocol("WM_DELETE_WINDOW", lambda: UsagePopupWindow.close(usage_popup_window, parent))
 
     @staticmethod
-    def close(usage_popup_window: BaseWindow, parent: tk.Toplevel) -> None:
+    def close(usage_popup_window: BaseWindow, parent: tk.Tk) -> None:
         usage_popup_window.root.destroy()
         if platform_system() == "Windows":
             parent.attributes("-disabled", False)  # noqa: FBT003  # Re-enable the parent window

@@ -278,11 +278,11 @@ class TestTemplateOverviewWindow(unittest.TestCase):
             window._display_vehicle_image = MagicMock()  # pylint: disable=protected-access
 
             # Call the method
-            window._TemplateOverviewWindow__update_selection()  # pytest: disable=protected-access
+            window._TemplateOverviewWindow__update_selection()  # pylint: disable=protected-access
 
             # Assertions
-            window.tree.selection.assert_called_once()  # pytest: disable=protected-access
-            window._display_vehicle_image.assert_not_called()  # pytest: disable=protected-access
+            window.tree.selection.assert_called_once()
+            window._display_vehicle_image.assert_not_called()  # pylint: disable=protected-access
 
     @patch("tkinter.Toplevel")
     @patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.VehicleComponents")

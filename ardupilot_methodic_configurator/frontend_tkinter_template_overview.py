@@ -38,7 +38,7 @@ class TemplateOverviewWindow(BaseWindow):
     manner, making it easier for users to navigate and select the desired template for configuration.
 
     Attributes:
-        window (tk.Toplevel): The root Tkinter window object for the GUI.
+        window (tk.Tk|None): The root Tkinter window object for the GUI.
 
     Methods:
         on_row_double_click(event): Handles the event triggered when a row in the Treeview is double-clicked, allowing the user
@@ -46,7 +46,7 @@ class TemplateOverviewWindow(BaseWindow):
 
     """
 
-    def __init__(self, parent: Optional[tk.Toplevel] = None) -> None:
+    def __init__(self, parent: Optional[tk.Tk] = None) -> None:
         super().__init__(parent)
         title = _("Amilcar Lucas's - ArduPilot methodic configurator {} - Template Overview and selection")
         self.root.title(title.format(__version__))
