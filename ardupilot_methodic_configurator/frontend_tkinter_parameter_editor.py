@@ -21,7 +21,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
 from tkinter import filedialog, messagebox, ttk
-from typing import Literal, Union
+from typing import Literal, Optional, Union
 
 # from logging import critical as logging_critical
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
@@ -448,6 +448,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                         raise
                     self.parameter_editor_table.set_at_least_one_param_edited(True)  # force writing doc annotations to file
 
+    def __handle_dialog_choice(self, result: list, dialog: tk.Toplevel, choice: Optional[bool]) -> None:
+        result.append(choice)
+        dialog.destroy()
+
     def __should_copy_fc_values_to_file(self, selected_file: str) -> None:  # pylint: disable=too-many-locals
         auto_changed_by = self.local_filesystem.auto_changed_by(selected_file)
         if auto_changed_by and self.flight_controller.fc_parameters:
@@ -484,24 +488,27 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
             # Close button (default)
             close_button = tk.Button(
-                button_frame, text=_("Close"), width=10, command=lambda: [result.append(None), dialog.destroy()]
+                button_frame,
+                text=_("Close"),
+                width=10,
+                command=lambda: self.__handle_dialog_choice(result, dialog, choice=None),
             )
             close_button.pack(side=tk.LEFT, padx=5)
 
             # Yes button
             yes_button = tk.Button(
-                button_frame, text=_("Yes"), width=10, command=lambda: [result.append(True), dialog.destroy()]
+                button_frame, text=_("Yes"), width=10, command=lambda: self.__handle_dialog_choice(result, dialog, choice=True)
             )
             yes_button.pack(side=tk.LEFT, padx=5)
 
             # No button
             no_button = tk.Button(
-                button_frame, text=_("No"), width=10, command=lambda: [result.append(False), dialog.destroy()]
+                button_frame, text=_("No"), width=10, command=lambda: self.__handle_dialog_choice(result, dialog, choice=False)
             )
             no_button.pack(side=tk.LEFT, padx=5)
 
             close_button.focus_set()  # Give the Close button focus
-            dialog.bind("<Return>", lambda _event: [result.append(None), dialog.destroy()])
+            dialog.bind("<Return>", lambda _event: self.__handle_dialog_choice(result, dialog, None))
 
             # Center the dialog on the parent window
             dialog.update_idletasks()
