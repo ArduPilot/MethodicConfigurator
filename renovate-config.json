@@ -1,6 +1,7 @@
 {
   "extends": ["config:recommended"],
   "enabledManagers": ["pre-commit"],
+  "repositories": ["ArduPilot/MethodicConfigurator"],
   "packageRules": [
     {
       "matchManagers": ["pre-commit"],

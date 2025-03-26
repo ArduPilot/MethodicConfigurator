@@ -25,15 +25,3 @@ jobs:
           configurationFile: renovate-config.json
         env:
           LOG_LEVEL: debug
-
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@dd2324fc52d5d43c699a5636bcf19fceaa70c284 # v7.0.7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          labels: deps, automated-pr
-          branch: renovate/pre-commit-hooks
-          title: "chore(deps): update pre-commit hooks"
-          commit-message: "chore(deps): update pre-commit hooks"
-          body: |
-            Updates pre-commit hook versions in .pre-commit-config.yaml
-          delete-branch: true
