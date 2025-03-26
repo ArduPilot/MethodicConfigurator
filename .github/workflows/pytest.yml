@@ -139,7 +139,7 @@ jobs:
             echo "Pytest failed - failing coverage check"
             exit 1
           fi
-          coverage report --fail-under=51
+          coverage report --fail-under=60
 
   publish-test-results:
     if: always()
@@ -220,4 +220,4 @@ jobs:
         with:
             coverageFile: coverage.xml
             token: ${{ secrets.GITHUB_TOKEN }}
-            thresholdAll: 0.55
+            thresholdAll: 0.60
