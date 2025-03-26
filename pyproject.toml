@@ -48,7 +48,7 @@ dependencies = [
     "numpy==2.0.2",
     "pillow==11.1.0",
     "pip_system_certs==4.0",
-    "platformdirs==4.3.6",
+    "platformdirs==4.3.7",
     "pymavlink==2.4.43",
     "pyserial==3.5",
     "requests==2.32.3",
