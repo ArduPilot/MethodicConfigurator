@@ -8,6 +8,14 @@ updates:
       prefix: "build"
       include: "scope"
 
+  - package-ecosystem: "pip"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
