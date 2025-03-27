@@ -32,7 +32,10 @@ NON_FC_SUFIXES = (
     "-Periph",
     "-SimOnHardWare",
 )
-
+NON_FC_PREFIXES = (
+    "iomcu",
+    "TBS-L431",
+)
 HwdefDict = dict[str, tuple[int, int, int, str, str, str]]
 
 logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
@@ -160,7 +163,7 @@ def create_dicts(  # pylint: disable=too-many-locals
 
     for dirname, (numeric_board_id, vid, pid, vid_name, pid_namef, mcu_series) in hwdef_data.items():
         if (
-            dirname.startswith("iomcu")
+            dirname.startswith(NON_FC_PREFIXES)
             or dirname.endswith(NON_FC_SUFIXES)
             or mcu_series.lower().startswith(("stm32f1", "stm32f3"))
             or (numeric_board_id == 1062 and dirname != "MatekL431")  # these AP_Periph are not an FC
