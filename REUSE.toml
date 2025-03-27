@@ -26,7 +26,7 @@ SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
-path = ["24_inflight_magnetometer_fit_setup.pdef.xml", "REUSE.toml", "SECURITY.md", "SetupDeveloperPC.bat", "SetupDeveloperPC.sh", "renovate-config.json"]
+path = ["24_inflight_magnetometer_fit_setup.pdef.xml", "REUSE.toml", "SECURITY.md", "SetupDeveloperPC.bat", "SetupDeveloperPC.sh", "renovate-config.json", "renovate.json"]
 SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
