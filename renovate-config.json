@@ -11,15 +11,16 @@
       "rangeStrategy": "pin"
     }
   ],
-  "pin": {
-    "enabled": true
-  },
+  "pin": {"enabled": true},
   "platform": "github",
   "dependencyDashboard": true,
-  "regexManagers": [
+  "customManagers": [
     {
+      "customType": "regex",
       "fileMatch": ["\\.pre-commit-config\\.yaml$"],
-      "matchStrings": ["- repo: (?<depName>.*?)\n\\s+rev: (?<currentValue>.*?)\\s"],
+      "matchStrings": [
+        "- repo: (?<depName>.*?)\n\\s+rev: (?<currentValue>.*?)\\s"
+      ],
       "datasourceTemplate": "github-tags"
     }
   ]
