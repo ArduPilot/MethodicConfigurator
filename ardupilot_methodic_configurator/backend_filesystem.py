@@ -439,7 +439,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         with ZipFile(zip_file_path, "w") as zipf:
             # Add all intermediate parameter files
             for file_name in self.file_parameters:
-                zipf.write(os_path.join(self.vehicle_dir, file_name), arcname=file_name)
+                self.add_configuration_file_to_zip(zipf, file_name)
                 # Add step-specific documentation metadata files
                 pdef_xml_file = file_name.replace(".param", ".pdef.xml")
                 self.add_configuration_file_to_zip(zipf, pdef_xml_file)
