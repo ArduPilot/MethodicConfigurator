@@ -2,6 +2,7 @@
   "extends": ["config:recommended"],
   "enabledManagers": ["pre-commit"],
   "repositories": ["ArduPilot/MethodicConfigurator"],
+  "includePaths": [".pre-commit-config.yaml"],
   "packageRules": [
     {
       "matchManagers": ["pre-commit"],
@@ -13,5 +14,13 @@
   "pin": {
     "enabled": true
   },
-  "platform": "github"
+  "platform": "github",
+  "dependencyDashboard": true,
+  "regexManagers": [
+    {
+      "fileMatch": ["\\.pre-commit-config\\.yaml$"],
+      "matchStrings": ["- repo: (?<depName>.*?)\n\\s+rev: (?<currentValue>.*?)\\s"],
+      "datasourceTemplate": "github-tags"
+    }
+  ]
 }
