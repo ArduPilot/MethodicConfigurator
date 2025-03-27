@@ -13,7 +13,5 @@
   "pin": {
     "enabled": true
   },
-  "platform": "github",
-  "includePaths": ["**/.pre-commit-config.yaml"],
-  "dependencyDashboard": false
+  "platform": "github"
 }
