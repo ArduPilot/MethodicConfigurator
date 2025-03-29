@@ -72,8 +72,7 @@ class ProgramSettings:
     @staticmethod
     def valid_directory_name(dir_name: str) -> bool:
         """
-        Check if a given directory name contains only alphanumeric characters, underscores, hyphens,
-        and the OS directory separator.
+        Check if a name contains only alphanumeric characters, underscores, hyphens and the OS directory separator.
 
         This function is designed to ensure that the directory name does not contain characters that are
         invalid for directory names in many operating systems. It does not guarantee that the name

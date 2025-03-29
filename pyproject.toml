@@ -127,6 +127,7 @@ lint.select = [
     "N",    # pep8-naming
     "D",    # pydocstyle
     "UP",   # pyupgrade
+    #"ERA",  # eradicate
     "YTT",  # flake8-2020
     "ANN",  # flake8-annotations
     "ASYNC",# flake8-async
@@ -141,6 +142,7 @@ lint.select = [
     "T10",  # flake8-debugger
     "EM",   # flake8-errmsg
     "EXE",  # flake8-executable
+    #"FIX",  # flake8-fixme
     "ISC",  # flake8-implicit-str-concat
     "ICN",  # flake8-import-conventions
     "LOG",  # flake8-logging
@@ -154,20 +156,18 @@ lint.select = [
     "RSE",  # flake8-raise (RSE)
     "RET",  # flake8-return (RET)
     "SLF",  # flake8-self (SLF)
-    "SLOT", # flake8-slots (SLOT)
     "SIM",  # flake8-simplify
+    "SLOT", # flake8-slots (SLOT)
     "TID",  # flake8-tidy-imports
+    #"TD",   # flake8-todos
     "TC",   # flake8-type-checking
-    "INT",  # flake8-gettext
     "ARG",  # flake8-unused-arguments
     #"PTH",  # flake8-use-pathlib
-    #"TD",   # flake8-todos
-    #"FIX",  # flake8-fixme
-    #"ERA",  # eradicate
+    "INT",  # flake8-gettext
     "PD",   # pandas-vet
     "PGH",  # pygrep-hooks
     "PL",   # Pylint
-    "FLY002", # flynt
+    "FLY",  # flynt
     "PERF", # Performance-related issues
     "FURB", # refurb
     "DOC",  # pydoclint
@@ -185,9 +185,7 @@ lint.ignore = [
     "D103",    # Missing docstring in public function
     "D107",    # Missing docstring in `__init__`
     "D203",    #
-    "D205",    # 1 blank line required between summary line and description
     "D212",    # Multi-line docstring summary should start at the first line
-    "D404",    # First word of the docstring should not be "This"
     "D401",    # First line of docstring should be in imperative mood
     "COM812",
     "DTZ005",  # `tz=None` passed to `datetime.datetime.now()`

@@ -47,7 +47,7 @@ from ardupilot_methodic_configurator.middleware_software_updates import UpdateMa
 
 def create_argument_parser() -> argparse.ArgumentParser:
     """
-    This function sets up an argument parser to handle the command-line arguments for the script.
+    Argument parser to handle the command-line arguments for the script.
 
     Returns:
         argparse.ArgumentParser: The argument parser object.

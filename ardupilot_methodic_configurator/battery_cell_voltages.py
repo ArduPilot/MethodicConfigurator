@@ -59,7 +59,7 @@ battery_cell_voltages = {
 
 class BatteryCell:
     """
-    This class provides methods to work with battery cell voltages for different chemistries.
+    Battery cell voltages for different chemistries.
 
     It includes methods to get the tuple of chemistries, limit voltages based on chemistry type,
     and get recommended voltages for a given chemistry.

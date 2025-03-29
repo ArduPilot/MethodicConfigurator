@@ -126,7 +126,8 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
     @staticmethod
     def __decode_flight_sw_version(flight_sw_version: int) -> tuple[int, int, int, str]:
         """
-        Decode 32 bit flight_sw_version mavlink parameter
+        Decode 32 bit flight_sw_version mavlink parameter.
+
         corresponds to ArduPilot encoding in  GCS_MAVLINK::send_autopilot_version.
         """
         fw_type_id = (flight_sw_version >> 0) % 256  # E221, E222
@@ -151,6 +152,7 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
     def __decode_flight_capabilities(capabilities: int) -> dict[str, str]:
         """
         Decode 32 bit flight controller capabilities bitmask mavlink parameter.
+
         Returns a dict of concise English descriptions of each active capability.
         """
         capabilities_dict: dict[str, str] = {}

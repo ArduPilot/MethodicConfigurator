@@ -37,7 +37,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widge
 # https://dev.to/geraldew/python-tkinter-an-exercise-in-wrapping-the-combobox-ndb
 class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
     """
-    A custom Combobox widget that allows for the display of a list of tuples, where each tuple contains a key and a value.
+    A custom Combobox widget that displays a list of key-value tuples.
+
     This widget processes the list of tuples to separate keys and values for display purposes and allows for the selection
     of a tuple based on its key.
     """

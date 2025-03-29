@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
-Inserts and/or removes parameter files in the configuration sequence defined in the configuration_steps_ArduCopter.json file.
+Inserts and/or removes parameter files in the configuration sequence defined in the configuration_steps_ArduCopter.json.
 
 It also replaces all occurrences of the old names with the new names
  in all *.py and *.md files in the current directory.

@@ -119,10 +119,7 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
         return poly(cal_temp - TEMP_REF) - poly(temperature - TEMP_REF)  # type: ignore[no-any-return]
 
     def correction_accel(self, imu: int, temperature: float) -> Vector3:
-        """
-        Calculate accel correction from temperature calibration from
-        log data using parameters.
-        """
+        """Calculate accel correction from temperature calibration from log data using parameters."""
         cal_temp = self.atcal.get(imu, TEMP_REF)
         return Vector3(
             self.correction(self.acoef[imu], imu, temperature, "X", cal_temp),
@@ -131,10 +128,7 @@ class Coefficients:  # pylint: disable=too-many-instance-attributes
         )
 
     def correction_gyro(self, imu: int, temperature: float) -> Vector3:
-        """
-        Calculate gyro correction from temperature calibration from
-        log data using parameters.
-        """
+        """Calculate gyro correction from temperature calibration from log data using parameters."""
         cal_temp = self.gtcal.get(imu, TEMP_REF)
         return Vector3(
             self.correction(self.gcoef[imu], imu, temperature, "X", cal_temp),

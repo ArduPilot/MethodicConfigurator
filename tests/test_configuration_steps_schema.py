@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Validates all configuration_steps_*.json files against a JSON schema.
+
 Finds all configuration_steps_*.json files in the project and its subdirectories, and validates them
 against the JSON schema defined in "ardupilot_methodic_configurator/configuration_steps_schema.json".
 
