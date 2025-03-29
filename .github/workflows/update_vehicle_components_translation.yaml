@@ -1,0 +1,56 @@
+name: Update Vehicle Components Strings
+
+on:
+  push:
+    paths:
+      - 'ardupilot_methodic_configurator/vehicle_templates/**/vehicle_components.json'
+  pull_request:
+    paths:
+      - 'ardupilot_methodic_configurator/vehicle_templates/**/vehicle_components.json'
+  # Run on schedule to catch any manual changes to files
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday at midnight
+  # Enable manual trigger
+  workflow_dispatch:
+
+jobs:
+  update-strings:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Generate vehicle components strings
+        run: |
+          python update_vehicle_components_translation.py
+      
+      - name: Check for changes
+        id: check-changes
+        run: |
+          if git diff --quiet ardupilot_methodic_configurator/vehicle_components.py; then
+            echo "::set-output name=changes::false"
+          else
+            echo "::set-output name=changes::true"
+          fi
+      
+      - name: Create Pull Request
+        if: steps.check-changes.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v4
+        with:
+          commit-message: 'Auto-update vehicle components translatable strings'
+          title: 'Update vehicle components translatable strings'
+          body: |
+            This PR updates the vehicle_components.py file with new translatable strings.
+            
+            These strings were automatically extracted from the vehicle_components.json template files.
+            
+            This PR was triggered by changes to one or more vehicle_components.json files.
+          branch: update-vehicle-components-strings
+          delete-branch: true
+          labels: automated-pr, i18n
+          reviewers: ${{ github.actor }}
