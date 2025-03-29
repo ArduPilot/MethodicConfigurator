@@ -31,10 +31,7 @@ from ardupilot_methodic_configurator.middleware_template_overview import Templat
 
 
 class VehicleComponents:
-    """
-    This class provides methods to load and save
-    vehicle components configurations from a JSON file.
-    """
+    """Load and save vehicle components configurations from a JSON file."""
 
     def __init__(self, save_component_to_system_templates: bool = False) -> None:
         self.vehicle_components_json_filename = "vehicle_components.json"
@@ -82,6 +79,7 @@ class VehicleComponents:
     def load_component_templates(self) -> dict[str, list[dict]]:
         """
         Load component templates from both system and user templates directories.
+
         User templates take precedence over system templates.
 
         :return: The merged templates as a dictionary
@@ -161,6 +159,7 @@ class VehicleComponents:
     def save_component_templates(self, templates: dict) -> tuple[bool, str]:  # pylint: disable=too-many-branches
         """
         Save component templates.
+
         For user templates: Only save templates that are user-modified or not present in system templates.
         For system templates: Merge with existing system templates, adding new ones.
 
@@ -401,8 +400,9 @@ class VehicleComponents:
     @staticmethod
     def get_vehicle_components_overviews() -> dict[str, TemplateOverview]:
         """
-        Finds all subdirectories of the templates base directory containing a
-        "vehicle_components.json" file, creates a dictionary where the keys are
+        Finds all subdirectories of the templates base directory containing a "vehicle_components.json" file.
+
+        Creates a dictionary where the keys are
         the subdirectory names (relative to templates base directory) and the
         values are instances of TemplateOverview.
 

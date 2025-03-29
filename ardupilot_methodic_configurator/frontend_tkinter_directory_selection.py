@@ -144,6 +144,7 @@ class DirectoryNameWidgets:  # pylint: disable=too-few-public-methods
 class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
     """
     A subclass of DirectorySelectionWidgets specifically tailored for selecting vehicle directories.
+
     This class extends the functionality of DirectorySelectionWidgets to handle vehicle-specific
     directory selections. It includes additional logic for updating the local filesystem with the
     selected vehicle directory and re-initializing the filesystem with the new directory.

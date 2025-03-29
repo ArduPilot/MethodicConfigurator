@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+Validates all vehicle_components.json files against a JSON schema.
+
 Finds all vehicle_components.json files in the project and its subdirectories, and validates them
 against the JSON schema defined in "ardupilot_methodic_configurator/vehicle_components_schema.json".
 

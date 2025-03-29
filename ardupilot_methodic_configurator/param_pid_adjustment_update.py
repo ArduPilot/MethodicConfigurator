@@ -73,7 +73,9 @@ explaining how their new value relates to the default parameter value.
 
 def ranged_type(value_type: type, min_value: float, max_value: float) -> Callable:
     """
-    Return function handle of an argument type function for ArgumentParser checking a range:
+    Returns a function handle to check an ArgumentParser argument range.
+
+    An argument type function for ArgumentParser checking a range:
         min_value <= arg <= max_value
     Args:
         value_type  - value-type to convert arg to

@@ -218,10 +218,7 @@ class MockEvent(tk.Event):  # pylint: disable=too-few-public-methods
 
 
 class ComponentEditorWindow(ComponentEditorWindowBase):
-    """
-    This class validates the user input and handles user interactions
-    for editing component configurations in the ArduPilot Methodic Configurator.
-    """
+    """Validates the user input and handles user interactions for editing component configurations."""
 
     def __init__(self, version: str, local_filesystem: LocalFilesystem) -> None:
         self.serial_ports = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]

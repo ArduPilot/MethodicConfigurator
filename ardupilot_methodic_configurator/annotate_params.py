@@ -329,6 +329,7 @@ class Par:
     def print_out(formatted_params: list[str], name: str) -> None:
         """
         Print out the contents of the provided list.
+
         If the list is too large, print only the ones that fit on the screen and
         wait for user input to continue.
 
@@ -564,6 +565,7 @@ def create_doc_dict(root: ET.Element, vehicle_type: str, max_line_length: int = 
 def format_columns(values: dict[str, Any], max_width: int = 105, max_columns: int = 4) -> list[str]:
     """
     Formats a dictionary of values into column-major horizontally aligned columns.
+
     It uses at most max_columns columns.
 
     Args:

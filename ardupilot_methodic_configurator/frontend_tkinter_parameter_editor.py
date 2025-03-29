@@ -127,10 +127,10 @@ def show_about_window(root: ttk.Frame, _version: str) -> None:  # pylint: disabl
 
 class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """
-    This class is responsible for creating and managing the graphical user interface (GUI)
-    for the ArduPilot methodic configurator. It inherits from the BaseWindow class
-    and provides functionalities for displaying and interacting with drone
-    parameters, documentation, and flight controller connection settings.
+    Parameter editor and upload graphical user interface (GUI) window.
+
+    It inherits from the BaseWindow class and displays documentation and edit widgets to
+    operate on drone parameters.
     """
 
     def __init__(self, current_file: str, flight_controller: FlightController, local_filesystem: LocalFilesystem) -> None:
