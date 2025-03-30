@@ -230,7 +230,9 @@ class TestDocumentationFrame(unittest.TestCase):
         assert str(label.cget("foreground")) == "blue"
         # Compare cursor string representation instead of object
         assert str(label.cget("cursor")) == "hand2"
-        assert bool(label.cget("underline")) is True
+        # Check that the font includes "underline" attribute
+        font = label.cget("font")
+        assert "underline" in font[-1] if isinstance(font, tuple) else font
 
     @pytest.mark.usefixtures("mock_show_tooltip")
     def test_refresh_documentation_label_without_url(self) -> None:
@@ -246,7 +248,9 @@ class TestDocumentationFrame(unittest.TestCase):
         assert str(label.cget("foreground")) == "black"
         # Compare cursor string representation instead of object
         assert str(label.cget("cursor")) == "arrow"
-        assert bool(label.cget("underline")) is False
+        # Check that the font doesn't include "underline" attribute
+        font = label.cget("font")
+        assert "underline" not in font[-1] if isinstance(font, tuple) else font
 
 
 if __name__ == "__main__":
