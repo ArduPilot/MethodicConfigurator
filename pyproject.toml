@@ -114,7 +114,6 @@ exclude = [
     "__pycache__",
     "__target__",
     "dist",
-    "ardupilot_methodic_configurator/middleware_fc_ids.py",
 ]
 
 # https://docs.astral.sh/ruff/rules/
