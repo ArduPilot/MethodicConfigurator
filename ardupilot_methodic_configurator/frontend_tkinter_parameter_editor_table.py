@@ -313,20 +313,18 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             and param_name in self.local_filesystem.forced_parameters[self.current_file]
         ):
             present_as_forced = True
-            if is_bitmask or not is_within_tolerance(
-                param.value, self.local_filesystem.forced_parameters[self.current_file][param_name].value
-            ):
-                param.value = self.local_filesystem.forced_parameters[self.current_file][param_name].value
+            new_value = self.local_filesystem.forced_parameters[self.current_file][param_name].value
+            if (is_bitmask and param.value != new_value) or not is_within_tolerance(param.value, new_value):
+                param.value = new_value
                 self.at_least_one_param_edited = True
         if (
             self.current_file in self.local_filesystem.derived_parameters
             and param_name in self.local_filesystem.derived_parameters[self.current_file]
         ):
             present_as_forced = True
-            if is_bitmask or not is_within_tolerance(
-                param.value, self.local_filesystem.derived_parameters[self.current_file][param_name].value
-            ):
-                param.value = self.local_filesystem.derived_parameters[self.current_file][param_name].value
+            new_value = self.local_filesystem.derived_parameters[self.current_file][param_name].value
+            if (is_bitmask and param.value != new_value) or not is_within_tolerance(param.value, new_value):
+                param.value = new_value
                 self.at_least_one_param_edited = True
 
         bitmask_dict = None
