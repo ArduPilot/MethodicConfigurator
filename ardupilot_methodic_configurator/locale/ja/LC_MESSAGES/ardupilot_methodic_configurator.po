@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2025-03-30 15:42+0000\n"
+"POT-Creation-Date: 2025-03-30 20:31+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -300,7 +300,7 @@ msgstr ""
 "'{filename}' {parameter_type}パラメータ'{parameter}'を計算できませんでした。"
 "利用可能なドキュメントメタデータがありません"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:194
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:195
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: {_e}"
@@ -309,8 +309,8 @@ msgstr ""
 "'{filename}' {parameter_type}パラメータ'{parameter}'を計算できませんでした: "
 "{_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:218
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:232
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:219
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:233
 msgid ""
 "File '{self.configuration_steps_filename}' not found. No intermediate "
 "parameter configuration steps available"
@@ -318,8 +318,8 @@ msgstr ""
 "ファイル'{self.configuration_steps_filename}'が見つかりません。中間パラメータ"
 "設定手順は利用できません"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:224
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:237
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:225
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:238
 msgid ""
 "No documentation available for {selected_file} in the {self."
 "configuration_steps_filename} file"
@@ -793,7 +793,9 @@ msgstr "ユーザーインターフェース言語。デフォルトは%(default
 msgid ""
 "An even better result for roll and pitch will be achieved by re-autotuning "
 "an already (in all axis) autotuned vehicle"
-msgstr "既に（全軸で）オートチューンされた機体を再度オートチューンすることで、ロールとピッチでさらに良い結果が得られます"
+msgstr ""
+"既に（全軸で）オートチューンされた機体を再度オートチューンすることで、ロール"
+"とピッチでさらに良い結果が得られます"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:26
 msgid ""
@@ -806,7 +808,9 @@ msgid ""
 "Correct orientation ensures that the flight controller accurately interprets "
 "the vehicle's movements and orientation, which is fundamental for stable "
 "flight and navigation."
-msgstr "正しい向きの設定により、フライトコントローラーが機体の動きと方向を正確に解釈できるようになり、これは安定した飛行とナビゲーションの基本です。"
+msgstr ""
+"正しい向きの設定により、フライトコントローラーが機体の動きと方向を正確に解釈"
+"できるようになり、これは安定した飛行とナビゲーションの基本です。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:28
 msgid ""
@@ -814,19 +818,26 @@ msgid ""
 "appropriate failsafe actions to protect the vehicle and its surroundings. It "
 "also helps by scaling the PIDs to provide a constant flight behavior, "
 "independent of the battery state-of-charge"
-msgstr "機体が安全な電圧範囲内で動作することを確保し、機体とその周囲を保護するための適切なフェイルセーフアクションをトリガーできます。また、バッテリーの充電状態に関係なく一定の飛行動作を提供するためにPIDをスケーリングすることも支援します"
+msgstr ""
+"機体が安全な電圧範囲内で動作することを確保し、機体とその周囲を保護するための"
+"適切なフェイルセーフアクションをトリガーできます。また、バッテリーの充電状態"
+"に関係なく一定の飛行動作を提供するためにPIDをスケーリングすることも支援します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:29
 msgid ""
 "Evaluate the aircraft's PID tuning and flight characteristics with feed-"
 "forward enable to test faster dynamics"
-msgstr "フィードフォワードを有効にして機体のPIDチューニングと飛行特性を評価し、より速い動的特性をテストします"
+msgstr ""
+"フィードフォワードを有効にして機体のPIDチューニングと飛行特性を評価し、より速"
+"い動的特性をテストします"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:30
 msgid ""
 "Evaluating the aircraft's PID tuning and flight characteristics is best done "
 "with feed-forward disabled"
-msgstr "機体のPIDチューニングと飛行特性の評価は、フィードフォワードを無効にして行うのが最適です"
+msgstr ""
+"機体のPIDチューニングと飛行特性の評価は、フィードフォワードを無効にして行うの"
+"が最適です"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:31
 msgid "For accurate altitude estimation"
@@ -843,7 +854,10 @@ msgid ""
 "GNSS positioning is required to compensate for the IMU drift. This is "
 "required by the configuration and tuning steps. After configuration and "
 "tuning are complete the GNSS can be replaced by other positioning system"
-msgstr "GNSSによる位置測定はIMUのドリフトを補償するために必要です。これは構成とチューニングステップで必要です。構成とチューニングが完了した後、GNSSは他の測位システムに置き換えることができます"
+msgstr ""
+"GNSSによる位置測定はIMUのドリフトを補償するために必要です。これは構成とチュー"
+"ニングステップで必要です。構成とチューニングが完了した後、GNSSは他の測位シス"
+"テムに置き換えることができます"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:34
 msgid "Guided mode is used for waypoint navigation and precision flying"
@@ -861,7 +875,9 @@ msgstr "光学フローセンサーの使用前には校正が必要です"
 msgid ""
 "Position controller parameters are crucial for waypoint navigation and "
 "precision flying"
-msgstr "位置コントローラーのパラメータはウェイポイントナビゲーションと精密飛行のために重要です"
+msgstr ""
+"位置コントローラーのパラメータはウェイポイントナビゲーションと精密飛行のため"
+"に重要です"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:38
 msgid ""
@@ -872,20 +888,27 @@ msgstr "精密着陸は正確で安全な着陸を確保し、多くのパラメ
 msgid ""
 "Propeller size has a big influence on the vehicle dynamics, this adapts the "
 "attitude controller response to it"
-msgstr "プロペラのサイズは機体のダイナミクスに大きな影響を与えます。これは姿勢コントローラーの応答をそれに適応させます"
+msgstr ""
+"プロペラのサイズは機体のダイナミクスに大きな影響を与えます。これは姿勢コント"
+"ローラーの応答をそれに適応させます"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:40
 msgid ""
 "Proper ESC configuration is crucial for accurate motor control, affecting "
 "vehicle performance and safety. It ensures motors respond correctly to "
 "control signals and fail safely in various flight conditions."
-msgstr "適切なESC構成は正確なモーター制御に不可欠であり、機体の性能と安全性に影響します。これにより、モーターが制御信号に正しく応答し、様々な飛行条件で安全に故障することを確保します。"
+msgstr ""
+"適切なESC構成は正確なモーター制御に不可欠であり、機体の性能と安全性に影響しま"
+"す。これにより、モーターが制御信号に正しく応答し、様々な飛行条件で安全に故障"
+"することを確保します。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:41
 msgid ""
 "Remote controller is mandatory in the initial configuration and tuning "
 "phases. Later might be required for operation and/or safety"
-msgstr "リモートコントローラーは初期構成とチューニングフェーズで必須です。その後、運用および/または安全のために必要になる場合があります"
+msgstr ""
+"リモートコントローラーは初期構成とチューニングフェーズで必須です。その後、運"
+"用および/または安全のために必要になる場合があります"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:42
 msgid "Sensors need to be calibrated once, before they can be used"
@@ -910,31 +933,41 @@ msgstr "システム識別は機体の数学モデルを作成するために必
 msgid ""
 "Telemetry allows the ground control station to monitor the vehicle's status "
 "in real-time, providing flight information for safe and efficient operation."
-msgstr "テレメトリーにより、地上管制局はリアルタイムで機体の状態を監視でき、安全で効率的な運用のための飛行情報を提供します。"
+msgstr ""
+"テレメトリーにより、地上管制局はリアルタイムで機体の状態を監視でき、安全で効"
+"率的な運用のための飛行情報を提供します。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:47
 msgid ""
 "The IMU drift is temperature dependent and can cause gyro and/or accel "
 "inconsistent errors"
-msgstr "IMUのドリフトは温度に依存し、ジャイロおよび/または加速度計の一貫性のないエラーを引き起こす可能性があります"
+msgstr ""
+"IMUのドリフトは温度に依存し、ジャイロおよび/または加速度計の一貫性のないエ"
+"ラーを引き起こす可能性があります"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:48
 msgid ""
 "The VTOL-quicktune lua script can safely estimate good PID starting values "
 "for the vehicle."
-msgstr "VTOL-quicktuneルアスクリプトは、機体に適した良好なPID初期値を安全に推定できます。"
+msgstr ""
+"VTOL-quicktuneルアスクリプトは、機体に適した良好なPID初期値を安全に推定できま"
+"す。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:49
 msgid ""
 "The compass heading is crucial for the vehicle's navigation and the "
 "calibration is very accurate if done during a special flight path."
-msgstr "コンパスの方位は機体のナビゲーションにとって重要であり、特別な飛行経路中に行われると校正は非常に正確です。"
+msgstr ""
+"コンパスの方位は機体のナビゲーションにとって重要であり、特別な飛行経路中に行"
+"われると校正は非常に正確です。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:50
 msgid ""
 "The motor thrust linearization is crucial for the throttle controller "
 "tuning, and throttle-based notch filter operation"
-msgstr "モータースラストの線形化はスロットルコントローラーのチューニングとスロットルベースのノッチフィルターの操作に不可欠です"
+msgstr ""
+"モータースラストの線形化はスロットルコントローラーのチューニングとスロットル"
+"ベースのノッチフィルターの操作に不可欠です"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:51
 msgid "The notch filter(s) configuration depends on real-flight data."
@@ -950,7 +983,9 @@ msgstr "一部のパラメータのデフォルト値は、後に続く飛行テ
 msgid ""
 "The throttle controller is crucial for maintaining altitude and controlling "
 "the vehicle's vertical movement."
-msgstr "スロットルコントローラーは高度を維持し、機体の垂直移動を制御するために重要です。"
+msgstr ""
+"スロットルコントローラーは高度を維持し、機体の垂直移動を制御するために重要で"
+"す。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:54
 msgid "To ensure the vehicle is safe and stable for routine flying"
@@ -996,30 +1031,39 @@ msgstr "オートチューンロール-ピッチ結果を記録するため"
 msgid ""
 "When the gyroscope signal is less noisy the PID gains can be higher without "
 "causing motor output oscillations"
-msgstr "ジャイロスコープ信号のノイズが少なければ、モーター出力の振動を引き起こすことなくPIDゲインを高くすることができます"
+msgstr ""
+"ジャイロスコープ信号のノイズが少なければ、モーター出力の振動を引き起こすこと"
+"なくPIDゲインを高くすることができます"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:65
 msgid ""
 "With very large or very small vehicles the default PID values are not "
 "suitable for the first flight"
-msgstr "非常に大きいか非常に小さい機体では、デフォルトのPID値が最初の飛行に適していません"
+msgstr ""
+"非常に大きいか非常に小さい機体では、デフォルトのPID値が最初の飛行に適していま"
+"せん"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:66
 msgid ""
 "parameter values at later steps depend on data that is gathered by means of "
 "logging"
-msgstr "後のステップのパラメータ値は、ロギングによって収集されるデータに依存します"
+msgstr ""
+"後のステップのパラメータ値は、ロギングによって収集されるデータに依存します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:69
 msgid ""
 "After the first flight because it depends on the MOT_THST_HOVER parameter, "
 "before the second flight so that it can safely use the altitude controller"
-msgstr "MOT_THST_HOVERパラメータに依存するため最初の飛行後、そして高度コントローラーを安全に使用できるように2回目の飛行前に"
+msgstr ""
+"MOT_THST_HOVERパラメータに依存するため最初の飛行後、そして高度コントローラー"
+"を安全に使用できるように2回目の飛行前に"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:70
 msgid ""
 "All the previous steps did not require logging, but the following ones do"
-msgstr "これまでのすべてのステップではロギングは必要ありませんでしたが、以下のステップでは必要です"
+msgstr ""
+"これまでのすべてのステップではロギングは必要ありませんでしたが、以下のステッ"
+"プでは必要です"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:71
 msgid "Because guided mode requires a tunned position controller"
@@ -1041,7 +1085,8 @@ msgstr "風速推定に依存するため"
 msgid ""
 "Because it is optional and should only be done after most other "
 "configurations are complete"
-msgstr "オプションであり、他のほとんどの構成が完了した後にのみ行うべきであるため"
+msgstr ""
+"オプションであり、他のほとんどの構成が完了した後にのみ行うべきであるため"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:76
 msgid "Because it needs an initial autotune of all axis"
@@ -1051,7 +1096,9 @@ msgstr "すべての軸の初期オートチューンが必要であるため"
 msgid ""
 "Because pitch is usually the axis that has the second highest dynamic, and "
 "we continue with the second highest dynamic axis"
-msgstr "ピッチは通常2番目に高いダイナミクスを持つ軸であり、2番目に高いダイナミクス軸を続けるためです"
+msgstr ""
+"ピッチは通常2番目に高いダイナミクスを持つ軸であり、2番目に高いダイナミクス軸"
+"を続けるためです"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:78
 msgid "Because precision landing requires guided mode"
@@ -1061,19 +1108,25 @@ msgstr "精密着陸にはガイドモードが必要であるため"
 msgid ""
 "Because roll is usually the axis that has the highest dynamic, and we start "
 "with the highest dynamic axis"
-msgstr "ロールは通常最も高いダイナミクスを持つ軸であり、最も高いダイナミクス軸から始めるためです"
+msgstr ""
+"ロールは通常最も高いダイナミクスを持つ軸であり、最も高いダイナミクス軸から始"
+"めるためです"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:80
 msgid ""
 "Because the position controller PIDs depend on the attitude and attitude-"
 "rate PIDs tunned in previous steps"
-msgstr "位置コントローラーのPIDは、前のステップで調整された姿勢と姿勢レートのPIDに依存するため"
+msgstr ""
+"位置コントローラーのPIDは、前のステップで調整された姿勢と姿勢レートのPIDに依"
+"存するため"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:81
 msgid ""
 "Because the vehicle should be fully tuned (no more PID changes) before a "
 "model gets created (that depends on said PID values)"
-msgstr "モデルが作成される前に機体が完全に調整されている（PIDの変更がない）べきであるため（そのPID値に依存するモデル）"
+msgstr ""
+"モデルが作成される前に機体が完全に調整されている（PIDの変更がない）べきである"
+"ため（そのPID値に依存するモデル）"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:82
 msgid ""
@@ -1089,19 +1142,25 @@ msgstr "ヨーDはヨーの後にのみ行うことができるため"
 msgid ""
 "Because yaw is usually the axis that has the third highest dynamic, and we "
 "continue with the third highest dynamic axis"
-msgstr "ヨーは通常3番目に高いダイナミクスを持つ軸であり、3番目に高いダイナミクス軸を続けるためです"
+msgstr ""
+"ヨーは通常3番目に高いダイナミクスを持つ軸であり、3番目に高いダイナミクス軸を"
+"続けるためです"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:85
 msgid ""
 "Before the autotune process to estimate if autotune can safely operate the "
 "vehicle"
-msgstr "オートチューンプロセスの前に、オートチューンが機体を安全に操作できるかどうかを推定するため"
+msgstr ""
+"オートチューンプロセスの前に、オートチューンが機体を安全に操作できるかどうか"
+"を推定するため"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:86
 msgid ""
 "Before the first flight so that it can gather data and safeguard the vehicle "
 "from some of the noise"
-msgstr "最初の飛行前に、データを収集し、一部のノイズから機体を保護できるようにするため"
+msgstr ""
+"最初の飛行前に、データを収集し、一部のノイズから機体を保護できるようにするた"
+"め"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:87
 msgid ""
@@ -1117,13 +1176,16 @@ msgstr "2回目の飛行前に、機体を安全に調整できるようにす�
 msgid ""
 "Can only be done after the connections and device drivers have been "
 "configured in the preceding steps"
-msgstr "前のステップで接続とデバイスドライバーが構成された後にのみ行うことができます"
+msgstr ""
+"前のステップで接続とデバイスドライバーが構成された後にのみ行うことができます"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:90
 msgid ""
 "Done before sensor calibration in Mission Planner to minimize the changes "
 "the user has to do in mission planner"
-msgstr "ユーザーがミッションプランナーで行う必要がある変更を最小限に抑えるために、ミッションプランナーでのセンサー校正の前に行います"
+msgstr ""
+"ユーザーがミッションプランナーで行う必要がある変更を最小限に抑えるために、"
+"ミッションプランナーでのセンサー校正の前に行います"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:91
 msgid "It con only be done after optical flow sensor calibration setup"
@@ -1137,13 +1199,17 @@ msgstr "一部のテレメトリーシステムとESCを構成するための前
 msgid ""
 "Most other parameters are done and these need to be corrected (depending on "
 "the vehicle size) before the first flight"
-msgstr "他のほとんどのパラメータは完了しており、これらは最初の飛行前に（機体のサイズに応じて）修正する必要があります"
+msgstr ""
+"他のほとんどのパラメータは完了しており、これらは最初の飛行前に（機体のサイズ"
+"に応じて）修正する必要があります"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:94
 msgid ""
 "Most parameters have been configured in previous steps. These are parameters "
 "that did not fit in any of the categories of the previous steps."
-msgstr "ほとんどのパラメータは前のステップで構成されています。これらは前のステップのカテゴリーのどれにも当てはまらなかったパラメータです。"
+msgstr ""
+"ほとんどのパラメータは前のステップで構成されています。これらは前のステップの"
+"カテゴリーのどれにも当てはまらなかったパラメータです。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:95
 msgid "Needs to be done before compass calibration"
@@ -1159,50 +1225,68 @@ msgid ""
 "Setting up ESCs early allows for initial motor tests and ensures a stable "
 "base for further tuning and flight testing without risking damage to the "
 "vehicle."
-msgstr "リモートコントロール構成を前提条件とします。利用可能な場合はGCSテレメトリーを使用します。ESCを早期に設定することで、初期モーターテストが可能になり、機体への損傷リスクなしで、さらなるチューニングと飛行テストのための安定したベースが確保されます。"
+msgstr ""
+"リモートコントロール構成を前提条件とします。利用可能な場合はGCSテレメトリーを"
+"使用します。ESCを早期に設定することで、初期モーターテストが可能になり、機体へ"
+"の損傷リスクなしで、さらなるチューニングと飛行テストのための安定したベースが"
+"確保されます。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:98
 msgid ""
 "Remote ID requires GNSS and air pressure to be configured before, and it "
 "must be set up before the first flight"
-msgstr "リモートIDはGNSSと気圧が事前に構成されている必要があり、最初の飛行前に設定する必要があります"
+msgstr ""
+"リモートIDはGNSSと気圧が事前に構成されている必要があり、最初の飛行前に設定す"
+"る必要があります"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:99
 msgid ""
 "Requires a basic tune (provided by the previous step) in order to be able to "
 "safely navigate in a figure eight flight path."
-msgstr "8の字の飛行経路で安全にナビゲートするために基本的な調整（前のステップで提供される）が必要です。"
+msgstr ""
+"8の字の飛行経路で安全にナビゲートするために基本的な調整（前のステップで提供さ"
+"れる）が必要です。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:100
 msgid ""
 "Requires the setup (provided by the previous step) and should be done before "
 "the second quicktune."
-msgstr "（前のステップで提供される）セットアップが必要であり、2回目のクイックチューンの前に行う必要があります。"
+msgstr ""
+"（前のステップで提供される）セットアップが必要であり、2回目のクイックチューン"
+"の前に行う必要があります。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:101
 msgid ""
 "Requires the setup step. It is easier to do before the FC is mounted in the "
 "vehicle"
-msgstr "セットアップステップが必要です。FCが機体に取り付けられる前に行う方が簡単です"
+msgstr ""
+"セットアップステップが必要です。FCが機体に取り付けられる前に行う方が簡単です"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:102
 msgid ""
 "Sometimes it depends on the remote controller. Configuring telemetry early "
 "allows vehicle configuration and sensor calibration in later steps without "
 "requiring a USB cable connection to the autopilot"
-msgstr "リモートコントローラーに依存する場合があります。テレメトリーを早期に構成することで、オートパイロットへのUSBケーブル接続を必要とせずに、後のステップで機体の構成とセンサーの校正が可能になります"
+msgstr ""
+"リモートコントローラーに依存する場合があります。テレメトリーを早期に構成する"
+"ことで、オートパイロットへのUSBケーブル接続を必要とせずに、後のステップで機体"
+"の構成とセンサーの校正が可能になります"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:103
 msgid ""
 "The failsafe configuration step requires this. Controller PID scaling "
 "depends on the battery voltage"
-msgstr "フェイルセーフ構成ステップにはこれが必要です。コントローラーPIDスケーリングはバッテリー電圧に依存します"
+msgstr ""
+"フェイルセーフ構成ステップにはこれが必要です。コントローラーPIDスケーリングは"
+"バッテリー電圧に依存します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:104
 msgid ""
 "The failsafe configuration step requires this. During flight tests PID "
 "scaling depends on the battery voltage"
-msgstr "フェイルセーフ構成ステップにはこれが必要です。飛行テスト中のPIDスケーリングはバッテリー電圧に依存します"
+msgstr ""
+"フェイルセーフ構成ステップにはこれが必要です。飛行テスト中のPIDスケーリングは"
+"バッテリー電圧に依存します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:105
 msgid "The following steps require that the orientation is correctly set"
@@ -1212,7 +1296,9 @@ msgstr "以下のステップでは、方向が正しく設定されているこ
 msgid ""
 "The notch filter setup step requires this, and the safety of the vehicle "
 "depends on the ESC and motor configuration"
-msgstr "ノッチフィルターセットアップステップにはこれが必要であり、機体の安全性はESCとモーター構成に依存します"
+msgstr ""
+"ノッチフィルターセットアップステップにはこれが必要であり、機体の安全性はESCと"
+"モーター構成に依存します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:107
 msgid "This is the last step in the tuning process"
@@ -1226,7 +1312,9 @@ msgstr "オートチューンの前に良好な調整が必要です。"
 msgid ""
 "You need to cool down the FC to perform this calibration. It is easier to do "
 "before the FC is mounted in the vehicle"
-msgstr "この校正を実行するにはFCを冷却する必要があります。FCが機体に取り付けられる前に行う方が簡単です"
+msgstr ""
+"この校正を実行するにはFCを冷却する必要があります。FCが機体に取り付けられる前"
+"に行う方が簡単です"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:110
 msgid "real-flight data is only available after the first flight"
@@ -1236,7 +1324,9 @@ msgstr "実際の飛行データは最初の飛行後にのみ利用可能です
 msgid ""
 "Adjust the Proportional-Integral-Derivative (PID) controllers based on the "
 "vehicle size before the first flight"
-msgstr "最初の飛行前に機体のサイズに基づいて比例-積分-微分（PID）コントローラーを調整します"
+msgstr ""
+"最初の飛行前に機体のサイズに基づいて比例-積分-微分（PID）コントローラーを調整"
+"します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:114
 msgid "Configure Extended Kalman Filter (EKF) noise weights"
@@ -1260,37 +1350,46 @@ msgstr "精密着陸のためのパラメータを設定します"
 msgid ""
 "Configure parameters for the first battery, including health monitoring "
 "thresholds and failsafe behavior"
-msgstr "健康監視しきい値やフェイルセーフ動作を含む、最初のバッテリーのパラメータを設定します"
+msgstr ""
+"健康監視しきい値やフェイルセーフ動作を含む、最初のバッテリーのパラメータを設"
+"定します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:119
 msgid ""
 "Configure parameters for the pitch axis system identification to create a "
 "mathematical model of the vehicle"
-msgstr "機体の数学モデルを作成するためのピッチ軸システム識別のパラメータを設定します"
+msgstr ""
+"機体の数学モデルを作成するためのピッチ軸システム識別のパラメータを設定します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:120
 msgid ""
 "Configure parameters for the roll axis system identification to create a "
 "mathematical model of the vehicle"
-msgstr "機体の数学モデルを作成するためのロール軸システム識別のパラメータを設定します"
+msgstr ""
+"機体の数学モデルを作成するためのロール軸システム識別のパラメータを設定します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:121
 msgid ""
 "Configure parameters for the second battery, including health monitoring "
 "thresholds and failsafe behavior"
-msgstr "健康監視しきい値やフェイルセーフ動作を含む、2番目のバッテリーのパラメータを設定します"
+msgstr ""
+"健康監視しきい値やフェイルセーフ動作を含む、2番目のバッテリーのパラメータを設"
+"定します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:122
 msgid ""
 "Configure parameters for the thrust axis system identification to create a "
 "mathematical model of the vehicle"
-msgstr "機体の数学モデルを作成するためのスラスト軸システム識別のパラメータを設定します"
+msgstr ""
+"機体の数学モデルを作成するためのスラスト軸システム識別のパラメータを設定しま"
+"す"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:123
 msgid ""
 "Configure parameters for the yaw axis system identification to create a "
 "mathematical model of the vehicle"
-msgstr "機体の数学モデルを作成するためのヨー軸システム識別のパラメータを設定します"
+msgstr ""
+"機体の数学モデルを作成するためのヨー軸システム識別のパラメータを設定します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:124
 msgid "Configure parameters for wind speed estimation"
@@ -1300,32 +1399,42 @@ msgstr "風速推定のためのパラメータを設定します"
 msgid ""
 "Configure remote controller connection, protocol and settings, including "
 "channel mapping and flight modes"
-msgstr "チャネルマッピングやフライトモードを含む、リモートコントローラー接続、プロトコルと設定を構成します"
+msgstr ""
+"チャネルマッピングやフライトモードを含む、リモートコントローラー接続、プロト"
+"コルと設定を構成します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:126
 msgid ""
 "Configure settings for the Electronic Speed Controllers (ESCs), including "
 "PWM range and failsafe behavior"
-msgstr "PWM範囲やフェイルセーフ動作など、電子スピードコントローラー（ESC）の設定を構成します"
+msgstr ""
+"PWM範囲やフェイルセーフ動作など、電子スピードコントローラー（ESC）の設定を構"
+"成します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:127
 msgid ""
 "Configure telemetry connection, data protocol and settings between the "
 "autopilot and the ground control station(s)"
-msgstr "オートパイロットと地上管制局の間のテレメトリー接続、データプロトコルと設定を構成します"
+msgstr ""
+"オートパイロットと地上管制局の間のテレメトリー接続、データプロトコルと設定を"
+"構成します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:128
 msgid ""
 "Configure the GNSS (Global Navigation Satellite System) connection and "
 "settings, including antenna phase center location and constellation "
 "selection for optimal update rates"
-msgstr "アンテナフェーズセンター位置や最適な更新レートのための衛星群選択を含む、GNSS（全地球航法衛星システム）接続と設定を構成します"
+msgstr ""
+"アンテナフェーズセンター位置や最適な更新レートのための衛星群選択を含む、GNSS"
+"（全地球航法衛星システム）接続と設定を構成します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:129
 msgid ""
 "Configure the notch filter settings, used to reduce gyroscope signal noise "
 "caused by the motors rotation"
-msgstr "モーター回転によって引き起こされるジャイロスコープ信号ノイズを減らすために使用されるノッチフィルターの設定を構成します"
+msgstr ""
+"モーター回転によって引き起こされるジャイロスコープ信号ノイズを減らすために使"
+"用されるノッチフィルターの設定を構成します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:130
 msgid ""
@@ -1341,7 +1450,8 @@ msgstr "位置コントローラーを設定します"
 msgid ""
 "Define the orientation of the flight controller board relative to the "
 "vehicle's body frame"
-msgstr "機体のボディフレームに対するフライトコントローラーボードの向きを定義します"
+msgstr ""
+"機体のボディフレームに対するフライトコントローラーボードの向きを定義します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:133
 msgid "ESC, Motor and propeller configurations"
@@ -1373,7 +1483,9 @@ msgstr "IMU（慣性計測ユニット）温度校正設定"
 msgid ""
 "Initial attitude controller configuration depends on the vehicle's propeller "
 "size defined in the component editor window"
-msgstr "初期姿勢コントローラー構成は、コンポーネントエディターウィンドウで定義された機体のプロペラサイズに依存します"
+msgstr ""
+"初期姿勢コントローラー構成は、コンポーネントエディターウィンドウで定義された"
+"機体のプロペラサイズに依存します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:140
 msgid "Parameters for analytical PID optimization"
@@ -1391,19 +1503,24 @@ msgstr "ピッチ軸オートチューニングの結果を記録します"
 msgid ""
 "Record the results of the roll and pitch axis retuning, providing data for "
 "analysis and adjustment."
-msgstr "ロールとピッチ軸の再調整結果を記録し、分析と調整のためのデータを提供します。"
+msgstr ""
+"ロールとピッチ軸の再調整結果を記録し、分析と調整のためのデータを提供します。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:144
 msgid ""
 "Record the results of the roll axis autotuning, providing data for analysis "
 "and adjustment."
-msgstr "ロール軸オートチューニングの結果を記録し、分析と調整のためのデータを提供します。"
+msgstr ""
+"ロール軸オートチューニングの結果を記録し、分析と調整のためのデータを提供しま"
+"す。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:145
 msgid ""
 "Record the results of the yaw axis autotuning, providing data for analysis "
 "and adjustment."
-msgstr "ヨー軸オートチューニングの結果を記録し、分析と調整のためのデータを提供します。"
+msgstr ""
+"ヨー軸オートチューニングの結果を記録し、分析と調整のためのデータを提供しま"
+"す。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:146
 msgid "Record the results of the yaw rate autotuning"
@@ -1428,7 +1545,9 @@ msgstr "該当する場合、地域法規制に準拠するために機体のリ
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:150
 msgid "Set up mandatory hardware components using Mission Planner"
-msgstr "ミッションプランナーを使用して必須ハードウェアコンポーネントをセットアップします"
+msgstr ""
+"ミッションプランナーを使用して必須ハードウェアコンポーネントをセットアップし"
+"ます"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:151
 msgid "Set up parameters for barometer compensation"
@@ -1438,7 +1557,9 @@ msgstr "気圧計補償のためのパラメータをセットアップします
 msgid ""
 "Set up parameters for guided operation, including waypoint navigation and "
 "obstacle avoidance"
-msgstr "ウェイポイントナビゲーションや障害物回避を含むガイド操作のパラメータをセットアップします"
+msgstr ""
+"ウェイポイントナビゲーションや障害物回避を含むガイド操作のパラメータをセット"
+"アップします"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:153
 msgid "Set up parameters for the in-flight magnetometer calibration"
@@ -1468,13 +1589,17 @@ msgstr "ヨーレートオートチューニングプロセスのパラメータ
 msgid ""
 "Set up the in-flight VTOL-quicktune lua script to tune the PIDs after the "
 "MAGFit flight"
-msgstr "MAGFit飛行後にPIDをチューニングするための飛行中VTOL-quicktuneルアスクリプトをセットアップします"
+msgstr ""
+"MAGFit飛行後にPIDをチューニングするための飛行中VTOL-quicktuneルアスクリプトを"
+"セットアップします"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:160
 msgid ""
 "Set up the in-flight VTOL-quicktune lua script to tune the PIDs before the "
 "MAGFit flight"
-msgstr "MAGFit飛行前にPIDをチューニングするための飛行中VTOL-quicktuneルアスクリプトをセットアップします"
+msgstr ""
+"MAGFit飛行前にPIDをチューニングするための飛行中VTOL-quicktuneルアスクリプトを"
+"セットアップします"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:161
 msgid "Setup optical flow sensor calibration"
@@ -1488,7 +1613,9 @@ msgstr "光学フローセンサー校正結果を保存します"
 msgid ""
 "Use MOT_THST_HOVER value calculated during the first flight to set throttle "
 "controller PIDs"
-msgstr "最初の飛行中に計算されたMOT_THST_HOVER値を使用してスロットルコントローラーPIDを設定します"
+msgstr ""
+"最初の飛行中に計算されたMOT_THST_HOVER値を使用してスロットルコントローラーPID"
+"を設定します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:164
 msgid "Use optical flow sensor instead of GNSS sensor for positioning"
@@ -1504,7 +1631,8 @@ msgstr "気圧計位置誤差補償"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:169
 msgid "Battery Monitors (aka Power Monitors/Modules) - BATT2_* parameters"
-msgstr "バッテリーモニター（別名パワーモニター/モジュール） - BATT2_*パラメータ"
+msgstr ""
+"バッテリーモニター（別名パワーモニター/モジュール） - BATT2_*パラメータ"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:170
 msgid "Battery Monitors (aka Power Monitors/Modules) - BATT_* parameters"
@@ -1530,7 +1658,9 @@ msgstr "拡張カルマンフィルターのチューニング"
 msgid ""
 "Follow the blog instructions and use Mission Planner instead of this tool to "
 "configure the mandatory hardware parameters."
-msgstr "ブログの指示に従い、このツールの代わりにミッションプランナーを使用して必須ハードウェアパラメータを設定します。"
+msgstr ""
+"ブログの指示に従い、このツールの代わりにミッションプランナーを使用して必須"
+"ハードウェアパラメータを設定します。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:176
 msgid "GPS/Compass (landing page) - GPS* parameters"
@@ -1699,7 +1829,12 @@ msgid ""
 "IMU temperature calibration is optional.\n"
 "\n"
 "Do you want to skip it?"
-msgstr "IMU温度校正により「Accel inconsistent」および「Gyro inconsistent」エラーの可能性が減少します。\nIMU温度校正はオプションです。\n\nスキップしますか？"
+msgstr ""
+"IMU温度校正により「Accel inconsistent」および「Gyro inconsistent」エラーの可"
+"能性が減少します。\n"
+"IMU温度校正はオプションです。\n"
+"\n"
+"スキップしますか？"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:224
 msgid ""
@@ -1707,7 +1842,11 @@ msgid ""
 "You can skip some steps now.\n"
 "\n"
 "Jump to '53_everyday_use.param' file?"
-msgstr "もし焦っていて完全に最適化されたフライトコントローラーが必要ない場合は\n今いくつかのステップをスキップできます。\n\n'53_everyday_use.param'ファイルにジャンプしますか？"
+msgstr ""
+"もし焦っていて完全に最適化されたフライトコントローラーが必要ない場合は\n"
+"今いくつかのステップをスキップできます。\n"
+"\n"
+"'53_everyday_use.param'ファイルにジャンプしますか？"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:228
 msgid ""
@@ -1715,7 +1854,11 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '53_everyday_use.param' file?"
-msgstr "光学フローを使用していない場合\n今いくつかのステップをスキップできます。\n\n'53_everyday_use.param'ファイルにジャンプしますか？"
+msgstr ""
+"光学フローを使用していない場合\n"
+"今いくつかのステップをスキップできます。\n"
+"\n"
+"'53_everyday_use.param'ファイルにジャンプしますか？"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:232
 msgid ""
@@ -1723,7 +1866,11 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '47_position_controller.param' file?"
-msgstr "解析的PID最適化が必要ない場合\n今いくつかのステップをスキップできます。\n\n'47_position_controller.param'ファイルにジャンプしますか？"
+msgstr ""
+"解析的PID最適化が必要ない場合\n"
+"今いくつかのステップをスキップできます。\n"
+"\n"
+"'47_position_controller.param'ファイルにジャンプしますか？"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:238
 msgid "(Critical voltage + 0.0) x no. of cells"
@@ -1803,7 +1950,9 @@ msgstr "FCが武装解除されている間、オフラインIMU温度校正用�
 msgid ""
 "Gyro raw logging no longer required, notch filter setup is complete, this "
 "reduces processor load and log file size"
-msgstr "ジャイロ生ログは不要になりました。ノッチフィルターの設定が完了し、これによりプロセッサの負荷とログファイルのサイズが削減されます"
+msgstr ""
+"ジャイロ生ログは不要になりました。ノッチフィルターの設定が完了し、これにより"
+"プロセッサの負荷とログファイルのサイズが削減されます"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:257
 msgid "Hover learn will improve this initial guess"
@@ -1813,7 +1962,9 @@ msgstr "ホバー学習でこの初期推定値が改善されます"
 msgid ""
 "IMU batch logging no longer required, notch filter setup is complete, this "
 "reduces processor load and log file size"
-msgstr "IMUバッチロギングは不要になりました。ノッチフィルターの設定が完了し、これによりプロセッサの負荷とログファイルのサイズが削減されます"
+msgstr ""
+"IMUバッチロギングは不要になりました。ノッチフィルターの設定が完了し、これによ"
+"りプロセッサの負荷とログファイルのサイズが削減されます"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:259
 msgid "INS_GYRO_FILTER / 2"
@@ -1847,7 +1998,9 @@ msgstr "できるだけ早く着陸"
 msgid ""
 "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video "
 "stabilization. These are not needed now"
-msgstr "高速姿勢、Nav、ミッション、OF、カメラ、高速IMU、raw、IMU、ビデオ安定化以外のすべてをログ。これらは現在必要ありません"
+msgstr ""
+"高速姿勢、Nav、ミッション、OF、カメラ、高速IMU、raw、IMU、ビデオ安定化以外の"
+"すべてをログ。これらは現在必要ありません"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:267
 msgid "Log disarmed was only required for offline IMU temperature calibration"
@@ -1857,7 +2010,9 @@ msgstr "武装解除時のログはオフラインIMU温度校正にのみ必要
 msgid ""
 "Logs measured data both before and after the filters for Filter Review "
 "Webtool usage"
-msgstr "フィルターレビューWebツール使用のために、フィルター前後の測定データの両方をログに記録します"
+msgstr ""
+"フィルターレビューWebツール使用のために、フィルター前後の測定データの両方をロ"
+"グに記録します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:269
 msgid "No more system identification chip injections"
@@ -1879,7 +2034,9 @@ msgstr "IMUとRaw-IMUのみ"
 msgid ""
 "Perform all arming checks. If you have a problem fix its source. Do NOT "
 "change this"
-msgstr "すべてのアーミングチェックを実行します。問題がある場合は原因を修正してください。これを変更しないでください"
+msgstr ""
+"すべてのアーミングチェックを実行します。問題がある場合は原因を修正してくださ"
+"い。これを変更しないでください"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:274
 msgid "Reasonable for most places on this planet"
@@ -1909,7 +2066,9 @@ msgstr "コンポーネントエディターで選択"
 msgid ""
 "So that it can tune the throttle controller on 20_throttle_controller.param "
 "file"
-msgstr "20_throttle_controller.paramファイルでスロットルコントローラーを調整できるようにするため"
+msgstr ""
+"20_throttle_controller.paramファイルでスロットルコントローラーを調整できるよ"
+"うにするため"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:281
 msgid "Specified in component editor window"
@@ -1947,7 +2106,9 @@ msgstr "VTOL-Quicktuneルアスクリプトを使用して良好なPID初期値�
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:289
 msgid ""
 "Use acc and gyro batch logging on F4 processors, gyro raw logging on others"
-msgstr "F4プロセッサではaccとgyroのバッチログを使用し、その他ではgyroの生ログを使用する"
+msgstr ""
+"F4プロセッサではaccとgyroのバッチログを使用し、その他ではgyroの生ログを使用す"
+"る"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:290
 msgid ""
@@ -1959,13 +2120,17 @@ msgstr "VTOL-Quicktune、MagFit自動化、風速推定自動化にLuaスクリ�
 msgid ""
 "Use pre and post filters acc and gyro batch logging on F4 processors, pre-"
 "post gyro raw logging on others"
-msgstr "F4プロセッサではプレフィルタとポストフィルタのaccとgyroバッチログを使用し、その他ではプレ-ポストgyro生ログを使用する"
+msgstr ""
+"F4プロセッサではプレフィルタとポストフィルタのaccとgyroバッチログを使用し、そ"
+"の他ではプレ-ポストgyro生ログを使用する"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:292
 msgid ""
 "Use the first notch filter to filter the noise created by the motors/"
 "propellers"
-msgstr "最初のノッチフィルターを使用してモーター/プロペラが発生するノイズをフィルタリングする"
+msgstr ""
+"最初のノッチフィルターを使用してモーター/プロペラが発生するノイズをフィルタリ"
+"ングする"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:293
 msgid ""
@@ -2201,7 +2366,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:745
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:767
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:774
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:345
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:347
 #: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
 msgid "Error"
 msgstr "エラー"
@@ -2354,8 +2519,8 @@ msgstr "ボタンは、すべての情報が正しいことを確認してから
 msgid "How to use the component editor window"
 msgstr "コンポーネントエディタウィンドウの使用方法"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:222
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:253
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:223
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:255
 msgid ""
 "\n"
 "This is optional and can be left blank"
@@ -2363,7 +2528,7 @@ msgstr ""
 "\n"
 "これはオプションで、空白のままにできます"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:307
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:309
 msgid ""
 "ArduPilot Methodic Configurator only operates correctly if all component "
 "properties are correct. ArduPilot parameter values depend on the components "
@@ -2379,27 +2544,27 @@ msgstr ""
 "ウィンドウ右側のスクロールバーを使用して、全てのコンポーネントに正しい値を入"
 "力しましたか？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:313
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:315
 msgid "Confirm that all component properties are correct"
 msgstr "すべてのコンポーネントプロパティが正しいことを確認してください"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:345
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:347
 msgid "Failed to save data to file."
 msgstr "ファイルにデータを保存できませんでした。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:347
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:349
 msgid "Vehicle component data saved successfully."
 msgstr "機体コンポーネントデータが正常に保存されました。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:352
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:354
 msgid "Do you want to save the changes before closing?"
 msgstr "閉じる前に変更を保存しますか？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:352
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:354
 msgid "Save Changes?"
 msgstr "変更を保存しますか？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:380
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:382
 msgid ""
 "Skip the component editor window. Only use this if all components have been "
 "configured. Default is %(default)s"
@@ -3373,7 +3538,17 @@ msgid ""
 "completed the experiment)\n"
 "* NO - Continue without copying values (if you haven't performed the "
 "experiment yet, but know what you are doing)"
-msgstr "この構成ステップには{auto_changed_by}による外部変更が必要です\n\n外部ツール実験手順はチューニングガイドに記載されています。\n\nオプションを選択してください:\n* 閉じる - アプリケーションを閉じて実験を実行する\n* はい - 現在のFCの値を{selected_file}にコピーする(実験がすでに完了している場合)\n* いいえ - 値をコピーせずに続行する(実験をまだ実行していないが、何をしているか分かっている場合)"
+msgstr ""
+"この構成ステップには{auto_changed_by}による外部変更が必要です\n"
+"\n"
+"外部ツール実験手順はチューニングガイドに記載されています。\n"
+"\n"
+"オプションを選択してください:\n"
+"* 閉じる - アプリケーションを閉じて実験を実行する\n"
+"* はい - 現在のFCの値を{selected_file}にコピーする(実験がすでに完了している場"
+"合)\n"
+"* いいえ - 値をコピーせずに続行する(実験をまだ実行していないが、何をしている"
+"か分かっている場合)"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:471
 msgid "Update file with values from FC?"
@@ -3397,6 +3572,10 @@ msgstr "いいえ"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:545
 msgid "Skip some steps?"
 msgstr "一部のステップをスキップしますか？"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:545
+msgid "Skip to {dest_file}?"
+msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:555
 msgid ""
@@ -3711,7 +3890,7 @@ msgid "External tool or documentation relevant for the current file"
 msgstr "現在のファイルに関連する外部ツールまたはドキュメント"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:34
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:130
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:131
 msgid "External tool:"
 msgstr "外部ツール:"
 
@@ -3758,11 +3937,11 @@ msgstr "なぜ今:"
 msgid "{current_file} Documentation"
 msgstr "{current_file}のドキュメント"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:152
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:158
 msgid "Documentation URL not available"
 msgstr "ドキュメントURLは利用できません"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:161
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:167
 msgid ""
 "This configuration step ({current_file} intermediate parameter file) is "
 "{percentage}% mandatory"
@@ -3770,7 +3949,7 @@ msgstr ""
 "この設定ステップ（{current_file}中間パラメータファイル）は{percentage}%必須で"
 "す"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:166
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:172
 msgid ""
 "Mandatory level not available for this configuration step ({current_file})"
 msgstr "この設定ステップ（{current_file}）では必須レベルは利用できません"
@@ -3866,7 +4045,7 @@ msgid "Parameter Renamed"
 msgstr "パラメータ名変更済み"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:190
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:481
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:479
 msgid "No documentation available in apm.pdef.xml for this parameter"
 msgstr "このパラメータのapm.pdef.xmlにドキュメントが利用できません"
 
@@ -3875,8 +4054,8 @@ msgid "Add a parameter to the {self.current_file} file"
 msgstr "パラメータを{self.current_file}ファイルに追加"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:221
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:370
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:636
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:368
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:634
 msgid "Parameter %s not found in the %s file: %s"
 msgstr "パラメータ%sが%sファイルに見つかりません: %s"
 
@@ -3888,40 +4067,40 @@ msgstr "{param_name}を{self.current_file}ファイルから削除"
 msgid "Could not solve the selected {combobox_widget} key to a float value."
 msgstr "選択した{combobox_widget}キーを浮動小数点値に変換できませんでした。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:432
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:430
 msgid "{_param_name} Value: {_new_decimal_value}"
 msgstr "{_param_name}の値: {_new_decimal_value}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:442
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:440
 msgid "Select {param_name} Bitmask Options"
 msgstr "{param_name}のビットマスクオプションを選択"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:491
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:489
 msgid "When selected upload {param_name} new value to the flight controller"
 msgstr "選択時、{param_name}の新しい値をフライトコントローラにアップロード"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:530
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:528
 msgid "Reason why {param_name} should change to {_value}"
 msgstr "{param_name}を{_value}に変更する理由"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:535
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:533
 msgid "Are you sure you want to delete the {param_name} parameter?"
 msgstr "本当に{param_name}パラメータを削除しますか？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:550
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:548
 msgid "Add Parameter to "
 msgstr "パラメータを追加"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:554
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:552
 msgid "Enter the parameter name to add:"
 msgstr "追加するパラメータ名を入力:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:561
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:625
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:559
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:623
 msgid "Operation not possible"
 msgstr "操作できません"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:562
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:560
 msgid ""
 "No apm.pdef.xml file and no FC connected. Not possible autocomplete "
 "parameter names."
@@ -3929,30 +4108,30 @@ msgstr ""
 "apm.pdef.xmlファイルがなく、FCも接続されていません。パラメータ名の自動補完は"
 "できません。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:601
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:599
 msgid "Parameter name can not be empty."
 msgstr "パラメータ名を空にすることはできません。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:601
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:604
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:612
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:622
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:599
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:602
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:610
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:620
 msgid "Invalid parameter name."
 msgstr "無効なパラメータ名です。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:604
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:602
 msgid "Parameter already exists, edit it instead"
 msgstr "パラメータはすでに存在します。代わりに編集してください"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:612
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:610
 msgid "Parameter name not found in the flight controller."
 msgstr "パラメータ名がフライトコントローラに見つかりません。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:621
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:619
 msgid "'{param_name}' not found in the apm.pdef.xml file."
 msgstr "'{param_name}'がapm.pdef.xmlファイルに見つかりません。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:626
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:624
 msgid ""
 "Can not add parameter when no FC is connected and no apm.pdef.xml file "
 "exists."
@@ -3960,43 +4139,43 @@ msgstr ""
 "FCが接続されておらず、apm.pdef.xmlファイルも存在しない場合、パラメータを追加"
 "できません。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:650
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:648
 msgid "The value for {param_name} {p} should be greater than {p_min}\n"
 msgstr "{param_name}の値{p}は{p_min}より大きくなければなりません\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:652
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:658
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:650
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:656
 msgid "Out-of-bounds Value"
 msgstr "範囲外の値"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:652
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:658
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:650
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:656
 msgid "Use out-of-bounds value?"
 msgstr "範囲外の値を使用しますか？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:656
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:654
 msgid "The value for {param_name} {p} should be smaller than {p_max}\n"
 msgstr "{param_name}の値{p}は{p_max}より小さくなければなりません\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:663
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:661
 msgid "The value for {param_name} must be a valid float."
 msgstr "{param_name}の値は有効な浮動小数点数である必要があります。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:664
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:662
 msgid "Invalid Value"
 msgstr "無効な値"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:668
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:666
 msgid ""
 "Parameter %s changed, will later ask if change(s) should be saved to file."
 msgstr ""
 "パラメータ%sが変更されました。後で変更をファイルに保存するか尋ねられます。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:686
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:684
 msgid "Parameter %s not found in the %s file %s: %s"
 msgstr "パラメータ%sが%sファイル%sに見つかりません: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:691
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:689
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if "
 "change(s) should be saved to file."
@@ -4555,7 +4734,9 @@ msgstr "完全充電時のセルあたりの最大電圧（LiPoの場合は4.2V�
 
 #: ardupilot_methodic_configurator/vehicle_components.py:92
 msgid "Microcontroller series used in the flight controller (e.g., STM32F4)"
-msgstr "フライトコントローラーで使用されるマイクロコントローラーシリーズ（例：STM32F4）"
+msgstr ""
+"フライトコントローラーで使用されるマイクロコントローラーシリーズ（例："
+"STM32F4）"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:93
 msgid "Minimum take-off weight in kilograms"
