@@ -31,13 +31,13 @@ def process_configuration_steps(text_fields: list[str], extracted_strings: dict[
             if field in step_data and isinstance(step_data[field], str) and step_data[field].strip():
                 extracted_strings[field].add(step_data[field])
 
-                # Special handling for jump_possible messages
+        # Special handling for jump_possible messages
         if "jump_possible" in step_data:
             for jump_message in step_data["jump_possible"].values():
                 if isinstance(jump_message, str) and jump_message.strip():
                     extracted_strings["jump_messages"].add(jump_message)
 
-                # Extract change reasons from forced_parameters and derived_parameters
+        # Extract change reasons from forced_parameters and derived_parameters
         for param_type in ["forced_parameters", "derived_parameters"]:
             if param_type in step_data:
                 for param_data in step_data[param_type].values():
