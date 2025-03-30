@@ -14,5 +14,5 @@ LAND_ALT_LOW,500  # I WANT IT TO SLOW DOWN LATER ENOUGH SPACE AND DUAL GPS
 RTL_ALT,10000  # This vehicle WILL FLY IN TERRAIN AREA AT TIMES
 RTL_LOIT_TIME,5000  # PERFECT IN MY CASE
 SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
-SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation
 SERIAL7_PROTOCOL,-1  # WE DONT USE

@@ -14,5 +14,5 @@ LAND_ALT_LOW,1000  # GPS is only 2.0m CEP
 RTL_ALT,500  # RTL at 5m is fine.
 RTL_LOIT_TIME,5000  # The default is too long. This reduces the time
 SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
-SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation
 SERIAL7_PROTOCOL,2  # MavLink 2 is supported.
