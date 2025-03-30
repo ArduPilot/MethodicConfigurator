@@ -762,6 +762,22 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 logging_debug(msg)
         return ""
 
+    def find_lowest_available_backup_number(self) -> int:
+        """
+        Find the lowest non-existing backup number.
+
+        Returns:
+            The lowest available backup number
+
+        """
+        backup_num = 1  # Start from 01
+        while self.vehicle_configuration_file_exists(f"autobackup_{backup_num:02d}.param"):
+            backup_num += 1
+            if backup_num > 99:  # Prevent endless loop, cap at 99
+                # Overwrite the highest number if we reach the cap
+                return 99
+        return backup_num
+
     @staticmethod
     def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
         parser.add_argument(

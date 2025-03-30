@@ -228,6 +228,15 @@ def main() -> None:
             overwrite_existing_file=False,
             even_if_last_uploaded_filename_exists=False,
         )
+        # Create incremental backup file
+        backup_num = local_filesystem.find_lowest_available_backup_number()
+        local_filesystem.backup_fc_parameters_to_file(
+            flight_controller.fc_parameters,
+            f"autobackup_{backup_num:02d}.param",
+            overwrite_existing_file=True,
+            even_if_last_uploaded_filename_exists=True,
+        )
+        logging_info(_("Created backup file autobackup_%02d.param"), backup_num)
 
     # Call the GUI function with the starting intermediate parameter file
     ParameterEditorWindow(start_file, flight_controller, local_filesystem)

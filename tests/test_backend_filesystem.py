@@ -17,7 +17,9 @@ from subprocess import SubprocessError
 from unittest.mock import MagicMock, mock_open, patch
 
 from ardupilot_methodic_configurator.annotate_params import Par
-from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, is_within_tolerance
+
+# pylint: disable=too-many-lines
 
 
 class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -417,9 +419,6 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
     def test_tolerance_handling(self) -> None:
         """Test parameter value tolerance checking."""
         # Setup LocalFilesystem instance
-        from ardupilot_methodic_configurator.backend_filesystem import (  # pylint: disable=import-outside-toplevel
-            is_within_tolerance,
-        )
 
         # Test cases within tolerance (default 0.1%)
         assert is_within_tolerance(10.0, 10.009)  # +0.09% - should pass
@@ -740,6 +739,159 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert result["PARAM2"].comment == "Comment 2"
         assert result["PARAM3"].value == 3.0
         assert result["PARAM3"].comment == ""
+
+    def test_find_lowest_available_backup_number(self) -> None:
+        """Test finding the lowest available backup number."""
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+
+        # Test when no backups exist
+        with patch.object(lfs, "vehicle_configuration_file_exists", return_value=False):
+            result = lfs.find_lowest_available_backup_number()
+            assert result == 1
+
+        # Test when backups 1-3 exist, but 4 doesn't
+        with patch.object(
+            lfs, "vehicle_configuration_file_exists", side_effect=lambda x: int(x.split("_")[1].split(".")[0]) < 4
+        ):
+            result = lfs.find_lowest_available_backup_number()
+            assert result == 4
+
+        # Test when all backups up to limit exist
+        with patch.object(lfs, "vehicle_configuration_file_exists", return_value=True):
+            result = lfs.find_lowest_available_backup_number()
+            assert result == 99  # Should return the cap value
+
+    def test_backup_fc_parameters_to_file(self) -> None:
+        """Test backing up flight controller parameters to a file."""
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+        test_params = {"PARAM1": 1.0, "PARAM2": 2.0}
+
+        # Test when file doesn't exist and no last uploaded filename
+        with (
+            patch.object(lfs, "vehicle_configuration_file_exists", return_value=False),
+            patch.object(lfs, "_LocalFilesystem__read_last_uploaded_filename", return_value=""),
+            patch("ardupilot_methodic_configurator.backend_filesystem.Par.export_to_param") as mock_export,
+            patch("ardupilot_methodic_configurator.backend_filesystem.Par.format_params") as mock_format,
+        ):
+            mock_format.return_value = "formatted_params"
+            lfs.backup_fc_parameters_to_file(test_params, "backup.param")
+            mock_export.assert_called_once()
+
+        # Test with existing file (should not overwrite by default)
+        with (
+            patch.object(lfs, "vehicle_configuration_file_exists", return_value=True),
+            patch.object(lfs, "_LocalFilesystem__read_last_uploaded_filename", return_value=""),
+            patch("ardupilot_methodic_configurator.backend_filesystem.Par.export_to_param") as mock_export,
+        ):
+            lfs.backup_fc_parameters_to_file(test_params, "backup.param")
+            mock_export.assert_not_called()
+
+        # Test with force overwrite
+        with (
+            patch.object(lfs, "vehicle_configuration_file_exists", return_value=True),
+            patch.object(lfs, "_LocalFilesystem__read_last_uploaded_filename", return_value=""),
+            patch("ardupilot_methodic_configurator.backend_filesystem.Par.export_to_param") as mock_export,
+            patch("ardupilot_methodic_configurator.backend_filesystem.Par.format_params") as mock_format,
+        ):
+            mock_format.return_value = "formatted_params"
+            lfs.backup_fc_parameters_to_file(test_params, "backup.param", overwrite_existing_file=True)
+            mock_export.assert_called_once()
+
+        # Test with last uploaded filename exists and even_if_last_uploaded_filename_exists=False
+        with (
+            patch.object(lfs, "vehicle_configuration_file_exists", return_value=False),
+            patch.object(lfs, "_LocalFilesystem__read_last_uploaded_filename", return_value="last_file.param"),
+            patch("ardupilot_methodic_configurator.backend_filesystem.Par.export_to_param") as mock_export,
+        ):
+            lfs.backup_fc_parameters_to_file(test_params, "backup.param", even_if_last_uploaded_filename_exists=False)
+            mock_export.assert_not_called()
+
+    def test_zip_files(self) -> None:
+        """Test zipping files functionality."""
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+
+        # Setup mock file parameters and file paths
+        lfs.file_parameters = {"01_file.param": {}, "02_file.param": {}}
+        lfs.get_vehicle_directory_name = MagicMock(return_value="test_vehicle")
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem.ZipFile") as mock_zipfile,
+            patch.object(lfs, "add_configuration_file_to_zip") as mock_add_file,
+            patch("os.path.join", return_value="vehicle_dir/test_vehicle.zip"),
+        ):
+            mock_zipfile_instance = MagicMock()
+            mock_zipfile.return_value.__enter__.return_value = mock_zipfile_instance
+
+            # Test with valid files_to_zip list
+            files_to_zip = [(True, "summary1.txt"), (False, "summary2.txt")]
+            lfs.zip_files(files_to_zip)
+
+            # Should call add_configuration_file_to_zip for each parameter file
+            assert mock_add_file.call_count >= 2
+            # Should add all files where the first tuple value is True
+            mock_add_file.assert_any_call(mock_zipfile_instance, "summary1.txt")
+            # Should not add files where the first tuple value is False
+            for call_args in mock_add_file.call_args_list:
+                assert call_args[0][1] != "summary2.txt"
+
+    def test_is_within_tolerance_edge_cases(self) -> None:
+        """Test is_within_tolerance function with edge cases."""
+        # Test with negative values
+        assert is_within_tolerance(-100, -100)
+        assert is_within_tolerance(-100, -100.099)  # 0.099% difference
+        assert not is_within_tolerance(-100, -101)  # 1% difference
+
+        # Test with very small values (where absolute tolerance dominates)
+        assert is_within_tolerance(1e-10, 1.09e-10)  # 9% difference but absolute diff is tiny
+        assert is_within_tolerance(0, 1e-9)  # Zero case with small absolute difference
+
+        # Test with very large values
+        assert is_within_tolerance(1e10, 1.0009e10)  # 0.09% difference
+        assert not is_within_tolerance(1e10, 1.01e10)  # 1% difference
+
+        # Test with custom tolerances
+        assert is_within_tolerance(100, 102, atol=3)  # 2% difference but within atol=3
+        assert is_within_tolerance(100, 110, rtol=0.1)  # 10% difference but within rtol=0.1
+
+    def test_get_download_url_and_local_filename_with_valid_config(self) -> None:
+        """Test get_download_url_and_local_filename with valid configuration."""
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+
+        # Set up configuration steps with download file section
+        lfs.configuration_steps = {
+            "test_file.param": {
+                "download_file": {"source_url": "https://example.com/file.bin", "dest_local": "local_file.bin"}
+            }
+        }
+
+        with patch("os.path.join", return_value="vehicle_dir/local_file.bin"):
+            url, local_path = lfs.get_download_url_and_local_filename("test_file.param")
+            assert url == "https://example.com/file.bin"
+            assert local_path == "vehicle_dir/local_file.bin"
+
+    def test_get_upload_local_and_remote_filenames_with_valid_config(self) -> None:
+        """Test get_upload_local_and_remote_filenames with valid configuration."""
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+
+        # Set up configuration steps with upload file section
+        lfs.configuration_steps = {
+            "test_file.param": {"upload_file": {"source_local": "local_file.bin", "dest_on_fc": "/fs/microsd/APM/file.bin"}}
+        }
+
+        with patch("os.path.join", return_value="vehicle_dir/local_file.bin"):
+            local_path, remote_path = lfs.get_upload_local_and_remote_filenames("test_file.param")
+            assert local_path == "vehicle_dir/local_file.bin"
+            assert remote_path == "/fs/microsd/APM/file.bin"
 
 
 class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
