@@ -542,7 +542,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def __should_jump_to_file(self, selected_file: str) -> str:
         jump_possible = self.local_filesystem.jump_possible(selected_file)
         for dest_file, msg in jump_possible.items():
-            if messagebox.askyesno(_("Skip some steps?"), msg):
+            if messagebox.askyesno(_("Skip some steps?"), _(msg) if msg else _("Skip to {dest_file}?").format(**locals())):
                 self.file_selection_combobox.set(dest_file)
                 return dest_file
         return selected_file

@@ -207,6 +207,7 @@ class ComponentEditorWindowBase(BaseWindow):
 
         current_path = (*path, key)
         description, is_optional = self.local_filesystem.get_component_property_description(current_path)
+        description = _(description) if description else ""
 
         if is_optional:
             frame = ttk.LabelFrame(parent, text=_(key), style="Optional.TLabelframe")
@@ -223,7 +224,7 @@ class ComponentEditorWindowBase(BaseWindow):
 
         # Add tooltip based on schema description
         if description:
-            show_tooltip(frame, _(description), position_below=False)
+            show_tooltip(frame, description, position_below=False)
 
         if is_toplevel and key in self.data.get("Components", {}):
             self._add_template_controls(frame, key)
@@ -237,6 +238,7 @@ class ComponentEditorWindowBase(BaseWindow):
         entry_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
 
         description, is_optional = self.local_filesystem.get_component_property_description((*path, key))
+        description = _(description) if description else ""
 
         label = ttk.Label(entry_frame, text=_(key), foreground="gray" if is_optional else "black")
 
@@ -254,8 +256,8 @@ class ComponentEditorWindowBase(BaseWindow):
 
         # Add tooltip based on schema description
         if description:
-            show_tooltip(label, _(description))
-            show_tooltip(entry, _(description))
+            show_tooltip(label, description)
+            show_tooltip(entry, description)
 
     def _add_template_controls(self, parent_frame: ttk.LabelFrame, component_name: str) -> None:
         """Add template controls for a component."""
