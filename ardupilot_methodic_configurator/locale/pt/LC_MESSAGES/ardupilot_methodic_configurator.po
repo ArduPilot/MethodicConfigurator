@@ -798,20 +798,20 @@ msgstr "Idioma da interface. Por defeito é %(default)s."
 msgid ""
 "An even better result for roll and pitch will be achieved by re-autotuning "
 "an already (in all axis) autotuned vehicle"
-msgstr ""
+msgstr "Um resultado ainda melhor para rolamento e inclinação será alcançado ao refazer o autotune num veículo já autoajustado (em todos os eixos)"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:26
 msgid ""
 "Because the mathematical model of the vehicle allows for analytical PID "
 "optimization"
-msgstr ""
+msgstr "Porque o modelo matemático do veículo permite a otimização analítica de PID"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:27
 msgid ""
 "Correct orientation ensures that the flight controller accurately interprets "
 "the vehicle's movements and orientation, which is fundamental for stable "
 "flight and navigation."
-msgstr ""
+msgstr "A orientação correta garante que o controlador de voo interpreta com precisão os movimentos e orientação do veículo, o que é fundamental para voo estável e navegação."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:28
 msgid ""
@@ -819,344 +819,344 @@ msgid ""
 "appropriate failsafe actions to protect the vehicle and its surroundings. It "
 "also helps by scaling the PIDs to provide a constant flight behavior, "
 "independent of the battery state-of-charge"
-msgstr ""
+msgstr "Assegura que o veículo opera dentro de limites de tensão seguros e pode acionar ações de segurança apropriadas para proteger o veículo e os seus arredores. Também ajuda ao dimensionar os PIDs para proporcionar um comportamento de voo constante, independentemente do estado de carga da bateria"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:29
 msgid ""
 "Evaluate the aircraft's PID tuning and flight characteristics with feed-"
 "forward enable to test faster dynamics"
-msgstr ""
+msgstr "Avaliar a afinação PID da aeronave e características de voo com feed-forward ativado para testar dinâmicas mais rápidas"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:30
 msgid ""
 "Evaluating the aircraft's PID tuning and flight characteristics is best done "
 "with feed-forward disabled"
-msgstr ""
+msgstr "Avaliar a afinação PID da aeronave e características de voo é melhor feito com feed-forward desativado"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:31
 msgid "For accurate altitude estimation"
-msgstr ""
+msgstr "Para estimativa precisa de altitude"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:32
 msgid ""
 "For accurate navigation and stabilization at high speeds and/or in windy "
 "conditions"
-msgstr ""
+msgstr "Para navegação e estabilização precisas em velocidades elevadas e/ou em condições de vento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:33
 msgid ""
 "GNSS positioning is required to compensate for the IMU drift. This is "
 "required by the configuration and tuning steps. After configuration and "
 "tuning are complete the GNSS can be replaced by other positioning system"
-msgstr ""
+msgstr "O posicionamento GNSS é necessário para compensar a deriva da IMU. Isto é requerido pelas etapas de configuração e afinação. Após concluir a configuração e afinação, o GNSS pode ser substituído por outro sistema de posicionamento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:34
 msgid "Guided mode is used for waypoint navigation and precision flying"
-msgstr ""
+msgstr "O modo Guiado é usado para navegação por pontos de passagem e voo de precisão"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:35
 msgid "If optical flow is to be used instead of GNSS for positioning"
-msgstr ""
+msgstr "Se o fluxo ótico for usado em vez de GNSS para posicionamento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:36
 msgid "Optical flow sensor calibration is needed before using it"
-msgstr ""
+msgstr "A calibração do sensor de fluxo ótico é necessária antes de o utilizar"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:37
 msgid ""
 "Position controller parameters are crucial for waypoint navigation and "
 "precision flying"
-msgstr ""
+msgstr "Os parâmetros do controlador de posição são cruciais para navegação por pontos de passagem e voo de precisão"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:38
 msgid ""
 "Precision landing ensures accurate and safe landing and has many parameters"
-msgstr ""
+msgstr "A aterragem de precisão garante uma aterragem precisa e segura e tem muitos parâmetros"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:39
 msgid ""
 "Propeller size has a big influence on the vehicle dynamics, this adapts the "
 "attitude controller response to it"
-msgstr ""
+msgstr "O tamanho da hélice tem uma grande influência na dinâmica do veículo, isto adapta a resposta do controlador de atitude a ela"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:40
 msgid ""
 "Proper ESC configuration is crucial for accurate motor control, affecting "
 "vehicle performance and safety. It ensures motors respond correctly to "
 "control signals and fail safely in various flight conditions."
-msgstr ""
+msgstr "A configuração adequada do ESC é crucial para o controlo preciso do motor, afetando o desempenho e segurança do veículo. Garante que os motores respondem corretamente aos sinais de controlo e falham com segurança em várias condições de voo."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:41
 msgid ""
 "Remote controller is mandatory in the initial configuration and tuning "
 "phases. Later might be required for operation and/or safety"
-msgstr ""
+msgstr "O controlador remoto é obrigatório nas fases iniciais de configuração e afinação. Posteriormente pode ser necessário para operação e/ou segurança"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:42
 msgid "Sensors need to be calibrated once, before they can be used"
-msgstr ""
+msgstr "Os sensores precisam de ser calibrados uma vez, antes de poderem ser usados"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:43
 msgid "Some countries require a remote ID for drones to be flown legally."
-msgstr ""
+msgstr "Alguns países requerem uma identificação remota para drones voarem legalmente."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:44
 msgid ""
 "Sometimes the weights of the barometer vs. GNSS altitude need to be adjusted."
-msgstr ""
+msgstr "Por vezes, os pesos do barómetro vs. altitude GNSS precisam de ser ajustados."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:45
 msgid ""
 "System identification is required to create a mathematical model of the "
 "vehicle"
-msgstr ""
+msgstr "A identificação do sistema é necessária para criar um modelo matemático do veículo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:46
 msgid ""
 "Telemetry allows the ground control station to monitor the vehicle's status "
 "in real-time, providing flight information for safe and efficient operation."
-msgstr ""
+msgstr "A telemetria permite que a estação de controlo em terra monitorize o estado do veículo em tempo real, fornecendo informações de voo para uma operação segura e eficiente."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:47
 msgid ""
 "The IMU drift is temperature dependent and can cause gyro and/or accel "
 "inconsistent errors"
-msgstr ""
+msgstr "A deriva da IMU é dependente da temperatura e pode causar erros inconsistentes no giroscópio e/ou acelerómetro"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:48
 msgid ""
 "The VTOL-quicktune lua script can safely estimate good PID starting values "
 "for the vehicle."
-msgstr ""
+msgstr "O script lua VTOL-quicktune pode estimar com segurança bons valores iniciais de PID para o veículo."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:49
 msgid ""
 "The compass heading is crucial for the vehicle's navigation and the "
 "calibration is very accurate if done during a special flight path."
-msgstr ""
+msgstr "A direção da bússola é crucial para a navegação do veículo e a calibração é muito precisa se feita durante uma trajetória de voo especial."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:50
 msgid ""
 "The motor thrust linearization is crucial for the throttle controller "
 "tuning, and throttle-based notch filter operation"
-msgstr ""
+msgstr "A linearização do impulso do motor é crucial para a afinação do controlador de aceleração e operação de filtro notch baseado no acelerador"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:51
 msgid "The notch filter(s) configuration depends on real-flight data."
-msgstr ""
+msgstr "A configuração do(s) filtro(s) notch depende de dados de voo real."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:52
 msgid ""
 "The parameter defaults of some parameters are not suitable for the flight "
 "tests that will follow"
-msgstr ""
+msgstr "Os valores predefinidos de alguns parâmetros não são adequados para os testes de voo que se seguirão"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:53
 msgid ""
 "The throttle controller is crucial for maintaining altitude and controlling "
 "the vehicle's vertical movement."
-msgstr ""
+msgstr "O controlador de acelerador é crucial para manter a altitude e controlar o movimento vertical do veículo."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:54
 msgid "To ensure the vehicle is safe and stable for routine flying"
-msgstr ""
+msgstr "Para garantir que o veículo é seguro e estável para voos rotineiros"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:55
 msgid "To optimize pitch step response."
-msgstr ""
+msgstr "Para otimizar a resposta ao degrau da inclinação."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:56
 msgid "To optimize roll step response."
-msgstr ""
+msgstr "Para otimizar a resposta ao degrau do rolamento."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:57
 msgid "To optimize yaw D step response."
-msgstr ""
+msgstr "Para otimizar a resposta ao degrau do D do guinada."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:58
 msgid "To optimize yaw step response."
-msgstr ""
+msgstr "Para otimizar a resposta ao degrau da guinada."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:59
 msgid "To record autotune results after pitch step response optimization"
-msgstr ""
+msgstr "Para registar os resultados do autotune após a otimização da resposta ao degrau da inclinação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:60
 msgid "To record autotune results after roll step response optimization"
-msgstr ""
+msgstr "Para registar os resultados do autotune após a otimização da resposta ao degrau do rolamento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:61
 msgid "To record autotune results after yaw D step response optimization"
-msgstr ""
+msgstr "Para registar os resultados do autotune após a otimização da resposta ao degrau do D da guinada"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:62
 msgid "To record autotune results after yaw step response optimization"
-msgstr ""
+msgstr "Para registar os resultados do autotune após a otimização da resposta ao degrau da guinada"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:63
 msgid "To record autotune roll-pitch results"
-msgstr ""
+msgstr "Para registar os resultados de autotune de rolamento-inclinação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:64
 msgid ""
 "When the gyroscope signal is less noisy the PID gains can be higher without "
 "causing motor output oscillations"
-msgstr ""
+msgstr "Quando o sinal do giroscópio é menos ruidoso, os ganhos PID podem ser mais altos sem causar oscilações na saída do motor"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:65
 msgid ""
 "With very large or very small vehicles the default PID values are not "
 "suitable for the first flight"
-msgstr ""
+msgstr "Com veículos muito grandes ou muito pequenos, os valores PID predefinidos não são adequados para o primeiro voo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:66
 msgid ""
 "parameter values at later steps depend on data that is gathered by means of "
 "logging"
-msgstr ""
+msgstr "Os valores dos parâmetros em etapas posteriores dependem de dados recolhidos por meio de registos"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:69
 msgid ""
 "After the first flight because it depends on the MOT_THST_HOVER parameter, "
 "before the second flight so that it can safely use the altitude controller"
-msgstr ""
+msgstr "Após o primeiro voo porque depende do parâmetro MOT_THST_HOVER, antes do segundo voo para que possa usar com segurança o controlador de altitude"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:70
 msgid ""
 "All the previous steps did not require logging, but the following ones do"
-msgstr ""
+msgstr "Todos os passos anteriores não requeriam registo, mas os seguintes sim"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:71
 msgid "Because guided mode requires a tunned position controller"
-msgstr ""
+msgstr "Porque o modo guiado requer um controlador de posição afinado"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:72
 msgid "Because it can only be done after PID tuning is complete"
-msgstr ""
+msgstr "Porque só pode ser feito após a afinação PID estar completa"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:73
 msgid "Because it can only be done after the respective autotune flight"
-msgstr ""
+msgstr "Porque só pode ser feito após o respetivo voo de autotune"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:74
 msgid "Because it depends on wind speed estimation"
-msgstr ""
+msgstr "Porque depende da estimativa da velocidade do vento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:75
 msgid ""
 "Because it is optional and should only be done after most other "
 "configurations are complete"
-msgstr ""
+msgstr "Porque é opcional e só deve ser feito após a maioria das outras configurações estarem completas"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:76
 msgid "Because it needs an initial autotune of all axis"
-msgstr ""
+msgstr "Porque necessita de um autotune inicial de todos os eixos"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:77
 msgid ""
 "Because pitch is usually the axis that has the second highest dynamic, and "
 "we continue with the second highest dynamic axis"
-msgstr ""
+msgstr "Porque a inclinação é geralmente o eixo que tem a segunda maior dinâmica, e continuamos com o eixo de segunda maior dinâmica"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:78
 msgid "Because precision landing requires guided mode"
-msgstr ""
+msgstr "Porque a aterragem de precisão requer modo guiado"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:79
 msgid ""
 "Because roll is usually the axis that has the highest dynamic, and we start "
 "with the highest dynamic axis"
-msgstr ""
+msgstr "Porque o rolamento é geralmente o eixo que tem a maior dinâmica, e começamos com o eixo de maior dinâmica"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:80
 msgid ""
 "Because the position controller PIDs depend on the attitude and attitude-"
 "rate PIDs tunned in previous steps"
-msgstr ""
+msgstr "Porque os PIDs do controlador de posição dependem dos PIDs de atitude e taxa de atitude afinados nos passos anteriores"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:81
 msgid ""
 "Because the vehicle should be fully tuned (no more PID changes) before a "
 "model gets created (that depends on said PID values)"
-msgstr ""
+msgstr "Porque o veículo deve estar totalmente afinado (sem mais alterações de PID) antes de criar um modelo (que depende desses valores de PID)"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:82
 msgid ""
 "Because we first needed system identification flights to create the "
 "mathematical model"
-msgstr ""
+msgstr "Porque primeiro precisávamos de voos de identificação do sistema para criar o modelo matemático"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:83
 msgid "Because yaw D can only be done after yaw"
-msgstr ""
+msgstr "Porque o D da guinada só pode ser feito após a guinada"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:84
 msgid ""
 "Because yaw is usually the axis that has the third highest dynamic, and we "
 "continue with the third highest dynamic axis"
-msgstr ""
+msgstr "Porque a guinada é geralmente o eixo que tem a terceira maior dinâmica, e continuamos com o eixo de terceira maior dinâmica"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:85
 msgid ""
 "Before the autotune process to estimate if autotune can safely operate the "
 "vehicle"
-msgstr ""
+msgstr "Antes do processo de autotune para estimar se o autotune pode operar o veículo com segurança"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:86
 msgid ""
 "Before the first flight so that it can gather data and safeguard the vehicle "
 "from some of the noise"
-msgstr ""
+msgstr "Antes do primeiro voo para que possa recolher dados e proteger o veículo de algum ruído"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:87
 msgid ""
 "Before the second flight so that the EKF can be used to estimate the "
 "vehicle's position"
-msgstr ""
+msgstr "Antes do segundo voo para que o EKF possa ser usado para estimar a posição do veículo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:88
 msgid "Before the second flight so that the vehicle can be safely tuned."
-msgstr ""
+msgstr "Antes do segundo voo para que o veículo possa ser afinado com segurança."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:89
 msgid ""
 "Can only be done after the connections and device drivers have been "
 "configured in the preceding steps"
-msgstr ""
+msgstr "Só pode ser feito depois das conexões e controladores de dispositivos terem sido configurados nos passos anteriores"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:90
 msgid ""
 "Done before sensor calibration in Mission Planner to minimize the changes "
 "the user has to do in mission planner"
-msgstr ""
+msgstr "Feito antes da calibração do sensor no Mission Planner para minimizar as alterações que o utilizador tem de fazer no Mission Planner"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:91
 msgid "It con only be done after optical flow sensor calibration setup"
-msgstr ""
+msgstr "Só pode ser feito após a configuração da calibração do sensor de fluxo ótico"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:92
 msgid "It is a pre-requirement for configuring some telemetry systems and ESCs"
-msgstr ""
+msgstr "É um pré-requisito para configurar alguns sistemas de telemetria e ESCs"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:93
 msgid ""
 "Most other parameters are done and these need to be corrected (depending on "
 "the vehicle size) before the first flight"
-msgstr ""
+msgstr "A maioria dos outros parâmetros está feita e estes precisam de ser corrigidos (dependendo do tamanho do veículo) antes do primeiro voo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:94
 msgid ""
 "Most parameters have been configured in previous steps. These are parameters "
 "that did not fit in any of the categories of the previous steps."
-msgstr ""
+msgstr "A maioria dos parâmetros foi configurada nos passos anteriores. Estes são parâmetros que não se enquadravam em nenhuma das categorias dos passos anteriores."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:95
 msgid "Needs to be done before compass calibration"
-msgstr ""
+msgstr "Precisa de ser feito antes da calibração da bússola"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:96
 msgid "Now that MagFit has been performed the quicktune will work even better"
-msgstr ""
+msgstr "Agora que o MagFit foi realizado, o quicktune funcionará ainda melhor"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:97
 msgid ""
@@ -1164,538 +1164,538 @@ msgid ""
 "Setting up ESCs early allows for initial motor tests and ensures a stable "
 "base for further tuning and flight testing without risking damage to the "
 "vehicle."
-msgstr ""
+msgstr "Pré-requer configuração de controlo remoto. Usa telemetria GCS se disponível. Configurar ESCs cedo permite testes iniciais do motor e garante uma base estável para posterior afinação e testes de voo sem arriscar danos no veículo."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:98
 msgid ""
 "Remote ID requires GNSS and air pressure to be configured before, and it "
 "must be set up before the first flight"
-msgstr ""
+msgstr "A identificação remota requer GNSS e pressão do ar configurados anteriormente, e deve ser configurada antes do primeiro voo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:99
 msgid ""
 "Requires a basic tune (provided by the previous step) in order to be able to "
 "safely navigate in a figure eight flight path."
-msgstr ""
+msgstr "Requer uma afinação básica (fornecida pelo passo anterior) para poder navegar com segurança numa trajetória em forma de oito."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:100
 msgid ""
 "Requires the setup (provided by the previous step) and should be done before "
 "the second quicktune."
-msgstr ""
+msgstr "Requer a configuração (fornecida pelo passo anterior) e deve ser feito antes do segundo quicktune."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:101
 msgid ""
 "Requires the setup step. It is easier to do before the FC is mounted in the "
 "vehicle"
-msgstr ""
+msgstr "Requer o passo de configuração. É mais fácil fazer antes do FC ser montado no veículo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:102
 msgid ""
 "Sometimes it depends on the remote controller. Configuring telemetry early "
 "allows vehicle configuration and sensor calibration in later steps without "
 "requiring a USB cable connection to the autopilot"
-msgstr ""
+msgstr "Por vezes depende do controlador remoto. Configurar a telemetria cedo permite a configuração do veículo e calibração do sensor em etapas posteriores sem necessitar de uma ligação por cabo USB ao piloto automático"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:103
 msgid ""
 "The failsafe configuration step requires this. Controller PID scaling "
 "depends on the battery voltage"
-msgstr ""
+msgstr "O passo de configuração de failsafe requer isto. O dimensionamento PID do controlador depende da tensão da bateria"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:104
 msgid ""
 "The failsafe configuration step requires this. During flight tests PID "
 "scaling depends on the battery voltage"
-msgstr ""
+msgstr "O passo de configuração de failsafe requer isto. Durante os testes de voo o dimensionamento PID depende da tensão da bateria"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:105
 msgid "The following steps require that the orientation is correctly set"
-msgstr ""
+msgstr "Os passos seguintes requerem que a orientação esteja corretamente definida"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:106
 msgid ""
 "The notch filter setup step requires this, and the safety of the vehicle "
 "depends on the ESC and motor configuration"
-msgstr ""
+msgstr "O passo de configuração do filtro notch requer isto, e a segurança do veículo depende da configuração do ESC e do motor"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:107
 msgid "This is the last step in the tuning process"
-msgstr ""
+msgstr "Este é o último passo no processo de afinação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:108
 msgid "We need a good tune before autotune."
-msgstr ""
+msgstr "Precisamos de uma boa afinação antes do autotune."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:109
 msgid ""
 "You need to cool down the FC to perform this calibration. It is easier to do "
 "before the FC is mounted in the vehicle"
-msgstr ""
+msgstr "Precisa de arrefecer o FC para realizar esta calibração. É mais fácil fazê-lo antes de o FC ser montado no veículo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:110
 msgid "real-flight data is only available after the first flight"
-msgstr ""
+msgstr "Os dados de voo real só estão disponíveis após o primeiro voo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:113
 msgid ""
 "Adjust the Proportional-Integral-Derivative (PID) controllers based on the "
 "vehicle size before the first flight"
-msgstr ""
+msgstr "Ajustar os controladores Proporcional-Integral-Derivativo (PID) com base no tamanho do veículo antes do primeiro voo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:114
 msgid "Configure Extended Kalman Filter (EKF) noise weights"
-msgstr ""
+msgstr "Configurar os pesos de ruído do Filtro de Kalman Estendido (EKF)"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:115
 msgid ""
 "Configure logging parameters, including what data is logged and how it's "
 "stored"
-msgstr ""
+msgstr "Configurar parâmetros de registo, incluindo quais dados são registados e como são armazenados"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:116
 msgid "Configure parameters for everyday use"
-msgstr ""
+msgstr "Configurar parâmetros para uso diário"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:117
 msgid "Configure parameters for precision landing"
-msgstr ""
+msgstr "Configurar parâmetros para aterragem de precisão"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:118
 msgid ""
 "Configure parameters for the first battery, including health monitoring "
 "thresholds and failsafe behavior"
-msgstr ""
+msgstr "Configurar parâmetros para a primeira bateria, incluindo limiares de monitorização de saúde e comportamento de failsafe"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:119
 msgid ""
 "Configure parameters for the pitch axis system identification to create a "
 "mathematical model of the vehicle"
-msgstr ""
+msgstr "Configurar parâmetros para a identificação do sistema do eixo de inclinação para criar um modelo matemático do veículo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:120
 msgid ""
 "Configure parameters for the roll axis system identification to create a "
 "mathematical model of the vehicle"
-msgstr ""
+msgstr "Configurar parâmetros para a identificação do sistema do eixo de rolamento para criar um modelo matemático do veículo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:121
 msgid ""
 "Configure parameters for the second battery, including health monitoring "
 "thresholds and failsafe behavior"
-msgstr ""
+msgstr "Configurar parâmetros para a segunda bateria, incluindo limiares de monitorização de saúde e comportamento de failsafe"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:122
 msgid ""
 "Configure parameters for the thrust axis system identification to create a "
 "mathematical model of the vehicle"
-msgstr ""
+msgstr "Configurar parâmetros para a identificação do sistema do eixo de impulso para criar um modelo matemático do veículo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:123
 msgid ""
 "Configure parameters for the yaw axis system identification to create a "
 "mathematical model of the vehicle"
-msgstr ""
+msgstr "Configurar parâmetros para a identificação do sistema do eixo de guinada para criar um modelo matemático do veículo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:124
 msgid "Configure parameters for wind speed estimation"
-msgstr ""
+msgstr "Configurar parâmetros para estimativa da velocidade do vento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:125
 msgid ""
 "Configure remote controller connection, protocol and settings, including "
 "channel mapping and flight modes"
-msgstr ""
+msgstr "Configurar a ligação do controlador remoto, protocolo e definições, incluindo mapeamento de canais e modos de voo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:126
 msgid ""
 "Configure settings for the Electronic Speed Controllers (ESCs), including "
 "PWM range and failsafe behavior"
-msgstr ""
+msgstr "Configurar definições para os Controladores Eletrónicos de Velocidade (ESCs), incluindo intervalo PWM e comportamento de failsafe"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:127
 msgid ""
 "Configure telemetry connection, data protocol and settings between the "
 "autopilot and the ground control station(s)"
-msgstr ""
+msgstr "Configurar ligação de telemetria, protocolo de dados e definições entre o piloto automático e a(s) estação(ões) de controlo em terra"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:128
 msgid ""
 "Configure the GNSS (Global Navigation Satellite System) connection and "
 "settings, including antenna phase center location and constellation "
 "selection for optimal update rates"
-msgstr ""
+msgstr "Configurar a ligação e definições do GNSS (Sistema Global de Navegação por Satélite), incluindo localização do centro de fase da antena e seleção de constelação para taxas de atualização ideais"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:129
 msgid ""
 "Configure the notch filter settings, used to reduce gyroscope signal noise "
 "caused by the motors rotation"
-msgstr ""
+msgstr "Configurar as definições do filtro notch, usado para reduzir o ruído do sinal do giroscópio causado pela rotação dos motores"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:130
 msgid ""
 "Configure the notch filter(s) based on the data collected from the first "
 "flight"
-msgstr ""
+msgstr "Configurar o(s) filtro(s) notch com base nos dados recolhidos do primeiro voo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:131
 msgid "Configure the position controller(s)"
-msgstr ""
+msgstr "Configurar o(s) controlador(es) de posição"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:132
 msgid ""
 "Define the orientation of the flight controller board relative to the "
 "vehicle's body frame"
-msgstr ""
+msgstr "Definir a orientação da placa do controlador de voo em relação ao referencial do veículo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:133
 msgid "ESC, Motor and propeller configurations"
-msgstr ""
+msgstr "Configurações de ESC, Motor e hélice"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:134
 msgid "Evaluate the aircraft's tuning with feed-forward control disabled"
-msgstr ""
+msgstr "Avaliar a afinação da aeronave com o controlo feed-forward desativado"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:135
 msgid "Evaluate the aircraft's tuning with feed-forward control enabled"
-msgstr ""
+msgstr "Avaliar a afinação da aeronave com o controlo feed-forward ativado"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:136
 msgid ""
 "General configuration parameters for the vehicle, including flight modes and "
 "safety settings"
-msgstr ""
+msgstr "Parâmetros de configuração geral para o veículo, incluindo modos de voo e definições de segurança"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:137
 msgid "IMU (Inertial Measurement Unit) temperature calibration results"
-msgstr ""
+msgstr "Resultados da calibração de temperatura da IMU (Unidade de Medição Inercial)"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:138
 msgid "IMU (Inertial Measurement Unit) temperature calibration setup"
-msgstr ""
+msgstr "Configuração da calibração de temperatura da IMU (Unidade de Medição Inercial)"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:139
 msgid ""
 "Initial attitude controller configuration depends on the vehicle's propeller "
 "size defined in the component editor window"
-msgstr ""
+msgstr "A configuração inicial do controlador de atitude depende do tamanho da hélice do veículo definido na janela do editor de componentes"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:140
 msgid "Parameters for analytical PID optimization"
-msgstr ""
+msgstr "Parâmetros para otimização analítica de PID"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:141
 msgid "Record the results of the in-flight magnetometer calibration"
-msgstr ""
+msgstr "Registar os resultados da calibração do magnetómetro em voo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:142
 msgid "Record the results of the pitch axis autotuning"
-msgstr ""
+msgstr "Registar os resultados do autotune do eixo de inclinação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:143
 msgid ""
 "Record the results of the roll and pitch axis retuning, providing data for "
 "analysis and adjustment."
-msgstr ""
+msgstr "Registar os resultados da reafinação dos eixos de rolamento e inclinação, fornecendo dados para análise e ajuste."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:144
 msgid ""
 "Record the results of the roll axis autotuning, providing data for analysis "
 "and adjustment."
-msgstr ""
+msgstr "Registar os resultados do autotune do eixo de rolamento, fornecendo dados para análise e ajuste."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:145
 msgid ""
 "Record the results of the yaw axis autotuning, providing data for analysis "
 "and adjustment."
-msgstr ""
+msgstr "Registar os resultados do autotune do eixo de guinada, fornecendo dados para análise e ajuste."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:146
 msgid "Record the results of the yaw rate autotuning"
-msgstr ""
+msgstr "Registar os resultados do autotune da taxa de guinada"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:147
 msgid ""
 "Results of the in-flight VTOL-quicktune lua script PIDs after the MAGFit "
 "flight"
-msgstr ""
+msgstr "Resultados dos PIDs do script lua VTOL-quicktune em voo após o voo MAGFit"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:148
 msgid ""
 "Results of the in-flight VTOL-quicktune lua script PIDs before the MAGFit "
 "flight."
-msgstr ""
+msgstr "Resultados dos PIDs do script lua VTOL-quicktune em voo antes do voo MAGFit."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:149
 msgid ""
 "Set the remote ID for the vehicle, to comply with local laws if applicable"
-msgstr ""
+msgstr "Definir a identificação remota para o veículo, para cumprir com as leis locais se aplicável"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:150
 msgid "Set up mandatory hardware components using Mission Planner"
-msgstr ""
+msgstr "Configurar componentes de hardware obrigatórios usando o Mission Planner"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:151
 msgid "Set up parameters for barometer compensation"
-msgstr ""
+msgstr "Configurar parâmetros para compensação do barómetro"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:152
 msgid ""
 "Set up parameters for guided operation, including waypoint navigation and "
 "obstacle avoidance"
-msgstr ""
+msgstr "Configurar parâmetros para operação guiada, incluindo navegação por pontos de passagem e evitação de obstáculos"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:153
 msgid "Set up parameters for the in-flight magnetometer calibration"
-msgstr ""
+msgstr "Configurar parâmetros para a calibração do magnetómetro em voo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:154
 msgid "Set up parameters for the pitch axis autotuning process"
-msgstr ""
+msgstr "Configurar parâmetros para o processo de autotune do eixo de inclinação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:155
 msgid "Set up parameters for the roll and pitch axis retuning process"
-msgstr ""
+msgstr "Configurar parâmetros para o processo de reafinação dos eixos de rolamento e inclinação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:156
 msgid "Set up parameters for the roll axis autotuning process"
-msgstr ""
+msgstr "Configurar parâmetros para o processo de autotune do eixo de rolamento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:157
 msgid "Set up parameters for the yaw axis autotuning process"
-msgstr ""
+msgstr "Configurar parâmetros para o processo de autotune do eixo de guinada"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:158
 msgid "Set up parameters for the yaw rate autotuning process"
-msgstr ""
+msgstr "Configurar parâmetros para o processo de autotune da taxa de guinada"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:159
 msgid ""
 "Set up the in-flight VTOL-quicktune lua script to tune the PIDs after the "
 "MAGFit flight"
-msgstr ""
+msgstr "Configurar o script lua VTOL-quicktune em voo para afinar os PIDs após o voo MAGFit"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:160
 msgid ""
 "Set up the in-flight VTOL-quicktune lua script to tune the PIDs before the "
 "MAGFit flight"
-msgstr ""
+msgstr "Configurar o script lua VTOL-quicktune em voo para afinar os PIDs antes do voo MAGFit"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:161
 msgid "Setup optical flow sensor calibration"
-msgstr ""
+msgstr "Configurar calibração do sensor de fluxo ótico"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:162
 msgid "Store optical flow sensor calibration results"
-msgstr ""
+msgstr "Armazenar resultados da calibração do sensor de fluxo ótico"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:163
 msgid ""
 "Use MOT_THST_HOVER value calculated during the first flight to set throttle "
 "controller PIDs"
-msgstr ""
+msgstr "Usar o valor MOT_THST_HOVER calculado durante o primeiro voo para definir os PIDs do controlador de acelerador"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:164
 msgid "Use optical flow sensor instead of GNSS sensor for positioning"
-msgstr ""
+msgstr "Usar o sensor de fluxo ótico em vez do sensor GNSS para posicionamento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:167
 msgid "AutoTune"
-msgstr ""
+msgstr "AutoTune"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:168
 msgid "Barometer Position Error Compensation"
-msgstr ""
+msgstr "Compensação de Erro de Posição do Barómetro"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:169
 msgid "Battery Monitors (aka Power Monitors/Modules) - BATT2_* parameters"
-msgstr ""
+msgstr "Monitores de Bateria (também conhecidos como Monitores/Módulos de Energia) - parâmetros BATT2_*"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:170
 msgid "Battery Monitors (aka Power Monitors/Modules) - BATT_* parameters"
-msgstr ""
+msgstr "Monitores de Bateria (também conhecidos como Monitores/Módulos de Energia) - parâmetros BATT_*"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:171
 msgid "Downloading and Analyzing Data Logs in Mission Planner"
-msgstr ""
+msgstr "Descarregar e Analisar Registos de Dados no Mission Planner"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:172
 msgid "ESC (Electronic Speed Controls)"
-msgstr ""
+msgstr "ESC (Controladores Eletrónicos de Velocidade)"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:173
 msgid "Evaluating the aircraft tune"
-msgstr ""
+msgstr "Avaliação da afinação da aeronave"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:174
 msgid "Extended Kalman filter tuning"
-msgstr ""
+msgstr "Afinação do filtro de Kalman estendido"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:175
 msgid ""
 "Follow the blog instructions and use Mission Planner instead of this tool to "
 "configure the mandatory hardware parameters."
-msgstr ""
+msgstr "Siga as instruções do blog e use o Mission Planner em vez desta ferramenta para configurar os parâmetros de hardware obrigatórios."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:176
 msgid "GPS/Compass (landing page) - GPS* parameters"
-msgstr ""
+msgstr "GPS/Bússola (página inicial) - parâmetros GPS*"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:177
 msgid "Guided Mode"
-msgstr ""
+msgstr "Modo Guiado"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:178
 msgid "IAV analytical PID model optimization"
-msgstr ""
+msgstr "Otimização de modelo PID analítico IAV"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:179
 msgid "IMU Temperature Calibration"
-msgstr ""
+msgstr "Calibração de Temperatura da IMU"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:180
 msgid "If lua scripting is not possible do compassmot instead"
-msgstr ""
+msgstr "Se a programação lua não for possível, faça compassmot em alternativa"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:181
 msgid "If lua scripting is not possible, do a manual tune instead"
-msgstr ""
+msgstr "Se a programação lua não for possível, faça uma afinação manual em alternativa"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:182
 msgid "Initial parameters calculator"
-msgstr ""
+msgstr "Calculadora de parâmetros iniciais"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:183
 msgid "Managing Gyro Noise with the Dynamic Harmonic Notch Filters"
-msgstr ""
+msgstr "Gestão do Ruído do Giroscópio com os Filtros Notch Harmónicos Dinâmicos"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:184
 msgid "Manual tuning of Roll and Pitch"
-msgstr ""
+msgstr "Afinação manual de Rolamento e Inclinação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:185
 msgid "Matlab and Simulink IAV scripts for system identification"
-msgstr ""
+msgstr "Scripts IAV de Matlab e Simulink para identificação do sistema"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:186
 msgid "Motor Thrust Scaling"
-msgstr ""
+msgstr "Escala de Impulso do Motor"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:187
 msgid "Mounting the Autopilot - AHRS_ORIENTATION parameter"
-msgstr ""
+msgstr "Montagem do Piloto Automático - parâmetro AHRS_ORIENTATION"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:188
 msgid "Precision Landing and Loiter"
-msgstr ""
+msgstr "Aterragem de Precisão e Loiter"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:189
 msgid "Radio Control Systems"
-msgstr ""
+msgstr "Sistemas de Controlo Remoto"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:190
 msgid "Remote ID (aka Drone ID)"
-msgstr ""
+msgstr "Identificação Remota (também conhecida como ID de Drone)"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:191
 msgid "Telemetry (landing page)"
-msgstr ""
+msgstr "Telemetria (página inicial)"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:192
 msgid "Test AltHold"
-msgstr ""
+msgstr "Testar AltHold"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:193
 msgid "optical flow sensor setup"
-msgstr ""
+msgstr "Configuração do sensor de fluxo ótico"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:194
 msgid "wind speed estimation"
-msgstr ""
+msgstr "Estimativa da velocidade do vento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:197
 msgid "ArduCopter Analytic Tune Tool"
-msgstr ""
+msgstr "Ferramenta de Afinação Analítica do ArduCopter"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:198
 msgid "ArduCopter Simulink Model"
-msgstr ""
+msgstr "Modelo Simulink do ArduCopter"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:199
 msgid "ArduPilot Hardware report"
-msgstr ""
+msgstr "Relatório de Hardware do ArduPilot"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:200
 msgid "ArduPilot MAGFit in flight compass calibration"
-msgstr ""
+msgstr "Calibração da bússola em voo ArduPilot MAGFit"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:201
 msgid "ArduPilot PID Review Tool"
-msgstr ""
+msgstr "Ferramenta de Revisão PID do ArduPilot"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:202
 msgid "ArduPilot Thrust Expo"
-msgstr ""
+msgstr "Expo de Impulso do ArduPilot"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:203
 msgid "ArduPlane Analytic Tune Tool"
-msgstr ""
+msgstr "Ferramenta de Afinação Analítica do ArduPlane"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:204
 msgid "Ardupilot Filter Review tool"
-msgstr ""
+msgstr "Ferramenta de Revisão de Filtro do ArduPilot"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:205
 msgid "BLHeliSuite32"
-msgstr ""
+msgstr "BLHeliSuite32"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:206
 msgid "Dronetag BS user manual"
-msgstr ""
+msgstr "Manual do utilizador Dronetag BS"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:207
 msgid "EdgeTX Companion"
-msgstr ""
+msgstr "EdgeTX Companion"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:208
 msgid "FlowCal"
-msgstr ""
+msgstr "FlowCal"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:209
 msgid "Heli Analytic Tune Tool"
-msgstr ""
+msgstr "Ferramenta de Afinação Analítica de Helicóptero"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:210
 msgid "Lua script provided by Yuri"
-msgstr ""
+msgstr "Script lua fornecido por Yuri"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:211
 msgid "Mission Planner"
-msgstr ""
+msgstr "Mission Planner"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:212
 msgid "Motor/Propeller order and direction test"
-msgstr ""
+msgstr "Teste de ordem e direção do motor/hélice"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:213
 msgid "Rover Analytic Tune Tool"
-msgstr ""
+msgstr "Ferramenta de Afinação Analítica do Rover"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:214
 msgid "VTOL-quicktune lua script"
-msgstr ""
+msgstr "Script lua VTOL-quicktune"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:215
 msgid "free online tool to overlay a grid over an image"
-msgstr ""
+msgstr "Ferramenta online gratuita para sobrepor uma grelha a uma imagem"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:216
 msgid "optical flow sensors"
-msgstr ""
+msgstr "Sensores de fluxo ótico"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:217
 msgid "param_pid_adjustment_update.py"
-msgstr ""
+msgstr "param_pid_adjustment_update.py"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:220
 msgid ""
@@ -1704,7 +1704,7 @@ msgid ""
 "IMU temperature calibration is optional.\n"
 "\n"
 "Do you want to skip it?"
-msgstr ""
+msgstr "A calibração de temperatura da IMU reduz o número possível de erros 'Acelerómetro inconsistente' e 'Giroscópio inconsistente'.\nA calibração de temperatura da IMU é opcional.\n\nDeseja ignorá-la?"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:224
 msgid ""
@@ -1712,7 +1712,7 @@ msgid ""
 "You can skip some steps now.\n"
 "\n"
 "Jump to '53_everyday_use.param' file?"
-msgstr ""
+msgstr "Se estiver impaciente e não desejar um controlador de voo totalmente otimizado\nPode saltar alguns passos agora.\n\nSaltar para o ficheiro '53_everyday_use.param'?"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:228
 msgid ""
@@ -1720,7 +1720,7 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '53_everyday_use.param' file?"
-msgstr ""
+msgstr "Se não utiliza fluxo ótico\npode saltar alguns passos agora.\n\nSaltar para o ficheiro '53_everyday_use.param'?"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:232
 msgid ""
@@ -1728,407 +1728,407 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '47_position_controller.param' file?"
-msgstr ""
+msgstr "Se não pretende uma otimização analítica de PID\npode saltar alguns passos agora.\n\nSaltar para o ficheiro '47_position_controller.param'?"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:238
 msgid "(Critical voltage + 0.0) x no. of cells"
-msgstr ""
+msgstr "(Tensão crítica + 0.0) x núm. de células"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:239
 msgid "(Low voltage + 0.0) x no. of cells"
-msgstr ""
+msgstr "(Tensão baixa + 0.0) x núm. de células"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:240
 msgid "(Max voltage + 0.0) x no. of cells"
-msgstr ""
+msgstr "(Tensão máxima + 0.0) x núm. de células"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:241
 msgid "Activates the logging of the MAGH.Active message"
-msgstr ""
+msgstr "Ativa o registo da mensagem MAGH.Active"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:242
 msgid "Activates the temperature calibration for IMU 1 at the next start"
-msgstr ""
+msgstr "Ativa a calibração de temperatura para a IMU 1 no próximo arranque"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:243
 msgid "Activates the temperature calibration for IMU 2 at the next start"
-msgstr ""
+msgstr "Ativa a calibração de temperatura para a IMU 2 no próximo arranque"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:244
 msgid "Activates the temperature calibration for IMU 3 at the next start"
-msgstr ""
+msgstr "Ativa a calibração de temperatura para a IMU 3 no próximo arranque"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:245
 msgid "Add Navigation logging"
-msgstr ""
+msgstr "Adicionar registo de Navegação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:246
 msgid "Autotune pitch axis"
-msgstr ""
+msgstr "Autotune do eixo de inclinação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:247
 msgid "Autotune roll and pitch axis"
-msgstr ""
+msgstr "Autotune dos eixos de rolamento e inclinação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:248
 msgid "Autotune roll axis"
-msgstr ""
+msgstr "Autotune do eixo de rolamento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:249
 msgid "Autotune yaw D axis"
-msgstr ""
+msgstr "Autotune do eixo D de guinada"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:250
 msgid "Autotune yaw axis"
-msgstr ""
+msgstr "Autotune do eixo de guinada"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:251
 msgid "Defined in component editor"
-msgstr ""
+msgstr "Definido no editor de componentes"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:252
 msgid "Derived from vehicle component editor propeller size"
-msgstr ""
+msgstr "Derivado do tamanho da hélice no editor de componentes do veículo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:253
 msgid "Disable fast harmonic notch logging"
-msgstr ""
+msgstr "Desativar registo rápido do filtro notch harmónico"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:254
 msgid "Do not allow arming below this voltage"
-msgstr ""
+msgstr "Não permitir armamento abaixo desta tensão"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:255
 msgid ""
 "Gather data for the offline IMU temperature calibration while the FC is "
 "disarmed"
-msgstr ""
+msgstr "Recolher dados para a calibração offline de temperatura da IMU enquanto o FC está desarmado"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:256
 msgid ""
 "Gyro raw logging no longer required, notch filter setup is complete, this "
 "reduces processor load and log file size"
-msgstr ""
+msgstr "Registo de giroscópio bruto já não é necessário, a configuração do filtro notch está completa, isto reduz a carga do processador e o tamanho do ficheiro de registo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:257
 msgid "Hover learn will improve this initial guess"
-msgstr ""
+msgstr "A aprendizagem em modo pairado irá melhorar esta estimativa inicial"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:258
 msgid ""
 "IMU batch logging no longer required, notch filter setup is complete, this "
 "reduces processor load and log file size"
-msgstr ""
+msgstr "Registo em lote da IMU já não é necessário, a configuração do filtro notch está completa, isto reduz a carga do processador e o tamanho do ficheiro de registo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:259
 msgid "INS_GYRO_FILTER / 2"
-msgstr ""
+msgstr "INS_GYRO_FILTER / 2"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:260
 msgid "Initial value, will be improved at a later step"
-msgstr ""
+msgstr "Valor inicial, será melhorado numa etapa posterior"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:261
 msgid "Inject chip on the mixer pitch signal"
-msgstr ""
+msgstr "Injetar chip no sinal de misturador de inclinação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:262
 msgid "Inject chip on the mixer roll signal"
-msgstr ""
+msgstr "Injetar chip no sinal de misturador de rolamento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:263
 msgid "Inject chip on the mixer thrust signal"
-msgstr ""
+msgstr "Injetar chip no sinal de misturador de impulso"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:264
 msgid "Inject chip on the mixer yaw signal"
-msgstr ""
+msgstr "Injetar chip no sinal de misturador de guinada"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:265
 msgid "Land ASAP"
-msgstr ""
+msgstr "Aterrar o mais rápido possível"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:266
 msgid ""
 "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video "
 "stabilization. These are not needed now"
-msgstr ""
+msgstr "Registar tudo exceto att rápido, Nav, Missão, OF, câmara, IMU rápida, bruto, IMU, estabilização de vídeo. Estes não são necessários agora"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:267
 msgid "Log disarmed was only required for offline IMU temperature calibration"
-msgstr ""
+msgstr "Registo desarmado apenas era necessário para calibração offline de temperatura da IMU"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:268
 msgid ""
 "Logs measured data both before and after the filters for Filter Review "
 "Webtool usage"
-msgstr ""
+msgstr "Regista dados medidos antes e depois dos filtros para uso na Ferramenta de Revisão de Filtro na Web"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:269
 msgid "No more system identification chip injections"
-msgstr ""
+msgstr "Sem mais injeções de chip de identificação do sistema"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:270
 msgid "Normal state for everyday use"
-msgstr ""
+msgstr "Estado normal para uso diário"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:271
 msgid "One .bin log file per flight, not per battery/reboot"
-msgstr ""
+msgstr "Um ficheiro de registo .bin por voo, não por bateria/reinicialização"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:272
 msgid "Only for IMU and Raw-IMU"
-msgstr ""
+msgstr "Apenas para IMU e Raw-IMU"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:273
 msgid ""
 "Perform all arming checks. If you have a problem fix its source. Do NOT "
 "change this"
-msgstr ""
+msgstr "Realizar todas as verificações de armamento. Se tiver um problema, corrija a sua origem. NÃO altere isto"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:274
 msgid "Reasonable for most places on this planet"
-msgstr ""
+msgstr "Razoável para a maioria dos locais neste planeta"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:275
 msgid "Reset to default after offline IMU temperature calibration"
-msgstr ""
+msgstr "Repor para o valor predefinido após a calibração offline de temperatura da IMU"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:276
 msgid "Restore value now that system identification is done"
-msgstr ""
+msgstr "Restaurar valor agora que a identificação do sistema está concluída"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:277
 msgid "Return and land at home or rally point"
-msgstr ""
+msgstr "Regressar e aterrar no ponto inicial ou ponto de concentração"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:278
 msgid "Selected in component editor window"
-msgstr ""
+msgstr "Selecionado no editor de componentes"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:279
 msgid "Selected in the component editor"
-msgstr ""
+msgstr "Selecionado no editor de componentes"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:280
 msgid ""
 "So that it can tune the throttle controller on 20_throttle_controller.param "
 "file"
-msgstr ""
+msgstr "Para que possa afinar o controlador de acelerador no ficheiro 20_throttle_controller.param"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:281
 msgid "Specified in component editor window"
-msgstr ""
+msgstr "Especificado na janela do editor de componentes"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:282
 msgid "The default is 20Hz but that is too high in most situations"
-msgstr ""
+msgstr "O valor predefinido é 20Hz, mas isso é demasiado alto na maioria das situações"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:283
 msgid "Total battery capacity specified in the component editor"
-msgstr ""
+msgstr "Capacidade total da bateria especificada no editor de componentes"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:284
 msgid "Use 1.4 * INS_GYRO_FILTER as a first guess"
-msgstr ""
+msgstr "Usar 1,4 * INS_GYRO_FILTER como primeira aproximação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:285
 msgid ""
 "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
-msgstr ""
+msgstr "Usar 2 * MOT_THST_HOVER assumindo que MOT_THST_HOVER foi corretamente aprendido"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:286
 msgid "Use INS_GYRO_FILTER / 4 as a first guess"
-msgstr ""
+msgstr "Usar INS_GYRO_FILTER / 4 como primeira aproximação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:287
 msgid "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
-msgstr ""
+msgstr "Usar MOT_THST_HOVER assumindo que MOT_THST_HOVER foi corretamente aprendido"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:288
 msgid "Use VTOL-Quicktune lua script to estimate a good PID starting values"
-msgstr ""
+msgstr "Usar o script lua VTOL-Quicktune para estimar bons valores iniciais de PID"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:289
 msgid ""
 "Use acc and gyro batch logging on F4 processors, gyro raw logging on others"
-msgstr ""
+msgstr "Utilizar registo em lote de acelerómetro e giroscópio em processadores F4, registo bruto de giroscópio nos outros"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:290
 msgid ""
 "Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed "
 "estimation automation"
-msgstr ""
+msgstr "Utilizar programação lua para VTOL-Quicktune, automação MagFit e automação de estimativa de velocidade do vento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:291
 msgid ""
 "Use pre and post filters acc and gyro batch logging on F4 processors, pre-"
 "post gyro raw logging on others"
-msgstr ""
+msgstr "Utilizar registo em lote de acelerómetro e giroscópio antes e depois dos filtros em processadores F4, registo bruto pré-pós de giroscópio nos outros"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:292
 msgid ""
 "Use the first notch filter to filter the noise created by the motors/"
 "propellers"
-msgstr ""
+msgstr "Utilizar o primeiro filtro notch para filtrar o ruído criado pelos motores/hélices"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:293
 msgid ""
 "Value for the first couple of flights will be changed later once "
 "MOT_THST_HOVER is learned"
-msgstr ""
+msgstr "O valor para os primeiros voos será alterado mais tarde quando MOT_THST_HOVER for aprendido"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:294
 msgid "allow post flight tuning with Replay"
-msgstr ""
+msgstr "permitir afinação pós-voo com Replay"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:295
 msgid "re-enable normal operation, activate input shaping"
-msgstr ""
+msgstr "reativar operação normal, ativar moldagem de entrada"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:296
 msgid "test the stabilization loops independent of the input shaping"
-msgstr ""
+msgstr "testar os ciclos de estabilização independentemente da moldagem de entrada"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:297
 msgid "was only needed for wind speed estimation"
-msgstr ""
+msgstr "era apenas necessário para estimativa de velocidade do vento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:300
 msgid "Assemble all components except the propellers"
-msgstr ""
+msgstr "Montar todos os componentes exceto as hélices"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:301
 msgid "Assemble the propellers and perform the first flight"
-msgstr ""
+msgstr "Montar as hélices e realizar o primeiro voo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:302
 msgid "Calibrate the IMU sensors for at different temperatures"
-msgstr ""
+msgstr "Calibrar os sensores IMU para diferentes temperaturas"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:303
 msgid "Guided operation"
-msgstr ""
+msgstr "Operação guiada"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:304
 msgid "Improve altitude under windy conditions"
-msgstr ""
+msgstr "Melhorar a altitude em condições de vento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:305
 msgid "Improve tuning with more test flight data"
-msgstr ""
+msgstr "Melhorar a afinação com mais dados de voo de teste"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:306
 msgid "Minimalistic mandatory tuning using test flight data"
-msgstr ""
+msgstr "Afinação obrigatória minimalista usando dados de voo de teste"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:307
 msgid "Optical flow sensor calibration"
-msgstr ""
+msgstr "Calibração do sensor de fluxo ótico"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:308
 msgid "Position controller tuning"
-msgstr ""
+msgstr "Afinação do controlador de posição"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid "Precision landing"
-msgstr ""
+msgstr "Aterragem de precisão"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:310
 msgid "Set up the basic parameters for the vehicle"
-msgstr ""
+msgstr "Configurar os parâmetros básicos para o veículo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:311
 msgid "Switch tests off, configure for productive work"
-msgstr ""
+msgstr "Desativar testes, configurar para trabalho produtivo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:312
 msgid "System identification and analytical PID optimization"
-msgstr ""
+msgstr "Identificação do sistema e otimização analítica de PID"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:324
 msgid "Description of the phase"
-msgstr ""
+msgstr "Descrição da fase"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:325
 msgid "Explanation of why this step is needed"
-msgstr ""
+msgstr "Explicação de por que este passo é necessário"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:326
 msgid "Explanation of why this step needs to be done at this point"
-msgstr ""
+msgstr "Explicação de por que este passo precisa de ser feito neste ponto"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:327
 msgid "Expression to derive new parameter value"
-msgstr ""
+msgstr "Expressão para derivar novo valor de parâmetro"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:328
 msgid "Expression to rename connection"
-msgstr ""
+msgstr "Expressão para renomear ligação"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:329
 msgid "Message about possible jump to another step"
-msgstr ""
+msgstr "Mensagem sobre possível salto para outro passo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:330
 msgid "Name of tool/process that automatically changes these parameters"
-msgstr ""
+msgstr "Nome da ferramenta/processo que altera automaticamente estes parâmetros"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:331
 msgid "Name/description of external tool needed"
-msgstr ""
+msgstr "Nome/descrição da ferramenta externa necessária"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:332
 msgid "New value for the parameter"
-msgstr ""
+msgstr "Novo valor para o parâmetro"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:333
 msgid "Phases of the configuration process"
-msgstr ""
+msgstr "Fases do processo de configuração"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:334
 msgid "Previous filenames for this step"
-msgstr ""
+msgstr "Nomes de ficheiros anteriores para este passo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:335
 msgid "Reason for changing the parameter"
-msgstr ""
+msgstr "Motivo para alterar o parâmetro"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:336
 msgid "Reason for the derived parameter"
-msgstr ""
+msgstr "Motivo para o parâmetro derivado"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:337
 msgid "Short description for blog reference"
-msgstr ""
+msgstr "Breve descrição para referência no blog"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:338
 msgid "Short description for wiki reference"
-msgstr ""
+msgstr "Breve descrição para referência na wiki"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:339
 msgid "Starting step number of this phase"
-msgstr ""
+msgstr "Número do passo inicial desta fase"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:340
 msgid "Text indicating if step is mandatory or optional with percentages"
-msgstr ""
+msgstr "Texto indicando se o passo é obrigatório ou opcional com percentagens"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:341
 msgid "URL to blog documentation"
-msgstr ""
+msgstr "URL para documentação no blog"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:342
 msgid "URL to external tool"
-msgstr ""
+msgstr "URL para ferramenta externa"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:343
 msgid "URL to wiki documentation"
-msgstr ""
+msgstr "URL para documentação na wiki"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:344
 msgid "Whether this phase is optional"
-msgstr ""
+msgstr "Se esta fase é opcional"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_autoresize_combobox.py:60
 msgid "param_file combobox selected string '%s' not in list %s"
@@ -3403,7 +3403,7 @@ msgid ""
 "completed the experiment)\n"
 "* NO - Continue without copying values (if you haven't performed the "
 "experiment yet, but know what you are doing)"
-msgstr ""
+msgstr "Este passo de configuração requer alterações externas por: {auto_changed_by}\n\nO procedimento da experiência com a ferramenta externa está descrito no guia de afinação.\n\nEscolha uma opção:\n* FECHAR - Fechar a aplicação e realizar a experiência\n* SIM - Copiar valores atuais do FC para {selected_file} (se já completou a experiência)\n* NÃO - Continuar sem copiar valores (se ainda não realizou a experiência, mas sabe o que está a fazer)"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:471
 msgid "Update file with values from FC?"
@@ -3412,17 +3412,17 @@ msgstr "Atualizar arquivo com valores do FC?"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:492
 #: tests/test_frontend_tkinter_parameter_editor.py:153
 msgid "Close"
-msgstr ""
+msgstr "Fechar"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:500
 #: tests/test_frontend_tkinter_parameter_editor.py:99
 msgid "Yes"
-msgstr ""
+msgstr "Sim"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:506
 #: tests/test_frontend_tkinter_parameter_editor.py:126
 msgid "No"
-msgstr ""
+msgstr "Não"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:545
 msgid "Skip some steps?"
@@ -4361,11 +4361,11 @@ msgstr "Química"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:24
 msgid "Components"
-msgstr ""
+msgstr "Componentes"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:25
 msgid "Configuration template"
-msgstr ""
+msgstr "Modelo de configuração"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:26
 msgid "Diameter_inches"
@@ -4389,7 +4389,7 @@ msgstr "Controlador de Voo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:31
 msgid "Format version"
-msgstr ""
+msgstr "Versão do formato"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:32
 msgid "Frame"
@@ -4429,7 +4429,7 @@ msgstr "Produto"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:42
 msgid "Program version"
-msgstr ""
+msgstr "Versão do programa"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:43
 msgid "Propellers"
@@ -4493,232 +4493,232 @@ msgstr "Volt por célula máx"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:66
 msgid "Additional notes or comments about the component"
-msgstr ""
+msgstr "Notas adicionais ou comentários sobre o componente"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:67
 msgid "Base definition that all vehicle components inherit from"
-msgstr ""
+msgstr "Definição base de que todos os componentes do veículo herdam"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:68
 msgid "Basic information about a product including manufacturer and model"
-msgstr ""
+msgstr "Informação básica sobre um produto incluindo fabricante e modelo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:69
 msgid "Battery capacity in milliampere-hours"
-msgstr ""
+msgstr "Capacidade da bateria em miliamperes-hora"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:70
 msgid "Battery chemistry type (e.g., LiPo, Li-Ion, LiFe)"
-msgstr ""
+msgstr "Tipo de química da bateria (ex., LiPo, Li-Ion, LiFe)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:71
 msgid "Collection of all components that make up the vehicle system"
-msgstr ""
+msgstr "Coleção de todos os componentes que constituem o sistema do veículo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:72
 msgid "Communication protocol used (e.g., SBUS, MAVLink)"
-msgstr ""
+msgstr "Protocolo de comunicação utilizado (ex., SBUS, MAVLink)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:73
 msgid "Company or brand that manufactures the component"
-msgstr ""
+msgstr "Empresa ou marca que fabrica o componente"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:74
 msgid "Component firmware information"
-msgstr ""
+msgstr "Informação de firmware do componente"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:75
 msgid "Component for wireless communication with ground station"
-msgstr ""
+msgstr "Componente para comunicação sem fios com a estação terrestre"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:76
 msgid "Component that connects to the flight controller"
-msgstr ""
+msgstr "Componente que se liga ao controlador de voo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:77
 msgid "Component that monitors battery voltage and current"
-msgstr ""
+msgstr "Componente que monitoriza a tensão e corrente da bateria"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:78
 msgid "Connection type (e.g., UART, I2C, SPI)"
-msgstr ""
+msgstr "Tipo de ligação (ex., UART, I2C, SPI)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:79
 msgid "Critical voltage per cell below which damage may occur (e.g., 3.3V)"
-msgstr ""
+msgstr "Tensão crítica por célula abaixo da qual podem ocorrer danos (ex., 3,3V)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:80
 msgid "Details about how a component connects to the flight controller"
-msgstr ""
+msgstr "Detalhes sobre como um componente se liga ao controlador de voo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:81
 msgid "Electronic Speed Controller for the motors"
-msgstr ""
+msgstr "Controlador Eletrónico de Velocidade para os motores"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:82
 msgid "Flight controller component that runs the ArduPilot firmware"
-msgstr ""
+msgstr "Componente do controlador de voo que executa o firmware ArduPilot"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:83
 msgid "Flight controller firmware information"
-msgstr ""
+msgstr "Informação do firmware do controlador de voo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:84
 msgid "Flight controller that runs ArduPilot firmware"
-msgstr ""
+msgstr "Controlador de voo que executa firmware ArduPilot"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:85
 msgid "Global Navigation Satellite System receiver for positioning"
-msgstr ""
+msgstr "Recetor de Sistema Global de Navegação por Satélite para posicionamento"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:86
 msgid "How this component connects to the flight controller"
-msgstr ""
+msgstr "Como este componente se liga ao controlador de voo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:87
 msgid "Information about the firmware running on a component"
-msgstr ""
+msgstr "Informação sobre o firmware em execução num componente"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:88
 msgid ""
 "Low voltage threshold per cell when battery should be changed (e.g., 3.5V)"
-msgstr ""
+msgstr "Limiar de baixa tensão por célula quando a bateria deve ser mudada (ex., 3,5V)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:89
 msgid "Main power source for the vehicle"
-msgstr ""
+msgstr "Fonte de energia principal para o veículo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:90
 msgid "Maximum take-off weight in kilograms"
-msgstr ""
+msgstr "Peso máximo de descolagem em quilogramas"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:91
 msgid "Maximum voltage per cell when fully charged (e.g., 4.2V for LiPo)"
-msgstr ""
+msgstr "Tensão máxima por célula quando totalmente carregada (ex., 4,2V para LiPo)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:92
 msgid "Microcontroller series used in the flight controller (e.g., STM32F4)"
-msgstr ""
+msgstr "Série de microcontrolador utilizada no controlador de voo (ex., STM32F4)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:93
 msgid "Minimum take-off weight in kilograms"
-msgstr ""
+msgstr "Peso mínimo de descolagem em quilogramas"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:94
 msgid "Name of the configuration template"
-msgstr ""
+msgstr "Nome do modelo de configuração"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:95
 msgid "Number of cells in series (e.g., 4S means 4 cells)"
-msgstr ""
+msgstr "Número de células em série (ex., 4S significa 4 células)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:96
 msgid "Number of magnetic pole pairs in the motor (affects RPM calculation)"
-msgstr ""
+msgstr "Número de pares de polos magnéticos no motor (afeta o cálculo de RPM)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:97
 msgid "Physical frame and structure of the vehicle"
-msgstr ""
+msgstr "Estrutura física e quadro do veículo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:98
 msgid "Physical structure of the vehicle"
-msgstr ""
+msgstr "Estrutura física do veículo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:99
 msgid "Power source for the vehicle"
-msgstr ""
+msgstr "Fonte de alimentação para o veículo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:100
 msgid "Product information including manufacturer and model"
-msgstr ""
+msgstr "Informação do produto incluindo fabricante e modelo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:101
 msgid "Propeller diameter in inches (affects PID tuning)"
-msgstr ""
+msgstr "Diâmetro da hélice em polegadas (afeta a afinação PID)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:102
 msgid "Propellers that generate thrust"
-msgstr ""
+msgstr "Hélices que geram impulso"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:103
 msgid "Propellers that generate thrust for the vehicle"
-msgstr ""
+msgstr "Hélices que geram impulso para o veículo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:104
 msgid "Propulsion motors for the vehicle"
-msgstr ""
+msgstr "Motores de propulsão para o veículo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:105
 msgid "Propulsion motors that power the vehicle"
-msgstr ""
+msgstr "Motores de propulsão que alimentam o veículo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:106
 msgid "Receiver that connects to the flight controller"
-msgstr ""
+msgstr "Recetor que se liga ao controlador de voo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:107
 msgid "Remote control component firmware information"
-msgstr ""
+msgstr "Informação do firmware do componente de controlo remoto"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:108
 msgid "Remote control device used by the pilot"
-msgstr ""
+msgstr "Dispositivo de controlo remoto utilizado pelo piloto"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:109
 msgid "Remote control system component"
-msgstr ""
+msgstr "Componente do sistema de controlo remoto"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:110
 msgid "Schema format version"
-msgstr ""
+msgstr "Versão do formato do esquema"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:111
 msgid "Specific model name/number of the component"
-msgstr ""
+msgstr "Nome/número específico do modelo do componente"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:112
 msgid "Technical specifications of the battery"
-msgstr ""
+msgstr "Especificações técnicas da bateria"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:113
 msgid "Technical specifications of the flight controller"
-msgstr ""
+msgstr "Especificações técnicas do controlador de voo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:114
 msgid "Technical specifications of the motors"
-msgstr ""
+msgstr "Especificações técnicas dos motores"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:115
 msgid "Technical specifications of the propellers"
-msgstr ""
+msgstr "Especificações técnicas das hélices"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:116
 msgid "Technical specifications of the vehicle frame"
-msgstr ""
+msgstr "Especificações técnicas da estrutura do veículo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:117
 msgid "Transmitter part of the remote control system"
-msgstr ""
+msgstr "Transmissor parte do sistema de controlo remoto"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:118
 msgid "Type of firmware"
-msgstr ""
+msgstr "Tipo de firmware"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:119
 msgid "Version number of the firmware"
-msgstr ""
+msgstr "Número da versão do firmware"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:120
 msgid "Version of the program"
-msgstr ""
+msgstr "Versão do programa"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:121
 msgid "Version or revision of the hardware"
-msgstr ""
+msgstr "Versão ou revisão do hardware"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
-msgstr ""
+msgstr "Ligação web para a página do produto ou documentação"
 
 #~ msgid ""
 #~ "This configuration step should be performed outside this tool by\n"
