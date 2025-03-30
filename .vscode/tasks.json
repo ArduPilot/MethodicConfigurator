@@ -127,7 +127,7 @@
             "type": "shell",
             "command": "python",
             "args": [
-                "insert_translations.py",
+                "insert_missing_translations.py",
                 "--lang-code",
                 "${input:languageCode}",
                 "--input-file",

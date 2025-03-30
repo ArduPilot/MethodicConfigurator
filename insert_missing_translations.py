@@ -50,27 +50,66 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def load_translations(lang_code: str, translations_basename: str) -> list[tuple[int, str]]:
+    """
+    Load translations for a language from translation files.
+
+    Args:
+        lang_code: Language code to load translations for
+        translations_basename: Base name of the translation file(s)
+
+    Returns:
+        List of tuples containing (line_index, translation_text)
+
+    """
+    translations_data: list[str] = []
+    try:
+        with open(translations_basename + "_" + lang_code + ".txt", encoding="utf-8") as f:
+            translations_data = f.read().strip().split("\n")
+    except FileNotFoundError:
+        try:
+            for n in range(1, 99):
+                with open(translations_basename + "_" + lang_code + "_" + str(n) + ".txt", encoding="utf-8") as f:
+                    translations_data += f.read().strip().split("\n")
+        except FileNotFoundError:
+            if translations_data:
+                pass
+            else:
+                print(f"Error: No translation file(s) found for {lang_code}.")  # noqa: T201
+                return []
+
+    # Process the raw data into tuples of (index, translation)
+    translations: list[tuple[int, str]] = []
+    for data in translations_data:
+        index_str, translation = data.split(":", 1)  # Split the index and the translation
+        translations.append((int(index_str), translation.strip()))  # Store index and translation as tuple
+
+    return translations
+
+
 def insert_translations(lang_code: str, translations_basename: str, output_file_name: str) -> None:
+    """
+    Insert translations into a .po file.
+
+    Args:
+        lang_code: Language code to process
+        translations_basename: Base name of the translation file(s)
+        output_file_name: Name of the output .po file
+
+    """
     po_file = os.path.join(
         "ardupilot_methodic_configurator", "locale", lang_code, "LC_MESSAGES", "ardupilot_methodic_configurator.po"
     )
     with open(po_file, encoding="utf-8") as f:
         lines = f.readlines()
 
-    try:
-        with open(translations_basename + "_" + lang_code + ".txt", encoding="utf-8") as f:
-            translations_data = f.read().strip().split("\n")
-    except FileNotFoundError:
+    # Load translations from files
+    translations = load_translations(lang_code, translations_basename)
+    if not translations:
         return
 
-    # Prepare to insert translations
-    translations: list[tuple[int, str]] = []
-    for data in translations_data:
-        index_str, translation = data.split(":", 1)  # Split the index and the translation
-        translations.append((int(index_str), translation.strip()))  # Store index and translation as tuple
-
+    # Insert the translations into the .po file
     insertion_offset = 0  # To track how many lines we've inserted
-    # To insert the translations correctly
     for index, translation in translations:
         # Adjust index accounting for previously inserted lines
         adjusted_index = index + insertion_offset
