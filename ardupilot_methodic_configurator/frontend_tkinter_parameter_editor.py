@@ -465,7 +465,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 " but know what you are doing)"
             )
 
-            # Create custom dialog with Yes, No, Close buttons
+            # Create custom dialog with Close, Yes, No buttons
             dialog = tk.Toplevel(self.root)
             dialog.transient(self.root)
             dialog.title(_("Update file with values from FC?"))
