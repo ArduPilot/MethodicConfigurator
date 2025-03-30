@@ -14,5 +14,5 @@ LAND_ALT_LOW,200  # come down fast and only slow down close to the ground. We ha
 RTL_ALT,500  # This vehicle will never fly indoors
 RTL_LOIT_TIME,1000  # The default is too long. This reduces the time
 SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
-SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation
 SERIAL7_PROTOCOL,-1  # Do not use CubeOrange ADSB receiver

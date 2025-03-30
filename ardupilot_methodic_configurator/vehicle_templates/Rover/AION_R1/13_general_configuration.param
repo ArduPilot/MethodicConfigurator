@@ -7,7 +7,7 @@ INS_POS1_Y,0
 INS_POS2_X,0
 INS_POS2_Y,0
 SCHED_LOOP_RATE,50  # keep default
-SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation
 SERIAL2_BAUD,921
 SERIAL4_BAUD,57
 SERIAL4_PROTOCOL,2
