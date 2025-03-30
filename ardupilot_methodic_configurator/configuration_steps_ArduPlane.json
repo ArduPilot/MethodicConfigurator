@@ -58,7 +58,7 @@
             "old_filenames": []
         },
         "05_remote_controller.param": {
-            "why": "Remote controller is mandatory in the initial configuration and tunning phases. Later might be required for operation and/or safety",
+            "why": "Remote controller is mandatory in the initial configuration and tuning phases. Later might be required for operation and/or safety",
             "why_now": "It is a pre-requirement for configuring some telemetry systems and ESCs",
             "blog_text": "Configure remote controller connection, protocol and settings, including channel mapping and flight modes",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane#62-configure-the-rc-receiver",
@@ -627,7 +627,7 @@
         },
         "40_windspeed_estimation.param": {
             "why": "For accurate navigation and stabilization at high speeds and/or in windy conditions",
-            "why_now": "Because it can only be done after PID tunning is complete",
+            "why_now": "Because it can only be done after PID tuning is complete",
             "blog_text": "Configure parameters for wind speed estimation",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane#101-windspeed-estimation-flights",
             "wiki_text": "Windspeed Estimation",
