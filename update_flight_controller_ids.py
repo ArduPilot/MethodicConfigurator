@@ -273,7 +273,7 @@ def write_to_file(  # pylint: disable=too-many-arguments, too-many-positional-ar
 
     nr_supported_boards = sum(len(boards) for boards in apj_board_id_name_dict.values())
 
-    with open(file_path, "w", encoding="utf-8") as file:
+    with open(file_path, "w", encoding="utf-8", newline="\n") as file:
         file.write('"""\n')
         file.write("Defines flight controller vendor, board name and MCU series depending on hwdef.dat file information.\n")
         file.write("\n")
@@ -285,6 +285,8 @@ def write_to_file(  # pylint: disable=too-many-arguments, too-many-positional-ar
         file.write("SPDX-License-Identifier: GPL-3.0-or-later\n")
         file.write('"""\n')
         file.write("\n")
+        file.write("# ruff: noqa: E501\n")
+        file.write("# fmt: off\n")
         file.write("# pylint: disable=line-too-long\n")
         file.write("\n")
         file.write("# Maps USB VID to vendor(s) (manufacturer) name\n")
