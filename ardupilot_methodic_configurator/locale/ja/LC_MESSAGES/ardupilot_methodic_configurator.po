@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2025-03-30 00:36+0000\n"
+"POT-Creation-Date: 2025-03-30 15:42+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -792,7 +792,7 @@ msgstr "ユーザーインターフェース言語。デフォルトは%(default
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:25
 msgid ""
 "An even better result for roll and pitch will be achieved by re-autotuning "
-"an already (in all axis) autonuned vehicle"
+"an already (in all axis) autotuned vehicle"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:26
@@ -1034,7 +1034,7 @@ msgid "Because it can only be done after the respective autotune flight"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:74
-msgid "Because it depends on windspeed estimation"
+msgid "Because it depends on wind speed estimation"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:75
@@ -1601,11 +1601,11 @@ msgid "Test AltHold"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:193
-msgid "Windspeed Estimation"
+msgid "optical flow sensor setup"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:194
-msgid "optical flow sensor setup"
+msgid "wind speed estimation"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:197
@@ -1951,8 +1951,8 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:290
 msgid ""
-"Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed "
-"Estimation automation"
+"Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed "
+"estimation automation"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:291
