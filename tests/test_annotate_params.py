@@ -31,15 +31,19 @@ from ardupilot_methodic_configurator.annotate_params import (
     create_doc_dict,
     extract_parameter_name_and_validate,
     format_columns,
+    get_env_proxies,
     get_xml_data,
     get_xml_url,
     main,
+    missionplanner_sort,
     parse_arguments,
     print_read_only_params,
     remove_prefix,
     split_into_lines,
     update_parameter_documentation,
 )
+
+# pylint: disable=too-many-lines
 
 
 @pytest.fixture
@@ -867,6 +871,216 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
 
                     # Assert that requests.get was called with no proxies
                     mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5, proxies=None)
+
+    @patch.dict(
+        "os.environ",
+        {
+            "HTTP_PROXY": "http://proxy-server:8080",
+            "HTTPS_PROXY": "https://proxy-server:8080",
+            "NO_PROXY": "localhost,127.0.0.1",
+        },
+    )
+    def test_get_env_proxies_with_proxies(self) -> None:
+        """Test getting proxies from environment variables."""
+        proxies = get_env_proxies()
+        assert proxies is not None
+        assert proxies["http"] == "http://proxy-server:8080"
+        assert proxies["https"] == "https://proxy-server:8080"
+        assert proxies["no_proxy"] == "localhost,127.0.0.1"
+
+    @patch.dict("os.environ", {}, clear=True)
+    def test_get_env_proxies_without_proxies(self) -> None:
+        """Test getting proxies when environment variables are not set."""
+        proxies = get_env_proxies()
+        assert proxies is None
+
+    @patch.dict("os.environ", {"http_proxy": "http://lowercase-proxy:8080"})
+    def test_get_env_proxies_lowercase(self) -> None:
+        """Test getting proxies from lowercase environment variables."""
+        proxies = get_env_proxies()
+        assert proxies is not None
+        assert proxies["http"] == "http://lowercase-proxy:8080"
+
+    def test_extract_parameter_name_and_validate_edge_cases(self) -> None:
+        """Test extract_parameter_name_and_validate with various edge cases."""
+        # Valid parameter names with different separators
+        assert extract_parameter_name_and_validate("PARAM1,100", "test.param", 1) == "PARAM1"
+        assert extract_parameter_name_and_validate("PARAM2 100", "test.param", 1) == "PARAM2"
+        assert extract_parameter_name_and_validate("PARAM3\t100", "test.param", 1) == "PARAM3"
+
+        # Parameter name must start with capital letter
+        with pytest.raises(SystemExit):
+            extract_parameter_name_and_validate("param4 100", "test.param", 1)
+
+        # Parameter name can't have special characters
+        with pytest.raises(SystemExit):
+            extract_parameter_name_and_validate("PARAM-5 100", "test.param", 1)
+
+        # Parameter must be followed by a valid separator
+        with pytest.raises(SystemExit):
+            extract_parameter_name_and_validate("PARAM6:100", "test.param", 1)
+
+    def test_par_class_methods_comprehensive(self) -> None:
+        """Test Par class methods more comprehensively."""
+        # Test Par.__init__ and equality
+        par1 = Par(10.5, "comment")
+        par2 = Par(10.5, "comment")
+        par3 = Par(10.5, "different comment")
+        par4 = Par(11.0, "comment")
+
+        assert par1 == par2
+        assert par1 != par3
+        assert par1 != par4
+        assert par1 != "not a Par object"
+
+        # Test load_param_file_into_dict with various formats
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as tf:
+            tf.write("PARAM1,10.5 # comment1\n")
+            tf.write("PARAM2 20.75 # comment2\n")
+            tf.write("PARAM3\t30.25\n")  # tab separator, no comment
+            tf.write("# This is a full line comment\n")
+            tf.write("\n")  # empty line
+            tf_name = tf.name
+
+        param_dict = Par.load_param_file_into_dict(tf_name)
+        os.unlink(tf_name)
+
+        assert len(param_dict) == 3
+        assert param_dict["PARAM1"].value == 10.5
+        assert param_dict["PARAM1"].comment == "comment1"
+        assert param_dict["PARAM2"].value == 20.75
+        assert param_dict["PARAM2"].comment == "comment2"
+        assert param_dict["PARAM3"].value == 30.25
+        assert param_dict["PARAM3"].comment is None
+
+        # Test load_param_file_into_dict with duplicate parameters
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as tf:
+            tf.write("PARAM1,10.5\n")
+            tf.write("PARAM1,20.5\n")  # Duplicate parameter
+            tf_name = tf.name
+
+        with pytest.raises(SystemExit):
+            Par.load_param_file_into_dict(tf_name)
+        os.unlink(tf_name)
+
+    def test_missionplanner_sort_function(self) -> None:
+        """Test the missionplanner_sort function."""
+        # Basic sorting
+        params = ["Z_PARAM", "A_PARAM", "C_PARAM", "B_PARAM"]
+        sorted_params = sorted(params, key=missionplanner_sort)
+        assert sorted_params == ["A_PARAM", "B_PARAM", "C_PARAM", "Z_PARAM"]
+
+        # Complex sorting with underscores
+        params = ["RC_FEEL", "RC_MAP_ROLL", "RC_MAP_PITCH", "RC_1_MIN"]
+        sorted_params = sorted(params, key=missionplanner_sort)
+        assert sorted_params == ["RC_1_MIN", "RC_FEEL", "RC_MAP_PITCH", "RC_MAP_ROLL"]
+
+        # Sort with line content
+        lines = ["RC_FEEL 100", "RC_MAP_ROLL 200", "RC_MAP_PITCH 300", "RC_1_MIN 400"]
+        sorted_lines = sorted(lines, key=missionplanner_sort)
+        assert sorted_lines == ["RC_1_MIN 400", "RC_FEEL 100", "RC_MAP_PITCH 300", "RC_MAP_ROLL 200"]
+
+    @patch("logging.Logger.warning")
+    def test_update_parameter_documentation_edge_cases(self, mock_warning) -> None:  # pylint: disable=unused-argument
+        """Test update_parameter_documentation with edge cases."""
+        # Create a simplified doc_dict for testing
+        doc_dict = {
+            "PARAM1": {
+                "humanName": "Parameter 1",
+                "documentation": ["Documentation for Parameter 1"],
+                "fields": {},
+                "values": {},
+            },
+            "PARAM2": {
+                "humanName": "Parameter 2",
+                "documentation": ["Documentation for Parameter 2"],
+                "fields": {},
+                "values": {},
+            },
+        }
+
+        # Create a temporary directory
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create an empty file
+            empty_file = os.path.join(temp_dir, "empty.param")
+            with open(empty_file, "w", encoding="utf-8") as f:
+                pass
+
+            # Create file with only comments and whitespace
+            comments_file = os.path.join(temp_dir, "comments.param")
+            with open(comments_file, "w", encoding="utf-8") as f:
+                f.write("# This is a comment\n\n# Another comment\n")
+
+            # Create file with comments and parameters
+            mixed_file = os.path.join(temp_dir, "mixed.param")
+            with open(mixed_file, "w", encoding="utf-8") as f:
+                f.write("# A comment\nPARAM1,100\n\n# Another comment\nPARAM2 200\n")
+
+            # Test with empty file
+            update_parameter_documentation(doc_dict, empty_file)
+            with open(empty_file, encoding="utf-8") as f:
+                content = f.read()
+            assert content == ""
+
+            # Test with comments-only file
+            update_parameter_documentation(doc_dict, comments_file)
+            with open(comments_file, encoding="utf-8") as f:
+                content = f.read()
+            assert content == ""
+
+            # Test with mixed content and delete_documentation_annotations=True
+            update_parameter_documentation(doc_dict, mixed_file, delete_documentation_annotations=True)
+            with open(mixed_file, encoding="utf-8") as f:
+                content = f.read()
+            assert "# Parameter 1" not in content
+            assert "PARAM1,100" in content
+            assert "PARAM2 200" in content
+
+            # Write the file again with annotations
+            with open(mixed_file, "w", encoding="utf-8") as f:
+                f.write("# A comment\nPARAM1,100\n\n# Another comment\nPARAM2 200\n")
+
+            # Test with mixed content and regular annotations
+            update_parameter_documentation(doc_dict, mixed_file)
+            with open(mixed_file, encoding="utf-8") as f:
+                content = f.read()
+            assert "# Parameter 1" in content
+            assert "# Documentation for Parameter 1" in content
+            assert "PARAM1,100" in content
+            assert "# Parameter 2" in content
+            assert "# Documentation for Parameter 2" in content
+            assert "PARAM2 200" in content
+
+    def test_extract_parameter_name_and_validate_comprehensive(self) -> None:
+        """Comprehensive testing of parameter name extraction and validation."""
+        # Valid parameter names with different separators
+        assert extract_parameter_name_and_validate("PARAM1,100", "test.param", 1) == "PARAM1"
+        assert extract_parameter_name_and_validate("PARAM2 100", "test.param", 1) == "PARAM2"
+        assert extract_parameter_name_and_validate("PARAM3\t100", "test.param", 1) == "PARAM3"
+        assert extract_parameter_name_and_validate("A123_XYZ,100", "test.param", 1) == "A123_XYZ"
+
+        # Parameter name with trailing whitespace before separator
+        assert extract_parameter_name_and_validate("PARAM4   \t100", "test.param", 1) == "PARAM4"
+
+        # Invalid parameter format (not starting with uppercase letter)
+        with pytest.raises(SystemExit):
+            extract_parameter_name_and_validate("param5 100", "test.param", 1)
+
+        # Invalid parameter format (invalid character)
+        with pytest.raises(SystemExit):
+            extract_parameter_name_and_validate("PARAM-5 100", "test.param", 1)
+
+        # Invalid separator
+        with pytest.raises(SystemExit):
+            extract_parameter_name_and_validate("PARAM6:100", "test.param", 1)
+
+        # Parameter name too long
+        with pytest.raises(SystemExit):
+            extract_parameter_name_and_validate("ABCDEFGHIJKLMNOPQR 100", "test.param", 1)
+
+        # Empty line
+        with pytest.raises(SystemExit):
+            extract_parameter_name_and_validate("", "test.param", 1)
 
 
 if __name__ == "__main__":
