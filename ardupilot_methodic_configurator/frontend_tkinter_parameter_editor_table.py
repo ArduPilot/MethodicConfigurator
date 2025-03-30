@@ -19,7 +19,7 @@ from math import nan
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import Par
@@ -298,7 +298,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         else:
             new_value_entry.configure(style="TEntry")
 
-    def __create_new_value_entry(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals
+    def __create_new_value_entry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         param_name: str,
         param: Par,
@@ -306,94 +306,278 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         param_default: Union[None, Par],
         doc_tooltip: str,
     ) -> Union[PairTupleCombobox, ttk.Entry]:
-        is_bitmask = param_metadata and "Bitmask" in param_metadata
+        """
+        Create an entry widget for editing parameter values.
+
+        Args:
+            param_name: Name of the parameter
+            param: Parameter object containing the value
+            param_metadata: Metadata for the parameter from documentation
+            param_default: Default parameter value if available
+            doc_tooltip: Documentation tooltip text
+
+        Returns:
+            Either a combobox (for enumerated values) or a text entry
+
+        """
+        # Apply any forced or derived parameter values
+        present_as_forced = self.__apply_forced_or_derived_parameters(
+            param_name, param, is_bitmask=bool(param_metadata and "Bitmask" in param_metadata)
+        )
+
+        value_str = format(param.value, ".6f").rstrip("0").rstrip(".")
+
+        # Create appropriate widget based on parameter type
+        new_value_entry: Union[PairTupleCombobox, ttk.Entry]
+        if self.__has_enumerated_values(param_metadata, value_str):
+            new_value_entry = self.__create_enumerated_value_widget(
+                param_name, param_metadata, value_str, param_default, present_as_forced
+            )
+        else:
+            new_value_entry = self.__create_numeric_value_widget(param.value, param_default)
+
+        bitmask_dict = param_metadata.get("Bitmask") if param_metadata else None
+
+        # Configure widget behavior
+        self.__configure_value_widget_behavior(new_value_entry, param_name, bitmask_dict, present_as_forced, doc_tooltip)
+
+        return new_value_entry
+
+    def __apply_forced_or_derived_parameters(self, param_name: str, param: Par, is_bitmask: bool) -> bool:
+        """
+        Apply forced or derived parameter values if applicable.
+
+        Args:
+            param_name: Name of the parameter
+            param: Parameter object to update if needed
+            is_bitmask: Whether the parameter is a bitmask
+
+        Returns:
+            True if the parameter should be presented as forced (disabled), False otherwise
+
+        """
         present_as_forced = False
+
+        # Handle forced parameters
         if (
             self.current_file in self.local_filesystem.forced_parameters
             and param_name in self.local_filesystem.forced_parameters[self.current_file]
         ):
             present_as_forced = True
             new_value = self.local_filesystem.forced_parameters[self.current_file][param_name].value
-            if (is_bitmask and param.value != new_value) or not is_within_tolerance(param.value, new_value):
-                param.value = new_value
-                self.at_least_one_param_edited = True
+            self.__update_param_if_different(param, new_value, is_bitmask)
+
+        # Handle derived parameters
         if (
             self.current_file in self.local_filesystem.derived_parameters
             and param_name in self.local_filesystem.derived_parameters[self.current_file]
         ):
             present_as_forced = True
             new_value = self.local_filesystem.derived_parameters[self.current_file][param_name].value
-            if (is_bitmask and param.value != new_value) or not is_within_tolerance(param.value, new_value):
-                param.value = new_value
-                self.at_least_one_param_edited = True
+            self.__update_param_if_different(param, new_value, is_bitmask)
 
-        bitmask_dict = None
-        value_str = format(param.value, ".6f").rstrip("0").rstrip(".")
-        new_value_entry: Union[PairTupleCombobox, ttk.Entry]
-        if (
-            param_metadata
-            and "values" in param_metadata
-            and param_metadata["values"]
-            and value_str in param_metadata["values"]
-        ):
-            selected_value = param_metadata["values"].get(value_str, None)
-            has_default_value = param_default is not None and is_within_tolerance(param.value, param_default.value)
-            new_value_entry = PairTupleCombobox(
-                self.view_port,
-                param_metadata["values"],
-                value_str,
-                param_name,
-                style="TCombobox"
-                if present_as_forced
-                else "default_v.TCombobox"
-                if has_default_value
-                else "readonly.TCombobox",
-            )
-            new_value_entry.set(selected_value)
-            font_family, font_size = get_widget_font_family_and_size(new_value_entry)
-            font_size -= 2 if platform_system() == "Windows" else 1
-            new_value_entry.config(state="readonly", width=NEW_VALUE_WIDGET_WIDTH, font=(font_family, font_size))
-            new_value_entry.bind(  # type: ignore[call-overload] # workaround a mypy issue
-                "<<ComboboxSelected>>",
-                lambda event: self.__update_combobox_style_on_selection(new_value_entry, param_default, event),
-                "+",
-            )
-        else:
-            new_value_entry = ttk.Entry(self.view_port, width=NEW_VALUE_WIDGET_WIDTH + 1, justify=tk.RIGHT)
-            ParameterEditorTable.__update_new_value_entry_text(new_value_entry, param.value, param_default)
-            bitmask_dict = param_metadata.get("Bitmask") if param_metadata else None
+        return present_as_forced
+
+    def __update_param_if_different(self, param: Par, new_value: float, is_bitmask: bool) -> None:
+        """
+        Update parameter value if it differs from the current value.
+
+        Args:
+            param: Parameter object to update
+            new_value: New value to set
+            is_bitmask: Whether the parameter is a bitmask
+
+        """
+        if (is_bitmask and param.value != new_value) or not is_within_tolerance(param.value, new_value):
+            param.value = new_value
+            self.at_least_one_param_edited = True
+
+    def __has_enumerated_values(self, param_metadata: dict[str, Any], value_str: str) -> bool:
+        """
+        Check if the parameter has enumerated values.
+
+        Args:
+            param_metadata: Parameter metadata
+            value_str: Current value as string
+
+        Returns:
+            True if parameter has enumerated values and current value is among them
+
+        """
+        if param_metadata is None:
+            return False
+
+        if "values" not in param_metadata:
+            return False
+
+        values_dict = param_metadata["values"]
+        if not values_dict:
+            return False
+
+        return value_str in values_dict
+
+    def __create_enumerated_value_widget(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        param_name: str,
+        param_metadata: dict[str, Any],
+        value_str: str,
+        param_default: Union[None, Par],
+        present_as_forced: bool,
+    ) -> PairTupleCombobox:
+        """
+        Create a combobox widget for enumerated values.
+
+        Args:
+            param_name: Parameter name
+            param_metadata: Parameter metadata
+            value_str: Current value as string
+            param_default: Default parameter value
+            present_as_forced: Whether widget should be presented as forced
+
+        Returns:
+            Configured combobox widget
+
+        """
+        values_dict = param_metadata["values"]
+        selected_value = values_dict.get(value_str, None)
+
+        # Determine style based on whether value is default or forced
+        has_default_value = param_default is not None and is_within_tolerance(float(value_str), param_default.value)
+        style = self.__get_combobox_style(present_as_forced, has_default_value)
+
+        # Create and configure the combobox
+        combobox = PairTupleCombobox(
+            self.view_port,
+            values_dict,
+            value_str,
+            param_name,
+            style=style,
+        )
+        combobox.set(selected_value)
+
+        # Configure font and appearance
+        font_family, font_size = get_widget_font_family_and_size(combobox)
+        font_size -= 2 if platform_system() == "Windows" else 1
+        combobox.config(state="readonly", width=NEW_VALUE_WIDGET_WIDTH, font=(font_family, font_size))
+
+        # Bind selection event
+        combobox.bind(
+            "<<ComboboxSelected>>",
+            lambda event: self.__update_combobox_style_on_selection(combobox, param_default, event),
+            "+",
+        )
+
+        return combobox
+
+    def __get_combobox_style(self, present_as_forced: bool, has_default_value: bool) -> str:
+        """
+        Get the appropriate combobox style.
+
+        Args:
+            present_as_forced: Whether widget should be presented as forced
+            has_default_value: Whether widget has default value
+
+        Returns:
+            Style name to use
+
+        """
+        if present_as_forced:
+            return "TCombobox"
+        if has_default_value:
+            return "default_v.TCombobox"
+        return "readonly.TCombobox"
+
+    def __create_numeric_value_widget(self, value: float, param_default: Union[None, Par]) -> ttk.Entry:
+        """
+        Create a text entry widget for numeric values.
+
+        Args:
+            value: Current parameter value
+            param_default: Default parameter value
+
+        Returns:
+            Configured entry widget
+
+        """
+        entry = ttk.Entry(self.view_port, width=NEW_VALUE_WIDGET_WIDTH + 1, justify=tk.RIGHT)
+        ParameterEditorTable.__update_new_value_entry_text(entry, value, param_default)
+        return entry
+
+    def __configure_value_widget_behavior(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        widget: Union[PairTupleCombobox, ttk.Entry],
+        param_name: str,
+        bitmask_dict: Optional[dict],
+        present_as_forced: bool,
+        doc_tooltip: str,
+    ) -> None:
+        """
+        Configure widget behavior (events, tooltips).
+
+        Args:
+            widget: Widget to configure
+            param_name: Parameter name
+            bitmask_dict: Dictionary of bitmask values if applicable
+            present_as_forced: Whether widget should be presented as forced
+            doc_tooltip: Documentation tooltip text
+
+        """
         try:
             old_value = self.local_filesystem.file_parameters[self.current_file][param_name].value
         except KeyError as e:
             logging_critical(_("Parameter %s not found in the %s file: %s"), param_name, self.current_file, e, exc_info=True)
             sys_exit(1)
+
         if present_as_forced:
-            new_value_entry.config(state="disabled", background="light grey")
+            widget.config(state="disabled", background="light grey")
         elif bitmask_dict:
-            new_value_entry.bind(
-                "<Double-Button>",
-                lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value),
-            )
-            # pylint: disable=line-too-long
-            new_value_entry.bind(
-                "<FocusOut>",
-                lambda event, current_file=self.current_file, param_name=param_name: self.__on_parameter_value_change(  # type: ignore[misc]
-                    event, current_file, param_name
-                ),
-            )
-            # pylint: enable=line-too-long
+            self.__configure_bitmask_widget_events(widget, param_name, bitmask_dict, old_value)
         else:
-            # pylint: disable=line-too-long
-            new_value_entry.bind(
-                "<FocusOut>",
-                lambda event, current_file=self.current_file, param_name=param_name: self.__on_parameter_value_change(  # type: ignore[misc]
-                    event, current_file, param_name
-                ),
-            )
-            # pylint: enable=line-too-long
+            self.__bind_value_change_event(widget, param_name)
+
         if doc_tooltip:
-            show_tooltip(new_value_entry, doc_tooltip)
-        return new_value_entry
+            show_tooltip(widget, doc_tooltip)
+
+    def __configure_bitmask_widget_events(
+        self,
+        widget: ttk.Entry,
+        param_name: str,
+        bitmask_dict: dict,
+        old_value: float,
+    ) -> None:
+        """
+        Configure events for bitmask entry widgets.
+
+        Args:
+            widget: Widget to configure
+            param_name: Parameter name
+            bitmask_dict: Dictionary of bitmask values
+            old_value: Current parameter value before changes
+
+        """
+        widget.bind(
+            "<Double-Button>",
+            lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value),
+        )
+        self.__bind_value_change_event(widget, param_name)
+
+    def __bind_value_change_event(self, widget: Union[PairTupleCombobox, ttk.Entry], param_name: str) -> None:
+        """
+        Bind the focus out event to update parameter values.
+
+        Args:
+            widget: Widget to bind event to
+            param_name: Parameter name
+
+        """
+        # pylint: disable=line-too-long
+        widget.bind(
+            "<FocusOut>",
+            lambda event, current_file=self.current_file, param_name=param_name: self.__on_parameter_value_change(  # type: ignore[misc]
+                event, current_file, param_name
+            ),
+        )
+        # pylint: enable=line-too-long
 
     def __open_bitmask_selection_window(self, event: tk.Event, param_name: str, bitmask_dict: dict, old_value: float) -> None:  # pylint: disable=too-many-locals
         def on_close() -> None:
