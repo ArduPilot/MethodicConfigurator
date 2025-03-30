@@ -105,9 +105,9 @@ class DocumentationFrame:
         why_now_tooltip_text = self.local_filesystem.get_seq_tooltip_text(current_file, "why_now")
         tooltip_text = ""
         if why_tooltip_text:
-            tooltip_text += _("Why: ") + why_tooltip_text + "\n"
+            tooltip_text += _("Why: ") + _(why_tooltip_text) + "\n"
         if why_now_tooltip_text:
-            tooltip_text += _("Why now: ") + why_now_tooltip_text
+            tooltip_text += _("Why now: ") + _(why_now_tooltip_text)
         if tooltip_text:
             show_tooltip(self.documentation_frame, tooltip_text, position_below=False)
 
@@ -121,13 +121,15 @@ class DocumentationFrame:
         self.documentation_frame.config(text=frame_title)
 
         blog_text, blog_url = self.local_filesystem.get_documentation_text_and_url(current_file, "blog")
-        self._refresh_documentation_label(_("Forum Blog:"), blog_text, blog_url)
+        self._refresh_documentation_label(_("Forum Blog:"), _(blog_text) if blog_text else "", blog_url)
         wiki_text, wiki_url = self.local_filesystem.get_documentation_text_and_url(current_file, "wiki")
-        self._refresh_documentation_label(_("Wiki:"), wiki_text, wiki_url)
+        self._refresh_documentation_label(_("Wiki:"), _(wiki_text) if wiki_text else "", wiki_url)
         external_tool_text, external_tool_url = self.local_filesystem.get_documentation_text_and_url(
             current_file, "external_tool"
         )
-        self._refresh_documentation_label(_("External tool:"), external_tool_text, external_tool_url)
+        self._refresh_documentation_label(
+            _("External tool:"), _(external_tool_text) if external_tool_text else "", external_tool_url
+        )
         mandatory_text, _mandatory_url = self.local_filesystem.get_documentation_text_and_url(current_file, "mandatory")
         self._refresh_mandatory_level(current_file, mandatory_text)
 
