@@ -142,11 +142,15 @@ class DocumentationFrame:
     def _refresh_documentation_label(self, label_key: str, text: str, url: str, url_expected: bool = True) -> None:
         label = self.documentation_labels[label_key]
         if url:
-            label.config(text=text, foreground="blue", cursor="hand2", underline=True)
+            # Create a font with underline attribute
+            underlined_font = ("TkDefaultFont", 10, "underline")
+            label.config(text=text, foreground="blue", cursor="hand2", font=underlined_font)
             label.bind("<Button-1>", lambda event: webbrowser_open(url))  # noqa: ARG005
             show_tooltip(label, url)
         else:
-            label.config(text=text, foreground="black", cursor="arrow", underline=False)
+            # Use regular font without underline
+            regular_font = ("TkDefaultFont", 10)
+            label.config(text=text, foreground="black", cursor="arrow", font=regular_font)
             label.bind("<Button-1>", lambda event: None)  # noqa: ARG005
             if url_expected:
                 show_tooltip(label, _("Documentation URL not available"))
