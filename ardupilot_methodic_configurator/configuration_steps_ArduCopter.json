@@ -230,7 +230,7 @@
             "auto_changed_by": "",
             "forced_parameters": {
                 "ARMING_CHECK": { "New Value": 1, "Change Reason": "Perform all arming checks. If you have a problem fix its source. Do NOT change this" },
-                "SCR_ENABLE": { "New Value": 1, "Change Reason": "Use lua scripting for VTOL-Quicktune, MagFit automation and Windspeed Estimation automation" }
+                "SCR_ENABLE": { "New Value": 1, "Change Reason": "Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation" }
             },
             "old_filenames": ["12_general_configuration.param"]
         },
@@ -603,7 +603,7 @@
             "old_filenames": ["35_autotune_yawd_results.param"]
         },
         "38_autotune_roll_pitch_retune_setup.param": {
-            "why": "An even better result for roll and pitch will be achieved by re-autotuning an already (in all axis) autonuned vehicle",
+            "why": "An even better result for roll and pitch will be achieved by re-autotuning an already (in all axis) autotuned vehicle",
             "why_now": "Because it needs an initial autotune of all axis",
             "blog_text": "Set up parameters for the roll and pitch axis retuning process",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#955-roll-and-pitch-axis-re-autotune",
@@ -636,7 +636,7 @@
             "why_now": "Because it can only be done after PID tuning is complete",
             "blog_text": "Configure parameters for wind speed estimation",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#101-windspeed-estimation-flights",
-            "wiki_text": "Windspeed Estimation",
+            "wiki_text": "wind speed estimation",
             "wiki_url": "https://ardupilot.org/copter/docs/airspeed-estimation.html",
             "external_tool_text": "free online tool to overlay a grid over an image",
             "external_tool_url": "https://yomotherboard.com/add-grid-to-image/",
@@ -650,7 +650,7 @@
         },
         "41_barometer_compensation.param": {
             "why": "For accurate altitude estimation",
-            "why_now": "Because it depends on windspeed estimation",
+            "why_now": "Because it depends on wind speed estimation",
             "blog_text": "Set up parameters for barometer compensation",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#102-baro-compensation-flights",
             "wiki_text": "Barometer Position Error Compensation",
