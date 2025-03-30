@@ -127,7 +127,7 @@
                 "BATT_FS_LOW_ACT": { "New Value": 2, "Change Reason": "Return and land at home or rally point" }
             },
             "derived_parameters": {
-                "BATT_ARM_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Number of cells']-1)*0.1+(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.3)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Don’t allow arming below this voltage" },
+                "BATT_ARM_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Number of cells']-1)*0.1+(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.3)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Do not allow arming below this voltage" },
                 "BATT_CAPACITY": { "New Value": "(vehicle_components['Battery']['Specifications']['Capacity mAh'])", "Change Reason": "Total battery capacity specified in the component editor" },
                 "BATT_CRT_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" },
                 "BATT_LOW_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell low'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Low voltage + 0.0) x no. of cells" },
@@ -650,7 +650,7 @@
         },
         "41_barometer_compensation.param": {
             "why": "For accurate altitude estimation",
-            "why_now": "Because it depends on windspedd estimation",
+            "why_now": "Because it depends on windspeed estimation",
             "blog_text": "Set up parameters for barometer compensation",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#102-baro-compensation-flights",
             "wiki_text": "Barometer Position Error Compensation",
@@ -729,7 +729,7 @@
             "old_filenames": ["43_system_id_thrust.param"]
         },
         "46_analytical_pid_optimization.param": {
-            "why": "Beacuse the mathematical model of the vehicle allows for analytical PID optimization",
+            "why": "Because the mathematical model of the vehicle allows for analytical PID optimization",
             "why_now": "Because we first needed system identification flights to create the mathematical model",
             "blog_text": "Parameters for analytical PID optimization",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#112-analytical-multicopter-flight-controller-pid-optimization",
@@ -748,7 +748,7 @@
         },
         "47_position_controller.param": {
             "why": "Position controller parameters are crucial for waypoint navigation and precision flying",
-            "why_now": "Because the position controller PIDs depend on the attitide and attitude-rate PIDs tunned in previous steps",
+            "why_now": "Because the position controller PIDs depend on the attitude and attitude-rate PIDs tunned in previous steps",
             "blog_text": "Configure the position controller(s)",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#121-position-controller",
             "wiki_text": "",
