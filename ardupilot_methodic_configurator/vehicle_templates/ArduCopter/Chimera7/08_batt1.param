@@ -1,5 +1,5 @@
 BATT_AMP_PERVLT,52.706  # new calibrated value for Mamba F45_128k 4in1 ESC
-BATT_ARM_VOLT,23.6  # Don’t allow arming below this voltage
+BATT_ARM_VOLT,23.6  # Do not allow arming below this voltage
 BATT_CAPACITY,3000  # Total battery capacity specified in the component editor
 BATT_CRT_MAH,0  # When only 0mAh out of the total 3000mAh remain, trigger critical failsafe
 BATT_CRT_VOLT,21.3  # (Critical voltage + 0.0) x no. of cells
