@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0.16\n"
-"POT-Creation-Date: 2025-03-31 11:41+0000\n"
+"POT-Creation-Date: 2025-03-31 12:23+0000\n"
 "PO-Revision-Date: 2025-02-05 01:24+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -2284,141 +2284,180 @@ msgid "was only needed for wind speed estimation"
 msgstr "era necessario solo per la stima della velocità del vento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:300
+msgid "Analytical PID optimization"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:301
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:315
 msgid "Assemble all components except the propellers"
 msgstr "Assembla tutti i componenti eccetto le eliche"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:301
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:302
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:316
 msgid "Assemble the propellers and perform the first flight"
 msgstr "Assembla le eliche ed esegui il primo volo"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:302
-msgid "Calibrate the IMU sensors for at different temperatures"
-msgstr "Calibra i sensori IMU a diverse temperature"
-
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:303
+msgid "Basic mandatory configuration"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:304
+msgid "Everyday use"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:305
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:318
 msgid "Guided operation"
 msgstr "Operazione guidata"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:304
-msgid "Improve altitude under windy conditions"
-msgstr "Migliora l'altitudine in condizioni di vento"
-
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:305
-msgid "Improve tuning with more test flight data"
-msgstr "Migliora la messa a punto con più dati di volo di prova"
-
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:306
-msgid "Minimalistic mandatory tuning using test flight data"
-msgstr "Messa a punto minima obbligatoria usando dati di volo di prova"
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:418
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:423
+msgid "IMU temperature calibration"
+msgstr "Calibrazione temperatura IMU"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:307
-msgid "Optical flow sensor calibration"
-msgstr "Calibrazione del sensore di flusso ottico"
+msgid "Improve altitude control"
+msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:308
+msgid "Minimalistic mandatory tuning"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:309
+msgid "Optical flow calibration"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:310
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:323
 msgid "Position controller tuning"
 msgstr "Messa a punto del controllore di posizione"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:309
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:311
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:324
 msgid "Precision landing"
 msgstr "Atterraggio di precisione"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:310
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:312
+msgid "Standard tuning"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:317
+msgid "Calibrate the IMU sensors for at different temperatures"
+msgstr "Calibra i sensori IMU a diverse temperature"
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:319
+msgid "Improve altitude under windy conditions"
+msgstr "Migliora l'altitudine in condizioni di vento"
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:320
+msgid "Improve tuning with more test flight data"
+msgstr "Migliora la messa a punto con più dati di volo di prova"
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:321
+msgid "Minimalistic mandatory tuning using test flight data"
+msgstr "Messa a punto minima obbligatoria usando dati di volo di prova"
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:322
+msgid "Optical flow sensor calibration"
+msgstr "Calibrazione del sensore di flusso ottico"
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:325
 msgid "Set up the basic parameters for the vehicle"
 msgstr "Imposta i parametri base per il veicolo"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:311
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:326
 msgid "Switch tests off, configure for productive work"
 msgstr "Disattiva i test, configura per lavoro produttivo"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:312
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:327
 msgid "System identification and analytical PID optimization"
 msgstr "Identificazione del sistema e ottimizzazione analitica del PID"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:324
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:339
 msgid "Description of the phase"
 msgstr "Descrizione della fase"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:325
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:340
 msgid "Explanation of why this step is needed"
 msgstr "Spiegazione del motivo per cui questo passaggio è necessario"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:326
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:341
 msgid "Explanation of why this step needs to be done at this point"
 msgstr ""
 "Spiegazione del motivo per cui questo passaggio deve essere fatto in questo "
 "punto"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:327
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:342
 msgid "Expression to derive new parameter value"
 msgstr "Espressione per derivare un nuovo valore del parametro"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:328
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:343
 msgid "Expression to rename connection"
 msgstr "Espressione per rinominare la connessione"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:329
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:344
 msgid "Message about possible jump to another step"
 msgstr "Messaggio sulla possibilità di passare a un altro step"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:330
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:345
 msgid "Name of tool/process that automatically changes these parameters"
 msgstr ""
 "Nome dello strumento/processo che modifica automaticamente questi parametri"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:331
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:346
 msgid "Name/description of external tool needed"
 msgstr "Nome/descrizione dello strumento esterno necessario"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:332
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:347
 msgid "New value for the parameter"
 msgstr "Nuovo valore per il parametro"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:333
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:348
 msgid "Phases of the configuration process"
 msgstr "Fasi del processo di configurazione"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:334
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:349
 msgid "Previous filenames for this step"
 msgstr "Nomi file precedenti per questo passaggio"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:335
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:350
 msgid "Reason for changing the parameter"
 msgstr "Motivo per la modifica del parametro"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:336
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:351
 msgid "Reason for the derived parameter"
 msgstr "Motivo per il parametro derivato"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:337
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:352
 msgid "Short description for blog reference"
 msgstr "Breve descrizione per riferimento blog"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:338
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:353
 msgid "Short description for wiki reference"
 msgstr "Breve descrizione per riferimento wiki"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:339
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:354
 msgid "Starting step number of this phase"
 msgstr "Numero di step iniziale di questa fase"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:340
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:355
 msgid "Text indicating if step is mandatory or optional with percentages"
 msgstr "Testo che indica se lo step è obbligatorio o opzionale con percentuali"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:341
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:356
 msgid "URL to blog documentation"
 msgstr "URL alla documentazione del blog"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:342
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:357
 msgid "URL to external tool"
 msgstr "URL allo strumento esterno"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:343
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:358
 msgid "URL to wiki documentation"
 msgstr "URL alla documentazione wiki"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:344
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:359
 msgid "Whether this phase is optional"
 msgstr "Se questa fase è opzionale"
 
@@ -3672,11 +3711,6 @@ msgstr ""
 "verrà sovrascritto con i nuovi risultati della calibrazione.\n"
 "Vuoi fornire un file .bin di log ed\n"
 "eseguire la calibrazione della temperatura IMU usando questo?"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:418
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:423
-msgid "IMU temperature calibration"
-msgstr "Calibrazione temperatura IMU"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:420
 msgid "ArduPilot binary log files"
