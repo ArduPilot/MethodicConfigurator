@@ -1,5 +1,5 @@
 """
-TKinter base classes reused in multiple parts of the code.
+TKinter progress window class.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
