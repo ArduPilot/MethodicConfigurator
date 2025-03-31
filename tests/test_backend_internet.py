@@ -417,3 +417,159 @@ def test_verify_and_open_url_proxy_handling(mock_webbrowser_open, mock_get, env_
     else:
         # Empty dict should be passed when no proxies are configured
         assert call_args[1]["proxies"] == {}
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+def test_get_release_info_success(mock_get) -> None:
+    """Test successful retrieval of release information."""
+    mock_response = Mock()
+    mock_release_data = {
+        "tag_name": "v1.0.0",
+        "name": "Release 1.0.0",
+        "body": "Release notes",
+        "prerelease": False,
+        "assets": [{"name": "asset1", "browser_download_url": "http://example.com/asset1"}],
+    }
+    mock_response.json.return_value = mock_release_data
+    mock_get.return_value = mock_response
+
+    release_info = get_release_info("latest", should_be_pre_release=False)
+
+    mock_get.assert_called_once()
+    assert release_info == mock_release_data
+    assert release_info["tag_name"] == "v1.0.0"
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+def test_get_release_info_empty_name(mock_get) -> None:
+    """Test with empty release name."""
+    with pytest.raises(ValueError, match="Release name cannot be empty"):
+        get_release_info("", should_be_pre_release=False)
+    mock_get.assert_not_called()
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+def test_get_release_info_http_error(mock_get) -> None:
+    """Test handling of HTTP errors."""
+    mock_response = Mock()
+    mock_response.status_code = 404
+    mock_error = requests_HTTPError("404 Not Found")
+    mock_error.response = mock_response
+    mock_get.side_effect = mock_error
+
+    with pytest.raises(requests_HTTPError):
+        get_release_info("latest", should_be_pre_release=False)
+    mock_get.assert_called_once()
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+def test_get_release_info_rate_limit_error(mock_get) -> None:
+    """Test handling of GitHub API rate limit errors."""
+    mock_response = Mock()
+    mock_response.status_code = 403
+    mock_response.headers = {"X-RateLimit-Reset": "1609459200"}  # 2021-01-01 00:00:00 UTC
+    mock_error = requests_HTTPError("API rate limit exceeded")
+    mock_error.response = mock_response
+    mock_get.side_effect = mock_error
+
+    with pytest.raises(requests_HTTPError):
+        get_release_info("latest", should_be_pre_release=False)
+    mock_get.assert_called_once()
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+def test_get_release_info_request_exception(mock_get) -> None:
+    """Test handling of general request exceptions."""
+    mock_get.side_effect = requests_RequestException("Connection failed")
+
+    with pytest.raises(requests_RequestException):
+        get_release_info("latest", should_be_pre_release=False)
+    mock_get.assert_called_once()
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+def test_get_release_info_timeout(mock_get) -> None:
+    """Test handling of request timeouts."""
+    mock_get.side_effect = requests_Timeout("Request timed out")
+
+    with pytest.raises(requests_RequestException):
+        get_release_info("latest", should_be_pre_release=False)
+    mock_get.assert_called_once()
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+def test_get_release_info_value_error(mock_get) -> None:
+    """Test handling of invalid JSON responses."""
+    mock_response = Mock()
+    mock_response.json.side_effect = ValueError("Invalid JSON")
+    mock_get.return_value = mock_response
+
+    with pytest.raises(ValueError, match="Invalid JSON"):
+        get_release_info("latest", should_be_pre_release=False)
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+def test_get_release_info_key_error(mock_get) -> None:
+    """Test handling of missing keys in response."""
+    mock_response = Mock()
+    mock_response.json.return_value = {"name": "Release 1.0.0"}  # Missing 'prerelease' key
+    mock_get.return_value = mock_response
+
+    with pytest.raises(KeyError):
+        get_release_info("latest", should_be_pre_release=False)
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+def test_get_release_info_correct_url_formation(mock_get) -> None:
+    """Test correct URL formation with different input formats."""
+    mock_response = Mock()
+    mock_response.json.return_value = {"prerelease": False}
+    mock_get.return_value = mock_response
+
+    # Test with leading slash
+    get_release_info("/latest", should_be_pre_release=False)
+    mock_get.assert_called_with("https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest", timeout=30)
+    mock_get.reset_mock()
+
+    # Test without leading slash
+    get_release_info("latest", should_be_pre_release=False)
+    mock_get.assert_called_with("https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest", timeout=30)
+    mock_get.reset_mock()
+
+    # Test with tag name
+    get_release_info("tags/v1.0.0", should_be_pre_release=False)
+    mock_get.assert_called_with("https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/tags/v1.0.0", timeout=30)
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+def test_get_release_info_custom_timeout(mock_get) -> None:
+    """Test custom timeout parameter."""
+    mock_response = Mock()
+    mock_response.json.return_value = {"prerelease": False}
+    mock_get.return_value = mock_response
+
+    get_release_info("latest", should_be_pre_release=False, timeout=60)
+    mock_get.assert_called_with("https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest", timeout=60)
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.requests_get")
+def test_get_release_info_prerelease_expectation_violated(mock_get) -> None:
+    """Test when prerelease expectation is violated."""
+    # Case 1: Expected prerelease but got stable
+    mock_response = Mock()
+    mock_response.json.return_value = {"prerelease": False}
+    mock_get.return_value = mock_response
+
+    # Should log an error but still return the data
+    result = get_release_info("latest", should_be_pre_release=True)
+    assert not result["prerelease"]
+    mock_get.reset_mock()
+
+    # Case 2: Expected stable but got prerelease
+    mock_response = Mock()
+    mock_response.json.return_value = {"prerelease": True}
+    mock_get.return_value = mock_response
+
+    # Should log an error but still return the data
+    result = get_release_info("latest", should_be_pre_release=False)
+    assert result["prerelease"]
