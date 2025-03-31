@@ -1,0 +1,4 @@
+MOT_SPIN_ARM,0.1  # ESCs reliably start spinning with this value (based on motor test)
+MOT_SPIN_MAX,0.95  # Upper dead zone of the ESC
+MOT_SPIN_MIN,0.13  # MOT_SPIN_ARM + 0.03
+MOT_THST_EXPO,0.5

@@ -1,0 +1,3 @@
+AHRS_ORIENTATION,4
+LOG_BITMASK,65535  # Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now
+LOG_DISARMED,0  # Log disarmed was only required for offline IMU temperature calibration

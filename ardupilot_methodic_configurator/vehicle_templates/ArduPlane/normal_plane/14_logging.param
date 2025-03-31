@@ -1,0 +1,4 @@
+INS_LOG_BAT_MASK,0
+INS_LOG_BAT_OPT,4  # Logs measured data both before and after the filters for Filter Review Webtool usage
+LOG_BITMASK,145118  # Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now
+LOG_FILE_DSRMROT,1  # One .bin log file per flight, not per battery/reboot
