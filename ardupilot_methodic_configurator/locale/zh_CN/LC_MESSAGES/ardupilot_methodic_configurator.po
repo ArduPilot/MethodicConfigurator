@@ -85,7 +85,7 @@ msgstr "读取参数文件时发生致命错误"
 
 #: ardupilot_methodic_configurator/__main__.py:239
 msgid "Created backup file autobackup_%02d.param"
-msgstr ""
+msgstr "已创建备份文件 autobackup_%02d.param"
 
 #: ardupilot_methodic_configurator/argparse_check_range.py:26
 msgid "either min or inf, but not both"
@@ -2023,7 +2023,7 @@ msgstr "仅用于风速估计"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:300
 msgid "Analytical PID optimization"
-msgstr ""
+msgstr "分析性PID优化"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:301
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:315
@@ -2037,11 +2037,11 @@ msgstr "安装螺旋桨并执行首次飞行"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:303
 msgid "Basic mandatory configuration"
-msgstr ""
+msgstr "基本必要配置"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:304
 msgid "Everyday use"
-msgstr ""
+msgstr "日常使用"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:305
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:318
@@ -2056,15 +2056,15 @@ msgstr "IMU 温度校准"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:307
 msgid "Improve altitude control"
-msgstr ""
+msgstr "改进高度控制"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:308
 msgid "Minimalistic mandatory tuning"
-msgstr ""
+msgstr "最小必要调参"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid "Optical flow calibration"
-msgstr ""
+msgstr "光流校准"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:310
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:323
@@ -2078,7 +2078,7 @@ msgstr "精确着陆"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:312
 msgid "Standard tuning"
-msgstr ""
+msgstr "标准调参"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:317
 msgid "Calibrate the IMU sensors for at different temperatures"
@@ -3463,7 +3463,7 @@ msgstr "跳过部分步骤吗？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:545
 msgid "Skip to {dest_file}?"
-msgstr ""
+msgstr "跳转到{dest_file}？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:555
 msgid ""
