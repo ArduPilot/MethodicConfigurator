@@ -1,0 +1,10 @@
+BATT_ARM_VOLT,23.3  # Do not allow arming below this voltage
+BATT_CAPACITY,3300  # Total battery capacity specified in the component editor
+BATT_CRT_MAH,0
+BATT_CRT_VOLT,21  # (Critical voltage + 0.0) x no. of cells
+BATT_FS_CRT_ACT,1  # Land ASAP
+BATT_FS_LOW_ACT,2  # Return and land at home or rally point
+BATT_FS_VOLTSRC,0
+BATT_LOW_MAH,0
+BATT_LOW_VOLT,22.8  # (Low voltage + 0.0) x no. of cells
+BATT_MONITOR,4  # Selected in component editor window

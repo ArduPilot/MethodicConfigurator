@@ -1,0 +1,5 @@
+ATC_ACCEL_P_MAX,48000  # adjusted manually because there were some oscillations after autotune when switching to Loiter
+ATC_ANG_PIT_P,7  # adjusted manually because there were some oscillations after autotune when switching to Loiter
+ATC_RAT_PIT_D,0.003  # adjusted manually because there were some oscillations after autotune when switching to Loiter
+ATC_RAT_PIT_I,0.115  # adjusted manually because there were some oscillations after autotune when switching to Loiter
+ATC_RAT_PIT_P,0.115  # adjusted manually because there were some oscillations after autotune when switching to Loiter

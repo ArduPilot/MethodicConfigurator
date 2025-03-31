@@ -1,0 +1,2 @@
+AUTOTUNE_AGGR,0.1  # Use smaller than default on this frame: 0.075
+AUTOTUNE_AXES,1  # Autotune roll axis

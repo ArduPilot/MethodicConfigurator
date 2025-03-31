@@ -13,7 +13,7 @@
             "auto_changed_by": "",
             "forced_parameters": {
                 "INS_TCAL1_ENABLE": { "New Value": 2, "Change Reason": "Activates the temperature calibration for IMU 1 at the next start" },
-                "LOG_BITMASK": { "New Value": 524416, "Change Reason": "Only for IMU and Raw-IMU" },
+                "LOG_BITMASK": { "New Value": 65535, "Change Reason": "Only for IMU and Raw-IMU" },
                 "LOG_DISARMED": { "New Value": 1, "Change Reason": "Gather data for the offline IMU temperature calibration while the FC is disarmed" }
             },
             "derived_parameters": {
@@ -49,7 +49,7 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "forced_parameters": {
-                "LOG_BITMASK": { "New Value": 145118, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
+                "LOG_BITMASK": { "New Value": 65535, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
                 "LOG_DISARMED": { "New Value": 0, "Change Reason": "Log disarmed was only required for offline IMU temperature calibration" }
             },
             "derived_parameters": {

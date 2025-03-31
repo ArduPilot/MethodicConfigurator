@@ -1,0 +1,7 @@
+BRD_SAFETY_DEFLT,0
+GPS_GNSS_MODE,0  # leave default
+GPS_POS1_X,0
+GPS_POS1_Y,0
+GPS_POS1_Z,0
+GPS_TYPE,1  # Defined in component editor
+SERIAL3_PROTOCOL,-1

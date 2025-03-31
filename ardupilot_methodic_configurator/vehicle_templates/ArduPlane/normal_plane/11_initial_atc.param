@@ -1,0 +1,2 @@
+INS_ACCEL_FILTER,10  # The default is 20Hz but that is too high in most situations
+INS_GYRO_FILTER,46  # Derived from vehicle component editor propeller size
