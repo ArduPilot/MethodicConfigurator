@@ -11,10 +11,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import os
 import subprocess
 import tempfile
+import time
 from datetime import datetime, timezone
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
+from logging import shutdown as logging_shutdown
 from typing import Any, Callable, Optional
 from urllib.parse import urljoin
 from webbrowser import open as webbrowser_open
@@ -148,6 +150,26 @@ def download_and_install_on_windows(
     file_name: str,
     progress_callback: Optional[Callable[[float, str], None]] = None,
 ) -> bool:
+    """
+    Download and install a new version of the application on Windows.
+
+    This function handles the complete update process:
+    1. Downloads the installer from the provided URL
+    2. Creates a batch script to run the installer after the current process exits
+    3. Exits the current application to allow the installer to run without conflicts
+       (prevents "program is already running" errors during installation)
+
+    Args:
+        download_url: The URL from which to download the installer
+        file_name: The name to save the downloaded file as
+        progress_callback: Optional callback function to report progress
+                          Takes two arguments: progress (0.0-1.0) and status message
+
+    Returns:
+        bool: True if the process started successfully (note: if successful,
+              the application will exit and never return from this function)
+
+    """
     logging_info(_("Downloading and installing new version for Windows..."))
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -160,29 +182,54 @@ def download_and_install_on_windows(
                 timeout=60,  # Increased timeout for large files
                 progress_callback=progress_callback,
             ):
+                logging_error(_("Failed to download installer from %s"), download_url)
                 return False
 
             if progress_callback:
                 progress_callback(0.0, _("Starting installation..."))
 
-            # Run installer
-            result = subprocess.run(  # noqa: S603
-                [temp_path],
-                shell=False,
-                check=True,
-                capture_output=True,
-                text=True,
-                creationflags=subprocess.CREATE_NO_WINDOW,  # type: ignore[attr-defined]
-            )
+            # Create a batch file to run the installer after this process exits
+            batch_file_path = os.path.join(temp_dir, "run_installer.bat")
+            with open(batch_file_path, "w", encoding="utf-8") as batch_file:
+                # Wait a moment for the main process to exit
+                batch_file.write("@echo off\n")
+                batch_file.write("ping 127.0.0.1 -n 2 > nul\n")  # Wait ~1 second
+                batch_file.write(f'if exist "{temp_path}" (\n')  # Check if installer still exists
+                batch_file.write(f'  start "" "{temp_path}"\n')  # Run the installer
+                batch_file.write(") else (\n")
+                batch_file.write("  echo Installer not found\n")
+                batch_file.write(")\n")
+                batch_file.write("del %0\n")  # Delete the batch file itself
 
-            return result.returncode == 0
+            # Make the batch file executable and start it
+            # Use 'with' pattern for the Popen operation to fix R1732
+            with subprocess.Popen(  # noqa: S602
+                [batch_file_path],
+                shell=True,
+                creationflags=subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS,  # type: ignore[attr-defined]
+            ) as _result:
+                pass  # We don't need to do anything with the process object
+
+            # Signal to the main application that it should exit
+            if progress_callback:
+                progress_callback(1.0, _("Installation ready. Application will restart now."))
+
+            # Ensure logs are flushed before exit
+            logging_shutdown()
+
+            # Give a moment for the callback to complete
+            time.sleep(0.5)
+
+            # Exit this process to allow the installer to run
+            # This means the function will never actually return at this point,
+            # but we need to maintain consistent return type for the function signature
+            os._exit(0)  # Force exit without cleanup
 
     except subprocess.SubprocessError as e:
         logging_error(_("Installation failed: {}").format(e))
-        return False
     except OSError as e:
         logging_error(_("File operation failed: {}").format(e))
-        return False
+    return False
 
 
 def download_and_install_pip_release(progress_callback: Optional[Callable[[float, str], None]] = None) -> int:
