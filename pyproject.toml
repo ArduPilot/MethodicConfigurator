@@ -201,7 +201,6 @@ indent-width = 4
 "ardupilot_methodic_configurator/backend_mavftp.py" = ["PGH004", "N801", "ANN001"]
 "ardupilot_methodic_configurator/backend_mavftp_example.py" = ["ANN001"]
 "ardupilot_methodic_configurator/tempcal_imu.py" = ["ANN001"]
-"ardupilot_methodic_configurator/middleware_fc_ids.py" = ["E501"]
 
 [tool.mypy]
 ignore_missing_imports = true
