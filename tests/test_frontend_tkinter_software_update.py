@@ -10,9 +10,11 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import tkinter as tk
 import unittest
 from unittest.mock import MagicMock, patch
 
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_software_update import UpdateDialog
 
 
@@ -21,20 +23,70 @@ class TestUpdateDialog(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up test fixtures."""
-        self.tk_mock = patch("tkinter.Tk").start()
-        self.ttk_mock = patch("tkinter.ttk").start()
+        # Patch PhotoImage before BaseWindow tries to use it
+        self.photo_image_patch = patch("tkinter.PhotoImage")
+        self.photo_image_mock = self.photo_image_patch.start()
+        self.photo_image_mock.return_value = MagicMock()
+
+        # Patch LocalFilesystem to avoid file system dependency
+        self.filesystem_patch = patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.LocalFilesystem")
+        self.filesystem_mock = self.filesystem_patch.start()
+        self.filesystem_mock.application_icon_filepath.return_value = "mock_icon_path"
+
+        # Create a real Tk instance but hide it
+        self.root = tk.Tk()
+        self.root.withdraw()  # Hide the window during tests
+
+        # Create mock methods for the Tk instance
+        self.root.title = MagicMock()
+        self.root.geometry = MagicMock()
+        self.root.protocol = MagicMock()
+        self.root.destroy = MagicMock()
+        self.root.update = MagicMock()
+        self.root.after = MagicMock()
+
+        # Patch BaseWindow to use our controlled root window
+        self.original_init = BaseWindow.__init__
+
+        def mock_init(instance, root_tk=None):
+            # Set instance attributes without calling the real __init__
+            instance.root = self.root
+            instance.main_frame = MagicMock()
+
+        BaseWindow.__init__ = mock_init
+
+        # Other mock setup
+        self.frame_mock = MagicMock()
+        self.ttk_patch = patch("tkinter.ttk.Frame", return_value=self.frame_mock)
+        self.ttk_mock = self.ttk_patch.start()
+
+        # Mock ScrollFrame
+        self.scroll_frame_mock = MagicMock()
+        self.scroll_frame_mock.view_port = MagicMock()
+        self.scroll_frame_patch = patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_software_update.ScrollFrame", return_value=self.scroll_frame_mock
+        )
+        self.scroll_frame_patch.start()
+
+        # Input data for tests
         self.version_info = "Test Version Info"
         self.download_callback = MagicMock(return_value=True)
 
     def tearDown(self) -> None:
         """Clean up after each test."""
+        # Restore the original __init__ method
+        BaseWindow.__init__ = self.original_init
+
+        # Close the real Tk instance
+        self.root.destroy()
+
+        # Stop all patches
         patch.stopall()
 
     def test_init(self) -> None:
         """Test dialog initialization."""
         dialog = UpdateDialog(self.version_info, self.download_callback)
 
-        self.tk_mock.assert_called_once()
         assert dialog.result is None
         assert dialog.download_callback == self.download_callback
 
@@ -53,7 +105,7 @@ class TestUpdateDialog(unittest.TestCase):
         dialog.on_no()
 
         assert not dialog.result
-        dialog.root.destroy.assert_called_once()  # pylint: disable=no-member
+        self.root.destroy.assert_called_once()
 
     def test_on_cancel(self) -> None:
         """Test cancel operation."""
@@ -61,7 +113,7 @@ class TestUpdateDialog(unittest.TestCase):
         dialog.on_cancel()
 
         assert not dialog.result
-        dialog.root.destroy.assert_called_once()  # pylint: disable=no-member
+        self.root.destroy.assert_called_once()
 
     def test_grid_management(self) -> None:
         """Test grid management during update process."""
@@ -76,7 +128,7 @@ class TestUpdateDialog(unittest.TestCase):
     def test_window_protocol(self) -> None:
         """Test window protocol configuration."""
         dialog = UpdateDialog(self.version_info)
-        dialog.root.protocol.assert_called_with("WM_DELETE_WINDOW", dialog.on_cancel)  # pylint: disable=no-member
+        self.root.protocol.assert_called_with("WM_DELETE_WINDOW", dialog.on_cancel)
 
     def test_progress_value_bounds(self) -> None:
         """Test progress bar value bounds."""
@@ -101,12 +153,14 @@ class TestUpdateDialog(unittest.TestCase):
         dialog = UpdateDialog(self.version_info)
 
         # Window configuration
-        dialog.root.title.assert_called_once()  # pylint: disable=no-member
-        dialog.root.geometry.assert_called_with("700x700")  # pylint: disable=no-member
+        self.root.title.assert_called_once()
+        self.root.geometry.assert_called_with("700x600")
 
-        # Grid configuration
-        dialog.root.grid_rowconfigure.assert_called_with(0, weight=1)  # pylint: disable=no-member
-        dialog.root.grid_columnconfigure.assert_called_with(0, weight=1)  # pylint: disable=no-member
+        dialog.frame.grid_rowconfigure.assert_called_with(0, weight=1)
+
+        # Check that grid_columnconfigure was called exactly twice with the right arguments
+        assert dialog.frame.grid_columnconfigure.call_count == 2
+        dialog.frame.grid_columnconfigure.assert_has_calls([unittest.mock.call(0, weight=1), unittest.mock.call(1, weight=1)])
 
     def test_init_scroll_frame(self) -> None:
         """Test ScrollFrame setup during initialization."""

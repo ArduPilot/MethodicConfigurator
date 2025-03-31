@@ -13,24 +13,22 @@ from tkinter import ttk
 from typing import Callable, Optional
 
 from ardupilot_methodic_configurator import _, __version__
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 
 
-class UpdateDialog:  # pylint: disable=too-many-instance-attributes
+class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """Dialog for displaying software update information and handling user interaction."""
 
     def __init__(self, version_info: str, download_callback: Optional[Callable[[], bool]] = None) -> None:
-        self.root = tk.Tk()
+        super().__init__()
         self.root.title(_("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - New version available"))
-        self.root.geometry("700x700")
+        self.root.geometry("700x600")
         self.download_callback = download_callback
         self.root.protocol("WM_DELETE_WINDOW", self.on_cancel)
 
-        self.root.grid_rowconfigure(0, weight=1)
-        self.root.grid_columnconfigure(0, weight=1)
-
-        self.frame = ttk.Frame(self.root, padding="20")
-        self.frame.grid(sticky="nsew")
+        self.frame = ttk.Frame(self.main_frame, padding="10")
+        self.frame.pack(fill=tk.BOTH, expand=True)
 
         # Configure main frame to expand
         self.frame.grid_rowconfigure(0, weight=1)
