@@ -3,4 +3,4 @@ source = ardupilot_methodic_configurator
 
 [report]
 include = ardupilot_methodic_configurator/*
-omit = ardupilot_methodic_configurator/backend_mavftp.py, ardupilot_methodic_configurator/mavftp_example.py ardupilot_methodic_configurator/configuration_steps_strings.py ardupilot_methodic_configurator/vehicle_components.py
+omit = ardupilot_methodic_configurator/backend_mavftp.py, ardupilot_methodic_configurator/mavftp_example.py, ardupilot_methodic_configurator/configuration_steps_strings.py, ardupilot_methodic_configurator/vehicle_components.py
