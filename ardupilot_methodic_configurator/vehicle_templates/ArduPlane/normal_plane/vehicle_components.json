@@ -10,7 +10,7 @@
             },
             "Firmware": {
                 "Type": "ArduPlane",
-                "Version": "4.5.7"
+                "Version": "4.5.6"
             },
             "Specifications": {
                 "MCU Series": "STM32F4xx"
