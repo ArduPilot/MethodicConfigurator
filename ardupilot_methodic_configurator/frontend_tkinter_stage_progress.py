@@ -110,7 +110,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
         progress.grid(row=0, column=0, sticky="ew", pady=2)
         self.phase_bars.append({"bar": progress, "start": limits[0], "end": limits[1]})
 
-        label_text = phase_name
+        label_text = _(phase_name) if phase_name else ""
         first_space = label_text.find(" ")
         if "\n" not in label_text:
             if 6 <= first_space < 20:

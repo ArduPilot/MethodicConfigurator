@@ -74,7 +74,10 @@ def extract_strings_from_config_steps(config_file: str) -> dict[str, set[str]]:
 
         # Process phases if present
         if "phases" in data:
-            for phase_data in data["phases"].values():
+            for phase_name, phase_data in data["phases"].items():
+                if phase_name and isinstance(phase_name, str):
+                    extracted_strings["phase_names"] = extracted_strings.get("phase_names", set())
+                    extracted_strings["phase_names"].add(phase_name)
                 if "description" in phase_data and isinstance(phase_data["description"], str):
                     extracted_strings["phase_descriptions"] = extracted_strings.get("phase_descriptions", set())
                     extracted_strings["phase_descriptions"].add(phase_data["description"])

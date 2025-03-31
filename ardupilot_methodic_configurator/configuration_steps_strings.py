@@ -296,6 +296,21 @@ Jump to '47_position_controller.param' file?""")
     _config_steps_strings = _("test the stabilization loops independent of the input shaping")
     _config_steps_strings = _("was only needed for wind speed estimation")
 
+    # phase_names
+    _config_steps_strings = _("Analytical PID optimization")
+    _config_steps_strings = _("Assemble all components except the propellers")
+    _config_steps_strings = _("Assemble the propellers and perform the first flight")
+    _config_steps_strings = _("Basic mandatory configuration")
+    _config_steps_strings = _("Everyday use")
+    _config_steps_strings = _("Guided operation")
+    _config_steps_strings = _("IMU temperature calibration")
+    _config_steps_strings = _("Improve altitude control")
+    _config_steps_strings = _("Minimalistic mandatory tuning")
+    _config_steps_strings = _("Optical flow calibration")
+    _config_steps_strings = _("Position controller tuning")
+    _config_steps_strings = _("Precision landing")
+    _config_steps_strings = _("Standard tuning")
+
     # phase_descriptions
     _config_steps_strings = _("Assemble all components except the propellers")
     _config_steps_strings = _("Assemble the propellers and perform the first flight")
