@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-03-30 20:31+0000\n"
+"POT-Creation-Date: 2025-03-31 11:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -59,6 +59,10 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:506
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:447
 msgid "Fatal error reading parameter files"
+msgstr ""
+
+#: ardupilot_methodic_configurator/__main__.py:239
+msgid "Created backup file autobackup_%02d.param"
 msgstr ""
 
 #: ardupilot_methodic_configurator/argparse_check_range.py:26
@@ -157,23 +161,23 @@ msgstr ""
 msgid "Last uploaded file is the last file in the list. Starting from there."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:772
+#: ardupilot_methodic_configurator/backend_filesystem.py:788
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:778
+#: ardupilot_methodic_configurator/backend_filesystem.py:794
 msgid "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:786
+#: ardupilot_methodic_configurator/backend_filesystem.py:802
 msgid "Start directly on the nth intermediate parameter file (skips previous files). Default is to start on the file next to the last that you wrote to the flight controller. If the file does not exist, it will start on the first file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:795
+#: ardupilot_methodic_configurator/backend_filesystem.py:811
 msgid "Allow opening and editing template files directly. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:804
+#: ardupilot_methodic_configurator/backend_filesystem.py:820
 msgid "Save the vehicle component to the system templates. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 

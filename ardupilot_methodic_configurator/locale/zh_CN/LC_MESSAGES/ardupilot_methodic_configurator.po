@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-03-30 20:31+0000\n"
+"POT-Creation-Date: 2025-03-31 11:41+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -82,6 +82,10 @@ msgstr "即将退出旧版软件。"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:447
 msgid "Fatal error reading parameter files"
 msgstr "读取参数文件时发生致命错误"
+
+#: ardupilot_methodic_configurator/__main__.py:239
+msgid "Created backup file autobackup_%02d.param"
+msgstr ""
 
 #: ardupilot_methodic_configurator/argparse_check_range.py:26
 msgid "either min or inf, but not both"
@@ -180,17 +184,17 @@ msgstr "未找到最后上传的文件。 %s。"
 msgid "Last uploaded file is the last file in the list. Starting from there."
 msgstr "最后上传的文件是列表中的最后一项。将从此继续。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:772
+#: ardupilot_methodic_configurator/backend_filesystem.py:788
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "飞行器类型。默认为ArduCopter"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:778
+#: ardupilot_methodic_configurator/backend_filesystem.py:794
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
 msgstr "包含飞行器特定中间参数文件的目录。默认为当前工作目录"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:786
+#: ardupilot_methodic_configurator/backend_filesystem.py:802
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -200,7 +204,7 @@ msgstr ""
 "直接从第n个中间参数文件开始（跳过之前的文件）。默认从上次写入飞控的文件之后开"
 "始。如果文件不存在，将从第一个文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:795
+#: ardupilot_methodic_configurator/backend_filesystem.py:811
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -208,7 +212,7 @@ msgstr ""
 "允许直接打开和编辑模板文件。仅供了解相关操作的软件开发人员使用。默认"
 "为%(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:804
+#: ardupilot_methodic_configurator/backend_filesystem.py:820
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
