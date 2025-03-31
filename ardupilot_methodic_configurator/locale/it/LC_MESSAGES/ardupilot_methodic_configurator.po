@@ -86,7 +86,7 @@ msgstr "Errore fatale nella lettura dei file dei parametri"
 
 #: ardupilot_methodic_configurator/__main__.py:239
 msgid "Created backup file autobackup_%02d.param"
-msgstr ""
+msgstr "Creato file di backup autobackup_%02d.param"
 
 #: ardupilot_methodic_configurator/argparse_check_range.py:26
 msgid "either min or inf, but not both"
@@ -2285,7 +2285,7 @@ msgstr "era necessario solo per la stima della velocità del vento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:300
 msgid "Analytical PID optimization"
-msgstr ""
+msgstr "Ottimizzazione analitica PID"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:301
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:315
@@ -2299,11 +2299,11 @@ msgstr "Assembla le eliche ed esegui il primo volo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:303
 msgid "Basic mandatory configuration"
-msgstr ""
+msgstr "Configurazione obbligatoria di base"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:304
 msgid "Everyday use"
-msgstr ""
+msgstr "Uso quotidiano"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:305
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:318
@@ -2318,15 +2318,15 @@ msgstr "Calibrazione temperatura IMU"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:307
 msgid "Improve altitude control"
-msgstr ""
+msgstr "Migliorare il controllo dell'altitudine"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:308
 msgid "Minimalistic mandatory tuning"
-msgstr ""
+msgstr "Tuning obbligatorio minimale"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid "Optical flow calibration"
-msgstr ""
+msgstr "Calibrazione del flusso ottico"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:310
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:323
@@ -2340,7 +2340,7 @@ msgstr "Atterraggio di precisione"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:312
 msgid "Standard tuning"
-msgstr ""
+msgstr "Tuning standard"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:317
 msgid "Calibrate the IMU sensors for at different temperatures"
@@ -3783,7 +3783,7 @@ msgstr "Saltare alcuni passaggi?"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:545
 msgid "Skip to {dest_file}?"
-msgstr ""
+msgstr "Passare a {dest_file}?"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:555
 msgid ""

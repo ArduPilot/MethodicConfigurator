@@ -83,7 +83,7 @@ msgstr "パラメータファイルの読み込みで致命的なエラーが発
 
 #: ardupilot_methodic_configurator/__main__.py:239
 msgid "Created backup file autobackup_%02d.param"
-msgstr ""
+msgstr "バックアップファイル autobackup_%02d.param を作成しました"
 
 #: ardupilot_methodic_configurator/argparse_check_range.py:26
 msgid "either min or inf, but not both"
@@ -2160,7 +2160,7 @@ msgstr "風速推定にのみ必要だった"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:300
 msgid "Analytical PID optimization"
-msgstr ""
+msgstr "解析的PID最適化"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:301
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:315
@@ -2174,11 +2174,11 @@ msgstr "プロペラを取り付けて初飛行を行う"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:303
 msgid "Basic mandatory configuration"
-msgstr ""
+msgstr "基本的な必須設定"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:304
 msgid "Everyday use"
-msgstr ""
+msgstr "日常的な使用"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:305
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:318
@@ -2193,15 +2193,15 @@ msgstr "IMU温度キャリブレーション"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:307
 msgid "Improve altitude control"
-msgstr ""
+msgstr "高度制御を改善"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:308
 msgid "Minimalistic mandatory tuning"
-msgstr ""
+msgstr "最小限の必須調整"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid "Optical flow calibration"
-msgstr ""
+msgstr "オプティカルフロー校正"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:310
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:323
@@ -2215,7 +2215,7 @@ msgstr "精密着陸"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:312
 msgid "Standard tuning"
-msgstr ""
+msgstr "標準調整"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:317
 msgid "Calibrate the IMU sensors for at different temperatures"
@@ -3613,7 +3613,7 @@ msgstr "一部のステップをスキップしますか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:545
 msgid "Skip to {dest_file}?"
-msgstr ""
+msgstr "{dest_file}へスキップしますか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:555
 msgid ""
