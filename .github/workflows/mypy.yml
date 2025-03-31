@@ -23,7 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install 'mypy==1.15.0' 'types-requests==2.32.0.20241016'
+          python -m pip install 'mypy==1.15.0' 'types-requests==2.32.0.20250328'
 
       - name: Lint the code with mypy
         uses: sasanquaneuf/mypy-github-action@a3f3a66f97792cac0cfd11d3e5c87088e5c8f6a9 # releases/v1.3
