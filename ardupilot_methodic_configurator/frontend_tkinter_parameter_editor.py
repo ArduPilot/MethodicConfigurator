@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import sys
+import time
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 
@@ -148,6 +149,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.param_download_progress_window: ProgressWindow
         self.tempcal_imu_progress_window: ProgressWindow
         self.file_upload_progress_window: ProgressWindow
+        self.last_time_asked_to_save: float = 0
 
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
@@ -819,7 +821,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.close_connection_and_quit()
 
     def write_changes_to_intermediate_parameter_file(self) -> None:
-        if self.parameter_editor_table.get_at_least_one_param_edited() or self.annotate_params_into_files.get():
+        elapsed_since_last_ask = time.time() - self.last_time_asked_to_save
+        # if annotate parameters into files is true, we always need to write to file, because
+        # the parameter metadata might have changed, or not be present in the file.
+        # In that situation, avoid asking multiple times to write the file, by checking the time last asked
+        # But only if self.annotate_params_into_files.get()
+        if self.parameter_editor_table.get_at_least_one_param_edited() or (
+            self.annotate_params_into_files.get() and elapsed_since_last_ask > 1.0
+        ):
             msg = _("Do you want to write the changes to the {self.current_file} file?")
             if messagebox.askyesno(_("One or more parameters have been edited"), msg.format(**locals())):
                 self.local_filesystem.export_to_param(
@@ -828,6 +837,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     annotate_doc=self.annotate_params_into_files.get(),
                 )
         self.parameter_editor_table.set_at_least_one_param_edited(False)
+        self.last_time_asked_to_save = time.time()
 
     def write_summary_files(self) -> None:  # pylint: disable=too-many-locals
         if not hasattr(self.flight_controller, "fc_parameters") or self.flight_controller.fc_parameters is None:
