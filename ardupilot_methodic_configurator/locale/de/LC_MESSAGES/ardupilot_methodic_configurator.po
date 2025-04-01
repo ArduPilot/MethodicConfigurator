@@ -760,7 +760,7 @@ msgstr "Neue Version für Windows wird heruntergeladen und installiert..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:185
 msgid "Failed to download installer from %s"
-msgstr ""
+msgstr "Fehler beim Herunterladen des Installers von %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:189
 #: ardupilot_methodic_configurator/backend_internet.py:239
@@ -769,7 +769,7 @@ msgstr "Installation wird gestartet..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:215
 msgid "Installation ready. Application will restart now."
-msgstr ""
+msgstr "Installation bereit. Die Anwendung wird jetzt neu gestartet."
 
 #: ardupilot_methodic_configurator/backend_internet.py:229
 msgid "Installation failed: {}"

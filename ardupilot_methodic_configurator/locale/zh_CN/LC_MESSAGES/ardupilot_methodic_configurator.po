@@ -727,7 +727,7 @@ msgstr "正在下载并安装Windows新版本..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:185
 msgid "Failed to download installer from %s"
-msgstr ""
+msgstr "无法从 %s 下载安装程序"
 
 #: ardupilot_methodic_configurator/backend_internet.py:189
 #: ardupilot_methodic_configurator/backend_internet.py:239
@@ -736,7 +736,7 @@ msgstr "开始安装..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:215
 msgid "Installation ready. Application will restart now."
-msgstr ""
+msgstr "安装准备就绪。应用程序将立即重启。"
 
 #: ardupilot_methodic_configurator/backend_internet.py:229
 msgid "Installation failed: {}"
