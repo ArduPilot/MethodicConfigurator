@@ -18,7 +18,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWin
 from ardupilot_methodic_configurator.frontend_tkinter_software_update import UpdateDialog
 
 
-class TestUpdateDialog(unittest.TestCase):
+class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-attributes
     """Test cases for the UpdateDialog class."""
 
     def setUp(self) -> None:
@@ -48,7 +48,7 @@ class TestUpdateDialog(unittest.TestCase):
         # Patch BaseWindow to use our controlled root window
         self.original_init = BaseWindow.__init__
 
-        def mock_init(instance, root_tk=None):
+        def mock_init(instance, root_tk=None) -> None:  # noqa: ARG001 # pylint: disable=unused-argument
             # Set instance attributes without calling the real __init__
             instance.root = self.root
             instance.main_frame = MagicMock()
@@ -90,15 +90,6 @@ class TestUpdateDialog(unittest.TestCase):
         assert dialog.result is None
         assert dialog.download_callback == self.download_callback
 
-    def test_update_progress(self) -> None:
-        """Test progress bar updates."""
-
-    def test_on_yes_successful_update(self) -> None:
-        """Test successful update process."""
-
-    def test_on_yes_failed_update(self) -> None:
-        """Test failed update process."""
-
     def test_on_no(self) -> None:
         """Test 'Not Now' button behavior."""
         dialog = UpdateDialog(self.version_info)
@@ -115,23 +106,10 @@ class TestUpdateDialog(unittest.TestCase):
         assert not dialog.result
         self.root.destroy.assert_called_once()
 
-    def test_grid_management(self) -> None:
-        """Test grid management during update process."""
-
-    @patch("tkinter.ttk.Button")
-    def test_button_states(self, mock_button) -> None:
-        """Test button state management."""
-
-    def test_status_messages(self) -> None:
-        """Test status message updates."""
-
     def test_window_protocol(self) -> None:
         """Test window protocol configuration."""
         dialog = UpdateDialog(self.version_info)
         self.root.protocol.assert_called_with("WM_DELETE_WINDOW", dialog.on_cancel)
-
-    def test_progress_value_bounds(self) -> None:
-        """Test progress bar value bounds."""
 
     def test_multiple_updates(self) -> None:
         """Test multiple update attempts."""
@@ -145,9 +123,6 @@ class TestUpdateDialog(unittest.TestCase):
         dialog.on_yes()
         assert dialog.result
 
-    def test_version_info_display(self) -> None:
-        """Test version info display in dialog."""
-
     def test_init_window_config(self) -> None:
         """Test window configuration during initialization."""
         dialog = UpdateDialog(self.version_info)
@@ -156,11 +131,11 @@ class TestUpdateDialog(unittest.TestCase):
         self.root.title.assert_called_once()
         self.root.geometry.assert_called_with("700x600")
 
-        dialog.frame.grid_rowconfigure.assert_called_with(0, weight=1)
+        dialog.frame.grid_rowconfigure.assert_called_with(0, weight=1)  # pylint: disable=no-member
 
         # Check that grid_columnconfigure was called exactly twice with the right arguments
-        assert dialog.frame.grid_columnconfigure.call_count == 2
-        dialog.frame.grid_columnconfigure.assert_has_calls([unittest.mock.call(0, weight=1), unittest.mock.call(1, weight=1)])
+        assert dialog.frame.grid_columnconfigure.call_count == 2  # pylint: disable=no-member
+        dialog.frame.grid_columnconfigure.assert_has_calls([unittest.mock.call(0, weight=1), unittest.mock.call(1, weight=1)])  # pylint: disable=no-member
 
     def test_init_scroll_frame(self) -> None:
         """Test ScrollFrame setup during initialization."""
@@ -214,3 +189,217 @@ class TestUpdateDialog(unittest.TestCase):
             # Verify configurations
             mock_yes_btn.configure.assert_called_with(text="Update Now", command=dialog.on_yes)
             mock_no_btn.configure.assert_called_with(text="Not Now", command=dialog.on_no)
+
+    def test_update_progress(self) -> None:
+        """Test progress bar updates."""
+        progress_mock = MagicMock()
+        status_label_mock = MagicMock()
+
+        dialog = UpdateDialog(self.version_info)
+        dialog.progress = progress_mock
+        dialog.status_label = status_label_mock
+
+        # Test with both value and status
+        dialog.update_progress(75, "Downloading...")
+        progress_mock.__setitem__.assert_called_with("value", 75)
+        status_label_mock.__setitem__.assert_called_with("text", "Downloading...")
+        self.root.update.assert_called_once()
+
+        # Reset mocks
+        progress_mock.reset_mock()
+        status_label_mock.reset_mock()
+        self.root.update.reset_mock()
+
+        # Test with only value (no status)
+        dialog.update_progress(50)
+        progress_mock.__setitem__.assert_called_with("value", 50)
+        status_label_mock.__setitem__.assert_not_called()
+        self.root.update.assert_called_once()
+
+    def test_on_yes_successful_update(self) -> None:
+        """Test successful update process."""
+        # Mock UI components
+        progress_mock = MagicMock()
+        status_label_mock = MagicMock()
+        yes_btn_mock = MagicMock()
+        no_btn_mock = MagicMock()
+
+        # Create callback that returns success
+        download_callback = MagicMock(return_value=True)
+
+        dialog = UpdateDialog(self.version_info, download_callback)
+        dialog.progress = progress_mock
+        dialog.status_label = status_label_mock
+        dialog.yes_btn = yes_btn_mock
+        dialog.no_btn = no_btn_mock
+
+        # Execute the method
+        dialog.on_yes()
+
+        # Verify progress bar is shown
+        progress_mock.grid.assert_called_once()
+        status_label_mock.grid.assert_called_once()
+
+        # Verify buttons are disabled
+        yes_btn_mock.config.assert_called_with(state="disabled")
+        no_btn_mock.config.assert_called_with(state="disabled")
+
+        # Verify download callback is called
+        download_callback.assert_called_once()
+
+        # Verify success message and result
+        status_label_mock.__setitem__.assert_called_with("text", "Update complete! Please restart the application.")
+        assert dialog.result is True
+
+        # Verify window is scheduled to close after 4 seconds
+        self.root.after.assert_called_with(4000, self.root.destroy)
+
+    def test_on_yes_failed_update(self) -> None:
+        """Test failed update process."""
+        # Mock UI components
+        progress_mock = MagicMock()
+        status_label_mock = MagicMock()
+        yes_btn_mock = MagicMock()
+        no_btn_mock = MagicMock()
+
+        # Create callback that returns failure
+        download_callback = MagicMock(return_value=False)
+
+        dialog = UpdateDialog(self.version_info, download_callback)
+        dialog.progress = progress_mock
+        dialog.status_label = status_label_mock
+        dialog.yes_btn = yes_btn_mock
+        dialog.no_btn = no_btn_mock
+
+        # Execute the method
+        dialog.on_yes()
+
+        # Verify progress bar is shown
+        progress_mock.grid.assert_called_once()
+        status_label_mock.grid.assert_called_once()
+
+        # Verify buttons get disabled and then re-enabled
+        yes_btn_mock.config.assert_any_call(state="disabled")
+        no_btn_mock.config.assert_any_call(state="disabled")
+
+        # Verify download callback is called
+        download_callback.assert_called_once()
+
+        # Verify error message and result
+        status_label_mock.__setitem__.assert_called_with("text", "Update failed!")
+        assert dialog.result is False
+
+        # Verify buttons are re-enabled
+        yes_btn_mock.config.assert_any_call(state="normal")
+        no_btn_mock.config.assert_any_call(state="normal")
+
+        # Verify window is scheduled to close after 4 seconds
+        self.root.after.assert_called_with(4000, self.root.destroy)
+
+    def test_on_yes_without_callback(self) -> None:
+        """Test on_yes method behavior when no callback is provided."""
+        dialog = UpdateDialog(self.version_info, None)
+        dialog.progress = MagicMock()
+        dialog.status_label = MagicMock()
+        dialog.yes_btn = MagicMock()
+        dialog.no_btn = MagicMock()
+
+        # Execute the method
+        dialog.on_yes()
+
+        # Verify progress bar is shown
+        dialog.progress.grid.assert_called_once()
+        dialog.status_label.grid.assert_called_once()
+
+        # Verify buttons are disabled
+        dialog.yes_btn.config.assert_called_with(state="disabled")
+        dialog.no_btn.config.assert_called_with(state="disabled")
+
+        # No further actions should happen without callback
+        assert dialog.result is None
+        self.root.after.assert_not_called()
+
+    def test_grid_management(self) -> None:
+        """Test grid management during update process."""
+        dialog = UpdateDialog(self.version_info)
+
+        # Mock the progress and status_label
+        progress_mock = MagicMock()
+        status_label_mock = MagicMock()
+        dialog.progress = progress_mock
+        dialog.status_label = status_label_mock
+
+        # Initially, progress should be hidden (grid_remove should have been called)
+        # We can't test this directly since it happens during initialization
+
+        # When on_yes is called, grid should be called to show the progress bar
+        dialog.on_yes()
+        progress_mock.grid.assert_called_once()
+        status_label_mock.grid.assert_called_once()
+
+    def test_status_messages(self) -> None:
+        """Test status message updates."""
+        dialog = UpdateDialog(self.version_info)
+        dialog.status_label = MagicMock()
+
+        # Test empty status
+        dialog.update_progress(50, "")
+        dialog.status_label.__setitem__.assert_not_called()  # pylint: disable=no-member
+
+        # Test with status message
+        dialog.update_progress(75, "Processing...")
+        dialog.status_label.__setitem__.assert_called_with("text", "Processing...")  # pylint: disable=no-member
+
+    def test_progress_value_bounds(self) -> None:
+        """Test progress bar value bounds."""
+        dialog = UpdateDialog(self.version_info)
+        dialog.progress = MagicMock()
+
+        # Test minimum value
+        dialog.update_progress(0)
+        dialog.progress.__setitem__.assert_called_with("value", 0)  # pylint: disable=no-member
+
+        # Test maximum value
+        dialog.update_progress(100)
+        dialog.progress.__setitem__.assert_called_with("value", 100)  # pylint: disable=no-member
+
+        # Test value between bounds
+        dialog.update_progress(50)
+        dialog.progress.__setitem__.assert_called_with("value", 50)  # pylint: disable=no-member
+
+    def test_version_info_display(self) -> None:
+        """Test version info display in dialog."""
+        version_info = "Version 2.0.0\n- New features\n- Bug fixes"
+
+        # Mock the label
+        label_mock = MagicMock()
+        with patch("tkinter.ttk.Label", return_value=label_mock) as mock_label:
+            _dialog = UpdateDialog(version_info)
+
+            # The mock should have been created with our version info text
+            mock_calls = mock_label.call_args_list
+            # Find the call that created the label with our version info
+            version_label_call_found = False
+            for call in mock_calls:
+                _args, kwargs = call
+                if "text" in kwargs and kwargs["text"] == version_info:
+                    version_label_call_found = True
+                    break
+
+            assert version_label_call_found, "Version info wasn't passed to the label"
+
+    def test_show_method(self) -> None:
+        """Test the show method returns the correct result."""
+        # Mock tk.mainloop to avoid actually starting the event loop
+        with patch("tkinter.Tk.mainloop"):
+            dialog = UpdateDialog(self.version_info)
+
+            # Set result and test return value
+            dialog.result = True
+            assert dialog.show() is True
+
+            dialog.result = False
+            assert dialog.show() is False
+
+            dialog.result = None
+            assert dialog.show() is False  # None should convert to False
