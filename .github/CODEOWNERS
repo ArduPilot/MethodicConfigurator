@@ -1,0 +1,10 @@
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+# @username will be requested for review when someone opens a pull request.
+* @amilcarlucas
+
+# You can also specify multiple owners
+# *.js @username1 @username2
+
+# And you can specify owners for specific directories
+# /docs/ @username
