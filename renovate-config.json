@@ -13,7 +13,7 @@
   ],
   "pin": {"enabled": true},
   "platform": "github",
-  "dependencyDashboard": true,
+  "dependencyDashboard": false,
   "customManagers": [
     {
       "customType": "regex",
