@@ -22,6 +22,7 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={commonpf}\{#MyAppName}
+; DefaultDirName={code:GetDefaultDirName}
 DefaultGroupName={#MyAppName}
 LicenseFile=..\LICENSE.md
 OutputBaseFilename=ardupilot_methodic_configurator_setup_{#MyAppVersion}
@@ -76,7 +77,8 @@ Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
-Name: "modifypath"; Description: "&Add application directory to your system path"; Flags: unchecked
+Name: "modifypath"; Description: "&Add application directory to environmental path for current user. For command line use"; Flags: unchecked checkablealone
+Name: "modifypath\system"; Description: Add application directory to environmental path for all users. For command line use; Flags: unchecked
 
 [Files]
 Source: "..\ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator\ardupilot_methodic_configurator.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -109,8 +111,33 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 
 [Code]
 const
-  ModPathName = 'modifypath';
-  ModPathType = 'system';
-  ModPathPath = '{app}';
+	ModPathName = 'modifypath';
+	ModPathPath = '{app}';
+
+var
+	ModPathType: String;
+
+function GetDefaultDirName(Dummy: string): string;
+begin
+	if IsAdminLoggedOn then begin
+		Result := ExpandConstant('{pf}\{#MyAppName}');
+	end else begin
+		Result := ExpandConstant('{userpf}\{#MyAppName}');
+	end;
+end;
 
 #include "modpath.iss"
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+	if CurStep = ssPostInstall then begin
+		if IsTaskSelected(ModPathName + '\system') then begin
+			ModPathType := 'system';
+		end else begin
+			ModPathType := 'user';
+		end;
+
+		if IsTaskSelected(ModPathName) then
+			ModPath();
+	end;
+end;
