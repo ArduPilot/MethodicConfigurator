@@ -236,6 +236,9 @@ warn_unused_configs = true
 files = ["ardupilot_methodic_configurator/*.py"]
 exclude = ["tests"]
 
+# created with "stubgen -p argcomplete"
+mypy_path = "out/argcomplete"
+
 [tool.pyright]
 exclude = [".venv"]
 pythonVersion = "3.9"
