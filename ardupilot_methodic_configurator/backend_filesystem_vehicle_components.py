@@ -455,15 +455,16 @@ class VehicleComponents:
             elif isinstance(value, list):
                 # If it's a list, preserve it but empty it
                 data[key] = []
-            elif isinstance(value, (int, float)):
-                # For numerical values, set to 0
-                data[key] = 0 if isinstance(value, int) else 0.0
             elif isinstance(value, bool):
-                # For boolean values, set to False
                 data[key] = False
+            elif isinstance(value, int):
+                data[key] = 0
+            elif isinstance(value, float):
+                data[key] = 0.0
+            elif isinstance(value, str):
+                data[key] = ""
             else:
-                # For strings and other types, set to empty string or None
-                data[key] = "" if isinstance(value, str) else None
+                data[key] = None
 
     def get_component_property_description(self, path: tuple[str, ...]) -> tuple[str, bool]:
         """
