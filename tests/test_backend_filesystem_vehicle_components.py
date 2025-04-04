@@ -12,10 +12,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import os.path
 import unittest
+from json.decoder import JSONDecodeError as RealJSONDecodeError
 from unittest.mock import mock_open, patch
 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.middleware_template_overview import TemplateOverview
+
+# pylint: disable=protected-access, too-many-lines
 
 
 class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -776,6 +779,353 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
         assert len(saved_templates["NewComponent"]) == 1
         assert saved_templates["NewComponent"][0]["name"] == "New Template"
         assert saved_templates["NewComponent"][0]["data"]["param"] == "new_value"
+
+    def test_component_property_description(self) -> None:
+        """Test getting component property descriptions from schema."""
+        # Set up a test schema for description lookup
+        self.vehicle_components.schema = {
+            "properties": {
+                "Components": {
+                    "properties": {
+                        "Flight Controller": {
+                            "description": "Flight controller component",
+                            "properties": {
+                                "Firmware": {
+                                    "description": "Firmware information",
+                                    "x-is-optional": True,
+                                    "properties": {"Type": {"description": "Firmware type"}},
+                                },
+                                "Product": {"description": "Product information"},
+                            },
+                        }
+                    }
+                }
+            },
+            "definitions": {
+                "product": {
+                    "properties": {
+                        "Manufacturer": {"description": "Manufacturer name", "x-is-optional": False},
+                        "Model": {"description": "Model identifier", "x-is-optional": True},
+                    }
+                }
+            },
+        }
+
+        # Test top-level component description
+        desc, is_optional = self.vehicle_components.get_component_property_description(("Flight Controller",))
+        assert desc == "Flight controller component"
+        assert not is_optional
+
+        # Test section description
+        desc, is_optional = self.vehicle_components.get_component_property_description(("Flight Controller", "Firmware"))
+        assert desc == "Firmware information"
+        assert is_optional
+
+        # Test product field description
+        desc, is_optional = self.vehicle_components.get_component_property_description(
+            ("Flight Controller", "Product", "Manufacturer")
+        )
+        assert desc == "Manufacturer name"
+        assert not is_optional
+
+        # Test product field with optional flag
+        desc, is_optional = self.vehicle_components.get_component_property_description(
+            ("Flight Controller", "Product", "Model")
+        )
+        assert desc == "Model identifier"
+        assert is_optional
+
+        # Test non-existent path
+        desc, is_optional = self.vehicle_components.get_component_property_description(("NonExistentComponent",))
+        assert desc == ""
+        assert not is_optional
+
+    @patch.object(VehicleComponents, "_resolve_schema_reference")
+    def test_resolve_schema_reference(self, mock_resolve) -> None:
+        """Test resolving schema references."""
+        # Setup
+        test_schema = {"type": "object", "properties": {"test": True}}
+        mock_resolve.return_value = test_schema
+
+        # Call the method with a reference object
+        ref_object = {"$ref": "#/definitions/test"}
+        result = self.vehicle_components._resolve_schema_reference(ref_object)
+
+        # Verify the reference was resolved
+        assert result == test_schema
+        mock_resolve.assert_called_once_with(ref_object)
+
+        # Test direct return of non-reference object
+        non_ref_object = {"type": "string"}
+        mock_resolve.reset_mock()
+        mock_resolve.return_value = non_ref_object
+
+        result = self.vehicle_components._resolve_schema_reference(non_ref_object)
+        assert result == non_ref_object
+        mock_resolve.assert_called_once_with(non_ref_object)
+
+    def test_recursively_clear_dict_edge_cases(self) -> None:
+        """Test edge cases for the recursive dictionary clearing method."""
+        # Test with empty dictionary
+        empty_dict = {}
+        self.vehicle_components._recursively_clear_dict(empty_dict)
+        assert not empty_dict
+
+        # Test with nested empty dictionaries
+        nested_empty = {"level1": {"level2": {}}}
+        self.vehicle_components._recursively_clear_dict(nested_empty)
+        assert nested_empty == {"level1": {"level2": {}}}
+
+        # Test with None values
+        none_dict = {"key1": None, "key2": {"nested": None}}
+        self.vehicle_components._recursively_clear_dict(none_dict)
+        assert none_dict == {"key1": None, "key2": {"nested": None}}
+
+        # Test with mixed types including complex ones
+        complex_dict = {
+            "string": "value",
+            "int": 42,
+            "float": 3.14,
+            "bool": True,
+            "list": ["a", "b", "c"],
+            "dict": {"nested": "value"},
+            "none": None,
+            "complex_nested": {
+                "strings": ["a", "b"],
+                "numbers": [1, 2, 3],
+                "mixed": [1, "a", True],
+                "deep": {"deeper": {"deepest": "value"}},
+            },
+        }
+
+        self.vehicle_components._recursively_clear_dict(complex_dict)
+
+        # Verify all values are cleared properly
+        assert complex_dict["string"] == ""
+        assert complex_dict["int"] == 0
+        assert complex_dict["float"] == 0.0
+        assert complex_dict["bool"] is False
+        assert not complex_dict["list"]
+        assert complex_dict["dict"] == {"nested": ""}
+        assert complex_dict["none"] is None
+        assert not complex_dict["complex_nested"]["strings"]
+        assert not complex_dict["complex_nested"]["numbers"]
+        assert not complex_dict["complex_nested"]["mixed"]
+        assert complex_dict["complex_nested"]["deep"]["deeper"]["deepest"] == ""
+
+    @patch("builtins.open", new_callable=mock_open, read_data='{"invalid": "json"')
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.logging_error")
+    def test_load_schema_invalid_json(self, mock_logging_error, mock_file) -> None:  # pylint: disable=unused-argument
+        """Test handling of invalid JSON in schema file."""
+        # Setup the mock to raise JSONDecodeError
+
+        # Create a real JSONDecodeError instance
+        error = RealJSONDecodeError("Expecting ',' delimiter", '{"invalid": "json"', 15)
+
+        with patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load", side_effect=error):
+            # Call the method - this should handle the exception internally
+            result = self.vehicle_components.load_schema()
+
+            # Verify an empty dict is returned
+            assert result == {}
+
+            # Verify the error was logged
+            mock_logging_error.assert_called_once()
+            assert "Error decoding JSON schema" in str(mock_logging_error.call_args)
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_path.relpath")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_walk")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    def test_get_vehicle_components_overviews_empty(self, mock_get_base_dir, mock_walk, mock_relpath) -> None:
+        """Test getting vehicle component overviews when no templates exist."""
+        # Setup
+        mock_get_base_dir.return_value = "/templates"
+        mock_walk.return_value = []  # No directories found
+
+        # Call the method
+        result = VehicleComponents.get_vehicle_components_overviews()
+
+        # Verify an empty dict is returned
+        assert not result
+        mock_walk.assert_called_once_with("/templates")
+        mock_relpath.assert_not_called()
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_walk")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    def test_get_vehicle_components_overviews_no_components_files(self, mock_get_base_dir, mock_walk) -> None:
+        """Test getting vehicle component overviews when directories exist but no component files."""
+        # Setup
+        mock_get_base_dir.return_value = "/templates"
+        mock_walk.return_value = [("/templates/dir1", [], ["other_file.txt"]), ("/templates/dir2", [], ["another_file.json"])]
+
+        # Call the method
+        result = VehicleComponents.get_vehicle_components_overviews()
+
+        # Verify an empty dict is returned since no vehicle_components.json files were found
+        assert not result
+
+    def test_recursively_clear_dict_non_dict_input(self) -> None:
+        """Test handling of non-dictionary inputs to _recursively_clear_dict."""
+        # Test with various non-dictionary inputs
+        list_input = [1, 2, 3]
+        self.vehicle_components._recursively_clear_dict(list_input)
+        assert list_input == [1, 2, 3]  # Should remain unchanged
+
+        string_input = "test"
+        self.vehicle_components._recursively_clear_dict(string_input)
+        assert string_input == "test"  # Should remain unchanged
+
+        int_input = 42
+        self.vehicle_components._recursively_clear_dict(int_input)
+        assert int_input == 42  # Should remain unchanged
+
+        none_input = None
+        self.vehicle_components._recursively_clear_dict(none_input)
+        assert none_input is None  # Should remain unchanged
+
+    @patch.object(VehicleComponents, "_check_direct_properties")
+    @patch.object(VehicleComponents, "_check_allof_constructs")
+    @patch.object(VehicleComponents, "_check_references")
+    def test_traverse_nested_path(self, mock_check_references, mock_check_allof, mock_check_direct) -> None:
+        """Test traversing nested paths in schema with different search strategies."""
+        # Setup initial schema
+        current_schema = {"properties": {"test": {"description": "Test property"}}}
+
+        # Case 1: Property found directly
+        mock_check_direct.return_value = (True, {"description": "Found in direct properties", "x-is-optional": True})
+        mock_check_allof.return_value = (False, {})
+        mock_check_references.return_value = (False, {})
+
+        result = self.vehicle_components._traverse_nested_path(current_schema, ("test",))
+        assert result == ("Found in direct properties", True)
+        mock_check_direct.assert_called_once()
+
+        # Case 2: Property found in allOf
+        mock_check_direct.reset_mock()
+        mock_check_allof.reset_mock()
+        mock_check_references.reset_mock()
+
+        mock_check_direct.return_value = (False, current_schema)
+        mock_check_allof.return_value = (True, {"description": "Found in allOf", "x-is-optional": False})
+        mock_check_references.return_value = (False, {})
+
+        result = self.vehicle_components._traverse_nested_path(current_schema, ("test",))
+        assert result == ("Found in allOf", False)
+        mock_check_direct.assert_called_once()
+        mock_check_allof.assert_called_once()
+
+        # Case 3: Property found in references
+        mock_check_direct.reset_mock()
+        mock_check_allof.reset_mock()
+        mock_check_references.reset_mock()
+
+        mock_check_direct.return_value = (False, current_schema)
+        mock_check_allof.return_value = (False, current_schema)
+        mock_check_references.return_value = (True, {"description": "Found in references"})
+
+        result = self.vehicle_components._traverse_nested_path(current_schema, ("test",))
+        assert result == ("Found in references", False)
+
+        # Case 4: Property not found
+        mock_check_direct.reset_mock()
+        mock_check_allof.reset_mock()
+        mock_check_references.reset_mock()
+
+        mock_check_direct.return_value = (False, current_schema)
+        mock_check_allof.return_value = (False, current_schema)
+        mock_check_references.return_value = (False, current_schema)
+
+        result = self.vehicle_components._traverse_nested_path(current_schema, ("test",))
+        assert result == ("", False)
+
+    @patch.object(VehicleComponents, "_resolve_schema_reference")
+    def test_check_direct_properties(self, mock_resolve) -> None:  # pylint: disable=unused-argument
+        """Test finding properties directly in schema properties."""
+        # Property exists
+        schema = {"properties": {"test_prop": {"description": "Test property"}}}
+        found, result = self.vehicle_components._check_direct_properties(schema, "test_prop")
+        assert found is True
+        assert result == {"description": "Test property"}
+
+        # Property doesn't exist
+        found, result = self.vehicle_components._check_direct_properties(schema, "non_existent")
+        assert found is False
+        assert result == schema
+
+        # No properties key
+        schema_no_props = {"type": "object"}
+        found, result = self.vehicle_components._check_direct_properties(schema_no_props, "test_prop")
+        assert found is False
+        assert result == schema_no_props
+
+    @patch.object(VehicleComponents, "_resolve_schema_reference")
+    def test_check_allof_constructs(self, mock_resolve) -> None:
+        """Test finding properties in allOf constructs."""
+        # Setup
+        mock_resolve.return_value = {"properties": {"ref_prop": {"description": "In reference"}}}
+
+        # Property in direct allOf
+        schema = {
+            "allOf": [{"properties": {"direct_prop": {"description": "In direct allOf"}}}, {"$ref": "#/definitions/test"}]
+        }
+
+        # Find direct property
+        found, result = self.vehicle_components._check_allof_constructs(schema, "direct_prop")
+        assert found is True
+        assert result == {"description": "In direct allOf"}
+
+        # Find referenced property
+        found, result = self.vehicle_components._check_allof_constructs(schema, "ref_prop")
+        assert found is True
+        assert result == {"description": "In reference"}
+        mock_resolve.assert_called_once()
+
+        # Property not found
+        found, result = self.vehicle_components._check_allof_constructs(schema, "non_existent")
+        assert found is False
+        assert result == schema
+
+    def test_json_load_error_handling(self) -> None:
+        """Test handling of various errors in JSON loading."""
+        # Test with broken JSON that generates a JSONDecodeError
+        broken_json = '{"broken": "json",}'
+
+        with (
+            patch("builtins.open", mock_open(read_data=broken_json)),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load",
+                side_effect=RealJSONDecodeError("Expecting ',' delimiter", broken_json, 15),
+            ),
+        ):
+            result = self.vehicle_components.load_vehicle_components_json_data("/test/dir")
+            assert result == {}  # Should return empty dict on error
+
+        # Test with valid JSON but invalid schema
+        with (
+            patch("builtins.open", mock_open(read_data='{"valid": "json"}')),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load",
+                return_value={"valid": "json"},
+            ),
+            patch.object(VehicleComponents, "validate_vehicle_components", return_value=(False, "Schema validation error")),
+        ):
+            # Should still return the data even if validation fails
+            result = self.vehicle_components.load_vehicle_components_json_data("/test/dir")
+            assert result == {"valid": "json"}
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.logging_error")
+    def test_get_component_property_description_exception_handling(self, mock_log_error) -> None:
+        """Test exception handling in get_component_property_description."""
+        # Setup a schema that will cause an exception
+        self.vehicle_components.schema = {"properties": {"Components": None}}
+
+        # Call the method with a path that will cause an exception
+        result = self.vehicle_components.get_component_property_description(("Flight Controller",))
+
+        # Verify we get a default result and log the error
+        assert result == ("", False)
+        mock_log_error.assert_called_once()
+        assert "Exception occurred in get_component_property_description" in str(mock_log_error.call_args)
 
 
 if __name__ == "__main__":
