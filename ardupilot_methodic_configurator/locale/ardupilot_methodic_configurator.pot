@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-04-01 22:15+0000\n"
+"POT-Creation-Date: 2025-04-05 11:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -420,7 +420,7 @@ msgid "FW version string {version_str} on {self.vehicle_components_json_filename
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:494
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:495
 msgid "Exception occurred in get_component_property_description: {}"
 msgstr ""
 
