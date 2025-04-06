@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 
 # from logging import debug as logging_debug
+from logging import error as logging_error
 from logging import info as logging_info
 from tkinter import ttk
 
@@ -71,12 +72,21 @@ class FlightControllerInfoWindow(BaseWindow):
         self.root.mainloop()
 
     def download_flight_controller_parameters(self) -> None:
+        """Download parameters from the flight controller with progress tracking and error handling."""
         param_download_progress_window = ProgressWindow(
             self.root, _("Downloading FC parameters"), _("Downloaded {} of {} parameters")
         )
-        self.flight_controller.fc_parameters, self.param_default_values = self.flight_controller.download_params(
-            param_download_progress_window.update_progress_bar
-        )
+        try:
+            self.flight_controller.fc_parameters, self.param_default_values = self.flight_controller.download_params(
+                param_download_progress_window.update_progress_bar
+            )
+        except Exception as e:
+            logging_error(_("Error downloading flight controller parameters: %s"), str(e))
+            # Make sure to destroy the progress window even on error
+            param_download_progress_window.destroy()
+            # Re-raise the exception after cleanup
+            raise
+        # Normal cleanup path when no exceptions occur
         param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
         self.root.destroy()
 
