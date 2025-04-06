@@ -64,7 +64,19 @@ class UpdateManager:
     def _perform_download(self, latest_release: dict[str, Any]) -> bool:
         if platform.system() == "Windows":
             try:
-                asset = latest_release["assets"][0]
+                # Look for .exe files first
+                exe_assets = [
+                    asset for asset in latest_release.get("assets", []) if asset.get("name", "").lower().endswith(".exe")
+                ]
+
+                if exe_assets:
+                    asset = exe_assets[0]  # Use the first .exe file
+                elif latest_release.get("assets"):
+                    asset = latest_release["assets"][0]  # Fallback to first asset
+                else:
+                    logging_error(_("No suitable assets found for Windows installation"))
+                    return False
+
                 return download_and_install_on_windows(
                     download_url=asset["browser_download_url"],
                     file_name=asset["name"],
@@ -73,7 +85,17 @@ class UpdateManager:
             except (KeyError, IndexError) as e:
                 logging_error(_("Error accessing release assets: %s"), e)
                 return False
-        return download_and_install_pip_release(progress_callback=self.dialog.update_progress if self.dialog else None) == 0
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logging_error(_("Error during Windows download: %s"), e)
+                return False
+
+        try:
+            return (
+                download_and_install_pip_release(progress_callback=self.dialog.update_progress if self.dialog else None) == 0
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logging_error(_("Error during pip installation: %s"), e)
+            return False
 
     def check_and_update(self, latest_release: dict[str, Any], current_version_str: str) -> bool:
         try:
