@@ -57,5 +57,7 @@
       },
       "editor.defaultFormatter": "charliermarsh.ruff"
     },
-    "files.eol": "\n"
+    "files.eol": "\n",
+    "github.copilot.chat.agent.thinkingTool": true,
+    "chat.agent.enabled": true
 }
