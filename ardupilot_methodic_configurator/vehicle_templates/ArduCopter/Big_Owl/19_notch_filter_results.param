@@ -1,0 +1,6 @@
+INS_HNTCH_ATT,21  # just enough to filter the noise created by the motors/propellers
+INS_HNTCH_BW,16  # just enough to filter the noise created by the motors/propellers
+INS_HNTCH_FM_RAT,0.85  # Allowed undercutting of the base frequency of the first notch filter
+INS_HNTCH_FREQ,43  # the minimum frequency that the motors are expected to operate at hover
+INS_HNTCH_HMNCS,37  # the motors produce secondary harmonics on this vehicle
+INS_HNTCH_OPTS,1  # Double Notch

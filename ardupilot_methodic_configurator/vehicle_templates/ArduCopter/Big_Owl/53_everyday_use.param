@@ -1,0 +1,6 @@
+ATC_THR_MIX_MAX,0.5  # use default
+BATT_FS_LOW_ACT,2  # outdoors we want the drone to come back
+BATT2_FS_LOW_ACT,2  # outdoors we want the drone to come back
+LOG_BITMASK,176126  # 2:GPS,3:System Performance,4:Control Tuning,6:RC input,7:IMU,8:Mission Commands,9:Battery Monitor,12:PID,13:Compass,17:Motors
+RTL_ALT,10000  # For going above trees, you should set at least 35 m (3500 cm)
+RTL_CLIMB_MIN,0  # rising at least 1 meter could be a good visual indicator

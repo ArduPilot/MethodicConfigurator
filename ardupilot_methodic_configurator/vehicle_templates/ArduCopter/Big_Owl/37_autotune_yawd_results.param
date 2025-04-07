@@ -1,0 +1,5 @@
+ATC_ACCEL_Y_MAX,9000  # adjusted manually because there were some oscillations after autotune when switching to Loiter
+ATC_ANG_YAW_P,4.5  # adjusted manually because there were some oscillations after autotune when switching to Loiter
+ATC_RAT_YAW_D,0  # if == to AUTOTUNE_MIN_D, autotune failed
+ATC_RAT_YAW_I,0.018  # adjusted manually because there were some oscillations after autotune when switching to Loiter
+ATC_RAT_YAW_P,0.18  # adjusted manually because there were some oscillations after autotune when switching to Loiter
