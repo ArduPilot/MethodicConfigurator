@@ -67,7 +67,7 @@ dev = [
     "pylint==3.3.6",
     "pyright==1.1.396",
     "pytest==8.3.5",
-    "pytest-cov==6.0.0",
+    "pytest-cov==6.1.1",
     "pytest-md==0.2.0",
     "pytest-mock==3.14.0",
     "python-gettext==5.0",
