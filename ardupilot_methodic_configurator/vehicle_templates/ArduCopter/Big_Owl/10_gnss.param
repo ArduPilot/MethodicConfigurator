@@ -1,0 +1,8 @@
+BRD_SAFETY_DEFLT,0  # Safety switch gets disabled.
+GPS_GNSS_MODE,7  # GPS and galileo
+GPS_POS1_X,0
+GPS_POS1_Y,0
+GPS_POS1_Z,0
+GPS_TYPE,2  # Defined in component editor
+SERIAL3_PROTOCOL,5  # GNSS receiver is connected to serial3
+WPNAV_RADIUS,200

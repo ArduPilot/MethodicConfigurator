@@ -1,0 +1,188 @@
+{
+    "Format version": 1,
+    "Components": {
+        "Flight Controller": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "Pixhawk6C",
+                "URL": "https://holybro.com/products/pixhawk-6c?srsltid=AfmBOoqx6fEclM8l4wICaZcGtR5ecABosliproB7TozPMEdYY7SG0A_t",
+                "Version": "1.0"
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.5.7 official"
+            },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
+            "Notes": "This is a custom build with a Holybro 6C mini flight controller with standard carrier board."
+        },
+        "Frame": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "Owls",
+                "URL": "",
+                "Version": "Custom"
+            },
+            "Specifications": {
+                "TOW min Kg": 7.0,
+                "TOW max Kg": 12.0
+            },
+            "Notes": ""
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "Sony",
+                "Model": "Dualsense wireless controller",
+                "URL": "https://www.playstation.com/de-de/accessories/dualsense-wireless-controller/",
+                "Version": "Playstation 5"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "MP",
+                "Model": "Joystick support",
+                "URL": "https://ardupilot.org/copter/docs/common-joystick.html",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "CUAV",
+                "Model": "LTE-Link SE",
+                "URL": "https://doc.cuav.net/link/lte-link/en/lte-link-se.html",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "All"
+            },
+            "Notes": "This receiver is on the vehicle and is connected to the flight controller"
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "CUAV",
+                "Model": "LTE-Link SE",
+                "URL": "https://doc.cuav.net/link/lte-link/en/lte-link-se.html",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": ""
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "PM02 V3 Power Module (12S)",
+                "URL": "https://holybro.com/products/pm02-v3-12s-power-module?srsltid=AfmBOoruyyy13wBspPFngCWD-IdOxUHiH3nfgUpN79MuVgugcMqUUxGK",
+                "Version": "V3"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "Analog",
+                "Protocol": "Analog Voltage Only"
+            },
+            "Notes": "Supplies 5.2V to FC, providing current consumption and battery voltage measurements"
+        },
+        "Battery": {
+            "Product": {
+                "Manufacturer": "Gens ace",
+                "Model": "Tattu 17000mAh 22.8V 15C 6S1P HV",
+                "URL": "https://gensace.de/products/tattu-17000mah-22-8v-15c-6s1p-hv-high-voltage-lipo-battery-with-as150-xt150-plug",
+                "Version": ""
+            },
+            "Specifications": {
+                "Chemistry": "LipoHV",
+                "Volt per cell max": 4.35,
+                "Volt per cell low": 3.9,
+                "Volt per cell crit": 3.8,
+                "Number of cells": 12,
+                "Capacity mAh": 17000
+            },
+            "Notes": "uses 2 batteries in series hence the 12s"
+        },
+        "ESC": {
+            "Product": {
+                "Manufacturer": "hobbywing",
+                "Model": "X6 Plus",
+                "URL": "",
+                "Version": ""
+            },
+            "Firmware": {
+                "Type": "hobbywing",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "Main Out",
+                "Protocol": "Normal"
+            },
+            "Notes": "ESCs are integrated in the motor arm sets"
+        },
+        "Motors": {
+            "Product": {
+                "Manufacturer": "hobbywing",
+                "Model": "x6 plus",
+                "URL": "",
+                "Version": ""
+            },
+            "Specifications": {
+                "Poles": 14
+            },
+            "Notes": ""
+        },
+        "Propellers": {
+            "Product": {
+                "Manufacturer": "hobbywing",
+                "Model": "Paddle 2388",
+                "URL": "",
+                "Version": "2"
+            },
+            "Specifications": {
+                "Diameter_inches": 23
+            },
+            "Notes": ""
+        },
+        "GNSS Receiver": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "M10",
+                "URL": "https://holybro.com/products/m10-gps?srsltid=AfmBOootSZi5Pc_2XhliqsKy-u3_8l8SKZ8tzd5wDuPMENtL-ZeLngUL",
+                "Version": "1"
+            },
+            "Firmware": {
+                "Type": "Ublox",
+                "Version": "M10"
+            },
+            "FC Connection": {
+                "Type": "SERIAL3",
+                "Protocol": "uBlox"
+            },
+            "Notes": "uBlox M10 GNSS"
+        }
+    },
+    "Program version": "1.4.2",
+    "Configuration template": "Tarot_X4"
+}

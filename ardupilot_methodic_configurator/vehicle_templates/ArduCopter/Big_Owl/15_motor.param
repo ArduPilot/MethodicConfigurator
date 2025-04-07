@@ -1,0 +1,4 @@
+MOT_SPIN_ARM,0.13
+MOT_SPIN_MAX,0.95  # Upper dead zone of the ESC
+MOT_SPIN_MIN,0.16  # MOT_SPIN_ARM + 0.03
+MOT_THST_EXPO,0.73  # similiar to other Hobbywing X6 systems
