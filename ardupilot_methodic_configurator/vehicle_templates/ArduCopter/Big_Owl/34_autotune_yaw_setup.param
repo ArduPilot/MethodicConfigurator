@@ -1,0 +1,3 @@
+ATC_RAT_YAW_FLTD,5  # Use INS_GYRO_FILTER / 4 as a first guess
+AUTOTUNE_AGGR,0.1  # Use smaller than default value on this frame: 0.075
+AUTOTUNE_AXES,4  # Autotune yaw axis

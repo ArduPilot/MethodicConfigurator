@@ -1,0 +1,13 @@
+BATT_ARM_VOLT,50.3  # Do not allow arming below this voltage
+BATT_CAPACITY,17000  # Total battery capacity specified in the component editor
+BATT_CRT_MAH,0  # Energy consumption not measured
+BATT_CRT_VOLT,45.6  # (Critical voltage + 0.0) x no. of cells
+BATT_FS_CRT_ACT,1  # Land ASAP
+BATT_FS_LOW_ACT,2  # Return and land at home or rally point
+BATT_FS_VOLTSRC,0  # Using only RAW voltage
+BATT_LOW_MAH,0  # Energy consumption not measured
+BATT_LOW_VOLT,46.8  # (Low voltage + 0.0) x no. of cells
+BATT_MONITOR,3  # Selected in component editor window
+BATT_VOLT_MULT,18.55167  # calibrated using a battery tester device
+MOT_BAT_VOLT_MAX,52.2  # (Max voltage + 0.0) x no. of cells
+MOT_BAT_VOLT_MIN,45.6  # (Critical voltage + 0.0) x no. of cells

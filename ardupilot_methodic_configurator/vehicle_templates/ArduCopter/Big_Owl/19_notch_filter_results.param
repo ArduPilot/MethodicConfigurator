@@ -1,0 +1,17 @@
+INS_HNTC2_ATT,15
+INS_HNTC2_BW,28
+INS_HNTC2_ENABLE,1
+INS_HNTC2_FM_RAT,0.78
+INS_HNTC2_FREQ,58  # Use the second filter for the landing legs
+INS_HNTC2_HMNCS,3
+INS_HNTC2_MODE,1
+INS_HNTC2_OPTS,0
+INS_HNTC2_REF,0.263
+INS_HNTCH_ATT,21  # just enough to filter the noise created by the motors/propellers
+INS_HNTCH_BW,23  # just enough to filter the noise created by the motors/propellers
+INS_HNTCH_FM_RAT,0.78  # Allowed undercutting of the base frequency of the first notch filter
+INS_HNTCH_FREQ,47  # the minimum frequency that the motors are expected to operate at hover
+INS_HNTCH_HMNCS,3  # the motors produce secondary harmonics on this vehicle
+INS_HNTCH_MODE,1
+INS_HNTCH_OPTS,1  # Double Notch
+INS_HNTCH_REF,0.263  # dynamically track noise created by the motors/propellers

@@ -1,0 +1,3 @@
+BRD_SER1_RTSCTS,2  # Auto detect (currently RTS/CTS are not connected)
+SERIAL1_BAUD,57  # The MAVLink over CUAV telemetry
+SERIAL1_PROTOCOL,2  # Use MAVLink 2 for telemetry

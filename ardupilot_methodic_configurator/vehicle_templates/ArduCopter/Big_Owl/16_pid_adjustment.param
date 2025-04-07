@@ -1,0 +1,10 @@
+ATC_INPUT_TC,0.3  # Slow it down a bit because it is a big vehicle
+ATC_RAT_PIT_D,0.00288  # (0.0036 default)
+ATC_RAT_PIT_I,0.108  # 0.115 recommended for that drone (0.135 default)
+ATC_RAT_PIT_P,0.108  # 0.115 recommended for that drone (0.135 default)
+ATC_RAT_RLL_D,0.00288  # (0.0036 default)
+ATC_RAT_RLL_I,0.108  # 0.115 recommended for that drone (0.135 default)
+ATC_RAT_RLL_P,0.108  # 0.115 recommended for that drone (0.135 default)
+ATC_RAT_YAW_D,0.01  # = 1 * (0 default)
+ATC_RAT_YAW_I,0.05  # 0.05 for that drone (0.018 default)
+ATC_RAT_YAW_P,0.5  # 0.5 for that drone (0.18 default)
