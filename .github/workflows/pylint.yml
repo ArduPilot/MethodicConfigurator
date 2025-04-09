@@ -40,7 +40,7 @@ jobs:
     - name: Install dependencies
       # these extra packages are required by pylint to validate the python imports
       run: |
-        uv pip install .[dev]
+        uv pip install .[dev,scripts]
 
     - name: Analyzing the code with pylint
       run: |
