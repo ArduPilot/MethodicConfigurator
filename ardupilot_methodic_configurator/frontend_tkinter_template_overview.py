@@ -11,10 +11,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import argparse
+import contextlib
 import tkinter as tk
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import getLevelName as logging_getLevelName
+from tkinter import font as tkfont
 from tkinter import ttk
 from typing import Optional
 
@@ -39,14 +41,20 @@ class TemplateOverviewWindow(BaseWindow):
 
     Attributes:
         window (tk.Tk|None): The root Tkinter window object for the GUI.
-
-    Methods:
-        on_row_double_click(event): Handles the event triggered when a row in the Treeview is double-clicked, allowing the user
-                                     to store the corresponding template directory.
+        sort_column (str): The column currently being used for sorting
+        tree (ttk.Treeview): The treeview widget displaying templates
+        image_label (ttk.Label): Label for displaying vehicle images
 
     """
 
     def __init__(self, parent: Optional[tk.Tk] = None) -> None:
+        """
+        Initialize the TemplateOverviewWindow.
+
+        Args:
+            parent: Optional parent Tk window
+
+        """
         super().__init__(parent)
         title = _("Amilcar Lucas's - ArduPilot methodic configurator {} - Template Overview and selection")
         self.root.title(title.format(__version__))
@@ -63,8 +71,12 @@ class TemplateOverviewWindow(BaseWindow):
         self.image_label = ttk.Label(self.top_frame)
         self.image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(20, 20), pady=IMAGE_HEIGHT_PX / 2)
 
-        self.sort_column: str
+        self.sort_column = ""
+        self.setup_treeview()
+        self.bind_events()
 
+    def setup_treeview(self) -> None:
+        """Set up the treeview with columns and styling."""
         style = ttk.Style(self.root)
         # Add padding to Treeview heading style
         style.layout(
@@ -99,19 +111,23 @@ class TemplateOverviewWindow(BaseWindow):
         for col in columns:
             self.tree.heading(col, text=col)
 
-        # Populate the Treeview with data from the template overview
+        self.populate_treeview()
+        self._adjust_treeview_column_widths()
+        self.tree.pack(fill=tk.BOTH, expand=True)
+
+    def populate_treeview(self) -> None:
+        """Populate the treeview with data from vehicle components."""
         for key, template_overview in VehicleComponents.get_vehicle_components_overviews().items():
             attribute_names = template_overview.attributes()
             values = (key, *(getattr(template_overview, attr, "") for attr in attribute_names))
             self.tree.insert("", "end", text=key, values=values)
 
-        self._adjust_treeview_column_widths()
-
+    def bind_events(self) -> None:
+        """Bind events to the treeview."""
         self.tree.bind("<ButtonRelease-1>", self.__on_row_selection_change)
         self.tree.bind("<Up>", self.__on_row_selection_change)
         self.tree.bind("<Down>", self.__on_row_selection_change)
         self.tree.bind("<Double-1>", self.__on_row_double_click)
-        self.tree.pack(fill=tk.BOTH, expand=True)
 
         for col in self.tree["columns"]:
             col_str = str(col)
@@ -121,27 +137,17 @@ class TemplateOverviewWindow(BaseWindow):
                 command=lambda col2=col_str: self.__sort_by_column(col2, reverse=False),  # type: ignore[misc]
             )
 
-        if isinstance(self.root, tk.Toplevel):
-            try:
-                while self.root.children:
-                    self.root.update_idletasks()
-                    self.root.update()
-            except tk.TclError as _exp:
-                pass
-        else:
-            self.root.mainloop()
-
     def _adjust_treeview_column_widths(self) -> None:
         """Adjusts the column widths of the Treeview to fit the contents of each column."""
         for col in self.tree["columns"]:
             max_width = 0
             for subtitle in col.title().split("\n"):
-                max_width = max(max_width, tk.font.Font().measure(subtitle))  # pyright: ignore[reportAttributeAccessIssue]
+                max_width = max(max_width, tkfont.Font().measure(subtitle))  # pyright: ignore[reportAttributeAccessIssue]
 
             # Iterate over all rows and update the max_width if a wider entry is found
             for item in self.tree.get_children():
                 item_text = self.tree.item(item, "values")[self.tree["columns"].index(col)]
-                text_width = tk.font.Font().measure(item_text)  # pyright: ignore[reportAttributeAccessIssue]
+                text_width = tkfont.Font().measure(item_text)  # pyright: ignore[reportAttributeAccessIssue]
                 max_width = max(max_width, text_width)
 
             # Update the column's width property to accommodate the largest text width
@@ -157,16 +163,32 @@ class TemplateOverviewWindow(BaseWindow):
         if selected_item:
             item_id = selected_item[0]
             selected_template_relative_path = self.tree.item(item_id)["text"]
-            ProgramSettings.store_template_dir(selected_template_relative_path)
+            self.store_template_dir(selected_template_relative_path)
             self._display_vehicle_image(selected_template_relative_path)
+
+    def store_template_dir(self, template_path: str) -> None:
+        """
+        Store the selected template directory.
+
+        This method is separated from the UI event handler to improve testability.
+
+        Args:
+            template_path: The path to store
+
+        """
+        ProgramSettings.store_template_dir(template_path)
 
     def __on_row_double_click(self, event: tk.Event) -> None:
         """Handle row double-click event."""
         item_id = self.tree.identify_row(event.y)
         if item_id:
             selected_template_relative_path = self.tree.item(item_id)["text"]
-            ProgramSettings.store_template_dir(selected_template_relative_path)
-            self.root.destroy()
+            self.store_template_dir(selected_template_relative_path)
+            self.close_window()
+
+    def close_window(self) -> None:
+        """Close the window - separated for testability."""
+        self.root.destroy()
 
     def __sort_by_column(self, col: str, reverse: bool) -> None:
         if hasattr(self, "sort_column") and self.sort_column and self.sort_column != col:
@@ -194,7 +216,7 @@ class TemplateOverviewWindow(BaseWindow):
             if isinstance(widget, ttk.Label) and widget == self.image_label:
                 widget.destroy()
         try:
-            vehicle_image_filepath = VehicleComponents.get_vehicle_image_filepath(template_path)
+            vehicle_image_filepath = self.get_vehicle_image_filepath(template_path)
             self.image_label = self.put_image_in_label(self.top_frame, vehicle_image_filepath, IMAGE_HEIGHT_PX)
         except FileNotFoundError:
             self.image_label = ttk.Label(
@@ -203,6 +225,24 @@ class TemplateOverviewWindow(BaseWindow):
                 padding=IMAGE_HEIGHT_PX / 2 - 8,
             )
         self.image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 0), pady=(0, 0))
+
+    def get_vehicle_image_filepath(self, template_path: str) -> str:
+        """
+        Get the filepath for a vehicle image.
+
+        Separated from display method for testability.
+
+        Args:
+            template_path: Path to the template
+
+        Returns:
+            Path to the vehicle image
+
+        Raises:
+            FileNotFoundError: If the image file doesn't exist
+
+        """
+        return VehicleComponents.get_vehicle_image_filepath(template_path)
 
 
 def argument_parser() -> argparse.Namespace:
@@ -228,14 +268,47 @@ def argument_parser() -> argparse.Namespace:
     return add_common_arguments(parser).parse_args()
 
 
+def setup_logging(loglevel: str) -> None:
+    """
+    Set up logging with the specified log level.
+
+    Args:
+        loglevel: The log level as a string (e.g. 'DEBUG', 'INFO')
+
+    """
+    logging_basicConfig(level=logging_getLevelName(loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+
+
+def run_app(parent: Optional[tk.Tk] = None, run_mainloop: bool = True) -> Optional[TemplateOverviewWindow]:
+    """
+    Create and run the TemplateOverviewWindow application.
+
+    Args:
+        parent: Optional parent Tk window
+        run_mainloop: Whether to run the Tk mainloop
+
+    Returns:
+        The TemplateOverviewWindow instance if created, otherwise None
+
+    """
+    window = TemplateOverviewWindow(parent)
+
+    if run_mainloop and parent is None:
+        with contextlib.suppress(tk.TclError):
+            window.root.mainloop()
+
+    return window
+
+
 def main() -> None:
+    """Main entry point for the application."""
     args = argument_parser()
+    setup_logging(args.loglevel)
 
-    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+    window = run_app()
 
-    TemplateOverviewWindow(None)
-
-    logging_debug(ProgramSettings.get_recently_used_dirs()[0])
+    if window and ProgramSettings.get_recently_used_dirs():
+        logging_debug(ProgramSettings.get_recently_used_dirs()[0])
 
 
 if __name__ == "__main__":
