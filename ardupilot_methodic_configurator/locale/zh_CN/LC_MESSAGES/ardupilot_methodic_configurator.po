@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-04-01 22:15+0000\n"
+"POT-Creation-Date: 2025-04-10 07:15+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -460,7 +460,7 @@ msgstr ""
 "在 '{self.vehicle_components_json_filename}' 中的固件版本字符串 "
 "{version_str} 无效。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:494
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:495
 msgid "Exception occurred in get_component_property_description: {}"
 msgstr "在 get_component_property_description 中发生异常：{}"
 
@@ -4209,20 +4209,20 @@ msgid "Dismiss"
 msgstr "关闭"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:50
-#: tests/test_middleware_software_updates.py:117
-#: tests/test_middleware_software_updates.py:131
+#: tests/test_middleware_software_updates.py:125
+#: tests/test_middleware_software_updates.py:139
 msgid "Current version: {_current_version}"
 msgstr "当前版本：{_current_version}"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:52
-#: tests/test_middleware_software_updates.py:119
-#: tests/test_middleware_software_updates.py:133
+#: tests/test_middleware_software_updates.py:127
+#: tests/test_middleware_software_updates.py:141
 msgid "Latest version: {_latest_release}"
 msgstr "最新版本：{_latest_release}"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:54
-#: tests/test_middleware_software_updates.py:121
-#: tests/test_middleware_software_updates.py:135
+#: tests/test_middleware_software_updates.py:129
+#: tests/test_middleware_software_updates.py:143
 msgid ""
 "Changes:\n"
 "{changes}"
@@ -4230,45 +4230,57 @@ msgstr ""
 "更改：\n"
 "{changes}"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:74
+#: ardupilot_methodic_configurator/middleware_software_updates.py:77
+msgid "No suitable assets found for Windows installation"
+msgstr ""
+
+#: ardupilot_methodic_configurator/middleware_software_updates.py:86
 msgid "Error accessing release assets: %s"
 msgstr "访问发布资源时出错：%s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:85
+#: ardupilot_methodic_configurator/middleware_software_updates.py:89
+msgid "Error during Windows download: %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/middleware_software_updates.py:97
+msgid "Error during pip installation: %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/middleware_software_updates.py:107
 msgid "Already running latest version."
 msgstr "已是最新版本。"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:89
+#: ardupilot_methodic_configurator/middleware_software_updates.py:111
 msgid "No changes listed"
 msgstr "未列出更改"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:98
+#: ardupilot_methodic_configurator/middleware_software_updates.py:120
 msgid "Key error during update process: %s"
 msgstr "更新过程中出现键值错误：%s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:101
+#: ardupilot_methodic_configurator/middleware_software_updates.py:123
 msgid "Network error during update process: %s"
 msgstr "更新过程中出现网络错误：%s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:104
+#: ardupilot_methodic_configurator/middleware_software_updates.py:126
 msgid "Value error during update process: %s"
 msgstr "更新过程中出现数值错误：%s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:112
+#: ardupilot_methodic_configurator/middleware_software_updates.py:134
 msgid ""
 "Skip check for software updates before staring the software. Default is "
 "%(default)s."
 msgstr "启动软件前跳过软件更新检查。默认为%(default)s。"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:121
+#: ardupilot_methodic_configurator/middleware_software_updates.py:143
 msgid "Running version: {} (git hash: {})"
 msgstr "运行版本：{}（git哈希：{}）"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:129
+#: ardupilot_methodic_configurator/middleware_software_updates.py:151
 msgid "Update check failed: {}"
 msgstr "更新检查失败：{}"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:137
+#: ardupilot_methodic_configurator/middleware_software_updates.py:159
 msgid ""
 "This main is for testing and development only, usually the "
 "check_for_software_updates is called from another script"
