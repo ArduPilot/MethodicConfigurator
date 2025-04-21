@@ -35,7 +35,7 @@ jobs:
       - name: Install apt packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y gettext
+          sudo apt-get install -y gettext=0.21-14ubuntu2
 
       - name: Compile translation .mo files from the .po files
         run: python create_mo_files.py

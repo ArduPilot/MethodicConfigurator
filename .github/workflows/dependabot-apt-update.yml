@@ -1,0 +1,82 @@
+name: Check apt dependencies for updates
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  check-apt-updates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      
+      - name: Check for apt package updates
+        run: |
+          # Create a list of all pinned apt packages from github workflow files
+          grep -r "apt-get install" .github/workflows/ | grep -o "[a-zA-Z0-9\-\._+~:]*=[a-zA-Z0-9\.\-+~:]*" > pinned_apt_packages.txt
+          
+          # Create report file header
+          echo "# Apt Package Update Report" > apt_update_report.md
+          echo "Generated on $(date)" >> apt_update_report.md
+          echo "" >> apt_update_report.md
+          
+          if [ -s pinned_apt_packages.txt ]; then
+            echo "Checking these pinned apt packages for updates:"
+            cat pinned_apt_packages.txt
+            
+            echo "## Pinned Packages" >> apt_update_report.md
+            echo "" >> apt_update_report.md
+            echo "| Package | Current Version | Latest Version | Update Available |" >> apt_update_report.md
+            echo "|---------|----------------|---------------|-----------------|" >> apt_update_report.md
+            
+            # Update apt database
+            sudo apt-get update
+            
+            updates_available=false
+            
+            # Check each package for available updates
+            while read package; do
+              pkg_name=${package%=*}
+              current_version=${package#*=}
+              available_version=$(apt-cache policy $pkg_name | grep Candidate | awk '{print $2}')
+              
+              echo "Package: $pkg_name"
+              echo "  Current pinned version: $current_version"
+              echo "  Latest available version: $available_version"
+              echo ""
+              
+              if [ "$current_version" != "$available_version" ]; then
+                update_status="Yes"
+                updates_available=true
+              else
+                update_status="No"
+              fi
+              
+              echo "| $pkg_name | $current_version | $available_version | $update_status |" >> apt_update_report.md
+            done < pinned_apt_packages.txt
+            
+            echo "" >> apt_update_report.md
+            if [ "$updates_available" = true ]; then
+              echo "## Action Required" >> apt_update_report.md
+              echo "Please update the pinned versions in the workflow files to the latest available versions." >> apt_update_report.md
+            else
+              echo "## No Action Required" >> apt_update_report.md
+              echo "All pinned packages are up to date." >> apt_update_report.md
+            fi
+            
+            echo "Check complete. Manual update required for any outdated packages."
+          else
+            echo "No pinned apt packages found in workflow files." 
+            echo "## No Pinned Packages Found" >> apt_update_report.md
+            echo "No pinned apt packages were found in the workflow files." >> apt_update_report.md
+          fi
+      
+      - name: Create issue for outdated packages
+        if: ${{ success() }}
+        uses: peter-evans/create-issue-from-file@v5.0.1 # v5.0.1
+        with:
+          title: Outdated apt packages in workflows
+          content-filepath: ./apt_update_report.md
+          labels: dependencies, apt
