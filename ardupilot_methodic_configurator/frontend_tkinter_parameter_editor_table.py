@@ -182,12 +182,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         try:
             for i, (param_name, param) in enumerate(params.items(), 1):
                 current_param_name = param_name
-                param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
+                param_metadata = self.local_filesystem.doc_dict.get(param_name, {})
                 param_default = self.local_filesystem.param_default_dict.get(param_name, None)
-                doc_tooltip = (
-                    param_metadata.get("doc_tooltip")
-                    if param_metadata
-                    else _("No documentation available in apm.pdef.xml for this parameter")
+                doc_tooltip = param_metadata.get(
+                    "doc_tooltip", _("No documentation available in apm.pdef.xml for this parameter")
                 )
 
                 column: list[tk.Widget] = []
@@ -240,8 +238,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         return delete_button
 
     def __create_parameter_name(self, param_name: str, param_metadata: dict[str, Any], doc_tooltip: str) -> ttk.Label:
-        is_calibration = param_metadata.get("Calibration", False) if param_metadata else False
-        is_readonly = param_metadata.get("ReadOnly", False) if param_metadata else False
+        is_calibration = param_metadata.get("Calibration", False)
+        is_readonly = param_metadata.get("ReadOnly", False)
         parameter_label = ttk.Label(
             self.view_port,
             text=param_name + (" " * (16 - len(param_name))),
@@ -472,11 +470,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         window.wait_window()  # Wait for the window to be closed
 
     def __create_unit_label(self, param_metadata: dict[str, Union[float, str]]) -> ttk.Label:
-        unit_label = ttk.Label(self.view_port, text=param_metadata.get("unit", "") if param_metadata else "")
+        unit_label = ttk.Label(self.view_port, text=param_metadata.get("unit", ""))
         unit_tooltip = str(
-            param_metadata.get("unit_tooltip")
-            if param_metadata
-            else _("No documentation available in apm.pdef.xml for this parameter")
+            param_metadata.get("unit_tooltip", _("No documentation available in apm.pdef.xml for this parameter"))
         )
         if unit_tooltip:
             show_tooltip(unit_label, unit_tooltip)
