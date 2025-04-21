@@ -4592,7 +4592,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:77
 msgid "No suitable assets found for Windows installation"
-msgstr ""
+msgstr "Keine geeigneten Assets für die Windows-Installation gefunden"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:86
 msgid "Error accessing release assets: %s"
@@ -4600,11 +4600,11 @@ msgstr "Fehler beim Zugriff auf Release-Assets: %s"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:89
 msgid "Error during Windows download: %s"
-msgstr ""
+msgstr "Fehler beim Windows-Download: %s"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:97
 msgid "Error during pip installation: %s"
-msgstr ""
+msgstr "Fehler bei der pip-Installation: %s"
 
 #: ardupilot_methodic_configurator/middleware_software_updates.py:107
 msgid "Already running latest version."
