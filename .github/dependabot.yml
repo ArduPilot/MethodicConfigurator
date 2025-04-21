@@ -20,14 +20,6 @@ updates:
       - dependency-type: "all"
 
   - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-
-  - package-ecosystem: "github-actions"
     directory: "/.github/workflows"
     schedule:
       interval: "monthly"
