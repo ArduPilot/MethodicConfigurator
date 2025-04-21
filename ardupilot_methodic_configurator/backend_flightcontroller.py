@@ -288,7 +288,36 @@ class FlightController:
             if log_errors:
                 logging_warning(_("Connection failed: %s"), e)
                 logging_error(_("Failed to connect after %d attempts."), retries)
-            return str(e)
+            error_message = str(e)
+            guidance = self.__get_connection_error_guidance(e, self.comport.device if self.comport else "")
+            if guidance:
+                error_message = f"{error_message}\n\n{guidance}"
+            return error_message
+
+    def __get_connection_error_guidance(self, error: Exception, device: str) -> str:
+        """
+        Provides guidance based on the type of connection error.
+
+        Args:
+            error (Exception): The exception that occurred during connection.
+            device (str): The device path or connection string.
+
+        Returns:
+            str: Guidance message specific to the error type, or empty string if no specific guidance.
+
+        """
+        # Check for permission denied errors on Linux
+        if isinstance(error, PermissionError) and os_name == "posix" and "/dev/" in device:
+            return _(
+                "Permission denied accessing the serial port. This is common on Linux systems.\n"
+                "To fix this issue, add your user to the 'dialout' group with the following command:\n"
+                "    sudo adduser $USER dialout\n"
+                "Then log out and log back in for the changes to take effect."
+            )
+
+        # Add more specific guidance for other error types as needed
+
+        return ""
 
     def __process_autopilot_version(self, m: MAVLink_autopilot_version_message, banner_msgs: list[str]) -> str:
         if m is None:
