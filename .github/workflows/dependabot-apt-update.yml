@@ -5,9 +5,14 @@ on:
     - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight
   workflow_dispatch:  # Allow manual triggering
 
+permissions:
+  contents: read
+
 jobs:
   check-apt-updates:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
