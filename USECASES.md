@@ -18,6 +18,16 @@ But there are other use cases as well:
 
 ## Use the *ArduPilot Methodic Configurator* software for the first time
 
+It is recommended to start with default parameter values on your flight controller as it guarantees that all parameters have sane values and
+provides a clean baseline for the configuration process.
+This is especially important for new vehicles or when you've made significant changes to your setup.
+
+If your vehicle is already operating correctly and you're just making minor adjustments, you do not need to reset the parameters to their default values
+as this would require reconfiguring everything from scratch.
+
+The ArduPilot documentation explains [how to reset all parameters to their default value](https://ardupilot.org/copter/docs/common-parameter-reset.html)
+if you decide this is the best approach for your situation.
+
 1. Close all other GCS software (MissionPlanner, QGroundControl, MAVProxy, DroneKit-Python, APM Planner 2.0, UgCS, LOGOS, Tower, AndroPilot, etc)
 the *ArduPilot Methodic Configurator* needs connection exclusivity.
 1. Connect the flight controller to the computer using a USB cable.
