@@ -409,8 +409,6 @@ If it doesn't, go back and perform the missing calibration(s).
 
 ## 6.12 Configure Logging
 
-![MP LOG_BITMASK parameter](images/blog/mp_logging_bitmask.png)
-
 Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `14_Logging.param` file
 
 For vehicles with weak F4 processors, small propellers, low-speed microSDcards, **or** simply not capable of gyro raw logging,
