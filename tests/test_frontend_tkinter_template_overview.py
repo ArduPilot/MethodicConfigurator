@@ -22,7 +22,9 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.frontend_tkinter_template_overview import TemplateOverviewWindow, argument_parser, main
 
-# pylint: disable=unused-argument,protected-access
+# pylint: disable=useless-suppression
+# pylint: disable=unused-argument,protected-access,invalid-name
+# pylint: enable=useless-suppression
 # ruff: noqa: ARG001
 
 
@@ -401,8 +403,8 @@ class TestTemplateOverviewWindow(unittest.TestCase):
             window.tree = MagicMock()
 
             # Create mocks for the private methods using the correct name mangling format
-            window._TemplateOverviewWindow__on_row_selection_change = MagicMock()  # pylint: disable=invalid-name
-            window._TemplateOverviewWindow__on_row_double_click = MagicMock()  # pylint: disable=invalid-name
+            window._TemplateOverviewWindow__on_row_selection_change = MagicMock()
+            window._TemplateOverviewWindow__on_row_double_click = MagicMock()
 
             # Manually call the binding code
             window.tree.bind("<ButtonRelease-1>", window._TemplateOverviewWindow__on_row_selection_change)
@@ -434,7 +436,7 @@ def test_column_heading_command(mock_vehicle_components, mock_toplevel) -> None:
         window.tree["columns"] = ["col1", "col2"]
 
         # Create a mock for __sort_by_column that we can track
-        window._TemplateOverviewWindow__sort_by_column = MagicMock()  # pylint: disable=invalid-name
+        window._TemplateOverviewWindow__sort_by_column = MagicMock()
 
         # Directly call heading for each column instead of using a loop
         window.tree.heading(
@@ -797,7 +799,7 @@ def test_on_row_selection_change_with_logging(
         window.root.after.side_effect = safe_after
 
         # Create a mock update_selection that raises an exception
-        window._TemplateOverviewWindow__update_selection = MagicMock(side_effect=Exception("Test exception"))  # pylint: disable=invalid-name
+        window._TemplateOverviewWindow__update_selection = MagicMock(side_effect=Exception("Test exception"))
 
         # Call the method
         window._TemplateOverviewWindow__on_row_selection_change(mock_event)
