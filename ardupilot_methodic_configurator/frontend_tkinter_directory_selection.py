@@ -89,7 +89,8 @@ class DirectorySelectionWidgets:
     def on_select_directory(self) -> bool:
         if self.is_template_selection:
             if isinstance(self.parent.root, tk.Tk):  # this keeps mypy and pyright happy
-                TemplateOverviewWindow(self.parent.root)
+                to = TemplateOverviewWindow(self.parent.root)
+                to.run_app()
             selected_directory = ProgramSettings.get_recently_used_dirs()[0]
             logging_info(_("Selected template directory: %s"), selected_directory)
         else:
