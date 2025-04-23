@@ -1,9 +1,4 @@
 # How to methodically tune any ArduPlane
-<!--
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
-
-SPDX-License-Identifier: GPL-3.0-or-later
--->
 
 <!-- markdownlint-disable MD013 MD025 MD034 -->
 
@@ -56,7 +51,7 @@ Use tools like [ecalc for multirotor](https://www.ecalc.ch/index.htm) to find a 
    1. **GNSS systems are likely to be affected by USB3 devices.** Keep possible negative influences in mind while using USB3 components.
 5. **Proper cable management:** Cables and wires must be organized sensibly to prevent entanglement or damage during flight. It must be ensured that no cables hinder movable parts such as propellers or gimbal mechanisms, or are damaged by them. Flexible, silicone-coated cables for data transfer save weight and reduce vibration transmission. Weak connectors are prone to loosening under the influence of vibration.
 6. **Weight distribution:** An even weight distribution of the drone with the FC at the center of gravity improves stability and flight control. Components such as batteries, sensors, cameras, and other payloads must be positioned evenly to achieve uniform weight distribution and maximum fit between the geometric and physical center of gravity.
-7. **Battery placement:** The battery is often located in the center of the frame to ensure stability during flight. It must be ensured that the battery is rigidly mounted and secured to prevent slipping or unintentional disconnection during operation. Additionally, when properly attached, the battery acts as an inertial mass and helps damp vibrations. Beware of landing directly on the battery since most of the batteries do have a resistant shell.
+7. **Battery placement:** The battery is often located in the center of the frame to ensure stability during flight. It must be ensured that the battery is rigidly mounted and secured to prevent slipping or unintentional disconnection during operation. Additionally, when properly attached, the battery acts as an inertial mass and helps damp vibrations. Beware of landing directly on the battery since most of the batteries do not have a resistant shell.
 8. **Voltage monitoring:** to [dynamically scale the PIDs and maintain stable flight in low battery conditions](https://ardupilot.org/copter/docs/current-limiting-and-voltage-scaling.html#voltage-scaling).
 9. **Current monitoring:** to compensate for the dynamic magnetic field caused by the high motor currents.
 10. **FC Power supply:** Must provide enough current for the flight controller, [GNSS](https://en.wikipedia.org/wiki/Satellite_navigation) receivers and other payloads operating on 5V.
@@ -186,7 +181,7 @@ After the calibration, temperature changes will cause no significant acceleromet
 
 # 5. Assemble all components except the propellers
 
-Now that the optional IMU temperature calibration is done we must assemble and connect all components except the propellers.
+Now that the optional IMU temperature calibration is done we must [assemble and connect all components](https://ardupilot.org/plane/docs/autopilot-assembly-instructions.html) except the propellers.
 
 Read the [Multicopter hardware best-practices](#11-multicopter-hardware-best-practices) section again before assembling the vehicle.
 
@@ -269,7 +264,7 @@ So we use BLHeliSuite32 Version 32.9.0.6 to configure the ESCs.
 Flash the Firmware version described in the table above.
 Configure the parameters to match the figures below.
 
-https://youtu.be/7WeHTb7aBrE?si=gW9YbcQkZYK3DoNE
+[![Tuning your BLHeli_32 to stop desyncs and improve motor performance in your FPV quadcopter](https://img.youtube.com/vi/7WeHTb7aBrE/0.jpg)](https://www.youtube.com/watch?v=7WeHTb7aBrE)
 
 ![ESC Setup](images/blog/BLHeli32_Konfig.PNG)
 
@@ -306,9 +301,13 @@ When asked *Should the FC values now be copied to the 12_mp_setup_mandatory_hard
 
 Open Mission Planner, connect to the flight controller and select `SETUP >> Mandatory Hardware` and work yourself through all the submenus as described below. **DO NOT SKIP ANY STEP**.
 
-### [Frame Type](https://ardupilot.org/copter/docs/frame-type-configuration.html)
+### Frame Type
 
 This relates to the `FRAME_CLASS` and `FRAME_TYPE` parameters.
+To do [frame type configuration](https://ardupilot.org/plane/docs/quadplane-frame-setup.html)
+you should read [how to connect ESCs and Motors](https://ardupilot.org/plane/docs/quadplane-esc-calibration.html)
+
+**WARNING:** If misconfigured, your vehicle will flip and crash on every attempt to takeoff.
 
 ### [Initial Tune Parameters](https://ardupilot.org/copter/docs/setting-up-for-tuning.html)
 
@@ -409,8 +408,6 @@ If it doesn't, go back and perform the missing calibration(s).
 ![Hardware-Report after IMU temperature compensation](images/blog/hardware_report_tempcal.png)
 
 ## 6.12 Configure Logging
-
-![MP LOG_BITMASK parameter](images/blog/mp_logging_bitmask.png)
 
 Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `14_Logging.param` file
 
@@ -615,7 +612,8 @@ Test the initial setup on the ground in [stabilize flight mode](https://ardupilo
 At this sweet spot, inspect all axes (roll, pitch and yaw) by providing small RC transmitter stick inputs.
 If the multicopter behaves correspondingly, the setup is good to go.
 
-After some careful test maneuvers switch to `ALTHOLD` and hover for 30 to 40 seconds one to two meters above the ground. Land and disarm.
+After some careful test maneuvers switch to `ALTHOLD` and hover for 30 to 40 seconds one to two meters above the ground.
+Land and disarm.
 
 Immediately check for hot motors.
 If the motors are too hot, check the `.bin` dataflash log, high or oscillating `RATE.*out` values indicate which PID gain you should reduce to remove the output oscillations causing the motors to heat up.
@@ -1091,12 +1089,12 @@ Now do the flight to collect the data and analyze the logs to see if the baromet
 
 # 11. System identification for analytical PID optimization (optional)
 
-## 11.1 [System Identification Flights](https://ardupilot.org/copter/docs/systemid-mode-operation.html)
+This uses [Ardupilot's system identification flight mode](https://ardupilot.org/copter/docs/systemid-mode-operation.html) to collect data to [build a mathematical model of the vehicle](https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter) that can later be used to further [optimize the control loops of the vehicle according to a set of constraints (requirements)](https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759).
 
-These steps are optional.
-Their goal is to build a mathematical model of the vehicle that can later be used to further [optimize the control loops of the vehicle according to a set of constraints (requirements)](https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759).
+## 11.1 System Identification Flights
 
-Documentation is available on [Fabian Bredemeier's Identification of a multicopter section at ArduCopter's_wiki](https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter).
+These flights need to be performed in the total absence of wind.
+The vehicle PIDs need to be a bit detuned in order to not fully cancel out the injected chirp signals.
 
 ### 11.1.1 Roll rate mathematical model
 
@@ -1122,9 +1120,9 @@ Use *ArduPilot Methodic Configurator* to edit and upload the `45_system_id_thrus
 
 Now do the flight to collect the data for the thrust system identification.
 
-### [Analytical Multicopter Flight Controller PID Optimization](https://discuss.ardupilot.org/t/analytical-multicopter-flight-controller-pid-optimization/109759)
+## 11.2 Analytical Multicopter Flight Controller PID Optimization
 
-This describes how to use IAV's multi-objective optimization to achieve even better (according to a predefined set of constraints) PID tuning.
+This describes how to use [IAV's multi-objective optimization](https://discuss.ardupilot.org/t/analytical-multicopter-flight-controller-pid-optimization/109759) to achieve even better (according to a predefined set of constraints) PID tuning.
 
 One other approach is described by Bill Geyer in his Blog post: [Predicting Closed Loop Response For Faster Autotune](https://discuss.ardupilot.org/t/predicting-closed-loop-response-for-faster-autotune/75096).
 
@@ -1189,3 +1187,12 @@ Enjoy,
 Jan Ole Noack
 
 Amilcar do Carmo Lucas
+
+<!-- Gurubase Widget -->
+<script async src="https://widget.gurubase.io/widget.latest.min.js"
+    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
+    data-text="Ask AI"
+    data-margins='{"bottom": "1rem", "right": "1rem"}'
+    data-light-mode="true"
+    id="guru-widget-id">
+</script>

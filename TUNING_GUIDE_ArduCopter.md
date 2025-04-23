@@ -307,7 +307,7 @@ This relates to the `FRAME_CLASS` and `FRAME_TYPE` parameters.
 To do [frame type configuration](https://ardupilot.org/copter/docs/frame-type-configuration.html)
 you should read [how to connect ESCs and Motors](https://ardupilot.org/copter/docs/connect-escs-and-motors.html)
 
-**WARNING:** If you do an error here your vehicle will flip and crash on every attempt to takeoff.
+**WARNING:** If misconfigured, your vehicle will flip and crash on every attempt to takeoff.
 
 ### [Initial Tune Parameters](https://ardupilot.org/copter/docs/setting-up-for-tuning.html)
 
@@ -1189,7 +1189,7 @@ This uses [Ardupilot's system identification flight mode](https://ardupilot.org/
 
 ## 11.1 System Identification Flights
 
-These flights need to be performormed in the total absense of wind.
+These flights need to be performed in the total absence of wind.
 The vehicle PIDs need to be a bit detuned in order to not fully cancel out the injected chirp signals.
 
 ### 11.1.1 Roll rate mathematical model
