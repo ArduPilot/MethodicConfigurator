@@ -1,9 +1,4 @@
 # How to methodically tune any ArduRover
-<!--
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
-
-SPDX-License-Identifier: GPL-3.0-or-later
--->
 
 <!-- markdownlint-disable MD013 MD025 MD034 -->
 
@@ -23,7 +18,7 @@ You will be able to tune multiple vehicles (think production line) using this me
 2. [Install required Software](#2-install-required-software)
 3. [Input vehicle components and component connections into ArduPilot Methodic Configurator](#3-input-vehicle-components-and-component-connections-into-ardupilot-methodic-configurator)
 4. [Perform IMU temperature calibration before assembling the autopilot into the vehicle](#4-perform-imu-temperature-calibration-before-assembling-the-autopilot-into-the-vehicle-optional) (optional)
-5. [Assemble all components except the propellers](#5-assemble-all-components-except-the-propellers)
+5. [Assemble all components except the wheels](#5-assemble-all-components-except-the-wheels)
 6. [Basic mandatory configuration](#6-basic-mandatory-configuration)
 7. [Assemble propellers and perform the first flight](#7-assemble-propellers-and-perform-the-first-flight)
 8. [Minimalistic mandatory tuning](#8-minimalistic-mandatory-tuning)
@@ -56,7 +51,7 @@ Use tools like [ecalc for multirotor](https://www.ecalc.ch/index.htm) to find a 
    1. **GNSS systems are likely to be affected by USB3 devices.** Keep possible negative influences in mind while using USB3 components.
 5. **Proper cable management:** Cables and wires must be organized sensibly to prevent entanglement or damage during flight. It must be ensured that no cables hinder movable parts such as propellers or gimbal mechanisms, or are damaged by them. Flexible, silicone-coated cables for data transfer save weight and reduce vibration transmission. Weak connectors are prone to loosening under the influence of vibration.
 6. **Weight distribution:** An even weight distribution of the drone with the FC at the center of gravity improves stability and flight control. Components such as batteries, sensors, cameras, and other payloads must be positioned evenly to achieve uniform weight distribution and maximum fit between the geometric and physical center of gravity.
-7. **Battery placement:** The battery is often located in the center of the frame to ensure stability during flight. It must be ensured that the battery is rigidly mounted and secured to prevent slipping or unintentional disconnection during operation. Additionally, when properly attached, the battery acts as an inertial mass and helps damp vibrations. Beware of landing directly on the battery since most of the batteries do have a resistant shell.
+7. **Battery placement:** The battery is often located in the center of the frame to ensure stability during flight. It must be ensured that the battery is rigidly mounted and secured to prevent slipping or unintentional disconnection during operation. Additionally, when properly attached, the battery acts as an inertial mass and helps damp vibrations. Beware of landing directly on the battery since most of the batteries do not have a resistant shell.
 8. **Voltage monitoring:** to [dynamically scale the PIDs and maintain stable flight in low battery conditions](https://ardupilot.org/copter/docs/current-limiting-and-voltage-scaling.html#voltage-scaling).
 9. **Current monitoring:** to compensate for the dynamic magnetic field caused by the high motor currents.
 10. **FC Power supply:** Must provide enough current for the flight controller, [GNSS](https://en.wikipedia.org/wiki/Satellite_navigation) receivers and other payloads operating on 5V.
@@ -184,9 +179,9 @@ After the calibration, temperature changes will cause no significant acceleromet
 
 ![MatekH743Slim IMU temperature calibration](images/blog/matekh743slim_accel.png)
 
-# 5. Assemble all components except the propellers
+# 5. Assemble all components except the wheels
 
-Now that the optional IMU temperature calibration is done we must assemble and connect all components except the propellers.
+Now that the optional IMU temperature calibration is done we must [assemble and connect all components](https://ardupilot.org/rover/docs/rover-autopilot-assembly-instructions.html) except the wheels.
 
 Read the [Multicopter hardware best-practices](#11-multicopter-hardware-best-practices) section again before assembling the vehicle.
 
@@ -306,7 +301,7 @@ When asked *Should the FC values now be copied to the 12_mp_setup_mandatory_hard
 
 Open Mission Planner, connect to the flight controller and select `SETUP >> Mandatory Hardware` and work yourself through all the submenus as described below. **DO NOT SKIP ANY STEP**.
 
-### [Frame Type](https://ardupilot.org/copter/docs/frame-type-configuration.html)
+### Frame Type
 
 This relates to the `FRAME_CLASS` and `FRAME_TYPE` parameters.
 
@@ -409,8 +404,6 @@ If it doesn't, go back and perform the missing calibration(s).
 ![Hardware-Report after IMU temperature compensation](images/blog/hardware_report_tempcal.png)
 
 ## 6.12 Configure Logging
-
-![MP LOG_BITMASK parameter](images/blog/mp_logging_bitmask.png)
 
 Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `14_Logging.param` file
 
@@ -1091,12 +1084,12 @@ Now do the flight to collect the data and analyze the logs to see if the baromet
 
 # 11. System identification for analytical PID optimization (optional)
 
-## 11.1 [System Identification Flights](https://ardupilot.org/copter/docs/systemid-mode-operation.html)
+This uses [Ardupilot's system identification flight mode](https://ardupilot.org/copter/docs/systemid-mode-operation.html) to collect data to [build a mathematical model of the vehicle](https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter) that can later be used to further [optimize the control loops of the vehicle according to a set of constraints (requirements)](https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759).
 
-These steps are optional.
-Their goal is to build a mathematical model of the vehicle that can later be used to further [optimize the control loops of the vehicle according to a set of constraints (requirements)](https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759).
+## 11.1 System Identification Flights
 
-Documentation is available on [Fabian Bredemeier's Identification of a multicopter section at ArduCopter's_wiki](https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter).
+These flights need to be performed in the total absence of wind.
+The vehicle PIDs need to be a bit detuned in order to not fully cancel out the injected chirp signals.
 
 ### 11.1.1 Roll rate mathematical model
 
@@ -1122,9 +1115,9 @@ Use *ArduPilot Methodic Configurator* to edit and upload the `45_system_id_thrus
 
 Now do the flight to collect the data for the thrust system identification.
 
-### [Analytical Multicopter Flight Controller PID Optimization](https://discuss.ardupilot.org/t/analytical-multicopter-flight-controller-pid-optimization/109759)
+## 11.2 Analytical Multicopter Flight Controller PID Optimization
 
-This describes how to use IAV's multi-objective optimization to achieve even better (according to a predefined set of constraints) PID tuning.
+This describes how to use [IAV's multi-objective optimization](https://discuss.ardupilot.org/t/analytical-multicopter-flight-controller-pid-optimization/109759) to achieve even better (according to a predefined set of constraints) PID tuning.
 
 One other approach is described by Bill Geyer in his Blog post: [Predicting Closed Loop Response For Faster Autotune](https://discuss.ardupilot.org/t/predicting-closed-loop-response-for-faster-autotune/75096).
 
@@ -1189,3 +1182,12 @@ Enjoy,
 Jan Ole Noack
 
 Amilcar do Carmo Lucas
+
+<!-- Gurubase Widget -->
+<script async src="https://widget.gurubase.io/widget.latest.min.js"
+    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
+    data-text="Ask AI"
+    data-margins='{"bottom": "1rem", "right": "1rem"}'
+    data-light-mode="true"
+    id="guru-widget-id">
+</script>
