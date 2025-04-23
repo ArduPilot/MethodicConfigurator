@@ -44,6 +44,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText,
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
+from ardupilot_methodic_configurator.parameter_editor_model import ParameterEditorModel
+from ardupilot_methodic_configurator.parameter_repository import LocalFilesystemParameterRepository
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
 
@@ -140,6 +142,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.flight_controller = flight_controller
         self.local_filesystem = local_filesystem
 
+        # Initialize the parameter repository and model
+        self.parameter_repository = LocalFilesystemParameterRepository(local_filesystem)
+        self.parameter_model = ParameterEditorModel(self.parameter_repository)
+
         self.at_least_one_changed_parameter_written = False
         self.file_selection_combobox: AutoResizeCombobox
         self.show_only_differences: tk.BooleanVar
@@ -183,6 +189,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Create a DocumentationFrame object for the Documentation Content
         self.documentation_frame = DocumentationFrame(self.main_frame, self.local_filesystem, self.current_file)
         self.documentation_frame.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
+
+        # Load the initial parameters into the model
+        self.parameter_model.load_parameters(self.current_file)
 
         self.__create_parameter_area_widgets()
 
@@ -237,7 +246,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         font_family, _font_size = get_widget_font_family_and_size(file_selection_label)
         self.legend_frame(config_subframe, font_family)
 
-        image_label = BaseWindow.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
+        image_label = BaseWindow.put_image_in_label(config_frame, ProgramSettings.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
         image_label.bind("<Button-1>", lambda event: show_about_window(self.main_frame, version))  # noqa: ARG005
         show_tooltip(image_label, _("User Manual, Support Forum, Report a Bug, Licenses, Source Code"))
@@ -287,8 +296,20 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             value=bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
         )
 
-        # Create a Scrollable parameter editor table
-        self.parameter_editor_table = ParameterEditorTable(self.main_frame, self.local_filesystem, self)
+        # Create a Scrollable parameter editor table connected to our model
+        self.parameter_editor_table = ParameterEditorTable(
+            self.main_frame,
+            self,
+            self.local_filesystem.param_default_dict,
+            self.local_filesystem.doc_dict,
+            self.local_filesystem,
+            self.current_file,
+            parameter_model=self.parameter_model,
+            parameter_upload_callback=self.flight_controller.set_param,
+            fc_parameters_dict=self.flight_controller.fc_parameters
+            if hasattr(self.flight_controller, "fc_parameters")
+            else {},
+        )
         self.repopulate_parameter_table(self.current_file)
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 
