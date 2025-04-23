@@ -165,13 +165,24 @@ All other intermediate parameter files can be used without modifications across 
 - **Use the `Current intermediate parameter file:` combobox to select an intermediate parameter file.**
 - The first available intermediate parameter file not named `00_default.param` will be selected by default
 - If the selection changes, the parameter table will update to display the parameters from the selected file.
+- The sequence is defined by the order of the intermediate parameter files in the vehicle configuration directory.
 
 #### 3. About information and help links (optional)
 
 When you click the ArduPilot logo the following window will appear:
 ![About and help information](images/App_screenshot_about.png)
 
-#### 4. Viewing Documentation
+#### 4a. Configuration sequence progress bar
+
+This segmented bar shows the progress in the vehicle configuration sequence.
+The progress bar is updated automatically when you upload an intermediate parameter file to the flight controller or
+select a different intermediate parameter file in the `Current intermediate parameter file:` combobox above it.
+The steps are grouped into phases and optional phases are greyed-out.
+There are mouse-over hints for each phase.
+
+![Parameter editor and uploader window](images/App_parameter_editor_and_uploader.png)
+
+#### 4b. Viewing Documentation
 
 - **Click on the documentation labels to open the corresponding documentation in a web browser.**
 - Documentation is split into four categories:
@@ -185,6 +196,8 @@ When you click the ArduPilot logo the following window will appear:
 
 #### 5. Editing Parameters
 
+![Editing parameters](images/App_editing_parameters.png)
+
 - The parameter table presents the parameters in the current intermediate parameter file
 - The first column is a `Del` button that deletes the parameter in this row from the current intermediate parameter file.
 - The second column is the ArduPilot parameter name used in that row.
@@ -197,7 +210,10 @@ When you click the ArduPilot logo the following window will appear:
 - The new value is the value in the intermediate file and will be uploaded to the flight controller.
   **You MUST change the value to meet your needs**. The provided values in the `vehicle_template` directory are just examples.
   - parameters that should not be changed by the users, or are derived from information in the [*component editor*](#vehicle-component-editor-interface)
-    are greyed out and can not be edited
+    are greyed out and can not be edited.
+  - bitmask parameters are editable in two ways:
+    - *Decimal* - enter the decimal value of the bitmask as you would with any other parameter.
+    - *Bitmask* - double-click the parameter value with the mouse and a window will popup where you can edit the individual bits in the bitmask.
 - **In the parameter table, you can edit the `New Value` and `Change Reason` entries for each parameter.**
 - **You MUST edit the `Change Reason` so that other users understand why you changed the parameter to that particular `New value`**
 - Check the `Upload` checkbox to select parameters to be uploaded to the flight controller
