@@ -306,6 +306,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     ) -> Union[PairTupleCombobox, ttk.Entry]:
         is_bitmask = param_metadata and "Bitmask" in param_metadata
         present_as_forced = False
+        present_as_derived = False
         if (
             self.current_file in self.local_filesystem.forced_parameters
             and param_name in self.local_filesystem.forced_parameters[self.current_file]
@@ -319,7 +320,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             self.current_file in self.local_filesystem.derived_parameters
             and param_name in self.local_filesystem.derived_parameters[self.current_file]
         ):
-            present_as_forced = True
+            present_as_derived = True
             new_value = self.local_filesystem.derived_parameters[self.current_file][param_name].value
             if (is_bitmask and param.value != new_value) or not is_within_tolerance(param.value, new_value):
                 param.value = new_value
@@ -342,7 +343,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 value_str,
                 param_name,
                 style="TCombobox"
-                if present_as_forced
+                if present_as_forced or present_as_derived
                 else "default_v.TCombobox"
                 if has_default_value
                 else "readonly.TCombobox",
@@ -365,8 +366,30 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         except KeyError as e:
             logging_critical(_("Parameter %s not found in the %s file: %s"), param_name, self.current_file, e, exc_info=True)
             sys_exit(1)
-        if present_as_forced:
+
+        # Store error messages for forced and derived parameters
+        forced_error_msg = _(
+            "This parameter already has the correct value for this configuration step.\n"
+            "You must not change it, as this would defeat the purpose of this configuration step.\n\n"
+            "Add it to other configuration step and change it there if you have a good reason to."
+        )
+        derived_error_msg = _(
+            "This parameter value has been derived from information you entered in the component editor window.\n"
+            "You need to change the information on that window to update the value here.\n"
+        )
+
+        # Function to show the appropriate error message
+        def show_parameter_error(_event: tk.Event) -> None:  # pylint: disable=unused-argument
+            if present_as_forced:
+                messagebox.showerror(_("Forced Parameter"), forced_error_msg)
+            elif present_as_derived:
+                messagebox.showerror(_("Derived Parameter"), derived_error_msg)
+
+        if present_as_forced or present_as_derived:
             new_value_entry.config(state="disabled", background="light grey")
+            new_value_entry.bind("<Button-1>", show_parameter_error)
+            # Also bind to right-click for completeness
+            new_value_entry.bind("<Button-3>", show_parameter_error)
         elif bitmask_dict:
             new_value_entry.bind(
                 "<Double-Button>",
@@ -636,9 +659,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         try:
             p = float(new_value)  # type: ignore[arg-type] # workaround a mypy bug
             changed = not is_within_tolerance(old_value, p)
-            param_metadata = self.local_filesystem.doc_dict.get(param_name, None)
-            p_min = param_metadata.get("min", None) if param_metadata else None
-            p_max = param_metadata.get("max", None) if param_metadata else None
+            param_metadata = self.local_filesystem.doc_dict.get(param_name, {})
+            p_min = param_metadata.get("min", None)
+            p_max = param_metadata.get("max", None)
             if changed:
                 if p_min and p < p_min:
                     msg = _("The value for {param_name} {p} should be greater than {p_min}\n")
