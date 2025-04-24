@@ -722,6 +722,8 @@ These are the very minimum tuning steps required for a stable flight:
 
 Load the `.bin` log from the first flight onto the [online Ardupilot Filter Review tool](https://firmware.ardupilot.org/Tools/WebTools/FilterReview/)
 Follow the [instructions from Peter Hall on his Blog Post](https://discuss.ardupilot.org/t/new-fft-filter-setup-and-review-web-tool/102572) to configure the Harmonic Notch filter(s).
+Noise levels bellow -50dB are considered good enough.
+Do not use notch filters to reduce noise bellow that level as it introduces unwanted signal lag.
 The graph below is a bode diagram of the gyro signals before and after the low-pass and Harmonic Notch filters.
 As you can see, the filters remove most of the vibration noise from the gyro sensors.
 
