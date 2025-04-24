@@ -40,7 +40,7 @@ NEW_VALUE_WIDGET_WIDTH = 9
 # pylint: disable=too-many-lines
 
 
-class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
+class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
     """
     A class to manage and display the parameter editor table within the GUI.
 
