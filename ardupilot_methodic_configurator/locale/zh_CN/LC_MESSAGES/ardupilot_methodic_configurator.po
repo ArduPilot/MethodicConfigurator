@@ -547,7 +547,7 @@ msgid ""
 "command:\n"
 "    sudo adduser $USER dialout\n"
 "Then log out and log back in for the changes to take effect."
-msgstr ""
+msgstr "访问串口时被拒绝。这在Linux系统上很常见。\n要解决此问题，请使用以下命令将您的用户添加到'dialout'组：\n    sudo adduser $USER dialout\n然后注销并重新登录以使更改生效。"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:324
 msgid ""
@@ -3975,22 +3975,22 @@ msgid ""
 "\n"
 "Add it to other configuration step and change it there if you have a good "
 "reason to."
-msgstr ""
+msgstr "此参数已经具有此配置步骤的正确值。\n您不得更改它，因为这会违背此配置步骤的目的。\n\n如果您有充分的理由更改它，请将其添加到其他配置步骤并在那里更改。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:376
 msgid ""
 "This parameter value has been derived from information you entered in the "
 "component editor window.\n"
 "You need to change the information on that window to update the value here.\n"
-msgstr ""
+msgstr "此参数值是根据您在组件编辑器窗口中输入的信息派生的。\n您需要在该窗口上更改信息以在此处更新值。\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:384
 msgid "Forced Parameter"
-msgstr ""
+msgstr "强制参数"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:386
 msgid "Derived Parameter"
-msgstr ""
+msgstr "派生参数"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:451
 msgid "{_param_name} Value: {_new_decimal_value}"
@@ -4231,7 +4231,7 @@ msgid ""
 "most closely resembles your vehicle's component setup to streamline the "
 "configuration process. The selected template will serve as a starting point "
 "for more detailed parameter configuration."
-msgstr ""
+msgstr "ArduPilot模板概述 - ArduPilot系统化配置工具套件的组件。此工具以用户友好的界面呈现可用的飞行器模板，使您能够浏览、比较并选择最适合您的飞行器配置的模板。选择一个与您的飞行器组件设置最相近的模板，以简化配置过程。所选模板将作为更详细参数配置的起点。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:63
 msgid "Show this usage popup again"

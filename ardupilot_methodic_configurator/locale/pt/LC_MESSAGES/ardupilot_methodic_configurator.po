@@ -573,7 +573,7 @@ msgid ""
 "command:\n"
 "    sudo adduser $USER dialout\n"
 "Then log out and log back in for the changes to take effect."
-msgstr ""
+msgstr "Permissão negada ao aceder à porta série. Isto é comum em sistemas Linux.\nPara corrigir este problema, adicione o seu utilizador ao grupo 'dialout' com o seguinte comando:\n    sudo adduser $USER dialout\nDepois termine a sessão e volte a iniciar sessão para que as alterações tenham efeito."
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:324
 msgid ""
@@ -4257,22 +4257,22 @@ msgid ""
 "\n"
 "Add it to other configuration step and change it there if you have a good "
 "reason to."
-msgstr ""
+msgstr "Este parâmetro já tem o valor correto para esta etapa de configuração.\nNão deve alterá-lo, pois isso iria contrariar o propósito desta etapa de configuração.\n\nAdicione-o a outra etapa de configuração e altere-o lá se tiver uma boa razão para tal."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:376
 msgid ""
 "This parameter value has been derived from information you entered in the "
 "component editor window.\n"
 "You need to change the information on that window to update the value here.\n"
-msgstr ""
+msgstr "O valor deste parâmetro foi derivado da informação que introduziu na janela de edição de componentes.\nPrecisa de alterar a informação nessa janela para atualizar o valor aqui.\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:384
 msgid "Forced Parameter"
-msgstr ""
+msgstr "Parâmetro Forçado"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:386
 msgid "Derived Parameter"
-msgstr ""
+msgstr "Parâmetro Derivado"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:451
 msgid "{_param_name} Value: {_new_decimal_value}"
@@ -4529,7 +4529,7 @@ msgid ""
 "most closely resembles your vehicle's component setup to streamline the "
 "configuration process. The selected template will serve as a starting point "
 "for more detailed parameter configuration."
-msgstr ""
+msgstr "Visão Geral dos Modelos ArduPilot - Um componente da suite ArduPilot Methodic Configurator. Esta ferramenta apresenta os modelos de veículos disponíveis numa interface amigável, permitindo-lhe navegar, comparar e selecionar o modelo mais adequado para a configuração do seu veículo. Selecione um modelo que mais se assemelhe à configuração de componentes do seu veículo para simplificar o processo de configuração. O modelo selecionado servirá como ponto de partida para uma configuração mais detalhada de parâmetros."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:63
 msgid "Show this usage popup again"
