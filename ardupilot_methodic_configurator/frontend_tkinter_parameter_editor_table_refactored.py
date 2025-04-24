@@ -1,5 +1,5 @@
 """
-Parameter editor table GUI.
+Parameter editor table GUI using the domain model.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -9,9 +9,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-
-# from logging import warning as logging_warning
-# from logging import error as logging_error
 from logging import critical as logging_critical
 from logging import debug as logging_debug
 from logging import info as logging_info
@@ -19,14 +16,14 @@ from math import nan
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
-from typing import Any, Union
+from typing import Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import Par
-from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, is_within_tolerance
-
-# from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-# from ardupilot_methodic_configurator.frontend_tkinter_auto_resize_combobox import AutoResizeCombobox
+from ardupilot_methodic_configurator.ardupilot_parameter import ArduPilotParameter
+from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.bitmask_helper import BitmaskHelper
+from ardupilot_methodic_configurator.connection_renamer import ConnectionRenamer
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
@@ -37,12 +34,13 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 NEW_VALUE_WIDGET_WIDTH = 9
 
 
-class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
+class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     """
     A class to manage and display the parameter editor table within the GUI.
 
     This class inherits from ScrollFrame and is responsible for creating,
     managing, and updating the table that displays parameters for editing.
+    It uses the ArduPilotParameter domain model to handle parameter operations.
     """
 
     def __init__(self, master, local_filesystem: LocalFilesystem, parameter_editor) -> None:  # noqa: ANN001
@@ -53,6 +51,7 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.current_file = ""
         self.upload_checkbutton_var: dict[str, tk.BooleanVar] = {}
         self.at_least_one_param_edited = False
+        self.parameters: dict[str, ArduPilotParameter] = {}
 
         style = ttk.Style()
         style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
@@ -65,6 +64,7 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
         for widget in self.view_port.winfo_children():
             widget.destroy()
         self.current_file = selected_file
+        self.parameters = {}
 
         # Create labels for table headers
         headers = (_("-/+"), _("Parameter"), _("Current Value"), _("New Value"), _("Unit"), _("Upload"), _("Change Reason"))
@@ -109,19 +109,17 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
             ):
                 self.at_least_one_param_edited = True
 
-            self.rename_fc_connection(selected_file)
+            self.__rename_fc_connection(selected_file)
+
+        # Convert file parameters to domain model parameters
+        self.__create_domain_model_parameters(selected_file, fc_parameters)
 
         if show_only_differences:
             # recompute different_params because of renames and derived values changes
             different_params = {
-                param_name: file_value
-                for param_name, file_value in self.local_filesystem.file_parameters[selected_file].items()
-                if param_name not in fc_parameters
-                or (
-                    param_name in fc_parameters and not is_within_tolerance(fc_parameters[param_name], float(file_value.value))
-                )
+                name: param for name, param in self.parameters.items() if param.is_different_from_fc or not param.has_fc_value
             }
-            self.__update_table(different_params, fc_parameters)
+            self.__update_table(different_params)
             if not different_params:
                 info_msg = _("No different parameters found in {selected_file}. Skipping...").format(**locals())
                 logging_info(info_msg)
@@ -129,74 +127,77 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
                 self.parameter_editor.on_skip_click(force_focus_out_event=False)
                 return
         else:
-            self.__update_table(self.local_filesystem.file_parameters[selected_file], fc_parameters)
+            self.__update_table(self.parameters)
         # Scroll to the top of the parameter table
         self.canvas.yview("moveto", 0)
 
-    def rename_fc_connection(self, selected_file: str) -> None:
-        renames = {}
+    def __create_domain_model_parameters(self, selected_file: str, fc_parameters: dict[str, float]) -> None:
+        """Create ArduPilotParameter objects for each parameter in the file."""
+        self.parameters = {}
+
+        for param_name, param in self.local_filesystem.file_parameters[selected_file].items():
+            # Get parameter metadata and default values
+            metadata = self.local_filesystem.doc_dict.get(param_name, {})
+            default_par = self.local_filesystem.param_default_dict.get(param_name, None)
+
+            # Check if parameter is forced or derived
+            is_forced = (
+                selected_file in self.local_filesystem.forced_parameters
+                and param_name in self.local_filesystem.forced_parameters[selected_file]
+            )
+            is_derived = (
+                selected_file in self.local_filesystem.derived_parameters
+                and param_name in self.local_filesystem.derived_parameters[selected_file]
+            )
+
+            # Get FC value if available
+            fc_value = fc_parameters.get(param_name)
+
+            # Create domain model parameter
+            self.parameters[param_name] = ArduPilotParameter(
+                param_name, param, metadata, default_par, fc_value, is_forced, is_derived
+            )
+
+    def __rename_fc_connection(self, selected_file: str) -> None:
+        """Rename parameters based on connection prefixes using the ConnectionRenamer."""
         if "rename_connection" in self.local_filesystem.configuration_steps[selected_file]:
             new_connection_prefix = self.local_filesystem.configuration_steps[selected_file]["rename_connection"]
-            new_connection_prefix = eval(str(new_connection_prefix), {}, self.variables)  # noqa: S307 pylint: disable=eval-used
-            for param_name in self.local_filesystem.file_parameters[selected_file]:
-                new_prefix = new_connection_prefix
-                old_prefix = param_name.split("_")[0]
 
-                # Handle CAN parameter names peculiarities
-                if new_connection_prefix[:-1] == "CAN" and "CAN_P" in param_name:
-                    old_prefix = param_name.split("_")[0] + "_" + param_name.split("_")[1]
-                    new_prefix = "CAN_P" + new_connection_prefix[-1]
-                if new_connection_prefix[:-1] == "CAN" and "CAN_D" in param_name:
-                    old_prefix = param_name.split("_")[0] + "_" + param_name.split("_")[1]
-                    new_prefix = "CAN_D" + new_connection_prefix[-1]
+            # Apply renames to the parameters dictionary
+            updated_parameters, new_names, renamed_pairs = ConnectionRenamer.apply_renames(
+                self.local_filesystem.file_parameters[selected_file], new_connection_prefix, self.variables
+            )
 
-                if new_connection_prefix[:-1] in old_prefix:
-                    renames[param_name] = param_name.replace(old_prefix, new_prefix)
+            # Update the file parameters with the renamed ones
+            self.local_filesystem.file_parameters[selected_file] = updated_parameters
 
-        new_names = set()
-        for old_name, new_name in renames.items():
-            if new_name in new_names:
-                self.local_filesystem.file_parameters[selected_file].pop(old_name)
-                logging_info(_("Removing duplicate parameter %s"), old_name)
-                info_msg = _("The parameter '{old_name}' was removed due to duplication.")
-                messagebox.showinfo(_("Parameter Removed"), info_msg.format(**locals()))
+            # Show info messages for renamed parameters
+            for old_name, new_name in renamed_pairs:
+                logging_info(_("Renaming parameter %s to %s"), old_name, new_name)
+                info_msg = _(
+                    "The parameter '{old_name}' was renamed to '{new_name}'.\n"
+                    "to obey the flight controller connection defined in the component editor window."
+                )
+                messagebox.showinfo(_("Parameter Renamed"), info_msg.format(**locals()))
                 # will ask the user to save changes before switching to another file
                 self.at_least_one_param_edited = True
-            else:
-                new_names.add(new_name)
-                if new_name != old_name:
-                    self.local_filesystem.file_parameters[selected_file][new_name] = self.local_filesystem.file_parameters[
-                        selected_file
-                    ].pop(old_name)
-                    logging_info(_("Renaming parameter %s to %s"), old_name, new_name)
-                    info_msg = _(
-                        "The parameter '{old_name}' was renamed to '{new_name}'.\n"
-                        "to obey the flight controller connection defined in the component editor window."
-                    )
-                    messagebox.showinfo(_("Parameter Renamed"), info_msg.format(**locals()))
-                    # will ask the user to save changes before switching to another file
-                    self.at_least_one_param_edited = True
 
-    def __update_table(self, params: dict[str, Par], fc_parameters: dict[str, float]) -> None:
+    def __update_table(self, params: dict[str, ArduPilotParameter]) -> None:
+        """Update the parameter table with the given parameters."""
         current_param_name: str = ""
         try:
             for i, (param_name, param) in enumerate(params.items(), 1):
                 current_param_name = param_name
-                param_metadata = self.local_filesystem.doc_dict.get(param_name, {})
-                param_default = self.local_filesystem.param_default_dict.get(param_name, None)
-                doc_tooltip = param_metadata.get(
-                    "doc_tooltip", _("No documentation available in apm.pdef.xml for this parameter")
-                )
 
                 column: list[tk.Widget] = []
                 column.append(self.__create_delete_button(param_name))
-                column.append(self.__create_parameter_name(param_name, param_metadata, doc_tooltip))
-                column.append(self.__create_flightcontroller_value(fc_parameters, param_name, param_default, doc_tooltip))
-                column.append(self.__create_new_value_entry(param_name, param, param_metadata, param_default, doc_tooltip))
-                column.append(self.__create_unit_label(param_metadata))
-                column.append(self.__create_upload_checkbutton(param_name, bool(fc_parameters)))
+                column.append(self.__create_parameter_name(param))
+                column.append(self.__create_flightcontroller_value(param))
+                column.append(self.__create_new_value_entry(param))
+                column.append(self.__create_unit_label(param))
+                column.append(self.__create_upload_checkbutton(param_name, param.has_fc_value))
                 # workaround a mypy issue
-                column.append(self.__create_change_reason_entry(param_name, param, column[3]))  # type: ignore[arg-type]
+                column.append(self.__create_change_reason_entry(param, column[3]))  # type: ignore[arg-type]
 
                 column[0].grid(row=i, column=0, sticky="w", padx=0)
                 column[1].grid(row=i, column=1, sticky="w", padx=0)
@@ -208,7 +209,7 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
 
             # Add the "Add" button at the bottom of the table
             add_button = ttk.Button(
-                self.view_port, text=_("Add"), style="narrow.TButton", command=lambda: self.__on_parameter_add(fc_parameters)
+                self.view_port, text=_("Add"), style="narrow.TButton", command=lambda: self.__on_parameter_add()
             )
             tooltip_msg = _("Add a parameter to the {self.current_file} file")
             show_tooltip(add_button, tooltip_msg.format(**locals()))
@@ -230,6 +231,7 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.view_port.columnconfigure(6, weight=1)  # Change Reason
 
     def __create_delete_button(self, param_name: str) -> ttk.Button:
+        """Create a delete button for a parameter."""
         delete_button = ttk.Button(
             self.view_port, text=_("Del"), style="narrow.TButton", command=lambda: self.__on_parameter_delete(param_name)
         )
@@ -237,47 +239,46 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
         show_tooltip(delete_button, tooltip_msg.format(**locals()))
         return delete_button
 
-    def __create_parameter_name(self, param_name: str, param_metadata: dict[str, Any], doc_tooltip: str) -> ttk.Label:
-        is_calibration = param_metadata.get("Calibration", False)
-        is_readonly = param_metadata.get("ReadOnly", False)
+    def __create_parameter_name(self, param: ArduPilotParameter) -> ttk.Label:
+        """Create a label displaying the parameter name."""
         parameter_label = ttk.Label(
             self.view_port,
-            text=param_name + (" " * (16 - len(param_name))),
+            text=param.name + (" " * (16 - len(param.name))),
             background="red"
-            if is_readonly
+            if param.is_readonly
             else "yellow"
-            if is_calibration
+            if param.is_calibration
             else ttk.Style(self.root).lookup("TFrame", "background"),
         )
-        if doc_tooltip:
-            show_tooltip(parameter_label, doc_tooltip)
+
+        if param.doc_tooltip:
+            show_tooltip(parameter_label, param.doc_tooltip)
         return parameter_label
 
-    def __create_flightcontroller_value(
-        self, fc_parameters: dict[str, float], param_name: str, param_default: Union[None, Par], doc_tooltip: str
-    ) -> ttk.Label:
-        if param_name in fc_parameters:
-            value_str = format(fc_parameters[param_name], ".6f").rstrip("0").rstrip(".")
-            if param_default is not None and is_within_tolerance(fc_parameters[param_name], param_default.value):
-                # If it matches, set the background color to light blue
-                flightcontroller_value = ttk.Label(self.view_port, text=value_str, background="light blue")
+    def __create_flightcontroller_value(self, param: ArduPilotParameter) -> ttk.Label:
+        """Create a label displaying the flight controller value."""
+        if param.has_fc_value:
+            if param.has_default_value:
+                # If it matches default, set the background color to light blue
+                flightcontroller_value = ttk.Label(self.view_port, text=param.fc_value_as_string, background="light blue")
             else:
                 # Otherwise, set the background color to the default color
-                flightcontroller_value = ttk.Label(self.view_port, text=value_str)
+                flightcontroller_value = ttk.Label(self.view_port, text=param.fc_value_as_string)
         else:
             flightcontroller_value = ttk.Label(self.view_port, text=_("N/A"), background="orange")
-        if doc_tooltip:
-            show_tooltip(flightcontroller_value, doc_tooltip)
+
+        if param.doc_tooltip:
+            show_tooltip(flightcontroller_value, param.doc_tooltip)
         return flightcontroller_value
 
     def __update_combobox_style_on_selection(
-        self, combobox_widget: PairTupleCombobox, param_default: Union[None, Par], event: tk.Event
+        self, combobox_widget: PairTupleCombobox, param: ArduPilotParameter, event: tk.Event
     ) -> None:
+        """Update the combobox style based on selection."""
         try:
             # we want None to raise an exception
             current_value = float(combobox_widget.get_selected_key())  # type: ignore[arg-type]
-            has_default_value = param_default is not None and is_within_tolerance(current_value, param_default.value)
-            combobox_widget.configure(style="default_v.TCombobox" if has_default_value else "readonly.TCombobox")
+            combobox_widget.configure(style="default_v.TCombobox" if param.has_default_value else "readonly.TCombobox")
             event.width = NEW_VALUE_WIDGET_WIDTH
             combobox_widget.on_combo_configure(event)
         except ValueError:
@@ -285,67 +286,34 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
             logging_info(msg.format(**locals()))
 
     @staticmethod
-    def __update_new_value_entry_text(new_value_entry: ttk.Entry, value: float, param_default: Union[None, Par]) -> None:
+    def __update_new_value_entry_text(new_value_entry: ttk.Entry, param: ArduPilotParameter) -> None:
+        """Update the new value entry text and style."""
         if isinstance(new_value_entry, PairTupleCombobox):
             return
         new_value_entry.delete(0, tk.END)
-        value_str = format(value, ".6f").rstrip("0").rstrip(".")
-        new_value_entry.insert(0, value_str)
-        if param_default is not None and is_within_tolerance(value, param_default.value):
+        new_value_entry.insert(0, param.value_as_string)
+        if param.has_default_value:
             new_value_entry.configure(style="default_v.TEntry")
         else:
             new_value_entry.configure(style="TEntry")
 
-    def __create_new_value_entry(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals
-        self,
-        param_name: str,
-        param: Par,
-        param_metadata: dict[str, Any],
-        param_default: Union[None, Par],
-        doc_tooltip: str,
-    ) -> Union[PairTupleCombobox, ttk.Entry]:
-        is_bitmask = param_metadata and "Bitmask" in param_metadata
-        present_as_forced = False
-        present_as_derived = False
-        if (
-            self.current_file in self.local_filesystem.forced_parameters
-            and param_name in self.local_filesystem.forced_parameters[self.current_file]
-        ):
-            present_as_forced = True
-            new_value = self.local_filesystem.forced_parameters[self.current_file][param_name].value
-            if (is_bitmask and param.value != new_value) or not is_within_tolerance(param.value, new_value):
-                param.value = new_value
-                self.at_least_one_param_edited = True
-        if (
-            self.current_file in self.local_filesystem.derived_parameters
-            and param_name in self.local_filesystem.derived_parameters[self.current_file]
-        ):
-            present_as_derived = True
-            new_value = self.local_filesystem.derived_parameters[self.current_file][param_name].value
-            if (is_bitmask and param.value != new_value) or not is_within_tolerance(param.value, new_value):
-                param.value = new_value
-                self.at_least_one_param_edited = True
-
-        bitmask_dict = None
-        value_str = format(param.value, ".6f").rstrip("0").rstrip(".")
+    def __create_new_value_entry(self, param: ArduPilotParameter) -> Union[PairTupleCombobox, ttk.Entry]:
+        """Create an entry widget for editing the parameter value."""
+        # Check if parameter has values dictionary
+        value_str = param.value_as_string
         new_value_entry: Union[PairTupleCombobox, ttk.Entry]
-        if (
-            param_metadata
-            and "values" in param_metadata
-            and param_metadata["values"]
-            and value_str in param_metadata["values"]
-        ):
-            selected_value = param_metadata["values"].get(value_str, None)
-            has_default_value = param_default is not None and is_within_tolerance(param.value, param_default.value)
+
+        if param.values_dict and param.is_in_values_dict():
+            selected_value = param.get_selected_value_from_dict()
             new_value_entry = PairTupleCombobox(
                 self.view_port,
-                param_metadata["values"],
+                param.values_dict,
                 value_str,
-                param_name,
+                param.name,
                 style="TCombobox"
-                if present_as_forced or present_as_derived
+                if not param.is_editable()
                 else "default_v.TCombobox"
-                if has_default_value
+                if param.has_default_value
                 else "readonly.TCombobox",
             )
             new_value_entry.set(selected_value)
@@ -354,18 +322,12 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
             new_value_entry.config(state="readonly", width=NEW_VALUE_WIDGET_WIDTH, font=(font_family, font_size))
             new_value_entry.bind(  # type: ignore[call-overload] # workaround a mypy issue
                 "<<ComboboxSelected>>",
-                lambda event: self.__update_combobox_style_on_selection(new_value_entry, param_default, event),
+                lambda event: self.__update_combobox_style_on_selection(new_value_entry, param, event),
                 "+",
             )
         else:
             new_value_entry = ttk.Entry(self.view_port, width=NEW_VALUE_WIDGET_WIDTH + 1, justify=tk.RIGHT)
-            ParameterEditorTable.__update_new_value_entry_text(new_value_entry, param.value, param_default)
-            bitmask_dict = param_metadata.get("Bitmask") if param_metadata else None
-        try:
-            old_value = self.local_filesystem.file_parameters[self.current_file][param_name].value
-        except KeyError as e:
-            logging_critical(_("Parameter %s not found in the %s file: %s"), param_name, self.current_file, e, exc_info=True)
-            sys_exit(1)
+            self.__update_new_value_entry_text(new_value_entry, param)
 
         # Store error messages for forced and derived parameters
         forced_error_msg = _(
@@ -380,26 +342,26 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         # Function to show the appropriate error message
         def show_parameter_error(_event: tk.Event) -> None:  # pylint: disable=unused-argument
-            if present_as_forced:
+            if param.is_forced:
                 messagebox.showerror(_("Forced Parameter"), forced_error_msg)
-            elif present_as_derived:
+            elif param.is_derived:
                 messagebox.showerror(_("Derived Parameter"), derived_error_msg)
 
-        if present_as_forced or present_as_derived:
+        if not param.is_editable():
             new_value_entry.config(state="disabled", background="light grey")
             new_value_entry.bind("<Button-1>", show_parameter_error)
             # Also bind to right-click for completeness
             new_value_entry.bind("<Button-3>", show_parameter_error)
-        elif bitmask_dict:
+        elif param.is_bitmask:
             new_value_entry.bind(
                 "<Double-Button>",
-                lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value),
+                lambda event: self.__open_bitmask_selection_window(event, param),
             )
             # pylint: disable=line-too-long
             new_value_entry.bind(
                 "<FocusOut>",
-                lambda event, current_file=self.current_file, param_name=param_name: self.__on_parameter_value_change(  # type: ignore[misc]
-                    event, current_file, param_name
+                lambda event: self.__on_parameter_value_change(  # type: ignore[misc]
+                    event, param
                 ),
             )
             # pylint: enable=line-too-long
@@ -407,26 +369,33 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
             # pylint: disable=line-too-long
             new_value_entry.bind(
                 "<FocusOut>",
-                lambda event, current_file=self.current_file, param_name=param_name: self.__on_parameter_value_change(  # type: ignore[misc]
-                    event, current_file, param_name
+                lambda event: self.__on_parameter_value_change(  # type: ignore[misc]
+                    event, param
                 ),
             )
             # pylint: enable=line-too-long
-        if doc_tooltip:
-            show_tooltip(new_value_entry, doc_tooltip)
+
+        if param.doc_tooltip:
+            show_tooltip(new_value_entry, param.doc_tooltip)
         return new_value_entry
 
-    def __open_bitmask_selection_window(self, event: tk.Event, param_name: str, bitmask_dict: dict, old_value: float) -> None:  # pylint: disable=too-many-locals
+    def __open_bitmask_selection_window(self, event: tk.Event, param: ArduPilotParameter) -> None:  # pylint: disable=too-many-locals
+        """Open a window to select bitmask options."""
+
         def on_close() -> None:
             checked_keys = [key for key, var in checkbox_vars.items() if var.get()]
-            # Convert checked keys back to a decimal value
-            new_decimal_value = sum(1 << key for key in checked_keys)
-            # Update new_value_entry with the new decimal value
-            ParameterEditorTable.__update_new_value_entry_text(
-                event.widget, new_decimal_value, self.local_filesystem.param_default_dict.get(param_name, None)
-            )
-            self.at_least_one_param_edited = (old_value != new_decimal_value) or self.at_least_one_param_edited
-            self.local_filesystem.file_parameters[self.current_file][param_name].value = new_decimal_value
+            # Convert checked keys back to a decimal value using our helper
+            new_decimal_value = BitmaskHelper.get_value_from_keys(checked_keys)
+
+            # Update the parameter value and entry text
+            if param.set_value(new_decimal_value):
+                self.at_least_one_param_edited = True
+                # Update the corresponding file parameter
+                self.local_filesystem.file_parameters[self.current_file][param.name].value = new_decimal_value
+
+            # Update the entry widget
+            self.__update_new_value_entry_text(event.widget, param)
+
             # Destroy the window
             window.destroy()
             # Issue a FocusIn event on something else than new_value_entry to prevent endless looping
@@ -436,7 +405,7 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
             # Re-bind the FocusIn event to new_value_entry
             event.widget.bind(
                 "<Double-Button>",
-                lambda event: self.__open_bitmask_selection_window(event, param_name, bitmask_dict, old_value),
+                lambda event: self.__open_bitmask_selection_window(event, param),
             )
 
         def is_widget_visible(widget: Union[tk.Misc, None]) -> bool:
@@ -446,38 +415,38 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
             if not is_widget_visible(window.focus_get()):
                 on_close()
 
-        def get_param_value_msg(_param_name: str, checked_keys: set) -> str:
-            _new_decimal_value = sum(1 << key for key in checked_keys)
-            text = _("{_param_name} Value: {_new_decimal_value}")
-            return text.format(**locals())
-
         def update_label() -> None:
             checked_keys = {key for key, var in checkbox_vars.items() if var.get()}
-            close_label.config(text=get_param_value_msg(param_name, checked_keys))
+            close_label.config(text=get_param_value_msg(param.name, checked_keys))
+
+        def get_param_value_msg(_param_name: str, checked_keys: set) -> str:
+            _new_decimal_value = BitmaskHelper.get_value_from_keys(list(checked_keys))
+            text = _("{_param_name} Value: {_new_decimal_value}")
+            return text.format(**locals())
 
         # Temporarily unbind the FocusIn event to prevent triggering the window again
         event.widget.unbind("<Double-Button>")
         window = tk.Toplevel(self.root)
-        title = _("Select {param_name} Bitmask Options")
+        title = _("Select {param.name} Bitmask Options")
         window.title(title.format(**locals()))
         checkbox_vars = {}
 
         main_frame = ttk.Frame(window)
         main_frame.pack(expand=True, fill=tk.BOTH)
 
-        # Convert current_value to a set of checked keys
-        current_value = int(event.widget.get())
-        checked_keys = {key for key, _value in bitmask_dict.items() if (current_value >> key) & 1}
+        # Convert current_value to a set of checked keys using our helper
+        current_value = int(float(event.widget.get()))
+        checked_keys = BitmaskHelper.get_checked_keys(current_value, param.bitmask_dict)
 
-        for i, (key, value) in enumerate(bitmask_dict.items()):
+        for i, (key, value) in enumerate(param.bitmask_dict.items()):
             var = tk.BooleanVar(value=key in checked_keys)
             checkbox_vars[key] = var
             checkbox = ttk.Checkbutton(main_frame, text=value, variable=var, command=update_label)
             checkbox.grid(row=i, column=0, sticky="w")
 
-        # Replace the close button with a read-only label displaying the current new_decimal_value
-        close_label = ttk.Label(main_frame, text=get_param_value_msg(param_name, checked_keys))
-        close_label.grid(row=len(bitmask_dict), column=0, pady=10)
+        # Add a read-only label displaying the current new_decimal_value
+        close_label = ttk.Label(main_frame, text=get_param_value_msg(param.name, checked_keys))
+        close_label.grid(row=len(param.bitmask_dict), column=0, pady=10)
 
         # Bind the on_close function to the window's WM_DELETE_WINDOW protocol
         window.protocol("WM_DELETE_WINDOW", on_close)
@@ -492,16 +461,15 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         window.wait_window()  # Wait for the window to be closed
 
-    def __create_unit_label(self, param_metadata: dict[str, Union[float, str]]) -> ttk.Label:
-        unit_label = ttk.Label(self.view_port, text=param_metadata.get("unit", ""))
-        unit_tooltip = str(
-            param_metadata.get("unit_tooltip", _("No documentation available in apm.pdef.xml for this parameter"))
-        )
-        if unit_tooltip:
-            show_tooltip(unit_label, unit_tooltip)
+    def __create_unit_label(self, param: ArduPilotParameter) -> ttk.Label:
+        """Create a label displaying the parameter unit."""
+        unit_label = ttk.Label(self.view_port, text=param.unit)
+        if param.unit_tooltip:
+            show_tooltip(unit_label, param.unit_tooltip)
         return unit_label
 
     def __create_upload_checkbutton(self, param_name: str, fc_connected: bool) -> ttk.Checkbutton:
+        """Create a checkbutton for upload selection."""
         self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=fc_connected)
         upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
         upload_checkbutton.configure(state="normal" if fc_connected else "disabled")
@@ -510,45 +478,31 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
         return upload_checkbutton
 
     def __create_change_reason_entry(
-        self, param_name: str, param: Par, new_value_entry: Union[ttk.Entry, PairTupleCombobox]
+        self, param: ArduPilotParameter, new_value_entry: Union[ttk.Entry, PairTupleCombobox]
     ) -> ttk.Entry:
-        present_as_forced = False
-        if (
-            self.current_file in self.local_filesystem.forced_parameters
-            and param_name in self.local_filesystem.forced_parameters[self.current_file]
-        ):
-            present_as_forced = True
-            if param.comment != self.local_filesystem.forced_parameters[self.current_file][param_name].comment:
-                param.comment = self.local_filesystem.forced_parameters[self.current_file][param_name].comment
-                self.at_least_one_param_edited = True
-        if (
-            self.current_file in self.local_filesystem.derived_parameters
-            and param_name in self.local_filesystem.derived_parameters[self.current_file]
-        ):
-            present_as_forced = True
-            if param.comment != self.local_filesystem.derived_parameters[self.current_file][param_name].comment:
-                param.comment = self.local_filesystem.derived_parameters[self.current_file][param_name].comment
-                self.at_least_one_param_edited = True
-
+        """Create an entry for the parameter change reason."""
         change_reason_entry = ttk.Entry(self.view_port, background="white")
         change_reason_entry.insert(0, "" if param.comment is None else param.comment)
-        if present_as_forced:
+
+        if not param.is_editable():
             change_reason_entry.config(state="disabled", background="light grey")
         else:
             # pylint: disable=line-too-long
             change_reason_entry.bind(
                 "<FocusOut>",
-                lambda event, current_file=self.current_file, param_name=param_name: self.__on_parameter_change_reason_change(  # type: ignore[misc]
-                    event, current_file, param_name
+                lambda event: self.__on_parameter_change_reason_change(  # type: ignore[misc]
+                    event, param
                 ),
             )
             # pylint: enable=line-too-long
+
         _value = new_value_entry.get()
-        msg = _("Reason why {param_name} should change to {_value}")
+        msg = _("Reason why {param.name} should change to {_value}")
         show_tooltip(change_reason_entry, msg.format(**locals()))
         return change_reason_entry
 
     def __on_parameter_delete(self, param_name: str) -> None:
+        """Handle parameter deletion."""
         msg = _("Are you sure you want to delete the {param_name} parameter?")
         if messagebox.askyesno(f"{self.current_file}", msg.format(**locals())):
             # Capture current vertical scroll position
@@ -556,13 +510,16 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
 
             # Delete the parameter
             del self.local_filesystem.file_parameters[self.current_file][param_name]
+            if param_name in self.parameters:
+                del self.parameters[param_name]
             self.at_least_one_param_edited = True
             self.parameter_editor.repopulate_parameter_table(self.current_file)
 
             # Restore the scroll position
             self.canvas.yview_moveto(current_scroll_position)
 
-    def __on_parameter_add(self, fc_parameters: dict[str, float]) -> None:
+    def __on_parameter_add(self) -> None:
+        """Handle parameter addition."""
         add_parameter_window = BaseWindow(self.root)
         add_parameter_window.root.title(_("Add Parameter to ") + self.current_file)
         add_parameter_window.root.geometry("450x300")
@@ -571,6 +528,7 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
         instruction_label = ttk.Label(add_parameter_window.main_frame, text=_("Enter the parameter name to add:"))
         instruction_label.pack(pady=5)
 
+        fc_parameters = {name: param.fc_value for name, param in self.parameters.items() if param.has_fc_value}
         param_dict = self.local_filesystem.doc_dict or fc_parameters
 
         if not param_dict:
@@ -604,7 +562,8 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         def custom_selection_handler(event: tk.Event) -> None:
             parameter_name_combobox.update_entry_from_listbox(event)
-            if self.__confirm_parameter_addition(parameter_name_combobox.get().upper(), fc_parameters):
+            param_name = parameter_name_combobox.get().upper()
+            if self.__confirm_parameter_addition(param_name):
                 add_parameter_window.root.destroy()
             else:
                 add_parameter_window.root.focus()
@@ -613,13 +572,18 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
         parameter_name_combobox.bind("<Return>", custom_selection_handler)
         parameter_name_combobox.bind("<<ComboboxSelected>>", custom_selection_handler)
 
-    def __confirm_parameter_addition(self, param_name: str, fc_parameters: dict[str, float]) -> bool:
+    def __confirm_parameter_addition(self, param_name: str) -> bool:
+        """Confirm and process parameter addition."""
         if not param_name:
             messagebox.showerror(_("Invalid parameter name."), _("Parameter name can not be empty."))
             return False
+
         if param_name in self.local_filesystem.file_parameters[self.current_file]:
             messagebox.showerror(_("Invalid parameter name."), _("Parameter already exists, edit it instead"))
             return False
+
+        fc_parameters = {name: param.fc_value for name, param in self.parameters.items() if param.has_fc_value}
+
         if fc_parameters:
             if param_name in fc_parameters:
                 self.local_filesystem.file_parameters[self.current_file][param_name] = Par(fc_parameters[param_name], "")
@@ -644,77 +608,69 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
             )
         return False
 
-    def __on_parameter_value_change(self, event: tk.Event, current_file: str, param_name: str) -> None:
+    def __on_parameter_value_change(self, event: tk.Event, param: ArduPilotParameter) -> None:
+        """Handle changes to parameter values."""
         # Get the new value from the Entry widget
         new_value = event.widget.get_selected_key() if isinstance(event.widget, PairTupleCombobox) else event.widget.get()
-        try:
-            old_value = self.local_filesystem.file_parameters[current_file][param_name].value
-        except KeyError as e:
-            logging_critical(_("Parameter %s not found in the %s file: %s"), param_name, current_file, e, exc_info=True)
-            sys_exit(1)
         valid: bool = True
-        changed: bool = False
-        p: float = nan
+        value: float = nan
+
         # Check if the input is a valid float
         try:
-            p = float(new_value)  # type: ignore[arg-type] # workaround a mypy bug
-            changed = not is_within_tolerance(old_value, p)
-            param_metadata = self.local_filesystem.doc_dict.get(param_name, {})
-            p_min = param_metadata.get("min", None)
-            p_max = param_metadata.get("max", None)
-            if changed:
-                if p_min and p < p_min:
-                    msg = _("The value for {param_name} {p} should be greater than {p_min}\n")
+            value = float(new_value)  # type: ignore[arg-type] # workaround a mypy bug
+
+            # Check if value is valid with domain model
+            if not param.is_valid_value(value):
+                min_val = param.min_value
+                max_val = param.max_value
+
+                if min_val is not None and value < min_val:
+                    msg = _("The value for {param.name} {value} should be greater than {min_val}\n")
                     if not messagebox.askyesno(
                         _("Out-of-bounds Value"), msg.format(**locals()) + _("Use out-of-bounds value?"), icon="warning"
                     ):
                         valid = False
-                if p_max and p > p_max:
-                    msg = _("The value for {param_name} {p} should be smaller than {p_max}\n")
+
+                if max_val is not None and value > max_val:
+                    msg = _("The value for {param.name} {value} should be smaller than {max_val}\n")
                     if not messagebox.askyesno(
                         _("Out-of-bounds Value"), msg.format(**locals()) + _("Use out-of-bounds value?"), icon="warning"
                     ):
                         valid = False
         except ValueError:
-            # Optionally, you can handle the invalid value here, for example, by showing an error message
-            error_msg = _("The value for {param_name} must be a valid float.")
+            # Handle invalid value
+            error_msg = _("The value for {param.name} must be a valid float.")
             messagebox.showerror(_("Invalid Value"), error_msg.format(**locals()))
             valid = False
-        if valid:
-            if changed and not self.at_least_one_param_edited:
-                logging_debug(_("Parameter %s changed, will later ask if change(s) should be saved to file."), param_name)
-            self.at_least_one_param_edited = changed or self.at_least_one_param_edited
-            # Update the params dictionary with the new value
-            self.local_filesystem.file_parameters[current_file][param_name].value = p
-        else:
-            # Revert to the previous (valid) value
-            p = old_value
-        self.__update_new_value_entry_text(event.widget, p, self.local_filesystem.param_default_dict.get(param_name, None))
 
-    def __on_parameter_change_reason_change(self, event: tk.Event, current_file: str, param_name: str) -> None:
+        if valid and param.set_value(value):
+            logging_debug(_("Parameter %s changed, will later ask if change(s) should be saved to file."), param.name)
+            self.at_least_one_param_edited = True
+            # Update the corresponding file parameter
+            self.local_filesystem.file_parameters[self.current_file][param.name].value = value
+
+        # Update the entry widget
+        self.__update_new_value_entry_text(event.widget, param)
+
+    def __on_parameter_change_reason_change(self, event: tk.Event, param: ArduPilotParameter) -> None:
+        """Handle changes to parameter change reasons."""
         # Get the new value from the Entry widget
-        new_value = event.widget.get()
-        try:
-            changed = new_value != self.local_filesystem.file_parameters[current_file][param_name].comment and not (
-                new_value == "" and self.local_filesystem.file_parameters[current_file][param_name].comment is None
-            )
-        except KeyError as e:
-            logging_critical(
-                _("Parameter %s not found in the %s file %s: %s"), param_name, current_file, new_value, e, exc_info=True
-            )
-            sys_exit(1)
-        if changed and not self.at_least_one_param_edited:
+        new_comment = event.widget.get()
+
+        # Use domain model's set_comment method
+        if param.set_comment(new_comment):
             logging_debug(
                 _("Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to file."),
-                param_name,
-                self.local_filesystem.file_parameters[current_file][param_name].comment,
-                new_value,
+                param.name,
+                param.comment,
+                new_comment,
             )
-        self.at_least_one_param_edited = changed or self.at_least_one_param_edited
-        # Update the params dictionary with the new value
-        self.local_filesystem.file_parameters[current_file][param_name].comment = new_value
+            self.at_least_one_param_edited = True
+            # Update the corresponding file parameter comment
+            self.local_filesystem.file_parameters[self.current_file][param.name].comment = new_comment
 
     def get_upload_selected_params(self, current_file: str) -> dict[str, Par]:
+        """Get the parameters selected for upload."""
         selected_params = {}
         for param_name, checkbutton_state in self.upload_checkbutton_var.items():
             if checkbutton_state.get():
@@ -722,13 +678,16 @@ class ParameterEditorTable2(ScrollFrame):  # pylint: disable=too-many-ancestors
         return selected_params
 
     def generate_edit_widgets_focus_out(self) -> None:
+        """Generate focus out events for all entry widgets."""
         # Trigger the <FocusOut> event for all entry widgets to ensure all changes are processed
         for widget in self.view_port.winfo_children():
             if isinstance(widget, ttk.Entry):
                 widget.event_generate("<FocusOut>", when="now")
 
     def get_at_least_one_param_edited(self) -> bool:
+        """Get whether at least one parameter has been edited."""
         return self.at_least_one_param_edited
 
     def set_at_least_one_param_edited(self, value: bool) -> None:
+        """Set whether at least one parameter has been edited."""
         self.at_least_one_param_edited = value
