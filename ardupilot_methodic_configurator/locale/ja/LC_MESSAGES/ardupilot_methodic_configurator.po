@@ -567,7 +567,7 @@ msgid ""
 "command:\n"
 "    sudo adduser $USER dialout\n"
 "Then log out and log back in for the changes to take effect."
-msgstr ""
+msgstr "シリアルポートへのアクセスが拒否されました。これはLinuxシステムでよくあることです。\nこの問題を解決するには、次のコマンドでユーザーを'dialout'グループに追加してください：\n    sudo adduser $USER dialout\nその後、ログアウトして再度ログインすると変更が有効になります。"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:324
 msgid ""
@@ -4131,22 +4131,22 @@ msgid ""
 "\n"
 "Add it to other configuration step and change it there if you have a good "
 "reason to."
-msgstr ""
+msgstr "このパラメータはすでにこの設定ステップに対して正しい値を持っています。\nこの設定ステップの目的を損なうため、変更してはいけません。\n\n正当な理由がある場合は、他の設定ステップに追加してそこで変更してください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:376
 msgid ""
 "This parameter value has been derived from information you entered in the "
 "component editor window.\n"
 "You need to change the information on that window to update the value here.\n"
-msgstr ""
+msgstr "このパラメータ値はコンポーネントエディタウィンドウで入力した情報から導出されています。\nここでの値を更新するには、そのウィンドウで情報を変更する必要があります。\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:384
 msgid "Forced Parameter"
-msgstr ""
+msgstr "強制パラメータ"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:386
 msgid "Derived Parameter"
-msgstr ""
+msgstr "派生パラメータ"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:451
 msgid "{_param_name} Value: {_new_decimal_value}"
@@ -4399,7 +4399,7 @@ msgid ""
 "most closely resembles your vehicle's component setup to streamline the "
 "configuration process. The selected template will serve as a starting point "
 "for more detailed parameter configuration."
-msgstr ""
+msgstr "ArduPilotテンプレート概要 - ArduPilot Methodic Configuratorスイートのコンポーネント。このツールは、利用可能な機体テンプレートをユーザーフレンドリーなインターフェースで表示し、機体構成に最適なテンプレートを閲覧、比較、選択することができます。設定プロセスを効率化するために、あなたの機体のコンポーネント設定に最も近いテンプレートを選択してください。選択したテンプレートは、より詳細なパラメータ設定の出発点となります。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:63
 msgid "Show this usage popup again"

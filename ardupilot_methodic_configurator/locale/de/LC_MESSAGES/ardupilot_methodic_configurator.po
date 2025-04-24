@@ -578,7 +578,7 @@ msgid ""
 "command:\n"
 "    sudo adduser $USER dialout\n"
 "Then log out and log back in for the changes to take effect."
-msgstr ""
+msgstr "Zugriff auf den seriellen Port verweigert. Dies ist ein häufiges Problem unter Linux-Systemen.\nUm dieses Problem zu beheben, fügen Sie Ihren Benutzer zur 'dialout'-Gruppe mit folgendem Befehl hinzu:\n    sudo adduser $USER dialout\nMelden Sie sich danach ab und wieder an, damit die Änderungen wirksam werden."
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:324
 msgid ""
@@ -4314,22 +4314,22 @@ msgid ""
 "\n"
 "Add it to other configuration step and change it there if you have a good "
 "reason to."
-msgstr ""
+msgstr "Dieser Parameter hat bereits den korrekten Wert für diesen Konfigurationsschritt.\nSie dürfen ihn nicht ändern, da dies den Zweck dieses Konfigurationsschritts zunichte machen würde.\n\nFügen Sie ihn einem anderen Konfigurationsschritt hinzu und ändern Sie ihn dort, wenn Sie einen guten Grund dafür haben."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:376
 msgid ""
 "This parameter value has been derived from information you entered in the "
 "component editor window.\n"
 "You need to change the information on that window to update the value here.\n"
-msgstr ""
+msgstr "Dieser Parameterwert wurde aus Informationen abgeleitet, die Sie im Komponenten-Editor-Fenster eingegeben haben.\nSie müssen die Informationen in diesem Fenster ändern, um den Wert hier zu aktualisieren.\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:384
 msgid "Forced Parameter"
-msgstr ""
+msgstr "Erzwungener Parameter"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:386
 msgid "Derived Parameter"
-msgstr ""
+msgstr "Abgeleiteter Parameter"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:451
 msgid "{_param_name} Value: {_new_decimal_value}"
@@ -4586,7 +4586,7 @@ msgid ""
 "most closely resembles your vehicle's component setup to streamline the "
 "configuration process. The selected template will serve as a starting point "
 "for more detailed parameter configuration."
-msgstr ""
+msgstr "ArduPilot-Vorlagenübersicht - Eine Komponente der ArduPilot Methodic Configurator-Suite. Dieses Werkzeug präsentiert verfügbare Fahrzeugvorlagen in einer benutzerfreundlichen Oberfläche und ermöglicht Ihnen, diese zu durchsuchen, zu vergleichen und die am besten geeignete Vorlage für Ihre Fahrzeugkonfiguration auszuwählen. Wählen Sie eine Vorlage, die der Komponentenkonfiguration Ihres Fahrzeugs am ähnlichsten ist, um den Konfigurationsprozess zu vereinfachen. Die ausgewählte Vorlage dient als Ausgangspunkt für eine detailliertere Parameterkonfiguration."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:63
 msgid "Show this usage popup again"
