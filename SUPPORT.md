@@ -5,6 +5,8 @@ To help yourself, read the extensive documentation:
 * [Install instructions](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html) to know how to install and run it on your computer.
 * [README](https://ardupilot.github.io/MethodicConfigurator/) for a fast overview and to get you started for the first time.
 * Move your mouse over the the software GUI elements to see a brief tooltip description of what they do.
+* Try our AI chatbot trained on the entire ArduPilot documentation.
+  Click the "Ask AI" button in the [bottom right corner of the page](https://ardupilot.github.io/MethodicConfigurator/).
 * [Usecases](https://ardupilot.github.io/MethodicConfigurator/USECASES.html) to learn how to use the software in different scenarios.
 * [Usermanual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html) to understand how to generally use the software.
 * Configuration and tunning guides: [copter](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter.html),
