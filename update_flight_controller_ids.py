@@ -165,7 +165,7 @@ def create_dicts(  # pylint: disable=too-many-locals
         if (
             dirname.startswith(NON_FC_PREFIXES)
             or dirname.endswith(NON_FC_SUFIXES)
-            or mcu_series.lower().startswith(("stm32f1", "stm32f3"))
+            or mcu_series.lower().startswith(("stm32f1", "stm32f3", "stm32g4"))
             or (numeric_board_id == 1062 and dirname != "MatekL431")  # these AP_Periph are not an FC
         ):
             continue  # Skip IOMCU boards, AP_Periph boards, GPS boards
