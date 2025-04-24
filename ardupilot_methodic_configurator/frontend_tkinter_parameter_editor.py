@@ -657,7 +657,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         else:
             fc_parameters = {}
         # Re-populate the table with the new parameters
-        self.parameter_editor_table.repopulate(selected_file, fc_parameters, self.show_only_differences.get())
+        self.parameter_editor_table.repopulate(
+            selected_file, fc_parameters, self.show_only_differences.get(), self.gui_complexity
+        )
 
     def on_show_only_changed_checkbox_change(self) -> None:
         self.repopulate_parameter_table(self.current_file)
