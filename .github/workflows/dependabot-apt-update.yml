@@ -16,71 +16,124 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      
+
       - name: Check for apt package updates
+        id: check-updates
         run: |
           # Create a list of all pinned apt packages from github workflow files
-          grep -r "apt-get install" .github/workflows/ | grep -o "[a-zA-Z0-9\-\._+~:]*=[a-zA-Z0-9\.\-+~:]*" > pinned_apt_packages.txt
-          
+          # Exclude the current workflow file and ensure package names are not empty
+          grep -r "apt-get install" .github/workflows/ --exclude="dependabot-apt-update.yml" | grep -o "[a-zA-Z0-9_.:+~-]\+=[a-zA-Z0-9_.:+~-]\+" > pinned_apt_packages.txt
+
           # Create report file header
           echo "# Apt Package Update Report" > apt_update_report.md
           echo "Generated on $(date)" >> apt_update_report.md
           echo "" >> apt_update_report.md
-          
+
           if [ -s pinned_apt_packages.txt ]; then
             echo "Checking these pinned apt packages for updates:"
             cat pinned_apt_packages.txt
-            
+
             echo "## Pinned Packages" >> apt_update_report.md
             echo "" >> apt_update_report.md
             echo "| Package | Current Version | Latest Version | Update Available |" >> apt_update_report.md
             echo "|---------|----------------|---------------|-----------------|" >> apt_update_report.md
-            
+
             # Update apt database
             sudo apt-get update
-            
+
             updates_available=false
-            
+
             # Check each package for available updates
             while read package; do
               pkg_name=${package%=*}
               current_version=${package#*=}
+
+              # Skip empty package names
+              if [ -z "$pkg_name" ]; then
+                continue
+              fi
+
               available_version=$(apt-cache policy $pkg_name | grep Candidate | awk '{print $2}')
-              
+
               echo "Package: $pkg_name"
               echo "  Current pinned version: $current_version"
               echo "  Latest available version: $available_version"
               echo ""
-              
+
               if [ "$current_version" != "$available_version" ]; then
                 update_status="Yes"
                 updates_available=true
               else
                 update_status="No"
               fi
-              
+
               echo "| $pkg_name | $current_version | $available_version | $update_status |" >> apt_update_report.md
             done < pinned_apt_packages.txt
-            
+
             echo "" >> apt_update_report.md
             if [ "$updates_available" = true ]; then
               echo "## Action Required" >> apt_update_report.md
               echo "Please update the pinned versions in the workflow files to the latest available versions." >> apt_update_report.md
+              echo "updates_available=true" >> $GITHUB_OUTPUT
+              echo "Check complete. Manual update required for outdated packages."
             else
               echo "## No Action Required" >> apt_update_report.md
               echo "All pinned packages are up to date." >> apt_update_report.md
+              echo "updates_available=false" >> $GITHUB_OUTPUT
+              echo "Check complete. No manual update required."
             fi
-            
-            echo "Check complete. Manual update required for any outdated packages."
+
           else
-            echo "No pinned apt packages found in workflow files." 
+            echo "No pinned apt packages found in workflow files."
             echo "## No Pinned Packages Found" >> apt_update_report.md
             echo "No pinned apt packages were found in the workflow files." >> apt_update_report.md
+            echo "updates_available=false" >> $GITHUB_OUTPUT
           fi
-      
-      - name: Create issue for outdated packages
-        if: ${{ success() }}
-        uses: peter-evans/create-issue-from-file@v5.0.1 # v5.0.1
+
+      - name: Check for existing issues
+        id: check-issues
+        if: steps.check-updates.outputs.updates_available == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueTitle = 'Outdated apt packages in workflows';
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'dependencies,apt'
+            });
+
+            const existingIssue = issues.data.find(issue => issue.title === issueTitle);
+            if (existingIssue) {
+              console.log(`Found existing issue #${existingIssue.number}`);
+              core.exportVariable('ISSUE_NUMBER', existingIssue.number);
+              core.exportVariable('ISSUE_EXISTS', 'true');
+            } else {
+              console.log('No existing issue found');
+              core.exportVariable('ISSUE_EXISTS', 'false');
+            }
+
+      - name: Update existing issue
+        if: steps.check-updates.outputs.updates_available == 'true' && env.ISSUE_EXISTS == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const issueNumber = parseInt(process.env.ISSUE_NUMBER);
+            const content = fs.readFileSync('./apt_update_report.md', 'utf8');
+
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: content
+            });
+            console.log(`Updated issue #${issueNumber}`);
+
+      - name: Create new issue for outdated packages
+        if: steps.check-updates.outputs.updates_available == 'true' && env.ISSUE_EXISTS == 'false'
+        uses: peter-evans/create-issue-from-file@v5.0.1
         with:
           title: Outdated apt packages in workflows
           content-filepath: ./apt_update_report.md
