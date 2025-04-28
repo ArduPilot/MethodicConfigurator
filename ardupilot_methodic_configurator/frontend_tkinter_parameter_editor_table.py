@@ -379,7 +379,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         )
 
         # Function to show the appropriate error message
-        def show_parameter_error(_event: tk.Event) -> None:  # pylint: disable=unused-argument
+        def show_parameter_error(_event: tk.Event) -> None:
             if present_as_forced:
                 messagebox.showerror(_("Forced Parameter"), forced_error_msg)
             elif present_as_derived:
@@ -690,6 +690,30 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             # Revert to the previous (valid) value
             p = old_value
         self.__update_new_value_entry_text(event.widget, p, self.local_filesystem.param_default_dict.get(param_name, None))
+        self.__update_change_reason_entry_tooltip(param_name, p)
+
+    def __update_change_reason_entry_tooltip(self, param_name: str, param_value: float) -> None:
+        """Update the tooltip on the change reason entry with the current parameter value."""
+        value_str = format(param_value, ".6f").rstrip("0").rstrip(".")
+
+        # Find the change reason entry widget for this parameter
+        for widget in self.view_port.winfo_children():
+            if isinstance(widget, ttk.Entry) and widget.grid_info().get("column", 0) == 6:
+                # Get the parameter label in the same row
+                row = widget.grid_info().get("row")
+                for param_widget in self.view_port.winfo_children():
+                    if (
+                        isinstance(param_widget, ttk.Label)
+                        and param_widget.grid_info().get("column", 0) == 1
+                        and param_widget.grid_info().get("row") == row
+                        and param_widget.cget("text").strip() == param_name
+                    ):
+                        # Found the matching change reason entry, update its tooltip
+                        msg = _("Reason why {param_name} should change to {value_str}")
+                        show_tooltip(widget, msg.format(**locals()))
+                        return
+
+        logging_debug(_("Could not find change reason entry widget for parameter %s (%s)"), param_name, value_str)
 
     def __on_parameter_change_reason_change(self, event: tk.Event, current_file: str, param_name: str) -> None:
         # Get the new value from the Entry widget
