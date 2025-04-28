@@ -807,8 +807,8 @@ Follow these steps before the flight:
 
 1. On Ardupilot versions < 4.6.0 download the `advance-wp.lua` scripts from [ardupilot github repository](https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/advance-wp.lua), follow [Scripted MagFit flightpath generation](https://discuss.ardupilot.org/t/scripted-magfit-flightpath-generation/97536) and put it on the micro SDCard's `APM/scripts` folder.
 1. On Ardupilot versions >= 4.6.0 the script is already included.
-1. insert the SD-Card on the flight controller
-1. connect your flight controller to the PC
+1. Insert the SD-Card on the flight controller
+1. Connect your flight controller to the PC
 1. Make sure your PC has internet connection
 1. On *ArduPilot Methodic Configurator* select `24_inflight_magnetometer_fit_setup.param` on the *Current intermediate parameter file:* Combobox.
 1. When asked if you want to download the .lua script from internet answer yes.
@@ -827,9 +827,9 @@ Perform the MagFit figure-eight flight and land
 1. Load it into MAVExplorer using the command line: `MAVExplorer.py filename.bin` or into the [ArduPilot MAGFit in flight compass calibration](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) using an internet browser.
 1. Select the area where the multicopter performed the Figure eight (exclude the takeoff and landing flight sections)
 1. Perform the MagFit calculations. Save the tool-generated file as `25_inflight_magnetometer_fit_results.param` in your vehicle's intermediate parameter file directory.
-1. connect your flight controller to the PC
+1. Connect your flight controller to the PC
 1. On *ArduPilot Methodic Configurator* select `25_inflight_magnetometer_fit_results.param` on the *Current intermediate parameter file:* Combobox.
-1. When asked *Should the FC values now be copied to the 25_inflight_magnetometer_fit_results.param file?* select `Yes`.
+1. When asked *Should the FC values now be copied to the 25_inflight_magnetometer_fit_results.param file?* select `No`.
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. Close *ArduPilot Methodic Configurator*
 
