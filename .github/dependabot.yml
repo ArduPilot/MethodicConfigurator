@@ -9,16 +9,6 @@ updates:
       include: "scope"
     open-pull-requests-limit: 10
 
-  - package-ecosystem: "pip"
-    directory: "/.github/workflows"
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-    allow:
-      - dependency-type: "all"
-
   - package-ecosystem: "github-actions"
     directory: "/.github/workflows"
     schedule:
