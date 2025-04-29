@@ -3,6 +3,13 @@ rem SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.
 rem
 rem SPDX-License-Identifier: GPL-3.0-or-later
 
+echo WARNING: This script should only be run by ArduPilot methodic configurator developers.
+echo Normal users should use https://ardupilot.github.io/MethodicConfigurator/INSTALL.html instead.
+choice /C YN /M "Do you want to proceed? (Y/N)"
+if errorlevel 2 goto :skip_uninstall
+if errorlevel 1 goto :do_install
+
+:do_install
 rem Check if Python 3 is installed
 where python3 >nul 2>&1
 if %errorlevel% neq 0 (
