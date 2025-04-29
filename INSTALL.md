@@ -82,6 +82,12 @@ ardupilot_methodic_configurator
 
 Follow the Linux installation instructions above.
 
+You might need to also do:
+
+```bash
+brew install uv python-tk@3.9
+```
+
 ## Install *Mission Planner* software on a PC or Mac
 
 1. Download and install [Mission Planner](https://firmware.ardupilot.org/Tools/MissionPlanner/).
