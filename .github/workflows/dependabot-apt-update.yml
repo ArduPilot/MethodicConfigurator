@@ -93,7 +93,7 @@ jobs:
       - name: Check for existing issues
         id: check-issues
         if: steps.check-updates.outputs.updates_available == 'true'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const issueTitle = 'Outdated apt packages in workflows';
@@ -116,7 +116,7 @@ jobs:
 
       - name: Update existing issue
         if: steps.check-updates.outputs.updates_available == 'true' && env.ISSUE_EXISTS == 'true'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
