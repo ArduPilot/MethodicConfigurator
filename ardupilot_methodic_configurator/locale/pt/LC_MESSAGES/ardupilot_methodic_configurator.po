@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-04-23 15:49+0000\n"
+"POT-Creation-Date: 2025-05-03 14:18+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -573,7 +573,13 @@ msgid ""
 "command:\n"
 "    sudo adduser $USER dialout\n"
 "Then log out and log back in for the changes to take effect."
-msgstr "Permissão negada ao aceder à porta série. Isto é comum em sistemas Linux.\nPara corrigir este problema, adicione o seu utilizador ao grupo 'dialout' com o seguinte comando:\n    sudo adduser $USER dialout\nDepois termine a sessão e volte a iniciar sessão para que as alterações tenham efeito."
+msgstr ""
+"Permissão negada ao aceder à porta série. Isto é comum em sistemas Linux.\n"
+"Para corrigir este problema, adicione o seu utilizador ao grupo 'dialout' "
+"com o seguinte comando:\n"
+"    sudo adduser $USER dialout\n"
+"Depois termine a sessão e volte a iniciar sessão para que as alterações "
+"tenham efeito."
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:324
 msgid ""
@@ -4257,14 +4263,23 @@ msgid ""
 "\n"
 "Add it to other configuration step and change it there if you have a good "
 "reason to."
-msgstr "Este parâmetro já tem o valor correto para esta etapa de configuração.\nNão deve alterá-lo, pois isso iria contrariar o propósito desta etapa de configuração.\n\nAdicione-o a outra etapa de configuração e altere-o lá se tiver uma boa razão para tal."
+msgstr ""
+"Este parâmetro já tem o valor correto para esta etapa de configuração.\n"
+"Não deve alterá-lo, pois isso iria contrariar o propósito desta etapa de "
+"configuração.\n"
+"\n"
+"Adicione-o a outra etapa de configuração e altere-o lá se tiver uma boa "
+"razão para tal."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:376
 msgid ""
 "This parameter value has been derived from information you entered in the "
 "component editor window.\n"
 "You need to change the information on that window to update the value here.\n"
-msgstr "O valor deste parâmetro foi derivado da informação que introduziu na janela de edição de componentes.\nPrecisa de alterar a informação nessa janela para atualizar o valor aqui.\n"
+msgstr ""
+"O valor deste parâmetro foi derivado da informação que introduziu na janela "
+"de edição de componentes.\n"
+"Precisa de alterar a informação nessa janela para atualizar o valor aqui.\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:384
 msgid "Forced Parameter"
@@ -4380,11 +4395,19 @@ msgstr ""
 "Parâmetro %s alterado, perguntará mais tarde se a(s) alteração(ões) devem "
 "ser salvas no arquivo."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:703
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:712
+msgid "Reason why {param_name} should change to {value_str}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:716
+msgid "Could not find change reason entry widget for parameter %s (%s)"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:727
 msgid "Parameter %s not found in the %s file %s: %s"
 msgstr "Parâmetro %s não encontrado no arquivo %s %s: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:708
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:732
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if "
 "change(s) should be saved to file."
@@ -4529,7 +4552,15 @@ msgid ""
 "most closely resembles your vehicle's component setup to streamline the "
 "configuration process. The selected template will serve as a starting point "
 "for more detailed parameter configuration."
-msgstr "Visão Geral dos Modelos ArduPilot - Um componente da suite ArduPilot Methodic Configurator. Esta ferramenta apresenta os modelos de veículos disponíveis numa interface amigável, permitindo-lhe navegar, comparar e selecionar o modelo mais adequado para a configuração do seu veículo. Selecione um modelo que mais se assemelhe à configuração de componentes do seu veículo para simplificar o processo de configuração. O modelo selecionado servirá como ponto de partida para uma configuração mais detalhada de parâmetros."
+msgstr ""
+"Visão Geral dos Modelos ArduPilot - Um componente da suite ArduPilot "
+"Methodic Configurator. Esta ferramenta apresenta os modelos de veículos "
+"disponíveis numa interface amigável, permitindo-lhe navegar, comparar e "
+"selecionar o modelo mais adequado para a configuração do seu veículo. "
+"Selecione um modelo que mais se assemelhe à configuração de componentes do "
+"seu veículo para simplificar o processo de configuração. O modelo "
+"selecionado servirá como ponto de partida para uma configuração mais "
+"detalhada de parâmetros."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:63
 msgid "Show this usage popup again"
