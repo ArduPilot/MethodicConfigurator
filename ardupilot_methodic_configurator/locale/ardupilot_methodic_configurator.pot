@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-04-23 15:49+0000\n"
+"POT-Creation-Date: 2025-05-03 14:18+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3668,12 +3668,22 @@ msgid "Parameter %s changed, will later ask if change(s) should be saved to file
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:703
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:712
+msgid "Reason why {param_name} should change to {value_str}"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:716
+msgid "Could not find change reason entry widget for parameter %s (%s)"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:727
 msgid "Parameter %s not found in the %s file %s: %s"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:708
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:732
 msgid "Parameter %s change reason changed from %s to %s, will later ask if change(s) should be saved to file."
 msgstr ""
 

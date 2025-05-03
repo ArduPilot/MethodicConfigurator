@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2025-04-23 15:49+0000\n"
+"POT-Creation-Date: 2025-05-03 14:18+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -567,7 +567,13 @@ msgid ""
 "command:\n"
 "    sudo adduser $USER dialout\n"
 "Then log out and log back in for the changes to take effect."
-msgstr "シリアルポートへのアクセスが拒否されました。これはLinuxシステムでよくあることです。\nこの問題を解決するには、次のコマンドでユーザーを'dialout'グループに追加してください：\n    sudo adduser $USER dialout\nその後、ログアウトして再度ログインすると変更が有効になります。"
+msgstr ""
+"シリアルポートへのアクセスが拒否されました。これはLinuxシステムでよくあること"
+"です。\n"
+"この問題を解決するには、次のコマンドでユーザーを'dialout'グループに追加してく"
+"ださい：\n"
+"    sudo adduser $USER dialout\n"
+"その後、ログアウトして再度ログインすると変更が有効になります。"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:324
 msgid ""
@@ -4131,14 +4137,21 @@ msgid ""
 "\n"
 "Add it to other configuration step and change it there if you have a good "
 "reason to."
-msgstr "このパラメータはすでにこの設定ステップに対して正しい値を持っています。\nこの設定ステップの目的を損なうため、変更してはいけません。\n\n正当な理由がある場合は、他の設定ステップに追加してそこで変更してください。"
+msgstr ""
+"このパラメータはすでにこの設定ステップに対して正しい値を持っています。\n"
+"この設定ステップの目的を損なうため、変更してはいけません。\n"
+"\n"
+"正当な理由がある場合は、他の設定ステップに追加してそこで変更してください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:376
 msgid ""
 "This parameter value has been derived from information you entered in the "
 "component editor window.\n"
 "You need to change the information on that window to update the value here.\n"
-msgstr "このパラメータ値はコンポーネントエディタウィンドウで入力した情報から導出されています。\nここでの値を更新するには、そのウィンドウで情報を変更する必要があります。\n"
+msgstr ""
+"このパラメータ値はコンポーネントエディタウィンドウで入力した情報から導出され"
+"ています。\n"
+"ここでの値を更新するには、そのウィンドウで情報を変更する必要があります。\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:384
 msgid "Forced Parameter"
@@ -4252,11 +4265,19 @@ msgid ""
 msgstr ""
 "パラメータ%sが変更されました。後で変更をファイルに保存するか尋ねられます。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:703
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:712
+msgid "Reason why {param_name} should change to {value_str}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:716
+msgid "Could not find change reason entry widget for parameter %s (%s)"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:727
 msgid "Parameter %s not found in the %s file %s: %s"
 msgstr "パラメータ%sが%sファイル%sに見つかりません: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:708
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:732
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if "
 "change(s) should be saved to file."
@@ -4399,7 +4420,13 @@ msgid ""
 "most closely resembles your vehicle's component setup to streamline the "
 "configuration process. The selected template will serve as a starting point "
 "for more detailed parameter configuration."
-msgstr "ArduPilotテンプレート概要 - ArduPilot Methodic Configuratorスイートのコンポーネント。このツールは、利用可能な機体テンプレートをユーザーフレンドリーなインターフェースで表示し、機体構成に最適なテンプレートを閲覧、比較、選択することができます。設定プロセスを効率化するために、あなたの機体のコンポーネント設定に最も近いテンプレートを選択してください。選択したテンプレートは、より詳細なパラメータ設定の出発点となります。"
+msgstr ""
+"ArduPilotテンプレート概要 - ArduPilot Methodic Configuratorスイートのコンポー"
+"ネント。このツールは、利用可能な機体テンプレートをユーザーフレンドリーなイン"
+"ターフェースで表示し、機体構成に最適なテンプレートを閲覧、比較、選択すること"
+"ができます。設定プロセスを効率化するために、あなたの機体のコンポーネント設定"
+"に最も近いテンプレートを選択してください。選択したテンプレートは、より詳細な"
+"パラメータ設定の出発点となります。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:63
 msgid "Show this usage popup again"

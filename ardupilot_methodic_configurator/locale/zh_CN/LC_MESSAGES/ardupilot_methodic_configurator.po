@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-04-23 15:49+0000\n"
+"POT-Creation-Date: 2025-05-03 14:18+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -547,7 +547,11 @@ msgid ""
 "command:\n"
 "    sudo adduser $USER dialout\n"
 "Then log out and log back in for the changes to take effect."
-msgstr "访问串口时被拒绝。这在Linux系统上很常见。\n要解决此问题，请使用以下命令将您的用户添加到'dialout'组：\n    sudo adduser $USER dialout\n然后注销并重新登录以使更改生效。"
+msgstr ""
+"访问串口时被拒绝。这在Linux系统上很常见。\n"
+"要解决此问题，请使用以下命令将您的用户添加到'dialout'组：\n"
+"    sudo adduser $USER dialout\n"
+"然后注销并重新登录以使更改生效。"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:324
 msgid ""
@@ -3975,14 +3979,20 @@ msgid ""
 "\n"
 "Add it to other configuration step and change it there if you have a good "
 "reason to."
-msgstr "此参数已经具有此配置步骤的正确值。\n您不得更改它，因为这会违背此配置步骤的目的。\n\n如果您有充分的理由更改它，请将其添加到其他配置步骤并在那里更改。"
+msgstr ""
+"此参数已经具有此配置步骤的正确值。\n"
+"您不得更改它，因为这会违背此配置步骤的目的。\n"
+"\n"
+"如果您有充分的理由更改它，请将其添加到其他配置步骤并在那里更改。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:376
 msgid ""
 "This parameter value has been derived from information you entered in the "
 "component editor window.\n"
 "You need to change the information on that window to update the value here.\n"
-msgstr "此参数值是根据您在组件编辑器窗口中输入的信息派生的。\n您需要在该窗口上更改信息以在此处更新值。\n"
+msgstr ""
+"此参数值是根据您在组件编辑器窗口中输入的信息派生的。\n"
+"您需要在该窗口上更改信息以在此处更新值。\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:384
 msgid "Forced Parameter"
@@ -4091,11 +4101,19 @@ msgid ""
 "Parameter %s changed, will later ask if change(s) should be saved to file."
 msgstr "参数 %s 已更改，稍后会询问是否将更改保存到文件。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:703
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:712
+msgid "Reason why {param_name} should change to {value_str}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:716
+msgid "Could not find change reason entry widget for parameter %s (%s)"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:727
 msgid "Parameter %s not found in the %s file %s: %s"
 msgstr "在 %s 文件 %s 中找不到参数 %s: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:708
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:732
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if "
 "change(s) should be saved to file."
@@ -4231,7 +4249,11 @@ msgid ""
 "most closely resembles your vehicle's component setup to streamline the "
 "configuration process. The selected template will serve as a starting point "
 "for more detailed parameter configuration."
-msgstr "ArduPilot模板概述 - ArduPilot系统化配置工具套件的组件。此工具以用户友好的界面呈现可用的飞行器模板，使您能够浏览、比较并选择最适合您的飞行器配置的模板。选择一个与您的飞行器组件设置最相近的模板，以简化配置过程。所选模板将作为更详细参数配置的起点。"
+msgstr ""
+"ArduPilot模板概述 - ArduPilot系统化配置工具套件的组件。此工具以用户友好的界面"
+"呈现可用的飞行器模板，使您能够浏览、比较并选择最适合您的飞行器配置的模板。选"
+"择一个与您的飞行器组件设置最相近的模板，以简化配置过程。所选模板将作为更详细"
+"参数配置的起点。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:63
 msgid "Show this usage popup again"
