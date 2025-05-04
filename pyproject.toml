@@ -79,6 +79,14 @@ scripts = [
     "bs4",
 ]
 
+win_dist = [
+    "wheel==0.45.1",
+    "pip==25.1.1",
+    "pywin32==310",
+    "pyinstaller==6.13.0",
+    "packaging==25.0",
+]
+
 [project.scripts]
 ardupilot_methodic_configurator = "ardupilot_methodic_configurator.__main__:main"
 extract_param_defaults = "ardupilot_methodic_configurator.extract_param_defaults:main"
