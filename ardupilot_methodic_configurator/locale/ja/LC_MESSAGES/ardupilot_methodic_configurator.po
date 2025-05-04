@@ -4267,11 +4267,11 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:712
 msgid "Reason why {param_name} should change to {value_str}"
-msgstr ""
+msgstr "{param_name}を{value_str}に変更する理由"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:716
 msgid "Could not find change reason entry widget for parameter %s (%s)"
-msgstr ""
+msgstr "パラメータ%s（%s）の変更理由入力ウィジェットが見つかりませんでした"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:727
 msgid "Parameter %s not found in the %s file %s: %s"
