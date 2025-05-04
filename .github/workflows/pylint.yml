@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
-      - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
+      - 'pyproject.toml' # Watch for changes in the pyproject.toml file
   workflow_dispatch:
   release:
     types: [published]
