@@ -4103,11 +4103,11 @@ msgstr "参数 %s 已更改，稍后会询问是否将更改保存到文件。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:712
 msgid "Reason why {param_name} should change to {value_str}"
-msgstr ""
+msgstr "{param_name}应更改为{value_str}的原因"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:716
 msgid "Could not find change reason entry widget for parameter %s (%s)"
-msgstr ""
+msgstr "找不到参数%s（%s）的更改原因输入控件"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:727
 msgid "Parameter %s not found in the %s file %s: %s"
