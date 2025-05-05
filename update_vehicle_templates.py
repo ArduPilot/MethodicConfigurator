@@ -17,13 +17,15 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, Union
 
 # Add parent directory to path to import from ardupilot_methodic_configurator
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ardupilot_methodic_configurator import __version__  # pylint: disable=wrong-import-position
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem  # pylint: disable=wrong-import-position
+from ardupilot_methodic_configurator.data_model_vehicle_components import (  # pylint: disable=wrong-import-position
+    ComponentDataModel,
+)
 
 
 def find_template_directories() -> list[Path]:
@@ -52,50 +54,6 @@ def find_template_directories() -> list[Path]:
     return leaf_dirs
 
 
-def update_vehicle_components(data: Union[dict[Any, Any], None]) -> dict[Any, Any]:  # pylint: disable=too-many-branches
-    if not data:
-        return {}
-    # Update old JSON files that do not have these new fields
-    if "Components" not in data:
-        data["Components"] = {}
-    if "Battery" not in data["Components"]:
-        data["Components"]["Battery"] = {}
-    if "Specifications" not in data["Components"]["Battery"]:
-        data["Components"]["Battery"]["Specifications"] = {}
-    if "Chemistry" not in data["Components"]["Battery"]["Specifications"]:
-        data["Components"]["Battery"]["Specifications"]["Chemistry"] = "Lipo"
-    if "Capacity mAh" not in data["Components"]["Battery"]["Specifications"]:
-        data["Components"]["Battery"]["Specifications"]["Capacity mAh"] = 0
-
-    # Update old JSON files that do not have these new "Frame.Specifications.TOW * Kg" fields
-    if "Frame" not in data["Components"]:
-        data["Components"]["Frame"] = {}
-    if "Specifications" not in data["Components"]["Frame"]:
-        data["Components"]["Frame"]["Specifications"] = {}
-    if "TOW min Kg" not in data["Components"]["Frame"]["Specifications"]:
-        data["Components"]["Frame"]["Specifications"]["TOW min Kg"] = 1
-    if "TOW max Kg" not in data["Components"]["Frame"]["Specifications"]:
-        data["Components"]["Frame"]["Specifications"]["TOW max Kg"] = 1
-
-    # Older versions used receiver instead of Receiver, rename it for consistency with other fields
-    if "GNSS receiver" in data["Components"]:
-        data["Components"]["GNSS Receiver"] = data["Components"].pop("GNSS receiver")
-
-    data["Program version"] = __version__
-
-    # Update old JSON files that do not have this new "Flight Controller.Specifications.MCU Series" field
-    if "Flight Controller" not in data["Components"]:
-        data["Components"]["Flight Controller"] = {}
-    if "Specifications" not in data["Components"]["Flight Controller"]:
-        data["Components"]["Flight Controller"] = {
-            "Product": data["Components"]["Flight Controller"]["Product"],
-            "Firmware": data["Components"]["Flight Controller"]["Firmware"],
-            "Specifications": {"MCU Series": "Unknown"},
-            "Notes": data["Components"]["Flight Controller"]["Notes"],
-        }
-    return data
-
-
 def process_template_directory(template_dir: Path) -> None:
     """Process a single template directory."""
     logging.info("\nProcessing template: %s", template_dir)
@@ -114,7 +72,15 @@ def process_template_directory(template_dir: Path) -> None:
             logging.error("Vehicle type mismatch in %s", template_dir)
             return
 
-        local_fs.vehicle_components = update_vehicle_components(local_fs.vehicle_components)
+        if not local_fs.vehicle_components or not isinstance(local_fs.vehicle_components, dict):
+            logging.error("Vehicle components are empty/invalid in %s", template_dir)
+            return
+
+        # Use ComponentDataModel to update the vehicle components structure
+        data_model = ComponentDataModel(local_fs.vehicle_components)
+        data_model.update_json_structure()
+        local_fs.vehicle_components = data_model.get_component_data()
+
         local_fs.save_vehicle_components_json_data(local_fs.vehicle_components, str(template_dir))
 
         existing_fc_params = list(local_fs.param_default_dict.keys()) if local_fs.param_default_dict else []
