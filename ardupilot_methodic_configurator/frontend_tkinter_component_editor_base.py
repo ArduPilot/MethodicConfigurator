@@ -56,7 +56,7 @@ def argument_parser() -> Namespace:
 
 
 # Type aliases to improve code readability
-ComponentPath = tuple[str, ...]
+ComponentPath = tuple[str, str, str]
 ComponentValue = Union[str, int, float, dict]
 EntryWidget = Union[ttk.Entry, ttk.Combobox]
 
@@ -64,10 +64,11 @@ EntryWidget = Union[ttk.Entry, ttk.Combobox]
 class ComponentDataModel:
     """
     A class to handle component data operations separate from UI logic.
+
     This improves testability by isolating data operations.
     """
 
-    def __init__(self, initial_data: dict):
+    def __init__(self, initial_data: dict) -> None:
         self.data = initial_data if initial_data else {"Components": {}, "Format version": 1}
 
     def get_component_data(self) -> dict:
@@ -299,6 +300,7 @@ class ComponentEditorWindowBase(BaseWindow):
     def add_widget(self, parent: tk.Widget, key: str, value: Union[dict, float], path: list[str]) -> None:
         """
         Adds a widget to the parent widget with the given key and value.
+
         Public version for better testability.
         """
         self._add_widget(parent, key, value, path)
@@ -476,7 +478,7 @@ class ComponentEditorWindowBase(BaseWindow):
         self,
         value: float,
         entry_frame: ttk.Frame,
-        _path: tuple[str, ...],
+        _path: ComponentPath,
         is_optional: bool = False,  # pylint: disable=unused-argument # noqa: ARG002
     ) -> Union[ttk.Entry, ttk.Combobox]:
         """Create an entry widget for input values."""

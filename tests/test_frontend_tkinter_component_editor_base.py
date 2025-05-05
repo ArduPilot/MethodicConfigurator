@@ -67,7 +67,7 @@ def editor_with_mocked_root() -> ComponentEditorWindowBase:
         editor.add_widget = lambda parent, key, value, path: editor._add_widget(parent, key, value, path)
 
         # Add helper methods for testing that bypass UI operations
-        def test_populate_frames():
+        def test_populate_frames() -> None:
             # This is a test-friendly version that doesn't involve actual UI widgets
             components = editor.data_model.get_component_data().get("Components", {})
             for key, value in components.items():
@@ -331,7 +331,7 @@ def test_add_widget_leaf(mock_label, mock_frame, editor_with_mocked_root) -> Non
 
     # We need to intercept calls to _add_widget to test leaf node handling
     # Since we can't directly modify private methods with property decorators
-    def mock_add_widget(parent, key, value, path):
+    def mock_add_widget(_parent, key, value, path) -> None:
         if isinstance(value, dict):
             # Skip non-leaf handling for this test
             return
@@ -425,7 +425,7 @@ def test_populate_frames_full_integration(mock_label, mock_frame, mock_labelfram
 
     # Since we can't replace the property-based methods directly,
     # we'll track structure through the _add_widget method instead
-    def mock_add_widget(parent, key, value, path):
+    def mock_add_widget(parent, key, value, path) -> None:
         if isinstance(value, dict):
             # This is a non-leaf call
             editor_with_mocked_root._add_widget_calls.append(("non_leaf", parent, key, value, path))
