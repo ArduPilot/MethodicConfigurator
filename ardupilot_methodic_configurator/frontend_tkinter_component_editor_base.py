@@ -55,6 +55,70 @@ def argument_parser() -> Namespace:
     # pylint: enable=duplicate-code
 
 
+# Type aliases to improve code readability
+ComponentPath = tuple[str, ...]
+ComponentValue = Union[str, int, float, dict]
+EntryWidget = Union[ttk.Entry, ttk.Combobox]
+
+
+class ComponentDataModel:
+    """
+    A class to handle component data operations separate from UI logic.
+    This improves testability by isolating data operations.
+    """
+
+    def __init__(self, initial_data: dict):
+        self.data = initial_data if initial_data else {"Components": {}, "Format version": 1}
+
+    def get_component_data(self) -> dict:
+        """Get the complete component data."""
+        return self.data
+
+    def set_component_value(self, path: ComponentPath, value: ComponentValue) -> None:
+        """Set a specific component value in the data structure."""
+        data_path = self.data["Components"]
+        for key in path[:-1]:
+            data_path = data_path[key]
+        data_path[path[-1]] = value
+
+    def get_component_value(self, path: ComponentPath) -> ComponentValue:
+        """Get a specific component value from the data structure."""
+        data_path = self.data["Components"]
+        for key in path:
+            if key not in data_path:
+                return {}
+            data_path = data_path[key]
+        return data_path
+
+    def update_from_entries(self, entries: dict[ComponentPath, str]) -> None:
+        """Update the data model from entry widget values."""
+        for path, value in entries.items():
+            # Process the value based on type
+            processed_value = value
+
+            if path[-1] != "Version":
+                try:
+                    processed_value = int(value)
+                except ValueError:
+                    try:
+                        processed_value = float(value)
+                    except ValueError:
+                        processed_value = str(value).strip()
+
+            # Navigate to the correct place in the data structure
+            current_data = self.data["Components"]
+            for key in path[:-1]:
+                current_data = current_data[key]
+
+            # Update the value
+            current_data[path[-1]] = processed_value
+
+    def ensure_format_version(self) -> None:
+        """Ensure the format version is set."""
+        if "Format version" not in self.data:
+            self.data["Format version"] = 1
+
+
 class ComponentEditorWindowBase(BaseWindow):
     """
     A class for editing JSON files in the ArduPilot methodic configurator.
@@ -67,23 +131,63 @@ class ComponentEditorWindowBase(BaseWindow):
     def __init__(self, version: str, local_filesystem: LocalFilesystem) -> None:
         super().__init__()
         self.local_filesystem = local_filesystem
+        self.version = version
 
-        self.root.title(_("Amilcar Lucas's - ArduPilot methodic configurator ") + version + _(" - Vehicle Component Editor"))
-        self.root.geometry("880x600")  # Set the window width
+        # Initialize the data model
+        raw_data = local_filesystem.load_vehicle_components_json_data(local_filesystem.vehicle_dir)
+        self.data_model = ComponentDataModel(raw_data)
 
+        # Backward compatibility for tests - provide direct access to data
+        self.data = self.data_model.data
+
+        # UI elements dictionary for easier access and testing
+        self.entry_widgets: dict[ComponentPath, EntryWidget] = {}
+
+        # Initialize UI if there's data to work with
+        if self._check_data():
+            self._setup_window()
+            self._setup_styles()
+            self._create_intro_frame()
+            self._create_scroll_frame()
+            self.update_json_data()
+            self._create_save_frame()
+            self._setup_template_manager()
+            self._check_show_usage_instructions()
+
+    # For backward compatibility with tests
+    def _set_component_value_and_update_ui(self, path: ComponentPath, value: str) -> None:
+        """Legacy method for backward compatibility with tests."""
+        self.set_component_value_and_update_ui(path, value)
+
+    # Add private method aliases for backward compatibility with tests
+    @property
+    def _ComponentEditorWindowBase__add_leaf_widget(self):
+        """For backward compatibility with tests using name mangling."""
+        return self._add_leaf_widget
+
+    @property
+    def _ComponentEditorWindowBase__add_non_leaf_widget(self):
+        """For backward compatibility with tests using name mangling."""
+        return self._add_non_leaf_widget
+
+    def _check_data(self) -> bool:
+        """Check if we have data to work with and prepare for UI setup."""
+        if len(self.data_model.get_component_data()) < 1:
+            # Schedule the window to be destroyed after the mainloop has started
+            self.root.after(100, self.root.destroy)
+            return False
+        return True
+
+    def _setup_window(self) -> None:
+        """Setup the main window properties."""
+        self.root.title(
+            _("Amilcar Lucas's - ArduPilot methodic configurator ") + self.version + _(" - Vehicle Component Editor")
+        )
+        self.root.geometry("880x600")
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-        self.data = local_filesystem.load_vehicle_components_json_data(local_filesystem.vehicle_dir)
-        if len(self.data) < 1:
-            # Schedule the window to be destroyed after the mainloop has started
-            self.root.after(100, self.root.destroy)  # Adjust the delay as needed
-            return
-
-        self.entry_widgets: dict[tuple, Union[ttk.Entry, ttk.Combobox]] = {}
-
-        intro_frame = ttk.Frame(self.main_frame)
-        intro_frame.pack(side=tk.TOP, fill="x", expand=False)
-
+    def _setup_styles(self) -> None:
+        """Configure the styles for UI elements."""
         style = ttk.Style()
         style.configure("bigger.TLabel", font=("TkDefaultFont", 13))
         style.configure("comb_input_invalid.TCombobox", fieldbackground="red")
@@ -93,29 +197,44 @@ class ComponentEditorWindowBase(BaseWindow):
         style.configure("Optional.TLabelframe", borderwidth=2)
         style.configure("Optional.TLabelframe.Label", foreground="gray")
 
+    def _create_intro_frame(self) -> None:
+        """Create the introduction frame with explanations and image."""
+        intro_frame = ttk.Frame(self.main_frame)
+        intro_frame.pack(side=tk.TOP, fill="x", expand=False)
+
+        self._add_explanation_text(intro_frame)
+        self._add_vehicle_image(intro_frame)
+
+    def _add_explanation_text(self, parent: ttk.Frame) -> None:
+        """Add explanation text to the parent frame."""
         explanation_text = _("Please configure properties of the vehicle components.\n")
         explanation_text += _("Labels for optional properties are displayed in gray text.\n")
         explanation_text += _("Scroll down to ensure that you do not overlook any properties.\n")
-        explanation_label = ttk.Label(intro_frame, text=explanation_text, wraplength=800, justify=tk.LEFT)
+
+        explanation_label = ttk.Label(parent, text=explanation_text, wraplength=800, justify=tk.LEFT)
         explanation_label.configure(style="bigger.TLabel")
         explanation_label.pack(side=tk.LEFT, padx=(10, 10), pady=(10, 0), anchor=tk.NW)
 
-        # Load the vehicle image and scale it down to image_height pixels in height
-        if local_filesystem.vehicle_image_exists():
-            image_label = self.put_image_in_label(intro_frame, local_filesystem.vehicle_image_filepath(), 100)
+    def _add_vehicle_image(self, parent: ttk.Frame) -> None:
+        """Add the vehicle image to the parent frame."""
+        if self.local_filesystem.vehicle_image_exists():
+            image_label = self.put_image_in_label(parent, self.local_filesystem.vehicle_image_filepath(), 100)
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
             show_tooltip(image_label, _("Replace the vehicle.jpg file in the vehicle directory to change the vehicle image."))
         else:
-            image_label = ttk.Label(intro_frame, text=_("Add a 'vehicle.jpg' image file to the vehicle directory."))
+            image_label = ttk.Label(parent, text=_("Add a 'vehicle.jpg' image file to the vehicle directory."))
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
 
+    def _create_scroll_frame(self) -> None:
+        """Create the scrollable frame for component widgets."""
         self.scroll_frame = ScrollFrame(self.main_frame)
         self.scroll_frame.pack(side="top", fill="both", expand=True)
 
-        self.update_json_data()
-
+    def _create_save_frame(self) -> None:
+        """Create the frame with save button."""
         save_frame = ttk.Frame(self.main_frame)
         save_frame.pack(side=tk.TOP, fill="x", expand=False)
+
         self.save_button = ttk.Button(
             save_frame, text=_("Save data and start configuration"), command=self.validate_and_save_component_json
         )
@@ -124,11 +243,12 @@ class ComponentEditorWindowBase(BaseWindow):
             _("Save component data to the vehicle_components.json file\nand start parameter value configuration and tuning."),
         )
         self.save_button.pack(pady=7)
-        if UsagePopupWindow.should_display("component_editor"):
-            self.root.after(10, self.__display_component_editor_usage_instructions(self.root))  # type: ignore[arg-type]
+
+    def _setup_template_manager(self) -> None:
+        """Set up the component template manager."""
 
         def update_data_callback(comp_name: str, template_data: dict) -> None:
-            self.data["Components"][comp_name] = template_data
+            self.data_model.get_component_data()["Components"][comp_name] = template_data
 
         self.template_manager = ComponentTemplateManager(
             self.root,
@@ -136,11 +256,16 @@ class ComponentEditorWindowBase(BaseWindow):
             self.get_component_data_from_gui,
             update_data_callback,
             self.derive_initial_template_name,
-            local_filesystem.save_component_to_system_templates,
+            self.local_filesystem.save_component_to_system_templates,
         )
 
-    @staticmethod
-    def __display_component_editor_usage_instructions(parent: tk.Tk) -> None:
+    def _check_show_usage_instructions(self) -> None:
+        """Check if usage instructions should be displayed."""
+        if UsagePopupWindow.should_display("component_editor"):
+            self.root.after(10, lambda: self._display_component_editor_usage_instructions(self.root))
+
+    def _display_component_editor_usage_instructions(self, parent: tk.Tk) -> None:
+        """Display usage instructions for the component editor."""
         usage_popup_window = BaseWindow(parent)
         style = ttk.Style()
 
@@ -165,15 +290,16 @@ class ComponentEditorWindowBase(BaseWindow):
             instructions_text,
         )
 
-    def update_json_data(self) -> None:  # should be overwritten in child classes
-        if "Format version" not in self.data:
-            self.data["Format version"] = 1
+    def update_json_data(self) -> None:
+        """Update JSON data and populate the UI."""
+        # Ensure format version is set
+        self.data_model.ensure_format_version()
+        # Populate the UI with data
+        self.populate_frames()
 
-    def _set_component_value_and_update_ui(self, path: tuple, value: str) -> None:
-        data_path = self.data["Components"]
-        for key in path[:-1]:
-            data_path = data_path[key]
-        data_path[path[-1]] = value
+    def set_component_value_and_update_ui(self, path: ComponentPath, value: str) -> None:
+        """Set a component value and update the UI to reflect it."""
+        self.data_model.set_component_value(path, value)
         entry = self.entry_widgets[path]
         entry.delete(0, tk.END)
         entry.insert(0, value)
@@ -181,11 +307,18 @@ class ComponentEditorWindowBase(BaseWindow):
 
     def populate_frames(self) -> None:
         """Populates the ScrollFrame with widgets based on the JSON data."""
-        if "Components" in self.data:
-            for key, value in self.data["Components"].items():
-                self._add_widget(self.scroll_frame.view_port, key, value, [])
+        components = self.data_model.get_component_data().get("Components", {})
+        for key, value in components.items():
+            self.add_widget(self.scroll_frame.view_port, key, value, [])
 
-    def _add_widget(self, parent: tk.Widget, key: str, value: Union[dict, float], path: list) -> None:
+    def add_widget(self, parent: tk.Widget, key: str, value: Union[dict, float], path: list[str]) -> None:
+        """
+        Adds a widget to the parent widget with the given key and value.
+        Public version for better testability.
+        """
+        self._add_widget(parent, key, value, path)
+
+    def _add_widget(self, parent: tk.Widget, key: str, value: Union[dict, float], path: list[str]) -> None:
         """
         Adds a widget to the parent widget with the given key and value.
 
@@ -197,11 +330,12 @@ class ComponentEditorWindowBase(BaseWindow):
 
         """
         if isinstance(value, dict):  # JSON non-leaf elements, add LabelFrame widget
-            self.__add_non_leaf_widget(parent, key, value, path)
+            self._add_non_leaf_widget(parent, key, value, path)
         else:  # JSON leaf elements, add Entry widget
-            self.__add_leaf_widget(parent, key, value, path)
+            self._add_leaf_widget(parent, key, value, path)
 
-    def __add_non_leaf_widget(self, parent: tk.Widget, key: str, value: dict, path: list) -> None:
+    def _add_non_leaf_widget(self, parent: tk.Widget, key: str, value: dict, path: list[str]) -> None:
+        """Add a non-leaf widget (frame containing other widgets) to the UI."""
         is_toplevel = parent == self.scroll_frame.view_port
         pady = 5 if is_toplevel else 3
 
@@ -226,14 +360,15 @@ class ComponentEditorWindowBase(BaseWindow):
         if description:
             show_tooltip(frame, description, position_below=False)
 
-        if is_toplevel and key in self.data.get("Components", {}):
+        if is_toplevel and key in self.data_model.get_component_data().get("Components", {}):
             self._add_template_controls(frame, key)
 
         for sub_key, sub_value in value.items():
             # recursively add child elements
             self._add_widget(frame, sub_key, sub_value, [*path, key])
 
-    def __add_leaf_widget(self, parent: tk.Widget, key: str, value: float, path: list) -> None:
+    def _add_leaf_widget(self, parent: tk.Widget, key: str, value: float, path: list[str]) -> None:
+        """Add a leaf widget (containing input controls) to the UI."""
         entry_frame = ttk.Frame(parent)
         entry_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
 
@@ -241,13 +376,12 @@ class ComponentEditorWindowBase(BaseWindow):
         description = _(description) if description else ""
 
         label = ttk.Label(entry_frame, text=_(key), foreground="gray" if is_optional else "black")
-
         label.pack(side=tk.LEFT)
 
         entry = self.add_entry_or_combobox(value, entry_frame, (*path, key), is_optional)
         entry.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 5))
 
-        # Store the entry widget in the entry_widgets dictionary for later retrieval
+        # Store the entry widget in the entry_widgets Dictionary for later retrieval
         self.entry_widgets[(*path, key)] = entry
 
         # Enhance tooltip for optional fields
@@ -273,7 +407,7 @@ class ComponentEditorWindowBase(BaseWindow):
         return ""
 
     def get_component_data_from_gui(self, component_name: str) -> dict[str, Any]:
-        """Save the current component configuration as a template."""
+        """Extract component data from GUI elements."""
         # Get fresh component data from the GUI elements instead of stored data
         component_data: dict[str, Any] = {}
 
@@ -305,48 +439,38 @@ class ComponentEditorWindowBase(BaseWindow):
         return component_data
 
     def validate_and_save_component_json(self) -> None:
-        """Saves the edited JSON data back to the file."""
+        """Validate and save the component JSON data."""
+        if self._confirm_component_properties():
+            self.save_component_json()
+
+    def _confirm_component_properties(self) -> bool:
+        """Show confirmation dialog for component properties."""
         confirm_message = _(
             "ArduPilot Methodic Configurator only operates correctly if all component properties are correct."
             " ArduPilot parameter values depend on the components used and their connections.\n\n"
             " Have you used the scrollbar on the right side of the window and "
             "entered the correct values for all components?"
         )
-        user_confirmation = messagebox.askyesno(_("Confirm that all component properties are correct"), confirm_message)
-
-        if not user_confirmation:
-            # User chose 'No', so return and do not save data
-            return
-
-        self.save_component_json()
+        return messagebox.askyesno(_("Confirm that all component properties are correct"), confirm_message)
 
     def save_component_json(self) -> None:
-        # User confirmed, proceed with saving the data
-        for path, entry in self.entry_widgets.items():
-            value: Union[str, int, float] = entry.get()
-            # Navigate through the nested dictionaries using the elements of the path
-            current_data = self.data["Components"]
-            for key in path[:-1]:
-                current_data = current_data[key]
+        """Save component JSON data to file."""
+        # Collect all entry values
+        entry_values = {path: entry.get() for path, entry in self.entry_widgets.items()}
 
-            if path[-1] != "Version":
-                try:
-                    value = int(value)
-                except ValueError:
-                    try:
-                        value = float(value)
-                    except ValueError:
-                        value = str(value).strip()
-
-            # Update the value in the data dictionary
-            current_data[path[-1]] = value
+        # Update the data model with entry values
+        self.data_model.update_from_entries(entry_values)
 
         # Save the updated data back to the JSON file
-        failed, msg = self.local_filesystem.save_vehicle_components_json_data(self.data, self.local_filesystem.vehicle_dir)
+        failed, msg = self.local_filesystem.save_vehicle_components_json_data(
+            self.data_model.get_component_data(), self.local_filesystem.vehicle_dir
+        )
+
         if failed:
             show_error_message(_("Error"), _("Failed to save data to file.") + "\n" + msg)
         else:
             logging_info(_("Vehicle component data saved successfully."))
+
         self.root.destroy()
 
     def on_closing(self) -> None:
@@ -367,15 +491,17 @@ class ComponentEditorWindowBase(BaseWindow):
         self,
         value: float,
         entry_frame: ttk.Frame,
-        _path: tuple[str, str, str],
+        _path: tuple[str, ...],
         is_optional: bool = False,  # pylint: disable=unused-argument # noqa: ARG002
     ) -> Union[ttk.Entry, ttk.Combobox]:
+        """Create an entry widget for input values."""
         entry = ttk.Entry(entry_frame)
         entry.insert(0, str(value))
         return entry
 
     @staticmethod
     def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
+        """Add component editor specific arguments to the parser."""
         parser.add_argument(
             "--skip-component-editor",
             action="store_true",
