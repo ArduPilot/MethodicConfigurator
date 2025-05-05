@@ -164,19 +164,17 @@ def test_add_entry_or_combobox(editor_with_mocked_root) -> None:  # pylint: disa
 
 
 def test_set_component_value_and_update_ui(editor_with_mocked_root) -> None:  # pylint: disable=redefined-outer-name
-    """Test the _set_component_value_and_update_ui method."""
+    """Test the set_component_value_and_update_ui method."""
     # Setup test data
     editor_with_mocked_root.data_model.data = {"Components": {"Motor": {"Type": "old_value"}}}
-    editor_with_mocked_root.data = editor_with_mocked_root.data_model.data  # Keep the reference in sync
     mock_entry = MagicMock()
     editor_with_mocked_root.entry_widgets = {("Motor", "Type"): mock_entry}
 
     # Call the method
-    editor_with_mocked_root._set_component_value_and_update_ui(("Motor", "Type"), "new_value")  # pylint: disable=protected-access
+    editor_with_mocked_root.set_component_value_and_update_ui(("Motor", "Type"), "new_value")
 
     # Assert data was updated
     assert editor_with_mocked_root.data_model.data["Components"]["Motor"]["Type"] == "new_value"
-    assert editor_with_mocked_root.data["Components"]["Motor"]["Type"] == "new_value"  # Verify backward compatibility
 
     # Assert UI was updated
     mock_entry.delete.assert_called_once_with(0, tk.END)
@@ -705,36 +703,6 @@ class TestComponentDataModel:
         del empty_data_model.data["Format version"]
         empty_data_model.ensure_format_version()
         assert empty_data_model.data["Format version"] == 1
-
-
-class TestBackwardCompatibilityMethods:
-    """Tests for backward compatibility methods and properties."""
-
-    def test_component_editor_backwards_compatibility(self, editor_with_mocked_root) -> None:
-        """Test that backward compatibility methods work correctly."""
-        # Test that the name-mangled methods are accessible through properties
-        assert editor_with_mocked_root._ComponentEditorWindowBase__add_leaf_widget == editor_with_mocked_root._add_leaf_widget
-        assert (
-            editor_with_mocked_root._ComponentEditorWindowBase__add_non_leaf_widget
-            == editor_with_mocked_root._add_non_leaf_widget
-        )
-
-    def test_set_component_value_and_update_ui_compatibility(self, editor_with_mocked_root) -> None:
-        """Test that _set_component_value_and_update_ui correctly calls set_component_value_and_update_ui."""
-        # Setup
-        original_method = editor_with_mocked_root.set_component_value_and_update_ui
-        editor_with_mocked_root.set_component_value_and_update_ui = MagicMock()
-
-        # Call the compatibility method
-        path = ("Motor", "Type")
-        value = "new_value"
-        editor_with_mocked_root._set_component_value_and_update_ui(path, value)
-
-        # Verify the public method was called with the same parameters
-        editor_with_mocked_root.set_component_value_and_update_ui.assert_called_once_with(path, value)
-
-        # Restore original method
-        editor_with_mocked_root.set_component_value_and_update_ui = original_method
 
 
 class TestComponentDataModelIntegration:

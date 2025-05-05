@@ -118,6 +118,10 @@ class ComponentDataModel:
         if "Format version" not in self.data:
             self.data["Format version"] = 1
 
+    def set_configuration_template(self, template_name: str) -> None:
+        """Set the configuration template name in the data."""
+        self.data["Configuration template"] = template_name
+
 
 class ComponentEditorWindowBase(BaseWindow):
     """
@@ -137,9 +141,6 @@ class ComponentEditorWindowBase(BaseWindow):
         raw_data = local_filesystem.load_vehicle_components_json_data(local_filesystem.vehicle_dir)
         self.data_model = ComponentDataModel(raw_data)
 
-        # Backward compatibility for tests - provide direct access to data
-        self.data = self.data_model.data
-
         # UI elements dictionary for easier access and testing
         self.entry_widgets: dict[ComponentPath, EntryWidget] = {}
 
@@ -153,22 +154,6 @@ class ComponentEditorWindowBase(BaseWindow):
             self._create_save_frame()
             self._setup_template_manager()
             self._check_show_usage_instructions()
-
-    # For backward compatibility with tests
-    def _set_component_value_and_update_ui(self, path: ComponentPath, value: str) -> None:
-        """Legacy method for backward compatibility with tests."""
-        self.set_component_value_and_update_ui(path, value)
-
-    # Add private method aliases for backward compatibility with tests
-    @property
-    def _ComponentEditorWindowBase__add_leaf_widget(self):
-        """For backward compatibility with tests using name mangling."""
-        return self._add_leaf_widget
-
-    @property
-    def _ComponentEditorWindowBase__add_non_leaf_widget(self):
-        """For backward compatibility with tests using name mangling."""
-        return self._add_non_leaf_widget
 
     def _check_data(self) -> bool:
         """Check if we have data to work with and prepare for UI setup."""
