@@ -110,7 +110,6 @@ jobs:
           subject-path: windows/Output/*.exe
           subject-name: 'ardupilot_methodic_configurator'
           push-to-registry: false
-          # Use the built-in token instead of secrets
           github-token: ${{ github.token }}
           show-summary: true
 
@@ -137,6 +136,13 @@ jobs:
           $exePath = Get-ChildItem -Filter *.exe | Select-Object -First 1 -ExpandProperty FullName
           "exe_path=$exePath" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
+      - name: Generate SLSA3 Provenance
+        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.10.0
+        with:
+          base64-subjects: ${{ steps.hash.outputs.hashes }}
+          upload-assets: true
+          provenance-name: 'ardupilot_methodic_configurator_provenance.intoto.jsonl'
+
       - name: Install SLSA Verifier
         run: |
           $version = "v2.7.0"
@@ -151,50 +157,53 @@ jobs:
             exit 1
           }
 
-      - name: Generate SLSA provenance
-        uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # v2.1.0
-        with:
-          path: ${{ steps.exe_path.outputs.exe_path }}
-
-      - name: Debug SLSA provenance files
+      - name: Download SLSA Provenance
         run: |
-          Write-Host "Looking for provenance files..."
-          $files = Get-ChildItem -Path ".", "..", "../.." -Recurse -Filter "*.intoto.jsonl" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
-          Write-Host "Found provenance files:"
-          $files | ForEach-Object { Write-Host $_ }
+          Write-Host "Downloading SLSA provenance..."
+          # Get the provenance URL from the previous step if it's available
+          $provenanceUrl = "${{ steps.slsa-gen.outputs.provenance-url }}"
+          if (-not $provenanceUrl) {
+            Write-Host "No direct provenance URL, checking artifacts..."
+            # Look for the provenance file in the workflow artifacts
+            $provenanceFile = Get-ChildItem -Path "." -Recurse -Filter "*provenance*.intoto.jsonl" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+            if ($provenanceFile) {
+              Write-Host "Found local provenance file: $provenanceFile"
+              Copy-Item -Path $provenanceFile -Destination "provenance.intoto.jsonl"
+            } else {
+              Write-Host "::warning::No provenance file found. SLSA verification may fail."
+            }
+          } else {
+            Write-Host "Downloading from URL: $provenanceUrl"
+            Invoke-WebRequest -Uri $provenanceUrl -OutFile "provenance.intoto.jsonl"
+          }
 
       - name: Verify SLSA Provenance
-        continue-on-error: true
         run: |
-          # Find the provenance file correctly
-          $provenance = Get-ChildItem -Path "." -Filter "*.intoto.jsonl" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
-          if (-not $provenance) {
-            # Try a broader search but exclude test files
-            $provenance = Get-ChildItem -Path ".", "..", "../.." -Recurse -Filter "*.intoto.jsonl" -ErrorAction SilentlyContinue |
-              Where-Object { $_.FullName -notlike "*\testdata\*" -and $_.FullName -notlike "*\test\*" } |
-              Select-Object -First 1 -ExpandProperty FullName
-          }
-          if (-not $provenance) {
-            Write-Host "::warning::SLSA provenance file not found, skipping verification"
-            exit 0  # Don't fail the build, but warn about it
-          }
-
-          Write-Host "Found provenance file at: $provenance"
-
-          # Verify provenance for each executable
           cd windows/Output
+          $verificationSuccess = $true
+
           Get-ChildItem -Filter *.exe | ForEach-Object {
-            Write-Host "Verifying SLSA provenance for $_..."
-            & "../../slsa-verifier.exe" verify-artifact $_.FullName `
-              --provenance-path "$provenance" `
+            Write-Host "Verifying SLSA3 provenance for $_..."
+
+            $hash = (Get-FileHash -Algorithm SHA256 $_).Hash.ToLower()
+
+            & "../../slsa-verifier.exe" verify-artifact `
+              --artifact-path $_.FullName `
+              --provenance-path "../../provenance.intoto.jsonl" `
               --source-uri "github.com/${{ github.repository }}" `
-              --builder-id "https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/heads/main"
+              --source-tag "${{ github.ref_name }}"
 
             if ($LASTEXITCODE -ne 0) {
-              Write-Host "::warning::SLSA verification failed for $_, but continuing"
+              Write-Host "::error::SLSA verification failed for $_"
+              $verificationSuccess = $false
             } else {
-              Write-Host "✅ SLSA provenance verified for $_"
+              Write-Host "✅ SLSA3 provenance verified for $_"
             }
+          }
+
+          if (-not $verificationSuccess) {
+            Write-Host "::error::SLSA verification failed for one or more artifacts"
+            exit 1
           }
 
       - name: Sign artifacts
@@ -206,7 +215,6 @@ jobs:
           }
 
       - name: Verify signatures
-        continue-on-error: true
         run: |
           cd windows/Output
           # Verify each signature
@@ -252,7 +260,8 @@ jobs:
           name: signatures
           path: |
             windows/Output/*.sig
-            *.intoto.jsonl
+            windows/Output/*.bundle
+            provenance.intoto.jsonl
           retention-days: 7
 
       - name: Archive build
@@ -269,7 +278,9 @@ jobs:
           automatic_release_tag: "latest"
           prerelease: true
           title: "Development Build"
-          files: windows/Output/*.*
+          files: |
+            windows/Output/*.*
+            provenance.intoto.jsonl
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Release
@@ -277,5 +288,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           prerelease: false
-          files: windows/Output/*.*
+          files: |
+            windows/Output/*.*
+            provenance.intoto.jsonl
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
