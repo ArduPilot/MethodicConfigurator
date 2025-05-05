@@ -36,7 +36,7 @@ class VehicleComponents:
     def __init__(self, save_component_to_system_templates: bool = False) -> None:
         self.vehicle_components_json_filename = "vehicle_components.json"
         self.vehicle_components_schema_filename = "vehicle_components_schema.json"
-        self.vehicle_components: Union[None, dict[Any, Any]] = None
+        self.vehicle_components: Union[None, dict[str, Any]] = None
         self.schema: Union[None, dict[Any, Any]] = None
         self.save_component_to_system_templates = save_component_to_system_templates
 
