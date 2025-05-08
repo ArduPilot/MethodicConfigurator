@@ -228,64 +228,77 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
     def update_json_data(self) -> None:
         super().update_json_data()
+
+        # Get current data from the data model
+        data = self.data_model.get_component_data()
+
         # To update old JSON files that do not have these new fields
-        if "Components" not in self.data:
-            self.data["Components"] = {}
-        if "Battery" not in self.data["Components"]:
-            self.data["Components"]["Battery"] = {}
-        if "Specifications" not in self.data["Components"]["Battery"]:
-            self.data["Components"]["Battery"]["Specifications"] = {}
-        if "Chemistry" not in self.data["Components"]["Battery"]["Specifications"]:
-            self.data["Components"]["Battery"]["Specifications"]["Chemistry"] = "Lipo"
-        if "Capacity mAh" not in self.data["Components"]["Battery"]["Specifications"]:
-            self.data["Components"]["Battery"]["Specifications"]["Capacity mAh"] = 0
+        if "Components" not in data:
+            data["Components"] = {}
+
+        if "Battery" not in data["Components"]:
+            data["Components"]["Battery"] = {}
+
+        if "Specifications" not in data["Components"]["Battery"]:
+            data["Components"]["Battery"]["Specifications"] = {}
+
+        if "Chemistry" not in data["Components"]["Battery"]["Specifications"]:
+            data["Components"]["Battery"]["Specifications"]["Chemistry"] = "Lipo"
+
+        if "Capacity mAh" not in data["Components"]["Battery"]["Specifications"]:
+            data["Components"]["Battery"]["Specifications"]["Capacity mAh"] = 0
 
         # To update old JSON files that do not have these new "Frame.Specifications.TOW * Kg" fields
-        if "Frame" not in self.data["Components"]:
-            self.data["Components"]["Frame"] = {}
-        if "Specifications" not in self.data["Components"]["Frame"]:
-            self.data["Components"]["Frame"]["Specifications"] = {}
-        if "TOW min Kg" not in self.data["Components"]["Frame"]["Specifications"]:
-            self.data["Components"]["Frame"]["Specifications"]["TOW min Kg"] = 1
-        if "TOW max Kg" not in self.data["Components"]["Frame"]["Specifications"]:
-            self.data["Components"]["Frame"]["Specifications"]["TOW max Kg"] = 1
+        if "Frame" not in data["Components"]:
+            data["Components"]["Frame"] = {}
+
+        if "Specifications" not in data["Components"]["Frame"]:
+            data["Components"]["Frame"]["Specifications"] = {}
+
+        if "TOW min Kg" not in data["Components"]["Frame"]["Specifications"]:
+            data["Components"]["Frame"]["Specifications"]["TOW min Kg"] = 1
+
+        if "TOW max Kg" not in data["Components"]["Frame"]["Specifications"]:
+            data["Components"]["Frame"]["Specifications"]["TOW max Kg"] = 1
 
         # Older versions used receiver instead of Receiver, rename it for consistency with other fields
-        if "GNSS receiver" in self.data["Components"]:
-            self.data["Components"]["GNSS Receiver"] = self.data["Components"].pop("GNSS receiver")
+        if "GNSS receiver" in data["Components"]:
+            data["Components"]["GNSS Receiver"] = data["Components"].pop("GNSS receiver")
 
-        self.data["Program version"] = __version__
+        data["Program version"] = __version__
 
         # To update old JSON files that do not have this new "Flight Controller.Specifications.MCU Series" field
-        if "Flight Controller" not in self.data["Components"]:
-            self.data["Components"]["Flight Controller"] = {}
-        if "Specifications" not in self.data["Components"]["Flight Controller"]:
-            self.data["Components"]["Flight Controller"] = {
-                "Product": self.data["Components"]["Flight Controller"]["Product"],
-                "Firmware": self.data["Components"]["Flight Controller"]["Firmware"],
+        if "Flight Controller" not in data["Components"]:
+            data["Components"]["Flight Controller"] = {}
+
+        if "Specifications" not in data["Components"]["Flight Controller"]:
+            data["Components"]["Flight Controller"] = {
+                "Product": data["Components"]["Flight Controller"]["Product"],
+                "Firmware": data["Components"]["Flight Controller"]["Firmware"],
                 "Specifications": {"MCU Series": "Unknown"},
-                "Notes": self.data["Components"]["Flight Controller"]["Notes"],
+                "Notes": data["Components"]["Flight Controller"]["Notes"],
             }
 
     def set_vehicle_type_and_version(self, vehicle_type: str, version: str) -> None:
-        self._set_component_value_and_update_ui(("Flight Controller", "Firmware", "Type"), vehicle_type)
+        """Set the vehicle type and version in the data model."""
+        self.set_component_value_and_update_ui(("Flight Controller", "Firmware", "Type"), vehicle_type)
         if version:
-            self._set_component_value_and_update_ui(("Flight Controller", "Firmware", "Version"), version)
+            self.set_component_value_and_update_ui(("Flight Controller", "Firmware", "Version"), version)
 
     def set_fc_manufacturer(self, manufacturer: str) -> None:
         if manufacturer and manufacturer not in (_("Unknown"), "ArduPilot"):
-            self._set_component_value_and_update_ui(("Flight Controller", "Product", "Manufacturer"), manufacturer)
+            self.set_component_value_and_update_ui(("Flight Controller", "Product", "Manufacturer"), manufacturer)
 
     def set_fc_model(self, model: str) -> None:
         if model and model not in (_("Unknown"), "MAVLink"):
-            self._set_component_value_and_update_ui(("Flight Controller", "Product", "Model"), model)
+            self.set_component_value_and_update_ui(("Flight Controller", "Product", "Model"), model)
 
     def set_mcu_series(self, mcu: str) -> None:
         if mcu:
-            self._set_component_value_and_update_ui(("Flight Controller", "Specifications", "MCU Series"), mcu)
+            self.set_component_value_and_update_ui(("Flight Controller", "Specifications", "MCU Series"), mcu)
 
     def set_vehicle_configuration_template(self, configuration_template: str) -> None:
-        self.data["Configuration template"] = configuration_template
+        self.data_model.set_configuration_template(configuration_template)
 
     @staticmethod
     def reverse_key_search(
@@ -335,11 +348,11 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             gps1_connection_type = gnss_receiver_connection[str(gps1_type)].get("type")
             gps1_connection_protocol = gnss_receiver_connection[str(gps1_type)].get("protocol")
             if gps1_connection_type is None:
-                self.data["Components"]["GNSS Receiver"]["FC Connection"]["Type"] = "None"
-                self.data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"] = "None"
+                self.data_model.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
+                self.data_model.set_component_value(("GNSS Receiver", "FC Connection", "Protocol"), "None")
             elif gps1_connection_type == "serial":
                 # GNSS connection type will be detected later in set_protocol_and_connection_from_fc_parameters()
-                self.data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"] = gps1_connection_protocol
+                self.data_model.set_component_value(("GNSS Receiver", "FC Connection", "Protocol"), gps1_connection_protocol)
             elif gps1_connection_type == "can":
                 if (
                     "CAN_D1_PROTOCOL" in fc_parameters
@@ -347,28 +360,28 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     and "CAN_P1_DRIVER" in fc_parameters
                     and fc_parameters["CAN_P1_DRIVER"] == 1
                 ):
-                    self.data["Components"]["GNSS Receiver"]["FC Connection"]["Type"] = "CAN1"
+                    self.data_model.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "CAN1")
                 elif (
                     "CAN_D2_PROTOCOL" in fc_parameters
                     and fc_parameters["CAN_D2_PROTOCOL"] == 1
                     and "CAN_P2_DRIVER" in fc_parameters
                     and fc_parameters["CAN_P2_DRIVER"] == 2
                 ):
-                    self.data["Components"]["GNSS Receiver"]["FC Connection"]["Type"] = "CAN2"
+                    self.data_model.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "CAN2")
                 else:
                     logging_error(
                         _("Invalid CAN_Dx_PROTOCOL %s and CAN_Px_DRIVER %s for GNSS Receiver"),
                         fc_parameters.get("CAN_D1_PROTOCOL"),
                         fc_parameters.get("CAN_P1_DRIVER"),
                     )
-                    self.data["Components"]["GNSS Receiver"]["FC Connection"]["Type"] = "None"
-                self.data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"] = gps1_connection_protocol
+                    self.data_model.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
+                self.data_model.set_component_value(("GNSS Receiver", "FC Connection", "Protocol"), gps1_connection_protocol)
             else:
                 logging_error("Invalid GNSS connection type %s", gps1_connection_type)
-                self.data["Components"]["GNSS Receiver"]["FC Connection"]["Type"] = "None"
+                self.data_model.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
         else:
             logging_error("GPS_TYPE %u not in gnss_receiver_connection", gps1_type)
-            self.data["Components"]["GNSS Receiver"]["FC Connection"]["Type"] = "None"
+            self.data_model.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
 
     def __set_serial_type_and_protocol_from_fc_parameters(self, fc_parameters: dict[str, float]) -> bool:
         if "RC_PROTOCOLS" in fc_parameters:
@@ -378,7 +391,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 # rc_bit is the number of the bit that is set
                 rc_bit = str(int(log2(rc_protocols_nr)))
                 protocol = rc_protocols_dict[rc_bit].get("protocol")
-                self.data["Components"]["RC Receiver"]["FC Connection"]["Protocol"] = protocol
+                self.data_model.set_component_value(("RC Receiver", "FC Connection", "Protocol"), protocol)
 
         rc = 1
         telem = 1
@@ -398,18 +411,22 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             if component is None:
                 continue
             if component == "RC Receiver" and rc == 1:
-                self.data["Components"][component]["FC Connection"]["Type"] = serial  # only one RC supported
+                self.data_model.set_component_value(("RC Receiver", "FC Connection", "Type"), serial)  # only one RC supported
                 rc += 1
             elif component == "Telemetry" and telem == 1:
-                self.data["Components"][component]["FC Connection"]["Type"] = serial  # only one telemetry supported
-                self.data["Components"][component]["FC Connection"]["Protocol"] = protocol
+                self.data_model.set_component_value(
+                    ("Telemetry", "FC Connection", "Type"), serial
+                )  # only one telemetry supported
+                self.data_model.set_component_value(("Telemetry", "FC Connection", "Protocol"), protocol)
                 telem += 1
             elif component == "GNSS Receiver" and gnss == 1:
-                self.data["Components"][component]["FC Connection"]["Type"] = serial  # only one GNSS supported
+                self.data_model.set_component_value(
+                    ("GNSS Receiver", "FC Connection", "Type"), serial
+                )  # only one GNSS supported
                 gnss += 1
             elif component == "ESC" and esc == 1:
-                self.data["Components"][component]["FC Connection"]["Type"] = serial  # only one ESC supported
-                self.data["Components"][component]["FC Connection"]["Protocol"] = protocol
+                self.data_model.set_component_value(("ESC", "FC Connection", "Type"), serial)  # only one ESC supported
+                self.data_model.set_component_value(("ESC", "FC Connection", "Protocol"), protocol)
                 esc += 1
 
         return esc >= 2
@@ -425,29 +442,34 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         # if any element of main_out_functions is in [33, 34, 35, 36] then ESC is connected to main_out
         if any(servo_function in {33, 34, 35, 36} for servo_function in main_out_functions):
-            self.data["Components"]["ESC"]["FC Connection"]["Type"] = "Main Out"
+            self.data_model.set_component_value(("ESC", "FC Connection", "Type"), "Main Out")
         else:
-            self.data["Components"]["ESC"]["FC Connection"]["Type"] = "AIO"
-        self.data["Components"]["ESC"]["FC Connection"]["Protocol"] = doc["MOT_PWM_TYPE"]["values"][str(mot_pwm_type)]
+            self.data_model.set_component_value(("ESC", "FC Connection", "Type"), "AIO")
+
+        self.data_model.set_component_value(
+            ("ESC", "FC Connection", "Protocol"), doc["MOT_PWM_TYPE"]["values"][str(mot_pwm_type)]
+        )
 
     def __set_battery_type_and_protocol_from_fc_parameters(self, fc_parameters: dict) -> None:
         if "BATT_MONITOR" in fc_parameters:
             batt_monitor = int(fc_parameters["BATT_MONITOR"])
-            self.data["Components"]["Battery Monitor"]["FC Connection"]["Type"] = batt_monitor_connection[
-                str(batt_monitor)
-            ].get("type")
-            self.data["Components"]["Battery Monitor"]["FC Connection"]["Protocol"] = batt_monitor_connection[
-                str(batt_monitor)
-            ].get("protocol")
+            self.data_model.set_component_value(
+                ("Battery Monitor", "FC Connection", "Type"), batt_monitor_connection[str(batt_monitor)].get("type")
+            )
+            self.data_model.set_component_value(
+                ("Battery Monitor", "FC Connection", "Protocol"), batt_monitor_connection[str(batt_monitor)].get("protocol")
+            )
 
     def __set_motor_poles_from_fc_parameters(self, fc_parameters: dict) -> None:
         if "MOT_PWM_TYPE" in fc_parameters:
             mot_pwm_type_str = str(fc_parameters["MOT_PWM_TYPE"])
             if mot_pwm_type_str in mot_pwm_type_dict and mot_pwm_type_dict[mot_pwm_type_str].get("is_dshot", False):
                 if "SERVO_BLH_POLES" in fc_parameters:
-                    self.data["Components"]["Motors"]["Specifications"]["Poles"] = fc_parameters["SERVO_BLH_POLES"]
+                    self.data_model.set_component_value(
+                        ("Motors", "Specifications", "Poles"), fc_parameters["SERVO_BLH_POLES"]
+                    )
             elif "SERVO_FTW_MASK" in fc_parameters and fc_parameters["SERVO_FTW_MASK"] and "SERVO_FTW_POLES" in fc_parameters:
-                self.data["Components"]["Motors"]["Specifications"]["Poles"] = fc_parameters["SERVO_FTW_POLES"]
+                self.data_model.set_component_value(("Motors", "Specifications", "Poles"), fc_parameters["SERVO_FTW_POLES"])
 
     def update_esc_protocol_combobox_entries(self, esc_connection_type: str) -> None:
         """Updates the ESC Protocol combobox entries based on the selected ESC Type."""
@@ -728,6 +750,11 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     continue
                 if "FC Connection" in path and "Type" in path:
                     if value in fc_serial_connection and value not in {"CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4", "None"}:
+                        # Get data from the data model
+                        battery_monitor_protocol = self.data_model.get_component_value(
+                            ("Battery Monitor", "FC Connection", "Protocol")
+                        )
+
                         if path[0] in {"Telemetry", "RC Receiver"} and fc_serial_connection[value] in {
                             "Telemetry",
                             "RC Receiver",
@@ -735,7 +762,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                             entry.configure(style="comb_input_valid.TCombobox")
                             continue  # Allow telemetry and RC Receiver connections using the same SERIAL port
                         if (
-                            self.data["Components"]["Battery Monitor"]["FC Connection"]["Protocol"] == "ESC"
+                            battery_monitor_protocol == "ESC"
                             and path[0] in {"Battery Monitor", "ESC"}
                             and fc_serial_connection[value] in {"Battery Monitor", "ESC"}
                         ):
