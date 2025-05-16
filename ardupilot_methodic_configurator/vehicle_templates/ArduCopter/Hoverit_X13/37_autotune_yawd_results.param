@@ -1,0 +1,5 @@
+ATC_ACCEL_Y_MAX,91119.27
+ATC_ANG_YAW_P,14.52818
+ATC_RAT_YAW_D,0.003508  # we did not do yaw d autotune due to beign a big craft
+ATC_RAT_YAW_I,0.090505
+ATC_RAT_YAW_P,0.905049

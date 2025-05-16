@@ -1,0 +1,4 @@
+AHRS_ORIENTATION,6  # Point 90* left  in the direction of travel Yaw 270*right
+BRD_HEAT_TARG,45  # Reset to default after offline IMU temperature calibration
+LOG_BITMASK,145118  # Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now
+LOG_DISARMED,0  # Log disarmed was only required for offline IMU temperature calibration

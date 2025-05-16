@@ -1,0 +1,16 @@
+BRD_SAFETY_DEFLT,1  # Use a safety switch
+COMPASS_ORIENT,0  # none
+COMPASS_ORIENT2,0  # none
+GPS_AUTO_SWITCH,1  # because in our region lots of gps jamming and spoofing happening
+GPS_GNSS_MODE,69  # BEST OVER INDIA , AND KEEPING LESS
+GPS_POS1_X,0.3  # Here4 GPS1is 30 cm front cg and fc
+GPS_POS1_Y,-0.16  # Here4 GPS1  IS 16cm left of fc and cg
+GPS_POS1_Z,-0.2  # Here4 GPS1  IS 20cm CM ABOVE OF AUTOPILOT AXIS
+GPS_POS2_X,0.3  # Here4 GPS2 is 30 cm front cg and fc
+GPS_POS2_Y,0.16  # Here4 GPS2  IS 16cm right of fc and cg
+GPS_POS2_Z,-0.2  # Here4 GPS2  IS 20cm CM ABOVE OF AUTOPILOT AXIS
+GPS_TYPE,9  # Defined in component editor
+NTF_LED_TYPES,32  # DRONECAN LED
+SERIAL3_PROTOCOL,-1  # NO SERIAL 3
+SERIAL4_PROTOCOL,-1  # NO SERIAL 4
+WPNAV_RADIUS,1000  # 10 METER RADIUS TO WAYPOINT IS GOOD KEEING INERTIA IN MIND

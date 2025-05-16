@@ -1,0 +1,15 @@
+BATT_AMP_PERVLT,0  # WE TAKE DATA FROM ESC TELEMETRY, so this can stay at 0
+BATT_ARM_VOLT,55.2  # Do not allow arming below this voltage
+BATT_CAPACITY,160000  # Total battery capacity specified in the component editor
+BATT_CRT_MAH,0  # WE DONT HAVE MAH READING SENSOR
+BATT_CRT_VOLT,49.7  # (Critical voltage + 0.0) x no. of cells
+BATT_FS_CRT_ACT,1  # Land ASAP
+BATT_FS_LOW_ACT,2  # Return and land at home or rally point
+BATT_FS_VOLTSRC,0  # AS PER OUR PREVIOUS DRONE SETUP
+BATT_I2C_BUS,4  # Selected in component editor window
+BATT_LOW_MAH,0  # WE DONT HAVE A MAH SENSOR
+BATT_LOW_VOLT,50.4  # (Low voltage + 0.0) x no. of cells
+BATT_MONITOR,9  # Selected in component editor window
+BATT_VOLT_MULT,0  # WE TAKE DATA FROM ESC TELEMETRY, so this can stay at 0
+MOT_BAT_VOLT_MAX,58.8  # (Max voltage + 0.0) x no. of cells
+MOT_BAT_VOLT_MIN,49.7  # (Critical voltage + 0.0) x no. of cells

@@ -1,0 +1,15 @@
+ATC_ANG_PIT_P,4.5
+ATC_ANG_RLL_P,5.2
+ATC_ANG_YAW_P,4.5
+ATC_INPUT_TC,0.3  # i want it to be softer
+ATC_RAT_PIT_D,0.003619  # .007239/2 ( as per docs there was osciallion in pitch rate outs
+ATC_RAT_PIT_I,0.046944  # .093889/2
+ATC_RAT_PIT_P,0.046944  # .093889/2
+ATC_RAT_RLL_D,0.00309  # = 0.690593 * (0.0036 default)
+ATC_RAT_RLL_I,0.095506  # = 1.061015 * (0.135 default)
+ATC_RAT_RLL_P,0.095506  # = 1.061015 * (0.135 default)
+ATC_RAT_YAW_D,0  # = 1 * (0 default)
+ATC_RAT_YAW_I,0.025  # = 2.514026 * (0.018 default)
+ATC_RAT_YAW_P,0.25  # = 2.514026 * (0.18 default)
+PSC_POSXY_P,1
+PSC_POSZ_P,1
