@@ -1,0 +1,8 @@
+INS_GYRO_FILTER,20  # as per initial parameter config
+INS_HNTCH_ATT,30  # just enough to filter the noise created by the motors/propellers
+INS_HNTCH_BW,11  # just enough to filter the noise created by the motors/propellers
+INS_HNTCH_FM_RAT,0.7  # go below the hover frequency
+INS_HNTCH_FREQ,43  # central hover frequency noise peak
+INS_HNTCH_HMNCS,3  # Only the first two harmonics are above -50 dB after filtering
+INS_HNTCH_OPTS,2  # ESC telemetry provides pre motor RPM data, use it
+INS_HNTCH_REF,1  # use ESC-telemetry RPM data

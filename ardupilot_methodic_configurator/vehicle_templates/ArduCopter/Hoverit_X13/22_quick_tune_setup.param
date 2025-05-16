@@ -1,0 +1,14 @@
+QUIK_AUTO_FILTER,1
+QUIK_AUTO_SAVE,0
+QUIK_AXES,7
+QUIK_DOUBLE_TIME,10
+QUIK_ENABLE,1  # Use VTOL-Quicktune lua script to estimate a good PID starting values
+QUIK_GAIN_MARGIN,70  # because we got too much oscialltion on 60% reduction
+QUIK_MAX_REDUCE,25  # vehicle osciallates a bit
+QUIK_OPTIONS,0
+QUIK_OSC_SMAX,3  # as per docs 60kgs mtow
+QUIK_RC_FUNC,300  # the script uses this value to listen to RC switch
+QUIK_RP_PI_RATIO,1
+QUIK_Y_PI_RATIO,10
+QUIK_YAW_D_MAX,0.01
+QUIK_YAW_P_MAX,0.5

@@ -1,0 +1,8 @@
+MAGH_ALT_DELTA,20  # Height difference INCREASED BECAUSE LARGE COPTER AND MORE CURRENT CHANGE ETC
+MAGH_B,1.4  # Geometric factor for the width of the eight
+MAGH_CMD,117  # Script_Time command value for identification of the script
+MAGH_COUNT,6  # Number of times the drone repeats the eight
+MAGH_LOG_ENABLE,1  # Activates the logging of the MAGH.Active message
+MAGH_MIN_SPEED,6  # Starting speed for the mission; slowly adjusts to the general speed in auto-missions
+MAGH_NUM_WP,18  # Number of waypoints from which the eight is built
+MAGH_USE_LOITER,1  # Sets a Loiter_unlimited command at the beginning of the mission to check the generated waypoints

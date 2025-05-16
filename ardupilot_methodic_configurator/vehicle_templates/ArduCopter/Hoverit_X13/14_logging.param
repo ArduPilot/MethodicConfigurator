@@ -1,0 +1,6 @@
+INS_LOG_BAT_CNT,512  # the default of 1024 causes some problems with https://firmware.ardupilot.org/Tools/WebTools/FilterReview/
+INS_LOG_BAT_MASK,0  # Use acc and gyro batch logging on F4 processors, gyro raw logging on others
+INS_LOG_BAT_OPT,0  # Use pre and post filters acc and gyro batch logging on F4 processors, pre-post gyro raw logging on others
+INS_RAW_LOG_OPT,9  # Use pre and post filters acc and gyro batch logging on F4 processors, pre-post gyro raw logging on others
+LOG_BITMASK,145118  # Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now
+LOG_FILE_DSRMROT,1  # One .bin log file per flight, not per battery/reboot

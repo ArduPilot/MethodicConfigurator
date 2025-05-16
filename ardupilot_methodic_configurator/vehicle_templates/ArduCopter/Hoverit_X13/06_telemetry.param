@@ -1,0 +1,2 @@
+BRD_SER1_RTSCTS,2  # we have no RTS/CTS pins connected
+SERIAL1_BAUD,57  # MK32 telemetry baud.

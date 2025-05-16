@@ -1,0 +1,10 @@
+ATC_RAT_PIT_D,0.005067  # Tuned in nil winds
+ATC_RAT_PIT_I,0.148442  # Tuned in nil winds
+ATC_RAT_PIT_P,0.148442  # Tuned in nil winds
+ATC_RAT_RLL_D,0.007578  # Tuned in nil winds
+ATC_RAT_RLL_I,0.135159  # Tuned in nil winds
+ATC_RAT_RLL_P,0.135159  # Tuned in nil winds
+ATC_RAT_YAW_D,0.01  # Tuned in nil winds
+ATC_RAT_YAW_FLTD,10  # Tuned in nil winds
+ATC_RAT_YAW_I,0.05  # Tuned in nil winds
+ATC_RAT_YAW_P,0.5  # Tuned in nil winds

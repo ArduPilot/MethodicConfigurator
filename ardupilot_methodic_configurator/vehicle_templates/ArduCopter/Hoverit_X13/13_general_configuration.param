@@ -1,0 +1,18 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+AUTO_OPTIONS,0  # I JUST WANT TO ARM THE DORNE IN AUTO MODE
+BRD_HEAT_TARG,48  # Operate at a constant IMU temperature
+BRD_RTC_TZ_MIN,330  # INDIA time zone
+EK3_SRC1_POSZ,1  # FROM BARO
+FENCE_TYPE,3  # RANGE AND max altitude
+FS_EKF_ACTION,2  # I WOULD WANT IT TO BE STABILIZED IN ALT MODE AND NOT LAND IN NO MAN LAND
+INS_ACCEL_FILTER,10  # AS PER OUR PRECIOUS SAME SETUP DRONE
+INS_POS1_X,0
+INS_POS1_Y,0
+INS_POS2_X,0
+INS_POS2_Y,0
+LAND_ALT_LOW,500  # I WANT IT TO SLOW DOWN LATER ENOUGH SPACE AND DUAL GPS
+RTL_ALT,10000  # This vehicle WILL FLY IN TERRAIN AREA AT TIMES
+RTL_LOIT_TIME,5000  # PERFECT IN MY CASE
+SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation
+SERIAL7_PROTOCOL,-1  # WE DONT USE
