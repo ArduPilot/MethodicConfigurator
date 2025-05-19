@@ -6,6 +6,7 @@ Hence the two main use cases are:
 
 1. [Use the *ArduPilot Methodic Configurator* software for the first time](#use-the-ardupilot-methodic-configurator-software-for-the-first-time)
    to create a vehicle configuration based on a pre-existing template
+   [![YouTube tutorial](images/Video2_Thumbnail_yt.png)](https://www.youtube.com/watch?v=9n4Wh6wBuHQ&list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9)
 1. [Use the *ArduPilot Methodic Configurator* software after having created a vehicle from a template](#use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template)
    to edit existing vehicle configuration files to configure and tune a vehicle
 
