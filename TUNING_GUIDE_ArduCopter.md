@@ -213,7 +213,7 @@ Follow [mounting the autopilot](https://ardupilot.org/copter/docs/common-mountin
 ### 6.1.1 Use ArduPilot Methodic Configurator to edit the parameter file and upload it to the flight controller
 
 1. The parameter file for this particular step is `04_board_orientation.param` other steps will use other parameter files
-  ![parameter file editor window](images/App_screenshot_Parameter_file_editor_and_uploader4.png)
+  ![parameter file editor window](images/App_screenshot_Parameter_file_editor_and_uploader4_4.png)
 1. On *ArduPilot Methodic Configurator* select `04_board_orientation.param` on the *Current intermediate parameter file:* Combobox.
 1. Read the documentation links inside the `04_board_orientation.param documentation`
 1. **Add** or **Del**ete parameters if necessary, using the respective GUI buttons
