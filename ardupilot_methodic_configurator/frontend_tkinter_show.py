@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from platform import system as platform_system
 from tkinter import messagebox, ttk
+from typing import Optional
 
 from ardupilot_methodic_configurator import _
 
@@ -41,38 +42,57 @@ def show_no_connection_error(_error_string: str) -> None:
     show_error_message(_("No Connection to the Flight Controller"), error_message.format(**locals()))
 
 
-def show_tooltip(widget: tk.Widget, text: str, position_below: bool = True) -> None:
-    def enter(_event: tk.Event) -> None:
+class Tooltip:
+    """
+    A tooltip class for displaying tooltips on widgets.
+
+    Creates a tooltip that appears when the mouse hovers over a widget and disappears when the mouse leaves the widget.
+    """
+
+    def __init__(self, widget: tk.Widget, text: str, position_below: bool = True) -> None:
+        self.widget = widget
+        self.text = text
+        self.tooltip = None
+        self.position_below = position_below
+
+        # Bind the <Enter> and <Leave> events to show and hide the tooltip
+        self.widget.bind("<Enter>", self.show)
+        self.widget.bind("<Leave>", self.hide)
+
+    def show(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
+        self.tooltip = tk.Toplevel(self.widget)
+
+        if platform_system() == "Darwin":  # macOS
+            try:
+                self.tooltip.tk.call(
+                    "::tk::unsupported::MacWindowStyle",
+                    "style",
+                    self.tooltip._w,  # type: ignore[attr-defined] # noqa: SLF001 # pylint: disable=protected-access
+                    "help",
+                    "noActivates",
+                )
+                self.tooltip.configure(bg="#ffffe0")
+            except AttributeError:  # Catches protected member access error
+                self.tooltip.wm_attributes("-alpha", 1.0)  # Ensure opacity
+                self.tooltip.wm_attributes("-topmost", True)  # Keep on top # noqa: FBT003
+                self.tooltip.configure(bg="#ffffe0")
+        else:
+            self.tooltip.wm_overrideredirect(boolean=True)
+        tooltip_label = ttk.Label(
+            self.tooltip, text=self.text, background="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT
+        )
+        tooltip_label.pack()
+
         # Calculate the position of the tooltip based on the widget's position
-        x = widget.winfo_rootx() + min(widget.winfo_width() // 2, 100)
-        y = widget.winfo_rooty() + (widget.winfo_height() if position_below else -10)
-        tooltip.geometry(f"+{x}+{y}")
-        tooltip.deiconify()
+        x = self.widget.winfo_rootx() + min(self.widget.winfo_width() // 2, 100)
+        y = self.widget.winfo_rooty() + (self.widget.winfo_height() if self.position_below else -10)
+        self.tooltip.geometry(f"+{x}+{y}")
 
-    def leave(_event: tk.Event) -> None:
-        tooltip.withdraw()
+    def hide(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
+        if self.tooltip:
+            self.tooltip.destroy()
+            self.tooltip = None
 
-    tooltip = tk.Toplevel(widget)
-    if platform_system() == "Darwin":  # macOS
-        try:
-            tooltip.tk.call(
-                "::tk::unsupported::MacWindowStyle",
-                "style",
-                tooltip._w,  # type: ignore[attr-defined] # noqa: SLF001 # pylint: disable=protected-access
-                "help",
-                "noActivates",
-            )
-            tooltip.configure(bg="#ffffe0")
-        except AttributeError:  # Catches protected member access error
-            tooltip.wm_attributes("-alpha", 1.0)  # Ensure opacity
-            tooltip.wm_attributes("-topmost", True)  # Keep on top # noqa: FBT003
-            tooltip.configure(bg="#ffffe0")
-    else:
-        tooltip.wm_overrideredirect(boolean=True)
-    tooltip_label = ttk.Label(tooltip, text=text, background="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT)
-    tooltip_label.pack()
-    tooltip.withdraw()  # Initially hide the tooltip
 
-    # Bind the <Enter> and <Leave> events to show and hide the tooltip
-    widget.bind("<Enter>", enter)
-    widget.bind("<Leave>", leave)
+def show_tooltip(widget: tk.Widget, text: str, position_below: bool = True) -> None:
+    _tooltip = Tooltip(widget, text, position_below)
