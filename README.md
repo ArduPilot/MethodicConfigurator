@@ -23,6 +23,12 @@ Here is a presentation explaining it:
 
 [![ArduPilot methodic configurator power point presentation](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/ArduPilot_Methodic_Configurator_presentation.png?raw=true)](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/ArduPilot_Methodic_Configurator.pdf?raw=true)
 
+And some YouTube video tutorials from the [AMC YouTube Channel](https://www.youtube.com/@AmilcardoCarmoLucas):
+
+[![YouTube tutorial](images/Video1_Thumbnail_yt.png)](https://www.youtube.com/watch?v=47RjQ_GarvE&list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9)
+[![YouTube tutorial](images/Video2_Thumbnail_yt.png)](https://www.youtube.com/watch?v=9n4Wh6wBuHQ&list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9)
+
+
 Let's compare it with the traditional tool used to configure ArduPilot: a generalist Ground Control Station (GCS) software.
 
 | Feature | Mission Planner, QGroundControl, ... etc | ArduPilot Methodic Configurator |
