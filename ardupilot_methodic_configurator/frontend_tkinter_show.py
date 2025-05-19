@@ -94,5 +94,5 @@ class Tooltip:
             self.tooltip = None
 
 
-def show_tooltip(widget: tk.Widget, text: str, position_below: bool = True) -> None:
-    _tooltip = Tooltip(widget, text, position_below)
+def show_tooltip(widget: tk.Widget, text: str, position_below: bool = True) -> Tooltip:
+    return Tooltip(widget, text, position_below)
