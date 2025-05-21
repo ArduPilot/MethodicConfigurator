@@ -19,17 +19,16 @@ But for those it is still very incomplete.
 - **proven**: the software has been used by hundreds of ArduPilot developers and users. From beginners to advanced. On big and small vehicles.
 - **safe**: the sequence reduces trial-and-error and reduces the amount of flights required to configure the vehicle
 
-Here is a presentation explaining it:
+Here are some YouTube video tutorials from the [AMC YouTube Channel](https://www.youtube.com/@AmilcardoCarmoLucas):
+
+[![YouTube tutorial - intro](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/Video1_Thumbnail_yt.png?raw=true)](https://www.youtube.com/watch?v=47RjQ_GarvE&list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9)
+[![YouTube tutorial - usecase](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/Video2_Thumbnail_yt.png?raw=true)](https://www.youtube.com/watch?v=9n4Wh6wBuHQ&list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9)
+
+And here is a presentation explaining it:
 
 [![ArduPilot methodic configurator power point presentation](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/ArduPilot_Methodic_Configurator_presentation.png?raw=true)](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/ArduPilot_Methodic_Configurator.pdf?raw=true)
 
-And some YouTube video tutorials from the [AMC YouTube Channel](https://www.youtube.com/@AmilcardoCarmoLucas):
-
-[![YouTube tutorial](images/Video1_Thumbnail_yt.png)](https://www.youtube.com/watch?v=47RjQ_GarvE&list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9)
-[![YouTube tutorial](images/Video2_Thumbnail_yt.png)](https://www.youtube.com/watch?v=9n4Wh6wBuHQ&list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9)
-
-
-Let's compare it with the traditional tool used to configure ArduPilot: a generalist Ground Control Station (GCS) software.
+Comparison with Ground Control Station (GCS) software, traditionally used to configure ArduPilot before AMC existed:
 
 | Feature | Mission Planner, QGroundControl, ... etc | ArduPilot Methodic Configurator |
 | ------- | ---------------------------------------- | ------------------------------- |
