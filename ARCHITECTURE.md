@@ -359,6 +359,8 @@ and `.vscode\tasks.json` file:
             "options": ["all", "zh_CN", "pt", "de", "it", "ja"],
 ```
 
+and add the language as `Natural Language ::` to the `classifiers` array in the `ardupilot_methodic_configurator/pyproject.toml` file.
+
 ### 3. Create a New PO File
 
 Inside your newly created language directory, create a new `.po` file using the `.pot` template:
