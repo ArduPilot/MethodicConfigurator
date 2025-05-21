@@ -14,7 +14,8 @@ description = "A clear configuration sequence for ArduPilot vehicles"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.9"
 keywords = ["ArduPilot", "Configuration", "SCM", "Methodic", "ArduCopter", "ArduPlane", "ArduRover", "ArduSub"]
-license = {text = "GPLv3"}
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE.md", "LICENSES/*.txt", "credits/CREDITS.md"]
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -23,7 +24,6 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Intended Audience :: Manufacturing",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Natural Language :: English",
     "Natural Language :: Chinese (Simplified)",
     "Natural Language :: German",
@@ -102,7 +102,7 @@ param_pid_adjustment_update = "ardupilot_methodic_configurator.param_pid_adjustm
 mavftp = "ardupilot_methodic_configurator.backend_mavftp:create_argument_parser"
 
 [project.urls]
-homepage = "https://github.com/ArduPilot/MethodicConfigurator"
+homepage = "https://ardupilot.github.io/MethodicConfigurator/"
 documentation = "https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"
 issues = "https://github.com/ArduPilot/MethodicConfigurator/issues"
 source = "https://github.com/ArduPilot/MethodicConfigurator"
