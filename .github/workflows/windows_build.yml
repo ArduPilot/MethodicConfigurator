@@ -105,6 +105,7 @@ jobs:
           ls Output
 
       - name: Generate GitHub Actions build provenance
+        id: gh_provenance_step # Added id
         uses: actions/attest-build-provenance@v2.3.0
         with:
           subject-path: windows/Output/*.exe
@@ -159,21 +160,42 @@ jobs:
       - name: Debug SLSA provenance files
         run: |
           Write-Host "Looking for provenance files..."
+          $ghProvenanceFile = "${{ steps.gh_provenance_step.outputs.bundle-path }}"
+          if ($ghProvenanceFile) {
+            Write-Host "Expected provenance file from gh_provenance_step: $ghProvenanceFile"
+            if (Test-Path $ghProvenanceFile) {
+              Write-Host "Found it at the expected path."
+            } else {
+              Write-Host "::warning::Expected provenance file from gh_provenance_step NOT FOUND at path: $ghProvenanceFile"
+            }
+          } else {
+            Write-Host "::warning::No bundle-path output from gh_provenance_step."
+          }
           $files = Get-ChildItem -Path ".", "..", "../.." -Recurse -Filter "*.intoto.jsonl" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
-          Write-Host "Found provenance files:"
+          Write-Host "Found provenance files via general search:"
           $files | ForEach-Object { Write-Host $_ }
 
       - name: Verify SLSA Provenance
         continue-on-error: true
         run: |
-          # Find the provenance file correctly
-          $provenance = Get-ChildItem -Path "." -Filter "*.intoto.jsonl" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
-          if (-not $provenance) {
-            # Try a broader search but exclude test files
-            $provenance = Get-ChildItem -Path ".", "..", "../.." -Recurse -Filter "*.intoto.jsonl" -ErrorAction SilentlyContinue |
-              Where-Object { $_.FullName -notlike "*\testdata\*" -and $_.FullName -notlike "*\test\*" } |
-              Select-Object -First 1 -ExpandProperty FullName
+          $provenance = ""
+          $ghProvenanceFile = "${{ steps.gh_provenance_step.outputs.bundle-path }}"
+
+          if (-not ([string]::IsNullOrEmpty($ghProvenanceFile)) -and (Test-Path $ghProvenanceFile)) {
+            $provenance = $ghProvenanceFile
+            Write-Host "Using provenance file from 'Generate GitHub Actions build provenance' step: $provenance"
+          } else {
+            Write-Host "::warning::Provenance file from 'Generate GitHub Actions build provenance' step output not found (path: '$ghProvenanceFile'). Falling back to search..."
+            # Fallback: Find the provenance file using existing search logic
+            $provenance = Get-ChildItem -Path "." -Filter "*.intoto.jsonl" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+            if (-not $provenance) {
+              # Try a broader search but exclude test files
+              $provenance = Get-ChildItem -Path ".", "..", "../.." -Recurse -Filter "*.intoto.jsonl" -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -notlike "*\\\\testdata\\\\*" -and $_.FullName -notlike "*\\\\test\\\\*" } |
+                Select-Object -First 1 -ExpandProperty FullName
+            }
           }
+
           if (-not $provenance) {
             Write-Host "::warning::SLSA provenance file not found, skipping verification"
             exit 0  # Don't fail the build, but warn about it
