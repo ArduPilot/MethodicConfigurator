@@ -28,6 +28,8 @@ classifiers = [
     "Natural Language :: Chinese (Simplified)",
     "Natural Language :: German",
     "Natural Language :: Portuguese",
+    "Natural Language :: Italian",
+    "Natural Language :: Japanese",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
