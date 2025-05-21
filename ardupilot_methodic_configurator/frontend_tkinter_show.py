@@ -50,10 +50,10 @@ class Tooltip:
     """
 
     def __init__(self, widget: tk.Widget, text: str, position_below: bool = True) -> None:
-        self.widget = widget
-        self.text = text
-        self.tooltip = None
-        self.position_below = position_below
+        self.widget: tk.Widget = widget
+        self.text: str = text
+        self.tooltip: Optional[tk.Toplevel] = None
+        self.position_below: bool = position_below
 
         # Bind the <Enter> and <Leave> events to show and hide the tooltip
         self.widget.bind("<Enter>", self.show)
