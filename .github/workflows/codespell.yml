@@ -1,0 +1,35 @@
+name: Codespell
+
+on:
+  push:
+    paths:
+      - '**/*' # Run on all files
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  codespell:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run codespell
+        uses: codespell-project/actions-codespell@v2.1
+        with:
+          check_filenames: true
+          check_hidden: true
+          skip: '*.ipynb,*.js,*.css,*.html,*.json,*.lock,*.min.js,*.min.css,*.csv,*.svg,*.xml,*.yml,*.yaml,*.toml,*.ini,*.cfg,*.param,*.pdef.xml' # Add file types/paths to skip
+          # Optional: specify a custom dictionary
+          # dictionary: .codespell/dictionary.txt
+          # Optional: specify a codespell configuration file
+          # codespell_args: --config .codespellrc
+          # Optional: specify a list of words to ignore
+          # ignore_words_list: word1,word2
