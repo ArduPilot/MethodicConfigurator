@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-05-03 14:18+0000\n"
+"POT-Creation-Date: 2025-05-22 20:39+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -598,9 +598,8 @@ msgstr ""
 "Stellen Sie sicher, dass der Parameter SERIAL0_PROTOCOL auf 2 gesetzt ist"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:346
-msgid "ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
+msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 msgstr ""
-"ChibiOS-Version stimmt nicht überein: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:362
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
@@ -1146,8 +1145,8 @@ msgstr ""
 "Alle vorherigen Schritte erforderten kein Logging, aber die folgenden schon"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:71
-msgid "Because guided mode requires a tunned position controller"
-msgstr "Weil der geführte Modus einen abgestimmten Positionsregler erfordert"
+msgid "Because guided mode requires a tuned position controller"
+msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:72
 msgid "Because it can only be done after PID tuning is complete"
@@ -1198,10 +1197,8 @@ msgstr ""
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:80
 msgid ""
 "Because the position controller PIDs depend on the attitude and attitude-"
-"rate PIDs tunned in previous steps"
+"rate PIDs tuned in previous steps"
 msgstr ""
-"Weil die PIDs des Positionsreglers von den in vorherigen Schritten "
-"abgestimmten Lage- und Lageraten-PIDs abhängen"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:81
 msgid ""
@@ -3761,7 +3758,7 @@ msgstr "IMU-Kalibrierungsnachrichten werden gelesen"
 msgid ""
 "This configuration step requires external changes by: {auto_changed_by}\n"
 "\n"
-"The external tool experiment procedure is described in the tunning guide.\n"
+"The external tool experiment procedure is described in the tuning guide.\n"
 "\n"
 "Choose an option:\n"
 "* CLOSE - Close the application and go perform the experiment\n"
@@ -3770,18 +3767,6 @@ msgid ""
 "* NO - Continue without copying values (if you haven't performed the "
 "experiment yet, but know what you are doing)"
 msgstr ""
-"Dieser Konfigurationsschritt erfordert externe Änderungen durch: "
-"{auto_changed_by}\n"
-"\n"
-"Das Experimentverfahren des externen Werkzeugs wird im Abstimmungsleitfaden "
-"beschrieben.\n"
-"\n"
-"Wählen Sie eine Option:\n"
-"* SCHLIESSEN - Anwendung schließen und das Experiment durchführen\n"
-"* JA - Aktuelle FC-Werte in {selected_file} kopieren (wenn Sie das "
-"Experiment bereits abgeschlossen haben)\n"
-"* NEIN - Ohne Kopieren fortfahren (wenn Sie das Experiment noch nicht "
-"durchgeführt haben, aber wissen, was Sie tun)"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:473
 msgid "Update file with values from FC?"
@@ -4459,7 +4444,8 @@ msgstr "Grund warum {param_name} zu {value_str} geändert werden sollte"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:716
 msgid "Could not find change reason entry widget for parameter %s (%s)"
-msgstr "Konnte kein Eingabefeld für den Änderungsgrund für Parameter %s (%s) finden"
+msgstr ""
+"Konnte kein Eingabefeld für den Änderungsgrund für Parameter %s (%s) finden"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:727
 msgid "Parameter %s not found in the %s file %s: %s"
@@ -4481,7 +4467,7 @@ msgstr "Bitte geduldig sein, {:.1f}% von {}% abgeschlossen"
 msgid "Lifting window: {_e}"
 msgstr "Hebendes Fenster: {_e}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:31
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:32
 msgid ""
 "No intermediate parameter files found in the selected '{_dirname}' vehicle "
 "directory.\n"
@@ -4498,11 +4484,11 @@ msgstr ""
 "Stellen Sie sicher, dass Sie in das Verzeichnis (Doppelklick) und es nicht "
 "nur auswählen."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:36
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:37
 msgid "No Parameter Files Found"
 msgstr "Keine Parameterdateien gefunden"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:40
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:41
 msgid ""
 "{_error_string}\n"
 "\n"
@@ -4514,7 +4500,7 @@ msgstr ""
 "Bitte schließen Sie einen Flugcontroller an den PC an,\n"
 "warten Sie mindestens 7 Sekunden und versuchen Sie es erneut."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:41
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:42
 msgid "No Connection to the Flight Controller"
 msgstr "Keine Verbindung zum Flugcontroller"
 
@@ -5171,6 +5157,48 @@ msgstr "Version oder Revision der Hardware"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "Weblink zur Produktseite oder Dokumentation"
+
+#~ msgid "ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
+#~ msgstr ""
+#~ "ChibiOS-Version stimmt nicht überein: %s (BANNER) != % s "
+#~ "(AUTOPILOT_VERSION)"
+
+#~ msgid "Because guided mode requires a tunned position controller"
+#~ msgstr ""
+#~ "Weil der geführte Modus einen abgestimmten Positionsregler erfordert"
+
+#~ msgid ""
+#~ "Because the position controller PIDs depend on the attitude and attitude-"
+#~ "rate PIDs tunned in previous steps"
+#~ msgstr ""
+#~ "Weil die PIDs des Positionsreglers von den in vorherigen Schritten "
+#~ "abgestimmten Lage- und Lageraten-PIDs abhängen"
+
+#~ msgid ""
+#~ "This configuration step requires external changes by: {auto_changed_by}\n"
+#~ "\n"
+#~ "The external tool experiment procedure is described in the tunning "
+#~ "guide.\n"
+#~ "\n"
+#~ "Choose an option:\n"
+#~ "* CLOSE - Close the application and go perform the experiment\n"
+#~ "* YES - Copy current FC values to {selected_file} (if you've already "
+#~ "completed the experiment)\n"
+#~ "* NO - Continue without copying values (if you haven't performed the "
+#~ "experiment yet, but know what you are doing)"
+#~ msgstr ""
+#~ "Dieser Konfigurationsschritt erfordert externe Änderungen durch: "
+#~ "{auto_changed_by}\n"
+#~ "\n"
+#~ "Das Experimentverfahren des externen Werkzeugs wird im "
+#~ "Abstimmungsleitfaden beschrieben.\n"
+#~ "\n"
+#~ "Wählen Sie eine Option:\n"
+#~ "* SCHLIESSEN - Anwendung schließen und das Experiment durchführen\n"
+#~ "* JA - Aktuelle FC-Werte in {selected_file} kopieren (wenn Sie das "
+#~ "Experiment bereits abgeschlossen haben)\n"
+#~ "* NEIN - Ohne Kopieren fortfahren (wenn Sie das Experiment noch nicht "
+#~ "durchgeführt haben, aber wissen, was Sie tun)"
 
 #~ msgid ""
 #~ "ArduPilot methodic configurator is a GUI-based tool designed to simplify "
