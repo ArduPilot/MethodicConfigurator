@@ -1,4 +1,4 @@
 MOT_SPIN_ARM,0.1  # lower than spin min
 MOT_SPIN_MAX,0.9  # as per previous drone setup similar specs
-MOT_SPIN_MIN,0.13  # since hover thst is around 18.
+MOT_SPIN_MIN,0.13  # MOT_SPIN_ARM + 0.03 and smaller than MOT_THST_HOVER (0.18)
 MOT_THST_EXPO,0.75  # as per previous drone setup similar specs
