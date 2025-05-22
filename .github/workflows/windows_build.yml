@@ -210,7 +210,7 @@ jobs:
             & "../../slsa-verifier.exe" verify-artifact $_.FullName `
               --provenance-path "$provenance" `
               --source-uri "github.com/${{ github.repository }}" `
-              --builder-id "https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/heads/main"
+              --builder-id "https://github.com/${{ github.repository }}/.github/workflows/windows_build.yml@${{ github.ref }}"
 
             if ($LASTEXITCODE -ne 0) {
               Write-Host "::warning::SLSA verification failed for $_, but continuing"
