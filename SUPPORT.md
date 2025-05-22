@@ -10,7 +10,7 @@ To help yourself, read the extensive documentation:
   Click the "Ask AI" button in the [bottom right corner of the page](https://ardupilot.github.io/MethodicConfigurator/).
 * [Usecases](https://ardupilot.github.io/MethodicConfigurator/USECASES.html) to learn how to use the software in different scenarios.
 * [Usermanual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html) to understand how to generally use the software.
-* Configuration and tunning guides: [copter](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter.html),
+* Configuration and tuning guides: [copter](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter.html),
   [plane](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane.html),
   [rover](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover.html),
   [heli](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli.html)

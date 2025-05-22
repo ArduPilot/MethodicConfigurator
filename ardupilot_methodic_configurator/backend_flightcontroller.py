@@ -343,7 +343,7 @@ class FlightController:
                 hash_len = min(hash_len1, hash_len2)
                 if os_custom_version[:hash_len] != self.info.os_custom_version[:hash_len]:
                     logging_warning(
-                        _("ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"),
+                        _("ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"),
                         os_custom_version,
                         self.info.os_custom_version,
                     )

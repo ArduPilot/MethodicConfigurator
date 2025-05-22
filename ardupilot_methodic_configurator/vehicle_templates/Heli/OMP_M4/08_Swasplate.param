@@ -4,7 +4,7 @@ H_COL_HOVER,0.6  # Starting point, will be set during Alt-hold hover.
 H_COL_LAND_MIN,-2
 H_COL_MAX,1640  # Starting point, to be checked during rigging.
 H_COL_MIN,1400  # Starting point, to be checked during rigging.
-H_COL_ZERO_THRST,0  # Symetrical blades
+H_COL_ZERO_THRST,0  # Symmetrical blades
 H_CYC_MAX,1500  # Starting point, to be checked during rigging.
 H_SW_TYPE,3
 SERVO1_FUNCTION,33  # Swashplate Front Left

@@ -23,5 +23,5 @@ SERVO3_TRIM,1500  # Operating Pulse Width:1100-1900us(Fixed or cannot be Program
 SERVO4_MAX,1900  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
 SERVO4_MIN,1100  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
 SERVO4_TRIM,1500  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
-TKOFF_RPM_MIN,0  # No esc telemtry to measure this
+TKOFF_RPM_MIN,0  # No esc telemetry to measure this
 TKOFF_SLEW_TIME,2

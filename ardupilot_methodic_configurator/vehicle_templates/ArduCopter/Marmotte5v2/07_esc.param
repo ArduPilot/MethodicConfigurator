@@ -11,7 +11,7 @@ NTF_LED_TYPES,2305  # Built-in LED, NCP5623 External (Holybro F9P), Neopixel (Ma
 PSC_ACCZ_SMAX,0  # No slew rate limit on throttle controller
 SERIAL5_BAUD,57  # bi-directional DShot telemetry data rate from T-Motor F45 4in1 ESC V2
 SERIAL5_PROTOCOL,-1
-SERVO_BLH_AUTO,1  # Enables BLHeli pass-thru
+SERVO_BLH_AUTO,1  # Enables BLHeli passthrough
 SERVO_BLH_BDMASK,15  # All four of our ESC support bi-directional DShot
 SERVO_BLH_POLES,14  # Specified in component editor window
 SERVO_BLH_TRATE,10  # Set to a low value because the RPM telemetry uses bi-directional DShot telemetry instead of this UART telemetry

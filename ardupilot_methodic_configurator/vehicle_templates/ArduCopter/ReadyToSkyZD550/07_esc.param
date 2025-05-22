@@ -11,7 +11,7 @@ NTF_LED_TYPES,1057  # Built-in, DroneCAN, Scripting
 PSC_ACCZ_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 SERIAL3_BAUD,115  # bi-directional DShot telemetry data rate
 SERIAL3_PROTOCOL,16  # bi-directional DShot telemetry pin is connected to SERIAL3
-SERVO_BLH_AUTO,1  # Enables BLHeli pass-thru
+SERVO_BLH_AUTO,1  # Enables BLHeli passthrough
 SERVO_BLH_BDMASK,3840  # All four of our ESC support bi-directional DShot
 SERVO_BLH_POLES,14  # Specified in component editor window
 SERVO_BLH_RVMASK,256  # Ch9

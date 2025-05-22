@@ -31,7 +31,7 @@ def autoscroll(sbar: ttk.Scrollbar, first: float, last: float) -> None:
 
 
 class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-ancestors, too-many-instance-attributes
-    """Entry with dynamicaly filtered ListBox to emulate an inteligent combobox widget."""
+    """Entry with dynamically filtered ListBox to emulate an intelligent combobox widget."""
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,

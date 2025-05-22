@@ -26,10 +26,11 @@ jobs:
         with:
           check_filenames: true
           check_hidden: true
-          skip: '*.ipynb,*.js,*.css,*.html,*.json,*.lock,*.min.js,*.min.css,*.csv,*.svg,*.xml,*.yml,*.yaml,*.toml,*.ini,*.cfg,*.param,*.pdef.xml' # Add file types/paths to skip
+          skip: '*.ipynb,*.svg,*.xml,*.pdef.xml,*.pdf,*.po,*.html,*.js,*.css' # Add file types/paths to skip
           # Optional: specify a custom dictionary
           # dictionary: .codespell/dictionary.txt
           # Optional: specify a codespell configuration file
           # codespell_args: --config .codespellrc
           # Optional: specify a list of words to ignore
-          # ignore_words_list: word1,word2
+          ignore_words_list: SITL,PARM,parm,NED,THST
+          exclude_file: .codespell-exclude-file

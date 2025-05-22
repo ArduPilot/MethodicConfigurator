@@ -563,7 +563,7 @@ def generate_tempcal_gyro_figures(  # pylint: disable=too-many-arguments, too-ma
         if log_parm:
             for axis in AXES:
                 if clog.enable[imu] == 0.0:
-                    logging.info("IMU[%d] disabled in log parms", imu)
+                    logging.info("IMU[%d] disabled in log params", imu)
                     continue
                 poly = np.poly1d(clog.gcoef[imu][axis])
                 correction = poly(data.gyro[imu]["T"] - TEMP_REF) - poly(clog.gtcal[imu] - TEMP_REF) + clog.gofs[imu][axis]
@@ -600,7 +600,7 @@ def generate_tempcal_accel_figures(  # pylint: disable=too-many-arguments, too-m
         if log_parm:
             for axis in AXES:
                 if clog.enable[imu] == 0.0:
-                    logging.info("IMU[%d] disabled in log parms", imu)
+                    logging.info("IMU[%d] disabled in log params", imu)
                     continue
                 poly = np.poly1d(clog.acoef[imu][axis])
                 ofs = data.accel_at_temp(imu, axis, clog.atcal[imu])
