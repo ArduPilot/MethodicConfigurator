@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-05-03 14:18+0000\n"
+"POT-Creation-Date: 2025-05-22 20:39+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -567,8 +567,8 @@ msgstr ""
 "请确保参数 SERIAL0_PROTOCOL 设置为 2。"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:346
-msgid "ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
-msgstr "ChibiOS 版本不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)。"
+msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
+msgstr ""
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:362
 #, fuzzy
@@ -1042,8 +1042,8 @@ msgid ""
 msgstr "所有先前步骤不需要日志记录，但以下步骤需要"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:71
-msgid "Because guided mode requires a tunned position controller"
-msgstr "因为引导模式需要调谐好的位置控制器"
+msgid "Because guided mode requires a tuned position controller"
+msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:72
 msgid "Because it can only be done after PID tuning is complete"
@@ -1086,8 +1086,8 @@ msgstr "因为横滚通常是动态最高的轴，我们从动态最高的轴开
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:80
 msgid ""
 "Because the position controller PIDs depend on the attitude and attitude-"
-"rate PIDs tunned in previous steps"
-msgstr "因为位置控制器PID取决于在前面步骤中调谐的姿态和姿态速率PID"
+"rate PIDs tuned in previous steps"
+msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:81
 msgid ""
@@ -3442,7 +3442,7 @@ msgstr "正在读取 IMU 校准信息"
 msgid ""
 "This configuration step requires external changes by: {auto_changed_by}\n"
 "\n"
-"The external tool experiment procedure is described in the tunning guide.\n"
+"The external tool experiment procedure is described in the tuning guide.\n"
 "\n"
 "Choose an option:\n"
 "* CLOSE - Close the application and go perform the experiment\n"
@@ -3451,14 +3451,6 @@ msgid ""
 "* NO - Continue without copying values (if you haven't performed the "
 "experiment yet, but know what you are doing)"
 msgstr ""
-"此配置步骤需要由: {auto_changed_by} 进行外部更改\n"
-"\n"
-"外部工具实验程序在调谐指南中有描述。\n"
-"\n"
-"选择一个选项:\n"
-"* 关闭 - 关闭应用程序并执行实验\n"
-"* 是 - 将当前飞控值复制到 {selected_file}（如果您已完成实验）\n"
-"* 否 - 不复制值继续（如果您尚未执行实验，但知道自己在做什么）"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:473
 msgid "Update file with values from FC?"
@@ -4127,7 +4119,7 @@ msgstr "请耐心等待, 已完成 {:.1f}% of {}%"
 msgid "Lifting window: {_e}"
 msgstr "升起窗口：{_e}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:31
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:32
 msgid ""
 "No intermediate parameter files found in the selected '{_dirname}' vehicle "
 "directory.\n"
@@ -4145,11 +4137,11 @@ msgstr ""
 "\n"
 "确保进入目录（双击）而不仅仅是选择它。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:36
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:37
 msgid "No Parameter Files Found"
 msgstr "没找到参数文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:40
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:41
 msgid ""
 "{_error_string}\n"
 "\n"
@@ -4162,7 +4154,7 @@ msgstr ""
 "请将飞控连接到电脑，\n"
 "并等待至少 7 秒钟后再重试。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:41
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:42
 msgid "No Connection to the Flight Controller"
 msgstr "没有连接到飞控"
 
@@ -4794,6 +4786,39 @@ msgstr "硬件的版本或修订号"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
+
+#~ msgid "ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
+#~ msgstr "ChibiOS 版本不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)。"
+
+#~ msgid "Because guided mode requires a tunned position controller"
+#~ msgstr "因为引导模式需要调谐好的位置控制器"
+
+#~ msgid ""
+#~ "Because the position controller PIDs depend on the attitude and attitude-"
+#~ "rate PIDs tunned in previous steps"
+#~ msgstr "因为位置控制器PID取决于在前面步骤中调谐的姿态和姿态速率PID"
+
+#~ msgid ""
+#~ "This configuration step requires external changes by: {auto_changed_by}\n"
+#~ "\n"
+#~ "The external tool experiment procedure is described in the tunning "
+#~ "guide.\n"
+#~ "\n"
+#~ "Choose an option:\n"
+#~ "* CLOSE - Close the application and go perform the experiment\n"
+#~ "* YES - Copy current FC values to {selected_file} (if you've already "
+#~ "completed the experiment)\n"
+#~ "* NO - Continue without copying values (if you haven't performed the "
+#~ "experiment yet, but know what you are doing)"
+#~ msgstr ""
+#~ "此配置步骤需要由: {auto_changed_by} 进行外部更改\n"
+#~ "\n"
+#~ "外部工具实验程序在调谐指南中有描述。\n"
+#~ "\n"
+#~ "选择一个选项:\n"
+#~ "* 关闭 - 关闭应用程序并执行实验\n"
+#~ "* 是 - 将当前飞控值复制到 {selected_file}（如果您已完成实验）\n"
+#~ "* 否 - 不复制值继续（如果您尚未执行实验，但知道自己在做什么）"
 
 #~ msgid ""
 #~ "ArduPilot methodic configurator is a GUI-based tool designed to simplify "

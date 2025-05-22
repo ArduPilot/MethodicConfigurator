@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-05-03 14:18+0000\n"
+"POT-Creation-Date: 2025-05-22 20:39+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -512,7 +512,7 @@ msgid ""
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:346
-msgid "ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
+msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:362
@@ -912,7 +912,7 @@ msgid "All the previous steps did not require logging, but the following ones do
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:71
-msgid "Because guided mode requires a tunned position controller"
+msgid "Because guided mode requires a tuned position controller"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:72
@@ -948,7 +948,7 @@ msgid "Because roll is usually the axis that has the highest dynamic, and we sta
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:80
-msgid "Because the position controller PIDs depend on the attitude and attitude-rate PIDs tunned in previous steps"
+msgid "Because the position controller PIDs depend on the attitude and attitude-rate PIDs tuned in previous steps"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:81
@@ -3031,7 +3031,7 @@ msgstr ""
 msgid ""
 "This configuration step requires external changes by: {auto_changed_by}\n"
 "\n"
-"The external tool experiment procedure is described in the tunning guide.\n"
+"The external tool experiment procedure is described in the tuning guide.\n"
 "\n"
 "Choose an option:\n"
 "* CLOSE - Close the application and go perform the experiment\n"
@@ -3695,7 +3695,7 @@ msgstr ""
 msgid "Lifting window: {_e}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:31
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:32
 msgid ""
 "No intermediate parameter files found in the selected '{_dirname}' vehicle directory.\n"
 "Please select and step inside a vehicle directory containing valid ArduPilot intermediate parameter files.\n"
@@ -3703,11 +3703,11 @@ msgid ""
 "Make sure to step inside the directory (double-click) and not just select it."
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:36
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:37
 msgid "No Parameter Files Found"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:40
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:41
 msgid ""
 "{_error_string}\n"
 "\n"
@@ -3715,7 +3715,7 @@ msgid ""
 "wait at least 7 seconds and retry."
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:41
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:42
 msgid "No Connection to the Flight Controller"
 msgstr ""
 
