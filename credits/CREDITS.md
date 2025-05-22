@@ -81,7 +81,7 @@ Credits also go to these other software projects that helped in developing ArduP
 - [pre-commit](https://pre-commit.com/): A framework for managing and maintaining multi-language git pre-commit hooks.
 - [OpenSSF Scorecard](https://securityscorecards.dev/): Quickly assess open source projects for risky practices.
 
-Using these softwares allowed a small group of programmers to produce better code faster.
+Using these software allowed a small group of programmers to produce better code faster.
 
 Thanks to the users for testing and suggesting features and improvements.
 

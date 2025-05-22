@@ -1,7 +1,7 @@
 ArduPilot Methodic Configurator Developer Code of Conduct
 =========================================================
 
-Rev 1.0 Apr 3nd 2024
+Rev 1.0 Apr 3rd 2024
 
 Our Aim
 -------

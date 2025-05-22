@@ -11,7 +11,7 @@ NTF_LED_TYPES,123079  # Left default
 PSC_ACCZ_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 SERIAL5_BAUD,57  # left default (no DShot telemetry available)
 SERIAL5_PROTOCOL,-1  # no DShot telemetry available
-SERVO_BLH_AUTO,0  # BLHeli pass-thru not availble with T-Motor ESCs
+SERVO_BLH_AUTO,0  # BLHeli passthrough not available with T-Motor ESCs
 SERVO_BLH_BDMASK,0  # no bidirectional DShot available
 SERVO_BLH_POLES,28  # Specified in component editor window
 SERVO_BLH_TRATE,10  # Left default (no RPM telemetry / bi-directional DShot telemetry available)

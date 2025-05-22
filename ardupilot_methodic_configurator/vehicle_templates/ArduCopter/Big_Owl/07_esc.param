@@ -5,13 +5,13 @@ MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on 20_throttle_
 MOT_PWM_MAX,2000
 MOT_PWM_MIN,1000
 MOT_PWM_TYPE,0  # Specified in component editor window
-MOT_SPOOL_TIME,2  # Spool slower becaus props are big and foldable
+MOT_SPOOL_TIME,2  # Spool slower because props are big and foldable
 NTF_BUZZ_TYPES,5
 NTF_LED_TYPES,199
 PSC_ACCZ_SMAX,200  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 SERIAL5_BAUD,57  # left default (no DShot telemetry available)
 SERIAL5_PROTOCOL,-1  # no DShot telemetry available
-SERVO_BLH_AUTO,0  # BLHeli pass-thru not availble with T-Motor ESCs
+SERVO_BLH_AUTO,0  # BLHeli passthrough not available with T-Motor ESCs
 SERVO_BLH_BDMASK,0  # no bidirectional DShot available
 SERVO_BLH_POLES,14  # Specified in component editor window
 SERVO_BLH_TRATE,10

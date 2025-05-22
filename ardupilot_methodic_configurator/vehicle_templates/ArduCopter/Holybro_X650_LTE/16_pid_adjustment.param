@@ -1,4 +1,4 @@
-ATC_ANG_PIT_P,4.5  # We completly skip this entire file!
+ATC_ANG_PIT_P,4.5  # We completely skip this entire file!
 ATC_ANG_RLL_P,4.5
 ATC_ANG_YAW_P,3.7
 ATC_INPUT_TC,0.15  # Make the RC feel a bit slower than default

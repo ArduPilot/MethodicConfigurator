@@ -1,8 +1,8 @@
 AHRS_TRIM_X,-0.017153
 AHRS_TRIM_Y,0.013513
-ATC_ACCEL_P_MAX,38700  # manually adjusted later (you should start with the initally calculated values)
-ATC_ACCEL_R_MAX,38700  # manually adjusted later (you should start with the initally calculated values)
-ATC_ACCEL_Y_MAX,15300  # manually adjusted later (you should start with the initally calculated values)
+ATC_ACCEL_P_MAX,38700  # manually adjusted later (you should start with the initially calculated values)
+ATC_ACCEL_R_MAX,38700  # manually adjusted later (you should start with the initially calculated values)
+ATC_ACCEL_Y_MAX,15300  # manually adjusted later (you should start with the initially calculated values)
 ATC_RAT_PIT_FLTD,10.5  # INS_GYRO_FILTER / 2
 ATC_RAT_PIT_FLTT,10.5  # INS_GYRO_FILTER / 2
 ATC_RAT_RLL_FLTD,10.5  # INS_GYRO_FILTER / 2

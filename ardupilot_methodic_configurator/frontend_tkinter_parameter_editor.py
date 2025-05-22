@@ -459,7 +459,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if auto_changed_by and self.flight_controller.fc_parameters:
             msg = _(
                 "This configuration step requires external changes by: {auto_changed_by}\n\n"
-                "The external tool experiment procedure is described in the tunning guide.\n\n"
+                "The external tool experiment procedure is described in the tuning guide.\n\n"
                 "Choose an option:\n"
                 "* CLOSE - Close the application and go perform the experiment\n"
                 "* YES - Copy current FC values to {selected_file} (if you've already completed the experiment)\n"

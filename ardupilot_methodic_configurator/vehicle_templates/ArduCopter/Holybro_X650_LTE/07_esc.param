@@ -15,7 +15,7 @@ SERVO_BLH_AUTO,1  # To program the ESCs without disconnecting them from the flig
 SERVO_BLH_BDMASK,0  # DBshot is not correctly supported by the ESCs
 SERVO_BLH_POLES,14  # Specified in component editor window
 SERVO_BLH_TEST,0
-SERVO_BLH_TRATE,0  # The ESC FW does not provive voltage, current nor temperature telemetry anyway
+SERVO_BLH_TRATE,0  # The ESC FW does not provide voltage, current nor temperature telemetry anyway
 SERVO_DSHOT_ESC,1
 SERVO_DSHOT_RATE,2
 SERVO_FTW_POLES,14  # Specified in component editor window

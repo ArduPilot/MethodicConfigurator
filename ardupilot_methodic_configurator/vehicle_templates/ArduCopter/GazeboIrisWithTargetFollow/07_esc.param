@@ -11,7 +11,7 @@ NTF_LED_TYPES,123079  # Built-in LED, NCP5623 External (Holybro F9P), Neopixel (
 PSC_ACCZ_SMAX,0  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 SERIAL5_BAUD,57  # bi-directional DShot telemetry data rate from T-Motor F45 4in1 ESC V2
 SERIAL5_PROTOCOL,-1  # bi-directional DShot telemetry pin is connected to SERIAL5
-SERVO_BLH_AUTO,1  # Enables BLHeli pass-thru
+SERVO_BLH_AUTO,1  # Enables BLHeli passthrough
 SERVO_BLH_BDMASK,15  # All four of our ESC support bi-directional DShot
 SERVO_BLH_POLES,3  # Specified in component editor window
 SERVO_BLH_TRATE,5  # Set to a low value because the RPM telemetry uses bi-directional DShot telemetry instead of this UART telemetry

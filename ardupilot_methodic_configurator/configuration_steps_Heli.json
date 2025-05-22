@@ -741,7 +741,7 @@
         },
         "47_position_controller.param": {
             "why": "Position controller parameters are crucial for waypoint navigation and precision flying",
-            "why_now": "Because the position controller PIDs depend on the attitude and attitude-rate PIDs tunned in previous steps",
+            "why_now": "Because the position controller PIDs depend on the attitude and attitude-rate PIDs tuned in previous steps",
             "blog_text": "Configure the position controller(s)",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#121-position-controller",
             "wiki_text": "",
@@ -757,7 +757,7 @@
         },
         "48_guided_operation.param": {
             "why": "Guided mode is used for waypoint navigation and precision flying",
-            "why_now": "Because guided mode requires a tunned position controller",
+            "why_now": "Because guided mode requires a tuned position controller",
             "blog_text": "Set up parameters for guided operation, including waypoint navigation and obstacle avoidance",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli#122-guided-operation-without-rc-transmitter",
             "wiki_text": "Guided Mode",

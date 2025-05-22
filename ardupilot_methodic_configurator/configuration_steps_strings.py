@@ -68,7 +68,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     # why_now
     _config_steps_strings = _("After the first flight because it depends on the MOT_THST_HOVER parameter, before the second flight so that it can safely use the altitude controller")
     _config_steps_strings = _("All the previous steps did not require logging, but the following ones do")
-    _config_steps_strings = _("Because guided mode requires a tunned position controller")
+    _config_steps_strings = _("Because guided mode requires a tuned position controller")
     _config_steps_strings = _("Because it can only be done after PID tuning is complete")
     _config_steps_strings = _("Because it can only be done after the respective autotune flight")
     _config_steps_strings = _("Because it depends on wind speed estimation")
@@ -77,7 +77,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Because pitch is usually the axis that has the second highest dynamic, and we continue with the second highest dynamic axis")
     _config_steps_strings = _("Because precision landing requires guided mode")
     _config_steps_strings = _("Because roll is usually the axis that has the highest dynamic, and we start with the highest dynamic axis")
-    _config_steps_strings = _("Because the position controller PIDs depend on the attitude and attitude-rate PIDs tunned in previous steps")
+    _config_steps_strings = _("Because the position controller PIDs depend on the attitude and attitude-rate PIDs tuned in previous steps")
     _config_steps_strings = _("Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)")
     _config_steps_strings = _("Because we first needed system identification flights to create the mathematical model")
     _config_steps_strings = _("Because yaw D can only be done after yaw")

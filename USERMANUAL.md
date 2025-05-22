@@ -145,7 +145,7 @@ ARMING_RUDDER,0 # We find it safer to use only a switch to arm instead of throug
 ```
 
 If you are working with multiple vehicles, create a separate directory for each vehicle with a descriptive identifiable name.
-Copy the aprox. 50 *intermediate parameter files* into them.
+Copy the approx. 50 *intermediate parameter files* into them.
 Edit the files to match the specific requirements of each vehicle.
 Now you have traceable documentation records for every parameter change on each of your vehicles.
 

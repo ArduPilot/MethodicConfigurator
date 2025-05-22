@@ -75,7 +75,7 @@ It uses the following components:
 |BEC with voltage/current monitor | [Holybro PM02 V3](https://holybro.com/products/pm02-v3-12s-power-module) |
 |Battery | [6s 4500mAh](https://www.stefansliposhop.de/akkus/sls-x-cube/sls-x-cube-40c/sls-x-cube-1800mah-4s1p-14-8v-40c-80c::1568.html) |
 |GNSS Receiver | [Holybro H-RTK F9P Helical](https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445) |
-|SDCard | Any FAT32 or exFAT formated fast Micro-SDCard > 8 GiB |
+|SDCard | Any FAT32 or exFAT formatted fast Micro-SDCard > 8 GiB |
 |RC Receiver | [Futaba 7603](https://www.team-blacksheep.com/products/prod:crossfire_nano_se) |
 |RC Transmitter | [Futaba 9C](https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller) |
 | Remote ID transmitter | [Remote ID transmitter](https://holybro.com/products/remote-id) |
@@ -134,7 +134,7 @@ So, [start the ArduPilot Methodic Configurator and select a vehicle that resembl
    ![FC connection and parameter download](images/App_screenshot_FC_info_and_param_download.png)
 1. Now using [New](USERMANUAL.md#new) subsection
    ![New vehicle](images/App_screenshot_Vehicle_directory1.png)
-1. Fom the existing templates, select the one most similar to your vehicle:
+1. From the existing templates, select the one most similar to your vehicle:
    ![New vehicle](images/App_screenshot_Vehicle_overview.png)
 1. select the destination directory, give it a name and press `Create vehicle configuration directory from template`
 1. On the component editor window, **add all the details of the components of your system** as we did in [Section 1.2](#12-our-example-vehicle):
@@ -257,7 +257,7 @@ In our setup, we used a [Bi-directional Dshot ESC](https://ardupilot.org/copter/
 
 Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `07_esc.param` file
 
-The step above configured ESC communication pass-thru.
+The step above configured ESC communication passthrough.
 In our vehicle, we use *BLHeli_32 ARM* ESC firmware.
 So we use BLHeliSuite32 Version 32.9.0.6 to configure the ESCs.
 Flash the Firmware version described in the table above.
@@ -438,7 +438,7 @@ The table below explains which bit is responsible for which `.bin` dataflash log
 <tr><td>GPA</td><td>GPS accuracy information</td></tr>
 <tr><td>UBX1</td><td>uBlox-specific GPS information (part 1)</td></tr>
 <tr><td>UBX2</td><td>uBlox-specific GPS information (part 2)</td></tr>
-<tr><td>GRAW</td><td>Raw uBlox datas</td></tr>
+<tr><td>GRAW</td><td>Raw uBlox data</td></tr>
 <tr><td>GRXH</td><td>Raw uBlox data - header</td></tr>
 <tr><td>GRXS</td><td>Raw uBlox data - space-vehicle data</td></tr>
 <tr><td>TERR</td><td>Terrain database information</td></tr>

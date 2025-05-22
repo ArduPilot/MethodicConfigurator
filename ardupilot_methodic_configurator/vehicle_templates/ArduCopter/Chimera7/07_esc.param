@@ -11,7 +11,7 @@ NTF_LED_TYPES,2305  # Built-in LED, Neopixel (Matek H743 slim v3), and DShot (4-
 PSC_ACCZ_SMAX,0  # No slew rate limit on throttle controller
 SERIAL5_BAUD,115  # bi-directional DShot telemetry data rate from T-Motor F55 4in1 ESC
 SERIAL5_PROTOCOL,16  # bi-directional DShot telemetry pin is connected to SERIAL5
-SERVO_BLH_AUTO,1  # Enables BLHeli pass-thru
+SERVO_BLH_AUTO,1  # Enables BLHeli passthrough
 SERVO_BLH_BDMASK,15  # All four of our ESC support bi-directional DShot
 SERVO_BLH_POLES,14  # Specified in component editor window
 SERVO_BLH_TRATE,5  # Set to a low value because the RPM telemetry uses bi-directional DShot telemetry instead of this UART telemetry
