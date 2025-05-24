@@ -568,7 +568,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:346
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
-msgstr ""
+msgstr "ChibiOS版本不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:362
 #, fuzzy
@@ -1043,7 +1043,7 @@ msgstr "所有先前步骤不需要日志记录，但以下步骤需要"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:71
 msgid "Because guided mode requires a tuned position controller"
-msgstr ""
+msgstr "因为引导模式需要调整好的位置控制器"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:72
 msgid "Because it can only be done after PID tuning is complete"
@@ -1087,7 +1087,7 @@ msgstr "因为横滚通常是动态最高的轴，我们从动态最高的轴开
 msgid ""
 "Because the position controller PIDs depend on the attitude and attitude-"
 "rate PIDs tuned in previous steps"
-msgstr ""
+msgstr "因为位置控制器PID依赖于在之前步骤中调整的姿态和姿态率PID"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:81
 msgid ""
@@ -3450,7 +3450,7 @@ msgid ""
 "completed the experiment)\n"
 "* NO - Continue without copying values (if you haven't performed the "
 "experiment yet, but know what you are doing)"
-msgstr ""
+msgstr "此配置步骤需要外部更改，执行者：{auto_changed_by}\n\n外部工具实验程序在调整指南中有描述。\n\n选择一个选项：\n* 关闭 - 关闭应用程序并执行实验\n* 是 - 将当前飞控值复制到{selected_file}（如果您已完成实验）\n* 否 - 不复制值继续（如果您尚未执行实验，但知道自己在做什么）"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:473
 msgid "Update file with values from FC?"
@@ -4786,162 +4786,3 @@ msgstr "硬件的版本或修订号"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
-
-#~ msgid "ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
-#~ msgstr "ChibiOS 版本不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)。"
-
-#~ msgid "Because guided mode requires a tunned position controller"
-#~ msgstr "因为引导模式需要调谐好的位置控制器"
-
-#~ msgid ""
-#~ "Because the position controller PIDs depend on the attitude and attitude-"
-#~ "rate PIDs tunned in previous steps"
-#~ msgstr "因为位置控制器PID取决于在前面步骤中调谐的姿态和姿态速率PID"
-
-#~ msgid ""
-#~ "This configuration step requires external changes by: {auto_changed_by}\n"
-#~ "\n"
-#~ "The external tool experiment procedure is described in the tunning "
-#~ "guide.\n"
-#~ "\n"
-#~ "Choose an option:\n"
-#~ "* CLOSE - Close the application and go perform the experiment\n"
-#~ "* YES - Copy current FC values to {selected_file} (if you've already "
-#~ "completed the experiment)\n"
-#~ "* NO - Continue without copying values (if you haven't performed the "
-#~ "experiment yet, but know what you are doing)"
-#~ msgstr ""
-#~ "此配置步骤需要由: {auto_changed_by} 进行外部更改\n"
-#~ "\n"
-#~ "外部工具实验程序在调谐指南中有描述。\n"
-#~ "\n"
-#~ "选择一个选项:\n"
-#~ "* 关闭 - 关闭应用程序并执行实验\n"
-#~ "* 是 - 将当前飞控值复制到 {selected_file}（如果您已完成实验）\n"
-#~ "* 否 - 不复制值继续（如果您尚未执行实验，但知道自己在做什么）"
-
-#~ msgid ""
-#~ "ArduPilot methodic configurator is a GUI-based tool designed to simplify "
-#~ "the management and visualization of ArduPilot parameters. It enables "
-#~ "users to browse through various vehicle templates, edit parameter files, "
-#~ "and apply changes directly to the flight controller. The tool is built to "
-#~ "semi-automate the configuration process of ArduPilot for drones by "
-#~ "providing a clear and intuitive interface for parameter management."
-#~ msgstr ""
-#~ "ArduPilot 调参助手是一个基于 GUI 的工具，旨在简化 ArduPilot 参数的管理和可"
-#~ "视化。它使用户能够浏览各种载具模板，编辑参数文件，并将更改直接应用于飞控。"
-#~ "该工具旨在通过提供清晰和直观的参数管理界面，半自动化无人机的 ArduPilot 配"
-#~ "置过程。"
-
-#~ msgid ""
-#~ "This configuration step should be performed outside this tool by\n"
-#~ "{auto_changed_by}\n"
-#~ "and that should have changed the parameters on the FC.\n"
-#~ "\n"
-#~ "Should the FC values now be copied to the {selected_file} file?"
-#~ msgstr ""
-#~ "此配置步驟應由\n"
-#~ "\n"
-#~ "在此工具之外執行，並且應該已更改 FC 上的參數。\n"
-#~ "\n"
-#~ "現在是否應將 FC 值複製到  文件中？此配置步骤应由 {auto_changed_by} 在此工"
-#~ "具之外执行\n"
-#~ "并且飞控上的参数应该已更改。\n"
-#~ "\n"
-#~ "现在应该将飞控的值复制到 {selected_file} 文件吗？"
-
-#~ msgid "Please configure all vehicle component properties in this window.\n"
-#~ msgstr "請在此窗口中配置所有車輛組件屬性。\n"
-
-#~ msgid "Scroll down and make sure you do not miss a property.\n"
-#~ msgstr "向下滾動並確保您沒有錯過任何屬性。\n"
-
-#~ msgid "Saving the result will write to the vehicle_components.json file."
-#~ msgstr "保存后的结果将写入 vehicle_components.json 文件。"
-
-#~ msgid ""
-#~ "Save component data and start parameter value configuration and tuning."
-#~ msgstr "保存组件数据并开始参数值配置和调试。"
-
-#, fuzzy
-#~ msgid "1. Describe all vehicle component properties in the window below\n"
-#~ msgstr "1. 在下面的窗口中描述所有車輛組件屬性\n"
-
-#, fuzzy
-#~ msgid "2. Scroll all the way down and make sure to edit all properties\n"
-#~ msgstr "2. 向下滾動並確保編輯所有屬性\n"
-
-#~ msgid "3. Do not be lazy, collect the required information and enter it\n"
-#~ msgstr "3. 不要懶惰，收集所需的信息並輸入\n"
-
-#~ msgid " only after all information is correct"
-#~ msgstr " 仅在所有信息正确后"
-
-#~ msgid "Error in forced parameters"
-#~ msgstr "强制参数中的错误"
-
-#~ msgid ""
-#~ "Invalid value '{value}' for {_paths_str}\n"
-#~ "{e}"
-#~ msgstr ""
-#~ "無效值 '' 對於 \n"
-#~ "无效的值 '{value}' 对于 {_paths_str}\n"
-#~ "{e}"
-
-#~ msgid "Blank template data"
-#~ msgstr "空白模板数据"
-
-#~ msgid ""
-#~ "Create a new blank vehicle configuration, with no data from the template."
-#~ msgstr "创建一个新的空白车辆配置，不使用模板中的任何数据。"
-
-#~ msgid "list_pair_tuple must be a tuple or a dictionary, not %s"
-#~ msgstr "list_pair_tuple 必须是元组或字典，而不是 %s"
-
-#~ msgid ""
-#~ "Use the parameter values from the connected flight controller instead of "
-#~ "the\n"
-#~ "template files when creating a new vehicle configuration directory from a "
-#~ "template.\n"
-#~ "This option is only available when a flight controller is connected"
-#~ msgstr ""
-#~ "在從模板創建新車輛配置目錄時，使用連接的飛行控制器中的參數值而不是模板文"
-#~ "件。\n"
-#~ "此選項僅在連接飛行控制器時可用在从模板创建新载具配置目录时，使用连接的飞控"
-#~ "的参数值，而不是模板文件中的值。\n"
-#~ "此选项仅在飞控连接时可用"
-
-#~ msgid "Cannot save invalid vehicle components data: %s"
-#~ msgstr "无法保存无效的车辆组件数据：%s"
-
-#~ msgid "Error saving JSON data to file '%s': %s"
-#~ msgstr "保存JSON数据到文件 '%s'时发生错误: %s"
-
-#~ msgid "Failed to save data to file. Is the destination write protected?"
-#~ msgstr "保存数据到文件失败。目标文件是否启用了写保护？"
-
-#~ msgid "Reason why respective parameter changed"
-#~ msgstr "相应参数更改的原因"
-
-#~ msgid ""
-#~ "Mandatory level of the current file,\n"
-#~ " 100% you MUST use this file to configure the vehicle,\n"
-#~ " 0% you can ignore this file if it does not apply to your vehicle"
-#~ msgstr ""
-#~ "當前文件的強制級別，\n"
-#~ " 100% 您必須使用此文件來配置車輛，\n"
-#~ " 0% 如果此文件不適用於您的車輛，您可以忽略它当前文件的强制性级别，\n"
-#~ " 100% 您必须使用此文件来配置载具，\n"
-#~ " 0% 如果该文件不适用于您的载具，您可以忽略它"
-
-#~ msgid "New"
-#~ msgstr "新建"
-
-#~ msgid "Open"
-#~ msgstr "打开"
-
-#~ msgid "Re-Open"
-#~ msgstr "重新打开"
-
-#~ msgid "New version available!"
-#~ msgstr "新版本可用！"

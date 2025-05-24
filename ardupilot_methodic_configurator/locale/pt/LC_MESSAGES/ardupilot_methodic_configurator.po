@@ -593,7 +593,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:346
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
-msgstr ""
+msgstr "Incompatibilidade de versão ChibiOS: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:362
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
@@ -1126,7 +1126,7 @@ msgstr "Todos os passos anteriores não requeriam registo, mas os seguintes sim"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:71
 msgid "Because guided mode requires a tuned position controller"
-msgstr ""
+msgstr "Porque o modo guiado requer um controlador de posição afinado"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:72
 msgid "Because it can only be done after PID tuning is complete"
@@ -1176,7 +1176,7 @@ msgstr ""
 msgid ""
 "Because the position controller PIDs depend on the attitude and attitude-"
 "rate PIDs tuned in previous steps"
-msgstr ""
+msgstr "Porque os PIDs do controlador de posição dependem dos PIDs de atitude e taxa de atitude afinados em etapas anteriores"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:81
 msgid ""
@@ -3713,7 +3713,7 @@ msgid ""
 "completed the experiment)\n"
 "* NO - Continue without copying values (if you haven't performed the "
 "experiment yet, but know what you are doing)"
-msgstr ""
+msgstr "Esta etapa de configuração requer alterações externas por: {auto_changed_by}\n\nO procedimento do experimento da ferramenta externa está descrito no guia de afinação.\n\nEscolha uma opção:\n* FECHAR - Fechar a aplicação e realizar o experimento\n* SIM - Copiar valores FC actuais para {selected_file} (se já completou o experimento)\n* NÃO - Continuar sem copiar valores (se ainda não realizou o experimento, mas sabe o que está a fazer)"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:473
 msgid "Update file with values from FC?"
@@ -5097,177 +5097,3 @@ msgstr "Versão ou revisão do hardware"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "Ligação web para a página do produto ou documentação"
-
-#~ msgid "ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
-#~ msgstr ""
-#~ "Incompatibilidade de versão do ChibiOS: %s (BANNER) != %s "
-#~ "(AUTOPILOT_VERSION)"
-
-#~ msgid "Because guided mode requires a tunned position controller"
-#~ msgstr "Porque o modo guiado requer um controlador de posição afinado"
-
-#~ msgid ""
-#~ "Because the position controller PIDs depend on the attitude and attitude-"
-#~ "rate PIDs tunned in previous steps"
-#~ msgstr ""
-#~ "Porque os PIDs do controlador de posição dependem dos PIDs de atitude e "
-#~ "taxa de atitude afinados nos passos anteriores"
-
-#~ msgid ""
-#~ "This configuration step requires external changes by: {auto_changed_by}\n"
-#~ "\n"
-#~ "The external tool experiment procedure is described in the tunning "
-#~ "guide.\n"
-#~ "\n"
-#~ "Choose an option:\n"
-#~ "* CLOSE - Close the application and go perform the experiment\n"
-#~ "* YES - Copy current FC values to {selected_file} (if you've already "
-#~ "completed the experiment)\n"
-#~ "* NO - Continue without copying values (if you haven't performed the "
-#~ "experiment yet, but know what you are doing)"
-#~ msgstr ""
-#~ "Este passo de configuração requer alterações externas por: "
-#~ "{auto_changed_by}\n"
-#~ "\n"
-#~ "O procedimento da experiência com a ferramenta externa está descrito no "
-#~ "guia de afinação.\n"
-#~ "\n"
-#~ "Escolha uma opção:\n"
-#~ "* FECHAR - Fechar a aplicação e realizar a experiência\n"
-#~ "* SIM - Copiar valores atuais do FC para {selected_file} (se já completou "
-#~ "a experiência)\n"
-#~ "* NÃO - Continuar sem copiar valores (se ainda não realizou a "
-#~ "experiência, mas sabe o que está a fazer)"
-
-#~ msgid ""
-#~ "ArduPilot methodic configurator is a GUI-based tool designed to simplify "
-#~ "the management and visualization of ArduPilot parameters. It enables "
-#~ "users to browse through various vehicle templates, edit parameter files, "
-#~ "and apply changes directly to the flight controller. The tool is built to "
-#~ "semi-automate the configuration process of ArduPilot for drones by "
-#~ "providing a clear and intuitive interface for parameter management."
-#~ msgstr ""
-#~ "O configurador metódico do ArduPilot é uma GUI projetada para simplificar "
-#~ "o gerenciamento e a visualização dos parâmetros do ArduPilot. Ele permite "
-#~ "aos usuários navegar por vários modelos de veículos, editar arquivos de "
-#~ "parâmetros e aplicar alterações diretamente ao controlador de voo. A "
-#~ "ferramenta foi construída para semi-automatizar o processo de "
-#~ "configuração do ArduPilot para drones, fornecendo uma interface clara e "
-#~ "intuitiva para gerenciamento de parâmetros."
-
-#~ msgid ""
-#~ "This configuration step should be performed outside this tool by\n"
-#~ "{auto_changed_by}\n"
-#~ "and that should have changed the parameters on the FC.\n"
-#~ "\n"
-#~ "Should the FC values now be copied to the {selected_file} file?"
-#~ msgstr ""
-#~ "Esse passo de configuração deve ser realizado fora desta ferramenta por\n"
-#~ "{auto_changed_by}\n"
-#~ "e isso deve ter alterado os parâmetros no controlador de voo.\n"
-#~ "\n"
-#~ "Os valores do controlador de voo devem agora ser copiados para o arquivo "
-#~ "{selected_file}?"
-
-#~ msgid "Please configure all vehicle component properties in this window.\n"
-#~ msgstr ""
-#~ "Por favor, configure todas as propriedades dos componentes do veículo "
-#~ "nesta janela.\n"
-
-#~ msgid "Scroll down and make sure you do not miss a property.\n"
-#~ msgstr ""
-#~ "Role para baixo e certifique-se de não esquecer nenhuma propriedade.\n"
-
-#~ msgid "Saving the result will write to the vehicle_components.json file."
-#~ msgstr "Salvar o resultado irá escrever no arquivo vehicle_components.json."
-
-#~ msgid ""
-#~ "Save component data and start parameter value configuration and tuning."
-#~ msgstr ""
-#~ "Salvar dados de componentes e iniciar a configuração e ajuste dos valores "
-#~ "de parâmetros."
-
-#~ msgid "1. Describe all vehicle component properties in the window below\n"
-#~ msgstr ""
-#~ "1. Descreva todas as propriedades dos componentes do veículo na janela "
-#~ "abaixo\n"
-
-#~ msgid "2. Scroll all the way down and make sure to edit all properties\n"
-#~ msgstr ""
-#~ "2. Role para baixo e certifique-se de editar todas as propriedades.\n"
-
-#~ msgid "3. Do not be lazy, collect the required information and enter it\n"
-#~ msgstr ""
-#~ "3. Não seja preguiçoso, colete as informações necessárias e insira-as\n"
-
-#~ msgid " only after all information is correct"
-#~ msgstr " somente após todas as informações estarem corretas"
-
-#~ msgid "Error in forced parameters"
-#~ msgstr "Erro em parâmetros forçados"
-
-#~ msgid ""
-#~ "Invalid value '{value}' for {_paths_str}\n"
-#~ "{e}"
-#~ msgstr ""
-#~ "Valor inválido '{value}' para {_paths_str}\n"
-#~ "{e}"
-
-#~ msgid "Blank template data"
-#~ msgstr "Dados de modelo em branco"
-
-#~ msgid ""
-#~ "Create a new blank vehicle configuration, with no data from the template."
-#~ msgstr ""
-#~ "Criar uma nova configuração de veículo em branco, sem dados do modelo."
-
-#~ msgid "list_pair_tuple must be a tuple or a dictionary, not %s"
-#~ msgstr "list_pair_tuple deve ser uma tupla ou um dicionário, não %s"
-
-#~ msgid ""
-#~ "Use the parameter values from the connected flight controller instead of "
-#~ "the\n"
-#~ "template files when creating a new vehicle configuration directory from a "
-#~ "template.\n"
-#~ "This option is only available when a flight controller is connected"
-#~ msgstr ""
-#~ "Use os valores de parâmetros do controlador de voo conectado em vez dos\n"
-#~ "arquivos de modelo ao criar um novo diretório de configuração de veículo "
-#~ "a partir de um modelo.\n"
-#~ "Esta opção só está disponível quando um controlador de voo está conectado"
-
-#~ msgid "Cannot save invalid vehicle components data: %s"
-#~ msgstr ""
-#~ "Não é possível guardar dados de componentes de veículo inválidos: %s"
-
-#~ msgid "Error saving JSON data to file '%s': %s"
-#~ msgstr "Erro ao salvar dados JSON no arquivo '%s': %s"
-
-#~ msgid "Failed to save data to file. Is the destination write protected?"
-#~ msgstr ""
-#~ "Falha ao salvar dados no arquivo. O destino está protegido contra "
-#~ "gravação?"
-
-#~ msgid "Reason why respective parameter changed"
-#~ msgstr "Motivo pelo qual o respectivo parâmetro mudou"
-
-#~ msgid ""
-#~ "Mandatory level of the current file,\n"
-#~ " 100% you MUST use this file to configure the vehicle,\n"
-#~ " 0% you can ignore this file if it does not apply to your vehicle"
-#~ msgstr ""
-#~ "Nível obrigatório do arquivo atual,\n"
-#~ " 100% você DEVE usar este arquivo para configurar o veículo,\n"
-#~ " 0% você pode ignorar este arquivo se ele não se aplicar ao seu veículo"
-
-#~ msgid "New"
-#~ msgstr "Novo"
-
-#~ msgid "Open"
-#~ msgstr "Abrir"
-
-#~ msgid "Re-Open"
-#~ msgstr "Reabrir"
-
-#~ msgid "New version available!"
-#~ msgstr "Nova versão disponível!"

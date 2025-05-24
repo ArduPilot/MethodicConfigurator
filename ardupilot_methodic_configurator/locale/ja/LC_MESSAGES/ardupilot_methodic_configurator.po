@@ -588,7 +588,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:346
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
-msgstr ""
+msgstr "ChibiOSバージョンの不一致: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:362
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
@@ -1095,7 +1095,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:71
 msgid "Because guided mode requires a tuned position controller"
-msgstr ""
+msgstr "ガイドモードには調整された位置制御装置が必要なため"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:72
 msgid "Because it can only be done after PID tuning is complete"
@@ -1144,7 +1144,7 @@ msgstr ""
 msgid ""
 "Because the position controller PIDs depend on the attitude and attitude-"
 "rate PIDs tuned in previous steps"
-msgstr ""
+msgstr "位置制御装置のPIDは、前のステップで調整された姿勢および姿勢レートPIDに依存するため"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:81
 msgid ""
@@ -3598,7 +3598,7 @@ msgid ""
 "completed the experiment)\n"
 "* NO - Continue without copying values (if you haven't performed the "
 "experiment yet, but know what you are doing)"
-msgstr ""
+msgstr "この設定ステップには次による外部変更が必要です: {auto_changed_by}\n\n外部ツール実験手順は調整ガイドに記載されています。\n\nオプションを選択してください:\n* 閉じる - アプリケーションを閉じて実験を実行する\n* はい - 現在のFC値を{selected_file}にコピーする（実験を既に完了している場合）\n* いいえ - 値をコピーせずに続行する（実験をまだ実行していないが、何をしているかを理解している場合）"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:473
 msgid "Update file with values from FC?"
@@ -4960,145 +4960,3 @@ msgstr "ハードウェアのバージョンまたはリビジョン"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "製品ページまたはドキュメントへのウェブリンク"
-
-#~ msgid "ChibiOS version missmatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
-#~ msgstr "ChibiOSバージョンの不一致: %s (BANNER) != % s (AUTOPILOT_VERSION)"
-
-#~ msgid "Because guided mode requires a tunned position controller"
-#~ msgstr "ガイドモードは調整された位置コントローラーを必要とするため"
-
-#~ msgid ""
-#~ "Because the position controller PIDs depend on the attitude and attitude-"
-#~ "rate PIDs tunned in previous steps"
-#~ msgstr ""
-#~ "位置コントローラーのPIDは、前のステップで調整された姿勢と姿勢レートのPIDに"
-#~ "依存するため"
-
-#~ msgid ""
-#~ "This configuration step requires external changes by: {auto_changed_by}\n"
-#~ "\n"
-#~ "The external tool experiment procedure is described in the tunning "
-#~ "guide.\n"
-#~ "\n"
-#~ "Choose an option:\n"
-#~ "* CLOSE - Close the application and go perform the experiment\n"
-#~ "* YES - Copy current FC values to {selected_file} (if you've already "
-#~ "completed the experiment)\n"
-#~ "* NO - Continue without copying values (if you haven't performed the "
-#~ "experiment yet, but know what you are doing)"
-#~ msgstr ""
-#~ "この構成ステップには{auto_changed_by}による外部変更が必要です\n"
-#~ "\n"
-#~ "外部ツール実験手順はチューニングガイドに記載されています。\n"
-#~ "\n"
-#~ "オプションを選択してください:\n"
-#~ "* 閉じる - アプリケーションを閉じて実験を実行する\n"
-#~ "* はい - 現在のFCの値を{selected_file}にコピーする(実験がすでに完了してい"
-#~ "る場合)\n"
-#~ "* いいえ - 値をコピーせずに続行する(実験をまだ実行していないが、何をしてい"
-#~ "るか分かっている場合)"
-
-#~ msgid ""
-#~ "ArduPilot methodic configurator is a GUI-based tool designed to simplify "
-#~ "the management and visualization of ArduPilot parameters. It enables "
-#~ "users to browse through various vehicle templates, edit parameter files, "
-#~ "and apply changes directly to the flight controller. The tool is built to "
-#~ "semi-automate the configuration process of ArduPilot for drones by "
-#~ "providing a clear and intuitive interface for parameter management."
-#~ msgstr ""
-#~ "ArduPilot方法論的コンフィギュレータは、ArduPilotパラメータの管理と可視化を"
-#~ "簡素化するために設計されたGUIベースのツールです。ユーザーは様々な機体テン"
-#~ "プレートを閲覧し、パラメータファイルを編集し、変更をフライトコントローラー"
-#~ "に直接適用することができます。このツールはドローン用ArduPilotの設定プロセ"
-#~ "スを半自動化するためのもので、パラメータ管理のための明確で直感的なインター"
-#~ "フェースを提供します。"
-
-#~ msgid ""
-#~ "This configuration step should be performed outside this tool by\n"
-#~ "{auto_changed_by}\n"
-#~ "and that should have changed the parameters on the FC.\n"
-#~ "\n"
-#~ "Should the FC values now be copied to the {selected_file} file?"
-#~ msgstr ""
-#~ "この設定ステップは、このツール外で\n"
-#~ "{auto_changed_by}によって\n"
-#~ "実行され、FCのパラメータが変更されているはずです。\n"
-#~ "\n"
-#~ "FC値を今{selected_file}ファイルにコピーしますか？"
-
-#~ msgid "Please configure all vehicle component properties in this window.\n"
-#~ msgstr ""
-#~ "このウィンドウで全ての機体コンポーネントのプロパティを設定してください。\n"
-
-#~ msgid "Scroll down and make sure you do not miss a property.\n"
-#~ msgstr ""
-#~ "スクロールダウンして、プロパティを見落とさないようにしてください。\n"
-
-#~ msgid "Saving the result will write to the vehicle_components.json file."
-#~ msgstr "結果を保存すると、vehicle_components.jsonファイルに書き込まれます。"
-
-#~ msgid ""
-#~ "Save component data and start parameter value configuration and tuning."
-#~ msgstr ""
-#~ "コンポーネントデータを保存し、パラメータ値の設定とチューニングを開始しま"
-#~ "す。"
-
-#~ msgid "1. Describe all vehicle component properties in the window below\n"
-#~ msgstr ""
-#~ "1. 以下のウィンドウで全ての機体コンポーネントのプロパティを記述してくださ"
-#~ "い\n"
-
-#~ msgid "2. Scroll all the way down and make sure to edit all properties\n"
-#~ msgstr "2. 最後までスクロールし、全てのプロパティを編集してください\n"
-
-#~ msgid "3. Do not be lazy, collect the required information and enter it\n"
-#~ msgstr "3. 手を抜かず、必要な情報を収集して入力してください\n"
-
-#~ msgid " only after all information is correct"
-#~ msgstr "はすべての情報が正しい場合のみクリックしてください"
-
-#~ msgid "Error in forced parameters"
-#~ msgstr "強制パラメータでエラーが発生しました"
-
-#~ msgid ""
-#~ "Invalid value '{value}' for {_paths_str}\n"
-#~ "{e}"
-#~ msgstr ""
-#~ "{_paths_str}の値'{value}'が無効です\n"
-#~ "{e}"
-
-#~ msgid "Blank template data"
-#~ msgstr "空のテンプレートデータ"
-
-#~ msgid ""
-#~ "Create a new blank vehicle configuration, with no data from the template."
-#~ msgstr "テンプレートのデータを使用せずに、新しい空の機体構成を作成します。"
-
-#~ msgid "list_pair_tuple must be a tuple or a dictionary, not %s"
-#~ msgstr "list_pair_tupleは%sではなく、タプルまたは辞書である必要があります"
-
-#~ msgid ""
-#~ "Use the parameter values from the connected flight controller instead of "
-#~ "the\n"
-#~ "template files when creating a new vehicle configuration directory from a "
-#~ "template.\n"
-#~ "This option is only available when a flight controller is connected"
-#~ msgstr ""
-#~ "テンプレートから新しい機体設定ディレクトリを作成する際に、\n"
-#~ "テンプレートファイルの代わりに接続されたフライトコントローラーからパラメー"
-#~ "タ値を使用します。\n"
-#~ "このオプションはフライトコントローラーが接続されている場合のみ利用可能です"
-
-#~ msgid "Cannot save invalid vehicle components data: %s"
-#~ msgstr "無効な機体コンポーネントデータを保存できません: %s"
-
-#~ msgid "Error saving JSON data to file '%s': %s"
-#~ msgstr "JSONデータをファイル'%s'に保存中にエラーが発生しました: %s"
-
-#~ msgid "Failed to save data to file. Is the destination write protected?"
-#~ msgstr ""
-#~ "データをファイルに保存できませんでした。保存先が書き込み保護されていません"
-#~ "か？"
-
-#~ msgid "Reason why respective parameter changed"
-#~ msgstr "それぞれのパラメータが変更された理由"
