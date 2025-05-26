@@ -15,9 +15,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# pylint: disable=redefined-outer-name
-
-
 from ardupilot_methodic_configurator.frontend_tkinter_show import (
     Tooltip,
     show_error_message,
@@ -25,6 +22,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import (
     show_no_param_files_error,
     show_tooltip,
 )
+
+# pylint: disable=redefined-outer-name
 
 
 # Fixtures
