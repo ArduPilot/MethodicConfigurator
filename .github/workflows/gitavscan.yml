@@ -38,4 +38,4 @@ jobs:
         sudo chmod 644 /etc/clamav/clamd.conf
 
     - name: Git AV Scan
-      uses: djdefi/gitavscan@efec7d014e25e46c8cfa3a875270099a4994fd89 # main
+      uses: djdefi/gitavscan@99aff2b8d0c05a649125d1735e54acb3880c2d09 # main
