@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-05-22 20:39+0000\n"
+"POT-Creation-Date: 2025-05-30 17:42+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -61,6 +61,8 @@ msgstr "Tipo de veículo explicitamente definido como %s."
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:115
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:118
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:119
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:402
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:406
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:276
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:280
 msgid "Unknown"
@@ -593,7 +595,8 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:346
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
-msgstr "Incompatibilidade de versão ChibiOS: %s (BANNER) != %s (AUTOPILOT_VERSION)"
+msgstr ""
+"Incompatibilidade de versão ChibiOS: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:362
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
@@ -1176,7 +1179,9 @@ msgstr ""
 msgid ""
 "Because the position controller PIDs depend on the attitude and attitude-"
 "rate PIDs tuned in previous steps"
-msgstr "Porque os PIDs do controlador de posição dependem dos PIDs de atitude e taxa de atitude afinados em etapas anteriores"
+msgstr ""
+"Porque os PIDs do controlador de posição dependem dos PIDs de atitude e taxa "
+"de atitude afinados em etapas anteriores"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:81
 msgid ""
@@ -2445,6 +2450,102 @@ msgstr "URL para documentação na wiki"
 msgid "Whether this phase is optional"
 msgstr "Se esta fase é opcional"
 
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:419
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:296
+msgid "Length of values %u and fallbacks %u differ for %s"
+msgstr "Comprimento dos valores %u e fallback %u diferem para %s"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:422
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:659
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:299
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:491
+msgid "No values found for %s in the metadata"
+msgstr "Nenhum valor encontrado para %s nos metadados"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:439
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:309
+msgid "Protocol %s does not match %s in %s metadata"
+msgstr "Protocolo %s não corresponde a %s nos metadados %s"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:442
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:311
+msgid "Protocol %s not found in %s metadata"
+msgstr "Protocolo %s não encontrado nos metadados de %s"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:478
+msgid "Invalid non-integer value for GPS_TYPE %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:507
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:360
+msgid "Invalid CAN_Dx_PROTOCOL %s and CAN_Px_DRIVER %s for GNSS Receiver"
+msgstr "CAN_Dx_PROTOCOL %s e CAN_Px_DRIVER %s inválidos para o receptor GNSS"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:526
+msgid "Invalid non-integer value for RC_PROTOCOLS %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:546
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:393
+msgid "Invalid non-integer value for {serial}_PROTOCOL {serial_protocol_nr}"
+msgstr "Valor inválido não inteiro para {serial}_PROTOCOL {serial_protocol_nr}"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:588
+msgid "Invalid non-integer value for MOT_PWM_TYPE %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:619
+msgid "Error processing BATT_MONITOR parameter: %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:662
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:494
+msgid "No fallback values found for %s"
+msgstr "Nenhum valor de fallback encontrado para %s"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:703
+msgid ""
+"{name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:720
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:671
+msgid "is below the {chemistry} minimum limit of {volt_limit}"
+msgstr "está abaixo do limite mínimo de {chemistry} de {volt_limit}"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:725
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:678
+msgid "is above the {chemistry} maximum limit of {volt_limit}"
+msgstr "está acima do limite máximo de {chemistry} de {volt_limit}"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:739
+msgid "Invalid value. Will be set to the recommended value."
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:759
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:616
+msgid ""
+"Invalid value '{value}' for {_paths_str}\n"
+"Allowed values are: {_allowed_str}"
+msgstr ""
+"Valor inválido '{value}' para {_paths_str}\n"
+"Valores permitios são: {_allowed_str}"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:779
+msgid "Duplicate FC connection type '{value}' for {_paths_str}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:804
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:767
+msgid "Battery Cell Low voltage must be lower than max voltage"
+msgstr "A tensão baixa da célula da bateria deve ser menor que a tensão máxima"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components.py:812
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:774
+msgid "Battery Cell Crit voltage must be lower than low voltage"
+msgstr ""
+"A tensão crítica da célula da bateria deve ser menor que a tensão baixa"
+
 #: ardupilot_methodic_configurator/frontend_tkinter_autoresize_combobox.py:60
 msgid "param_file combobox selected string '%s' not in list %s"
 msgstr ""
@@ -2470,50 +2571,13 @@ msgstr ""
 "de veículos. Não deve ser usada diretamente, mas através do script principal "
 "do configurador metódico do ArduPilot."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:296
-msgid "Length of values %u and fallbacks %u differ for %s"
-msgstr "Comprimento dos valores %u e fallback %u diferem para %s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:299
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:491
-msgid "No values found for %s in the metadata"
-msgstr "Nenhum valor encontrado para %s nos metadados"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:309
-msgid "Protocol %s does not match %s in %s metadata"
-msgstr "Protocolo %s não corresponde a %s nos metadados %s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:311
-msgid "Protocol %s not found in %s metadata"
-msgstr "Protocolo %s não encontrado nos metadados de %s"
-
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:332
 msgid "Invalid non-integer value for GPS_TYPE %f"
 msgstr "Valor inválido não inteiro para GPS_TYPE %f"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:360
-msgid "Invalid CAN_Dx_PROTOCOL %s and CAN_Px_DRIVER %s for GNSS Receiver"
-msgstr "CAN_Dx_PROTOCOL %s e CAN_Px_DRIVER %s inválidos para o receptor GNSS"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:393
-msgid "Invalid non-integer value for {serial}_PROTOCOL {serial_protocol_nr}"
-msgstr "Valor inválido não inteiro para {serial}_PROTOCOL {serial_protocol_nr}"
-
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:422
 msgid "Invalid non-integer value for MOT_PWM_TYPE %f"
 msgstr "Valor inválido não inteiro para MOT_PWM_TYPE %f"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:494
-msgid "No fallback values found for %s"
-msgstr "Nenhum valor de fallback encontrado para %s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:616
-msgid ""
-"Invalid value '{value}' for {_paths_str}\n"
-"Allowed values are: {_allowed_str}"
-msgstr ""
-"Valor inválido '{value}' para {_paths_str}\n"
-"Valores permitios são: {_allowed_str}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:617
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:648
@@ -2547,14 +2611,6 @@ msgstr ""
 msgid "Battery Chemistry not set. Will default to Lipo."
 msgstr "Química da bateria não definida. Será adotado o padrão Lipo."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:671
-msgid "is below the {chemistry} minimum limit of {volt_limit}"
-msgstr "está abaixo do limite mínimo de {chemistry} de {volt_limit}"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:678
-msgid "is above the {chemistry} maximum limit of {volt_limit}"
-msgstr "está acima do limite máximo de {chemistry} de {volt_limit}"
-
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:682
 msgid ""
 "Invalid value '{value}' for {_path_str}\n"
@@ -2584,15 +2640,6 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:744
 msgid "Duplicate FC connection type '{value}' for {_path_str}"
 msgstr "Tipo de conexão FC duplicado '{value}' para {_path_str}"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:767
-msgid "Battery Cell Low voltage must be lower than max voltage"
-msgstr "A tensão baixa da célula da bateria deve ser menor que a tensão máxima"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:774
-msgid "Battery Cell Crit voltage must be lower than low voltage"
-msgstr ""
-"A tensão crítica da célula da bateria deve ser menor que a tensão baixa"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:71
 msgid " - Vehicle Component Editor"
@@ -3713,7 +3760,19 @@ msgid ""
 "completed the experiment)\n"
 "* NO - Continue without copying values (if you haven't performed the "
 "experiment yet, but know what you are doing)"
-msgstr "Esta etapa de configuração requer alterações externas por: {auto_changed_by}\n\nO procedimento do experimento da ferramenta externa está descrito no guia de afinação.\n\nEscolha uma opção:\n* FECHAR - Fechar a aplicação e realizar o experimento\n* SIM - Copiar valores FC actuais para {selected_file} (se já completou o experimento)\n* NÃO - Continuar sem copiar valores (se ainda não realizou o experimento, mas sabe o que está a fazer)"
+msgstr ""
+"Esta etapa de configuração requer alterações externas por: "
+"{auto_changed_by}\n"
+"\n"
+"O procedimento do experimento da ferramenta externa está descrito no guia de "
+"afinação.\n"
+"\n"
+"Escolha uma opção:\n"
+"* FECHAR - Fechar a aplicação e realizar o experimento\n"
+"* SIM - Copiar valores FC actuais para {selected_file} (se já completou o "
+"experimento)\n"
+"* NÃO - Continuar sem copiar valores (se ainda não realizou o experimento, "
+"mas sabe o que está a fazer)"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:473
 msgid "Update file with values from FC?"
