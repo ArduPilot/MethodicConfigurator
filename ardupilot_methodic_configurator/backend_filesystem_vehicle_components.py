@@ -631,6 +631,93 @@ class VehicleComponents:
 
         return False, schema_obj
 
+    def get_all_value_datatypes(self) -> dict[str, Any]:
+        """
+        Get a dictionary of all value data types used in the vehicle_components_dict as defined in the schema.
+
+        The keys are the vehicle_components_dict keys and their values are the actual Python datatype
+
+        :return: A nested dictionary mapping data names to their Python datatypes.
+        """
+        schema = self.load_schema()
+        if not schema:
+            return {}
+
+        value_datatypes: dict[str, Any] = {}
+
+        # Start with the Components node since all our editable items are under it
+        components_schema = schema.get("properties", {}).get("Components", {})
+        if not components_schema:
+            return {}
+
+        # Traverse all component types (Flight Controller, Frame, etc.)
+        for component_type, component_schema in components_schema.get("properties", {}).items():
+            value_datatypes[component_type] = {}
+            self._extract_datatypes_from_component(component_schema, value_datatypes[component_type])
+
+        return value_datatypes
+
+    def _extract_datatypes_from_component(self, component_schema: dict[str, Any], target_dict: dict[str, Any]) -> None:
+        """Extract datatypes from a component schema recursively."""
+        # Resolve reference if present
+        resolved_schema = self._resolve_schema_reference(component_schema)
+
+        # Check direct properties
+        if "properties" in resolved_schema:
+            for prop_name, prop_schema in resolved_schema["properties"].items():
+                self._extract_datatypes_from_property(prop_schema, prop_name, target_dict)
+
+        # Check allOf constructs
+        if "allOf" in resolved_schema:
+            for allof_item in resolved_schema["allOf"]:
+                self._extract_datatypes_from_component(allof_item, target_dict)
+
+    def _extract_datatypes_from_property(
+        self, prop_schema: dict[str, Any], prop_name: str, target_dict: dict[str, Any]
+    ) -> None:
+        """Extract datatype from a property schema."""
+        # Resolve reference if present
+        resolved_schema = self._resolve_schema_reference(prop_schema)
+
+        # If this property has nested properties, create a nested dict and recurse
+        if "properties" in resolved_schema:
+            target_dict[prop_name] = {}
+            for nested_prop_name, nested_prop_schema in resolved_schema["properties"].items():
+                self._extract_datatypes_from_property(nested_prop_schema, nested_prop_name, target_dict[prop_name])
+
+        # Handle allOf constructs in properties
+        elif "allOf" in resolved_schema:
+            target_dict[prop_name] = {}
+            for allof_item in resolved_schema["allOf"]:
+                self._extract_datatypes_from_property(allof_item, prop_name, target_dict)
+
+        # If this property has a direct type, convert to Python type and record it as a leaf value
+        elif "type" in resolved_schema:
+            target_dict[prop_name] = self._json_type_to_python_type(resolved_schema["type"])
+
+        # If no type or properties found, create empty dict as placeholder
+        else:
+            target_dict[prop_name] = {}
+
+    def _json_type_to_python_type(self, json_type: str) -> type:
+        """
+        Convert JSON Schema type string to actual Python type.
+
+        :param json_type: JSON Schema type string
+        :return: Corresponding Python type
+        """
+        type_mapping = {
+            "string": str,
+            "number": float,
+            "integer": int,
+            "boolean": bool,
+            "array": list,
+            "object": dict,
+            "null": type(None),
+        }
+
+        return type_mapping.get(json_type, str)  # Default to str if unknown type
+
 
 def main() -> None:
     """Main function for standalone execution."""
