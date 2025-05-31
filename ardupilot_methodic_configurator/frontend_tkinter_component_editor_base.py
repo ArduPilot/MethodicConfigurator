@@ -102,8 +102,6 @@ class ComponentEditorWindowBase(BaseWindow):
             self._update_data_structure()
             self._create_save_frame()
             self._check_show_usage_instructions()
-            # Populate the UI with data
-            self.populate_frames()
 
     def _check_data(self) -> bool:
         """Check if we have data to work with and prepare for UI setup."""

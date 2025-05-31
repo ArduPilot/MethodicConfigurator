@@ -116,7 +116,7 @@ BATT_MONITOR_CONNECTION: dict[str, dict[str, str]] = {
 }
 
 GNSS_RECEIVER_CONNECTION: dict[str, Any] = {
-    "0": {"type": None, "protocol": "None"},
+    "0": {"type": "None", "protocol": "None"},
     "1": {"type": "serial", "protocol": "AUTO"},
     "2": {"type": "serial", "protocol": "uBlox"},
     "5": {"type": "serial", "protocol": "NMEA"},
@@ -481,7 +481,7 @@ class ComponentDataModel:  # pylint: disable=too-many-public-methods
         if str(gps1_type) in GNSS_RECEIVER_CONNECTION:
             gps1_connection_type = GNSS_RECEIVER_CONNECTION[str(gps1_type)].get("type")
             gps1_connection_protocol = GNSS_RECEIVER_CONNECTION[str(gps1_type)].get("protocol")
-            if gps1_connection_type is None:
+            if gps1_connection_type == "None":
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Protocol"), "None")
             elif gps1_connection_type == "serial":
@@ -640,6 +640,15 @@ class ComponentDataModel:  # pylint: disable=too-many-public-methods
             return list(doc_dict["Q_M_PWM_TYPE"]["values"].values())
         return []
 
+    def get_gnss_protocol_values(self, gnss_connection_type: str, _doc_dict: dict) -> list[str]:
+        """Get GNSS protocol values based on connection type."""
+        connection_type = "None"
+        if len(gnss_connection_type) > 3 and gnss_connection_type[:3] == "CAN":
+            connection_type= "can"
+        if len(gnss_connection_type) > 6 and gnss_connection_type[:6] == "SERIAL":
+            connection_type = "serial"
+        return [value["protocol"] for value in GNSS_RECEIVER_CONNECTION.values() if value["type"] == connection_type]
+
     def get_combobox_values_for_path(self, path: ValidationRulePath, doc_dict: dict) -> tuple[str, ...]:
         """Get valid combobox values for a given path."""
         # Default values for comboboxes in case the apm.pdef.xml metadata is not available
@@ -684,6 +693,19 @@ class ComponentDataModel:  # pylint: disable=too-many-public-methods
             ("GNSS Receiver", "FC Connection", "Protocol"): get_combobox_values("GPS_TYPE"),
             ("Battery", "Specifications", "Chemistry"): BatteryCell.chemistries(),
         }
+
+        # Protocols do not use the above defined dict
+        if path == ("GNSS Receiver", "FC Connection", "Protocol"):
+            connection_type_path = (path[0], path[1], "Type")
+            connection_type = self.get_component_value(connection_type_path)
+            if isinstance(connection_type, str):
+                subtype = "None"
+                if len(connection_type) > 3 and connection_type[:3] == "CAN":
+                    subtype= "can"
+                if len(connection_type) > 6 and connection_type[:6] == "SERIAL":
+                    subtype = "serial"
+                return tuple(value["protocol"] for value in GNSS_RECEIVER_CONNECTION.values() if value["type"] == subtype)
+
         return combobox_dict.get(path, ())
 
     def has_validation_rules(self, path: ValidationRulePath) -> bool:

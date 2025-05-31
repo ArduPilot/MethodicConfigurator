@@ -125,6 +125,18 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 protocol_combobox.set(protocols[0] if protocols else "")
             protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
 
+    def update_gnss_protocol_combobox_entries(self, gnss_connection_type: str) -> None:
+        """Updates the GNSS Protocol combobox entries based on the selected GNSS connection Type."""
+        protocols = self.data_model.get_gnss_protocol_values(gnss_connection_type, self.local_filesystem.doc_dict)
+
+        protocol_path = ("GNSS Receiver", "FC Connection", "Protocol")
+        if protocol_path in self.entry_widgets:
+            protocol_combobox = self.entry_widgets[protocol_path]
+            protocol_combobox["values"] = protocols  # Update the combobox entries
+            if protocol_combobox.get() not in protocols and isinstance(protocol_combobox, ttk.Combobox):
+                protocol_combobox.set(protocols[0] if protocols else "")
+            protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
+
     def add_entry_or_combobox(
         self, value: Union[str, float], entry_frame: ttk.Frame, path: ValidationRulePath, is_optional: bool = False
     ) -> Union[ttk.Entry, ttk.Combobox]:
@@ -167,10 +179,16 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             cb.bind("<Button-4>", handle_mousewheel)  # Linux mouse wheel up
             cb.bind("<Button-5>", handle_mousewheel)  # Linux mouse wheel down
 
-            if path == ("ESC", "FC Connection", "Type"):  # immediate update of ESC Protocol upon ESC Type selection
-                cb.bind(
+            if path == ("ESC", "FC Connection", "Type"):
+                cb.bind(    # immediate update of ESC Protocol upon ESC connection Type selection
                     "<<ComboboxSelected>>",
                     lambda event: self.update_esc_protocol_combobox_entries(cb.get()),  # noqa: ARG005
+                )
+
+            if path == ("GNSS Receiver", "FC Connection", "Type"):
+                cb.bind(  # immediate update of GNSS Protocol upon GNSS connection Type selection
+                    "<<ComboboxSelected>>",
+                    lambda event: self.update_gnss_protocol_combobox_entries(cb.get()),  # noqa: ARG005
                 )
 
             cb.set(value)
@@ -226,6 +244,9 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         if path == ("ESC", "FC Connection", "Type"):
             self.update_esc_protocol_combobox_entries(value)
+
+        if path == ("GNSS Receiver", "FC Connection", "Type"):
+            self.update_gnss_protocol_combobox_entries(value)
 
         combobox.configure(style="comb_input_valid.TCombobox")
         return True
@@ -296,6 +317,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 if isinstance(entry, ttk.Combobox):
                     if path == ("ESC", "FC Connection", "Type"):
                         self.update_esc_protocol_combobox_entries(value)
+                    if path == ("GNSS Receiver", "FC Connection", "Type"):
+                        self.update_gnss_protocol_combobox_entries(value)
                     combobox_values = self.data_model.get_combobox_values_for_path(path, self.local_filesystem.doc_dict)
                     if combobox_values and value not in combobox_values:
                         entry.configure(style="comb_input_invalid.TCombobox")
@@ -333,6 +356,8 @@ if __name__ == "__main__":
     component_editor_window.populate_frames()
     if args.skip_component_editor:
         component_editor_window.root.after(10, component_editor_window.root.destroy)
+
+    component_editor_window.validate_data()
 
     component_editor_window.root.mainloop()
 # pylint: enable=duplicate-code
