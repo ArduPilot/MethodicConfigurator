@@ -45,6 +45,17 @@
                 "--device=COM6",
                 "--loglevel=DEBUG"
             ]
+        },
+        {
+            "name": "Python Debugger: frontend_tkinter_component_editor.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "ardupilot_methodic_configurator/frontend_tkinter_component_editor.py",
+            "args": [
+                "--vehicle-dir=ardupilot_methodic_configurator/vehicle_templates/ArduCopter/diatone_taycan_mxc/4.6.x-params",
+                "--allow-editing-template-files",
+                "--loglevel=DEBUG"
+            ]
         }
     ]
 }
