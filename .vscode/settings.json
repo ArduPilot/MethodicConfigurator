@@ -59,5 +59,6 @@
     },
     "files.eol": "\n",
     "github.copilot.chat.agent.thinkingTool": true,
-    "chat.agent.enabled": true
+    "chat.agent.enabled": true,
+    "python-envs.pythonProjects": []
 }

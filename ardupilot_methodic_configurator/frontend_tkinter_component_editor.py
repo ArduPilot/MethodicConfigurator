@@ -797,6 +797,11 @@ if __name__ == "__main__":
     filesystem = LocalFilesystem(
         args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates
     )
-    app = ComponentEditorWindow(__version__, filesystem)
-    app.root.mainloop()
+    component_editor_window = ComponentEditorWindow(__version__, filesystem)
+
+    component_editor_window.populate_frames()
+    if args.skip_component_editor:
+        component_editor_window.root.after(10, component_editor_window.root.destroy)
+
+    component_editor_window.root.mainloop()
 # pylint: enable=duplicate-code
