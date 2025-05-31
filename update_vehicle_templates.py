@@ -77,7 +77,8 @@ def process_template_directory(template_dir: Path) -> None:
             return
 
         # Use ComponentDataModel to update the vehicle components structure
-        data_model = ComponentDataModel(local_fs.vehicle_components)
+        datatypes = local_fs.get_all_value_datatypes()
+        data_model = ComponentDataModel(local_fs.vehicle_components, datatypes)
         data_model.update_json_structure()
         local_fs.vehicle_components = data_model.get_component_data()
 

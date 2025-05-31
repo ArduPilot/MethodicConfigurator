@@ -1127,6 +1127,144 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
         mock_log_error.assert_called_once()
         assert "Exception occurred in get_component_property_description" in str(mock_log_error.call_args)
 
+    @patch.object(VehicleComponents, "load_schema")
+    def test_get_all_value_datatypes(self, mock_load_schema) -> None:
+        """Test the get_all_value_datatypes method returns correct Python types."""
+        # Setup schema with various JSON Schema types
+        test_schema = {
+            "properties": {
+                "Components": {
+                    "properties": {
+                        "Flight Controller": {
+                            "allOf": [
+                                {
+                                    "properties": {
+                                        "Product": {
+                                            "properties": {
+                                                "Manufacturer": {"type": "string"},
+                                                "Model": {"type": "string"},
+                                                "Version": {"type": "string"},
+                                            }
+                                        },
+                                        "Firmware": {
+                                            "properties": {"Type": {"type": "string"}, "Version": {"type": "string"}}
+                                        },
+                                    }
+                                }
+                            ]
+                        },
+                        "Battery": {
+                            "properties": {
+                                "Specifications": {
+                                    "properties": {
+                                        "Capacity mAh": {"type": "integer"},
+                                        "Chemistry": {"type": "string"},
+                                        "Number of cells": {"type": "integer"},
+                                        "Volt per cell max": {"type": "number"},
+                                        "Enabled": {"type": "boolean"},
+                                    }
+                                }
+                            }
+                        },
+                        "Frame": {
+                            "properties": {
+                                "Specifications": {
+                                    "properties": {
+                                        "TOW min Kg": {"type": "number"},
+                                        "TOW max Kg": {"type": "number"},
+                                        "Config": {"type": "object"},
+                                        "Tags": {"type": "array"},
+                                    }
+                                }
+                            }
+                        },
+                    }
+                }
+            }
+        }
+
+        mock_load_schema.return_value = test_schema
+
+        # Call the method
+        result = self.vehicle_components.get_all_value_datatypes()
+
+        # Verify structure and types
+        assert isinstance(result, dict)
+        assert "Flight Controller" in result
+        assert "Battery" in result
+        assert "Frame" in result
+
+        # Test Flight Controller nested structure
+        fc_types = result["Flight Controller"]
+        assert "Product" in fc_types
+        assert "Firmware" in fc_types
+
+        # Test specific type conversions
+        assert fc_types["Product"]["Manufacturer"] is str
+        assert fc_types["Product"]["Model"] is str
+        assert fc_types["Product"]["Version"] is str
+        assert fc_types["Firmware"]["Type"] is str
+        assert fc_types["Firmware"]["Version"] is str
+
+        # Test Battery types
+        battery_specs = result["Battery"]["Specifications"]
+        assert battery_specs["Capacity mAh"] is int
+        assert battery_specs["Chemistry"] is str
+        assert battery_specs["Number of cells"] is int
+        assert battery_specs["Volt per cell max"] is float
+        assert battery_specs["Enabled"] is bool
+
+        # Test Frame types
+        frame_specs = result["Frame"]["Specifications"]
+        assert frame_specs["TOW min Kg"] is float
+        assert frame_specs["TOW max Kg"] is float
+        assert frame_specs["Config"] is dict
+        assert frame_specs["Tags"] is list
+
+        # Verify schema loading was called
+        mock_load_schema.assert_called_once()
+
+    @patch.object(VehicleComponents, "load_schema")
+    def test_get_all_value_datatypes_empty_schema(self, mock_load_schema) -> None:
+        """Test get_all_value_datatypes with empty or missing schema."""
+        # Test with None schema
+        mock_load_schema.return_value = None
+        result = self.vehicle_components.get_all_value_datatypes()
+        assert not result
+
+        # Test with empty schema
+        mock_load_schema.return_value = {}
+        result = self.vehicle_components.get_all_value_datatypes()
+        assert not result
+
+        # Test with schema missing Components
+        mock_load_schema.return_value = {"properties": {}}
+        result = self.vehicle_components.get_all_value_datatypes()
+        assert not result
+
+    @patch.object(VehicleComponents, "load_schema")
+    def test_get_all_value_datatypes_unknown_types(self, mock_load_schema) -> None:
+        """Test get_all_value_datatypes with unknown JSON Schema types."""
+        test_schema = {
+            "properties": {
+                "Components": {
+                    "properties": {
+                        "TestComponent": {
+                            "properties": {"UnknownType": {"type": "unknowntype"}, "NoType": {"someother": "property"}}
+                        }
+                    }
+                }
+            }
+        }
+
+        mock_load_schema.return_value = test_schema
+        result = self.vehicle_components.get_all_value_datatypes()
+
+        # Verify unknown types default to str
+        assert result["TestComponent"]["UnknownType"] is str
+        # Verify missing type creates empty dict
+        assert result["TestComponent"]["NoType"] == {}
+
 
 if __name__ == "__main__":
     unittest.main()
