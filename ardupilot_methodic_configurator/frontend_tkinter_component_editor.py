@@ -113,29 +113,49 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         # Delegate to the data model for parameter processing
         self.data_model.process_fc_parameters(fc_parameters, doc)
 
-    def update_esc_protocol_combobox_entries(self, esc_connection_type: str) -> None:
-        """Updates the ESC Protocol combobox entries based on the selected ESC Type."""
+    def update_rc_protocol_combobox_entries(self, rc_connection_type: str) -> str:
+        """Updates the RC Protocol combobox entries based on the selected RC connection Type."""
+        protocols = self.data_model.get_rc_protocol_values(rc_connection_type, self.local_filesystem.doc_dict)
+        protocol_path = ("RC Receiver", "FC Connection", "Protocol")
+        return self.update_protocol_combobox_entries(protocols, protocol_path)
+
+    def update_telem_protocol_combobox_entries(self, telem_connection_type: str) -> str:
+        """Updates the Telemetry Protocol combobox entries based on the selected Telemetry connection Type."""
+        protocols = self.data_model.get_telem_protocol_values(telem_connection_type, self.local_filesystem.doc_dict)
+        protocol_path = ("Telemetry", "FC Connection", "Protocol")
+        return self.update_protocol_combobox_entries(protocols, protocol_path)
+
+    def update_battery_protocol_combobox_entries(self, battery_connection_type: str) -> str:
+        """Updates the Battery Monitor Protocol combobox entries based on the selected Battery Monitor connection Type."""
+        protocols = self.data_model.get_battery_protocol_values(battery_connection_type, self.local_filesystem.doc_dict)
+        protocol_path = ("Battery Monitor", "FC Connection", "Protocol")
+        return self.update_protocol_combobox_entries(protocols, protocol_path)
+
+    def update_esc_protocol_combobox_entries(self, esc_connection_type: str) -> str:
+        """Updates the ESC Protocol combobox entries based on the selected ESC connection Type."""
         protocols = self.data_model.get_esc_protocol_values(esc_connection_type, self.local_filesystem.doc_dict)
-
         protocol_path = ("ESC", "FC Connection", "Protocol")
-        if protocol_path in self.entry_widgets:
-            protocol_combobox = self.entry_widgets[protocol_path]
-            protocol_combobox["values"] = protocols  # Update the combobox entries
-            if protocol_combobox.get() not in protocols and isinstance(protocol_combobox, ttk.Combobox):
-                protocol_combobox.set(protocols[0] if protocols else "")
-            protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
+        return self.update_protocol_combobox_entries(protocols, protocol_path)
 
-    def update_gnss_protocol_combobox_entries(self, gnss_connection_type: str) -> None:
+    def update_gnss_protocol_combobox_entries(self, gnss_connection_type: str) -> str:
         """Updates the GNSS Protocol combobox entries based on the selected GNSS connection Type."""
         protocols = self.data_model.get_gnss_protocol_values(gnss_connection_type, self.local_filesystem.doc_dict)
-
         protocol_path = ("GNSS Receiver", "FC Connection", "Protocol")
+        return self.update_protocol_combobox_entries(protocols, protocol_path)
+
+    def update_protocol_combobox_entries(self, protocols: list[str], protocol_path: ValidationRulePath) -> str:
+        err_msg = ""
         if protocol_path in self.entry_widgets:
             protocol_combobox = self.entry_widgets[protocol_path]
             protocol_combobox["values"] = protocols  # Update the combobox entries
-            if protocol_combobox.get() not in protocols and isinstance(protocol_combobox, ttk.Combobox):
+            selected_protocol = protocol_combobox.get()
+            if selected_protocol not in protocols and isinstance(protocol_combobox, ttk.Combobox):
                 protocol_combobox.set(protocols[0] if protocols else "")
+                err_msg = f"On {' > '.join(protocol_path)} the selected\nprotocol '{selected_protocol}' is not available for the currently selected connection Type."
+                err_msg += f" Defaulting to '{protocols[0]}'." if protocols else " No protocols available."
+                err_msg = _(err_msg)
             protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
+        return err_msg
 
     def add_entry_or_combobox(
         self, value: Union[str, float], entry_frame: ttk.Frame, path: ValidationRulePath, is_optional: bool = False
@@ -148,8 +168,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         if combobox_values:
             cb = ttk.Combobox(entry_frame, values=combobox_values, foreground=fg_color)
-            cb.bind("<FocusOut>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore[misc]
-            cb.bind("<KeyRelease>", lambda event, path=path: self.validate_combobox(event, path))  # type: ignore[misc]
+            cb.bind("<FocusOut>", lambda event, path=path: self._validate_combobox(event, path))  # type: ignore[misc]
+            cb.bind("<KeyRelease>", lambda event, path=path: self._validate_combobox(event, path))  # type: ignore[misc]
 
             # Prevent mouse wheel from changing value when dropdown is not open
             def handle_mousewheel(_event: tk.Event, widget: tk.Widget = cb) -> Optional[str]:
@@ -172,15 +192,33 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             cb.bind("<<ComboboxDropdown>>", dropdown_opened)
             cb.bind(
                 "<FocusOut>",
-                lambda e, p=path: (dropdown_closed(e), self.validate_combobox(e, p)),  # type: ignore[misc, func-returns-value]
+                lambda e, p=path: (dropdown_closed(e), self._validate_combobox(e, p)),  # type: ignore[misc, func-returns-value]
             )
             # Bind mouse wheel events
             cb.bind("<MouseWheel>", handle_mousewheel)  # Windows mouse wheel
             cb.bind("<Button-4>", handle_mousewheel)  # Linux mouse wheel up
             cb.bind("<Button-5>", handle_mousewheel)  # Linux mouse wheel down
 
+            if path == ("RC Receiver", "FC Connection", "Type"):
+                cb.bind(  # immediate update of RC Receiver Protocol upon RC connection Type selection
+                    "<<ComboboxSelected>>",
+                    lambda event: self.update_rc_protocol_combobox_entries(cb.get()),  # noqa: ARG005
+                )
+
+            if path == ("Telemetry", "FC Connection", "Type"):
+                cb.bind(  # immediate update of Telemetry Protocol upon Telemetry connection Type selection
+                    "<<ComboboxSelected>>",
+                    lambda event: self.update_telem_protocol_combobox_entries(cb.get()),  # noqa: ARG005
+                )
+
+            if path == ("Battery Monitor", "FC Connection", "Type"):
+                cb.bind(  # immediate update of Battery Monitor Protocol upon Battery Monitor connection Type selection
+                    "<<ComboboxSelected>>",
+                    lambda event: self.update_battery_protocol_combobox_entries(cb.get()),  # noqa: ARG005
+                )
+
             if path == ("ESC", "FC Connection", "Type"):
-                cb.bind(    # immediate update of ESC Protocol upon ESC connection Type selection
+                cb.bind(  # immediate update of ESC Protocol upon ESC connection Type selection
                     "<<ComboboxSelected>>",
                     lambda event: self.update_esc_protocol_combobox_entries(cb.get()),  # noqa: ARG005
                 )
@@ -227,7 +265,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         return None
 
-    def validate_combobox(self, event: tk.Event, path: ComponentPath) -> bool:
+    def _validate_combobox(self, event: tk.Event, path: ComponentPath) -> bool:
         """Validates the value of a combobox."""
         combobox = event.widget  # Get the combobox widget that triggered the event
         value = combobox.get()  # Get the current value of the combobox
@@ -241,6 +279,15 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 show_error_message(_("Error"), error_msg.format(value=value, _paths_str=_paths_str, _allowed_str=_allowed_str))
             combobox.configure(style="comb_input_invalid.TCombobox")
             return False
+
+        if path == ("RC Receiver", "FC Connection", "Type"):
+            self.update_rc_protocol_combobox_entries(value)
+
+        if path == ("Telemetry", "FC Connection", "Type"):
+            self.update_telem_protocol_combobox_entries(value)
+
+        if path == ("Battery Monitor", "FC Connection", "Type"):
+            self.update_battery_protocol_combobox_entries(value)
 
         if path == ("ESC", "FC Connection", "Type"):
             self.update_esc_protocol_combobox_entries(value)
@@ -315,6 +362,12 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
                 # Check combobox validation
                 if isinstance(entry, ttk.Combobox):
+                    if path == ("RC Receiver", "FC Connection", "Type"):
+                        self.update_rc_protocol_combobox_entries(value)
+                    if path == ("Telemetry", "FC Connection", "Type"):
+                        self.update_telem_protocol_combobox_entries(value)
+                    if path == ("Battery Monitor ", "FC Connection", "Type"):
+                        self.update_battery_protocol_combobox_entries(value)
                     if path == ("ESC", "FC Connection", "Type"):
                         self.update_esc_protocol_combobox_entries(value)
                     if path == ("GNSS Receiver", "FC Connection", "Type"):
