@@ -485,13 +485,15 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         try:
             if not os_path.exists(template_dir):
                 error_msg = _("Template directory does not exist: {template_dir}")
+                error_msg = error_msg.format(**locals())
                 logging_error(error_msg)
-                return error_msg.format(**locals())
+                return error_msg
 
             if not os_path.exists(new_vehicle_dir):
                 error_msg = _("New vehicle directory does not exist: {new_vehicle_dir}")
+                error_msg = error_msg.format(**locals())
                 logging_error(error_msg)
-                return error_msg.format(**locals())
+                return error_msg
 
             for item in os_listdir(template_dir):
                 if item in {
