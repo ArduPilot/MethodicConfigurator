@@ -34,6 +34,9 @@ CAN_PORTS = ["CAN1", "CAN2"]
 I2C_PORTS = ["I2C1", "I2C2", "I2C3", "I2C4"]
 PWM_PORTS = ["Main Out", "AIO"]
 RC_PORTS = ["RCin/SBUS"]
+SPI_PORTS = ["SPI"]
+PWM_PORTS = ["PWM"]
+OTHER_PORTS = ["other"]
 
 # Protocol dictionaries
 SERIAL_PROTOCOLS_DICT: dict[str, dict[str, Any]] = {
@@ -84,39 +87,39 @@ SERIAL_PROTOCOLS_DICT: dict[str, dict[str, Any]] = {
     "46": {"type": SERIAL_PORTS, "protocol": "IMUDATA", "component": None},
 }
 
-BATT_MONITOR_CONNECTION: dict[str, dict[str, str]] = {
-    "0": {"type": "None", "protocol": "Disabled"},
-    "3": {"type": "Analog", "protocol": "Analog Voltage Only"},
-    "4": {"type": "Analog", "protocol": "Analog Voltage and Current"},
-    "5": {"type": "i2c", "protocol": "Solo"},
-    "6": {"type": "i2c", "protocol": "Bebop"},
-    "7": {"type": "i2c", "protocol": "SMBus-Generic"},
-    "8": {"type": "can", "protocol": "DroneCAN-BatteryInfo"},
-    "9": {"type": "None", "protocol": "ESC"},
-    "10": {"type": "None", "protocol": "Sum Of Selected Monitors"},
-    "11": {"type": "i2c", "protocol": "FuelFlow"},
-    "12": {"type": "pwm", "protocol": "FuelLevelPWM"},
-    "13": {"type": "i2c", "protocol": "SMBUS-SUI3"},
-    "14": {"type": "i2c", "protocol": "SMBUS-SUI6"},
-    "15": {"type": "i2c", "protocol": "NeoDesign"},
-    "16": {"type": "i2c", "protocol": "SMBus-Maxell"},
-    "17": {"type": "i2c", "protocol": "Generator-Elec"},
-    "18": {"type": "i2c", "protocol": "Generator-Fuel"},
-    "19": {"type": "i2c", "protocol": "Rotoye"},
-    "20": {"type": "i2c", "protocol": "MPPT"},
-    "21": {"type": "i2c", "protocol": "INA2XX"},
-    "22": {"type": "i2c", "protocol": "LTC2946"},
-    "23": {"type": "None", "protocol": "Torqeedo"},
-    "24": {"type": "Analog", "protocol": "FuelLevelAnalog"},
-    "25": {"type": "Analog", "protocol": "Synthetic Current and Analog Voltage"},
-    "26": {"type": "spi", "protocol": "INA239_SPI"},
-    "27": {"type": "i2c", "protocol": "EFI"},
-    "28": {"type": "i2c", "protocol": "AD7091R5"},
-    "29": {"type": "None", "protocol": "Scripting"},
+BATT_MONITOR_CONNECTION: dict[str, dict[str, Union[list[str], str]]] = {
+    "0": {"type": ["None"], "protocol": "Disabled"},
+    "3": {"type": ANALOG_PORTS, "protocol": "Analog Voltage Only"},
+    "4": {"type": ANALOG_PORTS, "protocol": "Analog Voltage and Current"},
+    "5": {"type": I2C_PORTS, "protocol": "Solo"},
+    "6": {"type": I2C_PORTS, "protocol": "Bebop"},
+    "7": {"type": I2C_PORTS, "protocol": "SMBus-Generic"},
+    "8": {"type": CAN_PORTS, "protocol": "DroneCAN-BatteryInfo"},
+    "9": {"type": OTHER_PORTS, "protocol": "ESC"},
+    "10": {"type": OTHER_PORTS, "protocol": "Sum Of Selected Monitors"},
+    "11": {"type": I2C_PORTS, "protocol": "FuelFlow"},
+    "12": {"type": PWM_PORTS, "protocol": "FuelLevelPWM"},
+    "13": {"type": I2C_PORTS, "protocol": "SMBUS-SUI3"},
+    "14": {"type": I2C_PORTS, "protocol": "SMBUS-SUI6"},
+    "15": {"type": I2C_PORTS, "protocol": "NeoDesign"},
+    "16": {"type": I2C_PORTS, "protocol": "SMBus-Maxell"},
+    "17": {"type": I2C_PORTS, "protocol": "Generator-Elec"},
+    "18": {"type": I2C_PORTS, "protocol": "Generator-Fuel"},
+    "19": {"type": I2C_PORTS, "protocol": "Rotoye"},
+    "20": {"type": I2C_PORTS, "protocol": "MPPT"},
+    "21": {"type": I2C_PORTS, "protocol": "INA2XX"},
+    "22": {"type": I2C_PORTS, "protocol": "LTC2946"},
+    "23": {"type": OTHER_PORTS, "protocol": "Torqeedo"},
+    "24": {"type": ANALOG_PORTS, "protocol": "FuelLevelAnalog"},
+    "25": {"type": ANALOG_PORTS, "protocol": "Synthetic Current and Analog Voltage"},
+    "26": {"type": SPI_PORTS, "protocol": "INA239_SPI"},
+    "27": {"type": I2C_PORTS, "protocol": "EFI"},
+    "28": {"type": I2C_PORTS, "protocol": "AD7091R5"},
+    "29": {"type": OTHER_PORTS, "protocol": "Scripting"},
 }
 
 GNSS_RECEIVER_CONNECTION: dict[str, Any] = {
-    "0": {"type": None, "protocol": "None"},
+    "0": {"type": "None", "protocol": "None"},
     "1": {"type": "serial", "protocol": "AUTO"},
     "2": {"type": "serial", "protocol": "uBlox"},
     "5": {"type": "serial", "protocol": "NMEA"},
@@ -481,7 +484,7 @@ class ComponentDataModel:  # pylint: disable=too-many-public-methods
         if str(gps1_type) in GNSS_RECEIVER_CONNECTION:
             gps1_connection_type = GNSS_RECEIVER_CONNECTION[str(gps1_type)].get("type")
             gps1_connection_protocol = GNSS_RECEIVER_CONNECTION[str(gps1_type)].get("protocol")
-            if gps1_connection_type is None:
+            if gps1_connection_type == "None":
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Protocol"), "None")
             elif gps1_connection_type == "serial":
@@ -610,11 +613,16 @@ class ComponentDataModel:  # pylint: disable=too-many-public-methods
         if "BATT_MONITOR" in fc_parameters:
             try:
                 batt_monitor = int(fc_parameters["BATT_MONITOR"])
-                batt_type = BATT_MONITOR_CONNECTION[str(batt_monitor)].get("type", "None")
-                batt_protocol = BATT_MONITOR_CONNECTION[str(batt_monitor)].get("protocol", "Disabled")
+                fc_conn_type = BATT_MONITOR_CONNECTION[str(batt_monitor)].get("type", "None")
+                fc_conn_protocol = BATT_MONITOR_CONNECTION[str(batt_monitor)].get("protocol", "Disabled")
 
-                self.set_component_value(("Battery Monitor", "FC Connection", "Type"), batt_type)
-                self.set_component_value(("Battery Monitor", "FC Connection", "Protocol"), batt_protocol)
+                if isinstance(fc_conn_type, list):
+                    fc_conn_type = fc_conn_type[0]
+                if isinstance(fc_conn_protocol, list):
+                    fc_conn_protocol = fc_conn_protocol[0]
+
+                self.set_component_value(("Battery Monitor", "FC Connection", "Type"), fc_conn_type)
+                self.set_component_value(("Battery Monitor", "FC Connection", "Protocol"), fc_conn_protocol)
             except (ValueError, KeyError, TypeError) as e:
                 logging_error(_("Error processing BATT_MONITOR parameter: %s"), str(e))
 
@@ -628,6 +636,64 @@ class ComponentDataModel:  # pylint: disable=too-many-public-methods
             elif "SERVO_FTW_MASK" in fc_parameters and fc_parameters["SERVO_FTW_MASK"] and "SERVO_FTW_POLES" in fc_parameters:
                 self.set_component_value(("Motors", "Specifications", "Poles"), fc_parameters["SERVO_FTW_POLES"])
 
+    def get_rc_protocol_values(self, rc_connection_type: str, _doc_dict: dict) -> list[str]:
+        """Get RC protocol values based on connection type."""
+        connection_type = None
+        if rc_connection_type in RC_PORTS or rc_connection_type in SERIAL_PORTS:
+            connection_type = "RCin/SBUS"
+        if rc_connection_type in CAN_PORTS:
+            connection_type = "can"
+        return [value["protocol"] for value in RC_PROTOCOLS_DICT.values() if value["type"] == connection_type]
+
+    def get_telem_protocol_values(self, telem_connection_type: str, _doc_dict: dict) -> list[str]:
+        """Get Telemetry protocol values based on connection type."""
+        if telem_connection_type == "None":
+            return ["None"]
+        return [value["protocol"] for value in SERIAL_PROTOCOLS_DICT.values() if value["component"] == "Telemetry"]
+
+    def get_battery_protocol_values(self, battery_connection_type: str, _doc_dict: dict) -> list[str]:
+        """Get Battery protocol values based on connection type."""
+        if battery_connection_type == "None":
+            return ["None"]
+        if battery_connection_type in ANALOG_PORTS:
+            return [
+                value["protocol"]
+                for value in BATT_MONITOR_CONNECTION.values()
+                if isinstance(value["type"], list) and any(port in ANALOG_PORTS for port in value["type"])
+            ]
+        if battery_connection_type in I2C_PORTS:
+            return [
+                value["protocol"]
+                for value in BATT_MONITOR_CONNECTION.values()
+                if isinstance(value["type"], list) and any(port in I2C_PORTS for port in value["type"])
+            ]
+        if battery_connection_type in CAN_PORTS:
+            return [
+                value["protocol"]
+                for value in BATT_MONITOR_CONNECTION.values()
+                if isinstance(value["type"], list) and any(port in CAN_PORTS for port in value["type"])
+            ]
+        if battery_connection_type in SPI_PORTS:
+            return [
+                value["protocol"]
+                for value in BATT_MONITOR_CONNECTION.values()
+                if isinstance(value["type"], list) and any(port in SPI_PORTS for port in value["type"])
+            ]
+        if battery_connection_type in PWM_PORTS:
+            return [
+                value["protocol"]
+                for value in BATT_MONITOR_CONNECTION.values()
+                if isinstance(value["type"], list) and any(port in PWM_PORTS for port in value["type"])
+            ]
+        if battery_connection_type in OTHER_PORTS:
+            return [
+                value["protocol"]
+                for value in BATT_MONITOR_CONNECTION.values()
+                if isinstance(value["type"], list) and any(port in OTHER_PORTS for port in value["type"])
+            ]
+        # If no specific type matched, return all protocols
+        return [value["protocol"] for value in BATT_MONITOR_CONNECTION.values()]
+
     def get_esc_protocol_values(self, esc_connection_type: str, doc_dict: dict) -> list[str]:
         """Get ESC protocol values based on connection type."""
         if len(esc_connection_type) > 3 and esc_connection_type[:3] == "CAN":
@@ -639,6 +705,15 @@ class ComponentDataModel:  # pylint: disable=too-many-public-methods
         if "Q_M_PWM_TYPE" in doc_dict:
             return list(doc_dict["Q_M_PWM_TYPE"]["values"].values())
         return []
+
+    def get_gnss_protocol_values(self, gnss_connection_type: str, _doc_dict: dict) -> list[str]:
+        """Get GNSS protocol values based on connection type."""
+        connection_type = "None"
+        if len(gnss_connection_type) > 3 and gnss_connection_type[:3] == "CAN":
+            connection_type = "can"
+        if len(gnss_connection_type) > 6 and gnss_connection_type[:6] == "SERIAL":
+            connection_type = "serial"
+        return [value["protocol"] for value in GNSS_RECEIVER_CONNECTION.values() if value["type"] == connection_type]
 
     def get_combobox_values_for_path(self, path: ValidationRulePath, doc_dict: dict) -> tuple[str, ...]:
         """Get valid combobox values for a given path."""
@@ -666,16 +741,20 @@ class ComponentDataModel:  # pylint: disable=too-many-public-methods
             ("Flight Controller", "Firmware", "Type"): VehicleComponents.supported_vehicles(),
             ("RC Receiver", "FC Connection", "Type"): ("RCin/SBUS", *SERIAL_PORTS, *CAN_PORTS),
             ("RC Receiver", "FC Connection", "Protocol"): get_combobox_values("RC_PROTOCOLS"),
-            ("Telemetry", "FC Connection", "Type"): tuple(SERIAL_PORTS + CAN_PORTS),
-            ("Telemetry", "FC Connection", "Protocol"): ("MAVLink1", "MAVLink2", "MAVLink High Latency"),
-            ("Battery Monitor", "FC Connection", "Type"): (
-                "None",
-                "Analog",
-                "SPI",
-                "PWM",
-                *I2C_PORTS,
-                *SERIAL_PORTS,
-                *CAN_PORTS,
+            ("Telemetry", "FC Connection", "Type"): ("None", *SERIAL_PORTS, *CAN_PORTS),
+            ("Telemetry", "FC Connection", "Protocol"): tuple(
+                value["protocol"] for value in SERIAL_PROTOCOLS_DICT.values() if value["component"] == "Telemetry"
+            ),
+            ("Battery Monitor", "FC Connection", "Type"): tuple(
+                dict.fromkeys(  # Use dict.fromkeys to preserve order while removing duplicates
+                    sum(
+                        [
+                            type_val if isinstance(type_val, list) else [type_val]
+                            for type_val in [value["type"] for value in BATT_MONITOR_CONNECTION.values()]
+                        ],
+                        [],
+                    )
+                )
             ),
             ("Battery Monitor", "FC Connection", "Protocol"): get_combobox_values("BATT_MONITOR"),
             ("ESC", "FC Connection", "Type"): ("Main Out", "AIO", *SERIAL_PORTS, *CAN_PORTS),
@@ -684,6 +763,50 @@ class ComponentDataModel:  # pylint: disable=too-many-public-methods
             ("GNSS Receiver", "FC Connection", "Protocol"): get_combobox_values("GPS_TYPE"),
             ("Battery", "Specifications", "Chemistry"): BatteryCell.chemistries(),
         }
+
+        # Protocols do not use the above defined dict
+        if path == ("RC Receiver", "FC Connection", "Protocol"):
+            connection_type_path = (path[0], path[1], "Type")
+            connection_type = self.get_component_value(connection_type_path)
+            if isinstance(connection_type, str):
+                subtype = "None"
+                if connection_type in RC_PORTS or connection_type in SERIAL_PORTS:
+                    subtype = "RCin/SBUS"
+                if connection_type in CAN_PORTS:
+                    subtype = "can"
+                return tuple([value["protocol"] for value in RC_PROTOCOLS_DICT.values() if value["type"] == subtype])
+
+        if path == ("Telemetry", "FC Connection", "Protocol"):
+            connection_type_path = (path[0], path[1], "Type")
+            connection_type = self.get_component_value(connection_type_path)
+            if isinstance(connection_type, str) and connection_type == "None":
+                return tuple("None")
+
+        if path == ("ESC", "FC Connection", "Protocol"):
+            connection_type_path = (path[0], path[1], "Type")
+            connection_type = self.get_component_value(connection_type_path)
+            if isinstance(connection_type, str):
+                subtype = "None"
+                if len(connection_type) > 3 and connection_type[:3] == "CAN":
+                    return tuple("DroneCAN")
+                if len(connection_type) > 6 and connection_type[:6] == "SERIAL":
+                    return tuple(value["protocol"] for value in SERIAL_PROTOCOLS_DICT.values() if value["component"] == "ESC")
+                if "MOT_PWM_TYPE" in doc_dict:
+                    return tuple(doc_dict["MOT_PWM_TYPE"]["values"].values())
+                if "Q_M_PWM_TYPE" in doc_dict:
+                    return tuple(doc_dict["Q_M_PWM_TYPE"]["values"].values())
+
+        if path == ("GNSS Receiver", "FC Connection", "Protocol"):
+            connection_type_path = (path[0], path[1], "Type")
+            connection_type = self.get_component_value(connection_type_path)
+            if isinstance(connection_type, str):
+                subtype = "None"
+                if len(connection_type) > 3 and connection_type[:3] == "CAN":
+                    subtype = "can"
+                if len(connection_type) > 6 and connection_type[:6] == "SERIAL":
+                    subtype = "serial"
+                return tuple(value["protocol"] for value in GNSS_RECEIVER_CONNECTION.values() if value["type"] == subtype)
+
         return combobox_dict.get(path, ())
 
     def has_validation_rules(self, path: ValidationRulePath) -> bool:

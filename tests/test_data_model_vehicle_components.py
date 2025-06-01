@@ -1188,7 +1188,7 @@ class TestComponentDataModel:
         """Test comprehensive validation with edge cases."""
         doc_dict = {
             "RC_PROTOCOLS": {"Bitmask": {"9": "CRSF"}},
-            "BATT_MONITOR": {"values": {"4": "Analog Voltage and Current"}},
+            "BATT_MONITOR": {"values": {"4": "Analog Voltage and Current", "9": "ESC"}},  # Include ESC option
             "MOT_PWM_TYPE": {"values": {"6": "DShot600"}},
             "GPS_TYPE": {"values": {"2": "uBlox"}},
         }
@@ -1212,9 +1212,12 @@ class TestComponentDataModel:
         assert is_valid  # Telemetry and RC Receiver can share connections
 
         # Test ESC and Battery Monitor sharing connection with ESC protocol
+        realistic_vehicle_data.set_component_value(("Battery Monitor", "FC Connection", "Type"), "other")
         realistic_vehicle_data.set_component_value(("Battery Monitor", "FC Connection", "Protocol"), "ESC")
+        realistic_vehicle_data.set_component_value(("ESC", "FC Connection", "Type"), "SERIAL2")
         entry_values = {
-            ("Battery Monitor", "FC Connection", "Type"): "SERIAL2",
+            ("Battery Monitor", "FC Connection", "Type"): "other",  # Use valid type for ESC protocol
+            ("Battery Monitor", "FC Connection", "Protocol"): "ESC",  # Include protocol in entry_values
             ("ESC", "FC Connection", "Type"): "SERIAL2",  # Should be allowed with ESC protocol
         }
 
