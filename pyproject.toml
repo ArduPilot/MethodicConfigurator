@@ -68,7 +68,7 @@ dev = [
     "pyinstaller==6.13.0",
     "pylint==3.3.7",
     "pyright==1.1.400",
-    "pytest==8.3.5",
+    "pytest==8.4.0",
     "pytest-cov==6.1.1",
     "pytest-md==0.2.0",
     "pytest-mock==3.14.1",
