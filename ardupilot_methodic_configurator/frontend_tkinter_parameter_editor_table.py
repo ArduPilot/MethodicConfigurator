@@ -296,7 +296,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         else:
             new_value_entry.configure(style="TEntry")
 
-    def __create_new_value_entry(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals
+    def __create_new_value_entry(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals,too-many-statements # noqa: PLR0915
         self,
         param_name: str,
         param: Par,
