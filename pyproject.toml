@@ -53,7 +53,7 @@ dependencies = [
     "platformdirs==4.3.8",
     "pymavlink==2.4.47",
     "pyserial==3.5",
-    "requests==2.32.3",
+    "requests==2.32.4",
     "setuptools==80.9.0",
 ]
 
