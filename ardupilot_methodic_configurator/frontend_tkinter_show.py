@@ -28,6 +28,16 @@ def show_error_message(title: str, message: str) -> None:
     root.destroy()
 
 
+def show_warning_message(title: str, message: str) -> None:
+    root = tk.Tk()
+    # Set the theme to 'alt'
+    style = ttk.Style()
+    style.theme_use("alt")
+    root.withdraw()  # Hide the main window
+    messagebox.showwarning(title, message)
+    root.destroy()
+
+
 def show_no_param_files_error(_dirname: str) -> None:
     error_message = _(
         "No intermediate parameter files found in the selected '{_dirname}' vehicle directory.\n"
