@@ -17,26 +17,26 @@ from ardupilot_methodic_configurator.backend_flightcontroller import FlightContr
 
 
 def test_add_connection() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     assert fc.add_connection("test_connection") is True
     assert fc.add_connection("test_connection") is False
     assert fc.add_connection("") is False
 
 
 def test_discover_connections() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.discover_connections()
     assert len(fc.get_connection_tuples()) > 0
 
 
 def test_connect() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     result = fc.connect(device="test")
     assert result == ""
 
 
 def test_disconnect() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.connect(device="test")
     fc.disconnect()
     assert fc.master is None
@@ -48,7 +48,7 @@ def test_disconnect() -> None:
     side_effect=lambda x: {"param1": Par(1, x), "param2": Par(2, x)},
 )
 def test_download_params(mock_load_param_file_into_dict, mock_file) -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.connect(device="test")
     with patch("ardupilot_methodic_configurator.backend_flightcontroller.open", mock_file):
         params, _ = fc.download_params()
@@ -63,7 +63,7 @@ def test_download_params(mock_load_param_file_into_dict, mock_file) -> None:
     side_effect=lambda x: {"param1": Par(1, x), "param2": Par(2, x)},
 )
 def test_set_param(mock_load_param_file_into_dict, mock_file) -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.connect(device="test")
     fc.set_param("TEST_PARAM", 1.0)
     with patch("ardupilot_methodic_configurator.backend_flightcontroller.open", mock_file):
@@ -73,14 +73,14 @@ def test_set_param(mock_load_param_file_into_dict, mock_file) -> None:
 
 
 def test_reset_and_reconnect() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.connect(device="test")
     result = fc.reset_and_reconnect()
     assert result == ""
 
 
 def test_upload_file() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.connect(device="test")
     result = fc.upload_file("local.txt", "remote.txt")
     # Assuming the mock environment always returns False for upload_file
@@ -88,7 +88,7 @@ def test_upload_file() -> None:
 
 
 def test_get_connection_tuples() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.add_connection("test_connection")
     connections = fc.get_connection_tuples()
     assert ("test_connection", "test_connection") in connections
@@ -100,7 +100,7 @@ def test_get_connection_tuples() -> None:
     side_effect=lambda x: {"param1": Par(1, x), "param2": Par(2, x)},
 )
 def test_set_param_and_verify(mock_load_param_file_into_dict, mock_file) -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.connect(device="test")
     fc.set_param("TEST_PARAM", 1.0)
     with patch("ardupilot_methodic_configurator.backend_flightcontroller.open", mock_file):
@@ -111,7 +111,7 @@ def test_set_param_and_verify(mock_load_param_file_into_dict, mock_file) -> None
 
 
 def test_download_params_via_mavftp() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.connect(device="test")
     params, default_params = fc.download_params_via_mavftp()
     assert isinstance(params, dict)
@@ -119,7 +119,7 @@ def test_download_params_via_mavftp() -> None:
 
 
 def test_auto_detect_serial() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     serial_ports = fc._FlightController__auto_detect_serial()  # pylint: disable=protected-access
     assert isinstance(serial_ports, list)
 
@@ -136,34 +136,34 @@ def test_list_network_ports() -> None:
 
 
 def test_request_banner() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.connect(device="test")
     fc._FlightController__request_banner()  # pylint: disable=protected-access
     # Since we cannot verify in the mock environment, we will just ensure no exceptions are raised
 
 
 def test_receive_banner_text() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.connect(device="test")
     banner_text = fc._FlightController__receive_banner_text()  # pylint: disable=protected-access
     assert isinstance(banner_text, list)
 
 
 def test_request_message() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.connect(device="test")
     fc._FlightController__request_message(1)  # pylint: disable=protected-access
     # Since we cannot verify in the mock environment, we will just ensure no exceptions are raised
 
 
 def test_create_connection_with_retry() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     result = fc._FlightController__create_connection_with_retry(progress_callback=None, retries=1, timeout=1)  # pylint: disable=protected-access
     assert result == ""
 
 
 def test_process_autopilot_version() -> None:
-    fc = FlightController(reboot_time=7)
+    fc = FlightController(reboot_time=7, baudrate=115200)
     fc.connect(device="test")
     banner_msgs = ["ChibiOS: 123", "ArduPilot"]
     result = fc._FlightController__process_autopilot_version(None, banner_msgs)  # pylint: disable=protected-access
