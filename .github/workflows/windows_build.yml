@@ -106,7 +106,7 @@ jobs:
 
       - name: Generate GitHub Actions build provenance
         id: gh_provenance_step # Added id
-        uses: actions/attest-build-provenance@v2.3.0
+        uses: actions/attest-build-provenance@v2.4.0
         with:
           subject-path: windows/Output/*.exe
           subject-name: 'ardupilot_methodic_configurator'
