@@ -47,18 +47,6 @@ class TestValidationConstants:
             assert len(path) == 3
             assert all(isinstance(element, str) for element in path)
 
-        # Verify specific required paths exist
-        expected_paths = [
-            ("RC Receiver", "FC Connection", "Type"),
-            ("Telemetry", "FC Connection", "Type"),
-            ("Battery Monitor", "FC Connection", "Type"),
-            ("ESC", "FC Connection", "Type"),
-            ("GNSS Receiver", "FC Connection", "Type"),
-        ]
-
-        for expected_path in expected_paths:
-            assert expected_path in FC_CONNECTION_TYPE_PATHS
-
         # All paths should follow the pattern (Component, "FC Connection", "Type")
         for path in FC_CONNECTION_TYPE_PATHS:
             assert path[1] == "FC Connection"

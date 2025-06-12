@@ -120,7 +120,7 @@ class ProgramSettings:
         return site_config_directory
 
     @staticmethod
-    def __get_settings_as_dict() -> dict[str, Any]:  # type: ignore[misc]
+    def __get_settings_as_dict() -> dict[str, Any]:
         settings_path = os_path.join(ProgramSettings.__user_config_dir(), "settings.json")
 
         settings = {}
@@ -153,14 +153,14 @@ class ProgramSettings:
         return settings
 
     @staticmethod
-    def __set_settings_from_dict(settings: dict) -> None:  # type: ignore[misc]
+    def __set_settings_from_dict(settings: dict) -> None:
         settings_path = os_path.join(ProgramSettings.__user_config_dir(), "settings.json")
 
         with open(settings_path, "w", encoding="utf-8") as settings_file:
             json_dump(settings, settings_file, indent=4)
 
     @staticmethod
-    def __get_settings_config() -> tuple[dict[str, Any], str, str]:  # type: ignore[misc]
+    def __get_settings_config() -> tuple[dict[str, Any], str, str]:
         settings = ProgramSettings.__get_settings_as_dict()
 
         # Regular expression pattern to match single backslashes

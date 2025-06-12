@@ -525,7 +525,7 @@ class FlightController:
         return self.__create_connection_with_retry(connection_progress_callback)
 
     @staticmethod
-    def __list_serial_ports() -> list[serial.tools.list_ports_common.ListPortInfo]:  # type: ignore[misc]
+    def __list_serial_ports() -> list[serial.tools.list_ports_common.ListPortInfo]:
         """List all available serial ports."""
         comports = serial.tools.list_ports.comports()
         for port in comports:
@@ -555,7 +555,7 @@ class FlightController:
             "*CubePilot*",
             "*Qiotek*",
         ]
-        serial_list = [
+        serial_list: list[mavutil.SerialPort] = [
             mavutil.SerialPort(device=connection[0], description=connection[1])
             for connection in self.__connection_tuples
             if connection[1] and "mavlink" in connection[1].lower()
