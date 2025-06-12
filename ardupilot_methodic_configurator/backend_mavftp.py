@@ -483,9 +483,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                     logging.info(" D %s", d[1:])
                 elif d[0] == "F":
                     (name, size) = d[1:].split("\t")
-                    size = int(size)
-                    self.total_size += size
-                    logging.info("   %s\t%u", name, size)
+                    size_int = int(size)
+                    self.total_size += size_int
+                    logging.info("   %s\t%u", name, size_int)
                 else:
                     logging.info(d)
             # ask for more
