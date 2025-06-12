@@ -60,6 +60,10 @@ class FakeSerialForTests:
         pass
 
 
+DEFAULT_BAUDRATE: int = 115200
+DEFAULT_REBOOT_TIME: int = 7
+
+
 class FlightController:
     """
     A class to manage the connection and parameters of a flight controller.
@@ -71,13 +75,14 @@ class FlightController:
 
     """
 
-    def __init__(self, reboot_time: int) -> None:
+    def __init__(self, reboot_time: int = DEFAULT_REBOOT_TIME, baudrate: int = DEFAULT_BAUDRATE) -> None:
         """Initialize the FlightController communication object."""
         # warn people about ModemManager which interferes badly with ArduPilot
         if os_path.exists("/usr/sbin/ModemManager"):
             logging_warning(_("You should uninstall ModemManager as it conflicts with ArduPilot"))
 
         self.__reboot_time = reboot_time
+        self.__baudrate = baudrate
         self.__connection_tuples: list[tuple[str, str]] = []
         self.discover_connections()
         self.master: Union[mavutil.mavlink_connection, None] = None  # pyright: ignore[reportGeneralTypeIssues]
@@ -167,7 +172,9 @@ class FlightController:
                     self.__connection_tuples.insert(-1, (self.comport.device, getattr(self.comport, "description", "")))
             else:
                 return _("No serial ports found. Please connect a flight controller and try again.")
-        return self.__create_connection_with_retry(progress_callback=progress_callback, log_errors=log_errors)
+        return self.__create_connection_with_retry(
+            progress_callback=progress_callback, baudrate=self.__baudrate, log_errors=log_errors
+        )
 
     def __request_banner(self) -> None:
         """Request banner information from the flight controller."""
@@ -219,11 +226,12 @@ class FlightController:
                 0,
             )
 
-    def __create_connection_with_retry(
+    def __create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         progress_callback: Union[None, Callable[[int, int], None]],
         retries: int = 3,
         timeout: int = 5,
+        baudrate: int = DEFAULT_BAUDRATE,
         log_errors: bool = True,
     ) -> str:
         """
@@ -239,6 +247,7 @@ class FlightController:
                                                     of the connection attempt. Default is None.
             retries (int, optional): The number of retries before giving up. Default is 3.
             timeout (int, optional): The timeout in seconds for each connection attempt. Default is 5.
+            baudrate (int, optional): The baud rate for the connection. Default is DEFAULT_BAUDRATE.
             log_errors (bool): log errors.
 
         Returns:
@@ -248,11 +257,15 @@ class FlightController:
         """
         if self.comport is None or self.comport.device == "test":  # FIXME for testing only pylint: disable=fixme
             return ""
-        logging_info(_("Will connect to %s"), self.comport.device)
+        logging_info(_("Will connect to %s @ %u baud"), self.comport.device, baudrate)
         try:
             # Create the connection
             self.master = mavutil.mavlink_connection(
-                device=self.comport.device, timeout=timeout, retries=retries, progress_callback=progress_callback
+                device=self.comport.device,
+                baud=baudrate,
+                timeout=timeout,
+                retries=retries,
+                progress_callback=progress_callback,
             )
             logging_debug(_("Waiting for MAVLink heartbeat"))
             if not self.master:
@@ -522,7 +535,7 @@ class FlightController:
             reset_progress_callback(current_step, sleep_time)
 
         # Reconnect to the flight controller
-        return self.__create_connection_with_retry(connection_progress_callback)
+        return self.__create_connection_with_retry(connection_progress_callback, baudrate=self.__baudrate)
 
     @staticmethod
     def __list_serial_ports() -> list[serial.tools.list_ports_common.ListPortInfo]:
@@ -603,6 +616,12 @@ class FlightController:
 
     @staticmethod
     def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
+        parser.add_argument(
+            "--baudrate",
+            type=int,
+            default=DEFAULT_BAUDRATE,
+            help=_("MAVLink serial connection baudrate to the flight controller. Default is %(default)s"),
+        )
         parser.add_argument(  # type: ignore[attr-defined]
             "--device",
             type=str,
@@ -620,7 +639,7 @@ class FlightController:
             min=5,
             max=50,
             action=CheckRange,
-            default=7,
+            default=DEFAULT_REBOOT_TIME,
             help=_("Flight controller reboot time. Default is %(default)s"),
         )
         return parser

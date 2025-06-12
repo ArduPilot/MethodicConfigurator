@@ -52,7 +52,7 @@ class TestMainFunctions(unittest.TestCase):
         mock_fc.info.vendor = "vendor"
         mock_fc.info.firmware_type = "type"
 
-        args = argparse.Namespace(device="test_device", vehicle_type="", reboot_time=5)
+        args = argparse.Namespace(device="test_device", vehicle_type="", reboot_time=5, baudrate=115200)
         flight_controller, vehicle_type = connect_to_fc_and_set_vehicle_type(args)
         assert flight_controller == mock_fc
         assert vehicle_type == "quad"
@@ -115,7 +115,7 @@ class TestMainFunctions(unittest.TestCase):
         mock_fc.info.flight_sw_version_and_type = "v1.0"
 
         # Set an explicit vehicle type
-        args = argparse.Namespace(device="test_device", vehicle_type="plane", reboot_time=5)
+        args = argparse.Namespace(device="test_device", vehicle_type="plane", reboot_time=5, baudrate=115200)
         flight_controller, vehicle_type = connect_to_fc_and_set_vehicle_type(args)
 
         assert flight_controller == mock_fc
@@ -131,7 +131,7 @@ class TestMainFunctions(unittest.TestCase):
             mock_window_instance = MagicMock()
             mock_window.return_value = mock_window_instance
 
-            args = argparse.Namespace(device="test_device", vehicle_type="", reboot_time=5)
+            args = argparse.Namespace(device="test_device", vehicle_type="", reboot_time=5, baudrate=115200)
             connect_to_fc_and_set_vehicle_type(args)
 
             # Verify ConnectionSelectionWindow was created with the right parameters
@@ -198,6 +198,7 @@ class TestMainFunctions(unittest.TestCase):
             # Just calling connect_to_fc_and_set_vehicle_type to get flight_controller
             args = argparse.Namespace(
                 device="test_device",
+                baudrate=115200,
                 vehicle_type="",
                 reboot_time=5,
                 n=0,

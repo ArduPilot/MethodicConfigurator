@@ -79,7 +79,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
 
 
 def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[FlightController, str]:
-    flight_controller = FlightController(args.reboot_time)
+    flight_controller = FlightController(reboot_time=args.reboot_time, baudrate=args.baudrate)
 
     error_str = flight_controller.connect(args.device, log_errors=False)
     if error_str:

@@ -285,8 +285,8 @@ def main() -> None:
     )
     # pylint: enable=duplicate-code
 
-    flight_controller = FlightController(args.reboot_time)  # Initialize your FlightController instance
-    result = flight_controller.connect(device=args.device)  # Connect to the flight controller
+    flight_controller = FlightController(reboot_time=args.reboot_time, baudrate=args.baudrate)
+    result = flight_controller.connect(device=args.device)
     if result:
         logging_warning(result)
         window = ConnectionSelectionWindow(flight_controller, result)
