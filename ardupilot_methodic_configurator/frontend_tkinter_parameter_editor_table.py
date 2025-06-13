@@ -129,6 +129,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 self.parameter_editor.on_skip_click(force_focus_out_event=False)
                 return
         else:
+            # Use all parameters - don't filter by complexity here so they're processed for upload and save
+            # The filtering for display will happen in __update_table
             self.__update_table(self.local_filesystem.file_parameters[selected_file], fc_parameters)
         # Scroll to the top of the parameter table
         self.canvas.yview("moveto", 0)
@@ -179,9 +181,30 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def __update_table(self, params: dict[str, Par], fc_parameters: dict[str, float]) -> None:
         current_param_name: str = ""
+        displayed_row_count = 0
         try:
-            for i, (param_name, param) in enumerate(params.items(), 1):
+            for __, (param_name, param) in enumerate(params.items(), 1):
                 current_param_name = param_name
+
+                # Create upload checkbutton variable for all parameters (even if not displayed)
+                # so they can be uploaded to the flight controller
+                self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=bool(fc_parameters))
+
+                # Check if parameter should be displayed based on GUI complexity
+                if self.parameter_editor.gui_complexity == "simple":
+                    # Do not display forced and derived parameters in simple mode
+                    if (
+                        self.current_file in self.local_filesystem.forced_parameters
+                        and param_name in self.local_filesystem.forced_parameters[self.current_file]
+                    ):
+                        continue
+                    if (
+                        self.current_file in self.local_filesystem.derived_parameters
+                        and param_name in self.local_filesystem.derived_parameters[self.current_file]
+                    ):
+                        continue
+
+                displayed_row_count += 1
                 param_metadata = self.local_filesystem.doc_dict.get(param_name, {})
                 param_default = self.local_filesystem.param_default_dict.get(param_name, None)
                 doc_tooltip = param_metadata.get(
@@ -198,13 +221,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 # workaround a mypy issue
                 column.append(self.__create_change_reason_entry(param_name, param, column[3]))  # type: ignore[arg-type]
 
-                column[0].grid(row=i, column=0, sticky="w", padx=0)
-                column[1].grid(row=i, column=1, sticky="w", padx=0)
-                column[2].grid(row=i, column=2, sticky="e", padx=0)
-                column[3].grid(row=i, column=3, sticky="e", padx=0)
-                column[4].grid(row=i, column=4, sticky="e", padx=0)
-                column[5].grid(row=i, column=5, sticky="e", padx=0)
-                column[6].grid(row=i, column=6, sticky="ew", padx=(0, 5))
+                column[0].grid(row=displayed_row_count, column=0, sticky="w", padx=0)
+                column[1].grid(row=displayed_row_count, column=1, sticky="w", padx=0)
+                column[2].grid(row=displayed_row_count, column=2, sticky="e", padx=0)
+                column[3].grid(row=displayed_row_count, column=3, sticky="e", padx=0)
+                column[4].grid(row=displayed_row_count, column=4, sticky="e", padx=0)
+                column[5].grid(row=displayed_row_count, column=5, sticky="e", padx=0)
+                column[6].grid(row=displayed_row_count, column=6, sticky="ew", padx=(0, 5))
 
             # Add the "Add" button at the bottom of the table
             add_button = ttk.Button(
@@ -212,7 +235,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             )
             tooltip_msg = _("Add a parameter to the {self.current_file} file")
             show_tooltip(add_button, tooltip_msg.format(**locals()))
-            add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
+            add_button.grid(row=displayed_row_count + 2, column=0, sticky="w", padx=0)
 
         except KeyError as e:
             logging_critical(
