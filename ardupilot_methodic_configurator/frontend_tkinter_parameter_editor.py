@@ -150,6 +150,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.tempcal_imu_progress_window: ProgressWindow
         self.file_upload_progress_window: ProgressWindow
         self.last_time_asked_to_save: float = 0
+        self.gui_complexity = ProgramSettings.get_setting("gui_complexity")
 
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
@@ -178,7 +179,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.stage_progress_bar = StageProgressBar(
                 self.main_frame, self.local_filesystem.configuration_phases, last_step_nr
             )
-            self.stage_progress_bar.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
+            if self.gui_complexity != "simple":
+                self.stage_progress_bar.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
 
         # Create a DocumentationFrame object for the Documentation Content
         self.documentation_frame = DocumentationFrame(self.main_frame, self.local_filesystem, self.current_file)
@@ -206,15 +208,18 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         directory_selection_frame = VehicleDirectorySelectionWidgets(
             self, config_subframe, self.local_filesystem, self.local_filesystem.vehicle_dir, destroy_parent_on_open=False
         )
-        directory_selection_frame.container_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(4, 6))
+        if self.gui_complexity != "simple":
+            directory_selection_frame.container_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(4, 6))
 
         # Create a new frame inside the config_subframe for the intermediate parameter file selection label and combobox
         file_selection_frame = ttk.Frame(config_subframe)
-        file_selection_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(6, 6))
+        if self.gui_complexity != "simple":
+            file_selection_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(6, 6))
 
         # Create a label for the Combobox
         file_selection_label = ttk.Label(file_selection_frame, text=_("Current intermediate parameter file:"))
-        file_selection_label.pack(side=tk.TOP, anchor=tk.NW)  # Add the label to the top of the file_selection_frame
+        if self.gui_complexity != "simple":
+            file_selection_label.pack(side=tk.TOP, anchor=tk.NW)  # Add the label to the top of the file_selection_frame
 
         # Create Combobox for intermediate parameter file selection
         self.file_selection_combobox = AutoResizeCombobox(
@@ -232,7 +237,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             style="readonly.TCombobox",
         )
         self.file_selection_combobox.bind("<<ComboboxSelected>>", self.on_param_file_combobox_change)
-        self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
+        if self.gui_complexity != "simple":  # only display the combobox when not simple
+            self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
         font_family, _font_size = get_widget_font_family_and_size(file_selection_label)
         self.legend_frame(config_subframe, font_family)
@@ -307,11 +313,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             variable=self.show_only_differences,
             command=self.on_show_only_changed_checkbox_change,
         )
-        only_changed_checkbox.pack(side=tk.TOP, anchor=tk.NW)
-        show_tooltip(
-            only_changed_checkbox,
-            _("Toggle to show only parameters that will change if/when uploaded to the flight controller"),
-        )
+        if self.gui_complexity != "simple":
+            only_changed_checkbox.pack(side=tk.TOP, anchor=tk.NW)
+            show_tooltip(
+                only_changed_checkbox,
+                _("Toggle to show only parameters that will change if/when uploaded to the flight controller"),
+            )
 
         annotate_params_checkbox = ttk.Checkbutton(
             checkboxes_frame,
@@ -322,14 +329,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 "annotate_docs_into_param_files", self.annotate_params_into_files.get()
             ),
         )
-        annotate_params_checkbox.pack(side=tk.TOP, anchor=tk.NW)
-        show_tooltip(
-            annotate_params_checkbox,
-            _(
-                "Annotate ArduPilot parameter documentation metadata into the intermediate parameter files\n"
-                "The files will be bigger, but all the existing parameter documentation will be included inside"
-            ),
-        )
+        if self.gui_complexity != "simple":
+            annotate_params_checkbox.pack(side=tk.TOP, anchor=tk.NW)
+            show_tooltip(
+                annotate_params_checkbox,
+                _(
+                    "Annotate ArduPilot parameter documentation metadata into the intermediate parameter files\n"
+                    "The files will be bigger, but all the existing parameter documentation will be included inside"
+                ),
+            )
 
         # Create upload button
         upload_selected_button = ttk.Button(
