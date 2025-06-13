@@ -183,6 +183,6 @@
             "Notes": "First GNSS receiver is connected to SERIAL4 the second to CAN1"
         }
     },
-    "Program version": "1.4.6",
+    "Program version": "1.5.0",
     "Configuration template": "ReadyToSkyZD550"
 }
