@@ -718,6 +718,58 @@ class VehicleComponents:
 
         return type_mapping.get(json_type, str)  # Default to str if unknown type
 
+    def modify_schema_for_mcu_series(self, is_optional: bool) -> None:
+        """
+        Modify the schema to set x-is-optional property for MCU Series field based on its value.
+
+        Dynamically updates the schema to make the MCU Series field optional
+
+        Args:
+            is_optional: If it should be marked as optional
+
+        """
+        if not self.schema:
+            self.load_schema()
+
+        if not self.schema:  # Still None after loading
+            logging_error(_("Cannot modify schema: Schema could not be loaded"))
+            return
+
+        # Navigate to the MCU Series field in the schema
+        flight_controller_def = self.schema.get("definitions", {}).get("flightController", {})
+        flight_controller_properties = None
+
+        # Check in allOf construct
+        if "allOf" in flight_controller_def:
+            for item in flight_controller_def["allOf"]:
+                if "properties" in item and "Specifications" in item["properties"]:
+                    flight_controller_properties = item
+                    break
+
+        if not flight_controller_properties:
+            logging_error(_("Could not find Specifications in flight controller schema"))
+            return
+
+        specifications = flight_controller_properties["properties"]["Specifications"]
+
+        if "properties" in specifications and "MCU Series" in specifications["properties"]:
+            try:
+                mcu_series_field = specifications["properties"]["MCU Series"]
+
+                if is_optional:
+                    mcu_series_field["x-is-optional"] = True
+                else:
+                    # Remove x-is-optional if it exists
+                    mcu_series_field.pop("x-is-optional", None)
+
+                logging_debug(
+                    _("Modified schema: MCU Series x-is-optional=%s to value=%u"),
+                    mcu_series_field.get("x-is-optional", False),
+                    is_optional,
+                )
+            except Exception as err:  # pylint: disable=broad-exception-caught
+                logging_error(_("Error modifying schema for MCU Series: %s"), str(err))
+
 
 def main() -> None:
     """Main function for standalone execution."""

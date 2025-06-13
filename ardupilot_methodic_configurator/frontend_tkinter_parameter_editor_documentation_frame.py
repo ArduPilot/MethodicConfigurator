@@ -91,14 +91,15 @@ class DocumentationFrame:
             variable=self.auto_open_var,
             command=lambda: ProgramSettings.set_setting("auto_open_doc_in_browser", self.auto_open_var.get()),
         )
-        show_tooltip(
-            auto_open_checkbox,
-            _(
-                "Automatically open all the above documentation links in a browser\n"
-                "whenever the current intermediate parameter file changes"
-            ),
-        )
-        auto_open_checkbox.pack(side=tk.LEFT, expand=False)
+        if ProgramSettings.get_setting("gui_complexity") != "simple":
+            show_tooltip(
+                auto_open_checkbox,
+                _(
+                    "Automatically open all the above documentation links in a browser\n"
+                    "whenever the current intermediate parameter file changes"
+                ),
+            )
+            auto_open_checkbox.pack(side=tk.LEFT, expand=False)
 
     def update_why_why_now_tooltip(self, current_file: str) -> None:
         why_tooltip_text = self.local_filesystem.get_seq_tooltip_text(current_file, "why")
