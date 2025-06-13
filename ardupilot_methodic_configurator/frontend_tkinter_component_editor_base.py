@@ -24,6 +24,7 @@ from unittest.mock import patch
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_vehicle_components import ComponentDataModel
 from ardupilot_methodic_configurator.data_model_vehicle_components_base import (
@@ -108,6 +109,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         self.scroll_frame: ScrollFrame
         self.save_button: ttk.Button
         self.template_manager: ComponentTemplateManager
+        self.complexity_var = tk.StringVar()
 
         # Initialize UI if there's data to work with
         if self._check_data():
@@ -175,11 +177,55 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         explanation_text += _("Labels for optional properties are displayed in gray text.\n")
         explanation_text += _("Scroll down to ensure that you do not overlook any properties.\n")
 
+        explanation_frame = ttk.Frame(parent)
+        explanation_frame.pack(side=tk.TOP, fill=tk.X, padx=(10, 10), pady=(10, 0))
+
         explanation_label = ttk.Label(
-            parent, text=explanation_text, wraplength=WINDOW_WIDTH_PIX - VEICLE_IMAGE_WIDTH_PIX, justify=tk.LEFT
+            explanation_frame, text=explanation_text, wraplength=WINDOW_WIDTH_PIX - VEICLE_IMAGE_WIDTH_PIX, justify=tk.LEFT
         )
         explanation_label.configure(style="bigger.TLabel")
-        explanation_label.pack(side=tk.LEFT, padx=(10, 10), pady=(10, 0), anchor=tk.NW)
+        explanation_label.pack(side=tk.LEFT, anchor=tk.NW)
+
+        # Add UI complexity combobox
+        complexity_frame = ttk.Frame(explanation_frame)
+        complexity_frame.pack(side=tk.RIGHT, anchor=tk.NE, padx=(0, 10))
+
+        complexity_label = ttk.Label(complexity_frame, text=_("GUI Complexity:"))
+        complexity_label.pack(side=tk.LEFT, padx=(0, 5))
+
+        complexity_setting = ProgramSettings.get_setting("gui_complexity")
+        self.complexity_var.set(str(complexity_setting) if complexity_setting is not None else "simple")
+
+        complexity_combobox = ttk.Combobox(
+            complexity_frame, textvariable=self.complexity_var, values=["simple", "normal"], state="readonly", width=10
+        )
+        complexity_combobox.pack(side=tk.LEFT)
+        complexity_combobox.bind("<<ComboboxSelected>>", self._on_complexity_changed)
+
+        # Add tooltip
+        show_tooltip(
+            complexity_combobox,
+            _(
+                "Select the graphical user interface complexity level:\n"
+                "simple for beginners, only minimal mandatory fields no optional params displayed\n"
+                "normal for everybody else."
+            ),
+        )
+
+    def _on_complexity_changed(self, _event: Optional[tk.Event] = None) -> None:
+        """Handle complexity combobox change."""
+        # Save the complexity setting
+        ProgramSettings.set_setting("gui_complexity", self.complexity_var.get())
+
+        # Clear all widgets from the scroll frame
+        for widget in self.scroll_frame.view_port.winfo_children():
+            widget.destroy()
+
+        # Repopulate the frame with widgets according to the new complexity setting
+        self.populate_frames()
+
+        # Update the UI
+        self.scroll_frame.view_port.update_idletasks()
 
     def _add_vehicle_image(self, parent: ttk.Frame) -> None:
         """Add the vehicle image to the parent frame."""
@@ -293,6 +339,17 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             path (list): The path to the current key in the JSON data.
 
         """
+        # Skip components that shouldn't be displayed in simple mode
+        if isinstance(value, dict) and not self._should_display_in_simple_mode(key, value, path):
+            return
+
+        # For leaf nodes in simple mode, check if they are optional
+        if not isinstance(value, dict) and self.complexity_var.get() == "simple":
+            current_path = (*path, key)
+            _, is_optional = self.local_filesystem.get_component_property_description(current_path)
+            if is_optional:
+                return
+
         if isinstance(value, dict):  # JSON non-leaf elements, add LabelFrame widget
             self._add_non_leaf_widget(parent, key, value, path)
         else:  # JSON leaf elements, add Entry widget
@@ -399,7 +456,8 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
     def _add_template_controls(self, parent_frame: ttk.LabelFrame, component_name: str) -> None:
         """Add template controls for a component."""
-        self.template_manager.add_template_controls(parent_frame, component_name)
+        if self.complexity_var.get() != "simple":
+            self.template_manager.add_template_controls(parent_frame, component_name)
 
     def get_component_data_from_gui(self, component_name: str) -> ComponentData:
         """Extract component data from GUI elements."""
@@ -532,6 +590,66 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             instance.template_manager = MagicMock()
 
             return instance
+
+    def _should_display_in_simple_mode(self, key: str, value: dict, path: list[str]) -> bool:  # pylint: disable=too-many-branches
+        """
+        Determine if a component should be displayed in simple mode.
+
+        In simple mode, only show components that have at least one non-optional parameter.
+
+        Args:
+            key (str): The component key
+            value (dict): The component value
+            path (list): The path to the component
+
+        Returns:
+            bool: True if the component should be displayed, False otherwise
+
+        """
+        # If not in simple mode, always display the component
+        if self.complexity_var.get() != "simple":
+            return True
+
+        has_non_optional = False
+
+        # Top-level components need special handling
+        if not path and key in self.data_model.get_all_components():
+            # Check if this component has any non-optional parameters
+            for sub_key, sub_value in value.items():
+                if isinstance(sub_value, dict):
+                    # For nested dictionaries, recursively check
+                    if self._should_display_in_simple_mode(sub_key, sub_value, [*path, key]):
+                        return True
+                else:
+                    # For leaf nodes, check if they are optional
+                    current_path = (*path, key, sub_key)
+                    _, is_optional = self.local_filesystem.get_component_property_description(current_path)
+                    if not is_optional:
+                        return True
+            return False
+
+        # For non-top-level components or leaf nodes
+        if isinstance(value, dict):
+            # Check if this component has any non-optional parameters
+            for sub_key, sub_value in value.items():
+                current_path = (*path, key, sub_key)
+                if isinstance(sub_value, dict):
+                    if self._should_display_in_simple_mode(sub_key, sub_value, [*path, key]):
+                        has_non_optional = True
+                        break
+                else:
+                    _, is_optional = self.local_filesystem.get_component_property_description(current_path)
+                    if not is_optional:
+                        has_non_optional = True
+                        break
+        else:
+            # Leaf node - check if it's optional
+            current_path = (*path, key)
+            _, is_optional = self.local_filesystem.get_component_property_description(current_path)
+            if not is_optional:
+                has_non_optional = True
+
+        return has_non_optional
 
 
 if __name__ == "__main__":

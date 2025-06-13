@@ -218,3 +218,40 @@ class TestProgramSettings:
             mock_set_settings.reset_mock()
             ProgramSettings.set_setting("nonexistent_setting", value=True)
             mock_set_settings.assert_not_called()
+
+    def test_get_setting_gui_complexity(self) -> None:
+        """Test getting the GUI complexity setting."""
+        with patch.object(ProgramSettings, "_ProgramSettings__get_settings_as_dict") as mock_get_settings:
+            # Test when setting exists
+            mock_get_settings.return_value = {
+                "Format version": 1,
+                "gui_complexity": "simple",
+            }
+            assert ProgramSettings.get_setting("gui_complexity") == "simple"
+
+            # Test default value when setting doesn't exist
+            mock_get_settings.return_value = {"Format version": 1}
+
+            # We need to mock the SETTINGS_DEFAULTS dictionary for this test
+            with patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.SETTINGS_DEFAULTS",
+                {"Format version": 1, "gui_complexity": "normal"},
+            ):
+                assert ProgramSettings.get_setting("gui_complexity") == "normal"  # Default from SETTINGS_DEFAULTS
+
+    def test_set_setting_gui_complexity(self) -> None:
+        """Test setting the GUI complexity setting."""
+        with (
+            patch.object(ProgramSettings, "_ProgramSettings__get_settings_config") as mock_get_config,
+            patch.object(ProgramSettings, "_ProgramSettings__set_settings_from_dict") as mock_set_settings,
+        ):
+            mock_get_config.return_value = ({"Format version": 1, "gui_complexity": "normal"}, "pattern", "replacement")
+
+            # Test setting gui_complexity to simple
+            ProgramSettings.set_setting("gui_complexity", value="simple")
+            mock_set_settings.assert_called_with({"Format version": 1, "gui_complexity": "simple"})
+
+            # Test setting gui_complexity back to normal
+            mock_set_settings.reset_mock()
+            ProgramSettings.set_setting("gui_complexity", value="normal")
+            mock_set_settings.assert_called_with({"Format version": 1, "gui_complexity": "normal"})
