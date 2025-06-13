@@ -29,7 +29,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base impo
     argument_parser,
 )
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access, too-many-lines
 
 
 def setup_common_editor_mocks(editor) -> ComponentEditorWindowBase:
@@ -73,6 +73,7 @@ def setup_common_editor_mocks(editor) -> ComponentEditorWindowBase:
     editor._add_widget = MagicMock()
     editor.put_image_in_label = MagicMock(return_value=MagicMock())
     editor.add_entry_or_combobox = MagicMock(return_value=MagicMock())
+    editor.complexity_var = MagicMock()
 
     return editor
 
@@ -381,7 +382,7 @@ class TestSaveOperationBehavior:
 
         # Test: User confirms
         with (
-            patch.object(editor, "_confirm_component_properties", return_value=True),
+            patch.object(editor, "_confirm_component_properties", return_value=True) as _,
             patch.object(editor, "save_component_json") as mock_save,
         ):
             editor.validate_and_save_component_json()
@@ -389,7 +390,7 @@ class TestSaveOperationBehavior:
 
         # Test: User doesn't confirm
         with (
-            patch.object(editor, "_confirm_component_properties", return_value=False),
+            patch.object(editor, "_confirm_component_properties", return_value=False) as _,
             patch.object(editor, "save_component_json") as mock_save,
         ):
             editor.validate_and_save_component_json()
@@ -494,6 +495,10 @@ class TestWidgetCreationLogic:
         editor.scroll_frame = MagicMock()
         editor.scroll_frame.view_port = MagicMock()
         editor.entry_widgets = {}
+
+        # Add mock complexity_var for simple/normal mode testing
+        editor.complexity_var = MagicMock()
+        editor.complexity_var.get.return_value = "normal"  # Default to normal mode for most tests
 
         return editor
 
@@ -795,7 +800,7 @@ class TestRealWorldUsageScenarios:
         mock_filesystem.save_component_to_system_templates = MagicMock()
 
         mock_data_model = MagicMock(spec=ComponentDataModel)
-        mock_data_model.is_valid_component_data.return_value = False  # Skip UI initialization for testing
+        mock_data_model.is_valid_component_data.return_value = False  # Skip UI initialization
         mock_data_model.has_components.return_value = False
         mock_data_model.get_all_components.return_value = {"Motor": {"Type": "brushless"}, "Battery": {"Chemistry": "LiPo"}}
 
@@ -898,3 +903,130 @@ class TestRealWorldUsageScenarios:
 
         # Verify both save attempts were made
         assert editor.data_model.save_to_filesystem.call_count == 2
+
+
+class TestComplexityCombobox:
+    """Test the UI complexity combobox feature."""
+
+    @pytest.fixture
+    def mock_editor(self) -> ComponentEditorWindowBase:
+        """Create a mock editor for testing."""
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        mock_filesystem.vehicle_dir = "test_vehicle"
+        mock_filesystem.doc_dict = {}
+
+        # Create the editor with dependency injection
+        editor = ComponentEditorWindowBase.create_for_testing(version="1.0.0", local_filesystem=mock_filesystem)
+
+        # Setup basic required attributes for testing
+        return setup_common_editor_mocks(editor)
+
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.ProgramSettings")
+    def test_complexity_combobox_initialization(self, mock_program_settings, mock_editor) -> None:
+        """Test that the complexity combobox is initialized with the correct value."""
+        # Setup mock for ProgramSettings.get_setting
+        mock_program_settings.get_setting.return_value = "simple"
+
+        # Create a real explanation frame for testing
+        parent_frame = tk.Frame()
+
+        # Override the Tkinter-dependent methods for testing
+        with (
+            patch("tkinter.StringVar") as mock_string_var,
+            patch("tkinter.ttk.Combobox") as mock_combobox,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.show_tooltip"),
+        ):
+            # Create a mock for the StringVar to capture set calls
+            string_var_instance = MagicMock()
+            mock_string_var.return_value = string_var_instance
+
+            # Create a mock for the Combobox
+            combobox_instance = MagicMock()
+            mock_combobox.return_value = combobox_instance
+
+            # Call the method under test
+            mock_editor._add_explanation_text(parent_frame)
+
+            # Verify the StringVar was set with the correct value from ProgramSettings
+            mock_program_settings.get_setting.assert_called_with("gui_complexity")
+
+            # Verify the combobox was created with the correct options
+            mock_combobox.assert_called_once()
+            combobox_args = mock_combobox.call_args[1]
+            assert combobox_args["values"] == ["simple", "normal"]
+            assert combobox_args["state"] == "readonly"
+
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.ProgramSettings")
+    def test_complexity_change_handler(self, mock_program_settings, mock_editor) -> None:
+        """Test that changing the complexity combobox value updates the setting."""
+        # Setup the editor with a complexity variable
+        mock_editor.complexity_var = MagicMock()
+        mock_editor.complexity_var.get.return_value = "simple"
+
+        # Call the method under test
+        mock_editor._on_complexity_changed()
+
+        # Verify that the setting was updated with the correct value
+        mock_program_settings.set_setting.assert_called_with("gui_complexity", "simple")
+
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.ProgramSettings")
+    def test_should_display_in_simple_mode(self, mock_program_settings, mock_editor) -> None:  # pylint: disable=unused-argument
+        """Test that components with no non-optional parameters are hidden in simple mode."""
+        # Setup mock string var for complexity
+        mock_editor.complexity_var = MagicMock()
+
+        # Test with normal complexity - should always return True
+        mock_editor.complexity_var.get.return_value = "normal"
+        assert mock_editor._should_display_in_simple_mode("test_key", {}, []) is True
+
+        # Test with simple complexity
+        mock_editor.complexity_var.get.return_value = "simple"
+
+        # Mock filesystem to return optional/non-optional status
+        mock_editor.local_filesystem.get_component_property_description = MagicMock()
+
+        # Case 1: Component with all optional parameters
+        mock_editor.local_filesystem.get_component_property_description.side_effect = lambda _: ("description", True)
+        assert mock_editor._should_display_in_simple_mode("test_key", {"param1": "value1"}, []) is False
+
+        # Case 2: Component with at least one non-optional parameter
+        mock_editor.local_filesystem.get_component_property_description.side_effect = [
+            ("description", True),  # First parameter is optional
+            ("description", False),  # Second parameter is non-optional
+        ]
+        assert mock_editor._should_display_in_simple_mode("test_key", {"param1": "value1", "param2": "value2"}, []) is True
+
+        # Case 3: Component with only "Notes" field (should be treated as optional)
+        mock_editor.local_filesystem.get_component_property_description.reset_mock()
+        mock_editor.local_filesystem.get_component_property_description.side_effect = lambda path: (
+            ("description", True) if isinstance(path, tuple) and path[-1] == "Notes" else ("description", False)
+        )
+        assert mock_editor._should_display_in_simple_mode("test_key", {"Notes": "Some notes"}, []) is False
+
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.ProgramSettings")
+    def test_complexity_change_ui_update(self, mock_program_settings, mock_editor) -> None:
+        """Test that UI is updated when complexity changes."""
+        # Setup mocks
+        mock_editor.complexity_var = MagicMock()
+        mock_editor.complexity_var.get.return_value = "simple"
+        mock_editor.scroll_frame = MagicMock()
+        mock_editor.scroll_frame.view_port = MagicMock()
+        mock_editor.scroll_frame.view_port.winfo_children.return_value = [MagicMock(), MagicMock()]
+        mock_editor.populate_frames = MagicMock()
+
+        # Call the method under test
+        mock_editor._on_complexity_changed()
+
+        # Verify that setting was updated
+        mock_program_settings.set_setting.assert_called_with("gui_complexity", "simple")
+
+        # Verify that widgets were destroyed
+        assert mock_editor.scroll_frame.view_port.winfo_children.called
+        for widget in mock_editor.scroll_frame.view_port.winfo_children():
+            assert widget.destroy.called
+
+        # Verify that frames were repopulated
+        assert mock_editor.populate_frames.called
+
+        # Verify that view was updated
+        assert mock_editor.scroll_frame.view_port.update_idletasks.called

@@ -62,6 +62,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
     def __init__(self, version: str, local_filesystem: LocalFilesystem) -> None:
         ComponentEditorWindowBase.__init__(self, version, local_filesystem)
+        # when only read from file and no FC is connected
+        mcu = self.data_model.get_component_value(("Flight Controller", "Specifications", "MCU Series"))
+        if mcu and isinstance(mcu, str):
+            self.set_mcu_series(mcu)
 
     def set_vehicle_type_and_version(self, vehicle_type: str, version: str) -> None:
         """Set the vehicle type and version in the data model."""
@@ -87,6 +91,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         # Update UI if widget exists
         if mcu:
             self.set_component_value_and_update_ui(("Flight Controller", "Specifications", "MCU Series"), mcu)
+            if mcu.upper() in ("STM32F4XX", "STM32F7XX", "STM32H7XX"):
+                self.local_filesystem.modify_schema_for_mcu_series(is_optional=True)
 
     def set_vehicle_configuration_template(self, configuration_template: str) -> None:
         """Set the configuration template name in the data."""
