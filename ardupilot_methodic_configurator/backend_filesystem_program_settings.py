@@ -27,10 +27,11 @@ from platformdirs import site_config_dir, user_config_dir
 
 from ardupilot_methodic_configurator import _
 
-SETTINGS_DEFAULTS: dict[str, Union[int, bool]] = {
+SETTINGS_DEFAULTS: dict[str, Union[int, bool, str]] = {
     "Format version": 1,
     "auto_open_doc_in_browser": True,
     "annotate_docs_into_param_files": False,
+    "gui_complexity": "simple",  # simple or normal
 }
 
 
@@ -247,14 +248,14 @@ class ProgramSettings:
             ProgramSettings.__set_settings_from_dict(settings)
 
     @staticmethod
-    def get_setting(setting: str) -> Union[int, bool]:
+    def get_setting(setting: str) -> Union[int, bool, str]:
         if setting in SETTINGS_DEFAULTS:
             setting_default = SETTINGS_DEFAULTS[setting]
             return ProgramSettings.__get_settings_as_dict().get(setting, setting_default)  # type: ignore[no-any-return]
         return False
 
     @staticmethod
-    def set_setting(setting: str, value: Union[int, bool]) -> None:
+    def set_setting(setting: str, value: Union[int, bool, str]) -> None:
         if setting in SETTINGS_DEFAULTS:
             settings, _, _ = ProgramSettings.__get_settings_config()
             settings[setting] = value

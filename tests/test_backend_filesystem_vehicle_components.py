@@ -40,6 +40,36 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
         # Sample invalid component data
         self.invalid_component_data: dict[str, dict] = {"WrongKey": {"Flight Controller": {}}}
 
+        # Detailed schema with MCU Series for testing modify_schema_for_mcu_series
+        self.schema_with_mcu_series = {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "definitions": {
+                "flightController": {
+                    "allOf": [
+                        {
+                            "properties": {
+                                "Specifications": {
+                                    "type": "object",
+                                    "properties": {
+                                        "MCU Series": {
+                                            "type": "string",
+                                            "description": "Microcontroller series used in the flight controller",
+                                        }
+                                    },
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "properties": {
+                "Components": {
+                    "type": "object",
+                    "properties": {"Flight Controller": {"$ref": "#/definitions/flightController"}},
+                }
+            },
+        }
+
     @patch("builtins.open", new_callable=mock_open, read_data='{"$schema": "http://json-schema.org/draft-07/schema#"}')
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
     def test_load_schema(self, mock_json_load, mock_file) -> None:  # type: ignore[misc]
@@ -991,6 +1021,13 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
         # Setup initial schema
         current_schema = {"properties": {"test": {"description": "Test property"}}}
 
+        # Initialize schema with definitions including baseComponent
+        self.vehicle_components.schema = {
+            "definitions": {
+                "baseComponent": {"properties": {"Notes": {"description": "Notes property", "x-is-optional": True}}}
+            }
+        }
+
         # Case 1: Property found directly
         mock_check_direct.return_value = (True, {"description": "Found in direct properties", "x-is-optional": True})
         mock_check_allof.return_value = (False, {})
@@ -1264,6 +1301,58 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
         assert result["TestComponent"]["UnknownType"] is str
         # Verify missing type creates empty dict
         assert result["TestComponent"]["NoType"] == {}
+
+    def test_modify_schema_for_mcu_series(self) -> None:
+        """Test that modify_schema_for_mcu_series correctly modifies the schema based on optional setting."""
+        # Set up the schema
+        self.vehicle_components.schema = self.schema_with_mcu_series
+
+        # Case 1: Set as optional
+        self.vehicle_components.modify_schema_for_mcu_series(is_optional=True)
+
+        # Get the MCU Series field
+        flight_controller_def = self.vehicle_components.schema["definitions"]["flightController"]
+        properties_item = flight_controller_def["allOf"][0]
+        mcu_series_field = properties_item["properties"]["Specifications"]["properties"]["MCU Series"]
+
+        # Check that x-is-optional is True
+        assert mcu_series_field.get("x-is-optional", False), "MCU Series field should be marked as optional"
+
+        # Case 2: Set as non-optional
+        self.vehicle_components.modify_schema_for_mcu_series(is_optional=False)
+
+        # Check that x-is-optional is False/removed
+        assert not mcu_series_field.get("x-is-optional", False), "MCU Series field should not be marked as optional"
+
+    def test_modify_schema_for_mcu_series_no_schema(self) -> None:
+        """Test that modify_schema_for_mcu_series handles the case when schema is not loaded."""
+        # Ensure schema is None
+        self.vehicle_components.schema = None
+
+        # Mock load_schema to return an empty dict
+        with patch.object(self.vehicle_components, "load_schema", return_value={}):
+            # This should not raise an exception
+            self.vehicle_components.modify_schema_for_mcu_series(is_optional=True)
+
+    def test_modify_schema_for_mcu_series_missing_properties(self) -> None:
+        """Test that modify_schema_for_mcu_series handles missing properties in schema."""
+        # Set up schema without the expected properties
+        incomplete_schema: dict = {
+            "definitions": {
+                "flightController": {
+                    "allOf": [
+                        {
+                            "properties": {
+                                # Missing "Specifications"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+
+        self.vehicle_components.schema = incomplete_schema
+        self.vehicle_components.modify_schema_for_mcu_series(is_optional=True)
 
 
 if __name__ == "__main__":
