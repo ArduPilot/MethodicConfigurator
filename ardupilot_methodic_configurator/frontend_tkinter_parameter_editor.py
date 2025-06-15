@@ -728,7 +728,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.parameter_editor_table.generate_edit_widgets_focus_out()
 
         self.write_changes_to_intermediate_parameter_file()
-        selected_params = self.parameter_editor_table.get_upload_selected_params(self.current_file)
+        selected_params = self.parameter_editor_table.get_upload_selected_params(self.current_file, str(self.gui_complexity))
         if selected_params:
             if hasattr(self.flight_controller, "fc_parameters") and self.flight_controller.fc_parameters:
                 self.upload_selected_params(selected_params)
