@@ -227,10 +227,24 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     def _update_table(self, params: dict[str, Par], fc_parameters: dict[str, float], gui_complexity: str) -> None:  # pylint: disable=too-many-locals
         current_param_name: str = ""
         show_upload_column = self._should_show_upload_column(gui_complexity)
+        displayed_row_count = 0
 
         try:
-            for i, (param_name, param) in enumerate(params.items(), 1):
+            for __, (param_name, param) in enumerate(params.items(), 1):
                 current_param_name = param_name
+
+                # Create upload checkbutton variable for all parameters (even if not displayed)
+                # so they can be uploaded to the flight controller
+                self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=bool(fc_parameters))
+
+                # Check if parameter should be displayed based on GUI complexity
+                if self.parameter_editor.gui_complexity == "simple":
+                    # Do not display forced and derived parameters in simple mode
+                    is_forced_or_derived, _ = self._is_forced_or_derived_parameter(param_name)
+                    if is_forced_or_derived:
+                        continue
+
+                displayed_row_count += 1
                 param_metadata = self.local_filesystem.doc_dict.get(param_name, {})
                 param_default = self.local_filesystem.param_default_dict.get(param_name, None)
                 doc_tooltip = param_metadata.get(
@@ -241,7 +255,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                     param_name, param, param_metadata, param_default, doc_tooltip, fc_parameters, show_upload_column
                 )
 
-                self._grid_column_widgets(column, i, show_upload_column)
+                self._grid_column_widgets(column, displayed_row_count, show_upload_column)
 
             # Add the "Add" button at the bottom of the table
             add_button = ttk.Button(
@@ -249,7 +263,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             )
             tooltip_msg = _("Add a parameter to the {self.current_file} file")
             show_tooltip(add_button, tooltip_msg.format(**locals()))
-            add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
+            add_button.grid(row=displayed_row_count + 2, column=0, sticky="w", padx=0)
 
         except KeyError as e:
             logging_critical(
