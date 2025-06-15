@@ -1277,9 +1277,6 @@ class TestRepopulateAdvancedBehavior:
             mock_error.assert_called_once_with("Error in derived parameters", "Computation error")
 
 
-# Add missing imports at the top if needed
-
-
 class TestCompleteIntegrationWorkflows:
     """Test complete integration workflows end-to-end."""
 
@@ -1376,3 +1373,81 @@ class TestCompleteIntegrationWorkflows:
             parameter_editor_table._should_show_upload_column()
         )
         assert column_index_advanced == 6
+
+
+def test_repopulate_filter_by_gui_complexity(
+    parameter_editor_table: ParameterEditorTable, mock_parameter_editor: MagicMock
+) -> None:
+    """Test that forced and derived parameters are calculated but filtered from display in simple mode."""
+    # Setup
+    test_file = "test_file.param"
+    parameter_editor_table.current_file = test_file
+    parameter_editor_table.parameter_editor = mock_parameter_editor
+    mock_parameter_editor.gui_complexity = "simple"  # Set to simple mode
+
+    # Create test parameters
+    parameter_editor_table.local_filesystem.file_parameters = {
+        test_file: {
+            "PARAM1": Par(1.0, "normal parameter"),
+            "PARAM2": Par(2.0, "forced parameter"),
+            "PARAM3": Par(3.0, "derived parameter"),
+        }
+    }
+
+    # Set up forced parameters
+    parameter_editor_table.local_filesystem.forced_parameters = {
+        test_file: {
+            "PARAM2": Par(2.0, "forced parameter"),
+        }
+    }
+
+    # Set up derived parameters
+    parameter_editor_table.local_filesystem.derived_parameters = {
+        test_file: {
+            "PARAM3": Par(3.0, "derived parameter"),
+        }
+    }
+
+    # Setup required metadata
+    parameter_editor_table.local_filesystem.doc_dict = {
+        "PARAM1": {"units": "none"},
+        "PARAM2": {"units": "none"},
+        "PARAM3": {"units": "none"},
+    }
+    parameter_editor_table.local_filesystem.param_default_dict = {
+        "PARAM1": Par(0.0, "default"),
+        "PARAM2": Par(0.0, "default"),
+        "PARAM3": Par(0.0, "default"),
+    }
+
+    fc_parameters = {
+        "PARAM1": 1.0,
+        "PARAM2": 2.0,
+        "PARAM3": 3.0,
+    }
+
+    # Patch the update_table method to check parameters passed to it
+    with patch.object(parameter_editor_table, "_ParameterEditorTable__update_table") as mock_update:
+        parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False)
+
+        # In simple mode, all parameters should be passed to update_table for processing
+        # but the filtering of display happens inside update_table
+        mock_update.assert_called_once()
+        params_dict = mock_update.call_args[0][0]
+        assert len(params_dict) == 3
+        assert "PARAM1" in params_dict
+        assert "PARAM2" in params_dict
+        assert "PARAM3" in params_dict
+
+    # Now test with normal complexity
+    mock_parameter_editor.gui_complexity = "normal"
+    with patch.object(parameter_editor_table, "_ParameterEditorTable__update_table") as mock_update:
+        parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False)
+
+        # In normal mode, all parameters should be passed to update_table
+        mock_update.assert_called_once()
+        params_dict = mock_update.call_args[0][0]
+        assert len(params_dict) == 3
+        assert "PARAM1" in params_dict
+        assert "PARAM2" in params_dict
+        assert "PARAM3" in params_dict
