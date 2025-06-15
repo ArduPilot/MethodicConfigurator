@@ -76,6 +76,17 @@ the following system design requirements were derived:
 - Users should be able to edit the new value for each parameter directly in the table.
 - Users should be able to edit the reason changed for each parameter directly in the table.
 - The software must perform efficiently, with minimal lag or delay in response to user actions.
+- The software must provide a `gui_complexity` setting that controls the user interface complexity:
+  - When set to "simple" (default), the interface simplifies for beginners by:
+    - In the component editor:
+      - only displaying non-optional properties
+      - only displaying components that have at least one non-optional parameter, hiding components with only optional parameters
+      - not displaying component template load/save controls
+    - In the parameter editor:
+      - hiding the "Upload" column, "Current intermediate parameter file" combobox, "See only changed parameters" checkbox, and "Annotate docs into .param files" checkbox;
+      - automatically selecting all parameters for upload
+  - When set to "normal", all interface elements are displayed for advanced users
+  - Users should be able to switch between complexity levels using a dropdown combobox in the component editor
 
 #### 4. Documentation and Help
 
