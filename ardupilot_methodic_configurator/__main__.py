@@ -219,7 +219,8 @@ def main() -> None:
         local_filesystem.write_param_default_values_to_file(param_default_values)
 
     imu_tcal_available = "INS_TCAL1_ENABLE" in flight_controller.fc_parameters or not flight_controller.fc_parameters
-    start_file = local_filesystem.get_start_file(args.n, imu_tcal_available)
+    simple_gui: bool = ProgramSettings.get_setting("gui_complexity") == "simple"
+    start_file = local_filesystem.get_start_file(args.n, imu_tcal_available and not simple_gui)
 
     if flight_controller.fc_parameters:
         local_filesystem.backup_fc_parameters_to_file(
