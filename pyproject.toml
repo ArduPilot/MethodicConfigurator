@@ -73,7 +73,7 @@ dev = [
     "pytest-mock==3.14.1",
     "python-gettext==5.0",
     "ruff==0.11.13",
-    "types-requests==2.32.0.20250602",
+    "types-requests==2.32.4.20250611",
 ]
 
 scripts = [
