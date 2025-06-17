@@ -288,7 +288,7 @@ def constrain(value: float, minv: float, maxv: float) -> Union[float, int]:
     return min(maxv, value)
 
 
-def IMUfit(  # noqa: PLR0915, N802, pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments, too-many-positional-arguments
+def IMUfit(  # noqa: C901, PLR0912, PLR0915, N802, pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-arguments, too-many-positional-arguments
     logfile: str,
     outfile: str,
     no_graph: bool,

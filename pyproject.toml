@@ -134,7 +134,7 @@ lint.select = [
     "F",    # Pyflakes
     "E",    # pycodestyle -Error
     "W",    # pycodestyle - Warning
-    #"C901", # maccabe
+    "C90",  # maccabe
     "I",    # isort
     "N",    # pep8-naming
     "D",    # pydocstyle
@@ -187,9 +187,6 @@ lint.select = [
 ]
 
 lint.ignore = [
-    "PLR0912",  # too many branches
-    "PLR0913",  # too many arguments
-    "PLR2004",  # Magic value used in comparison, consider replacing `X` with a constant variable
     "ISC001",  # to let formatter run
     "ANN002",
     "ANN003",
@@ -214,6 +211,14 @@ indent-width = 4
 "ardupilot_methodic_configurator/backend_mavftp.py" = ["PGH004", "N801", "ANN001"]
 "ardupilot_methodic_configurator/backend_mavftp_example.py" = ["ANN001"]
 "ardupilot_methodic_configurator/tempcal_imu.py" = ["ANN001"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 22  # Default is 10
+
+[tool.ruff.lint.pylint]
+allow-magic-value-types = ["bytes", "float", "int", "str"]
+max-args = 9       # Default is 5
+max-branches = 24  # Default is 12
 
 [tool.mypy]
 ignore_missing_imports = true
