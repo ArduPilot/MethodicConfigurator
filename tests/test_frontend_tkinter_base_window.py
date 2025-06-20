@@ -19,6 +19,9 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWin
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 
 
+# pylint: disable=protected-access
+
+
 class TestBaseWindow(unittest.TestCase):
     """Test cases for the BaseWindow class."""
 
@@ -35,6 +38,10 @@ class TestBaseWindow(unittest.TestCase):
     def test_initialization(self) -> None:
         assert isinstance(self.base_window.root, tk.Toplevel)
         assert isinstance(self.base_window.main_frame, ttk.Frame)
+        # Test that DPI scaling factor is initialized
+        assert hasattr(self.base_window, "dpi_scaling_factor")
+        assert isinstance(self.base_window.dpi_scaling_factor, float)
+        assert self.base_window.dpi_scaling_factor > 0.0
 
     def test_center_window(self) -> None:
         child_window = tk.Toplevel(self.root)
@@ -52,7 +59,9 @@ class TestBaseWindow(unittest.TestCase):
     def test_theme_and_style(self) -> None:
         style = ttk.Style()
         assert style.theme_use() == "alt"
-        assert style.lookup("Bold.TLabel", "font") == "TkDefaultFont 10 bold"
+        # The font size should be scaled by DPI scaling factor
+        expected_font_size = int(10 * self.base_window.dpi_scaling_factor)
+        assert style.lookup("Bold.TLabel", "font") == f"TkDefaultFont {expected_font_size} bold"
 
     @patch("PIL.Image.open")
     @patch("PIL.ImageTk.PhotoImage")
@@ -89,6 +98,33 @@ class TestBaseWindow(unittest.TestCase):
         title = "Test Window"
         self.base_window.root.title(title)
         assert self.base_window.root.title() == title
+
+    def test_dpi_scaling_factor_method_exists(self) -> None:
+        """Test that the DPI scaling factor method exists and returns a reasonable value."""
+        scaling_factor = self.base_window._get_dpi_scaling_factor()
+        assert isinstance(scaling_factor, float)
+        assert scaling_factor > 0.0
+        # Typically DPI scaling should be between 0.5 and 4.0 in most realistic scenarios
+        assert 0.5 <= scaling_factor <= 4.0
+
+    def test_dpi_scaling_factor_integration(self) -> None:
+        """Test that DPI scaling is properly integrated into BaseWindow initialization."""
+        # Test that the dpi_scaling_factor attribute exists and is set properly
+        assert hasattr(self.base_window, "dpi_scaling_factor")
+        assert isinstance(self.base_window.dpi_scaling_factor, float)
+        assert self.base_window.dpi_scaling_factor > 0.0
+
+    def test_dpi_scaling_factor_fallback_on_error(self) -> None:
+        """Test DPI scaling factor fallback when detection fails."""
+        # Mock TclError to simulate detection failure
+        with patch.object(self.base_window.root, "winfo_fpixels", side_effect=tk.TclError):
+            scaling_factor = self.base_window._get_dpi_scaling_factor()
+            assert scaling_factor == 1.0
+
+        # Mock AttributeError to simulate detection failure
+        with patch.object(self.base_window.root, "winfo_fpixels", side_effect=AttributeError):
+            scaling_factor = self.base_window._get_dpi_scaling_factor()
+            assert scaling_factor == 1.0
 
 
 if __name__ == "__main__":

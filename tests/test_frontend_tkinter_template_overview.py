@@ -229,7 +229,7 @@ class TestTemplateOverviewWindow(unittest.TestCase):  # pylint: disable=too-many
 
 
 @pytest.fixture
-def template_overview_window() -> None:
+def template_overview_window() -> Generator[Any, Any, Any]:
     """Create a mocked TemplateOverviewWindow instance with pytest fixture."""
     with (
         patch("tkinter.Toplevel"),
@@ -247,6 +247,8 @@ def template_overview_window() -> None:
             window.top_frame = MagicMock()
             window.tree = MagicMock()
             window.image_label = MagicMock()
+            # Add DPI scaling factor for HiDPI support tests
+            window.dpi_scaling_factor = 1.0
             yield window
 
 

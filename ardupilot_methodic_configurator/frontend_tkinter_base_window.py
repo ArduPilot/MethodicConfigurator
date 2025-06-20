@@ -43,13 +43,40 @@ class BaseWindow:
             # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
             self.root.iconphoto(True, tk.PhotoImage(file=LocalFilesystem.application_icon_filepath()))  # noqa: FBT003
 
+        # Detect DPI scaling for HiDPI support
+        self.dpi_scaling_factor = self._get_dpi_scaling_factor()
+
         # Set the theme to 'alt'
         style = ttk.Style()
         style.theme_use("alt")
-        style.configure("Bold.TLabel", font=("TkDefaultFont", 10, "bold"))
+        style.configure("Bold.TLabel", font=("TkDefaultFont", int(10 * self.dpi_scaling_factor), "bold"))
 
         self.main_frame = ttk.Frame(self.root)
         self.main_frame.pack(expand=True, fill=tk.BOTH)
+
+    def _get_dpi_scaling_factor(self) -> float:
+        """
+        Detect the DPI scaling factor for HiDPI displays.
+
+        Returns:
+            float: The scaling factor (1.0 for normal DPI, 2.0 for 200% scaling, etc.)
+
+        """
+        try:
+            # Get the DPI from Tkinter
+            dpi = self.root.winfo_fpixels("1i")  # pixels per inch
+            # Standard DPI is typically 96, so calculate scaling factor
+            standard_dpi = 96.0
+            scaling_factor = dpi / standard_dpi
+
+            # Also check the tk scaling factor which might be set by the system
+            tk_scaling = float(self.root.tk.call("tk", "scaling"))
+
+            # Use the maximum of both methods to ensure we catch HiDPI scaling
+            return max(scaling_factor, tk_scaling)
+        except (tk.TclError, AttributeError):
+            # Fallback to 1.0 if detection fails
+            return 1.0
 
     @staticmethod
     def center_window(window: Union[tk.Toplevel, tk.Tk], parent: Union[tk.Toplevel, tk.Tk]) -> None:

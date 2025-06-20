@@ -57,18 +57,29 @@ class TemplateOverviewWindow(BaseWindow):
         super().__init__(parent)
         title = _("Amilcar Lucas's - ArduPilot methodic configurator {} - Template Overview and selection")
         self.root.title(title.format(__version__))
-        self.root.geometry("1200x600")
 
-        self.top_frame = ttk.Frame(self.main_frame, height=IMAGE_HEIGHT_PX)
+        # Scale window geometry for HiDPI displays
+        scaled_width = int(1200 * self.dpi_scaling_factor)
+        scaled_height = int(600 * self.dpi_scaling_factor)
+        self.root.geometry(f"{scaled_width}x{scaled_height}")
+
+        self.top_frame = ttk.Frame(self.main_frame, height=int(IMAGE_HEIGHT_PX * self.dpi_scaling_factor))
         self.top_frame.pack(side=tk.TOP, fill="x", expand=False)
 
         instruction_text = _("Please double-click the template below that most resembles your own vehicle components")
         instruction_text += _("\nit does not need to exactly match your vehicle's components.")
-        instruction_label = ttk.Label(self.top_frame, text=instruction_text, font=("Arial", 12))
-        instruction_label.pack(side=tk.LEFT, pady=(10, 20))
+        # Scale font size for HiDPI displays
+        scaled_font_size = int(12 * self.dpi_scaling_factor)
+        instruction_label = ttk.Label(self.top_frame, text=instruction_text, font=("Arial", scaled_font_size))
+        # Scale padding for HiDPI displays
+        scaled_pady = (int(10 * self.dpi_scaling_factor), int(20 * self.dpi_scaling_factor))
+        instruction_label.pack(side=tk.LEFT, pady=scaled_pady)
 
         self.image_label = ttk.Label(self.top_frame)
-        self.image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(20, 20), pady=IMAGE_HEIGHT_PX / 2)
+        # Scale padding for HiDPI displays
+        scaled_padx = (int(20 * self.dpi_scaling_factor), int(20 * self.dpi_scaling_factor))
+        scaled_pady_value = int(IMAGE_HEIGHT_PX * self.dpi_scaling_factor / 2)
+        self.image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=scaled_padx, pady=scaled_pady_value)
 
         self.sort_column: str = ""
         self._setup_treeview()
@@ -114,7 +125,14 @@ class TemplateOverviewWindow(BaseWindow):
                 ),
             ],
         )
-        style.configure("Treeview.Heading", padding=[2, 2, 2, 18], justify="center")
+        # Scale padding for HiDPI displays
+        scaled_padding = [
+            int(2 * self.dpi_scaling_factor),
+            int(2 * self.dpi_scaling_factor),
+            int(2 * self.dpi_scaling_factor),
+            int(18 * self.dpi_scaling_factor),
+        ]
+        style.configure("Treeview.Heading", padding=scaled_padding, justify="center")
 
         # Define the columns for the Treeview
         columns = TemplateOverview.columns()
@@ -137,17 +155,22 @@ class TemplateOverviewWindow(BaseWindow):
         """Adjusts the column widths of the Treeview to fit the contents of each column."""
         for col in self.tree["columns"]:
             max_width = 0
+            # Create a font object that matches the Treeview's font and scale for HiDPI
+            tree_font = tkfont.Font()
             for subtitle in col.title().split("\n"):
-                max_width = max(max_width, tkfont.Font().measure(subtitle))
+                scaled_width = int(tree_font.measure(subtitle) * self.dpi_scaling_factor)
+                max_width = max(max_width, scaled_width)
 
             # Iterate over all rows and update the max_width if a wider entry is found
             for item in self.tree.get_children():
                 item_text = self.tree.item(item, "values")[self.tree["columns"].index(col)]
-                text_width = tkfont.Font().measure(item_text)
-                max_width = max(max_width, text_width)
+                scaled_text_width = int(tree_font.measure(item_text) * self.dpi_scaling_factor)
+                max_width = max(max_width, scaled_text_width)
 
             # Update the column's width property to accommodate the largest text width
-            self.tree.column(col, width=int(max_width * 0.6 + 10))
+            # Scale the padding and multiplication factor for HiDPI
+            scaled_padding = int(10 * self.dpi_scaling_factor)
+            self.tree.column(col, width=int(max_width * 0.6 + scaled_padding))
 
     def _bind_events(self) -> None:
         """Bind events to the treeview."""
@@ -229,14 +252,18 @@ class TemplateOverviewWindow(BaseWindow):
                 widget.destroy()
         try:
             vehicle_image_filepath = self.get_vehicle_image_filepath(template_path)
-            self.image_label = self.put_image_in_label(self.top_frame, vehicle_image_filepath, IMAGE_HEIGHT_PX)
+            scaled_image_height = int(IMAGE_HEIGHT_PX * self.dpi_scaling_factor)
+            self.image_label = self.put_image_in_label(self.top_frame, vehicle_image_filepath, scaled_image_height)
         except FileNotFoundError:
+            scaled_padding = int((IMAGE_HEIGHT_PX * self.dpi_scaling_factor / 2) - (8 * self.dpi_scaling_factor))
             self.image_label = ttk.Label(
                 self.top_frame,
                 text=_("No 'vehicle.jpg' image file in the vehicle directory."),
-                padding=IMAGE_HEIGHT_PX / 2 - 8,
+                padding=scaled_padding,
             )
-        self.image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 0), pady=(0, 0))
+        # Scale padding for HiDPI displays
+        scaled_padx = (int(4 * self.dpi_scaling_factor), 0)
+        self.image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=scaled_padx, pady=(0, 0))
 
     def get_vehicle_image_filepath(self, template_path: str) -> str:
         """
