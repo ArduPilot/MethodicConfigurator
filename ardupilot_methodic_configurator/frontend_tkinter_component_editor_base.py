@@ -69,6 +69,7 @@ EntryWidget = Union[ttk.Entry, ttk.Combobox]
 
 WINDOW_WIDTH_PIX = 880
 VEICLE_IMAGE_WIDTH_PIX = 100
+VEICLE_IMAGE_HEIGHT_PIX = 100
 
 
 class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instance-attributes
@@ -231,7 +232,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         """Add the vehicle image to the parent frame."""
         if self.local_filesystem.vehicle_image_exists():
             image_label = self.put_image_in_label(
-                parent, self.local_filesystem.vehicle_image_filepath(), VEICLE_IMAGE_WIDTH_PIX
+                parent, self.local_filesystem.vehicle_image_filepath(), VEICLE_IMAGE_HEIGHT_PIX
             )
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
             show_tooltip(image_label, _("Replace the vehicle.jpg file in the vehicle directory to change the vehicle image."))

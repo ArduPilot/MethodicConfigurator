@@ -33,21 +33,21 @@ class VehicleComponentsProviderProtocol(Protocol):
     @staticmethod
     def get_vehicle_components_overviews() -> dict[str, TemplateOverview]:
         """Get vehicle components overviews."""
-        ...
+        ...  # pylint: disable=unnecessary-ellipsis
 
     @staticmethod
     def get_vehicle_image_filepath(relative_template_path: str) -> str:
         """Get vehicle image filepath."""
-        ...
+        ...  # pylint: disable=unnecessary-ellipsis
 
 
-class ProgramSettingsProviderProtocol(Protocol):
+class ProgramSettingsProviderProtocol(Protocol):  # pylint: disable=too-few-public-methods
     """Minimal protocol for program settings provider - only methods used by TemplateOverviewWindow."""
 
     @staticmethod
     def store_template_dir(relative_template_dir: str) -> None:
         """Store template directory."""
-        ...
+        ...  # pylint: disable=unnecessary-ellipsis
 
 
 IMAGE_HEIGHT_PX = 100
@@ -93,6 +93,10 @@ class TemplateOverviewWindow(BaseWindow):
         self.vehicle_components_provider: VehicleComponentsProviderProtocol = vehicle_components_provider or VehicleComponents
         self.program_settings_provider: ProgramSettingsProviderProtocol = program_settings_provider or ProgramSettings
 
+        self.image_label: ttk.Label
+        # Initialize sorting state
+        self.sort_column: str = ""
+
         # Initialize UI configuration
         self._configure_window()
         self._initialize_ui_components()
@@ -117,7 +121,7 @@ class TemplateOverviewWindow(BaseWindow):
 
         # Initialize instruction label
         instruction_text = self._get_instruction_text()
-        scaled_font_size = self._calculate_scaled_font_size(12)
+        scaled_font_size = self.calculate_scaled_font_size(12)
         self.instruction_label = ttk.Label(self.top_frame, text=instruction_text, font=("Arial", scaled_font_size))
 
         # Initialize image label
@@ -127,26 +131,11 @@ class TemplateOverviewWindow(BaseWindow):
         columns = TemplateOverview.columns()
         self.tree = ttk.Treeview(self.main_frame, columns=columns, show="headings")
 
-        # Initialize sorting state
-        self.sort_column: str = ""
-
     def _get_instruction_text(self) -> str:
         """Get the instruction text for the user interface."""
         instruction_text = _("Please double-click the template below that most resembles your own vehicle components")
         instruction_text += _("\nit does not need to exactly match your vehicle's components.")
         return instruction_text
-
-    def _calculate_scaled_font_size(self, base_size: int) -> int:
-        """Calculate scaled font size based on DPI scaling factor."""
-        return int(base_size * self.dpi_scaling_factor)
-
-    def _calculate_scaled_padding(self, base_padding: int) -> int:
-        """Calculate scaled padding based on DPI scaling factor."""
-        return int(base_padding * self.dpi_scaling_factor)
-
-    def _calculate_scaled_padding_tuple(self, padding1: int, padding2: int) -> tuple[int, int]:
-        """Calculate scaled padding tuple based on DPI scaling factor."""
-        return (self._calculate_scaled_padding(padding1), self._calculate_scaled_padding(padding2))
 
     def _setup_layout(self) -> None:
         """Setup the layout of UI components."""
@@ -154,11 +143,11 @@ class TemplateOverviewWindow(BaseWindow):
         self.top_frame.pack(side=tk.TOP, fill="x", expand=False)
 
         # Pack instruction label
-        scaled_pady = self._calculate_scaled_padding_tuple(10, 20)
+        scaled_pady = self.calculate_scaled_padding_tuple(10, 20)
         self.instruction_label.pack(side=tk.LEFT, pady=scaled_pady)
 
         # Pack image label
-        scaled_padx = self._calculate_scaled_padding_tuple(20, 20)
+        scaled_padx = self.calculate_scaled_padding_tuple(20, 20)
         scaled_pady_value = int(IMAGE_HEIGHT_PX * self.dpi_scaling_factor / 2)
         self.image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=scaled_padx, pady=scaled_pady_value)
 
@@ -212,10 +201,10 @@ class TemplateOverviewWindow(BaseWindow):
         )
         # Scale padding for HiDPI displays
         scaled_padding = [
-            self._calculate_scaled_padding(2),
-            self._calculate_scaled_padding(2),
-            self._calculate_scaled_padding(2),
-            self._calculate_scaled_padding(18),
+            self.calculate_scaled_padding(2),
+            self.calculate_scaled_padding(2),
+            self.calculate_scaled_padding(2),
+            self.calculate_scaled_padding(18),
         ]
         style.configure("Treeview.Heading", padding=scaled_padding, justify="center")
 
@@ -332,13 +321,12 @@ class TemplateOverviewWindow(BaseWindow):
                 widget.destroy()
         try:
             vehicle_image_filepath = self.get_vehicle_image_filepath(template_path)
-            scaled_image_height = int(IMAGE_HEIGHT_PX * self.dpi_scaling_factor)
-            self.image_label = self.put_image_in_label(self.top_frame, vehicle_image_filepath, scaled_image_height)
+            self.image_label = self.put_image_in_label(self.top_frame, vehicle_image_filepath, IMAGE_HEIGHT_PX)
         except FileNotFoundError:
-            scaled_padding = int((IMAGE_HEIGHT_PX * self.dpi_scaling_factor / 2) - (8 * self.dpi_scaling_factor))
+            scaled_padding = int(((IMAGE_HEIGHT_PX / 2) - 5.5) * self.dpi_scaling_factor)
             self.image_label = ttk.Label(
                 self.top_frame,
-                text=_("No 'vehicle.jpg' image file in the vehicle directory."),
+                text=_("No 'vehicle.jpg' image file in the vehicle template directory."),
                 padding=scaled_padding,
             )
         # Scale padding for HiDPI displays

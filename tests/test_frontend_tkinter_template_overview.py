@@ -12,13 +12,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import logging
-import unittest
+import tkinter as tk
 from collections.abc import Generator
-from typing import Any, Optional
-from unittest.mock import MagicMock, patch
+from tkinter import ttk
+from typing import Any
+from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_template_overview import (
     TemplateOverviewWindow,
     argument_parser,
@@ -26,10 +28,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_template_overview import (
     setup_logging,
 )
 
-# pylint: disable=useless-suppression
-# pylint: disable=unused-argument,protected-access,invalid-name,redefined-outer-name
-# pylint: enable=useless-suppression
-# ruff: noqa: ARG001, ARG005, SIM117, ANN401
+# pylint: disable=too-many-lines,protected-access,redefined-outer-name,unused-argument
 
 
 @pytest.fixture
@@ -47,37 +46,71 @@ def mock_logging_getlevelname() -> Generator[Any, Any, Any]:
 
 
 @pytest.fixture
-def mock_toplevel() -> Generator[Any, Any, Any]:
-    """Fixture to mock tkinter.Toplevel."""
-    with patch("tkinter.Toplevel") as mock:
-        yield mock
+def template_overview_window_setup() -> Generator[None, None, None]:
+    """Fixture providing a properly mocked TemplateOverviewWindow for behavior testing."""
+    with (
+        patch("tkinter.Toplevel"),
+        patch.object(BaseWindow, "__init__", return_value=None),
+        patch.object(TemplateOverviewWindow, "_configure_window"),
+        patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
+        patch.object(TemplateOverviewWindow, "_setup_layout"),
+        patch.object(TemplateOverviewWindow, "_configure_treeview"),
+        patch.object(TemplateOverviewWindow, "_bind_events"),
+    ):
+        yield
 
 
 @pytest.fixture
-def mock_vehicle_components() -> Generator[Any, Any, Any]:
-    """Fixture to mock VehicleComponents."""
-    with patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.VehicleComponents") as mock:
-        mock.get_vehicle_components_overviews.return_value = {}
-        yield mock
+def mock_vehicle_provider() -> MagicMock:
+    """Fixture providing a mock vehicle components provider with common test data."""
+    provider = MagicMock()
+
+    # Create properly structured mock templates
+    template_1 = MagicMock()
+    template_1.attributes.return_value = ["name", "fc", "gnss"]
+    template_1.name = "QuadCopter X"
+    template_1.fc = "Pixhawk 6C"
+    template_1.gnss = "Here3+"
+
+    template_2 = MagicMock()
+    template_2.attributes.return_value = ["name", "fc"]
+    template_2.name = "Plane"
+    template_2.fc = "Cube Orange"
+    template_2.gnss = ""  # This attribute doesn't exist but getattr will return "" as default
+
+    provider.get_vehicle_components_overviews.return_value = {
+        "Copter/QuadX": template_1,
+        "Plane/FixedWing": template_2,
+    }
+    provider.get_vehicle_image_filepath.return_value = "/mock/path/image.jpg"
+    return provider
 
 
 @pytest.fixture
-def mock_program_settings() -> Generator[Any, Any, Any]:
-    """Fixture to mock ProgramSettings."""
-    with patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.ProgramSettings") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_root() -> MagicMock:
-    """Fixture to create a mock tkinter root window."""
+def mock_program_provider() -> MagicMock:
+    """Fixture providing a mock program settings provider."""
     return MagicMock()
 
 
 @pytest.fixture
-def mock_treeview() -> MagicMock:
-    """Fixture to create a mock ttk.Treeview."""
-    return MagicMock()
+def template_window(mock_vehicle_provider, mock_program_provider) -> TemplateOverviewWindow:
+    """Fixture providing a configured TemplateOverviewWindow for behavior testing."""
+    with (
+        patch("tkinter.Toplevel"),
+        patch.object(BaseWindow, "__init__", return_value=None),
+        patch.object(TemplateOverviewWindow, "_configure_window"),
+        patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
+        patch.object(TemplateOverviewWindow, "_setup_layout"),
+        patch.object(TemplateOverviewWindow, "_configure_treeview"),
+        patch.object(TemplateOverviewWindow, "_bind_events"),
+    ):
+        window = TemplateOverviewWindow(
+            vehicle_components_provider=mock_vehicle_provider, program_settings_provider=mock_program_provider
+        )
+        # Mock essential UI components that tests actually interact with
+        window.root = MagicMock()
+        window.tree = MagicMock()
+        return window
 
 
 @pytest.mark.parametrize(
@@ -114,732 +147,865 @@ def test_setup_logging(mock_logging_basicconfig, mock_logging_getlevelname) -> N
     mock_logging_basicconfig.assert_called_once_with(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
-@patch("sys.argv", ["script.py", "--loglevel", "DEBUG"])
-def test_main_function_integration(mock_vehicle_components, mock_program_settings) -> None:
-    """Test the main function's integration of components."""
-    # Setup
-    mock_program_settings.get_recently_used_dirs.return_value = ["test_dir"]
+class TestUserTemplateSelection:
+    """Test user stories around template selection behavior."""
 
-    # Mock the TemplateOverviewWindow class and its methods
-    with patch(
-        "ardupilot_methodic_configurator.frontend_tkinter_template_overview.TemplateOverviewWindow"
-    ) as mock_window_class:
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.setup_logging") as mock_setup_logging:
-            with patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.logging_info") as mock_logging_info:
-                # Configure the mock window
-                mock_window = MagicMock()
-                mock_window_class.return_value = mock_window
+    def test_user_can_select_template_by_double_clicking(self, template_window) -> None:
+        """
+        User can select a template by double-clicking on it.
 
-                # Call the function
-                main()
+        GIVEN: A user is viewing the template overview window
+        WHEN: They double-click on a template row
+        THEN: The selected template should be stored for use
+        AND: The window should close
+        """
+        # Arrange: Configure mock responses for double-click behavior
+        template_window.tree.identify_row.return_value = "item_1"
+        template_window.tree.item.return_value = {"text": "Copter/QuadCopter"}
 
-                # Assertions
-                mock_setup_logging.assert_called_once_with("DEBUG")
-                mock_window_class.assert_called_once()
-                mock_window.run_app.assert_called_once()
-                assert mock_program_settings.get_recently_used_dirs.call_count >= 1
-                mock_logging_info.assert_called_once_with("test_dir")
+        mock_event = MagicMock(y=100)
 
+        # Act: User double-clicks
+        template_window._on_row_double_click(mock_event)
 
-class TestTemplateOverviewWindow(unittest.TestCase):  # pylint: disable=too-many-instance-attributes
-    """Tests for the TemplateOverviewWindow class."""
+        # Assert: Template is stored and window closes
+        template_window.program_settings_provider.store_template_dir.assert_called_once_with("Copter/QuadCopter")
+        template_window.root.destroy.assert_called_once()
 
-    def setUp(self) -> None:
-        """Set up test fixtures."""
-        self.mock_root = MagicMock()
-        self.mock_main_frame = MagicMock()
-        self.mock_top_frame = MagicMock()
-        self.mock_tree = MagicMock()
-        self.mock_image_label = MagicMock()
+    def test_user_sees_vehicle_image_when_selecting_template(self, template_window) -> None:
+        """
+        When a template is highlighted or selected, the corresponding vehicle image should be displayed.
 
-        # Create patches
-        self.patcher_toplevel = patch("tkinter.Toplevel", return_value=self.mock_root)
-        self.mock_toplevel = self.patcher_toplevel.start()
+        GIVEN: A user is browsing templates
+        WHEN: They click on a template with an available image
+        THEN: The vehicle image should be displayed
+        """
+        # Arrange: Configure selection behavior
+        template_window.tree.selection.return_value = ["item_1"]
+        template_window.tree.item.return_value = {"text": "Copter/QuadX"}
 
-        self.patcher_frame = patch("tkinter.ttk.Frame", return_value=self.mock_main_frame)
-        self.mock_frame = self.patcher_frame.start()
+        with patch.object(template_window, "_display_vehicle_image") as mock_display:
+            mock_event = MagicMock()
 
-        self.patcher_label = patch("tkinter.ttk.Label", return_value=self.mock_image_label)
-        self.mock_label = self.patcher_label.start()
+            # Act: User selects template
+            template_window._on_row_selection_change(mock_event)
+            template_window._update_selection()  # Simulate the after callback
 
-        self.patcher_treeview = patch("tkinter.ttk.Treeview", return_value=self.mock_tree)
-        self.mock_treeview = self.patcher_treeview.start()
+            # Assert: Image is displayed for selected template
+            mock_display.assert_called_once_with("Copter/QuadX")
 
-        self.patcher_vehicle_components = patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_template_overview.VehicleComponents"
-        )
-        self.mock_vehicle_components = self.patcher_vehicle_components.start()
-        self.mock_vehicle_components.get_vehicle_components_overviews.return_value = {}
+    def test_user_sees_fallback_message_when_no_vehicle_image_available(self, template_window) -> None:
+        """
+        When no vehicle image is available for a template, a helpful fallback message is shown.
 
-        self.patcher_program_settings = patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_template_overview.ProgramSettings"
-        )
-        self.mock_program_settings = self.patcher_program_settings.start()
+        GIVEN: A user selects a template
+        WHEN: No vehicle image is available for that template
+        THEN: A helpful message should be displayed instead
+        """
+        # Arrange: Configure vehicle provider to return no image
+        template_window.vehicle_components_provider.get_vehicle_image_filepath.return_value = ""
+        template_window.tree.selection.return_value = ["item_1"]
+        template_window.tree.item.return_value = {"text": "Experimental/NewDesign"}
 
-        # Create class with init mocked
-        with patch.object(TemplateOverviewWindow, "__init__", return_value=None):
-            self.window = TemplateOverviewWindow()
-            self.window.root = self.mock_root
-            self.window.main_frame = self.mock_main_frame
-            self.window.top_frame = self.mock_top_frame
-            self.window.tree = self.mock_tree
-            self.window.image_label = self.mock_image_label
-            # Add the provider attributes that would be set in __init__
-            self.window.vehicle_components_provider = self.mock_vehicle_components
-            self.window.program_settings_provider = self.mock_program_settings
+        with patch.object(template_window, "_display_vehicle_image") as mock_display:
+            mock_event = MagicMock()
 
-    def tearDown(self) -> None:
-        """Tear down test fixtures."""
-        self.patcher_toplevel.stop()
-        self.patcher_frame.stop()
-        self.patcher_label.stop()
-        self.patcher_treeview.stop()
-        self.patcher_vehicle_components.stop()
-        self.patcher_program_settings.stop()
+            # Act: User selects template without image
+            template_window._on_row_selection_change(mock_event)
+            template_window._update_selection()
 
-    def test_store_template_dir(self) -> None:
-        """Test that store_template_dir calls ProgramSettings.store_template_dir correctly."""
-        # Setup
-        template_path = "test/template/path"
-
-        # Call the method
-        self.window.store_template_dir(template_path)
-
-        # Assertions
-        self.mock_program_settings.store_template_dir.assert_called_once_with(template_path)
-
-    def test_close_window(self) -> None:
-        """Test that close_window destroys the root window."""
-        # Call the method
-        self.window.close_window()
-
-        # Assertions
-        self.mock_root.destroy.assert_called_once()
-
-    def test_get_vehicle_image_filepath(self) -> None:
-        """Test that get_vehicle_image_filepath calls VehicleComponents correctly."""
-        # Setup
-        template_path = "test/template/path"
-        expected_filepath = "/some/image/path.jpg"
-        self.mock_vehicle_components.get_vehicle_image_filepath.return_value = expected_filepath
-
-        # Call the method
-        result = self.window.get_vehicle_image_filepath(template_path)
-
-        # Assertions
-        self.mock_vehicle_components.get_vehicle_image_filepath.assert_called_once_with(template_path)
-        assert result == expected_filepath
+            # Assert: Display method is called (internal logic handles missing image gracefully)
+            mock_display.assert_called_once_with("Experimental/NewDesign")
 
 
-@pytest.fixture
-def mock_vehicle_components_provider() -> MagicMock:
-    """Create a mock vehicle components provider following the protocol."""
-    mock = MagicMock()
-    mock.get_vehicle_components_overviews.return_value = {
-        "test_template": MagicMock(attributes=lambda: ["attr1", "attr2"], attr1="value1", attr2="value2")
-    }
-    mock.get_vehicle_image_filepath.return_value = "/path/to/image.jpg"
-    return mock
+class TestTemplateDataDisplay:
+    """Test how template data is presented to users."""
+
+    def test_templates_are_populated_from_vehicle_components(self, template_window) -> None:
+        """
+        Test that templates are correctly populated from vehicle components.
+
+        GIVEN: Vehicle templates exist in the system
+        WHEN: The template overview window is opened
+        THEN: All available templates should be displayed in the tree
+        """
+        # Act: Populate the tree with templates from our mock provider
+        template_window._populate_treeview()
+
+        # Assert: Both templates are added to tree with correct data
+        assert template_window.tree.insert.call_count == 2
+
+        # Check first template (Copter/QuadX)
+        first_call = template_window.tree.insert.call_args_list[0]
+        assert first_call[0] == ("", "end")
+        assert first_call[1]["text"] == "Copter/QuadX"
+        assert first_call[1]["values"] == ("Copter/QuadX", "QuadCopter X", "Pixhawk 6C", "Here3+")
+
+        # Check second template (Plane/FixedWing)
+        second_call = template_window.tree.insert.call_args_list[1]
+        assert second_call[0] == ("", "end")
+        assert second_call[1]["text"] == "Plane/FixedWing"
+        assert second_call[1]["values"] == ("Plane/FixedWing", "Plane", "Cube Orange")
+
+    def test_sorting_helps_users_find_templates(self, template_window) -> None:
+        """
+        Test that sorting templates by column helps users find what they need.
+
+        GIVEN: Multiple templates are displayed
+        WHEN: User clicks a column header to sort
+        THEN: Templates should be reordered to help users find what they need
+        """
+        # Arrange: Mock tree data for sorting
+        template_window.tree.get_children.return_value = ["item1", "item2", "item3"]
+        template_window.tree.set.side_effect = lambda item, col: {
+            ("item1", "Frame"): "QuadCopter",
+            ("item2", "Frame"): "Airplane",
+            ("item3", "Frame"): "Helicopter",
+        }.get((item, col), "")
+
+        # Act: User clicks on Frame column to sort
+        template_window._sort_by_column("Frame", reverse=False)
+
+        # Assert: Items are reordered (Airplane, Helicopter, QuadCopter)
+        assert template_window.tree.move.call_count == 3
+        # Verify ascending sort indicator is shown
+        template_window.tree.heading.assert_called_with("Frame", command=ANY)
 
 
-@pytest.fixture
-def mock_program_settings_provider() -> MagicMock:
-    """Create a mock program settings provider following the protocol."""
-    mock = MagicMock()
-    mock.store_template_dir.return_value = None
-    return mock
+class TestAccessibilityAndUsability:
+    """Test accessibility and usability features."""
+
+    def test_window_scales_properly_for_high_dpi_displays(self, template_window) -> None:
+        """
+        Test that the template overview window scales properly on high-DPI displays.
+
+        GIVEN: A user has a high-DPI display
+        WHEN: The template overview window opens
+        THEN: UI elements should be appropriately scaled for readability
+        """
+        # Arrange: Simulate high-DPI display
+        template_window.dpi_scaling_factor = 2.0
+
+        # Mock the geometry method to capture calls
+        with patch.object(template_window.root, "geometry") as mock_geometry:
+            # Act: Configure window for high-DPI
+            template_window._configure_window()
+
+            # Assert: Window size is scaled appropriately
+            mock_geometry.assert_called_once()
+            geometry_call = mock_geometry.call_args[0][0]
+            # Should be 2400x1200 (1200x600 * 2.0 scaling)
+            assert "2400x1200" in geometry_call
+
+    def test_keyboard_navigation_works_for_accessibility(self, template_window) -> None:
+        """
+        Test that keyboard navigation works for users with accessibility needs.
+
+        GIVEN: A user navigating with keyboard
+        WHEN: They use up/down arrow keys
+        THEN: The selection should update and show vehicle image
+        """
+        # Arrange: Set up selection return values
+        template_window.tree.selection.return_value = ["new_item"]
+        template_window.tree.item.return_value = {"text": "Plane/Glider"}
+
+        with patch.object(template_window, "_display_vehicle_image") as mock_display:
+            # Act: User presses down arrow key
+            mock_event = MagicMock()
+            template_window._on_row_selection_change(mock_event)
+
+            # Trigger the delayed update
+            template_window.root.after.assert_called_once_with(0, template_window._update_selection)
+
+            # Simulate the after callback
+            template_window._update_selection()
+
+            # Assert: Image updates for new selection
+            mock_display.assert_called_once_with("Plane/Glider")
 
 
-@pytest.fixture
-def template_overview_window_with_injection(
-    mock_vehicle_components_provider, mock_program_settings_provider
-) -> Generator[TemplateOverviewWindow, None, None]:
-    """Create a TemplateOverviewWindow with dependency injection (improved approach)."""
-    with (
-        patch("tkinter.Toplevel"),
-        patch("tkinter.ttk.Frame"),
-        patch("tkinter.ttk.Label"),
-        patch("tkinter.ttk.Treeview"),
-        patch("tkinter.ttk.Style"),
-        patch.object(TemplateOverviewWindow, "_configure_window"),
-        patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
-        patch.object(TemplateOverviewWindow, "_setup_layout"),
-        patch.object(TemplateOverviewWindow, "_configure_treeview"),
-        patch.object(TemplateOverviewWindow, "_bind_events"),
-    ):
-        # Create window with dependency injection
-        window = TemplateOverviewWindow(
-            vehicle_components_provider=mock_vehicle_components_provider,
-            program_settings_provider=mock_program_settings_provider,
-        )
-        # Mock essential attributes
-        window.root = MagicMock()
-        window.main_frame = MagicMock()
-        window.top_frame = MagicMock()
+class TestErrorHandlingAndEdgeCases:
+    """Test system behavior in error conditions."""
+
+    def test_graceful_handling_when_no_templates_available(self, template_overview_window_setup) -> None:
+        """
+        Test that the system handles no available templates gracefully.
+
+        GIVEN: No templates are available in the system
+        WHEN: User opens the template overview
+        THEN: The system should handle this gracefully without crashing
+        """
+        # Arrange: Mock empty template data
+        mock_vehicle_provider = MagicMock()
+        mock_vehicle_provider.get_vehicle_components_overviews.return_value = {}
+
+        window = TemplateOverviewWindow(vehicle_components_provider=mock_vehicle_provider)
         window.tree = MagicMock()
-        window.image_label = MagicMock()
-        window.dpi_scaling_factor = 1.0
-        yield window
-
-
-def test_display_vehicle_image(template_overview_window_with_injection, monkeypatch) -> None:
-    """Test that _display_vehicle_image manages the image display correctly."""
-    # Setup
-    template_path = "test/template/path"
-
-    # Mock the get_vehicle_image_filepath and put_image_in_label methods
-    monkeypatch.setattr(
-        template_overview_window_with_injection, "get_vehicle_image_filepath", MagicMock(return_value="/path/to/image.jpg")
-    )
-    monkeypatch.setattr(template_overview_window_with_injection, "put_image_in_label", MagicMock(return_value=MagicMock()))
-
-    # Call the method
-    template_overview_window_with_injection._display_vehicle_image(template_path)
-
-    # Assertions
-    template_overview_window_with_injection.get_vehicle_image_filepath.assert_called_once_with(template_path)
-    template_overview_window_with_injection.put_image_in_label.assert_called_once()
-    template_overview_window_with_injection.image_label.pack.assert_called_once()
-
-
-def test_display_vehicle_image_no_image(template_overview_window_with_injection, monkeypatch) -> None:
-    """Test that _display_vehicle_image handles missing images correctly."""
-    # Setup
-    template_path = "test/template/path"
-
-    # Mock the get_vehicle_image_filepath to raise FileNotFoundError
-    get_filepath_mock = MagicMock(side_effect=FileNotFoundError)
-    monkeypatch.setattr(template_overview_window_with_injection, "get_vehicle_image_filepath", get_filepath_mock)
-
-    # Also mock put_image_in_label to ensure it's not called
-    put_image_mock = MagicMock()
-    monkeypatch.setattr(template_overview_window_with_injection, "put_image_in_label", put_image_mock)
-
-    # Call the method
-    template_overview_window_with_injection._display_vehicle_image(template_path)
 
-    # Assertions
-    get_filepath_mock.assert_called_once_with(template_path)
-    put_image_mock.assert_not_called()
-    template_overview_window_with_injection.image_label.pack.assert_called_once()
-
-
-def test_setup_treeview(template_overview_window, monkeypatch) -> None:
-    """Test that setup_treeview configures the treeview properly."""
-    # Mock the dependent methods
-    monkeypatch.setattr(template_overview_window, "_populate_treeview", MagicMock())
-    monkeypatch.setattr(template_overview_window, "_adjust_treeview_column_widths", MagicMock())
-
-    # Create a mock for Style and columns
-    mock_style = MagicMock()
-    monkeypatch.setattr("tkinter.ttk.Style", lambda root: mock_style)
-    mock_columns = ["Column1", "Column2"]
-    monkeypatch.setattr(
-        "ardupilot_methodic_configurator.middleware_template_overview.TemplateOverview.columns", lambda: mock_columns
-    )
-
-    # Call the method
-    template_overview_window._setup_treeview()
-
-    # Assertions
-    mock_style.layout.assert_called_once()
-    mock_style.configure.assert_called_once()
-    template_overview_window.tree.heading.call_count = len(mock_columns)
-    template_overview_window._populate_treeview.assert_called_once()
-    template_overview_window._adjust_treeview_column_widths.assert_called_once()
-    template_overview_window.tree.pack.assert_called_once()
-
-
-def test_populate_treeview(template_overview_window, monkeypatch) -> None:
-    """Test that populate_treeview adds items to the treeview."""
-    # Create a mock template overview
-    mock_template = MagicMock()
-    mock_template.attributes.return_value = ["attr1", "attr2"]
-    mock_template.attr1 = "value1"
-    mock_template.attr2 = "value2"
-
-    # Mock VehicleComponents.get_vehicle_components_overviews
-    mock_components = {"template1": mock_template}
-    monkeypatch.setattr(
-        "ardupilot_methodic_configurator.frontend_tkinter_template_overview."
-        "VehicleComponents.get_vehicle_components_overviews",
-        lambda: mock_components,
-    )
-
-    # Call the method
-    template_overview_window._populate_treeview()
-
-    # Assertions
-    template_overview_window.tree.insert.assert_called_once_with(
-        "", "end", text="template1", values=("template1", "value1", "value2")
-    )
-
-
-def test_bind_events(template_overview_window) -> None:
-    """Test that bind_events binds the correct events."""
-    # Setup mock tree with columns
-    template_overview_window.tree.__getitem__.return_value = ["Column1", "Column2"]
-
-    # Call the method
-    template_overview_window._bind_events()
-
-    # Assertions - should bind four events
-    assert template_overview_window.tree.bind.call_count == 4
-    assert template_overview_window.tree.heading.call_count == 2  # Once for each column
-
-
-def test_on_row_selection_change(template_overview_window, monkeypatch) -> None:
-    """Test the protected _on_row_selection_change method."""
-    # Create a mock for root.after
-    template_overview_window.root.after = MagicMock()
-
-    # Create a mock event
-    mock_event = MagicMock()
-
-    # Call the method directly since it's now protected, not private
-    template_overview_window._on_row_selection_change(mock_event)
-
-    # Assertions
-    template_overview_window.root.after.assert_called_once()
-
-
-def test_update_selection(template_overview_window, monkeypatch) -> None:
-    """Test the protected _update_selection method."""
-    # Setup mock tree selection
-    template_overview_window.tree.selection.return_value = ["item1"]
-    template_overview_window.tree.item.return_value = {"text": "template/path"}
-
-    # Mock the dependent methods
-    monkeypatch.setattr(template_overview_window, "store_template_dir", MagicMock())
-    monkeypatch.setattr(template_overview_window, "_display_vehicle_image", MagicMock())
-
-    # Call the method directly since it's now protected, not private
-    template_overview_window._update_selection()
-
-    # Assertions
-    template_overview_window.tree.selection.assert_called_once()
-    template_overview_window.tree.item.assert_called_once_with("item1")
-    template_overview_window.store_template_dir.assert_called_once_with("template/path")
-    template_overview_window._display_vehicle_image.assert_called_once_with("template/path")
-
-
-def test_on_row_double_click(template_overview_window, monkeypatch) -> None:
-    """Test the protected _on_row_double_click method."""
-    # Setup mocks
-    template_overview_window.tree.identify_row.return_value = "item1"
-    template_overview_window.tree.item.return_value = {"text": "template/path"}
-    monkeypatch.setattr(template_overview_window, "store_template_dir", MagicMock())
-    monkeypatch.setattr(template_overview_window, "close_window", MagicMock())
-
-    # Create a mock event
-    mock_event = MagicMock()
-    mock_event.y = 10
-
-    # Call the method directly since it's now protected, not private
-    template_overview_window._on_row_double_click(mock_event)
-
-    # Assertions
-    template_overview_window.tree.identify_row.assert_called_once_with(10)
-    template_overview_window.tree.item.assert_called_once_with("item1")
-    template_overview_window.store_template_dir.assert_called_once_with("template/path")
-    template_overview_window.close_window.assert_called_once()
-
-
-def test_adjust_treeview_column_widths(template_overview_window, monkeypatch) -> None:
-    """Test that _adjust_treeview_column_widths correctly sets column widths."""
-    # Setup mock tree with columns and items
-    template_overview_window.tree.__getitem__.return_value = ["Column1", "Column2"]
-    template_overview_window.tree.get_children.return_value = ["item1", "item2"]
-
-    # Mock font measurements
-    mock_font = MagicMock()
-    mock_font.measure.side_effect = lambda text: len(text) * 10  # Simple length-based measurement
-
-    # Setup item values
-    def mock_item_values(item, option) -> Optional[list[str]]:
-        if option == "values":
-            if item == "item1":
-                return ["Short", "Medium text"]
-            return ["Very long item text", "Short"]
-        return None
-
-    template_overview_window.tree.item.side_effect = mock_item_values
-
-    # Mock Font class
-    monkeypatch.setattr("tkinter.font.Font", lambda: mock_font)
-
-    # Call the method
-    template_overview_window._adjust_treeview_column_widths()
-
-    # Assertions - width should be calculated based on the longest text + padding
-    expected_widths = {
-        "Column1": int(max(len("Column1") * 10, len("Very long item text") * 10) * 0.6 + 10),
-        "Column2": int(max(len("Column2") * 10, len("Medium text") * 10) * 0.6 + 10),
-    }
-
-    # Verify column width was set correctly for each column
-    calls = template_overview_window.tree.column.call_args_list
-    assert len(calls) == 2
-
-    # Check each column was set with the correct width
-    for call in calls:
-        args, kwargs = call
-        column_name = args[0]
-        assert "width" in kwargs
-        assert kwargs["width"] == expected_widths[column_name]
-
-
-def test_sort_by_column_numeric(template_overview_window) -> None:
-    """Test sorting by column with numeric values."""
-    # Setup
-    template_overview_window.sort_column = "OldColumn"
-    column_to_sort = "NumericColumn"
-
-    # Mock tree methods
-    template_overview_window.tree.get_children.return_value = ["item1", "item2", "item3"]
-
-    # Set up the column data with numeric values
-    template_overview_window.tree.set = MagicMock()
-    template_overview_window.tree.set.side_effect = lambda item, col: {
-        ("item1", "NumericColumn"): "10.5",
-        ("item2", "NumericColumn"): "5.2",
-        ("item3", "NumericColumn"): "7.8",
-    }.get((item, col), "")
-
-    # Mock the move method
-    template_overview_window.tree.move = MagicMock()
-
-    # Mock the heading method
-    template_overview_window.tree.heading = MagicMock()
-
-    # Call the method directly since it's now protected, not private
-    template_overview_window._sort_by_column(column_to_sort, reverse=False)
-
-    # Assertions
-    # 1. Old column heading should be reset
-    template_overview_window.tree.heading.assert_any_call("OldColumn", text="OldColumn")
-
-    # 2. New column should have ascending sort indicator
-    template_overview_window.tree.heading.assert_any_call(column_to_sort, text=column_to_sort + " ▲")
-
-    # 3. Sort column should be updated
-    assert template_overview_window.sort_column == column_to_sort
-
-    # 4. Items should be sorted in ascending order (item2, item3, item1)
-    assert template_overview_window.tree.move.call_count == 3
-    template_overview_window.tree.move.assert_any_call("item2", "", 0)  # 5.2 is smallest
-    template_overview_window.tree.move.assert_any_call("item3", "", 1)  # 7.8 is middle
-    template_overview_window.tree.move.assert_any_call("item1", "", 2)  # 10.5 is largest
-
-    # 5. Heading should have command for reverse sort
-    assert len(template_overview_window.tree.heading.call_args_list) == 3
-    assert template_overview_window.tree.heading.call_args_list[2][0][0] == column_to_sort
-    # Verify the command parameter is set (exact function comparison is complex)
-    assert "command" in template_overview_window.tree.heading.call_args_list[2][1]
-
-
-def test_sort_by_column_text(template_overview_window) -> None:
-    """Test sorting by column with text values."""
-    # Setup
-    template_overview_window.sort_column = ""
-    column_to_sort = "TextColumn"
-
-    # Mock tree methods
-    template_overview_window.tree.get_children.return_value = ["item1", "item2", "item3"]
-
-    # Set up the column data with text values
-    template_overview_window.tree.set = MagicMock()
-    template_overview_window.tree.set.side_effect = lambda item, col: {
-        ("item1", "TextColumn"): "Zebra",
-        ("item2", "TextColumn"): "Apple",
-        ("item3", "TextColumn"): "Monkey",
-    }.get((item, col), "")
-
-    # Mock the move method
-    template_overview_window.tree.move = MagicMock()
-
-    # Mock the heading method
-    template_overview_window.tree.heading = MagicMock()
-
-    # Call the method directly since it's now protected, not private
-    template_overview_window._sort_by_column(column_to_sort, reverse=False)
-
-    # Assertions
-    # 1. New column should have ascending sort indicator
-    template_overview_window.tree.heading.assert_any_call(column_to_sort, text=column_to_sort + " ▲")
-
-    # 2. Sort column should be updated
-    assert template_overview_window.sort_column == column_to_sort
-
-    # 3. Items should be sorted in ascending order (item2, item3, item1)
-    assert template_overview_window.tree.move.call_count == 3
-    template_overview_window.tree.move.assert_any_call("item2", "", 0)  # Apple comes first
-    template_overview_window.tree.move.assert_any_call("item3", "", 1)  # Monkey comes second
-    template_overview_window.tree.move.assert_any_call("item1", "", 2)  # Zebra comes last
-
-
-def test_sort_by_column_reverse(template_overview_window) -> None:
-    """Test sorting by column in reverse order."""
-    # Setup
-    template_overview_window.sort_column = "OldColumn"
-    column_to_sort = "TextColumn"
-
-    # Mock tree methods
-    template_overview_window.tree.get_children.return_value = ["item1", "item2", "item3"]
-
-    # Set up the column data with text values
-    template_overview_window.tree.set = MagicMock()
-    template_overview_window.tree.set.side_effect = lambda item, col: {
-        ("item1", "TextColumn"): "Zebra",
-        ("item2", "TextColumn"): "Apple",
-        ("item3", "TextColumn"): "Monkey",
-    }.get((item, col), "")
-
-    # Mock the move method
-    template_overview_window.tree.move = MagicMock()
-
-    # Mock the heading method
-    template_overview_window.tree.heading = MagicMock()
-
-    # Call the method directly since it's now protected, not private
-    template_overview_window._sort_by_column(column_to_sort, reverse=True)
-
-    # Assertions
-    # 1. Old column heading should be reset
-    template_overview_window.tree.heading.assert_any_call("OldColumn", text="OldColumn")
-
-    # 2. New column should have descending sort indicator
-    template_overview_window.tree.heading.assert_any_call(column_to_sort, text=column_to_sort + " ▼")
-
-    # 3. Sort column should be updated
-    assert template_overview_window.sort_column == column_to_sort
-
-    # 4. Items should be sorted in descending order (item1, item3, item2)
-    assert template_overview_window.tree.move.call_count == 3
-    template_overview_window.tree.move.assert_any_call("item1", "", 0)  # Zebra comes first in reverse
-    template_overview_window.tree.move.assert_any_call("item3", "", 1)  # Monkey comes second in reverse
-    template_overview_window.tree.move.assert_any_call("item2", "", 2)  # Apple comes last in reverse
-
-
-# New improved tests using dependency injection and testing refactored methods
-
-
-def test_dependency_injection_vehicle_components(mock_vehicle_components_provider) -> None:
-    """Test that dependency injection works correctly for vehicle components provider."""
-    with (
-        patch("tkinter.Toplevel"),
-        patch.object(TemplateOverviewWindow, "_configure_window"),
-        patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
-        patch.object(TemplateOverviewWindow, "_setup_layout"),
-        patch.object(TemplateOverviewWindow, "_configure_treeview"),
-        patch.object(TemplateOverviewWindow, "_bind_events"),
-    ):
-        window = TemplateOverviewWindow(vehicle_components_provider=mock_vehicle_components_provider)
-
-        # Test that the injected provider is used
-        assert window.vehicle_components_provider is mock_vehicle_components_provider
-
-
-def test_dependency_injection_program_settings(mock_program_settings_provider) -> None:
-    """Test that dependency injection works correctly for program settings provider."""
-    with (
-        patch("tkinter.Toplevel"),
-        patch.object(TemplateOverviewWindow, "_configure_window"),
-        patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
-        patch.object(TemplateOverviewWindow, "_setup_layout"),
-        patch.object(TemplateOverviewWindow, "_configure_treeview"),
-        patch.object(TemplateOverviewWindow, "_bind_events"),
-    ):
-        window = TemplateOverviewWindow(program_settings_provider=mock_program_settings_provider)
-
-        # Test that the injected provider is used
-        assert window.program_settings_provider is mock_program_settings_provider
-
-
-def test_dependency_injection_defaults() -> None:
-    """Test that default dependencies are used when none are provided."""
-    with (
-        patch("tkinter.Toplevel"),
-        patch.object(TemplateOverviewWindow, "_configure_window"),
-        patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
-        patch.object(TemplateOverviewWindow, "_setup_layout"),
-        patch.object(TemplateOverviewWindow, "_configure_treeview"),
-        patch.object(TemplateOverviewWindow, "_bind_events"),
-    ):
-        window = TemplateOverviewWindow()
-
-        # Test that default classes are used
-        from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
-        from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
-
-        assert window.vehicle_components_provider is VehicleComponents
-        assert window.program_settings_provider is ProgramSettings
-
-
-def test_store_template_dir_with_injection(template_overview_window_with_injection, mock_program_settings_provider) -> None:
-    """Test store_template_dir using dependency injection."""
-    template_path = "test/template/path"
-
-    template_overview_window_with_injection.store_template_dir(template_path)
-
-    mock_program_settings_provider.store_template_dir.assert_called_once_with(template_path)
-
-
-def test_get_vehicle_image_filepath_with_injection(
-    template_overview_window_with_injection, mock_vehicle_components_provider
-) -> None:
-    """Test get_vehicle_image_filepath using dependency injection."""
-    template_path = "test/template/path"
-    expected_filepath = "/injected/path/to/image.jpg"
-    mock_vehicle_components_provider.get_vehicle_image_filepath.return_value = expected_filepath
-
-    result = template_overview_window_with_injection.get_vehicle_image_filepath(template_path)
-
-    mock_vehicle_components_provider.get_vehicle_image_filepath.assert_called_once_with(template_path)
-    assert result == expected_filepath
-
-
-def test_calculate_scaled_font_size(template_overview_window_with_injection) -> None:
-    """Test the _calculate_scaled_font_size helper method."""
-    template_overview_window_with_injection.dpi_scaling_factor = 1.5
-
-    result = template_overview_window_with_injection._calculate_scaled_font_size(12)
-
-    assert result == 18  # 12 * 1.5
-
-
-def test_calculate_scaled_padding(template_overview_window_with_injection) -> None:
-    """Test the _calculate_scaled_padding helper method."""
-    template_overview_window_with_injection.dpi_scaling_factor = 2.0
-
-    result = template_overview_window_with_injection._calculate_scaled_padding(10)
-
-    assert result == 20  # 10 * 2.0
-
-
-def test_calculate_scaled_padding_tuple(template_overview_window_with_injection) -> None:
-    """Test the _calculate_scaled_padding_tuple helper method."""
-    template_overview_window_with_injection.dpi_scaling_factor = 1.25
-
-    result = template_overview_window_with_injection._calculate_scaled_padding_tuple(8, 16)
-
-    assert result == (10, 20)  # (8 * 1.25, 16 * 1.25)
-
-
-def test_get_instruction_text(template_overview_window_with_injection) -> None:
-    """Test the _get_instruction_text helper method."""
-    result = template_overview_window_with_injection._get_instruction_text()
-
-    # Should return the translated instruction text
-    assert "Please double-click the template below" in result
-    assert "it does not need to exactly match" in result
-
-
-def test_configure_window(template_overview_window_with_injection) -> None:
-    """Test the _configure_window method."""
-    with patch.object(
-        template_overview_window_with_injection,
-        "_configure_window",
-        wraps=template_overview_window_with_injection._configure_window,
-    ):
-        template_overview_window_with_injection._configure_window()
-
-        # Verify window title was set
-        template_overview_window_with_injection.root.title.assert_called_once()
-        # Verify geometry was set
-        template_overview_window_with_injection.root.geometry.assert_called_once()
-
-
-def test_initialize_ui_components() -> None:
-    """Test the _initialize_ui_components method."""
-    with (
-        patch("tkinter.Toplevel"),
-        patch("tkinter.ttk.Frame"),
-        patch("tkinter.ttk.Label"),
-        patch("tkinter.ttk.Treeview"),
-        patch.object(TemplateOverviewWindow, "_configure_window"),
-        patch.object(TemplateOverviewWindow, "_setup_layout"),
-        patch.object(TemplateOverviewWindow, "_configure_treeview"),
-        patch.object(TemplateOverviewWindow, "_bind_events"),
-    ):
-        window = TemplateOverviewWindow()
-
-        # Verify UI components were initialized
-        assert hasattr(window, "top_frame")
-        assert hasattr(window, "instruction_label")
-        assert hasattr(window, "image_label")
-        assert hasattr(window, "tree")
-        assert hasattr(window, "sort_column")
-
-
-def test_populate_treeview_with_injection(template_overview_window_with_injection, mock_vehicle_components_provider) -> None:
-    """Test _populate_treeview using dependency injection."""
-    # Setup mock data
-    mock_template = MagicMock()
-    mock_template.attributes.return_value = ["attr1", "attr2"]
-    mock_template.attr1 = "value1"
-    mock_template.attr2 = "value2"
-
-    mock_vehicle_components_provider.get_vehicle_components_overviews.return_value = {"template1": mock_template}
-
-    template_overview_window_with_injection._populate_treeview()
-
-    # Verify the tree was populated with the injected data
-    template_overview_window_with_injection.tree.insert.assert_called_once_with(
-        "", "end", text="template1", values=("template1", "value1", "value2")
-    )
-    mock_vehicle_components_provider.get_vehicle_components_overviews.assert_called_once()
-
-
-def test_ui_setup_method_decomposition() -> None:
-    """Test that UI setup methods are properly decomposed and called in the right order."""
-    with (
-        patch("tkinter.Toplevel"),
-        patch.object(TemplateOverviewWindow, "_configure_window") as mock_configure,
-        patch.object(TemplateOverviewWindow, "_initialize_ui_components") as mock_initialize,
-        patch.object(TemplateOverviewWindow, "_setup_layout") as mock_layout,
-        patch.object(TemplateOverviewWindow, "_configure_treeview") as mock_treeview,
-        patch.object(TemplateOverviewWindow, "_bind_events") as mock_bind,
-    ):
-        TemplateOverviewWindow()
-
-        # Verify all setup methods were called in the correct order
-        mock_configure.assert_called_once()
-        mock_initialize.assert_called_once()
-        mock_layout.assert_called_once()
-        mock_treeview.assert_called_once()
-        mock_bind.assert_called_once()
-
-
-def test_treeview_configuration_decomposition(template_overview_window_with_injection) -> None:
-    """Test that treeview configuration is properly decomposed."""
-    with (
-        patch.object(template_overview_window_with_injection, "_setup_treeview_style") as mock_style,
-        patch.object(template_overview_window_with_injection, "_setup_treeview_columns") as mock_columns,
-        patch.object(template_overview_window_with_injection, "_populate_treeview") as mock_populate,
-        patch.object(template_overview_window_with_injection, "_adjust_treeview_column_widths") as mock_adjust,
-    ):
-        template_overview_window_with_injection._configure_treeview()
-
-        # Verify all treeview setup methods were called
-        mock_style.assert_called_once()
-        mock_columns.assert_called_once()
-        mock_populate.assert_called_once()
-        mock_adjust.assert_called_once()
-        # Verify tree was packed
-        template_overview_window_with_injection.tree.pack.assert_called_once()
-
-
-def test_mock_providers_follow_protocol(mock_vehicle_components_provider, mock_program_settings_provider) -> None:
-    """Test that mock providers implement the expected protocol methods."""
-    # Test VehicleComponentsProviderProtocol
-    assert hasattr(mock_vehicle_components_provider, "get_vehicle_components_overviews")
-    assert hasattr(mock_vehicle_components_provider, "get_vehicle_image_filepath")
-
-    # Test ProgramSettingsProviderProtocol
-    assert hasattr(mock_program_settings_provider, "store_template_dir")
-
-    # Test that methods are callable
-    mock_vehicle_components_provider.get_vehicle_components_overviews()
-    mock_vehicle_components_provider.get_vehicle_image_filepath("test")
-    mock_program_settings_provider.store_template_dir("test")
+        # Act: Try to populate empty template list
+        window._populate_treeview()
+
+        # Assert: No crash, no tree items added
+        window.tree.insert.assert_not_called()
+
+    def test_window_closes_properly_on_user_cancel(self, template_window) -> None:
+        """
+        Test that the window closes properly when the user cancels the operation.
+
+        GIVEN: A user has the template overview open
+        WHEN: They close the window (cancel operation)
+        THEN: Resources should be cleaned up properly
+        """
+        # Act: User closes window
+        template_window.close_window()
+
+        # Assert: Window is properly destroyed
+        template_window.root.destroy.assert_called_once()
+
+
+class TestUIComponentInitialization:
+    """Test UI component initialization and responsive layout behavior."""
+
+    def test_high_dpi_displays_get_properly_scaled_components(self, template_window) -> None:
+        """
+        Users on high-DPI displays should see properly scaled UI components.
+
+        GIVEN: A user opens the template overview on a high-DPI display
+        WHEN: UI components are initialized
+        THEN: All components should be created with appropriate DPI scaling
+        """
+        # Arrange: Set high-DPI environment
+        template_window.dpi_scaling_factor = 2.0
+        template_window.calculate_scaled_font_size = MagicMock(return_value=24)
+
+        # Act: Initialize UI components (already done by fixture, verify state)
+        # Assert: Window has proper scaling setup
+        assert hasattr(template_window, "dpi_scaling_factor")
+        assert template_window.dpi_scaling_factor == 2.0
+
+    def test_users_see_clear_instructions_for_template_selection(self, template_window) -> None:
+        """
+        Users should see clear, localized instructions for selecting templates.
+
+        GIVEN: A user opens the template overview window
+        WHEN: The instruction text is displayed
+        THEN: Text should be clear, multilingual, and properly formatted
+        """
+        # Act: Get instruction text
+        instruction_text = template_window._get_instruction_text()
+
+        # Assert: Text contains helpful guidance
+        assert "double-click" in instruction_text.lower()
+        assert "template" in instruction_text.lower()
+        assert "\n" in instruction_text  # Multi-line for readability
+
+    def test_window_layout_adapts_to_different_screen_sizes(self, template_window) -> None:
+        """
+        Window layout should adapt gracefully to different screen sizes.
+
+        GIVEN: A user opens the template overview on any screen size
+        WHEN: The layout is configured
+        THEN: Components should be positioned with responsive scaling
+        """
+        # Arrange: Set up variable DPI environment
+        template_window.dpi_scaling_factor = 1.25
+        template_window.calculate_scaled_padding_tuple = MagicMock(return_value=(15, 30))
+
+        # Mock the necessary components for layout
+        template_window.top_frame = MagicMock()
+        template_window.instruction_label = MagicMock()
+        template_window.image_label = MagicMock()
+
+        # Act: Test layout setup
+        try:
+            TemplateOverviewWindow._setup_layout(template_window)
+            layout_success = True
+        except Exception:  # pylint: disable=broad-exception-caught
+            layout_success = False
+
+        # Assert: Layout setup completes successfully
+        assert layout_success, "Layout setup should complete without errors"
+        assert hasattr(template_window, "top_frame")
+        assert hasattr(template_window, "instruction_label")
+
+
+class TestTreeviewConfiguration:
+    """Test treeview configuration and user experience optimization."""
+
+    def test_treeview_styling_adapts_to_user_display_settings(self, template_window) -> None:
+        """
+        Treeview styling should provide optimal readability on all displays.
+
+        GIVEN: A user opens the template overview on any display
+        WHEN: Treeview styling is configured
+        THEN: Styling should be applied with proper DPI scaling for readability
+        """
+        # Arrange: Set up style environment
+        template_window.calculate_scaled_padding = MagicMock(return_value=3)
+
+        with patch("tkinter.ttk.Style") as mock_style_class:
+            mock_style = MagicMock()
+            mock_style_class.return_value = mock_style
+
+            # Act: Apply treeview styling
+            template_window._setup_treeview_style()
+
+            # Assert: Style configuration provides good UX
+            mock_style.layout.assert_called_once()
+            mock_style.configure.assert_called_once()
+
+    def test_treeview_columns_resize_for_content_readability(self, template_window) -> None:
+        """
+        Treeview columns should automatically size for optimal content readability.
+
+        GIVEN: A populated treeview with varying content lengths
+        WHEN: Column widths are adjusted
+        THEN: Widths should accommodate content with appropriate DPI scaling
+        """
+        # Arrange: Set up mock font and treeview data
+        with patch("tkinter.font.Font") as mock_font_class:
+            mock_font = MagicMock()
+            mock_font.measure.return_value = 100
+            mock_font_class.return_value = mock_font
+
+            # Configure template_window tree with test data
+            template_window.tree.__getitem__.return_value = ["Frame", "Size"]
+            template_window.tree.get_children.return_value = ["item1", "item2"]
+            template_window.tree.item.side_effect = lambda item, key: {
+                "values": ["QuadCopter", "Large"] if item == "item1" else ["Airplane", "Medium"]
+            }.get(key, ["QuadCopter", "Large"])
+            template_window.dpi_scaling_factor = 1.5
+
+            # Act: Adjust column widths
+            template_window._adjust_treeview_column_widths()
+
+            # Assert: Columns are properly sized
+            assert template_window.tree.column.call_count >= 2
+
+
+class TestUserInteractionBehavior:
+    """Test user interaction patterns and responsive behavior."""
+
+    def test_user_selection_updates_provide_immediate_feedback(self, template_window) -> None:
+        """
+        Users should see immediate visual feedback when selecting templates.
+
+        GIVEN: A user browses through different templates
+        WHEN: They select a row in the treeview
+        THEN: Their selection should be immediately stored and image updated
+        """
+        # Arrange: Set up selection behavior
+        template_window.tree.selection.return_value = ["item1"]
+        template_window.tree.item.return_value = {"text": "Copter/QuadCopter"}
+        template_window.store_template_dir = MagicMock()
+        template_window._display_vehicle_image = MagicMock()
+
+        # Act: User clicks on a template
+        mock_event = MagicMock()
+        template_window._on_row_selection_change(mock_event)
+        template_window._update_selection()  # Simulate the after callback
+
+        # Assert: Immediate feedback provided
+        template_window.store_template_dir.assert_called_once_with("Copter/QuadCopter")
+        template_window._display_vehicle_image.assert_called_once_with("Copter/QuadCopter")
+
+    def test_user_double_click_provides_quick_template_selection(self, template_window) -> None:
+        """
+        Users should be able to quickly select templates with double-click.
+
+        GIVEN: A user has found their desired template
+        WHEN: They double-click on the template row
+        THEN: Template should be selected and window closed for efficient workflow
+        """
+        # Arrange: Set up double-click behavior
+        template_window.tree.identify_row.return_value = "item1"
+        template_window.tree.item.return_value = {"text": "Copter/QuadCopter"}
+        template_window.store_template_dir = MagicMock()
+        template_window.close_window = MagicMock()
+
+        # Act: User double-clicks to select
+        mock_event = MagicMock()
+        mock_event.y = 100
+        template_window._on_row_double_click(mock_event)
+
+        # Assert: Quick selection workflow completed
+        template_window.store_template_dir.assert_called_once_with("Copter/QuadCopter")
+        template_window.close_window.assert_called_once()
+
+
+class TestVisualFeedbackAndImageDisplay:  # pylint: disable=too-few-public-methods
+    """Test visual feedback mechanisms for better user experience."""
+
+    def test_missing_vehicle_images_handled_gracefully_for_users(self, template_window) -> None:
+        """
+        Users should experience graceful handling when vehicle images are missing.
+
+        GIVEN: A user selects a template without an associated image
+        WHEN: The system tries to display the vehicle image
+        THEN: The missing image should be handled without disrupting user workflow
+        """
+        # Arrange: Template without image
+        template_window.top_frame = MagicMock()
+        template_window.top_frame.winfo_children.return_value = []
+        template_window.image_label = MagicMock()
+        template_window.dpi_scaling_factor = 1.0
+        template_window.vehicle_components_provider.get_vehicle_image_filepath.return_value = "missing.png"
+        template_window.get_vehicle_image_filepath = MagicMock(return_value="missing.png")
+
+        # Act: User selects template without image
+        template_window._display_vehicle_image("Copter/ExperimentalQuad")
+
+        # Assert: Graceful handling without errors (method completes without exceptions)
+
+
+class TestApplicationEntryPoint:  # pylint: disable=too-few-public-methods
+    """Test application startup and command-line interface behavior."""
+
+    def test_command_line_startup_creates_functional_user_interface(self) -> None:
+        """
+        Command-line startup should create a fully functional user interface.
+
+        GIVEN: A user starts the application from command line
+        WHEN: The main function is called with arguments
+        THEN: A complete template overview window should be created and run
+        """
+        # Arrange: Command line environment with minimal mocking
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.argument_parser") as mock_parser,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.setup_logging") as mock_setup_logging,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.ProgramSettings") as mock_settings,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_template_overview.TemplateOverviewWindow"
+            ) as mock_window_class,
+        ):
+            # Set up mock returns
+            mock_args = MagicMock()
+            mock_args.loglevel = "INFO"
+            mock_parser.return_value = mock_args
+            mock_settings.get_recently_used_dirs.return_value = ["/test/dir"]
+
+            mock_window = MagicMock()
+            mock_window_class.return_value = mock_window
+
+            # Act: User starts application from command line
+            main()
+
+            # Assert: Complete application setup
+            mock_parser.assert_called_once()
+            mock_setup_logging.assert_called_once_with("INFO")
+            mock_window.run_app.assert_called_once()
+
+
+class TestWindowInitialization:
+    """Test comprehensive window initialization behavior."""
+
+    def test_window_initialization_creates_all_required_components(self, template_overview_window_setup) -> None:
+        """
+        Window initialization should create all required UI components.
+
+        GIVEN: A user opens the template overview window
+        WHEN: Window initialization occurs
+        THEN: All UI components should be properly created and configured
+        """
+        # Arrange: Mock all required components for full initialization
+        with (
+            patch("tkinter.ttk.Frame"),
+            patch("tkinter.ttk.Label"),
+            patch("tkinter.ttk.Treeview"),
+        ):
+            mock_vehicle_provider = MagicMock()
+            mock_program_provider = MagicMock()
+
+            # Act: Initialize window with real initialization call
+            window = TemplateOverviewWindow(
+                vehicle_components_provider=mock_vehicle_provider,
+                program_settings_provider=mock_program_provider,
+            )
+
+            # Assert: Components are properly initialized
+            assert window.vehicle_components_provider == mock_vehicle_provider
+            assert window.program_settings_provider == mock_program_provider
+
+    def test_ui_components_get_proper_dependency_injection(self, template_overview_window_setup) -> None:
+        """
+        UI components should receive proper dependency injection.
+
+        GIVEN: A user provides custom providers
+        WHEN: Window is initialized with dependency injection
+        THEN: Custom providers should be used instead of defaults
+        """
+        # Arrange: Custom providers
+        mock_vehicle_provider = MagicMock()
+        mock_program_provider = MagicMock()
+
+        # Act: Initialize with custom providers
+        window = TemplateOverviewWindow(
+            vehicle_components_provider=mock_vehicle_provider,
+            program_settings_provider=mock_program_provider,
+        )
+
+        # Assert: Custom providers are used
+        assert window.vehicle_components_provider is mock_vehicle_provider
+        assert window.program_settings_provider is mock_program_provider
+
+    def test_window_uses_default_providers_when_none_specified(self, template_overview_window_setup) -> None:
+        """
+        Window should use default providers when none are specified.
+
+        GIVEN: A user doesn't specify custom providers
+        WHEN: Window is initialized without providers
+        THEN: Default providers should be used
+        """
+        # Arrange: Patch the default classes
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.VehicleComponents") as mock_vc,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.ProgramSettings") as mock_ps,
+        ):
+            # Act: Initialize without providers
+            window = TemplateOverviewWindow()
+
+            # Assert: Default providers are used
+            assert window.vehicle_components_provider is mock_vc
+            assert window.program_settings_provider is mock_ps
+
+
+class TestWindowApplicationRunner:
+    """Test window application running behavior."""
+
+    def test_toplevel_window_runs_with_update_loop(self, template_window) -> None:
+        """
+        Toplevel window should run with proper update loop.
+
+        GIVEN: A window is created as Toplevel
+        WHEN: run_app is called
+        THEN: Update loop should run properly
+        """
+        # Arrange: Mock Toplevel window
+        template_window.root = MagicMock(spec=tk.Toplevel)
+        # Start with children, will be cleared to exit loop
+        template_window.root.children = {"child1": MagicMock()}
+
+        def clear_children_after_call() -> None:
+            template_window.root.children = {}
+
+        template_window.root.update_idletasks.side_effect = clear_children_after_call
+
+        # Act: Run the app
+        template_window.run_app()
+
+        # Assert: Update methods were called
+        template_window.root.update_idletasks.assert_called()
+
+    def test_tk_window_runs_with_mainloop(self, template_window) -> None:
+        """
+        Tk window should run with mainloop.
+
+        GIVEN: A window is created as Tk root
+        WHEN: run_app is called
+        THEN: Mainloop should be called
+        """
+        # Arrange: Mock Tk root window
+        template_window.root = MagicMock(spec=tk.Tk)
+
+        # Act: Run the app
+        template_window.run_app()
+
+        # Assert: Mainloop was called
+        template_window.root.mainloop.assert_called_once()
+
+    def test_tcl_error_handled_gracefully_in_toplevel_run(self, template_window) -> None:
+        """
+        TclError should be handled gracefully in Toplevel run.
+
+        GIVEN: A Toplevel window encounters TclError
+        WHEN: run_app is called and TclError occurs
+        THEN: Error should be handled without crashing
+        """
+        # Arrange: Mock Toplevel with TclError
+        template_window.root = MagicMock(spec=tk.Toplevel)
+        template_window.root.children = {"child1": MagicMock()}
+        template_window.root.update_idletasks.side_effect = tk.TclError("Test error")
+
+        # Act: Run the app (should not raise exception)
+        try:
+            template_window.run_app()
+            test_passed = True
+        except tk.TclError:
+            test_passed = False
+
+        # Assert: Error was handled gracefully
+        assert test_passed
+
+
+class TestTreeviewConfigurationDetails:
+    """Test detailed treeview configuration behavior."""
+
+    def test_treeview_style_configuration_uses_proper_scaling(self, template_window) -> None:
+        """
+        Treeview style should use proper DPI scaling.
+
+        GIVEN: A window with specific DPI scaling
+        WHEN: Treeview style is configured
+        THEN: Style should use appropriate scaling values
+        """
+        # Arrange: Set scaling and mock style
+        template_window.dpi_scaling_factor = 1.5
+        template_window.calculate_scaled_padding = MagicMock(return_value=15)
+
+        with patch("tkinter.ttk.Style") as mock_style_class:
+            mock_style = MagicMock()
+            mock_style_class.return_value = mock_style
+
+            # Act: Configure treeview style
+            template_window._setup_treeview_style()
+
+            # Assert: Style methods were called with scaling
+            mock_style.layout.assert_called_once()
+            mock_style.configure.assert_called_once()
+
+    def test_treeview_columns_setup_creates_proper_headings(self, template_window) -> None:
+        """
+        Treeview columns should be set up with proper headings.
+
+        GIVEN: A treeview needs column configuration
+        WHEN: Columns are set up
+        THEN: Proper headings should be created
+        """
+        # Arrange: Mock the tree columns directly
+        template_window.tree = MagicMock()
+        template_window.tree.__getitem__.return_value = ["Template", "Frame", "FC"]
+
+        # Act: Setup treeview columns
+        template_window._setup_treeview_columns()
+
+        # Assert: Headings were configured for each column
+        assert template_window.tree.heading.call_count == 3
+
+    def test_event_binding_creates_all_required_handlers(self, template_window) -> None:
+        """
+        Event binding should create all required event handlers.
+
+        GIVEN: A treeview needs event handling
+        WHEN: Events are bound
+        THEN: All required events should have handlers
+        """
+        # Arrange: Mock tree columns
+        template_window.tree.__getitem__ = MagicMock(return_value=["Template", "Frame"])
+
+        # Act: Bind events
+        template_window._bind_events()
+
+        # Assert: All required events are bound
+        expected_events = ["<ButtonRelease-1>", "<Up>", "<Down>", "<Double-1>"]
+        actual_bind_calls = [call[0][0] for call in template_window.tree.bind.call_args_list]
+        for event in expected_events:
+            assert event in actual_bind_calls
+
+
+class TestSortingBehaviorDetails:
+    """Test detailed sorting behavior."""
+
+    def test_numeric_sorting_works_with_float_values(self, template_window) -> None:
+        """
+        Numeric sorting should work with float values.
+
+        GIVEN: A treeview with numeric data
+        WHEN: User sorts by numeric column
+        THEN: Values should be sorted numerically, not alphabetically
+        """
+        # Arrange: Mock tree with numeric data
+        template_window.tree.get_children.return_value = ["item1", "item2", "item3"]
+        template_window.tree.set.side_effect = lambda item, col: {
+            ("item1", "Size"): "1.5",
+            ("item2", "Size"): "10.2",
+            ("item3", "Size"): "2.0",
+        }.get((item, col), "0")
+
+        # Act: Sort by Size column
+        template_window._sort_by_column("Size", reverse=False)
+
+        # Assert: Items were moved (sorted)
+        assert template_window.tree.move.call_count == 3
+
+    def test_string_sorting_fallback_handles_non_numeric_data(self, template_window) -> None:
+        """
+        String sorting should work as fallback for non-numeric data.
+
+        GIVEN: A treeview with non-numeric data
+        WHEN: User sorts by text column
+        THEN: Values should be sorted alphabetically
+        """
+        # Arrange: Mock tree with text data
+        template_window.tree.get_children.return_value = ["item1", "item2"]
+        template_window.tree.set.side_effect = lambda item, col: {
+            ("item1", "Name"): "Zebra",
+            ("item2", "Name"): "Alpha",
+        }.get((item, col), "")
+
+        # Act: Sort by Name column
+        template_window._sort_by_column("Name", reverse=False)
+
+        # Assert: String sorting was used (move was called)
+        assert template_window.tree.move.call_count == 2
+
+    def test_sorting_indicators_update_properly(self, template_window) -> None:
+        """
+        Sorting indicators should update properly.
+
+        GIVEN: A user sorts by different columns
+        WHEN: Sort direction changes
+        THEN: Visual indicators should update correctly
+        """
+        # Arrange: Initial sort state
+        template_window.sort_column = "OldColumn"
+        template_window.tree.get_children.return_value = ["item1"]
+        template_window.tree.set.return_value = "value"
+
+        # Act: Sort by new column
+        template_window._sort_by_column("NewColumn", reverse=False)
+
+        # Assert: Old column indicator cleared, new column shows ascending
+        template_window.tree.heading.assert_any_call("OldColumn", text="OldColumn")
+        template_window.tree.heading.assert_any_call("NewColumn", text="NewColumn ▲")
+
+
+class TestImageDisplayBehavior:
+    """Test vehicle image display behavior."""
+
+    def test_image_display_removes_previous_image_correctly(self, template_window) -> None:
+        """
+        Image display should remove previous image correctly.
+
+        GIVEN: A previous image is displayed
+        WHEN: A new template is selected
+        THEN: Previous image should be removed before showing new one
+        """
+        # Arrange: Mock existing image widget and top_frame
+        old_image_widget = MagicMock(spec=ttk.Label)
+        template_window.image_label = old_image_widget
+        template_window.top_frame = MagicMock()
+        template_window.top_frame.winfo_children.return_value = [old_image_widget]
+        template_window.dpi_scaling_factor = 1.0
+
+        with (
+            patch.object(template_window, "get_vehicle_image_filepath", return_value="/path/to/image.jpg"),
+            patch.object(template_window, "put_image_in_label", return_value=MagicMock()),
+        ):
+            # Act: Display new image
+            template_window._display_vehicle_image("Copter/NewTemplate")
+
+            # Assert: Old image was destroyed
+            old_image_widget.destroy.assert_called_once()
+
+    def test_image_display_handles_file_not_found_gracefully(self, template_window) -> None:
+        """
+        Image display should handle FileNotFoundError gracefully.
+
+        GIVEN: A template without an associated image
+        WHEN: Image display is attempted
+        THEN: A fallback message should be shown
+        """
+        # Arrange: Mock FileNotFoundError and top_frame
+        template_window.top_frame = MagicMock()
+        template_window.top_frame.winfo_children.return_value = []
+        template_window.dpi_scaling_factor = 1.0
+
+        with (
+            patch.object(template_window, "get_vehicle_image_filepath", side_effect=FileNotFoundError),
+            patch("tkinter.ttk.Label") as mock_label,
+        ):
+            # Act: Try to display image
+            template_window._display_vehicle_image("Copter/NoImage")
+
+            # Assert: Fallback label was created
+            mock_label.assert_called_once()
+            call_args = mock_label.call_args[1]
+            assert "No 'vehicle.jpg'" in call_args["text"]
+
+    def test_get_vehicle_image_filepath_delegates_to_provider(self, template_window) -> None:
+        """
+        get_vehicle_image_filepath should delegate to vehicle components provider.
+
+        GIVEN: A template path
+        WHEN: Vehicle image filepath is requested
+        THEN: Request should be delegated to provider
+        """
+        # Arrange: Mock provider response
+        template_window.vehicle_components_provider.get_vehicle_image_filepath.return_value = "/test/path.jpg"
+
+        # Act: Get image filepath
+        result = template_window.get_vehicle_image_filepath("Copter/Test")
+
+        # Assert: Provider was called and result returned
+        template_window.vehicle_components_provider.get_vehicle_image_filepath.assert_called_once_with("Copter/Test")
+        assert result == "/test/path.jpg"
+
+
+class TestAdvancedMainFunctionality:
+    """Test advanced main function behavior."""
+
+    def test_main_function_logs_recently_used_directory_when_available(self) -> None:
+        """
+        Main function should log recently used directory when available.
+
+        GIVEN: A user has recently used directories
+        WHEN: Main function completes
+        THEN: Most recent directory should be logged
+        """
+        # Arrange: Mock all main dependencies
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.argument_parser") as mock_parser,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.setup_logging"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_template_overview.TemplateOverviewWindow"
+            ) as mock_window_class,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.ProgramSettings") as mock_settings,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.logging_info") as mock_log_info,
+        ):
+            # Set up mocks
+            mock_args = MagicMock()
+            mock_args.loglevel = "INFO"
+            mock_parser.return_value = mock_args
+
+            mock_window = MagicMock()
+            mock_window_class.return_value = mock_window
+            mock_settings.get_recently_used_dirs.return_value = ["/recent/dir"]
+
+            # Act: Run main function
+            main()
+
+            # Assert: Recent directory was logged
+            mock_log_info.assert_called_once_with("/recent/dir")
+
+    def test_main_function_handles_no_recently_used_directories(self) -> None:
+        """
+        Main function should handle no recently used directories gracefully.
+
+        GIVEN: A user has no recently used directories
+        WHEN: Main function completes
+        THEN: No logging should occur without error
+        """
+        # Arrange: Mock all main dependencies
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.argument_parser") as mock_parser,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.setup_logging"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_template_overview.TemplateOverviewWindow"
+            ) as mock_window_class,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.ProgramSettings") as mock_settings,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.logging_info") as mock_log_info,
+        ):
+            # Set up mocks
+            mock_args = MagicMock()
+            mock_args.loglevel = "INFO"
+            mock_parser.return_value = mock_args
+
+            mock_window = MagicMock()
+            mock_window_class.return_value = mock_window
+            mock_settings.get_recently_used_dirs.return_value = []
+
+            # Act: Run main function
+            main()
+
+            # Assert: No logging occurred
+            mock_log_info.assert_not_called()

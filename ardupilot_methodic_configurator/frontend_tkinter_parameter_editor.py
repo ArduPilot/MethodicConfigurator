@@ -243,7 +243,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         font_family, _font_size = get_widget_font_family_and_size(file_selection_label)
         self.legend_frame(config_subframe, font_family)
 
-        image_label = BaseWindow.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
+        image_label = self.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
         image_label.bind("<Button-1>", lambda event: show_about_window(self.main_frame, version))  # noqa: ARG005
         show_tooltip(image_label, _("User Manual, Support Forum, Report a Bug, Licenses, Source Code"))
