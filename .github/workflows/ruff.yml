@@ -19,9 +19,6 @@ permissions:
 jobs:
   ruff:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['py39']
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -32,15 +29,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      # Ruff does not need a specific python version installed
-      - name: Install dependencies
-        run: |
-          python -m pip install 'ruff==0.11.13'
-
       - name: Lint with Ruff
-        run: |
-          ruff check --target-version ${{ matrix.python-version }} --output-format=github
+        uses: astral-sh/ruff-action@v3
+        with:
+          version: 0.11.13
 
       - name: Check format with Ruff
-        run: |
-          ruff format --check
+        uses: astral-sh/ruff-action@v3
+        with:
+          version: 0.11.13
+          args: format --check
