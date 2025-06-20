@@ -18,7 +18,6 @@ from unittest.mock import MagicMock, patch
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 
-
 # pylint: disable=protected-access
 
 

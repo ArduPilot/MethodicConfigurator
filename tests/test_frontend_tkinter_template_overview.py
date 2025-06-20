@@ -184,6 +184,9 @@ class TestTemplateOverviewWindow(unittest.TestCase):  # pylint: disable=too-many
             self.window.top_frame = self.mock_top_frame
             self.window.tree = self.mock_tree
             self.window.image_label = self.mock_image_label
+            # Add the provider attributes that would be set in __init__
+            self.window.vehicle_components_provider = self.mock_vehicle_components
+            self.window.program_settings_provider = self.mock_program_settings
 
     def tearDown(self) -> None:
         """Tear down test fixtures."""
@@ -229,67 +232,96 @@ class TestTemplateOverviewWindow(unittest.TestCase):  # pylint: disable=too-many
 
 
 @pytest.fixture
-def template_overview_window() -> Generator[Any, Any, Any]:
-    """Create a mocked TemplateOverviewWindow instance with pytest fixture."""
+def mock_vehicle_components_provider() -> MagicMock:
+    """Create a mock vehicle components provider following the protocol."""
+    mock = MagicMock()
+    mock.get_vehicle_components_overviews.return_value = {
+        "test_template": MagicMock(attributes=lambda: ["attr1", "attr2"], attr1="value1", attr2="value2")
+    }
+    mock.get_vehicle_image_filepath.return_value = "/path/to/image.jpg"
+    return mock
+
+
+@pytest.fixture
+def mock_program_settings_provider() -> MagicMock:
+    """Create a mock program settings provider following the protocol."""
+    mock = MagicMock()
+    mock.store_template_dir.return_value = None
+    return mock
+
+
+@pytest.fixture
+def template_overview_window_with_injection(
+    mock_vehicle_components_provider, mock_program_settings_provider
+) -> Generator[TemplateOverviewWindow, None, None]:
+    """Create a TemplateOverviewWindow with dependency injection (improved approach)."""
     with (
         patch("tkinter.Toplevel"),
         patch("tkinter.ttk.Frame"),
         patch("tkinter.ttk.Label"),
         patch("tkinter.ttk.Treeview"),
-        patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.VehicleComponents"),
-        patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.ProgramSettings"),
+        patch("tkinter.ttk.Style"),
+        patch.object(TemplateOverviewWindow, "_configure_window"),
+        patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
+        patch.object(TemplateOverviewWindow, "_setup_layout"),
+        patch.object(TemplateOverviewWindow, "_configure_treeview"),
+        patch.object(TemplateOverviewWindow, "_bind_events"),
     ):
-        # Create the window with a mocked __init__
-        with patch.object(TemplateOverviewWindow, "__init__", return_value=None):
-            window = TemplateOverviewWindow()
-            window.root = MagicMock()
-            window.main_frame = MagicMock()
-            window.top_frame = MagicMock()
-            window.tree = MagicMock()
-            window.image_label = MagicMock()
-            # Add DPI scaling factor for HiDPI support tests
-            window.dpi_scaling_factor = 1.0
-            yield window
+        # Create window with dependency injection
+        window = TemplateOverviewWindow(
+            vehicle_components_provider=mock_vehicle_components_provider,
+            program_settings_provider=mock_program_settings_provider,
+        )
+        # Mock essential attributes
+        window.root = MagicMock()
+        window.main_frame = MagicMock()
+        window.top_frame = MagicMock()
+        window.tree = MagicMock()
+        window.image_label = MagicMock()
+        window.dpi_scaling_factor = 1.0
+        yield window
 
 
-def test_display_vehicle_image(template_overview_window, monkeypatch) -> None:
+def test_display_vehicle_image(template_overview_window_with_injection, monkeypatch) -> None:
     """Test that _display_vehicle_image manages the image display correctly."""
     # Setup
     template_path = "test/template/path"
 
     # Mock the get_vehicle_image_filepath and put_image_in_label methods
-    monkeypatch.setattr(template_overview_window, "get_vehicle_image_filepath", MagicMock(return_value="/path/to/image.jpg"))
-    monkeypatch.setattr(template_overview_window, "put_image_in_label", MagicMock(return_value=MagicMock()))
+    monkeypatch.setattr(
+        template_overview_window_with_injection, "get_vehicle_image_filepath", MagicMock(return_value="/path/to/image.jpg")
+    )
+    monkeypatch.setattr(template_overview_window_with_injection, "put_image_in_label", MagicMock(return_value=MagicMock()))
 
     # Call the method
-    template_overview_window._display_vehicle_image(template_path)
+    template_overview_window_with_injection._display_vehicle_image(template_path)
 
     # Assertions
-    template_overview_window.get_vehicle_image_filepath.assert_called_once_with(template_path)
-    template_overview_window.put_image_in_label.assert_called_once()
-    template_overview_window.image_label.pack.assert_called_once()
+    template_overview_window_with_injection.get_vehicle_image_filepath.assert_called_once_with(template_path)
+    template_overview_window_with_injection.put_image_in_label.assert_called_once()
+    template_overview_window_with_injection.image_label.pack.assert_called_once()
 
 
-def test_display_vehicle_image_no_image(template_overview_window, monkeypatch) -> None:
+def test_display_vehicle_image_no_image(template_overview_window_with_injection, monkeypatch) -> None:
     """Test that _display_vehicle_image handles missing images correctly."""
     # Setup
     template_path = "test/template/path"
 
     # Mock the get_vehicle_image_filepath to raise FileNotFoundError
     get_filepath_mock = MagicMock(side_effect=FileNotFoundError)
-    monkeypatch.setattr(template_overview_window, "get_vehicle_image_filepath", get_filepath_mock)
+    monkeypatch.setattr(template_overview_window_with_injection, "get_vehicle_image_filepath", get_filepath_mock)
 
     # Also mock put_image_in_label to ensure it's not called
     put_image_mock = MagicMock()
-    monkeypatch.setattr(template_overview_window, "put_image_in_label", put_image_mock)
+    monkeypatch.setattr(template_overview_window_with_injection, "put_image_in_label", put_image_mock)
 
     # Call the method
-    template_overview_window._display_vehicle_image(template_path)
+    template_overview_window_with_injection._display_vehicle_image(template_path)
 
     # Assertions
     get_filepath_mock.assert_called_once_with(template_path)
     put_image_mock.assert_not_called()
-    template_overview_window.image_label.pack.assert_called_once()
+    template_overview_window_with_injection.image_label.pack.assert_called_once()
 
 
 def test_setup_treeview(template_overview_window, monkeypatch) -> None:
@@ -587,3 +619,227 @@ def test_sort_by_column_reverse(template_overview_window) -> None:
     template_overview_window.tree.move.assert_any_call("item1", "", 0)  # Zebra comes first in reverse
     template_overview_window.tree.move.assert_any_call("item3", "", 1)  # Monkey comes second in reverse
     template_overview_window.tree.move.assert_any_call("item2", "", 2)  # Apple comes last in reverse
+
+
+# New improved tests using dependency injection and testing refactored methods
+
+
+def test_dependency_injection_vehicle_components(mock_vehicle_components_provider) -> None:
+    """Test that dependency injection works correctly for vehicle components provider."""
+    with (
+        patch("tkinter.Toplevel"),
+        patch.object(TemplateOverviewWindow, "_configure_window"),
+        patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
+        patch.object(TemplateOverviewWindow, "_setup_layout"),
+        patch.object(TemplateOverviewWindow, "_configure_treeview"),
+        patch.object(TemplateOverviewWindow, "_bind_events"),
+    ):
+        window = TemplateOverviewWindow(vehicle_components_provider=mock_vehicle_components_provider)
+
+        # Test that the injected provider is used
+        assert window.vehicle_components_provider is mock_vehicle_components_provider
+
+
+def test_dependency_injection_program_settings(mock_program_settings_provider) -> None:
+    """Test that dependency injection works correctly for program settings provider."""
+    with (
+        patch("tkinter.Toplevel"),
+        patch.object(TemplateOverviewWindow, "_configure_window"),
+        patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
+        patch.object(TemplateOverviewWindow, "_setup_layout"),
+        patch.object(TemplateOverviewWindow, "_configure_treeview"),
+        patch.object(TemplateOverviewWindow, "_bind_events"),
+    ):
+        window = TemplateOverviewWindow(program_settings_provider=mock_program_settings_provider)
+
+        # Test that the injected provider is used
+        assert window.program_settings_provider is mock_program_settings_provider
+
+
+def test_dependency_injection_defaults() -> None:
+    """Test that default dependencies are used when none are provided."""
+    with (
+        patch("tkinter.Toplevel"),
+        patch.object(TemplateOverviewWindow, "_configure_window"),
+        patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
+        patch.object(TemplateOverviewWindow, "_setup_layout"),
+        patch.object(TemplateOverviewWindow, "_configure_treeview"),
+        patch.object(TemplateOverviewWindow, "_bind_events"),
+    ):
+        window = TemplateOverviewWindow()
+
+        # Test that default classes are used
+        from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
+        from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
+
+        assert window.vehicle_components_provider is VehicleComponents
+        assert window.program_settings_provider is ProgramSettings
+
+
+def test_store_template_dir_with_injection(template_overview_window_with_injection, mock_program_settings_provider) -> None:
+    """Test store_template_dir using dependency injection."""
+    template_path = "test/template/path"
+
+    template_overview_window_with_injection.store_template_dir(template_path)
+
+    mock_program_settings_provider.store_template_dir.assert_called_once_with(template_path)
+
+
+def test_get_vehicle_image_filepath_with_injection(
+    template_overview_window_with_injection, mock_vehicle_components_provider
+) -> None:
+    """Test get_vehicle_image_filepath using dependency injection."""
+    template_path = "test/template/path"
+    expected_filepath = "/injected/path/to/image.jpg"
+    mock_vehicle_components_provider.get_vehicle_image_filepath.return_value = expected_filepath
+
+    result = template_overview_window_with_injection.get_vehicle_image_filepath(template_path)
+
+    mock_vehicle_components_provider.get_vehicle_image_filepath.assert_called_once_with(template_path)
+    assert result == expected_filepath
+
+
+def test_calculate_scaled_font_size(template_overview_window_with_injection) -> None:
+    """Test the _calculate_scaled_font_size helper method."""
+    template_overview_window_with_injection.dpi_scaling_factor = 1.5
+
+    result = template_overview_window_with_injection._calculate_scaled_font_size(12)
+
+    assert result == 18  # 12 * 1.5
+
+
+def test_calculate_scaled_padding(template_overview_window_with_injection) -> None:
+    """Test the _calculate_scaled_padding helper method."""
+    template_overview_window_with_injection.dpi_scaling_factor = 2.0
+
+    result = template_overview_window_with_injection._calculate_scaled_padding(10)
+
+    assert result == 20  # 10 * 2.0
+
+
+def test_calculate_scaled_padding_tuple(template_overview_window_with_injection) -> None:
+    """Test the _calculate_scaled_padding_tuple helper method."""
+    template_overview_window_with_injection.dpi_scaling_factor = 1.25
+
+    result = template_overview_window_with_injection._calculate_scaled_padding_tuple(8, 16)
+
+    assert result == (10, 20)  # (8 * 1.25, 16 * 1.25)
+
+
+def test_get_instruction_text(template_overview_window_with_injection) -> None:
+    """Test the _get_instruction_text helper method."""
+    result = template_overview_window_with_injection._get_instruction_text()
+
+    # Should return the translated instruction text
+    assert "Please double-click the template below" in result
+    assert "it does not need to exactly match" in result
+
+
+def test_configure_window(template_overview_window_with_injection) -> None:
+    """Test the _configure_window method."""
+    with patch.object(
+        template_overview_window_with_injection,
+        "_configure_window",
+        wraps=template_overview_window_with_injection._configure_window,
+    ):
+        template_overview_window_with_injection._configure_window()
+
+        # Verify window title was set
+        template_overview_window_with_injection.root.title.assert_called_once()
+        # Verify geometry was set
+        template_overview_window_with_injection.root.geometry.assert_called_once()
+
+
+def test_initialize_ui_components() -> None:
+    """Test the _initialize_ui_components method."""
+    with (
+        patch("tkinter.Toplevel"),
+        patch("tkinter.ttk.Frame"),
+        patch("tkinter.ttk.Label"),
+        patch("tkinter.ttk.Treeview"),
+        patch.object(TemplateOverviewWindow, "_configure_window"),
+        patch.object(TemplateOverviewWindow, "_setup_layout"),
+        patch.object(TemplateOverviewWindow, "_configure_treeview"),
+        patch.object(TemplateOverviewWindow, "_bind_events"),
+    ):
+        window = TemplateOverviewWindow()
+
+        # Verify UI components were initialized
+        assert hasattr(window, "top_frame")
+        assert hasattr(window, "instruction_label")
+        assert hasattr(window, "image_label")
+        assert hasattr(window, "tree")
+        assert hasattr(window, "sort_column")
+
+
+def test_populate_treeview_with_injection(template_overview_window_with_injection, mock_vehicle_components_provider) -> None:
+    """Test _populate_treeview using dependency injection."""
+    # Setup mock data
+    mock_template = MagicMock()
+    mock_template.attributes.return_value = ["attr1", "attr2"]
+    mock_template.attr1 = "value1"
+    mock_template.attr2 = "value2"
+
+    mock_vehicle_components_provider.get_vehicle_components_overviews.return_value = {"template1": mock_template}
+
+    template_overview_window_with_injection._populate_treeview()
+
+    # Verify the tree was populated with the injected data
+    template_overview_window_with_injection.tree.insert.assert_called_once_with(
+        "", "end", text="template1", values=("template1", "value1", "value2")
+    )
+    mock_vehicle_components_provider.get_vehicle_components_overviews.assert_called_once()
+
+
+def test_ui_setup_method_decomposition() -> None:
+    """Test that UI setup methods are properly decomposed and called in the right order."""
+    with (
+        patch("tkinter.Toplevel"),
+        patch.object(TemplateOverviewWindow, "_configure_window") as mock_configure,
+        patch.object(TemplateOverviewWindow, "_initialize_ui_components") as mock_initialize,
+        patch.object(TemplateOverviewWindow, "_setup_layout") as mock_layout,
+        patch.object(TemplateOverviewWindow, "_configure_treeview") as mock_treeview,
+        patch.object(TemplateOverviewWindow, "_bind_events") as mock_bind,
+    ):
+        TemplateOverviewWindow()
+
+        # Verify all setup methods were called in the correct order
+        mock_configure.assert_called_once()
+        mock_initialize.assert_called_once()
+        mock_layout.assert_called_once()
+        mock_treeview.assert_called_once()
+        mock_bind.assert_called_once()
+
+
+def test_treeview_configuration_decomposition(template_overview_window_with_injection) -> None:
+    """Test that treeview configuration is properly decomposed."""
+    with (
+        patch.object(template_overview_window_with_injection, "_setup_treeview_style") as mock_style,
+        patch.object(template_overview_window_with_injection, "_setup_treeview_columns") as mock_columns,
+        patch.object(template_overview_window_with_injection, "_populate_treeview") as mock_populate,
+        patch.object(template_overview_window_with_injection, "_adjust_treeview_column_widths") as mock_adjust,
+    ):
+        template_overview_window_with_injection._configure_treeview()
+
+        # Verify all treeview setup methods were called
+        mock_style.assert_called_once()
+        mock_columns.assert_called_once()
+        mock_populate.assert_called_once()
+        mock_adjust.assert_called_once()
+        # Verify tree was packed
+        template_overview_window_with_injection.tree.pack.assert_called_once()
+
+
+def test_mock_providers_follow_protocol(mock_vehicle_components_provider, mock_program_settings_provider) -> None:
+    """Test that mock providers implement the expected protocol methods."""
+    # Test VehicleComponentsProviderProtocol
+    assert hasattr(mock_vehicle_components_provider, "get_vehicle_components_overviews")
+    assert hasattr(mock_vehicle_components_provider, "get_vehicle_image_filepath")
+
+    # Test ProgramSettingsProviderProtocol
+    assert hasattr(mock_program_settings_provider, "store_template_dir")
+
+    # Test that methods are callable
+    mock_vehicle_components_provider.get_vehicle_components_overviews()
+    mock_vehicle_components_provider.get_vehicle_image_filepath("test")
+    mock_program_settings_provider.store_template_dir("test")

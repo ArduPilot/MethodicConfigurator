@@ -17,7 +17,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from tkinter import font as tkfont
 from tkinter import ttk
-from typing import Optional
+from typing import Optional, Protocol
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
@@ -25,6 +25,30 @@ from ardupilot_methodic_configurator.backend_filesystem_vehicle_components impor
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.middleware_template_overview import TemplateOverview
+
+
+class VehicleComponentsProviderProtocol(Protocol):
+    """Minimal protocol for vehicle components provider - only methods used by TemplateOverviewWindow."""
+
+    @staticmethod
+    def get_vehicle_components_overviews() -> dict[str, TemplateOverview]:
+        """Get vehicle components overviews."""
+        ...
+
+    @staticmethod
+    def get_vehicle_image_filepath(relative_template_path: str) -> str:
+        """Get vehicle image filepath."""
+        ...
+
+
+class ProgramSettingsProviderProtocol(Protocol):
+    """Minimal protocol for program settings provider - only methods used by TemplateOverviewWindow."""
+
+    @staticmethod
+    def store_template_dir(relative_template_dir: str) -> None:
+        """Store template directory."""
+        ...
+
 
 IMAGE_HEIGHT_PX = 100
 
@@ -39,22 +63,45 @@ class TemplateOverviewWindow(BaseWindow):
     manner, making it easier for users to navigate and select the desired template for configuration.
 
     Attributes:
-        window (tk.Tk|None): The root Tkinter window object for the GUI.
         sort_column (str): The column currently being used for sorting
         tree (ttk.Treeview): The treeview widget displaying templates
         image_label (ttk.Label): Label for displaying vehicle images
+        top_frame (ttk.Frame): Top frame containing instructions and image
+        vehicle_components_provider: Provider for vehicle components data
+        program_settings_provider: Provider for program settings operations
 
     """
 
-    def __init__(self, parent: Optional[tk.Tk] = None) -> None:
+    def __init__(
+        self,
+        parent: Optional[tk.Tk] = None,
+        vehicle_components_provider: Optional[VehicleComponentsProviderProtocol] = None,
+        program_settings_provider: Optional[ProgramSettingsProviderProtocol] = None,
+    ) -> None:
         """
         Initialize the TemplateOverviewWindow.
 
         Args:
             parent: Optional parent Tk window
+            vehicle_components_provider: Optional provider for vehicle components (for dependency injection)
+            program_settings_provider: Optional provider for program settings (for dependency injection)
 
         """
         super().__init__(parent)
+
+        # Dependency injection for better testability
+        self.vehicle_components_provider: VehicleComponentsProviderProtocol = vehicle_components_provider or VehicleComponents
+        self.program_settings_provider: ProgramSettingsProviderProtocol = program_settings_provider or ProgramSettings
+
+        # Initialize UI configuration
+        self._configure_window()
+        self._initialize_ui_components()
+        self._setup_layout()
+        self._configure_treeview()
+        self._bind_events()
+
+    def _configure_window(self) -> None:
+        """Configure the main window properties."""
         title = _("Amilcar Lucas's - ArduPilot methodic configurator {} - Template Overview and selection")
         self.root.title(title.format(__version__))
 
@@ -63,27 +110,57 @@ class TemplateOverviewWindow(BaseWindow):
         scaled_height = int(600 * self.dpi_scaling_factor)
         self.root.geometry(f"{scaled_width}x{scaled_height}")
 
+    def _initialize_ui_components(self) -> None:
+        """Initialize UI components with proper scaling."""
+        # Initialize frames
         self.top_frame = ttk.Frame(self.main_frame, height=int(IMAGE_HEIGHT_PX * self.dpi_scaling_factor))
-        self.top_frame.pack(side=tk.TOP, fill="x", expand=False)
 
+        # Initialize instruction label
+        instruction_text = self._get_instruction_text()
+        scaled_font_size = self._calculate_scaled_font_size(12)
+        self.instruction_label = ttk.Label(self.top_frame, text=instruction_text, font=("Arial", scaled_font_size))
+
+        # Initialize image label
+        self.image_label = ttk.Label(self.top_frame)
+
+        # Initialize treeview
+        columns = TemplateOverview.columns()
+        self.tree = ttk.Treeview(self.main_frame, columns=columns, show="headings")
+
+        # Initialize sorting state
+        self.sort_column: str = ""
+
+    def _get_instruction_text(self) -> str:
+        """Get the instruction text for the user interface."""
         instruction_text = _("Please double-click the template below that most resembles your own vehicle components")
         instruction_text += _("\nit does not need to exactly match your vehicle's components.")
-        # Scale font size for HiDPI displays
-        scaled_font_size = int(12 * self.dpi_scaling_factor)
-        instruction_label = ttk.Label(self.top_frame, text=instruction_text, font=("Arial", scaled_font_size))
-        # Scale padding for HiDPI displays
-        scaled_pady = (int(10 * self.dpi_scaling_factor), int(20 * self.dpi_scaling_factor))
-        instruction_label.pack(side=tk.LEFT, pady=scaled_pady)
+        return instruction_text
 
-        self.image_label = ttk.Label(self.top_frame)
-        # Scale padding for HiDPI displays
-        scaled_padx = (int(20 * self.dpi_scaling_factor), int(20 * self.dpi_scaling_factor))
+    def _calculate_scaled_font_size(self, base_size: int) -> int:
+        """Calculate scaled font size based on DPI scaling factor."""
+        return int(base_size * self.dpi_scaling_factor)
+
+    def _calculate_scaled_padding(self, base_padding: int) -> int:
+        """Calculate scaled padding based on DPI scaling factor."""
+        return int(base_padding * self.dpi_scaling_factor)
+
+    def _calculate_scaled_padding_tuple(self, padding1: int, padding2: int) -> tuple[int, int]:
+        """Calculate scaled padding tuple based on DPI scaling factor."""
+        return (self._calculate_scaled_padding(padding1), self._calculate_scaled_padding(padding2))
+
+    def _setup_layout(self) -> None:
+        """Setup the layout of UI components."""
+        # Pack top frame
+        self.top_frame.pack(side=tk.TOP, fill="x", expand=False)
+
+        # Pack instruction label
+        scaled_pady = self._calculate_scaled_padding_tuple(10, 20)
+        self.instruction_label.pack(side=tk.LEFT, pady=scaled_pady)
+
+        # Pack image label
+        scaled_padx = self._calculate_scaled_padding_tuple(20, 20)
         scaled_pady_value = int(IMAGE_HEIGHT_PX * self.dpi_scaling_factor / 2)
         self.image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=scaled_padx, pady=scaled_pady_value)
-
-        self.sort_column: str = ""
-        self._setup_treeview()
-        self._bind_events()
 
     def run_app(self) -> None:
         """Run the TemplateOverviewWindow application."""
@@ -97,8 +174,16 @@ class TemplateOverviewWindow(BaseWindow):
         elif isinstance(self.root, tk.Tk):
             self.root.mainloop()
 
-    def _setup_treeview(self) -> None:
-        """Set up the treeview with columns and styling."""
+    def _configure_treeview(self) -> None:
+        """Configure the treeview with styling and data."""
+        self._setup_treeview_style()
+        self._setup_treeview_columns()
+        self._populate_treeview()
+        self._adjust_treeview_column_widths()
+        self.tree.pack(fill=tk.BOTH, expand=True)
+
+    def _setup_treeview_style(self) -> None:
+        """Setup treeview styling with DPI scaling."""
         style = ttk.Style(self.root)
         # Add padding to Treeview heading style
         style.layout(
@@ -127,26 +212,21 @@ class TemplateOverviewWindow(BaseWindow):
         )
         # Scale padding for HiDPI displays
         scaled_padding = [
-            int(2 * self.dpi_scaling_factor),
-            int(2 * self.dpi_scaling_factor),
-            int(2 * self.dpi_scaling_factor),
-            int(18 * self.dpi_scaling_factor),
+            self._calculate_scaled_padding(2),
+            self._calculate_scaled_padding(2),
+            self._calculate_scaled_padding(2),
+            self._calculate_scaled_padding(18),
         ]
         style.configure("Treeview.Heading", padding=scaled_padding, justify="center")
 
-        # Define the columns for the Treeview
-        columns = TemplateOverview.columns()
-        self.tree = ttk.Treeview(self.main_frame, columns=columns, show="headings")
-        for col in columns:
+    def _setup_treeview_columns(self) -> None:
+        """Setup treeview column headers."""
+        for col in self.tree["columns"]:
             self.tree.heading(col, text=col)
-
-        self._populate_treeview()
-        self._adjust_treeview_column_widths()
-        self.tree.pack(fill=tk.BOTH, expand=True)
 
     def _populate_treeview(self) -> None:
         """Populate the treeview with data from vehicle components."""
-        for key, template_overview in VehicleComponents.get_vehicle_components_overviews().items():
+        for key, template_overview in self.vehicle_components_provider.get_vehicle_components_overviews().items():
             attribute_names = template_overview.attributes()
             values = (key, *(getattr(template_overview, attr, "") for attr in attribute_names))
             self.tree.insert("", "end", text=key, values=values)
@@ -210,7 +290,7 @@ class TemplateOverviewWindow(BaseWindow):
             template_path: The path to store
 
         """
-        ProgramSettings.store_template_dir(template_path)
+        self.program_settings_provider.store_template_dir(template_path)
 
     def _on_row_double_click(self, event: tk.Event) -> None:
         """Handle row double-click event."""
@@ -281,7 +361,7 @@ class TemplateOverviewWindow(BaseWindow):
             FileNotFoundError: If the image file doesn't exist
 
         """
-        return VehicleComponents.get_vehicle_image_filepath(template_path)
+        return self.vehicle_components_provider.get_vehicle_image_filepath(template_path)
 
 
 def argument_parser() -> argparse.Namespace:
