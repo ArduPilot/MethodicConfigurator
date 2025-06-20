@@ -1,4 +1,12 @@
-#!/usr/bin/python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#     "beautifulsoup4",
+#     "requests",
+# ]
+# ///
 
 """
 Outputs URLs of ArduPilot documentation pages.
@@ -69,7 +77,7 @@ def get_env_proxies() -> Union[dict[str, str], None]:
     # Remove None values
     proxies_dict: dict[str, str] = {k: v for k, v in proxies_env.items() if v is not None}
     # define as None if no proxies are defined in the OS environment variables
-    proxies = proxies_dict if proxies_dict else None
+    proxies = proxies_dict or None
     if proxies:
         logging.info("Proxies: %s", proxies)
     else:
