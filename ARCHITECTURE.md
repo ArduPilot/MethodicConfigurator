@@ -85,6 +85,9 @@ the following system design requirements were derived:
     - In the parameter editor:
       - hiding the "Upload" column, "Current intermediate parameter file" combobox, "See only changed parameters" checkbox, and "Annotate docs into .param files" checkbox;
       - automatically selecting all parameters for upload
+    - In the documentation frame:
+      - automatically opening all available documentation links (wiki, external tools, blog posts) in the browser
+        when the current intermediate parameter file changes, providing immediate access to relevant documentation for beginners
   - When set to "normal", all interface elements are displayed for advanced users
   - Users should be able to switch between complexity levels using a dropdown combobox in the component editor
 

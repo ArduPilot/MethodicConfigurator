@@ -134,7 +134,7 @@ class DocumentationFrame:
         mandatory_text, _mandatory_url = self.local_filesystem.get_documentation_text_and_url(current_file, "mandatory")
         self._refresh_mandatory_level(current_file, mandatory_text)
 
-        if self.auto_open_var.get():
+        if self.auto_open_var.get() or ProgramSettings.get_setting("gui_complexity") == "simple":
             if wiki_url:
                 webbrowser_open(url=wiki_url, new=0, autoraise=False)
             if external_tool_url:
