@@ -68,7 +68,8 @@ def argument_parser() -> Namespace:
 EntryWidget = Union[ttk.Entry, ttk.Combobox]
 
 WINDOW_WIDTH_PIX = 880
-VEICLE_IMAGE_WIDTH_PIX = 100
+VEHICLE_IMAGE_WIDTH_PIX = 100
+VEHICLE_IMAGE_HEIGHT_PIX = 100
 
 
 class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instance-attributes
@@ -181,7 +182,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         explanation_frame.pack(side=tk.TOP, fill=tk.X, padx=(10, 10), pady=(10, 0))
 
         explanation_label = ttk.Label(
-            explanation_frame, text=explanation_text, wraplength=WINDOW_WIDTH_PIX - VEICLE_IMAGE_WIDTH_PIX, justify=tk.LEFT
+            explanation_frame, text=explanation_text, wraplength=WINDOW_WIDTH_PIX - VEHICLE_IMAGE_WIDTH_PIX, justify=tk.LEFT
         )
         explanation_label.configure(style="bigger.TLabel")
         explanation_label.pack(side=tk.LEFT, anchor=tk.NW)
@@ -231,7 +232,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         """Add the vehicle image to the parent frame."""
         if self.local_filesystem.vehicle_image_exists():
             image_label = self.put_image_in_label(
-                parent, self.local_filesystem.vehicle_image_filepath(), VEICLE_IMAGE_WIDTH_PIX
+                parent, self.local_filesystem.vehicle_image_filepath(), VEHICLE_IMAGE_HEIGHT_PIX
             )
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
             show_tooltip(image_label, _("Replace the vehicle.jpg file in the vehicle directory to change the vehicle image."))
