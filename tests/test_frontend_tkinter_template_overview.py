@@ -93,6 +93,44 @@ def mock_program_provider() -> MagicMock:
 
 
 @pytest.fixture
+def firmware_filtering_templates() -> dict[str, MagicMock]:
+    """Fixture providing mock templates for firmware filtering tests."""
+    return {
+        "Copter/QuadX": MagicMock(attributes=lambda: ["name"], name="QuadCopter"),
+        "Plane/FixedWing": MagicMock(attributes=lambda: ["name"], name="Airplane"),
+        "Copter/HexaX": MagicMock(attributes=lambda: ["name"], name="Hexacopter"),
+        "Rover/SkidSteer": MagicMock(attributes=lambda: ["name"], name="Rover"),
+        "ArduCopter/QuadX": MagicMock(attributes=lambda: ["name"], name="ArduCopter QuadX"),
+        "ArduPlane/FixedWing": MagicMock(attributes=lambda: ["name"], name="ArduPlane"),
+        "Custom/Copter/Experimental": MagicMock(attributes=lambda: ["name"], name="Experimental Copter"),
+    }
+
+
+@pytest.fixture
+def firmware_window(mock_vehicle_provider, mock_program_provider, firmware_filtering_templates) -> TemplateOverviewWindow:
+    """Fixture providing a configured window for firmware filtering tests."""
+    mock_vehicle_provider.get_vehicle_components_overviews.return_value = firmware_filtering_templates
+
+    with (
+        patch("tkinter.Toplevel"),
+        patch.object(BaseWindow, "__init__", return_value=None),
+        patch.object(TemplateOverviewWindow, "_configure_window"),
+        patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
+        patch.object(TemplateOverviewWindow, "_setup_layout"),
+        patch.object(TemplateOverviewWindow, "_configure_treeview"),
+        patch.object(TemplateOverviewWindow, "_bind_events"),
+    ):
+        window = TemplateOverviewWindow(
+            vehicle_components_provider=mock_vehicle_provider,
+            program_settings_provider=mock_program_provider,
+            connected_fc_vehicle_type="Copter",  # Default firmware type for filtering tests
+        )
+        window.root = MagicMock()
+        window.tree = MagicMock()
+        return window
+
+
+@pytest.fixture
 def template_window(mock_vehicle_provider, mock_program_provider) -> TemplateOverviewWindow:
     """Fixture providing a configured TemplateOverviewWindow for behavior testing."""
     with (
@@ -105,7 +143,9 @@ def template_window(mock_vehicle_provider, mock_program_provider) -> TemplateOve
         patch.object(TemplateOverviewWindow, "_bind_events"),
     ):
         window = TemplateOverviewWindow(
-            vehicle_components_provider=mock_vehicle_provider, program_settings_provider=mock_program_provider
+            vehicle_components_provider=mock_vehicle_provider,
+            program_settings_provider=mock_program_provider,
+            connected_fc_vehicle_type=None,  # No filtering for most tests
         )
         # Mock essential UI components that tests actually interact with
         window.root = MagicMock()
@@ -230,7 +270,7 @@ class TestTemplateDataDisplay:
         THEN: All available templates should be displayed in the tree
         """
         # Act: Populate the tree with templates from our mock provider
-        template_window._populate_treeview()
+        template_window._populate_treeview("")  # Empty string means no filtering
 
         # Assert: Both templates are added to tree with correct data
         assert template_window.tree.insert.call_count == 2
@@ -343,7 +383,7 @@ class TestErrorHandlingAndEdgeCases:
         window.tree = MagicMock()
 
         # Act: Try to populate empty template list
-        window._populate_treeview()
+        window._populate_treeview("")  # Empty string means no filtering
 
         # Assert: No crash, no tree items added
         window.tree.insert.assert_not_called()
@@ -1009,3 +1049,104 @@ class TestAdvancedMainFunctionality:
 
             # Assert: No logging occurred
             mock_log_info.assert_not_called()
+
+
+class TestFirmwareTypeFiltering:
+    """Test firmware type filtering functionality."""
+
+    def test_filtering_shows_only_matching_firmware_templates(self, firmware_window) -> None:
+        """
+        Test that firmware filtering shows only templates matching the connected flight controller.
+
+        GIVEN: Multiple templates exist for different firmware types
+        WHEN: User has a specific firmware type connected (e.g., "Copter")
+        THEN: Only templates matching that firmware type should be displayed
+        """
+        # Act: Populate treeview with Copter filtering
+        firmware_window._populate_treeview("Copter")
+
+        # Assert: Only Copter templates are added
+        # Should include: Copter/QuadX, Copter/HexaX, ArduCopter/QuadX, and Custom/Copter/Experimental
+        assert firmware_window.tree.insert.call_count == 4
+
+        # Verify the calls contain only Copter templates
+        call_args_list = firmware_window.tree.insert.call_args_list
+        inserted_keys = [call[1]["text"] for call in call_args_list]
+        assert "Copter/QuadX" in inserted_keys
+        assert "Copter/HexaX" in inserted_keys
+        assert "ArduCopter/QuadX" in inserted_keys
+        assert "Custom/Copter/Experimental" in inserted_keys
+        assert "Plane/FixedWing" not in inserted_keys
+        assert "Rover/SkidSteer" not in inserted_keys
+
+    def test_no_filtering_shows_all_templates(self, firmware_window) -> None:
+        """
+        Test that passing empty/None firmware type shows all available templates.
+
+        GIVEN: Multiple templates exist for different firmware types
+        WHEN: No specific firmware type is provided for filtering
+        THEN: All available templates should be displayed
+        """
+        # Act: Populate treeview without filtering
+        firmware_window._populate_treeview("")
+
+        # Assert: All templates are added
+        assert firmware_window.tree.insert.call_count == 7  # All seven templates
+
+        # Verify all template types are included
+        call_args_list = firmware_window.tree.insert.call_args_list
+        inserted_keys = [call[1]["text"] for call in call_args_list]
+        assert "Copter/QuadX" in inserted_keys
+        assert "Plane/FixedWing" in inserted_keys
+        assert "Rover/SkidSteer" in inserted_keys
+        assert "ArduCopter/QuadX" in inserted_keys
+
+    def test_partial_firmware_matching_works_correctly(self, firmware_window) -> None:
+        """
+        Test that firmware filtering works with partial string matching.
+
+        GIVEN: Templates with firmware types as part of their keys
+        WHEN: A specific firmware substring is used for filtering
+        THEN: All templates containing that substring should be included
+        """
+        # Act: Filter by "Copter" substring
+        firmware_window._populate_treeview("Copter")
+
+        # Assert: Both ArduCopter and Custom/Copter templates are included
+        assert firmware_window.tree.insert.call_count == 4
+
+        call_args_list = firmware_window.tree.insert.call_args_list
+        inserted_keys = [call[1]["text"] for call in call_args_list]
+        assert "ArduCopter/QuadX" in inserted_keys
+        assert "Custom/Copter/Experimental" in inserted_keys
+        assert "Copter/QuadX" in inserted_keys
+        assert "ArduPlane/FixedWing" not in inserted_keys
+
+    def test_constructor_passes_firmware_type_to_configure_treeview(
+        self, mock_vehicle_provider, mock_program_provider
+    ) -> None:
+        """
+        Test that the constructor properly passes firmware type to the configuration methods.
+
+        GIVEN: A TemplateOverviewWindow is created with a specific firmware type
+        WHEN: The constructor initializes the UI components
+        THEN: The firmware type should be passed down to the treeview configuration
+        """
+        with (
+            patch("tkinter.Toplevel"),
+            patch.object(BaseWindow, "__init__", return_value=None),
+            patch.object(TemplateOverviewWindow, "_configure_window"),
+            patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
+            patch.object(TemplateOverviewWindow, "_setup_layout"),
+            patch.object(TemplateOverviewWindow, "_configure_treeview") as mock_configure_treeview,
+            patch.object(TemplateOverviewWindow, "_bind_events"),
+        ):
+            # Act: Create window with specific firmware type
+            TemplateOverviewWindow(
+                vehicle_components_provider=mock_vehicle_provider,
+                program_settings_provider=mock_program_provider,
+                connected_fc_vehicle_type="Plane",
+            )
+
+            # Assert: Firmware type is passed to configure_treeview
+            mock_configure_treeview.assert_called_once_with("Plane")

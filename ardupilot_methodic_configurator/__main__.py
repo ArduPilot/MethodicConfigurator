@@ -164,7 +164,7 @@ def component_editor(
         sys_exit(1)
 
 
-def main() -> None:
+def main() -> None:  # pylint: disable=too-many-locals
     args = create_argument_parser().parse_args()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
@@ -209,7 +209,9 @@ def main() -> None:
 
     vehicle_dir_window = None
     if not files:
-        vehicle_dir_window = VehicleDirectorySelectionWindow(local_filesystem, len(flight_controller.fc_parameters) > 0)
+        fc_connected = len(flight_controller.fc_parameters) > 0
+        connected_fc_vehicle_type = flight_controller.info.vehicle_type if fc_connected else ""
+        vehicle_dir_window = VehicleDirectorySelectionWindow(local_filesystem, fc_connected, connected_fc_vehicle_type)
         vehicle_dir_window.root.mainloop()
 
     component_editor(args, flight_controller, local_filesystem.vehicle_type, local_filesystem, vehicle_dir_window)

@@ -77,6 +77,7 @@ class TemplateOverviewWindow(BaseWindow):
         parent: Optional[tk.Tk] = None,
         vehicle_components_provider: Optional[VehicleComponentsProviderProtocol] = None,
         program_settings_provider: Optional[ProgramSettingsProviderProtocol] = None,
+        connected_fc_vehicle_type: Optional[str] = None,
     ) -> None:
         """
         Initialize the TemplateOverviewWindow.
@@ -85,6 +86,7 @@ class TemplateOverviewWindow(BaseWindow):
             parent: Optional parent Tk window
             vehicle_components_provider: Optional provider for vehicle components (for dependency injection)
             program_settings_provider: Optional provider for program settings (for dependency injection)
+            connected_fc_vehicle_type: Optional firmware type of connected flight controller for filtering templates
 
         """
         super().__init__(parent)
@@ -101,7 +103,7 @@ class TemplateOverviewWindow(BaseWindow):
         self._configure_window()
         self._initialize_ui_components()
         self._setup_layout()
-        self._configure_treeview()
+        self._configure_treeview(connected_fc_vehicle_type or "")
         self._bind_events()
 
     def _configure_window(self) -> None:
@@ -163,11 +165,11 @@ class TemplateOverviewWindow(BaseWindow):
         elif isinstance(self.root, tk.Tk):
             self.root.mainloop()
 
-    def _configure_treeview(self) -> None:
+    def _configure_treeview(self, connected_fc_vehicle_type: str) -> None:
         """Configure the treeview with styling and data."""
         self._setup_treeview_style()
         self._setup_treeview_columns()
-        self._populate_treeview()
+        self._populate_treeview(connected_fc_vehicle_type)
         self._adjust_treeview_column_widths()
         self.tree.pack(fill=tk.BOTH, expand=True)
 
@@ -213,11 +215,19 @@ class TemplateOverviewWindow(BaseWindow):
         for col in self.tree["columns"]:
             self.tree.heading(col, text=col)
 
-    def _populate_treeview(self) -> None:
-        """Populate the treeview with data from vehicle components."""
+    def _populate_treeview(self, connected_fc_vehicle_type: str) -> None:
+        """
+        Populate the treeview with data from vehicle components.
+
+        Args:
+            connected_fc_vehicle_type: Optional firmware type to filter templates by
+
+        """
         for key, template_overview in self.vehicle_components_provider.get_vehicle_components_overviews().items():
             attribute_names = template_overview.attributes()
             values = (key, *(getattr(template_overview, attr, "") for attr in attribute_names))
+            if connected_fc_vehicle_type and connected_fc_vehicle_type not in key:
+                continue
             self.tree.insert("", "end", text=key, values=values)
 
     def _adjust_treeview_column_widths(self) -> None:
