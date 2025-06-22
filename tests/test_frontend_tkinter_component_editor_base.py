@@ -22,7 +22,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.data_model_vehicle_components import ComponentDataModel
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base import (
-    VEICLE_IMAGE_WIDTH_PIX,
+    VEHICLE_IMAGE_WIDTH_PIX,
     WINDOW_WIDTH_PIX,
     ComponentEditorWindowBase,
     EntryWidget,
@@ -666,10 +666,10 @@ class TestModuleConstants:
     def test_window_dimensions_are_reasonable(self) -> None:
         """Test that window dimensions are reasonable values."""
         assert WINDOW_WIDTH_PIX == 880
-        assert VEICLE_IMAGE_WIDTH_PIX == 100
-        assert WINDOW_WIDTH_PIX > VEICLE_IMAGE_WIDTH_PIX
+        assert VEHICLE_IMAGE_WIDTH_PIX == 100
+        assert WINDOW_WIDTH_PIX > VEHICLE_IMAGE_WIDTH_PIX
         assert WINDOW_WIDTH_PIX > 500  # Minimum reasonable width
-        assert VEICLE_IMAGE_WIDTH_PIX > 50  # Minimum reasonable image width
+        assert VEHICLE_IMAGE_WIDTH_PIX > 50  # Minimum reasonable image width
 
     def test_entry_widget_type_alias_definition(self) -> None:
         """Test that EntryWidget type alias is correctly defined."""

@@ -345,6 +345,7 @@ def test_directory_selection_widgets_interaction(root: tk.Tk, monkeypatch: pytes
                     dir_tooltip="Test tooltip",
                     button_tooltip="Select directory",
                     is_template_selection=False,
+                    connected_fc_vehicle_type="ArduCopter",
                 )
 
                 # Update UI
@@ -383,6 +384,7 @@ def test_keyboard_navigation(root: tk.Tk, monkeypatch: pytest.MonkeyPatch) -> No
                 dir_tooltip="Test tooltip",
                 button_tooltip="Test button tooltip",
                 is_template_selection=False,
+                connected_fc_vehicle_type="ArduCopter",
             )
 
             # Ensure widgets are created and displayed

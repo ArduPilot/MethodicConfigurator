@@ -30,7 +30,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import show_no_param_
 from ardupilot_methodic_configurator.frontend_tkinter_template_overview import TemplateOverviewWindow
 
 
-class DirectorySelectionWidgets:
+class DirectorySelectionWidgets:  # pylint: disable=too-many-instance-attributes
     """
     A class to manage directory selection widgets in the GUI.
 
@@ -49,12 +49,14 @@ class DirectorySelectionWidgets:
         dir_tooltip: str,
         button_tooltip: str,
         is_template_selection: bool,
+        connected_fc_vehicle_type: str,
     ) -> None:
         self.parent = parent
         self.directory: str = deepcopy(initialdir)
         self.label_text = label_text
         self.autoresize_width = autoresize_width
         self.is_template_selection = is_template_selection
+        self.connected_fc_vehicle_type = connected_fc_vehicle_type
 
         # Create a new frame for the directory selection label and button
         self.container_frame = ttk.Frame(parent_frame)
@@ -89,7 +91,7 @@ class DirectorySelectionWidgets:
     def on_select_directory(self) -> bool:
         if self.is_template_selection:
             if isinstance(self.parent.root, tk.Tk):  # this keeps mypy and pyright happy
-                to = TemplateOverviewWindow(self.parent.root)
+                to = TemplateOverviewWindow(self.parent.root, connected_fc_vehicle_type=self.connected_fc_vehicle_type)
                 to.run_app()
             selected_directory = ProgramSettings.get_recently_used_dirs()[0]
             logging_info(_("Selected template directory: %s"), selected_directory)
@@ -158,6 +160,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
         local_filesystem: LocalFilesystem,
         initial_dir: str,
         destroy_parent_on_open: bool,
+        connected_fc_vehicle_type: str = "",
     ) -> None:
         # Call the parent constructor with the necessary arguments
         super().__init__(
@@ -177,6 +180,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
             if destroy_parent_on_open
             else "",
             is_template_selection=False,
+            connected_fc_vehicle_type=connected_fc_vehicle_type,
         )
         self.local_filesystem = local_filesystem
         self.destroy_parent_on_open = destroy_parent_on_open
@@ -231,9 +235,12 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
     vehicle configuration directory.
     """
 
-    def __init__(self, local_filesystem: LocalFilesystem, fc_connected: bool = False) -> None:
+    def __init__(
+        self, local_filesystem: LocalFilesystem, fc_connected: bool = False, connected_fc_vehicle_type: str = ""
+    ) -> None:
         super().__init__()
         self.local_filesystem = local_filesystem
+        self.connected_fc_vehicle_type = connected_fc_vehicle_type
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ")
             + __version__
@@ -259,7 +266,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         )
         introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)
         template_dir, new_base_dir, vehicle_dir = LocalFilesystem.get_recently_used_dirs()
-        self.create_option1_widgets(template_dir, new_base_dir, _("MyVehicleName"), fc_connected)
+        self.create_option1_widgets(template_dir, new_base_dir, _("MyVehicleName"), fc_connected, connected_fc_vehicle_type)
         self.create_option2_widgets(vehicle_dir)
         self.create_option3_widgets(vehicle_dir)
 
@@ -269,8 +276,13 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
     def close_and_quit(self) -> None:
         sys_exit(0)
 
-    def create_option1_widgets(  # pylint: disable=too-many-locals
-        self, initial_template_dir: str, initial_base_dir: str, initial_new_dir: str, fc_connected: bool
+    def create_option1_widgets(  # pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments
+        self,
+        initial_template_dir: str,
+        initial_base_dir: str,
+        initial_new_dir: str,
+        fc_connected: bool,
+        connected_fc_vehicle_type: str,
     ) -> None:
         # Option 1 - Create a new vehicle configuration directory based on an existing template
         option1_label = ttk.Label(text=_("New vehicle"), style="Bold.TLabel")
@@ -293,6 +305,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
             dir_tooltip=template_dir_edit_tooltip,
             button_tooltip=template_dir_btn_tooltip,
             is_template_selection=True,
+            connected_fc_vehicle_type=connected_fc_vehicle_type,
         )
         self.template_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
         blank_component_data_checkbox = ttk.Checkbutton(
@@ -364,6 +377,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
             dir_tooltip=new_base_dir_edit_tooltip,
             button_tooltip=new_base_dir_btn_tooltip,
             is_template_selection=False,
+            connected_fc_vehicle_type="",
         )
         self.new_base_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
         new_dir_edit_tooltip = _(
@@ -404,7 +418,12 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         )
         option2_label.pack(expand=False, fill=tk.X, padx=6)
         self.connection_selection_widgets = VehicleDirectorySelectionWidgets(
-            self, option2_label_frame, self.local_filesystem, initial_dir, destroy_parent_on_open=True
+            self,
+            option2_label_frame,
+            self.local_filesystem,
+            initial_dir,
+            destroy_parent_on_open=True,
+            connected_fc_vehicle_type=self.connected_fc_vehicle_type,
         )
         self.connection_selection_widgets.container_frame.pack(expand=True, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
@@ -423,6 +442,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
             dir_tooltip=_("Last used vehicle configuration directory"),
             button_tooltip="",
             is_template_selection=False,
+            connected_fc_vehicle_type="",
         )
         last_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 

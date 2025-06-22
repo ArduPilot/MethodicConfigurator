@@ -151,6 +151,7 @@ def directory_selection_widgets(root: tk.Tk, base_parent: MagicMock) -> Generato
             dir_tooltip="Test directory tooltip",
             button_tooltip="Select directory button tooltip",
             is_template_selection=False,
+            connected_fc_vehicle_type="",
         )
         yield widget
 
@@ -214,6 +215,7 @@ def test_directory_selection_widgets_template_selection(base_parent, root) -> No
                     dir_tooltip="Template directory tooltip",
                     button_tooltip="Select template button tooltip",
                     is_template_selection=True,
+                    connected_fc_vehicle_type="ArduCopter",
                 )
 
                 # Call the method to select a template
@@ -250,6 +252,7 @@ def test_directory_selection_widgets_autoresize_width(base_parent, root) -> None
             dir_tooltip="Tooltip",
             button_tooltip="Button tooltip",
             is_template_selection=False,
+            connected_fc_vehicle_type="ArduCopter",
         )
 
         # Test with autoresize_width=False
@@ -262,6 +265,7 @@ def test_directory_selection_widgets_autoresize_width(base_parent, root) -> None
             dir_tooltip="Another tooltip",
             button_tooltip="Another button tooltip",
             is_template_selection=False,
+            connected_fc_vehicle_type="ArduCopter",
         )
 
         # Verify the difference in behavior when selecting a directory
@@ -297,6 +301,7 @@ def test_directory_selection_widgets_extremely_long_path(base_parent, root) -> N
             dir_tooltip="Test tooltip",
             button_tooltip="Button tooltip",
             is_template_selection=False,
+            connected_fc_vehicle_type="ArduCopter",
         )
 
         # Create an extremely long path
@@ -335,6 +340,7 @@ def test_directory_selection_widgets_special_characters(base_parent, root) -> No
             dir_tooltip="Test tooltip",
             button_tooltip="Button tooltip",
             is_template_selection=False,
+            connected_fc_vehicle_type="ArduCopter",
         )
 
         # Test with paths containing special characters
@@ -1165,11 +1171,19 @@ def test_create_option1_widgets(root, photo_patcher, icon_patcher, mock_local_fi
                                 with patch.object(window, "create_option1_widgets", mock_create_option1):
                                     # Call the method via the patched object
                                     window.create_option1_widgets(
-                                        "/template/dir", "/base/dir", "vehicle_name", fc_connected=True
+                                        "/template/dir",
+                                        "/base/dir",
+                                        "vehicle_name",
+                                        fc_connected=True,
+                                        connected_fc_vehicle_type="ArduCopter",
                                     )
                                     # Verify it was called with the correct arguments
                                     mock_create_option1.assert_called_once_with(
-                                        "/template/dir", "/base/dir", "vehicle_name", fc_connected=True
+                                        "/template/dir",
+                                        "/base/dir",
+                                        "vehicle_name",
+                                        fc_connected=True,
+                                        connected_fc_vehicle_type="ArduCopter",
                                     )
 
 
@@ -1203,6 +1217,7 @@ def test_ui_interaction_directory_selection_widgets() -> None:
                     dir_tooltip="Test tooltip",
                     button_tooltip="Select directory",
                     is_template_selection=True,
+                    connected_fc_vehicle_type="ArduCopter",
                 )
 
                 # Verify initial state
