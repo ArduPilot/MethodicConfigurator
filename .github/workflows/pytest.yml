@@ -47,18 +47,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install 'pip==25.0.1'
-          pip install -e .[dev]
-
-      - name: Install apt packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb
+          pip install .[dev]
 
       - name: Test with pytest
         id: pytest
         continue-on-error: false
         run: |
+          export LIBGL_ALWAYS_SOFTWARE=1
           export DISPLAY=:99
           Xvfb :99 -screen 0 1024x768x16 &
           pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md --junit-xml=tests/results-junit.xml
