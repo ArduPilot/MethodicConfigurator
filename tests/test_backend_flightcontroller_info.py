@@ -11,14 +11,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from contextlib import contextmanager
-from unittest.mock import MagicMock, patch
+from typing import Union
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
 
-# pylint: disable=protected-access
+# pylint: disable=too-many-lines,protected-access
 
 
 @contextmanager
@@ -605,3 +606,446 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         with patch.object(fc_info, "_BackendFlightcontrollerInfo__decode_flight_capabilities", return_value={}):
             fc_info.set_capabilities(input_capabilities)
             assert fc_info.is_mavftp_supported is expected_mavftp
+
+    def test_log_flight_controller_info_logs_all_attributes(self) -> None:
+        """
+        Test that log_flight_controller_info logs all flight controller attributes.
+
+        Given: A backend flight controller info instance with various attributes set
+        When: The log_flight_controller_info method is called
+        Then: All flight controller attributes are logged at INFO level
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+        backend_info.flight_sw_version_and_type = "4.5.6 official"
+        backend_info.flight_custom_version = "abc12345"
+        backend_info.os_custom_version = "def67890"
+        backend_info.firmware_type = "ArduCopter"
+        backend_info.apj_board_id = "123"
+        backend_info.board_version = "456"
+        backend_info.vendor = "ArduPilot"
+        backend_info.product = "Test FC"
+
+        # When
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_info.logging_info") as mock_logging_info:
+            backend_info.log_flight_controller_info()
+
+        # Then - verify all expected log calls were made
+        expected_calls = [
+            call("Firmware Version: %s", "4.5.6 official"),
+            call("Firmware first 8 hex bytes of the FC git hash: %s", "abc12345"),
+            call("Firmware first 8 hex bytes of the ChibiOS git hash: %s", "def67890"),
+            call("Flight Controller firmware type: %s (%s)", "ArduCopter", "123"),
+            call("Flight Controller HW / board version: %s", "456"),
+            call("Flight Controller USB vendor ID: %s", "ArduPilot"),
+            call("Flight Controller USB product ID: %s", "Test FC"),
+        ]
+        mock_logging_info.assert_has_calls(expected_calls, any_order=False)
+        assert mock_logging_info.call_count == 7
+
+
+# ==================== BACKEND FORMATTING TESTS ====================
+
+
+class TestBackendFlightcontrollerInfoFormatting:
+    """
+    Test the display formatting logic in BackendFlightcontrollerInfo.
+
+    Tests focus on ensuring different data types are correctly
+    formatted for display in the user interface.
+    """
+
+    @pytest.fixture
+    def flight_controller_info(self) -> BackendFlightcontrollerInfo:
+        """Create a flight controller info instance for testing."""
+        return BackendFlightcontrollerInfo()
+
+    def test_user_sees_string_values_formatted_correctly(self, flight_controller_info: BackendFlightcontrollerInfo) -> None:
+        """
+        Test that string values are displayed as-is.
+
+        Given: A flight controller info formatter
+        When: A string value is formatted for display
+        Then: The string is returned unchanged
+        """
+        # Given
+        test_value = "Test String Value"
+
+        # When
+        result = flight_controller_info.format_display_value(test_value)
+
+        # Then
+        assert result == "Test String Value"
+
+    def test_user_sees_dictionary_values_as_comma_separated_keys(
+        self, flight_controller_info: BackendFlightcontrollerInfo
+    ) -> None:
+        """
+        Test that dictionary values are displayed as comma-separated keys.
+
+        Given: A flight controller info formatter
+        When: A dictionary value is formatted for display
+        Then: The keys are joined with commas
+        """
+        # Given
+        test_value = {"capability1": "desc1", "capability2": "desc2", "capability3": "desc3"}
+
+        # When
+        result = flight_controller_info.format_display_value(test_value)
+
+        # Then
+        assert result == "capability1, capability2, capability3"
+
+    @pytest.mark.parametrize("empty_value", [None, "", {}])
+    def test_user_sees_na_for_empty_values(
+        self, flight_controller_info: BackendFlightcontrollerInfo, empty_value: Union[None, str, dict]
+    ) -> None:
+        """
+        Test that empty values are displayed as "N/A".
+
+        Given: A flight controller info formatter
+        When: An empty value (None, empty string, or empty dict) is formatted
+        Then: "N/A" is displayed to the user
+        """
+        # When
+        result = flight_controller_info.format_display_value(empty_value)
+
+        # Then
+        assert "N/A" in result  # Should return translated "N/A"
+
+    def test_user_sees_single_key_dictionary_formatted_correctly(
+        self, flight_controller_info: BackendFlightcontrollerInfo
+    ) -> None:
+        """
+        Test that single-key dictionaries are handled correctly.
+
+        Given: A flight controller info formatter
+        When: A dictionary with one key is formatted for display
+        Then: Only that key is displayed
+        """
+        # Given
+        test_value = {"single_key": "single_value"}
+
+        # When
+        result = flight_controller_info.format_display_value(test_value)
+
+        # Then
+        assert result == "single_key"
+
+
+# ==================== BACKEND SETTER METHODS TESTS ====================
+
+
+class TestBackendFlightcontrollerInfoSetters:
+    """
+    Test the setter methods in BackendFlightcontrollerInfo.
+
+    Tests focus on ensuring the various set_* methods correctly
+    process and store flight controller information.
+    """
+
+    def test_set_system_id_and_component_id_stores_values(self) -> None:
+        """
+        Test that system ID and component ID are correctly stored.
+
+        Given: A backend flight controller info instance
+        When: System ID and component ID are set
+        Then: Values are stored correctly
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+
+        # When
+        backend_info.set_system_id_and_component_id("1", "1")
+
+        # Then
+        assert backend_info.system_id == "1"
+        assert backend_info.component_id == "1"
+
+    def test_set_autopilot_with_ardupilot_sets_supported_flag(self) -> None:
+        """
+        Test that ArduPilot autopilot type sets supported flag.
+
+        Given: A backend flight controller info instance
+        When: ArduPilot autopilot type is set
+        Then: The supported flag is set to True
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+
+        # When
+        backend_info.set_autopilot(mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA)
+
+        # Then
+        assert backend_info.is_supported is True
+        assert "ArduPilot" in backend_info.autopilot
+
+    def test_set_autopilot_with_non_ardupilot_clears_supported_flag(self) -> None:
+        """
+        Test that non-ArduPilot autopilot type clears supported flag.
+
+        Given: A backend flight controller info instance
+        When: Non-ArduPilot autopilot type is set
+        Then: The supported flag is set to False
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+
+        # When
+        backend_info.set_autopilot(mavutil.mavlink.MAV_AUTOPILOT_PX4)
+
+        # Then
+        assert backend_info.is_supported is False
+
+    def test_set_type_classifies_vehicle_type_correctly(self) -> None:
+        """
+        Test that MAV_TYPE is correctly classified into vehicle type.
+
+        Given: A backend flight controller info instance
+        When: A MAV_TYPE is set
+        Then: The vehicle type is correctly classified
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+
+        # When
+        backend_info.set_type(mavutil.mavlink.MAV_TYPE_QUADROTOR)
+
+        # Then
+        assert backend_info.vehicle_type == "ArduCopter"
+        assert "Quadrotor" in backend_info.mav_type
+
+    def test_set_flight_sw_version_formats_version_correctly(self) -> None:
+        """
+        Test that flight software version is correctly formatted.
+
+        Given: A backend flight controller info instance
+        When: A version integer is set
+        Then: The version is correctly formatted as major.minor.patch
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+        # Version encoding: major=4, minor=4, patch=4, fw_type=12 (undefined)
+        # This creates a version like 4.4.4
+        version_int = (4 << 24) | (4 << 16) | (4 << 8) | 12
+
+        # When
+        backend_info.set_flight_sw_version(version_int)
+
+        # Then
+        assert backend_info.flight_sw_version == "4.4.4"
+        assert "4.4.4" in backend_info.flight_sw_version_and_type
+
+    def test_set_board_version_extracts_board_info(self) -> None:
+        """
+        Test that board version correctly extracts board and APJ info.
+
+        Given: A backend flight controller info instance
+        When: A board version integer is set
+        Then: Board version and APJ board ID are correctly extracted
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+        # Board version with APJ board ID = 1000, board version = 0x1234
+        board_version_int = (1000 << 16) | 0x1234
+
+        # When
+        backend_info.set_board_version(board_version_int)
+
+        # Then
+        assert backend_info.board_version == str(0x1234)
+        assert backend_info.apj_board_id == "1000"
+
+    def test_set_flight_custom_version_stores_git_hash(self) -> None:
+        """
+        Test that flight custom version stores Git hash correctly.
+
+        Given: A backend flight controller info instance
+        When: A custom version array is set
+        Then: The Git hash is correctly formatted and stored
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+        git_hash = [0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38]  # ASCII for "12345678"
+
+        # When
+        backend_info.set_flight_custom_version(git_hash)
+
+        # Then
+        assert backend_info.flight_custom_version == "12345678"
+
+    def test_set_os_custom_version_stores_os_git_hash(self) -> None:
+        """
+        Test that OS custom version stores OS Git hash correctly.
+
+        Given: A backend flight controller info instance
+        When: An OS custom version array is set
+        Then: The OS Git hash is correctly formatted and stored
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+        os_git_hash = [0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68]  # ASCII for "abcdefgh"
+
+        # When
+        backend_info.set_os_custom_version(os_git_hash)
+
+        # Then
+        assert backend_info.os_custom_version == "abcdefgh"
+
+    def test_set_usb_vendor_and_product_ids_with_known_vendor(self) -> None:
+        """
+        Test that known vendor and product IDs set information correctly.
+
+        Given: A backend flight controller info instance
+        When: Known vendor and product IDs are set
+        Then: Vendor and product information are correctly set
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+        vendor_id = 0x26AC  # ArduPilot vendor ID
+        product_id = 0x0001
+
+        # When
+        backend_info.set_usb_vendor_and_product_ids(vendor_id, product_id)
+
+        # Then
+        assert "0x26AC" in backend_info.vendor_id
+        assert backend_info.vendor_and_vendor_id != ""
+        assert "0x0001" in backend_info.product_id
+        assert backend_info.product_and_product_id != ""
+
+    def test_set_capabilities_processes_bitmask_correctly(self) -> None:
+        """
+        Test that capabilities bitmask is correctly processed.
+
+        Given: A backend flight controller info instance
+        When: A capabilities bitmask is set
+        Then: Capabilities are correctly decoded and stored
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+        # Set some known capability bits
+        capabilities = mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_PARAM_FLOAT
+
+        # When
+        backend_info.set_capabilities(capabilities)
+
+        # Then
+        assert isinstance(backend_info.capabilities, dict)
+        assert len(backend_info.capabilities) > 0
+
+
+# ==================== BACKEND STATIC DECODER TESTS ====================
+
+
+class TestBackendFlightcontrollerInfoDecoders:
+    """
+    Test the behavior of backend methods that use static decoders.
+
+    Since the decoder methods are private, we test them indirectly
+    through the public methods that use them.
+    """
+
+    def test_flight_sw_version_decoding_through_public_api(self) -> None:
+        """
+        Test that flight software version decoding works through public API.
+
+        Given: A backend flight controller info instance
+        When: A version integer is set through the public API
+        Then: The version is correctly decoded and formatted
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+        # Version encoding that should result in a recognizable version
+        version_int = (4 << 24) | (5 << 16) | (6 << 8) | 255  # 4.5.6 official
+
+        # When
+        backend_info.set_flight_sw_version(version_int)
+
+        # Then
+        assert backend_info.flight_sw_version == "4.5.6"
+        assert "official" in backend_info.flight_sw_version_and_type
+
+    def test_mav_type_decoding_through_public_api(self) -> None:
+        """
+        Test that MAV_TYPE decoding works through public API.
+
+        Given: A backend flight controller info instance
+        When: A MAV_TYPE is set through the public API
+        Then: The type is correctly decoded and classified
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+
+        # When
+        backend_info.set_type(mavutil.mavlink.MAV_TYPE_QUADROTOR)
+
+        # Then
+        assert backend_info.vehicle_type == "ArduCopter"
+        assert "Quadrotor" in backend_info.mav_type
+
+    def test_autopilot_decoding_through_public_api(self) -> None:
+        """
+        Test that MAV_AUTOPILOT decoding works through public API.
+
+        Given: A backend flight controller info instance
+        When: An autopilot type is set through the public API
+        Then: The autopilot is correctly decoded
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+
+        # When
+        backend_info.set_autopilot(mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA)
+
+        # Then
+        assert "ArduPilot" in backend_info.autopilot
+        assert backend_info.is_supported is True
+
+    def test_capabilities_decoding_through_public_api(self) -> None:
+        """
+        Test that capabilities decoding works through public API.
+
+        Given: A backend flight controller info instance
+        When: Capabilities are set through the public API
+        Then: The capabilities are correctly decoded into a dictionary
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+        capabilities = mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_PARAM_FLOAT
+
+        # When
+        backend_info.set_capabilities(capabilities)
+
+        # Then
+        assert isinstance(backend_info.capabilities, dict)
+        assert len(backend_info.capabilities) > 0
+        # Should have decoded at least one capability
+        assert any("PARAM_FLOAT" in key for key in backend_info.capabilities)
+
+    def test_vehicle_type_classification_covers_common_types(self) -> None:
+        """
+        Test that common vehicle types are correctly classified.
+
+        Given: A backend flight controller info instance
+        When: Various common MAV_TYPEs are set
+        Then: They are correctly classified to expected vehicle types
+        """
+        # Given
+        backend_info = BackendFlightcontrollerInfo()
+        test_cases = [
+            (mavutil.mavlink.MAV_TYPE_QUADROTOR, "ArduCopter"),
+            (mavutil.mavlink.MAV_TYPE_FIXED_WING, "ArduPlane"),
+            (mavutil.mavlink.MAV_TYPE_HELICOPTER, "Heli"),
+            (mavutil.mavlink.MAV_TYPE_GROUND_ROVER, "Rover"),
+            (mavutil.mavlink.MAV_TYPE_SUBMARINE, "ArduSub"),
+        ]
+
+        for mav_type, expected_vehicle_type in test_cases:
+            # When
+            backend_info.set_type(mav_type)
+
+            # Then
+            assert backend_info.vehicle_type == expected_vehicle_type, (
+                f"MAV_TYPE {mav_type} should map to {expected_vehicle_type}, got {backend_info.vehicle_type}"
+            )
