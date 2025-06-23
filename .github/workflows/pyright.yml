@@ -11,6 +11,10 @@ on:
       - 'pyproject.toml' # Watch for changes in the pyproject.toml file
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{github.workflow}}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
