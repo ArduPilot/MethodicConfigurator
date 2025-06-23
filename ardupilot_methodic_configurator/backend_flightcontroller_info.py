@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Sequence
+from logging import info as logging_info
 from typing import Union
 
 from pymavlink import mavutil
@@ -250,3 +251,21 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
 
         # Return the classified vehicle type based on the MAV_TYPE enum
         return mav_type_to_vehicle_type.get(mav_type_int, "")
+
+    def log_flight_controller_info(self) -> None:
+        """Log flight controller information at INFO level."""
+        logging_info("Firmware Version: %s", self.flight_sw_version_and_type)
+        logging_info("Firmware first 8 hex bytes of the FC git hash: %s", self.flight_custom_version)
+        logging_info("Firmware first 8 hex bytes of the ChibiOS git hash: %s", self.os_custom_version)
+        logging_info("Flight Controller firmware type: %s (%s)", self.firmware_type, self.apj_board_id)
+        logging_info("Flight Controller HW / board version: %s", self.board_version)
+        logging_info("Flight Controller USB vendor ID: %s", self.vendor)
+        logging_info("Flight Controller USB product ID: %s", self.product)
+
+    def format_display_value(self, value: Union[str, dict[str, str], None]) -> str:
+        """Format a value for display in the UI."""
+        if value:
+            if isinstance(value, dict):
+                return ", ".join(value.keys())
+            return str(value)
+        return _("N/A")
