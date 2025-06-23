@@ -28,7 +28,26 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install 'mypy==1.16.0' 'types-requests==2.32.0.20250602'
+          export MYPY_VERSION=$(grep -oP 'mypy\s*==\s*\K([0-9]+\.[0-9]+\.[0-9]+)' pyproject.toml || echo '')
+          export TYPES_REQUESTS_VERSION=$(grep -oP 'types-requests\s*==\s*\K([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)' pyproject.toml || echo '')
+
+          if [ -z "$MYPY_VERSION" ]; then
+            echo "Could not detect mypy version in pyproject.toml; falling back to latest."
+            MYPY_INSTALL="mypy"
+          else
+            echo "Will install mypy version $MYPY_VERSION."
+            MYPY_INSTALL="mypy==$MYPY_VERSION"
+          fi
+
+          if [ -z "$TYPES_REQUESTS_VERSION" ]; then
+            echo "Could not detect types-requests version in pyproject.toml; falling back to latest."
+            TYPES_REQUESTS_INSTALL="types-requests"
+          else
+            echo "Will install types-requests version $TYPES_REQUESTS_VERSION."
+            TYPES_REQUESTS_INSTALL="types-requests==$TYPES_REQUESTS_VERSION"
+          fi
+
+          python -m pip install "$MYPY_INSTALL" "$TYPES_REQUESTS_INSTALL"
 
       - name: Lint the code with mypy
         uses: sasanquaneuf/mypy-github-action@a3f3a66f97792cac0cfd11d3e5c87088e5c8f6a9 # releases/v1.3
