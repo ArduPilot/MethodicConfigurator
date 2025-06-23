@@ -63,7 +63,7 @@ dynamic = ["version"]
 dev = [
     "coverage==7.9.1",
     "mock==5.2.0",
-    "mypy==1.16.0",
+    "mypy==1.16.1",
     "pre-commit==4.2.0",
     "pylint==3.3.7",
     "pyright==1.1.400",
