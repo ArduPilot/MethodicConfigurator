@@ -211,6 +211,9 @@ indent-width = 4
 "ardupilot_methodic_configurator/backend_mavftp.py" = ["PGH004", "N801", "ANN001"]
 "ardupilot_methodic_configurator/backend_mavftp_example.py" = ["ANN001"]
 "ardupilot_methodic_configurator/tempcal_imu.py" = ["ANN001"]
+"ardupilot_methodic_configurator/annotate_params.py" = ["PLC0415"]
+"ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py" = ["PLC0415"]
+"ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py" = ["PLC0415"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 22  # Default is 10

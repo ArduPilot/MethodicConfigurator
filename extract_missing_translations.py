@@ -211,8 +211,7 @@ def output_to_files(missing_translations: list[tuple[int, str]], output_file_bas
 
         # Write untranslated msgids along with their indices to the output file
         with open(current_output_file, "w", encoding="utf-8") as f:
-            for index, item in missing_translations[start_index:end_index]:
-                f.write(f"{index}:{item}\n")
+            f.writelines(f"{index}:{item}\n" for index, item in missing_translations[start_index:end_index])
 
 
 def main() -> None:

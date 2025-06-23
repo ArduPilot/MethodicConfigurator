@@ -157,6 +157,10 @@ class Par:
             return self.value == other.value and self.comment == other.comment
         return False
 
+    def __hash__(self) -> int:
+        """Hash operation for using Par objects in sets and as dict keys."""
+        return hash((self.value, self.comment))
+
     @staticmethod
     def load_param_file_into_dict(param_file: str) -> dict[str, "Par"]:
         """
@@ -319,8 +323,7 @@ class Par:
         try:
             # Ensure newline character is LF, even on windows
             with open(filename_out, "w", encoding="utf-8", newline="\n") as output_file:
-                for line in formatted_params:
-                    output_file.write(line + "\n")
+                output_file.writelines(line + "\n" for line in formatted_params)
         except OSError as e:
             msg = f"ERROR: writing to file {filename_out}: {e}"
             raise SystemExit(msg) from e

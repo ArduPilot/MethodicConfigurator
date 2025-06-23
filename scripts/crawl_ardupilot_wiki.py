@@ -200,13 +200,11 @@ def main() -> None:
         except (requests.RequestException, requests.Timeout) as e:
             logging.error("Network error crawling %s: %s", current_url, str(e))
             broken_urls.add(current_url)
-            if current_url in visited_urls:
-                visited_urls.remove(current_url)
+            visited_urls.discard(current_url)
         except (KeyError, ValueError) as e:
             logging.error("URL processing error for %s: %s", current_url, str(e))
             broken_urls.add(current_url)
-            if current_url in visited_urls:
-                visited_urls.remove(current_url)
+            visited_urls.discard(current_url)
     output_urls(visited_urls, broken_urls, start_time)
 
 
@@ -214,8 +212,7 @@ def output_urls(visited_urls: set[str], broken_urls: set[str], start_time: float
     # Write all html URLs to file
     raw_pages = len(visited_urls)
     with open("gurubase.io_url_list_raw.txt", "w", encoding="utf-8") as f:
-        for url in sorted(visited_urls):
-            f.write(f"{url}\n")  # Output to file
+        f.writelines(f"{url}\n" for url in sorted(visited_urls))  # Output to file
 
     visited_urls -= set(URL_BLACKLIST)
     dedup_urls = remove_duplicates(visited_urls)
