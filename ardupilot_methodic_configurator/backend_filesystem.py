@@ -511,8 +511,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     with open(source, encoding="utf-8") as file:
                         lines = file.readlines()
                     with open(dest, "w", encoding="utf-8") as file:
-                        for line in lines:
-                            file.write(line.split("#")[0].strip() + "\n")
+                        file.writelines(line.split("#")[0].strip() + "\n" for line in lines)
                 elif os_path.isdir(source):
                     shutil_copytree(source, dest)
                 else:
@@ -742,7 +741,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def get_git_commit_hash() -> str:
         # Try to get git hash using git command
         try:
-            result = run(  # noqa: S603
+            result = run(
                 ["git", "rev-parse", "HEAD"],  # noqa: S607
                 capture_output=True,
                 text=True,

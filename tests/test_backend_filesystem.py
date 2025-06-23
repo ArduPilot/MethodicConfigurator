@@ -951,17 +951,28 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         mock_isdir.side_effect = lambda path: path.endswith("dir1")
 
         lfs = LocalFilesystem(
-            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+            "vehicle_dir",
+            "vehicle_type",
+            "4.5.0",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
         )
 
         # Test with blank_change_reason=True
         lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir", blank_change_reason=True)
 
         # Verify file handling when blank_change_reason=True
-        write_calls = mock_open_file().write.call_args_list
-        # Check that comments were removed for param files
-        assert any(call[0][0] == "PARAM1,1.0\n" for call in write_calls)
-        assert any(call[0][0] == "PARAM2,2.0\n" for call in write_calls)
+        # First check if writelines was called at all
+        assert mock_open_file().writelines.called, "writelines should have been called for .param files"
+
+        # Get the arguments passed to writelines
+        writelines_calls = mock_open_file().writelines.call_args_list
+        assert len(writelines_calls) > 0, "Expected at least one writelines call"
+
+        # Convert the generator to list to check content
+        lines_written = list(writelines_calls[0][0][0])  # Convert generator to list
+        assert "PARAM1,1.0\n" in lines_written, f"Expected 'PARAM1,1.0\\n' in {lines_written}"
+        assert "PARAM2,2.0\n" in lines_written, f"Expected 'PARAM2,2.0\\n' in {lines_written}"
 
         # Verify directory was copied with copytree
         mock_copytree.assert_called_with("template_dir/dir1", "new_vehicle_dir/dir1")
@@ -1055,10 +1066,8 @@ def test_merge_forced_or_derived_parameters_none_parameters() -> None:
         "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
     )
     test_file = "test.json"
-    lfs.file_parameters = {test_file: {}}
-
-    # Test with None parameters
-    lfs.merge_forced_or_derived_parameters(test_file, None, [])
+    lfs.file_parameters = {test_file: {}}  # Test with empty dict instead of None (None is not valid type)
+    lfs.merge_forced_or_derived_parameters(test_file, {}, [])
     assert lfs.file_parameters[test_file] == {}
 
     # Test with empty dict
