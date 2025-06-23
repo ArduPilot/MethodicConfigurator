@@ -1,6 +1,7 @@
----
-applyTo: 'tests/test_*.py'
----
+# Pytest Testing Guidelines
+
+> **Note**: This is a comprehensive developer documentation file. For GitHub Copilot repository instructions, see [`.github/copilot-instructions.md`](../copilot-instructions.md).
+
 ## For AI Agents and Senior Developers
 
 This document provides comprehensive guidelines for writing high-quality,
