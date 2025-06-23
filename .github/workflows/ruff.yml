@@ -31,8 +31,11 @@ jobs:
 
       - name: Lint with Ruff
         uses: astral-sh/ruff-action@v3
+        with:
+          version-file: pyproject.toml
 
       - name: Check format with Ruff
         uses: astral-sh/ruff-action@v3
         with:
+          version-file: pyproject.toml
           args: format --check
