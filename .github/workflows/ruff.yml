@@ -1,17 +1,21 @@
 name: Ruff
 
 on:
+  pull_request:
+    paths:
+      - '**/*.py'        # Watch for changes in any Python files
+      - 'pyproject.toml' # Watch for changes in the pyproject.toml file
   push:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
-      - 'pyproject.yml'  # Watch for changes in the pyproject.yml file
+      - 'pyproject.toml' # Watch for changes in the pyproject.toml file
   workflow_dispatch:
   release:
     types: [published]
 
-#concurrency:
-#  group: ci-${{github.workflow}}-${{ github.ref }}
-#  cancel-in-progress: true
+concurrency:
+  group: ci-${{github.workflow}}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

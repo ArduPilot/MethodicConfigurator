@@ -1,6 +1,10 @@
 name: Pylint
 
 on:
+  pull_request:
+    paths:
+      - '**/*.py'        # Watch for changes in any Python files
+      - 'pyproject.toml' # Watch for changes in the pyproject.toml file
   push:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
@@ -8,6 +12,10 @@ on:
   workflow_dispatch:
   release:
     types: [published]
+
+concurrency:
+  group: ci-${{github.workflow}}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
