@@ -55,9 +55,10 @@ jobs:
             ${{ runner.os }}-pip-${{ matrix.python-version }}-
             ${{ runner.os }}-pip-
 
-      - name: Install dependencies
+      - name: Install dependencies and application
+        # without --editable the coverage report is not generated correctly
         run: |
-          pip install .[dev]
+          pip install --editable .[dev]
 
       - name: Test with pytest
         id: pytest
