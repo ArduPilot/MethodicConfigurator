@@ -58,8 +58,10 @@ then translated into language-specific `.po` files, which are compiled into bina
 
 - **Portuguese (pt)**: Use European Portuguese (Portugal) conventions, not Brazilian Portuguese
   - Prefer "transferir" over "baixar" for "download"
+  - Use "ficheiro" instead of "arquivo" for "file"
   - Use formal register appropriate for technical documentation
   - Follow Portuguese spelling reform standards
+  - While "você" is acceptable, consider more formal alternatives when appropriate
 
 ### Technical Considerations
 
