@@ -32,6 +32,11 @@ jobs:
     steps:
       # step-security/harden-runner does not (yet) run on windows, so do not use it
 
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
@@ -106,7 +111,7 @@ jobs:
 
       - name: Generate GitHub Actions build provenance
         id: gh_provenance_step # Added id
-        uses: actions/attest-build-provenance@v2.4.0
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-path: windows/Output/*.exe
           subject-name: 'ardupilot_methodic_configurator'
