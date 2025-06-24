@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-06-23 00:13+0000\n"
+"POT-Creation-Date: 2025-06-24 00:49+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -69,16 +69,18 @@ msgstr "读取参数文件时发生致命错误"
 msgid ""
 "Will present all vehicle templates for all vehicle types since no FC "
 "connected and no explicit vehicle type set on the command line"
-msgstr "由于没有连接飞控且命令行上未设置明确的车辆类型，将展示所有车辆类型的所有车辆模板"
+msgstr ""
+"由于没有连接飞控且命令行上未设置明确的车辆类型，将展示所有车辆类型的所有车辆"
+"模板"
 
 #: ardupilot_methodic_configurator/__main__.py:269
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:100
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:103
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:105
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:114
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:101
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:104
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:106
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:115
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:118
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:116
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:119
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:120
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:37
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:41
 msgid "Unknown"
@@ -167,66 +169,66 @@ msgstr "模板目录不存在：{template_dir}"
 msgid "New vehicle directory does not exist: {new_vehicle_dir}"
 msgstr "新飞行器目录不存在：{new_vehicle_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:521
+#: ardupilot_methodic_configurator/backend_filesystem.py:520
 #, fuzzy
 msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr "将模板文件复制到新飞行器目录时出错：{_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:541
+#: ardupilot_methodic_configurator/backend_filesystem.py:540
 msgid "Parameter %s not found in the current parameter file"
 msgstr "在当前参数文件中未找到参数 %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:549
+#: ardupilot_methodic_configurator/backend_filesystem.py:548
 msgid "Error writing last uploaded filename: %s"
 msgstr "写入上传的最后一个文件的文件名时发生错误: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:556
+#: ardupilot_methodic_configurator/backend_filesystem.py:555
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr "未找到 last_uploaded_filename.txt: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:558
+#: ardupilot_methodic_configurator/backend_filesystem.py:557
 msgid "Error reading last uploaded filename: %s"
 msgstr "读取上传的最后一个文件的文件名时发生错误: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:574
+#: ardupilot_methodic_configurator/backend_filesystem.py:573
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr "起始文件索引 %s 超出范围。改为从文件 %s 开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:582
+#: ardupilot_methodic_configurator/backend_filesystem.py:581
 msgid "Starting with the first file."
 msgstr "从第一个文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:585
+#: ardupilot_methodic_configurator/backend_filesystem.py:584
 msgid "Starting with the first non-tcal file."
 msgstr "从第一个非温度校准文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:589
+#: ardupilot_methodic_configurator/backend_filesystem.py:588
 msgid "Last uploaded file was %s."
 msgstr "最后上传的文件是 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:591
+#: ardupilot_methodic_configurator/backend_filesystem.py:590
 msgid "No last uploaded file found. %s."
 msgstr "未找到最后上传的文件。 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:596
+#: ardupilot_methodic_configurator/backend_filesystem.py:595
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr "未找到最后上传的文件。 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:605
+#: ardupilot_methodic_configurator/backend_filesystem.py:604
 msgid "Last uploaded file is the last file in the list. Starting from there."
 msgstr "最后上传的文件是列表中的最后一项。将从此继续。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:790
+#: ardupilot_methodic_configurator/backend_filesystem.py:789
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "飞行器类型。默认为ArduCopter"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:796
+#: ardupilot_methodic_configurator/backend_filesystem.py:795
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
 msgstr "包含飞行器特定中间参数文件的目录。默认为当前工作目录"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:804
+#: ardupilot_methodic_configurator/backend_filesystem.py:803
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -236,7 +238,7 @@ msgstr ""
 "直接从第n个中间参数文件开始（跳过之前的文件）。默认从上次写入飞控的文件之后开"
 "始。如果文件不存在，将从第一个文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:813
+#: ardupilot_methodic_configurator/backend_filesystem.py:812
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -244,7 +246,7 @@ msgstr ""
 "允许直接打开和编辑模板文件。仅供了解相关操作的软件开发人员使用。默认"
 "为%(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:822
+#: ardupilot_methodic_configurator/backend_filesystem.py:821
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -674,66 +676,71 @@ msgstr ""
 msgid "Flight controller reboot time. Default is %(default)s"
 msgstr "飞控重启时间, 默认为  %(default)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:62
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:63
 msgid "USB Vendor"
 msgstr "USB 廠商"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:63
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:64
 msgid "USB Product"
 msgstr "USB 產品"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:64
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:65
 msgid "Board Type"
 msgstr "板類型"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:65
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:66
 msgid "Hardware Version"
 msgstr "硬件版本"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:66
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:67
 msgid "Autopilot Type"
 msgstr "自動駕駛儀類型"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:67
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:68
 msgid "ArduPilot Vehicle Type"
 msgstr "ArduPilot 車輛類型"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:68
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:69
 msgid "ArduPilot FW Type"
 msgstr "ArduPilot 固件類型"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:69
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:70
 msgid "MAV Type"
 msgstr "MAV 類型"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:70
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:71
 msgid "Firmware Version"
 msgstr "固件版本"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:71
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:72
 msgid "Git Hash"
 msgstr "Git 哈希"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:72
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:73
 msgid "OS Git Hash"
 msgstr "操作系統 Git 哈希"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:73
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:74
 msgid "Capabilities"
 msgstr "功能"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:74
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:75
 msgid "System ID"
 msgstr "系統 ID"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:75
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:76
 msgid "Component ID"
 msgstr "組件 ID"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:76
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:77
 #: ardupilot_methodic_configurator/vehicle_components.py:34
 msgid "MCU Series"
 msgstr "MCU系列"
+
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:271
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:368
+msgid "N/A"
+msgstr "不适用"
 
 #: ardupilot_methodic_configurator/backend_internet.py:40
 msgid "URL or local filename not provided."
@@ -2375,7 +2382,9 @@ msgstr "高于 {limit_value} 的 {limit_name}"
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
 "Allowed values are: {allowed_str}"
-msgstr "{paths_str} 的无效值 '{value}'\n允许的值为: {allowed_str}"
+msgstr ""
+"{paths_str} 的无效值 '{value}'\n"
+"允许的值为: {allowed_str}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:548
 msgid "Duplicate FC connection type '{value}' for {paths_str}"
@@ -2432,7 +2441,9 @@ msgid ""
 "On {_component} the selected\n"
 "protocol '{selected_protocol}' is not available for the selected connection "
 "Type."
-msgstr "在 {_component} 上，所选的\n协议 '{selected_protocol}' 对所选连接类型不可用。"
+msgstr ""
+"在 {_component} 上，所选的\n"
+"协议 '{selected_protocol}' 对所选连接类型不可用。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:136
 msgid " Defaulting to '{protocol}'."
@@ -2447,6 +2458,7 @@ msgstr "没有可用的协议。"
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:290
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:492
 #: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
 msgid "Error"
 msgstr "错误"
 
@@ -2459,7 +2471,10 @@ msgid ""
 "Will update the cell voltage limits to the recommended\n"
 "values for {chemistry} chemistry.\n"
 "This will overwrite any custom values you may have set."
-msgstr "将更新电池单元电压限制为 {chemistry} 化学类型的\n推荐值。\n这将覆盖您可能设置的任何自定义值。"
+msgstr ""
+"将更新电池单元电压限制为 {chemistry} 化学类型的\n"
+"推荐值。\n"
+"这将覆盖您可能设置的任何自定义值。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:177
 msgid "No valid value found for {voltage_path} with chemistry {chemistry}.\n"
@@ -2469,7 +2484,9 @@ msgstr "使用 {chemistry} 化学类型找不到 {voltage_path} 的有效值。\
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
 "{error_msg}"
-msgstr "{paths_str} 的无效值 '{value}'\n{error_msg}"
+msgstr ""
+"{paths_str} 的无效值 '{value}'\n"
+"{error_msg}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:335
 msgid "Validation Errors"
@@ -2508,7 +2525,10 @@ msgid ""
 "simple for beginners, only minimal mandatory fields no optional params "
 "displayed\n"
 "normal for everybody else."
-msgstr "选择图形用户界面复杂度级别:\n简单 - 适合初学者，仅显示最少的必填字段，不显示可选参数\n正常 - 适合其他所有人。"
+msgstr ""
+"选择图形用户界面复杂度级别:\n"
+"简单 - 适合初学者，仅显示最少的必填字段，不显示可选参数\n"
+"正常 - 适合其他所有人。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:238
 msgid ""
@@ -3142,56 +3162,27 @@ msgstr "在 %s 中未找到模版文件。"
 msgid "List_of_items can't be 'None'"
 msgstr "List_of_items 不能为 'None'"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:29
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:68
 msgid " - Flight Controller Info"
 msgstr " - 飞控信息"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:29
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:68
 msgid "ArduPilot methodic configurator "
 msgstr "ArduPilot 调参助手 "
 
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:53
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:368
-msgid "N/A"
-msgstr "不适用"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:58
-msgid "Firmware Version: %s"
-msgstr "固件版本：%s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:59
-msgid "Firmware first 8 hex bytes of the FC git hash: %s"
-msgstr "飞控固件前的 8 个十六进制字节 git 哈希：%s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:60
-msgid "Firmware first 8 hex bytes of the ChibiOS git hash: %s"
-msgstr "飞控固件前的 8 个十六进制字节 ChibiOS git 哈希：%s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:62
-msgid "Flight Controller firmware type: %s (%s)"
-msgstr "飛行控制器固件類型：%s (%s)"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:66
-msgid "Flight Controller HW / board version: %s"
-msgstr "飞控硬件 / 主板版本：%s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:67
-msgid "Flight Controller USB vendor ID: %s"
-msgstr "飞控 USB 厂商 ID：%s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:68
-msgid "Flight Controller USB product ID: %s"
-msgstr "飞控 USB 产品 ID：%s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:75
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:109
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:632
 msgid "Downloading FC parameters"
 msgstr "下载飞控参数"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:75
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:109
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:634
 msgid "Downloaded {} of {} parameters"
 msgstr "已下载 {} / {} 个参数"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
+msgid "Failed to download parameters"
+msgstr "参数下载失败"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:72
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
@@ -4918,6 +4909,27 @@ msgstr "硬件的版本或修订号"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
+
+#~ msgid "Firmware Version: %s"
+#~ msgstr "固件版本：%s"
+
+#~ msgid "Firmware first 8 hex bytes of the FC git hash: %s"
+#~ msgstr "飞控固件前的 8 个十六进制字节 git 哈希：%s"
+
+#~ msgid "Firmware first 8 hex bytes of the ChibiOS git hash: %s"
+#~ msgstr "飞控固件前的 8 个十六进制字节 ChibiOS git 哈希：%s"
+
+#~ msgid "Flight Controller firmware type: %s (%s)"
+#~ msgstr "飛行控制器固件類型：%s (%s)"
+
+#~ msgid "Flight Controller HW / board version: %s"
+#~ msgstr "飞控硬件 / 主板版本：%s"
+
+#~ msgid "Flight Controller USB vendor ID: %s"
+#~ msgstr "飞控 USB 厂商 ID：%s"
+
+#~ msgid "Flight Controller USB product ID: %s"
+#~ msgstr "飞控 USB 产品 ID：%s"
 
 #~ msgid "Will connect to %s"
 #~ msgstr "将连接到 %s"

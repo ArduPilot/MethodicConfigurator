@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-06-23 00:13+0000\n"
+"POT-Creation-Date: 2025-06-24 00:49+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -69,16 +69,19 @@ msgstr "Erro fatal lendo arquivos de parâmetros"
 msgid ""
 "Will present all vehicle templates for all vehicle types since no FC "
 "connected and no explicit vehicle type set on the command line"
-msgstr "Irá apresentar todos os modelos de veículos para todos os tipos de veículos, pois não há FC conectado e nenhum tipo de veículo explícito definido na linha de comando"
+msgstr ""
+"Irá apresentar todos os modelos de veículos para todos os tipos de veículos, "
+"pois não há FC conectado e nenhum tipo de veículo explícito definido na "
+"linha de comando"
 
 #: ardupilot_methodic_configurator/__main__.py:269
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:100
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:103
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:105
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:114
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:101
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:104
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:106
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:115
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:118
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:116
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:119
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:120
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:37
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:41
 msgid "Unknown"
@@ -101,7 +104,9 @@ msgstr "Permissão negada ao criar ficheiros de backup: %s"
 msgid ""
 "Please check file permissions and ensure you have write access to the "
 "vehicle directory"
-msgstr "Por favor, verifique as permissões do ficheiro e certifique-se de que tem acesso de escrita ao diretório do veículo"
+msgstr ""
+"Por favor, verifique as permissões do ficheiro e certifique-se de que tem "
+"acesso de escrita ao diretório do veículo"
 
 #: ardupilot_methodic_configurator/__main__.py:413
 msgid "Insufficient disk space to create backup files: %s"
@@ -169,62 +174,62 @@ msgstr "O diretório do modelo não existe: {template_dir}"
 msgid "New vehicle directory does not exist: {new_vehicle_dir}"
 msgstr "O diretório do novo veículo não existe: {new_vehicle_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:521
+#: ardupilot_methodic_configurator/backend_filesystem.py:520
 msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr "Erro ao criar novo diretório de veículo: {_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:541
+#: ardupilot_methodic_configurator/backend_filesystem.py:540
 msgid "Parameter %s not found in the current parameter file"
 msgstr "Parâmetro %s não encontrado no arquivo de parâmetros atual"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:549
+#: ardupilot_methodic_configurator/backend_filesystem.py:548
 msgid "Error writing last uploaded filename: %s"
 msgstr "Erro ao escrever o nome do último arquivo enviado: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:556
+#: ardupilot_methodic_configurator/backend_filesystem.py:555
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr "last_uploaded_filename.txt não encontrado: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:558
+#: ardupilot_methodic_configurator/backend_filesystem.py:557
 msgid "Error reading last uploaded filename: %s"
 msgstr "Erro ao ler o nome do último arquivo enviado: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:574
+#: ardupilot_methodic_configurator/backend_filesystem.py:573
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr ""
 "Índice do arquivo inicial %s está fora de alcance. Começando com o arquivo "
 "%s em vez disso."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:582
+#: ardupilot_methodic_configurator/backend_filesystem.py:581
 msgid "Starting with the first file."
 msgstr "Começando com o primeiro arquivo."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:585
+#: ardupilot_methodic_configurator/backend_filesystem.py:584
 msgid "Starting with the first non-tcal file."
 msgstr "Começando com o primeiro arquivo não-tcal."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:589
+#: ardupilot_methodic_configurator/backend_filesystem.py:588
 msgid "Last uploaded file was %s."
 msgstr "Último arquivo enviado foi %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:591
+#: ardupilot_methodic_configurator/backend_filesystem.py:590
 msgid "No last uploaded file found. %s."
 msgstr "Nenhum arquivo enviado encontrado. %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:596
+#: ardupilot_methodic_configurator/backend_filesystem.py:595
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr "Último arquivo enviado não encontrado na lista de arquivos. %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:605
+#: ardupilot_methodic_configurator/backend_filesystem.py:604
 msgid "Last uploaded file is the last file in the list. Starting from there."
 msgstr ""
 "Último arquivo enviado é o último arquivo na lista. Começando a partir daí."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:790
+#: ardupilot_methodic_configurator/backend_filesystem.py:789
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "O tipo do veículo. Por defeito é ArduCopter"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:796
+#: ardupilot_methodic_configurator/backend_filesystem.py:795
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
@@ -232,7 +237,7 @@ msgstr ""
 "Diretório que contém os ficheiros de parâmetros intermédios específicos do "
 "veículo. Por defeito é o diretório de trabalho atual"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:804
+#: ardupilot_methodic_configurator/backend_filesystem.py:803
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -244,7 +249,7 @@ msgstr ""
 "escreveu no controlador de voo. Se o ficheiro não existir, começará no "
 "primeiro ficheiro."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:813
+#: ardupilot_methodic_configurator/backend_filesystem.py:812
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -252,7 +257,7 @@ msgstr ""
 "Permite abrir e editar ficheiros modelo diretamente. Apenas para "
 "programadores que saibam o que estão a fazer. Por defeito é %(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:822
+#: ardupilot_methodic_configurator/backend_filesystem.py:821
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -524,7 +529,8 @@ msgstr "Não é possível modificar o esquema: O esquema não pôde ser carregad
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:750
 msgid "Could not find Specifications in flight controller schema"
-msgstr "Não foi possível encontrar Especificações no esquema do controlador de voo"
+msgstr ""
+"Não foi possível encontrar Especificações no esquema do controlador de voo"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:766
 msgid "Modified schema: MCU Series x-is-optional=%s to value=%u"
@@ -686,7 +692,9 @@ msgstr "Comando de redefinição enviado ao ArduPilot."
 msgid ""
 "MAVLink serial connection baudrate to the flight controller. Default is "
 "%(default)s"
-msgstr "Taxa de transmissão da conexão serial MAVLink para o controlador de voo. O padrão é %(default)s"
+msgstr ""
+"Taxa de transmissão da conexão serial MAVLink para o controlador de voo. O "
+"padrão é %(default)s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:629
 msgid ""
@@ -700,66 +708,71 @@ msgstr ""
 msgid "Flight controller reboot time. Default is %(default)s"
 msgstr "Tempo de reinicialização do controlador de voo. O padrão é %(default)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:62
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:63
 msgid "USB Vendor"
 msgstr "Vendedor USB"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:63
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:64
 msgid "USB Product"
 msgstr "Produto USB"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:64
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:65
 msgid "Board Type"
 msgstr "Tipo de controlador de voo"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:65
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:66
 msgid "Hardware Version"
 msgstr "Versão do Hardware"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:66
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:67
 msgid "Autopilot Type"
 msgstr "Tipo do autopiloto"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:67
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:68
 msgid "ArduPilot Vehicle Type"
 msgstr "Tipo de veículo ArduPilot"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:68
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:69
 msgid "ArduPilot FW Type"
 msgstr "Tipo de firmware ArduPilot"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:69
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:70
 msgid "MAV Type"
 msgstr "Tipo de MAV"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:70
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:71
 msgid "Firmware Version"
 msgstr "Versão do Firmware"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:71
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:72
 msgid "Git Hash"
 msgstr "Hash Git"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:72
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:73
 msgid "OS Git Hash"
 msgstr "Hash Git do SO"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:73
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:74
 msgid "Capabilities"
 msgstr "Capacidades"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:74
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:75
 msgid "System ID"
 msgstr "ID do Sistema"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:75
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:76
 msgid "Component ID"
 msgstr "ID do Componente"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:76
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:77
 #: ardupilot_methodic_configurator/vehicle_components.py:34
 msgid "MCU Series"
 msgstr "Série MCU"
+
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:271
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:368
+msgid "N/A"
+msgstr "Indisponível"
 
 #: ardupilot_methodic_configurator/backend_internet.py:40
 msgid "URL or local filename not provided."
@@ -2562,7 +2575,8 @@ msgstr "Nenhum valor de fallback encontrado para %s"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:404
 msgid ""
 "{name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}"
-msgstr "{name} deve ser um {data_type.__name__} entre {limits[0]} e {limits[1]}"
+msgstr ""
+"{name} deve ser um {data_type.__name__} entre {limits[0]} e {limits[1]}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:416
 msgid "Takeoff Weight max must be a float"
@@ -2605,7 +2619,9 @@ msgstr "está acima do {limit_name} de {limit_value}"
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
 "Allowed values are: {allowed_str}"
-msgstr "Valor inválido '{value}' para {paths_str}\nValores permitidos: {allowed_str}"
+msgstr ""
+"Valor inválido '{value}' para {paths_str}\n"
+"Valores permitidos: {allowed_str}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:548
 msgid "Duplicate FC connection type '{value}' for {paths_str}"
@@ -2665,7 +2681,9 @@ msgid ""
 "On {_component} the selected\n"
 "protocol '{selected_protocol}' is not available for the selected connection "
 "Type."
-msgstr "No {_component} o protocolo selecionado\n'{selected_protocol}' não está disponível para o Tipo de conexão selecionado."
+msgstr ""
+"No {_component} o protocolo selecionado\n"
+"'{selected_protocol}' não está disponível para o Tipo de conexão selecionado."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:136
 msgid " Defaulting to '{protocol}'."
@@ -2680,6 +2698,7 @@ msgstr "Nenhum protocolo disponível."
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:290
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:492
 #: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
 msgid "Error"
 msgstr "Erro"
 
@@ -2692,17 +2711,23 @@ msgid ""
 "Will update the cell voltage limits to the recommended\n"
 "values for {chemistry} chemistry.\n"
 "This will overwrite any custom values you may have set."
-msgstr "Irá atualizar os limites de tensão da célula para os valores\nrecomendados para a química {chemistry}.\nIsto irá substituir quaisquer valores personalizados que possa ter definido."
+msgstr ""
+"Irá atualizar os limites de tensão da célula para os valores\n"
+"recomendados para a química {chemistry}.\n"
+"Isto irá substituir quaisquer valores personalizados que possa ter definido."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:177
 msgid "No valid value found for {voltage_path} with chemistry {chemistry}.\n"
-msgstr "Nenhum valor válido encontrado para {voltage_path} com química {chemistry}.\n"
+msgstr ""
+"Nenhum valor válido encontrado para {voltage_path} com química {chemistry}.\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:287
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
 "{error_msg}"
-msgstr "Valor inválido '{value}' para {paths_str}\n{error_msg}"
+msgstr ""
+"Valor inválido '{value}' para {paths_str}\n"
+"{error_msg}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:335
 msgid "Validation Errors"
@@ -2743,7 +2768,11 @@ msgid ""
 "simple for beginners, only minimal mandatory fields no optional params "
 "displayed\n"
 "normal for everybody else."
-msgstr "Selecione o nível de complexidade da interface gráfica do utilizador:\nsimples para iniciantes, apenas campos obrigatórios mínimos sem parâmetros opcionais exibidos\nnormal para todos os outros."
+msgstr ""
+"Selecione o nível de complexidade da interface gráfica do utilizador:\n"
+"simples para iniciantes, apenas campos obrigatórios mínimos sem parâmetros "
+"opcionais exibidos\n"
+"normal para todos os outros."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:238
 msgid ""
@@ -3406,56 +3435,27 @@ msgstr "Nenhum arquivo de parâmetro intermediário encontrado em %s."
 msgid "List_of_items can't be 'None'"
 msgstr "List_of_items não pode ser 'None'"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:29
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:68
 msgid " - Flight Controller Info"
 msgstr " - Informações do Controlador de Voo"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:29
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:68
 msgid "ArduPilot methodic configurator "
 msgstr "Configurador metódico do ArduPilot "
 
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:53
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:368
-msgid "N/A"
-msgstr "Indisponível"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:58
-msgid "Firmware Version: %s"
-msgstr "Versão do Firmware: %s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:59
-msgid "Firmware first 8 hex bytes of the FC git hash: %s"
-msgstr "Primeiros 8 bytes hexadecimais do hash git do firmware do FC: %s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:60
-msgid "Firmware first 8 hex bytes of the ChibiOS git hash: %s"
-msgstr "Primeiros 8 bytes hexadecimais do hash git do ChibiOS: %s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:62
-msgid "Flight Controller firmware type: %s (%s)"
-msgstr "Tipo do firmware do Controlador de Voo: %s (%s)"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:66
-msgid "Flight Controller HW / board version: %s"
-msgstr "Versão de HW / placa do Controlador de Voo: %s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:67
-msgid "Flight Controller USB vendor ID: %s"
-msgstr "ID do fornecedor USB do Controlador de Voo: %s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:68
-msgid "Flight Controller USB product ID: %s"
-msgstr "ID do produto USB do Controlador de Voo: %s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:75
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:109
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:632
 msgid "Downloading FC parameters"
 msgstr "Baixando parâmetros do FC"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:75
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:109
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:634
 msgid "Downloaded {} of {} parameters"
 msgstr "Baixou {} de {} parâmetros"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
+msgid "Failed to download parameters"
+msgstr "Falha ao transferir parâmetros"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:72
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
@@ -4671,7 +4671,8 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:339
 msgid "No 'vehicle.jpg' image file in the vehicle template directory."
-msgstr "Nenhum ficheiro de imagem 'vehicle.jpg' no diretório do modelo de veículo."
+msgstr ""
+"Nenhum ficheiro de imagem 'vehicle.jpg' no diretório do modelo de veículo."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:376
 msgid ""
@@ -5240,6 +5241,27 @@ msgstr "Versão ou revisão do hardware"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "Ligação web para a página do produto ou documentação"
+
+#~ msgid "Firmware Version: %s"
+#~ msgstr "Versão do Firmware: %s"
+
+#~ msgid "Firmware first 8 hex bytes of the FC git hash: %s"
+#~ msgstr "Primeiros 8 bytes hexadecimais do hash git do firmware do FC: %s"
+
+#~ msgid "Firmware first 8 hex bytes of the ChibiOS git hash: %s"
+#~ msgstr "Primeiros 8 bytes hexadecimais do hash git do ChibiOS: %s"
+
+#~ msgid "Flight Controller firmware type: %s (%s)"
+#~ msgstr "Tipo do firmware do Controlador de Voo: %s (%s)"
+
+#~ msgid "Flight Controller HW / board version: %s"
+#~ msgstr "Versão de HW / placa do Controlador de Voo: %s"
+
+#~ msgid "Flight Controller USB vendor ID: %s"
+#~ msgstr "ID do fornecedor USB do Controlador de Voo: %s"
+
+#~ msgid "Flight Controller USB product ID: %s"
+#~ msgstr "ID do produto USB do Controlador de Voo: %s"
 
 #~ msgid "Will connect to %s"
 #~ msgstr "Conectando a %s"

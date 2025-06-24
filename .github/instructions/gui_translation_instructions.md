@@ -54,6 +54,13 @@ then translated into language-specific `.po` files, which are compiled into bina
 3. **Testing**: Always test translations in the actual application
 4. **Cultural adaptation**: Adapt to local conventions, not just literal translation
 
+### Language-Specific Guidelines
+
+- **Portuguese (pt)**: Use European Portuguese (Portugal) conventions, not Brazilian Portuguese
+  - Prefer "transferir" over "baixar" for "download"
+  - Use formal register appropriate for technical documentation
+  - Follow Portuguese spelling reform standards
+
 ### Technical Considerations
 
 - **Encoding**: Files must be UTF-8 encoded
