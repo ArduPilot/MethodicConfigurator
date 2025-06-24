@@ -394,8 +394,8 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
         # No locally cached file exists, get it from the internet
         try:
             # pylint: disable=import-outside-toplevel
-            from requests import exceptions as requests_exceptions  # type: ignore[import-untyped]
-            from requests import get as requests_get
+            from requests import exceptions as requests_exceptions  # type: ignore[import-untyped] # noqa: PLC0415
+            from requests import get as requests_get  # noqa: PLC0415
 
             # pylint: enable=import-outside-toplevel
         except ImportError as exc:

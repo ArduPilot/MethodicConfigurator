@@ -249,8 +249,8 @@ def main() -> None:
     root.geometry("400x100")  # Set a size for the window
 
     # Generate 20 random strings between 4 and 70 characters
-    import random  # pylint: disable=import-outside-toplevel
-    import string  # pylint: disable=import-outside-toplevel
+    import random  # pylint: disable=import-outside-toplevel # noqa: PLC0415
+    import string  # pylint: disable=import-outside-toplevel # noqa: PLC0415
 
     random_strings = [
         "".join(random.choices(string.ascii_letters + string.digits, k=random.randint(4, 70)))  # noqa: S311
