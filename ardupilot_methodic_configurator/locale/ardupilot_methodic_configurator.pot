@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-06-23 00:13+0000\n"
+"POT-Creation-Date: 2025-06-24 00:49+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -48,13 +48,13 @@ msgid "Will present all vehicle templates for all vehicle types since no FC conn
 msgstr ""
 
 #: ardupilot_methodic_configurator/__main__.py:269
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:100
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:103
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:105
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:114
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:101
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:104
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:106
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:115
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:118
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:116
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:119
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:120
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:37
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:41
 msgid "Unknown"
@@ -141,71 +141,71 @@ msgstr ""
 msgid "New vehicle directory does not exist: {new_vehicle_dir}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:521
+#: ardupilot_methodic_configurator/backend_filesystem.py:520
 msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:541
+#: ardupilot_methodic_configurator/backend_filesystem.py:540
 msgid "Parameter %s not found in the current parameter file"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:549
+#: ardupilot_methodic_configurator/backend_filesystem.py:548
 msgid "Error writing last uploaded filename: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:556
+#: ardupilot_methodic_configurator/backend_filesystem.py:555
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:558
+#: ardupilot_methodic_configurator/backend_filesystem.py:557
 msgid "Error reading last uploaded filename: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:574
+#: ardupilot_methodic_configurator/backend_filesystem.py:573
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:582
+#: ardupilot_methodic_configurator/backend_filesystem.py:581
 msgid "Starting with the first file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:585
+#: ardupilot_methodic_configurator/backend_filesystem.py:584
 msgid "Starting with the first non-tcal file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:589
+#: ardupilot_methodic_configurator/backend_filesystem.py:588
 msgid "Last uploaded file was %s."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:591
+#: ardupilot_methodic_configurator/backend_filesystem.py:590
 msgid "No last uploaded file found. %s."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:596
+#: ardupilot_methodic_configurator/backend_filesystem.py:595
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:605
+#: ardupilot_methodic_configurator/backend_filesystem.py:604
 msgid "Last uploaded file is the last file in the list. Starting from there."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:790
+#: ardupilot_methodic_configurator/backend_filesystem.py:789
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:796
+#: ardupilot_methodic_configurator/backend_filesystem.py:795
 msgid "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:804
+#: ardupilot_methodic_configurator/backend_filesystem.py:803
 msgid "Start directly on the nth intermediate parameter file (skips previous files). Default is to start on the file next to the last that you wrote to the flight controller. If the file does not exist, it will start on the first file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:813
+#: ardupilot_methodic_configurator/backend_filesystem.py:812
 msgid "Allow opening and editing template files directly. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:822
+#: ardupilot_methodic_configurator/backend_filesystem.py:821
 msgid "Save the vehicle component to the system templates. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 
@@ -611,65 +611,70 @@ msgstr ""
 msgid "Flight controller reboot time. Default is %(default)s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:62
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:63
 msgid "USB Vendor"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:63
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:64
 msgid "USB Product"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:64
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:65
 msgid "Board Type"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:65
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:66
 msgid "Hardware Version"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:66
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:67
 msgid "Autopilot Type"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:67
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:68
 msgid "ArduPilot Vehicle Type"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:68
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:69
 msgid "ArduPilot FW Type"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:69
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:70
 msgid "MAV Type"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:70
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:71
 msgid "Firmware Version"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:71
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:72
 msgid "Git Hash"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:72
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:73
 msgid "OS Git Hash"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:73
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:74
 msgid "Capabilities"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:74
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:75
 msgid "System ID"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:75
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:76
 msgid "Component ID"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:76
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:77
 #: ardupilot_methodic_configurator/vehicle_components.py:34
 msgid "MCU Series"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_flightcontroller_info.py:271
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:368
+msgid "N/A"
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_internet.py:40
@@ -2155,6 +2160,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:290
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:492
 #: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
 msgid "Error"
 msgstr ""
 
@@ -2800,66 +2806,30 @@ msgid "List_of_items can't be 'None'"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:29
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:68
 msgid " - Flight Controller Info"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:29
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:68
 msgid "ArduPilot methodic configurator "
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:53
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:368
-msgid "N/A"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:58
-msgid "Firmware Version: %s"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:59
-msgid "Firmware first 8 hex bytes of the FC git hash: %s"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:60
-msgid "Firmware first 8 hex bytes of the ChibiOS git hash: %s"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:62
-msgid "Flight Controller firmware type: %s (%s)"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:66
-msgid "Flight Controller HW / board version: %s"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:67
-msgid "Flight Controller USB vendor ID: %s"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:68
-msgid "Flight Controller USB product ID: %s"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:75
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:109
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:632
 msgid "Downloading FC parameters"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:75
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:109
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:634
 msgid "Downloaded {} of {} parameters"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
+msgid "Failed to download parameters"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:72
