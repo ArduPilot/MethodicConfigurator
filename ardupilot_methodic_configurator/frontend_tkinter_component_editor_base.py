@@ -559,7 +559,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
         """
         # Import MagicMock at the method level to avoid import issues
-        from unittest.mock import MagicMock  # pylint: disable=import-outside-toplevel
+        from unittest.mock import MagicMock  # pylint: disable=import-outside-toplevel # noqa: PLC0415
 
         if local_filesystem is None:
             # Create a minimal mock filesystem for testing
