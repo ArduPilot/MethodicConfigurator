@@ -175,36 +175,45 @@ The (main) application itself does the command line parsing and starts the sub-a
 
 To satisfy the system design requirements described above the following five user interface sub-applications were developed:
 
-- **check for software updates**
-  - checks if there is a newer software version available, downloads and updates it
-  - [`frontend_tkinter_software_update.py`](ardupilot_methodic_configurator/frontend_tkinter_software_update.py)
-- **FC communication**
-  - establishes connection to the flight controller, gets hardware information, downloads parameters and their default values
-  - [`frontend_tkinter_connection_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py)
-    - [`frontend_tkinter_flightcontroller_info.py`](ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py)
-- **choose project to open**
-  - either creates a new project or opens an existing one, downloads parameter documentation metadata corresponding to the FC firmware version to the project directory
-  - [`frontend_tkinter_directory_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py)
-    - [`frontend_tkinter_template_overview.py`](ardupilot_methodic_configurator/frontend_tkinter_template_overview.py)
-- **define vehicle components and their connections**
-  - define specifications of all vehicle components and their connections to the flight controller
-  - [`frontend_tkinter_component_editor.py`](ardupilot_methodic_configurator/frontend_tkinter_component_editor.py)
-    - [`frontend_tkinter_component_editor_base.py`](ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py)
-    - [`frontend_tkinter_component_template_manager.py`](ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py)
-- **view documentation, edit parameters, upload them to FC**
-  - sequentially for each configuration step:
-    - view documentation relevant for the current configuration step,
-    - edit parameters relevant for the current configuration step,
-    - upload them to the flight controller,
-    - save them to file
-  - [`frontend_tkinter_parameter_editor.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py)
-    - [`frontend_tkinter_parameter_editor_documentation_frame.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py)
-    - [`frontend_tkinter_parameter_editor_table.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py)
-    - [`frontend_tkinter_stage_progress.py`](ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py)
+## Sub-Application Architecture Documentation
+
+Each sub-application has detailed architecture documentation covering requirements, implementation status, data flow, components, testing, and recommendations:
+
+1. **[Software Update Check](ARCHITECTURE_1_software_update.md)** - Checks for and downloads software updates
+   - [`frontend_tkinter_software_update.py`](ardupilot_methodic_configurator/frontend_tkinter_software_update.py)
+   - [`middleware_software_updates.py`](ardupilot_methodic_configurator/middleware_software_updates.py)
+
+2. **[Flight Controller Communication](ARCHITECTURE_2_flight_controller_communication.md)** - Establishes FC connection, downloads parameters and metadata
+   - [`frontend_tkinter_connection_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py)
+     - [`frontend_tkinter_flightcontroller_info.py`](ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py)
+     - [`backend_flightcontroller.py`](ardupilot_methodic_configurator/backend_flightcontroller.py)
+     - [`backend_mavftp.py`](ardupilot_methodic_configurator/backend_mavftp.py)
+
+3. **[Directory and Project Selection](ARCHITECTURE_3_directory_selection.md)** - Creates new projects or opens existing ones
+   - [`frontend_tkinter_directory_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py)
+     - [`frontend_tkinter_template_overview.py`](ardupilot_methodic_configurator/frontend_tkinter_template_overview.py)
+
+4. **[Vehicle Component Editor](ARCHITECTURE_4_component_editor.md)** - Defines vehicle components and their FC connections
+   - [`frontend_tkinter_component_editor.py`](ardupilot_methodic_configurator/frontend_tkinter_component_editor.py)
+     - [`frontend_tkinter_component_editor_base.py`](ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py)
+     - [`frontend_tkinter_component_template_manager.py`](ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py)
+
+5. **[Parameter Editor and Uploader](ARCHITECTURE_5_parameter_editor.md)** - Views documentation, edits parameters, uploads to FC
+   - sequentially for each configuration step:
+     - view documentation relevant for the current configuration step,
+     - edit parameters relevant for the current configuration step,
+     - upload them to the flight controller,
+     - save them to file
+   - [`frontend_tkinter_parameter_editor.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py)
+     - [`frontend_tkinter_parameter_editor_documentation_frame.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py)
+     - [`frontend_tkinter_parameter_editor_table.py`](ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py)
+     - [`frontend_tkinter_stage_progress.py`](ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py)
 
 Each sub-application can be run in isolation, so it is easier to test and develop them.
 
-The data models. Each application separates the business logic from the user interface logic.
+## Data Models and Architecture
+
+Each application separates the business logic from the user interface logic.
 This improves testability and maintainability of the code.
 
 1. Check for software updates:
@@ -219,7 +228,11 @@ This improves testability and maintainability of the code.
    1. [`data_model_vehicle_components_validation.py`](ardupilot_methodic_configurator/data_model_vehicle_components_validation.py)
    1. [`data_model_vehicle_components.py`](ardupilot_methodic_configurator/data_model_vehicle_components.py)
 
-All applications use one or more of the following libraries:
+The detailed data models, components, and dependencies for each sub-application are documented in their respective architecture files linked above.
+
+### Common Libraries and Shared Components
+
+All applications use one or more of the following shared libraries:
 
 1. internationalization
    1. [`__init__.py`](ardupilot_methodic_configurator/__init__.py)
@@ -320,18 +333,15 @@ pytest
 ### Integration testing
 
 The five different sub-applications are first tested independently.
+Each has detailed testing strategies documented in their respective architecture files:
 
-- software update checker
-  - `python .\ardupilot_methodic_configurator\middleware_software_updates.py`
-- flight controller connection GUI
-  - `python .\ardupilot_methodic_configurator\frontend_tkinter_connection_selection.py`
-- vehicle configuration directory selection GUI
+- **[Software Update](ARCHITECTURE_1_software_update.md#testing-analysis)** - `python .\ardupilot_methodic_configurator\middleware_software_updates.py`
+- **[Flight Controller Communication](ARCHITECTURE_2_flight_controller_communication.md#testing-analysis)** - `python .\ardupilot_methodic_configurator\frontend_tkinter_connection_selection.py`
+- **[Directory Selection](ARCHITECTURE_3_directory_selection.md#testing-strategy)**
   - `python .\ardupilot_methodic_configurator\frontend_tkinter_directory_selection.py`
   - `python .\ardupilot_methodic_configurator\frontend_tkinter_template_overview.py`
-- vehicle component editor GUI
-  - `python .\ardupilot_methodic_configurator\frontend_tkinter_component_editor.py`
-- parameter editor and uploader GUI
-  - `python .\ardupilot_methodic_configurator\frontend_tkinter_parameter_editor.py`
+- **[Component Editor](ARCHITECTURE_4_component_editor.md#testing-strategy)** - `python .\ardupilot_methodic_configurator\frontend_tkinter_component_editor.py`
+- **[Parameter Editor](ARCHITECTURE_5_parameter_editor.md#testing-strategy)** - `python .\ardupilot_methodic_configurator\frontend_tkinter_parameter_editor.py`
 
 Only after each one performs 100% as expected, they are integrated and tested together.
 This speeds up the development process.
