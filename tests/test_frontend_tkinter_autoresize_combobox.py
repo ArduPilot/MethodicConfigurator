@@ -15,6 +15,8 @@ import unittest
 from tkinter import ttk
 from unittest.mock import patch
 
+import pytest
+
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import (
     AutoResizeCombobox,
     update_combobox_width,
@@ -24,17 +26,20 @@ from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import
 class TestUpdateComboboxWidth(unittest.TestCase):
     """Test cases for the update_combobox_width function."""
 
+    @pytest.mark.gui
     def test_update_combobox_width(self) -> None:
         combobox = ttk.Combobox(values=["short", "longer", "longest"])
         update_combobox_width(combobox)
         assert combobox.cget("width") == 7
 
+    @pytest.mark.gui
     def test_update_combobox_width_empty_values(self) -> None:
         combobox = ttk.Combobox(values=[])
         update_combobox_width(combobox)
         # Should use the minimum width (4) when no values
         assert combobox.cget("width") == 4
 
+    @pytest.mark.gui
     def test_update_combobox_width_very_short_values(self) -> None:
         combobox = ttk.Combobox(values=["a", "b", "c"])
         update_combobox_width(combobox)
@@ -45,6 +50,7 @@ class TestUpdateComboboxWidth(unittest.TestCase):
 class TestAutoResizeCombobox(unittest.TestCase):
     """Test cases for the AutoResizeCombobox class."""
 
+    @pytest.mark.gui
     def setUp(self) -> None:
         self.root = tk.Tk()
         self.root.withdraw()  # Hide the main window during tests
@@ -55,14 +61,17 @@ class TestAutoResizeCombobox(unittest.TestCase):
     def tearDown(self) -> None:
         self.root.destroy()
 
+    @pytest.mark.gui
     def test_initial_selection(self) -> None:
         assert self.combobox.get() == "two"
 
+    @pytest.mark.gui
     def test_update_values(self) -> None:
         self.combobox.set_entries_tuple(["four", "five", "six"], "five")
         assert self.combobox.get() == "five"
         assert self.combobox["values"] == ("four", "five", "six")
 
+    @pytest.mark.gui
     def test_set_entries_with_spaces(self) -> None:
         """Test values with spaces."""
         values = ["option one", "option  two", "option   three"]
@@ -70,6 +79,7 @@ class TestAutoResizeCombobox(unittest.TestCase):
         assert self.combobox["values"] == tuple(values)
         assert self.combobox.get() == "option  two"
 
+    @pytest.mark.gui
     @patch("ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox.logging_error")
     def test_set_entries_invalid_selection(self, mock_logging_error) -> None:
         """Test when selected element is not in values list."""
@@ -81,6 +91,7 @@ class TestAutoResizeCombobox(unittest.TestCase):
         # Selected value should not be set
         assert self.combobox.get() == "two"  # Maintains previous value
 
+    @pytest.mark.gui
     @patch("ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox.logging_warning")
     def test_set_entries_no_selection(self, mock_logging_warning) -> None:
         """Test when no selection is provided."""
@@ -90,6 +101,7 @@ class TestAutoResizeCombobox(unittest.TestCase):
         # Should log a warning
         mock_logging_warning.assert_called_once()
 
+    @pytest.mark.gui
     @patch("ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox.update_combobox_width")
     def test_set_entries_empty_values(self, mock_update_width) -> None:
         """Test behavior with empty values list."""
@@ -98,6 +110,7 @@ class TestAutoResizeCombobox(unittest.TestCase):
         # Width update should not be called with empty values
         mock_update_width.assert_not_called()
 
+    @pytest.mark.gui
     @patch("ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox.show_tooltip")
     def test_tooltip_display(self, mock_show_tooltip) -> None:
         """Test tooltip is shown when provided."""
@@ -106,6 +119,7 @@ class TestAutoResizeCombobox(unittest.TestCase):
         # Tooltip should be shown
         mock_show_tooltip.assert_called_once_with(self.combobox, "Help text")
 
+    @pytest.mark.gui
     @patch("ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox.show_tooltip")
     def test_no_tooltip_when_none(self, mock_show_tooltip) -> None:
         """Test tooltip is not shown when None."""

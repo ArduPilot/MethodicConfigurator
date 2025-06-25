@@ -222,6 +222,84 @@
                 "-Command",
                 "coverage run -m pytest; coverage html; Start-Process firefox -ArgumentList 'htmlcov/index.html'"
             ]
+        },
+        {
+            "label": "pytest skip GUI tests",
+            "type": "shell",
+            "command": "pytest",
+            "args": [
+                "--cov=ardupilot_methodic_configurator",
+                "--cov-report=xml:tests/coverage.xml",
+                "--md=tests/results.md",
+                "-m",
+                "not gui"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "problemMatcher": {
+                "owner": "python",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": [
+                    {
+                        "regexp": "^(.+):(\\d+): (\\w+): (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "severity": 3,
+                        "message": 4
+                    },
+                    {
+                        "regexp": "^(.+):(\\d+): in (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "code": 3
+                    },
+                    {
+                        "regexp": "^E\\s+(.+)$",
+                        "message": 1
+                    }
+                ]
+            }
+        },
+        {
+            "label": "pytest only GUI tests",
+            "type": "shell",
+            "command": "DISPLAY=:99.0 LIBGL_ALWAYS_SOFTWARE=1 QT_QPA_PLATFORM=offscreen MPLBACKEND=Agg pytest",
+            "args": [
+                "--cov=ardupilot_methodic_configurator",
+                "--cov-report=xml:tests/coverage.xml",
+                "--md=tests/results.md",
+                "-m",
+                "gui"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "problemMatcher": {
+                "owner": "python",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": [
+                    {
+                        "regexp": "^(.+):(\\d+): (\\w+): (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "severity": 3,
+                        "message": 4
+                    },
+                    {
+                        "regexp": "^(.+):(\\d+): in (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "code": 3
+                    },
+                    {
+                        "regexp": "^E\\s+(.+)$",
+                        "message": 1
+                    }
+                ]
+            }
         }
     ],
     "inputs": [
