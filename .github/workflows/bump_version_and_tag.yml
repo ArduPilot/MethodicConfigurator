@@ -39,26 +39,37 @@ jobs:
           python-version: 3.x
 
       - name: Install dependencies
+        id: install_deps
+        continue-on-error: true
         run: |
-          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K([0-9]+\.[0-9]+\.[0-9]+)' pyproject.toml || echo '')
+          WARNINGS=0
+
+          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
           if [ -z "$PIP_VERSION" ]; then
-            echo '::warning title=Could not detect pip version::in pyproject.toml; falling back to latest.'
+            echo "::warning::Could not detect pip version in pyproject.toml; falling back to latest."
             PIP_INSTALL="pip"
+            WARNINGS=1
           else
             echo "Will install pip version $PIP_VERSION."
             PIP_INSTALL="pip==$PIP_VERSION"
           fi
           python -m pip install "$PIP_INSTALL"
 
-          export PACKAGING_VERSION=$(grep -oP 'packaging\s*==\s*\K([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)' pyproject.toml || echo '')
+          export PACKAGING_VERSION=$(grep -oP 'packaging\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
           if [ -z "$PACKAGING_VERSION" ]; then
-            echo '::warning title=Could not detect packaging version::in pyproject.toml; falling back to latest.'
+            echo "::warning::Could not detect packaging version in pyproject.toml; falling back to latest."
             PACKAGING_INSTALL="packaging"
+            WARNINGS=1
           else
             echo "Will install packaging version $PACKAGING_VERSION."
             PACKAGING_INSTALL="packaging==$PACKAGING_VERSION"
           fi
           pip install "$PACKAGING_INSTALL"
+
+          echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
+          if [ "$WARNINGS" -eq 1 ]; then
+            exit 1
+          fi
 
       - name: Validate version format
         run: |

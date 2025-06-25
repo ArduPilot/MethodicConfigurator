@@ -47,27 +47,38 @@ jobs:
           sudo apt-get install -y gettext=0.21-14ubuntu2
 
       - name: Install python-gettext requirement
+        id: install_deps
+        continue-on-error: true
         run: |
-          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K([0-9]+\.[0-9]+\.[0-9]+)' pyproject.toml || echo '')
-          export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)' pyproject.toml || echo '')
+          WARNINGS=0
+
+          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
+          export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
 
           if [ -z "$PIP_VERSION" ]; then
-            echo '::warning title=Could not detect pip version::in pyproject.toml; falling back to latest.'
+            echo "::warning::Could not detect pip version in pyproject.toml; falling back to latest."
             PIP_INSTALL="pip"
+            WARNINGS=1
           else
             echo "Will install pip version $PIP_VERSION."
             PIP_INSTALL="pip==$PIP_VERSION"
           fi
 
           if [ -z "$PYTHON_GETTEXT_VERSION" ]; then
-            echo '::warning title=Could not detect python-gettext version::in pyproject.toml; falling back to 5.0.'
+            echo "::warning::Could not detect python-gettext version in pyproject.toml; falling back to 5.0."
             PYTHON_GETTEXT_INSTALL="python-gettext==5.0"
+            WARNINGS=1
           else
             echo "Will install python-gettext version $PYTHON_GETTEXT_VERSION."
             PYTHON_GETTEXT_INSTALL="python-gettext==$PYTHON_GETTEXT_VERSION"
           fi
 
           python -m pip install "$PIP_INSTALL" "$PYTHON_GETTEXT_INSTALL"
+
+          echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
+          if [ "$WARNINGS" -eq 1 ]; then
+            exit 1
+          fi
 
       - name: Extract strings
         run: |
