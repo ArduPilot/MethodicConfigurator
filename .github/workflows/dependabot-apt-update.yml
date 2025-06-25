@@ -27,7 +27,7 @@ jobs:
         run: |
           # Create a list of all pinned apt packages from github workflow files
           # Exclude the current workflow file and ensure package names are not empty
-          grep -r "apt-get install" .github/workflows/ --exclude="dependabot-apt-update.yml" | grep -o "[a-zA-Z0-9_.:+~-]\+=[a-zA-Z0-9_.:+~-]\+" > pinned_apt_packages.txt
+          grep -r "apt-get install" .github/workflows/ --exclude="dependabot-apt-update.yml" | grep -o "[a-zA-Z0-9_.:\+~-]\+=[a-zA-Z0-9_.:\+~-]\+" > pinned_apt_packages.txt
 
           # Create report file header
           echo "# Apt Package Update Report" > apt_update_report.md
