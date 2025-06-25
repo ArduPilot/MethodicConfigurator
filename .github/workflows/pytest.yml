@@ -40,25 +40,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      # https://docs.astral.sh/uv/guides/integration/github/
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6.5.0
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Set up pip cache
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
-        with:
-          path: |
-            ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-${{ matrix.python-version }}-
-            ${{ runner.os }}-pip-
+          activate-environment: true
 
       - name: Install dependencies and application
         # without --editable the coverage report is not generated correctly
         run: |
-          pip install --editable .[dev]
+          uv pip install --editable .[dev]
 
       - name: Test with pytest
         id: pytest
@@ -67,7 +59,7 @@ jobs:
           export LIBGL_ALWAYS_SOFTWARE=1
           export DISPLAY=:99
           Xvfb :99 -screen 0 1024x768x16 &
-          pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md --junit-xml=tests/results-junit.xml
+          uv run pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md --junit-xml=tests/results-junit.xml
 
       - name: Fix coverage paths
         run: |
