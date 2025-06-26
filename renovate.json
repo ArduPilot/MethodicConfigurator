@@ -52,9 +52,10 @@
       "customType": "regex",
       "managerFilePatterns": ["/\\.bash$/", "/\\.sh$/"],
       "matchStrings": [
-        "npm install --global (?<depName>[^@\\s]+)@(?<currentValue>[\\d\\.]+)(?:\\s+--integrity\\s+(?<currentDigest>sha[0-9]+-[A-Za-z0-9+/=]+))?"
+        "^npm install --global (?<depName>[^@\\s]+)@(?<currentValue>[\\d\\.]+)(?:\\s+--integrity\\s+(?<currentDigest>sha[0-9]+-[A-Za-z0-9+/=]+))?\\s*$"
       ],
-      "datasourceTemplate": "npm"
+      "datasourceTemplate": "npm",
+      "autoReplaceStringTemplate": "npm install --global {{{depName}}}@{{{newValue}}}{{#if newDigest}} --integrity {{{newDigest}}}{{/if}}"
     },
     {
       "customType": "regex",
