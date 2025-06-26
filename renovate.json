@@ -1,3 +1,149 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json"
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [],
+  "enabledManagers": ["pre-commit", "custom.regex"],
+  "repositories": ["ArduPilot/MethodicConfigurator"],
+  "platform": "github",
+  "includePaths": [
+    ".pre-commit-config.yaml",
+    "*.sh",
+    "*.bash",
+    "*.bat",
+    "scripts/*.py",
+    "tests/*.sh",
+    "tests/*.bash",
+    "windows/*.bat",
+    "install_*.sh",
+    "install_*.bash",
+    "install_*.bat"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["pre-commit"],
+      "automerge": true,
+      "pinDigests": true,
+      "rangeStrategy": "pin"
+    },
+    {
+      "matchManagers": ["custom.regex"],
+      "matchDatasources": ["npm"],
+      "automerge": false,
+      "pinDigests": true,
+      "rangeStrategy": "pin"
+    },
+    {
+      "matchManagers": ["custom.regex"],
+      "matchDatasources": ["pypi"],
+      "automerge": false,
+      "rangeStrategy": "pin"
+    },
+    {
+      "matchManagers": ["custom.regex"],
+      "matchDatasources": ["github-releases"],
+      "automerge": false,
+      "rangeStrategy": "pin"
+    }
+  ],
+  "pin": {"enabled": true},
+  "dependencyDashboard": false,
+  "ignorePaths": ["**/node_modules/**", "**/bower_components/**", "**/.git/**"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.bash$/", "/\\.sh$/"],
+      "matchStrings": [
+        "npm install --global (?<depName>[^@\\s]+)@(?<currentValue>[\\d\\.]+)(?:\\s+--integrity\\s+(?<currentDigest>sha[0-9]+-[A-Za-z0-9+/=]+))?"
+      ],
+      "datasourceTemplate": "npm"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
+      "matchStrings": [
+        "brew install (?<depName>python-tk)@(?<currentValue>[\\d\\.]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "python/cpython"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
+      "matchStrings": ["brew install (?<depName>uv)(?:\\s|$)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "astral-sh/uv",
+      "currentValueTemplate": "latest"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.py$/"],
+      "matchStrings": [
+        "# dependencies = \\[\\s*(?:[^\\]]*\\n)*?#\\s*\"(?<depName>[^\"]+)==(?<currentValue>[\\d\\.]+)\""
+      ],
+      "datasourceTemplate": "pypi"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.py$/"],
+      "matchStrings": [
+        "subprocess\\.check_call\\(\\[sys\\.executable, \"-m\", \"pip\", \"install\", \"(?<depName>[^\"]+)\"\\]\\)"
+      ],
+      "datasourceTemplate": "pypi",
+      "currentValueTemplate": "latest"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
+      "matchStrings": [
+        "REQUIRED_PKGS=\\([^)]*\"(?<depName>[^\"@]+)(?:@(?<currentValue>[\\d\\.]+))?\"[^)]*\\)"
+      ],
+      "datasourceTemplate": "pypi",
+      "currentValueTemplate": "latest"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
+      "matchStrings": ["pip install (?<depName>[\\w-]+)(?:\\s|$)"],
+      "datasourceTemplate": "pypi",
+      "currentValueTemplate": "latest"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
+      "matchStrings": ["uv pip install (?<depName>[\\w-]+)(?:\\s|$)"],
+      "datasourceTemplate": "pypi",
+      "currentValueTemplate": "latest"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.bat$/"],
+      "matchStrings": [
+        "set \"URL=https://github\\.com/(?<depName>[^/]+/[^/]+)/releases/download/v(?<currentValue>[\\d\\.\\-]+)/[^\"]+\""
+      ],
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.py$/"],
+      "matchStrings": [
+        "import (?<depName>matplotlib|lxml|beautifulsoup4|requests)(?:\\s|$)"
+      ],
+      "datasourceTemplate": "pypi",
+      "currentValueTemplate": "latest"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.py$/"],
+      "matchStrings": ["required_packages = \\[[^\\]]*\"(?<depName>[^\"]+)\""],
+      "datasourceTemplate": "pypi",
+      "currentValueTemplate": "latest"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.bat$/"],
+      "matchStrings": [
+        "github\\.com/(?<depName>[^/]+/[^/]+)/releases/download/(?<currentValue>v[\\d\\.\\-]+)/"
+      ],
+      "datasourceTemplate": "github-releases"
+    }
+  ]
 }
