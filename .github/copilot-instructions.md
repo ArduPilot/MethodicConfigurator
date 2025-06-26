@@ -19,6 +19,7 @@ For detailed testing guidelines, see `.github/instructions/pytest_testing_instru
 ## Architecture
 
 The project uses a clean architecture with separation of concerns:
+
 - Frontend: tkinter-based GUI
 - Backend: Filesystem operations and parameter management
 - Business logic: Configuration steps and vehicle templates
@@ -33,7 +34,8 @@ Pre-commit hooks ensure code quality - run `pre-commit install` after cloning.
 
 Parameter files use `.param` extension and are numbered (e.g., `01_first_setup.param`).
 
-Vehicle templates are organized in `ardupilot_methodic_configurator/vehicle_templates/` with subdirectories for each vehicle type (ArduCopter, ArduPlane, Rover, Heli).
+Vehicle templates are organized in `ardupilot_methodic_configurator/vehicle_templates/` with subdirectories for each vehicle type
+(ArduCopter, ArduPlane, Rover, Heli).
 
 ## Internationalization
 
@@ -41,9 +43,12 @@ The application supports multiple languages using gettext. All user-facing strin
 
 ## Documentation
 
-We maintain comprehensive documentation including [user manuals](../USERMANUAL.md), [tuning guides](../TUNING_GUIDE_ArduCopter.md), and [architecture](../ARCHITECTURE.md) documentation.
+We maintain comprehensive documentation including
+[user manuals](../USERMANUAL.md), [tuning guides](../TUNING_GUIDE_ArduCopter.md), and
+[architecture](../ARCHITECTURE.md) documentation.
 All changes should include appropriate documentation updates.
 
 For specific workflows, see detailed instructions in `.github/instructions/`:
-- [GUI Translation Instructions](.github/instructions/gui_translation_instructions.md) - Complete guide for translating the user interface
-- [Pytest Testing Guidelines](.github/instructions/pytest_testing_instructions.md) - Comprehensive testing standards
+
+- [GUI Translation Instructions](instructions/gui_translation_instructions.md) - Complete guide for translating the user interface
+- [Pytest Testing Guidelines](instructions/pytest_testing_instructions.md) - Comprehensive testing standards
