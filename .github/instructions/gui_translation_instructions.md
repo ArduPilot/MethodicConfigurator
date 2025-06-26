@@ -87,4 +87,4 @@ then translated into language-specific `.po` files, which are compiled into bina
 
 ## Support
 
-- **Documentation**: See [ARCHITECTURE.md](../ARCHITECTURE.md) for detailed technical information
+- **Documentation**: See [ARCHITECTURE.md](../../ARCHITECTURE.md) for detailed technical information
