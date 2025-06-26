@@ -123,8 +123,9 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         # the new style must inherit from current widget style (unless it's our custom style!)
         style_name = current_combo_style if unique_name in current_combo_style else f"{unique_name}.{current_combo_style}"
 
-        style.configure(style_name, postoffset=(0, 0, width, 0))
-        combo.configure(style=style_name)
+        if isinstance(combo, ttk.Combobox):
+            style.configure(style_name, postoffset=(0, 0, width, 0))
+            combo.configure(style=style_name)
 
 
 class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-ancestors

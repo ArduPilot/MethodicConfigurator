@@ -421,7 +421,9 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         """Test combobox validation with valid value."""
         mock_event = MagicMock()
         mock_event.type = "10"  # FocusOut event
-        mock_combobox = MagicMock()
+
+        # Create a mock that actually behaves like a ttk.Combobox instance
+        mock_combobox = MagicMock(spec=ttk.Combobox)
         mock_combobox.get.return_value = "PWM"
         mock_combobox.cget.return_value = ("PWM", "SBUS", "PPM")
         mock_event.widget = mock_combobox
@@ -437,7 +439,9 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         """Test combobox validation with invalid value."""
         mock_event = MagicMock()
         mock_event.type = "10"  # FocusOut event
-        mock_combobox = MagicMock()
+
+        # Create a mock that actually behaves like a ttk.Combobox instance
+        mock_combobox = MagicMock(spec=ttk.Combobox)
         mock_combobox.get.return_value = "INVALID"
         mock_combobox.cget.return_value = ("PWM", "SBUS", "PPM")
         mock_event.widget = mock_combobox
@@ -455,7 +459,9 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         """Test combobox validation with invalid value but not FocusOut event."""
         mock_event = MagicMock()
         mock_event.type = "2"  # Not FocusOut event
-        mock_combobox = MagicMock()
+
+        # Create a mock that actually behaves like a ttk.Combobox instance
+        mock_combobox = MagicMock(spec=ttk.Combobox)
         mock_combobox.get.return_value = "INVALID"
         mock_combobox.cget.return_value = ("PWM", "SBUS", "PPM")
         mock_event.widget = mock_combobox

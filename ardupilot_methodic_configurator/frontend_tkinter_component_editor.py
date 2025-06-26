@@ -256,6 +256,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     def _validate_combobox(self, event: tk.Event, path: ComponentPath) -> bool:
         """Validates the value of a combobox."""
         combobox = event.widget  # Get the combobox widget that triggered the event
+        if not isinstance(combobox, ttk.Combobox):
+            return False
         value = combobox.get()  # Get the current value of the combobox
         allowed_values = combobox.cget("values")  # Get the list of allowed values
 
