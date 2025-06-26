@@ -13,7 +13,7 @@ sudo apt-get update
 
 sudo apt install unzip shellcheck
 
-npm install --global markdown-link-check@3.13.6
+npm install --global markdown-link-check@3.13.6 --integrity sha512-JiqexKOR+oaBovJ16x/VEN886CzPI48bSGUcKJvnkHVS8xSb9fRJtsdcLwG8+5QQ/V0UZKFmW8JEZFcZbd0BBA==
 
 shellcheck --version
 npm list -g markdown-link-check

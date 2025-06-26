@@ -1,9 +1,12 @@
-name: Renovate Pre-commit Hooks
+name: Renovate SW dependencies
 
 on:
   schedule:
     - cron: "0 0 * * *"  # Runs daily at midnight
-  workflow_dispatch:      # Allows manual trigger
+  workflow_dispatch:     # Allows manual trigger
+  push:
+    paths:
+      - "renovate.json"  # Run when renovate config changes
 
 permissions:
   contents: read  # Default limited permission
@@ -28,6 +31,6 @@ jobs:
         uses: renovatebot/github-action@248bf5a619694187930adc80b9343c37761c173f # v43.0.1
         with:
           token: ${{ secrets.RENOVATE_TOKEN }}
-          configurationFile: renovate-config.json
+          configurationFile: renovate.json
         env:
           LOG_LEVEL: debug
