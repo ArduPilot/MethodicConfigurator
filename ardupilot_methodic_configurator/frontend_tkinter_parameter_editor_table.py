@@ -385,15 +385,20 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             logging_info(msg.format(**locals()))
 
     @staticmethod
-    def _update_new_value_entry_text(new_value_entry: ttk.Entry, value: float, param_default: Union[None, Par]) -> None:
+    def _update_new_value_entry_text(
+        new_value_entry: Union[ttk.Entry, tk.Entry], value: float, param_default: Union[None, Par]
+    ) -> None:
         if isinstance(new_value_entry, PairTupleCombobox):
             return
         new_value_entry.delete(0, tk.END)
         value_str = format(value, ".6f").rstrip("0").rstrip(".")
         new_value_entry.insert(0, value_str)
         if param_default is not None and is_within_tolerance(value, param_default.value):
-            new_value_entry.configure(style="default_v.TEntry")
-        else:
+            # Only ttk.Entry widgets support style configuration
+            if isinstance(new_value_entry, ttk.Entry):
+                new_value_entry.configure(style="default_v.TEntry")
+        # Only ttk.Entry widgets support style configuration
+        elif isinstance(new_value_entry, ttk.Entry):
             new_value_entry.configure(style="TEntry")
 
     def _create_new_value_entry(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals,too-many-statements # noqa: PLR0915
@@ -515,9 +520,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             # Convert checked keys back to a decimal value
             new_decimal_value = sum(1 << key for key in checked_keys)
             # Update new_value_entry with the new decimal value
-            ParameterEditorTable._update_new_value_entry_text(
-                event.widget, new_decimal_value, self.local_filesystem.param_default_dict.get(param_name, None)
-            )
+            # For bitmask windows, event.widget should always be ttk.Entry (not PairTupleCombobox)
+            # since bitmasks are only created for Entry widgets, not Comboboxes
+            if isinstance(event.widget, ttk.Entry):
+                ParameterEditorTable._update_new_value_entry_text(
+                    event.widget, new_decimal_value, self.local_filesystem.param_default_dict.get(param_name, None)
+                )
             self.at_least_one_param_edited = (old_value != new_decimal_value) or self.at_least_one_param_edited
             self.local_filesystem.file_parameters[self.current_file][param_name].value = new_decimal_value
             # Destroy the window
@@ -559,7 +567,19 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         main_frame.pack(expand=True, fill=tk.BOTH)
 
         # Convert current_value to a set of checked keys
-        current_value = int(event.widget.get())
+        widget = event.widget
+        # Bitmask windows are only opened for ttk.Entry widgets, not PairTupleCombobox
+        # since comboboxes have predefined values and don't use bitmasks
+        if not isinstance(widget, ttk.Entry):
+            return
+
+        current_value_str = widget.get() or "0"
+
+        try:
+            current_value = int(current_value_str)
+        except ValueError:
+            current_value = 0
+
         checked_keys = {key for key, _value in bitmask_dict.items() if (current_value >> key) & 1}
 
         for i, (key, value) in enumerate(bitmask_dict.items()):
@@ -737,7 +757,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def _on_parameter_value_change(self, event: tk.Event, current_file: str, param_name: str) -> None:
         # Get the new value from the Entry widget
-        new_value = event.widget.get_selected_key() if isinstance(event.widget, PairTupleCombobox) else event.widget.get()
+        widget = event.widget
+        if isinstance(widget, PairTupleCombobox):
+            new_value = widget.get_selected_key()
+        elif isinstance(widget, (ttk.Entry, tk.Entry)):  # it is a ttk.Entry. The tk.Entry check is just defensive programming
+            new_value = widget.get()
+        else:
+            return  # Unknown widget type
+
         try:
             old_value = self.local_filesystem.file_parameters[current_file][param_name].value
         except KeyError as e:
@@ -769,7 +796,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.local_filesystem.file_parameters[current_file][param_name].value = p
 
         # Update the displayed value in the Entry or Combobox
-        self._update_new_value_entry_text(event.widget, p, self.local_filesystem.param_default_dict.get(param_name, None))
+        if isinstance(
+            event.widget, (ttk.Entry, tk.Entry)
+        ):  # it is a ttk.Entry. The tk.Entry check is just defensive programming
+            self._update_new_value_entry_text(event.widget, p, self.local_filesystem.param_default_dict.get(param_name, None))
+        elif isinstance(event.widget, PairTupleCombobox):
+            # For PairTupleCombobox, update the style based on whether it matches default value
+            param_default = self.local_filesystem.param_default_dict.get(param_name, None)
+            self._update_combobox_style_on_selection(event.widget, param_default, event)
 
         # Update the tooltip for the change reason entry
         self._update_change_reason_entry_tooltip(param_name, p)
@@ -933,7 +967,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def _on_parameter_change_reason_change(self, event: tk.Event, current_file: str, param_name: str) -> None:
         # Get the new value from the Entry widget
-        new_value = event.widget.get()
+        widget = event.widget
+        if not isinstance(
+            widget, (ttk.Entry, tk.Entry)
+        ):  # it is a ttk.Entry. The tk.Entry check is just defensive programming
+            return
+        new_value = widget.get()
         try:
             changed = new_value != self.local_filesystem.file_parameters[current_file][param_name].comment and not (
                 new_value == "" and self.local_filesystem.file_parameters[current_file][param_name].comment is None
