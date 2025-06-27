@@ -8,10 +8,11 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+# from sys import exit as sys_exit
+import glob
+import sys
 from json import dump as json_dump
 from json import load as json_load
-
-# from sys import exit as sys_exit
 from logging import debug as logging_debug
 from logging import error as logging_error
 from os import makedirs as os_makedirs
@@ -27,11 +28,14 @@ from platformdirs import site_config_dir, user_config_dir
 
 from ardupilot_methodic_configurator import _
 
-SETTINGS_DEFAULTS: dict[str, Union[int, bool, str]] = {
+SETTINGS_DEFAULTS: dict[str, Union[int, bool, str, float]] = {
     "Format version": 1,
     "auto_open_doc_in_browser": True,
     "annotate_docs_into_param_files": False,
     "gui_complexity": "simple",  # simple or normal
+    # Motor test settings
+    "motor_test_duration": 2.5,  # Default test duration in seconds
+    "motor_test_throttle_pct": 10,  # Default throttle percentage (10%)
 }
 
 
@@ -91,7 +95,7 @@ class ProgramSettings:
         return re_match(pattern, dir_name) is not None
 
     @staticmethod
-    def __user_config_dir() -> str:
+    def _user_config_dir() -> str:
         user_config_directory = user_config_dir(
             ".ardupilot_methodic_configurator", appauthor=False, roaming=True, ensure_exists=True
         )
@@ -106,7 +110,7 @@ class ProgramSettings:
         return user_config_directory
 
     @staticmethod
-    def __site_config_dir() -> str:
+    def _site_config_dir() -> str:
         site_config_directory = site_config_dir(
             ".ardupilot_methodic_configurator", appauthor=False, version=None, multipath=False, ensure_exists=True
         )
@@ -121,18 +125,34 @@ class ProgramSettings:
         return site_config_directory
 
     @staticmethod
-    def __get_settings_as_dict() -> dict[str, Any]:
-        settings_path = os_path.join(ProgramSettings.__user_config_dir(), "settings.json")
+    def _load_settings_from_file(settings_path: str) -> dict[str, Any]:
+        """
+        Load settings from the specified file path.
 
-        settings = {}
+        Returns:
+            dict: Loaded settings or empty dict if file doesn't exist
 
+        """
         try:
             with open(settings_path, encoding="utf-8") as settings_file:
-                settings = json_load(settings_file)
+                loaded_settings: dict[str, Any] = json_load(settings_file)
+                return loaded_settings
         except FileNotFoundError:
             # If the file does not exist, it will be created later
-            pass
+            return {}
 
+    @staticmethod
+    def _ensure_default_settings(settings: dict[str, Any]) -> dict[str, Any]:
+        """
+        Ensure all required default settings are present in the settings dict.
+
+        Args:
+            settings: Existing settings dictionary
+
+        Returns:
+            dict: Settings with all defaults applied
+
+        """
         if "Format version" not in settings:
             settings["Format version"] = SETTINGS_DEFAULTS["Format version"]
 
@@ -154,62 +174,84 @@ class ProgramSettings:
         return settings
 
     @staticmethod
-    def __set_settings_from_dict(settings: dict) -> None:
-        settings_path = os_path.join(ProgramSettings.__user_config_dir(), "settings.json")
+    def _get_settings_as_dict() -> dict[str, Any]:
+        settings_path = os_path.join(ProgramSettings._user_config_dir(), "settings.json")
+        settings = ProgramSettings._load_settings_from_file(settings_path)
+        return ProgramSettings._ensure_default_settings(settings)
+
+    @staticmethod
+    def _set_settings_from_dict(settings: dict) -> None:
+        settings_path = os_path.join(ProgramSettings._user_config_dir(), "settings.json")
 
         with open(settings_path, "w", encoding="utf-8") as settings_file:
             json_dump(settings, settings_file, indent=4)
 
     @staticmethod
-    def __get_settings_config() -> tuple[dict[str, Any], str, str]:
-        settings = ProgramSettings.__get_settings_as_dict()
+    def _normalize_path_separators(path: str) -> str:
+        """
+        Normalize path separators for the current platform.
 
+        Args:
+            path: Path to normalize
+
+        Returns:
+            str: Path with normalized separators
+
+        """
         # Regular expression pattern to match single backslashes
         pattern = r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)"
+        # Replacement string
+        replacement = r"\\" if platform_system() == "Windows" else r"/"
+        return re_sub(pattern, replacement, path)
 
+    @staticmethod
+    def _get_settings_config() -> tuple[dict[str, Any], str, str]:
+        settings = ProgramSettings._get_settings_as_dict()
+        # Regular expression pattern to match single backslashes
+        pattern = r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)"
         # Replacement string
         replacement = r"\\" if platform_system() == "Windows" else r"/"
         return settings, pattern, replacement
 
     @staticmethod
     def store_recently_used_template_dirs(template_dir: str, new_base_dir: str) -> None:
-        settings, pattern, replacement = ProgramSettings.__get_settings_config()
+        settings, pattern, replacement = ProgramSettings._get_settings_config()
 
         # Update the settings with the new values
         settings["directory_selection"].update(
             {
-                "template_dir": re_sub(pattern, replacement, template_dir),
-                "new_base_dir": re_sub(pattern, replacement, new_base_dir),
+                "template_dir": ProgramSettings._normalize_path_separators(template_dir),
+                "new_base_dir": ProgramSettings._normalize_path_separators(new_base_dir),
             }
         )
 
-        ProgramSettings.__set_settings_from_dict(settings)
+        ProgramSettings._set_settings_from_dict(settings)
 
     @staticmethod
     def store_template_dir(relative_template_dir: str) -> None:
-        settings, pattern, replacement = ProgramSettings.__get_settings_config()
+        settings, pattern, replacement = ProgramSettings._get_settings_config()
 
         template_dir = os_path.join(ProgramSettings.get_templates_base_dir(), relative_template_dir)
 
         # Update the settings with the new values
-        settings["directory_selection"].update({"template_dir": re_sub(pattern, replacement, template_dir)})
+        settings["directory_selection"].update({"template_dir": ProgramSettings._normalize_path_separators(template_dir)})
 
-        ProgramSettings.__set_settings_from_dict(settings)
+        ProgramSettings._set_settings_from_dict(settings)
 
     @staticmethod
     def store_recently_used_vehicle_dir(vehicle_dir: str) -> None:
-        settings, pattern, replacement = ProgramSettings.__get_settings_config()
+        settings, pattern, replacement = ProgramSettings._get_settings_config()
 
         # Update the settings with the new values
-        settings["directory_selection"].update({"vehicle_dir": re_sub(pattern, replacement, vehicle_dir)})
+        settings["directory_selection"].update({"vehicle_dir": ProgramSettings._normalize_path_separators(vehicle_dir)})
 
-        ProgramSettings.__set_settings_from_dict(settings)
+        ProgramSettings._set_settings_from_dict(settings)
 
     @staticmethod
     def get_templates_base_dir() -> str:
         current_script_dir = os_path.dirname(os_path.abspath(__file__))
         if platform_system() == "Windows":
-            site_directory = ProgramSettings.__site_config_dir()
+            site_directory = ProgramSettings._site_config_dir()
         else:
             logging_debug("current script directory: %s", current_script_dir)
             site_directory = current_script_dir
@@ -223,12 +265,12 @@ class ProgramSettings:
             ProgramSettings.get_templates_base_dir(), "ArduCopter", "diatone_taycan_mxc", "4.5.x-params"
         )
 
-        settings_directory = ProgramSettings.__user_config_dir()
+        settings_directory = ProgramSettings._user_config_dir()
         vehicles_default_dir = os_path.join(settings_directory, "vehicles")
         if not os_path.exists(vehicles_default_dir):
             os_makedirs(vehicles_default_dir, exist_ok=True)
 
-        settings = ProgramSettings.__get_settings_as_dict()
+        settings = ProgramSettings._get_settings_as_dict()
         template_dir = settings["directory_selection"].get("template_dir", template_default_dir)
         new_base_dir = settings["directory_selection"].get("new_base_dir", vehicles_default_dir)
         vehicle_dir = settings["directory_selection"].get("vehicle_dir", vehicles_default_dir)
@@ -237,26 +279,106 @@ class ProgramSettings:
 
     @staticmethod
     def display_usage_popup(ptype: str) -> bool:
-        display_usage_popup_settings = ProgramSettings.__get_settings_as_dict().get("display_usage_popup", {})
+        display_usage_popup_settings = ProgramSettings._get_settings_as_dict().get("display_usage_popup", {})
         return bool(display_usage_popup_settings.get(ptype, True))
 
     @staticmethod
     def set_display_usage_popup(ptype: str, value: bool) -> None:
         if ptype in {"component_editor", "parameter_editor"}:
-            settings, _, _ = ProgramSettings.__get_settings_config()
+            settings, _, _ = ProgramSettings._get_settings_config()
             settings["display_usage_popup"][ptype] = value
-            ProgramSettings.__set_settings_from_dict(settings)
+            ProgramSettings._set_settings_from_dict(settings)
 
     @staticmethod
-    def get_setting(setting: str) -> Union[int, bool, str]:
+    def get_setting(setting: str) -> Union[int, bool, str, float]:
         if setting in SETTINGS_DEFAULTS:
             setting_default = SETTINGS_DEFAULTS[setting]
-            return ProgramSettings.__get_settings_as_dict().get(setting, setting_default)  # type: ignore[no-any-return]
+            return ProgramSettings._get_settings_as_dict().get(setting, setting_default)  # type: ignore[no-any-return]
         return False
 
     @staticmethod
-    def set_setting(setting: str, value: Union[int, bool, str]) -> None:
+    def set_setting(setting: str, value: Union[bool, str, float]) -> None:
         if setting in SETTINGS_DEFAULTS:
-            settings, _, _ = ProgramSettings.__get_settings_config()
+            settings, _, _ = ProgramSettings._get_settings_config()
             settings[setting] = value
-            ProgramSettings.__set_settings_from_dict(settings)
+            ProgramSettings._set_settings_from_dict(settings)
+
+    # Motor Test Settings
+
+    @staticmethod
+    def get_motor_test_duration() -> float:
+        """Get the motor test duration setting in seconds."""
+        return float(ProgramSettings.get_setting("motor_test_duration"))
+
+    @staticmethod
+    def set_motor_test_duration(duration: float) -> None:
+        """Set the motor test duration setting in seconds."""
+        if 0.1 <= duration <= 10.0:  # Reasonable safety limits
+            ProgramSettings.set_setting("motor_test_duration", duration)
+
+    @staticmethod
+    def get_motor_test_throttle_pct() -> int:
+        """Get the motor test throttle percentage setting."""
+        return int(ProgramSettings.get_setting("motor_test_throttle_pct"))
+
+    @staticmethod
+    def set_motor_test_throttle_pct(throttle: int) -> None:
+        """Set the motor test throttle percentage setting."""
+        if 1 <= throttle <= 100:  # Valid throttle range
+            ProgramSettings.set_setting("motor_test_throttle_pct", throttle)
+
+    @staticmethod
+    def motor_diagram_filepath(frame_class: int, frame_type: int) -> str:
+        """
+        Get the filepath for the motor diagram SVG file.
+
+        Args:
+            frame_class: ArduPilot frame class (1=QUAD, 2=HEXA, etc.)
+            frame_type: ArduPilot frame type (0=PLUS, 1=X, etc.)
+
+        Returns:
+            str: Absolute path to the motor diagram SVG file
+
+        """
+        # Determine the application directory (where images are stored)
+        if getattr(sys, "frozen", False):
+            # Running as compiled executable
+            application_path = os_path.dirname(sys.executable)
+        else:
+            # Running as script
+            application_path = os_path.dirname(os_path.dirname(os_path.abspath(__file__)))
+
+        images_dir = os_path.join(application_path, "ardupilot_methodic_configurator", "images")
+
+        # Generate SVG filename based on frame configuration
+        filename = f"m_{frame_class:02d}_{frame_type:02d}_*.svg"
+
+        # Search for matching SVG file (since exact naming varies)
+        matching_files = glob.glob(os_path.join(images_dir, filename))
+
+        if matching_files:
+            return matching_files[0]  # Return first match
+
+        # If no specific match found, return a default quad X diagram
+        default_diagram = os_path.join(images_dir, "m_01_01_quad_x.svg")
+        if os_path.exists(default_diagram):
+            return default_diagram
+
+        # If no diagrams exist at all, return empty string
+        return ""
+
+    @staticmethod
+    def motor_diagram_exists(frame_class: int, frame_type: int) -> bool:
+        """
+        Check if a motor diagram exists for the given frame configuration.
+
+        Args:
+            frame_class: ArduPilot frame class
+            frame_type: ArduPilot frame type
+
+        Returns:
+            bool: True if diagram exists, False otherwise
+
+        """
+        filepath = ProgramSettings.motor_diagram_filepath(frame_class, frame_type)
+        return filepath != "" and os_path.exists(filepath)
