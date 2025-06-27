@@ -47,7 +47,7 @@ jobs:
           uv pip install .[win_dist]
 
       - name: Download Inno Setup installer
-        run: curl -L -o installer.exe http://files.jrsoftware.org/is/6/innosetup-6.3.3.exe
+        run: curl -L -o installer.exe http://files.jrsoftware.org/is/6/innosetup-6.4.3.exe
 
       - name: Install Inno Setup
         run: ./installer.exe /verysilent /allusers /dir=inst
