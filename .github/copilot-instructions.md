@@ -6,6 +6,8 @@ This is a Python GUI application for configuring ArduPilot flight controller par
 
 We follow PEP 8 Python style guidelines with strict linting using ruff, pylint, mypy, and pyright. All code must pass these checks before merging.
 
+**Important**: Use ruff only for Python files (*.py). For markdown files (*.md), use `npx markdownlint-cli2` or similar markdown-specific linting tools.
+
 When writing code, use type hints for all function parameters and return values following PEP 484 standards.
 
 ## Testing Philosophy
@@ -52,3 +54,4 @@ For specific workflows, see detailed instructions in `.github/instructions/`:
 
 - [GUI Translation Instructions](instructions/gui_translation_instructions.md) - Complete guide for translating the user interface
 - [Pytest Testing Guidelines](instructions/pytest_testing_instructions.md) - Comprehensive testing standards
+- [Motor Diagrams Update Instructions](instructions/update_motor_diagrams.md) - Guide for updating motor diagram SVG files
