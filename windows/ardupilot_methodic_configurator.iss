@@ -88,8 +88,9 @@ Source: "..\ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator
 Source: "..\ardupilot_methodic_configurator\vehicle_templates\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\git_hash.txt"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\windows\ardupilot_methodic_configurator.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\ardupilot_methodic_configurator\ArduPilot_icon.png"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
-Source: "..\ardupilot_methodic_configurator\ArduPilot_logo.png"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
+Source: "..\ardupilot_methodic_configurator\images\ArduPilot_icon.png"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\images"; Flags: ignoreversion
+Source: "..\ardupilot_methodic_configurator\images\ArduPilot_logo.png"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\images"; Flags: ignoreversion
+Source: "..\ardupilot_methodic_configurator\images\*.svg"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\images"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\configuration_steps_*.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\vehicle_components_schema.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\LICENSES\*.*"; DestDir: "{app}\LICENSES"; Flags: ignoreversion
