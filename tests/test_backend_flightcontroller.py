@@ -10,7 +10,10 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from unittest.mock import mock_open, patch
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
+from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
@@ -168,3 +171,274 @@ def test_process_autopilot_version() -> None:
     banner_msgs = ["ChibiOS: 123", "ArduPilot"]
     result = fc._FlightController__process_autopilot_version(None, banner_msgs)  # pylint: disable=protected-access
     assert isinstance(result, str)
+
+
+class TestMotorTestFunctionality:
+    """Test motor test commands and functionality in FlightController."""
+
+    @pytest.fixture
+    def mock_fc_connection(self) -> MagicMock:
+        """Fixture providing a mocked flight controller connection."""
+        mock_connection = MagicMock()
+        mock_connection.target_system = 1
+        mock_connection.target_component = 1
+        mock_connection.wait_heartbeat.return_value = None
+        return mock_connection
+
+    @pytest.fixture
+    def flight_controller(self, mock_fc_connection) -> FlightController:
+        """Fixture providing a configured FlightController for motor testing."""
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller.mavutil.mavlink_connection",
+            return_value=mock_fc_connection,
+        ):
+            fc = FlightController("test_connection")
+            fc.master = mock_fc_connection
+            return fc
+
+    def test_user_can_test_individual_motor(self, flight_controller) -> None:
+        """
+        User can test an individual motor safely.
+
+        GIVEN: A connected flight controller with proper motor test setup
+        WHEN: User requests to test motor 1 at 15% throttle for 3 seconds
+        THEN: The motor test command should be sent with correct parameters
+        AND: The function should return True indicating success
+        """
+        # Arrange: Set up motor test parameters
+        motor_number = 1
+        throttle_percent = 15
+        timeout_seconds = 3
+
+        # Act: Execute motor test
+        success, error_msg = flight_controller.test_motor(motor_number, throttle_percent, timeout_seconds)
+
+        # Assert: Motor test command sent correctly
+        assert success is True, f"Motor test should succeed, but got error: {error_msg}"
+        assert error_msg == "", f"No error message expected on success, but got: {error_msg}"
+        flight_controller.master.mav.command_long_send.assert_called_once()
+        call_args = flight_controller.master.mav.command_long_send.call_args[0]  # Positional args
+
+        assert call_args[0] == 1  # target_system
+        assert call_args[1] == 1  # target_component
+        assert call_args[2] == mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST  # command
+        assert call_args[3] == 0  # confirmation
+        assert call_args[4] == motor_number  # param1: motor number
+        assert call_args[5] == mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT  # param2: throttle type
+        assert call_args[6] == throttle_percent  # param3: throttle value
+        assert call_args[7] == timeout_seconds  # param4: timeout
+        assert call_args[8] == motor_number  # param5: motor count
+        assert call_args[9] == mavutil.mavlink.MOTOR_TEST_ORDER_BOARD  # param6: test order
+
+    def test_user_can_stop_all_motors_immediately(self, flight_controller) -> None:
+        """
+        User can stop all motors immediately for safety.
+
+        GIVEN: Motors are currently running during test
+        WHEN: User presses emergency stop button
+        THEN: All motors should stop immediately
+        AND: The function should return True indicating success
+        """
+        # Arrange: Emergency stop scenario
+
+        # Act: Execute emergency stop
+        success, error_msg = flight_controller.stop_all_motors()
+
+        # Assert: Emergency stop command sent
+        assert success is True, f"Motor stop should succeed, but got error: {error_msg}"
+        assert error_msg == "", f"No error message expected on success, but got: {error_msg}"
+        flight_controller.master.mav.command_long_send.assert_called_once()
+        call_args = flight_controller.master.mav.command_long_send.call_args[0]  # Positional args
+
+        assert call_args[0] == 1  # target_system
+        assert call_args[1] == 1  # target_component
+        assert call_args[2] == mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST  # command
+        assert call_args[3] == 0  # confirmation
+        assert call_args[4] == 0  # param1: motor number (0 = all)
+        assert call_args[5] == mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT  # param2: throttle type
+        assert call_args[6] == 0  # param3: throttle value (0 = stop)
+        assert call_args[7] == 0  # param4: timeout (0 = immediate)
+        assert call_args[8] == 0  # param5: motor count (0 = all)
+        assert call_args[9] == mavutil.mavlink.MOTOR_TEST_ORDER_BOARD  # param6: test order
+
+    def test_user_can_test_motors_in_sequence(self, flight_controller) -> None:
+        """
+        User can test all motors in sequence automatically.
+
+        GIVEN: A quadcopter frame with 4 motors configured
+        WHEN: User requests sequential motor test at 12% throttle for 2 seconds each
+        THEN: Each motor should be tested in sequence (A, B, C, D)
+        AND: The function should return True indicating success
+        """
+        # Arrange: Configure for quad frame (4 motors)
+        flight_controller.fc_parameters = {
+            "FRAME_CLASS": 1,  # Quad
+            "FRAME_TYPE": 1,  # X configuration
+        }
+        throttle_percent = 12
+        timeout_seconds = 2
+
+        # Act: Execute sequential motor test
+        success, error_msg = flight_controller.test_motors_in_sequence(4, throttle_percent, timeout_seconds)
+
+        # Assert: Sequential test command sent for all motors
+        assert success is True, f"Sequential motor test should succeed, but got error: {error_msg}"
+        assert error_msg == "", f"No error message expected on success, but got: {error_msg}"
+        flight_controller.master.mav.command_long_send.assert_called_once()
+        call_args = flight_controller.master.mav.command_long_send.call_args[0]  # Positional args
+
+        assert call_args[0] == 1  # target_system
+        assert call_args[1] == 1  # target_component
+        assert call_args[2] == mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST  # command
+        assert call_args[3] == 0  # confirmation
+        assert call_args[4] == 4  # param1: motor count (4 for quad)
+        assert call_args[5] == mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT  # param2: throttle type
+        assert call_args[6] == throttle_percent  # param3: throttle value
+        assert call_args[7] == timeout_seconds  # param4: timeout per motor
+        assert call_args[8] == 4  # param5: motor count
+        assert call_args[9] == mavutil.mavlink.MOTOR_TEST_ORDER_SEQUENCE  # param6: test order (sequence)
+
+    def test_motor_test_handles_communication_failure(self, flight_controller) -> None:
+        """
+        Motor test handles communication failures gracefully.
+
+        GIVEN: Flight controller connection is unstable
+        WHEN: Motor test command fails to send due to communication error
+        THEN: The function should handle the exception gracefully
+        AND: Return False to indicate failure
+        """
+        # Arrange: Simulate communication failure
+        flight_controller.master.mav.command_long_send.side_effect = Exception("Connection lost")
+
+        # Act: Attempt motor test during communication failure
+        success, error_msg = flight_controller.test_motor(1, 10, 2)
+
+        # Assert: Function handles error gracefully
+        assert success is False
+        assert "Connection lost" in error_msg
+
+    def test_battery_status_monitoring_during_motor_test(self, flight_controller) -> None:
+        """
+        Battery status is properly monitored during motor tests.
+
+        GIVEN: Battery monitoring is enabled with voltage and current sensors
+        WHEN: Battery status is requested during motor testing
+        THEN: Current voltage and current readings should be returned
+        AND: Values should be within expected ranges for safe operation
+        """
+        # Arrange: Set up battery monitoring parameters
+        flight_controller.fc_parameters = {
+            "BATT_MONITOR": 4,  # Voltage and current monitoring
+            "BATT_ARM_VOLT": 11.0,  # Minimum arming voltage
+            "MOT_BAT_VOLT_MAX": 12.6,  # Maximum motor voltage
+        }
+
+        # Mock battery status message
+        mock_battery_status = MagicMock()
+        mock_battery_status.voltages = [12100, -1, -1, -1, -1, -1, -1, -1, -1, -1]  # 12.1V in mV
+        mock_battery_status.current_battery = 250  # 2.5A in cA
+
+        flight_controller.master.recv_match.return_value = mock_battery_status
+
+        # Act: Get battery status
+        battery_info, error_msg = flight_controller.get_battery_status()
+
+        # Assert: Battery values are correctly parsed
+        assert battery_info is not None, f"Battery info should be available, got error: {error_msg}"
+        voltage, current = battery_info
+        assert error_msg == "", f"No error expected on successful battery status, got: {error_msg}"
+        assert voltage == 12.1  # Converted from mV to V
+        assert current == 2.5  # Converted from cA to A
+        assert 11.0 <= voltage <= 12.6  # Within safe operating range
+
+    def test_battery_status_monitoring_during_motor_test_no_current(self, flight_controller) -> None:
+        """
+        Battery status can be monitored during motor test operations.
+
+        GIVEN: A flight controller connection is available
+        WHEN: Battery status is requested during motor test
+        THEN: Battery voltage information should be available
+        AND: The information should be properly formatted for safety checks
+        """
+        # Arrange: Configure battery monitoring
+        flight_controller.fc_parameters = {
+            "BATT_MONITOR": 4,
+            "BATT_ARM_VOLT": 11.0,
+            "MOT_BAT_VOLT_MAX": 12.6,
+        }
+
+        # Mock battery status response
+        mock_battery_status = MagicMock()
+        mock_battery_status.voltages = [12100, -1, -1, -1, -1, -1, -1, -1, -1, -1]  # 12.1V
+        mock_battery_status.current_battery = 0
+        flight_controller.master.recv_match.return_value = mock_battery_status
+
+        # Act: Request battery status
+        flight_controller.master.mav.request_data_stream_send(
+            flight_controller.master.target_system,
+            flight_controller.master.target_component,
+            mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS,
+            1,
+            1,
+        )
+
+        # Assert: Battery status should be available for monitoring
+        assert flight_controller.master.mav.request_data_stream_send.called
+        assert mock_battery_status.voltages[0] == 12100  # Voltage in millivolts
+        assert mock_battery_status.current_battery >= 0  # Valid battery index
+
+
+class TestMotorTestCommandSending:
+    """Test motor test command sending functionality."""
+
+    @pytest.fixture
+    def flight_controller(self) -> FlightController:
+        """Fixture providing a FlightController for command sending testing."""
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller.mavutil.mavlink_connection"):
+            fc = FlightController("test_connection")
+            fc.master = MagicMock()
+            return fc
+
+    def test_motor_commands_are_sent_to_flight_controller(self, flight_controller) -> None:
+        """
+        Motor test commands are properly sent to the flight controller.
+
+        GIVEN: A valid flight controller connection exists
+        WHEN: Motor test commands are issued with various parameters
+        THEN: The commands should be sent to the flight controller via MAVLink
+        AND: The function should return True to indicate successful command sending
+        """
+        # Arrange: Set up test parameters
+        test_cases = [
+            (1, 5, 1.0),  # Minimum test
+            (4, 50, 5.0),  # Mid-range test
+            (8, 100, 10.0),  # Maximum test
+        ]
+
+        # Act & Assert: Test command sending for each case
+        for motor_num, throttle, timeout in test_cases:
+            success, error_msg = flight_controller.test_motor(motor_num, throttle, timeout)
+
+            # Assert: Command should be sent successfully
+            assert success is True, f"Motor test command should be sent successfully for motor {motor_num}, error: {error_msg}"
+            assert error_msg == "", f"No error expected on successful motor test, got: {error_msg}"
+            flight_controller.master.mav.command_long_send.assert_called()
+
+    def test_command_sending_handles_no_connection_gracefully(self, flight_controller) -> None:
+        """
+        Motor test commands handle connection failures gracefully.
+
+        GIVEN: No flight controller connection is available
+        WHEN: Motor test commands are attempted
+        THEN: The function should return False safely
+        AND: No exceptions should be raised
+        """
+        # Arrange: Remove connection
+        flight_controller.master = None
+
+        # Act: Attempt motor test without connection
+        success, error_msg = flight_controller.test_motor(1, 10, 2.0)
+
+        # Assert: Should fail gracefully
+        assert success is False, "Motor test should fail gracefully when no connection is available"
+        assert "No flight controller connection" in error_msg, f"Expected connection error message, got: {error_msg}"

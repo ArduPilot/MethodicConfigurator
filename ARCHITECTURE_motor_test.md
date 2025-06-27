@@ -70,6 +70,7 @@ It allows users to test motor functionality, verify motor order and direction, a
    - Keyboard shortcuts for critical functions
 
 3. **Reliability**
+   - Active flight controller connection required for all motor testing operations
    - Robust error handling for communication failures
    - Parameter validation and bounds checking
    - Graceful degradation when features unavailable
@@ -100,16 +101,31 @@ The motor test sub-application follows the Model-View separation pattern establi
 └─────────────────┘    └──────────────────────┘
                                 │
                                 ▼
-                       ┌──────────────────────┐
-                       │ Flight Controller    │
-                       │                      │
-                       │ backend_flight       │
-                       │ controller.py        │
-                       │                      │
-                       │ - MAVLink Comm       │
-                       │ - Parameter I/O      │
-                       │ - Motor Commands     │
-                       └──────────────────────┘
+                ┌───────────────────────────────────────┐
+                │         Backend Layer                 │
+                │                                       │
+                │ ┌─────────────────────────────────────┤
+                │ │ backend_flightcontroller.py         │
+                │ │ - Motor test commands (individual,   │
+                │ │   all, sequence, emergency stop)    │
+                │ │ - Battery monitoring & safety        │
+                │ │ │ - Frame detection & motor count    │
+                │ │ - MAVLink communication              │
+                │ │ - Parameter read/write               │
+                │ └─────────────────────────────────────┤
+                │ ┌─────────────────────────────────────┤
+                │ │ backend_filesystem.py                │
+                │ │ - Safety validation logic            │
+                │ │ - Frame configuration support        │
+                │ │ - Parameter documentation metadata   │
+                │ └─────────────────────────────────────┤
+                │ ┌─────────────────────────────────────┤
+                │ │ backend_filesystem_program_settings.py │
+                │ │ - Motor diagram SVG file access      │
+                │ │ - Settings persistence (test duration)│
+                │ │ - Application configuration          │
+                │ └─────────────────────────────────────┤
+                └───────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
@@ -124,12 +140,12 @@ The motor test sub-application follows the Model-View separation pattern establi
 - Battery status monitoring (BATT1 voltage and current when BATT_MONITOR != 0)
 - Voltage threshold validation (BATT_ARM_VOLT and MOT_BAT_VOLT_MAX thresholds)
 - Business logic validation
-- Flight controller communication abstraction
+- Backend coordination and abstraction
 
 **Key Methods:**
 
 ```python
-def __init__(self, flight_controller: FlightController) -> None
+def __init__(self, flight_controller: FlightController, filesystem: LocalFilesystem, settings: ProgramSettings) -> None
 def get_motor_count(self) -> int
 def get_motor_labels(self) -> list[str]
 def get_battery_status(self) -> tuple[float, float] | None  # voltage, current or None if BATT_MONITOR == 0
@@ -138,14 +154,72 @@ def is_battery_monitoring_enabled(self) -> bool  # True if BATT_MONITOR != 0
 def set_parameter(self, param_name: str, value: float) -> bool
 def test_motor(self, motor_number: int, throttle_percent: int, timeout_seconds: int) -> None
 def stop_all_motors(self) -> None
+def get_motor_diagram_path(self) -> str
 ```
 
 **Data Attributes:**
 
-- `flight_controller`: Backend communication interface
+- `flight_controller`: Backend flight controller interface
+- `filesystem`: Backend filesystem interface
+- `settings`: Backend program settings interface
 - `frame_class`: Detected vehicle frame class
 - `frame_type`: Detected vehicle frame type
 - `motor_count`: Number of motors for current frame
+
+#### Backend Layer Distribution
+
+The motor test sub-application backend logic is distributed across three specialized backend modules:
+
+##### `backend_flightcontroller.py` - Flight Controller Communication
+
+**Responsibilities:**
+
+- Direct MAVLink communication with flight controller
+- Motor testing command execution
+- Real-time battery monitoring and telemetry
+- Parameter read/write operations
+- Flight controller status monitoring
+
+**Key Motor Test Methods:**
+
+```python
+def test_motor(self, motor_number: int, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]
+def test_all_motors(self, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]
+def test_motors_in_sequence(self, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]
+def stop_all_motors(self) -> tuple[bool, str]
+def get_battery_status(self) -> tuple[Union[tuple[float, float], None], str]
+def get_voltage_thresholds(self) -> tuple[float, float]
+def is_battery_monitoring_enabled(self) -> bool
+def get_frame_info(self) -> tuple[int, int]
+def get_motor_count_from_frame(self) -> int
+```
+
+##### `backend_filesystem.py` - Safety & Parameter Support
+
+**Responsibilities:**
+
+- Motor testing safety validation logic
+- Parameter default values and bounds checking
+- Frame configuration from parameter metadata
+- Parameter documentation access
+
+##### `backend_filesystem_program_settings.py` - Diagrams & Settings
+
+**Responsibilities:**
+
+- Motor diagram SVG file access and validation
+- User settings persistence (test duration, preferences)
+- Application configuration management
+
+**Key Motor Test Methods:**
+
+```python
+@staticmethod
+def motor_diagram_filepath(frame_class: int, frame_type: int) -> str
+@staticmethod
+def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
+# Settings persistence methods (protected methods for test duration, etc.)
+```
 
 #### GUI Layer (`frontend_tkinter_motor_test.py`)
 
@@ -310,11 +384,11 @@ Following project pytest guidelines with BDD structure:
 @pytest.fixture
 def mock_flight_controller() -> MagicMock:
     """Fixture providing mocked flight controller with realistic responses."""
-    
+
 @pytest.fixture
 def motor_test_data_model(mock_flight_controller) -> MotorTestDataModel:
     """Fixture providing configured motor test data model."""
-    
+
 @pytest.fixture
 def motor_test_window(motor_test_data_model) -> MotorTestWindow:
     """Fixture providing configured motor test GUI window."""
@@ -322,7 +396,7 @@ def motor_test_window(motor_test_data_model) -> MotorTestWindow:
 def test_user_can_test_individual_motor(self, motor_test_window) -> None:
     """
     User can test individual motors safely.
-    
+
     GIVEN: A configured vehicle with detected frame type
     WHEN: User clicks a motor test button
     THEN: The corresponding motor should activate with feedback
@@ -367,6 +441,32 @@ The motor test sub-application integrates with the main ArduPilot Methodic Confi
 3. **Parameter Context**: Reads current vehicle configuration (LocalFilesystem)
 4. **Logging Integration**: Uses application logging framework
 5. **Settings Persistence**: Saves user settings (test duration in ProgramSettings)
+
+### Backend Architecture Integration
+
+The motor test sub-application leverages the existing backend infrastructure without requiring additional backend modules:
+
+#### Flight Controller Backend Integration (`backend_flightcontroller.py`)
+
+- **Existing Infrastructure**: Utilizes the established MAVLink connection and parameter system
+- **Motor Commands**: All motor testing functionality is already implemented with proper error handling
+- **Battery Monitoring**: Real-time telemetry integration with safety threshold validation
+- **Frame Detection**: Automatic vehicle configuration detection from flight controller parameters
+
+#### Filesystem Backend Integration (`backend_filesystem.py`)
+
+- **Safety Framework**: Leverages existing parameter validation and safety check infrastructure
+- **Configuration Management**: Uses established parameter default and metadata systems
+- **Documentation Access**: Integrates with existing parameter documentation framework
+
+#### Program Settings Integration (`backend_filesystem_program_settings.py`)
+
+- **Motor Diagrams**: Comprehensive SVG diagram support for all ArduPilot frame types
+- **Settings Persistence**: Consistent user preference storage using established patterns
+- **Resource Management**: Proper handling of application resources and file paths
+
+This architecture demonstrates the project's modular design - new sub-applications can be implemented by primarily creating frontend
+and data model layers while leveraging the robust, tested backend infrastructure that already exists.
 
 ### ArduPilot Integration
 
