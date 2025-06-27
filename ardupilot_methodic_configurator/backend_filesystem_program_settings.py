@@ -50,12 +50,12 @@ class ProgramSettings:
     @staticmethod
     def application_icon_filepath() -> str:
         script_dir = os_path.dirname(os_path.abspath(__file__))
-        return os_path.join(script_dir, "ArduPilot_icon.png")
+        return os_path.join(script_dir, "images", "ArduPilot_icon.png")
 
     @staticmethod
     def application_logo_filepath() -> str:
         script_dir = os_path.dirname(os_path.abspath(__file__))
-        return os_path.join(script_dir, "ArduPilot_logo.png")
+        return os_path.join(script_dir, "images", "ArduPilot_logo.png")
 
     @staticmethod
     def create_new_vehicle_dir(new_vehicle_dir: str) -> str:

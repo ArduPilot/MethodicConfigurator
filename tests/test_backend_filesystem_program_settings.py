@@ -31,14 +31,14 @@ class TestProgramSettings:
         ):
             mock_dirname.return_value = "/mock/dir"
             mock_abspath.return_value = "/mock/dir/file"
-            mock_join.return_value = "/mock/dir/ArduPilot_icon.png"
+            mock_join.return_value = "/mock/dir/images/ArduPilot_icon.png"
 
             result = ProgramSettings.application_icon_filepath()
 
             mock_dirname.assert_called_once()
             mock_abspath.assert_called_once()
-            mock_join.assert_called_once_with("/mock/dir", "ArduPilot_icon.png")
-            assert result == "/mock/dir/ArduPilot_icon.png"
+            mock_join.assert_called_once_with("/mock/dir", "images", "ArduPilot_icon.png")
+            assert result == "/mock/dir/images/ArduPilot_icon.png"
 
     def test_application_logo_filepath(self) -> None:
         with (
@@ -48,14 +48,14 @@ class TestProgramSettings:
         ):
             mock_dirname.return_value = "/mock/dir"
             mock_abspath.return_value = "/mock/dir/file"
-            mock_join.return_value = "/mock/dir/ArduPilot_logo.png"
+            mock_join.return_value = "/mock/dir/images/ArduPilot_logo.png"
 
             result = ProgramSettings.application_logo_filepath()
 
             mock_dirname.assert_called_once()
             mock_abspath.assert_called_once()
-            mock_join.assert_called_once_with("/mock/dir", "ArduPilot_logo.png")
-            assert result == "/mock/dir/ArduPilot_logo.png"
+            mock_join.assert_called_once_with("/mock/dir", "images", "ArduPilot_logo.png")
+            assert result == "/mock/dir/images/ArduPilot_logo.png"
 
     def test_create_new_vehicle_dir_already_exists(self) -> None:
         with patch("os.path.exists", return_value=True):
