@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Vehicle Components JSON Schema data model validation tests.
+Vehicle components JSON schema tests.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -23,6 +23,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema i
 class TestVehicleComponentsJsonSchema:
     """Test Vehicle Components JSON Schema business logic and behavior."""
 
+    # pylint: disable=duplicate-code
     @pytest.fixture
     def minimal_schema(self) -> dict[str, Any]:
         """Fixture providing a minimal realistic schema for testing."""
@@ -173,6 +174,8 @@ class TestVehicleComponentsJsonSchema:
                 },
             },
         }
+
+    # pylint: enable=duplicate-code
 
     @pytest.fixture
     def json_schema_instance(self, minimal_schema) -> VehicleComponentsJsonSchema:
@@ -545,6 +548,7 @@ class TestVehicleComponentsJsonSchema:
         THEN: All errors should be handled gracefully with appropriate logging
         """
         # Test schema modification with exception in MCU field access
+        # pylint: disable=duplicate-code
         problematic_schema = {
             "definitions": {
                 "flightController": {
@@ -562,6 +566,7 @@ class TestVehicleComponentsJsonSchema:
                 }
             }
         }
+        # pylint: enable=duplicate-code
 
         json_schema = VehicleComponentsJsonSchema(problematic_schema)
 

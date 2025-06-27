@@ -1,0 +1,210 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ardupilot.org/schemas/AP_Motors_test.json",
+  "title": "ArduPilot Motor Test Configuration Schema",
+  "description": "JSON Schema for validating ArduPilot motor test configuration data that defines motor layouts for different frame classes and types",
+  "type": "object",
+  "required": ["Version", "layouts"],
+  "properties": {
+    "Version": {
+      "type": "string",
+      "description": "Version string identifying the AP_Motors library test format",
+      "pattern": "^AP_Motors library test ver [0-9]+\\.[0-9]+$",
+      "examples": ["AP_Motors library test ver 1.2"]
+    },
+    "layouts": {
+      "type": "array",
+      "description": "Array of motor layout configurations for different frame types",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/layout"
+      }
+    }
+  },
+  "$defs": {
+    "layout": {
+      "type": "object",
+      "description": "Motor layout configuration for a specific frame class and type combination",
+      "required": ["Class", "ClassName", "Type", "TypeName", "motors"],
+      "properties": {
+        "Class": {
+          "type": "integer",
+          "description": "Frame class identifier (FRAME_CLASS parameter value)",
+          "minimum": 1,
+          "maximum": 50,
+          "examples": [1, 2, 3, 4, 5, 7, 10, 12, 14]
+        },
+        "ClassName": {
+          "type": "string",
+          "description": "Human-readable frame class name",
+          "enum": [
+            "QUAD",
+            "HEXA", 
+            "OCTA",
+            "OCTAQUAD",
+            "Y6",
+            "TRI",
+            "SINGLE",
+            "COAX",
+            "BICOPTER",
+            "DODECAHEXA",
+            "HELI_QUAD",
+            "DECA"
+          ],
+          "examples": ["QUAD", "HEXA", "OCTA"]
+        },
+        "Type": {
+          "type": "integer",
+          "description": "Frame type identifier (FRAME_TYPE parameter value)",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "TypeName": {
+          "type": "string",
+          "description": "Human-readable frame type name",
+          "examples": ["PLUS", "X", "V", "H", "VTAIL", "ATAIL", "PLUSREV", "BF_X", "DJI_X", "CW_X", "NYT_PLUS", "NYT_X", "X_REV", "default"]
+        },
+        "motors": {
+          "type": "array",
+          "description": "Array of motor definitions for this frame layout",
+          "minItems": 0,
+          "items": {
+            "$ref": "#/$defs/motor"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "motor": {
+      "type": "object",
+      "description": "Individual motor configuration including position, rotation direction, and test order",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/completeMotor"
+        },
+        {
+          "$ref": "#/$defs/incompleteMotor"
+        }
+      ]
+    },
+    "completeMotor": {
+      "type": "object",
+      "description": "Complete motor definition with all required properties",
+      "required": ["Number", "TestOrder", "Rotation", "Roll", "Pitch"],
+      "properties": {
+        "Number": {
+          "type": "integer",
+          "description": "Motor number/identifier (1-based indexing)",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "TestOrder": {
+          "type": "integer",
+          "description": "Order in which motor should be tested (1-based indexing)",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "Rotation": {
+          "type": "string",
+          "description": "Motor rotation direction",
+          "enum": ["CW", "CCW", "?"],
+          "examples": ["CW", "CCW"]
+        },
+        "Roll": {
+          "type": "number",
+          "description": "Roll axis contribution factor (-1.0 to 1.0)",
+          "minimum": -1.0,
+          "maximum": 1.0
+        },
+        "Pitch": {
+          "type": "number",
+          "description": "Pitch axis contribution factor (-1.0 to 1.0)",
+          "minimum": -1.0,
+          "maximum": 1.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "incompleteMotor": {
+      "type": "object",
+      "description": "Incomplete motor definition (may be missing some properties due to data corruption or incomplete generation)",
+      "properties": {
+        "Number": {
+          "type": "integer",
+          "description": "Motor number/identifier (1-based indexing)",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "TestOrder": {
+          "type": "integer",
+          "description": "Order in which motor should be tested (1-based indexing)",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "Rotation": {
+          "type": "string",
+          "description": "Motor rotation direction",
+          "enum": ["CW", "CCW", "?"],
+          "examples": ["CW", "CCW"]
+        },
+        "Roll": {
+          "type": "number",
+          "description": "Roll axis contribution factor (-1.0 to 1.0)",
+          "minimum": -1.0,
+          "maximum": 1.0
+        },
+        "Pitch": {
+          "type": "number",
+          "description": "Pitch axis contribution factor (-1.0 to 1.0)",
+          "minimum": -1.0,
+          "maximum": 1.0
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    }
+  },
+  "examples": [
+    {
+      "Version": "AP_Motors library test ver 1.2",
+      "layouts": [
+        {
+          "Class": 1,
+          "ClassName": "QUAD",
+          "Type": 0,
+          "TypeName": "PLUS",
+          "motors": [
+            {
+              "Number": 1,
+              "TestOrder": 2,
+              "Rotation": "CCW",
+              "Roll": -0.5,
+              "Pitch": 0.0
+            },
+            {
+              "Number": 2,
+              "TestOrder": 4,
+              "Rotation": "CCW",
+              "Roll": 0.5,
+              "Pitch": 0.0
+            },
+            {
+              "Number": 3,
+              "TestOrder": 1,
+              "Rotation": "CW",
+              "Roll": 0.0,
+              "Pitch": 0.5
+            },
+            {
+              "Number": 4,
+              "TestOrder": 3,
+              "Rotation": "CW",
+              "Roll": 0.0,
+              "Pitch": -0.5
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
