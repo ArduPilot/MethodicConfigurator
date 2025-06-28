@@ -1151,7 +1151,11 @@ class TestComponentEditorIntegration:
 
         # Arrange: Mock arguments with skip option
         application_state.args.skip_component_editor = True
-        application_state.vehicle_dir_window = MagicMock()
+
+        # Mock vehicle_dir_window to ensure skip condition is met
+        # The skip condition requires that NOT(vehicle_dir_window AND configuration_template AND blank_component_data.get())
+        # So we need to set vehicle_dir_window to None or make one of the other conditions False
+        application_state.vehicle_dir_window = None
 
         # Mock local filesystem with vehicle_type
         mock_filesystem = MagicMock()

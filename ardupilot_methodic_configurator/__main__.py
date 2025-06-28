@@ -317,7 +317,12 @@ def component_editor(state: ApplicationState) -> None:
     )
 
     # Handle skip component editor option
-    if state.args.skip_component_editor:
+    should_skip_editor = state.args.skip_component_editor and not (
+        state.vehicle_dir_window
+        and state.vehicle_dir_window.configuration_template
+        and state.vehicle_dir_window.blank_component_data.get()
+    )
+    if should_skip_editor:
         component_editor_window.root.after(10, component_editor_window.root.destroy)
     elif should_open_firmware_documentation(state.flight_controller):
         open_firmware_documentation(state.flight_controller.info.firmware_type)
