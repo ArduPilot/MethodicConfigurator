@@ -148,13 +148,26 @@ The motor test sub-application follows the Model-View separation pattern establi
 def __init__(self, flight_controller: FlightController, filesystem: LocalFilesystem, settings: ProgramSettings) -> None
 def get_motor_count(self) -> int
 def get_motor_labels(self) -> list[str]
-def get_battery_status(self) -> tuple[float, float] | None  # voltage, current or None if BATT_MONITOR == 0
+def get_motor_numbers(self) -> list[int]
+def get_battery_status(self) -> Optional[tuple[float, float]]  # voltage, current or None if BATT_MONITOR == 0
 def get_voltage_status(self) -> str  # "safe", "critical" or "disabled"
 def is_battery_monitoring_enabled(self) -> bool  # True if BATT_MONITOR != 0
-def set_parameter(self, param_name: str, value: float) -> bool
-def test_motor(self, motor_number: int, throttle_percent: int, timeout_seconds: int) -> None
-def stop_all_motors(self) -> None
+def is_motor_test_safe(self) -> tuple[bool, str]  # (is_safe, reason)
+def set_parameter(self, param_name: str, value: float) -> tuple[bool, str]  # (success, error_message)
+def get_parameter(self, param_name: str) -> Optional[float]
+def test_motor(self, motor_number: int, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]
+def test_all_motors(self, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]
+def test_motors_in_sequence(self, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]
+def stop_all_motors(self) -> tuple[bool, str]
 def get_motor_diagram_path(self) -> str
+def motor_diagram_exists(self) -> bool
+def get_test_duration(self) -> float
+def set_test_duration(self, duration: float) -> bool
+def get_test_throttle_pct(self) -> int
+def set_test_throttle_pct(self, throttle: int) -> bool
+def update_frame_configuration(self, frame_class: int, frame_type: int) -> tuple[bool, str]
+def get_frame_options(self) -> dict[str, dict[int, str]]
+def refresh_connection_status(self) -> bool
 ```
 
 **Data Attributes:**
