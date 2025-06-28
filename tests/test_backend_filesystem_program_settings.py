@@ -654,6 +654,7 @@ class TestGenericSettingsAccess:
             ProgramSettings.set_setting("gui_complexity", "simple")
 
             # Assert: Valid setting is updated and saved
+            # pylint: disable=duplicate-code
             expected_settings = {
                 "Format version": 1,
                 "auto_open_doc_in_browser": True,
@@ -662,6 +663,7 @@ class TestGenericSettingsAccess:
                 "motor_test_duration": 2.5,
                 "motor_test_throttle_pct": 10,
             }
+            # pylint: enable=duplicate-code
             mock_set_settings.assert_called_with(expected_settings)
 
             # Act: Try to set invalid setting
@@ -982,6 +984,7 @@ class TestGUIComplexitySettings:
                 "replacement",
             )
             ProgramSettings.set_setting("gui_complexity", "simple")
+            # pylint: disable=duplicate-code
             expected_settings = {
                 "Format version": 1,
                 "auto_open_doc_in_browser": True,
@@ -990,6 +993,7 @@ class TestGUIComplexitySettings:
                 "motor_test_duration": 2.5,
                 "motor_test_throttle_pct": 10,
             }
+            # pylint: disable=duplicate-code
             mock_set_settings.assert_called_with(expected_settings)
 
 

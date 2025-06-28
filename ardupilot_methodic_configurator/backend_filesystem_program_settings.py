@@ -28,6 +28,7 @@ from platformdirs import site_config_dir, user_config_dir
 
 from ardupilot_methodic_configurator import _
 
+# pylint: disable=duplicate-code
 SETTINGS_DEFAULTS: dict[str, Union[int, bool, str, float]] = {
     "Format version": 1,
     "auto_open_doc_in_browser": True,
@@ -37,6 +38,7 @@ SETTINGS_DEFAULTS: dict[str, Union[int, bool, str, float]] = {
     "motor_test_duration": 2.5,  # Default test duration in seconds
     "motor_test_throttle_pct": 10,  # Default throttle percentage (10%)
 }
+# pylint: disable=duplicate-code
 
 
 class ProgramSettings:
