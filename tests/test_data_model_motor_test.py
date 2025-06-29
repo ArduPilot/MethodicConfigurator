@@ -19,6 +19,9 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
 
+# pylint: disable=too-many-lines,redefined-outer-name
+
+
 # ==================== FIXTURES ====================
 
 
@@ -942,15 +945,17 @@ class TestErrorHandlingAndEdgeCases:
         WHEN: An exception occurs during frame configuration update
         THEN: The exception should be caught and re-raised with proper logging
         """
-        # Arrange: Mock an exception during frame configuration
-        with patch.object(motor_test_model, "_update_frame_configuration", side_effect=Exception("Test exception")):
+        with (
+            # Arrange: Mock an exception during frame configuration
+            patch.object(motor_test_model, "_update_frame_configuration", side_effect=Exception("Test exception")),
             # Act & Assert: Exception should be caught and re-raised
-            with pytest.raises(Exception, match="Test exception"):
-                motor_test_model.__init__(
-                    flight_controller=motor_test_model.flight_controller,
-                    filesystem=motor_test_model.filesystem,
-                    settings=motor_test_model.settings,
-                )
+            pytest.raises(Exception, match="Test exception"),
+        ):
+            motor_test_model(
+                flight_controller=motor_test_model.flight_controller,
+                filesystem=motor_test_model.filesystem,
+                settings=motor_test_model.settings,
+            )
 
     def test_battery_monitoring_disabled_check(self, motor_test_model) -> None:
         """

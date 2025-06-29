@@ -21,7 +21,7 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 
 
-class MotorTestDataModel:
+class MotorTestDataModel:  # pylint: disable=too-many-public-methods
     """
     Data model for motor test functionality.
 
@@ -185,7 +185,7 @@ class MotorTestDataModel:
         if battery_status is None:
             return "unavailable"
 
-        voltage, current = battery_status
+        voltage, _current = battery_status
         min_voltage, max_voltage = self.get_voltage_thresholds()
 
         if min_voltage < voltage < max_voltage:
@@ -218,7 +218,7 @@ class MotorTestDataModel:
         voltage, _current = battery_status
         min_voltage, max_voltage = self.get_voltage_thresholds()
 
-        if not (min_voltage < voltage < max_voltage):
+        if not min_voltage < voltage < max_voltage:
             return False, _("Battery voltage %(voltage).1fV is outside safe range (%(min).1fV - %(max).1fV)") % {
                 "voltage": voltage,
                 "min": min_voltage,
