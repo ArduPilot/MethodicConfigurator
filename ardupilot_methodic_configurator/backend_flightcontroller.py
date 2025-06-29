@@ -545,6 +545,321 @@ class FlightController:
             logging_debug("ComPort - %s, Description: %s", port.device, port.description)
         return comports  # type: ignore[no-any-return]
 
+    # Motor Test Functionality
+
+    def test_motor(self, motor_number: int, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]:
+        """
+        Test a specific motor.
+
+        Args:
+            motor_number: Motor number (1-based, as used by ArduPilot)
+            throttle_percent: Throttle percentage (0-100)
+            timeout_seconds: Test duration in seconds
+
+        Returns:
+            tuple[bool, str]: (success, error_message) - success is True if command was sent successfully,
+                             error_message is empty string on success or contains error description on failure
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for motor test")
+            logging_error(error_msg)
+            return False, error_msg
+
+        try:
+            # MAV_CMD_DO_MOTOR_TEST command
+            # https://mavlink.io/en/messages/common.html#MAV_CMD_DO_MOTOR_TEST
+            self.master.mav.command_long_send(
+                self.master.target_system,
+                self.master.target_component,
+                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+                0,  # confirmation
+                motor_number,  # param1: motor number
+                mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # param2: throttle type
+                throttle_percent,  # param3: throttle value
+                timeout_seconds,  # param4: timeout
+                motor_number,  # param5: motor count (same as motor number for single motor test)
+                mavutil.mavlink.MOTOR_TEST_ORDER_BOARD,  # param6: test order
+                0,  # param7: unused
+            )
+            logging_info(
+                _("Motor test command sent: Motor %(motor)d at %(throttle)d%% for %(duration)d seconds"),
+                {
+                    "motor": motor_number,
+                    "throttle": throttle_percent,
+                    "duration": timeout_seconds,
+                },
+            )
+            return True, ""
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            error_msg = _("Failed to send motor test command: %(error)s") % {"error": str(e)}
+            logging_error(error_msg)
+            return False, error_msg
+
+    def test_all_motors(self, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]:
+        """
+        Test all motors simultaneously.
+
+        Args:
+            throttle_percent: Throttle percentage (0-100)
+            timeout_seconds: Test duration in seconds
+
+        Returns:
+            tuple[bool, str]: (success, error_message) - success is True if command was sent successfully,
+                             error_message is empty string on success or contains error description on failure
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for motor test")
+            logging_error(error_msg)
+            return False, error_msg
+
+        try:
+            # Get motor count from FRAME_CLASS parameter or default to 4
+            motor_count = self.fc_parameters.get("FRAME_CLASS", 4)
+            if motor_count == 1:  # QUAD
+                motor_count = 4
+            elif motor_count == 2:  # HEXA
+                motor_count = 6
+            elif motor_count == 3:  # OCTO
+                motor_count = 8
+            else:
+                motor_count = 4  # Default to quad
+
+            # MAV_CMD_DO_MOTOR_TEST command for all motors
+            self.master.mav.command_long_send(
+                self.master.target_system,
+                self.master.target_component,
+                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+                0,  # confirmation
+                motor_count,  # param1: motor count (all motors)
+                mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # param2: throttle type
+                throttle_percent,  # param3: throttle value
+                timeout_seconds,  # param4: timeout
+                motor_count,  # param5: motor count
+                mavutil.mavlink.MOTOR_TEST_ORDER_BOARD,  # param6: test order
+                0,  # param7: unused
+            )
+            logging_info(
+                _("All motors test command sent at %(throttle)d%% for %(duration)d seconds"),
+                {
+                    "throttle": throttle_percent,
+                    "duration": timeout_seconds,
+                },
+            )
+            return True, ""
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            error_msg = _("Failed to send all motors test command: %(error)s") % {"error": str(e)}
+            logging_error(error_msg)
+            return False, error_msg
+
+    def test_motors_in_sequence(self, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]:
+        """
+        Test motors in sequence (A, B, C, D, etc.).
+
+        Args:
+            throttle_percent: Throttle percentage (0-100)
+            timeout_seconds: Test duration per motor in seconds
+
+        Returns:
+            tuple[bool, str]: (success, error_message) - success is True if command was sent successfully,
+                             error_message is empty string on success or contains error description on failure
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for motor test")
+            logging_error(error_msg)
+            return False, error_msg
+
+        try:
+            # Get motor count from FRAME_CLASS parameter or default to 4
+            motor_count = self.fc_parameters.get("FRAME_CLASS", 4)
+            if motor_count == 1:  # QUAD
+                motor_count = 4
+            elif motor_count == 2:  # HEXA
+                motor_count = 6
+            elif motor_count == 3:  # OCTO
+                motor_count = 8
+            else:
+                motor_count = 4  # Default to quad
+
+            # MAV_CMD_DO_MOTOR_TEST command for sequence test
+            self.master.mav.command_long_send(
+                self.master.target_system,
+                self.master.target_component,
+                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+                0,  # confirmation
+                motor_count,  # param1: motor count
+                mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # param2: throttle type
+                throttle_percent,  # param3: throttle value
+                timeout_seconds,  # param4: timeout per motor
+                motor_count,  # param5: motor count
+                mavutil.mavlink.MOTOR_TEST_ORDER_SEQUENCE,  # param6: test order (sequence)
+                0,  # param7: unused
+            )
+            logging_info(
+                _("Sequential motor test command sent at %(throttle)d%% for %(duration)d seconds per motor"),
+                {
+                    "throttle": throttle_percent,
+                    "duration": timeout_seconds,
+                },
+            )
+            return True, ""
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            error_msg = _("Failed to send sequential motor test command: %(error)s") % {"error": str(e)}
+            logging_error(error_msg)
+            return False, error_msg
+
+    def stop_all_motors(self) -> tuple[bool, str]:
+        """
+        Emergency stop for all motors.
+
+        Returns:
+            tuple[bool, str]: (success, error_message) - success is True if command was sent successfully,
+                             error_message is empty string on success or contains error description on failure
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for motor stop")
+            logging_error(error_msg)
+            return False, error_msg
+
+        try:
+            # Send motor test command with 0% throttle to stop all motors
+            self.master.mav.command_long_send(
+                self.master.target_system,
+                self.master.target_component,
+                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+                0,  # confirmation
+                0,  # param1: motor number (0 = all motors)
+                mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # param2: throttle type
+                0,  # param3: throttle value (0% = stop)
+                0,  # param4: timeout (0 = immediate stop)
+                0,  # param5: motor count
+                mavutil.mavlink.MOTOR_TEST_ORDER_BOARD,  # param6: test order
+                0,  # param7: unused
+            )
+            logging_info(_("Motor stop command sent"))
+            return True, ""
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            error_msg = _("Failed to send motor stop command: %(error)s") % {"error": str(e)}
+            logging_error(error_msg)
+            return False, error_msg
+
+    def get_battery_status(self) -> tuple[Union[tuple[float, float], None], str]:
+        """
+        Get current battery voltage and current.
+
+        Returns:
+            tuple[Union[tuple[float, float], None], str]: ((voltage, current), error_message) -
+                                                         voltage and current in volts and amps,
+                                                         or None if not available with error message
+
+        """
+        if not self.fc_parameters or self.master is None:
+            error_msg = _("No flight controller connection or parameters available")
+            return None, error_msg
+
+        # Check if battery monitoring is enabled
+        if not self.is_battery_monitoring_enabled():
+            error_msg = _("Battery monitoring is not enabled (BATT_MONITOR=0)")
+            return None, error_msg
+
+        try:
+            # Try to get real telemetry data
+            battery_status = self.master.recv_match(type="BATTERY_STATUS", blocking=False, timeout=1)
+            if battery_status:
+                # Convert from millivolts to volts, and centiamps to amps
+                voltage = battery_status.voltages[0] / 1000.0 if battery_status.voltages[0] != -1 else 0.0
+                current = battery_status.current_battery / 100.0 if battery_status.current_battery != -1 else 0.0
+                return (voltage, current), ""
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logging_debug(_("Failed to get battery status from telemetry: %(error)s"), {"error": str(e)})
+
+        # Fallback to parameter values if telemetry is not available
+        voltage = self.fc_parameters.get("BATT_ARM_VOLT", 0.0)
+        current = 0.0
+
+        if voltage > 0:
+            return (voltage, current), _("Using parameter fallback values (telemetry unavailable)")
+
+        error_msg = _("Battery status not available from telemetry or parameters")
+        return None, error_msg
+
+    def get_voltage_thresholds(self) -> tuple[float, float]:
+        """
+        Get battery voltage thresholds for motor testing safety.
+
+        Returns:
+            tuple[float, float]: (min_voltage, max_voltage) for safe motor testing
+
+        """
+        min_voltage = self.fc_parameters.get("BATT_ARM_VOLT", 0.0)
+        max_voltage = self.fc_parameters.get("MOT_BAT_VOLT_MAX", 0.0)
+        return (min_voltage, max_voltage)
+
+    def is_battery_monitoring_enabled(self) -> bool:
+        """
+        Check if battery monitoring is enabled.
+
+        Returns:
+            bool: True if BATT_MONITOR != 0, False otherwise
+
+        """
+        return self.fc_parameters.get("BATT_MONITOR", 0) != 0
+
+    def get_frame_info(self) -> tuple[int, int]:
+        """
+        Get frame class and frame type from flight controller parameters.
+
+        Returns:
+            tuple[int, int]: (frame_class, frame_type)
+
+        """
+        frame_class = int(self.fc_parameters.get("FRAME_CLASS", 1))  # Default to QUAD
+        frame_type = int(self.fc_parameters.get("FRAME_TYPE", 1))  # Default to X
+        return (frame_class, frame_type)
+
+    def get_motor_count_from_frame(self) -> int:
+        """
+        Calculate motor count based on frame class and validate frame type.
+
+        Returns:
+            int: Number of motors for the current frame configuration (0 for invalid frames)
+
+        """
+        frame_class = int(self.fc_parameters.get("FRAME_CLASS", 1))
+        frame_type = int(self.fc_parameters.get("FRAME_TYPE", 0))
+
+        # ArduPilot frame class mapping with valid frame types
+        frame_configs = {
+            1: {"motors": 4, "max_type": 20},  # QUAD (X, +, V, H, etc.)
+            2: {"motors": 6, "max_type": 5},  # HEXA (X, +, etc.)
+            3: {"motors": 8, "max_type": 20},  # OCTO (X, +, V, H, etc.)
+            4: {"motors": 8, "max_type": 5},  # OCTO_QUAD
+            5: {"motors": 6, "max_type": 3},  # Y6 (B, F, etc.)
+            7: {"motors": 3, "max_type": 2},  # TRI (front motor variations)
+            10: {"motors": 2, "max_type": 0},  # BICOPTER
+            12: {"motors": 12, "max_type": 1},  # DODECAHEXA
+            14: {"motors": 10, "max_type": 1},  # DECA
+        }
+
+        # Check if frame class is valid
+        if frame_class not in frame_configs:
+            return 0  # Invalid frame class
+
+        config = frame_configs[frame_class]
+
+        # Check if frame type is valid for this frame class
+        if frame_type < 0 or frame_type > config["max_type"]:
+            return 0  # Invalid frame type for this frame class
+
+        return config["motors"]
+
     @staticmethod
     def __list_network_ports() -> list[str]:
         """List all available network ports."""
