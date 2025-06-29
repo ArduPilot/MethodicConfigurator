@@ -12,13 +12,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
 import platform
+from os import path as os_path
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 
-# pylint: disable=protected-access,redefined-outer-name,too-few-public-methods
+# pylint: disable=too-many-lines,protected-access,redefined-outer-name,too-few-public-methods
 
 
 @pytest.fixture
@@ -425,7 +426,7 @@ class TestSettingsFileOperations:
             assert result["display_usage_popup"]["component_editor"] is True
             assert result["display_usage_popup"]["parameter_editor"] is True
 
-    def test_user_can_load_settings_from_file_directly(self, mock_user_config) -> None:
+    def test_user_can_load_settings_from_file_directly(self, mock_user_config) -> None:  # pylint: disable=unused-argument
         """
         User can load settings from file using the file loading method.
 
@@ -1090,32 +1091,63 @@ class TestInternalConfigurationMethods:
 
     def test_get_templates_base_dir_uses_script_dir_on_linux(self) -> None:
         """
-        Templates base directory uses script directory on Linux platforms.
+        Templates base directory uses script directory on non-Windows platforms (Linux/macOS).
 
-        GIVEN: A Linux platform environment
+        GIVEN: A non-Windows platform environment (Linux or macOS)
         WHEN: The templates base directory is requested
         THEN: The script directory should be used as the base
         """
-        # Arrange: Mock Linux platform and paths
+        # Arrange: Mock non-Windows platform and paths
         with (
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system") as mock_platform,
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.dirname") as mock_dirname,
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.abspath") as mock_abspath,
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.join") as mock_join,
-            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.logging_debug") as mock_logging,
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.logging_debug"),
         ):
+            # Test for Linux platform
             mock_platform.return_value = "Linux"
-            mock_abspath.return_value = "/path/to/script.py"
+            mock_abspath.return_value = "/path/to/backend_filesystem_program_settings.py"
             mock_dirname.return_value = "/path/to"
             mock_join.return_value = "/path/to/vehicle_templates"
 
             # Act: Get templates base directory
             result = ProgramSettings.get_templates_base_dir()
 
-            # Assert: Linux path logic is used correctly
-            mock_logging.assert_called()
-            mock_join.assert_called_with("/path/to", "vehicle_templates")
+            # Assert: Non-Windows path logic is used correctly
+            mock_dirname.assert_called_once_with("/path/to/backend_filesystem_program_settings.py")
+            mock_join.assert_called_once_with("/path/to", "vehicle_templates")
             assert result == "/path/to/vehicle_templates"
+
+    def test_get_templates_base_dir_uses_script_dir_on_macos(self) -> None:
+        """
+        Templates base directory uses script directory on macOS platform.
+
+        GIVEN: A macOS platform environment
+        WHEN: The templates base directory is requested
+        THEN: The script directory should be used as the base
+        """
+        # Arrange: Mock macOS platform and paths
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system") as mock_platform,
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.dirname") as mock_dirname,
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.abspath") as mock_abspath,
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.join") as mock_join,
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.logging_debug"),
+        ):
+            # Test for macOS platform (Darwin)
+            mock_platform.return_value = "Darwin"
+            mock_abspath.return_value = "/Applications/ArduPilot/backend_filesystem_program_settings.py"
+            mock_dirname.return_value = "/Applications/ArduPilot"
+            mock_join.return_value = "/Applications/ArduPilot/vehicle_templates"
+
+            # Act: Get templates base directory
+            result = ProgramSettings.get_templates_base_dir()
+
+            # Assert: macOS path logic is used correctly (same as Linux - non-Windows)
+            mock_dirname.assert_called_once_with("/Applications/ArduPilot/backend_filesystem_program_settings.py")
+            mock_join.assert_called_once_with("/Applications/ArduPilot", "vehicle_templates")
+            assert result == "/Applications/ArduPilot/vehicle_templates"
 
     def test_get_templates_base_dir_uses_site_config_on_windows(self) -> None:
         """
@@ -1140,4 +1172,6 @@ class TestInternalConfigurationMethods:
 
             # Assert: Windows path logic is used correctly
             mock_site_config.assert_called_once()
-            assert result == "C:\\Program Files\\App\\vehicle_templates"
+            # Use os.path.join to handle platform-specific path separators
+            expected_path = os_path.join("C:\\Program Files\\App", "vehicle_templates")
+            assert result == expected_path
