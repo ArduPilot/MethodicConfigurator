@@ -20,10 +20,87 @@ import sys
 from argparse import ArgumentParser
 from typing import Callable, Union
 
+import matplotlib as mpl
 import numpy as np
-from matplotlib import pyplot as plt
-from pymavlink import mavutil
-from pymavlink.rotmat import Vector3
+
+# Check for display availability (Linux/Unix style)
+HAS_UNIX_DISPLAY = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+
+# For Windows, assume GUI is available unless specific headless indicators are present
+IS_WINDOWS = sys.platform.startswith("win")
+
+IS_HEADLESS = bool(
+    os.environ.get("CI")  # Continuous Integration
+    or os.environ.get("PYTEST_CURRENT_TEST")  # pytest running
+    or os.environ.get("GITHUB_ACTIONS")  # GitHub Actions
+    or os.environ.get("HEADLESS")  # Explicit headless flag
+    or os.environ.get("NO_DISPLAY")  # Explicit no display flag
+)
+
+
+# Set backend before importing pyplot to avoid display issues
+def select_matplotlib_backend() -> str:
+    """
+    Select the most appropriate matplotlib backend for the current environment.
+
+    Returns:
+        str: The name of the selected backend.
+
+    """
+    # Check if we're in an SSH session (force non-interactive)
+    is_ssh = bool(os.environ.get("SSH_CONNECTION") or os.environ.get("SSH_CLIENT"))
+
+    if is_ssh:
+        # SSH session - use non-interactive backend
+        mpl.use("Agg")
+        return "Agg"
+
+    # Determine if we should try interactive backends
+    should_try_interactive = (
+        (IS_WINDOWS and not IS_HEADLESS)  # Windows GUI (default assumption)
+        or HAS_UNIX_DISPLAY  # Linux/Unix with display
+    )
+
+    if not should_try_interactive:
+        # No display available - use non-interactive backend
+        mpl.use("Agg")
+        return "Agg"
+
+    # Try interactive backends in order of preference
+    # TkAgg first as it's most commonly available on Windows
+    interactive_backends = ["TkAgg", "Qt5Agg", "GTK3Agg"]
+
+    for backend in interactive_backends:
+        try:
+            mpl.use(backend, force=True)
+            # Test if the backend actually works by trying to create a figure
+            # This is more thorough than just importing pyplot
+            import matplotlib.pyplot as plt_test  # pylint: disable=import-outside-toplevel, reimported # noqa: PLC0415, ICN001
+
+            # Try to create a minimal figure to verify the backend actually works
+            # This catches issues like _tkinter module problems on TkAgg
+            test_fig = plt_test.figure()
+            # Try to add a subplot and create an axes - this triggers more backend initialization
+            test_ax = test_fig.add_subplot(111)
+            test_ax.plot([1, 2, 3], [1, 4, 2])  # Simple plot to ensure backend can handle drawing
+            plt_test.close(test_fig)
+
+            return backend
+        except (ImportError, OSError, AttributeError, RuntimeError):  # noqa: PERF203
+            # Backend not available or failed to initialize, try next one
+            continue
+
+    # No interactive backend available, fall back to Agg
+    mpl.use("Agg")
+    return "Agg"
+
+
+# Select and set the backend
+SELECTED_BACKEND = select_matplotlib_backend()
+
+from matplotlib import pyplot as plt  # pylint: disable=wrong-import-position # noqa: E402
+from pymavlink import mavutil  # pylint: disable=wrong-import-position # noqa: E402
+from pymavlink.rotmat import Vector3  # pylint: disable=wrong-import-position # noqa: E402
 
 # fit an order 3 polynomial
 POLY_ORDER = 3
@@ -488,7 +565,17 @@ def IMUfit(  # noqa: C901, PLR0912, PLR0915, N802, pylint: disable=too-many-loca
     if progress_callback:
         progress_callback(300)
 
-    plt.show()
+    # Only show plots if we have an interactive backend and display available
+    try:
+        # Check if we should display plots interactively
+        should_display = SELECTED_BACKEND != "Agg" and ((IS_WINDOWS and not IS_HEADLESS) or HAS_UNIX_DISPLAY)
+
+        if should_display:
+            plt.show()
+        else:
+            logging.info("Non-interactive backend or no display detected, plots saved to files but not displayed")
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logging.warning("Cannot display plots: %s", e)
 
 
 def generate_calibration_file(  # pylint: disable=too-many-locals
@@ -634,6 +721,9 @@ def main() -> None:
     args = parser.parse_args()
 
     logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
+
+    logging.debug("Using matplotlib backend: %s", SELECTED_BACKEND)
+
     IMUfit(args.log, args.outfile, args.no_graph, args.log_parm, args.online, args.tclr, None, None)
 
 
