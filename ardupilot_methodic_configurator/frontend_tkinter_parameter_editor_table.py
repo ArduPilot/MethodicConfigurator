@@ -366,8 +366,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 flightcontroller_value = ttk.Label(self.view_port, text=value_str)
         else:
             flightcontroller_value = ttk.Label(self.view_port, text=_("N/A"), background="orange")
-        if doc_tooltip:
-            show_tooltip(flightcontroller_value, doc_tooltip)
+
+        # Use numerically sorted tooltip for Current Value column if available
+        param_metadata = self.local_filesystem.doc_dict.get(param_name, {})
+        sorted_tooltip = param_metadata.get("doc_tooltip_sorted_numerically", doc_tooltip)
+        if sorted_tooltip:
+            show_tooltip(flightcontroller_value, sorted_tooltip)
         return flightcontroller_value
 
     def _update_combobox_style_on_selection(
