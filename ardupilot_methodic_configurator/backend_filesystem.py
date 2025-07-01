@@ -186,6 +186,67 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                         os_rename(old_filename_path, new_filename_path)
                         logging_info("Renamed %s to %s", old_filename, new_filename)
 
+    def _format_columns_sorted_numerically(
+        self, values: dict[str, Any], max_width: int = 105, max_columns: int = 4
+    ) -> list[str]:
+        """
+        Formats a dictionary of values into column-major horizontally aligned columns with numeric sorting.
+
+        This is similar to format_columns from annotate_params.py but sorts the values numerically by key.
+
+        Args:
+            values (Dict[str, Any]): The dictionary of values to format.
+            max_width (int, optional): The maximum number of characters on all columns. Default is 105.
+            max_columns (int): Maximum number of columns
+
+        Returns:
+            List[str]: The list of formatted strings.
+
+        """
+        if not values:
+            return []
+
+        # Sort values numerically by key
+        try:
+            # Try to sort by numeric key (int first, then float)
+            try:
+                sorted_items = sorted(values.items(), key=lambda x: int(x[0]))
+            except ValueError:
+                sorted_items = sorted(values.items(), key=lambda x: float(x[0]))
+        except ValueError:
+            # Fall back to string sorting if numeric sorting fails
+            sorted_items = sorted(values.items())
+
+        # Format each key-value pair
+        formatted_items = [f"{key}: {value}" for key, value in sorted_items]
+
+        if not formatted_items:
+            return []
+
+        # Calculate optimal column width and number of columns
+        max_item_length = max(len(item) for item in formatted_items)
+        optimal_columns = min(max_columns, max(1, max_width // (max_item_length + 2)))  # +2 for spacing
+
+        # Ensure we don't exceed max_width with the chosen number of columns
+        while optimal_columns > 1 and (max_item_length + 2) * optimal_columns > max_width:
+            optimal_columns -= 1
+
+        # Arrange items in column-major order
+        num_items = len(formatted_items)
+        rows_per_column = (num_items + optimal_columns - 1) // optimal_columns  # Ceiling division
+
+        result = []
+        for row in range(rows_per_column):
+            row_items = []
+            for col in range(optimal_columns):
+                index = col * rows_per_column + row
+                if index < num_items:
+                    row_items.append(formatted_items[index].ljust(max_item_length))
+            if row_items:
+                result.append("  ".join(row_items).rstrip())
+
+        return result
+
     def __extend_and_reformat_parameter_documentation_metadata(self) -> None:  # pylint: disable=too-many-branches
         for param_name, param_info in self.doc_dict.items():
             if "fields" in param_info:
@@ -238,6 +299,20 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 default_value = format(self.param_default_dict[param_name].value, ".6f").rstrip("0").rstrip(".")
                 prefix_parts += [f"Default: {default_value}"]
             param_info["doc_tooltip"] = ("\n").join(prefix_parts)
+
+            # Create a numerically sorted version for Current Value column tooltips
+            prefix_parts_sorted = [
+                f"{param_info['humanName']}",
+            ]
+            prefix_parts_sorted += param_info["documentation"]
+            for key, value in param_info["fields"].items():
+                if key not in {"Units", "UnitText"}:
+                    prefix_parts_sorted += split_into_lines(f"{key}: {value}", TOOLTIP_MAX_LENGTH)
+            prefix_parts_sorted += self._format_columns_sorted_numerically(param_info["values"], TOOLTIP_MAX_LENGTH)
+            if param_name in self.param_default_dict:
+                default_value = format(self.param_default_dict[param_name].value, ".6f").rstrip("0").rstrip(".")
+                prefix_parts_sorted += [f"Default: {default_value}"]
+            param_info["doc_tooltip_sorted_numerically"] = ("\n").join(prefix_parts_sorted)
 
     def read_params_from_files(self) -> dict[str, dict[str, "Par"]]:
         """
