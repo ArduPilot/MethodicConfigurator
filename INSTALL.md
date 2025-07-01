@@ -31,6 +31,7 @@ Accept the software license.
 ![AMC install 02](images/AMC_install_02.png)
 
 Create a desktop icon, so that the language setting will take effect.
+Most users do not use the command line and do not need to add the application to their path.
 
 ![AMC install 03](images/AMC_install_03.png)
 
