@@ -197,19 +197,20 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             # Prevent mouse wheel from changing value when dropdown is not open
             def handle_mousewheel(_event: tk.Event, widget: tk.Widget = cb) -> Optional[str]:
                 # Check if dropdown is open by examining the combobox's state
-                if not hasattr(widget, "_dropdown_open") or not widget._dropdown_open:  # pylint: disable=protected-access,line-too-long # noqa: SLF001 # pyright: ignore[reportAttributeAccessIssue]
+                dropdown_is_open = getattr(widget, "dropdown_is_open", False)
+                if not dropdown_is_open:
                     return "break"  # Prevent default behavior
                 return None  # Allow default behavior when dropdown is open
 
             # Set flag when dropdown opens or closes
             def dropdown_opened(_event: tk.Event, widget: tk.Widget = cb) -> None:
-                widget._dropdown_open = True  # type: ignore[attr-defined] # pylint: disable=protected-access # noqa: SLF001
+                widget.dropdown_is_open = True  # type: ignore[attr-defined]
 
             def dropdown_closed(_event: tk.Event, widget: tk.Widget = cb) -> None:
-                widget._dropdown_open = False  # type: ignore[attr-defined] # pylint: disable=protected-access # noqa: SLF001
+                widget.dropdown_is_open = False  # type: ignore[attr-defined]
 
             # Initialize the flag
-            cb._dropdown_open = False  # type: ignore[attr-defined] # pylint: disable=protected-access # noqa: SLF001
+            cb.dropdown_is_open = False  # type: ignore[attr-defined]
 
             # Bind to events for dropdown opening and closing
             cb.bind("<<ComboboxDropdown>>", dropdown_opened)
@@ -262,7 +263,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         allowed_values = combobox.cget("values")  # Get the list of allowed values
 
         if value not in allowed_values:
-            if event.type == "10":  # FocusOut events
+            if (
+                (event.type == "10" and getattr(combobox, "dropdown_is_open", False))  # FocusOut events
+                or event.type == "2"  # Return KeyPress event
+            ):
                 paths_str = ">".join(list(path))
                 allowed_str = ", ".join(allowed_values)
                 error_msg = _("Invalid value '{value}' for {paths_str}\nAllowed values are: {allowed_str}")
@@ -298,7 +302,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         entry.configure(style="entry_input_valid.TEntry")
         return True
 
-    def validate_data(self) -> bool:
+    def validate_data(self) -> str:
         """Validate all data using the data model."""
         # Collect all entry values
         entry_values = {path: entry.get() for path, entry in self.entry_widgets.items() if len(path) == 3}
@@ -308,10 +312,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         if not is_valid:
             # Update UI to show invalid states and display errors
-            for path, entry in self.entry_widgets.items():
-                if len(path) != 3:
-                    continue
-
+            for path, entry in ((path, entry) for path, entry in self.entry_widgets.items() if len(path) == 3):
                 value = entry.get()
 
                 # Check combobox validation
@@ -330,13 +331,13 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                         entry.configure(style="entry_input_valid.TEntry")
 
             # Show first few errors
-            if errors:
-                error_message = "\n".join(errors[:3])  # Show first 3 errors
-                if len(errors) > 3:
-                    error_message += f"\n... and {len(errors) - 3} more errors"
-                show_error_message(_("Validation Errors"), error_message)
+            error_message = "\n".join(errors[:3])  # Show first 3 errors
+            if len(errors) > 3:
+                error_message += f"\n... and {len(errors) - 3} more errors"
+            show_error_message(_("Validation Errors"), error_message)
+            return _("Validation failed. Please correct the errors before saving.")
 
-        return is_valid
+        return ""
 
 
 # pylint: disable=duplicate-code

@@ -444,6 +444,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         mock_combobox = MagicMock(spec=ttk.Combobox)
         mock_combobox.get.return_value = "INVALID"
         mock_combobox.cget.return_value = ("PWM", "SBUS", "PPM")
+        mock_combobox.dropdown_is_open = True  # Simulate dropdown was open
         mock_event.widget = mock_combobox
 
         path = ("RC", "Protocol")
@@ -554,7 +555,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
             ("RC Receiver", "FC Connection", "Protocol"): "PWM",
         }
         editor_with_mocked_root.data_model.validate_all_data.assert_called_once_with(expected_entry_values)
-        assert result is True
+        assert result == ""
 
     def test_validate_data_with_errors(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
         """Test validating all data with validation errors."""
@@ -591,7 +592,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
             assert "Error 3" in error_call_args[1]
             assert "1 more errors" in error_call_args[1]
 
-            assert result is False
+            assert result != ""
 
     def test_validate_data_combobox_valid_after_correction(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
         """Test validating combobox that becomes valid after data model validation."""
@@ -643,7 +644,7 @@ class TestIntegrationScenarios:
         result = editor_with_mocked_root.validate_data()
 
         # Should validate successfully
-        assert result is True
+        assert result == ""
         editor_with_mocked_root.data_model.validate_all_data.assert_called_once()
 
     def test_fc_parameter_processing_workflow(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
