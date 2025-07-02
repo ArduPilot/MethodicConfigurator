@@ -550,4 +550,22 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                     continue
                 fc_serial_connection[value] = path[0]
 
+            if path in self.VALIDATION_RULES:
+                # Validate entry limits
+                error_msg, corrected_value = self.validate_entry_limits(value, path)
+                if error_msg:
+                    errors.append(error_msg.format(value=value, paths_str=paths_str))
+                    if corrected_value is not None:
+                        self.set_component_value(path, corrected_value)
+                    continue
+
+            if path in BATTERY_CELL_VOLTAGE_PATHS:
+                # Validate battery cell voltages
+                error_msg, corrected_value = self.validate_cell_voltage(value, path)
+                if error_msg:
+                    errors.append(error_msg.format(value=value, paths_str=paths_str))
+                    if corrected_value is not None:
+                        self.set_component_value(path, corrected_value)
+                    continue
+
         return len(errors) == 0, errors

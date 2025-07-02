@@ -468,8 +468,24 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         # Use the data model to extract and process the component data
         return self.data_model.extract_component_data_from_entries(component_name, entry_values)
 
+    def validate_data(self) -> str:
+        """
+        Validate the data in the entry widgets.
+
+        This is an abstract method that must be implemented in subclasses.
+
+        This method checks if all required fields are filled and if the values
+        conform to the expected data types.
+
+        """
+        return ""
+
     def validate_and_save_component_json(self) -> None:
         """Validate and save the component JSON data."""
+        error_msg = self.validate_data()
+        if error_msg:
+            show_error_message(_("Error"), error_msg)
+            return
         if self._confirm_component_properties():
             self.save_component_json()
 
