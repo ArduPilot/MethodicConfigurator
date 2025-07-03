@@ -22,6 +22,7 @@ from test_data_model_vehicle_components_common import (
 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
+from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 from ardupilot_methodic_configurator.data_model_vehicle_components_validation import ComponentDataModelValidation
 
 # pylint: disable=too-many-lines,protected-access,too-many-public-methods
@@ -101,20 +102,21 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
     def test_is_valid_component_data_invalid_structures(self) -> None:
         """Test is_valid_component_data with invalid data structures."""
         vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
+        schema = VehicleComponentsJsonSchema(vehicle_components.load_schema())
+        component_datatypes = schema.get_all_value_datatypes()
 
         # Test with missing Components key
         invalid_data1 = {"Format version": 1}
-        model1 = ComponentDataModelValidation(invalid_data1, component_datatypes)
+        model1 = ComponentDataModelValidation(invalid_data1, component_datatypes, schema)
         assert model1.is_valid_component_data() is False
 
         # Test with Components not being a dict
         invalid_data2 = {"Components": "not_a_dict", "Format version": 1}
-        model2 = ComponentDataModelValidation(invalid_data2, component_datatypes)
+        model2 = ComponentDataModelValidation(invalid_data2, component_datatypes, schema)
         assert model2.is_valid_component_data() is False
 
         # Test with data not being a dict - use type: ignore to bypass type checking for testing
-        model3 = ComponentDataModelValidation({}, component_datatypes)
+        model3 = ComponentDataModelValidation({}, component_datatypes, schema)
         model3._data = "not_a_dict"  # type: ignore[assignment] # Manually set to invalid type for testing
         assert model3.is_valid_component_data() is False
 

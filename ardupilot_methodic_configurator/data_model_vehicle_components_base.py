@@ -16,6 +16,7 @@ from typing import Any, Optional, Union
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
+from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 
 # Type aliases to improve code readability
 ComponentPath = tuple[str, ...]
@@ -31,12 +32,15 @@ class ComponentDataModelBase:
     This improves testability by isolating data operations.
     """
 
-    def __init__(self, initial_data: ComponentData, component_datatypes: dict[str, Any]) -> None:
+    def __init__(
+        self, initial_data: ComponentData, component_datatypes: dict[str, Any], schema: VehicleComponentsJsonSchema
+    ) -> None:
         self._data: ComponentData = initial_data if initial_data else {"Components": {}, "Format version": 1}
         self._battery_chemistry: str = ""
         self._possible_choices: dict[ValidationRulePath, tuple[str, ...]] = {}
         self._mot_pwm_types: tuple[str, ...] = ()
         self._component_datatypes: dict[str, Any] = component_datatypes
+        self.schema: VehicleComponentsJsonSchema = schema
 
     def get_component_data(self) -> ComponentData:
         """

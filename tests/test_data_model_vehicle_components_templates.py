@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import pytest
 from test_data_model_vehicle_components_common import BasicTestMixin, ComponentDataModelFixtures, RealisticDataTestMixin
 
-from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.data_model_vehicle_components_base import ComponentDataModelBase
 from ardupilot_methodic_configurator.data_model_vehicle_components_templates import ComponentDataModelTemplates
 
@@ -94,10 +93,10 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
 
     def test_update_component_no_components_key(self) -> None:
         """Test updating component when Components key doesn't exist."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
         data_without_components = {"Format version": 1}
-        model = ComponentDataModelTemplates(data_without_components, component_datatypes)
+        model = ComponentDataModelTemplates(data_without_components, component_datatypes, schema)
         model.post_init({})
 
         component_name = "Test Component"
@@ -127,9 +126,9 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
 
     def test_derive_initial_template_name_with_product_data(self) -> None:
         """Test deriving template name from component data with Product information."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         component_data = {"Product": {"Manufacturer": "Arduino", "Model": "Uno R3"}}
 
@@ -138,9 +137,9 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
 
     def test_derive_initial_template_name_missing_manufacturer(self) -> None:
         """Test deriving template name when manufacturer is missing."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         component_data = {"Product": {"Model": "Solo Model"}}
 
@@ -149,9 +148,9 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
 
     def test_derive_initial_template_name_missing_model(self) -> None:
         """Test deriving template name when model is missing."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         component_data = {"Product": {"Manufacturer": "Solo Manufacturer"}}
 
@@ -160,9 +159,9 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
 
     def test_derive_initial_template_name_no_product_data(self) -> None:
         """Test deriving template name when Product data is missing."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         component_data = {"Specifications": {"Power": 100}, "Notes": "No product info"}
 
@@ -171,9 +170,9 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
 
     def test_derive_initial_template_name_empty_product_data(self) -> None:
         """Test deriving template name with empty Product data."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         component_data = {"Product": {}}
 
@@ -182,18 +181,18 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
 
     def test_derive_initial_template_name_empty_component_data(self) -> None:
         """Test deriving template name with completely empty component data."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         result = model.derive_initial_template_name({})
         assert result == ""
 
     def test_derive_initial_template_name_special_characters(self) -> None:
         """Test deriving template name with special characters in manufacturer and model."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         component_data = {"Product": {"Manufacturer": "Manu-Corp™", "Model": "Model-X_v2.1"}}
 
@@ -245,9 +244,9 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
 
     def test_derive_initial_template_name_none_input(self) -> None:
         """Test deriving template name with None input."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         with pytest.raises(AttributeError):
             model.derive_initial_template_name(None)
@@ -644,9 +643,9 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
     # Template derivation edge cases
     def test_derive_initial_template_name_none_manufacturer(self) -> None:
         """Test deriving template name with None manufacturer."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         component_data = {"Product": {"Manufacturer": None, "Model": "Test Model"}}
 
@@ -655,9 +654,9 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
 
     def test_derive_initial_template_name_none_model(self) -> None:
         """Test deriving template name with None model."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         component_data = {"Product": {"Manufacturer": "Test Corp", "Model": None}}
 
@@ -666,9 +665,9 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
 
     def test_derive_initial_template_name_numeric_values(self) -> None:
         """Test deriving template name with numeric manufacturer/model values."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         component_data = {"Product": {"Manufacturer": 123, "Model": 456}}
 
@@ -677,9 +676,9 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
 
     def test_derive_initial_template_name_whitespace_values(self) -> None:
         """Test deriving template name with whitespace-only values."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         component_data = {"Product": {"Manufacturer": "   ", "Model": "\t\n"}}
 
@@ -782,9 +781,9 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
 
     def test_derive_template_name_with_complex_types(self) -> None:
         """Test deriving template name when manufacturer/model are complex types."""
-        vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelTemplates({}, component_datatypes)
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        model = ComponentDataModelTemplates({}, component_datatypes, schema)
 
         component_data = {
             "Product": {
