@@ -25,6 +25,7 @@ from test_data_model_vehicle_components_common import REALISTIC_VEHICLE_DATA
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_vehicle_components import ComponentDataModel
+from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 
 # pylint: disable=redefined-outer-name
@@ -78,10 +79,13 @@ class TestComponentEditorIntegration:
             editor.scroll_frame.view_port = MagicMock()
             editor.entry_widgets = {}
 
-            # Initialize data model
+            # Initialize data model properly using schema
+            schema = VehicleComponentsJsonSchema(real_filesystem.load_schema())
+            component_datatypes = schema.get_all_value_datatypes()
             editor.data_model = ComponentDataModel(
                 real_filesystem.load_vehicle_components_json_data(real_filesystem.vehicle_dir),
-                real_filesystem.get_all_value_datatypes(),
+                component_datatypes,
+                schema,
             )
 
             yield editor
@@ -101,7 +105,8 @@ class TestComponentEditorIntegration:
         assert len(components) > 0
 
         # Verify schema loading worked properly
-        component_datatypes = editor.local_filesystem.get_all_value_datatypes()
+        schema = VehicleComponentsJsonSchema(editor.local_filesystem.load_schema())
+        component_datatypes = schema.get_all_value_datatypes()
         assert len(component_datatypes) > 0
 
     def test_component_adding_integration(self, editor_with_real_filesystem) -> None:
@@ -136,7 +141,9 @@ class TestComponentEditorIntegration:
         editor = editor_with_real_filesystem
 
         # Create a real data model for testing
-        real_data_model = ComponentDataModel(REALISTIC_VEHICLE_DATA, editor.local_filesystem.get_all_value_datatypes())
+        schema = VehicleComponentsJsonSchema(editor.local_filesystem.load_schema())
+        component_datatypes = schema.get_all_value_datatypes()
+        real_data_model = ComponentDataModel(REALISTIC_VEHICLE_DATA, component_datatypes, schema)
         real_data_model.post_init(editor.local_filesystem.doc_dict)
         editor.data_model = real_data_model
 
@@ -322,7 +329,9 @@ class TestComponentEditorWithMinimalMocking:
         )
 
         # Create a data model with realistic test data
-        data_model = ComponentDataModel(REALISTIC_VEHICLE_DATA, filesystem.get_all_value_datatypes())
+        schema = VehicleComponentsJsonSchema(filesystem.load_schema())
+        component_datatypes = schema.get_all_value_datatypes()
+        data_model = ComponentDataModel(REALISTIC_VEHICLE_DATA, component_datatypes, schema)
 
         # Bypass UI initialization but use real data model
         with (

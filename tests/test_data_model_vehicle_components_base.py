@@ -17,6 +17,7 @@ from test_data_model_vehicle_components_common import BasicTestMixin, ComponentD
 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.data_model_vehicle_components_base import ComponentData, ComponentDataModelBase
+from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 
 # pylint: disable=protected-access,too-many-public-methods
 
@@ -331,8 +332,9 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         # Create data without Components key
         data: ComponentData = {"Configuration": {}}
         vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        component_model = ComponentDataModelBase(data, component_datatypes)
+        schema = VehicleComponentsJsonSchema(vehicle_components.load_schema())
+        component_datatypes = schema.get_all_value_datatypes()
+        component_model = ComponentDataModelBase(data, component_datatypes, schema)
 
         # Call update_json_structure to create the Components key
         component_model.update_json_structure()
@@ -442,7 +444,7 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert "Components" in empty_model._data
 
         # Test with corrupted data structure
-        corrupted_model = ComponentDataModelBase({}, {})
+        corrupted_model = ComponentDataModelBase({}, {}, {})
         assert corrupted_model._data == {"Components": {}, "Format version": 1}
 
     def test_nested_path_creation(self, empty_model) -> None:
@@ -523,14 +525,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         """Test error handling with malformed initial data."""
         # Test with None initial data
         vehicle_components = VehicleComponents()
-        component_datatypes = vehicle_components.get_all_value_datatypes()
-        model = ComponentDataModelBase(None, component_datatypes)  # type: ignore[arg-type]
+        schema = VehicleComponentsJsonSchema(vehicle_components.load_schema())
+        component_datatypes = schema.get_all_value_datatypes()
+        model = ComponentDataModelBase(None, component_datatypes, schema)  # type: ignore[arg-type]
         assert model._data == {"Components": {}, "Format version": 1}
 
         # Test with string instead of dict - documents current behavior
         # The constructor doesn't validate input, it just assigns whatever is passed
         try:
-            model = ComponentDataModelBase("invalid", component_datatypes)  # type: ignore[arg-type]
+            model = ComponentDataModelBase("invalid", component_datatypes, schema)  # type: ignore[arg-type]
             # Current behavior: Constructor doesn't validate input type
             assert model._data == "invalid"  # Documents that no validation occurs
         except (TypeError, AttributeError):
@@ -564,7 +567,7 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert realistic_model.has_components() is True
 
         # Test with model that has no components
-        empty_components = ComponentDataModelBase({"Components": {}, "Format version": 1}, {})
+        empty_components = ComponentDataModelBase({"Components": {}, "Format version": 1}, {}, {})
         assert empty_components.has_components() is False
 
     def test_version_field_special_handling(self, basic_model) -> None:

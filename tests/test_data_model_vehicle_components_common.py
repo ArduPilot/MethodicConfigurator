@@ -14,6 +14,7 @@ import copy
 from typing import Any, Optional, TypeVar, cast
 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
+from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 
 # Type variables for generic fixture factories
 T = TypeVar("T")
@@ -158,16 +159,57 @@ class ComponentDataModelFixtures:
 
     @staticmethod
     def create_component_datatypes() -> dict[str, Any]:
-        """Create component datatypes from VehicleComponents."""
+        """Create component datatypes from schema."""
         vehicle_components = ComponentDataModelFixtures.create_vehicle_components()
-        return vehicle_components.get_all_value_datatypes()
+        schema_dict = vehicle_components.load_schema()
+        schema = VehicleComponentsJsonSchema(schema_dict)
+        return schema.get_all_value_datatypes()
+
+    @staticmethod
+    def create_schema() -> VehicleComponentsJsonSchema:
+        """Create a minimal schema for testing."""
+        vehicle_components = ComponentDataModelFixtures.create_vehicle_components()
+        schema_dict = vehicle_components.load_schema()
+        return VehicleComponentsJsonSchema(schema_dict)
+
+    @staticmethod
+    def create_simple_schema() -> dict[str, Any]:
+        """Create a simplified schema for testing."""
+        return {
+            "properties": {
+                "Components": {
+                    "properties": {
+                        "Flight Controller": {
+                            "description": "Flight controller component",
+                            "properties": {
+                                "Firmware": {
+                                    "description": "Firmware information",
+                                    "x-is-optional": True,
+                                    "properties": {"Type": {"description": "Firmware type"}},
+                                },
+                                "Product": {"description": "Product information"},
+                            },
+                        }
+                    }
+                }
+            },
+            "definitions": {
+                "product": {
+                    "properties": {
+                        "Manufacturer": {"description": "Manufacturer name", "x-is-optional": False},
+                        "Model": {"description": "Model identifier", "x-is-optional": True},
+                    }
+                }
+            },
+        }
 
     @staticmethod
     def create_empty_model(model_class: type[T]) -> T:
         """Create an empty component data model."""
         data = copy.deepcopy(EMPTY_COMPONENT_DATA)
         component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
-        model = model_class(data, component_datatypes)
+        schema = ComponentDataModelFixtures.create_schema()
+        model = model_class(data, component_datatypes, schema)
         if hasattr(model, "post_init"):
             model.post_init({})
         return cast("T", model)
@@ -177,7 +219,8 @@ class ComponentDataModelFixtures:
         """Create a basic component data model with simple data."""
         data = copy.deepcopy(data or BASIC_COMPONENT_DATA)
         component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
-        model = model_class(data, component_datatypes)
+        schema = ComponentDataModelFixtures.create_schema()
+        model = model_class(data, component_datatypes, schema)
         if hasattr(model, "post_init"):
             model.post_init({})
         return cast("T", model)
@@ -187,7 +230,8 @@ class ComponentDataModelFixtures:
         """Create a realistic component data model with comprehensive data."""
         data = copy.deepcopy(REALISTIC_VEHICLE_DATA)
         component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
-        model = model_class(data, component_datatypes)
+        schema = ComponentDataModelFixtures.create_schema()
+        model = model_class(data, component_datatypes, schema)
         if hasattr(model, "post_init"):
             model.post_init({})
         return cast("T", model)

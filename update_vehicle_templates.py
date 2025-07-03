@@ -26,6 +26,9 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem  
 from ardupilot_methodic_configurator.data_model_vehicle_components import (  # pylint: disable=wrong-import-position
     ComponentDataModel,
 )
+from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import (  # pylint: disable=wrong-import-position
+    VehicleComponentsJsonSchema,
+)
 
 
 def find_template_directories() -> list[Path]:
@@ -77,8 +80,9 @@ def process_template_directory(template_dir: Path) -> None:
             return
 
         # Use ComponentDataModel to update the vehicle components structure
-        datatypes = local_fs.get_all_value_datatypes()
-        data_model = ComponentDataModel(local_fs.vehicle_components, datatypes)
+        schema = VehicleComponentsJsonSchema(local_fs.load_schema())
+        datatypes = schema.get_all_value_datatypes()
+        data_model = ComponentDataModel(local_fs.vehicle_components, datatypes, schema)
         data_model.update_json_structure()
         local_fs.vehicle_components = data_model.get_component_data()
 

@@ -92,7 +92,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         if mcu:
             self.set_component_value_and_update_ui(("Flight Controller", "Specifications", "MCU Series"), mcu)
             if mcu.upper() in ("STM32F4XX", "STM32F7XX", "STM32H7XX"):
-                self.local_filesystem.modify_schema_for_mcu_series(is_optional=True)
+                self.data_model.schema.modify_schema_for_mcu_series(is_optional=True)
 
     def set_vehicle_configuration_template(self, configuration_template: str) -> None:
         """Set the configuration template name in the data."""

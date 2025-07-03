@@ -16,11 +16,11 @@ from typing import get_args, get_origin
 from unittest.mock import MagicMock, patch
 
 import pytest
-from test_data_model_vehicle_components_common import REALISTIC_VEHICLE_DATA
+from test_data_model_vehicle_components_common import REALISTIC_VEHICLE_DATA, ComponentDataModelFixtures
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.data_model_vehicle_components import ComponentDataModel
+from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base import (
     VEHICLE_IMAGE_WIDTH_PIX,
     WINDOW_WIDTH_PIX,
@@ -60,9 +60,9 @@ def setup_common_editor_mocks(editor) -> ComponentEditorWindowBase:
     editor.entry_widgets = {}
 
     # Create data model with realistic test data
-    vehicle_components = VehicleComponents()
-    component_datatypes = vehicle_components.get_all_value_datatypes()
-    editor.data_model = ComponentDataModel(REALISTIC_VEHICLE_DATA, component_datatypes)
+    component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+    schema = ComponentDataModelFixtures.create_schema()
+    editor.data_model = ComponentDataModel(REALISTIC_VEHICLE_DATA, component_datatypes, schema)
 
     # Mock specific methods that are used in tests
     editor.data_model.set_component_value = MagicMock()
@@ -482,12 +482,15 @@ class TestWidgetCreationLogic:
     def editor_with_realistic_data(self) -> ComponentEditorWindowBase:
         """Create editor with realistic data for widget testing."""
         mock_filesystem = MagicMock(spec=LocalFilesystem)
-        mock_filesystem.get_component_property_description.return_value = ("Test description", False)
+
+        mock_schema = MagicMock(spec=VehicleComponentsJsonSchema)
+        mock_schema.get_component_property_description.return_value = ("Test description", False)
 
         mock_data_model = MagicMock(spec=ComponentDataModel)
         mock_data_model.is_valid_component_data.return_value = False  # Skip UI initialization
         mock_data_model.has_components.return_value = False
         mock_data_model.get_all_components.return_value = {"Motor": {"Type": "brushless"}, "Battery": {"Chemistry": "LiPo"}}
+        mock_data_model.schema = mock_schema
 
         editor = ComponentEditorWindowBase.create_for_testing(local_filesystem=mock_filesystem, data_model=mock_data_model)
 
@@ -796,13 +799,17 @@ class TestRealWorldUsageScenarios:
         mock_filesystem = MagicMock(spec=LocalFilesystem)
         mock_filesystem.vehicle_dir = "test_vehicle"
         mock_filesystem.doc_dict = {"Motor": {"Type": "Motor type description"}}
-        mock_filesystem.get_component_property_description.return_value = ("Motor description", False)
+
+        mock_schema = MagicMock(spec=VehicleComponentsJsonSchema)
+        mock_schema.get_component_property_description.return_value = ("Motor description", False)
+
         mock_filesystem.save_component_to_system_templates = MagicMock()
 
         mock_data_model = MagicMock(spec=ComponentDataModel)
         mock_data_model.is_valid_component_data.return_value = False  # Skip UI initialization
         mock_data_model.has_components.return_value = False
         mock_data_model.get_all_components.return_value = {"Motor": {"Type": "brushless"}, "Battery": {"Chemistry": "LiPo"}}
+        mock_data_model.schema = mock_schema
 
         editor = ComponentEditorWindowBase.create_for_testing(local_filesystem=mock_filesystem, data_model=mock_data_model)
 
@@ -974,6 +981,7 @@ class TestComplexityCombobox:
         """Test that components with no non-optional parameters are hidden in simple mode."""
         # Setup mock string var for complexity
         mock_editor.complexity_var = MagicMock()
+        mock_editor.data_model = MagicMock()
 
         # Test with normal complexity - should always return True
         mock_editor.complexity_var.get.return_value = "normal"

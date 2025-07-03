@@ -33,6 +33,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_base import (
     ComponentValue,
     ValidationRulePath,
 )
+from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_component_template_manager import ComponentTemplateManager
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
@@ -120,8 +121,9 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
     def _create_data_model(self) -> ComponentDataModel:
         """Create the data model. Extracted for better testability."""
         raw_data = self.local_filesystem.load_vehicle_components_json_data(self.local_filesystem.vehicle_dir)
-        component_datatypes = self.local_filesystem.get_all_value_datatypes()
-        return ComponentDataModel(raw_data, component_datatypes)
+        schema = VehicleComponentsJsonSchema(self.local_filesystem.load_schema())
+        component_datatypes = schema.get_all_value_datatypes()
+        return ComponentDataModel(raw_data, component_datatypes, schema)
 
     def _initialize_ui(self) -> None:
         """Initialize the complete UI. Extracted for better testability."""
@@ -583,7 +585,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             local_filesystem.vehicle_dir = "test_vehicle"
             local_filesystem.doc_dict = {}
             local_filesystem.load_vehicle_components_json_data.return_value = {}
-            local_filesystem.get_all_value_datatypes.return_value = {}
+            local_filesystem.load_schema.return_value = {}
 
         # Patch the BaseWindow initialization to avoid Tkinter dependencies
         with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.BaseWindow.__init__"):
@@ -605,6 +607,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             instance.scroll_frame = MagicMock()
             instance.save_button = MagicMock()
             instance.template_manager = MagicMock()
+            instance.complexity_var = MagicMock()
 
             return instance
 
