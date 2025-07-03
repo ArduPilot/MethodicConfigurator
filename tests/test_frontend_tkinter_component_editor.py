@@ -223,8 +223,8 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.show_error_message") as mock_error:
             result = editor_with_mocked_root.update_protocol_combobox_entries(protocols, protocol_path)
 
-            # Should set first protocol and show error
-            mock_combobox.set.assert_called_once_with("PWM")
+            # Should set empty string and show error
+            mock_combobox.set.assert_called_once_with("")
             mock_combobox.configure.assert_called_once_with(style="comb_input_invalid.TCombobox")
             mock_error.assert_called_once()
             assert "not available" in result
@@ -245,7 +245,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
             # Should set empty protocol and show error
             mock_combobox.set.assert_called_once_with("")
             mock_error.assert_called_once()
-            assert "No protocols available" in result
+            assert "not available" in result
 
     def test_update_cell_voltage_limits_entries(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
         """Test updating cell voltage limit entries."""
@@ -459,7 +459,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
     def test_validate_combobox_invalid_value_no_focusout(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
         """Test combobox validation with invalid value but not FocusOut event."""
         mock_event = MagicMock()
-        mock_event.type = "2"  # Not FocusOut event
+        mock_event.type = "3"  # Not FocusOut event (10) or Return KeyPress (2)
 
         # Create a mock that actually behaves like a ttk.Combobox instance
         mock_combobox = MagicMock(spec=ttk.Combobox)
@@ -473,7 +473,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
             result = editor_with_mocked_root._validate_combobox(mock_event, path)
 
             mock_combobox.configure.assert_called_once_with(style="comb_input_invalid.TCombobox")
-            mock_error.assert_not_called()  # Should not show error for non-FocusOut events
+            mock_error.assert_not_called()  # Should not show error for non-FocusOut/non-Return events
             assert result is False
 
     def test_validate_entry_limits_ui_valid(self, editor_with_mocked_root: ComponentEditorWindow) -> None:

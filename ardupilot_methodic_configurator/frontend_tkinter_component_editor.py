@@ -125,17 +125,12 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             protocol_combobox["values"] = protocols  # Update the combobox entries
             selected_protocol = protocol_combobox.get()
             if selected_protocol not in protocols and isinstance(protocol_combobox, ttk.Combobox):
-                protocol = protocols[0] if protocols else ""
-                protocol_combobox.set(protocol)
+                protocol_combobox.set("")
                 _component: str = " > ".join(protocol_path)
                 err_msg = _(
                     "On {_component} the selected\nprotocol '{selected_protocol}' "
                     "is not available for the selected connection Type."
                 )
-                if protocol:
-                    err_msg += _(" Defaulting to '{protocol}'.")
-                else:
-                    err_msg += _(" No protocols available.")
                 err_msg = err_msg.format(**locals())
             if err_msg:
                 show_error_message(_("Error"), err_msg)
