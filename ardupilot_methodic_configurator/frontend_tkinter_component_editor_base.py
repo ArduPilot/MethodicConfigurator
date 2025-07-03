@@ -219,7 +219,10 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         """Handle complexity combobox change."""
         # Save the complexity setting
         ProgramSettings.set_setting("gui_complexity", self.complexity_var.get())
+        self._refresh_component_display()
 
+    def _refresh_component_display(self) -> None:
+        """Refresh the component display UI."""
         # Clear all widgets from the scroll frame
         for widget in self.scroll_frame.view_port.winfo_children():
             widget.destroy()
@@ -310,7 +313,15 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
     def set_component_value_and_update_ui(self, path: ComponentPath, value: str) -> None:
         """Set a component value and update the UI to reflect it."""
+        self._set_component_value(path, value)
+        self._update_widget_value(path, value)
+
+    def _set_component_value(self, path: ComponentPath, value: str) -> None:
+        """Set component value in data model."""
         self.data_model.set_component_value(path, value)
+
+    def _update_widget_value(self, path: ComponentPath, value: str) -> None:
+        """Update widget value in UI."""
         if path in self.entry_widgets:
             entry = self.entry_widgets[path]
             entry.delete(0, tk.END)
@@ -343,15 +354,16 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
         """
         # Skip components that shouldn't be displayed in simple mode
-        if isinstance(value, dict) and not self._should_display_in_simple_mode(key, value, path):
+        if isinstance(value, dict) and not self.data_model.should_display_in_simple_mode(
+            key, value, path, self.complexity_var.get()
+        ):
             return
 
         # For leaf nodes in simple mode, check if they are optional
-        if not isinstance(value, dict) and self.complexity_var.get() == "simple":
-            current_path = (*path, key)
-            _, is_optional = self.local_filesystem.get_component_property_description(current_path)
-            if is_optional:
-                return
+        if not isinstance(value, dict) and not self.data_model.should_display_leaf_in_simple_mode(
+            (*path, key), self.complexity_var.get()
+        ):
+            return
 
         if isinstance(value, dict):  # JSON non-leaf elements, add LabelFrame widget
             self._add_non_leaf_widget(parent, key, value, path)
@@ -359,25 +371,8 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             self._add_leaf_widget(parent, key, value, path)
 
     def _prepare_non_leaf_widget_config(self, key: str, value: dict, path: list[str]) -> dict:
-        """Prepare configuration for non-leaf widget creation. Pure function for easy testing."""
-        is_toplevel = len(path) == 0  # More explicit than checking parent type
-        current_path = (*path, key)
-        description, is_optional = self.local_filesystem.get_component_property_description(current_path)
-        description = _(description) if description else ""
-
-        # Enhance tooltip for optional fields
-        if is_optional and description:
-            description += _("\nThis is optional and can be left blank")
-
-        return {
-            "key": key,
-            "value": value,
-            "path": current_path,
-            "description": description,
-            "is_optional": is_optional,
-            "is_toplevel": is_toplevel,
-            "pady": 5 if is_toplevel else 3,
-        }
+        """Prepare configuration for non-leaf widget creation. Delegates to display logic."""
+        return self.data_model.prepare_non_leaf_widget_config(key, value, path)
 
     def _create_non_leaf_widget_ui(self, parent: tk.Widget, config: dict) -> ttk.LabelFrame:
         """Create the UI elements for a non-leaf widget. Separated for better testability."""
@@ -389,7 +384,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         frame.pack(
             fill=tk.X,
             side=tk.TOP if config["is_toplevel"] else tk.LEFT,
-            pady=config["pady"],
+            pady=5 if config["is_toplevel"] else 3,
             padx=5,
             anchor=tk.NW if config["is_toplevel"] else tk.N,
         )
@@ -420,30 +415,15 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         self._create_leaf_widget_ui(parent, widget_config)
 
     def _prepare_leaf_widget_config(self, key: str, value: Union[str, float], path: list[str]) -> dict:
-        """Prepare configuration for leaf widget creation. Pure function for easy testing."""
-        component_path = (*path, key)
-        description, is_optional = self.local_filesystem.get_component_property_description(component_path)
-        description = _(description) if description else ""
-
-        # Enhance tooltip for optional fields
-        if is_optional and description:
-            description += _("\nThis is optional and can be left blank")
-
-        return {
-            "key": key,
-            "value": value,
-            "path": component_path,
-            "description": description,
-            "is_optional": is_optional,
-            "label_color": "gray" if is_optional else "black",
-        }
+        """Prepare configuration for leaf widget creation. Delegates to display logic."""
+        return self.data_model.prepare_leaf_widget_config(key, value, path)
 
     def _create_leaf_widget_ui(self, parent: tk.Widget, config: dict) -> None:
         """Create the UI elements for a leaf widget. Separated for better testability."""
         entry_frame = ttk.Frame(parent)
         entry_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
 
-        label = ttk.Label(entry_frame, text=_(config["key"]), foreground=config["label_color"])
+        label = ttk.Label(entry_frame, text=_(config["key"]), foreground="gray" if config["is_optional"] else "black")
         label.pack(side=tk.LEFT)
 
         entry = self.add_entry_or_combobox(config["value"], entry_frame, config["path"], config["is_optional"])
@@ -470,7 +450,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         # Use the data model to extract and process the component data
         return self.data_model.extract_component_data_from_entries(component_name, entry_values)
 
-    def validate_data(self) -> str:
+    def validate_data_and_highlight_errors_in_red(self) -> str:
         """
         Validate the data in the entry widgets.
 
@@ -484,7 +464,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
     def validate_and_save_component_json(self) -> None:
         """Validate and save the component JSON data."""
-        error_msg = self.validate_data()
+        error_msg = self.validate_data_and_highlight_errors_in_red()
         if error_msg:
             show_error_message(_("Error"), error_msg)
             return
@@ -503,11 +483,17 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
     def save_component_json(self) -> None:
         """Save component JSON data to file."""
-        # Use data model to save (which handles validation and data processing)
-        failed, msg = self.data_model.save_to_filesystem(self.local_filesystem)
+        save_result = self._perform_file_save()
+        self._handle_save_result(save_result)
 
-        if failed:
-            show_error_message(_("Error"), _("Failed to save data to file.") + "\n" + msg)
+    def _perform_file_save(self) -> tuple[bool, str]:
+        """Perform file save operation."""
+        return self.data_model.save_to_filesystem(self.local_filesystem)
+
+    def _handle_save_result(self, save_result: tuple[bool, str]) -> None:
+        """Handle save operation result."""
+        if save_result[0]:
+            show_error_message(_("Error"), _("Failed to save data to file.") + "\n" + save_result[1])
         else:
             logging_info(_("Vehicle component data saved successfully."))
 
@@ -610,66 +596,6 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             instance.complexity_var = MagicMock()
 
             return instance
-
-    def _should_display_in_simple_mode(self, key: str, value: dict, path: list[str]) -> bool:  # pylint: disable=too-many-branches
-        """
-        Determine if a component should be displayed in simple mode.
-
-        In simple mode, only show components that have at least one non-optional parameter.
-
-        Args:
-            key (str): The component key
-            value (dict): The component value
-            path (list): The path to the component
-
-        Returns:
-            bool: True if the component should be displayed, False otherwise
-
-        """
-        # If not in simple mode, always display the component
-        if self.complexity_var.get() != "simple":
-            return True
-
-        has_non_optional = False
-
-        # Top-level components need special handling
-        if not path and key in self.data_model.get_all_components():
-            # Check if this component has any non-optional parameters
-            for sub_key, sub_value in value.items():
-                if isinstance(sub_value, dict):
-                    # For nested dictionaries, recursively check
-                    if self._should_display_in_simple_mode(sub_key, sub_value, [*path, key]):
-                        return True
-                else:
-                    # For leaf nodes, check if they are optional
-                    current_path = (*path, key, sub_key)
-                    _, is_optional = self.local_filesystem.get_component_property_description(current_path)
-                    if not is_optional:
-                        return True
-            return False
-
-        # For non-top-level components or leaf nodes
-        if isinstance(value, dict):
-            # Check if this component has any non-optional parameters
-            for sub_key, sub_value in value.items():
-                current_path = (*path, key, sub_key)
-                if isinstance(sub_value, dict):
-                    if self._should_display_in_simple_mode(sub_key, sub_value, [*path, key]):
-                        has_non_optional = True
-                        break
-                else:
-                    _, is_optional = self.local_filesystem.get_component_property_description(current_path)
-                    if not is_optional:
-                        has_non_optional = True
-                        break
-        else:
-            # Leaf node - check if it's optional
-            current_path = (*path, key)
-            _, is_optional = self.local_filesystem.get_component_property_description(current_path)
-            if not is_optional:
-                has_non_optional = True
-
-        return has_non_optional
 
 
 if __name__ == "__main__":

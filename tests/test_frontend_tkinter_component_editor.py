@@ -548,7 +548,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
 
         editor_with_mocked_root.data_model.validate_all_data = MagicMock(return_value=(True, []))
 
-        result = editor_with_mocked_root.validate_data()
+        result = editor_with_mocked_root.validate_data_and_highlight_errors_in_red()
 
         expected_entry_values = {
             ("Motor", "Specifications", "KV"): "1000",
@@ -578,7 +578,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         editor_with_mocked_root.data_model.validate_entry_limits = MagicMock(return_value=("Value too high", None))
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.show_error_message") as mock_error:
-            result = editor_with_mocked_root.validate_data()
+            result = editor_with_mocked_root.validate_data_and_highlight_errors_in_red()
 
             # Should configure widgets with invalid styles
             mock_combobox.configure.assert_called_once_with(style="comb_input_invalid.TCombobox")
@@ -608,7 +608,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         editor_with_mocked_root.data_model.get_combobox_values_for_path = MagicMock(return_value=("PWM", "SBUS"))
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.show_error_message"):
-            editor_with_mocked_root.validate_data()
+            editor_with_mocked_root.validate_data_and_highlight_errors_in_red()
 
             # Should configure combobox as valid since value is in allowed values
             mock_combobox.configure.assert_called_once_with(style="comb_input_valid.TCombobox")
@@ -641,7 +641,7 @@ class TestIntegrationScenarios:
         editor_with_mocked_root.data_model.get_combobox_values_for_path = MagicMock(return_value=("PWM", "SBUS"))
         editor_with_mocked_root.data_model.validate_entry_limits = MagicMock(return_value=("", None))
 
-        result = editor_with_mocked_root.validate_data()
+        result = editor_with_mocked_root.validate_data_and_highlight_errors_in_red()
 
         # Should validate successfully
         assert result == ""
