@@ -297,7 +297,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         entry.configure(style="entry_input_valid.TEntry")
         return True
 
-    def validate_data(self) -> str:
+    def validate_data_and_highlight_errors_in_red(self) -> str:
         """Validate all data using the data model."""
         # Collect all entry values
         entry_values = {path: entry.get() for path, entry in self.entry_widgets.items() if len(path) == 3}
@@ -350,7 +350,7 @@ if __name__ == "__main__":
     if args.skip_component_editor:
         component_editor_window.root.after(10, component_editor_window.root.destroy)
 
-    component_editor_window.validate_data()
+    component_editor_window.validate_data_and_highlight_errors_in_red()
 
     component_editor_window.root.mainloop()
 # pylint: enable=duplicate-code
