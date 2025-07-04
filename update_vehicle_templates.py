@@ -75,18 +75,18 @@ def process_template_directory(template_dir: Path) -> None:
             logging.error("Vehicle type mismatch in %s", template_dir)
             return
 
-        if not local_fs.vehicle_components or not isinstance(local_fs.vehicle_components, dict):
+        if not local_fs.vehicle_components_fs.data or not isinstance(local_fs.vehicle_components_fs.data, dict):
             logging.error("Vehicle components are empty/invalid in %s", template_dir)
             return
 
         # Use ComponentDataModel to update the vehicle components structure
         schema = VehicleComponentsJsonSchema(local_fs.load_schema())
         datatypes = schema.get_all_value_datatypes()
-        data_model = ComponentDataModel(local_fs.vehicle_components, datatypes, schema)
+        data_model = ComponentDataModel(local_fs.vehicle_components_fs.data, datatypes, schema)
         data_model.update_json_structure()
-        local_fs.vehicle_components = data_model.get_component_data()
+        local_fs.vehicle_components_fs.data = data_model.get_component_data()
 
-        local_fs.save_vehicle_components_json_data(local_fs.vehicle_components, str(template_dir))
+        local_fs.save_vehicle_components_json_data(local_fs.vehicle_components_fs.data, str(template_dir))
 
         existing_fc_params = list(local_fs.param_default_dict.keys()) if local_fs.param_default_dict else []
 
