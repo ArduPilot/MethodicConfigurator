@@ -115,8 +115,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         if blank_component_data:
             self.wipe_component_info()
-            if self.vehicle_components and "Components" in self.vehicle_components:
-                self.save_vehicle_components_json_data(self.vehicle_components, self.vehicle_dir)
+            if self.vehicle_components_fs.data and "Components" in self.vehicle_components_fs.data:
+                self.save_vehicle_components_json_data(self.vehicle_components_fs.data, self.vehicle_dir)
 
         if not self.fw_version:
             self.fw_version = self.get_fc_fw_version_from_vehicle_components_json()
@@ -159,7 +159,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             if platform_system() == "Windows":
                 vehicle_configuration_files = [f.lower() for f in vehicle_configuration_files]
             pattern = re_compile(r"^\d{2}_.*\.param$")
-            if self.vehicle_components_json_filename in vehicle_configuration_files and any(
+            if self.vehicle_components_fs.json_filename in vehicle_configuration_files and any(
                 pattern.match(f) for f in vehicle_configuration_files
             ):
                 return True
@@ -524,7 +524,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 "00_default.param",
                 "apm.pdef.xml",
                 self.configuration_steps_filename,
-                self.vehicle_components_json_filename,
+                self.vehicle_components_fs.json_filename,
                 "vehicle.jpg",
                 "last_uploaded_filename.txt",
                 "tempcal_gyro.png",
@@ -700,8 +700,12 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     def get_eval_variables(self) -> dict[str, dict[str, Any]]:
         variables = {}
-        if hasattr(self, "vehicle_components") and self.vehicle_components and "Components" in self.vehicle_components:
-            variables["vehicle_components"] = self.vehicle_components["Components"]
+        if (
+            hasattr(self, "vehicle_components_fs")
+            and self.vehicle_components_fs.data
+            and "Components" in self.vehicle_components_fs.data
+        ):
+            variables["vehicle_components"] = self.vehicle_components_fs.data["Components"]
         if hasattr(self, "doc_dict") and self.doc_dict:
             variables["doc_dict"] = self.doc_dict
         return variables

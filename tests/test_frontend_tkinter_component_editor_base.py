@@ -51,12 +51,15 @@ def setup_common_editor_mocks(editor) -> ComponentEditorWindowBase:
     editor.local_filesystem.vehicle_image_filepath = MagicMock(return_value="test.jpg")
     editor.local_filesystem.save_component_to_system_templates = MagicMock()
 
-    # Mock the vehicle_components attribute
-    mock_vehicle_components = MagicMock()
-    # Make schema loading return a valid empty schema
-    mock_vehicle_components.load_schema.return_value = {"properties": {}}
-    mock_vehicle_components.get_component_property_description = MagicMock(return_value=("Test description", False))
-    editor.local_filesystem.vehicle_components = mock_vehicle_components
+    # Mock the vehicle_components_fs attribute structure
+    mock_vehicle_components_fs = MagicMock()
+    mock_vehicle_components_fs.data = MagicMock()
+    mock_vehicle_components_fs.json_filename = "vehicle_components.json"
+    editor.local_filesystem.vehicle_components_fs = mock_vehicle_components_fs
+
+    # Mock the vehicle_components methods that are accessed directly
+    editor.local_filesystem.load_schema = MagicMock(return_value={"properties": {}})
+    editor.local_filesystem.get_component_property_description = MagicMock(return_value=("Test description", False))
 
     # Setup test data and data model
     editor.entry_widgets = {}
@@ -1064,8 +1067,8 @@ class TestUIInitializationWorkflows:
         User can scroll through large lists of vehicle components.
 
         GIVEN: A user has many vehicle components to configure
-        WHEN: The scrollable frame is created
-        THEN: A scroll frame should be properly configured for navigation
+        WHEN: The scrollable frame is set up
+        THEN: The user should be able to scroll through all components
         """
         # Arrange: Mock ScrollFrame creation
         mock_scroll_frame = MagicMock()
