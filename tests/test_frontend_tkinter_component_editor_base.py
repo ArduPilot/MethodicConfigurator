@@ -56,7 +56,7 @@ def setup_common_editor_mocks(editor) -> ComponentEditorWindowBase:
     # Make schema loading return a valid empty schema
     mock_vehicle_components.load_schema.return_value = {"properties": {}}
     mock_vehicle_components.get_component_property_description = MagicMock(return_value=("Test description", False))
-    editor.local_filesystem.vehicle_components = mock_vehicle_components
+    editor.local_filesystem.vehicle_components_fs.data = mock_vehicle_components
 
     # Setup test data and data model
     editor.entry_widgets = {}

@@ -383,7 +383,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         lfs = LocalFilesystem(
             "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
         )
-        lfs.vehicle_components = None
+        lfs.vehicle_components_fs.data = None
         lfs.doc_dict = None
         result = lfs.get_eval_variables()
         assert not result
@@ -483,7 +483,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert not result
 
         # Test with components and doc_dict
-        lfs.vehicle_components = {"Components": {"test": "value"}}
+        lfs.vehicle_components_fs.data = {"Components": {"test": "value"}}
         lfs.doc_dict = {"param": "doc"}
         result = lfs.get_eval_variables()
         assert "vehicle_components" in result
