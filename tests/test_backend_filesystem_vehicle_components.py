@@ -70,81 +70,83 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
             },
         }
 
-    @patch("builtins.open", new_callable=mock_open, read_data='{"$schema": "http://json-schema.org/draft-07/schema#"}')
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
-    def test_load_schema(self, mock_json_load, mock_file) -> None:  # type: ignore[misc]
-        mock_json_load.return_value = self.valid_schema
-        result = self.vehicle_components.load_schema()
-        assert result == self.valid_schema
-        mock_file.assert_called_once()
-        mock_json_load.assert_called_once()
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_load_schema(self, mock_fs_class) -> None:  # type: ignore[misc]
+        mock_fs = mock_fs_class.return_value
+        mock_fs.load_schema.return_value = self.valid_schema
 
-    @patch.object(VehicleComponents, "load_schema")
-    def test_validate_vehicle_components_valid(self, mock_load_schema) -> None:  # type: ignore[misc]
-        mock_load_schema.return_value = self.valid_schema
-        is_valid, error_message = self.vehicle_components.validate_vehicle_components(self.valid_component_data)
+        # Create a new instance so it uses the mocked FilesystemJSONWithSchema
+        vehicle_components = VehicleComponents()
+        result = vehicle_components.load_schema()
+
+        assert result == self.valid_schema
+        mock_fs.load_schema.assert_called_once()
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_validate_vehicle_components_valid(self, mock_fs_class) -> None:  # type: ignore[misc]
+        mock_fs = mock_fs_class.return_value
+        mock_fs.validate_json_against_schema.return_value = (True, "")
+
+        vehicle_components = VehicleComponents()
+        is_valid, error_message = vehicle_components.validate_vehicle_components(self.valid_component_data)
         assert is_valid
         assert error_message == ""
 
-    @patch.object(VehicleComponents, "load_schema")
-    def test_validate_vehicle_components_invalid(self, mock_load_schema) -> None:  # type: ignore[misc]
-        mock_load_schema.return_value = self.valid_schema
-        is_valid, error_message = self.vehicle_components.validate_vehicle_components(self.invalid_component_data)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_validate_vehicle_components_invalid(self, mock_fs_class) -> None:  # type: ignore[misc]
+        mock_fs = mock_fs_class.return_value
+        mock_fs.validate_json_against_schema.return_value = (False, "Validation error")
+
+        vehicle_components = VehicleComponents()
+        is_valid, error_message = vehicle_components.validate_vehicle_components(self.invalid_component_data)
         assert not is_valid
         assert "Validation error" in error_message
 
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
-    @patch.object(VehicleComponents, "validate_vehicle_components")
-    def test_load_vehicle_components_json_data(self, mock_validate, mock_json_load, mock_file) -> None:  # type: ignore[misc]
-        mock_json_load.return_value = self.valid_component_data
-        mock_validate.return_value = (True, "")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_load_vehicle_components_json_data(self, mock_fs_class) -> None:  # type: ignore[misc]
+        mock_fs = mock_fs_class.return_value
+        mock_fs.load_json_data.return_value = self.valid_component_data
 
-        result = self.vehicle_components.load_vehicle_components_json_data("/test/dir")
+        vehicle_components = VehicleComponents()
+        result = vehicle_components.load_vehicle_components_json_data("/test/dir")
 
         assert result == self.valid_component_data
-        assert self.vehicle_components.vehicle_components == self.valid_component_data
+        mock_fs.load_json_data.assert_called_once_with("/test/dir")
 
-        expected_path = os.path.join("/test/dir", "vehicle_components.json")
-        mock_file.assert_called_once_with(expected_path, encoding="utf-8")
-        mock_json_load.assert_called_once()
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_save_vehicle_components_json_data_valid(self, mock_fs_class) -> None:  # type: ignore[misc]
+        mock_fs = mock_fs_class.return_value
+        mock_fs.save_json_data.return_value = (False, "")
 
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
-    @patch.object(VehicleComponents, "validate_vehicle_components")
-    def test_save_vehicle_components_json_data_valid(  # type: ignore[misc]
-        self, mock_validate, mock_json_dump, mock_file
-    ) -> None:
-        mock_validate.return_value = (True, "")
-
-        result, _msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
+        vehicle_components = VehicleComponents()
+        result, _msg = vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
 
         assert not result  # False means success
-        expected_path = os.path.join("/test/dir", "vehicle_components.json")
-        mock_file.assert_called_once_with(expected_path, "w", encoding="utf-8", newline="\n")
-        mock_json_dump.assert_called_once()
+        mock_fs.save_json_data.assert_called_once_with(self.valid_component_data, "/test/dir")
 
-    @patch.object(VehicleComponents, "validate_vehicle_components")
-    def test_save_vehicle_components_json_data_invalid(self, mock_validate) -> None:  # type: ignore[misc]
-        mock_validate.return_value = (False, "Validation error")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_save_vehicle_components_json_data_invalid(self, mock_fs_class) -> None:  # type: ignore[misc]
+        mock_fs = mock_fs_class.return_value
+        mock_fs.save_json_data.return_value = (True, "Validation error")
 
-        result, _msg = self.vehicle_components.save_vehicle_components_json_data(self.invalid_component_data, "/test/dir")
+        vehicle_components = VehicleComponents()
+        result, _msg = vehicle_components.save_vehicle_components_json_data(self.invalid_component_data, "/test/dir")
 
         assert result  # True means failure
 
     def test_get_fc_fw_type_from_vehicle_components_json(self) -> None:
-        self.vehicle_components.vehicle_components = self.valid_component_data
+        self.vehicle_components.vehicle_components_fs.data = self.valid_component_data
         fw_type = self.vehicle_components.get_fc_fw_type_from_vehicle_components_json()
         assert fw_type == "ArduCopter"
 
         # Test with unsupported firmware type
         invalid_data = {"Components": {"Flight Controller": {"Firmware": {"Type": "UnsupportedType", "Version": "4.3.0"}}}}
-        self.vehicle_components.vehicle_components = invalid_data
+        self.vehicle_components.vehicle_components_fs.data = invalid_data
         fw_type = self.vehicle_components.get_fc_fw_type_from_vehicle_components_json()
         assert fw_type == ""
 
     def test_get_fc_fw_version_from_vehicle_components_json(self) -> None:
-        self.vehicle_components.vehicle_components = self.valid_component_data
+        self.vehicle_components.vehicle_components_fs.data = self.valid_component_data
         version = self.vehicle_components.get_fc_fw_version_from_vehicle_components_json()
         assert version == "4.3.0"
 
@@ -152,7 +154,7 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
         invalid_data = {
             "Components": {"Flight Controller": {"Firmware": {"Type": "ArduCopter", "Version": "invalid-version"}}}
         }
-        self.vehicle_components.vehicle_components = invalid_data
+        self.vehicle_components.vehicle_components_fs.data = invalid_data
         version = self.vehicle_components.get_fc_fw_version_from_vehicle_components_json()
         assert version == ""
 
@@ -207,7 +209,7 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
 
     def test_wipe_component_info(self) -> None:
         # Test with nested dictionary containing various data types
-        self.vehicle_components.vehicle_components = {
+        test_data = {
             "Components": {
                 "Flight Controller": {
                     "Firmware": {"Type": "ArduCopter", "Version": "4.3.0"},
@@ -216,12 +218,13 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
                 }
             }
         }
+        self.vehicle_components.vehicle_components_fs.data = test_data
 
         # Call the method to wipe
         self.vehicle_components.wipe_component_info()
 
         # Verify structure is preserved but values are cleared
-        result = self.vehicle_components.vehicle_components
+        result = self.vehicle_components.vehicle_components_fs.data
         assert "Components" in result
         assert "Flight Controller" in result["Components"]
         assert "Firmware" in result["Components"]["Flight Controller"]
@@ -233,60 +236,70 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
         assert result["Components"]["Flight Controller"]["Options"]["Enabled"] == 0
         assert result["Components"]["Flight Controller"]["Options"]["Value"] == 0.0
 
-    @patch("builtins.open")
-    def test_save_vehicle_components_json_data_file_not_found(self, mock_open) -> None:  # type: ignore[misc] # pylint: disable=redefined-outer-name
-        mock_open.side_effect = FileNotFoundError()
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_save_vehicle_components_json_data_file_not_found(self, mock_fs_class) -> None:  # type: ignore[misc]
+        mock_fs = mock_fs_class.return_value
+        mock_fs.save_json_data.return_value = (True, "File not found")
 
-        result, msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/nonexistent/dir")
+        vehicle_components = VehicleComponents()
+        result, msg = vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/nonexistent/dir")
 
         assert result  # True means error
         assert "not found" in msg
 
-    @patch("builtins.open")
-    def test_save_vehicle_components_json_data_permission_error(self, mock_open) -> None:  # type: ignore[misc] # pylint: disable=redefined-outer-name
-        mock_open.side_effect = PermissionError()
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_save_vehicle_components_json_data_permission_error(self, mock_fs_class) -> None:  # type: ignore[misc]
+        mock_fs = mock_fs_class.return_value
+        mock_fs.save_json_data.return_value = (True, "Permission denied")
 
-        result, msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
+        vehicle_components = VehicleComponents()
+        result, msg = vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
 
         assert result  # True means error
         assert "Permission denied" in msg
 
-    @patch("builtins.open")
-    def test_save_vehicle_components_json_data_is_a_directory_error(self, mock_open) -> None:  # type: ignore[misc] # pylint: disable=redefined-outer-name
-        mock_open.side_effect = IsADirectoryError()
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_save_vehicle_components_json_data_is_a_directory_error(self, mock_fs_class) -> None:  # type: ignore[misc]
+        mock_fs = mock_fs_class.return_value
+        mock_fs.save_json_data.return_value = (True, "path is a directory")
 
-        result, msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
+        vehicle_components = VehicleComponents()
+        result, msg = vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
 
         assert result  # True means error
         assert "is a directory" in msg.lower()
 
-    @patch("builtins.open")
-    def test_save_vehicle_components_json_data_os_error(self, mock_open) -> None:  # type: ignore[misc] # pylint: disable=redefined-outer-name
-        mock_open.side_effect = OSError("Disk full")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_save_vehicle_components_json_data_os_error(self, mock_fs_class) -> None:  # type: ignore[misc]
+        mock_fs = mock_fs_class.return_value
+        mock_fs.save_json_data.return_value = (True, "OS error: Disk full")
 
-        result, msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
+        vehicle_components = VehicleComponents()
+        result, msg = vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
 
         assert result  # True means error
         assert "OS error" in msg
         assert "Disk full" in msg
 
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
-    def test_save_vehicle_components_json_data_type_error(self, mock_json_dump, mock_file) -> None:  # type: ignore[misc] # pylint: disable=unused-argument
-        mock_json_dump.side_effect = TypeError("Invalid type")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_save_vehicle_components_json_data_type_error(self, mock_fs_class) -> None:  # type: ignore[misc]
+        mock_fs = mock_fs_class.return_value
+        mock_fs.save_json_data.return_value = (True, "Type error: Invalid type")
 
-        result, msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
+        vehicle_components = VehicleComponents()
+        result, msg = vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
 
         assert result  # True means error
         assert "Type error" in msg
         assert "Invalid type" in msg
 
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
-    def test_save_vehicle_components_json_data_value_error(self, mock_json_dump, mock_file) -> None:  # type: ignore[misc] # pylint: disable=unused-argument
-        mock_json_dump.side_effect = ValueError("Circular reference")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_save_vehicle_components_json_data_value_error(self, mock_fs_class) -> None:  # type: ignore[misc]
+        mock_fs = mock_fs_class.return_value
+        mock_fs.save_json_data.return_value = (True, "Value error: Circular reference")
 
-        result, msg = self.vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
+        vehicle_components = VehicleComponents()
+        result, msg = vehicle_components.save_vehicle_components_json_data(self.valid_component_data, "/test/dir")
 
         assert result  # True means error
         assert "Value error" in msg
@@ -859,25 +872,17 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
         assert not complex_dict["complex_nested"]["mixed"]
         assert complex_dict["complex_nested"]["deep"]["deeper"]["deepest"] == ""
 
-    @patch("builtins.open", new_callable=mock_open, read_data='{"invalid": "json"')
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.logging_error")
-    def test_load_schema_invalid_json(self, mock_logging_error, mock_file) -> None:  # pylint: disable=unused-argument
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
+    def test_load_schema_invalid_json(self, mock_fs_class) -> None:
         """Test handling of invalid JSON in schema file."""
-        # Setup the mock to raise JSONDecodeError
+        mock_fs = mock_fs_class.return_value
+        mock_fs.load_schema.return_value = {}  # FilesystemJSONWithSchema returns empty dict on error
 
-        # Create a real JSONDecodeError instance
-        error = RealJSONDecodeError("Expecting ',' delimiter", '{"invalid": "json"', 15)
+        vehicle_components = VehicleComponents()
+        result = vehicle_components.load_schema()
 
-        with patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load", side_effect=error):
-            # Call the method - this should handle the exception internally
-            result = self.vehicle_components.load_schema()
-
-            # Verify an empty dict is returned
-            assert result == {}
-
-            # Verify the error was logged
-            mock_logging_error.assert_called_once()
-            assert "Error decoding JSON schema" in str(mock_logging_error.call_args)
+        # Verify an empty dict is returned
+        assert result == {}
 
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_path.relpath")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_walk")

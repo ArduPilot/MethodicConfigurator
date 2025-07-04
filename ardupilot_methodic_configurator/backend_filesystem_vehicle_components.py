@@ -23,9 +23,8 @@ from os import walk as os_walk
 from re import match as re_match
 from typing import Any, Union
 
-from jsonschema import ValidationError, validate, validators
-
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_filesystem_json_with_schema import FilesystemJSONWithSchema
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 from ardupilot_methodic_configurator.middleware_template_overview import TemplateOverview
@@ -35,10 +34,9 @@ class VehicleComponents:
     """Load and save vehicle components configurations from a JSON file."""
 
     def __init__(self, save_component_to_system_templates: bool = False) -> None:
-        self.vehicle_components_json_filename = "vehicle_components.json"
-        self.vehicle_components_schema_filename = "vehicle_components_schema.json"
-        self.vehicle_components: Union[None, dict[str, Any]] = None
-        self.schema: Union[None, dict[Any, Any]] = None
+        self.vehicle_components_fs: FilesystemJSONWithSchema = FilesystemJSONWithSchema(
+            "vehicle_components.json", "vehicle_components_schema.json"
+        )
         self.save_component_to_system_templates = save_component_to_system_templates
 
     def load_schema(self) -> dict:
@@ -47,35 +45,7 @@ class VehicleComponents:
 
         :return: The schema as a dictionary
         """
-        if self.schema is not None:
-            return self.schema
-
-        # Determine the location of the schema file
-        schema_path = os_path.join(os_path.dirname(__file__), self.vehicle_components_schema_filename)
-
-        try:
-            with open(schema_path, encoding="utf-8") as file:
-                loaded_schema: dict[Any, Any] = json_load(file)
-
-                # Validate the schema itself against the JSON Schema meta-schema
-                try:
-                    # Get the Draft7Validator class which has the META_SCHEMA property
-                    validator_class = validators.Draft7Validator
-                    meta_schema = validator_class.META_SCHEMA
-
-                    # Validate the loaded schema against the meta-schema
-                    validate(instance=loaded_schema, schema=meta_schema)
-                    logging_debug(_("Schema file '%s' is valid."), schema_path)
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    logging_error(_("Schema file '%s' is not a valid JSON Schema: %s"), schema_path, str(e))
-
-                self.schema = loaded_schema
-            return self.schema
-        except FileNotFoundError:
-            logging_error(_("Schema file '%s' not found."), schema_path)
-        except JSONDecodeError:
-            logging_error(_("Error decoding JSON schema from file '%s'."), schema_path)
-        return {}
+        return self.vehicle_components_fs.load_schema()
 
     def load_component_templates(self) -> dict[str, list[dict]]:
         """
@@ -285,37 +255,12 @@ class VehicleComponents:
         :param data: The vehicle components data to validate
         :return: A tuple of (is_valid, error_message)
         """
-        schema = self.load_schema()
-        if not schema:
-            return False, _("Could not load validation schema")
-
-        try:
-            validate(instance=data, schema=schema)
-            return True, ""
-        except ValidationError as e:
-            return False, f"{_('Validation error')}: {e.message}"
+        return self.vehicle_components_fs.validate_json_against_schema(data)
 
     def load_vehicle_components_json_data(self, vehicle_dir: str) -> dict[Any, Any]:
-        data: dict[Any, Any] = {}
-        filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
-        try:
-            with open(filepath, encoding="utf-8") as file:
-                data = json_load(file)
+        return self.vehicle_components_fs.load_json_data(vehicle_dir)
 
-            # Validate the loaded data against the schema
-            is_valid, error_message = self.validate_vehicle_components(data)
-            if not is_valid:
-                logging_error(_("Invalid vehicle components file '%s': %s"), filepath, error_message)
-                # We still return the data even if invalid for debugging purposes
-        except FileNotFoundError:
-            # Normal users do not need this information
-            logging_debug(_("File '%s' not found in %s."), self.vehicle_components_json_filename, vehicle_dir)
-        except JSONDecodeError:
-            logging_error(_("Error decoding JSON data from file '%s'."), filepath)
-        self.vehicle_components = data
-        return data
-
-    def save_vehicle_components_json_data(self, data: dict, vehicle_dir: str) -> tuple[bool, str]:  # noqa: PLR0911 # pylint: disable=too-many-return-statements
+    def save_vehicle_components_json_data(self, data: dict, vehicle_dir: str) -> tuple[bool, str]:
         """
         Save the vehicle components data to a JSON file.
 
@@ -323,75 +268,29 @@ class VehicleComponents:
         :param vehicle_dir: The directory to save the file in
         :return: A tuple of (error_occurred, error_message)
         """
-        # Validate before saving
-        # commented out until https://github.com/ArduPilot/MethodicConfigurator/pull/237 gets merged
-        # is_valid, error_message = self.validate_vehicle_components(data)
-        # if not is_valid:
-        #     msg = _("Cannot save invalid vehicle components data: {}").format(error_message)
-        #     logging_error(msg)
-        #     return True, msg
-
-        filepath = os_path.join(vehicle_dir, self.vehicle_components_json_filename)
-        try:
-            with open(filepath, "w", encoding="utf-8", newline="\n") as file:
-                json_dump(data, file, indent=4)
-        except FileNotFoundError:
-            msg = _("Directory '{}' not found").format(vehicle_dir)
-            logging_error(msg)
-            return True, msg
-        except PermissionError:
-            msg = _("Permission denied when writing to file '{}'").format(filepath)
-            logging_error(msg)
-            return True, msg
-        except IsADirectoryError:
-            msg = _("Path '{}' is a directory, not a file").format(filepath)
-            logging_error(msg)
-            return True, msg
-        except OSError as e:
-            msg = _("OS error when writing to file '{}': {}").format(filepath, str(e))
-            logging_error(msg)
-            return True, msg
-        except TypeError as e:
-            msg = _("Type error when serializing data to JSON: {}").format(str(e))
-            logging_error(msg)
-            return True, msg
-        except ValueError as e:
-            msg = _("Value error when serializing data to JSON: {}").format(str(e))
-            logging_error(msg)
-            return True, msg
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            # Still have a fallback for truly unexpected errors
-            msg = _("Unexpected error saving data to file '{}': {}").format(filepath, str(e))
-            logging_error(msg)
-            return True, msg
-
-        return False, ""
+        return self.vehicle_components_fs.save_json_data(data, vehicle_dir)
 
     def get_fc_fw_type_from_vehicle_components_json(self) -> str:
-        if self.vehicle_components and "Components" in self.vehicle_components:
-            components = self.vehicle_components["Components"]
-        else:
-            components = None
+        data = self.vehicle_components_fs.data
+        components = data["Components"] if data and "Components" in data else None
         if components:
             fw_type: str = components.get("Flight Controller", {}).get("Firmware", {}).get("Type", "")
             if fw_type in self.supported_vehicles():
                 return fw_type
-            error_msg = _("Firmware type {fw_type} in {self.vehicle_components_json_filename} is not supported")
-            logging_error(error_msg.format(**locals()))
+            error_msg = _("Firmware type {fw_type} in {filename} is not supported")
+            logging_error(error_msg.format(fw_type=fw_type, filename=self.vehicle_components_fs.json_filename))
         return ""
 
     def get_fc_fw_version_from_vehicle_components_json(self) -> str:
-        if self.vehicle_components and "Components" in self.vehicle_components:
-            components = self.vehicle_components["Components"]
-        else:
-            components = None
+        data = self.vehicle_components_fs.data
+        components = data["Components"] if data and "Components" in data else None
         if components:
             version_str: str = components.get("Flight Controller", {}).get("Firmware", {}).get("Version", "")
             version_str = version_str.lstrip().split(" ")[0] if version_str else ""
             if re_match(r"^\d+\.\d+\.\d+$", version_str):
                 return version_str
-            error_msg = _("FW version string {version_str} on {self.vehicle_components_json_filename} is invalid")
-            logging_error(error_msg.format(**locals()))
+            error_msg = _("FW version string {version_str} on {filename} is invalid")
+            logging_error(error_msg.format(version_str=version_str, filename=self.vehicle_components_fs.json_filename))
         return ""
 
     @staticmethod
@@ -410,7 +309,7 @@ class VehicleComponents:
         :return: A dictionary mapping subdirectory paths to TemplateOverview instances.
         """
         vehicle_components_dict = {}
-        file_to_find = VehicleComponents().vehicle_components_json_filename
+        file_to_find = VehicleComponents().vehicle_components_fs.json_filename
         template_default_dir = ProgramSettings.get_templates_base_dir()
         for root, _dirs, files in os_walk(template_default_dir):
             if file_to_find in files:
@@ -437,8 +336,9 @@ class VehicleComponents:
         Preserves the complete structure of the dictionary including all branches and leaves,
         but sets leaf values to empty values based on their type.
         """
-        if self.vehicle_components is not None:
-            self._recursively_clear_dict(self.vehicle_components)
+        data = self.vehicle_components_fs.data
+        if data is not None:
+            self._recursively_clear_dict(data)
 
     def _recursively_clear_dict(self, data: Union[dict, list, float, bool, str]) -> None:
         """
