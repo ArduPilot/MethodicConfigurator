@@ -91,9 +91,20 @@ def create_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def setup_logging_and_check_updates(state: ApplicationState) -> bool:
+def setup_logging(state: ApplicationState) -> None:
     """
-    Set up logging and check for software updates.
+    Set up logging.
+
+    Args:
+        state: Application state containing parsed arguments
+
+    """
+    logging_basicConfig(level=logging_getLevelName(state.args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+
+
+def check_updates(state: ApplicationState) -> bool:
+    """
+    Check for software updates.
 
     Args:
         state: Application state containing parsed arguments
@@ -102,8 +113,6 @@ def setup_logging_and_check_updates(state: ApplicationState) -> bool:
         True if the application should exit due to updates, False otherwise
 
     """
-    logging_basicConfig(level=logging_getLevelName(state.args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
-
     if not state.args.skip_check_for_updates and check_for_software_updates():
         logging_info(_("Will now exit the old software version."))
         return True
@@ -448,18 +457,18 @@ def main() -> None:
     Orchestrates the entire application startup process by calling specialized functions
     for each major step.
     """
-    # Parse arguments and create application state
     args = create_argument_parser().parse_args()
+
     state = ApplicationState(args)
 
-    # Set up logging and check for updates
-    if setup_logging_and_check_updates(state):
-        sys_exit(0)
+    setup_logging(state)
 
-    # Handle auto-opening documentation
+    # Check for software updates
+    if check_updates(state):
+        sys_exit(0)  # user asked to update, exit the old version
+
     display_first_use_documentation()
 
-    # Initialize flight controller and filesystem
     initialize_flight_controller_and_filesystem(state)
 
     # Handle vehicle directory selection if needed
