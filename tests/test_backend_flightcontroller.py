@@ -226,12 +226,16 @@ class TestMotorTestFunctionality:
         AND: The function should return True indicating success
         """
         # Arrange: Set up motor test parameters
-        motor_number = 1
+        test_sequence_nr = 0  # First motor (0-based for test sequence)
+        motor_letters = "A"
+        motor_output_nr = 1  # First output (1-based)
         throttle_percent = 15
         timeout_seconds = 3
 
         # Act: Execute motor test
-        success, error_msg = flight_controller.test_motor(motor_number, throttle_percent, timeout_seconds)
+        success, error_msg = flight_controller.test_motor(
+            test_sequence_nr, motor_letters, motor_output_nr, throttle_percent, timeout_seconds
+        )
 
         # Assert: Motor test command sent correctly
         assert success is True, f"Motor test should succeed, but got error: {error_msg}"
@@ -243,12 +247,12 @@ class TestMotorTestFunctionality:
         assert call_args[1] == 1  # target_component
         assert call_args[2] == mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST  # command
         assert call_args[3] == 0  # confirmation
-        assert call_args[4] == motor_number  # param1: motor number
+        assert call_args[4] == test_sequence_nr + 1  # param1: motor test number (1-based)
         assert call_args[5] == mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT  # param2: throttle type
         assert call_args[6] == throttle_percent  # param3: throttle value
         assert call_args[7] == timeout_seconds  # param4: timeout
-        assert call_args[8] == motor_number  # param5: motor count
-        assert call_args[9] == mavutil.mavlink.MOTOR_TEST_ORDER_BOARD  # param6: test order
+        assert call_args[8] == 0  # param5: motor count (0=single motor test)
+        assert call_args[9] == 0  # param6: test order (0=default/board order)
 
     def test_user_can_stop_all_motors_immediately(self, flight_controller) -> None:
         """
@@ -279,7 +283,7 @@ class TestMotorTestFunctionality:
         assert call_args[6] == 0  # param3: throttle value (0 = stop)
         assert call_args[7] == 0  # param4: timeout (0 = immediate)
         assert call_args[8] == 0  # param5: motor count (0 = all)
-        assert call_args[9] == mavutil.mavlink.MOTOR_TEST_ORDER_BOARD  # param6: test order
+        assert call_args[9] == 0  # param6: test order (0 = default/board order)
 
     def test_user_can_test_motors_in_sequence(self, flight_controller) -> None:
         """
@@ -299,7 +303,11 @@ class TestMotorTestFunctionality:
         timeout_seconds = 2
 
         # Act: Execute sequential motor test
-        success, error_msg = flight_controller.test_motors_in_sequence(4, throttle_percent, timeout_seconds)
+        start_motor = 1  # Start with first motor
+        motor_count = 4  # Test 4 motors
+        success, error_msg = flight_controller.test_motors_in_sequence(
+            start_motor, motor_count, throttle_percent, timeout_seconds
+        )
 
         # Assert: Sequential test command sent for all motors
         assert success is True, f"Sequential motor test should succeed, but got error: {error_msg}"
@@ -311,11 +319,11 @@ class TestMotorTestFunctionality:
         assert call_args[1] == 1  # target_component
         assert call_args[2] == mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST  # command
         assert call_args[3] == 0  # confirmation
-        assert call_args[4] == 4  # param1: motor count (4 for quad)
+        assert call_args[4] == start_motor  # param1: starting motor number (1-based)
         assert call_args[5] == mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT  # param2: throttle type
         assert call_args[6] == throttle_percent  # param3: throttle value
         assert call_args[7] == timeout_seconds  # param4: timeout per motor
-        assert call_args[8] == 4  # param5: motor count
+        assert call_args[8] == motor_count  # param5: number of motors to test in sequence
         assert call_args[9] == mavutil.mavlink.MOTOR_TEST_ORDER_SEQUENCE  # param6: test order (sequence)
 
     def test_motor_test_handles_communication_failure(self, flight_controller) -> None:
@@ -331,7 +339,7 @@ class TestMotorTestFunctionality:
         flight_controller.master.mav.command_long_send.side_effect = Exception("Connection lost")
 
         # Act: Attempt motor test during communication failure
-        success, error_msg = flight_controller.test_motor(1, 10, 2)
+        success, error_msg = flight_controller.test_motor(0, "A", 1, 10, 2)
 
         # Assert: Function handles error gracefully
         assert success is False
@@ -469,7 +477,13 @@ class TestMotorTestCommandSending:
 
         # Act & Assert: Test command sending for each case
         for motor_num, throttle, timeout in test_cases:
-            success, error_msg = flight_controller.test_motor(motor_num, throttle, timeout)
+            # Convert motor_num to test parameters
+            test_sequence_nr = motor_num - 1  # Convert to 0-based index
+            motor_letters = chr(ord("A") + test_sequence_nr)  # A, B, C, etc.
+            motor_output_nr = motor_num  # Keep 1-based for output number
+            success, error_msg = flight_controller.test_motor(
+                test_sequence_nr, motor_letters, motor_output_nr, throttle, timeout
+            )
 
             # Assert: Command should be sent successfully
             assert success is True, f"Motor test command should be sent successfully for motor {motor_num}, error: {error_msg}"
@@ -489,7 +503,7 @@ class TestMotorTestCommandSending:
         flight_controller.master = None
 
         # Act: Attempt motor test without connection
-        success, error_msg = flight_controller.test_motor(1, 10, 2.0)
+        success, error_msg = flight_controller.test_motor(0, "A", 1, 10, 2.0)
 
         # Assert: Should fail gracefully
         assert success is False, "Motor test should fail gracefully when no connection is available"

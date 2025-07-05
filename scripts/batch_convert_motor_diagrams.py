@@ -76,28 +76,39 @@ def crop_whitespace(image: Image.Image, margin: int = 5) -> Image.Image:
     return image.crop((left, top, right, bottom))
 
 
-def get_firefox_service() -> Union[FirefoxService, None]:
-    """Return a FirefoxService using system or fallback geckodriver."""
+def setup_firefox_service() -> tuple[Union[FirefoxService, None], str]:
+    """Set up Firefox service with geckodriver fallback logic."""
+    # Create Firefox driver with fallback for geckodriver
     try:
+        # Try to use system geckodriver first
         geckodriver_path = shutil.which("geckodriver")
         if geckodriver_path:
-            return FirefoxService(executable_path=geckodriver_path)
-        return FirefoxService(GeckoDriverManager().install())
-    except (OSError, RuntimeError):
+            return FirefoxService(executable_path=geckodriver_path), "Success"
+        # Fallback to webdriver_manager (may hit rate limit)
+        return FirefoxService(GeckoDriverManager().install()), "Success"
+    except (OSError, RuntimeError, ValueError) as e:
+        # If webdriver_manager fails due to rate limit, try common system paths
         common_paths = [
+            "geckodriver.exe",  # Windows executable
+            "geckodriver",  # Unix executable
             "/usr/bin/geckodriver",
             "/usr/local/bin/geckodriver",
             "/snap/bin/geckodriver",
-            "geckodriver",
+            "C:\\Program Files\\geckodriver\\geckodriver.exe",  # Windows common install
+            "C:\\Windows\\System32\\geckodriver.exe",  # Windows system path
         ]
+
         for path in common_paths:
-            if os.path.exists(path) or (path == "geckodriver" and shutil.which("geckodriver")):
+            if os.path.exists(path) or shutil.which(path):
                 try:
-                    return FirefoxService(executable_path=path)
-                except (OSError, RuntimeError) as exc:
+                    logger.info("Using geckodriver: %s", path)  # Debug output
+                    return FirefoxService(executable_path=path), "Success"
+                except (OSError, RuntimeError, ValueError) as exc:
+                    # Log the exception but continue trying other paths
                     logger.warning("Failed to create FirefoxService with %s: %s", path, exc)
                     continue
-        return None
+
+        return None, f"Geckodriver not found. Please install geckodriver. Original error: {e!s}"
 
 
 def process_image(png_data: bytes, resize_width: int, resize_height: int) -> Image.Image:
@@ -138,20 +149,31 @@ def convert_with_firefox(  # pylint: disable=too-many-arguments, too-many-positi
         firefox_options.add_argument("--no-sandbox")
         firefox_options.add_argument("--disable-dev-shm-usage")
 
-        service = get_firefox_service()
-        if not service:
-            return False, "Geckodriver not found. Please install geckodriver."
+        # Set up Firefox service
+        service, error_msg = setup_firefox_service()
+        if service is None:
+            return False, error_msg
 
         driver = webdriver.Firefox(service=service, options=firefox_options)
 
         # Set window size to large canvas for high quality rendering
         driver.set_window_size(canvas_width, canvas_height)
 
-        # Convert SVG path to absolute path
+        # Convert SVG path to absolute path and handle Windows paths
         svg_abs_path = os.path.abspath(svg_path)
 
+        # Convert Windows path to file URL format
+        if os.name == "nt":  # Windows
+            # Replace backslashes with forward slashes and handle drive letter
+            svg_abs_path = svg_abs_path.replace("\\", "/")
+            svg_abs_path = f"file:///{svg_abs_path}" if svg_abs_path[1] == ":" else f"file://{svg_abs_path}"
+        else:
+            svg_abs_path = f"file://{svg_abs_path}"
+
+        logger.info("Opening URL: %s", svg_abs_path)  # Debug output
+
         # Open SVG file
-        driver.get(f"file://{svg_abs_path}")
+        driver.get(svg_abs_path)
 
         # Take screenshot
         png_data = driver.get_screenshot_as_png()
@@ -224,9 +246,15 @@ def batch_convert_and_compare(  # pylint: disable=too-many-locals, too-many-argu
     png_path = Path(png_dir)
     png_path.mkdir(parents=True, exist_ok=True)
 
+    logger.info("Looking for SVG files in: %s", svg_path.absolute())
+
     # Find all motor diagram SVG files
     svg_files = list(svg_path.glob("m_*.svg"))
     svg_files.sort()
+
+    logger.info(
+        "Found %d SVG files: %s%s", len(svg_files), [f.name for f in svg_files[:5]], "..." if len(svg_files) > 5 else ""
+    )
 
     if not svg_files:
         logger.warning("No motor diagram SVG files found in %s", svg_dir)
@@ -318,25 +346,33 @@ if __name__ == "__main__":
     # Update logging level
     logger.setLevel(args.loglevel)
 
-    # Convert all motor diagrams with new processing pipeline:
-    # - Customizable canvas size for high quality rendering
-    # - Crop whitespace around content
-    # - Remove alpha channel
-    # - Anti-aliasing resize to user-specified size
-    # - Save as optimized PNG
-    # Note: Output PNGs will be resized to (resize_width, resize_height)
-    # Example usage:
-    #   python batch_convert_motor_diagrams.py \
-    #       --svg-dir ./images \
-    #       --png-dir ./pngs \
-    #       --resize-width 300 \
-    #       --resize-height 300 \
-    #       --loglevel DEBUG
-    batch_convert_and_compare(
-        args.svg_dir,
-        args.png_dir,
-        canvas_width=args.canvas_width,
-        canvas_height=args.canvas_height,
-        resize_width=args.resize_width,
-        resize_height=args.resize_height,
-    )
+    logger.info("Starting motor diagram batch conversion...")
+    try:
+        # Convert all motor diagrams with new processing pipeline:
+        # - Customizable canvas size for high quality rendering
+        # - Crop whitespace around content
+        # - Remove alpha channel
+        # - Anti-aliasing resize to user-specified size
+        # - Save as optimized PNG
+        # Note: Output PNGs will be resized to (resize_width, resize_height)
+        # Example usage:
+        #   python batch_convert_motor_diagrams.py \
+        #       --svg-dir ./images \
+        #       --png-dir ./pngs \
+        #       --resize-width 200 \
+        #       --resize-height 200 \
+        #       --loglevel DEBUG
+        batch_convert_and_compare(
+            args.svg_dir,
+            args.png_dir,
+            canvas_width=args.canvas_width,
+            canvas_height=args.canvas_height,
+            resize_width=args.resize_width,
+            resize_height=args.resize_height,
+        )
+        logger.info("Conversion completed successfully!")
+    except (OSError, RuntimeError, ValueError) as e:
+        logger.error("Error during conversion: %s", e)
+        import traceback
+
+        traceback.print_exc()

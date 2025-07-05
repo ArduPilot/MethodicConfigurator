@@ -11,11 +11,13 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import logging
 import urllib.request
 from pathlib import Path
+from urllib.error import URLError
 from urllib.parse import urlparse
 
-# ruff: noqa: T201
+from batch_convert_motor_diagrams import DEFAULT_RESIZE_HEIGHT, DEFAULT_RESIZE_WIDTH, batch_convert_and_compare
 
 # List of all motor diagram SVG files from the ArduPilot documentation at
 # https://ardupilot.org/copter/docs/connect-escs-and-motors.html
@@ -76,7 +78,7 @@ motor_diagrams = [
 
 
 def download_motor_diagrams() -> None:
-    """Download all motor diagram SVG files."""
+    """Download all motor diagram SVG files and convert them to PNG using batch_convert_and_compare."""
     base_url = "https://ardupilot.org/copter/_images/"
     images_dir = Path("ardupilot_methodic_configurator/images")
 
@@ -86,6 +88,9 @@ def download_motor_diagrams() -> None:
     downloaded = 0
     failed = 0
 
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    logger = logging.getLogger(__name__)
+
     for filename in motor_diagrams:
         try:
             url = base_url + filename
@@ -94,19 +99,29 @@ def download_motor_diagrams() -> None:
             # Validate URL scheme for security
             parsed_url = urlparse(url)
             if parsed_url.scheme not in ("http", "https"):
-                print(f"Invalid URL scheme for {filename}: {parsed_url.scheme}")
+                logger.error("Invalid URL scheme for %s: %s", filename, parsed_url.scheme)
                 failed += 1
                 continue
 
-            print(f"Downloading {filename}...")
+            logger.info("Downloading %s...", filename)
             urllib.request.urlretrieve(url, output_path)  # noqa: S310
             downloaded += 1
 
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            print(f"Failed to download {filename}: {e}")
+        except (URLError, OSError) as e:
+            logger.error("Failed to download %s: %s", filename, e)
             failed += 1
 
-    print(f"\nDownload complete: {downloaded} succeeded, {failed} failed")
+    logger.info("Download complete: %d succeeded, %d failed", downloaded, failed)
+
+    # Call batch_convert_and_compare to convert all SVGs to PNGs
+    batch_convert_and_compare(
+        svg_dir=str(images_dir),
+        png_dir=str(images_dir / "motor_diagrams_png"),
+        canvas_width=1200,
+        canvas_height=1200,
+        resize_width=DEFAULT_RESIZE_WIDTH,
+        resize_height=DEFAULT_RESIZE_HEIGHT,
+    )
 
 
 if __name__ == "__main__":
