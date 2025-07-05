@@ -59,33 +59,54 @@ It allows users to test motor functionality, verify motor order and direction, a
    - ✅ Visual feedback for correct/incorrect motor placement
    - 🟡 Guidance for correcting wiring issues
 
+### Additional Implemented Features (Beyond Original Requirements)
+
+#### Enhanced User Experience
+
+- ✅ Status column for real-time visual feedback during motor testing
+- ✅ First-time safety confirmation popup
+- ✅ Keyboard shortcuts for critical functions:
+  - Escape: Emergency stop all motors
+  - Ctrl+A: Test all motors simultaneously
+  - Ctrl+S: Test motors in sequence
+- ✅ Settings persistence for test duration and throttle percentage
+- ✅ Enhanced error handling and user feedback messages
+- ✅ Graceful SVG rendering fallback when tksvg is not available
+
+#### Advanced Safety Features
+
+- ✅ Multiple safety confirmation layers
+- ✅ Comprehensive parameter validation with bounds checking
+- ✅ Motor direction display (CW/CCW) for each motor position
+- ✅ Battery safety threshold validation with visual indicators
+
 ### Non-Functional Requirements
 
 1. **Safety**
-   - Multiple safety warnings prominently displayed
-   - Clear indication of active motor testing
-   - Emergency stop functionality always accessible
-   - Safe parameter defaults and validation
+   - ✅ Multiple safety warnings prominently displayed
+   - ✅ Clear indication of active motor testing
+   - ✅ Emergency stop functionality always accessible
+   - ✅ Safe parameter defaults and validation
 
 2. **Usability**
-   - Intuitive frame-based layout with logical workflow progression
-   - Clear visual feedback for active operations
-   - Immediate parameter application with confirmation
-   - Responsive UI with real-time feedback
-   - Keyboard shortcuts for critical functions
+   - ✅ Intuitive frame-based layout with logical workflow progression
+   - ✅ Clear visual feedback for active operations
+   - ✅ Immediate parameter application with confirmation
+   - ✅ Responsive UI with real-time feedback
+   - ✅ Keyboard shortcuts for critical functions
 
 3. **Reliability**
-   - Active flight controller connection required for all motor testing operations
-   - Robust error handling for communication failures
-   - Parameter validation and bounds checking
-   - Graceful degradation when features unavailable
-   - Comprehensive logging for debugging
+   - ✅ Active flight controller connection required for all motor testing operations
+   - ✅ Robust error handling for communication failures
+   - ✅ Parameter validation and bounds checking
+   - ✅ Graceful degradation when features unavailable
+   - ✅ Comprehensive logging for debugging
 
 4. **Performance**
-   - Responsive UI updates during motor testing
-   - Efficient parameter reading/writing
-   - Minimal latency for emergency stop operations
-   - Low resource usage
+   - ✅ Responsive UI updates during motor testing
+   - ✅ Efficient parameter reading/writing
+   - ✅ Minimal latency for emergency stop operations
+   - ✅ Low resource usage
 
 ## System Design
 
@@ -141,11 +162,35 @@ The motor test sub-application follows the Model-View separation pattern establi
 
 - Frame type detection and motor count calculation
 - Motor label generation (numbers and letters)
+- **JSON-driven motor direction retrieval** from AP_Motors_test.json with schema validation
 - Parameter reading and writing (MOT_SPIN_ARM, MOT_SPIN_MIN)
 - Battery status monitoring (BATT1 voltage and current when BATT_MONITOR != 0)
 - Voltage threshold validation (BATT_ARM_VOLT and MOT_BAT_VOLT_MAX thresholds)
 - Business logic validation
 - Backend coordination and abstraction
+
+#### Motor Order and Direction Logic Architecture
+
+The motor test sub-application implements a robust JSON-driven architecture for motor test order and direction determination:
+
+**JSON Data Sources:**
+
+- **`AP_Motors_test.json`** - Authoritative motor layout data from ArduPilot project
+- **`AP_Motors_test_schema.json`** - JSON schema for data structure validation
+
+**Key Features:**
+
+- ✅ **Schema Validation**: All JSON data validated against schema on load
+- ✅ **Frame-specific Lookup**: Motor test order and directions retrieved based on FRAME_CLASS and FRAME_TYPE
+- ✅ **Motor Number Ordering**: Directions sorted by motor number for consistent mapping
+- ✅ **Error Logging**: Comprehensive logging for debugging and troubleshooting
+
+**Data Flow:**
+
+1. JSON data loaded during model initialization with schema validation
+2. Motor test order and directions retrieved by matching current frame configuration
+3. Results sorted by motor number and adapted to expected motor count
+4. Error if frame not found or data invalid
 
 **Key Methods:**
 
@@ -154,7 +199,7 @@ def __init__(self, flight_controller: FlightController, filesystem: LocalFilesys
 def get_motor_count(self) -> int
 def get_motor_labels(self) -> list[str]
 def get_motor_numbers(self) -> list[int]
-def get_motor_directions(self) -> list[str]  # Returns CW/CCW direction labels for each motor
+def get_motor_directions(self) -> list[str]  # ✅ Returns CW/CCW direction labels from AP_Motors_test.json
 def get_battery_status(self) -> Optional[tuple[float, float]]  # voltage, current or None if BATT_MONITOR == 0
 def get_voltage_status(self) -> str  # "safe", "critical" "unavailable" or "disabled"
 def is_battery_monitoring_enabled(self) -> bool  # True if BATT_MONITOR != 0
@@ -175,6 +220,8 @@ def update_frame_configuration(self, frame_class: int, frame_type: int) -> tuple
 def get_frame_options(self) -> dict[str, dict[int, str]]
 def refresh_connection_status(self) -> bool
 def get_voltage_thresholds(self) -> tuple[float, float]  # Returns (BATT_ARM_VOLT, MOT_BAT_VOLT_MAX)
+def refresh_from_flight_controller(self) -> bool  # ✅ Refresh frame configuration from FC
+def _load_motor_data(self) -> None  # ✅ Load motor configuration from AP_Motors_test.json with schema validation
 ```
 
 **Data Attributes:**
@@ -182,9 +229,11 @@ def get_voltage_thresholds(self) -> tuple[float, float]  # Returns (BATT_ARM_VOL
 - `flight_controller`: Backend flight controller interface
 - `filesystem`: Backend filesystem interface
 - `settings`: Backend program settings interface
-- `frame_class`: Detected vehicle frame class
-- `frame_type`: Detected vehicle frame type
-- `motor_count`: Number of motors for current frame
+- `_frame_class`: Detected vehicle frame class
+- `_frame_type`: Detected vehicle frame type
+- `_motor_count`: Number of motors for current frame
+- `_motor_data_loader`: FilesystemJSONWithSchema instance for loading AP_Motors_test.json
+- `_motor_data`: Loaded motor configuration data from JSON with schema validation
 
 #### Backend Layer Distribution
 
@@ -238,8 +287,13 @@ def get_motor_count_from_frame(self) -> int
 def motor_diagram_filepath(frame_class: int, frame_type: int) -> str
 @staticmethod
 def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
-# Settings persistence methods (protected methods for test duration, etc.)
 ```
+
+##### `backend_filesystem_json_with_schema.py` - Motor Frames & rotation order and direction
+
+**Responsibilities:**
+
+- loading and validating AP_Motors_test.json
 
 #### GUI Layer (`frontend_tkinter_motor_test.py`)
 
@@ -254,38 +308,58 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 **Key UI Components:**
 
 - Information and safety warnings at the top
-- Frame configuration section with FRAME_TYPE and FRAME_CLASS comboboxes
+- Frame configuration section with FRAME_TYPE combobox
 - Arm and min throttle configuration with parameter buttons
 - Motor order/direction configuration with test buttons and direction detection
 - Real-time battery status display with color-coded voltage indication
 - Prominent red emergency stop button and test sequence controls
+- Status column for real-time motor testing feedback (NEW)
+- Keyboard shortcuts for critical operations (NEW)
+
+**Enhanced Features:**
+
+- ✅ SVG diagram rendering with tksvg integration and graceful fallback
+- ✅ First-time safety confirmation popups
+- ✅ Real-time status updates during motor testing
+- ✅ **Spinbox value management** - Automatic initialization from data model and proper change handling
+- ✅ **Input validation and recovery** - Invalid inputs gracefully handled with model fallback
+- ✅ Keyboard shortcuts:
+  - Escape: Emergency stop all motors
+  - Ctrl+A: Test all motors simultaneously  
+  - Ctrl+S: Test motors in sequence
+- ✅ Settings persistence for user preferences
+- ✅ Enhanced error handling and logging
+- ✅ **Comprehensive test coverage** - 34 BDD pytest tests ensuring reliability
 
 **Layout Structure:**
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│ Information & Safety Warnings                               │
-│ • Remove propellers before testing                          │
-│ • Ensure vehicle is secured                                 │
-│ • Emergency stop always available                           │
-├─────────────────────────────────────────────────────────────┤
-│ 1. Frame configuration                                      │
-│ Frame Type: [FRAME_TYPE ▼]  Frame Class: [FRAME_CLASS ▼]   │
-├─────────────────────────────────────────────────────────────┤
-│ 2. Arm and min throttle configuration                      │
-│ [Set Motor Spin Arm] [Set Motor Spin Min]                  │
-├─────────────────────────────────────────────────────────────┤
-│ 3. Motor order/direction configuration                     │
-│ Duration: [____] seconds    Battery: 12.4V/2.1A            │
-│                                                             │
-│ [Motor A] Motor 1 CW  [Detected: ▼]                       │
-│ [Motor B] Motor 2 CCW [Detected: ▼]                       │
-│ [Motor C] Motor 3 CCW [Detected: ▼]                       │
-│ [Motor D] Motor 4 CW  [Detected: ▼]                       │
-│ ...                                                         │
-│                                                             │
-│ [🛑 STOP ALL MOTORS] [Test in Sequence]                   │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│ Information & Safety Warnings                                       │
+│ • Remove propellers before testing                                  │
+│ • Ensure vehicle is secured                                         │
+│ • Emergency stop always available                                   │
+├─────────────────────────────────────────────────────────────────────┤
+│ 1. Frame configuration                                              │
+│ Frame Type: [FRAME_TYPE ▼]                                          │
+│                                                                     │
+│                     Frame Type svg image                            │
+│                                                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│ 2. Arm and min throttle configuration                               │
+│ [Set Motor Spin Arm] [Set Motor Spin Min]                           │
+├─────────────────────────────────────────────────────────────────────┤
+│ 3. Motor order/direction configuration                              │
+│ Throttle: [____] %   Duration: [____] seconds  Battery: 12.4V/2.1A  |
+│                                                                     │
+│ [Motor A] Motor 1 CW  [Detected: ▼]                                 │
+│ [Motor B] Motor 2 CCW [Detected: ▼]                                 │
+│ [Motor C] Motor 3 CCW [Detected: ▼]                                 │
+│ [Motor D] Motor 4 CW  [Detected: ▼]                                 │
+│ ...                                                                 │
+│                                                                     │
+│ [🛑 STOP ALL MOTORS] [Test in Sequence]                            │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Data Flow
@@ -363,7 +437,7 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 
 #### Data Model Tests (`tests/test_data_model_motor_test.py`) - ✅ IMPLEMENTED
 
-**Status:** 54 comprehensive BDD pytest tests implemented covering all functionality
+**Status:** 81 comprehensive BDD pytest tests implemented covering all functionality with **100% code coverage**
 
 **Test Coverage Areas:**
 
@@ -377,20 +451,25 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 - ✅ Settings persistence and configuration management
 - ✅ Exception handling and edge cases
 
-#### GUI Tests (`tests/test_frontend_tkinter_motor_test.py`) - ❌ NOT IMPLEMENTED
+#### GUI Tests (`tests/test_frontend_tkinter_motor_test.py`) - ✅ IMPLEMENTED
 
-**Status:** Frontend tests not yet implemented
+**Status:** 34 comprehensive BDD pytest tests implemented covering frontend functionality with **high test coverage**
 
-**Planned Test Coverage:**
+**Test Coverage Areas:**
 
-- ❌ UI component creation and layout
-- ❌ Button generation based on motor count
-- ❌ Event handling for all interactive elements
-- ❌ Safety confirmation dialogs
-- ❌ Parameter input validation
-- ❌ Integration with data model layer
-- ❌ Keyboard shortcut functionality
-- ❌ SVG diagram rendering
+- ✅ UI component creation and layout validation
+- ✅ Button generation based on motor count changes
+- ✅ Event handling for all interactive elements
+- ✅ Safety confirmation dialogs and user interactions
+- ✅ Parameter input validation and error handling
+- ✅ Integration with data model layer via dependency injection
+- ✅ Keyboard shortcut functionality verification
+- ✅ SVG diagram rendering and error handling
+- ✅ Spinbox initialization and change handling
+- ✅ Frame type selection and immediate parameter application
+- ✅ Battery status monitoring and display updates
+- ✅ Motor status visual feedback during testing
+- ✅ Emergency stop functionality and safety mechanisms
 
 ### Integration Testing
 
@@ -420,21 +499,101 @@ def mock_flight_controller() -> MagicMock:
 
 @pytest.fixture
 def motor_test_data_model(mock_flight_controller) -> MotorTestDataModel:
-    """Fixture providing configured motor test data model."""
+    """Fixture providing configured motor test data model with dependency injection support."""
+
+@pytest.fixture
+def motor_test_view_setup() -> tuple[MagicMock, ...]:
+    """Fixture providing complete mock setup for testing MotorTestView without full window creation."""
 
 @pytest.fixture
 def motor_test_window(motor_test_data_model) -> MotorTestWindow:
-    """Fixture providing configured motor test GUI window."""
+    """Fixture providing configured motor test GUI window for integration testing."""
 
-def test_user_can_test_individual_motor(self, motor_test_window) -> None:
+def test_user_can_test_individual_motor(self, motor_test_view_setup) -> None:
     """
     User can test individual motors safely.
 
-    GIVEN: A configured vehicle with detected frame type
+    GIVEN: A configured motor test view with mock dependencies
     WHEN: User clicks a motor test button
-    THEN: The corresponding motor should activate with feedback
+    THEN: The corresponding motor should activate with proper validation and feedback
+    """
+
+def test_spinbox_values_initialize_from_data_model(self, motor_test_view_setup) -> None:
+    """
+    Spinbox values are properly initialized from the data model.
+
+    GIVEN: A motor test view with configured data model
+    WHEN: The view is updated
+    THEN: Spinbox values should reflect the current model values
+    """
+
+def test_spinbox_changes_update_data_model(self, motor_test_view_setup) -> None:
+    """
+    Spinbox changes properly update the data model.
+
+    GIVEN: A motor test view with Spinbox widgets
+    WHEN: User changes Spinbox values
+    THEN: The data model should be updated with the new values
     """
 ```
+
+## Implementation Status Summary
+
+### ✅ COMPLETED FEATURES
+
+**Core Functionality:**
+
+- ✅ Complete data model with 30+ methods (**100% test coverage** with 81 BDD pytest tests)
+- ✅ Full Tkinter GUI implementation with all required components (**34 BDD pytest tests** with comprehensive coverage)
+- ✅ **Enhanced Model-View separation** with dependency injection for improved testability
+- ✅ Real backend integration (FlightController, LocalFilesystem, ProgramSettings)
+- ✅ Frame configuration with parameter metadata integration
+- ✅ Motor testing (individual, all, sequence, emergency stop)
+- ✅ Battery monitoring with safety validation
+- ✅ Parameter configuration (MOT_SPIN_ARM, MOT_SPIN_MIN)
+- ✅ SVG diagram rendering with tksvg support and fallback
+- ✅ **JSON-driven motor direction logic** with schema validation (AP_Motors_test.json)
+- ✅ **Motor rotation direction display** (CW/CCW) from authoritative ArduPilot data
+- ✅ **Motor count mismatch handling** with extension/truncation for various frame configurations
+- ✅ **Spinbox value synchronization** - proper initialization from data model and change handling
+
+**Enhanced Features:**
+
+- ✅ Status column for real-time feedback
+- ✅ Keyboard shortcuts for critical functions
+- ✅ First-time safety confirmation
+- ✅ Settings persistence with Spinbox initialization from data model
+- ✅ Enhanced error handling and logging
+- ✅ Motor direction display (CW/CCW)
+- ✅ **FilesystemJSONWithSchema integration** for robust JSON loading and validation
+
+### 🟡 PARTIAL FEATURES (Implemented but not fully tested)
+
+- 🟡 Motor order comparison and validation logic (framework present)
+- 🟡 Wiring issue guidance (basic framework implemented)
+
+### ❌ MISSING FEATURES
+
+- ❌ End-to-end integration tests with real flight controller hardware
+- ❌ Advanced motor order validation algorithms with automatic correction suggestions
+
+### Dependencies and Requirements
+
+#### Backend Dependencies
+
+- ✅ `backend_flightcontroller.py` - All required motor test methods verified present
+- ✅ `backend_filesystem.py` - Enhanced with `get_frame_options()` method
+- ✅ `backend_filesystem_program_settings.py` - Settings persistence implemented
+- ✅ `backend_filesystem_json_with_schema.py` - JSON loading with schema validation for motor data
+- ✅ `annotate_params.py` - Parameter metadata parsing support
+
+#### File Dependencies
+
+- ✅ Motor diagram SVG files in `ardupilot_methodic_configurator/images/` directory
+- ✅ Parameter documentation metadata files (`.pdef.xml`)
+- ✅ Frame configuration JSON schemas
+- ✅ **AP_Motors_test.json** - Motor layout configuration data with motor positions, rotations, and test order
+- ✅ **AP_Motors_test_schema.json** - JSON schema for validating motor configuration data structure
 
 ## Implementation Guidelines
 
@@ -448,13 +607,14 @@ def test_user_can_test_individual_motor(self, motor_test_window) -> None:
 
 ### Safety Implementation
 
-1. **Parameter Validation**: All parameters validated before sending to FC
-2. **Battery Monitoring**: Real-time battery voltage monitoring with BATT_ARM_VOLT/MOT_BAT_VOLT_MAX threshold validation (when BATT_MONITOR != 0)
-3. **Voltage Safety**: Safety popup when attempting motor test with voltage outside safe range, prompting user to connect battery and/or ensure charged state
-4. **Timeout Mechanisms**: Automatic motor stop after configured timeout
-5. **Emergency Stop**: Always accessible stop functionality
-6. **User Confirmation**: Display a Safety confirmation popup the first time a Motor test button is pressed
-7. **Visual Feedback**: Clear indication of active motor testing (status column) and battery status (green/red voltage display)
+1. **Parameter Validation**: ✅ All parameters validated before sending to FC
+2. **Battery Monitoring**: ✅ Real-time battery voltage monitoring with BATT_ARM_VOLT/MOT_BAT_VOLT_MAX threshold validation (when BATT_MONITOR != 0)
+3. **Voltage Safety**: ✅ Safety popup when attempting motor test with voltage outside safe range, prompting user to connect battery and/or ensure charged state
+4. **Timeout Mechanisms**: ✅ Automatic motor stop after configured timeout
+5. **Emergency Stop**: ✅ Always accessible stop functionality with keyboard shortcut (Escape)
+6. **User Confirmation**: ✅ Display a Safety confirmation popup the first time a Motor test button is pressed
+7. **Visual Feedback**: ✅ Clear indication of active motor testing (status column) and battery status (green/red voltage display)
+8. **Multi-layer Safety**: ✅ Multiple confirmation dialogs and safety checks throughout the workflow
 
 ### Performance Considerations
 
@@ -510,14 +670,6 @@ Communication with ArduPilot flight controller via:
 3. **Motor Commands**: Direct motor control via MAVLink
 4. **Status Monitoring**: Real-time status and safety monitoring
 5. **Frame Detection**: Automatic vehicle configuration detection
-
-## Future Enhancements
-
-### Planned Features
-
-1. **Motor Health Monitoring**: Current draw and performance metrics
-2. **Calibration Assistance**: Guided motor calibration procedures
-3. **Visual Frame Display**: Graphical representation of motor layout
 
 ## Security Considerations
 
