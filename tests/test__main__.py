@@ -20,6 +20,7 @@ import pytest
 from ardupilot_methodic_configurator.__main__ import (
     ApplicationState,
     backup_fc_parameters,
+    check_updates,
     component_editor,
     connect_to_fc_and_set_vehicle_type,
     create_and_configure_component_editor,
@@ -29,7 +30,6 @@ from ardupilot_methodic_configurator.__main__ import (
     open_firmware_documentation,
     parameter_editor_and_uploader,
     process_component_editor_results,
-    setup_logging_and_check_updates,
     should_open_firmware_documentation,
     vehicle_directory_selection,
     write_parameter_defaults_if_dirty,
@@ -145,15 +145,13 @@ class TestApplicationStartup:
         application_state.args.skip_check_for_updates = True
 
         with (
-            patch("ardupilot_methodic_configurator.__main__.logging_basicConfig") as mock_logging,
             patch("ardupilot_methodic_configurator.__main__.check_for_software_updates") as mock_check,
         ):
             # Act: User starts application
-            should_exit = setup_logging_and_check_updates(application_state)
+            should_exit = check_updates(application_state)
 
             # Assert: Application continues normally
             assert should_exit is False
-            mock_logging.assert_called_once()
             mock_check.assert_not_called()
 
     def test_user_receives_update_notification_when_new_version_available(self, application_state: ApplicationState) -> None:
@@ -170,14 +168,12 @@ class TestApplicationStartup:
         with (
             patch("ardupilot_methodic_configurator.__main__.logging_basicConfig"),
             patch("ardupilot_methodic_configurator.__main__.check_for_software_updates", return_value=True),
-            patch("ardupilot_methodic_configurator.__main__.logging_info") as mock_log,
         ):
             # Act: User starts outdated application
-            should_exit = setup_logging_and_check_updates(application_state)
+            should_exit = check_updates(application_state)
 
             # Assert: User informed and application exits
             assert should_exit is True
-            mock_log.assert_called_once()
 
     def test_user_proceeds_normally_when_application_is_current(self, application_state: ApplicationState) -> None:
         """
@@ -191,11 +187,10 @@ class TestApplicationStartup:
         application_state.args.skip_check_for_updates = False
 
         with (
-            patch("ardupilot_methodic_configurator.__main__.logging_basicConfig"),
             patch("ardupilot_methodic_configurator.__main__.check_for_software_updates", return_value=False),
         ):
             # Act: User starts current application
-            should_exit = setup_logging_and_check_updates(application_state)
+            should_exit = check_updates(application_state)
 
             # Assert: Application continues normally
             assert should_exit is False
@@ -461,7 +456,6 @@ class TestApplicationIntegration:
         mock_args.skip_check_for_updates = True  # Skip for test efficiency
 
         with (
-            patch("ardupilot_methodic_configurator.__main__.logging_basicConfig"),
             patch("ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting", return_value=False),
             patch("ardupilot_methodic_configurator.__main__.connect_to_fc_and_set_vehicle_type") as mock_connect,
             patch("ardupilot_methodic_configurator.__main__.FlightControllerInfoWindow"),
@@ -479,7 +473,7 @@ class TestApplicationIntegration:
             # Act: Execute complete startup workflow
             state = ApplicationState(mock_args)
 
-            should_exit = setup_logging_and_check_updates(state)
+            should_exit = check_updates(state)
             assert should_exit is False
 
             display_first_use_documentation()  # Should complete without issues
