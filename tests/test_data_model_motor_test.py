@@ -17,7 +17,14 @@ import pytest
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
+from ardupilot_methodic_configurator.data_model_motor_test import (
+    FlightControllerConnectionError,
+    FrameConfigurationError,
+    MotorTestDataModel,
+    MotorTestSafetyError,
+    ParameterError,
+    ValidationError,
+)
 
 # pylint: disable=too-many-lines,redefined-outer-name,protected-access,too-few-public-methods
 
@@ -51,7 +58,19 @@ def mock_flight_controller() -> MagicMock:
     fc.test_all_motors.return_value = (True, "")
     fc.test_motors_in_sequence.return_value = (True, "")
     fc.stop_all_motors.return_value = (True, "")
-    fc.set_param.return_value = True
+
+    # Configure set_param to update fc_parameters and return success
+    def set_param_side_effect(param_name: str, value: float) -> bool:
+        fc.fc_parameters[param_name] = value
+        return True
+
+    fc.set_param.side_effect = set_param_side_effect
+
+    # Configure fetch_param to return values from fc_parameters
+    def fetch_param_side_effect(param_name: str) -> float | None:
+        return fc.fc_parameters.get(param_name)
+
+    fc.fetch_param.side_effect = fetch_param_side_effect
 
     return fc
 
@@ -267,7 +286,7 @@ class TestMotorTestDataModelInitialization:
         # Assert: Frame configuration loaded correctly
         assert model.frame_class == 1
         assert model.frame_type == 1
-        assert model.get_motor_count() == 4
+        assert model.motor_count == 4
         mock_flight_controller.get_frame_info.assert_called_once()
 
     def test_model_initialization_fails_with_disconnected_flight_controller(
@@ -341,7 +360,7 @@ class TestMotorTestDataModelFrameConfiguration:
         # Arrange: Motor count is configured in fixture (4 motors)
 
         # Act: Get motor labels
-        labels = motor_test_model.get_motor_labels()
+        labels = motor_test_model.motor_labels
 
         # Assert: Correct labels returned
         assert labels == ["A", "B", "C", "D"]
@@ -358,7 +377,7 @@ class TestMotorTestDataModelFrameConfiguration:
         # Arrange: Motor count is configured in fixture (4 motors, QUAD X)
 
         # Act: Get motor numbers (in test order)
-        numbers = motor_test_model.get_motor_numbers()
+        numbers = motor_test_model.motor_numbers
 
         # Assert: Correct numbers returned in test order for QUAD X
         # Based on mock_motor_data_json: QUAD X has TestOrder [1,2,3,4] for Motors [1,2,3,4]
@@ -376,14 +395,12 @@ class TestMotorTestDataModelFrameConfiguration:
         # Arrange: Configure successful parameter setting
         with patch.object(motor_test_model, "set_parameter", return_value=(True, "")):
             # Act: Update frame configuration
-            success, error_msg = motor_test_model.update_frame_configuration(2, 1)  # Hexa X
+            motor_test_model.update_frame_configuration(2, 1)  # Hexa X
 
             # Assert: Update successful
-            assert success is True
-            assert error_msg == ""
             assert motor_test_model.frame_class == 2
             assert motor_test_model.frame_type == 1
-            assert motor_test_model.get_motor_count() == 6  # HEXA X has 6 motors
+            assert motor_test_model.motor_count == 6  # HEXA X has 6 motors
 
     def test_user_can_update_frame_configuration_and_motor_count(self, motor_test_model) -> None:
         """
@@ -396,14 +413,12 @@ class TestMotorTestDataModelFrameConfiguration:
         # Arrange: Mock set_parameter to return success
         with patch.object(motor_test_model, "set_parameter", return_value=(True, "")):
             # Act: Update frame configuration
-            success, error = motor_test_model.update_frame_configuration(frame_class=2, frame_type=1)
+            motor_test_model.update_frame_configuration(frame_class=2, frame_type=1)
 
             # Assert: Configuration updated successfully
-            assert success is True
-            assert error == ""
             assert motor_test_model.frame_class == 2
             assert motor_test_model.frame_type == 1
-            assert motor_test_model.get_motor_count() == 6  # HEXA X has 6 motors
+            assert motor_test_model.motor_count == 6  # HEXA X has 6 motors
 
     def test_frame_configuration_update_fails_with_disconnected_controller(
         self, disconnected_flight_controller, mock_filesystem
@@ -427,7 +442,7 @@ class TestMotorTestDataModelFrameConfiguration:
 
         GIVEN: A motor test model with disconnected flight controller
         WHEN: User attempts to update frame configuration
-        THEN: Should return failure with clear error message
+        THEN: Should raise FlightControllerConnectionError with clear error message
         """
         # Arrange: Create model with disconnected FC (will fail initialization)
         # We'll test this by mocking the model's flight controller directly
@@ -435,12 +450,9 @@ class TestMotorTestDataModelFrameConfiguration:
             model = MotorTestDataModel(flight_controller=disconnected_flight_controller, filesystem=mock_filesystem)
             model.flight_controller = disconnected_flight_controller
 
-            # Act: Attempt frame configuration update
-            success, error = model.update_frame_configuration(frame_class=2, frame_type=1)
-
-            # Assert: Update failed with appropriate error
-            assert success is False
-            assert "Flight controller connection required" in error
+            # Act & Assert: Attempt frame configuration update should raise exception
+            with pytest.raises(FlightControllerConnectionError, match="Flight controller connection required"):
+                model.update_frame_configuration(frame_class=2, frame_type=1)
 
 
 class TestMotorTestDataModelBatteryMonitoring:
@@ -575,16 +587,14 @@ class TestMotorTestDataModelSafetyValidation:
 
         GIVEN: Motor test model with connected flight controller and good battery
         WHEN: User checks if motor testing is safe
-        THEN: Should return True with no safety warnings
+        THEN: Should not raise any exceptions (test is safe)
         """
         # Arrange: Good conditions configured in fixture
 
-        # Act: Check motor testing safety
-        is_safe, reason = motor_test_model.is_motor_test_safe()
+        # Act: Check motor testing safety - should not raise exceptions
+        motor_test_model.is_motor_test_safe()
 
-        # Assert: Motor testing is safe
-        assert is_safe is True
-        assert reason == ""
+        # Assert: If we reach here, the test is safe (no exceptions raised)
 
     def test_motor_testing_unsafe_with_disconnected_controller(self, motor_test_model) -> None:
         """
@@ -592,17 +602,14 @@ class TestMotorTestDataModelSafetyValidation:
 
         GIVEN: Motor test model with disconnected flight controller
         WHEN: User checks if motor testing is safe
-        THEN: Should return False with appropriate error message
+        THEN: Should raise FlightControllerConnectionError with appropriate error message
         """
         # Arrange: Disconnect flight controller
         motor_test_model.flight_controller.master = None
 
-        # Act: Check motor testing safety
-        is_safe, reason = motor_test_model.is_motor_test_safe()
-
-        # Assert: Motor testing is unsafe
-        assert is_safe is False
-        assert "not connected" in reason.lower()
+        # Act & Assert: Check motor testing safety should raise exception
+        with pytest.raises(FlightControllerConnectionError, match="not connected"):
+            motor_test_model.is_motor_test_safe()
 
     def test_motor_testing_unsafe_with_no_battery_monitoring(self, motor_test_model) -> None:
         """
@@ -610,17 +617,14 @@ class TestMotorTestDataModelSafetyValidation:
 
         GIVEN: A disconnected flight controller
         WHEN: User checks if motor testing is safe
-        THEN: Should return False with connection error message
+        THEN: Should raise FlightControllerConnectionError with connection error message
         """
         # Arrange: Disconnect flight controller
         motor_test_model.flight_controller.master = None
 
-        # Act: Check motor test safety
-        is_safe, reason = motor_test_model.is_motor_test_safe()
-
-        # Assert: Motor testing is unsafe
-        assert is_safe is False
-        assert "Flight controller not connected" in reason
+        # Act & Assert: Check motor test safety should raise exception
+        with pytest.raises(FlightControllerConnectionError, match="Flight controller not connected"):
+            motor_test_model.is_motor_test_safe()
 
     def test_motor_testing_safe_with_battery_monitoring_disabled(self, motor_test_model) -> None:
         """
@@ -628,17 +632,15 @@ class TestMotorTestDataModelSafetyValidation:
 
         GIVEN: A flight controller with battery monitoring disabled
         WHEN: User checks if motor testing is safe
-        THEN: Should return True with a warning about disabled monitoring
+        THEN: Should not raise exceptions but log warning about disabled monitoring
         """
         # Arrange: Disable battery monitoring
         motor_test_model.flight_controller.is_battery_monitoring_enabled.return_value = False
 
-        # Act: Check motor test safety
-        is_safe, reason = motor_test_model.is_motor_test_safe()
+        # Act: Check motor test safety - should not raise exceptions
+        motor_test_model.is_motor_test_safe()
 
-        # Assert: Motor testing is safe even without battery monitoring
-        assert is_safe is True
-        assert "Battery monitoring disabled" in reason
+        # Assert: If we reach here, test is safe despite disabled monitoring
 
     def test_motor_testing_unsafe_with_low_voltage(self, motor_test_model) -> None:
         """
@@ -646,18 +648,15 @@ class TestMotorTestDataModelSafetyValidation:
 
         GIVEN: A battery with voltage below the minimum threshold
         WHEN: User checks if motor testing is safe
-        THEN: Should return False with low voltage warning
+        THEN: Should raise MotorTestSafetyError with low voltage warning
         """
         # Arrange: Set voltage below minimum threshold
         motor_test_model.flight_controller.get_battery_status.return_value = ((10.5, 2.1), "")
-        min_voltage, max_voltage = motor_test_model.get_voltage_thresholds()
+        _min_voltage, _max_voltage = motor_test_model.get_voltage_thresholds()
 
-        # Act: Check motor test safety
-        is_safe, reason = motor_test_model.is_motor_test_safe()
-
-        # Assert: Motor testing is unsafe due to low voltage
-        assert is_safe is False
-        assert f"Battery voltage 10.5V is outside safe range ({min_voltage}V - {max_voltage}V)" in reason
+        # Act & Assert: Check motor test safety should raise exception
+        with pytest.raises(MotorTestSafetyError, match=r"Battery voltage 10.5V is outside safe range"):
+            motor_test_model.is_motor_test_safe()
 
     def test_motor_testing_unsafe_with_high_voltage(self, motor_test_model) -> None:
         """
@@ -665,18 +664,15 @@ class TestMotorTestDataModelSafetyValidation:
 
         GIVEN: A battery with voltage above the maximum threshold
         WHEN: User checks if motor testing is safe
-        THEN: Should return False with high voltage warning
+        THEN: Should raise MotorTestSafetyError with high voltage warning
         """
         # Arrange: Set voltage above maximum threshold
         motor_test_model.flight_controller.get_battery_status.return_value = ((17.0, 2.1), "")
-        min_voltage, max_voltage = motor_test_model.get_voltage_thresholds()
+        _min_voltage, _max_voltage = motor_test_model.get_voltage_thresholds()
 
-        # Act: Check motor test safety
-        is_safe, reason = motor_test_model.is_motor_test_safe()
-
-        # Assert: Motor testing is unsafe due to high voltage
-        assert is_safe is False
-        assert f"Battery voltage 17.0V is outside safe range ({min_voltage}V - {max_voltage}V)" in reason
+        # Act & Assert: Check motor test safety should raise exception
+        with pytest.raises(MotorTestSafetyError, match=r"Battery voltage 17.0V is outside safe range"):
+            motor_test_model.is_motor_test_safe()
 
 
 class TestMotorTestDataModelParameterManagement:
@@ -688,17 +684,15 @@ class TestMotorTestDataModelParameterManagement:
 
         GIVEN: A connected flight controller and valid parameter
         WHEN: User sets a motor parameter
-        THEN: Parameter should be set and verified successfully
+        THEN: Parameter should be set successfully without raising exceptions
         """
         # Arrange: Configure parameter reading
         motor_test_model.flight_controller.fc_parameters["MOT_SPIN_ARM"] = 0.12
 
-        # Act: Set parameter
-        success, error = motor_test_model.set_parameter("MOT_SPIN_ARM", 0.12)
+        # Act: Set parameter - should not raise exceptions
+        motor_test_model.set_parameter("MOT_SPIN_ARM", 0.12)
 
-        # Assert: Parameter set successfully
-        assert success is True
-        assert error == ""
+        # Assert: If we reach here, parameter was set successfully
         motor_test_model.flight_controller.set_param.assert_called_once_with("MOT_SPIN_ARM", 0.12)
 
     def test_parameter_setting_fails_with_disconnected_controller(self, motor_test_model) -> None:
@@ -707,17 +701,14 @@ class TestMotorTestDataModelParameterManagement:
 
         GIVEN: A disconnected flight controller
         WHEN: User attempts to set a parameter
-        THEN: Should return failure with connection error
+        THEN: Should raise FlightControllerConnectionError with connection error
         """
         # Arrange: Disconnect flight controller
         motor_test_model.flight_controller.master = None
 
-        # Act: Attempt to set parameter
-        success, error = motor_test_model.set_parameter("MOT_SPIN_ARM", 0.12)
-
-        # Assert: Parameter setting failed
-        assert success is False
-        assert "No flight controller connection available" in error
+        # Act & Assert: Attempt to set parameter should raise exception
+        with pytest.raises(FlightControllerConnectionError, match="No flight controller connection available"):
+            motor_test_model.set_parameter("MOT_SPIN_ARM", 0.12)
 
     def test_parameter_validation_rejects_out_of_bounds_values(self, motor_test_model) -> None:
         """
@@ -725,16 +716,13 @@ class TestMotorTestDataModelParameterManagement:
 
         GIVEN: A motor parameter with defined bounds
         WHEN: User attempts to set value outside bounds
-        THEN: Should return failure with validation error
+        THEN: Should raise ValidationError with validation error
         """
         # Arrange: Parameter bounds defined in code (0.0 - 1.0)
 
-        # Act: Attempt to set out-of-bounds value
-        success, error = motor_test_model.set_parameter("MOT_SPIN_ARM", 1.5)
-
-        # Assert: Parameter validation failed
-        assert success is False
-        assert "outside valid range (0.0 - 1.0)" in error
+        # Act & Assert: Attempt to set out-of-bounds value should raise exception
+        with pytest.raises(ValidationError, match=r"outside valid range \(0.0 - 1.0\)"):
+            motor_test_model.set_parameter("MOT_SPIN_ARM", 1.5)
 
     def test_parameter_verification_detects_setting_failure(self, motor_test_model) -> None:
         """
@@ -742,18 +730,15 @@ class TestMotorTestDataModelParameterManagement:
 
         GIVEN: A parameter that appears to set but reads back differently
         WHEN: User sets the parameter
-        THEN: Should return failure with verification error
+        THEN: Should raise ParameterError with verification error
         """
-        # Arrange: Simulate verification failure
-        motor_test_model.flight_controller.fc_parameters["MOT_SPIN_ARM"] = 0.10  # Different from set value
+        # Arrange: Override fetch_param to return different value for verification failure
+        motor_test_model.flight_controller.fetch_param.side_effect = None  # Clear side_effect
+        motor_test_model.flight_controller.fetch_param.return_value = 0.10  # Different from set value
 
-        # Act: Set parameter with different result
-        success, error = motor_test_model.set_parameter("MOT_SPIN_ARM", 0.12)
-
-        # Assert: Verification failed
-        assert success is False
-        assert "verification failed" in error
-        assert "expected 0.120, got 0.1" in error
+        # Act & Assert: Set parameter with different result should raise exception
+        with pytest.raises(ParameterError, match="verification failed"):
+            motor_test_model.set_parameter("MOT_SPIN_ARM", 0.12)
 
     def test_user_can_get_parameter_value(self, motor_test_model) -> None:
         """
@@ -799,17 +784,15 @@ class TestMotorTestDataModelMotorTesting:
 
         GIVEN: Motor test model with safe conditions
         WHEN: User tests a specific motor with valid parameters
-        THEN: Motor test should be executed successfully
+        THEN: Motor test should be executed successfully without raising exceptions
         """
         # Arrange: Safe conditions configured in fixture
 
-        # Act: Test motor 1 at 10% throttle for 2 seconds
-        success, error_msg = motor_test_model.test_motor(1, 10, 2)
+        # Act: Test motor 1 (test_sequence_nr=0, motor_output_nr=1) at 10% throttle for 2 seconds
+        motor_test_model.test_motor(0, 1, 10, 2)
 
-        # Assert: Motor test successful
-        assert success is True
-        assert error_msg == ""
-        motor_test_model.flight_controller.test_motor.assert_called_once_with(1, 10, 2)
+        # Assert: Motor test successful (verified that flight controller was called with correct parameters)
+        motor_test_model.flight_controller.test_motor.assert_called_once_with(0, "A", 1, 10, 2)
 
     def test_motor_test_fails_with_invalid_motor_number(self, motor_test_model) -> None:
         """
@@ -817,18 +800,13 @@ class TestMotorTestDataModelMotorTesting:
 
         GIVEN: Motor test model with 4-motor configuration
         WHEN: User attempts to test motor 5 (out of range)
-        THEN: Should return failure with descriptive error message
+        THEN: Should raise ValidationError with descriptive error message
         """
         # Arrange: 4-motor configuration in fixture
 
-        # Act: Attempt to test invalid motor number
-        success, error_msg = motor_test_model.test_motor(5, 10, 2)
-
-        # Assert: Test fails with appropriate error
-        assert success is False
-        assert "Invalid motor number" in error_msg
-        assert "5" in error_msg
-        assert "1-4" in error_msg
+        # Act & Assert: Attempt to test invalid test sequence number (4 is out of range for 4-motor config)
+        with pytest.raises(ValidationError, match="Invalid test sequence number"):
+            motor_test_model.test_motor(4, 5, 10, 2)
 
     def test_motor_test_fails_with_invalid_motor_number2(self, motor_test_model) -> None:
         """
@@ -836,16 +814,13 @@ class TestMotorTestDataModelMotorTesting:
 
         GIVEN: A 4-motor vehicle configuration
         WHEN: User attempts to test motor number outside valid range
-        THEN: Should return failure with validation error
+        THEN: Should raise ValidationError with motor number validation message
         """
         # Arrange: 4-motor configuration in fixture
 
-        # Act: Test invalid motor number
-        success, error = motor_test_model.test_motor(motor_number=5, throttle_percent=10, timeout_seconds=2)
-
-        # Assert: Motor test failed
-        assert success is False
-        assert "Invalid motor number 5 (valid range: 1-4)" in error
+        # Act & Assert: Test invalid motor output number should raise ValidationError
+        with pytest.raises(ValidationError, match=r"Invalid motor output number 5"):
+            motor_test_model.test_motor(0, 5, 10, 2)  # test_sequence_nr=0, motor_output_nr=5 (invalid)
 
     def test_motor_test_fails_with_invalid_throttle_percentage(self, motor_test_model) -> None:
         """
@@ -853,16 +828,13 @@ class TestMotorTestDataModelMotorTesting:
 
         GIVEN: Safe conditions for motor testing
         WHEN: User attempts test with throttle outside valid range
-        THEN: Should return failure with validation error
+        THEN: Should raise ValidationError with throttle validation message
         """
         # Arrange: Safe conditions configured in fixture
 
-        # Act: Test with invalid throttle
-        success, error = motor_test_model.test_motor(motor_number=1, throttle_percent=150, timeout_seconds=2)
-
-        # Assert: Motor test failed
-        assert success is False
-        assert "Invalid throttle percentage 150 (valid range: 1-100)" in error
+        # Act & Assert: Test with invalid throttle should raise ValidationError
+        with pytest.raises(ValidationError, match=r"Invalid throttle percentage 150 \(valid range: 1-100\)"):
+            motor_test_model.test_motor(0, 1, 150, 2)
 
     def test_motor_test_fails_under_unsafe_conditions(self, motor_test_model) -> None:
         """
@@ -870,17 +842,14 @@ class TestMotorTestDataModelMotorTesting:
 
         GIVEN: Unsafe battery voltage conditions
         WHEN: User attempts motor test
-        THEN: Should return failure with safety
+        THEN: Should raise MotorTestSafetyError with safety message
         """
         # Arrange: Set unsafe battery voltage
         motor_test_model.flight_controller.get_battery_status.return_value = ((10.0, 2.1), "")
 
-        # Act: Attempt motor test
-        success, error = motor_test_model.test_motor(motor_number=1, throttle_percent=10, timeout_seconds=2)
-
-        # Assert: Motor test failed due to safety
-        assert success is False
-        assert "Battery voltage 10.0V is outside safe range" in error
+        # Act & Assert: Attempt motor test should raise MotorTestSafetyError
+        with pytest.raises(MotorTestSafetyError, match=r"Battery voltage 10\.0V is outside safe range"):
+            motor_test_model.test_motor(0, 1, 10, 2)
 
     def test_user_can_test_all_motors_simultaneously(self, motor_test_model) -> None:
         """
@@ -888,17 +857,15 @@ class TestMotorTestDataModelMotorTesting:
 
         GIVEN: Safe conditions for motor testing
         WHEN: User tests all motors
-        THEN: All motors test should execute successfully
+        THEN: All motors test should execute successfully without exception
         """
         # Arrange: Safe conditions configured in fixture
 
-        # Act: Test all motors
-        success, error = motor_test_model.test_all_motors(throttle_percent=10, timeout_seconds=2)
+        # Act: Test all motors (should not raise exception)
+        motor_test_model.test_all_motors(throttle_percent=10, timeout_seconds=2)
 
-        # Assert: All motors test successful
-        assert success is True
-        assert error == ""
-        motor_test_model.flight_controller.test_all_motors.assert_called_once_with(10, 2)
+        # Assert: Verify method was called correctly
+        motor_test_model.flight_controller.test_all_motors.assert_called_once_with(4, 10, 2)
 
     def test_user_can_test_motors_in_sequence(self, motor_test_model) -> None:
         """
@@ -906,17 +873,15 @@ class TestMotorTestDataModelMotorTesting:
 
         GIVEN: Safe conditions for motor testing
         WHEN: User tests motors in sequence
-        THEN: Sequential test should execute successfully
+        THEN: Sequential test should execute successfully without exception
         """
         # Arrange: Safe conditions configured in fixture
 
-        # Act: Test motors in sequence
-        success, error = motor_test_model.test_motors_in_sequence(throttle_percent=10, timeout_seconds=2)
+        # Act: Test motors in sequence (should not raise exception)
+        motor_test_model.test_motors_in_sequence(throttle_percent=10, timeout_seconds=2)
 
-        # Assert: Sequential test successful
-        assert success is True
-        assert error == ""
-        motor_test_model.flight_controller.test_motors_in_sequence.assert_called_once_with(4, 10, 2)
+        # Assert: Verify method was called correctly
+        motor_test_model.flight_controller.test_motors_in_sequence.assert_called_once_with(1, 4, 10, 2)
 
     def test_user_can_stop_all_motors_emergency(self, motor_test_model) -> None:
         """
@@ -924,16 +889,14 @@ class TestMotorTestDataModelMotorTesting:
 
         GIVEN: Motors potentially running
         WHEN: User triggers emergency stop
-        THEN: All motors should stop immediately
+        THEN: All motors should stop immediately without exception
         """
         # Arrange: No special setup needed
 
-        # Act: Emergency stop
-        success, error = motor_test_model.stop_all_motors()
+        # Act: Emergency stop (should not raise exception)
+        motor_test_model.stop_all_motors()
 
-        # Assert: Emergency stop successful
-        assert success is True
-        assert error == ""
+        # Assert: Verify method was called correctly
         motor_test_model.flight_controller.stop_all_motors.assert_called_once()
 
 
@@ -1053,17 +1016,14 @@ class TestMotorTestDataModelEdgeCases:
 
         GIVEN: A flight controller that raises communication errors
         WHEN: User performs operations that trigger communication
-        THEN: Should handle errors gracefully with appropriate messages
+        THEN: Should raise ParameterError with appropriate message
         """
         # Arrange: Configure communication error
         motor_test_model.flight_controller.set_param.side_effect = Exception("Communication timeout")
 
-        # Act: Attempt parameter setting
-        success, error = motor_test_model.set_parameter("MOT_SPIN_ARM", 0.12)
-
-        # Assert: Error handled gracefully
-        assert success is False
-        assert "Communication timeout" in error
+        # Act & Assert: Attempt parameter setting should raise ParameterError
+        with pytest.raises(ParameterError, match=r"Communication timeout"):
+            motor_test_model.set_parameter("MOT_SPIN_ARM", 0.12)
 
     def test_model_handles_missing_parameters_gracefully(self, motor_test_model) -> None:
         """
@@ -1113,10 +1073,10 @@ class TestErrorHandlingAndEdgeCases:
         WHEN: An exception occurs during frame configuration update
         THEN: The exception should be caught and re-raised with proper logging
         """
+        # Arrange: Mock an exception during frame configuration
+        # Act & Assert: Exception should be caught and re-raised
         with (
-            # Arrange: Mock an exception during frame configuration
             patch.object(MotorTestDataModel, "_update_frame_configuration", side_effect=Exception("Test exception")),
-            # Act & Assert: Exception should be caught and re-raised
             pytest.raises(Exception, match="Test exception"),
         ):
             MotorTestDataModel(
@@ -1221,16 +1181,15 @@ class TestErrorHandlingAndEdgeCases:
 
         GIVEN: A motor test model with unsafe conditions
         WHEN: Attempting to test all motors
-        THEN: Should fail with safety reason
+        THEN: Should raise MotorTestSafetyError with safety reason
         """
-        # Arrange: Make conditions unsafe
-        with patch.object(motor_test_model, "is_motor_test_safe", return_value=(False, "Unsafe voltage")):
-            # Act: Attempt motor test
-            success, reason = motor_test_model.test_all_motors(50, 3)
-
-            # Assert: Test fails due to safety
-            assert success is False
-            assert reason == "Unsafe voltage"
+        # Arrange: Make conditions unsafe by mocking is_motor_test_safe to raise exception
+        with (
+            patch.object(motor_test_model, "is_motor_test_safe", side_effect=MotorTestSafetyError("Unsafe voltage")),
+            pytest.raises(MotorTestSafetyError, match=r"Unsafe voltage"),
+        ):
+            # Act: Attempt motor test should raise MotorTestSafetyError
+            motor_test_model.test_all_motors(50, 3)
 
     def test_sequential_motor_test_with_unsafe_conditions(self, motor_test_model) -> None:
         """
@@ -1238,16 +1197,15 @@ class TestErrorHandlingAndEdgeCases:
 
         GIVEN: A motor test model with unsafe conditions
         WHEN: Attempting to test motors in sequence
-        THEN: Should fail with safety reason
+        THEN: Should raise MotorTestSafetyError with safety reason
         """
-        # Arrange: Make conditions unsafe
-        with patch.object(motor_test_model, "is_motor_test_safe", return_value=(False, "Battery too low")):
-            # Act: Attempt sequential motor test
-            success, reason = motor_test_model.test_motors_in_sequence(throttle_percent=30, timeout_seconds=2)
-
-            # Assert: Test fails due to safety
-            assert success is False
-            assert reason == "Battery too low"
+        # Arrange: Make conditions unsafe by mocking is_motor_test_safe to raise exception
+        with (
+            patch.object(motor_test_model, "is_motor_test_safe", side_effect=MotorTestSafetyError("Battery too low")),
+            pytest.raises(MotorTestSafetyError, match=r"Battery too low"),
+        ):
+            # Act: Attempt sequential motor test should raise MotorTestSafetyError
+            motor_test_model.test_motors_in_sequence(throttle_percent=30, timeout_seconds=2)
 
     def test_set_test_duration_exception_handling(self, motor_test_model) -> None:
         """
@@ -1258,15 +1216,15 @@ class TestErrorHandlingAndEdgeCases:
         THEN: Should return False and log error
         """
         # Arrange: Mock exception in ProgramSettings.set_setting
-        with patch(
-            "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.set_setting",
-            side_effect=Exception("Save error"),
+        # Act & Assert: Attempt to set duration should raise exception
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.set_setting",
+                side_effect=Exception("Save error"),
+            ),
+            pytest.raises(Exception, match="Save error"),
         ):
-            # Act: Attempt to set duration
-            result = motor_test_model.set_test_duration(5)
-
-            # Assert: Returns False on exception
-            assert result is False
+            motor_test_model.set_test_duration_s(5)
 
     def test_set_test_throttle_exception_handling(self, motor_test_model) -> None:
         """
@@ -1277,15 +1235,15 @@ class TestErrorHandlingAndEdgeCases:
         THEN: Should return False and log error
         """
         # Arrange: Mock exception in ProgramSettings.set_setting
-        with patch(
-            "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.set_setting",
-            side_effect=Exception("Save error"),
+        # Act & Assert: Attempt to set throttle should raise exception
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.set_setting",
+                side_effect=Exception("Save error"),
+            ),
+            pytest.raises(Exception, match="Save error"),
         ):
-            # Act: Attempt to set throttle
-            result = motor_test_model.set_test_throttle_pct(75)
-
-            # Assert: Returns False on exception
-            assert result is False
+            motor_test_model.set_test_throttle_pct(75)
 
     def test_update_frame_configuration_class_parameter_failure(self, motor_test_model) -> None:
         """
@@ -1293,21 +1251,18 @@ class TestErrorHandlingAndEdgeCases:
 
         GIVEN: A motor test model
         WHEN: Setting FRAME_CLASS parameter fails
-        THEN: Should return failure with appropriate error message
+        THEN: Should raise ParameterError with appropriate error message
         """
         # Arrange: Mock parameter setting to fail for FRAME_CLASS
         with patch.object(motor_test_model, "set_parameter") as mock_set_param:
             mock_set_param.side_effect = [
-                (False, "Failed to set FRAME_CLASS"),  # First call fails
-                (True, ""),  # Second call would succeed but shouldn't be reached
+                ParameterError("Failed to set FRAME_CLASS"),  # First call fails
+                None,  # Second call would succeed but shouldn't be reached
             ]
 
-            # Act: Attempt frame configuration update
-            success, error = motor_test_model.update_frame_configuration(2, 0)
-
-            # Assert: Returns failure for FRAME_CLASS error
-            assert success is False
-            assert error == "Failed to set FRAME_CLASS"
+            # Act & Assert: Attempt frame configuration update should raise ParameterError
+            with pytest.raises(ParameterError, match=r"Failed to set FRAME_CLASS"):
+                motor_test_model.update_frame_configuration(2, 0)
 
     def test_update_frame_configuration_type_parameter_failure(self, motor_test_model) -> None:
         """
@@ -1315,21 +1270,18 @@ class TestErrorHandlingAndEdgeCases:
 
         GIVEN: A motor test model
         WHEN: Setting FRAME_TYPE parameter fails
-        THEN: Should return failure with appropriate error message
+        THEN: Should raise ParameterError with appropriate error message
         """
         # Arrange: Mock parameter setting to fail for FRAME_TYPE
         with patch.object(motor_test_model, "set_parameter") as mock_set_param:
             mock_set_param.side_effect = [
-                (True, ""),  # FRAME_CLASS succeeds
-                (False, "Failed to set FRAME_TYPE"),  # FRAME_TYPE fails
+                None,  # FRAME_CLASS succeeds (void)
+                ParameterError("Failed to set FRAME_TYPE"),  # FRAME_TYPE fails
             ]
 
-            # Act: Attempt frame configuration update
-            success, error = motor_test_model.update_frame_configuration(2, 0)
-
-            # Assert: Returns failure for FRAME_TYPE error
-            assert success is False
-            assert error == "Failed to set FRAME_TYPE"
+            # Act & Assert: Attempt frame configuration update should raise ParameterError
+            with pytest.raises(ParameterError, match=r"Failed to set FRAME_TYPE"):
+                motor_test_model.update_frame_configuration(2, 0)
 
     def test_update_frame_configuration_exception_during_update(self, motor_test_model) -> None:
         """
@@ -1337,18 +1289,17 @@ class TestErrorHandlingAndEdgeCases:
 
         GIVEN: A motor test model
         WHEN: An exception occurs during the update process
-        THEN: Should return failure with error message
+        THEN: Should raise FrameConfigurationError with error message
         """
         # Arrange: Mock an exception during the update process
         with patch.object(motor_test_model, "set_parameter") as mock_set_param:
             mock_set_param.side_effect = Exception("Internal error during parameter setting")
 
-            # Act: Attempt frame configuration update
-            success, error = motor_test_model.update_frame_configuration(2, 0)
-
-            # Assert: Returns failure with exception message
-            assert success is False
-            assert "Failed to update frame configuration: Internal error during parameter setting" in error
+            # Act & Assert: Attempt frame configuration update should raise FrameConfigurationError
+            with pytest.raises(
+                FrameConfigurationError, match=r"Failed to update frame configuration: Internal error during parameter setting"
+            ):
+                motor_test_model.update_frame_configuration(2, 0)
 
     def test_refresh_connection_status_exception_handling(self, motor_test_model) -> None:
         """
@@ -1382,7 +1333,7 @@ class TestMotorTestDataModelMotorDirections:
         model = motor_test_model_with_json_data
 
         # Act: Get motor directions
-        directions = model.get_motor_directions()
+        directions = model.motor_directions
 
         # Assert: Correct directions returned from JSON data
         expected_directions = ["CCW", "CW", "CW", "CCW"]  # From mock JSON for QUAD X
@@ -1399,20 +1350,14 @@ class TestMotorTestDataModelMotorDirections:
         """
         # Arrange: Update model to QUAD PLUS frame (class=1, type=0)
         model = motor_test_model_with_json_data
-        model._frame_class = 1
-        model._frame_type = 0
-        model._motor_count = 4
-        # Update the frame layout to match QUAD PLUS
-        for layout in model._motor_data_loader.data["layouts"]:
-            if layout["Class"] == 1 and layout["Type"] == 0:
-                model._frame_layout = layout
-                break
+        model._configure_frame_layout(frame_class=1, frame_type=0)
 
         # Act: Get motor directions
-        directions = model.get_motor_directions()
+        directions = model.motor_directions
 
         # Assert: Correct PLUS frame directions in test order
-        expected_directions = ["CW", "CCW", "CW", "CCW"]  # Test order 1,2,3,4 from mock JSON for QUAD PLUS
+        # TestOrder 1: Motor 3 (CW), TestOrder 2: Motor 1 (CCW), TestOrder 3: Motor 4 (CW), TestOrder 4: Motor 2 (CCW)
+        expected_directions = ["CW", "CCW", "CW", "CCW"]  # Ordered by TestOrder from mock JSON for QUAD PLUS
         assert directions == expected_directions
         assert len(directions) == 4
 
@@ -1426,80 +1371,80 @@ class TestMotorTestDataModelMotorDirections:
         """
         # Arrange: Update model to HEXA frame (class=2, type=1)
         model = motor_test_model_with_json_data
-        model._frame_class = 2
-        model._frame_type = 1
-        model._motor_count = 6
-        # Update the frame layout to match HEXA X
-        for layout in model._motor_data_loader.data["layouts"]:
-            if layout["Class"] == 2 and layout["Type"] == 1:
-                model._frame_layout = layout
-                break
+        model._configure_frame_layout(frame_class=2, frame_type=1)
 
         # Act: Get motor directions
-        directions = model.get_motor_directions()
+        directions = model.motor_directions
 
         # Assert: Correct HEXA frame directions
+        # From JSON: TestOrder 1-6 → Motors 1-6 → CW,CCW,CW,CCW,CW,CCW
         expected_directions = ["CW", "CCW", "CW", "CCW", "CW", "CCW"]  # From mock JSON for HEXA X
         assert directions == expected_directions
         assert len(directions) == 6
 
-    def test_user_gets_fallback_when_frame_not_found_in_json(self, motor_test_model_with_json_data) -> None:
+    def test_user_gets_empty_directions_when_frame_not_found_in_json(self, motor_test_model_with_json_data) -> None:
         """
-        User gets appropriate error when frame configuration not found in JSON.
+        User gets empty motor directions when frame configuration not found in JSON.
 
         GIVEN: A motor test model with JSON data
         WHEN: User requests directions for unsupported frame configuration
-        THEN: Should raise ValueError with appropriate error message
+        THEN: Should return empty motor directions list
         """
         # Arrange: Configure unsupported frame (class=99, type=99)
         model = motor_test_model_with_json_data
         model._frame_class = 99
         model._frame_type = 99
-        model._motor_count = 4
-        model._frame_layout = {}  # No frame layout found
+        model._motor_count = 0
+        model._motor_directions = []  # No frame layout found
 
-        # Act & Assert: Should raise ValueError
-        with pytest.raises(ValueError, match="No Frame layout found"):
-            model.get_motor_directions()
+        # Act: Get motor directions
+        directions = model.motor_directions
 
-    def test_user_gets_fallback_when_json_data_empty(self, motor_test_model_with_empty_json_data) -> None:
+        # Assert: Should return empty list
+        assert directions == []
+
+    def test_user_gets_empty_directions_when_json_data_empty(self, motor_test_model_with_empty_json_data) -> None:
         """
-        User gets appropriate error when JSON data is empty or invalid.
+        User gets empty motor directions when JSON data is empty or invalid.
 
         GIVEN: A motor test model with empty or failed JSON data loading
         WHEN: User requests motor directions
-        THEN: Should raise ValueError with appropriate error message
+        THEN: Should return empty motor directions list
         """
         # Arrange: Model with empty JSON data from fixture
         model = motor_test_model_with_empty_json_data
-        model._frame_layout = {}  # No frame layout available
+        model._motor_directions = []  # No frame layout available
 
-        # Act & Assert: Should raise ValueError
-        with pytest.raises(ValueError, match="No Frame layout found"):
-            model.get_motor_directions()
+        # Act: Get motor directions
+        directions = model.motor_directions
 
-    def test_user_gets_fallback_when_json_data_corrupted(self, motor_test_model_with_corrupted_json_data) -> None:
+        # Assert: Should return empty list
+        assert directions == []
+
+    def test_user_gets_empty_directions_when_json_data_corrupted(self, motor_test_model_with_corrupted_json_data) -> None:
         """
-        User gets appropriate error when JSON data structure is invalid.
+        User gets empty motor directions when JSON data structure is invalid.
 
         GIVEN: A motor test model with corrupted JSON data structure
         WHEN: User requests motor directions
-        THEN: Should raise ValueError with appropriate error message
+        THEN: Should return empty motor directions list
         """
         # Arrange: Model with corrupted JSON data from fixture
         model = motor_test_model_with_corrupted_json_data
 
-        # Act & Assert: Get motor directions should raise ValueError
-        with pytest.raises(ValueError, match="No Frame layout found, not possible to generate motor test rotation order"):
-            model.get_motor_directions()
+        # Act: Get motor directions
+        directions = model.motor_directions
 
-    def test_motor_count_mismatch_handled_with_extension(self, motor_test_model_with_json_data) -> None:
+        # Assert: Should return empty list
+        assert directions == []
+
+    def test_motor_directions_unchanged_when_count_manually_increased(self, motor_test_model_with_json_data) -> None:
         """
-        System handles motor count mismatch by leaving missing positions empty.
+        Motor directions remain unchanged when motor count is manually increased.
 
         GIVEN: A motor test model where JSON has fewer motors than expected
-        WHEN: User requests directions for frame needing more motors
-        THEN: Should return directions with empty strings for missing motors
+        WHEN: User manually increases motor count after configuration
+        THEN: Should return original directions (implementation doesn't auto-extend)
         """
         # Arrange: Configure frame with valid class/type then simulate motor count mismatch
         model = motor_test_model_with_json_data
@@ -1510,38 +1455,38 @@ class TestMotorTestDataModelMotorDirections:
         model._motor_count = 8  # Expect 8 motors but frame layout only has 4
 
         # Act: Get motor directions
-        directions = model.get_motor_directions()
+        directions = model.motor_directions
 
-        # Assert: Directions list has correct length with empty strings for missing motors
-        assert len(directions) == 8
-        # First 4 from JSON, remaining 4 are empty strings
-        expected_directions = ["CCW", "CW", "CW", "CCW", "", "", "", ""]
+        # Assert: Directions list has original length (no auto-extension)
+        assert len(directions) == 4
+        expected_directions = ["CCW", "CW", "CW", "CCW"]  # From mock JSON for QUAD X
         assert directions == expected_directions
 
-    def test_motor_count_mismatch_handled_with_truncation(self, motor_test_model_with_json_data) -> None:
+    def test_motor_directions_unchanged_when_count_manually_decreased(self, motor_test_model_with_json_data) -> None:
         """
-        System handles motor count mismatch by truncating directions appropriately.
+        Motor directions remain unchanged when motor count is manually decreased.
 
         GIVEN: A motor test model where JSON has more motors than expected
-        WHEN: User requests directions for frame needing fewer motors
-        THEN: Should truncate directions to match expected count
+        WHEN: User manually decreases motor count after configuration
+        THEN: Should return original directions (implementation doesn't auto-truncate)
         """
         # Arrange: Configure frame with valid class/type then simulate motor count mismatch
         model = motor_test_model_with_json_data
-        with patch.object(model, "set_parameter", return_value=(True, None)):
-            model.update_frame_configuration(2, 1)  # Configure HEXA frame (has 6 motors)
+
+        # Configure HEXA frame directly without using update_frame_configuration
+        model._configure_frame_layout(2, 1)  # Configure HEXA frame (has 6 motors)
 
         # Manually decrease motor count to simulate mismatch
+        original_directions = model.motor_directions.copy()  # Save original directions
         model._motor_count = 4  # Expect only 4 motors but frame layout has 6
 
         # Act: Get motor directions
-        directions = model.get_motor_directions()
+        directions = model.motor_directions
 
-        # Assert: Directions truncated to match motor count
-        assert len(directions) == 4
-        # Only first 4 directions from frame layout
-        expected_directions = ["CW", "CCW", "CW", "CCW"]
+        # Assert: Directions remain original (implementation doesn't auto-truncate based on motor count)
+        expected_directions = ["CW", "CCW", "CW", "CCW", "CW", "CCW"]  # From mock JSON for HEXA X
         assert directions == expected_directions
+        assert directions == original_directions
 
 
 class TestMotorTestDataModelJSONLoading:
@@ -1706,14 +1651,14 @@ class TestMotorTestDataModelSettingsManagement:
         WHEN: The user requests the current test duration
         THEN: The stored duration value should be returned
         """
-        # Arrange: Mock settings to return a specific duration
-        with patch.object(ProgramSettings, "get_setting", return_value="2.5") as mock_get:
-            # Act: Get test duration
-            duration = motor_test_model.get_test_duration()
+        # Arrange: Set internal duration value
+        motor_test_model._test_duration_s = 2.5
 
-            # Assert: Correct duration returned
-            assert duration == 2.5
-            mock_get.assert_called_once_with("motor_test/duration")
+        # Act: Get test duration
+        duration = motor_test_model.get_test_duration_s()
+
+        # Assert: Correct duration returned
+        assert duration == 2.5
 
     def test_user_can_get_test_throttle_percentage_from_settings(self, motor_test_model) -> None:
         """
@@ -1723,14 +1668,14 @@ class TestMotorTestDataModelSettingsManagement:
         WHEN: The user requests the current throttle percentage
         THEN: The stored throttle value should be returned
         """
-        # Arrange: Mock settings to return a specific throttle percentage
-        with patch.object(ProgramSettings, "get_setting", return_value="15") as mock_get:
-            # Act: Get throttle percentage
-            throttle = motor_test_model.get_test_throttle_pct()
+        # Arrange: Set internal throttle value
+        motor_test_model._test_throttle_pct = 15
 
-            # Assert: Correct throttle returned
-            assert throttle == 15
-            mock_get.assert_called_once_with("motor_test/throttle_pct")
+        # Act: Get throttle percentage
+        throttle = motor_test_model.get_test_throttle_pct()
+
+        # Assert: Correct throttle returned
+        assert throttle == 15
 
     def test_set_test_duration_handles_exception_gracefully(self, motor_test_model) -> None:
         """
@@ -1745,11 +1690,11 @@ class TestMotorTestDataModelSettingsManagement:
             patch.object(ProgramSettings, "set_setting", side_effect=Exception("Settings save failed")),
             patch("ardupilot_methodic_configurator.data_model_motor_test.logging_error") as mock_log,
         ):
-            # Act: Try to set duration
-            result = motor_test_model.set_test_duration(2.0)
+            # Act & Assert: Try to set duration should raise exception
+            with pytest.raises(Exception, match="Settings save failed"):
+                motor_test_model.set_test_duration_s(2.0)
 
-            # Assert: Failure handled gracefully
-            assert result is False
+            # Assert: Error was logged
             mock_log.assert_called_once()
             error_call = mock_log.call_args[0]
             assert "Failed to save duration setting" in error_call[0]
@@ -1767,11 +1712,11 @@ class TestMotorTestDataModelSettingsManagement:
             patch.object(ProgramSettings, "set_setting", side_effect=Exception("Settings save failed")),
             patch("ardupilot_methodic_configurator.data_model_motor_test.logging_error") as mock_log,
         ):
-            # Act: Try to set throttle
-            result = motor_test_model.set_test_throttle_pct(10)
+            # Act & Assert: Try to set throttle should raise exception
+            with pytest.raises(Exception, match="Settings save failed"):
+                motor_test_model.set_test_throttle_pct(10)
 
-            # Assert: Failure handled gracefully
-            assert result is False
+            # Assert: Error was logged
             mock_log.assert_called_once()
             error_call = mock_log.call_args[0]
             assert "Failed to save throttle percentage setting" in error_call[0]
@@ -1786,7 +1731,7 @@ class TestMotorTestDataModelSafetyChecksAdvanced:
 
         GIVEN: A motor test model with battery monitoring enabled
         WHEN: Battery status returns None (unreadable)
-        THEN: Motor testing should be considered unsafe
+        THEN: Should raise MotorTestSafetyError with appropriate message
         """
         # Arrange: Mock flight controller as connected but battery status unavailable
         motor_test_model.flight_controller.master = MagicMock()
@@ -1795,13 +1740,12 @@ class TestMotorTestDataModelSafetyChecksAdvanced:
         }
 
         # Mock get_battery_status to return None
-        with patch.object(motor_test_model, "get_battery_status", return_value=None):
-            # Act: Check safety
-            is_safe, message = motor_test_model.is_motor_test_safe()
-
-            # Assert: Testing is unsafe due to unreadable battery
-            assert is_safe is False
-            assert "Could not read battery status" in message
+        with (
+            patch.object(motor_test_model, "get_battery_status", return_value=None),
+            pytest.raises(MotorTestSafetyError, match=r"Could not read battery status"),
+        ):
+            # Act: Check safety should raise MotorTestSafetyError
+            motor_test_model.is_motor_test_safe()
 
 
 class TestMotorTestDataModelFrameOptionsAdvanced:
@@ -1932,10 +1876,9 @@ class TestMotorTestDataModelSettingsPersistence:
 
         # Act: Save test duration
         with patch("ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings.set_setting") as mock_set:
-            result = motor_test_model.set_test_duration(duration)
+            motor_test_model.set_test_duration_s(duration)
 
-            # Assert: Setting saved successfully
-            assert result is True
+            # Assert: Setting saved successfully (no exception raised)
             mock_set.assert_called_once_with("motor_test/duration", duration)
 
     def test_set_test_throttle_pct_succeeds_with_valid_value(self, motor_test_model) -> None:
@@ -1951,10 +1894,9 @@ class TestMotorTestDataModelSettingsPersistence:
 
         # Act: Save throttle percentage
         with patch("ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings.set_setting") as mock_set:
-            result = motor_test_model.set_test_throttle_pct(throttle)
+            motor_test_model.set_test_throttle_pct(throttle)
 
-            # Assert: Setting saved successfully
-            assert result is True
+            # Assert: Setting saved successfully (no exception raised)
             mock_set.assert_called_once_with("motor_test/throttle_pct", throttle)
 
 
@@ -1973,11 +1915,9 @@ class TestSettingsExceptionHandling:
         with patch("ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings") as mock_settings:
             mock_settings.set_setting.side_effect = Exception("Settings error")
 
-            # Act: Try to save test duration
-            result = motor_test_model.set_test_duration(2.0)
-
-            # Assert: Should return False
-            assert result is False
+            # Act & Assert: Try to save test duration should raise exception
+            with pytest.raises(Exception, match="Settings error"):
+                motor_test_model.set_test_duration_s(2.0)
 
     def test_set_test_throttle_pct_handles_exceptions(self, motor_test_model) -> None:
         """
@@ -1991,11 +1931,9 @@ class TestSettingsExceptionHandling:
         with patch("ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings") as mock_settings:
             mock_settings.set_setting.side_effect = Exception("Settings error")
 
-            # Act: Try to save test throttle
-            result = motor_test_model.set_test_throttle_pct(50)
-
-            # Assert: Should return False
-            assert result is False
+            # Act & Assert: Try to save test throttle should raise exception
+            with pytest.raises(Exception, match="Settings error"):
+                motor_test_model.set_test_throttle_pct(50)
 
     def test_refresh_from_flight_controller_handles_runtime_error(self, motor_test_model) -> None:
         """
