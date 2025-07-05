@@ -55,6 +55,8 @@ dependencies = [
     "pyserial==3.5",
     "requests==2.32.4",
     "setuptools==80.9.0",
+    "scikit-build==0.18.1",
+    "tksvg==0.7.4",
 ]
 
 dynamic = ["version"]
