@@ -1,5 +1,11 @@
 # Motor Test Sub-application Architecture
 
+## Status Legend
+
+- ✅ **Green Check**: Fully implemented and tested with BDD pytest
+- 🟡 **Yellow Check**: Implemented but not yet tested with BDD pytest  
+- ❌ **Red Cross**: Not implemented
+
 ## Overview
 
 The Motor Test sub-application provides a graphical interface for testing individual motors on ArduPilot vehicles, similar to Mission Planner's motor test functionality.
@@ -10,49 +16,49 @@ It allows users to test motor functionality, verify motor order and direction, a
 ### Functional Requirements
 
 1. **Frame Configuration Interface**
-   - FRAME_TYPE dropdown populated from parameter documentation metadata
-   - FRAME_CLASS dropdown populated from parameter documentation metadata
-   - Immediate parameter application to flight controller on selection
-   - Dynamic motor count calculation based on frame configuration
-   - Motor diagram display showing the currently selected frame configuration
-   - SVG motor diagrams loaded from local images directory (downloaded from [ArduPilot documentation](https://ardupilot.org/copter/docs/connect-escs-and-motors.html))
+   - ✅ FRAME_TYPE dropdown populated from parameter documentation metadata
+   - ✅ Immediate parameter application to flight controller on selection
+   - ✅ Dynamic motor count calculation based on frame configuration
+   - ✅ Motor diagram display showing the currently selected frame configuration
+   - ✅ SVG motor diagrams loaded from local images directory (downloaded from [ArduPilot documentation](https://ardupilot.org/copter/docs/connect-escs-and-motors.html))
      - The original diagrams are the `.svg` files in the `https://ardupilot.org/copter/_images/` directory
 
 2. **Motor Parameter Configuration**
-   - "Set Motor Spin Arm" button with parameter dialog for MOT_SPIN_ARM
-   - "Set Motor Spin Min" button with parameter dialog for MOT_SPIN_MIN
-   - Immediate parameter save and upload to flight controller
-   - Current value display and validation
+   - ✅ "Set Motor Spin Arm" button with parameter dialog for MOT_SPIN_ARM
+   - ✅ "Set Motor Spin Min" button with parameter dialog for MOT_SPIN_MIN
+   - ✅ Immediate parameter save and upload to flight controller
+   - ✅ Current value display and validation
 
 3. **Motor Testing Interface**
-   - Display N motor test buttons based on detected/configured frame
-   - Label buttons with letters (A, B, C, D...) following ArduPilot conventions
-   - Expected direction labels (CW/CCW) for each motor position
-   - Detected order dropdown comboboxes for user feedback
-   - Configurable test duration (default: 2 seconds)
-   - Real-time BATT1 voltage and current display with color-coded status
+   - ✅ Display N motor test buttons based on detected/configured frame
+   - ✅ Label buttons with letters (A, B, C, D...) following ArduPilot conventions
+   - ✅ Expected direction labels (CW/CCW) for each motor position
+   - ✅ Detected order dropdown comboboxes for user feedback
+   - ✅ Configurable test duration (default: 2 seconds)
+   - ✅ Real-time BATT1 voltage and current display with color-coded status
 
 4. **Battery Status Display**
-   - Current BATT1 voltage and current readings (only when BATT_MONITOR != 0)
-   - When BATT_MONITOR == 0: Display "N/A"
-   - Color-coded voltage display based on BATT_ARM_VOLT and MOT_BAT_VOLT_MAX thresholds:
+   - ✅ Current BATT1 voltage and current readings (only when BATT_MONITOR != 0)
+   - ✅ When BATT_MONITOR == 0: Display "N/A"
+   - ✅ Color-coded voltage display based on BATT_ARM_VOLT and MOT_BAT_VOLT_MAX thresholds:
      - Green: Voltage within BATT_ARM_VOLT to MOT_BAT_VOLT_MAX range (safe for motor testing)
      - Red: Voltage outside the safe range (unsafe for motor testing)
-   - Safety popup when motor testing attempted with voltage outside safe range
-   - Real-time updates during motor testing operations
+   - ✅ Safety popup when motor testing attempted with voltage outside safe range
+   - ✅ Real-time updates during motor testing operations
 
 5. **Safety Controls**
-   - Prominent red "Stop all motors" emergency button
-   - "Test in Sequence" button for automated testing
-   - Safety warnings and operational guidelines at top
-   - Parameter validation before motor testing
-   - Automatic motor timeout for safety
+   - ✅ Prominent red "Stop all motors" emergency button
+   - ✅ "Test in Sequence" button for automated testing
+   - ✅ Safety warnings and operational guidelines at top
+   - ✅ Parameter validation before motor testing
+   - ✅ Automatic motor timeout for safety
 
 6. **Order Detection and Validation**
-   - User-selectable "Detected" comboboxes for each motor
-   - Comparison between expected and detected motor order
-   - Visual feedback for correct/incorrect motor placement
-   - Guidance for correcting wiring issues
+   - ✅ User-selectable "Detected" comboboxes for each motor
+   - 🟡 Comparison between expected and detected motor order
+   - ✅ Visual feedback for correct/incorrect motor placement
+   - 🟡 Guidance for correcting wiring issues
+
 
 ### Non-Functional Requirements
 
@@ -148,13 +154,28 @@ The motor test sub-application follows the Model-View separation pattern establi
 def __init__(self, flight_controller: FlightController, filesystem: LocalFilesystem, settings: ProgramSettings) -> None
 def get_motor_count(self) -> int
 def get_motor_labels(self) -> list[str]
-def get_battery_status(self) -> tuple[float, float] | None  # voltage, current or None if BATT_MONITOR == 0
-def get_voltage_status(self) -> str  # "safe", "critical" or "disabled"
+def get_motor_numbers(self) -> list[int]
+def get_motor_directions(self) -> list[str]  # Returns CW/CCW direction labels for each motor
+def get_battery_status(self) -> Optional[tuple[float, float]]  # voltage, current or None if BATT_MONITOR == 0
+def get_voltage_status(self) -> str  # "safe", "critical" "unavailable" or "disabled"
 def is_battery_monitoring_enabled(self) -> bool  # True if BATT_MONITOR != 0
-def set_parameter(self, param_name: str, value: float) -> bool
-def test_motor(self, motor_number: int, throttle_percent: int, timeout_seconds: int) -> None
-def stop_all_motors(self) -> None
-def get_motor_diagram_path(self) -> str
+def is_motor_test_safe(self) -> tuple[bool, str]  # (is_safe, reason)
+def set_parameter(self, param_name: str, value: float) -> tuple[bool, str]  # (success, error_message)
+def get_parameter(self, param_name: str) -> Optional[float]
+def test_motor(self, motor_number: int, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]
+def test_all_motors(self, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]
+def test_motors_in_sequence(self, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]
+def stop_all_motors(self) -> tuple[bool, str]
+def get_motor_diagram_path(self) -> tuple[str, str]  # Returns (filepath, description)
+def motor_diagram_exists(self) -> bool
+def get_test_duration(self) -> float
+def set_test_duration(self, duration: float) -> bool
+def get_test_throttle_pct(self) -> int
+def set_test_throttle_pct(self, throttle: int) -> bool
+def update_frame_configuration(self, frame_class: int, frame_type: int) -> tuple[bool, str]
+def get_frame_options(self) -> dict[str, dict[int, str]]
+def refresh_connection_status(self) -> bool
+def get_voltage_thresholds(self) -> tuple[float, float]  # Returns (BATT_ARM_VOLT, MOT_BAT_VOLT_MAX)
 ```
 
 **Data Attributes:**
@@ -278,7 +299,6 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 
 2. **Frame Configuration**
    - User selects appropriate FRAME_TYPE from dropdown (populated from parameter documentation)
-   - User selects appropriate FRAME_CLASS from dropdown (populated from parameter documentation)
    - Parameters are immediately applied to flight controller on selection
 
 3. **Motor Parameter Configuration**
@@ -288,6 +308,7 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 
 4. **Motor Testing and Order Detection**
    - User monitors real-time battery voltage and current display (if BATT_MONITOR != 0)
+   - User sets throttle % (default: 1%)
    - User sets test duration (default: 2 seconds)
    - User tests individual motors using labeled buttons (Motor A, B, C, etc.)
    - User observes actual motor spinning and records in "Detected" comboboxes
@@ -328,7 +349,7 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 
 #### Parameter Configuration Workflow
 
-1. **Frame Selection**: User selects FRAME_TYPE/FRAME_CLASS from dropdowns
+1. **Frame Selection**: User selects FRAME_TYPE from dropdowns
 2. **Immediate Application**: Parameters uploaded to flight controller immediately
 3. **Parameter Button**: User clicks "Set Motor Spin Arm/Min" button
 4. **Current Value**: Data model reads current parameter value
@@ -339,25 +360,38 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 
 ## Testing Strategy
 
-### Pytest Unit Testing Requirements
+### Current Test Coverage Status
 
-#### Data Model Tests (`tests/test_data_model_motor_test.py`)
+#### Data Model Tests (`tests/test_data_model_motor_test.py`) - ✅ IMPLEMENTED
 
-- Frame detection logic with various FRAME_CLASS/FRAME_TYPE combinations
-- Motor count calculation for all supported frame types
-- Motor label generation (number/letter mapping)
-- Parameter validation and bounds checking
-- Error handling for communication failures
-- Motor testing command generation
+**Status:** 54 comprehensive BDD pytest tests implemented covering all functionality
 
-#### GUI Tests (`tests/test_frontend_tkinter_motor_test.py`)
+**Test Coverage Areas:**
 
-- UI component creation and layout
-- Button generation based on motor count
-- Event handling for all interactive elements
-- Safety confirmation dialogs
-- Parameter input validation
-- Integration with data model layer
+- ✅ Frame detection logic with various FRAME_CLASS/FRAME_TYPE combinations
+- ✅ Motor count calculation for all supported frame types
+- ✅ Motor label generation (number/letter mapping)
+- ✅ Parameter validation and bounds checking
+- ✅ Error handling for communication failures
+- ✅ Motor testing command generation
+- ✅ Battery monitoring and safety validation
+- ✅ Settings persistence and configuration management
+- ✅ Exception handling and edge cases
+
+#### GUI Tests (`tests/test_frontend_tkinter_motor_test.py`) - ❌ NOT IMPLEMENTED
+
+**Status:** Frontend tests not yet implemented
+
+**Planned Test Coverage:**
+
+- ❌ UI component creation and layout
+- ❌ Button generation based on motor count
+- ❌ Event handling for all interactive elements
+- ❌ Safety confirmation dialogs
+- ❌ Parameter input validation
+- ❌ Integration with data model layer
+- ❌ Keyboard shortcut functionality
+- ❌ SVG diagram rendering
 
 ### Integration Testing
 
