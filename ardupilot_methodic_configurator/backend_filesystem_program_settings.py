@@ -22,23 +22,11 @@ from platform import system as platform_system
 from re import escape as re_escape
 from re import match as re_match
 from re import sub as re_sub
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from platformdirs import site_config_dir, user_config_dir
 
 from ardupilot_methodic_configurator import _
-
-# pylint: disable=duplicate-code
-SETTINGS_DEFAULTS: dict[str, Union[int, bool, str, float]] = {
-    "Format version": 1,
-    "auto_open_doc_in_browser": True,
-    "annotate_docs_into_param_files": False,
-    "gui_complexity": "simple",  # simple or normal
-    # Motor test settings
-    "motor_test_duration": 2.5,  # Default test duration in seconds
-    "motor_test_throttle_pct": 10,  # Default throttle percentage (10%)
-}
-# pylint: disable=duplicate-code
 
 
 class ProgramSettings:
@@ -53,53 +41,66 @@ class ProgramSettings:
     def __init__(self) -> None:
         pass
 
-    @staticmethod
-    def _ensure_default_settings(settings: dict[str, Any]) -> dict[str, Any]:
+    @classmethod
+    def _get_settings_defaults(cls) -> dict[str, Union[int, bool, str, float, dict]]:
         """
-        Ensure all required default settings are present in the settings dict.
+        Get the default settings dictionary with dynamically computed paths.
+
+        Returns:
+            dict: Default settings with all paths properly computed
+
+        """
+        # Define default settings directly - no need for deep copying
+        settings_directory = cls._user_config_dir()
+
+        return {
+            "Format version": 1,
+            "display_usage_popup": {
+                "component_editor": True,
+                "parameter_editor": True,
+            },
+            "directory_selection": {
+                "template_dir": os_path.join(cls.get_templates_base_dir(), "ArduCopter", "diatone_taycan_mxc", "4.5.x-params"),
+                "new_base_dir": os_path.join(settings_directory, "vehicles"),
+                "vehicle_dir": os_path.join(settings_directory, "vehicles"),
+            },
+            "auto_open_doc_in_browser": True,
+            "annotate_docs_into_param_files": False,
+            "gui_complexity": "simple",  # simple or normal
+            # Motor test settings
+            "motor_test_duration": 2.5,  # Default test duration in seconds
+            "motor_test_throttle_pct": 10,  # Default throttle percentage (10%)
+        }
+
+    @staticmethod
+    def _recursive_merge_defaults(settings: dict[str, Any], defaults: dict[str, Any]) -> dict[str, Any]:
+        """
+        Recursively merge default values into settings dictionary.
+
+        This handles nested dictionaries properly and is much cleaner than manual checking.
 
         Args:
             settings: Existing settings dictionary
+            defaults: Default values to merge in
 
         Returns:
             dict: Settings with all defaults applied
 
         """
-        if "Format version" not in settings:
-            settings["Format version"] = SETTINGS_DEFAULTS["Format version"]
-
-        if "directory_selection" not in settings:
-            settings["directory_selection"] = {}
-
-        if "display_usage_popup" not in settings:
-            settings["display_usage_popup"] = {}
-        if "component_editor" not in settings["display_usage_popup"]:
-            settings["display_usage_popup"]["component_editor"] = True
-        if "parameter_editor" not in settings["display_usage_popup"]:
-            settings["display_usage_popup"]["parameter_editor"] = True
-
-        if "auto_open_doc_in_browser" not in settings:
-            settings["auto_open_doc_in_browser"] = SETTINGS_DEFAULTS["auto_open_doc_in_browser"]
-
-        if "annotate_docs_into_param_files" not in settings:
-            settings["annotate_docs_into_param_files"] = SETTINGS_DEFAULTS["annotate_docs_into_param_files"]
-
-        if "gui_complexity" not in settings:
-            settings["gui_complexity"] = SETTINGS_DEFAULTS["gui_complexity"]
-
-        if "motor_test_duration" not in settings:
-            settings["motor_test_duration"] = SETTINGS_DEFAULTS["motor_test_duration"]
-
-        if "motor_test_throttle_pct" not in settings:
-            settings["motor_test_throttle_pct"] = SETTINGS_DEFAULTS["motor_test_throttle_pct"]
-
+        for key, default_value in defaults.items():
+            if key not in settings:
+                settings[key] = default_value
+            elif isinstance(default_value, dict) and isinstance(settings[key], dict):
+                # Recursively merge nested dictionaries
+                settings[key] = ProgramSettings._recursive_merge_defaults(settings[key], default_value)
         return settings
 
     @staticmethod
     def _get_settings_as_dict() -> dict[str, Any]:
         settings_path = os_path.join(ProgramSettings._user_config_dir(), "settings.json")
         settings = ProgramSettings._load_settings_from_file(settings_path)
-        return ProgramSettings._ensure_default_settings(settings)
+        # fallback to default values if settings are not defined in the json file
+        return ProgramSettings._recursive_merge_defaults(settings, ProgramSettings._get_settings_defaults())
 
     @staticmethod
     def application_icon_filepath() -> str:
@@ -217,17 +218,8 @@ class ProgramSettings:
         return re_sub(pattern, replacement, path)
 
     @staticmethod
-    def _get_settings_config() -> tuple[dict[str, Any], str, str]:
-        settings = ProgramSettings._get_settings_as_dict()
-        # Regular expression pattern to match single backslashes
-        pattern = r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)"
-        # Replacement string
-        replacement = r"\\" if platform_system() == "Windows" else r"/"
-        return settings, pattern, replacement
-
-    @staticmethod
     def store_recently_used_template_dirs(template_dir: str, new_base_dir: str) -> None:
-        settings, _pattern, _replacement = ProgramSettings._get_settings_config()
+        settings = ProgramSettings._get_settings_as_dict()
 
         # Update the settings with the new values
         settings["directory_selection"].update(
@@ -241,7 +233,7 @@ class ProgramSettings:
 
     @staticmethod
     def store_template_dir(relative_template_dir: str) -> None:
-        settings, _pattern, _replacement = ProgramSettings._get_settings_config()
+        settings = ProgramSettings._get_settings_as_dict()
 
         template_dir = os_path.join(ProgramSettings.get_templates_base_dir(), relative_template_dir)
 
@@ -252,7 +244,7 @@ class ProgramSettings:
 
     @staticmethod
     def store_recently_used_vehicle_dir(vehicle_dir: str) -> None:
-        settings, _pattern, _replacement = ProgramSettings._get_settings_config()
+        settings = ProgramSettings._get_settings_as_dict()
 
         # Update the settings with the new values
         settings["directory_selection"].update({"vehicle_dir": ProgramSettings._normalize_path_separators(vehicle_dir)})
@@ -273,19 +265,15 @@ class ProgramSettings:
 
     @staticmethod
     def get_recently_used_dirs() -> tuple[str, str, str]:
-        template_default_dir = os_path.join(
-            ProgramSettings.get_templates_base_dir(), "ArduCopter", "diatone_taycan_mxc", "4.5.x-params"
-        )
-
         settings_directory = ProgramSettings._user_config_dir()
         vehicles_default_dir = os_path.join(settings_directory, "vehicles")
         if not os_path.exists(vehicles_default_dir):
             os_makedirs(vehicles_default_dir, exist_ok=True)
 
         settings = ProgramSettings._get_settings_as_dict()
-        template_dir = settings["directory_selection"].get("template_dir", template_default_dir)
-        new_base_dir = settings["directory_selection"].get("new_base_dir", vehicles_default_dir)
-        vehicle_dir = settings["directory_selection"].get("vehicle_dir", vehicles_default_dir)
+        template_dir = settings["directory_selection"].get("template_dir")
+        new_base_dir = settings["directory_selection"].get("new_base_dir")
+        vehicle_dir = settings["directory_selection"].get("vehicle_dir")
 
         return template_dir, new_base_dir, vehicle_dir
 
@@ -297,23 +285,56 @@ class ProgramSettings:
     @staticmethod
     def set_display_usage_popup(ptype: str, value: bool) -> None:
         if ptype in {"component_editor", "parameter_editor"}:
-            settings, _, _ = ProgramSettings._get_settings_config()
+            settings = ProgramSettings._get_settings_as_dict()
             settings["display_usage_popup"][ptype] = value
             ProgramSettings._set_settings_from_dict(settings)
 
     @staticmethod
-    def get_setting(setting: str) -> Union[int, bool, str, float]:
-        if setting in SETTINGS_DEFAULTS:
-            setting_default = SETTINGS_DEFAULTS[setting]
-            return ProgramSettings._get_settings_as_dict().get(setting, setting_default)  # type: ignore[no-any-return]
-        return False
+    def get_setting(setting: str) -> Optional[Union[int, bool, str, float]]:
+        settings = ProgramSettings._get_settings_as_dict()
+        setting_parts = setting.split("/")
+        for part in setting_parts:
+            if part in settings:
+                settings = settings[part]
+            else:
+                logging_error(_("Setting '%s' not found in settings dictionary"), setting)
+                return None
+        if isinstance(settings, (int, bool, str, float)):
+            return settings
+        return None
 
     @staticmethod
     def set_setting(setting: str, value: Union[bool, str, float]) -> None:
-        if setting in SETTINGS_DEFAULTS:
-            settings, _, _ = ProgramSettings._get_settings_config()
+        settings = ProgramSettings._get_settings_as_dict()
+        setting_parts = setting.split("/")
+
+        # Handle hierarchical setting paths (e.g., "directory_selection/template_dir")
+        if len(setting_parts) > 1:
+            current = settings
+            # Navigate to the nested dictionary, except for the last part
+            for i, part in enumerate(setting_parts[:-1]):
+                if part not in current or not isinstance(current[part], dict):
+                    logging_error(
+                        _("Cannot set nested setting '%s': parent path '%s' not found or not a dictionary"),
+                        setting,
+                        "/".join(setting_parts[: i + 1]),
+                    )
+                    return
+                current = current[part]
+
+            # Set the value at the final level
+            last_part = setting_parts[-1]
+            if last_part in current:
+                current[last_part] = value
+                ProgramSettings._set_settings_from_dict(settings)
+            else:
+                logging_error(_("Setting path '%s' not found in settings dictionary"), setting)
+        # Handle simple (non-hierarchical) setting
+        elif setting in settings:
             settings[setting] = value
             ProgramSettings._set_settings_from_dict(settings)
+        else:
+            logging_error(_("Setting '%s' not found in settings dictionary"), setting)
 
     # Motor Test Settings
 
@@ -331,6 +352,7 @@ class ProgramSettings:
             str: Error message if multiple or no files found, empty string if no error
 
         """
+        # See https://github.com/ArduPilot/ardupilot_wiki/pull/6215
         # Determine the application directory (where images are stored)
         if getattr(sys, "frozen", False):
             # Running as compiled executable
