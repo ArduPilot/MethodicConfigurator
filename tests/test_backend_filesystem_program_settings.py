@@ -79,7 +79,9 @@ class TestApplicationResourcePaths:
 
             # Assert: Correct filepath is constructed and returned
             mock_file_operations.dirname.assert_called_once()
-            mock_file_operations.abspath.assert_called_once()
+            # abspath might be called multiple times during import, so we check it was called
+            assert mock_file_operations.abspath.called
+            # Verify the correct arguments for join
             mock_join.assert_called_once_with("/mock/app/dir", "images", "ArduPilot_icon.png")
             assert result == "/mock/app/dir/images/ArduPilot_icon.png"
 
@@ -359,13 +361,17 @@ class TestSettingsFileOperations:
         """
         # Arrange: Mock existing settings file with realistic data
         expected_result = sample_program_settings.copy()
-        # Add all missing defaults that would be added by _ensure_default_settings
+        # Add all missing defaults that would be added by _recursive_merge_defaults
         expected_result["annotate_docs_into_param_files"] = False  # Added by default
         expected_result["gui_complexity"] = "simple"  # Added by default
 
+        # Update directory_selection with the defaults that would be merged in
+        expected_result["directory_selection"]["new_base_dir"] = os_path.join(mock_user_config["config_dir"], "vehicles")
+        expected_result["directory_selection"]["vehicle_dir"] = os_path.join(mock_user_config["config_dir"], "vehicles")
+
         with (
             patch.object(ProgramSettings, "_user_config_dir", return_value=mock_user_config["config_dir"]),
-            patch("os.path.join", return_value=mock_user_config["settings_file"]),
+            patch.object(ProgramSettings, "get_templates_base_dir", return_value="/app/templates"),
             patch("builtins.open", mock_open(read_data=json.dumps(sample_program_settings))),
         ):
             # Act: Load settings from file
@@ -470,21 +476,28 @@ class TestSettingsFileOperations:
         WHEN: Default settings are applied
         THEN: All missing keys should be added with appropriate defaults
         """
-        # Arrange: Incomplete settings missing various keys
+        # Arrange: Incomplete settings missing various keys and mock defaults
         incomplete_settings = {"existing_key": "existing_value"}
 
-        # Act: Apply default settings
-        result = ProgramSettings._ensure_default_settings(incomplete_settings)
+        with (
+            patch.object(ProgramSettings, "_user_config_dir", return_value="/mock/config"),
+            patch.object(ProgramSettings, "get_templates_base_dir", return_value="/app/templates"),
+        ):
+            # Get the defaults from the actual method
+            defaults = ProgramSettings._get_settings_defaults()
 
-        # Assert: All defaults added while preserving existing
-        assert result["existing_key"] == "existing_value"  # Preserved
-        assert result["Format version"] == 1  # Added
-        assert "directory_selection" in result  # Added
-        assert "display_usage_popup" in result  # Added
-        assert result["display_usage_popup"]["component_editor"] is True  # Added
-        assert result["display_usage_popup"]["parameter_editor"] is True  # Added
-        assert result["auto_open_doc_in_browser"] is True  # Added
-        assert result["annotate_docs_into_param_files"] is False  # Added
+            # Act: Apply default settings using recursive merge
+            result = ProgramSettings._recursive_merge_defaults(incomplete_settings, defaults)
+
+            # Assert: All defaults added while preserving existing
+            assert result["existing_key"] == "existing_value"  # Preserved
+            assert result["Format version"] == 1  # Added
+            assert "directory_selection" in result  # Added
+            assert "display_usage_popup" in result  # Added
+            assert result["display_usage_popup"]["component_editor"] is True  # Added
+            assert result["display_usage_popup"]["parameter_editor"] is True  # Added
+            assert result["auto_open_doc_in_browser"] is True  # Added
+            assert result["annotate_docs_into_param_files"] is False  # Added
 
     def test_user_can_normalize_path_separators_for_platform(self) -> None:
         """
@@ -561,14 +574,10 @@ class TestUsagePopupSettings:
         """
         # Arrange: Mock current settings and save functionality
         with (
-            patch.object(ProgramSettings, "_get_settings_config") as mock_get_config,
+            patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings,
             patch.object(ProgramSettings, "_set_settings_from_dict") as mock_set_settings,
         ):
-            mock_get_config.return_value = (
-                {"display_usage_popup": {"component_editor": True, "parameter_editor": True}},
-                "pattern",
-                "replacement",
-            )
+            mock_get_settings.return_value = {"display_usage_popup": {"component_editor": True, "parameter_editor": True}}
 
             # Act: Set valid popup preference
             ProgramSettings.set_display_usage_popup("component_editor", value=False)
@@ -587,7 +596,7 @@ class TestUsagePopupSettings:
 
 
 class TestGenericSettingsAccess:
-    """Test general settings reading and writing functionality."""
+    """Test access to general settings in ProgramSettings."""
 
     def test_user_can_read_existing_settings_values(self) -> None:
         """
@@ -604,13 +613,17 @@ class TestGenericSettingsAccess:
                 "Format version": 2,
                 "auto_open_doc_in_browser": False,
                 "motor_test_duration": 3.5,
+                # Add primitive value directly to test line 304
+                "primitive_dict": {},
             }
 
             # Act & Assert: Read various setting types
             assert ProgramSettings.get_setting("Format version") == 2
             assert ProgramSettings.get_setting("auto_open_doc_in_browser") is False
             assert ProgramSettings.get_setting("motor_test_duration") == 3.5
-            assert ProgramSettings.get_setting("nonexistent_setting") is False  # Default
+            assert ProgramSettings.get_setting("nonexistent_setting") is None
+            # Test direct primitive value to cover line 304
+            assert ProgramSettings.get_setting("primitive_dict") is None
 
     def test_user_can_write_setting_values(self) -> None:
         """
@@ -621,13 +634,14 @@ class TestGenericSettingsAccess:
         THEN: The setting should be saved with the new value
         AND: Invalid settings should be ignored for safety
         """
-        # Arrange: Mock settings operations and SETTINGS_DEFAULTS
+        # Arrange: Mock settings operations and defaults
         with (
-            patch.object(ProgramSettings, "_get_settings_config") as mock_get_config,
+            patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings_dict,
             patch.object(ProgramSettings, "_set_settings_from_dict") as mock_set_settings,
-            patch(
-                "ardupilot_methodic_configurator.backend_filesystem_program_settings.SETTINGS_DEFAULTS",
-                {
+            patch.object(
+                ProgramSettings,
+                "_get_settings_defaults",
+                return_value={
                     "Format version": 1,
                     "auto_open_doc_in_browser": True,
                     "annotate_docs_into_param_files": False,
@@ -637,18 +651,14 @@ class TestGenericSettingsAccess:
                 },
             ),
         ):
-            mock_get_config.return_value = (
-                {
-                    "Format version": 1,
-                    "auto_open_doc_in_browser": True,
-                    "annotate_docs_into_param_files": False,
-                    "gui_complexity": "normal",
-                    "motor_test_duration": 2.5,
-                    "motor_test_throttle_pct": 10,
-                },
-                "pattern",
-                "replacement",
-            )
+            mock_get_settings_dict.return_value = {
+                "Format version": 1,
+                "auto_open_doc_in_browser": True,
+                "annotate_docs_into_param_files": False,
+                "gui_complexity": "normal",
+                "motor_test_duration": 2.5,
+                "motor_test_throttle_pct": 10,
+            }
 
             # Act: Set valid setting value
             ProgramSettings.set_setting("gui_complexity", "simple")
@@ -672,6 +682,117 @@ class TestGenericSettingsAccess:
 
             # Assert: Invalid settings are ignored
             mock_set_settings.assert_not_called()
+
+    def test_user_can_write_nested_setting_values(self) -> None:
+        """
+        User can update nested settings using hierarchical paths.
+
+        GIVEN: A system with nested settings
+        WHEN: User sets a value using a path like "directory_selection/template_dir"
+        THEN: The setting should be updated correctly in the nested structure
+        """
+        # Arrange: Mock settings operations and defaults with nested structure
+        with (
+            patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings_dict,
+            patch.object(ProgramSettings, "_set_settings_from_dict") as mock_set_settings,
+        ):
+            mock_get_settings_dict.return_value = {
+                "directory_selection": {
+                    "template_dir": "/original/path",
+                    "new_base_dir": "/base/dir",
+                }
+            }
+
+            # Act: Set nested setting value
+            ProgramSettings.set_setting("directory_selection/template_dir", "/new/path")
+
+            # Assert: Nested setting is updated and saved
+            expected_settings = {
+                "directory_selection": {
+                    "template_dir": "/new/path",
+                    "new_base_dir": "/base/dir",
+                }
+            }
+            mock_set_settings.assert_called_with(expected_settings)
+
+    def test_user_gets_error_when_invalid_nested_path(self) -> None:
+        """
+        User gets error when trying to set a value with invalid nested path.
+
+        GIVEN: A system with settings
+        WHEN: User tries to set a value with a nonexistent parent path
+        THEN: No setting should be updated and an error should be logged
+        """
+        # Arrange: Mock settings operations
+        with (
+            patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings_dict,
+            patch.object(ProgramSettings, "_set_settings_from_dict") as mock_set_settings,
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.logging_error") as mock_logging_error,
+        ):
+            mock_get_settings_dict.return_value = {
+                "directory_selection": {
+                    "template_dir": "/original/path",
+                }
+            }
+
+            # Act: Try to set nested setting with invalid parent path
+            ProgramSettings.set_setting("nonexistent/template_dir", "/new/path")
+
+            # Assert: Setting is not updated and error is logged
+            mock_set_settings.assert_not_called()
+            mock_logging_error.assert_called()
+
+    def test_user_gets_error_when_invalid_nested_key(self) -> None:
+        """
+        User gets error when trying to set a value with valid parent but invalid key.
+
+        GIVEN: A system with nested settings
+        WHEN: User tries to set a value with a nonexistent key in a valid parent
+        THEN: No setting should be updated and an error should be logged
+        """
+        # Arrange: Mock settings operations
+        with (
+            patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings_dict,
+            patch.object(ProgramSettings, "_set_settings_from_dict") as mock_set_settings,
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.logging_error") as mock_logging_error,
+        ):
+            mock_get_settings_dict.return_value = {
+                "directory_selection": {
+                    "template_dir": "/original/path",
+                }
+            }
+
+            # Act: Try to set nonexistent nested setting
+            ProgramSettings.set_setting("directory_selection/nonexistent_key", "/new/path")
+
+            # Assert: Setting is not updated and error is logged
+            mock_set_settings.assert_not_called()
+            mock_logging_error.assert_called()
+
+    def test_user_gets_error_when_parent_not_dict(self) -> None:
+        """
+        User gets error when trying to set a nested path where parent is not a dictionary.
+
+        GIVEN: A system with settings where a primitive value exists
+        WHEN: User tries to treat a primitive value as a dictionary
+        THEN: No setting should be updated and an error should be logged
+        """
+        # Arrange: Mock settings operations
+        with (
+            patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings_dict,
+            patch.object(ProgramSettings, "_set_settings_from_dict") as mock_set_settings,
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.logging_error") as mock_logging_error,
+        ):
+            mock_get_settings_dict.return_value = {
+                "primitive_value": "string",
+            }
+
+            # Act: Try to use primitive value as dictionary
+            ProgramSettings.set_setting("primitive_value/some_key", "value")
+
+            # Assert: Setting is not updated and error is logged
+            mock_set_settings.assert_not_called()
+            mock_logging_error.assert_called()
 
 
 class TestMotorDiagramManagement:
@@ -723,6 +844,30 @@ class TestMotorDiagramManagement:
             assert error_msg != ""
             assert "not found" in error_msg
 
+    def test_user_gets_first_file_when_multiple_diagrams_found(self) -> None:
+        """
+        User gets the first matching file when multiple diagram files exist.
+
+        GIVEN: A system with multiple matching motor diagram files
+        WHEN: User requests motor diagram filepath for a frame with multiple matches
+        THEN: The first matching file should be returned with an error message
+        """
+        # Arrange: Mock file operations with multiple matches
+        multiple_matches = ["/app/images/m_01_01_quad_x_v1.svg", "/app/images/m_01_01_quad_x_v2.svg"]
+
+        with (
+            patch("glob.glob", return_value=multiple_matches),  # Multiple matches
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.logging_error") as mock_logging_error,
+        ):
+            # Act: Get diagram filepath
+            filepath, error_msg = ProgramSettings.motor_diagram_filepath(frame_class=1, frame_type=1)
+
+            # Assert: First match returned with error message
+            assert filepath == multiple_matches[0]
+            assert "Multiple motor diagrams found" in error_msg
+            # Verify that logging_error was called (line 355)
+            mock_logging_error.assert_called_once()
+
     def test_user_gets_empty_string_when_no_diagrams_exist(self) -> None:
         """
         User gets empty string when no motor diagrams exist at all.
@@ -755,12 +900,13 @@ class TestMotorDiagramManagement:
         # Arrange: Mock diagram filepath and existence check
         with patch.object(ProgramSettings, "motor_diagram_filepath") as mock_filepath:
             # Act & Assert: Test when diagram exists
-            mock_filepath.return_value = ("/app/images/m_01_01_quad_x.svg", "")
+            # motor_diagram_filepath still returns a tuple (path, error_msg) as per its implementation
+            mock_filepath.return_value = "/app/images/m_01_01_quad_x.svg", ""
             with patch("os.path.exists", return_value=True):
                 assert ProgramSettings.motor_diagram_exists(1, 1) is True
 
             # Act & Assert: Test when diagram doesn't exist
-            mock_filepath.return_value = ("", "Not found")
+            mock_filepath.return_value = "", "Not found"
             assert ProgramSettings.motor_diagram_exists(99, 99) is False
 
     def test_motor_diagram_filepath_works_in_compiled_executable(self) -> None:
@@ -811,17 +957,9 @@ class TestTemplateDirectoryManagement:
         with (
             patch.object(ProgramSettings, "_user_config_dir", return_value="/user/config"),
             patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings,
-            patch.object(ProgramSettings, "get_templates_base_dir", return_value="/app/templates"),
-            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.join") as mock_join,
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.exists", return_value=False),
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_makedirs") as mock_makedirs,
         ):
-            # Configure path joining
-            mock_join.side_effect = [
-                "/app/templates/ArduCopter/diatone_taycan_mxc/4.5.x-params",  # template_default_dir
-                "/user/config/vehicles",  # vehicles_default_dir
-            ]
-
             # Configure settings response
             mock_get_settings.return_value = {
                 "directory_selection": {
@@ -850,16 +988,12 @@ class TestTemplateDirectoryManagement:
         """
         # Arrange: Mock setting operations
         with (
-            patch.object(ProgramSettings, "_get_settings_config") as mock_get_config,
+            patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings,
             patch.object(ProgramSettings, "_set_settings_from_dict") as mock_set_settings,
             patch.object(ProgramSettings, "get_templates_base_dir", return_value="/app/templates"),
             patch("os.path.join", return_value="/app/templates/Copter/QuadX"),
         ):
-            mock_get_config.return_value = (
-                {"directory_selection": {"template_dir": "/old/template"}},
-                r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)",
-                "/",
-            )
+            mock_get_settings.return_value = {"directory_selection": {"template_dir": "/old/template"}}
 
             # Act: Store new template directory
             ProgramSettings.store_template_dir("Copter/QuadX")
@@ -885,14 +1019,10 @@ class TestTemplateDirectoryManagement:
         """
         # Arrange: Mock setting operations
         with (
-            patch.object(ProgramSettings, "_get_settings_config") as mock_get_config,
+            patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings,
             patch.object(ProgramSettings, "_set_settings_from_dict") as mock_set_settings,
         ):
-            mock_get_config.return_value = (
-                {"directory_selection": {}},
-                r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)",
-                "/" if platform.system() != "Windows" else "\\",
-            )
+            mock_get_settings.return_value = {"directory_selection": {}}
 
             # Act: Store recently used directories
             ProgramSettings.store_recently_used_template_dirs("/template/path", "/base/path")
@@ -913,14 +1043,10 @@ class TestTemplateDirectoryManagement:
         """
         # Arrange: Mock setting operations
         with (
-            patch.object(ProgramSettings, "_get_settings_config") as mock_get_config,
+            patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings,
             patch.object(ProgramSettings, "_set_settings_from_dict") as mock_set_settings,
         ):
-            mock_get_config.return_value = (
-                {"directory_selection": {}},
-                r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)",
-                "/" if platform.system() != "Windows" else "\\",
-            )
+            mock_get_settings.return_value = {"directory_selection": {}}
 
             # Act: Store recently used vehicle directory
             ProgramSettings.store_recently_used_vehicle_dir("/vehicle/path")
@@ -946,11 +1072,11 @@ class TestGUIComplexitySettings:
         # Arrange: Mock setting operations and defaults
         with (
             patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings,
-            patch.object(ProgramSettings, "_get_settings_config") as mock_get_config,
             patch.object(ProgramSettings, "_set_settings_from_dict") as mock_set_settings,
-            patch(
-                "ardupilot_methodic_configurator.backend_filesystem_program_settings.SETTINGS_DEFAULTS",
-                {
+            patch.object(
+                ProgramSettings,
+                "_get_settings_defaults",
+                return_value={
                     "Format version": 1,
                     "auto_open_doc_in_browser": True,
                     "annotate_docs_into_param_files": False,
@@ -968,21 +1094,17 @@ class TestGUIComplexitySettings:
             # Test getting default when setting doesn't exist
             mock_get_settings.return_value = {}
             complexity = ProgramSettings.get_setting("gui_complexity")
-            assert complexity == "normal"  # Default value
+            assert complexity is None  # Returns None for missing settings
 
             # Test setting GUI complexity
-            mock_get_config.return_value = (
-                {
-                    "Format version": 1,
-                    "auto_open_doc_in_browser": True,
-                    "annotate_docs_into_param_files": False,
-                    "gui_complexity": "normal",
-                    "motor_test_duration": 2.5,
-                    "motor_test_throttle_pct": 10,
-                },
-                "pattern",
-                "replacement",
-            )
+            mock_get_settings.return_value = {
+                "Format version": 1,
+                "auto_open_doc_in_browser": True,
+                "annotate_docs_into_param_files": False,
+                "gui_complexity": "normal",
+                "motor_test_duration": 2.5,
+                "motor_test_throttle_pct": 10,
+            }
             ProgramSettings.set_setting("gui_complexity", "simple")
             # pylint: disable=duplicate-code
             expected_settings = {
@@ -999,46 +1121,6 @@ class TestGUIComplexitySettings:
 
 class TestInternalConfigurationMethods:
     """Test internal configuration helper methods for complete coverage."""
-
-    def test_get_settings_config_returns_correct_pattern_for_windows(self) -> None:
-        """
-        Internal settings config method returns Windows-specific patterns.
-
-        GIVEN: A Windows platform environment
-        WHEN: The internal settings config method is called
-        THEN: Windows path separator patterns should be returned
-        """
-        # Arrange: Mock Windows platform
-        with patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system") as mock_platform:
-            mock_platform.return_value = "Windows"
-
-            # Act: Call internal settings config method
-            settings, pattern, replacement = ProgramSettings._get_settings_config()
-
-            # Assert: Windows patterns are configured correctly
-            assert isinstance(settings, dict)
-            assert pattern == r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)"
-            assert replacement == r"\\"
-
-    def test_get_settings_config_returns_correct_pattern_for_linux(self) -> None:
-        """
-        Internal settings config method returns Linux-specific patterns.
-
-        GIVEN: A Linux platform environment
-        WHEN: The internal settings config method is called
-        THEN: Linux path separator patterns should be returned
-        """
-        # Arrange: Mock Linux platform
-        with patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system") as mock_platform:
-            mock_platform.return_value = "Linux"
-
-            # Act: Call internal settings config method
-            settings, pattern, replacement = ProgramSettings._get_settings_config()
-
-            # Assert: Linux patterns are configured correctly
-            assert isinstance(settings, dict)
-            assert pattern == r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)"
-            assert replacement == r"/"
 
     def test_get_templates_base_dir_uses_script_dir_on_linux(self) -> None:
         """
