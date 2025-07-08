@@ -1713,7 +1713,7 @@ class TestMotorTestDataModelSettingsManagement:
 
             # Assert: Correct duration returned
             assert duration == 2.5
-            mock_get.assert_called_once_with("motor_test_duration")
+            mock_get.assert_called_once_with("motor_test/duration")
 
     def test_user_can_get_test_throttle_percentage_from_settings(self, motor_test_model) -> None:
         """
@@ -1730,7 +1730,7 @@ class TestMotorTestDataModelSettingsManagement:
 
             # Assert: Correct throttle returned
             assert throttle == 15
-            mock_get.assert_called_once_with("motor_test_throttle_pct")
+            mock_get.assert_called_once_with("motor_test/throttle_pct")
 
     def test_set_test_duration_handles_exception_gracefully(self, motor_test_model) -> None:
         """
@@ -1752,7 +1752,7 @@ class TestMotorTestDataModelSettingsManagement:
             assert result is False
             mock_log.assert_called_once()
             error_call = mock_log.call_args[0]
-            assert "Failed to save test duration setting" in error_call[0]
+            assert "Failed to save duration setting" in error_call[0]
 
     def test_set_test_throttle_handles_exception_gracefully(self, motor_test_model) -> None:
         """
@@ -1936,7 +1936,7 @@ class TestMotorTestDataModelSettingsPersistence:
 
             # Assert: Setting saved successfully
             assert result is True
-            mock_set.assert_called_once_with("motor_test_duration", duration)
+            mock_set.assert_called_once_with("motor_test/duration", duration)
 
     def test_set_test_throttle_pct_succeeds_with_valid_value(self, motor_test_model) -> None:
         """
@@ -1955,7 +1955,7 @@ class TestMotorTestDataModelSettingsPersistence:
 
             # Assert: Setting saved successfully
             assert result is True
-            mock_set.assert_called_once_with("motor_test_throttle_pct", throttle)
+            mock_set.assert_called_once_with("motor_test/throttle_pct", throttle)
 
 
 class TestSettingsExceptionHandling:

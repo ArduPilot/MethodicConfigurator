@@ -502,7 +502,19 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods
             float: Test duration in seconds
 
         """
-        return float(ProgramSettings.get_setting("motor_test_duration"))
+        try:
+            duration = ProgramSettings.get_setting("motor_test/duration")
+            if duration is None:
+                raise ReferenceError(_("Motor test duration setting not found"))
+            duration = float(duration)
+            if duration < 0.1:
+                raise ValueError(_("Motor test duration must be at least 0.1 seconds"))
+            if duration > 10.0:
+                raise ValueError(_("Motor test duration must not exceed 10 seconds"))
+            return duration
+        except (ReferenceError, ValueError) as exc:
+            logging_error(_("Invalid motor test duration setting: %(error)s"), {"error": str(exc)})
+            raise exc
 
     def set_test_duration(self, duration: float) -> bool:
         """
@@ -516,11 +528,17 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods
 
         """
         try:
-            if 0.1 <= duration <= 10.0:  # Reasonable safety limits
-                ProgramSettings.set_setting("motor_test_duration", duration)
+            if duration < 0.1:
+                raise ValueError(_("Motor test duration must be at least 0.1 seconds"))
+            if duration > 10.0:
+                raise ValueError(_("Motor test duration must not exceed 10 seconds"))
+            ProgramSettings.set_setting("motor_test/duration", duration)
             return True
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            logging_error(_("Failed to save test duration setting: %(error)s"), {"error": str(e)})
+        except ValueError as exc:
+            logging_error(_("Invalid motor test duration setting: %(error)s"), {"error": str(exc)})
+            return False
+        except Exception as exc:
+            logging_error(_("Failed to save duration setting: %(error)s"), {"error": str(exc)})
             return False
 
     def get_test_throttle_pct(self) -> int:
@@ -531,25 +549,43 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods
             int: Throttle percentage (1-100)
 
         """
-        return int(ProgramSettings.get_setting("motor_test_throttle_pct"))
+        try:
+            throttle_pct = ProgramSettings.get_setting("motor_test/throttle_pct")
+            if throttle_pct is None:
+                raise ReferenceError(_("Motor test throttle percentage setting not found"))
+            throttle_pct = int(throttle_pct)
+            if throttle_pct < 1:
+                raise ValueError(_("Motor test throttle percentage must be at least 1"))
+            if throttle_pct > 100:
+                raise ValueError(_("Motor test throttle percentage must not exceed 100"))
+            return throttle_pct
+        except (ReferenceError, ValueError) as exc:
+            logging_error(_("Invalid motor test throttle percentage setting: %(error)s"), {"error": str(exc)})
+            raise exc
 
-    def set_test_throttle_pct(self, throttle: int) -> bool:
+    def set_test_throttle_pct(self, throttle_pct: int) -> bool:
         """
         Set the motor test throttle percentage setting.
 
         Args:
-            throttle: Throttle percentage (1-100)
+            throttle_pct: Throttle percentage (1-100)
 
         Returns:
             bool: True if setting was saved successfully
 
         """
         try:
-            if 1 <= throttle <= 100:  # Valid throttle range
-                ProgramSettings.set_setting("motor_test_throttle_pct", throttle)
+            if throttle_pct < 1:
+                raise ValueError(_("Motor test throttle percentage must be at least 1"))
+            if throttle_pct > 100:
+                raise ValueError(_("Motor test throttle percentage must not exceed 100"))
+            ProgramSettings.set_setting("motor_test/throttle_pct", throttle_pct)
             return True
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            logging_error(_("Failed to save throttle percentage setting: %(error)s"), {"error": str(e)})
+        except ValueError as exc:
+            logging_error(_("Invalid motor test throttle percentage setting: %(error)s"), {"error": str(exc)})
+            return False
+        except Exception as exc:
+            logging_error(_("Failed to save throttle percentage setting: %(error)s"), {"error": str(exc)})
             return False
 
     def update_frame_configuration(self, frame_class: int, frame_type: int) -> tuple[bool, str]:
