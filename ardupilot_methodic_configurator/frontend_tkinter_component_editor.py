@@ -188,6 +188,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             cb.bind("<FocusOut>", lambda event, path=path: self._validate_combobox(event, path))  # type: ignore[misc]
             cb.bind("<KeyRelease>", lambda event, path=path: self._validate_combobox(event, path))  # type: ignore[misc]
             cb.bind("<Return>", lambda event, path=path: self._validate_combobox(event, path))  # type: ignore[misc]
+            cb.bind("<ButtonRelease>", lambda event, path=path: self._validate_combobox(event, path))  # type: ignore[misc]
 
             # Prevent mouse wheel from changing value when dropdown is not open
             def handle_mousewheel(_event: tk.Event, widget: tk.Widget = cb) -> Optional[str]:
@@ -257,15 +258,27 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         value = combobox.get()  # Get the current value of the combobox
         allowed_values = combobox.cget("values")  # Get the list of allowed values
 
+        # Events that should trigger data model update (when value is valid)
+        should_update_data_model = event.type in {
+            tk.EventType.FocusOut,
+            tk.EventType.KeyPress,  # Return key
+            tk.EventType.KeyRelease,  # Key release events
+            tk.EventType.ButtonRelease,  # Mouse click on dropdown item
+        }
+
+        if should_update_data_model and value in allowed_values:
+            self.data_model.set_component_value(path, value)
+
         if value not in allowed_values:
-            if (
-                (event.type == "10" and getattr(combobox, "dropdown_is_open", False))  # FocusOut events
-                or event.type == "2"  # Return KeyPress event
+            if (  # this is complicated because we only want to issue error messages in particular cases
+                (event.type == tk.EventType.FocusOut and getattr(combobox, "dropdown_is_open", False))  # FocusOut events
+                or event.type == tk.EventType.KeyPress  # KeyPress event (Return key)
             ):
                 paths_str = ">".join(list(path))
                 allowed_str = ", ".join(allowed_values)
                 error_msg = _("Invalid value '{value}' for {paths_str}\nAllowed values are: {allowed_str}")
                 show_error_message(_("Error"), error_msg.format(value=value, paths_str=paths_str, allowed_str=allowed_str))
+
             combobox.configure(style="comb_input_invalid.TCombobox")
             return False
 

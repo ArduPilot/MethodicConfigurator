@@ -222,6 +222,9 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         for widget in self.scroll_frame.view_port.winfo_children():
             widget.destroy()
 
+        # Clear the entry_widgets dictionary since all widgets have been destroyed
+        self.entry_widgets.clear()
+
         # Repopulate the frame with widgets according to the new complexity setting
         self.populate_frames()
 

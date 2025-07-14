@@ -577,7 +577,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         editor_with_mocked_root.data_model.get_combobox_values_for_path = MagicMock(return_value=("PWM", "SBUS"))
         editor_with_mocked_root.data_model.validate_entry_limits = MagicMock(return_value=("Value too high", None))
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.show_error_message") as mock_error:
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.show_error_message") as mock_error:
             result = editor_with_mocked_root.validate_data_and_highlight_errors_in_red()
 
             # Should configure widgets with invalid styles
@@ -607,7 +607,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         editor_with_mocked_root.data_model.validate_all_data = MagicMock(return_value=(False, ["Some error"]))
         editor_with_mocked_root.data_model.get_combobox_values_for_path = MagicMock(return_value=("PWM", "SBUS"))
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.show_error_message"):
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.show_error_message"):
             editor_with_mocked_root.validate_data_and_highlight_errors_in_red()
 
             # Should configure combobox as valid since value is in allowed values
