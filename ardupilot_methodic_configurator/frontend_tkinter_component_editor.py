@@ -23,7 +23,7 @@ from typing import Callable, Optional, Union
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.data_model_vehicle_components_base import ComponentPath, ValidationRulePath
+from ardupilot_methodic_configurator.data_model_vehicle_components_base import ComponentPath
 from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (
     BATTERY_CELL_VOLTAGE_PATHS,
     FC_CONNECTION_TYPE_PATHS,
@@ -108,17 +108,17 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         # Delegate to the data model for parameter processing
         self.data_model.process_fc_parameters(fc_parameters, doc)
 
-    def update_component_protocol_combobox_entries(self, component_path: ValidationRulePath, connection_type: str) -> str:
+    def update_component_protocol_combobox_entries(self, component_path: ComponentPath, connection_type: str) -> str:
         """Updates the Protocol combobox entries based on the selected component connection Type."""
         self.data_model.set_component_value(component_path, connection_type)
 
         # when the connection Type changes, we need to update the Protocol combobox entries
-        protocol_path: ValidationRulePath = (component_path[0], component_path[1], "Protocol")
+        protocol_path: ComponentPath = (component_path[0], component_path[1], "Protocol")
         return self.update_protocol_combobox_entries(
             self.data_model.get_combobox_values_for_path(protocol_path), protocol_path
         )
 
-    def update_protocol_combobox_entries(self, protocols: tuple[str, ...], protocol_path: ValidationRulePath) -> str:
+    def update_protocol_combobox_entries(self, protocols: tuple[str, ...], protocol_path: ComponentPath) -> str:
         err_msg = ""
         if protocol_path in self.entry_widgets:
             protocol_combobox = self.entry_widgets[protocol_path]
@@ -138,7 +138,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
         return err_msg
 
-    def update_cell_voltage_limits_entries(self, component_path: ValidationRulePath, chemistry: str) -> str:
+    def update_cell_voltage_limits_entries(self, component_path: ComponentPath, chemistry: str) -> str:
         """
         Updates the cell voltage limits entries based on the selected battery chemistry.
 
@@ -175,7 +175,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         return err_msg
 
     def add_entry_or_combobox(
-        self, value: Union[str, float], entry_frame: ttk.Frame, path: ValidationRulePath, is_optional: bool = False
+        self, value: Union[str, float], entry_frame: ttk.Frame, path: ComponentPath, is_optional: bool = False
     ) -> Union[ttk.Entry, ttk.Combobox]:
         # Get combobox values from data model
         combobox_values = self.data_model.get_combobox_values_for_path(path)
@@ -243,7 +243,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         entry.insert(0, str(value))
         return entry
 
-    def get_validate_function(self, entry: ttk.Entry, path: ValidationRulePath) -> Union[Callable[[tk.Event], object], None]:
+    def get_validate_function(self, entry: ttk.Entry, path: ComponentPath) -> Union[Callable[[tk.Event], object], None]:
         def validate_limits(event: tk.Event) -> bool:
             return self.validate_entry_limits_ui(event, entry, path)
 
@@ -272,9 +272,12 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         combobox.configure(style="comb_input_valid.TCombobox")
         return True
 
-    def validate_entry_limits_ui(self, event: Union[None, tk.Event], entry: ttk.Entry, path: ValidationRulePath) -> bool:
+    def validate_entry_limits_ui(self, event: Union[None, tk.Event], entry: ttk.Entry, path: ComponentPath) -> bool:
         """UI wrapper for entry limits validation."""
-        is_focusout_event = event and event.type in {"10", "2"}  # FocusOut (10) or Return KeyPress (2) events
+        is_focusout_event = event and event.type in {
+            tk.EventType.FocusOut,
+            tk.EventType.KeyPress,  # Return key generates KeyPress event
+        }
         value = entry.get()
 
         error_msg, corrected_value = self.data_model.validate_entry_limits(value, path)

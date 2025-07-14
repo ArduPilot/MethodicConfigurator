@@ -22,7 +22,6 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema i
 ComponentPath = tuple[str, ...]
 ComponentData = dict[str, Any]
 ComponentValue = Union[str, int, float]
-ValidationRulePath = tuple[str, str, str]  # Exactly 3 elements for validation rules
 
 
 class ComponentDataModelBase:
@@ -37,7 +36,7 @@ class ComponentDataModelBase:
     ) -> None:
         self._data: ComponentData = initial_data if initial_data else {"Components": {}, "Format version": 1}
         self._battery_chemistry: str = ""
-        self._possible_choices: dict[ValidationRulePath, tuple[str, ...]] = {}
+        self._possible_choices: dict[ComponentPath, tuple[str, ...]] = {}
         self._mot_pwm_types: tuple[str, ...] = ()
         self._component_datatypes: dict[str, Any] = component_datatypes
         self.schema: VehicleComponentsJsonSchema = schema
@@ -279,6 +278,6 @@ class ComponentDataModelBase:
         """Initialize possible choices for validation rules."""
         # this method should be implemented in the ComponentDataModelValidation mixedin
 
-    def get_combobox_values_for_path(self, path: ValidationRulePath) -> tuple[str, ...]:
+    def get_combobox_values_for_path(self, path: ComponentPath) -> tuple[str, ...]:
         """Get valid combobox values for a given path."""
         return self._possible_choices.get(path, ())
