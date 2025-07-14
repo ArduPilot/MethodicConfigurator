@@ -59,6 +59,11 @@ class DocumentationFrame:
         documentation_grid.pack(fill="both", expand=True)
 
         for row, (text, tooltip) in enumerate(self.DOCUMENTATION_SECTIONS):
+            if row == 3 and ProgramSettings.get_setting("gui_complexity") == "simple":
+                # Skip the mandatory level row in simple mode
+                self.mandatory_level = ttk.Progressbar(documentation_grid, length=100, mode="determinate")
+                continue
+
             # Create labels for the first column with static descriptive text
             label = ttk.Label(documentation_grid, text=text)
             label.grid(row=row, column=0, sticky="w")
@@ -78,14 +83,11 @@ class DocumentationFrame:
         self.update_why_why_now_tooltip(current_file)
 
     def _create_bottom_row(self, documentation_grid: ttk.Frame, row: int) -> None:
-        gui_complexity = ProgramSettings.get_setting("gui_complexity")
-
         bottom_frame = ttk.Frame(documentation_grid)
         bottom_frame.grid(row=row, column=1, sticky="ew")  # ew to stretch horizontally
 
         self.mandatory_level = ttk.Progressbar(bottom_frame, length=100, mode="determinate")
-        if gui_complexity != "simple":
-            self.mandatory_level.pack(side=tk.LEFT, fill="x", expand=True, padx=(0, 100))
+        self.mandatory_level.pack(side=tk.LEFT, fill="x", expand=True, padx=(0, 100))
 
         auto_open_checkbox = ttk.Checkbutton(
             bottom_frame,
@@ -93,15 +95,14 @@ class DocumentationFrame:
             variable=self.auto_open_var,
             command=lambda: ProgramSettings.set_setting("auto_open_doc_in_browser", self.auto_open_var.get()),
         )
-        if gui_complexity != "simple":
-            show_tooltip(
-                auto_open_checkbox,
-                _(
-                    "Automatically open all the above documentation links in a browser\n"
-                    "whenever the current intermediate parameter file changes"
-                ),
-            )
-            auto_open_checkbox.pack(side=tk.LEFT, expand=False)
+        show_tooltip(
+            auto_open_checkbox,
+            _(
+                "Automatically open all the above documentation links in a browser\n"
+                "whenever the current intermediate parameter file changes"
+            ),
+        )
+        auto_open_checkbox.pack(side=tk.LEFT, expand=False)
 
     def update_why_why_now_tooltip(self, current_file: str) -> None:
         why_tooltip_text = self.local_filesystem.get_seq_tooltip_text(current_file, "why")
