@@ -30,7 +30,7 @@ class TestStageProgressBar(unittest.TestCase):
             "Milestone": {"description": "A milestone without start"},
         }
         self.total_steps = 30
-        self.progress_bar = StageProgressBar(self.root, self.test_phases, self.total_steps)
+        self.progress_bar = StageProgressBar(self.root, self.test_phases, self.total_steps, gui_complexity="normal")
 
     def tearDown(self) -> None:
         """Clean up after tests."""
@@ -137,7 +137,7 @@ class TestStageProgressBar(unittest.TestCase):
             "Very Long Phase Name Example": {"start": 5},  # Long with spaces
         }
 
-        test_progress = StageProgressBar(self.root, test_texts, 10)
+        test_progress = StageProgressBar(self.root, test_texts, 10, "normal")
 
         for phase_name, frame in test_progress.phase_frames.items():
             label = None
