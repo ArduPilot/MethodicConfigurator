@@ -451,15 +451,44 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         return self.data_model.extract_component_data_from_entries(component_name, entry_values)
 
     def validate_data_and_highlight_errors_in_red(self) -> str:
-        """
-        Validate the data in the entry widgets.
+        """Validate all data using the data model."""
+        # Collect all entry values
+        entry_values = {
+            path: entry.get() for path, entry in self.entry_widgets.items() if isinstance(entry, (ttk.Entry, ttk.Combobox))
+        }
 
-        This is an abstract method that must be implemented in subclasses.
+        # Use data model for validation
+        is_valid, errors = self.data_model.validate_all_data(entry_values)
 
-        This method checks if all required fields are filled and if the values
-        conform to the expected data types.
+        if not is_valid:
+            # Update UI to show invalid states and display errors
+            for path, entry in (
+                (path, entry) for path, entry in self.entry_widgets.items() if isinstance(entry, (ttk.Entry, ttk.Combobox))
+            ):
+                value = entry.get()
 
-        """
+                # Check combobox validation
+                if isinstance(entry, ttk.Combobox):
+                    combobox_values = self.data_model.get_combobox_values_for_path(path)
+                    if combobox_values and value not in combobox_values:
+                        entry.configure(style="comb_input_invalid.TCombobox")
+                    else:
+                        entry.configure(style="comb_input_valid.TCombobox")
+                else:
+                    # Check entry validation
+                    error_message, _corr = self.data_model.validate_entry_limits(value, path)
+                    if error_message:
+                        entry.configure(style="entry_input_invalid.TEntry")
+                    else:
+                        entry.configure(style="entry_input_valid.TEntry")
+
+            # Show first few errors
+            error_message = "\n".join(errors[:3])  # Show first 3 errors
+            if len(errors) > 3:
+                error_message += f"\n... and {len(errors) - 3} more errors"
+            show_error_message(_("Validation Errors"), error_message)
+            return _("Validation failed. Please correct the errors before saving.")
+
         return ""
 
     def validate_and_save_component_json(self) -> None:
