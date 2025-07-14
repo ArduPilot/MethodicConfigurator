@@ -973,7 +973,9 @@ class TestTemplateDirectoryManagement:
             template_dir, new_base_dir, vehicle_dir = ProgramSettings.get_recently_used_dirs()
 
             # Assert: Directory was created and paths returned correctly
-            mock_makedirs.assert_called_once_with("/user/config/vehicles", exist_ok=True)
+            # Use os_path.join to create platform-appropriate path for assertion
+            expected_path = os_path.join("/user/config", "vehicles")
+            mock_makedirs.assert_called_once_with(expected_path, exist_ok=True)
             assert template_dir == "/saved/template"
             assert new_base_dir == "/saved/base"
             assert vehicle_dir == "/saved/vehicle"
