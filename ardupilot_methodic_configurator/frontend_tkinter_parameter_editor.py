@@ -150,7 +150,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.tempcal_imu_progress_window: ProgressWindow
         self.file_upload_progress_window: ProgressWindow
         self.last_time_asked_to_save: float = 0
-        self.gui_complexity = ProgramSettings.get_setting("gui_complexity")
+        self.gui_complexity = str(ProgramSettings.get_setting("gui_complexity"))
 
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
@@ -177,10 +177,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             last_step_nr = int(last_step_filename[:2]) + 1 if len(last_step_filename) >= 2 else 1
 
             self.stage_progress_bar = StageProgressBar(
-                self.main_frame, self.local_filesystem.configuration_phases, last_step_nr
+                self.main_frame, self.local_filesystem.configuration_phases, last_step_nr, self.gui_complexity
             )
-            if self.gui_complexity != "simple":
-                self.stage_progress_bar.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
+            self.stage_progress_bar.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
 
         # Create a DocumentationFrame object for the Documentation Content
         self.documentation_frame = DocumentationFrame(self.main_frame, self.local_filesystem, self.current_file)
@@ -558,7 +557,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def __should_jump_to_file(self, selected_file: str) -> str:
         jump_possible = self.local_filesystem.jump_possible(selected_file)
         for dest_file, msg in jump_possible.items():
-            if messagebox.askyesno(_("Skip some steps?"), _(msg) if msg else _("Skip to {dest_file}?").format(**locals())):
+            if self.gui_complexity == "simple" or messagebox.askyesno(
+                _("Skip some steps?"), _(msg) if msg else _("Skip to {dest_file}?").format(**locals())
+            ):
                 self.file_selection_combobox.set(dest_file)
                 return dest_file
         return selected_file
@@ -821,6 +822,23 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return
         try:
             next_file_index = files.index(self.current_file) + 1
+            # Skip files with mandatory_level == 0
+            while next_file_index < len(files):
+                next_file = files[next_file_index]
+                mandatory_text, _mandatory_url = self.local_filesystem.get_documentation_text_and_url(next_file, "mandatory")
+                # Extract percentage from mandatory_text like "80% mandatory (20% optional)"
+                percentage = 0
+                if mandatory_text:
+                    try:
+                        percentage = int(mandatory_text.split("%")[0])
+                    except (ValueError, IndexError):
+                        percentage = 0
+
+                # If the file has mandatory_level > 0, use it
+                if percentage > 0:
+                    break
+
+                next_file_index += 1
             if next_file_index >= len(files):
                 self.write_summary_files()
                 # Close the application and the connection

@@ -53,7 +53,9 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
     """Stage-segmented Configuration sequence progress UI."""
 
-    def __init__(self, master: Union[tk.Widget, tk.Tk], phases: dict[str, dict], total_steps: int, **kwargs) -> None:
+    def __init__(
+        self, master: Union[tk.Widget, tk.Tk], phases: dict[str, dict], total_steps: int, gui_complexity: str, **kwargs
+    ) -> None:
         super().__init__(master, text=_("Configuration sequence progress"), **kwargs)
         self.phases = phases
         self.total_files = total_steps
@@ -63,7 +65,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.create_phase_frames()
+        self.create_phase_frames(gui_complexity)
         self.bind("<Configure>", self._on_resize)
         show_tooltip(
             self,
@@ -74,7 +76,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
             position_below=False,
         )
 
-    def create_phase_frames(self) -> None:
+    def create_phase_frames(self, gui_complexity: str) -> None:
         """Create frames for each phase with progress bars and labels."""
         # Get phases with start positions
         active_phases = {k: v for k, v in self.phases.items() if "start" in v}
@@ -82,19 +84,32 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
         # Sort phases by start position
         sorted_phases = dict(sorted(active_phases.items(), key=lambda x: x[1]["start"]))
 
-        num_phases = len(sorted_phases)
+        # Add the end information to each phase using the start of the next phase
+        phase_names = list(sorted_phases.keys())
+        for i, phase_name in enumerate(phase_names):
+            if i < len(phase_names) - 1:
+                next_phase_name = phase_names[i + 1]
+                sorted_phases[phase_name]["end"] = sorted_phases[next_phase_name]["start"]
+            else:
+                sorted_phases[phase_name]["end"] = self.total_files
+            sorted_phases[phase_name]["weight"] = max(2, sorted_phases[phase_name]["end"] - sorted_phases[phase_name]["start"])
+
+        # Calculate non-optional phases
+        non_optional_sorted_phases = {name: data for name, data in sorted_phases.items() if not data.get("optional", False)}
+
+        phases_to_display = non_optional_sorted_phases if gui_complexity == "simple" else sorted_phases
 
         # Create container frame that will expand
         container = ttk.Frame(self)
         container.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
         # Configure container columns to expand equally
-        for i in range(num_phases):
-            container.grid_columnconfigure(i, weight=1, uniform="phase")
-
-        for i, (phase_name, phase_data) in enumerate(sorted_phases.items()):
+        for i, (phase_name, phase_data) in enumerate(phases_to_display.items()):
+            container.grid_columnconfigure(
+                i, weight=phase_data["weight"] if gui_complexity == "simple" else 1, uniform="phase"
+            )
             start = phase_data["start"]
-            end = list(sorted_phases.values())[i + 1]["start"] if i < num_phases - 1 else self.total_files
+            end = phase_data["end"]
             self.phase_frames[phase_name] = self._create_phase_frame(container, i, phase_name, phase_data, (start, end))
 
     def _create_phase_frame(  # pylint: disable=too-many-arguments, too-many-positional-arguments
@@ -229,7 +244,7 @@ def main() -> None:
     config_steps = ConfigurationSteps("", "ArduCopter")
     config_steps.re_init("", "ArduCopter")
 
-    progress = StageProgressBar(root, config_steps.configuration_phases, 54)
+    progress = StageProgressBar(root, config_steps.configuration_phases, 54, "normal")
     progress.pack(padx=10, pady=10, fill="both", expand=True)
 
     # Demo update function
