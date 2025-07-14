@@ -676,8 +676,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         start_file_index = last_uploaded_index + 1
         if start_file_index >= len(files):
             # Handle the case where last_uploaded_filename is the last file in the list
-            logging_warning(_("Last uploaded file is the last file in the list. Starting from there."))
-            start_file_index = len(files) - 1
+            logging_warning(_("Last uploaded file is the last file in the list. Starting from the beginning."))
+            return start_file
         return files[start_file_index]
 
     def backup_fc_parameters_to_file(
