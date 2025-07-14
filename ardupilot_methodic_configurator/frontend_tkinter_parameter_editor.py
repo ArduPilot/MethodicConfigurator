@@ -351,7 +351,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             command=self.on_upload_selected_click,
         )
         upload_selected_button.configure(state="normal" if self.flight_controller.master else "disabled")
-        upload_selected_button.pack(side=tk.LEFT, padx=(8, 8))  # Add padding on both sides of the upload selected button
+        if self.gui_complexity != "simple" or self.flight_controller.master:
+            upload_selected_button.pack(side=tk.LEFT, padx=(8, 8))  # Add padding on both sides of the upload selected button
         show_tooltip(
             upload_selected_button,
             _(
@@ -365,7 +366,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # Create skip button
         skip_button = ttk.Button(buttons_frame, text=_("Skip parameter file"), command=self.on_skip_click)
-        skip_button.pack(side=tk.RIGHT, padx=(8, 8))  # Add right padding to the skip button
+        if self.gui_complexity != "simple" or not self.flight_controller.master:
+            skip_button.pack(side=tk.RIGHT, padx=(8, 8))  # Add right padding to the skip button
         show_tooltip(
             skip_button,
             _(
