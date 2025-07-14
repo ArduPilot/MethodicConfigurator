@@ -45,14 +45,13 @@ class DocumentationFrame:
     def __init__(self, root: tk.Widget, local_filesystem: LocalFilesystem, current_file: str) -> None:
         self.root = root
         self.local_filesystem = local_filesystem
-        self.current_file = current_file
         self.documentation_frame: ttk.LabelFrame
         self.documentation_labels: dict[str, ttk.Label] = {}
         self.mandatory_level: ttk.Progressbar
         self.auto_open_var = tk.BooleanVar(value=bool(ProgramSettings.get_setting("auto_open_doc_in_browser")))
-        self._create_documentation_frame()
+        self._create_documentation_frame(current_file)
 
-    def _create_documentation_frame(self) -> None:
+    def _create_documentation_frame(self, current_file: str) -> None:
         self.documentation_frame = ttk.LabelFrame(self.root, text=_("Documentation"))
 
         # Create a grid structure within the documentation_frame
@@ -75,15 +74,18 @@ class DocumentationFrame:
         documentation_grid.columnconfigure(1, weight=1)
 
         # Dynamically update the documentation text and URL links
-        self.refresh_documentation_labels(self.current_file)
-        self.update_why_why_now_tooltip(self.current_file)
+        self.refresh_documentation_labels(current_file)
+        self.update_why_why_now_tooltip(current_file)
 
     def _create_bottom_row(self, documentation_grid: ttk.Frame, row: int) -> None:
+        gui_complexity = ProgramSettings.get_setting("gui_complexity")
+
         bottom_frame = ttk.Frame(documentation_grid)
         bottom_frame.grid(row=row, column=1, sticky="ew")  # ew to stretch horizontally
 
         self.mandatory_level = ttk.Progressbar(bottom_frame, length=100, mode="determinate")
-        self.mandatory_level.pack(side=tk.LEFT, fill="x", expand=True, padx=(0, 100))
+        if gui_complexity != "simple":
+            self.mandatory_level.pack(side=tk.LEFT, fill="x", expand=True, padx=(0, 100))
 
         auto_open_checkbox = ttk.Checkbutton(
             bottom_frame,
@@ -91,7 +93,7 @@ class DocumentationFrame:
             variable=self.auto_open_var,
             command=lambda: ProgramSettings.set_setting("auto_open_doc_in_browser", self.auto_open_var.get()),
         )
-        if ProgramSettings.get_setting("gui_complexity") != "simple":
+        if gui_complexity != "simple":
             show_tooltip(
                 auto_open_checkbox,
                 _(
@@ -112,8 +114,22 @@ class DocumentationFrame:
         if tooltip_text:
             show_tooltip(self.documentation_frame, tooltip_text, position_below=False)
 
+    def open_documentation_in_browser(self, current_file: str) -> None:
+        _blog_text, blog_url = self.local_filesystem.get_documentation_text_and_url(current_file, "blog")
+        _wiki_text, wiki_url = self.local_filesystem.get_documentation_text_and_url(current_file, "wiki")
+        _external_tool_text, external_tool_url = self.local_filesystem.get_documentation_text_and_url(
+            current_file, "external_tool"
+        )
+
+        if self.auto_open_var.get() or ProgramSettings.get_setting("gui_complexity") == "simple":
+            if wiki_url:
+                webbrowser_open(url=wiki_url, new=0, autoraise=False)
+            if external_tool_url:
+                webbrowser_open(url=external_tool_url, new=0, autoraise=False)
+            if blog_url:
+                webbrowser_open(url=blog_url, new=0, autoraise=True)
+
     def refresh_documentation_labels(self, current_file: str) -> None:
-        self.current_file = current_file
         if current_file:
             title = _("{current_file} Documentation")
             frame_title = title.format(**locals())
@@ -133,14 +149,6 @@ class DocumentationFrame:
         )
         mandatory_text, _mandatory_url = self.local_filesystem.get_documentation_text_and_url(current_file, "mandatory")
         self._refresh_mandatory_level(current_file, mandatory_text)
-
-        if self.auto_open_var.get() or ProgramSettings.get_setting("gui_complexity") == "simple":
-            if wiki_url:
-                webbrowser_open(url=wiki_url, new=0, autoraise=False)
-            if external_tool_url:
-                webbrowser_open(url=external_tool_url, new=0, autoraise=False)
-            if blog_url:
-                webbrowser_open(url=blog_url, new=0, autoraise=True)
 
     def _refresh_documentation_label(self, label_key: str, text: str, url: str, url_expected: bool = True) -> None:
         label = self.documentation_labels[label_key]

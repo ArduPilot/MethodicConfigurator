@@ -607,6 +607,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if self.current_file != selected_file or forced:
             self.write_changes_to_intermediate_parameter_file()
             self.__do_tempcal_imu(selected_file)
+            # open the documentation of the next step in the browser,
+            # before giving the user the option to close the SW in the __should_copy_fc_values_to_file method
+            self.documentation_frame.open_documentation_in_browser(selected_file)
             self.__should_copy_fc_values_to_file(selected_file)
             selected_file = self.__should_jump_to_file(selected_file)
             self.__should_download_file_from_url(selected_file)
