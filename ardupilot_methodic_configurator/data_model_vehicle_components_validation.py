@@ -23,7 +23,6 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_base import (
     ComponentDataModelBase,
     ComponentPath,
     ComponentValue,
-    ValidationRulePath,
 )
 
 # Port definitions
@@ -38,7 +37,7 @@ SPI_PORTS = ["SPI"]
 OTHER_PORTS = ["other"]
 
 # Map paths to component names for unified protocol update
-FC_CONNECTION_TYPE_PATHS: list[ValidationRulePath] = [
+FC_CONNECTION_TYPE_PATHS: list[ComponentPath] = [
     ("RC Receiver", "FC Connection", "Type"),
     ("Telemetry", "FC Connection", "Type"),
     ("Battery Monitor", "FC Connection", "Type"),
@@ -46,7 +45,7 @@ FC_CONNECTION_TYPE_PATHS: list[ValidationRulePath] = [
     ("GNSS Receiver", "FC Connection", "Type"),
 ]
 
-BATTERY_CELL_VOLTAGE_PATHS: list[ValidationRulePath] = [
+BATTERY_CELL_VOLTAGE_PATHS: list[ComponentPath] = [
     ("Battery", "Specifications", "Volt per cell max"),
     ("Battery", "Specifications", "Volt per cell low"),
     ("Battery", "Specifications", "Volt per cell crit"),
@@ -199,7 +198,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
     """
 
     # Class attribute for validation rules - use immutable mapping
-    VALIDATION_RULES: MappingProxyType[ValidationRulePath, tuple[type, tuple[float, float], str]] = MappingProxyType(
+    VALIDATION_RULES: MappingProxyType[ComponentPath, tuple[type, tuple[float, float], str]] = MappingProxyType(
         {
             ("Frame", "Specifications", "TOW min Kg"): (float, (0.01, 600), "Takeoff Weight"),
             ("Frame", "Specifications", "TOW max Kg"): (float, (0.01, 600), "Takeoff Weight"),
@@ -314,7 +313,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
         # Only update if this is a connection type change that affects protocol choices
         if len(path) >= 3 and path[1] == "FC Connection" and path[2] == "Type" and isinstance(value, str):
             component_name = path[0]
-            protocol_path: ValidationRulePath = (component_name, "FC Connection", "Protocol")
+            protocol_path: ComponentPath = (component_name, "FC Connection", "Protocol")
 
             # Calculate the new possible choices for the corresponding protocol field
             if component_name == "RC Receiver":
@@ -390,7 +389,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                     tuple(gnss_available_protocols) if gnss_available_protocols else ("None",)
                 )
 
-    def validate_entry_limits(self, value: str, path: ValidationRulePath) -> tuple[str, Optional[float]]:  # noqa: PLR0911 # pylint: disable=too-many-return-statements
+    def validate_entry_limits(self, value: str, path: ComponentPath) -> tuple[str, Optional[float]]:  # noqa: PLR0911 # pylint: disable=too-many-return-statements
         """
         Validate entry values against limits.
 
@@ -430,7 +429,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
 
         return "", None  # value is within valid interval, return empty string as there is no error
 
-    def validate_cell_voltage(self, value: str, path: ValidationRulePath) -> tuple[str, Optional[float]]:  # noqa: PLR0911 # pylint: disable=too-many-return-statements
+    def validate_cell_voltage(self, value: str, path: ComponentPath) -> tuple[str, Optional[float]]:  # noqa: PLR0911 # pylint: disable=too-many-return-statements
         """
         Validate battery cell voltage.
 
@@ -472,7 +471,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
 
         return "", None
 
-    def recommended_cell_voltage(self, path: ValidationRulePath) -> float:
+    def recommended_cell_voltage(self, path: ComponentPath) -> float:
         """Get recommended cell voltage based on the path."""
         if path[-1] == "Volt per cell max":
             return BatteryCell.recommended_max_voltage(self._battery_chemistry)
@@ -510,7 +509,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ), corrected
         return "", None  # value is within valid interval, return empty string as there is no error
 
-    def validate_all_data(self, entry_values: dict[ValidationRulePath, str]) -> tuple[bool, list[str]]:
+    def validate_all_data(self, entry_values: dict[ComponentPath, str]) -> tuple[bool, list[str]]:
         """
         Centralize all data validation logic.
 

@@ -27,12 +27,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_vehicle_components import ComponentDataModel
-from ardupilot_methodic_configurator.data_model_vehicle_components_base import (
-    ComponentData,
-    ComponentPath,
-    ComponentValue,
-    ValidationRulePath,
-)
+from ardupilot_methodic_configurator.data_model_vehicle_components_base import ComponentData, ComponentPath, ComponentValue
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_component_template_manager import ComponentTemplateManager
@@ -546,7 +541,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         self,
         value: Union[str, float],
         entry_frame: ttk.Frame,
-        _path: ValidationRulePath,
+        _path: ComponentPath,
         is_optional: bool = False,  # pylint: disable=unused-argument # noqa: ARG002
     ) -> EntryWidget:
         """Create an entry widget for input values."""
