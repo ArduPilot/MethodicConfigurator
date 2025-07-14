@@ -65,7 +65,7 @@ class TestDocumentationFrame(unittest.TestCase):
         ]
         self.doc_frame.auto_open_var.set(True)
 
-        self.doc_frame.refresh_documentation_labels(self.current_file)
+        self.doc_frame.open_documentation_in_browser(self.current_file)
 
         mock_webbrowser_open_.assert_any_call(url="http://wiki.url", new=0, autoraise=False)
         mock_webbrowser_open_.assert_any_call(url="http://external_tool.url", new=0, autoraise=False)
