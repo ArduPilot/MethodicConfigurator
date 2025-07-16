@@ -212,9 +212,11 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
     def _on_complexity_changed(self, _event: Optional[tk.Event] = None) -> None:
         """Handle complexity combobox change."""
-        # Save the complexity setting
-        ProgramSettings.set_setting("gui_complexity", self.complexity_var.get())
-        self._refresh_component_display()
+        old_gui_complexity = ProgramSettings.get_setting("gui_complexity")
+        new_gui_complexity = self.complexity_var.get()
+        if new_gui_complexity != old_gui_complexity:
+            ProgramSettings.set_setting("gui_complexity", new_gui_complexity)
+            self._refresh_component_display()
 
     def _refresh_component_display(self) -> None:
         """Refresh the component display UI."""
