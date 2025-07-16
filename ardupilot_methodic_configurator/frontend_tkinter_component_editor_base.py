@@ -347,6 +347,8 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         components = self.data_model.get_all_components()
         for key, value in components.items():
             self.add_widget(self.scroll_frame.view_port, key, value, [])
+        # Scroll to the top after (re-)populating
+        self.scroll_frame.canvas.yview("moveto", 0)
 
     def add_widget(self, parent: tk.Widget, key: str, value: ComponentValue, path: list[str]) -> None:
         """
