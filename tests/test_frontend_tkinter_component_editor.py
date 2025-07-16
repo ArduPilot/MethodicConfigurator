@@ -352,14 +352,13 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
             mock_entry = MagicMock()
             mock_entry_class.return_value = mock_entry
 
-            with patch.object(editor_with_mocked_root, "get_validate_function", return_value=MagicMock()):
-                result = editor_with_mocked_root.add_entry_or_combobox(value, mock_entry_frame, path, is_optional=True)
+            result = editor_with_mocked_root.add_entry_or_combobox(value, mock_entry_frame, path, is_optional=True)
 
-                # Should create entry with gray foreground for optional field
-                call_args = mock_entry_class.call_args[1]
-                assert call_args["foreground"] == "gray"
-                mock_entry.insert.assert_called_once_with(0, str(value))
-                assert result == mock_entry
+            # Should create entry with gray foreground for optional field
+            call_args = mock_entry_class.call_args[1]
+            assert call_args["foreground"] == "gray"
+            mock_entry.insert.assert_called_once_with(0, str(value))
+            assert result == mock_entry
 
     def test_add_entry_or_combobox_fc_connection_type(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
         """Test adding combobox for FC connection type with special binding."""
@@ -401,21 +400,24 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
             bound_events = [call[0][0] for call in bind_calls]  # Extract just the event names
             assert "<<ComboboxSelected>>" in bound_events
 
-    def test_get_validate_function(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
-        """Test getting validation function for entry."""
+    def test_validate_entry_limits_ui_private_method(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
+        """Test the private validation method for entry limits."""
+        mock_event = MagicMock()
+        mock_event.type = tk.EventType.FocusOut
         mock_entry = MagicMock()
+        mock_entry.get.return_value = "1000"
         path = ("Motor", "Specifications", "KV")  # Use proper 3-level path
 
-        validate_func = editor_with_mocked_root.get_validate_function(mock_entry, path)
+        editor_with_mocked_root.data_model.validate_entry_limits = MagicMock(return_value=("", None))
+        editor_with_mocked_root.data_model.set_component_value = MagicMock()
 
-        assert callable(validate_func)
+        result = editor_with_mocked_root._validate_entry_limits_ui(mock_event, mock_entry, path)
 
-        # Test the returned function
-        mock_event = MagicMock()
-        with patch.object(editor_with_mocked_root, "validate_entry_limits_ui", return_value=True) as mock_validate:
-            result = validate_func(mock_event)
-            mock_validate.assert_called_once_with(mock_event, mock_entry, path)
-            assert result is True
+        # Should validate and update data model
+        editor_with_mocked_root.data_model.validate_entry_limits.assert_called_once_with("1000", path)
+        editor_with_mocked_root.data_model.set_component_value.assert_called_once_with(path, "1000")
+        mock_entry.configure.assert_called_once_with(style="entry_input_valid.TEntry")
+        assert result is True
 
     def test_validate_combobox_valid_value(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
         """Test combobox validation with valid value."""
@@ -487,7 +489,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         editor_with_mocked_root.data_model.validate_entry_limits = MagicMock(return_value=("", None))
         editor_with_mocked_root.data_model.set_component_value = MagicMock()
 
-        result = editor_with_mocked_root.validate_entry_limits_ui(mock_event, mock_entry, path)
+        result = editor_with_mocked_root._validate_entry_limits_ui(mock_event, mock_entry, path)
 
         editor_with_mocked_root.data_model.validate_entry_limits.assert_called_once_with("1000", path)
         editor_with_mocked_root.data_model.set_component_value.assert_called_once_with(path, "1000")
@@ -505,7 +507,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         editor_with_mocked_root.data_model.validate_entry_limits = MagicMock(return_value=("Value too high", "8000"))
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.show_error_message") as mock_error:
-            result = editor_with_mocked_root.validate_entry_limits_ui(mock_event, mock_entry, path)
+            result = editor_with_mocked_root._validate_entry_limits_ui(mock_event, mock_entry, path)
 
             # Should correct the value and show error
             mock_entry.delete.assert_called_once_with(0, tk.END)
@@ -527,7 +529,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         editor_with_mocked_root.data_model.validate_entry_limits = MagicMock(return_value=("", None))
         editor_with_mocked_root.data_model.set_component_value = MagicMock()
 
-        result = editor_with_mocked_root.validate_entry_limits_ui(mock_event, mock_entry, path)
+        result = editor_with_mocked_root._validate_entry_limits_ui(mock_event, mock_entry, path)
 
         editor_with_mocked_root.data_model.validate_entry_limits.assert_called_once_with("4.2", path)
         assert result is True

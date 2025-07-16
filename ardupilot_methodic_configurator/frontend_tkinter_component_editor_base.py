@@ -318,6 +318,20 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         """Set component value in data model."""
         self.data_model.set_component_value(path, value)
 
+    def set_vehicle_configuration_template(self, configuration_template: str) -> None:
+        """Set the configuration template name in the data."""
+        self.data_model.set_configuration_template(configuration_template)
+
+    def set_values_from_fc_parameters(self, fc_parameters: dict, doc: dict) -> None:
+        """
+        Process flight controller parameters and update the data model.
+
+        This delegates to the data model's process_fc_parameters method to handle
+        all the business logic of processing parameters.
+        """
+        # Delegate to the data model for parameter processing
+        self.data_model.process_fc_parameters(fc_parameters, doc)
+
     def _update_widget_value(self, path: ComponentPath, value: str) -> None:
         """Update widget value in UI."""
         if path in self.entry_widgets:
