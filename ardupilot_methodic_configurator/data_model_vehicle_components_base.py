@@ -203,68 +203,91 @@ class ComponentDataModelBase:
         self.init_possible_choices(doc_dict)
         self.init_battery_chemistry()
 
-    def update_json_structure(self) -> None:  # pylint: disable=too-many-branches
+    def update_json_structure(self) -> None:
         """
         Update the data structure to ensure all required fields are present.
 
         Used to update old JSON files to the latest format.
         """
-        # Get current data
-        data = self._data
+        # Define the default structure with all required fields
+        default_structure = {
+            "Format version": 1,
+            "Program version": __version__,
+            "Components": {
+                "Battery": {
+                    "Specifications": {
+                        "Chemistry": "Lipo",
+                        "Capacity mAh": 0,
+                    }
+                },
+                "Frame": {
+                    "Specifications": {
+                        "TOW min Kg": 1,
+                        "TOW max Kg": 1,
+                    }
+                },
+                "Flight Controller": {
+                    "Product": {},
+                    "Firmware": {},
+                    "Specifications": {"MCU Series": "Unknown"},
+                    "Notes": "",
+                },
+            },
+        }
 
-        # Ensure the format version is set.
-        if "Format version" not in data:
-            data["Format version"] = 1
+        # Handle legacy field renaming before merging
+        if "GNSS receiver" in self._data.get("Components", {}):
+            components = self._data.setdefault("Components", {})
+            components["GNSS Receiver"] = components.pop("GNSS receiver")
 
-        # To update old JSON files that do not have these new fields
-        if "Components" not in data:
-            data["Components"] = {}
+        # Handle legacy battery monitor protocol migration for protocols that don't need hardware connections
+        # This is a local import to avoid a circular import dependency
+        from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (  # pylint: disable=import-outside-toplevel # noqa: PLC0415
+            BATT_MONITOR_CONNECTION,
+            OTHER_PORTS,
+        )
 
-        if "Battery" not in data["Components"]:
-            data["Components"]["Battery"] = {}
+        # Calculate protocols that use OTHER_PORTS (don't require specific hardware connections)
+        battmon_other_protocols = {
+            str(value["protocol"]) for value in BATT_MONITOR_CONNECTION.values() if value.get("type") == OTHER_PORTS
+        }
+        battery_monitor_protocol = (
+            self._data.get("Components", {}).get("Battery Monitor", {}).get("FC Connection", {}).get("Protocol")
+        )
+        if battery_monitor_protocol in battmon_other_protocols:
+            # These protocols don't require specific hardware connections, so we can safely migrate them
+            battery_monitor = self._data.setdefault("Components", {}).setdefault("Battery Monitor", {})
+            battery_monitor.setdefault("FC Connection", {})["Type"] = "other"
 
-        if "Specifications" not in data["Components"]["Battery"]:
-            data["Components"]["Battery"]["Specifications"] = {}
+        # Merge existing data onto default structure (preserves existing values)
+        self._data = self._deep_merge_dicts(default_structure, self._data)
 
-        if "Chemistry" not in data["Components"]["Battery"]["Specifications"]:
-            data["Components"]["Battery"]["Specifications"]["Chemistry"] = "Lipo"
+    def _deep_merge_dicts(self, default: dict[str, Any], existing: dict[str, Any]) -> dict[str, Any]:
+        """
+        Deep merge two dictionaries, preserving existing values and key order.
 
-        if "Capacity mAh" not in data["Components"]["Battery"]["Specifications"]:
-            data["Components"]["Battery"]["Specifications"]["Capacity mAh"] = 0
+        Args:
+            default: Default structure with fallback values
+            existing: Existing data to preserve
 
-        # To update old JSON files that do not have these new "Frame.Specifications.TOW * Kg" fields
-        if "Frame" not in data["Components"]:
-            data["Components"]["Frame"] = {}
+        Returns:
+            Merged dictionary with existing values taking precedence and preserving existing key order
 
-        if "Specifications" not in data["Components"]["Frame"]:
-            data["Components"]["Frame"]["Specifications"] = {}
+        """
+        # Start with existing dictionary to preserve its key order
+        result = existing.copy()
 
-        if "TOW min Kg" not in data["Components"]["Frame"]["Specifications"]:
-            data["Components"]["Frame"]["Specifications"]["TOW min Kg"] = 1
+        # Add any missing keys from the default structure
+        for key, value in default.items():
+            if key not in result:
+                # Key doesn't exist in existing data, add it from default
+                result[key] = value
+            elif isinstance(result[key], dict) and isinstance(value, dict):
+                # Both are dictionaries, recursively merge them
+                result[key] = self._deep_merge_dicts(value, result[key])
+            # If key exists in result but isn't a dict, keep the existing value (no change needed)
 
-        if "TOW max Kg" not in data["Components"]["Frame"]["Specifications"]:
-            data["Components"]["Frame"]["Specifications"]["TOW max Kg"] = 1
-
-        # Older versions used receiver instead of Receiver, rename it for consistency with other fields
-        if "GNSS receiver" in data["Components"]:
-            data["Components"]["GNSS Receiver"] = data["Components"].pop("GNSS receiver")
-
-        data["Program version"] = __version__
-
-        # To update old JSON files that do not have this new "Flight Controller.Specifications.MCU Series" field
-        if "Flight Controller" not in data["Components"]:
-            data["Components"]["Flight Controller"] = {}
-
-        if "Specifications" not in data["Components"]["Flight Controller"]:
-            fc_data = data["Components"]["Flight Controller"]
-            data["Components"]["Flight Controller"] = {
-                "Product": fc_data.get("Product", {}),
-                "Firmware": fc_data.get("Firmware", {}),
-                "Specifications": {"MCU Series": "Unknown"},
-                "Notes": fc_data.get("Notes", ""),
-            }
-
-        self._data = data
+        return result
 
     def init_battery_chemistry(self) -> None:
         self._battery_chemistry = (

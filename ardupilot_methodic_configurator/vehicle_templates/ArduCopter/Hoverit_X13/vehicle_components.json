@@ -102,7 +102,7 @@
                 "Version": ""
             },
             "FC Connection": {
-                "Type": "CAN1",
+                "Type": "other",
                 "Protocol": "ESC"
             },
             "Notes": "Voltage and current are monitored via the ESC DatalinkV2."

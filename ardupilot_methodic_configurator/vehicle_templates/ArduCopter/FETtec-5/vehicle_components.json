@@ -102,7 +102,7 @@
                 "Version": "10_224"
             },
             "FC Connection": {
-                "Type": "SERIAL1",
+                "Type": "other",
                 "Protocol": "ESC"
             },
             "Notes": "ESC Telemetry is used as battery monitor"
