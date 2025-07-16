@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from argparse import ArgumentParser
+from tkinter import ttk
 from typing import Union, get_args, get_origin
 from unittest.mock import MagicMock, patch
 
@@ -275,69 +276,202 @@ class TestUserArgumentParsingWorkflows:
 class TestDataValidationWorkflows:
     """Test user workflows for data validation."""
 
-    def test_user_sees_valid_data_when_components_are_properly_configured(
-        self, configured_editor: ComponentEditorWindowBase
+    def test_user_sees_no_errors_when_all_data_is_valid(self, editor_with_mocked_root: ComponentEditorWindowBase) -> None:
+        """
+        User receives no error messages when all component data is valid.
+
+        GIVEN: A user has filled in all component fields with valid data
+        WHEN: The system validates all entered data
+        THEN: No error messages should be displayed and validation should pass
+        """
+        # Arrange: Set up valid entry widgets with proper data
+        mock_entry = MagicMock(spec=ttk.Entry)
+        mock_entry.get.return_value = "1000"
+
+        mock_combobox = MagicMock(spec=ttk.Combobox)
+        mock_combobox.get.return_value = "PWM"
+
+        editor_with_mocked_root.entry_widgets = {
+            ("Motor", "Specifications", "KV"): mock_entry,
+            ("RC Receiver", "FC Connection", "Protocol"): mock_combobox,
+        }
+
+        # Mock data model to return valid validation
+        editor_with_mocked_root.data_model.validate_all_data = MagicMock(return_value=(True, []))
+
+        # Act: User triggers validation
+        result = editor_with_mocked_root.validate_data_and_highlight_errors_in_red()
+
+        # Assert: No errors should be returned
+        assert result == ""
+        editor_with_mocked_root.data_model.validate_all_data.assert_called_once()
+
+    def test_user_sees_error_highlighting_for_invalid_entry_values(
+        self, editor_with_mocked_root: ComponentEditorWindowBase
     ) -> None:
         """
-        User receives confirmation that their component data is valid.
+        User sees visual feedback when entry fields contain invalid values.
 
-        GIVEN: A user has properly configured vehicle components
-        WHEN: The system validates the component data
-        THEN: The data should be recognized as valid and complete
+        GIVEN: A user has entered invalid data in text entry fields
+        WHEN: The system validates the data
+        THEN: Invalid entries should be highlighted in red and error messages displayed
         """
-        # Arrange: Editor is configured with valid data via fixture
+        # Arrange: Set up invalid entry data
+        mock_invalid_entry = MagicMock(spec=ttk.Entry)
+        mock_invalid_entry.get.return_value = "99999"  # Invalid high value
 
-        # Act: Check data validation (simulated through data model state)
-        is_valid = configured_editor.data_model.is_valid_component_data.return_value
-        has_components = configured_editor.data_model.has_components.return_value
+        editor_with_mocked_root.entry_widgets = {
+            ("Motor", "Specifications", "KV"): mock_invalid_entry,
+        }
 
-        # Assert: Data should be valid and components should exist
-        assert is_valid is True
-        assert has_components is True
-
-    def test_user_receives_appropriate_feedback_for_invalid_data(self, mock_filesystem: MagicMock) -> None:
-        """
-        User receives clear feedback when component data is invalid or incomplete.
-
-        GIVEN: A user has incomplete or invalid component configuration
-        WHEN: The system validates the component data
-        THEN: The validation should properly identify the issues
-        """
-        # Arrange: Create a data model that reports invalid data
-        invalid_data_model = MagicMock(spec=ComponentDataModel)
-        invalid_data_model.is_valid_component_data.return_value = False
-        invalid_data_model.has_components.return_value = False
-
-        # Act: Create editor with invalid data
-        ComponentEditorWindowBase.create_for_testing(
-            version="1.0.0", local_filesystem=mock_filesystem, data_model=invalid_data_model
+        # Mock validation to return errors
+        editor_with_mocked_root.data_model.validate_all_data = MagicMock(return_value=(False, ["KV value too high"]))
+        editor_with_mocked_root.data_model.validate_entry_limits = MagicMock(
+            return_value=("Value exceeds maximum limit", None)
         )
 
-        # Assert: System should recognize invalid data
-        assert not invalid_data_model.is_valid_component_data.return_value
-        assert not invalid_data_model.has_components.return_value
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.show_error_message") as mock_error:
+            # Act: User triggers validation
+            result = editor_with_mocked_root.validate_data_and_highlight_errors_in_red()
 
-    def test_user_can_handle_edge_cases_in_data_validation(self, mock_filesystem: MagicMock) -> None:
+            # Assert: Entry should be styled as invalid and error shown
+            mock_invalid_entry.configure.assert_called_once_with(style="entry_input_invalid.TEntry")
+            mock_error.assert_called_once()
+            assert result != ""
+
+    def test_user_sees_error_highlighting_for_invalid_combobox_selections(
+        self, editor_with_mocked_root: ComponentEditorWindowBase
+    ) -> None:
         """
-        User can work with edge cases like valid structure but missing components.
+        User sees visual feedback when combobox selections are invalid.
 
-        GIVEN: A user has a valid data structure but no component data
-        WHEN: The system validates the configuration
-        THEN: The validation should handle this edge case appropriately
+        GIVEN: A user has selected invalid options in combobox fields
+        WHEN: The system validates the selections
+        THEN: Invalid comboboxes should be highlighted in red
         """
-        # Arrange: Create data model with valid structure but no components
-        edge_case_data_model = MagicMock(spec=ComponentDataModel)
-        edge_case_data_model.is_valid_component_data.return_value = True
-        edge_case_data_model.has_components.return_value = False
+        # Arrange: Set up invalid combobox selection
+        mock_invalid_combobox = MagicMock(spec=ttk.Combobox)
+        mock_invalid_combobox.get.return_value = "INVALID_PROTOCOL"
 
-        # Act: Create editor with edge case data
-        ComponentEditorWindowBase.create_for_testing(
-            version="1.0.0", local_filesystem=mock_filesystem, data_model=edge_case_data_model
-        )
+        editor_with_mocked_root.entry_widgets = {
+            ("RC Receiver", "FC Connection", "Protocol"): mock_invalid_combobox,
+        }
 
-        # Assert: System should handle edge case appropriately
-        assert edge_case_data_model.is_valid_component_data.return_value is True
-        assert edge_case_data_model.has_components.return_value is False
+        # Mock validation to return errors
+        editor_with_mocked_root.data_model.validate_all_data = MagicMock(return_value=(False, ["Invalid protocol selected"]))
+        editor_with_mocked_root.data_model.get_combobox_values_for_path = MagicMock(return_value=("PWM", "SBUS", "PPM"))
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.show_error_message"):
+            # Act: User triggers validation
+            result = editor_with_mocked_root.validate_data_and_highlight_errors_in_red()
+
+            # Assert: Combobox should be styled as invalid
+            mock_invalid_combobox.configure.assert_called_once_with(style="comb_input_invalid.TCombobox")
+            assert result != ""
+
+    def test_user_sees_valid_styling_for_corrected_combobox_values(
+        self, editor_with_mocked_root: ComponentEditorWindowBase
+    ) -> None:
+        """
+        User sees positive visual feedback when combobox values become valid.
+
+        GIVEN: A user has corrected a combobox selection to a valid value
+        WHEN: The system validates the corrected data
+        THEN: The combobox should be highlighted as valid
+        """
+        # Arrange: Set up valid combobox selection
+        mock_valid_combobox = MagicMock(spec=ttk.Combobox)
+        mock_valid_combobox.get.return_value = "PWM"
+
+        editor_with_mocked_root.entry_widgets = {
+            ("RC Receiver", "FC Connection", "Protocol"): mock_valid_combobox,
+        }
+
+        # Mock validation - overall fails but this combobox is valid
+        editor_with_mocked_root.data_model.validate_all_data = MagicMock(return_value=(False, ["Other validation error"]))
+        editor_with_mocked_root.data_model.get_combobox_values_for_path = MagicMock(return_value=("PWM", "SBUS", "PPM"))
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.show_error_message"):
+            # Act: User triggers validation
+            editor_with_mocked_root.validate_data_and_highlight_errors_in_red()
+
+            # Assert: Combobox should be styled as valid
+            mock_valid_combobox.configure.assert_called_once_with(style="comb_input_valid.TCombobox")
+
+    def test_user_sees_limited_error_messages_when_many_errors_exist(
+        self, editor_with_mocked_root: ComponentEditorWindowBase
+    ) -> None:
+        """
+        User sees a manageable number of error messages when many validation errors exist.
+
+        GIVEN: A user has multiple validation errors across many fields
+        WHEN: The system validates all data
+        THEN: Only the first 3 errors should be shown with a count of remaining errors
+        """
+        # Arrange: Set up entry that will trigger validation
+        mock_entry = MagicMock(spec=ttk.Entry)
+        mock_entry.get.return_value = "invalid"
+
+        editor_with_mocked_root.entry_widgets = {
+            ("Motor", "Specifications", "KV"): mock_entry,
+        }
+
+        # Mock validation to return many errors
+        many_errors = ["Error 1", "Error 2", "Error 3", "Error 4", "Error 5"]
+        editor_with_mocked_root.data_model.validate_all_data = MagicMock(return_value=(False, many_errors))
+        editor_with_mocked_root.data_model.validate_entry_limits = MagicMock(return_value=("Invalid value", None))
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.show_error_message") as mock_error:
+            # Act: User triggers validation
+            result = editor_with_mocked_root.validate_data_and_highlight_errors_in_red()
+
+            # Assert: Should show first 3 errors + count of remaining
+            mock_error.assert_called_once()
+            error_message = mock_error.call_args[0][1]
+            assert "Error 1" in error_message
+            assert "Error 2" in error_message
+            assert "Error 3" in error_message
+            assert "2 more errors" in error_message
+            assert result != ""
+
+    def test_user_validation_only_processes_entry_and_combobox_widgets(
+        self, editor_with_mocked_root: ComponentEditorWindowBase
+    ) -> None:
+        """
+        User data validation only processes actual input widgets, ignoring other UI elements.
+
+        GIVEN: A user interface contains various widget types including input fields
+        WHEN: The system validates user input data
+        THEN: Only Entry and Combobox widgets should be included in validation
+        """
+        # Arrange: Set up mixed widget types
+        mock_entry = MagicMock(spec=ttk.Entry)
+        mock_entry.get.return_value = "1000"
+
+        mock_combobox = MagicMock(spec=ttk.Combobox)
+        mock_combobox.get.return_value = "PWM"
+
+        mock_label = MagicMock()  # Non-input widget
+
+        editor_with_mocked_root.entry_widgets = {
+            ("Motor", "Specifications", "KV"): mock_entry,
+            ("RC Receiver", "FC Connection", "Protocol"): mock_combobox,
+            ("Some", "Label", "Widget"): mock_label,  # Should be ignored
+        }
+
+        editor_with_mocked_root.data_model.validate_all_data = MagicMock(return_value=(True, []))
+
+        # Act: User triggers validation
+        result = editor_with_mocked_root.validate_data_and_highlight_errors_in_red()
+
+        # Assert: Only Entry and Combobox values should be validated
+        expected_values = {
+            ("Motor", "Specifications", "KV"): "1000",
+            ("RC Receiver", "FC Connection", "Protocol"): "PWM",
+            # Label widget should NOT be included
+        }
+        editor_with_mocked_root.data_model.validate_all_data.assert_called_once_with(expected_values)
+        assert result == ""
 
 
 class TestComponentDataManagementWorkflows:
@@ -1504,36 +1638,6 @@ class TestTemplateControlsWorkflows:
 
         # Assert: Template manager should not add controls
         editor_for_template_tests.template_manager.add_template_controls.assert_not_called()
-
-
-class TestWidgetValidationWorkflows:
-    """Test user workflows for widget validation and error handling."""
-
-    @pytest.fixture
-    def editor_for_widget_validation_tests(self, mock_filesystem: MagicMock) -> ComponentEditorWindowBase:
-        """Fixture providing an editor configured for widget validation testing."""
-        editor = ComponentEditorWindowBase.create_for_testing(version="1.0.0", local_filesystem=mock_filesystem)
-
-        # Override the abstract validate_data_and_highlight_errors_in_red method for testing
-        editor.validate_data_and_highlight_errors_in_red = MagicMock(return_value="Test validation error")
-
-        return editor
-
-    def test_user_can_trigger_validation_through_public_interface(
-        self, editor_for_widget_validation_tests: ComponentEditorWindowBase
-    ) -> None:
-        """
-        User can trigger validation through the public interface.
-
-        GIVEN: A user has configured components and wants to validate
-        WHEN: They trigger validation through the interface
-        THEN: The validation process should execute and return results
-        """
-        # Act: Trigger validation
-        result = editor_for_widget_validation_tests.validate_data_and_highlight_errors_in_red()
-
-        # Assert: Validation should return expected result
-        assert result == "Test validation error"
 
 
 class TestUsageInstructionsWorkflows:
