@@ -18,7 +18,7 @@ from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from tkinter import ttk
-from typing import Callable, Optional, Union
+from typing import Optional, Union
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -93,20 +93,6 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             self.set_component_value_and_update_ui(("Flight Controller", "Specifications", "MCU Series"), mcu)
             if mcu.upper() in ("STM32F4XX", "STM32F7XX", "STM32H7XX"):
                 self.data_model.schema.modify_schema_for_mcu_series(is_optional=True)
-
-    def set_vehicle_configuration_template(self, configuration_template: str) -> None:
-        """Set the configuration template name in the data."""
-        self.data_model.set_configuration_template(configuration_template)
-
-    def set_values_from_fc_parameters(self, fc_parameters: dict, doc: dict) -> None:
-        """
-        Process flight controller parameters and update the data model.
-
-        This delegates to the data model's process_fc_parameters method to handle
-        all the business logic of processing parameters.
-        """
-        # Delegate to the data model for parameter processing
-        self.data_model.process_fc_parameters(fc_parameters, doc)
 
     def update_component_protocol_combobox_entries(self, component_path: ComponentPath, connection_type: str) -> str:
         """Updates the Protocol combobox entries based on the selected component connection Type."""
@@ -183,12 +169,15 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         # Determine foreground color based on is_optional flag
         fg_color = "gray" if is_optional else "black"
 
+        def on_validate_combobox(event: tk.Event) -> bool:
+            return self._validate_combobox(event, path)
+
         if combobox_values:
             cb = ttk.Combobox(entry_frame, values=combobox_values, foreground=fg_color)
-            cb.bind("<FocusOut>", lambda event, path=path: self._validate_combobox(event, path))  # type: ignore[misc]
-            cb.bind("<KeyRelease>", lambda event, path=path: self._validate_combobox(event, path))  # type: ignore[misc]
-            cb.bind("<Return>", lambda event, path=path: self._validate_combobox(event, path))  # type: ignore[misc]
-            cb.bind("<ButtonRelease>", lambda event, path=path: self._validate_combobox(event, path))  # type: ignore[misc]
+            cb.bind("<FocusOut>", on_validate_combobox)
+            cb.bind("<KeyRelease>", on_validate_combobox)
+            cb.bind("<Return>", on_validate_combobox)
+            cb.bind("<ButtonRelease>", on_validate_combobox)
 
             # Prevent mouse wheel from changing value when dropdown is not open
             def handle_mousewheel(_event: tk.Event, widget: tk.Widget = cb) -> Optional[str]:
@@ -237,18 +226,15 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             return cb
 
         entry = ttk.Entry(entry_frame, foreground=fg_color)
-        update_if_valid_function = self.get_validate_function(entry, path)
-        entry.bind("<FocusOut>", update_if_valid_function)
-        entry.bind("<KeyRelease>", update_if_valid_function)
-        entry.bind("<Return>", update_if_valid_function)
+
+        def on_validate_entry_limits_ui(event: tk.Event) -> bool:
+            return self._validate_entry_limits_ui(event, entry, path)
+
+        entry.bind("<FocusOut>", on_validate_entry_limits_ui)
+        entry.bind("<KeyRelease>", on_validate_entry_limits_ui)
+        entry.bind("<Return>", on_validate_entry_limits_ui)
         entry.insert(0, str(value))
         return entry
-
-    def get_validate_function(self, entry: ttk.Entry, path: ComponentPath) -> Union[Callable[[tk.Event], object], None]:
-        def validate_limits(event: tk.Event) -> bool:
-            return self.validate_entry_limits_ui(event, entry, path)
-
-        return validate_limits
 
     def _validate_combobox(self, event: tk.Event, path: ComponentPath) -> bool:
         """Validates the value of a combobox."""
@@ -285,7 +271,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         combobox.configure(style="comb_input_valid.TCombobox")
         return True
 
-    def validate_entry_limits_ui(self, event: Union[None, tk.Event], entry: ttk.Entry, path: ComponentPath) -> bool:
+    def _validate_entry_limits_ui(self, event: Union[None, tk.Event], entry: ttk.Entry, path: ComponentPath) -> bool:
         """UI wrapper for entry limits validation."""
         is_focusout_event = event and event.type in {
             tk.EventType.FocusOut,
