@@ -261,6 +261,7 @@ class ComponentDataModelBase:
 
         # Merge existing data onto default structure (preserves existing values)
         self._data = self._deep_merge_dicts(default_structure, self._data)
+        self._data["Program version"] = __version__
 
     def _deep_merge_dicts(self, default: dict[str, Any], existing: dict[str, Any]) -> dict[str, Any]:
         """

@@ -19,7 +19,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
-from typing import Optional, Union, cast
+from typing import Any, Optional, Union, cast
 from unittest.mock import patch
 
 from ardupilot_methodic_configurator import _, __version__
@@ -324,7 +324,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         """Set the configuration template name in the data."""
         self.data_model.set_configuration_template(configuration_template)
 
-    def set_values_from_fc_parameters(self, fc_parameters: dict, doc: dict) -> None:
+    def set_values_from_fc_parameters(self, fc_parameters: dict[str, Any], doc: dict[str, Any]) -> None:
         """
         Process flight controller parameters and update the data model.
 
