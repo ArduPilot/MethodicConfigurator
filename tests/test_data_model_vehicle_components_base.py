@@ -770,7 +770,7 @@ class TestComponentDataModelEdgeCases:
 
         GIVEN: A model with type casting capability
         WHEN: Casting None values to different datatypes
-        THEN: Should return appropriate default values (missing lines 134, 137-143)
+        THEN: Should return appropriate default values
         """
         path = ("Battery", "Specifications", "Test")
 
@@ -800,17 +800,17 @@ class TestComponentDataModelEdgeCases:
 
         GIVEN: A model with type casting capability
         WHEN: Casting None values to unusual datatypes
-        THEN: Should handle gracefully (covers lines 141-143)
+        THEN: Should handle gracefully
         """
         path = ("Battery", "Specifications", "Test")
 
-        # Test None to dict - covers line 141
+        # Test None to dict
         result = model_with_datatypes._safe_cast_value(None, dict, path)
         assert result == {}
 
-        # Test None with unknown datatype - covers line 143 (fallback case)
-        class CustomType:
-            pass
+        # Test None with unknown datatype
+        class CustomType:  # pylint: disable=too-few-public-methods
+            """Dummy, just for testing."""
 
         result = model_with_datatypes._safe_cast_value(None, CustomType, path)
         assert result == ""  # Should return empty string for unknown types
@@ -821,16 +821,16 @@ class TestComponentDataModelEdgeCases:
 
         GIVEN: A model with component datatypes
         WHEN: Accessing datatypes with various path scenarios
-        THEN: Should execute isinstance check paths (covers lines 113-114)
+        THEN: Should execute isinstance check paths
         """
         # Set up component datatypes with both type objects and non-type values
         model_with_datatypes._component_datatypes = {
             "Battery": {
                 "Specifications": {
-                    "ValidType": int,  # This is a type - line 113
-                    "InvalidType": "not_a_type",  # This is not a type - line 114
-                    "AnotherValidType": str,  # Another type - line 113
-                    "NonCallable": 42,  # Not callable - line 114
+                    "ValidType": int,  # This is a type
+                    "InvalidType": "not_a_type",  # This is not a type
+                    "AnotherValidType": str,  # Another type
+                    "NonCallable": 42,  # Not callable
                 }
             }
         }
@@ -839,15 +839,15 @@ class TestComponentDataModelEdgeCases:
         datatype = model_with_datatypes._get_component_datatype(("Battery", "Specifications", "ValidType"))
         assert datatype is int
 
-        # Test another valid type (covers line 113 again)
+        # Test another valid type
         datatype = model_with_datatypes._get_component_datatype(("Battery", "Specifications", "AnotherValidType"))
         assert datatype is str
 
-        # Test invalid type - string (covers line 114: else case)
+        # Test invalid type - string
         datatype = model_with_datatypes._get_component_datatype(("Battery", "Specifications", "InvalidType"))
         assert datatype is None
 
-        # Test invalid type - number (covers line 114: else case)
+        # Test invalid type - number
         datatype = model_with_datatypes._get_component_datatype(("Battery", "Specifications", "NonCallable"))
         assert datatype is None
 
@@ -857,18 +857,18 @@ class TestComponentDataModelEdgeCases:
 
         GIVEN: A model with type casting capability
         WHEN: Attempting to cast to list or dict types
-        THEN: Should execute special handling code and log error (covers lines 152-154)
+        THEN: Should execute special handling code and log error
         """
         path = ("Battery", "Specifications", "TestField")
 
-        # Test list datatype - should hit line 152 check, log error, and fall back to _process_value
+        # Test list datatype - log error, and fall back to _process_value
         result = model_with_datatypes._safe_cast_value("some_value", list, path)
         assert result == "some_value"  # Falls back to _process_value which returns the original value
         assert "Failed to cast value" in caplog.text
 
         caplog.clear()
 
-        # Test dict datatype - should hit line 152 check, log error, and fall back to _process_value
+        # Test dict datatype - log error, and fall back to _process_value
         result = model_with_datatypes._safe_cast_value("another_value", dict, path)
         assert result == "another_value"  # Falls back to _process_value which returns the original value
         assert "Failed to cast value" in caplog.text
@@ -879,20 +879,22 @@ class TestComponentDataModelEdgeCases:
 
         GIVEN: A model with type casting capability
         WHEN: A callable datatype raises AttributeError during instantiation
-        THEN: Should catch AttributeError and fall back to _process_value (covers line 159)
+        THEN: Should catch AttributeError and fall back to _process_value
         """
         path = ("Battery", "Specifications", "TestField")
 
         # Create a mock class that raises AttributeError when called
         class AttributeErrorType(type):
+            """Dummy, just for testing."""
+
             def __call__(cls, *args, **kwargs) -> None:
                 msg = "Mock AttributeError for testing"
                 raise AttributeError(msg)
 
-        class MockDatatype(metaclass=AttributeErrorType):
-            pass
+        class MockDatatype(metaclass=AttributeErrorType):  # pylint: disable=too-few-public-methods
+            """Dummy, just for testing."""
 
-        # This should trigger the AttributeError handling at line 159
+        # This should trigger the AttributeError handling
         result = model_with_datatypes._safe_cast_value("test_value", MockDatatype, path)
 
         # Should log the error and fall back to _process_value
@@ -906,9 +908,9 @@ class TestComponentDataModelEdgeCases:
 
         GIVEN: A model instance with _deep_merge_dicts method
         WHEN: Merging nested dictionaries with various structures
-        THEN: Should handle all recursive paths (covers lines 259-260)
+        THEN: Should handle all recursive paths
         """
-        # Test deep recursive merging (covers line 259: recursive call)
+        # Test deep recursive merging
         default = {
             "level1": {
                 "level2": {
@@ -936,7 +938,7 @@ class TestComponentDataModelEdgeCases:
 
         result = model_with_datatypes._deep_merge_dicts(default, existing)
 
-        # Verify deep recursive merging occurred (line 259)
+        # Verify deep recursive merging occurred
         assert result["level1"]["level2"]["level3"]["default_value"] == "from_default"
         assert result["level1"]["level2"]["level3"]["existing_value"] == "from_existing"
         assert result["level1"]["level2"]["level3"]["shared_key"] == "existing_shared"
@@ -947,7 +949,7 @@ class TestComponentDataModelEdgeCases:
         assert result["top_level_default"] == "default"
         assert result["top_level_existing"] == "existing"
 
-        # Test case where existing value is not a dict (covers line 260: else case)
+        # Test case where existing value is not a dict
         default_with_dict = {"mixed_key": {"nested": "should_not_appear"}}
 
         existing_with_string = {
@@ -956,7 +958,7 @@ class TestComponentDataModelEdgeCases:
 
         result = model_with_datatypes._deep_merge_dicts(default_with_dict, existing_with_string)
 
-        # existing value should be preserved (line 260: result[key] = existing[key])
+        # existing value should be preserved
         assert result["mixed_key"] == "string_value"
         assert not isinstance(result["mixed_key"], dict)
 
@@ -966,14 +968,14 @@ class TestComponentDataModelEdgeCases:
 
         GIVEN: A model instance
         WHEN: Processing None values and Version fields
-        THEN: Should handle appropriately (covers line 173)
+        THEN: Should handle appropriately
         """
-        # Test None value handling (covers line 173: if value is None)
+        # Test None value handling
         path = ("Battery", "Specifications", "TestField")
         result = model_with_datatypes._process_value(path, None)
         assert result == ""
 
-        # Test Version field special handling (covers version check)
+        # Test Version field special handling
         version_path = ("Battery", "Product", "Version")
         result = model_with_datatypes._process_value(version_path, "1.2.3-beta")
         assert result == "1.2.3-beta"

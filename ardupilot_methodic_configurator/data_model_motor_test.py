@@ -22,8 +22,10 @@ from ardupilot_methodic_configurator.backend_filesystem_json_with_schema import 
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 
+# pylint: disable=too-many-lines
 
-class MotorTestDataModel:  # pylint: disable=too-many-public-methods
+
+class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-instance-attributes
     """
     Data model for motor test functionality.
 
@@ -537,7 +539,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods
         except ValueError as exc:
             logging_error(_("Invalid motor test duration setting: %(error)s"), {"error": str(exc)})
             return False
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=broad-exception-caught
             logging_error(_("Failed to save duration setting: %(error)s"), {"error": str(exc)})
             return False
 
@@ -584,7 +586,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods
         except ValueError as exc:
             logging_error(_("Invalid motor test throttle percentage setting: %(error)s"), {"error": str(exc)})
             return False
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=broad-exception-caught
             logging_error(_("Failed to save throttle percentage setting: %(error)s"), {"error": str(exc)})
             return False
 
@@ -646,7 +648,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods
             logging_error(error_msg)
             return False, error_msg
 
-    def get_frame_options(self) -> dict[str, dict[int, str]]:
+    def get_frame_options(self) -> dict[str, dict[int, str]]:  # pylint: disable=too-many-branches
         """
         Get all available frame configuration options.
 
@@ -689,7 +691,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods
                 )
 
         # Fallback: Use doc_dict only if motor data loader didn't provide data
-        if not frame_options and hasattr(self.filesystem, "doc_dict") and self.filesystem.doc_dict:
+        if not frame_options and hasattr(self.filesystem, "doc_dict") and self.filesystem.doc_dict:  # pylint: disable=too-many-nested-blocks
             logging_debug(_("Motor data unavailable, using doc_dict as fallback for frame options"))
 
             # Get FRAME_TYPE options (these contain both class and type info)
