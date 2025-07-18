@@ -24,6 +24,8 @@ Here are some YouTube video tutorials from the [AMC YouTube Channel](https://www
 [![YouTube tutorial - intro](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/Video1_Thumbnail_yt.png?raw=true)](https://www.youtube.com/watch?v=47RjQ_GarvE&list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9)
 [![YouTube tutorial - usecase](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/Video2_Thumbnail_yt.png?raw=true)](https://www.youtube.com/watch?v=9n4Wh6wBuHQ&list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9)
 
+[![YouTube tutorial - beginners](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/Video3_Thumbnail_yt.png?raw=true)](https://www.youtube.com/watch?v=tM8EznlNhgs&list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9)
+
 And here is a presentation explaining it:
 
 [![ArduPilot methodic configurator power point presentation](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/ArduPilot_Methodic_Configurator_presentation.png?raw=true)](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/ArduPilot_Methodic_Configurator.pdf?raw=true)
