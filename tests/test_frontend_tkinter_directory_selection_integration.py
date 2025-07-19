@@ -10,11 +10,11 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import contextlib
 import os
 import tkinter as tk
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
-from time import sleep
 from tkinter import ttk
 from unittest.mock import MagicMock, patch
 
@@ -36,8 +36,8 @@ class WidgetEventTracker:
 
     def __init__(self, widget) -> None:
         self.widget = widget
-        self.events = []
-        self.bindings = {}
+        self.events: list[tuple[str, tk.Event[tk.Misc]]] = []
+        self.bindings: dict[str, Callable[[tk.Event[tk.Misc]], None]] = {}
 
     def bind(self, event_name) -> None:
         """Bind to a widget event."""
@@ -56,19 +56,35 @@ class WidgetEventTracker:
         self.events.clear()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def root() -> Generator[tk.Tk, None, None]:
-    """Create a Tk root for the integration tests."""
-    root = tk.Tk()
+    """Create and clean up Tk root window for testing."""
+    # Try to reuse existing root or create new one
+    try:
+        root = tk._default_root  # type: ignore[attr-defined]
+        if root is None:
+            root = tk.Tk()
+    except (AttributeError, tk.TclError):
+        root = tk.Tk()
 
-    # Let's not actually show the window during tests
-    root.withdraw()
+    root.withdraw()  # Hide the main window during tests
+
+    # Patch the iconphoto method to prevent errors with mock PhotoImage
+    original_iconphoto = root.iconphoto
+
+    def mock_iconphoto(*args, **kwargs) -> None:
+        pass
+
+    root.iconphoto = mock_iconphoto  # type: ignore[method-assign]
 
     yield root
 
-    # Give a moment for all cleanup
-    sleep(0.1)
-    root.destroy()
+    # Restore original method and destroy root
+    root.iconphoto = original_iconphoto  # type: ignore[method-assign]
+
+    # Only destroy if we're the last test
+    with contextlib.suppress(tk.TclError):
+        root.quit()  # Close the event loop
 
 
 # pylint: disable=duplicate-code
