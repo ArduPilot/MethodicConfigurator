@@ -97,11 +97,9 @@ Re-open the last used vehicle configuration directory.
 
 Here you specify the components of your vehicle, their properties and how they are connected to the flight controller.
 
-![Component Editor Window](images/App_screenshot_Component_Editor.png)
-<figure align="center">
-<br>
-  <ins><b><i>Component Editor Window</i></b></ins>
-</figure>
+![Vehicle Component Editor Window - simple](images/App_screenshot_Component_Editor.png) ![Vehicle Component Editor Window - normal](images/App_screenshot_Component_Editor_normal.png)
+
+On the left with simple GUI complexity for beginners, on the right with normal GUI complexity.
 
 Change every field to match your vehicle's.
 When finished press the `Save data and start configuration` button.
@@ -113,12 +111,6 @@ Correct those entries and press the `Save data and start configuration` button a
 ### Parameter File Editor and uploader interface
 
 Here you sequentially configure the parameters of your flight controller to meet your needs while having all the available documentation at your fingertips.
-
-![Parameter File Editor and Uploader Window (main application)](images/App_screenshot2.png)
-<figure align="center">
-<br>
-  <ins><b><i>Parameter File Editor and Uploader Window (main application)</i></b></ins>
-</figure>
 
 For reproducibility and quality purposes, we configure the vehicle with a well-defined sequence of intermediate parameter files.
 
@@ -154,6 +146,21 @@ you can reuse most intermediate parameter files across these vehicles.
 Only three intermediate parameter files: `03_imu_temperature_calibration_results.param`, `12_mp_setup_mandatory_hardware.param` and
 `25_inflight_magnetometer_fit_results.param` are specific to each vehicle instance.
 All other intermediate parameter files can be used without modifications across all instances (or serial numbers) of the same product model.
+
+![Parameter File Editor and Uploader Window (main application)](images/App_screenshot_Parameter_file_editor_and_uploader4_4_simple.png)
+<figure align="center">
+<br>
+  <ins><b><i>Parameter File Editor and Uploader Window (main application) in simple GUI complexity for beginners</i></b></ins>
+</figure>
+
+![Parameter File Editor and Uploader Window (main application)](images/App_screenshot2.png)
+<figure align="center">
+<br>
+  <ins><b><i>Parameter File Editor and Uploader Window (main application) in normal GUI complexity</i></b></ins>
+</figure>
+
+The GUI complexity (simple or normal) is selected in the vehicle component editor window in the previous step.
+The normal layout is explained below, the simple layout is similar but has less elements.
 
 #### 1. See the Current Vehicle Directory (optional)
 
