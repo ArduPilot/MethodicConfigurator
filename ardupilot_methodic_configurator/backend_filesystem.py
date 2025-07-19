@@ -554,7 +554,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return os_path.exists(directory) and os_path.isdir(directory)
 
     def copy_template_files_to_new_vehicle_dir(
-        self, template_dir: str, new_vehicle_dir: str, blank_change_reason: bool
+        self, template_dir: str, new_vehicle_dir: str, blank_change_reason: bool, copy_vehicle_image: bool
     ) -> str:
         # Copy the template files to the new vehicle directory
         try:
@@ -570,14 +570,17 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 logging_error(error_msg)
                 return error_msg
 
+            skip_files = {
+                "apm.pdef.xml",
+                "last_uploaded_filename.txt",
+                "tempcal_acc.png",
+                "tempcal_gyro.png",
+            }
+            if not copy_vehicle_image:
+                skip_files.add("vehicle.jpg")
+
             for item in os_listdir(template_dir):
-                if item in {
-                    "apm.pdef.xml",
-                    "vehicle.jpg",
-                    "last_uploaded_filename.txt",
-                    "tempcal_acc.png",
-                    "tempcal_gyro.png",
-                }:
+                if item in skip_files:
                     continue
                 source = os_path.join(template_dir, item)
                 dest = os_path.join(new_vehicle_dir, item)

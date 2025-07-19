@@ -251,6 +251,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
         self.use_fc_params = tk.BooleanVar(value=False)
         self.blank_change_reason = tk.BooleanVar(value=False)
+        self.copy_vehicle_image = tk.BooleanVar(value=False)
         self.configuration_template: str = ""  # will be set to a string if a template was used
 
         # Explain why we are here
@@ -359,6 +360,19 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         show_tooltip(
             blank_change_reason_checkbox,
             _("Do not use the parameters change reason from the template."),
+        )
+        copy_vehicle_image_checkbox = ttk.Checkbutton(
+            option1_label_frame,
+            variable=self.copy_vehicle_image,
+            text=_("Copy vehicle image from template"),
+        )
+        copy_vehicle_image_checkbox.pack(anchor=tk.NW)
+        show_tooltip(
+            copy_vehicle_image_checkbox,
+            _(
+                "Copy the vehicle.jpg image file from the template directory to the new vehicle directory\n"
+                "if it exists. This image helps identify the vehicle configuration."
+            ),
         )
         if not fc_connected:
             self.infer_comp_specs_and_conn_from_fc_params.set(False)
@@ -491,7 +505,10 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
             return
 
         error_msg = self.local_filesystem.copy_template_files_to_new_vehicle_dir(
-            template_dir, new_vehicle_dir, self.blank_change_reason.get()
+            template_dir,
+            new_vehicle_dir,
+            blank_change_reason=self.blank_change_reason.get(),
+            copy_vehicle_image=self.copy_vehicle_image.get(),
         )
         if error_msg:
             messagebox.showerror(_("Copying template files"), error_msg)
