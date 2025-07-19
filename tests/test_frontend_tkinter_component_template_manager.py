@@ -10,7 +10,6 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import tkinter as tk
 from tkinter import ttk
 from unittest.mock import MagicMock, patch
 
@@ -23,14 +22,6 @@ class TestComponentTemplateManager:
     """Test suite for ComponentTemplateManager."""
 
     @pytest.fixture
-    def setup_tkinter(self) -> tk.Tk:
-        """Setup tkinter root window for testing."""
-        root = tk.Tk()
-        root.withdraw()  # Hide the window
-        yield root
-        root.destroy()
-
-    @pytest.fixture
     def mock_callbacks(self) -> tuple[MagicMock, MagicMock, MagicMock]:
         """Setup mock callbacks for testing."""
         get_component_data = MagicMock(return_value={"Model": "XYZ", "Version": "1.0"})
@@ -39,9 +30,8 @@ class TestComponentTemplateManager:
         return get_component_data, update_data, derive_name
 
     @pytest.fixture
-    def entry_widgets(self, setup_tkinter) -> dict[tuple, ttk.Entry]:
+    def entry_widgets(self, root) -> dict[tuple, ttk.Entry]:
         """Setup entry widgets for testing."""
-        root = setup_tkinter
         frame = ttk.Frame(root)
 
         entry1 = ttk.Entry(frame)
@@ -60,21 +50,19 @@ class TestComponentTemplateManager:
         }
 
     @pytest.fixture
-    def template_manager(self, setup_tkinter, entry_widgets, mock_callbacks) -> ComponentTemplateManager:
+    def template_manager(self, root, entry_widgets, mock_callbacks) -> ComponentTemplateManager:
         """Create ComponentTemplateManager instance for testing."""
         get_data_callback, update_callback, derive_name_callback = mock_callbacks
-        manager = ComponentTemplateManager(
-            setup_tkinter, entry_widgets, get_data_callback, update_callback, derive_name_callback
-        )
+        manager = ComponentTemplateManager(root, entry_widgets, get_data_callback, update_callback, derive_name_callback)
         # Mock the VehicleComponents to avoid actual file operations
         manager.template_manager = MagicMock()
         return manager
 
-    def test_initialization(self, template_manager, setup_tkinter, entry_widgets, mock_callbacks) -> None:
+    def test_initialization(self, template_manager, root, entry_widgets, mock_callbacks) -> None:
         """Test that initialization correctly sets up instance variables."""
         get_data_callback, update_callback, derive_name_callback = mock_callbacks
 
-        assert template_manager.root == setup_tkinter
+        assert template_manager.root == root
         assert template_manager.entry_widgets == entry_widgets
         assert template_manager.buttons == {}
         assert template_manager.current_menu is None
@@ -92,9 +80,8 @@ class TestComponentTemplateManager:
         derive_name_callback.assert_called_once_with(component_data)
         assert template_name == "XYZ_1.0"  # From the mock's return value
 
-    def test_add_template_controls(self, setup_tkinter, template_manager) -> None:
+    def test_add_template_controls(self, root, template_manager) -> None:
         """Test that add_template_controls creates and adds buttons correctly."""
-        root = setup_tkinter
         parent_frame = ttk.LabelFrame(root, text="Test Component")
 
         template_manager.add_template_controls(parent_frame, "TestComponent")
@@ -220,9 +207,8 @@ class TestComponentTemplateManager:
             assert "Test Template" in args[1]
             assert "Component1" in args[1]
 
-    def test_create_template_dropdown_button(self, setup_tkinter, template_manager) -> None:
+    def test_create_template_dropdown_button(self, root, template_manager) -> None:
         """Test creating a template dropdown button."""
-        root = setup_tkinter
         frame = ttk.Frame(root)
 
         button = template_manager.create_template_dropdown_button(frame, "TestComponent")

@@ -52,9 +52,40 @@ def test_environment() -> Generator[None, None, None]:
         os.environ["PYTEST_CURRENT_TEST"] = original_env
 
 
+@pytest.fixture(scope="session")
+def root() -> Generator[tk.Tk, None, None]:
+    """Create and clean up Tk root window for testing (session-scoped for robustness)."""
+    # Try to reuse existing root or create new one
+    try:
+        root = tk._default_root  # type: ignore[attr-defined]
+        if root is None:
+            root = tk.Tk()
+    except (AttributeError, tk.TclError):
+        root = tk.Tk()
+
+    root.withdraw()  # Hide the main window during tests
+
+    # Patch the iconphoto method to prevent errors with mock PhotoImage
+    original_iconphoto = root.iconphoto
+
+    def mock_iconphoto(*args, **kwargs) -> None:
+        pass
+
+    root.iconphoto = mock_iconphoto  # type: ignore[method-assign]
+
+    yield root
+
+    # Restore original method and destroy root
+    root.iconphoto = original_iconphoto  # type: ignore[method-assign]
+
+    # Only destroy if we're the last test
+    with contextlib.suppress(tk.TclError):
+        root.quit()  # Close the event loop
+
+
 @pytest.fixture
 def tk_root() -> Generator[tk.Tk, None, None]:
-    """Provide a real Tkinter root for integration tests."""
+    """Provide a real Tkinter root for integration tests (legacy name for compatibility)."""
     root = None
     try:
         root = tk.Tk()
