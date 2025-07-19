@@ -166,27 +166,20 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         intro_frame = ttk.Frame(self.main_frame)
         intro_frame.pack(side=tk.TOP, fill="x", expand=False)
 
-        self._add_explanation_text(intro_frame)
+        # Add vehicle image first to the right side
         self._add_vehicle_image(intro_frame)
+
+        # Add explanation text to the left side
+        self._add_explanation_text(intro_frame)
 
     def _add_explanation_text(self, parent: ttk.Frame) -> None:
         """Add explanation text to the parent frame."""
-        explanation_text = _("Please configure properties of the vehicle components.\n")
-        explanation_text += _("Labels for optional properties are displayed in gray text.\n")
-        explanation_text += _("Scroll down to ensure that you do not overlook any properties.\n")
-
         explanation_frame = ttk.Frame(parent)
-        explanation_frame.pack(side=tk.TOP, fill=tk.X, padx=(10, 10), pady=(10, 0))
-
-        explanation_label = ttk.Label(
-            explanation_frame, text=explanation_text, wraplength=WINDOW_WIDTH_PIX - VEHICLE_IMAGE_WIDTH_PIX, justify=tk.LEFT
-        )
-        explanation_label.configure(style="bigger.TLabel")
-        explanation_label.pack(side=tk.LEFT, anchor=tk.NW)
+        explanation_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 10), pady=(10, 0))
 
         # Add UI complexity combobox
         complexity_frame = ttk.Frame(explanation_frame)
-        complexity_frame.pack(side=tk.RIGHT, anchor=tk.NE, padx=(0, 10))
+        complexity_frame.pack(side=tk.TOP, anchor=tk.NW, padx=(0, 10))
 
         complexity_label = ttk.Label(complexity_frame, text=_("GUI Complexity:"))
         complexity_label.pack(side=tk.LEFT, padx=(0, 5))
@@ -209,6 +202,16 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
                 "normal for everybody else."
             ),
         )
+
+        explanation_text = _("Please configure properties of the vehicle components.\n")
+        explanation_text += _("Labels for optional properties are displayed in gray text.\n")
+        explanation_text += _("Scroll down to ensure that you do not overlook any properties.\n")
+
+        explanation_label = ttk.Label(
+            explanation_frame, text=explanation_text, wraplength=WINDOW_WIDTH_PIX - VEHICLE_IMAGE_WIDTH_PIX, justify=tk.LEFT
+        )
+        explanation_label.configure(style="bigger.TLabel")
+        explanation_label.pack(side=tk.TOP, anchor=tk.NW, pady=self.calculate_scaled_padding_tuple(10, 0))
 
     def _on_complexity_changed(self, _event: Optional[tk.Event] = None) -> None:
         """Handle complexity combobox change."""
