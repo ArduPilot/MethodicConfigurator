@@ -59,7 +59,6 @@ It allows users to test motor functionality, verify motor order and direction, a
    - ✅ Visual feedback for correct/incorrect motor placement
    - 🟡 Guidance for correcting wiring issues
 
-
 ### Non-Functional Requirements
 
 1. **Safety**
