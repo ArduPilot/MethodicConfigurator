@@ -16,6 +16,8 @@ from os import path as os_path
 from subprocess import SubprocessError
 from unittest.mock import MagicMock, mock_open, patch
 
+import pytest
+
 from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, is_within_tolerance
 
@@ -915,7 +917,9 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         lfs = LocalFilesystem(
             "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
         )
-        lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir", blank_change_reason=False)
+        lfs.copy_template_files_to_new_vehicle_dir(
+            "template_dir", "new_vehicle_dir", blank_change_reason=False, copy_vehicle_image=False
+        )
 
         # Verify all files and directories were processed
         assert mock_listdir.call_count >= 1
@@ -959,7 +963,9 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         )
 
         # Test with blank_change_reason=True
-        lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir", blank_change_reason=True)
+        lfs.copy_template_files_to_new_vehicle_dir(
+            "template_dir", "new_vehicle_dir", blank_change_reason=True, copy_vehicle_image=False
+        )
 
         # Verify file handling when blank_change_reason=True
         # First check if writelines was called at all
@@ -986,10 +992,153 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         mock_copytree.reset_mock()
 
         # Test with blank_change_reason=False
-        lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir", blank_change_reason=False)
+        lfs.copy_template_files_to_new_vehicle_dir(
+            "template_dir", "new_vehicle_dir", blank_change_reason=False, copy_vehicle_image=False
+        )
 
         # Verify param file was copied normally
         mock_copy2.assert_any_call("template_dir/file1.param", "new_vehicle_dir/file1.param")
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copy2")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir")
+    def test_user_can_copy_vehicle_image_from_template(
+        self, mock_isdir, mock_copy2, mock_join, mock_listdir, mock_exists
+    ) -> None:
+        """
+        User can copy vehicle image file when creating a new vehicle from template.
+
+        GIVEN: A template directory containing a vehicle.jpg file
+        WHEN: The user creates a new vehicle with copy_vehicle_image=True
+        THEN: The vehicle.jpg file should be copied to the new vehicle directory
+        """
+        # Arrange: Set up template directory with vehicle.jpg
+        mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
+        mock_listdir.return_value = ["vehicle.jpg", "config.param"]
+        mock_join.side_effect = lambda *args: "/".join(args)
+        mock_isdir.return_value = False
+
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+
+        # Act: Copy template files with copy_vehicle_image=True
+        result = lfs.copy_template_files_to_new_vehicle_dir(
+            "template_dir", "new_vehicle_dir", blank_change_reason=False, copy_vehicle_image=True
+        )
+
+        # Assert: Vehicle image should be copied
+        assert result == ""  # No error
+        mock_copy2.assert_any_call("template_dir/vehicle.jpg", "new_vehicle_dir/vehicle.jpg")
+        mock_copy2.assert_any_call("template_dir/config.param", "new_vehicle_dir/config.param")
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copy2")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir")
+    def test_user_can_skip_copying_vehicle_image_from_template(
+        self, mock_isdir, mock_copy2, mock_join, mock_listdir, mock_exists
+    ) -> None:
+        """
+        User can choose not to copy vehicle image file when creating a new vehicle from template.
+
+        GIVEN: A template directory containing a vehicle.jpg file
+        WHEN: The user creates a new vehicle with copy_vehicle_image=False
+        THEN: The vehicle.jpg file should not be copied to the new vehicle directory
+        AND: Other files should still be copied normally
+        """
+        # Arrange: Set up template directory with vehicle.jpg and other files
+        mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
+        mock_listdir.return_value = ["vehicle.jpg", "config.param", "readme.txt"]
+        mock_join.side_effect = lambda *args: "/".join(args)
+        mock_isdir.return_value = False
+
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+
+        # Act: Copy template files with copy_vehicle_image=False
+        result = lfs.copy_template_files_to_new_vehicle_dir(
+            "template_dir", "new_vehicle_dir", blank_change_reason=False, copy_vehicle_image=False
+        )
+
+        # Assert: Vehicle image should not be copied, but other files should be
+        assert result == ""  # No error
+
+        # Verify vehicle.jpg was NOT copied
+        copy_calls = [call.args for call in mock_copy2.call_args_list]
+        vehicle_jpg_calls = [call for call in copy_calls if "vehicle.jpg" in str(call)]
+        assert len(vehicle_jpg_calls) == 0, "vehicle.jpg should not be copied when copy_vehicle_image=False"
+
+        # Verify other files were copied
+        mock_copy2.assert_any_call("template_dir/config.param", "new_vehicle_dir/config.param")
+        mock_copy2.assert_any_call("template_dir/readme.txt", "new_vehicle_dir/readme.txt")
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copy2")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir")
+    def test_copy_vehicle_image_defaults_to_false(self, mock_isdir, mock_copy2, mock_join, mock_listdir, mock_exists) -> None:
+        """
+        Vehicle image copying defaults to disabled.
+
+        GIVEN: A template directory containing a vehicle.jpg file
+        WHEN: The user creates a new vehicle without specifying copy_vehicle_image parameter
+        THEN: The vehicle.jpg file should not be copied by default
+        """
+        # Arrange: Set up template directory with vehicle.jpg
+        mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
+        mock_listdir.return_value = ["vehicle.jpg", "config.param"]
+        mock_join.side_effect = lambda *args: "/".join(args)
+        mock_isdir.return_value = False
+
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", "", allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+
+        # Act: Copy template files without specifying copy_vehicle_image
+        # (this should cause an error since parameter is required)
+        with pytest.raises(TypeError):
+            lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir", blank_change_reason=False)
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copy2")
+    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir")
+    def test_copy_vehicle_image_with_no_image_file_present(
+        self, mock_isdir, mock_copy2, mock_join, mock_listdir, mock_exists
+    ) -> None:
+        """
+        Vehicle image copying gracefully handles missing vehicle.jpg file.
+
+        GIVEN: A template directory without a vehicle.jpg file
+        WHEN: The user creates a new vehicle with copy_vehicle_image=True
+        THEN: No error should occur and other files should be copied normally
+        """
+        # Arrange: Set up template directory without vehicle.jpg
+        mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
+        mock_listdir.return_value = ["config.param", "readme.txt"]  # No vehicle.jpg
+        mock_join.side_effect = lambda *args: "/".join(args)
+        mock_isdir.return_value = False
+
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+
+        # Act: Copy template files with copy_vehicle_image=True (but no vehicle.jpg exists)
+        result = lfs.copy_template_files_to_new_vehicle_dir(
+            "template_dir", "new_vehicle_dir", blank_change_reason=False, copy_vehicle_image=True
+        )
+
+        # Assert: No error and other files copied normally
+        assert result == ""  # No error
+        mock_copy2.assert_any_call("template_dir/config.param", "new_vehicle_dir/config.param")
+        mock_copy2.assert_any_call("template_dir/readme.txt", "new_vehicle_dir/readme.txt")
 
 
 def test_merge_forced_or_derived_parameters_comprehensive() -> None:

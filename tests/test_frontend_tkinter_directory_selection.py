@@ -101,6 +101,7 @@ def window(
         window.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
         window.use_fc_params = tk.BooleanVar(value=False)
         window.blank_change_reason = tk.BooleanVar(value=False)
+        window.copy_vehicle_image = tk.BooleanVar(value=False)
         window.configuration_template = ""
         window.local_filesystem = mock_local_filesystem
 
@@ -1038,7 +1039,8 @@ def test_blank_change_reason_setting(window: VehicleDirectorySelectionWindow) ->
                                             copy_files_mock.assert_called_once_with(
                                                 "/valid/template/dir",
                                                 "/base/dir/vehicle_name",
-                                                True,  # noqa: FBT003
+                                                blank_change_reason=True,
+                                                copy_vehicle_image=False,
                                             )
 
 
@@ -1282,3 +1284,178 @@ def test_vehicle_directory_selection_widgets() -> None:
                     assert "Invalid Vehicle Directory Selected" in mock_error.call_args[0][0]
 
     root.destroy()
+
+
+# ==== Tests for copy vehicle image feature ====
+
+
+class TestCopyVehicleImageFeature:
+    """Test user workflows for copying vehicle image files from templates."""
+
+    def test_user_can_enable_copy_vehicle_image_checkbox(self, window) -> None:
+        """
+        User can enable the copy vehicle image checkbox to copy vehicle.jpg from template.
+
+        GIVEN: A user is creating a new vehicle from a template
+        WHEN: They check the "Copy vehicle image from template" checkbox
+        THEN: The copy_vehicle_image variable should be set to True
+        """
+        # Arrange: User has window open with checkbox available
+        # Act: User checks the copy vehicle image checkbox
+        window.copy_vehicle_image.set(True)
+
+        # Assert: The variable should be set to True
+        assert window.copy_vehicle_image.get() is True
+
+    def test_user_can_disable_copy_vehicle_image_checkbox(self, window) -> None:
+        """
+        User can disable the copy vehicle image checkbox to skip copying vehicle.jpg from template.
+
+        GIVEN: A user is creating a new vehicle from a template
+        WHEN: They uncheck the "Copy vehicle image from template" checkbox
+        THEN: The copy_vehicle_image variable should be set to False
+        """
+        # Arrange: Checkbox starts with default (False), set to True first
+        window.copy_vehicle_image.set(True)
+        assert window.copy_vehicle_image.get() is True
+
+        # Act: User unchecks the copy vehicle image checkbox
+        window.copy_vehicle_image.set(False)
+
+        # Assert: The variable should be set to False
+        assert window.copy_vehicle_image.get() is False
+
+    def test_copy_vehicle_image_checkbox_defaults_to_disabled(self, window) -> None:
+        """
+        Copy vehicle image checkbox defaults to disabled.
+
+        GIVEN: A user opens the new vehicle creation dialog
+        WHEN: The dialog is displayed
+        THEN: The copy vehicle image checkbox should be unchecked by default
+        """
+        # Assert: Checkbox should be disabled by default
+        assert window.copy_vehicle_image.get() is False
+
+    def test_user_can_create_new_vehicle_with_image_copying_enabled(self, window) -> None:
+        """
+        User can successfully create a new vehicle with vehicle image copying enabled.
+
+        GIVEN: A user has configured a new vehicle with copy_vehicle_image=True
+        WHEN: They click "Create vehicle configuration directory from template"
+        THEN: The copy_vehicle_image parameter should be passed to the backend
+        AND: The vehicle creation should succeed
+        """
+        # Arrange: Set up valid inputs for vehicle creation
+        window.template_dir.get_selected_directory = MagicMock(return_value="/valid/template/dir")
+        window.new_base_dir.get_selected_directory = MagicMock(return_value="/valid/base/dir")
+        window.new_dir.get_selected_directory = MagicMock(return_value="MyNewVehicle")
+        window.copy_vehicle_image.set(True)
+
+        # Mock the required filesystem operations
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.directory_exists", return_value=True),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.valid_directory_name", return_value=True
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.new_vehicle_dir",
+                return_value="/valid/base/dir/MyNewVehicle",
+            ),
+            patch.object(window.local_filesystem, "create_new_vehicle_dir", return_value=""),
+            patch.object(window.local_filesystem, "copy_template_files_to_new_vehicle_dir", return_value="") as mock_copy,
+            patch.object(window.local_filesystem, "re_init", return_value=None),
+            patch("ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.store_recently_used_template_dirs"),
+            patch("ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.store_recently_used_vehicle_dir"),
+            patch("ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.get_directory_name_from_full_path"),
+            patch.object(window.root, "destroy"),
+        ):
+            # Set up file_parameters to simulate successful file loading
+            window.local_filesystem.file_parameters = {"00_default.param": {}}
+
+            # Act: User creates new vehicle with image copying enabled
+            window.create_new_vehicle_from_template()
+
+            # Assert: copy_template_files_to_new_vehicle_dir called with copy_vehicle_image=True
+            mock_copy.assert_called_once_with(
+                "/valid/template/dir",
+                "/valid/base/dir/MyNewVehicle",
+                blank_change_reason=window.blank_change_reason.get(),
+                copy_vehicle_image=True,
+            )
+
+    def test_user_can_create_new_vehicle_with_image_copying_disabled(self, window) -> None:
+        """
+        User can successfully create a new vehicle with vehicle image copying disabled.
+
+        GIVEN: A user has configured a new vehicle with copy_vehicle_image=False
+        WHEN: They click "Create vehicle configuration directory from template"
+        THEN: The copy_vehicle_image parameter should be False in the backend call
+        AND: The vehicle creation should succeed
+        """
+        # Arrange: Set up valid inputs for vehicle creation with image copying disabled
+        window.template_dir.get_selected_directory = MagicMock(return_value="/valid/template/dir")
+        window.new_base_dir.get_selected_directory = MagicMock(return_value="/valid/base/dir")
+        window.new_dir.get_selected_directory = MagicMock(return_value="MyNewVehicle")
+        window.copy_vehicle_image.set(False)  # User disables image copying
+
+        # Mock the required filesystem operations
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.directory_exists", return_value=True),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.valid_directory_name", return_value=True
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.new_vehicle_dir",
+                return_value="/valid/base/dir/MyNewVehicle",
+            ),
+            patch.object(window.local_filesystem, "create_new_vehicle_dir", return_value=""),
+            patch.object(window.local_filesystem, "copy_template_files_to_new_vehicle_dir", return_value="") as mock_copy,
+            patch.object(window.local_filesystem, "re_init", return_value=None),
+            patch("ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.store_recently_used_template_dirs"),
+            patch("ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.store_recently_used_vehicle_dir"),
+            patch("ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.get_directory_name_from_full_path"),
+            patch.object(window.root, "destroy"),
+        ):
+            # Set up file_parameters to simulate successful file loading
+            window.local_filesystem.file_parameters = {"00_default.param": {}}
+
+            # Act: User creates new vehicle with image copying disabled
+            window.create_new_vehicle_from_template()
+
+            # Assert: copy_template_files_to_new_vehicle_dir called with copy_vehicle_image=False
+            mock_copy.assert_called_once_with(
+                "/valid/template/dir",
+                "/valid/base/dir/MyNewVehicle",
+                blank_change_reason=window.blank_change_reason.get(),
+                copy_vehicle_image=False,
+            )
+
+    def test_copy_vehicle_image_state_persists_across_user_interactions(self, window) -> None:
+        """
+        Copy vehicle image checkbox state persists across user interactions.
+
+        GIVEN: A user has set the copy vehicle image checkbox to a specific state
+        WHEN: They interact with other UI elements
+        THEN: The copy vehicle image checkbox state should remain unchanged
+        """
+        # Arrange: User sets checkbox to disabled state
+        window.copy_vehicle_image.set(False)
+
+        # Act: User interacts with other checkboxes
+        window.blank_component_data.set(True)
+        window.use_fc_params.set(True)
+        window.blank_change_reason.set(True)
+
+        # Assert: Copy vehicle image state should remain unchanged
+        assert window.copy_vehicle_image.get() is False
+
+        # Arrange: User changes to enabled state
+        window.copy_vehicle_image.set(True)
+
+        # Act: User interacts with other checkboxes again
+        window.blank_component_data.set(False)
+        window.use_fc_params.set(False)
+        window.blank_change_reason.set(False)
+
+        # Assert: Copy vehicle image state should remain enabled
+        assert window.copy_vehicle_image.get() is True

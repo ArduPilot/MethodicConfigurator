@@ -229,6 +229,7 @@ def test_create_new_vehicle_from_template_integration(
         self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
         self.use_fc_params = tk.BooleanVar(value=False)
         self.blank_change_reason = tk.BooleanVar(value=False)
+        self.copy_vehicle_image = tk.BooleanVar(value=False)
         self.configuration_template = ""
 
     # Apply the patch
@@ -267,7 +268,10 @@ def test_create_new_vehicle_from_template_integration(
                     )
                     mock_local_filesystem.create_new_vehicle_dir.assert_called_once_with(new_vehicle_dir)
                     mock_local_filesystem.copy_template_files_to_new_vehicle_dir.assert_called_once_with(
-                        template_dir, new_vehicle_dir, window.blank_change_reason.get()
+                        template_dir,
+                        new_vehicle_dir,
+                        blank_change_reason=window.blank_change_reason.get(),
+                        copy_vehicle_image=window.copy_vehicle_image.get(),
                     )
                     mock_destroy.assert_called_once()
 
