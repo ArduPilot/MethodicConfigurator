@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-07-17 09:47+0000\n"
+"POT-Creation-Date: 2025-07-19 17:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,8 +37,8 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/__main__.py:182
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:211
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:506
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:527
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:523
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:544
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:464
 msgid "Fatal error reading parameter files"
 msgstr ""
@@ -141,71 +141,71 @@ msgstr ""
 msgid "New vehicle directory does not exist: {new_vehicle_dir}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:595
+#: ardupilot_methodic_configurator/backend_filesystem.py:598
 msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:615
+#: ardupilot_methodic_configurator/backend_filesystem.py:618
 msgid "Parameter %s not found in the current parameter file"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:623
+#: ardupilot_methodic_configurator/backend_filesystem.py:626
 msgid "Error writing last uploaded filename: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:630
+#: ardupilot_methodic_configurator/backend_filesystem.py:633
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:632
+#: ardupilot_methodic_configurator/backend_filesystem.py:635
 msgid "Error reading last uploaded filename: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:648
+#: ardupilot_methodic_configurator/backend_filesystem.py:651
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:656
+#: ardupilot_methodic_configurator/backend_filesystem.py:659
 msgid "Starting with the first file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:659
+#: ardupilot_methodic_configurator/backend_filesystem.py:662
 msgid "Starting with the first non-tcal file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:663
+#: ardupilot_methodic_configurator/backend_filesystem.py:666
 msgid "Last uploaded file was %s."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:665
+#: ardupilot_methodic_configurator/backend_filesystem.py:668
 msgid "No last uploaded file found. %s."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:670
+#: ardupilot_methodic_configurator/backend_filesystem.py:673
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:679
+#: ardupilot_methodic_configurator/backend_filesystem.py:682
 msgid "Last uploaded file is the last file in the list. Starting from the beginning."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:864
+#: ardupilot_methodic_configurator/backend_filesystem.py:867
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:870
+#: ardupilot_methodic_configurator/backend_filesystem.py:873
 msgid "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:878
+#: ardupilot_methodic_configurator/backend_filesystem.py:881
 msgid "Start directly on the nth intermediate parameter file (skips previous files). Default is to start on the file next to the last that you wrote to the flight controller. If the file does not exist, it will start on the first file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:887
+#: ardupilot_methodic_configurator/backend_filesystem.py:890
 msgid "Allow opening and editing template files directly. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:896
+#: ardupilot_methodic_configurator/backend_filesystem.py:899
 msgid "Save the vehicle component to the system templates. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 
@@ -2520,8 +2520,8 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:122
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:266
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:293
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:514
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:541
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:517
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:544
 #: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
 #: tests/test_frontend_tkinter_component_editor_base.py:1445
@@ -2564,30 +2564,12 @@ msgid "Amilcar Lucas's - ArduPilot methodic configurator "
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:174
-msgid ""
-"Please configure properties of the vehicle components.\n"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:175
-msgid ""
-"Labels for optional properties are displayed in gray text.\n"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:176
-msgid ""
-"Scroll down to ensure that you do not overlook any properties.\n"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:191
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:184
 msgid "GUI Complexity:"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:206
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:199
 msgid ""
 "Select the graphical user interface complexity level:\n"
 "simple for beginners, only minimal mandatory fields no optional params displayed\n"
@@ -2595,80 +2577,98 @@ msgid ""
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:243
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:206
+msgid ""
+"Please configure properties of the vehicle components.\n"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:207
+msgid ""
+"Labels for optional properties are displayed in gray text.\n"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:208
+msgid ""
+"Scroll down to ensure that you do not overlook any properties.\n"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:246
 msgid "Replace the vehicle.jpg file in the vehicle directory to change the vehicle image."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:245
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:248
 msgid "Add a 'vehicle.jpg' image file to the vehicle directory."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:259
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:301
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:262
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:304
 msgid "Save data and start configuration"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:263
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:266
 msgid ""
 "Save component data to the vehicle_components.json file\n"
 "and start parameter value configuration and tuning."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:296
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:299
 msgid ""
 "1. Describe the properties of the vehicle components in the window below.\n"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:297
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:300
 msgid ""
 "2. Each field has mouse-over tooltips for additional guidance.\n"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:298
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:301
 msgid ""
 "3. Optional fields are marked with gray text and can be left blank.\n"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:299
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:302
 msgid ""
 "4. Scroll to the bottom of the window to ensure all properties are edited.\n"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:300
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:303
 msgid "5. Press the "
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:302
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:305
 msgid ""
 " button only after verifying that all information is correct.\n"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:308
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:311
 msgid "How to use the component editor window"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:505
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:508
 msgid "Validation Errors"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:506
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:509
 msgid "Validation failed. Please correct the errors before saving."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:521
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:524
 msgid ""
 "ArduPilot Methodic Configurator only operates correctly if all component properties are correct. ArduPilot parameter values depend on the components used and their connections.\n"
 "\n"
@@ -2676,32 +2676,32 @@ msgid ""
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:527
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:530
 msgid "Confirm that all component properties are correct"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:541
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:544
 msgid "Failed to save data to file."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:543
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:546
 msgid "Vehicle component data saved successfully."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:549
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:552
 msgid "Do you want to save the changes before closing?"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:549
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:552
 msgid "Save Changes?"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:579
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:582
 msgid "Skip the component editor window. Only use this if all components have been configured. Default is %(default)s"
 msgstr ""
 
@@ -2844,7 +2844,7 @@ msgstr ""
 
 #:
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:171
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:265
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:266
 msgid ""
 "\n"
 "Choose one of the following three options:"
@@ -2966,55 +2966,55 @@ msgstr ""
 msgid " - Select vehicle configuration directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:258
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:259
 msgid ""
 "No intermediate parameter files found\n"
 "in current working directory."
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:260
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:261
 msgid ""
 "No intermediate parameter files found\n"
 "in the --vehicle-dir specified directory."
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:269
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:270
 msgid "MyVehicleName"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:288
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:289
 msgid "New vehicle"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:291
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:292
 msgid ""
 "Existing vehicle template directory containing the intermediate\n"
 "parameter files to be copied to the new vehicle configuration directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:295
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:296
 msgid ""
 "Select the existing vehicle template directory containing the intermediate\n"
 "parameter files to be copied to the new vehicle configuration directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:303
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:304
 msgid "Source Template directory:"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:314
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:315
 msgid "Blank component data"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:319
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:320
 msgid "Create a new blank vehicle configuration, with no component data from the template."
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:324
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:325
 msgid "Infer component specifications and FC connections from FC parameters, not from template files"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:329
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:330
 msgid ""
 "When creating a new vehicle configuration, extract component specifications\n"
 "and connection information directly from the connected flight controller\n"
@@ -3024,16 +3024,16 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:336
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:351
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:337
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:352
 msgid "This option is only available when a flight controller is connected."
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:341
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:342
 msgid "Use parameter values from connected FC, not from template files"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:346
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:347
 msgid ""
 "Use the parameter values from the connected flight controller instead of the\n"
 "template files when creating a new vehicle configuration directory from a template.\n"
@@ -3041,125 +3041,135 @@ msgid ""
 "\n"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:356
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:357
 msgid "Blank parameter change reason"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:361
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:362
 msgid "Do not use the parameters change reason from the template."
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:369
-msgid "Existing directory where the new vehicle configuration directory will be created"
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:367
+msgid "Copy vehicle image from template"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:370
-msgid "Select the directory where the new vehicle configuration directory will be created"
-msgstr ""
-
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:375
-msgid "Destination base directory:"
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:372
+msgid ""
+"Copy the vehicle.jpg image file from the template directory to the new vehicle directory\n"
+"if it exists. This image helps identify the vehicle configuration."
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:383
+msgid "Existing directory where the new vehicle configuration directory will be created"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:384
+msgid "Select the directory where the new vehicle configuration directory will be created"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:389
+msgid "Destination base directory:"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:397
 msgid "A new vehicle configuration directory with this name will be created at the (destination) base directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:387
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:401
 msgid "Destination new vehicle name:"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:392
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:406
 msgid "Create vehicle configuration directory from template"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:398
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:412
 msgid ""
 "Create a new vehicle configuration directory on the (destination) base directory,\n"
 "copy the template files from the (source) template directory to it and\n"
 "load the newly created files into the application"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:407
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:421
 msgid "Open vehicle"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:414
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:428
 msgid ""
 "Use an existing vehicle configuration directory with\n"
 "intermediate parameter files, apm.pdef.xml and vehicle_components.json"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:432
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:446
 msgid "Re-Open vehicle"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:440
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:454
 msgid "Last used vehicle configuration directory:"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:442
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:456
 msgid "Last used vehicle configuration directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:455
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:469
 msgid "Open Last Used Vehicle Configuration Directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:464
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:478
 msgid "Directly open the last used vehicle configuration directory for configuring and tuning the vehicle"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:474
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:488
 msgid "Vehicle template directory cannot be empty"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:474
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:477
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:488
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:491
 msgid "Vehicle template directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:477
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:491
 msgid "Vehicle template directory does not exist"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:481
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:495
 msgid "New vehicle name cannot be empty"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:481
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:484
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:490
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:495
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:498
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:504
 msgid "New vehicle directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:484
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:498
 msgid "New vehicle name must not contain invalid characters"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:497
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:514
 msgid "Copying template files"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:541
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:558
 msgid "No Last Vehicle Directory Found"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:542
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:559
 msgid ""
 "No last opened vehicle configuration directory was found.\n"
 "Please select a directory manually."
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:557
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:574
 msgid "This main is for testing and development only. Usually, the VehicleDirectorySelectionWindow is called from another script"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:573
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:590
 msgid "This main is for testing and development only, usually the VehicleDirectorySelectionWindow is called from another script"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:588
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:605
 msgid "No intermediate parameter files found in %s."
 msgstr ""
 
