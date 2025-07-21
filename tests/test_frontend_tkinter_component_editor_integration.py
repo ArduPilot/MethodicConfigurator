@@ -267,7 +267,7 @@ class TestComponentEditorWithMinimalMocking:
     while mocking only the absolute minimum required to avoid UI rendering.
     """
 
-    def test_editor_initialization_process(self, temp_vehicle_dir, root) -> None:  # pylint: disable=unused-argument
+    def test_editor_initialization_process(self, temp_vehicle_dir, root) -> None:
         """
         Test the full initialization process with minimal mocking.
 
@@ -315,7 +315,7 @@ class TestComponentEditorWithMinimalMocking:
             assert isinstance(components, dict)
             assert len(components) > 0
 
-    def test_editor_with_real_data_model(self, temp_vehicle_dir, root) -> None:  # pylint: disable=unused-argument
+    def test_editor_with_real_data_model(self, temp_vehicle_dir, root) -> None:
         """
         Test the editor with a real data model but minimal UI mocking.
 

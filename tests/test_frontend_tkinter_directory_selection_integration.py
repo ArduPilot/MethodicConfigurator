@@ -35,8 +35,8 @@ class WidgetEventTracker:
 
     def __init__(self, widget) -> None:
         self.widget = widget
-        self.events: list[tuple[str, tk.Event[tk.Misc]]] = []
-        self.bindings: dict[str, Callable[[tk.Event[tk.Misc]], None]] = {}
+        self.events: list[tuple[str, tk.Event]] = []
+        self.bindings: dict[str, Callable[[tk.Event], None]] = {}
 
     def bind(self, event_name) -> None:
         """Bind to a widget event."""

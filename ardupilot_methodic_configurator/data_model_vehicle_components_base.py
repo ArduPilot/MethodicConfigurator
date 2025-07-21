@@ -242,7 +242,7 @@ class ComponentDataModelBase:
 
         # Handle legacy battery monitor protocol migration for protocols that don't need hardware connections
         # This is a local import to avoid a circular import dependency
-        from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (  # pylint: disable=import-outside-toplevel # noqa: PLC0415
+        from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (  # pylint: disable=import-outside-toplevel, cyclic-import # noqa: PLC0415
             BATT_MONITOR_CONNECTION,
             OTHER_PORTS,
         )
