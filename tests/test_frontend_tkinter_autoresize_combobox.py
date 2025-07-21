@@ -10,9 +10,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import contextlib
 import tkinter as tk
-from collections.abc import Generator
 from tkinter import ttk
 from unittest.mock import patch
 
@@ -20,36 +18,7 @@ import pytest
 
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox, update_combobox_width
 
-
-@pytest.fixture(scope="session")
-def root() -> Generator[tk.Tk, None, None]:
-    """Create and clean up Tk root window for testing."""
-    # Try to reuse existing root or create new one
-    try:
-        root = tk._default_root  # type: ignore[attr-defined]
-        if root is None:
-            root = tk.Tk()
-    except (AttributeError, tk.TclError):
-        root = tk.Tk()
-
-    root.withdraw()  # Hide the main window during tests
-
-    # Patch the iconphoto method to prevent errors with mock PhotoImage
-    original_iconphoto = root.iconphoto
-
-    def mock_iconphoto(*args, **kwargs) -> None:
-        pass
-
-    root.iconphoto = mock_iconphoto  # type: ignore[method-assign]
-
-    yield root
-
-    # Restore original method and destroy root
-    root.iconphoto = original_iconphoto  # type: ignore[method-assign]
-
-    # Only destroy if we're the last test
-    with contextlib.suppress(tk.TclError):
-        root.quit()  # Close the event loop
+# pylint: disable=redefined-outer-name
 
 
 @pytest.fixture

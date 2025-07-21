@@ -21,7 +21,7 @@ import pytest
 from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, is_within_tolerance
 
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines, too-many-arguments, too-many-positional-arguments
 
 
 class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -1082,7 +1082,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join")
     @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copy2")
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir")
-    def test_copy_vehicle_image_defaults_to_false(self, mock_isdir, mock_copy2, mock_join, mock_listdir, mock_exists) -> None:
+    def test_copy_vehicle_image_defaults_to_false(self, mock_isdir, mock_copy2, mock_join, mock_listdir, mock_exists) -> None:  # pylint: disable=unused-argument
         """
         Vehicle image copying defaults to disabled.
 
@@ -1103,7 +1103,9 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         # Act: Copy template files without specifying copy_vehicle_image
         # (this should cause an error since parameter is required)
         with pytest.raises(TypeError):
-            lfs.copy_template_files_to_new_vehicle_dir("template_dir", "new_vehicle_dir", blank_change_reason=False)
+            lfs.copy_template_files_to_new_vehicle_dir(
+                "template_dir", "new_vehicle_dir", blank_change_reason=False, copy_vehicle_image=False
+            )
 
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")

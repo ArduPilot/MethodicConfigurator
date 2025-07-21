@@ -57,46 +57,46 @@ def root() -> Generator[tk.Tk, None, None]:
     """Create and clean up Tk root window for testing (session-scoped for robustness)."""
     # Try to reuse existing root or create new one
     try:
-        root = tk._default_root  # type: ignore[attr-defined]
-        if root is None:
-            root = tk.Tk()
+        root_instance = tk._default_root  # type: ignore[attr-defined] # pylint: disable=protected-access
+        if root_instance is None:
+            root_instance = tk.Tk()
     except (AttributeError, tk.TclError):
-        root = tk.Tk()
+        root_instance = tk.Tk()
 
-    root.withdraw()  # Hide the main window during tests
+    root_instance.withdraw()  # Hide the main window during tests
 
     # Patch the iconphoto method to prevent errors with mock PhotoImage
-    original_iconphoto = root.iconphoto
+    original_iconphoto = root_instance.iconphoto
 
-    def mock_iconphoto(*args, **kwargs) -> None:
+    def mock_iconphoto(*args, **kwargs) -> None:  # pylint: disable=unused-argument
         pass
 
-    root.iconphoto = mock_iconphoto  # type: ignore[method-assign]
+    root_instance.iconphoto = mock_iconphoto  # type: ignore[method-assign]
 
-    yield root
+    yield root_instance
 
     # Restore original method and destroy root
-    root.iconphoto = original_iconphoto  # type: ignore[method-assign]
+    root_instance.iconphoto = original_iconphoto  # type: ignore[method-assign]
 
     # Only destroy if we're the last test
     with contextlib.suppress(tk.TclError):
-        root.quit()  # Close the event loop
+        root_instance.quit()  # Close the event loop
 
 
 @pytest.fixture
 def tk_root() -> Generator[tk.Tk, None, None]:
     """Provide a real Tkinter root for integration tests (legacy name for compatibility)."""
-    root = None
+    tk_root_instance = None
     try:
-        root = tk.Tk()
-        root.withdraw()
-        yield root
+        tk_root_instance = tk.Tk()
+        tk_root_instance.withdraw()
+        yield tk_root_instance
     except tk.TclError:
         pytest.skip("Tkinter not available in test environment")
     finally:
-        if root is not None:
+        if tk_root_instance is not None:
             with contextlib.suppress(tk.TclError):
-                root.destroy()
+                tk_root_instance.destroy()
 
 
 @pytest.fixture

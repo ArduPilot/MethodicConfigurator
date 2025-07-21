@@ -19,7 +19,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name, too-many-arguments, too-many-positional-arguments, unused-argument
 
 
 @pytest.fixture

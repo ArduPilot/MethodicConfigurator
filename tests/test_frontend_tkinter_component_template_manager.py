@@ -17,8 +17,6 @@ import pytest
 
 from ardupilot_methodic_configurator.frontend_tkinter_component_template_manager import ComponentTemplateManager
 
-# pylint: disable=redefined-outer-name
-
 
 class TestComponentTemplateManager:
     """Test suite for ComponentTemplateManager."""
