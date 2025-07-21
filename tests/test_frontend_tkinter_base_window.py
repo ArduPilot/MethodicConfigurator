@@ -10,7 +10,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import contextlib  # noqa: I001
+import contextlib
 import os
 import tempfile
 import time
@@ -22,10 +22,10 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-from PIL import Image
 
 # Import shared configuration from conftest
 from conftest import MockConfiguration
+from PIL import Image
 
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 
@@ -621,7 +621,7 @@ class TestCompleteWorkflows:
 class TestRealImageIntegration:
     """Test image operations with real files and Tkinter."""
 
-    def test_user_sees_images_loaded_correctly_in_real_environment(self, tk_root, sample_image_file) -> None:
+    def test_user_sees_images_loaded_correctly_in_real_environment(self, root, sample_image_file) -> None:
         """
         User sees images loaded correctly in real environment.
 
@@ -631,7 +631,7 @@ class TestRealImageIntegration:
         """
         try:
             # Arrange: Set up real window and image file
-            window = BaseWindow(tk_root)
+            window = BaseWindow(root)
 
             # Act: User loads real image into the application
             label = window.put_image_in_label(window.main_frame, sample_image_file, image_height=50)
@@ -647,7 +647,7 @@ class TestRealImageIntegration:
                 pytest.skip(f"Tkinter image/display not available in test environment: {e}")
             raise
 
-    def test_user_sees_properly_scaled_images_across_dpi_settings(self, tk_root, sample_image_file) -> None:
+    def test_user_sees_properly_scaled_images_across_dpi_settings(self, root, sample_image_file) -> None:
         """
         User sees properly scaled images across DPI settings.
 
@@ -656,7 +656,7 @@ class TestRealImageIntegration:
         THEN: Should scale images appropriately for good visual experience
         """
         try:  # Arrange: Set up real window environment
-            window = BaseWindow(tk_root)
+            window = BaseWindow(root)
 
             # Test different image heights for various UI contexts
             heights = [25, 50, 100]
@@ -676,7 +676,7 @@ class TestRealImageIntegration:
                 pytest.skip(f"Tkinter image/display not available in test environment: {e}")
             raise
 
-    def test_user_can_load_multiple_images_without_performance_issues(self, tk_root) -> None:
+    def test_user_can_load_multiple_images_without_performance_issues(self, root) -> None:
         """
         User can load multiple images without performance issues.
 
@@ -686,7 +686,7 @@ class TestRealImageIntegration:
         """
         try:
             # Arrange: Set up window and prepare for multiple image loading
-            window = BaseWindow(tk_root)
+            window = BaseWindow(root)
             temp_files = []
             labels = []
 
@@ -866,7 +866,7 @@ class TestWindowPositioningIntegration:
 class TestPerformanceIntegration:
     """Test performance characteristics with real Tkinter operations."""
 
-    def test_user_experiences_responsive_window_creation(self) -> None:
+    def test_user_experiences_responsive_window_creation(self, root) -> None:
         """
         User experiences responsive window creation.
 
@@ -881,7 +881,7 @@ class TestPerformanceIntegration:
         try:
             # Act: User rapidly creates 10 windows (simulating busy workflow)
             for _ in range(10):
-                window = BaseWindow()
+                window = BaseWindow(root)
                 windows.append(window)
 
             creation_time = time.time() - start_time
@@ -899,9 +899,10 @@ class TestPerformanceIntegration:
             # Cleanup: Close all windows
             for window in windows:
                 with contextlib.suppress(tk.TclError):
-                    window.root.destroy()
+                    if hasattr(window, "root") and window.root != root:  # Don't destroy the session root
+                        window.root.destroy()
 
-    def test_user_experiences_smooth_image_loading_performance(self, sample_image_file) -> None:
+    def test_user_experiences_smooth_image_loading_performance(self, root, sample_image_file) -> None:
         """
         User experiences smooth image loading performance.
 
@@ -912,7 +913,7 @@ class TestPerformanceIntegration:
         # Arrange: Prepare for image loading performance test
         window = None
         try:
-            window = BaseWindow()
+            window = BaseWindow(root)
 
             start_time = time.time()
             labels = []
@@ -933,10 +934,8 @@ class TestPerformanceIntegration:
         except tk.TclError:
             pytest.skip("Tkinter display not available")
         finally:
-            # Cleanup: Close window properly
-            if window is not None and hasattr(window, "root"):
-                with contextlib.suppress(tk.TclError):
-                    window.root.destroy()
+            # Cleanup: Don't destroy the session root, it's managed by conftest.py
+            pass
 
 
 if __name__ == "__main__":

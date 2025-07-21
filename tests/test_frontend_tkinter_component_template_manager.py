@@ -17,6 +17,8 @@ import pytest
 
 from ardupilot_methodic_configurator.frontend_tkinter_component_template_manager import ComponentTemplateManager
 
+# pylint: disable=redefined-outer-name
+
 
 class TestComponentTemplateManager:
     """Test suite for ComponentTemplateManager."""
@@ -218,6 +220,13 @@ class TestComponentTemplateManager:
         assert button["width"] == 2
 
     def test_save_component_as_template_no_data(self, template_manager, mock_callbacks) -> None:
+        """
+        Test that saving a component with no data shows an error.
+
+        GIVEN: A component with no data to save
+        WHEN: User attempts to save it as a template
+        THEN: An error message should be displayed and no template should be saved
+        """
         get_data_callback, _, _ = mock_callbacks
         get_data_callback.return_value = {}
 
@@ -226,6 +235,13 @@ class TestComponentTemplateManager:
             mock_error.assert_called_once()
 
     def test_apply_template_missing_keys(self, template_manager, entry_widgets, mock_callbacks) -> None:
+        """
+        Test applying a template that doesn't contain all required keys.
+
+        GIVEN: A template with incomplete data for a component
+        WHEN: User applies the template to the component
+        THEN: Only matching fields should be updated and other fields remain unchanged
+        """
         _, update_callback, _ = mock_callbacks  # pylint: disable=unused-variable
         template = {"name": "Incomplete", "data": {"SomeOtherField": "value"}}
 
