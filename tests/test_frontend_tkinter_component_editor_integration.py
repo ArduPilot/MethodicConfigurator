@@ -265,21 +265,16 @@ class TestComponentEditorWithMinimalMocking:
 
     These tests focus on verifying the integration of multiple classes
     while mocking only the absolute minimum required to avoid UI rendering.
-
-    NOTE: These tests are currently skipped due to issues with tkinter
-    initialization in test environments.
     """
 
-    @pytest.fixture
-    def minimal_mock_setup(self) -> Generator[None, None, None]:
-        """Set up minimal mocks required to avoid actual window rendering."""
-        # Only mock the actual window creation parts of tkinter
-        with patch("tkinter.Tk"), patch("tkinter.Toplevel"), patch("tkinter.PhotoImage"), patch("PIL.ImageTk.PhotoImage"):
-            yield
+    def test_editor_initialization_process(self, temp_vehicle_dir, root) -> None:  # pylint: disable=unused-argument
+        """
+        Test the full initialization process with minimal mocking.
 
-    @pytest.mark.skip(reason="Tkinter initialization issues in test environment")
-    def test_editor_initialization_process(self, temp_vehicle_dir, minimal_mock_setup) -> None:  # pylint: disable=unused-argument
-        """Test the full initialization process with minimal mocking."""
+        GIVEN: A temporary vehicle directory with realistic test data
+        WHEN: Creating a ComponentEditorWindow with minimal UI mocking
+        THEN: The editor should initialize properly with real filesystem and data model
+        """
         # Use a real filesystem with temporary directory
         filesystem = LocalFilesystem(
             vehicle_dir=temp_vehicle_dir,
@@ -289,19 +284,19 @@ class TestComponentEditorWithMinimalMocking:
             save_component_to_system_templates=False,
         )
 
-        # Mock _create_scroll_frame to avoid UI rendering but capture the call
+        # Mock only the UI rendering parts, use the real root from conftest.py
         with (
             patch.object(ComponentEditorWindow, "_create_scroll_frame") as mock_scroll_frame,
             patch.object(ComponentEditorWindow, "_create_intro_frame") as mock_intro_frame,
             patch.object(ComponentEditorWindow, "_create_save_frame") as mock_save_frame,
-            patch.object(ComponentEditorWindow, "populate_frames") as mock_populate_frames,
-            patch("tkinter.Tk"),
-            patch("tkinter.Toplevel"),
             patch("tkinter.PhotoImage"),
             patch("PIL.ImageTk.PhotoImage"),
         ):
             # Create the editor with real filesystem and data model
             editor = ComponentEditorWindow("1.0.0", filesystem)
+
+            # Use the real root from conftest.py
+            editor.root = root
 
             # Check editor has been properly initialized
             assert editor.version == "1.0.0"
@@ -314,11 +309,20 @@ class TestComponentEditorWithMinimalMocking:
             assert mock_scroll_frame.called
             assert mock_intro_frame.called
             assert mock_save_frame.called
-            assert mock_populate_frames.called
 
-    @pytest.mark.skip(reason="Tkinter initialization issues in test environment")
-    def test_editor_with_real_data_model(self, temp_vehicle_dir, minimal_mock_setup) -> None:  # pylint: disable=unused-argument
-        """Test the editor with a real data model but minimal UI mocking."""
+            # Test that we can access the data model functionality
+            components = editor.data_model.get_all_components()
+            assert isinstance(components, dict)
+            assert len(components) > 0
+
+    def test_editor_with_real_data_model(self, temp_vehicle_dir, root) -> None:  # pylint: disable=unused-argument
+        """
+        Test the editor with a real data model but minimal UI mocking.
+
+        GIVEN: A realistic vehicle data model and minimal UI mocking
+        WHEN: Creating and using a ComponentEditorWindow
+        THEN: The editor should work with real data validation and processing
+        """
         # Use a real filesystem with temporary directory
         filesystem = LocalFilesystem(
             vehicle_dir=temp_vehicle_dir,
@@ -333,18 +337,16 @@ class TestComponentEditorWithMinimalMocking:
         component_datatypes = schema.get_all_value_datatypes()
         data_model = ComponentDataModel(REALISTIC_VEHICLE_DATA, component_datatypes, schema)
 
-        # Bypass UI initialization but use real data model
+        # Bypass UI initialization but use real data model and real root
         with (
             patch.object(ComponentEditorWindow, "_initialize_ui"),
-            patch("tkinter.Tk"),
-            patch("tkinter.Toplevel"),
             patch("tkinter.PhotoImage"),
             patch("PIL.ImageTk.PhotoImage"),
         ):
             # Initialize with existing data_model using dependency injection
             editor = ComponentEditorWindow("1.0.0", filesystem)
             editor.data_model = data_model  # Override the data model
-            editor.root = MagicMock()
+            editor.root = root  # Use the real root from conftest.py
 
             # Test data model integration
             assert editor.data_model is data_model
@@ -358,15 +360,17 @@ class TestComponentEditorWithMinimalMocking:
             cells = editor.data_model.get_component_value(("Battery", "Specifications", "Number of cells"))
 
             assert chemistry == "Lipo"
-            assert cells == "4"
+            assert cells == 4  # Data model should convert to proper type (int)
 
             # Verify default voltage values were set for Lipo
             max_cell_voltage = editor.data_model.get_component_value(("Battery", "Specifications", "Volt per cell max"))
             if isinstance(max_cell_voltage, (str, float)):
                 assert float(max_cell_voltage) == pytest.approx(4.2)
 
-            # Skip the validation test as it requires proper mocking of entry_widgets
-            # The validation is tested properly in other test files
+            # Test that the editor can process real component data
+            components = editor.data_model.get_all_components()
+            assert len(components) > 0
+            assert "Components" in editor.data_model.get_component_data()
 
 
 if __name__ == "__main__":
