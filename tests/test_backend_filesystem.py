@@ -16,8 +16,6 @@ from os import path as os_path
 from subprocess import SubprocessError
 from unittest.mock import MagicMock, mock_open, patch
 
-import pytest
-
 from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, is_within_tolerance
 
@@ -1082,13 +1080,13 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join")
     @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copy2")
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir")
-    def test_copy_vehicle_image_defaults_to_false(self, mock_isdir, mock_copy2, mock_join, mock_listdir, mock_exists) -> None:  # pylint: disable=unused-argument
+    def test_copy_vehicle_image_defaults_to_false(self, mock_isdir, mock_copy2, mock_join, mock_listdir, mock_exists) -> None:
         """
         Vehicle image copying defaults to disabled.
 
         GIVEN: A template directory containing a vehicle.jpg file
-        WHEN: The user creates a new vehicle without specifying copy_vehicle_image parameter
-        THEN: The vehicle.jpg file should not be copied by default
+        WHEN: The user creates a new vehicle with copy_vehicle_image=False
+        THEN: The vehicle.jpg file should not be copied
         """
         # Arrange: Set up template directory with vehicle.jpg
         mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
@@ -1100,12 +1098,21 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
             "vehicle_dir", "vehicle_type", "", allow_editing_template_files=False, save_component_to_system_templates=False
         )
 
-        # Act: Copy template files without specifying copy_vehicle_image
-        # (this should cause an error since parameter is required)
-        with pytest.raises(TypeError):
-            lfs.copy_template_files_to_new_vehicle_dir(
-                "template_dir", "new_vehicle_dir", blank_change_reason=False, copy_vehicle_image=False
-            )
+        # Act: Copy template files with copy_vehicle_image=False
+        result = lfs.copy_template_files_to_new_vehicle_dir(
+            "template_dir", "new_vehicle_dir", blank_change_reason=False, copy_vehicle_image=False
+        )
+
+        # Assert: No error and vehicle image should not be copied
+        assert result == ""  # No error
+
+        # Verify vehicle.jpg was NOT copied
+        copy_calls = [call.args for call in mock_copy2.call_args_list]
+        vehicle_jpg_calls = [call for call in copy_calls if "vehicle.jpg" in str(call)]
+        assert len(vehicle_jpg_calls) == 0, "vehicle.jpg should not be copied when copy_vehicle_image=False"
+
+        # Verify other files were copied
+        mock_copy2.assert_any_call("template_dir/config.param", "new_vehicle_dir/config.param")
 
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")
@@ -1129,7 +1136,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         mock_isdir.return_value = False
 
         lfs = LocalFilesystem(
-            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+            "vehicle_dir", "vehicle_type", "", allow_editing_template_files=False, save_component_to_system_templates=False
         )
 
         # Act: Copy template files with copy_vehicle_image=True (but no vehicle.jpg exists)
@@ -1146,7 +1153,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
 def test_merge_forced_or_derived_parameters_comprehensive() -> None:
     """Test merge_forced_or_derived_parameters with various scenarios."""
     lfs = LocalFilesystem(
-        "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        "vehicle_dir", "vehicle_type", "", allow_editing_template_files=False, save_component_to_system_templates=False
     )
     test_file = "test_file"
 
@@ -1214,7 +1221,7 @@ def test_merge_forced_or_derived_parameters_comprehensive() -> None:
 def test_merge_forced_or_derived_parameters_none_parameters() -> None:
     """Test merge_forced_or_derived_parameters handles None parameters."""
     lfs = LocalFilesystem(
-        "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        "vehicle_dir", "vehicle_type", "", allow_editing_template_files=False, save_component_to_system_templates=False
     )
     test_file = "test.json"
     lfs.file_parameters = {test_file: {}}  # Test with empty dict instead of None (None is not valid type)
