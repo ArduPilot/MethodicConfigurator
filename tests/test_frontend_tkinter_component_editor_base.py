@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from argparse import ArgumentParser
+from collections.abc import Generator
 from tkinter import ttk
 from typing import Union, get_args, get_origin
 from unittest.mock import MagicMock, patch
@@ -34,13 +35,13 @@ from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base impo
 # pylint: disable=protected-access, too-many-lines, redefined-outer-name, unused-argument, too-few-public-methods
 
 
-def setup_common_editor_mocks(editor) -> ComponentEditorWindowBase:
+def setup_common_editor_mocks(editor, root=None) -> ComponentEditorWindowBase:
     """Set up common mock attributes and methods for editor fixtures."""
     # Set up all required attributes manually
-    editor.root = MagicMock()
-    editor.main_frame = MagicMock()
+    editor.root = root if root is not None else MagicMock()
+    editor.main_frame = ttk.Frame(editor.root) if root is not None else MagicMock()
     editor.scroll_frame = MagicMock()
-    editor.scroll_frame.view_port = MagicMock()
+    editor.scroll_frame.view_port = ttk.Frame(editor.root) if root is not None else MagicMock()
     editor.version = "1.0.0"
 
     # Mock filesystem and methods with proper schema loading
@@ -125,14 +126,14 @@ class SharedTestArgumentParser:
 
 
 @pytest.fixture
-def editor_with_mocked_root() -> ComponentEditorWindowBase:
+def editor_with_mocked_root(root) -> Generator[ComponentEditorWindowBase, None, None]:
     """Create a mock ComponentEditorWindowBase for testing."""
     # Create the class without initialization
     with patch.object(ComponentEditorWindowBase, "__init__", return_value=None):
         editor = ComponentEditorWindowBase()  # pylint: disable=no-value-for-parameter
 
-        # Set up common mocks and helper methods
-        setup_common_editor_mocks(editor)
+        # Set up common mocks and helper methods with real root
+        setup_common_editor_mocks(editor, root)
         add_editor_helper_methods(editor)
 
         yield editor
@@ -1046,7 +1047,6 @@ class TestUIInitializationWorkflows:
         mock_intro_frame = MagicMock()
         mock_frame_class.return_value = mock_intro_frame
 
-        # Mock the methods that would be called
         editor_for_ui_tests._add_explanation_text = MagicMock()
         editor_for_ui_tests._add_vehicle_image = MagicMock()
 
