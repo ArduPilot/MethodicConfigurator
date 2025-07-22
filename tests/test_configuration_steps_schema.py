@@ -13,8 +13,10 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import fnmatch
 import json
 import os
+import subprocess
 
 import pytest
 from jsonschema import ValidationError, exceptions, validate, validators
@@ -51,7 +53,21 @@ def find_json_files(directory) -> list[str]:
     return json_files
 
 
-@pytest.mark.parametrize("json_file", find_json_files("."))
+def git_tracked_json_files() -> list[str]:
+    """Find all git tracked configuration_steps_*.json files in the repository."""
+    try:
+        files = subprocess.check_output(["git", "ls-files"], encoding="utf-8").splitlines()  # noqa: S607
+        return [
+            f
+            for f in files
+            if fnmatch.fnmatch(os.path.basename(f), "configuration_steps_*.json")
+            and os.path.basename(f) != "configuration_steps_schema.json"
+        ]
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return find_json_files(".")
+
+
+@pytest.mark.parametrize("json_file", git_tracked_json_files())
 def test_json_schema(json_file) -> None:
     """Test that the JSON files conform to the predefined schema."""
     with open(json_file, encoding="utf-8") as file:
