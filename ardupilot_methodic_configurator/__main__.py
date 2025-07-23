@@ -166,7 +166,7 @@ def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None
 
     # Get default parameter values from flight controller
     if state.flight_controller.master is not None or state.args.device == "test":
-        fciw = FlightControllerInfoWindow(state.flight_controller)
+        fciw = FlightControllerInfoWindow(state.flight_controller, show_window=False)
         state.param_default_values = fciw.get_param_default_values()
 
     # Initialize local filesystem
@@ -316,6 +316,16 @@ def component_editor(state: ApplicationState) -> None:
         SystemExit: If there's an error in derived parameters
 
     """
+    # Handle skip component editor option early to avoid window creation
+    should_skip_editor = state.args.skip_component_editor and not (
+        state.vehicle_dir_window
+        and state.vehicle_dir_window.configuration_template
+        and state.vehicle_dir_window.blank_component_data.get()
+    )
+    if should_skip_editor:
+        # Skip creating the window entirely to avoid shuttering
+        return
+
     # Create and configure the component editor window
     component_editor_window = create_and_configure_component_editor(
         __version__,
@@ -325,15 +335,7 @@ def component_editor(state: ApplicationState) -> None:
         state.vehicle_dir_window,
     )
 
-    # Handle skip component editor option
-    should_skip_editor = state.args.skip_component_editor and not (
-        state.vehicle_dir_window
-        and state.vehicle_dir_window.configuration_template
-        and state.vehicle_dir_window.blank_component_data.get()
-    )
-    if should_skip_editor:
-        component_editor_window.root.after(10, component_editor_window.root.destroy)
-    elif should_open_firmware_documentation(state.flight_controller):
+    if should_open_firmware_documentation(state.flight_controller):
         open_firmware_documentation(state.flight_controller.info.firmware_type)
 
     # Run the GUI
