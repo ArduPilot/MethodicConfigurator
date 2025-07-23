@@ -180,10 +180,13 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def _create_motor_buttons(self, parent: Union[Frame, ttk.Frame]) -> None:
         """Create the motor test buttons and detection comboboxes."""
-        for i in range(self.model.get_motor_count()):
-            motor_label = self.model.get_motor_labels()[i]
-            motor_number = self.model.get_motor_numbers()[i]
-            motor_direction = self.model.get_motor_directions()[i]
+        motor_labels = self.model.motor_labels
+        motor_numbers = self.model.motor_numbers
+        motor_directions = self.model.motor_directions
+        for i in range(self.model.motor_count):
+            motor_label = motor_labels[i]
+            motor_number = motor_numbers[i]
+            motor_direction = motor_directions[i]
 
             motor_frame = ttk.Frame(parent)
             motor_frame.grid(row=i // 4, column=i % 4, padx=10, pady=5)
@@ -205,7 +208,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             info_label.pack()
 
             ttk.Label(motor_frame, text=_("Detected:")).pack()
-            combo = ttk.Combobox(motor_frame, values=self.model.get_motor_labels(), width=5)
+            combo = ttk.Combobox(motor_frame, values=self.model.motor_labels, width=5)
             combo.pack()
             self.detected_comboboxes.append(combo)
 
@@ -257,7 +260,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
     def _update_motor_buttons_layout(self) -> None:
         """Re-create motor buttons if motor count changes."""
         current_count = len(self.motor_buttons)
-        required_count = self.model.get_motor_count()
+        required_count = self.model.motor_count
 
         if current_count != required_count:
             # Clear existing widgets
