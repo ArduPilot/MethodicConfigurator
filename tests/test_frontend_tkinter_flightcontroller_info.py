@@ -383,3 +383,35 @@ class TestFlightControllerInfoWindow:
                 mock_ttk_frame.pack.assert_called_once()
                 mock_ttk_frame.columnconfigure.assert_called_once_with(1, weight=1)
                 configured_flight_controller.info.get_info.assert_called_once()
+
+    def test_user_can_download_parameters_without_showing_window(
+        self, configured_flight_controller: Mock
+    ) -> None:
+        """
+        Test that users can download parameters in background without UI disruption.
+
+        GIVEN: A flight controller with downloadable parameters
+        WHEN: A user creates a FlightControllerInfoWindow with show_window=False
+        THEN: Parameters are downloaded without displaying a window interface
+        """
+        # Given - Configure the mock to return sample parameters
+        configured_flight_controller.download_params.return_value = (
+            {"FC_PARAM1": 1.0, "FC_PARAM2": 2.5},
+            {"PARAM1": Par(1.0, "test parameter 1"), "PARAM2": Par(2.5, "test parameter 2")},
+        )
+
+        # When - Create window in background mode
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info.BaseWindow.__init__"),
+            patch("tkinter.Tk"),
+            patch("tkinter.Toplevel"),
+            patch("tkinter.ttk.Frame"),
+        ):
+            window = FlightControllerInfoWindow(configured_flight_controller, show_window=False)
+
+            # Then - Parameters are downloaded without GUI creation
+            param_defaults = window.get_param_default_values()
+            assert param_defaults is not None
+            assert isinstance(param_defaults, dict)
+            assert "PARAM1" in param_defaults
+            configured_flight_controller.download_params.assert_called_once()
