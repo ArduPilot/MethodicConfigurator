@@ -63,19 +63,23 @@ class FlightControllerInfoPresenter:
 class FlightControllerInfoWindow(BaseWindow):
     """Display flight controller hardware, firmware and parameter information."""
 
-    def __init__(self, flight_controller: FlightController) -> None:
-        super().__init__()
-        self.root.title(_("ArduPilot methodic configurator ") + __version__ + _(" - Flight Controller Info"))
-        self.root.geometry("500x350")  # Adjust the window size as needed
-
+    def __init__(self, flight_controller: FlightController, show_window: bool = True) -> None:
         self.presenter = FlightControllerInfoPresenter(flight_controller)
-
-        self._create_info_display()
         self.presenter.log_flight_controller_info()
+        
+        if show_window:
+            super().__init__()
+            self.root.title(_("ArduPilot methodic configurator ") + __version__ + _(" - Flight Controller Info"))
+            self.root.geometry("500x350")  # Adjust the window size as needed
 
-        # Schedule parameter download after UI is ready
-        self.root.after(50, self._download_flight_controller_parameters)
-        self.root.mainloop()
+            self._create_info_display()
+
+            # Schedule parameter download after UI is ready
+            self.root.after(50, self._download_flight_controller_parameters)
+            self.root.mainloop()
+        else:
+            # Download parameters without showing window
+            self._download_flight_controller_parameters_no_window()
 
     def _create_info_display(self) -> None:
         """Create the flight controller information display."""
@@ -119,6 +123,14 @@ class FlightControllerInfoWindow(BaseWindow):
         finally:
             param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
             self.root.destroy()
+
+    def _download_flight_controller_parameters_no_window(self) -> None:
+        """Download flight controller parameters without showing progress window."""
+        try:
+            self.presenter.download_parameters()
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Log the error
+            logging.error("Failed to download parameters: %s", e)
 
     def get_param_default_values(self) -> dict[str, Par]:
         """Get parameter default values from the presenter."""

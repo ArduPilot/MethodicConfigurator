@@ -284,6 +284,7 @@ class TestFlightControllerConnection:
             assert application_state.local_filesystem is mock_local_filesystem
             assert application_state.param_default_values == default_params
             assert application_state.param_default_values_dirty is True
+            mock_fc_window.assert_called_once_with(mock_flight_controller, show_window=False)
 
     def test_user_can_work_in_simulation_mode(self, application_state: ApplicationState) -> None:
         """
@@ -318,7 +319,7 @@ class TestFlightControllerConnection:
             # Assert: Simulation mode works
             assert application_state.flight_controller is mock_fc
             assert application_state.vehicle_type == "ArduCopter"
-            mock_fc_window.assert_called_once_with(mock_fc)
+            mock_fc_window.assert_called_once_with(mock_fc, show_window=False)
 
     def test_user_receives_clear_error_when_configuration_invalid(self, application_state: ApplicationState) -> None:
         """
@@ -1139,7 +1140,7 @@ class TestComponentEditorIntegration:
 
         GIVEN: User wants to skip component editor
         WHEN: Component editor workflow runs
-        THEN: GUI should close automatically without user interaction
+        THEN: Window creation should be skipped entirely to prevent shuttering
         """
         # Note: component_editor is already imported at the top of the file
 
@@ -1157,15 +1158,11 @@ class TestComponentEditorIntegration:
         application_state.local_filesystem = mock_filesystem
 
         with patch("ardupilot_methodic_configurator.__main__.create_and_configure_component_editor") as mock_create:
-            mock_window = MagicMock()
-            mock_create.return_value = mock_window
-
             # Act: Run component editor with skip
             component_editor(application_state)
 
-            # Assert: Window configured to auto-close
-            mock_window.root.after.assert_called_once_with(10, mock_window.root.destroy)
-            mock_window.root.mainloop.assert_called_once()
+            # Assert: Window creation is skipped entirely (no shuttering)
+            mock_create.assert_not_called()
 
     def test_component_editor_workflow_with_documentation(self, application_state: ApplicationState) -> None:
         """
