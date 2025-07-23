@@ -60,6 +60,9 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         self._frame_class: int = 0  # Default to invalid
         self._frame_type: int = 0  # Default to invalid
         self._motor_count: int = 0  # Default to invalid
+        self._motor_labels: list[str] = []  # default to empty
+        self._motor_numbers: list[int] = []  # default to empty
+        self._motor_directions: list[str] = []  # default to empty
         self._frame_layout: dict[str, Any] = {}  # default to empty
         self._got_battery_status = False
 
@@ -91,6 +94,14 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                     if layout["Class"] == self._frame_class and layout["Type"] == self._frame_type and "motors" in layout:
                         self._frame_layout = layout
                         self._motor_count = len(layout["motors"])
+                        self._motor_labels = [chr(ord("A") + i) for i in range(self._motor_count)]
+                        self._motor_numbers: list[int] = [0] * self._motor_count
+                        self._motor_directions: list[str] = [""] * self._motor_count
+                        for motor in self._frame_layout.get("motors", []):
+                            test_order = motor.get("TestOrder")
+                            if test_order and 1 <= test_order <= self._motor_count:
+                                self._motor_numbers[test_order - 1] = motor.get("Number")
+                                self._motor_directions[test_order - 1] = motor.get("Rotation")
                         break
             if self._motor_count == 0:
                 raise RuntimeError(
@@ -153,61 +164,25 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         """Get the current frame type."""
         return self._frame_type
 
-    def get_motor_count(self) -> int:
-        """
-        Get the number of motors for the current frame configuration.
-
-        Returns:
-            int: Number of motors
-
-        """
+    @property
+    def motor_count(self) -> int:
+        """Get the number of motors for the current frame configuration."""
         return self._motor_count
 
-    def get_motor_labels(self) -> list[str]:
-        """
-        Generate motor labels (A, B, C, D, etc.) based on motor count.
+    @property
+    def motor_labels(self) -> list[str]:
+        """Get motor labels (A, B, C, D, etc.) based on motor count."""
+        return self._motor_labels
 
-        Returns:
-            list[str]: List of motor labels
+    @property
+    def motor_numbers(self) -> list[int]:
+        """Get motor numbers in test order (1, 4, 3, 2, etc.)."""
+        return self._motor_numbers
 
-        """
-        return [chr(ord("A") + i) for i in range(self._motor_count)]
-
-    def get_motor_numbers(self) -> list[int]:
-        """
-        Get motor numbers in test order (1, 4, 3, 2, etc.).
-
-        Returns:
-            list[int]: List of motor numbers (1-based) in their test order
-
-        """
-        motor_numbers: list[int] = [0] * self._motor_count
-        if self._frame_layout:
-            for motor in self._frame_layout.get("motors", []):
-                test_order = motor.get("TestOrder")
-                if test_order and 1 <= test_order <= self._motor_count:
-                    motor_numbers[test_order - 1] = motor.get("Number")
-            return motor_numbers
-        err_msg = _("No Frame layout found, not possible to generate motor test order")
-        raise ValueError(err_msg)
-
-    def get_motor_directions(self) -> list[str]:
-        """
-        Get expected motor rotation directions based on frame configuration.
-
-        Returns:
-            list[str]: List of motor directions ("CW" or "CCW")
-
-        """
-        motor_directions: list[str] = [""] * self._motor_count
-        if self._frame_layout:
-            for motor in self._frame_layout.get("motors", []):
-                test_order = motor.get("TestOrder")
-                if test_order and 1 <= test_order <= self._motor_count:
-                    motor_directions[test_order - 1] = motor.get("Rotation")
-            return motor_directions
-        err_msg = _("No Frame layout found, not possible to generate motor test rotation order")
-        raise ValueError(err_msg)
+    @property
+    def motor_directions(self) -> list[str]:
+        """Get expected motor rotation directions based on frame configuration."""
+        return self._motor_directions
 
     def is_battery_monitoring_enabled(self) -> bool:
         """
@@ -462,7 +437,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             return False, safety_reason
 
         # Execute sequential test
-        return self.flight_controller.test_motors_in_sequence(self.get_motor_count(), throttle_percent, timeout_seconds)
+        return self.flight_controller.test_motors_in_sequence(self.motor_count, throttle_percent, timeout_seconds)
 
     def stop_all_motors(self) -> tuple[bool, str]:
         """
