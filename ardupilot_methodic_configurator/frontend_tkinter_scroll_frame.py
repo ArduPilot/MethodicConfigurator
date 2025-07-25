@@ -30,7 +30,7 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         super().__init__(master)  # create a frame (self)
 
         # place canvas on self, copy ttk.background to tk.background
-        self.canvas = tk.Canvas(self, borderwidth=0, background=ttk.Style(master).lookup("TFrame", "background"))
+        self.canvas = tk.Canvas(self, borderwidth=0, background=ttk.Style(master).lookup("TFrame", "background"))  # type: ignore[no-untyped-call]
 
         # place a frame on the canvas, this frame will hold the child widgets
         self.view_port = ttk.Frame(self.canvas)

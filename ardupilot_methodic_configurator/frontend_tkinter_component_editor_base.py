@@ -153,13 +153,13 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
     def _setup_styles(self) -> None:
         """Configure the styles for UI elements."""
         style = ttk.Style()
-        style.configure("bigger.TLabel", font=("TkDefaultFont", 13))
-        style.configure("comb_input_invalid.TCombobox", fieldbackground="red")
-        style.configure("comb_input_valid.TCombobox", fieldbackground="white")
-        style.configure("entry_input_invalid.TEntry", fieldbackground="red")
-        style.configure("entry_input_valid.TEntry", fieldbackground="white")
-        style.configure("Optional.TLabelframe", borderwidth=2)
-        style.configure("Optional.TLabelframe.Label", foreground="gray")
+        style.configure("bigger.TLabel", font=("TkDefaultFont", 13))  # type: ignore[no-untyped-call]
+        style.configure("comb_input_invalid.TCombobox", fieldbackground="red")  # type: ignore[no-untyped-call]
+        style.configure("comb_input_valid.TCombobox", fieldbackground="white")  # type: ignore[no-untyped-call]
+        style.configure("entry_input_invalid.TEntry", fieldbackground="red")  # type: ignore[no-untyped-call]
+        style.configure("entry_input_valid.TEntry", fieldbackground="white")  # type: ignore[no-untyped-call]
+        style.configure("Optional.TLabelframe", borderwidth=2)  # type: ignore[no-untyped-call]
+        style.configure("Optional.TLabelframe.Label", foreground="gray")  # type: ignore[no-untyped-call]
 
     def _create_intro_frame(self) -> None:
         """Create the introduction frame with explanations and image."""
@@ -294,7 +294,11 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         style = ttk.Style()
 
         instructions_text = RichText(
-            usage_popup_window.main_frame, wrap=tk.WORD, height=5, bd=0, background=style.lookup("TLabel", "background")
+            usage_popup_window.main_frame,
+            wrap=tk.WORD,
+            height=5,
+            bd=0,
+            background=style.lookup("TLabel", "background"),  # type: ignore[no-untyped-call]
         )
         instructions_text.insert(tk.END, _("1. Describe the properties of the vehicle components in the window below.\n"))
         instructions_text.insert(tk.END, _("2. Each field has mouse-over tooltips for additional guidance.\n"))

@@ -135,7 +135,7 @@ class BaseWindow:
 
         # Create custom styles with DPI-aware font sizes
         bold_font_size = self.calculate_scaled_font_size(8)
-        style.configure("Bold.TLabel", font=("TkDefaultFont", bold_font_size, "bold"))
+        style.configure("Bold.TLabel", font=("TkDefaultFont", bold_font_size, "bold"))  # type: ignore[no-untyped-call]
 
     def _get_dpi_scaling_factor(self) -> float:
         """
