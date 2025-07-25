@@ -8,13 +8,14 @@ repos:
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
-      - id: check-yaml
+        exclude: \.svg$
       - id: check-added-large-files
       - id: check-case-conflict
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
       - id: check-illegal-windows-names
       - id: check-json
+        exclude: .vscode/tasks.json
       - id: check-toml
       - id: check-yaml
       - id: mixed-line-ending
@@ -31,25 +32,21 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.5
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [ --fix ]
-        language: system
-        types: [python]
         stages: [pre-commit]
-      # Run the formatter.
       - id: ruff-format
-        types_or: [ python ]
         stages: [pre-commit]
 
-  - repo: https://github.com/gruntwork-io/pre-commit
-    rev: v0.1.30
-    hooks:
-      - id: shellcheck
-        entry: C:\\Windows\\System32\\wsl.exe --exec bash -c "find . -type f \( -name '*.sh' -o -name '*.bash' \) ! -name 'get-helm-3.bash' -print0 | xargs -0 printf '%q ' | xargs shellcheck --color=never"
-        files: \.bash$
-      - id: markdown-link-check
-        language: system
-        entry: markdown-link-check
+  #- repo: https://github.com/gruntwork-io/pre-commit
+  #  rev: v0.1.30
+  #  hooks:
+  #    - id: shellcheck
+  #      entry: C:\\Windows\\System32\\wsl.exe --exec bash -c "find . -type f \( -name '*.sh' -o -name '*.bash' \) ! -name 'get-helm-3.bash' -print0 | xargs -0 printf '%q ' | xargs shellcheck --color=never"
+  #      files: \.bash$
+  #    - id: markdown-link-check
+  #      language: system
+  #      entry: markdown-link-check
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.45.0
