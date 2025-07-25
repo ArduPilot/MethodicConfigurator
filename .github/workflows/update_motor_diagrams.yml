@@ -79,10 +79,10 @@ jobs:
           commit-message: "chore(images): Updated ArduPilot motor diagram SVG files"
           body: |
             This PR updates the ArduPilot motor diagram SVG files from the upstream ArduPilot documentation.
-            
+
             Changes include:
             - Updated motor diagram SVG files from https://ardupilot.org/copter/docs/connect-escs-and-motors.html
             - Ensures diagrams are current with latest ArduPilot documentation
-            
+
             These diagrams are used in the Motor Test sub-application to help users understand correct motor order and rotation.
           delete-branch: true

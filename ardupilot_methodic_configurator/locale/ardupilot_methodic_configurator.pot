@@ -4790,4 +4790,3 @@ msgstr ""
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr ""
-

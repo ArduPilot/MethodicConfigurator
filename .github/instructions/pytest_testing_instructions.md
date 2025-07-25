@@ -47,9 +47,9 @@ def test_descriptive_behavior_name(self, fixture_name) -> None:
     THEN: Expected outcomes and assertions
     """
     # Arrange (Given): Set up test data and mocks
-    
+
     # Act (When): Execute the behavior being tested
-    
+
     # Assert (Then): Verify expected outcomes
 ```
 
@@ -64,14 +64,14 @@ Create reusable fixtures that eliminate code duplication:
 def mock_vehicle_provider() -> MagicMock:
     """Fixture providing a mock vehicle components provider with realistic test data."""
     provider = MagicMock()
-    
+
     # Create properly structured mock data matching real object interfaces
     template_1 = MagicMock()
     template_1.attributes.return_value = ["name", "fc", "gnss"]
     template_1.name = "QuadCopter X"
-    template_1.fc = "Pixhawk 6C" 
+    template_1.fc = "Pixhawk 6C"
     template_1.gnss = "Here3+"
-    
+
     provider.get_vehicle_components_overviews.return_value = {
         "Copter/QuadX": template_1,
     }
@@ -105,11 +105,11 @@ def configured_window(mock_vehicle_provider) -> ComponentWindow:
 ```python
 class TestUserWorkflow:
     """Test complete user workflows and interactions."""
-    
+
     def test_user_can_complete_primary_task(self, configured_window) -> None:
         """
         User can successfully complete the primary workflow.
-        
+
         GIVEN: A user opens the application
         WHEN: They follow the standard workflow
         THEN: They should achieve their goal without errors
@@ -179,8 +179,8 @@ def test_template_selection(self) -> None:
 # Use template_overview_window_setup fixture for complex UI mocking
 def test_ui_behavior(self, template_overview_window_setup) -> None:
     """Test UI behavior without full window creation."""
-    
-# Use template_window fixture for component testing  
+
+# Use template_window fixture for component testing
 def test_component_behavior(self, template_window) -> None:
     """Test component behavior with configured window."""
 ```
@@ -191,7 +191,7 @@ def test_component_behavior(self, template_window) -> None:
 # Use minimal mocking for business logic
 def test_business_logic(self, mock_data_provider) -> None:
     """Test core logic with realistic data."""
-    
+
 # Mock only external dependencies
 @patch('module.external_api_call')
 def test_integration_behavior(self, mock_api) -> None:
@@ -203,7 +203,7 @@ def test_integration_behavior(self, mock_api) -> None:
 ### Required Test Types
 
 1. **User Workflow Tests** - Complete user journeys
-2. **Component Behavior Tests** - Individual component functionality  
+2. **Component Behavior Tests** - Individual component functionality
 3. **Error Handling Tests** - Graceful failure scenarios
 4. **Integration Tests** - Component interaction validation
 5. **Edge Case Tests** - Boundary conditions and unusual inputs
@@ -213,7 +213,7 @@ def test_integration_behavior(self, mock_api) -> None:
 ```text
 tests/
 ├── test_frontend_tkinter_component.py      # UI component tests
-├── test_backend_logic.py                   # Business logic tests  
+├── test_backend_logic.py                   # Business logic tests
 ├── test_integration_workflows.py           # End-to-end scenarios
 └── conftest.py                             # Shared fixtures
 ```
@@ -242,11 +242,11 @@ tests/
 ```python
 class TestTemplateSelection:
     """Test user template selection workflows."""
-    
+
     def test_user_can_select_template_by_double_clicking(self, template_window) -> None:
         """
         User can select a vehicle template by double-clicking on the tree item.
-        
+
         GIVEN: A user views available vehicle templates
         WHEN: They double-click on a specific template row
         THEN: The template should be selected and stored
@@ -255,19 +255,19 @@ class TestTemplateSelection:
         # Arrange: Configure template selection behavior
         template_window.tree.identify_row.return_value = "template_item"
         template_window.tree.item.return_value = {"text": "Copter/QuadX"}
-        
+
         # Act: User double-clicks on template
         mock_event = MagicMock(y=100)
         template_window._on_row_double_click(mock_event)
-        
+
         # Assert: Template selected and workflow completed
         template_window.program_settings_provider.store_template_dir.assert_called_once_with("Copter/QuadX")
         template_window.root.destroy.assert_called_once()
-    
+
     def test_user_sees_visual_feedback_during_selection(self, template_window) -> None:
         """
         User receives immediate visual feedback when selecting templates.
-        
+
         GIVEN: A user is browsing available templates
         WHEN: They click on a template row
         THEN: The corresponding vehicle image should be displayed immediately
@@ -275,13 +275,13 @@ class TestTemplateSelection:
         # Arrange: Set up selection behavior
         template_window.tree.selection.return_value = ["selected_item"]
         template_window.tree.item.return_value = {"text": "Plane/FixedWing"}
-        
+
         with patch.object(template_window, "_display_vehicle_image") as mock_display:
             # Act: User selects template
             mock_event = MagicMock()
             template_window._on_row_selection_change(mock_event)
             template_window._update_selection()  # Simulate callback
-            
+
             # Assert: Visual feedback provided
             mock_display.assert_called_once_with("Plane/FixedWing")
 ```
@@ -345,7 +345,7 @@ Before submitting any test changes:
 ### Success Criteria
 
 - ✅ All tests pass consistently
-- ✅ Coverage ≥ 80% on modified modules  
+- ✅ Coverage ≥ 80% on modified modules
 - ✅ Zero ruff/mypy violations
 - ✅ Tests follow behavior-driven structure
 - ✅ Fixtures eliminate code duplication

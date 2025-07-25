@@ -81,7 +81,7 @@ scripts/
 The motor diagrams are categorized by frame type:
 
 - **QUAD FRAMES** (m_01_*): Standard quadcopter configurations
-- **HEXA FRAMES** (m_02_*): Hexacopter configurations  
+- **HEXA FRAMES** (m_02_*): Hexacopter configurations
 - **OCTO FRAMES** (m_03_*): Octocopter configurations
 - **OCTO QUAD FRAMES** (m_04_*): Octo-quad configurations
 - **Y6 FRAMES** (m_05_*): Y6 configurations
