@@ -13,12 +13,20 @@ After installing it you must also:
 
 ## MS Windows Installation
 
-Download the latest [ardupilot_methodic_configurator_setup_x.x.x.exe](https://github.com/ArduPilot/MethodicConfigurator/releases/latest) installer file and execute it.
+The MS Windows Installation file is at the bottom of
+[github's AMC project latest release page](https://github.com/ArduPilot/MethodicConfigurator/releases/latest), in the *Assets* section.
+You do not need a github account to download this file.
 
-Ignore the `ardupilot_methodic_configurator_setup_x.x.x.exe.bundle` and `ardupilot_methodic_configurator_setup_x.x.x.exe.sig` files
-those are just cryptographic signatures for cyber security applications.
+Download the latest
+[ardupilot_methodic_configurator_setup_x.x.x.exe](https://github.com/ArduPilot/MethodicConfigurator/releases/latest) installer file.
+Ignore the `ardupilot_methodic_configurator_setup_x.x.x.exe.bundle` and `ardupilot_methodic_configurator_setup_x.x.x.exe.sig`
+files - they are just cryptographic signatures for cyber security applications.
 
-Do the steps highlighted in red.
+If you have an anti-virus program running, it may prompt you to allow the download and installation.
+Please tell it to allow the download and installation.
+Github also runs [ClamAV to scan the AMC software for virus](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/gitavscan.yml).
+
+Execute the downloaded file and do the steps highlighted in red.
 
 ![AMC install 01](images/AMC_install_01.png)
 
