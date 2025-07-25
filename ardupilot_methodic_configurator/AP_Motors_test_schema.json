@@ -39,7 +39,7 @@
           "description": "Human-readable frame class name",
           "enum": [
             "QUAD",
-            "HEXA", 
+            "HEXA",
             "OCTA",
             "OCTAQUAD",
             "Y6",

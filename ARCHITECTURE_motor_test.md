@@ -3,7 +3,7 @@
 ## Status Legend
 
 - ✅ **Green Check**: Fully implemented and tested with BDD pytest
-- 🟡 **Yellow Check**: Implemented but not yet tested with BDD pytest  
+- 🟡 **Yellow Check**: Implemented but not yet tested with BDD pytest
 - ❌ **Red Cross**: Not implemented
 
 ## Overview

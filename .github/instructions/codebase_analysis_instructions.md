@@ -38,7 +38,7 @@ The codebase is organized into the following categories:
   ```bash
   # Find all markdown files
   find . -name "*.md" -type f
-  
+
   # Count lines in documentation
   find . -name "*.md" -type f | xargs cloc
   ```
@@ -53,7 +53,7 @@ The codebase is organized into the following categories:
   ```bash
   # Find all JSON files
   find . -name "*.json" -type f
-  
+
   # Count lines in configuration files
   find . -name "*.json" -type f | xargs cloc
   ```
@@ -87,7 +87,7 @@ The codebase is organized into the following categories:
   ```bash
   # Find all Python scripts in root directory
   find . -maxdepth 1 -name "*.py" -type f
-  
+
   # Count lines in root directory scripts
   cloc ./unix2dos.py ./create_pot_file.py ./insert_missing_translations.py \
        ./mavproxy_param.py ./copy_magfit_pdef_to_template_dirs.py ./setup.py \
@@ -98,7 +98,7 @@ The codebase is organized into the following categories:
        ./param_filter.py ./create_mo_files.py ./copy_param_files.py \
        ./update_configuration_steps_translation.py ./merge_pot_file.py \
        ./mavftp.py ./dos2unix.py
-  
+
   # Count lines in scripts directory
   cloc scripts/
   ```
