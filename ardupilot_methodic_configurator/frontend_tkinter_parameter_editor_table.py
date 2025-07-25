@@ -454,7 +454,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 else None
             )
             valid: bool = True
-            value: float = param._new_value
+            value: float = param._new_value  # noqa: SLF001
 
             # Check if the input is a valid float
             try:
