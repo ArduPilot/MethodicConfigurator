@@ -177,7 +177,7 @@ class TemplateOverviewWindow(BaseWindow):
         """Setup treeview styling with DPI scaling."""
         style = ttk.Style(self.root)
         # Add padding to Treeview heading style
-        style.layout(
+        style.layout(  # type: ignore[no-untyped-call]
             "Treeview.Heading",
             [
                 ("Treeview.Heading.cell", {"sticky": "nswe"}),
@@ -208,7 +208,7 @@ class TemplateOverviewWindow(BaseWindow):
             self.calculate_scaled_padding(2),
             self.calculate_scaled_padding(18),
         ]
-        style.configure("Treeview.Heading", padding=scaled_padding, justify="center")
+        style.configure("Treeview.Heading", padding=scaled_padding, justify="center")  # type: ignore[no-untyped-call]
 
     def _setup_treeview_columns(self) -> None:
         """Setup treeview column headers."""
