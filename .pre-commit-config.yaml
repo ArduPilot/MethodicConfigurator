@@ -31,14 +31,10 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.5
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [ --fix ]
-        language: system
-        types: [python]
         stages: [pre-commit]
-      # Run the formatter.
       - id: ruff-format
-        types_or: [ python ]
         stages: [pre-commit]
 
   - repo: https://github.com/gruntwork-io/pre-commit

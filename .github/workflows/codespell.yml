@@ -2,14 +2,36 @@ name: Codespell
 
 on:
   push:
-    paths:
-      - '**/*' # Run on all files
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - run: pip install --upgrade pip
+      - run: pip install pylint
+      - run: npm install -g markdown-link-check
+
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.1
+
   codespell:
     runs-on: ubuntu-latest
     steps:
