@@ -29,6 +29,13 @@ repos:
         files: ^ardupilot_methodic_configurator/vehicle_templates/.*\.(param|json)$
         description: Forces LF line endings in .param and .json vehicle_template files
 
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell # See pyproject.toml for args
+        additional_dependencies:
+          - tomli
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.5
     hooks:

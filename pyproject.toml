@@ -123,6 +123,11 @@ ardupilot_methodic_configurator = ["*.param", "*.jpg", "*.json", "*.xml", "*.mo"
 [tool.setuptools.dynamic]
 version = {attr = "ardupilot_methodic_configurator.__version__"}
 
+[tool.codespell]
+check-filenames = true
+ignore-words-list = "datas,intoto,juli,laf,ned,parm,sade,sitl,thst"
+skip = "*.pdef.xml,*.pdf,*.po"
+
 [tool.ruff]
 exclude = [
     ".git",
