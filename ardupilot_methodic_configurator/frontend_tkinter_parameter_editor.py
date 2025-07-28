@@ -168,6 +168,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         style.map("default_v.TCombobox", selectbackground=[("readonly", "light blue")])  # type: ignore[no-untyped-call]
         style.map("default_v.TCombobox", selectforeground=[("readonly", "black")])  # type: ignore[no-untyped-call]
         style.configure("default_v.TEntry", fieldbackground="light blue")  # type: ignore[no-untyped-call]
+        style.configure("below_limit.TEntry", fieldbackground="orangered")  # type: ignore[no-untyped-call]
+        style.configure("above_limit.TEntry", fieldbackground="red3")  # type: ignore[no-untyped-call]
 
         self.__create_conf_widgets(__version__)
 
@@ -269,9 +271,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         cal_label = ttk.Label(legend_left, text=_("Calibration param"), background="yellow", font=font)
         show_tooltip(cal_label, _("Calibration parameter - not-reusable, even in similar vehicles"))
         cal_label.pack(side=tk.TOP, anchor=tk.NW)
-        readonly_label = ttk.Label(legend_left, text=_("Read-only param"), background="red", font=font)
+        readonly_label = ttk.Label(legend_left, text=_("Read-only param"), background="purple1", font=font)
         show_tooltip(readonly_label, _("Read-only parameter - not writable nor changeable"))
         readonly_label.pack(side=tk.TOP, anchor=tk.NW)
+        toolow_label = ttk.Label(legend_left, text=_("Below limit"), background="orangered", font=font)
+        show_tooltip(toolow_label, _("Parameter value below the minimum recommended value"))
+        toolow_label.pack(side=tk.TOP, anchor=tk.NW)
         legend_right = ttk.Frame(legend_frame)
         legend_right.pack(side=tk.RIGHT, anchor=tk.NE)
         default_label = ttk.Label(legend_right, text=_("Default value"), background="lightblue", font=font)
@@ -290,6 +295,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
         ne_label.configure(state="disabled")
         ne_label.pack(side=tk.TOP, anchor=tk.NW)
+        toohigh_label = ttk.Label(legend_right, text=_("Above limit"), background="red3", font=font)
+        show_tooltip(toohigh_label, _("Parameter value above the maximum recommended value"))
+        toohigh_label.pack(side=tk.TOP, anchor=tk.NW)
         legend_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(2, 2))
 
     def __create_parameter_area_widgets(self) -> None:

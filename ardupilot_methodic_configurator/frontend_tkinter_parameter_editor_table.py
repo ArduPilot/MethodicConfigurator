@@ -325,7 +325,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         parameter_label = ttk.Label(
             self.view_port,
             text=param.name + (" " * (16 - len(param.name))),
-            background="red"
+            background="purpule1"
             if param.is_readonly
             else "yellow"
             if param.is_calibration
@@ -343,6 +343,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             if param.fc_value_equals_default_value:
                 # If it matches default, set the background color to light blue
                 flightcontroller_value = ttk.Label(self.view_port, text=param.fc_value_as_string, background="light blue")
+            elif param.fc_value_is_below_limit():
+                flightcontroller_value = ttk.Label(self.view_port, text=param.fc_value_as_string, background="orangered")
+            elif param.fc_value_is_above_limit():
+                flightcontroller_value = ttk.Label(self.view_port, text=param.fc_value_as_string, background="red3")
             else:
                 # Otherwise, set the background color to the default color
                 flightcontroller_value = ttk.Label(self.view_port, text=param.fc_value_as_string)
@@ -387,6 +391,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         new_value_entry.insert(0, param.value_as_string)
         if param.new_value_equals_default_value:
             new_value_entry.configure(style="default_v.TEntry")
+        elif param.is_below_limit():
+            new_value_entry.configure(style="below_limit.TEntry")
+        elif param.is_above_limit():
+            new_value_entry.configure(style="above_limit.TEntry")
         else:
             new_value_entry.configure(style="TEntry")
 
