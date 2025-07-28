@@ -608,7 +608,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def on_param_file_combobox_change(self, _event: Union[None, tk.Event], forced: bool = False) -> None:
         if not self.file_selection_combobox["values"]:
             return
-        self.parameter_editor_table.generate_edit_widgets_focus_out()
         selected_file = self.file_selection_combobox.get()
         self._update_progress_bar_from_file(selected_file)
         if self.current_file != selected_file or forced:
@@ -743,8 +742,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.reset_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
 
     def on_upload_selected_click(self) -> None:
-        self.parameter_editor_table.generate_edit_widgets_focus_out()
-
         self.write_changes_to_intermediate_parameter_file()
         selected_params = self.parameter_editor_table.get_upload_selected_params(self.current_file, str(self.gui_complexity))
         if selected_params:
@@ -759,7 +756,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             logging_warning(_("No parameter was selected for upload, will not upload any parameter"))
             messagebox.showwarning(_("Will not upload any parameter"), _("No parameter was selected for upload"))
         # Delete the parameter table and create a new one with the next file if available
-        self.on_skip_click(force_focus_out_event=False)
+        self.on_skip_click()
 
     # This function can recurse multiple times if there is an upload error
     def upload_selected_params(self, selected_params: dict) -> None:
@@ -820,9 +817,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
         self.local_filesystem.write_last_uploaded_filename(self.current_file)
 
-    def on_skip_click(self, _event: Union[None, tk.Event] = None, force_focus_out_event: bool = True) -> None:
-        if force_focus_out_event:
-            self.parameter_editor_table.generate_edit_widgets_focus_out()
+    def on_skip_click(self, _event: Union[None, tk.Event] = None) -> None:
         self.write_changes_to_intermediate_parameter_file()
         # Find the next filename in the file_parameters dictionary
         files = list(self.local_filesystem.file_parameters.keys())
@@ -960,7 +955,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         return should_write_file
 
     def close_connection_and_quit(self) -> None:
-        self.parameter_editor_table.generate_edit_widgets_focus_out()
+        focused_widget = self.parameter_editor_table.view_port.focus_get()
+        if focused_widget is not None:
+            focused_widget.event_generate("<FocusOut>", when="now")  # trigger a sync between GUI and data-model values
         self.write_changes_to_intermediate_parameter_file()
         self.root.quit()  # Then stop the Tkinter event loop
 

@@ -792,13 +792,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 selected_params[param_name] = self.local_filesystem.file_parameters[current_file][param_name]
         return selected_params
 
-    def generate_edit_widgets_focus_out(self) -> None:
-        """Generate focus out events for all entry widgets."""
-        # Trigger the <FocusOut> event for all entry widgets to ensure all changes are processed
-        for widget in self.view_port.winfo_children():
-            if isinstance(widget, ttk.Entry):
-                widget.event_generate("<FocusOut>", when="now")
-
     def get_at_least_one_param_edited(self) -> bool:
         """Get whether at least one parameter has been edited."""
         return self.at_least_one_param_edited
