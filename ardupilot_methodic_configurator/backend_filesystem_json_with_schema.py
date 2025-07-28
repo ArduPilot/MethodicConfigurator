@@ -126,6 +126,7 @@ class FilesystemJSONWithSchema:
         try:
             with open(filepath, "w", encoding="utf-8", newline="\n") as file:
                 json_dump(data, file, indent=4)
+                file.write("\n")  # pre-commit recommends adding an extra newline at the end of the file
         except FileNotFoundError:
             msg = _("Directory '{}' not found").format(data_dir)
             logging_error(msg)
