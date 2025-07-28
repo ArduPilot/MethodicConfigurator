@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from json import JSONDecodeError
-from json import dump as json_dump
+from json import dumps as json_dumps
 from json import load as json_load
 
 # from logging import warning as logging_warning
@@ -125,8 +125,10 @@ class FilesystemJSONWithSchema:
         filepath = os_path.join(data_dir, self.json_filename)
         try:
             with open(filepath, "w", encoding="utf-8", newline="\n") as file:
-                json_dump(data, file, indent=4)
-                file.write("\n")  # pre-commit recommends adding an extra newline at the end of the file
+                json_str = json_dumps(data, indent=4)
+                # Strip the last newline to avoid double newlines
+                # This is to ensure compatibility with pre-commit's end-of-file-fixer
+                file.write(json_str.rstrip("\n") + "\n")
         except FileNotFoundError:
             msg = _("Directory '{}' not found").format(data_dir)
             logging_error(msg)
