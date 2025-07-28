@@ -104,7 +104,15 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         """Return True if this parameter uses a multiple choice representation."""
         # these parameters do have choices defined in their metadata, the handful of discrete choices
         #  is limitative and most usecases require the use of a continuous range instead
-        multiple_choice_blacklist = {"MOT_SPIN_ARM", "MOT_SPIN_MAX", "MOT_SPIN_MIN", "MOT_THST_EXPO"}
+        multiple_choice_blacklist = {
+            "MOT_SPIN_ARM",
+            "MOT_SPIN_MAX",
+            "MOT_SPIN_MIN",
+            "MOT_THST_EXPO",
+            "ATC_ACCEL_P_MAX",
+            "ATC_ACCEL_R_MAX",
+            "ATC_ACCEL_Y_MAX",
+        }
         return (
             self.choices_dict is not None
             and len(self.choices_dict) > 0
@@ -245,21 +253,31 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
             return _("The value for {param_name} must be a finite number.").format(param_name=self._name)
         return ""
 
-    def is_above_limit(self, new_value: float) -> str:
-        """Return an error message if the new value is above the limit for this parameter."""
+    def is_above_limit(self, value: Optional[float] = None) -> str:
+        """Return an error message if the value is above the limit for this parameter."""
+        new_value = self._new_value if value is None else value
         if self.max_value is not None and new_value > self.max_value:
             return _("The value for {param_name} ({value}) should be smaller than {max_val}\n").format(
                 param_name=self._name, value=new_value, max_val=self.max_value
             )
         return ""
 
-    def is_below_limit(self, new_value: float) -> str:
-        """Return an error message if the new value is below the limit for this parameter."""
+    def is_below_limit(self, value: Optional[float] = None) -> str:
+        """Return an error message if the value is below the limit for this parameter."""
+        new_value = self._new_value if value is None else value
         if self.min_value is not None and new_value < self.min_value:
             return _("The value for {param_name} ({value}) should be greater than {min_val}\n").format(
                 param_name=self._name, value=new_value, min_val=self.min_value
             )
         return ""
+
+    def fc_value_is_above_limit(self) -> str:
+        """Return an error message if the FC value is above the limit for this parameter."""
+        return self.is_above_limit(self._fc_value) if self._fc_value is not None else ""
+
+    def fc_value_is_below_limit(self) -> str:
+        """Return an error message if the RC value is below the limit for this parameter."""
+        return self.is_below_limit(self._fc_value) if self._fc_value is not None else ""
 
     def set_new_value(self, value: float) -> bool:
         """
