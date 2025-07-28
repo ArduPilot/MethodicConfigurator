@@ -339,6 +339,46 @@ class VehicleComponents:
         data = self.vehicle_components_fs.data
         if data is not None:
             self._recursively_clear_dict(data)
+            default_data = {
+                "RC Receiver": {
+                    "FC Connection": {"Type": "RCin/SBUS", "Protocol": "All"},
+                },
+                "Telemetry": {
+                    "FC Connection": {"Type": "SERIAL1", "Protocol": "MAVLink2"},
+                },
+                "Battery Monitor": {
+                    "FC Connection": {"Type": "Analog", "Protocol": "Analog Voltage and Current"},
+                },
+                "Battery": {
+                    "Specifications": {
+                        "Chemistry": "Lipo",
+                        "Volt per cell max": 4.2,
+                        "Volt per cell low": 3.6,
+                        "Volt per cell crit": 3.55,
+                    },
+                },
+                "ESC": {
+                    "FC Connection": {"Type": "Main Out", "Protocol": "Normal"},
+                },
+                "Motors": {
+                    "Specifications": {"Poles": 14},
+                },
+                "GNSS Receiver": {
+                    "FC Connection": {"Type": "SERIAL3", "Protocol": "AUTO"},
+                },
+            }
+
+            def is_empty(val: Any) -> bool:
+                return val in (None, "", 0, 0.0, {}) or (isinstance(val, dict) and not val)
+
+            def merge_defaults(target: dict, defaults: dict) -> None:
+                for key, value in defaults.items():
+                    if key not in target or is_empty(target[key]):
+                        target[key] = value
+                    elif isinstance(value, dict) and isinstance(target[key], dict):
+                        merge_defaults(target[key], value)
+
+            merge_defaults(data["Components"], default_data)
 
     def _recursively_clear_dict(self, data: Union[dict, list, float, bool, str]) -> None:
         """
