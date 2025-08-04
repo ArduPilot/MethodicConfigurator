@@ -53,7 +53,7 @@ dependencies = [
     "pillow==11.3.0",
     "pip_system_certs==4.0",
     "platformdirs==4.3.8",
-    "pymavlink==2.4.48",
+    "pymavlink==2.4.49",
     "pyserial==3.5",
     "requests==2.32.4",
     "setuptools==80.9.0",
