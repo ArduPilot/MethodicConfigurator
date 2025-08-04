@@ -325,7 +325,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         parameter_label = ttk.Label(
             self.view_port,
             text=param.name + (" " * (16 - len(param.name))),
-            background="purpule1"
+            background="purple1"
             if param.is_readonly
             else "yellow"
             if param.is_calibration
@@ -462,7 +462,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 else None
             )
             valid: bool = True
-            value: float = param._new_value
+            value: float = 0.0
 
             # Check if the input is a valid float
             try:
