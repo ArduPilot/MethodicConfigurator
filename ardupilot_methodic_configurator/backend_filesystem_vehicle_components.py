@@ -368,7 +368,7 @@ class VehicleComponents:
                 },
             }
 
-            def is_empty(val: Any) -> bool:
+            def is_empty(val: Any) -> bool:  # noqa: ANN401
                 return val in (None, "", 0, 0.0, {}) or (isinstance(val, dict) and not val)
 
             def merge_defaults(target: dict, defaults: dict) -> None:
