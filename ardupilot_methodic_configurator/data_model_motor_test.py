@@ -25,6 +25,34 @@ from ardupilot_methodic_configurator.backend_flightcontroller import FlightContr
 # pylint: disable=too-many-lines
 
 
+class MotorTestError(Exception):
+    """Base exception for motor test related errors."""
+
+
+class FlightControllerConnectionError(MotorTestError):
+    """Raised when flight controller is not connected."""
+
+
+class MotorTestSafetyError(MotorTestError):
+    """Raised when motor test conditions are unsafe."""
+
+
+class ParameterError(MotorTestError):
+    """Raised when parameter operations fail."""
+
+
+class MotorTestExecutionError(MotorTestError):
+    """Raised when motor test execution fails."""
+
+
+class FrameConfigurationError(MotorTestError):
+    """Raised when frame configuration operations fail."""
+
+
+class ValidationError(MotorTestError):
+    """Raised when validation of input parameters fails."""
+
+
 class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-instance-attributes
     """
     Data model for motor test functionality.
@@ -73,54 +101,6 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         # We must fail early if the connection is not available
         self._update_frame_configuration()
 
-    def _update_frame_configuration(self) -> None:
-        """Update frame configuration from flight controller."""
-        if self.flight_controller.master is None or not self.flight_controller.fc_parameters:
-            msg = _("Flight controller connection required for motor testing")
-            logging_error(msg)
-            raise RuntimeError(msg)
-
-        try:
-            # Get from flight controller
-            frame_class, frame_type = self.flight_controller.get_frame_info()
-            if self._frame_class == frame_class and self._frame_type == frame_type:
-                return
-            self._frame_class = frame_class
-            self._frame_type = frame_type
-            self._motor_count = 0
-            if self._motor_data_loader.data and "layouts" in self._motor_data_loader.data:
-                # find a layout that matches the current frame class and type
-                for layout in self._motor_data_loader.data["layouts"]:
-                    if layout["Class"] == self._frame_class and layout["Type"] == self._frame_type and "motors" in layout:
-                        self._frame_layout = layout
-                        self._motor_count = len(layout["motors"])
-                        self._motor_labels = [chr(ord("A") + i) for i in range(self._motor_count)]
-                        self._motor_numbers: list[int] = [0] * self._motor_count
-                        self._motor_directions: list[str] = [""] * self._motor_count
-                        for motor in self._frame_layout.get("motors", []):
-                            test_order = motor.get("TestOrder")
-                            if test_order and 1 <= test_order <= self._motor_count:
-                                self._motor_numbers[test_order - 1] = motor.get("Number")
-                                self._motor_directions[test_order - 1] = motor.get("Rotation")
-                        break
-            if self._motor_count == 0:
-                raise RuntimeError(
-                    _("No motor configuration found for frame class %(class)d and type %(type)d")
-                    % {"class": self._frame_class, "type": self._frame_type}
-                )
-
-            logging_debug(
-                _("Frame configuration updated: Class=%(class)d, Type=%(type)d, Motors=%(motors)d"),
-                {
-                    "class": self._frame_class,
-                    "type": self._frame_type,
-                    "motors": self._motor_count,
-                },
-            )
-        except Exception as e:
-            logging_error(_("Failed to update frame configuration: %(error)s"), {"error": str(e)})
-            raise
-
     def _load_motor_data(self) -> None:
         """Load motor configuration data from AP_Motors_test.json file."""
         try:
@@ -139,6 +119,80 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         except Exception as e:  # pylint: disable=broad-exception-caught
             logging_error(_("Error loading motor test data: %(error)s"), {"error": str(e)})
             self._motor_data = {}
+
+    def _configure_frame_layout(self, frame_class: int, frame_type: int) -> None:
+        """
+        Configure frame layout based on frame class and type.
+
+        This is the pure logic function that processes frame configuration
+        without flight controller interaction, making it easily testable.
+
+        Args:
+            frame_class: Frame class (e.g., 1 for QUAD)
+            frame_type: Frame type (e.g., 0 for PLUS, 1 for X)
+
+        Raises:
+            RuntimeError: If no motor configuration found for the frame
+
+        """
+        # Check if frame configuration has changed
+        if self._frame_class == frame_class and self._frame_type == frame_type:
+            return
+
+        # Update frame parameters
+        self._frame_class = frame_class
+        self._frame_type = frame_type
+        self._motor_count = 0
+        self._frame_layout = {}
+
+        # Find matching layout in motor data and populate motor arrays
+        if self._motor_data_loader.data and "layouts" in self._motor_data_loader.data:
+            for layout in self._motor_data_loader.data["layouts"]:
+                if layout["Class"] == self._frame_class and layout["Type"] == self._frame_type and "motors" in layout:
+                    self._frame_layout = layout
+                    self._motor_count = len(layout["motors"])
+                    self._motor_labels = [chr(ord("A") + i) for i in range(self._motor_count)]
+                    self._motor_numbers = [0] * self._motor_count
+                    self._motor_directions = [""] * self._motor_count
+                    for motor in self._frame_layout.get("motors", []):
+                        test_order = motor.get("TestOrder")
+                        if test_order and 1 <= test_order <= self._motor_count:
+                            self._motor_numbers[test_order - 1] = motor.get("Number")
+                            self._motor_directions[test_order - 1] = motor.get("Rotation")
+                    break
+
+        if self._motor_count == 0:
+            raise RuntimeError(
+                _("No motor configuration found for frame class %(class)d and type %(type)d")
+                % {"class": self._frame_class, "type": self._frame_type}
+            )
+
+        logging_debug(
+            _("Frame configuration updated: Class=%(class)d, Type=%(type)d, Motors=%(motors)d"),
+            {
+                "class": self._frame_class,
+                "type": self._frame_type,
+                "motors": self._motor_count,
+            },
+        )
+
+    def _update_frame_configuration(self) -> None:
+        """Update frame configuration from flight controller."""
+        if self.flight_controller.master is None or not self.flight_controller.fc_parameters:
+            msg = _("Flight controller connection required for motor testing")
+            logging_error(msg)
+            raise RuntimeError(msg)
+
+        try:
+            # Get frame info from flight controller
+            frame_class, frame_type = self.flight_controller.get_frame_info()
+
+            # Configure frame layout using the separated logic
+            self._configure_frame_layout(frame_class, frame_type)
+
+        except Exception as e:
+            logging_error(_("Failed to update frame configuration: %(error)s"), {"error": str(e)})
+            raise
 
     def refresh_from_flight_controller(self) -> bool:
         """
@@ -261,42 +315,44 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             return "safe"
         return "critical"
 
-    def is_motor_test_safe(self) -> tuple[bool, str]:
+    def is_motor_test_safe(self) -> None:
         """
         Check if motor testing is currently safe.
 
-        Returns:
-            tuple[bool, str]: (is_safe, reason) - True if safe with empty reason,
-                             False with explanation if unsafe
+        Raises:
+            FlightControllerConnectionError: If flight controller is not connected
+            MotorTestSafetyError: If motor test conditions are unsafe
 
         """
         # Check if flight controller is connected
         if self.flight_controller.master is None:
-            return False, _("Flight controller not connected.")
+            raise FlightControllerConnectionError(_("Flight controller not connected."))
 
         # Check battery monitoring
         if not self.is_battery_monitoring_enabled():
-            # If battery monitoring is disabled, assume it's safe but warn user
-            return True, _("Battery monitoring disabled, cannot verify voltage.")
+            # If battery monitoring is disabled, we still warn but don't fail
+            logging_warning(_("Battery monitoring disabled, cannot verify voltage."))
+            return
 
         # Check battery voltage if monitoring is enabled
         battery_status = self.get_battery_status()
         if battery_status is None:
-            return False, _("Could not read battery status.")
+            raise MotorTestSafetyError(_("Could not read battery status."))
 
         voltage, _current = battery_status
         min_voltage, max_voltage = self.get_voltage_thresholds()
 
         if not min_voltage < voltage < max_voltage:
-            return False, _("Battery voltage %(voltage).1fV is outside safe range (%(min).1fV - %(max).1fV)") % {
-                "voltage": voltage,
-                "min": min_voltage,
-                "max": max_voltage,
-            }
+            raise MotorTestSafetyError(
+                _("Battery voltage %(voltage).1fV is outside safe range (%(min).1fV - %(max).1fV)")
+                % {
+                    "voltage": voltage,
+                    "min": min_voltage,
+                    "max": max_voltage,
+                }
+            )
 
-        return True, ""
-
-    def set_parameter(self, param_name: str, value: float) -> tuple[bool, str]:
+    def set_parameter(self, param_name: str, value: float) -> None:
         """
         Set a parameter value and upload to flight controller.
 
@@ -304,23 +360,25 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             param_name: Parameter name (e.g., "MOT_SPIN_ARM")
             value: Parameter value
 
-        Returns:
-            tuple[bool, str]: (success, error_message) - True on success with empty message,
-                             False with error description on failure
+        Raises:
+            FlightControllerConnectionError: If flight controller is not connected
+            ValidationError: If parameter value is invalid
+            ParameterError: If parameter setting fails
 
         """
         if self.flight_controller.master is None:
-            error_msg = _("No flight controller connection available")
-            return False, error_msg
+            raise FlightControllerConnectionError(_("No flight controller connection available"))
 
         try:
             # Validate parameter bounds if possible
             if param_name in ["MOT_SPIN_ARM", "MOT_SPIN_MIN"] and not 0.0 <= value <= 1.0:
-                error_msg = _("%(param)s value %(value).3f is outside valid range (0.0 - 1.0)") % {
-                    "param": param_name,
-                    "value": value,
-                }
-                return False, error_msg
+                raise ValidationError(
+                    _("%(param)s value %(value).3f is outside valid range (0.0 - 1.0)")
+                    % {
+                        "param": param_name,
+                        "value": value,
+                    }
+                )
 
             # Set parameter and verify it was set correctly
             self.flight_controller.set_param(param_name, value)
@@ -328,21 +386,25 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             actual_value = self.get_parameter(param_name)
             if actual_value is not None and abs(actual_value - value) < 0.001:  # Allow small floating-point tolerance
                 logging_info(_("Parameter %(param)s set to %(value).3f"), {"param": param_name, "value": value})
-                return True, ""
-            error_msg = _("Parameter %(param)s verification failed: expected %(expected).3f, got %(actual)s") % {
-                "param": param_name,
-                "expected": value,
-                "actual": actual_value if actual_value is not None else "None",
-            }
-            return False, error_msg
+                return
+            raise ParameterError(
+                _("Parameter %(param)s verification failed: expected %(expected).3f, got %(actual)s")
+                % {
+                    "param": param_name,
+                    "expected": value,
+                    "actual": actual_value if actual_value is not None else "None",
+                }
+            )
 
+        except (ValidationError, ParameterError):
+            raise
         except Exception as e:  # pylint: disable=broad-exception-caught
             error_msg = _("Error setting parameter %(param)s: %(error)s") % {
                 "param": param_name,
                 "error": str(e),
             }
             logging_error(error_msg)
-            return False, error_msg
+            raise ParameterError(error_msg) from e
 
     def get_parameter(self, param_name: str) -> Optional[float]:
         """
@@ -360,7 +422,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
 
         return self.flight_controller.fc_parameters.get(param_name)
 
-    def test_motor(self, motor_number: int, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]:
+    def test_motor(self, motor_number: int, throttle_percent: int, timeout_seconds: int) -> None:
         """
         Test a specific motor.
 
@@ -369,35 +431,41 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             throttle_percent: Throttle percentage (1-100)
             timeout_seconds: Test duration in seconds
 
-        Returns:
-            tuple[bool, str]: (success, error_message) - True on success with empty message,
-                             False with error description on failure
+        Raises:
+            FlightControllerConnectionError: If flight controller is not connected
+            MotorTestSafetyError: If motor test conditions are unsafe
+            ValidationError: If motor number or throttle percentage is invalid
+            MotorTestExecutionError: If motor test execution fails
 
         """
         # Safety check
-        is_safe, safety_reason = self.is_motor_test_safe()
-        if not is_safe:
-            return False, safety_reason
+        self.is_motor_test_safe()
 
         # Validate motor number
         if not 1 <= motor_number <= self._motor_count:
-            error_msg = _("Invalid motor number %(number)d (valid range: 1-%(max)d)") % {
-                "number": motor_number,
-                "max": self._motor_count,
-            }
-            return False, error_msg
+            raise ValidationError(
+                _("Invalid motor number %(number)d (valid range: 1-%(max)d)")
+                % {
+                    "number": motor_number,
+                    "max": self._motor_count,
+                }
+            )
 
         # Validate throttle percentage
         if not 1 <= throttle_percent <= 100:
-            error_msg = _("Invalid throttle percentage %(throttle)d (valid range: 1-100)") % {
-                "throttle": throttle_percent,
-            }
-            return False, error_msg
+            raise ValidationError(
+                _("Invalid throttle percentage %(throttle)d (valid range: 1-100)")
+                % {
+                    "throttle": throttle_percent,
+                }
+            )
 
         # Execute motor test
-        return self.flight_controller.test_motor(motor_number, throttle_percent, timeout_seconds)
+        success, message = self.flight_controller.test_motor(motor_number, throttle_percent, timeout_seconds)
+        if not success:
+            raise MotorTestExecutionError(message)
 
-    def test_all_motors(self, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]:
+    def test_all_motors(self, throttle_percent: int, timeout_seconds: int) -> None:
         """
         Test all motors simultaneously.
 
@@ -405,20 +473,21 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             throttle_percent: Throttle percentage (1-100)
             timeout_seconds: Test duration in seconds
 
-        Returns:
-            tuple[bool, str]: (success, error_message) - True on success with empty message,
-                             False with error description on failure
+        Raises:
+            FlightControllerConnectionError: If flight controller is not connected
+            MotorTestSafetyError: If motor test conditions are unsafe
+            MotorTestExecutionError: If motor test execution fails
 
         """
         # Safety check
-        is_safe, safety_reason = self.is_motor_test_safe()
-        if not is_safe:
-            return False, safety_reason
+        self.is_motor_test_safe()
 
         # Execute all motors test
-        return self.flight_controller.test_all_motors(throttle_percent, timeout_seconds)
+        success, message = self.flight_controller.test_all_motors(throttle_percent, timeout_seconds)
+        if not success:
+            raise MotorTestExecutionError(message)
 
-    def test_motors_in_sequence(self, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]:
+    def test_motors_in_sequence(self, throttle_percent: int, timeout_seconds: int) -> None:
         """
         Test motors in sequence (A, B, C, D, etc.).
 
@@ -426,29 +495,31 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             throttle_percent: Throttle percentage (0-100)
             timeout_seconds: Test duration per motor in seconds
 
-        Returns:
-            tuple[bool, str]: (success, error_message) - True on success with empty message,
-                             False with error description on failure
+        Raises:
+            FlightControllerConnectionError: If flight controller is not connected
+            MotorTestSafetyError: If motor test conditions are unsafe
+            MotorTestExecutionError: If motor test execution fails
 
         """
         # Safety check
-        is_safe, safety_reason = self.is_motor_test_safe()
-        if not is_safe:
-            return False, safety_reason
+        self.is_motor_test_safe()
 
         # Execute sequential test
-        return self.flight_controller.test_motors_in_sequence(self.motor_count, throttle_percent, timeout_seconds)
+        success, message = self.flight_controller.test_motors_in_sequence(self.motor_count, throttle_percent, timeout_seconds)
+        if not success:
+            raise MotorTestExecutionError(message)
 
-    def stop_all_motors(self) -> tuple[bool, str]:
+    def stop_all_motors(self) -> None:
         """
         Emergency stop for all motors.
 
-        Returns:
-            tuple[bool, str]: (success, error_message) - True on success with empty message,
-                             False with error description on failure
+        Raises:
+            MotorTestExecutionError: If emergency stop fails
 
         """
-        return self.flight_controller.stop_all_motors()
+        success, message = self.flight_controller.stop_all_motors()
+        if not success:
+            raise MotorTestExecutionError(message)
 
     def get_motor_diagram_path(self) -> tuple[str, str]:
         """
@@ -565,7 +636,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             logging_error(_("Failed to save throttle percentage setting: %(error)s"), {"error": str(exc)})
             return False
 
-    def update_frame_configuration(self, frame_class: int, frame_type: int) -> tuple[bool, str]:
+    def update_frame_configuration(self, frame_class: int, frame_type: int) -> None:
         """
         Update the frame configuration and upload to flight controller.
 
@@ -573,25 +644,21 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             frame_class: New frame class
             frame_type: New frame type
 
-        Returns:
-            tuple[bool, str]: (success, error_message) - True on success with empty message,
-                             False with error description on failure
+        Raises:
+            FlightControllerConnectionError: If flight controller is not connected
+            ParameterError: If parameter setting fails
+            FrameConfigurationError: If frame configuration update fails
 
         """
         if self.flight_controller.master is None or not self.flight_controller.fc_parameters:
-            error_msg = _("Flight controller connection required for frame configuration update")
-            return False, error_msg
+            raise FlightControllerConnectionError(_("Flight controller connection required for frame configuration update"))
 
         try:
             # Set FRAME_CLASS parameter
-            class_success, class_error = self.set_parameter("FRAME_CLASS", float(frame_class))
-            if not class_success:
-                return False, class_error
+            self.set_parameter("FRAME_CLASS", float(frame_class))
 
             # Set FRAME_TYPE parameter
-            type_success, type_error = self.set_parameter("FRAME_TYPE", float(frame_type))
-            if not type_success:
-                return False, type_error
+            self.set_parameter("FRAME_TYPE", float(frame_type))
 
             # Update internal state
             self._frame_class = frame_class
@@ -616,12 +683,12 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                 },
             )
 
-            return True, ""
-
+        except (FlightControllerConnectionError, ParameterError):
+            raise
         except Exception as e:  # pylint: disable=broad-exception-caught
             error_msg = _("Failed to update frame configuration: %(error)s") % {"error": str(e)}
             logging_error(error_msg)
-            return False, error_msg
+            raise FrameConfigurationError(error_msg) from e
 
     def get_frame_options(self) -> dict[str, dict[int, str]]:  # pylint: disable=too-many-branches
         """
@@ -730,7 +797,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             logging_warning(_("Failed to refresh frame configuration: %(error)s"), {"error": str(e)})
             return False
 
-    def parse_frame_type_selection(self, selected_text: str) -> tuple[bool, int, int, str]:
+    def parse_frame_type_selection(self, selected_text: str) -> tuple[int, int]:
         """
         Parse frame type selection text and return frame codes.
 
@@ -738,11 +805,14 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             selected_text: Selected text in format "Frame Class: Frame Type"
 
         Returns:
-            tuple[bool, int, int, str]: (success, frame_class_code, frame_type_code, error_message)
+            tuple[int, int]: (frame_class_code, frame_type_code)
+
+        Raises:
+            ValidationError: If frame type selection text is invalid or frame configuration not found
 
         """
         if ":" not in selected_text:
-            return False, 0, 0, _("Invalid frame type format: %(text)s") % {"text": selected_text}
+            raise ValidationError(_("Invalid frame type format: %(text)s") % {"text": selected_text})
 
         try:
             frame_class_name, frame_type_name = selected_text.split(":", 1)
@@ -766,14 +836,16 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                     break
 
             if frame_class_code is None or frame_type_code is None:
-                return False, 0, 0, _("Could not find frame configuration for: %(text)s") % {"text": selected_text}
+                raise ValidationError(_("Could not find frame configuration for: %(text)s") % {"text": selected_text})
 
-            return True, frame_class_code, frame_type_code, ""
+            return frame_class_code, frame_type_code
 
+        except ValidationError:
+            raise
         except Exception as e:  # pylint: disable=broad-exception-caught
-            return False, 0, 0, _("Error parsing frame type: %(error)s") % {"error": str(e)}
+            raise ValidationError(_("Error parsing frame type: %(error)s") % {"error": str(e)}) from e
 
-    def update_frame_type_from_selection(self, selected_text: str) -> tuple[bool, str]:
+    def update_frame_type_from_selection(self, selected_text: str) -> bool:
         """
         Update frame configuration based on user selection.
 
@@ -781,42 +853,53 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             selected_text: Selected text in format "Frame Class: Frame Type"
 
         Returns:
-            tuple[bool, str]: (success, error_message)
+            bool: True if successful
+
+        Raises:
+            ValidationError: If frame type selection text is invalid
+            ParameterError: If parameter setting fails
+            FrameConfigurationError: If frame configuration update fails
 
         """
-        success, frame_class_code, frame_type_code, error_msg = self.parse_frame_type_selection(selected_text)
-        if not success:
-            return False, error_msg
+        try:
+            frame_class_code, frame_type_code = self.parse_frame_type_selection(selected_text)
+        except ValidationError:
+            raise
 
-        # Immediately upload parameters to flight controller
-        success_class, msg_class = self.set_parameter("FRAME_CLASS", frame_class_code)
-        success_type, msg_type = self.set_parameter("FRAME_TYPE", frame_type_code)
+        try:
+            # Immediately upload parameters to flight controller
+            self.set_parameter("FRAME_CLASS", frame_class_code)
+            self.set_parameter("FRAME_TYPE", frame_type_code)
 
-        if not success_class or not success_type:
-            error_msg = _("Failed to update frame parameters:\n%(msg1)s\n%(msg2)s") % {
-                "msg1": msg_class,
-                "msg2": msg_type,
-            }
-            return False, error_msg
+            logging_info(
+                _("Updated frame configuration: FRAME_CLASS=%(class)d, FRAME_TYPE=%(type)d"),
+                {"class": frame_class_code, "type": frame_type_code},
+            )
 
-        logging_info(
-            _("Updated frame configuration: FRAME_CLASS=%(class)d, FRAME_TYPE=%(type)d"),
-            {"class": frame_class_code, "type": frame_type_code},
-        )
+            # Update internal state and recalculate motor count
+            self._frame_class = frame_class_code
+            self._frame_type = frame_type_code
+            self._motor_count = 0
+            if self._motor_data_loader.data and "layouts" in self._motor_data_loader.data:
+                # Find a layout that matches the current frame class and type
+                for layout in self._motor_data_loader.data["layouts"]:
+                    if (
+                        layout.get("Class") == frame_class_code
+                        and layout.get("Type") == frame_type_code
+                        and "motors" in layout
+                    ):
+                        self._frame_layout = layout
+                        self._motor_count = len(layout["motors"])
+                        break
 
-        # Update internal state and recalculate motor count
-        self._frame_class = frame_class_code
-        self._frame_type = frame_type_code
-        self._motor_count = 0
-        if self._motor_data_loader.data and "layouts" in self._motor_data_loader.data:
-            # Find a layout that matches the current frame class and type
-            for layout in self._motor_data_loader.data["layouts"]:
-                if layout.get("Class") == frame_class_code and layout.get("Type") == frame_type_code and "motors" in layout:
-                    self._frame_layout = layout
-                    self._motor_count = len(layout["motors"])
-                    break
+            return True
 
-        return True, ""
+        except (ParameterError, ValidationError):
+            raise
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            error_msg = _("Failed to update frame configuration: %(error)s") % {"error": str(e)}
+            logging_error(error_msg)
+            raise FrameConfigurationError(error_msg) from e
 
     def get_svg_scaling_info(
         self, canvas_width: int, canvas_height: int, svg_width: int, svg_height: int
@@ -878,7 +961,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             return voltage_text, current_text
         return _("Voltage: N/A"), _("Current: N/A")
 
-    def validate_motor_test_parameters(self, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]:
+    def validate_motor_test_parameters(self, throttle_percent: int, timeout_seconds: int) -> bool:
         """
         Validate motor test parameters before execution.
 
@@ -887,16 +970,19 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             timeout_seconds: Test duration in seconds
 
         Returns:
-            tuple[bool, str]: (is_valid, error_message)
+            bool: True if parameters are valid
+
+        Raises:
+            ValidationError: If parameters are invalid
 
         """
         if not 0 <= throttle_percent <= 100:
-            return False, _("Throttle percentage must be between 0 and 100")
+            raise ValidationError(_("Throttle percentage must be between 0 and 100"))
 
         if not 0.1 <= timeout_seconds <= 60:
-            return False, _("Test duration must be between 0.1 and 60 seconds")
+            raise ValidationError(_("Test duration must be between 0.1 and 60 seconds"))
 
-        return True, ""
+        return True
 
     def should_show_first_test_warning(self) -> bool:
         """
