@@ -41,7 +41,14 @@ from ardupilot_methodic_configurator.__main__ import (
     setup_logging,
 )
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
+from ardupilot_methodic_configurator.data_model_motor_test import (
+    FrameConfigurationError,
+    MotorTestDataModel,
+    MotorTestExecutionError,
+    MotorTestSafetyError,
+    ParameterError,
+    ValidationError,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 
@@ -363,16 +370,16 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         selected_text = self.frame_type_combobox.get()
         logging_info(_("Frame type changed: %(type)s"), {"type": selected_text})
 
-        # Update frame configuration through data model
-        success, error_msg = self.model.update_frame_type_from_selection(selected_text)
+        try:
+            # Update frame configuration through data model
+            self.model.update_frame_type_from_selection(selected_text)
 
-        if not success:
-            showerror(_("Parameter Update Error"), error_msg)
-            return
+            # Update UI components
+            self._update_motor_buttons_layout()
+            self._update_diagram()
 
-        # Update UI components
-        self._update_motor_buttons_layout()
-        self._update_diagram()
+        except (ValidationError, ParameterError, FrameConfigurationError) as e:
+            showerror(_("Parameter Update Error"), str(e))
 
     def _on_throttle_change(self) -> None:
         """Handle throttle spinbox change."""
@@ -406,9 +413,10 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             initialvalue=current_val,
         )
         if new_val is not None:
-            success, message = self.model.set_parameter("MOT_SPIN_ARM", new_val)
-            if not success:
-                showerror(_("Error"), message)
+            try:
+                self.model.set_parameter("MOT_SPIN_ARM", new_val)
+            except (ParameterError, ValidationError) as e:
+                showerror(_("Error"), str(e))
 
     def _set_motor_spin_min(self) -> None:
         """Open a dialog to set MOT_SPIN_MIN."""
@@ -421,9 +429,10 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             maxvalue=1.0,
         )
         if new_val is not None:
-            success, message = self.model.set_parameter("MOT_SPIN_MIN", new_val)
-            if not success:
-                showerror(_("Error"), message)
+            try:
+                self.model.set_parameter("MOT_SPIN_MIN", new_val)
+            except (ParameterError, ValidationError) as e:
+                showerror(_("Error"), str(e))
 
     def _test_motor(self, motor_number: int) -> None:
         """Execute a test for a single motor."""
@@ -435,83 +444,102 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
                 return
             self._first_motor_test = False
 
-        # Check if motor test is safe (includes voltage checks)
-        is_safe, reason = self.model.is_motor_test_safe()
-        if not is_safe:
-            # Check if it's a voltage issue and provide specific guidance
-            if self.model.is_battery_related_safety_issue(reason):
-                showwarning(_("Battery Voltage Warning"), self.model.get_battery_safety_message(reason))
-            else:
-                showwarning(_("Safety Check Failed"), reason)
-            return
+        try:
+            # Check if motor test is safe (includes voltage checks)
+            self.model.is_motor_test_safe()
 
-        # Validate test parameters
-        throttle_pct = self.model.get_test_throttle_pct()
-        duration = int(self.model.get_test_duration())
-        is_valid, validation_error = self.model.validate_motor_test_parameters(throttle_pct, duration)
-        if not is_valid:
-            showerror(_("Parameter Validation Error"), validation_error)
-            return
+            # Validate test parameters
+            throttle_pct = self.model.get_test_throttle_pct()
+            duration = int(self.model.get_test_duration())
+            self.model.validate_motor_test_parameters(throttle_pct, duration)
 
-        success, message = self.model.test_motor(motor_number, throttle_pct, duration)
+            # Execute motor test
+            self.model.test_motor(motor_number, throttle_pct, duration)
 
-        # Update status based on test result
-        if success:
+            # Update status on success
             self._update_motor_status(motor_number, _("Test Complete"), "green")
-        else:
-            self._update_motor_status(motor_number, _("Test Failed"), "red")
-            showerror(_("Error"), message)
 
-        # Reset status after a short delay
-        self.root_window.after(2000, lambda: self._update_motor_status(motor_number, _("Ready"), "blue"))
+            # Reset status after a short delay
+            self.root_window.after(2000, lambda: self._update_motor_status(motor_number, _("Ready"), "blue"))
+
+        except MotorTestSafetyError as e:
+            # Check if it's a voltage issue and provide specific guidance
+            if self.model.is_battery_related_safety_issue(str(e)):
+                showwarning(_("Battery Voltage Warning"), self.model.get_battery_safety_message(str(e)))
+            else:
+                showwarning(_("Safety Check Failed"), str(e))
+            self._update_motor_status(motor_number, _("Safety Check Failed"), "red")
+        except ValidationError as e:
+            showerror(_("Parameter Validation Error"), str(e))
+            self._update_motor_status(motor_number, _("Invalid Parameters"), "red")
+        except MotorTestExecutionError as e:
+            self._update_motor_status(motor_number, _("Test Failed"), "red")
+            showerror(_("Error"), str(e))
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            self._update_motor_status(motor_number, _("Error"), "red")
+            showerror(_("Unexpected Error"), str(e))
 
     def _test_all_motors(self) -> None:
         """Execute a test for all motors simultaneously."""
         logging_debug(_("Testing all motors"))
-        is_safe, reason = self.model.is_motor_test_safe()
-        if not is_safe:
-            showwarning(_("Safety Check Failed"), reason)
-            return
 
-        # Validate test parameters
-        throttle_pct = self.model.get_test_throttle_pct()
-        duration = int(self.model.get_test_duration())
-        is_valid, validation_error = self.model.validate_motor_test_parameters(throttle_pct, duration)
-        if not is_valid:
-            showerror(_("Parameter Validation Error"), validation_error)
-            return
+        try:
+            # Check if motor test is safe
+            self.model.is_motor_test_safe()
 
-        success, message = self.model.test_all_motors(throttle_pct, duration)
-        if not success:
-            showerror(_("Error"), message)
+            # Validate test parameters
+            throttle_pct = self.model.get_test_throttle_pct()
+            duration = int(self.model.get_test_duration())
+            self.model.validate_motor_test_parameters(throttle_pct, duration)
+
+            # Execute all motors test
+            self.model.test_all_motors(throttle_pct, duration)
+
+        except MotorTestSafetyError as e:
+            showwarning(_("Safety Check Failed"), str(e))
+        except ValidationError as e:
+            showerror(_("Parameter Validation Error"), str(e))
+        except MotorTestExecutionError as e:
+            showerror(_("Error"), str(e))
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            showerror(_("Unexpected Error"), str(e))
 
     def _test_motors_in_sequence(self) -> None:
         """Execute a test for all motors in sequence."""
         logging_debug(_("Testing motors in sequence"))
-        is_safe, reason = self.model.is_motor_test_safe()
-        if not is_safe:
-            showwarning(_("Safety Check Failed"), reason)
-            return
 
-        # Validate test parameters
-        throttle_pct = self.model.get_test_throttle_pct()
-        duration = int(self.model.get_test_duration())
-        is_valid, validation_error = self.model.validate_motor_test_parameters(throttle_pct, duration)
-        if not is_valid:
-            showerror(_("Parameter Validation Error"), validation_error)
-            return
+        try:
+            # Check if motor test is safe
+            self.model.is_motor_test_safe()
 
-        success, message = self.model.test_motors_in_sequence(throttle_pct, duration)
-        if not success:
-            showerror(_("Error"), message)
+            # Validate test parameters
+            throttle_pct = self.model.get_test_throttle_pct()
+            duration = int(self.model.get_test_duration())
+            self.model.validate_motor_test_parameters(throttle_pct, duration)
+
+            # Execute sequential test
+            self.model.test_motors_in_sequence(throttle_pct, duration)
+
+        except MotorTestSafetyError as e:
+            showwarning(_("Safety Check Failed"), str(e))
+        except ValidationError as e:
+            showerror(_("Parameter Validation Error"), str(e))
+        except MotorTestExecutionError as e:
+            showerror(_("Error"), str(e))
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            showerror(_("Unexpected Error"), str(e))
 
     def _stop_all_motors(self) -> None:
         """Stop all motors immediately."""
         logging_info(_("Stopping all motors"))
-        success, message = self.model.stop_all_motors()
-        if not success:
-            showerror(_("Error"), message)
-        self._reset_all_motor_status()
+
+        try:
+            self.model.stop_all_motors()
+            self._reset_all_motor_status()
+        except MotorTestExecutionError as e:
+            showerror(_("Error"), str(e))
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            showerror(_("Unexpected Error"), str(e))
 
     def _emergency_stop(self) -> None:
         """Emergency stop - alias for _stop_all_motors for test compatibility."""
