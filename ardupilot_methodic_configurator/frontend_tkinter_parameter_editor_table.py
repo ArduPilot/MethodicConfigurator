@@ -164,7 +164,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 info_msg = _("No different parameters found in {selected_file}. Skipping...").format(**locals())
                 logging_info(info_msg)
                 messagebox.showinfo(_("ArduPilot methodic configurator"), info_msg)
-                self.parameter_editor.on_skip_click(force_focus_out_event=False)
+                self.parameter_editor.on_skip_click()
                 return
         else:
             self._update_table(self.parameters, fc_parameters, self.parameter_editor.gui_complexity)
