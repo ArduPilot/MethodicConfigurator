@@ -414,7 +414,8 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                     except ValueError:
                         return _("Takeoff Weight max must be a float"), None
                     lim = self.get_component_value(("Frame", "Specifications", "TOW min Kg"))
-                    return self.validate_against_another_value(tow_max, lim, "TOW min Kg", above=True, delta=0.01)
+                    if lim:
+                        return self.validate_against_another_value(tow_max, lim, "TOW min Kg", above=True, delta=0.01)
 
                 if path[2] == "TOW min Kg":
                     try:
@@ -422,7 +423,8 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                     except ValueError:
                         return _("Takeoff Weight min must be a float"), None
                     lim = self.get_component_value(("Frame", "Specifications", "TOW max Kg"))
-                    return self.validate_against_another_value(tow_min, lim, "TOW max Kg", above=False, delta=0.01)
+                    if lim:
+                        return self.validate_against_another_value(tow_min, lim, "TOW max Kg", above=False, delta=0.01)
 
         if path in BATTERY_CELL_VOLTAGE_PATHS:
             return self.validate_cell_voltage(value, path)
