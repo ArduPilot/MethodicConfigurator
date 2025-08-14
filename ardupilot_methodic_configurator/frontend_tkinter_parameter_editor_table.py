@@ -770,7 +770,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 self.parameter_editor.repopulate_parameter_table(self.current_file)
                 return True
             messagebox.showerror(_("Invalid parameter name."), _("Parameter name not found in the flight controller."))
-        elif self.local_filesystem.doc_dict:
+        if self.local_filesystem.doc_dict:
             if param_name in self.local_filesystem.doc_dict:
                 self.local_filesystem.file_parameters[self.current_file][param_name] = Par(
                     self.local_filesystem.param_default_dict.get(param_name, Par(0, "")).value, ""
@@ -780,7 +780,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 return True
             error_msg = _("'{param_name}' not found in the apm.pdef.xml file.")
             messagebox.showerror(_("Invalid parameter name."), error_msg.format(**locals()))
-        else:
+        if not fc_parameters and not self.local_filesystem.doc_dict:
             messagebox.showerror(
                 _("Operation not possible"),
                 _("Can not add parameter when no FC is connected and no apm.pdef.xml file exists."),
