@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
 from typing import Any
-from unittest.mock import ANY, mock_open, patch
+from unittest.mock import mock_open, patch
 
 import pytest
 
@@ -432,7 +432,10 @@ class TestJSONDataSaving:
                 return_value="/output/directory/output.json",
             ),
             patch("builtins.open", mock_open()) as mock_file,
-            patch("ardupilot_methodic_configurator.backend_filesystem_json_with_schema.json_dump") as mock_dump,
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.json_dumps",
+                return_value='{"name": "Test Output", "count": 42}',
+            ) as mock_dumps,
         ):
             # Act: User saves valid data
             error_occurred, error_message = json_manager_with_schema.save_json_data(valid_data, data_dir)
@@ -441,7 +444,7 @@ class TestJSONDataSaving:
             assert error_occurred is False
             assert error_message == ""
             mock_file.assert_called_once_with("/output/directory/output.json", "w", encoding="utf-8", newline="\n")
-            mock_dump.assert_called_once_with(valid_data, mock_file.return_value.__enter__.return_value, indent=4)
+            mock_dumps.assert_called_once_with(valid_data, indent=4)
 
     def test_user_cannot_save_invalid_data(self, json_manager_with_schema) -> None:
         """
@@ -610,7 +613,7 @@ class TestJSONDataSaving:
             ),
             patch("builtins.open", mock_open()),
             patch(
-                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.json_dump",
+                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.json_dumps",
                 side_effect=TypeError("Object not serializable"),
             ),
             patch("ardupilot_methodic_configurator.backend_filesystem_json_with_schema.logging_error") as mock_error,
@@ -643,7 +646,7 @@ class TestJSONDataSaving:
             ),
             patch("builtins.open", mock_open()),
             patch(
-                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.json_dump",
+                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.json_dumps",
                 side_effect=ValueError("Circular reference in data"),
             ),
             patch("ardupilot_methodic_configurator.backend_filesystem_json_with_schema.logging_error") as mock_error,
@@ -725,7 +728,10 @@ class TestFilesystemJSONWithSchemaIntegration:
                     mock_open().return_value,  # Data file for saving
                 ],
             ),
-            patch("ardupilot_methodic_configurator.backend_filesystem_json_with_schema.json_dump") as mock_dump,
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.json_dumps",
+                return_value='{"app_name": "Test App", "version": 1.5}',
+            ) as mock_dumps,
             patch("ardupilot_methodic_configurator.backend_filesystem_json_with_schema.logging_debug"),
         ):
             # Act: User performs complete workflow
@@ -744,7 +750,7 @@ class TestFilesystemJSONWithSchemaIntegration:
             assert error_msg == ""
             assert error_occurred is False
             assert save_error_msg == ""
-            mock_dump.assert_called_once_with(config_data, ANY, indent=4)
+            mock_dumps.assert_called_once_with(config_data, indent=4)
 
     def test_user_workflow_fails_gracefully_on_invalid_data(self) -> None:
         """
