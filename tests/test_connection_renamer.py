@@ -92,7 +92,7 @@ def test_apply_renames_without_duplicates(connection_params) -> None:
     params = connection_params["param_objects"].copy()
 
     # Apply renames for CAN1 to CAN2
-    duplicated_names, renamed_pairs = ConnectionRenamer.apply_renames(params, "CAN2")
+    _duplicated_names, renamed_pairs = ConnectionRenamer.apply_renames(params, "CAN2")
 
     # Check that the parameters were renamed correctly
     assert "CAN_P2_DRIVER" in params
@@ -119,7 +119,7 @@ def test_apply_renames_with_duplicates(connection_params) -> None:
     params["CAN_P2_DRIVER"] = Par(value=2.0, comment="Already exists")
 
     # Apply renames for CAN1 to CAN2
-    duplicated_params, renamed_pairs = ConnectionRenamer.apply_renames(params, "CAN2")
+    _duplicated_params, _renamed_pairs = ConnectionRenamer.apply_renames(params, "CAN2")
 
     # Check that CAN_P1_DRIVER was removed to avoid duplicates
     assert "CAN_P1_DRIVER" not in params
@@ -141,7 +141,7 @@ def test_apply_renames_with_variables(connection_params) -> None:
     params = connection_params["param_objects"].copy()
 
     # Apply renames with variables
-    duplicated_params, renamed_pairs = ConnectionRenamer.apply_renames(params, "selected_can", variables)
+    _duplicated_params, renamed_pairs = ConnectionRenamer.apply_renames(params, "selected_can", variables)
 
     # Check that the parameters were renamed correctly using the evaluated variable
     assert "CAN_P3_DRIVER" in params
