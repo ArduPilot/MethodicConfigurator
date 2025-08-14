@@ -284,19 +284,17 @@ class TestComponentEditorWithMinimalMocking:
             save_component_to_system_templates=False,
         )
 
-        # Mock only the UI rendering parts, use the real root from conftest.py
+        # Mock tkinter creation to use the provided session root instead
         with (
             patch.object(ComponentEditorWindow, "_create_scroll_frame") as mock_scroll_frame,
             patch.object(ComponentEditorWindow, "_create_intro_frame") as mock_intro_frame,
             patch.object(ComponentEditorWindow, "_create_save_frame") as mock_save_frame,
             patch("tkinter.PhotoImage"),
             patch("PIL.ImageTk.PhotoImage"),
+            patch("tkinter.Tk", return_value=root),  # Use the session root instead of creating new one
         ):
             # Create the editor with real filesystem and data model
             editor = ComponentEditorWindow("1.0.0", filesystem)
-
-            # Use the real root from conftest.py
-            editor.root = root
 
             # Check editor has been properly initialized
             assert editor.version == "1.0.0"
@@ -342,11 +340,11 @@ class TestComponentEditorWithMinimalMocking:
             patch.object(ComponentEditorWindow, "_initialize_ui"),
             patch("tkinter.PhotoImage"),
             patch("PIL.ImageTk.PhotoImage"),
+            patch("tkinter.Tk", return_value=root),  # Use the session root instead of creating new one
         ):
             # Initialize with existing data_model using dependency injection
             editor = ComponentEditorWindow("1.0.0", filesystem)
             editor.data_model = data_model  # Override the data model
-            editor.root = root  # Use the real root from conftest.py
 
             # Test data model integration
             assert editor.data_model is data_model
