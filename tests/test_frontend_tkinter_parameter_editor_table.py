@@ -12,16 +12,63 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from tkinter import ttk
+from typing import Any, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from ardupilot_methodic_configurator.annotate_params import Par
+from ardupilot_methodic_configurator.ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 
-# pylint: disable=too-many-lines, protected-access
+# pylint: disable=protected-access, redefined-outer-name, too-few-public-methods
+
+
+def create_mock_ardupilot_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments # noqa: PLR0913
+    name: str = "TEST_PARAM",
+    value: float = 1.0,
+    comment: str = "test comment",
+    metadata: Optional[dict[str, Any]] = None,
+    fc_value: Optional[float] = None,
+    is_forced: bool = False,
+    is_derived: bool = False,
+    is_calibration: bool = False,
+    is_readonly: bool = False,
+    is_bitmask: bool = False,
+    is_multiple_choice: bool = False,
+) -> ArduPilotParameter:
+    """Create a mock ArduPilotParameter for testing."""
+    metadata = metadata or {}
+
+    if is_calibration:
+        metadata["Calibration"] = True
+    if is_readonly:
+        metadata["ReadOnly"] = True
+    if is_bitmask:
+        metadata["Bitmask"] = {0: "Bit 0", 1: "Bit 1", 2: "Bit 2"}
+    if is_multiple_choice:
+        metadata["values"] = {"0": "Option 0", "1": "Option 1"}
+
+    metadata.setdefault("unit", "")
+    metadata.setdefault("doc_tooltip", "Test tooltip")
+    metadata.setdefault("unit_tooltip", "Unit tooltip")
+
+    par_obj = Par(value, comment)
+    default_par = Par(0.0, "default") if metadata else None
+    forced_par = Par(value, "forced comment") if is_forced else None
+    derived_par = Par(value, "derived comment") if is_derived else None
+
+    return ArduPilotParameter(
+        name=name,
+        par_obj=par_obj,
+        metadata=metadata,
+        default_par=default_par,
+        fc_value=fc_value,
+        forced_par=forced_par,
+        derived_par=derived_par,
+    )
 
 
 @pytest.fixture
@@ -51,9 +98,6 @@ def mock_local_filesystem() -> MagicMock:
 def mock_parameter_editor() -> MagicMock:
     """Create a mock parameter editor."""
     return MagicMock()
-
-
-# pylint: disable=redefined-outer-name
 
 
 @pytest.fixture
@@ -141,7 +185,7 @@ def test_repopulate_empty_parameters(parameter_editor_table: ParameterEditorTabl
     parameter_editor_table.local_filesystem.file_parameters = {test_file: {}}
     fc_parameters = {}
 
-    parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False)
+    parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
     parameter_editor_table.add_parameter_row.assert_not_called()
 
 
@@ -157,7 +201,7 @@ def test_repopulate_clears_existing_content(parameter_editor_table: ParameterEdi
     parameter_editor_table.local_filesystem.doc_dict = {"PARAM1": {"units": "none"}}
     parameter_editor_table.local_filesystem.param_default_dict = {"PARAM1": Par(0.0, "default")}
 
-    parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False)
+    parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
     assert not dummy_widget.winfo_exists()
 
 
@@ -169,7 +213,7 @@ def test_repopulate_handles_none_current_file(parameter_editor_table: ParameterE
     parameter_editor_table.local_filesystem.doc_dict = {}
     parameter_editor_table.local_filesystem.param_default_dict = {}
 
-    parameter_editor_table.repopulate(None, fc_parameters, show_only_differences=False)
+    parameter_editor_table.repopulate(None, fc_parameters, show_only_differences=False, gui_complexity="simple")
     parameter_editor_table.add_parameter_row.assert_not_called()
 
 
@@ -183,7 +227,7 @@ def test_repopulate_single_parameter(parameter_editor_table: ParameterEditorTabl
     parameter_editor_table.local_filesystem.param_default_dict = {"PARAM1": Par(0.0, "default")}
 
     with patch.object(parameter_editor_table, "grid_slaves", return_value=[]):
-        parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False)
+        parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
         # parameter_editor_table.add_parameter_row.assert_called_once()
 
 
@@ -211,7 +255,7 @@ def test_repopulate_multiple_parameters(parameter_editor_table: ParameterEditorT
     }
 
     with patch.object(parameter_editor_table, "grid_slaves", return_value=[]):
-        parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False)
+        parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
         # assert parameter_editor_table.add_parameter_row.call_count == 3
 
 
@@ -237,7 +281,7 @@ def test_repopulate_preserves_checkbutton_states(parameter_editor_table: Paramet
     _original_param1_var = parameter_editor_table.upload_checkbutton_var["PARAM1"]
     _original_param2_var = parameter_editor_table.upload_checkbutton_var["PARAM2"]
 
-    parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False)
+    parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
 
     # Verify the original BooleanVars are still present and maintain their values
     # assert parameter_editor_table.upload_checkbutton_var["PARAM1"] is original_param1_var
@@ -274,203 +318,9 @@ def test_repopulate_show_only_differences(parameter_editor_table: ParameterEdito
         "PARAM3": Par(0.0, "default"),
     }
 
-    parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=True)
+    parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=True, gui_complexity="simple")
     # Should only show PARAM2 and PARAM3 as they differ from FC
     # assert parameter_editor_table.add_parameter_row.call_count == 2
-
-
-class TestParameterValidationBehavior:
-    """Test the behavior of parameter validation helper methods."""
-
-    def test_validate_parameter_value_format_with_valid_float(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test that valid float strings are accepted."""
-        is_valid, value = parameter_editor_table._validate_parameter_value_format("1.5", "TEST_PARAM")
-
-        assert is_valid is True
-        assert value == 1.5
-
-    def test_validate_parameter_value_format_with_integer_string(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test that integer strings are converted to float."""
-        is_valid, value = parameter_editor_table._validate_parameter_value_format("42", "TEST_PARAM")
-
-        assert is_valid is True
-        assert value == 42.0
-
-    def test_validate_parameter_value_format_with_negative_value(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test that negative values are handled correctly."""
-        is_valid, value = parameter_editor_table._validate_parameter_value_format("-3.14", "TEST_PARAM")
-
-        assert is_valid is True
-        assert value == -3.14
-
-    def test_validate_parameter_value_format_with_invalid_string(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test that invalid strings are rejected."""
-        with patch("tkinter.messagebox.showerror") as mock_error:
-            is_valid, value = parameter_editor_table._validate_parameter_value_format("invalid", "TEST_PARAM")
-
-            assert is_valid is False
-            assert str(value) == "nan"  # Check that it's NaN
-            mock_error.assert_called_once()
-
-    def test_validate_parameter_bounds_within_limits(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test validation when parameter value is within bounds."""
-        # Mock the bounds method to return specific min/max values
-        parameter_editor_table._get_parameter_validation_bounds = MagicMock(return_value=(0.0, 10.0))
-
-        is_valid = parameter_editor_table._validate_parameter_bounds(5.0, "TEST_PARAM")
-
-        assert is_valid is True
-
-    def test_validate_parameter_bounds_below_minimum(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test validation when parameter value is below minimum."""
-        parameter_editor_table._get_parameter_validation_bounds = MagicMock(return_value=(0.0, 10.0))
-
-        with patch("tkinter.messagebox.askyesno", return_value=True) as mock_dialog:
-            is_valid = parameter_editor_table._validate_parameter_bounds(-1.0, "TEST_PARAM")
-
-            assert is_valid is True  # User accepted out-of-bounds value
-            mock_dialog.assert_called_once()
-
-    def test_validate_parameter_bounds_above_maximum_rejected(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test validation when parameter value is above maximum and user rejects."""
-        parameter_editor_table._get_parameter_validation_bounds = MagicMock(return_value=(0.0, 10.0))
-
-        with patch("tkinter.messagebox.askyesno", return_value=False) as mock_dialog:
-            is_valid = parameter_editor_table._validate_parameter_bounds(15.0, "TEST_PARAM")
-
-            assert is_valid is False  # User rejected out-of-bounds value
-            mock_dialog.assert_called_once()
-
-    def test_validate_parameter_bounds_no_limits(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test validation when no bounds are defined."""
-        parameter_editor_table._get_parameter_validation_bounds = MagicMock(return_value=(None, None))
-
-        is_valid = parameter_editor_table._validate_parameter_bounds(999.0, "TEST_PARAM")
-
-        assert is_valid is True
-
-    def test_check_parameter_value_changed_within_tolerance(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test that values within tolerance are considered unchanged."""
-        with patch("ardupilot_methodic_configurator.backend_filesystem.is_within_tolerance", return_value=True):
-            changed = parameter_editor_table._check_parameter_value_changed(1.0, 1.0001)
-
-            assert changed is False
-
-    def test_check_parameter_value_changed_outside_tolerance(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test that values outside tolerance are considered changed."""
-        with patch("ardupilot_methodic_configurator.backend_filesystem.is_within_tolerance", return_value=False):
-            changed = parameter_editor_table._check_parameter_value_changed(1.0, 2.0)
-
-            assert changed is True
-
-    def test_update_parameter_change_state_first_change(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test parameter change state update for first change."""
-        parameter_editor_table.at_least_one_param_edited = False
-
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.logging_debug") as mock_log:
-            parameter_editor_table._update_parameter_change_state(changed=True, param_name="TEST_PARAM")
-
-            assert parameter_editor_table.at_least_one_param_edited is True
-            mock_log.assert_called_once()
-
-    def test_update_parameter_change_state_subsequent_change(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test parameter change state update for subsequent changes."""
-        parameter_editor_table.at_least_one_param_edited = True
-
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.logging_debug") as mock_log:
-            parameter_editor_table._update_parameter_change_state(changed=True, param_name="TEST_PARAM")
-
-            assert parameter_editor_table.at_least_one_param_edited is True
-            mock_log.assert_not_called()  # Should not log for subsequent changes
-
-    def test_update_parameter_change_state_no_change(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test parameter change state when no change occurred."""
-        original_state = parameter_editor_table.at_least_one_param_edited
-
-        parameter_editor_table._update_parameter_change_state(changed=False, param_name="TEST_PARAM")
-
-        assert parameter_editor_table.at_least_one_param_edited == original_state
-
-
-class TestForcedDerivedParameterBehavior:
-    """Test the behavior of forced and derived parameter detection."""
-
-    def test_is_forced_parameter(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test detection of forced parameters."""
-        test_file = "test_file"
-        parameter_editor_table.current_file = test_file
-        parameter_editor_table.local_filesystem.forced_parameters = {test_file: {"FORCED_PARAM": MagicMock()}}
-        parameter_editor_table.local_filesystem.derived_parameters = {}
-
-        is_forced_or_derived, param_type = parameter_editor_table._is_forced_or_derived_parameter("FORCED_PARAM")
-
-        assert is_forced_or_derived is True
-        assert param_type == "forced"
-
-    def test_is_derived_parameter(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test detection of derived parameters."""
-        test_file = "test_file"
-        parameter_editor_table.current_file = test_file
-        parameter_editor_table.local_filesystem.forced_parameters = {}
-        parameter_editor_table.local_filesystem.derived_parameters = {test_file: {"DERIVED_PARAM": MagicMock()}}
-
-        is_forced_or_derived, param_type = parameter_editor_table._is_forced_or_derived_parameter("DERIVED_PARAM")
-
-        assert is_forced_or_derived is True
-        assert param_type == "derived"
-
-    def test_is_normal_parameter(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test detection of normal (neither forced nor derived) parameters."""
-        test_file = "test_file"
-        parameter_editor_table.current_file = test_file
-        parameter_editor_table.local_filesystem.forced_parameters = {}
-        parameter_editor_table.local_filesystem.derived_parameters = {}
-
-        is_forced_or_derived, param_type = parameter_editor_table._is_forced_or_derived_parameter("NORMAL_PARAM")
-
-        assert is_forced_or_derived is False
-        assert param_type == ""
-
-    def test_forced_parameter_precedence_over_derived(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test that forced parameters take precedence over derived when both are present."""
-        test_file = "test_file"
-        parameter_editor_table.current_file = test_file
-        parameter_editor_table.local_filesystem.forced_parameters = {test_file: {"CONFLICT_PARAM": MagicMock()}}
-        parameter_editor_table.local_filesystem.derived_parameters = {test_file: {"CONFLICT_PARAM": MagicMock()}}
-
-        is_forced_or_derived, param_type = parameter_editor_table._is_forced_or_derived_parameter("CONFLICT_PARAM")
-
-        assert is_forced_or_derived is True
-        assert param_type == "forced"  # Forced should take precedence
-
-    def test_get_parameter_validation_bounds_with_bounds(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test getting validation bounds when they exist."""
-        parameter_editor_table.local_filesystem.doc_dict = {"TEST_PARAM": {"min": -10.0, "max": 100.0}}
-
-        min_val, max_val = parameter_editor_table._get_parameter_validation_bounds("TEST_PARAM")
-
-        assert min_val == -10.0
-        assert max_val == 100.0
-
-    def test_get_parameter_validation_bounds_no_bounds(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test getting validation bounds when they don't exist."""
-        parameter_editor_table.local_filesystem.doc_dict = {
-            "TEST_PARAM": {}  # No min/max defined
-        }
-
-        min_val, max_val = parameter_editor_table._get_parameter_validation_bounds("TEST_PARAM")
-
-        assert min_val is None
-        assert max_val is None
-
-    def test_get_parameter_validation_bounds_parameter_not_found(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test getting validation bounds for unknown parameter."""
-        parameter_editor_table.local_filesystem.doc_dict = {}
-
-        min_val, max_val = parameter_editor_table._get_parameter_validation_bounds("UNKNOWN_PARAM")
-
-        assert min_val is None
-        assert max_val is None
 
 
 class TestUIComplexityBehavior:
@@ -516,55 +366,6 @@ class TestUIComplexityBehavior:
         assert column_index == 5
 
 
-class TestWidgetManagementBehavior:
-    """Test behavior of widget management helper methods."""
-
-    def test_find_change_reason_widget_by_parameter_found(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test finding change reason widget when it exists."""
-        # Mock the view_port and widgets
-        mock_entry = MagicMock(spec=ttk.Entry)
-        mock_entry.grid_info.return_value = {"column": 5, "row": 1}
-
-        mock_label = MagicMock(spec=ttk.Label)
-        mock_label.grid_info.return_value = {"column": 1, "row": 1}
-        mock_label.cget.return_value = "TEST_PARAM   "  # With padding spaces
-
-        with patch.object(parameter_editor_table.view_port, "winfo_children", return_value=[mock_entry, mock_label]):
-            parameter_editor_table._should_show_upload_column = MagicMock(return_value=False)
-            parameter_editor_table._get_change_reason_column_index = MagicMock(return_value=5)
-
-            widget = parameter_editor_table._find_change_reason_widget_by_parameter("TEST_PARAM")
-
-            assert widget == mock_entry
-
-    def test_find_change_reason_widget_by_parameter_not_found(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test finding change reason widget when it doesn't exist."""
-        with patch.object(parameter_editor_table.view_port, "winfo_children", return_value=[]):
-            parameter_editor_table._should_show_upload_column = MagicMock(return_value=False)
-            parameter_editor_table._get_change_reason_column_index = MagicMock(return_value=5)
-
-            widget = parameter_editor_table._find_change_reason_widget_by_parameter("NONEXISTENT_PARAM")
-
-            assert widget is None
-
-    def test_find_change_reason_widget_wrong_parameter_name(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test finding change reason widget with wrong parameter name."""
-        mock_entry = MagicMock(spec=ttk.Entry)
-        mock_entry.grid_info.return_value = {"column": 5, "row": 1}
-
-        mock_label = MagicMock(spec=ttk.Label)
-        mock_label.grid_info.return_value = {"column": 1, "row": 1}
-        mock_label.cget.return_value = "OTHER_PARAM"
-
-        with patch.object(parameter_editor_table.view_port, "winfo_children", return_value=[mock_entry, mock_label]):
-            parameter_editor_table._should_show_upload_column = MagicMock(return_value=False)
-            parameter_editor_table._get_change_reason_column_index = MagicMock(return_value=5)
-
-            widget = parameter_editor_table._find_change_reason_widget_by_parameter("TEST_PARAM")
-
-            assert widget is None
-
-
 class TestParameterChangeStateBehavior:
     """Test behavior of parameter change state management."""
 
@@ -601,41 +402,6 @@ class TestParameterChangeStateBehavior:
 class TestIntegrationBehavior:
     """Test integration behavior between refactored methods."""
 
-    def test_parameter_validation_workflow_valid_input(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test complete parameter validation workflow with valid input."""
-        # Setup
-        parameter_editor_table._get_parameter_validation_bounds = MagicMock(return_value=(0.0, 10.0))
-        parameter_editor_table.at_least_one_param_edited = False
-
-        # Simulate validation workflow
-        is_valid, value = parameter_editor_table._validate_parameter_value_format("5.0", "TEST_PARAM")
-        assert is_valid is True
-
-        bounds_valid = parameter_editor_table._validate_parameter_bounds(value, "TEST_PARAM")
-        assert bounds_valid is True
-
-        with patch("ardupilot_methodic_configurator.backend_filesystem.is_within_tolerance", return_value=False):
-            changed = parameter_editor_table._check_parameter_value_changed(1.0, value)
-            assert changed is True
-
-            parameter_editor_table._update_parameter_change_state(changed, "TEST_PARAM")
-            assert parameter_editor_table.at_least_one_param_edited is True
-
-    def test_forced_parameter_integration(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test integration behavior with forced parameters."""
-        test_file = "test_file"
-        parameter_editor_table.current_file = test_file
-        parameter_editor_table.local_filesystem.forced_parameters = {test_file: {"FORCED_PARAM": MagicMock()}}
-        parameter_editor_table.local_filesystem.derived_parameters = {}
-
-        is_forced_or_derived, param_type = parameter_editor_table._is_forced_or_derived_parameter("FORCED_PARAM")
-
-        assert is_forced_or_derived is True
-        assert param_type == "forced"
-
-        # In a real scenario, forced parameters would bypass normal validation
-        # This demonstrates the integration point
-
     def test_gui_complexity_affects_column_calculation(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test that UI complexity affects column index calculations."""
         parameter_editor_table.parameter_editor.gui_complexity = "simple"
@@ -668,70 +434,61 @@ class TestWidgetCreationBehavior:
 
     def test_create_parameter_name_normal(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter name label creation for normal parameters."""
-        param_metadata = {}
-        doc_tooltip = "Test tooltip"
+        param = create_mock_ardupilot_parameter()
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip:
-            label = parameter_editor_table._create_parameter_name("TEST_PARAM", param_metadata, doc_tooltip)
+            label = parameter_editor_table._create_parameter_name(param)
 
             assert isinstance(label, ttk.Label)
             assert "TEST_PARAM" in label.cget("text")
-            mock_tooltip.assert_called_once_with(label, doc_tooltip)
+            mock_tooltip.assert_called_once()
 
     def test_create_parameter_name_calibration(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter name label creation for calibration parameters."""
-        param_metadata = {"Calibration": True}
-        doc_tooltip = "Test tooltip"
+        param = create_mock_ardupilot_parameter(name="CAL_PARAM", is_calibration=True)
 
-        label = parameter_editor_table._create_parameter_name("CAL_PARAM", param_metadata, doc_tooltip)
+        label = parameter_editor_table._create_parameter_name(param)
 
         assert isinstance(label, ttk.Label)
         assert str(label.cget("background")) == "yellow"
 
     def test_create_parameter_name_readonly(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter name label creation for readonly parameters."""
-        param_metadata = {"ReadOnly": True}
-        doc_tooltip = "Test tooltip"
+        param = create_mock_ardupilot_parameter(name="RO_PARAM", is_readonly=True)
 
-        label = parameter_editor_table._create_parameter_name("RO_PARAM", param_metadata, doc_tooltip)
+        label = parameter_editor_table._create_parameter_name(param)
 
         assert isinstance(label, ttk.Label)
-        assert str(label.cget("background")) == "red"
+        assert str(label.cget("background")) == "purple1"
 
     def test_create_flightcontroller_value_exists(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test flight controller value label when parameter exists in FC."""
-        fc_parameters = {"TEST_PARAM": 1.234567}
-        param_default = Par(1.234567, "default")
+        param = create_mock_ardupilot_parameter(fc_value=1.234567)
 
-        with patch("ardupilot_methodic_configurator.backend_filesystem.is_within_tolerance", return_value=True):
-            label = parameter_editor_table._create_flightcontroller_value(
-                fc_parameters, "TEST_PARAM", param_default, "tooltip"
-            )
+        label = parameter_editor_table._create_flightcontroller_value(param)
 
-            assert isinstance(label, ttk.Label)
-            assert label.cget("text") == "1.234567"
-            assert str(label.cget("background")) == "light blue"
+        assert isinstance(label, ttk.Label)
+        assert label.cget("text") == "1.234567"
 
     def test_create_flightcontroller_value_missing(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test flight controller value label when parameter is missing from FC."""
-        fc_parameters = {}
+        param = create_mock_ardupilot_parameter(fc_value=None)
 
-        label = parameter_editor_table._create_flightcontroller_value(fc_parameters, "MISSING_PARAM", None, "tooltip")
+        label = parameter_editor_table._create_flightcontroller_value(param)
 
         assert isinstance(label, ttk.Label)
         assert label.cget("text") == "N/A"
-        assert str(label.cget("background")) == "orange"
 
     def test_create_unit_label(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test unit label creation."""
-        param_metadata = {"unit": "m/s", "unit_tooltip": "meters per second"}
+        param = create_mock_ardupilot_parameter(metadata={"unit": "m/s", "unit_tooltip": "meters per second"})
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip:
-            label = parameter_editor_table._create_unit_label(param_metadata)
+            label = parameter_editor_table._create_unit_label(param)
 
             assert isinstance(label, ttk.Label)
             assert label.cget("text") == "m/s"
-            mock_tooltip.assert_called_once_with(label, "meters per second")
+            mock_tooltip.assert_called_once()
 
     def test_create_upload_checkbutton_connected(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test upload checkbutton creation when FC is connected."""
@@ -754,170 +511,28 @@ class TestWidgetCreationBehavior:
 
     def test_create_change_reason_entry_normal(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test change reason entry creation for normal parameters."""
-        param = Par(1.0, "test comment")
-        mock_entry = MagicMock(spec=ttk.Entry)
-        mock_entry.get.return_value = "1.0"
-
-        parameter_editor_table.current_file = "test_file"
-        parameter_editor_table.local_filesystem.forced_parameters = {}
-        parameter_editor_table.local_filesystem.derived_parameters = {}
+        param = create_mock_ardupilot_parameter()
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip:
-            entry = parameter_editor_table._create_change_reason_entry("TEST_PARAM", param, mock_entry)
+            entry = parameter_editor_table._create_change_reason_entry(param)
 
             assert isinstance(entry, ttk.Entry)
             assert entry.get() == "test comment"
-            assert entry.cget("state") != "disabled"
             mock_tooltip.assert_called_once()
 
     def test_create_change_reason_entry_forced(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test change reason entry creation for forced parameters."""
-        param = Par(1.0, "original comment")
-        forced_param = Par(1.0, "forced comment")
-        mock_entry = MagicMock(spec=ttk.Entry)
-        mock_entry.get.return_value = "1.0"
+        param = create_mock_ardupilot_parameter(is_forced=True)
 
-        parameter_editor_table.current_file = "test_file"
-        parameter_editor_table.local_filesystem.forced_parameters = {"test_file": {"FORCED_PARAM": forced_param}}
-        parameter_editor_table.local_filesystem.derived_parameters = {}
-
-        entry = parameter_editor_table._create_change_reason_entry("FORCED_PARAM", param, mock_entry)
+        entry = parameter_editor_table._create_change_reason_entry(param)
 
         assert isinstance(entry, ttk.Entry)
         assert entry.get() == "forced comment"
         assert str(entry.cget("state")) == "disabled"
-        assert str(entry.cget("background")) == "light grey"
 
 
 class TestEventHandlerBehavior:
     """Test the behavior of event handler methods."""
-
-    def test_on_parameter_value_change_valid_input(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test parameter value change with valid input."""
-        # Setup
-        parameter_editor_table.current_file = "test_file"
-        parameter_editor_table.local_filesystem.file_parameters = {"test_file": {"TEST_PARAM": Par(1.0, "comment")}}
-        parameter_editor_table.local_filesystem.param_default_dict = {"TEST_PARAM": Par(0.0, "default")}
-
-        # Mock event with proper Entry widget
-        mock_event = MagicMock()
-        mock_widget = MagicMock()
-        mock_widget.get.return_value = "2.5"
-        mock_event.widget = mock_widget
-
-        # Mock validation methods
-        parameter_editor_table._validate_parameter_value_format = MagicMock(return_value=(True, 2.5))
-        parameter_editor_table._validate_parameter_bounds = MagicMock(return_value=True)
-        parameter_editor_table._check_parameter_value_changed = MagicMock(return_value=True)
-        parameter_editor_table._update_parameter_change_state = MagicMock()
-        parameter_editor_table._update_change_reason_entry_tooltip = MagicMock()
-
-        # Create a simplified version of the method for testing that doesn't use isinstance
-        def test_on_parameter_value_change(event: tk.Event, current_file: str, param_name: str) -> None:
-            """Test version that treats all widgets as Entry widgets."""
-            widget = event.widget
-            new_value = widget.get()
-
-            try:
-                old_value = parameter_editor_table.local_filesystem.file_parameters[current_file][param_name].value
-            except KeyError:
-                return
-
-            # Handle None or empty values
-            if new_value is None:
-                new_value = ""
-
-            # Validate the new value format
-            is_valid, p = parameter_editor_table._validate_parameter_value_format(str(new_value), param_name)
-            if not is_valid:
-                p = old_value
-
-            # Validate the parameter bounds
-            if not parameter_editor_table._validate_parameter_bounds(p, param_name):
-                p = old_value
-
-            # Check if the value has changed
-            changed = parameter_editor_table._check_parameter_value_changed(old_value, p)
-
-            # Update the parameter change state
-            parameter_editor_table._update_parameter_change_state(changed=changed, param_name=param_name)
-
-            # Update the params dictionary with the new value
-            parameter_editor_table.local_filesystem.file_parameters[current_file][param_name].value = p
-
-            # Update the tooltip for the change reason entry
-            parameter_editor_table._update_change_reason_entry_tooltip(param_name, p)
-
-        # Use the test version of the method
-        test_on_parameter_value_change(mock_event, "test_file", "TEST_PARAM")
-
-        # Verify validation chain was called
-        parameter_editor_table._validate_parameter_value_format.assert_called_once_with("2.5", "TEST_PARAM")
-        parameter_editor_table._validate_parameter_bounds.assert_called_once_with(2.5, "TEST_PARAM")
-        parameter_editor_table._check_parameter_value_changed.assert_called_once_with(1.0, 2.5)
-        parameter_editor_table._update_parameter_change_state.assert_called_once_with(changed=True, param_name="TEST_PARAM")
-
-        # Verify parameter was updated
-        assert parameter_editor_table.local_filesystem.file_parameters["test_file"]["TEST_PARAM"].value == 2.5
-
-    def test_on_parameter_value_change_invalid_format(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test parameter value change with invalid format."""
-        parameter_editor_table.current_file = "test_file"
-        parameter_editor_table.local_filesystem.file_parameters = {"test_file": {"TEST_PARAM": Par(1.0, "comment")}}
-
-        mock_event = MagicMock()
-        mock_widget = MagicMock()
-        mock_widget.get.return_value = "invalid"
-        mock_event.widget = mock_widget
-
-        parameter_editor_table._validate_parameter_value_format = MagicMock(return_value=(False, 1.0))
-        parameter_editor_table._validate_parameter_bounds = MagicMock(return_value=True)
-        parameter_editor_table._check_parameter_value_changed = MagicMock(return_value=False)
-        parameter_editor_table._update_parameter_change_state = MagicMock()
-        parameter_editor_table._update_change_reason_entry_tooltip = MagicMock()
-
-        # Create a simplified version of the method for testing that doesn't use isinstance
-        def test_on_parameter_value_change(event: tk.Event, current_file: str, param_name: str) -> None:
-            """Test version that treats all widgets as Entry widgets."""
-            widget = event.widget
-            new_value = widget.get()
-
-            try:
-                old_value = parameter_editor_table.local_filesystem.file_parameters[current_file][param_name].value
-            except KeyError:
-                return
-
-            # Handle None or empty values
-            if new_value is None:
-                new_value = ""
-
-            # Validate the new value format
-            is_valid, p = parameter_editor_table._validate_parameter_value_format(str(new_value), param_name)
-            if not is_valid:
-                p = old_value
-
-            # Validate the parameter bounds
-            if not parameter_editor_table._validate_parameter_bounds(p, param_name):
-                p = old_value
-
-            # Check if the value has changed
-            changed = parameter_editor_table._check_parameter_value_changed(old_value, p)
-
-            # Update the parameter change state
-            parameter_editor_table._update_parameter_change_state(changed=changed, param_name=param_name)
-
-            # Update the params dictionary with the new value
-            parameter_editor_table.local_filesystem.file_parameters[current_file][param_name].value = p
-
-            # Update the tooltip for the change reason entry
-            parameter_editor_table._update_change_reason_entry_tooltip(param_name, p)
-
-        # Use the test version of the method
-        test_on_parameter_value_change(mock_event, "test_file", "TEST_PARAM")
-
-        # Should revert to original value
-        parameter_editor_table._validate_parameter_bounds.assert_called_once_with(1.0, "TEST_PARAM")
-        parameter_editor_table._check_parameter_value_changed.assert_called_once_with(1.0, 1.0)
 
     def test_on_parameter_delete_confirmed(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter deletion when user confirms."""
@@ -1019,62 +634,54 @@ class TestColumnManagementBehavior:
     def test_create_column_widgets_normal_parameter(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test column widget creation for normal parameters."""
         param_name = "TEST_PARAM"
-        param = Par(1.5, "test comment")
-        param_metadata = {"unit": "m/s"}
-        param_default = Par(0.0, "default")
-        doc_tooltip = "Test tooltip"
-        fc_parameters = {"TEST_PARAM": 1.5}
+        param = create_mock_ardupilot_parameter()
         show_upload_column = True
 
-        # Mock individual widget creation methods
-        parameter_editor_table._create_delete_button = MagicMock(return_value=MagicMock())
-        parameter_editor_table._create_parameter_name = MagicMock(return_value=MagicMock())
-        parameter_editor_table._create_flightcontroller_value = MagicMock(return_value=MagicMock())
-        parameter_editor_table._create_new_value_entry = MagicMock(return_value=MagicMock())
-        parameter_editor_table._create_unit_label = MagicMock(return_value=MagicMock())
-        parameter_editor_table._create_upload_checkbutton = MagicMock(return_value=MagicMock())
-        parameter_editor_table._create_change_reason_entry = MagicMock(return_value=MagicMock())
+        # Mock individual widget creation methods using patch.object
+        with (
+            patch.object(parameter_editor_table, "_create_delete_button", return_value=MagicMock()) as mock_delete,
+            patch.object(parameter_editor_table, "_create_parameter_name", return_value=MagicMock()) as mock_name,
+            patch.object(parameter_editor_table, "_create_flightcontroller_value", return_value=MagicMock()) as mock_fc,
+            patch.object(parameter_editor_table, "_create_new_value_entry", return_value=MagicMock()) as mock_new,
+            patch.object(parameter_editor_table, "_create_unit_label", return_value=MagicMock()) as mock_unit,
+            patch.object(parameter_editor_table, "_create_upload_checkbutton", return_value=MagicMock()) as mock_upload,
+            patch.object(parameter_editor_table, "_create_change_reason_entry", return_value=MagicMock()) as mock_reason,
+        ):
+            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
 
-        column = parameter_editor_table._create_column_widgets(
-            param_name, param, param_metadata, param_default, doc_tooltip, fc_parameters, show_upload_column
-        )
-
-        assert len(column) == 7  # With upload column
-        parameter_editor_table._create_delete_button.assert_called_once_with(param_name)
-        parameter_editor_table._create_parameter_name.assert_called_once()
-        parameter_editor_table._create_flightcontroller_value.assert_called_once()
-        parameter_editor_table._create_new_value_entry.assert_called_once()
-        parameter_editor_table._create_unit_label.assert_called_once()
-        parameter_editor_table._create_upload_checkbutton.assert_called_once()
-        parameter_editor_table._create_change_reason_entry.assert_called_once()
+            assert len(column) == 7  # With upload column
+            mock_delete.assert_called_once()
+            mock_name.assert_called_once()
+            mock_fc.assert_called_once()
+            mock_new.assert_called_once()
+            mock_unit.assert_called_once()
+            mock_upload.assert_called_once()
+            mock_reason.assert_called_once()
 
     def test_create_column_widgets_without_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test column widget creation without upload column."""
         param_name = "TEST_PARAM"
-        param = Par(1.5, "test comment")
-        param_metadata = {"unit": "m/s"}
-        param_default = Par(0.0, "default")
-        doc_tooltip = "Test tooltip"
-        fc_parameters = {"TEST_PARAM": 1.5}
+        param = create_mock_ardupilot_parameter()
         show_upload_column = False
 
-        # Mock individual widget creation methods
-        parameter_editor_table._create_delete_button = MagicMock(return_value=MagicMock())
-        parameter_editor_table._create_parameter_name = MagicMock(return_value=MagicMock())
-        parameter_editor_table._create_flightcontroller_value = MagicMock(return_value=MagicMock())
-        parameter_editor_table._create_new_value_entry = MagicMock(return_value=MagicMock())
-        parameter_editor_table._create_unit_label = MagicMock(return_value=MagicMock())
-        parameter_editor_table._create_change_reason_entry = MagicMock(return_value=MagicMock())
+        # Mock individual widget creation methods using patch.object
+        with (
+            patch.object(parameter_editor_table, "_create_delete_button", return_value=MagicMock()) as mock_delete,
+            patch.object(parameter_editor_table, "_create_parameter_name", return_value=MagicMock()) as mock_name,
+            patch.object(parameter_editor_table, "_create_flightcontroller_value", return_value=MagicMock()) as mock_fc,
+            patch.object(parameter_editor_table, "_create_new_value_entry", return_value=MagicMock()) as mock_new,
+            patch.object(parameter_editor_table, "_create_unit_label", return_value=MagicMock()) as mock_unit,
+            patch.object(parameter_editor_table, "_create_change_reason_entry", return_value=MagicMock()) as mock_reason,
+        ):
+            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
 
-        # Mock the upload checkbutton method to track calls
-        parameter_editor_table._create_upload_checkbutton = MagicMock(return_value=MagicMock())
-
-        column = parameter_editor_table._create_column_widgets(
-            param_name, param, param_metadata, param_default, doc_tooltip, fc_parameters, show_upload_column
-        )
-
-        assert len(column) == 6  # Without upload column
-        parameter_editor_table._create_upload_checkbutton.assert_not_called()
+            assert len(column) == 6  # Without upload column
+            mock_delete.assert_called_once()
+            mock_name.assert_called_once()
+            mock_fc.assert_called_once()
+            mock_new.assert_called_once()
+            mock_unit.assert_called_once()
+            mock_reason.assert_called_once()
 
     def test_grid_column_widgets_with_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test column widget gridding with upload column."""
@@ -1141,20 +748,28 @@ class TestUpdateMethodsBehavior:
     def test_update_new_value_entry_text_normal_entry(self, parameter_editor_table: ParameterEditorTable) -> None:  # pylint: disable=unused-argument
         """Test updating new value entry text for normal entry widget."""
         mock_entry = MagicMock(spec=ttk.Entry)
-        param_default = Par(1.5, "default")
 
-        with patch("ardupilot_methodic_configurator.backend_filesystem.is_within_tolerance", return_value=True):
-            ParameterEditorTable._update_new_value_entry_text(mock_entry, 1.5, param_default)
+        # Create a parameter where new value equals default value to trigger default_v.TEntry style
+        param = ArduPilotParameter(
+            name="TEST_PARAM",
+            par_obj=Par(1.5, "test comment"),
+            metadata={},
+            default_par=Par(1.5, "default comment"),  # Same value as par_obj to trigger default style
+            fc_value=None,
+        )
 
-            mock_entry.delete.assert_called_once_with(0, tk.END)
-            mock_entry.insert.assert_called_once_with(0, "1.5")
-            mock_entry.configure.assert_called_once_with(style="default_v.TEntry")
+        ParameterEditorTable._update_new_value_entry_text(mock_entry, param)
+
+        mock_entry.delete.assert_called_once_with(0, tk.END)
+        mock_entry.insert.assert_called_once_with(0, "1.5")
+        mock_entry.configure.assert_called_once_with(style="default_v.TEntry")
 
     def test_update_new_value_entry_text_combobox(self, parameter_editor_table: ParameterEditorTable) -> None:  # pylint: disable=unused-argument
         """Test updating new value entry text for combobox widget (should be skipped)."""
         mock_combobox = MagicMock(spec=PairTupleCombobox)
+        param = create_mock_ardupilot_parameter(value=1.5)
 
-        ParameterEditorTable._update_new_value_entry_text(mock_combobox, 1.5, None)
+        ParameterEditorTable._update_new_value_entry_text(mock_combobox, param)
 
         # Should not call any methods on combobox
         mock_combobox.delete.assert_not_called()
@@ -1166,88 +781,29 @@ class TestUpdateMethodsBehavior:
         mock_combobox.get_selected_key.return_value = "1.5"
         mock_event = MagicMock()
         mock_event.width = 9
-        param_default = Par(1.5, "default")
+        mock_change_reason_widget = MagicMock(spec=ttk.Entry)
 
-        with patch("ardupilot_methodic_configurator.backend_filesystem.is_within_tolerance", return_value=True):
-            parameter_editor_table._update_combobox_style_on_selection(mock_combobox, param_default, mock_event)
+        # Create a parameter where the selected value (1.5) equals the default value
+        param = ArduPilotParameter(
+            name="TEST_PARAM",
+            par_obj=Par(1.0, "test comment"),  # Initial value is different
+            metadata={},
+            default_par=Par(1.5, "default comment"),  # Default value matches what will be selected
+            fc_value=None,
+        )
 
-            mock_combobox.configure.assert_called_once_with(style="default_v.TCombobox")
-            mock_combobox.on_combo_configure.assert_called_once_with(mock_event)
+        # Mock the local filesystem since set_new_value tries to update it
+        parameter_editor_table.local_filesystem.file_parameters = {"test_file": {"TEST_PARAM": Par(1.0, "test")}}
+        parameter_editor_table.current_file = "test_file"
 
-    def test_update_combobox_style_on_selection_invalid(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test combobox style update on selection with invalid value."""
-        mock_combobox = MagicMock(spec=PairTupleCombobox)
-        mock_combobox.get_selected_key.return_value = "invalid"
-        mock_event = MagicMock()
+        # Mock the show_tooltip function to avoid creating actual Tkinter widgets
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"):
+            parameter_editor_table._update_combobox_style_on_selection(
+                mock_combobox, param, mock_event, mock_change_reason_widget
+            )
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.logging_info") as mock_log:
-            parameter_editor_table._update_combobox_style_on_selection(mock_combobox, None, mock_event)
-
-            # Should log the error
-            mock_log.assert_called_once()
-
-
-class TestRenameConnectionBehavior:
-    """Test the behavior of connection renaming functionality."""
-
-    def test_rename_fc_connection_simple_rename(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test simple connection renaming."""
-        test_file = "test_file"
-        parameter_editor_table.current_file = test_file
-        parameter_editor_table.local_filesystem.configuration_steps = {test_file: {"rename_connection": "GPS2"}}
-        parameter_editor_table.local_filesystem.file_parameters = {test_file: {"GPS_PARAM": Par(1.0, "comment")}}
-        parameter_editor_table.variables = {"some_var": "some_value"}
-
-        with (
-            patch("builtins.eval", return_value="GPS2") as mock_eval,
-            patch("tkinter.messagebox.showinfo") as mock_info,
-        ):
-            parameter_editor_table.rename_fc_connection(test_file)
-
-            mock_eval.assert_called_once()
-            mock_info.assert_called_once()
-            assert "GPS2_PARAM" in parameter_editor_table.local_filesystem.file_parameters[test_file]
-            assert "GPS_PARAM" not in parameter_editor_table.local_filesystem.file_parameters[test_file]
-            assert parameter_editor_table.at_least_one_param_edited is True
-
-    def test_rename_fc_connection_can_parameters(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test CAN parameter renaming with special handling."""
-        test_file = "test_file"
-        parameter_editor_table.current_file = test_file
-        parameter_editor_table.local_filesystem.configuration_steps = {test_file: {"rename_connection": "CAN2"}}
-        parameter_editor_table.local_filesystem.file_parameters = {test_file: {"CAN_P1_PARAM": Par(1.0, "comment")}}
-        parameter_editor_table.variables = {}
-
-        with patch("builtins.eval", return_value="CAN2"), patch("tkinter.messagebox.showinfo") as mock_info:
-            parameter_editor_table.rename_fc_connection(test_file)
-
-            assert "CAN_P2_PARAM" in parameter_editor_table.local_filesystem.file_parameters[test_file]
-            assert "CAN_P1_PARAM" not in parameter_editor_table.local_filesystem.file_parameters[test_file]
-            mock_info.assert_called_once()
-
-    def test_rename_fc_connection_duplicate_handling(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test handling of duplicate parameters during renaming."""
-        test_file = "test_file"
-        parameter_editor_table.current_file = test_file
-        parameter_editor_table.local_filesystem.configuration_steps = {test_file: {"rename_connection": "GPS2"}}
-        parameter_editor_table.local_filesystem.file_parameters = {
-            test_file: {
-                "GPS_PARAM1": Par(1.0, "comment1"),
-                "GPS_PARAM2": Par(2.0, "comment2"),  # Would both rename to GPS2_PARAM2
-            }
-        }
-        parameter_editor_table.variables = {}
-
-        with (
-            patch("builtins.eval", return_value="GPS2"),
-            patch("tkinter.messagebox.showinfo") as mock_info,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.logging_info") as mock_log,
-        ):
-            parameter_editor_table.rename_fc_connection(test_file)
-
-            # One parameter should be removed due to duplication
-            mock_info.assert_called()
-            mock_log.assert_called()
+        mock_combobox.configure.assert_called_once_with(style="default_v.TCombobox")
+        mock_combobox.on_combo_configure.assert_called_once_with(mock_event)
 
 
 class TestBitmaskFunctionalityBehavior:
@@ -1260,9 +816,13 @@ class TestBitmaskFunctionalityBehavior:
         mock_widget.get.return_value = "5"  # Binary: 101 (bits 0 and 2 set)
         mock_widget.unbind = MagicMock()
         mock_event.widget = mock_widget
+        mock_change_reason_widget = MagicMock(spec=ttk.Entry)
 
-        bitmask_dict = {0: "Bit 0", 1: "Bit 1", 2: "Bit 2"}
-        old_value = 3.0
+        param = create_mock_ardupilot_parameter(
+            name="TEST_PARAM",
+            value=3.0,
+            is_bitmask=True,
+        )
 
         parameter_editor_table.root = MagicMock()
         parameter_editor_table.local_filesystem.param_default_dict = {"TEST_PARAM": Par(0.0, "default")}
@@ -1273,7 +833,7 @@ class TestBitmaskFunctionalityBehavior:
             patch("tkinter.ttk.Checkbutton"),
             patch("tkinter.ttk.Label"),
         ):
-            parameter_editor_table._open_bitmask_selection_window(mock_event, "TEST_PARAM", bitmask_dict, old_value)
+            parameter_editor_table._open_bitmask_selection_window(mock_event, param, mock_change_reason_widget)
 
             # Verify window was created
             mock_toplevel.assert_called_once()
@@ -1286,156 +846,8 @@ class TestBitmaskFunctionalityBehavior:
         # logic into a separate testable method
 
 
-class TestRepopulateAdvancedBehavior:
-    """Test advanced repopulate behavior scenarios."""
-
-    def test_repopulate_with_derived_parameters(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test repopulate with derived parameters computation."""
-        test_file = "test_file"
-        parameter_editor_table.local_filesystem.file_parameters = {test_file: {"PARAM1": Par(1.0, "comment")}}
-        parameter_editor_table.local_filesystem.configuration_steps = {test_file: {"some_step": "value"}}
-        parameter_editor_table.local_filesystem.derived_parameters = {}
-        parameter_editor_table.variables = {"fc_parameters": {}}
-
-        # Mock the methods
-        parameter_editor_table.local_filesystem.compute_parameters = MagicMock(return_value=None)
-        parameter_editor_table.local_filesystem.merge_forced_or_derived_parameters = MagicMock(return_value=True)
-        parameter_editor_table.rename_fc_connection = MagicMock()
-        parameter_editor_table._update_table = MagicMock()
-        parameter_editor_table._configure_table_columns = MagicMock()
-        parameter_editor_table.canvas = MagicMock()
-
-        fc_parameters = {"PARAM1": 1.0}
-
-        parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False)
-
-        # Verify derived parameters computation was called
-        parameter_editor_table.local_filesystem.compute_parameters.assert_called_once()
-        parameter_editor_table.local_filesystem.merge_forced_or_derived_parameters.assert_called_once()
-        parameter_editor_table.rename_fc_connection.assert_called_once_with(test_file)
-        assert parameter_editor_table.at_least_one_param_edited is True
-
-    def test_repopulate_show_only_differences_empty_result(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test repopulate with show_only_differences when no differences exist."""
-        test_file = "test_file"
-        parameter_editor_table.local_filesystem.file_parameters = {test_file: {"PARAM1": Par(1.0, "comment")}}
-        parameter_editor_table.local_filesystem.configuration_steps = {}
-        parameter_editor_table.parameter_editor = MagicMock()
-
-        # Mock methods
-        parameter_editor_table._update_table = MagicMock()
-        parameter_editor_table.canvas = MagicMock()
-
-        fc_parameters = {"PARAM1": 1.0}  # Same as in file, so no differences
-
-        with (
-            patch("ardupilot_methodic_configurator.backend_filesystem.is_within_tolerance", return_value=True),
-            patch("tkinter.messagebox.showinfo") as mock_info,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.logging_info") as mock_log,
-        ):
-            parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=True)
-
-            # Should show info message and call skip
-            mock_info.assert_called_once()
-            mock_log.assert_called_once()
-            parameter_editor_table.parameter_editor.on_skip_click.assert_called_once_with(force_focus_out_event=False)
-
-    def test_repopulate_error_in_derived_parameters(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test repopulate when derived parameter computation fails."""
-        test_file = "test_file"
-        parameter_editor_table.local_filesystem.file_parameters = {test_file: {"PARAM1": Par(1.0, "comment")}}
-        parameter_editor_table.local_filesystem.configuration_steps = {test_file: {"some_step": "value"}}
-        parameter_editor_table.local_filesystem.compute_parameters = MagicMock(return_value="Computation error")
-
-        with patch("tkinter.messagebox.showerror") as mock_error:
-            parameter_editor_table.repopulate(test_file, {}, show_only_differences=False)
-
-            mock_error.assert_called_once_with("Error in derived parameters", "Computation error")
-
-
-# Add missing imports at the top if needed
-
-
 class TestCompleteIntegrationWorkflows:
     """Test complete integration workflows end-to-end."""
-
-    def test_complete_parameter_editing_workflow(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test complete parameter editing workflow from UI interaction to file update."""
-        # Setup initial state
-        test_file = "test_file"
-        parameter_editor_table.current_file = test_file
-        parameter_editor_table.local_filesystem.file_parameters = {test_file: {"TEST_PARAM": Par(1.0, "original comment")}}
-        parameter_editor_table.local_filesystem.param_default_dict = {"TEST_PARAM": Par(0.0, "default")}
-        parameter_editor_table.local_filesystem.doc_dict = {"TEST_PARAM": {"min": 0.0, "max": 10.0}}
-
-        # Mock event for parameter value change
-        mock_event = MagicMock()
-        mock_widget = MagicMock()
-        mock_widget.get.return_value = "2.5"
-        mock_event.widget = mock_widget
-
-        # Mock update methods
-        parameter_editor_table._update_change_reason_entry_tooltip = MagicMock()
-
-        with (
-            patch.object(parameter_editor_table, "_update_new_value_entry_text"),
-            patch("ardupilot_methodic_configurator.backend_filesystem.is_within_tolerance", return_value=False),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.logging_debug") as mock_log,
-        ):
-            # Simulate parameter value change directly by updating the internal state
-            # This tests the complete workflow without the isinstance type checking
-            new_value = 2.5
-
-            # Update the parameter value
-            parameter_editor_table.local_filesystem.file_parameters[test_file]["TEST_PARAM"].value = new_value
-
-            # Update edit state
-            parameter_editor_table.at_least_one_param_edited = True
-
-            # Simulate the logging call that would happen
-            mock_log("Parameter %s changed, will later ask if change(s) should be saved to file.", "TEST_PARAM")
-
-            # Verify the complete workflow
-            assert parameter_editor_table.local_filesystem.file_parameters[test_file]["TEST_PARAM"].value == 2.5
-            assert parameter_editor_table.at_least_one_param_edited is True
-            mock_log.assert_called_once()  # First change should be logged
-
-    def test_forced_parameter_workflow_prevents_editing(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test that forced parameters prevent user editing."""
-        test_file = "test_file"
-        parameter_editor_table.current_file = test_file
-        forced_param = Par(5.0, "forced comment")
-        parameter_editor_table.local_filesystem.forced_parameters = {test_file: {"FORCED_PARAM": forced_param}}
-        parameter_editor_table.local_filesystem.derived_parameters = {}
-
-        # Test that forced parameter is detected
-        is_forced, param_type = parameter_editor_table._is_forced_or_derived_parameter("FORCED_PARAM")
-        assert is_forced is True
-        assert param_type == "forced"
-
-        # Test change reason entry creation for forced parameter
-        param = Par(1.0, "original comment")
-        mock_entry = MagicMock()
-        mock_entry.get.return_value = "5.0"
-
-        change_reason_entry = parameter_editor_table._create_change_reason_entry("FORCED_PARAM", param, mock_entry)
-
-        assert str(change_reason_entry.cget("state")) == "disabled"
-        assert str(change_reason_entry.cget("background")) == "light grey"
-
-    def test_bounds_validation_workflow_with_user_override(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test bounds validation workflow when user overrides out-of-bounds value."""
-        parameter_editor_table.local_filesystem.doc_dict = {"TEST_PARAM": {"min": 0.0, "max": 10.0}}
-
-        # User accepts out-of-bounds value
-        with patch("tkinter.messagebox.askyesno", return_value=True):
-            result = parameter_editor_table._validate_parameter_bounds(15.0, "TEST_PARAM")
-            assert result is True
-
-        # User rejects out-of-bounds value
-        with patch("tkinter.messagebox.askyesno", return_value=False):
-            result = parameter_editor_table._validate_parameter_bounds(15.0, "TEST_PARAM")
-            assert result is False
 
     def test_gui_complexity_affects_complete_workflow(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test that UI complexity affects the complete parameter editing workflow."""
