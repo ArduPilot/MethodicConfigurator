@@ -368,15 +368,12 @@ class VehicleComponents:
                 },
             }
 
-            def is_empty(val: Any) -> bool:
-                return val in (None, "", 0, 0.0, {}) or (isinstance(val, dict) and not val)
-
             def merge_defaults(target: dict, defaults: dict) -> None:
-                for key, value in defaults.items():
-                    if key not in target or is_empty(target[key]):
-                        target[key] = value
-                    elif isinstance(value, dict) and isinstance(target[key], dict):
-                        merge_defaults(target[key], value)
+                for key, default_value in defaults.items():
+                    if key not in target or not target[key]:
+                        target[key] = default_value
+                    elif isinstance(default_value, dict) and isinstance(target[key], dict):
+                        merge_defaults(target[key], default_value)
 
             merge_defaults(data["Components"], default_data)
 
