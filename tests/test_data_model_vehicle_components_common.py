@@ -35,6 +35,7 @@ BASIC_COMPONENT_DATA = {
     "Program version": "1.4.8",
 }
 
+# pylint: disable=duplicate-code
 REALISTIC_VEHICLE_DATA = {
     "Format version": 1,
     "Components": {
@@ -132,6 +133,7 @@ REALISTIC_VEHICLE_DATA = {
     },
     "Program version": "1.4.6",
 }
+# pylint: enable=duplicate-code
 
 SAMPLE_DOC_DICT = {
     "RC_PROTOCOLS": {"Bitmask": {"0": "All", "9": "CRSF", "11": "FPORT"}},

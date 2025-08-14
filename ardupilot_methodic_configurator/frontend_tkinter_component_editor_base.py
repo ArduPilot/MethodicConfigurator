@@ -290,6 +290,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
     def _display_component_editor_usage_instructions(self, parent: tk.Tk) -> None:
         """Display usage instructions for the component editor."""
+        # pylint: disable=duplicate-code
         usage_popup_window = BaseWindow(parent)
         style = ttk.Style()
 
@@ -300,6 +301,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             bd=0,
             background=style.lookup("TLabel", "background"),  # type: ignore[no-untyped-call]
         )
+        # pylint: enable=duplicate-code
         instructions_text.insert(tk.END, _("1. Describe the properties of the vehicle components in the window below.\n"))
         instructions_text.insert(tk.END, _("2. Each field has mouse-over tooltips for additional guidance.\n"))
         instructions_text.insert(tk.END, _("3. Optional fields are marked with gray text and can be left blank.\n"))

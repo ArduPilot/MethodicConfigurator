@@ -46,6 +46,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import Stag
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
+# pylint: disable=too-many-lines
+
 
 def show_about_window(root: ttk.Frame, _version: str) -> None:  # pylint: disable=too-many-locals
     # Create a new window for the custom "About" message
@@ -255,7 +257,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         image_label.bind("<Button-1>", lambda event: show_about_window(self.main_frame, version))  # noqa: ARG005
         show_tooltip(image_label, _("User Manual, Support Forum, Report a Bug, Licenses, Source Code"))
 
-    def legend_frame(self, config_subframe: ttk.Frame, font_family: str) -> None:
+    def legend_frame(self, config_subframe: ttk.Frame, font_family: str) -> None:  # pylint: disable=too-many-locals
         style = ttk.Style()
         style.configure("Legend.TLabelframe", font=(font_family, 9))  # type: ignore[no-untyped-call]
         legend_frame = ttk.LabelFrame(config_subframe, text=_("Legend"), style="Legend.TLabelframe")
