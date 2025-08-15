@@ -15,7 +15,7 @@ from typing import Any
 import pytest
 
 from ardupilot_methodic_configurator.annotate_params import Par
-from ardupilot_methodic_configurator.ardupilot_parameter import ConnectionRenamer
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ConnectionRenamer
 
 # pylint: disable=redefined-outer-name
 

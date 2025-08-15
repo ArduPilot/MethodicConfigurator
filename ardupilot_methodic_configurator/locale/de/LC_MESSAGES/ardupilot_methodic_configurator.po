@@ -5209,21 +5209,21 @@ msgstr "Dieses Nutzungspopup erneut anzeigen"
 msgid "Dismiss"
 msgstr "Abweisen"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:50
-#: tests/test_middleware_software_updates.py:125
-#: tests/test_middleware_software_updates.py:139
+#: ardupilot_methodic_configurator/data_model_software_updates.py:50
+#: tests/test_data_model_software_updates.py:125
+#: tests/test_data_model_software_updates.py:139
 msgid "Current version: {_current_version}"
 msgstr "Aktuelle Version: {_current_version}"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:52
-#: tests/test_middleware_software_updates.py:127
-#: tests/test_middleware_software_updates.py:141
+#: ardupilot_methodic_configurator/data_model_software_updates.py:52
+#: tests/test_data_model_software_updates.py:127
+#: tests/test_data_model_software_updates.py:141
 msgid "Latest version: {_latest_release}"
 msgstr "Neueste Version: {_latest_release}"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:54
-#: tests/test_middleware_software_updates.py:129
-#: tests/test_middleware_software_updates.py:143
+#: ardupilot_methodic_configurator/data_model_software_updates.py:54
+#: tests/test_data_model_software_updates.py:129
+#: tests/test_data_model_software_updates.py:143
 msgid ""
 "Changes:\n"
 "{changes}"
@@ -5231,43 +5231,43 @@ msgstr ""
 "Änderungen:\n"
 "{changes}"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:77
+#: ardupilot_methodic_configurator/data_model_software_updates.py:77
 msgid "No suitable assets found for Windows installation"
 msgstr "Keine geeigneten Assets für die Windows-Installation gefunden"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:86
+#: ardupilot_methodic_configurator/data_model_software_updates.py:86
 msgid "Error accessing release assets: %s"
 msgstr "Fehler beim Zugriff auf Release-Assets: %s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:89
+#: ardupilot_methodic_configurator/data_model_software_updates.py:89
 msgid "Error during Windows download: %s"
 msgstr "Fehler beim Windows-Download: %s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:97
+#: ardupilot_methodic_configurator/data_model_software_updates.py:97
 msgid "Error during pip installation: %s"
 msgstr "Fehler bei der pip-Installation: %s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:107
+#: ardupilot_methodic_configurator/data_model_software_updates.py:107
 msgid "Already running latest version."
 msgstr "Bereits auf der neuesten Version."
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:111
+#: ardupilot_methodic_configurator/data_model_software_updates.py:111
 msgid "No changes listed"
 msgstr "Keine Änderungen aufgelistet"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:120
+#: ardupilot_methodic_configurator/data_model_software_updates.py:120
 msgid "Key error during update process: %s"
 msgstr "Schlüsselfehler während des Aktualisierungsprozesses: %s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:123
+#: ardupilot_methodic_configurator/data_model_software_updates.py:123
 msgid "Network error during update process: %s"
 msgstr "Netzwerkfehler während des Aktualisierungsprozesses: %s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:126
+#: ardupilot_methodic_configurator/data_model_software_updates.py:126
 msgid "Value error during update process: %s"
 msgstr "Wertfehler während des Aktualisierungsprozesses: %s"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:134
+#: ardupilot_methodic_configurator/data_model_software_updates.py:134
 msgid ""
 "Skip check for software updates before staring the software. Default is "
 "%(default)s."
@@ -5275,15 +5275,15 @@ msgstr ""
 "Prüfung auf Softwareaktualisierungen vor dem Programmstart überspringen. "
 "Standard ist %(default)s."
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:143
+#: ardupilot_methodic_configurator/data_model_software_updates.py:143
 msgid "Running version: {} (git hash: {})"
 msgstr "Laufende Version: {} (Git Hash: {})"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:151
+#: ardupilot_methodic_configurator/data_model_software_updates.py:151
 msgid "Update check failed: {}"
 msgstr "Aktualisierungsprüfung fehlgeschlagen: {}"
 
-#: ardupilot_methodic_configurator/middleware_software_updates.py:159
+#: ardupilot_methodic_configurator/data_model_software_updates.py:159
 msgid ""
 "This main is for testing and development only, usually the "
 "check_for_software_updates is called from another script"
@@ -5291,11 +5291,11 @@ msgstr ""
 "Diese main() ist nur für Tests und Entwicklung gedacht, normalerweise wird "
 "check_for_software_updates von einem anderen Skript aufgerufen"
 
-#: ardupilot_methodic_configurator/middleware_template_overview.py:40
+#: ardupilot_methodic_configurator/data_model_template_overview.py:40
 msgid "Template path"
 msgstr "Vorlage-Pfad"
 
-#: ardupilot_methodic_configurator/middleware_template_overview.py:41
+#: ardupilot_methodic_configurator/data_model_template_overview.py:41
 msgid ""
 "FC\n"
 "Manufacturer"
@@ -5303,7 +5303,7 @@ msgstr ""
 "FC\n"
 "Hersteller"
 
-#: ardupilot_methodic_configurator/middleware_template_overview.py:42
+#: ardupilot_methodic_configurator/data_model_template_overview.py:42
 msgid ""
 "FC\n"
 "Model"
@@ -5311,7 +5311,7 @@ msgstr ""
 "FC\n"
 "Modell"
 
-#: ardupilot_methodic_configurator/middleware_template_overview.py:43
+#: ardupilot_methodic_configurator/data_model_template_overview.py:43
 msgid ""
 "TOW Max\n"
 "[Kg]"
@@ -5319,7 +5319,7 @@ msgstr ""
 "Max. TOW\n"
 "[Kg]"
 
-#: ardupilot_methodic_configurator/middleware_template_overview.py:44
+#: ardupilot_methodic_configurator/data_model_template_overview.py:44
 msgid ""
 "Prop Diameter\n"
 "[inches]"
@@ -5327,7 +5327,7 @@ msgstr ""
 "Prop-Durchmesser\n"
 "[Zoll]"
 
-#: ardupilot_methodic_configurator/middleware_template_overview.py:45
+#: ardupilot_methodic_configurator/data_model_template_overview.py:45
 msgid ""
 "RC\n"
 "Protocol"
@@ -5335,7 +5335,7 @@ msgstr ""
 "RC\n"
 "Protokoll"
 
-#: ardupilot_methodic_configurator/middleware_template_overview.py:46
+#: ardupilot_methodic_configurator/data_model_template_overview.py:46
 msgid ""
 "Telemetry\n"
 "Model"
@@ -5343,7 +5343,7 @@ msgstr ""
 "Telemetrie\n"
 "Modell"
 
-#: ardupilot_methodic_configurator/middleware_template_overview.py:47
+#: ardupilot_methodic_configurator/data_model_template_overview.py:47
 msgid ""
 "ESC\n"
 "Protocol"
@@ -5351,7 +5351,7 @@ msgstr ""
 "ESC\n"
 "Protokoll"
 
-#: ardupilot_methodic_configurator/middleware_template_overview.py:48
+#: ardupilot_methodic_configurator/data_model_template_overview.py:48
 msgid ""
 "GNSS\n"
 "Model"
@@ -5359,7 +5359,7 @@ msgstr ""
 "GNSS\n"
 "Modell"
 
-#: ardupilot_methodic_configurator/middleware_template_overview.py:49
+#: ardupilot_methodic_configurator/data_model_template_overview.py:49
 msgid ""
 "GNSS\n"
 "Connection"

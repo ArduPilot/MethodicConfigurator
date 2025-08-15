@@ -18,15 +18,15 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.annotate_params import Par
-from ardupilot_methodic_configurator.ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 
 # pylint: disable=protected-access, redefined-outer-name, too-few-public-methods
 
 
-def create_mock_ardupilot_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments # noqa: PLR0913
+def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments # noqa: PLR0913
     name: str = "TEST_PARAM",
     value: float = 1.0,
     comment: str = "test comment",
@@ -434,7 +434,7 @@ class TestWidgetCreationBehavior:
 
     def test_create_parameter_name_normal(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter name label creation for normal parameters."""
-        param = create_mock_ardupilot_parameter()
+        param = create_mock_data_model_ardupilot_parameter()
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip:
             label = parameter_editor_table._create_parameter_name(param)
@@ -445,7 +445,7 @@ class TestWidgetCreationBehavior:
 
     def test_create_parameter_name_calibration(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter name label creation for calibration parameters."""
-        param = create_mock_ardupilot_parameter(name="CAL_PARAM", is_calibration=True)
+        param = create_mock_data_model_ardupilot_parameter(name="CAL_PARAM", is_calibration=True)
 
         label = parameter_editor_table._create_parameter_name(param)
 
@@ -454,7 +454,7 @@ class TestWidgetCreationBehavior:
 
     def test_create_parameter_name_readonly(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter name label creation for readonly parameters."""
-        param = create_mock_ardupilot_parameter(name="RO_PARAM", is_readonly=True)
+        param = create_mock_data_model_ardupilot_parameter(name="RO_PARAM", is_readonly=True)
 
         label = parameter_editor_table._create_parameter_name(param)
 
@@ -463,7 +463,7 @@ class TestWidgetCreationBehavior:
 
     def test_create_flightcontroller_value_exists(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test flight controller value label when parameter exists in FC."""
-        param = create_mock_ardupilot_parameter(fc_value=1.234567)
+        param = create_mock_data_model_ardupilot_parameter(fc_value=1.234567)
 
         label = parameter_editor_table._create_flightcontroller_value(param)
 
@@ -472,7 +472,7 @@ class TestWidgetCreationBehavior:
 
     def test_create_flightcontroller_value_missing(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test flight controller value label when parameter is missing from FC."""
-        param = create_mock_ardupilot_parameter(fc_value=None)
+        param = create_mock_data_model_ardupilot_parameter(fc_value=None)
 
         label = parameter_editor_table._create_flightcontroller_value(param)
 
@@ -481,7 +481,7 @@ class TestWidgetCreationBehavior:
 
     def test_create_unit_label(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test unit label creation."""
-        param = create_mock_ardupilot_parameter(metadata={"unit": "m/s", "unit_tooltip": "meters per second"})
+        param = create_mock_data_model_ardupilot_parameter(metadata={"unit": "m/s", "unit_tooltip": "meters per second"})
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip:
             label = parameter_editor_table._create_unit_label(param)
@@ -511,7 +511,7 @@ class TestWidgetCreationBehavior:
 
     def test_create_change_reason_entry_normal(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test change reason entry creation for normal parameters."""
-        param = create_mock_ardupilot_parameter()
+        param = create_mock_data_model_ardupilot_parameter()
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip:
             entry = parameter_editor_table._create_change_reason_entry(param)
@@ -522,7 +522,7 @@ class TestWidgetCreationBehavior:
 
     def test_create_change_reason_entry_forced(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test change reason entry creation for forced parameters."""
-        param = create_mock_ardupilot_parameter(is_forced=True)
+        param = create_mock_data_model_ardupilot_parameter(is_forced=True)
 
         entry = parameter_editor_table._create_change_reason_entry(param)
 
@@ -634,7 +634,7 @@ class TestColumnManagementBehavior:
     def test_create_column_widgets_normal_parameter(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test column widget creation for normal parameters."""
         param_name = "TEST_PARAM"
-        param = create_mock_ardupilot_parameter()
+        param = create_mock_data_model_ardupilot_parameter()
         show_upload_column = True
 
         # Mock individual widget creation methods using patch.object
@@ -661,7 +661,7 @@ class TestColumnManagementBehavior:
     def test_create_column_widgets_without_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test column widget creation without upload column."""
         param_name = "TEST_PARAM"
-        param = create_mock_ardupilot_parameter()
+        param = create_mock_data_model_ardupilot_parameter()
         show_upload_column = False
 
         # Mock individual widget creation methods using patch.object
@@ -767,7 +767,7 @@ class TestUpdateMethodsBehavior:
     def test_update_new_value_entry_text_combobox(self, parameter_editor_table: ParameterEditorTable) -> None:  # pylint: disable=unused-argument
         """Test updating new value entry text for combobox widget (should be skipped)."""
         mock_combobox = MagicMock(spec=PairTupleCombobox)
-        param = create_mock_ardupilot_parameter(value=1.5)
+        param = create_mock_data_model_ardupilot_parameter(value=1.5)
 
         ParameterEditorTable._update_new_value_entry_text(mock_combobox, param)
 
@@ -818,7 +818,7 @@ class TestBitmaskFunctionalityBehavior:
         mock_event.widget = mock_widget
         mock_change_reason_widget = MagicMock(spec=ttk.Entry)
 
-        param = create_mock_ardupilot_parameter(
+        param = create_mock_data_model_ardupilot_parameter(
             name="TEST_PARAM",
             value=3.0,
             is_bitmask=True,

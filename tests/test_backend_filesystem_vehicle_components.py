@@ -16,7 +16,7 @@ from json.decoder import JSONDecodeError as RealJSONDecodeError
 from unittest.mock import mock_open, patch
 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
-from ardupilot_methodic_configurator.middleware_template_overview import TemplateOverview
+from ardupilot_methodic_configurator.data_model_template_overview import TemplateOverview
 
 # pylint: disable=protected-access
 

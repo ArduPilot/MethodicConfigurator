@@ -16,7 +16,7 @@ from pymavlink import mavutil
 
 # import pymavlink.dialects.v20.ardupilotmega
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.middleware_fc_ids import (
+from ardupilot_methodic_configurator.data_model_fc_ids import (
     APJ_BOARD_ID_MCU_SERIES_DICT,
     APJ_BOARD_ID_NAME_DICT,
     APJ_BOARD_ID_VENDOR_DICT,

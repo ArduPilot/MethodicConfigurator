@@ -269,7 +269,7 @@ def write_to_file(  # pylint: disable=too-many-arguments, too-many-positional-ar
 ) -> None:
     directory = "ardupilot_methodic_configurator"
     os.makedirs(directory, exist_ok=True)  # Create the directory if it doesn't exist
-    file_path = os.path.join(directory, "middleware_fc_ids.py")
+    file_path = os.path.join(directory, "data_model_fc_ids.py")
 
     nr_supported_boards = sum(len(boards) for boards in apj_board_id_name_dict.values())
 
