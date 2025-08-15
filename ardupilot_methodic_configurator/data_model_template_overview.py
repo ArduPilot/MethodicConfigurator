@@ -1,5 +1,5 @@
 """
-Middleware between the flight controller information backend and the GUI fronted.
+Vehicle template configuration overview information data model.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 

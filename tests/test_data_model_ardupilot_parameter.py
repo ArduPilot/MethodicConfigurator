@@ -15,7 +15,9 @@ from typing import Any
 import pytest
 
 from ardupilot_methodic_configurator.annotate_params import Par
-from ardupilot_methodic_configurator.ardupilot_parameter import ArduPilotParameter
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
+    ArduPilotParameter,
+)
 
 # pylint: disable=redefined-outer-name, protected-access
 

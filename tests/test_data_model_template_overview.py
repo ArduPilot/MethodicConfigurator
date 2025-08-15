@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for the middleware_template_overview.py file.
+Tests for the data_model_template_overview.py file.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 
-from ardupilot_methodic_configurator.middleware_template_overview import TemplateOverview
+from ardupilot_methodic_configurator.data_model_template_overview import TemplateOverview
 
 
 class TestTemplateOverview(unittest.TestCase):  # pylint: disable=missing-class-docstring

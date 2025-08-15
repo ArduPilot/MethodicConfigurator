@@ -79,7 +79,7 @@ This ensures users always have access to the latest features, bug fixes, and sec
 
 #### Core Module
 
-- **File**: `middleware_software_updates.py` ✅ **IMPLEMENTED**
+- **File**: `data_model_software_updates.py` ✅ **IMPLEMENTED**
 - **Purpose**: Contains the business logic for version checking, downloading, and installation orchestration
 - **Key Classes**:
   - `UpdateManager`: Handles user interaction and installation coordination
@@ -198,10 +198,10 @@ This ensures users always have access to the latest features, bug fixes, and sec
 ## File Structure - Implementation Status
 
 ```text
-middleware_software_updates.py          # Core update logic and orchestration ✅
+data_model_software_updates.py          # Core update logic and orchestration ✅
 frontend_tkinter_software_update.py     # GUI dialog interface ✅
 backend_internet.py                     # Download and installation backend ✅
-tests/test_middleware_software_updates.py        # Unit tests for core logic ✅
+tests/test_data_model_software_updates.py        # Unit tests for core logic ✅
 tests/test_frontend_tkinter_software_update.py   # UI dialog tests ✅
 ```
 
@@ -215,7 +215,7 @@ tests/test_frontend_tkinter_software_update.py   # UI dialog tests ✅
 
 ### Actual Implementation Dependencies
 
-**Core Module (`middleware_software_updates.py`)**:
+**Core Module (`data_model_software_updates.py`)**:
 
 - `packaging.version` for version comparison (✅ present)
 - `requests` for HTTP operations (✅ present)

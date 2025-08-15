@@ -77,10 +77,10 @@ The following architecture files should be validated periodically:
 
 ### Software Update (`ARCHITECTURE_1_software_update.md`)
 
-- `ardupilot_methodic_configurator/middleware_software_updates.py`
+- `ardupilot_methodic_configurator/data_model_software_updates.py`
 - `ardupilot_methodic_configurator/frontend_tkinter_software_update.py`
 - `ardupilot_methodic_configurator/backend_internet.py`
-- `tests/test_middleware_software_updates.py`
+- `tests/test_data_model_software_updates.py`
 - `tests/test_frontend_tkinter_software_update.py`
 
 ### Flight Controller Communication (`ARCHITECTURE_2_flight_controller_communication.md`)
@@ -89,7 +89,7 @@ The following architecture files should be validated periodically:
 - `ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py`
 - `ardupilot_methodic_configurator/backend_flightcontroller.py`
 - `ardupilot_methodic_configurator/backend_mavftp.py`
-- `ardupilot_methodic_configurator/middleware_fc_ids.py`
+- `ardupilot_methodic_configurator/data_model_fc_ids.py`
 
 ### Directory Selection (`ARCHITECTURE_3_directory_selection.md`)
 

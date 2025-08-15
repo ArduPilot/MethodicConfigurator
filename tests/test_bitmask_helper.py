@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import pytest
 
-from ardupilot_methodic_configurator.ardupilot_parameter import BitmaskHelper
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import BitmaskHelper
 
 # pylint: disable=redefined-outer-name
 

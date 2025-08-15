@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for middleware_software_updates.py.
+Tests for data_model_software_updates.py.
 
 This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -17,7 +17,7 @@ import pytest
 from requests import RequestException as requests_RequestException
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.middleware_software_updates import (
+from ardupilot_methodic_configurator.data_model_software_updates import (
     UpdateManager,
     check_for_software_updates,
     format_version_info,
@@ -58,7 +58,7 @@ class TestUpdateManager:
         latest_release = {}
         current_version = "1.0.0"
 
-        with patch("ardupilot_methodic_configurator.middleware_software_updates.logging_error") as mock_logging_error:
+        with patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error") as mock_logging_error:
             assert not update_manager.check_and_update(latest_release, current_version)
             mock_logging_error.assert_called_once()
 
@@ -68,10 +68,10 @@ class TestUpdateManager:
 
         with (
             patch(
-                "ardupilot_methodic_configurator.middleware_software_updates.format_version_info",
+                "ardupilot_methodic_configurator.data_model_software_updates.format_version_info",
                 side_effect=ValueError,
             ),
-            patch("ardupilot_methodic_configurator.middleware_software_updates.logging_error") as mock_logging_error,
+            patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error") as mock_logging_error,
         ):
             assert not update_manager.check_and_update(latest_release, current_version)
             mock_logging_error.assert_called_once()
@@ -176,13 +176,13 @@ def test_check_for_software_updates_success() -> None:
     mock_release = {"tag_name": "v2.0.0", "body": "Test changes"}
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.get_release_info", return_value=mock_release),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.get_release_info", return_value=mock_release),
         patch(
-            "ardupilot_methodic_configurator.middleware_software_updates.LocalFilesystem.get_git_commit_hash",
+            "ardupilot_methodic_configurator.data_model_software_updates.LocalFilesystem.get_git_commit_hash",
             return_value="abc123",
         ),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.UpdateManager.check_and_update", return_value=True),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.logging_info"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateManager.check_and_update", return_value=True),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
     ):
         assert check_for_software_updates() is True
 
@@ -191,15 +191,15 @@ def test_check_for_software_updates_network_error() -> None:
     """Test software update check with network error."""
     with (
         patch(
-            "ardupilot_methodic_configurator.middleware_software_updates.get_release_info",
+            "ardupilot_methodic_configurator.data_model_software_updates.get_release_info",
             side_effect=requests_RequestException("Network error"),
         ),
         patch(
-            "ardupilot_methodic_configurator.middleware_software_updates.LocalFilesystem.get_git_commit_hash",
+            "ardupilot_methodic_configurator.data_model_software_updates.LocalFilesystem.get_git_commit_hash",
             return_value="abc123",
         ),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.logging_info"),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.logging_error") as mock_logging_error,
+        patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error") as mock_logging_error,
     ):
         assert check_for_software_updates() is False
         mock_logging_error.assert_called_once()
@@ -211,9 +211,9 @@ def test_update_manager_newer_version(update_manager) -> None:  # pylint: disabl
     current_version = "1.0.0"
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.webbrowser_open"),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.UpdateDialog") as mock_update_dialog_class,
-        patch("ardupilot_methodic_configurator.middleware_software_updates.logging_info"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_update_dialog_class,
+        patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
     ):
         mock_dialog = Mock()
         mock_dialog.show.return_value = True
@@ -230,9 +230,9 @@ def test_update_manager_perform_download_windows_success(update_manager, mock_di
     latest_release = {"assets": [{"browser_download_url": "https://example.com/file.exe", "name": "file.exe"}]}
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.platform.system", return_value="Windows"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Windows"),
         patch(
-            "ardupilot_methodic_configurator.middleware_software_updates.download_and_install_on_windows", return_value=True
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_windows", return_value=True
         ),
     ):
         assert update_manager._perform_download(latest_release) is True
@@ -244,8 +244,8 @@ def test_update_manager_perform_download_windows_error(update_manager, mock_dial
     latest_release = {"assets": []}
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.platform.system", return_value="Windows"),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.logging_error") as mock_logging_error,
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Windows"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error") as mock_logging_error,
     ):
         assert update_manager._perform_download(latest_release) is False
         mock_logging_error.assert_called_once()
@@ -257,8 +257,8 @@ def test_update_manager_perform_download_linux(update_manager, mock_dialog) -> N
     latest_release = {}
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.platform.system", return_value="Linux"),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.download_and_install_pip_release", return_value=0),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Linux"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=0),
     ):
         assert update_manager._perform_download(latest_release) is True
 
@@ -268,9 +268,9 @@ def test_update_manager_perform_download_no_dialog(update_manager) -> None:  # p
     latest_release = {"assets": [{"browser_download_url": "url", "name": "name"}]}
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.platform.system", return_value="Windows"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Windows"),
         patch(
-            "ardupilot_methodic_configurator.middleware_software_updates.download_and_install_on_windows", return_value=True
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_windows", return_value=True
         ),
     ):
         assert update_manager._perform_download(latest_release) is True
@@ -283,10 +283,10 @@ def test_update_manager_network_error(update_manager) -> None:  # pylint: disabl
 
     with (
         patch(
-            "ardupilot_methodic_configurator.middleware_software_updates.format_version_info",
+            "ardupilot_methodic_configurator.data_model_software_updates.format_version_info",
             side_effect=requests_RequestException("Network error"),
         ),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.logging_error") as mock_logging_error,
+        patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error") as mock_logging_error,
     ):
         assert not update_manager.check_and_update(latest_release, current_version)
         mock_logging_error.assert_called_once()
@@ -312,7 +312,7 @@ def test_update_manager_check_and_update_older_version(update_manager) -> None: 
     latest_release = {"tag_name": "v0.9.0", "body": "Old features"}
     current_version = "1.0.0"
 
-    with patch("ardupilot_methodic_configurator.middleware_software_updates.logging_info") as mock_logging_info:
+    with patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info") as mock_logging_info:
         assert update_manager.check_and_update(latest_release, current_version) is False
         mock_logging_info.assert_called_once()
 
@@ -323,8 +323,8 @@ def test_update_manager_check_and_update_user_cancels(update_manager) -> None:  
     current_version = "1.0.0"
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.webbrowser_open"),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.UpdateDialog") as mock_update_dialog_class,
+        patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_update_dialog_class,
     ):
         mock_dialog = Mock()
         mock_dialog.show.return_value = False  # User cancels the dialog
@@ -340,9 +340,9 @@ def test_update_manager_perform_download_linux_failure(update_manager, mock_dial
     latest_release = {}
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.platform.system", return_value="Linux"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Linux"),
         patch(
-            "ardupilot_methodic_configurator.middleware_software_updates.download_and_install_pip_release", return_value=1
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=1
         ),  # Non-zero exit code
     ):
         assert update_manager._perform_download(latest_release) is False
@@ -354,8 +354,8 @@ def test_update_manager_perform_download_mac(update_manager, mock_dialog) -> Non
     latest_release = {}
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.platform.system", return_value="Darwin"),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.download_and_install_pip_release", return_value=0),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Darwin"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=0),
     ):
         assert update_manager._perform_download(latest_release) is True
 
@@ -364,15 +364,15 @@ def test_check_for_software_updates_value_error() -> None:
     """Test software update check with ValueError."""
     with (
         patch(
-            "ardupilot_methodic_configurator.middleware_software_updates.get_release_info",
+            "ardupilot_methodic_configurator.data_model_software_updates.get_release_info",
             side_effect=ValueError("Format error"),
         ),
         patch(
-            "ardupilot_methodic_configurator.middleware_software_updates.LocalFilesystem.get_git_commit_hash",
+            "ardupilot_methodic_configurator.data_model_software_updates.LocalFilesystem.get_git_commit_hash",
             return_value="abc123",
         ),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.logging_info"),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.logging_error") as mock_logging_error,
+        patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error") as mock_logging_error,
     ):
         assert check_for_software_updates() is False
         mock_logging_error.assert_called_once()
@@ -383,7 +383,7 @@ def test_update_manager_malformed_tag_name(update_manager) -> None:  # pylint: d
     latest_release = {"tag_name": "not_a_version"}
     current_version = "1.0.0"
 
-    with patch("ardupilot_methodic_configurator.middleware_software_updates.logging_error") as mock_logging_error:
+    with patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error") as mock_logging_error:
         assert not update_manager.check_and_update(latest_release, current_version)
         mock_logging_error.assert_called_once()
 
@@ -393,7 +393,7 @@ def test_update_manager_check_and_update_equal_versions(update_manager) -> None:
     latest_release = {"tag_name": "v1.0.0", "body": "Same features"}
     current_version = "1.0.0"
 
-    with patch("ardupilot_methodic_configurator.middleware_software_updates.logging_info") as mock_logging_info:
+    with patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info") as mock_logging_info:
         assert not update_manager.check_and_update(latest_release, current_version)
         mock_logging_info.assert_called_once()
 
@@ -459,8 +459,8 @@ def test_update_manager_with_complex_release_data(update_manager) -> None:  # py
     current_version = "1.0.0"
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.webbrowser_open"),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.UpdateDialog") as mock_update_dialog_class,
+        patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_update_dialog_class,
     ):
         mock_dialog = Mock()
         mock_dialog.show.return_value = True
@@ -498,9 +498,9 @@ def test_update_manager_with_prerelease_versions(update_manager) -> None:  # pyl
         if should_update:
             # Test path where update should happen
             with (
-                patch("ardupilot_methodic_configurator.middleware_software_updates.webbrowser_open") as mock_browser,
+                patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open") as mock_browser,
                 patch(
-                    "ardupilot_methodic_configurator.middleware_software_updates.UpdateDialog",
+                    "ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog",
                     return_value=Mock(show=lambda: True),
                 ),
             ):
@@ -509,7 +509,7 @@ def test_update_manager_with_prerelease_versions(update_manager) -> None:  # pyl
                 mock_browser.assert_called()
         else:
             # Test path where update should NOT happen
-            with patch("ardupilot_methodic_configurator.middleware_software_updates.logging_info") as mock_info:
+            with patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info") as mock_info:
                 result = update_manager.check_and_update(latest_release, current)
                 assert result is False, f"Failed with latest={latest}, current={current}"
                 mock_info.assert_called()
@@ -521,12 +521,12 @@ def test_update_manager_perform_download_windows_exception(update_manager, mock_
     latest_release = {"assets": [{"browser_download_url": "https://example.com/file.exe", "name": "file.exe"}]}
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.platform.system", return_value="Windows"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Windows"),
         patch(
-            "ardupilot_methodic_configurator.middleware_software_updates.download_and_install_on_windows",
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_windows",
             side_effect=Exception("Download failed"),
         ),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.logging_error") as mock_logging_error,
+        patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error") as mock_logging_error,
     ):
         assert update_manager._perform_download(latest_release) is False
         mock_logging_error.assert_called_once()
@@ -538,12 +538,12 @@ def test_update_manager_perform_download_pip_exception(update_manager, mock_dial
     latest_release = {}
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.platform.system", return_value="Linux"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Linux"),
         patch(
-            "ardupilot_methodic_configurator.middleware_software_updates.download_and_install_pip_release",
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release",
             side_effect=Exception("Pip install failed"),
         ),
-        patch("ardupilot_methodic_configurator.middleware_software_updates.logging_error") as mock_logging_error,
+        patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error") as mock_logging_error,
     ):
         assert update_manager._perform_download(latest_release) is False
         mock_logging_error.assert_called_once()
@@ -561,9 +561,9 @@ def test_update_manager_perform_download_windows_asset_selection(update_manager,
     }
 
     with (
-        patch("ardupilot_methodic_configurator.middleware_software_updates.platform.system", return_value="Windows"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Windows"),
         patch(
-            "ardupilot_methodic_configurator.middleware_software_updates.download_and_install_on_windows", return_value=True
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_windows", return_value=True
         ) as mock_download,
     ):
         assert update_manager._perform_download(latest_release) is True

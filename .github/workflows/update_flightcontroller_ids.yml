@@ -65,7 +65,7 @@ jobs:
       - name: Stage changes
         id: stage_changes
         run: |
-          git add ardupilot_methodic_configurator/middleware_fc_ids.py
+          git add ardupilot_methodic_configurator/data_model_fc_ids.py
           CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
           echo "CHANGED_LINES=$CHANGED_LINES" >> $GITHUB_OUTPUT
           if [ $CHANGED_LINES -gt 3 ]; then

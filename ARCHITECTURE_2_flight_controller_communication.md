@@ -123,9 +123,9 @@ ArduPilot-based flight controllers using the MAVLink protocol.
   - Vehicle type determination and logging
   - Firmware version parsing and validation
 
-#### Flight Controller ID Middleware
+#### Flight Controller ID data_model
 
-- **File**: `middleware_fc_ids.py` ✅ **IMPLEMENTED** (Auto-generated)
+- **File**: `data_model_fc_ids.py` ✅ **IMPLEMENTED** (Auto-generated)
 - **Purpose**: Flight controller hardware identification mappings
 - **Key Features**:
   - Hardware type identification using board IDs
@@ -248,7 +248,7 @@ ArduPilot-based flight controllers using the MAVLink protocol.
 ```text
 backend_flightcontroller.py              # Core MAVLink communication
 backend_mavftp.py                        # FTP-over-MAVLink implementation
-middleware_fc_ids.py                     # Hardware identification (auto-generated)
+data_model_fc_ids.py                     # Hardware identification (auto-generated)
 frontend_tkinter_connection_selection.py # Connection selection GUI
 frontend_tkinter_flightcontroller_info.py # Information display GUI
 ```
@@ -277,7 +277,7 @@ frontend_tkinter_flightcontroller_info.py # Information display GUI
 
 ### Strengths ✅
 
-- **Modular Design**: Clear separation between backend communication logic, frontend GUI, and middleware data
+- **Modular Design**: Clear separation between backend communication logic, frontend GUI, and data_model data
 - **Type Hints**: Comprehensive type annotations throughout codebase
 - **Exception Handling**: Robust exception handling with specific error types
 - **Documentation**: Well-documented classes and methods with docstrings

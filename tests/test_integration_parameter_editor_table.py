@@ -20,8 +20,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.annotate_params import Par
-from ardupilot_methodic_configurator.ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 
 # pylint: disable=redefined-outer-name, protected-access
