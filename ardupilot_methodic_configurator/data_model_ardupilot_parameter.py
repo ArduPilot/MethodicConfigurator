@@ -16,6 +16,25 @@ from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import is_within_tolerance
 
 
+class ParameterUnchangedError(Exception):
+    """
+    Raised when a call to set_new_value would not change the stored value.
+
+    This allows callers to distinguish between an invalid input (ValueError)
+    and a valid input that simply results in no change.
+    """
+
+
+class ParameterOutOfRangeError(Exception):
+    """
+    Raised when a provided value is outside the configured min/max limits.
+
+    This allows callers (usually the UI) to ask the user for confirmation
+    before proceeding. If the caller passes `ignore_out_of_range=True` to
+    `set_new_value`, the value will be accepted despite being out of range.
+    """
+
+
 class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-many-public-methods
     """Domain model representing an ArduPilot parameter with all its attributes."""
 
@@ -279,28 +298,106 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         """Return an error message if the RC value is below the limit for this parameter."""
         return self.is_below_limit(self._fc_value) if self._fc_value is not None else ""
 
-    def set_new_value(self, value: float) -> bool:
+    def set_new_value(self, value: str, ignore_out_of_range: bool = False) -> float:  # pylint: disable=too-many-branches
         """
-        Set the new parameter value and return whether it changed.
+        Set the new parameter value from a UI string input.
+
+        This method parses and validates the provided string and updates
+        ``self._new_value``. On invalid input it raises a ``ValueError`` or
+        ``TypeError`` with a user-friendly, translatable message.
 
         Args:
-            value: The new value to set
+            value: The new value as a string (e.g. "1.23", "0x10", or a choice label).
+            ignore_out_of_range: If True accept values outside min/max limits.
 
         Returns:
-            True if the new value was changed, False otherwise
+            The new value as a float (or int for bitmask values).
+
+        Raises:
+            TypeError: if the provided value is not a string.
+            ValueError: if the value is invalid for this parameter (not in choices,
+                        invalid bitmask bits, invalid numeric format, etc.).
+            ParameterOutOfRangeError: if the value is outside min/max limits and
+                `ignore_out_of_range` is False.
+            ParameterUnchangedError: if the provided value is valid but does not
+                change the currently stored value.
 
         """
         if self._is_forced or self._is_derived:
-            return False
+            raise ValueError(_("This parameter is forced or derived and cannot be changed."))
 
-        if (self.is_bitmask or self.is_multiple_choice) and value == self._new_value:
-            return False
+        if not isinstance(value, str):
+            raise TypeError(_("Parameter value must be provided as a string."))
 
-        if not (self.is_bitmask or self.is_multiple_choice) and is_within_tolerance(self._new_value, value):
-            return False
+        s = value.strip()
+        if s == "":
+            raise ValueError(_("Empty value is not allowed for {param_name}").format(param_name=self._name))
 
-        self._new_value = value
-        return True
+        # Multiple-choice parameters: accept either the choice label or the numeric key
+        if self.is_multiple_choice:
+            new_value = float(s)
+            # No change
+            if new_value == self._new_value:
+                raise ParameterUnchangedError(
+                    _("The provided value for {param_name} would not change the parameter.").format(param_name=self._name)
+                )
+
+            self._new_value = new_value
+            return self._new_value
+
+        # Bitmask parameters: require integer value; allow 0x / 0b prefixes
+        if self.is_bitmask:
+            try:
+                int_value = int(s, 0)
+            except ValueError as exc:
+                raise ValueError(
+                    _("The value for {param_name} must be an integer for bitmask parameters.").format(param_name=self._name)
+                ) from exc
+
+            # ensure no unknown bits are set
+            allowed_mask = 0
+            for k in self.bitmask_dict:
+                allowed_mask |= 1 << int(k)
+
+            if int_value & ~allowed_mask:
+                raise ValueError(_("The value for {param_name} contains unknown bit(s).").format(param_name=self._name))
+
+            if int_value == int(self._new_value):
+                raise ParameterUnchangedError(
+                    _("The provided bitmask value for {param_name} would not change the parameter.").format(
+                        param_name=self._name
+                    )
+                )
+
+            self._new_value = float(int_value)
+            return self._new_value
+
+        # Otherwise expect a numeric value
+        try:
+            f = float(s)
+        except ValueError as exc:
+            raise ValueError(_("The value for {param_name} must be a number.").format(param_name=self._name)) from exc
+
+        if not isfinite(f) or isnan(f):
+            raise ValueError(self.is_invalid_number(f))
+
+        msg = self.is_above_limit(f)
+        if msg and not ignore_out_of_range:
+            raise ParameterOutOfRangeError(msg)
+
+        msg = self.is_below_limit(f)
+        if msg and not ignore_out_of_range:
+            raise ParameterOutOfRangeError(msg)
+
+        if is_within_tolerance(self._new_value, f):
+            raise ParameterUnchangedError(
+                _(
+                    "The provided numeric value for {param_name} is within tolerance and would not change the parameter."
+                ).format(param_name=self._name)
+            )
+
+        self._new_value = f
+        return self._new_value
 
     def set_change_reason(self, change_reason: str) -> bool:
         """
@@ -339,10 +436,11 @@ class BitmaskHelper:
             Set of keys (bit positions) that are set in the value
 
         """
-        return {key for key in bitmask_dict if (value >> key) & 1}
+        # Ensure keys are integers (metadata may contain string keys)
+        return {int(key) for key in bitmask_dict if (value >> int(key)) & 1}
 
     @staticmethod
-    def get_value_from_keys(checked_keys: set[int]) -> int:
+    def get_value_from_keys(checked_keys: set[int]) -> str:
         """
         Convert a list of checked bit keys to a decimal value.
 
@@ -350,10 +448,10 @@ class BitmaskHelper:
             checked_keys: List of bit positions that are set
 
         Returns:
-            The decimal value representing the bits set
+            The decimal value string representing the bits set
 
         """
-        return sum(1 << key for key in checked_keys)
+        return str(sum(1 << key for key in checked_keys))
 
 
 class ConnectionRenamer:
