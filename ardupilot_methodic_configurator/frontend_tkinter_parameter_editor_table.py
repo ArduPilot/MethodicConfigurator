@@ -21,7 +21,13 @@ from typing import Union
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter, BitmaskHelper, ConnectionRenamer
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
+    ArduPilotParameter,
+    BitmaskHelper,
+    ConnectionRenamer,
+    ParameterOutOfRangeError,
+    ParameterUnchangedError,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
@@ -362,24 +368,28 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self, combobox_widget: PairTupleCombobox, param: ArduPilotParameter, event: tk.Event, change_reason_widget: ttk.Entry
     ) -> None:
         """Update the combobox style based on selection."""
-        new_value_str = combobox_widget.get_selected_key()
+        new_value_str = combobox_widget.get_selected_key() or ""
         try:
-            # we want None to raise an exception
-            new_value = float(new_value_str)  # type: ignore[arg-type]
-            if param.set_new_value(new_value):
-                show_tooltip(change_reason_widget, param.tooltip_change_reason)
-                self.at_least_one_param_edited = True
-                # Update the corresponding file parameter
-                self.local_filesystem.file_parameters[self.current_file][param.name].value = new_value
-            combobox_widget.configure(
-                style="default_v.TCombobox" if param.new_value_equals_default_value else "readonly.TCombobox"
-            )
-            event.width = NEW_VALUE_WIDGET_WIDTH
-            combobox_widget.on_combo_configure(event)
-        except ValueError as e:
-            msg = _("Could not solve the selected {new_value_str} key to a float value.").format(new_value_str=new_value_str)
-            logging_exception(msg, e)
-            messagebox.showerror(_("Error"), msg)
+            # Pass the string to the domain model; it will validate and raise on error
+            new_value = param.set_new_value(new_value_str)
+        except ParameterUnchangedError:
+            # valid but no change; just refresh style
+            pass
+        except (ValueError, TypeError) as exc:  # user provided invalid input
+            msg = _("Could not apply the selected value: {new_value_str}").format(new_value_str=new_value_str)
+            logging_exception(msg, exc)
+            messagebox.showerror(_("Error"), str(exc))
+        else:
+            # Success: mark edited and update the stored file parameter value
+            show_tooltip(change_reason_widget, param.tooltip_change_reason)
+            self.at_least_one_param_edited = True
+            self.local_filesystem.file_parameters[self.current_file][param.name].value = new_value
+
+        combobox_widget.configure(
+            style="default_v.TCombobox" if param.new_value_equals_default_value else "readonly.TCombobox"
+        )
+        event.width = NEW_VALUE_WIDGET_WIDTH
+        combobox_widget.on_combo_configure(event)
 
     @staticmethod
     def _update_new_value_entry_text(new_value_entry: ttk.Entry, param: ArduPilotParameter) -> None:
@@ -453,7 +463,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         def _on_parameter_value_change(event: tk.Event) -> None:
             """Handle changes to parameter values."""
-            # Get the new value from the Entry widget
+            # Get the new value string from the Entry widget (always treat as string)
             new_value = (
                 event.widget.get_selected_key()
                 if isinstance(event.widget, PairTupleCombobox)
@@ -461,43 +471,39 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 if isinstance(event.widget, (ttk.Entry, tk.Entry))
                 else None
             )
-            valid: bool = True
-            value: float = 0.0
 
-            # Check if the input is a valid float
+            # If we couldn't extract a string, abort early
+            if new_value is None:
+                return
+
+            new_value_result = None
+            valid = True
+
             try:
-                value = float(new_value)  # type: ignore[arg-type] # workaround a mypy bug
-
-                err_msg = param.is_invalid_number(value)
-                if err_msg:
-                    messagebox.showerror(_("Invalid Value"), err_msg)
+                # first attempt: let the model validate the provided string
+                # (it will convert/validate as required)
+                new_value_result = param.set_new_value(new_value)
+            except ParameterOutOfRangeError as oor:  # user-visible warning from model
+                # Ask the user if they want to accept the out-of-range value
+                if messagebox.askyesno(_("Out-of-bounds Value"), str(oor) + _(" Use out-of-bounds value?"), icon="warning"):
+                    # Retry accepting the value while telling the model to ignore range checks
+                    new_value_result = param.set_new_value(new_value, ignore_out_of_range=True)
+                else:
                     valid = False
-
-                # Check if value is valid according to domain model
-                err_msg = param.is_below_limit(value)
-                if err_msg and not messagebox.askyesno(
-                    _("Out-of-bounds Value"), err_msg + _("Use out-of-bounds value?"), icon="warning"
-                ):
-                    valid = False
-
-                err_msg = param.is_above_limit(value)
-                if err_msg and not messagebox.askyesno(
-                    _("Out-of-bounds Value"), err_msg + _("Use out-of-bounds value?"), icon="warning"
-                ):
-                    valid = False
-
-            except ValueError:
-                # Handle invalid value
-                error_msg = _("The value for {param.name} must be a valid float.")
-                messagebox.showerror(_("Invalid Value"), error_msg.format(**locals()))
+            except ParameterUnchangedError:
+                # Valid but no change — just refresh the UI and do not mark edited
+                valid = False
+            except (ValueError, TypeError) as exc:  # invalid input according to model
+                messagebox.showerror(_("Invalid Value"), str(exc))
                 valid = False
 
-            if valid and param.set_new_value(value):
+            if valid and new_value_result is not None:
                 logging_debug(_("Parameter %s changed, will later ask if change(s) should be saved to file."), param.name)
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
                 self.at_least_one_param_edited = True
-                # Update the corresponding file parameter
-                self.local_filesystem.file_parameters[self.current_file][param.name].value = value
+                # Update the corresponding file parameter with the model-returned value
+                # (model returns the canonical numeric/string representation)
+                self.local_filesystem.file_parameters[self.current_file][param.name].value = new_value_result
 
             # Update the displayed value in the Entry or Combobox
             if isinstance(
@@ -534,22 +540,28 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         def on_close() -> None:
             try:
-                checked_keys = [int(key) for key, var in checkbox_vars.items() if var.get()]
+                checked_keys = {int(key) for key, var in checkbox_vars.items() if var.get()}
             except (ValueError, TypeError) as e:
                 logging_exception(_("Error getting {param_name} checked keys: %s").format(param_name=param.name), e)
                 messagebox.showerror(
                     _("Error"), _("Could not get {param_name} checked keys. Please try again.").format(param_name=param.name)
                 )
                 return
-            # Convert checked keys back to a decimal value using our helper
-            new_decimal_value = BitmaskHelper.get_value_from_keys(set(checked_keys))
 
             # Update the parameter value and entry text
-            if param.set_new_value(new_decimal_value):
+            try:
+                new_value = param.set_new_value(BitmaskHelper.get_value_from_keys(checked_keys))
+            except ParameterUnchangedError:
+                # valid but no change
+                pass
+            except (ValueError, TypeError) as exc:
+                logging_exception(_("Could not set bitmask value for %s: %s"), param.name, exc)
+                messagebox.showerror(_("Error"), str(exc))
+            else:
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
                 self.at_least_one_param_edited = True
                 # Update the corresponding file parameter
-                self.local_filesystem.file_parameters[self.current_file][param.name].value = new_decimal_value
+                self.local_filesystem.file_parameters[self.current_file][param.name].value = new_value
 
             # Update new_value_entry with the new decimal value
             # For bitmask windows, event.widget should always be ttk.Entry (not PairTupleCombobox)

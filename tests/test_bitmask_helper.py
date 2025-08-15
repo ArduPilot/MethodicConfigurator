@@ -56,20 +56,20 @@ def test_get_value_from_keys() -> None:
     """Test getting decimal value from a list of checked keys."""
     # Test with no keys
     value = BitmaskHelper.get_value_from_keys([])
-    assert value == 0
+    assert value == "0"
 
     # Test with single key
     value = BitmaskHelper.get_value_from_keys([0])
-    assert value == 1
+    assert value == "1"
 
     # Test with multiple keys
     value = BitmaskHelper.get_value_from_keys([0, 1, 2])
-    assert value == 7  # 1 + 2 + 4 = 7
+    assert value == "7"  # 1 + 2 + 4 = 7
 
     # Test with all keys
     value = BitmaskHelper.get_value_from_keys([0, 1, 2, 3, 4])
-    assert value == 31  # 1 + 2 + 4 + 8 + 16 = 31
+    assert value == "31"  # 1 + 2 + 4 + 8 + 16 = 31
 
     # Test with some keys
     value = BitmaskHelper.get_value_from_keys([1, 4])
-    assert value == 18  # 2 + 16 = 18
+    assert value == "18"  # 2 + 16 = 18

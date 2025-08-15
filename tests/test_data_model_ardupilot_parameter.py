@@ -17,6 +17,7 @@ import pytest
 from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
+    ParameterUnchangedError,
 )
 
 # pylint: disable=redefined-outer-name, protected-access
@@ -195,26 +196,26 @@ def test_value_dictionary_operations(param_fixture) -> None:
 
 def test_set_new_value(param_fixture) -> None:
     """Test setting parameter values."""
-    # Regular parameter
-    new_value = 12.0
-    result = param_fixture["full_param"].set_new_value(new_value)
-    assert result
-    assert param_fixture["full_param"]._new_value == new_value
+    # Regular parameter: use a non-bitmask parameter and provide string input
+    new_value = "12.0"
+    result = param_fixture["basic_param"].set_new_value(new_value)
+    assert result == 12.0
+    assert param_fixture["basic_param"]._new_value == 12.0
 
-    # Same value - should return False for no change
-    result = param_fixture["full_param"].set_new_value(new_value)
-    assert not result
+    # Same value - should raise ParameterUnchangedError
+    with pytest.raises(ParameterUnchangedError):
+        param_fixture["basic_param"].set_new_value(new_value)
 
-    # Forced parameter - should return False and not change
+    # Forced parameter - should raise ValueError and not change
     original_value = param_fixture["forced_param"]._new_value
-    result = param_fixture["forced_param"].set_new_value(new_value)
-    assert not result
+    with pytest.raises(ValueError, match="forced or derived"):
+        param_fixture["forced_param"].set_new_value(new_value)
     assert param_fixture["forced_param"]._new_value == original_value
 
-    # Derived parameter - should return False and not change
+    # Derived parameter - should raise ValueError and not change
     original_value = param_fixture["derived_param"]._new_value
-    result = param_fixture["derived_param"].set_new_value(new_value)
-    assert not result
+    with pytest.raises(ValueError, match="forced or derived"):
+        param_fixture["derived_param"].set_new_value(new_value)
     assert param_fixture["derived_param"]._new_value == original_value
 
 
