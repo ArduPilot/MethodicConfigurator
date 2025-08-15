@@ -14,7 +14,7 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from math import nan
 from os import path as os_path
-from typing import Any, Optional
+from typing import Any, Callable, Optional, Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -23,6 +23,12 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 
 # pylint: disable=too-many-lines
+
+
+DURATION_S_MIN = 1.0  # Minimum duration for motor tests in seconds
+DURATION_S_MAX = 60.0  # Maximum duration for motor tests in seconds
+THROTTLE_PCT_MIN = 1  # Minimum throttle percentage for motor tests
+THROTTLE_PCT_MAX = 100  # Maximum throttle percentage for motor tests
 
 
 class MotorTestError(Exception):
@@ -90,9 +96,17 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         self._motor_count: int = 0  # Default to invalid
         self._motor_labels: list[str] = []  # default to empty
         self._motor_numbers: list[int] = []  # default to empty
+        self._test_order: list[int] = []  # default to empty
         self._motor_directions: list[str] = []  # default to empty
         self._frame_layout: dict[str, Any] = {}  # default to empty
+
+        self._test_throttle_pct = 0.0
+        self._test_duration_s = 0.0
+
         self._got_battery_status = False
+
+        # Cache for frame options to avoid reloading them repeatedly
+        self._cached_frame_options: Optional[dict[str, dict[int, str]]] = None
 
         # Load motor configuration data
         self._load_motor_data()
@@ -101,12 +115,17 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         # We must fail early if the connection is not available
         self._update_frame_configuration()
 
+        self._get_test_settings_from_disk()
+
     def _load_motor_data(self) -> None:
         """Load motor configuration data from AP_Motors_test.json file."""
         try:
             # Get the directory where this module is located (contains the JSON files)
             current_dir = os_path.dirname(__file__)
             self._motor_data = self._motor_data_loader.load_json_data(current_dir)
+
+            # Clear frame options cache since motor data changed
+            self._cached_frame_options = None
 
             if not self._motor_data:
                 logging_warning(_("Failed to load motor test data from AP_Motors_test.json"))
@@ -153,12 +172,14 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                     self._motor_count = len(layout["motors"])
                     self._motor_labels = [chr(ord("A") + i) for i in range(self._motor_count)]
                     self._motor_numbers = [0] * self._motor_count
+                    self._test_order = [0] * self._motor_count
                     self._motor_directions = [""] * self._motor_count
-                    for motor in self._frame_layout.get("motors", []):
+                    for i, motor in enumerate(self._frame_layout.get("motors", [])):
                         test_order = motor.get("TestOrder")
                         if test_order and 1 <= test_order <= self._motor_count:
                             self._motor_numbers[test_order - 1] = motor.get("Number")
                             self._motor_directions[test_order - 1] = motor.get("Rotation")
+                            self._test_order[i] = test_order
                     break
 
         if self._motor_count == 0:
@@ -175,6 +196,11 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                 "motors": self._motor_count,
             },
         )
+
+    def _get_test_settings_from_disk(self) -> None:
+        """Load test settings from disk."""
+        self._test_throttle_pct = self._get_test_throttle_pct()
+        self._test_duration_s = self._get_test_duration_s()
 
     def _update_frame_configuration(self) -> None:
         """Update frame configuration from flight controller."""
@@ -232,6 +258,12 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
     def motor_numbers(self) -> list[int]:
         """Get motor numbers in test order (1, 4, 3, 2, etc.)."""
         return self._motor_numbers
+
+    def test_order(self, motor_number: int) -> int:
+        """Get the test order for a specific motor."""
+        if 1 <= motor_number <= self._motor_count:
+            return self._test_order[motor_number - 1] - 1
+        raise ValueError(_("Invalid motor number: %(number)d") % {"number": motor_number})
 
     @property
     def motor_directions(self) -> list[str]:
@@ -352,18 +384,29 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                 }
             )
 
-    def set_parameter(self, param_name: str, value: float) -> None:
+    def set_parameter(
+        self,
+        param_name: str,
+        value: float,
+        reset_progress_callback: Union[None, Callable[[int, int], None]] = None,
+        connection_progress_callback: Union[None, Callable[[int, int], None]] = None,
+        extra_sleep_time: Optional[int] = 0,
+    ) -> None:
         """
         Set a parameter value and upload to flight controller.
 
         Args:
             param_name: Parameter name (e.g., "MOT_SPIN_ARM")
             value: Parameter value
+            reset_progress_callback: Optional callback for reset progress updates
+            connection_progress_callback: Optional callback for connection progress updates
+            extra_sleep_time: Optional additional sleep time before re-connecting
 
         Raises:
             FlightControllerConnectionError: If flight controller is not connected
             ValidationError: If parameter value is invalid
             ParameterError: If parameter setting fails
+            TimeoutError: If parameter setting times out
 
         """
         if self.flight_controller.master is None:
@@ -380,12 +423,32 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                     }
                 )
 
+            requires_reset = False
+            if param_name in self.filesystem.doc_dict:
+                min_value = self.filesystem.doc_dict[param_name].get("min", -float("inf"))
+                max_value = self.filesystem.doc_dict[param_name].get("max", float("inf"))
+                requires_reset = self.filesystem.doc_dict[param_name].get("RebootRequired", False)
+                if value < min_value:
+                    raise ValidationError(
+                        _("%(param)s value %(value).3f is smaller than %(min)f")
+                        % {"param": param_name, "value": value, "min": min_value}
+                    )
+                if value > max_value:
+                    raise ValidationError(
+                        _("%(param)s value %(value).3f is greater than %(max)f")
+                        % {"param": param_name, "value": value, "max": max_value}
+                    )
+
             # Set parameter and verify it was set correctly
             self.flight_controller.set_param(param_name, value)
             # Read back the parameter to verify it was set correctly
-            actual_value = self.get_parameter(param_name)
+            actual_value = self.flight_controller.fetch_param(param_name)
             if actual_value is not None and abs(actual_value - value) < 0.001:  # Allow small floating-point tolerance
                 logging_info(_("Parameter %(param)s set to %(value).3f"), {"param": param_name, "value": value})
+                if requires_reset:
+                    self.flight_controller.reset_and_reconnect(
+                        reset_progress_callback, connection_progress_callback, extra_sleep_time
+                    )
                 return
             raise ParameterError(
                 _("Parameter %(param)s verification failed: expected %(expected).3f, got %(actual)s")
@@ -396,7 +459,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                 }
             )
 
-        except (ValidationError, ParameterError):
+        except (ValidationError, ParameterError, TimeoutError):
             raise
         except Exception as e:  # pylint: disable=broad-exception-caught
             error_msg = _("Error setting parameter %(param)s: %(error)s") % {
@@ -452,12 +515,26 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             )
 
         # Validate throttle percentage
-        if not 1 <= throttle_percent <= 100:
+        if not THROTTLE_PCT_MIN <= throttle_percent <= THROTTLE_PCT_MAX:
             raise ValidationError(
-                _("Invalid throttle percentage %(throttle)d (valid range: 1-100)")
+                _("Invalid throttle percentage %(throttle)d (valid range: %(min)d-%(max)d")
                 % {
                     "throttle": throttle_percent,
+                    "min": THROTTLE_PCT_MIN,
+                    "max": THROTTLE_PCT_MAX,
                 }
+            )
+
+        # Validate test duration
+        if timeout_seconds < DURATION_S_MIN:
+            raise ValidationError(
+                _("Invalid test duration %(duration)d (valid range: %(min)d-%(max)d)")
+                % {"duration": timeout_seconds, "min": DURATION_S_MIN, "max": DURATION_S_MAX}
+            )
+        if timeout_seconds > DURATION_S_MAX:
+            raise ValidationError(
+                _("Invalid test duration %(duration)d (valid range: %(min)d-%(max)d)")
+                % {"duration": timeout_seconds, "min": DURATION_S_MIN, "max": DURATION_S_MAX}
             )
 
         # Execute motor test
@@ -542,9 +619,9 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         """
         return ProgramSettings.motor_diagram_exists(self._frame_class, self._frame_type)
 
-    def get_test_duration(self) -> float:
+    def _get_test_duration_s(self) -> float:
         """
-        Get the current motor test duration setting.
+        Get the current motor test duration setting from disk.
 
         Returns:
             float: Test duration in seconds
@@ -555,43 +632,50 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             if duration is None:
                 raise ReferenceError(_("Motor test duration setting not found"))
             duration = float(duration)
-            if duration < 0.1:
-                raise ValueError(_("Motor test duration must be at least 0.1 seconds"))
-            if duration > 10.0:
-                raise ValueError(_("Motor test duration must not exceed 10 seconds"))
+            if duration < DURATION_S_MIN:
+                raise ValueError(_("Motor test duration must be at least %(min)d second") % {"min": DURATION_S_MIN})
+            if duration > DURATION_S_MAX:
+                raise ValueError(_("Motor test duration must not exceed %(max)d seconds") % {"max": DURATION_S_MAX})
             return duration
         except (ReferenceError, ValueError) as exc:
             logging_error(_("Invalid motor test duration setting: %(error)s"), {"error": str(exc)})
             raise exc
 
-    def set_test_duration(self, duration: float) -> bool:
+    def get_test_duration_s(self) -> float:
+        """
+        Get the current motor test duration setting.
+
+        Returns:
+            float: Test duration in seconds
+
+        """
+        return self._test_duration_s
+
+    def set_test_duration_s(self, duration: float) -> None:
         """
         Set the motor test duration setting.
 
         Args:
             duration: Test duration in seconds
 
-        Returns:
-            bool: True if setting was saved successfully
-
         """
         try:
-            if duration < 0.1:
-                raise ValueError(_("Motor test duration must be at least 0.1 seconds"))
-            if duration > 10.0:
-                raise ValueError(_("Motor test duration must not exceed 10 seconds"))
+            if duration < DURATION_S_MIN:
+                raise ValueError(_("Motor test duration must be at least %(min)d second") % {"min": DURATION_S_MIN})
+            if duration > DURATION_S_MAX:
+                raise ValueError(_("Motor test duration must not exceed %(max)d seconds") % {"max": DURATION_S_MAX})
             ProgramSettings.set_setting("motor_test/duration", duration)
-            return True
+            self._test_duration_s = int(duration)
         except ValueError as exc:
             logging_error(_("Invalid motor test duration setting: %(error)s"), {"error": str(exc)})
-            return False
+            raise exc
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logging_error(_("Failed to save duration setting: %(error)s"), {"error": str(exc)})
-            return False
+            raise exc
 
-    def get_test_throttle_pct(self) -> int:
+    def _get_test_throttle_pct(self) -> int:
         """
-        Get the current motor test throttle percentage setting.
+        Get the current motor test throttle percentage setting from disk.
 
         Returns:
             int: Throttle percentage (1-100)
@@ -602,39 +686,46 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             if throttle_pct is None:
                 raise ReferenceError(_("Motor test throttle percentage setting not found"))
             throttle_pct = int(throttle_pct)
-            if throttle_pct < 1:
-                raise ValueError(_("Motor test throttle percentage must be at least 1"))
-            if throttle_pct > 100:
-                raise ValueError(_("Motor test throttle percentage must not exceed 100"))
+            if throttle_pct < THROTTLE_PCT_MIN:
+                raise ValueError(_("Motor test throttle percentage must be at least %(min)d%%") % {"min": THROTTLE_PCT_MIN})
+            if throttle_pct > THROTTLE_PCT_MAX:
+                raise ValueError(_("Motor test throttle percentage must not exceed %(max)d%%") % {"max": THROTTLE_PCT_MAX})
             return throttle_pct
         except (ReferenceError, ValueError) as exc:
             logging_error(_("Invalid motor test throttle percentage setting: %(error)s"), {"error": str(exc)})
             raise exc
 
-    def set_test_throttle_pct(self, throttle_pct: int) -> bool:
+    def get_test_throttle_pct(self) -> int:
+        """
+        Get the current motor test throttle percentage setting.
+
+        Returns:
+            int: Throttle percentage (1-100)
+
+        """
+        return int(self._test_throttle_pct)
+
+    def set_test_throttle_pct(self, throttle_pct: int) -> None:
         """
         Set the motor test throttle percentage setting.
 
         Args:
             throttle_pct: Throttle percentage (1-100)
 
-        Returns:
-            bool: True if setting was saved successfully
-
         """
         try:
-            if throttle_pct < 1:
-                raise ValueError(_("Motor test throttle percentage must be at least 1"))
-            if throttle_pct > 100:
-                raise ValueError(_("Motor test throttle percentage must not exceed 100"))
+            if throttle_pct < THROTTLE_PCT_MIN:
+                raise ValueError(_("Motor test throttle percentage must be at least %(min)d%%") % {"min": THROTTLE_PCT_MIN})
+            if throttle_pct > THROTTLE_PCT_MAX:
+                raise ValueError(_("Motor test throttle percentage must not exceed %(max)d%%") % {"max": THROTTLE_PCT_MAX})
             ProgramSettings.set_setting("motor_test/throttle_pct", throttle_pct)
-            return True
+            self._test_throttle_pct = throttle_pct
         except ValueError as exc:
             logging_error(_("Invalid motor test throttle percentage setting: %(error)s"), {"error": str(exc)})
-            return False
+            raise exc
         except Exception as exc:  # pylint: disable=broad-exception-caught
             logging_error(_("Failed to save throttle percentage setting: %(error)s"), {"error": str(exc)})
-            return False
+            raise exc
 
     def update_frame_configuration(self, frame_class: int, frame_type: int) -> None:
         """
@@ -695,11 +786,19 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         Get all available frame configuration options.
 
         Uses motor data loader as the primary source, falling back to doc_dict if necessary.
+        Results are cached to avoid repeated processing.
 
         Returns:
             dict[str, dict[int, str]]: A dictionary of frame options grouped by class name.
 
         """
+        # Return cached result if available
+        if self._cached_frame_options is not None:
+            logging_debug(
+                _("Returning cached frame options with %(count)d classes"), {"count": len(self._cached_frame_options)}
+            )
+            return self._cached_frame_options
+
         frame_options: dict[str, dict[int, str]] = {}
 
         # Primary source: Use motor data loader - same logic as _update_frame_configuration
@@ -776,7 +875,15 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         else:
             logging_warning(_("No frame options could be loaded from motor data or parameter metadata"))
 
+        # Cache the result for future calls
+        self._cached_frame_options = frame_options
+
         return frame_options
+
+    def clear_frame_options_cache(self) -> None:
+        """Clear the cached frame options to force reload on next access."""
+        self._cached_frame_options = None
+        logging_debug(_("Frame options cache cleared"))
 
     def refresh_connection_status(self) -> bool:
         """
@@ -845,12 +952,21 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         except Exception as e:  # pylint: disable=broad-exception-caught
             raise ValidationError(_("Error parsing frame type: %(error)s") % {"error": str(e)}) from e
 
-    def update_frame_type_from_selection(self, selected_text: str) -> bool:
+    def update_frame_type_from_selection(
+        self,
+        selected_text: str,
+        reset_progress_callback: Union[None, Callable[[int, int], None]] = None,
+        connection_progress_callback: Union[None, Callable[[int, int], None]] = None,
+        extra_sleep_time: Optional[int] = None,
+    ) -> bool:
         """
         Update frame configuration based on user selection.
 
         Args:
             selected_text: Selected text in format "Frame Class: Frame Type"
+            reset_progress_callback: Callback for resetting progress
+            connection_progress_callback: Callback for connection progress
+            extra_sleep_time: Additional sleep time before setting parameters
 
         Returns:
             bool: True if successful
@@ -868,8 +984,14 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
 
         try:
             # Immediately upload parameters to flight controller
-            self.set_parameter("FRAME_CLASS", frame_class_code)
-            self.set_parameter("FRAME_TYPE", frame_type_code)
+            if self.frame_class != frame_class_code:
+                self.set_parameter(
+                    "FRAME_CLASS", frame_class_code, reset_progress_callback, connection_progress_callback, extra_sleep_time
+                )
+            if self.frame_type != frame_type_code:
+                self.set_parameter(
+                    "FRAME_TYPE", frame_type_code, reset_progress_callback, connection_progress_callback, extra_sleep_time
+                )
 
             logging_info(
                 _("Updated frame configuration: FRAME_CLASS=%(class)d, FRAME_TYPE=%(type)d"),
@@ -960,29 +1082,6 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             current_text = _("Current: %(curr).2fA") % {"curr": current}
             return voltage_text, current_text
         return _("Voltage: N/A"), _("Current: N/A")
-
-    def validate_motor_test_parameters(self, throttle_percent: int, timeout_seconds: int) -> bool:
-        """
-        Validate motor test parameters before execution.
-
-        Args:
-            throttle_percent: Throttle percentage (0-100)
-            timeout_seconds: Test duration in seconds
-
-        Returns:
-            bool: True if parameters are valid
-
-        Raises:
-            ValidationError: If parameters are invalid
-
-        """
-        if not 0 <= throttle_percent <= 100:
-            raise ValidationError(_("Throttle percentage must be between 0 and 100"))
-
-        if not 0.1 <= timeout_seconds <= 60:
-            raise ValidationError(_("Test duration must be between 0.1 and 60 seconds"))
-
-        return True
 
     def should_show_first_test_warning(self) -> bool:
         """

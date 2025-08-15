@@ -21,7 +21,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-import tkinter.messagebox
 from argparse import ArgumentParser, Namespace
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -32,7 +31,16 @@ from tkinter.messagebox import askyesno, showerror, showwarning
 from tkinter.simpledialog import askfloat
 from typing import Callable, Union
 
-import tksvg
+try:
+    import tksvg
+except ImportError:
+    tksvg = None
+
+# For fallback SVG rendering
+import io
+
+import cairosvg
+from PIL import Image, ImageTk
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.__main__ import (
@@ -42,6 +50,10 @@ from ardupilot_methodic_configurator.__main__ import (
 )
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_motor_test import (
+    DURATION_S_MAX,
+    DURATION_S_MIN,
+    THROTTLE_PCT_MAX,
+    THROTTLE_PCT_MIN,
     FrameConfigurationError,
     MotorTestDataModel,
     MotorTestExecutionError,
@@ -50,6 +62,7 @@ from ardupilot_methodic_configurator.data_model_motor_test import (
     ValidationError,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 
 
@@ -79,6 +92,10 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self.batt_current_label: ttk.Label
         self._current_svg_image = None  # Store SVG image reference
         self._first_motor_test = True  # Track if this is the first motor test
+        self._frame_options_loaded = False  # Track if frame options have been loaded
+        self._diagram_loaded = False  # Track if diagram has been loaded initially
+        self._diagrams_path = ""
+        self._content_frame = None  # Store reference to content frame for widget searches
 
         self._create_widgets()
 
@@ -97,6 +114,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         main_frame = ScrollFrame(self.parent)
         main_frame.pack(fill="both", expand=True)
         content_frame = main_frame.view_port
+        self._content_frame = content_frame  # Store reference for later use
 
         # --- Safety Warnings ---
         warning_frame = ttk.LabelFrame(content_frame, text=_("Safety Warnings"))
@@ -153,16 +171,22 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
         ttk.Label(controls_frame, text=_("Throttle:")).pack(side="left", padx=4)
         self.throttle_spinbox = ttk.Spinbox(
-            controls_frame, from_=1, to=100, increment=1, width=3, command=self._on_throttle_change
+            controls_frame, from_=THROTTLE_PCT_MIN, to=THROTTLE_PCT_MAX, increment=1, width=3, command=self._on_throttle_change
         )
         self.throttle_spinbox.pack(side="left", padx=2)
+        # Bind events to capture manual text entry completion
+        self.throttle_spinbox.bind("<Return>", lambda _: self._on_throttle_change())
+        self.throttle_spinbox.bind("<FocusOut>", lambda _: self._on_throttle_change())
         ttk.Label(controls_frame, text="%").pack(side="left", padx=2)
 
         ttk.Label(controls_frame, text=_("Duration:")).pack(side="left", padx=4)
         self.duration_spinbox = ttk.Spinbox(
-            controls_frame, from_=0.5, to=10, increment=0.5, width=4, command=self._on_duration_change
+            controls_frame, from_=DURATION_S_MIN, to=DURATION_S_MAX, increment=0.5, width=4, command=self._on_duration_change
         )
         self.duration_spinbox.pack(side="left", padx=2)
+        # Bind events to capture manual text entry completion
+        self.duration_spinbox.bind("<Return>", lambda _: self._on_duration_change())
+        self.duration_spinbox.bind("<FocusOut>", lambda _: self._on_duration_change())
         ttk.Label(controls_frame, text="s").pack(side="left", padx=2)
 
         self.batt_voltage_label = ttk.Label(controls_frame, text=_("Voltage: N/A"))
@@ -226,27 +250,43 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def _update_view(self) -> None:
         """Update the view with data from the model."""
-        self._update_frame_options()
+        # Only load frame options once, not on every update
+        if not self._frame_options_loaded:
+            self._update_frame_options()
+            self._frame_options_loaded = True
+
+        # Only load diagram once during initial setup, not on every update
+        if not self._diagram_loaded:
+            self._update_diagram()
+            self._diagram_loaded = True
+
         self._update_motor_buttons_layout()
-        self._update_diagram()
         self._update_battery_status()
         self._update_spinbox_values()
         self.parent.after(1000, self._update_view)  # Schedule periodic update
 
     def _update_spinbox_values(self) -> None:
-        """Update spinbox values from the data model."""
+        """Update spinbox values from the data model only if not currently being edited."""
         try:
-            # Update throttle spinbox
-            throttle_pct = self.model.get_test_throttle_pct()
-            self.throttle_spinbox.delete(0, "end")
-            self.throttle_spinbox.insert(0, str(throttle_pct))
+            # Only update if the spinbox doesn't have focus (user is not editing)
+            if self.throttle_spinbox.focus_get() != self.throttle_spinbox:
+                throttle_pct = self.model.get_test_throttle_pct()
+                current_value = self.throttle_spinbox.get()
+                # Only update if the value has actually changed to avoid unnecessary updates
+                if current_value != str(throttle_pct):
+                    self.throttle_spinbox.delete(0, "end")
+                    self.throttle_spinbox.insert(0, str(throttle_pct))
 
-            # Update duration spinbox
-            duration = self.model.get_test_duration()
-            self.duration_spinbox.delete(0, "end")
-            self.duration_spinbox.insert(0, str(duration))
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            logging_error(_("Failed to update spinbox values: %(error)s"), {"error": str(e)})
+            # Only update if the spinbox doesn't have focus (user is not editing)
+            if self.duration_spinbox.focus_get() != self.duration_spinbox:
+                duration = self.model.get_test_duration_s()
+                current_value = self.duration_spinbox.get()
+                # Only update if the value has actually changed to avoid unnecessary updates
+                if current_value != str(duration):
+                    self.duration_spinbox.delete(0, "end")
+                    self.duration_spinbox.insert(0, str(duration))
+        except KeyError:
+            pass
 
     def _update_frame_options(self) -> None:
         """Update the frame type combobox options."""
@@ -263,6 +303,12 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         current_frame_text = self.model.get_current_frame_selection_text()
         if current_frame_text in options:
             self.frame_type_combobox.set(current_frame_text)
+
+    def refresh_frame_options(self) -> None:
+        """Force refresh of frame options (e.g., when motor data changes)."""
+        self._frame_options_loaded = False
+        self._update_frame_options()
+        self._frame_options_loaded = True
 
     def _update_motor_buttons_layout(self) -> None:
         """Re-create motor buttons if motor count changes."""
@@ -297,10 +343,15 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
             # Find the testing frame and create new motor grid
             testing_frame = None
-            for child in self.parent.winfo_children():
-                if hasattr(child, "cget") and "Motor Testing" in str(child.cget("text") if hasattr(child, "cget") else ""):
-                    testing_frame = child
-                    break
+            if self._content_frame:
+                for child in self._content_frame.winfo_children():
+                    try:
+                        if hasattr(child, "cget") and "Motor Order/Direction Configuration" in str(child.cget("text")):
+                            testing_frame = child
+                            break
+                    except tk.TclError:
+                        # Widget doesn't have a "text" option, skip it
+                        continue
 
             if testing_frame and isinstance(testing_frame, (Frame, ttk.Frame)):
                 motor_grid = find_motor_grid(testing_frame)
@@ -316,32 +367,124 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self.diagram_canvas.delete("all")
 
         if self.model.motor_diagram_exists():
-            diagram_path, error_msg = self.model.get_motor_diagram_path()
+            if self._diagrams_path:
+                diagram_path = self._diagrams_path
+                error_msg = ""
+            else:
+                diagram_path, error_msg = self.model.get_motor_diagram_path()
+                self._diagrams_path = diagram_path
 
             if diagram_path and diagram_path.endswith(".svg"):
+                logging_error(_("Found SVG diagram at: %(path)s"), {"path": diagram_path})
+                width = 400
+                height = 300
+                canvas_width = int(self.diagram_canvas.winfo_width() or width)
+                canvas_height = int(self.diagram_canvas.winfo_height() or height)
+                if canvas_width <= 0:
+                    canvas_width = max(1, int(width))
+                if canvas_height <= 0:
+                    canvas_height = max(1, int(height))
                 try:
-                    # Use tksvg to render SVG
-                    svg_image = tksvg.SvgImage(file=diagram_path)
-                    # Scale the image to fit the canvas
-                    canvas_width = self.diagram_canvas.winfo_width() or 400
-                    canvas_height = self.diagram_canvas.winfo_height() or 300
+                    if tksvg is not None:
+                        # Use tksvg to render SVG
+                        svg_image = tksvg.SvgImage(file=diagram_path)
+                        # Scale the image to fit the canvas
 
-                    # Calculate scaling to fit within canvas while maintaining aspect ratio
-                    svg_width = svg_image.width()
-                    svg_height = svg_image.height()
-                    _scale, scaled_height = self.model.get_svg_scaling_info(canvas_width, canvas_height, svg_width, svg_height)
-
-                    if svg_width > 0 and svg_height > 0:
-                        # Create scaled image
-                        scaled_svg = tksvg.SvgImage(file=diagram_path, scaletoheight=scaled_height)
-                        self.diagram_canvas.create_image(
-                            canvas_width // 2, canvas_height // 2, image=scaled_svg, anchor="center"
+                        # Calculate scaling to fit within canvas while maintaining aspect ratio
+                        svg_width = svg_image.width()
+                        svg_height = svg_image.height()
+                        _scale, scaled_height = self.model.get_svg_scaling_info(
+                            canvas_width, canvas_height, svg_width, svg_height
                         )
-                        # Keep a reference to prevent garbage collection
-                        # Store in the view instance instead of canvas
-                        self._current_svg_image = scaled_svg
+
+                        if svg_width > 0 and svg_height > 0:
+                            # Create scaled image
+                            scaled_svg = tksvg.SvgImage(file=diagram_path, scaletoheight=scaled_height)
+                            self.diagram_canvas.create_image(
+                                canvas_width // 2, canvas_height // 2, image=scaled_svg, anchor="center"
+                            )
+                            # Keep a reference to prevent garbage collection
+                            # Store in the view instance instead of canvas
+                            self._current_svg_image = scaled_svg
+                        else:
+                            self.diagram_canvas.create_text(200, 150, text=_("Invalid SVG diagram"), fill="red")
+                    elif cairosvg is not None:
+                        # Use cairosvg to rasterize the SVG to PNG and display via PIL on the canvas.
+
+                        try:
+                            png_data = cairosvg.svg2png(
+                                url=str(diagram_path),  # output_width=canvas_width, output_height=canvas_height
+                            )
+                            # Defensive check: svg2png should return bytes; if not, log and fallback
+                            if not isinstance(png_data, (bytes, bytearray)):
+                                logging_error(
+                                    _("cairosvg.svg2png returned unexpected type: %(type)s"),
+                                    {"type": type(png_data)},
+                                )
+                                self.diagram_canvas.create_text(
+                                    canvas_width // 2,
+                                    canvas_height // 2,
+                                    text=_("SVG render returned unexpected data type for %(path)s") % {"path": diagram_path},
+                                    fill="red",
+                                    width=380,
+                                )
+                                raise TypeError("svg2png returned non-bytes data")
+
+                            try:
+                                image = Image.open(io.BytesIO(png_data))
+                            except TypeError as img_e:
+                                # Image.open failed due to bad argument type - log details
+                                logging_error(
+                                    _("PIL.Image.open TypeError: %(error)s - png_data type: %(type)s"),
+                                    {"error": img_e, "type": type(png_data)},
+                                )
+                                self.diagram_canvas.create_text(
+                                    canvas_width // 2,
+                                    canvas_height // 2,
+                                    text=_("Error opening rendered PNG for %(path)s") % {"path": diagram_path},
+                                    fill="red",
+                                    width=380,
+                                )
+                                raise
+
+                            tk_image = ImageTk.PhotoImage(image)
+                            # Center the image on the canvas
+                            self.diagram_canvas.create_image(
+                                canvas_width // 2,
+                                canvas_height // 2,
+                                image=tk_image,
+                                anchor="center",
+                            )
+                            # Keep reference to avoid garbage collection
+                            self._current_svg_image = tk_image
+                        except TypeError as e:
+                            logging_error(_("TypeError rendering SVG with cairosvg: %(error)s"), {"error": e})
+                            self.diagram_canvas.create_text(
+                                canvas_width // 2,
+                                canvas_height // 2,
+                                text=_("TypeError rendering SVG: %(path)s") % {"path": diagram_path},
+                                fill="red",
+                                width=380,
+                            )
+                        except Exception as e:  # pylint: disable=broad-exception-caught
+                            logging_error(_("Error rendering SVG with cairosvg: %(error)s"), {"error": e})
+                            # Show an informative fallback message
+                            self.diagram_canvas.create_text(
+                                canvas_width // 2,
+                                canvas_height // 2,
+                                text=_("Error rendering SVG: %(path)s") % {"path": diagram_path},
+                                fill="red",
+                                width=380,
+                            )
                     else:
-                        self.diagram_canvas.create_text(200, 150, text=_("Invalid SVG diagram"), fill="red")
+                        # No SVG rendering backend available, show filename instead
+                        self.diagram_canvas.create_text(
+                            canvas_width // 2,
+                            canvas_height // 2,
+                            text=_("SVG diagram: %(path)s") % {"path": diagram_path},
+                            fill="black",
+                            width=380,
+                        )
                 except Exception as e:  # pylint: disable=broad-exception-caught
                     logging_error(_("Error loading SVG diagram: %(error)s"), {"error": e})
                     self.diagram_canvas.create_text(200, 150, text=_("Error loading diagram"), fill="red")
@@ -372,7 +515,20 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
         try:
             # Update frame configuration through data model
-            self.model.update_frame_type_from_selection(selected_text)
+            reset_progress_window = ProgressWindow(
+                self.root_window, _("Resetting Flight Controller"), _("Waiting for {} of {} seconds")
+            )
+            connection_progress_window = ProgressWindow(
+                self.root_window, _("Re-Connecting to Flight Controller"), _("Waiting for {} of {} seconds")
+            )
+            self.model.update_frame_type_from_selection(
+                selected_text,
+                reset_progress_window.update_progress_bar,
+                connection_progress_window.update_progress_bar,
+                extra_sleep_time=2,
+            )
+            reset_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
+            connection_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
 
             # Update UI components
             self._update_motor_buttons_layout()
@@ -383,25 +539,51 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def _on_throttle_change(self) -> None:
         """Handle throttle spinbox change."""
+        logging_debug(_("_on_throttle_change called with value: %(val)s"), {"val": self.throttle_spinbox.get()})
         try:
             throttle_pct = int(float(self.throttle_spinbox.get()))
             self.model.set_test_throttle_pct(throttle_pct)
-        except ValueError:
+            logging_debug(_("Throttle set to %(pct)d%%"), {"pct": throttle_pct})
+        except ValueError as e:
             # Invalid value entered, reset to model value
+            logging_warning(_("ValueError in _on_throttle_change: %(error)s"), {"error": str(e)})
             throttle_pct = self.model.get_test_throttle_pct()
             self.throttle_spinbox.delete(0, "end")
             self.throttle_spinbox.insert(0, str(throttle_pct))
+            showerror(
+                _("Throttle value error"), _("Invalid throttle value entered, reset to %(pct)d%%") % {"pct": throttle_pct}
+            )
+        except (ValidationError, ParameterError) as e:
+            # Model validation failed, reset to current model value
+            logging_warning(_("ValidationError/ParameterError in _on_throttle_change: %(error)s"), {"error": str(e)})
+            throttle_pct = self.model.get_test_throttle_pct()
+            self.throttle_spinbox.delete(0, "end")
+            self.throttle_spinbox.insert(0, str(throttle_pct))
+            showerror(_("Throttle value error"), _("Throttle validation failed: %(error)s") % {"error": str(e)})
 
     def _on_duration_change(self) -> None:
         """Handle duration spinbox change."""
+        logging_debug(_("_on_duration_change called with value: %(val)s"), {"val": self.duration_spinbox.get()})
         try:
             duration = float(self.duration_spinbox.get())
-            self.model.set_test_duration(duration)
-        except ValueError:
+            self.model.set_test_duration_s(duration)
+            logging_debug(_("Duration set to %(dur)g seconds"), {"dur": duration})
+        except ValueError as e:
             # Invalid value entered, reset to model value
-            duration = self.model.get_test_duration()
+            logging_warning(_("ValueError in _on_duration_change: %(error)s"), {"error": str(e)})
+            duration = self.model.get_test_duration_s()
             self.duration_spinbox.delete(0, "end")
             self.duration_spinbox.insert(0, str(duration))
+            showerror(
+                _("Duration value error"), _("Invalid duration value entered, reset to %(dur)g seconds") % {"dur": duration}
+            )
+        except (ValidationError, ParameterError) as e:
+            # Model validation failed, reset to current model value
+            logging_warning(_("ValidationError/ParameterError in _on_duration_change: %(error)s"), {"error": str(e)})
+            duration = self.model.get_test_duration_s()
+            self.duration_spinbox.delete(0, "end")
+            self.duration_spinbox.insert(0, str(duration))
+            showerror(_("Duration value error"), _("Duration validation failed: %(error)s") % {"error": str(e)})
 
     def _set_motor_spin_arm(self) -> None:
         """Open a dialog to set MOT_SPIN_ARM."""
@@ -414,7 +596,11 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         )
         if new_val is not None:
             try:
-                self.model.set_parameter("MOT_SPIN_ARM", new_val)
+                self.reset_progress_window = ProgressWindow(
+                    self.root_window, _("Resetting Flight Controller"), _("Waiting for {} of {} seconds")
+                )
+                self.model.set_parameter("MOT_SPIN_ARM", new_val, self.reset_progress_window.update_progress_bar)
+                self.reset_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
             except (ParameterError, ValidationError) as e:
                 showerror(_("Error"), str(e))
 
@@ -450,14 +636,12 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
             # Validate test parameters
             throttle_pct = self.model.get_test_throttle_pct()
-            duration = int(self.model.get_test_duration())
-            self.model.validate_motor_test_parameters(throttle_pct, duration)
+            duration = int(self.model.get_test_duration_s())
 
             # Execute motor test
             self.model.test_motor(motor_number, throttle_pct, duration)
 
-            # Update status on success
-            self._update_motor_status(motor_number, _("Test Complete"), "green")
+            self._update_motor_status(motor_number, _("Command sent"), "green")
 
             # Reset status after a short delay
             self.root_window.after(2000, lambda: self._update_motor_status(motor_number, _("Ready"), "blue"))
@@ -483,17 +667,28 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         """Execute a test for all motors simultaneously."""
         logging_debug(_("Testing all motors"))
 
+        # First-time safety confirmation
+        if self._first_motor_test and self.model.should_show_first_test_warning():
+            if not askyesno(_("Safety Confirmation"), self.model.get_safety_warning_message()):
+                return
+            self._first_motor_test = False
+
         try:
             # Check if motor test is safe
             self.model.is_motor_test_safe()
 
             # Validate test parameters
             throttle_pct = self.model.get_test_throttle_pct()
-            duration = int(self.model.get_test_duration())
-            self.model.validate_motor_test_parameters(throttle_pct, duration)
+            duration = int(self.model.get_test_duration_s())
 
             # Execute all motors test
             self.model.test_all_motors(throttle_pct, duration)
+
+            for motor_number in range(1, self.model.motor_count + 1):
+                self._update_motor_status(motor_number, _("Command sent"), "green")
+
+                # Reset status after a short delay
+                self.root_window.after(2000, lambda m=motor_number: self._update_motor_status(m, _("Ready"), "blue"))
 
         except MotorTestSafetyError as e:
             showwarning(_("Safety Check Failed"), str(e))
@@ -508,17 +703,28 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         """Execute a test for all motors in sequence."""
         logging_debug(_("Testing motors in sequence"))
 
+        # First-time safety confirmation
+        if self._first_motor_test and self.model.should_show_first_test_warning():
+            if not askyesno(_("Safety Confirmation"), self.model.get_safety_warning_message()):
+                return
+            self._first_motor_test = False
+
         try:
             # Check if motor test is safe
             self.model.is_motor_test_safe()
 
             # Validate test parameters
             throttle_pct = self.model.get_test_throttle_pct()
-            duration = int(self.model.get_test_duration())
-            self.model.validate_motor_test_parameters(throttle_pct, duration)
+            duration = int(self.model.get_test_duration_s())
 
             # Execute sequential test
             self.model.test_motors_in_sequence(throttle_pct, duration)
+
+            for motor_number in range(1, self.model.motor_count + 1):
+                self._update_motor_status(motor_number, _("Command sent"), "green")
+
+                # Reset status after a short delay
+                self.root_window.after(2000, lambda m=motor_number: self._update_motor_status(m, _("Ready"), "blue"))
 
         except MotorTestSafetyError as e:
             showwarning(_("Safety Check Failed"), str(e))
@@ -535,7 +741,9 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
         try:
             self.model.stop_all_motors()
-            self._reset_all_motor_status()
+            for motor_number in range(1, self.model.motor_count + 1):
+                self._update_motor_status(motor_number, _("Stop sent"), "red")
+            self.root_window.after(2000, lambda: self._reset_all_motor_status())
         except MotorTestExecutionError as e:
             showerror(_("Error"), str(e))
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -556,7 +764,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
         """
         if 1 <= motor_number <= len(self.motor_status_labels):
-            label = self.motor_status_labels[motor_number - 1]
+            label = self.motor_status_labels[self.model.test_order(motor_number)]
             label.config(text=status, foreground=color)
             label.update_idletasks()  # Force GUI update
 
@@ -656,7 +864,7 @@ def main() -> None:
     except Exception as e:  # pylint: disable=broad-exception-caught
         logging_error("Failed to start MotorTestWindow: %(error)s", {"error": e})
         # Show error to user
-        tkinter.messagebox.showerror(_("Error"), f"Failed to start Motor Test: {e}")
+        showerror(_("Error"), f"Failed to start Motor Test: {e}")
     finally:
         if state.flight_controller:
             state.flight_controller.disconnect()  # Disconnect from the flight controller
