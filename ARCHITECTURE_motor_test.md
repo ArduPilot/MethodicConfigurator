@@ -325,7 +325,7 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 - ✅ **Input validation and recovery** - Invalid inputs gracefully handled with model fallback
 - ✅ Keyboard shortcuts:
   - Escape: Emergency stop all motors
-  - Ctrl+A: Test all motors simultaneously  
+  - Ctrl+A: Test all motors simultaneously
   - Ctrl+S: Test motors in sequence
 - ✅ Settings persistence for user preferences
 - ✅ Enhanced error handling and logging
