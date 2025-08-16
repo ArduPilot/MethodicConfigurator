@@ -62,7 +62,7 @@
         {
             "label": "pylint",
             "type": "shell",
-            "command": "pylint $(git ls-files '*.py')",
+            "command": "pylint $(git ls-files '**/*.py')",
             "problemMatcher": {
                 "owner": "pylint",
                 "fileLocation": ["relative", "${workspaceFolder}"],
