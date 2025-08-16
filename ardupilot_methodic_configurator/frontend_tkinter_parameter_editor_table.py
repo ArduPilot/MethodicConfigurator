@@ -400,13 +400,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         new_value_entry.delete(0, tk.END)
         new_value_entry.insert(0, param.value_as_string)
         if param.new_value_equals_default_value:
-            new_value_entry.configure(style="default_v.TEntry")
+            style = "default_v.TEntry"
         elif param.is_below_limit():
-            new_value_entry.configure(style="below_limit.TEntry")
+            style = "below_limit.TEntry"
         elif param.is_above_limit():
-            new_value_entry.configure(style="above_limit.TEntry")
+            style = "above_limit.TEntry"
         else:
-            new_value_entry.configure(style="TEntry")
+            style = "TEntry"
+        new_value_entry.configure(style=style)
 
     def _create_new_value_entry(  # pylint: disable=too-many-statements # noqa: PLR0915
         self, param: ArduPilotParameter, change_reason_widget: ttk.Entry
@@ -521,12 +522,16 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             new_value_entry.bind("<Button-3>", show_parameter_error)
         elif param.is_bitmask:
             new_value_entry.bind(
-                "<Double-Button>",
+                "<Double-Button-1>",
                 lambda event: self._open_bitmask_selection_window(event, param, change_reason_widget),
             )
             new_value_entry.bind("<FocusOut>", _on_parameter_value_change)
+            new_value_entry.bind("<Return>", _on_parameter_value_change)
+            new_value_entry.bind("<KP_Enter>", _on_parameter_value_change)
         else:
             new_value_entry.bind("<FocusOut>", _on_parameter_value_change)
+            new_value_entry.bind("<Return>", _on_parameter_value_change)
+            new_value_entry.bind("<KP_Enter>", _on_parameter_value_change)
 
         tooltip_new_value = param.tooltip_new_value
         if tooltip_new_value:
