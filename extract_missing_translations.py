@@ -220,7 +220,12 @@ def main() -> None:
     lang_codes = TRANSLATED_LANGUAGES if args.lang_code == "all" else [args.lang_code]
     for lang_code in lang_codes:
         missing_translations = extract_missing_translations(lang_code)
-        output_to_files(missing_translations, args.output_file + "_" + lang_code, args.max_translations)
+        logging.info("Found %d missing translations for language '%s'", len(missing_translations), lang_code)
+        if missing_translations:
+            output_to_files(missing_translations, args.output_file + "_" + lang_code, args.max_translations)
+            logging.debug("Created translation file(s) for language '%s'", lang_code)
+        else:
+            logging.info("No missing translations found for language '%s', no file created", lang_code)
 
 
 if __name__ == "__main__":
