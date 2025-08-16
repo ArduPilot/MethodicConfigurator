@@ -4,15 +4,18 @@ This is a Python GUI application for configuring ArduPilot flight controller par
 
 ## Code Style and Standards
 
-We follow PEP 8 Python style guidelines with strict linting using ruff, pylint, mypy, and pyright. All code must pass these checks before merging.
+We follow PEP 8 Python style guidelines with strict linting using ruff, pylint, mypy, and pyright.
+All code must pass these checks before merging.
 
-**Important**: Use ruff only for Python files (*.py). For markdown files (*.md), use `npx markdownlint-cli2` or similar markdown-specific linting tools.
+**Important**: Use ruff only for Python files (*.py).
+For markdown files (*.md), use `npx markdownlint-cli2` or similar markdown-specific linting tools.
 
 When writing code, use type hints for all function parameters and return values following PEP 484 standards.
 
 ## Testing Philosophy
 
-We use pytest for testing with a behavior-driven development (BDD) approach. Tests should focus on user behavior and business value, not implementation details.
+We use pytest for testing with a behavior-driven development (BDD) approach.
+Tests should focus on user behavior and business value, not implementation details.
 
 Test structure follows Given-When-Then pattern with descriptive names like `test_user_can_select_template_by_double_clicking`.
 
@@ -23,12 +26,13 @@ For detailed testing guidelines, see `.github/instructions/pytest_testing_instru
 The project uses a clean architecture with separation of concerns:
 
 - Frontend: tkinter-based GUI
-- Backend: Filesystem operations and parameter management
-- Business logic: Configuration steps and vehicle templates
+- Business logic: vehicle templates, configuration steps and parameter management
+- Backend: Filesystem operations, Flightcontroller integration and communication
 
 ## Dependencies and Tools
 
-We use uv for dependency management, not pip directly. Always update pyproject.toml when adding dependencies.
+We use uv for dependency management, not pip directly.
+Always update `pyproject.toml` when adding dependencies.
 
 Pre-commit hooks ensure code quality - run `pre-commit install` after cloning.
 
@@ -36,12 +40,13 @@ Pre-commit hooks ensure code quality - run `pre-commit install` after cloning.
 
 Parameter files use `.param` extension and are numbered (e.g., `01_first_setup.param`).
 
-Vehicle templates are organized in `ardupilot_methodic_configurator/vehicle_templates/` with subdirectories for each vehicle type
-(ArduCopter, ArduPlane, Rover, Heli).
+Vehicle templates are organized in `ardupilot_methodic_configurator/vehicle_templates/` with subdirectories
+for each vehicle type (ArduCopter, ArduPlane, Rover, Heli).
 
 ## Internationalization
 
-The application supports multiple languages using gettext. All user-facing strings should be wrapped with `_()` for translation.
+The application supports multiple languages using gettext.
+All user-facing strings should be wrapped with `_()` for translation.
 
 ## Documentation
 
