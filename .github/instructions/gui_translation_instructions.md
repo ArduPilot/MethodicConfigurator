@@ -25,6 +25,12 @@ then translated into language-specific `.po` files, which are compiled into bina
 
 ### For Updating Existing Languages
 
+1. **Update POT template**: Execute `python create_pot_file.py` in the project root directory.
+   This extracts all translatable strings from the source code and updates the `.pot` template file.
+
+1. **Merge new strings**: Execute `python merge_pot_file.py` in the project root directory.
+   This merges new strings from the updated `.pot` file into all existing `.po` files, adding new untranslated entries.
+
 1. **Extract missing translations**: Execute `python extract_missing_translations.py` in the project root directory.
    The script automatically detects all existing languages and creates/updates `missing_translations_<lang_code>.txt` files in the root directory.
 
@@ -43,6 +49,8 @@ then translated into language-specific `.po` files, which are compiled into bina
 
 1. **Insert translations**: Execute `python insert_missing_translations.py` in the project root directory.
    The script automatically processes all language files and inserts the translated strings into their respective `.po` files in `ardupilot_methodic_configurator/locale/<lang_code>/LC_MESSAGES/`.
+
+   **Note**: The script processes all languages in a single run, so you only need to execute it once after translating all language files.
 
 1. **Compile and validate**: Execute `python create_mo_files.py` in the project root directory.
    This compiles the `.po` files into binary `.mo` files and performs partial validation of the translation files.
