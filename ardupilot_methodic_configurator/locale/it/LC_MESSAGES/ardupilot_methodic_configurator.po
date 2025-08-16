@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0.16\n"
-"POT-Creation-Date: 2025-08-16 13:39+0200\n"
+"POT-Creation-Date: 2025-08-16 14:09+0000\n"
 "PO-Revision-Date: 2025-02-05 01:24+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -395,6 +395,10 @@ msgstr "Errore durante la decodifica dello schema JSON dal file '%s'."
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:81
 msgid "Could not load validation schema"
 msgstr "Impossibile caricare lo schema di validazione"
+
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:87
+msgid "Validation error"
+msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:99
 msgid "Invalid JSON file '%s': %s"
@@ -2655,11 +2659,13 @@ msgstr "Il valore per {param_name} deve essere un numero finito."
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:279
 msgid "The value for {param_name} ({value}) should be smaller than {max_val}\n"
-msgstr "Il valore per {param_name} ({value}) dovrebbe essere minore di {max_val}\n"
+msgstr ""
+"Il valore per {param_name} ({value}) dovrebbe essere minore di {max_val}\n"
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:288
 msgid "The value for {param_name} ({value}) should be greater than {min_val}\n"
-msgstr "Il valore per {param_name} ({value}) dovrebbe essere maggiore di {min_val}\n"
+msgstr ""
+"Il valore per {param_name} ({value}) dovrebbe essere maggiore di {min_val}\n"
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:327
 msgid "This parameter is forced or derived and cannot be changed."
@@ -2679,7 +2685,9 @@ msgstr "Il valore fornito per {param_name} non modificherebbe il parametro."
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:354
 msgid "The value for {param_name} must be an integer for bitmask parameters."
-msgstr "Il valore per {param_name} deve essere un numero intero per i parametri di bitmask."
+msgstr ""
+"Il valore per {param_name} deve essere un numero intero per i parametri di "
+"bitmask."
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:363
 msgid "The value for {param_name} contains unknown bit(s)."
@@ -2688,7 +2696,9 @@ msgstr "Il valore per {param_name} contiene bit sconosciuti."
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:367
 msgid ""
 "The provided bitmask value for {param_name} would not change the parameter."
-msgstr "Il valore di bitmask fornito per {param_name} non modificherebbe il parametro."
+msgstr ""
+"Il valore di bitmask fornito per {param_name} non modificherebbe il "
+"parametro."
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:379
 msgid "The value for {param_name} must be a number."
@@ -2698,7 +2708,9 @@ msgstr "Il valore per {param_name} deve essere un numero."
 msgid ""
 "The provided numeric value for {param_name} is within tolerance and would "
 "not change the parameter."
-msgstr "Il valore numerico fornito per {param_name} è entro la tolleranza e non modificherebbe il parametro."
+msgstr ""
+"Il valore numerico fornito per {param_name} è entro la tolleranza e non "
+"modificherebbe il parametro."
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:76
 msgid "Flight controller connection required for motor testing"
@@ -2714,11 +2726,11 @@ msgstr ""
 #: ardupilot_methodic_configurator/data_model_motor_test.py:102
 #: ardupilot_methodic_configurator/data_model_motor_test.py:636
 msgid ""
-"Frame configuration updated: Class=%(class)d, Type=%(type)d, Motors="
-"%(motors)d"
+"Frame configuration updated: Class=%(class)d, Type=%(type)d, "
+"Motors=%(motors)d"
 msgstr ""
-"Configurazione telaio aggiornata: Classe=%(class)d, Tipo=%(type)d, Motori="
-"%(motors)d"
+"Configurazione telaio aggiornata: Classe=%(class)d, Tipo=%(type)d, "
+"Motori=%(motors)d"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:110
 #: ardupilot_methodic_configurator/data_model_motor_test.py:647
@@ -3024,14 +3036,20 @@ msgstr ""
 "Motivo: %(reason)s"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:50
+#: tests/test_data_model_software_updates.py:125
+#: tests/test_data_model_software_updates.py:139
 msgid "Current version: {_current_version}"
 msgstr "Versione attuale: {_current_version}"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:52
+#: tests/test_data_model_software_updates.py:127
+#: tests/test_data_model_software_updates.py:141
 msgid "Latest version: {_latest_release}"
 msgstr "Ultima versione: {_latest_release}"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:54
+#: tests/test_data_model_software_updates.py:129
+#: tests/test_data_model_software_updates.py:143
 msgid ""
 "Changes:\n"
 "{changes}"
@@ -3387,6 +3405,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:381
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:552
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:564
+#: tests/test_frontend_tkinter_component_editor_base.py:1448
 msgid "Error"
 msgstr "Errore"
 
@@ -4155,6 +4174,10 @@ msgstr "Download parametri FC in corso"
 msgid "Downloaded {} of {} parameters"
 msgstr "Scaricati {} di {} parametri"
 
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
+msgid "Failed to download parameters"
+msgstr ""
+
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:72
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
 msgstr "list_pair_tuple deve essere una lista di tuple o un dizionario, non %s"
@@ -4577,14 +4600,17 @@ msgid "Update file with values from FC?"
 msgstr "Aggiornare il file con i valori dal FC?"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:523
+#: tests/test_frontend_tkinter_parameter_editor.py:193
 msgid "Close"
 msgstr "Chiudi"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:531
+#: tests/test_frontend_tkinter_parameter_editor.py:107
 msgid "Yes"
 msgstr "Sì"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:537
+#: tests/test_frontend_tkinter_parameter_editor.py:150
 msgid "No"
 msgstr "No"
 
@@ -5169,7 +5195,9 @@ msgstr "Valore Bitmask Non Valido"
 msgid ""
 "The new value '{new_value_str}' is not a valid integer for the {param.name} "
 "bitmask."
-msgstr "Il nuovo valore '{new_value_str}' non è un numero intero valido per la bitmask {param.name}."
+msgstr ""
+"Il nuovo valore '{new_value_str}' non è un numero intero valido per la "
+"bitmask {param.name}."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:668
 msgid "When selected upload {param_name} new value to the flight controller"
@@ -5181,7 +5209,9 @@ msgstr ""
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if should "
 "be saved to file."
-msgstr "Il motivo di modifica del parametro %s è cambiato da %s a %s, verrà chiesto in seguito se salvare nel file."
+msgstr ""
+"Il motivo di modifica del parametro %s è cambiato da %s a %s, verrà chiesto "
+"in seguito se salvare nel file."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:705
 msgid "Are you sure you want to delete the {param_name} parameter?"

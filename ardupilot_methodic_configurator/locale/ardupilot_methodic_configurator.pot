@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-08-16 13:39+0200\n"
+"POT-Creation-Date: 2025-08-16 14:09+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -309,6 +309,10 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:81
 msgid "Could not load validation schema"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:87
+msgid "Validation error"
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:99
@@ -2353,14 +2357,20 @@ msgid ""
 msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:50
+#: tests/test_data_model_software_updates.py:125
+#: tests/test_data_model_software_updates.py:139
 msgid "Current version: {_current_version}"
 msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:52
+#: tests/test_data_model_software_updates.py:127
+#: tests/test_data_model_software_updates.py:141
 msgid "Latest version: {_latest_release}"
 msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:54
+#: tests/test_data_model_software_updates.py:129
+#: tests/test_data_model_software_updates.py:143
 msgid ""
 "Changes:\n"
 "{changes}"
@@ -2687,6 +2697,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:381
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:552
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:564
+#: tests/test_frontend_tkinter_component_editor_base.py:1448
 msgid "Error"
 msgstr ""
 
@@ -3361,6 +3372,11 @@ msgstr ""
 msgid "Downloaded {} of {} parameters"
 msgstr ""
 
+#:
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
+msgid "Failed to download parameters"
+msgstr ""
+
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:72
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
 msgstr ""
@@ -3707,14 +3723,17 @@ msgid "Update file with values from FC?"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:523
+#: tests/test_frontend_tkinter_parameter_editor.py:193
 msgid "Close"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:531
+#: tests/test_frontend_tkinter_parameter_editor.py:107
 msgid "Yes"
 msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:537
+#: tests/test_frontend_tkinter_parameter_editor.py:150
 msgid "No"
 msgstr ""
 
@@ -4802,3 +4821,4 @@ msgstr ""
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr ""
+

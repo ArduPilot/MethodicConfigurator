@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2025-08-16 13:39+0200\n"
+"POT-Creation-Date: 2025-08-16 14:09+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -387,6 +387,10 @@ msgstr "JSONスキーマファイル '%s' のデコードエラー。"
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:81
 msgid "Could not load validation schema"
 msgstr "検証スキーマを読み込めませんでした"
+
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:87
+msgid "Validation error"
+msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:99
 msgid "Invalid JSON file '%s': %s"
@@ -1598,8 +1602,8 @@ msgid ""
 "settings, including antenna phase center location and constellation "
 "selection for optimal update rates"
 msgstr ""
-"アンテナフェーズセンター位置や最適な更新レートのための衛星群選択を含む、"
-"GNSS（全地球航法衛星システム）接続と設定を構成します"
+"アンテナフェーズセンター位置や最適な更新レートのための衛星群選択を含む、GNSS"
+"（全地球航法衛星システム）接続と設定を構成します"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:129
 msgid ""
@@ -2541,7 +2545,8 @@ msgstr "{param_name}に提供された値はパラメータを変更しません
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:354
 msgid "The value for {param_name} must be an integer for bitmask parameters."
-msgstr "{param_name}の値はビットマスクパラメータの場合は整数である必要があります。"
+msgstr ""
+"{param_name}の値はビットマスクパラメータの場合は整数である必要があります。"
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:363
 msgid "The value for {param_name} contains unknown bit(s)."
@@ -2560,7 +2565,8 @@ msgstr "{param_name}の値は数値である必要があります。"
 msgid ""
 "The provided numeric value for {param_name} is within tolerance and would "
 "not change the parameter."
-msgstr "{param_name}に提供された数値は許容範囲内でありパラメータを変更しません。"
+msgstr ""
+"{param_name}に提供された数値は許容範囲内でありパラメータを変更しません。"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:76
 msgid "Flight controller connection required for motor testing"
@@ -2575,11 +2581,11 @@ msgstr ""
 #: ardupilot_methodic_configurator/data_model_motor_test.py:102
 #: ardupilot_methodic_configurator/data_model_motor_test.py:636
 msgid ""
-"Frame configuration updated: Class=%(class)d, Type=%(type)d, Motors="
-"%(motors)d"
+"Frame configuration updated: Class=%(class)d, Type=%(type)d, "
+"Motors=%(motors)d"
 msgstr ""
-"フレーム設定を更新しました：クラス=%(class)d、タイプ=%(type)d、モーター="
-"%(motors)d"
+"フレーム設定を更新しました：クラス=%(class)d、タイプ=%(type)d、モーター"
+"=%(motors)d"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:110
 #: ardupilot_methodic_configurator/data_model_motor_test.py:647
@@ -2871,14 +2877,20 @@ msgstr ""
 "理由：%(reason)s"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:50
+#: tests/test_data_model_software_updates.py:125
+#: tests/test_data_model_software_updates.py:139
 msgid "Current version: {_current_version}"
 msgstr "現在のバージョン: {_current_version}"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:52
+#: tests/test_data_model_software_updates.py:127
+#: tests/test_data_model_software_updates.py:141
 msgid "Latest version: {_latest_release}"
 msgstr "最新バージョン: {_latest_release}"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:54
+#: tests/test_data_model_software_updates.py:129
+#: tests/test_data_model_software_updates.py:143
 msgid ""
 "Changes:\n"
 "{changes}"
@@ -3229,6 +3241,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:381
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:552
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:564
+#: tests/test_frontend_tkinter_component_editor_base.py:1448
 msgid "Error"
 msgstr "エラー"
 
@@ -3973,6 +3986,10 @@ msgstr "FCパラメータをダウンロード中"
 msgid "Downloaded {} of {} parameters"
 msgstr "{}パラメータ中{}をダウンロード済み"
 
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
+msgid "Failed to download parameters"
+msgstr ""
+
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:72
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
 msgstr ""
@@ -4384,14 +4401,17 @@ msgid "Update file with values from FC?"
 msgstr "FCの値でファイルを更新しますか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:523
+#: tests/test_frontend_tkinter_parameter_editor.py:193
 msgid "Close"
 msgstr "閉じる"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:531
+#: tests/test_frontend_tkinter_parameter_editor.py:107
 msgid "Yes"
 msgstr "はい"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:537
+#: tests/test_frontend_tkinter_parameter_editor.py:150
 msgid "No"
 msgstr "いいえ"
 
@@ -4942,7 +4962,8 @@ msgstr "{param_name}のチェック済みキーの取得エラー: %s"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:552
 msgid "Could not get {param_name} checked keys. Please try again."
-msgstr "{param_name}のチェック済みキーを取得できませんでした。再試行してください。"
+msgstr ""
+"{param_name}のチェック済みキーを取得できませんでした。再試行してください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:563
 msgid "Could not set bitmask value for %s: %s"
@@ -4964,7 +4985,9 @@ msgstr "無効なビットマスク値"
 msgid ""
 "The new value '{new_value_str}' is not a valid integer for the {param.name} "
 "bitmask."
-msgstr "新しい値'{new_value_str}'は{param.name}ビットマスクの有効な整数ではありません。"
+msgstr ""
+"新しい値'{new_value_str}'は{param.name}ビットマスクの有効な整数ではありませ"
+"ん。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:668
 msgid "When selected upload {param_name} new value to the flight controller"
@@ -4974,7 +4997,9 @@ msgstr "選択時、{param_name}の新しい値をフライトコントローラ
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if should "
 "be saved to file."
-msgstr "パラメータ%sの変更理由が%sから%sに変更されました。後でファイルに保存するかどうか確認します。"
+msgstr ""
+"パラメータ%sの変更理由が%sから%sに変更されました。後でファイルに保存するかど"
+"うか確認します。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:705
 msgid "Are you sure you want to delete the {param_name} parameter?"
