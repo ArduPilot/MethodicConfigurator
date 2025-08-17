@@ -58,6 +58,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.at_least_one_param_edited = False
         self.parameters: dict[str, ArduPilotParameter] = {}
         self.config_step_processor = ConfigurationStepProcessor(local_filesystem)
+        # Track last return values to prevent duplicate event processing
+        self._last_return_values: dict[tk.Misc, str] = {}
 
         style = ttk.Style()
         style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))  # type: ignore[no-untyped-call]
@@ -130,6 +132,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         for widget in self.view_port.winfo_children():
             widget.destroy()
         self.current_file = selected_file
+        # Clear the last return values tracking dictionary when repopulating
+        self._last_return_values.clear()
 
         # Check if upload column should be shown based on UI complexity
         show_upload_column = self._should_show_upload_column(gui_complexity)
@@ -439,6 +443,24 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             if new_value is None:
                 return
 
+            # Prevent duplicate execution when both Return and FocusOut events are triggered
+            # EventType.KeyPress for Return/Enter, EventType.FocusOut for focus loss
+            if (
+                hasattr(event, "type")
+                and event.type == tk.EventType.FocusOut
+                and event.widget in self._last_return_values
+                # Check if the widget still has the same value as when Return was pressed
+                # If Return was just pressed, skip FocusOut to avoid duplicate processing
+                and new_value == self._last_return_values[event.widget]
+            ):
+                # Clear the flag and skip processing
+                del self._last_return_values[event.widget]
+                return
+
+            # Mark that Return was pressed with this value (for FocusOut deduplication)
+            if hasattr(event, "type") and event.type == tk.EventType.KeyPress:  # KeyPress event (Return/Enter)
+                self._last_return_values[event.widget] = new_value
+
             new_value_result = None
             valid = True
 
@@ -656,8 +678,24 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             change_reason_entry.config(state="disabled", background="light grey")
         else:
 
-            def _on_change_reason_change(event: tk.Event) -> None:  # pylint: disable=unused-argument # noqa: ARG001
+            def _on_change_reason_change(event: tk.Event) -> None:
                 new_comment = change_reason_entry.get()
+
+                # Prevent duplicate execution when both Return and FocusOut events are triggered
+                if (
+                    hasattr(event, "type")
+                    and event.type == tk.EventType.FocusOut
+                    and change_reason_entry in self._last_return_values
+                    and new_comment == self._last_return_values[change_reason_entry]
+                ):
+                    # Clear the flag and skip processing
+                    del self._last_return_values[change_reason_entry]
+                    return
+
+                # Mark that Return was pressed with this value (for FocusOut deduplication)
+                if hasattr(event, "type") and event.type == tk.EventType.KeyPress:  # KeyPress event (Return/Enter)
+                    self._last_return_values[change_reason_entry] = new_comment
+
                 # Only set the flag and update file if the comment actually changes
                 if param.set_change_reason(new_comment):
                     logging_debug(

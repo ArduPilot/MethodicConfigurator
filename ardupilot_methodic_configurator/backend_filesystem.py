@@ -47,7 +47,7 @@ from ardupilot_methodic_configurator.backend_filesystem_vehicle_components impor
 TOOLTIP_MAX_LENGTH = 105
 
 
-def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1e-03) -> bool:
+def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1e-04) -> bool:
     """
     Determines if the absolute difference between two numbers is within a specified tolerance.
 
@@ -59,7 +59,7 @@ def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1
       x (float): The first number to compare.
       y (float): The second number to compare.
       atol (float, optional): The absolute tolerance. Default is 1e-08.
-      rtol (float, optional): The relative tolerance. Default is 1e-03.
+      rtol (float, optional): The relative tolerance. Default is 1e-04.
 
     Returns:
       bool: True if the difference is within the tolerance, False otherwise.

@@ -370,16 +370,16 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
                     _("The value for {param_name} must be an integer for bitmask parameters.").format(param_name=self._name)
                 ) from exc
 
-            msg = self.has_unknown_bits_set(int_value)
-            if msg and not ignore_out_of_range:
-                raise ParameterOutOfRangeError(msg)
-
             if int_value == int(self._new_value):
                 raise ParameterUnchangedError(
                     _("The provided bitmask value for {param_name} would not change the parameter.").format(
                         param_name=self._name
                     )
                 )
+
+            msg = self.has_unknown_bits_set(int_value)
+            if msg and not ignore_out_of_range:
+                raise ParameterOutOfRangeError(msg)
 
             self._new_value = float(int_value)
             return self._new_value
@@ -393,6 +393,13 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         if not isfinite(f) or isnan(f):
             raise ValueError(self.is_invalid_number(f))
 
+        if is_within_tolerance(self._new_value, f):
+            raise ParameterUnchangedError(
+                _(
+                    "The provided numeric value for {param_name} is within tolerance and would not change the parameter."
+                ).format(param_name=self._name)
+            )
+
         msg = self.is_above_limit(f)
         if msg and not ignore_out_of_range:
             raise ParameterOutOfRangeError(msg)
@@ -400,13 +407,6 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         msg = self.is_below_limit(f)
         if msg and not ignore_out_of_range:
             raise ParameterOutOfRangeError(msg)
-
-        if is_within_tolerance(self._new_value, f):
-            raise ParameterUnchangedError(
-                _(
-                    "The provided numeric value for {param_name} is within tolerance and would not change the parameter."
-                ).format(param_name=self._name)
-            )
 
         self._new_value = f
         return self._new_value
