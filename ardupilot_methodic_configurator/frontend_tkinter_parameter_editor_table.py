@@ -36,6 +36,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import Scroll
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
 NEW_VALUE_WIDGET_WIDTH = 9
+NEW_VALUE_DIFFERENT_STR = "\u2260" if platform_system() == "Windows" else "!="
 
 
 class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, too-many-instance-attributes
@@ -86,6 +87,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             _("-/+"),
             _("Parameter"),
             _("Current Value"),
+            " ",  # intentionally left blank
             _("New Value"),
             _("Unit"),
         ]
@@ -93,7 +95,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         base_tooltips = [
             _("Delete or add a parameter"),
             _("Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long"),
-            _("Current value on the flight controller "),
+            _("Current value on the flight controller"),
+            _("Is the new value different from the current FC value?"),
             _("New value from the above selected intermediate parameter file"),
             _("Parameter Unit"),
         ]
@@ -202,11 +205,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         """Create all column widgets for a parameter row."""
         column: list[tk.Widget] = []
         change_reason_widget = self._create_change_reason_entry(param)
+        value_is_different_widget = self._create_value_different_label(param)
         column.append(self._create_delete_button(param_name))
         column.append(self._create_parameter_name(param))
         column.append(self._create_flightcontroller_value(param))
+        column.append(value_is_different_widget)
         # update the change reason tooltip when the new value changes
-        column.append(self._create_new_value_entry(param, change_reason_widget))
+        column.append(self._create_new_value_entry(param, change_reason_widget, value_is_different_widget))
         column.append(self._create_unit_label(param))
 
         if show_upload_column:
@@ -223,9 +228,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         column[2].grid(row=row, column=2, sticky="e", padx=0)
         column[3].grid(row=row, column=3, sticky="e", padx=0)
         column[4].grid(row=row, column=4, sticky="e", padx=0)
+        column[5].grid(row=row, column=5, sticky="e", padx=0)
 
         if show_upload_column:
-            column[5].grid(row=row, column=5, sticky="e", padx=0)
+            column[6].grid(row=row, column=6, sticky="e", padx=0)
 
         change_reason_column = self._get_change_reason_column_index(show_upload_column)
         column[change_reason_column].grid(row=row, column=change_reason_column, sticky="ew", padx=(0, 5))
@@ -242,7 +248,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         """
         # Base columns: Delete, Parameter, Current Value, New Value, Unit
-        base_column_count = 5
+        base_column_count = 6
         if show_upload_column:
             return base_column_count + 1  # Upload column + Change Reason
         return base_column_count  # Change Reason directly after Unit
@@ -252,11 +258,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.view_port.columnconfigure(0, weight=0)  # Delete and Add buttons
         self.view_port.columnconfigure(1, weight=0, minsize=120)  # Parameter name
         self.view_port.columnconfigure(2, weight=0)  # Current Value
-        self.view_port.columnconfigure(3, weight=0)  # New Value
-        self.view_port.columnconfigure(4, weight=0)  # Units
+        self.view_port.columnconfigure(3, weight=0)  # Different
+        self.view_port.columnconfigure(4, weight=0)  # New Value
+        self.view_port.columnconfigure(5, weight=0)  # Units
 
         if show_upload_column:
-            self.view_port.columnconfigure(5, weight=0)  # Upload to FC
+            self.view_port.columnconfigure(6, weight=0)  # Upload to FC
 
         self.view_port.columnconfigure(self._get_change_reason_column_index(show_upload_column), weight=1)  # Change Reason
 
@@ -307,8 +314,17 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             show_tooltip(flightcontroller_value, tooltip_fc_value)
         return flightcontroller_value
 
-    def _update_combobox_style_on_selection(
-        self, combobox_widget: PairTupleCombobox, param: ArduPilotParameter, event: tk.Event, change_reason_widget: ttk.Entry
+    def _create_value_different_label(self, param: ArduPilotParameter) -> ttk.Label:
+        """Create a label indicating if the new value is different from current FC value."""
+        return ttk.Label(self.view_port, text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
+
+    def _update_combobox_style_on_selection(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        combobox_widget: PairTupleCombobox,
+        param: ArduPilotParameter,
+        event: tk.Event,
+        change_reason_widget: ttk.Entry,
+        value_is_different: ttk.Label,
     ) -> None:
         """Update the combobox style based on selection."""
         new_value_str = combobox_widget.get_selected_key() or ""
@@ -327,6 +343,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             show_tooltip(change_reason_widget, param.tooltip_change_reason)
             self.at_least_one_param_edited = True
             self.local_filesystem.file_parameters[self.current_file][param.name].value = new_value
+            value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
         combobox_widget.configure(
             style="default_v.TCombobox" if param.new_value_equals_default_value else "readonly.TCombobox"
@@ -353,7 +370,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         new_value_entry.configure(style=style)
 
     def _create_new_value_entry(  # pylint: disable=too-many-statements # noqa: PLR0915
-        self, param: ArduPilotParameter, change_reason_widget: ttk.Entry
+        self, param: ArduPilotParameter, change_reason_widget: ttk.Entry, value_is_different: ttk.Label
     ) -> Union[PairTupleCombobox, ttk.Entry]:
         """Create an entry widget for editing the parameter value."""
         # if param.is_dirty:
@@ -380,7 +397,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             new_value_entry.config(state="readonly", width=NEW_VALUE_WIDGET_WIDTH, font=(font_family, font_size))
             new_value_entry.bind(  # type: ignore[call-overload] # workaround a mypy issue
                 "<<ComboboxSelected>>",
-                lambda event: self._update_combobox_style_on_selection(new_value_entry, param, event, change_reason_widget),
+                lambda event: self._update_combobox_style_on_selection(
+                    new_value_entry, param, event, change_reason_widget, value_is_different
+                ),
                 "+",
             )
         else:
@@ -449,6 +468,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 # Update the corresponding file parameter with the model-returned value
                 # (model returns the canonical numeric/string representation)
                 self.local_filesystem.file_parameters[self.current_file][param.name].value = new_value_result
+                value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update the displayed value in the Entry or Combobox
             if isinstance(
@@ -457,7 +477,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 self._update_new_value_entry_text(event.widget, param)  # type: ignore[arg-type] # workaround a mypy bug
             elif isinstance(event.widget, PairTupleCombobox):
                 # For PairTupleCombobox, update the style based on whether it matches default value
-                self._update_combobox_style_on_selection(event.widget, param, event, change_reason_widget)
+                self._update_combobox_style_on_selection(event.widget, param, event, change_reason_widget, value_is_different)
 
         if not param.is_editable:
             new_value_entry.config(state="disabled", background="light grey")
@@ -467,7 +487,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         elif param.is_bitmask:
             new_value_entry.bind(
                 "<Double-Button-1>",
-                lambda event: self._open_bitmask_selection_window(event, param, change_reason_widget),
+                lambda event: self._open_bitmask_selection_window(event, param, change_reason_widget, value_is_different),
             )
             new_value_entry.bind("<FocusOut>", _on_parameter_value_change)
             new_value_entry.bind("<Return>", _on_parameter_value_change)
@@ -483,7 +503,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         return new_value_entry
 
     def _open_bitmask_selection_window(  # pylint: disable=too-many-locals, too-many-statements # noqa: PLR0915
-        self, event: tk.Event, param: ArduPilotParameter, change_reason_widget: ttk.Entry
+        self, event: tk.Event, param: ArduPilotParameter, change_reason_widget: ttk.Entry, value_is_different: ttk.Label
     ) -> None:
         """Open a window to select bitmask options."""
 
@@ -524,6 +544,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 self.at_least_one_param_edited = True
                 # Update the corresponding file parameter
                 self.local_filesystem.file_parameters[self.current_file][param.name].value = new_value_result
+                value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update new_value_entry with the new decimal value
             # For bitmask windows, event.widget should always be ttk.Entry (not PairTupleCombobox)
@@ -540,7 +561,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             # Re-bind the FocusIn event to new_value_entry
             event.widget.bind(
                 "<Double-Button-1>",
-                lambda event: self._open_bitmask_selection_window(event, param, change_reason_widget),
+                lambda event: self._open_bitmask_selection_window(event, param, change_reason_widget, value_is_different),
             )
 
         def is_widget_visible(widget: Union[tk.Misc, None]) -> bool:
