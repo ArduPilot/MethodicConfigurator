@@ -2655,11 +2655,13 @@ msgstr "Il valore per {param_name} deve essere un numero finito."
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:279
 msgid "The value for {param_name} ({value}) should be smaller than {max_val}\n"
-msgstr "Il valore per {param_name} ({value}) dovrebbe essere minore di {max_val}\n"
+msgstr ""
+"Il valore per {param_name} ({value}) dovrebbe essere minore di {max_val}\n"
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:288
 msgid "The value for {param_name} ({value}) should be greater than {min_val}\n"
-msgstr "Il valore per {param_name} ({value}) dovrebbe essere maggiore di {min_val}\n"
+msgstr ""
+"Il valore per {param_name} ({value}) dovrebbe essere maggiore di {min_val}\n"
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:327
 msgid "This parameter is forced or derived and cannot be changed."
@@ -2679,7 +2681,9 @@ msgstr "Il valore fornito per {param_name} non modificherebbe il parametro."
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:354
 msgid "The value for {param_name} must be an integer for bitmask parameters."
-msgstr "Il valore per {param_name} deve essere un numero intero per i parametri di bitmask."
+msgstr ""
+"Il valore per {param_name} deve essere un numero intero per i parametri di "
+"bitmask."
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:363
 msgid "The value for {param_name} contains unknown bit(s)."
@@ -2688,7 +2692,9 @@ msgstr "Il valore per {param_name} contiene bit sconosciuti."
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:367
 msgid ""
 "The provided bitmask value for {param_name} would not change the parameter."
-msgstr "Il valore di bitmask fornito per {param_name} non modificherebbe il parametro."
+msgstr ""
+"Il valore di bitmask fornito per {param_name} non modificherebbe il "
+"parametro."
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:379
 msgid "The value for {param_name} must be a number."
@@ -2698,7 +2704,9 @@ msgstr "Il valore per {param_name} deve essere un numero."
 msgid ""
 "The provided numeric value for {param_name} is within tolerance and would "
 "not change the parameter."
-msgstr "Il valore numerico fornito per {param_name} è entro la tolleranza e non modificherebbe il parametro."
+msgstr ""
+"Il valore numerico fornito per {param_name} è entro la tolleranza e non "
+"modificherebbe il parametro."
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:76
 msgid "Flight controller connection required for motor testing"
@@ -5169,7 +5177,9 @@ msgstr "Valore Bitmask Non Valido"
 msgid ""
 "The new value '{new_value_str}' is not a valid integer for the {param.name} "
 "bitmask."
-msgstr "Il nuovo valore '{new_value_str}' non è un numero intero valido per la bitmask {param.name}."
+msgstr ""
+"Il nuovo valore '{new_value_str}' non è un numero intero valido per la "
+"bitmask {param.name}."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:668
 msgid "When selected upload {param_name} new value to the flight controller"
@@ -5181,7 +5191,9 @@ msgstr ""
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if should "
 "be saved to file."
-msgstr "Il motivo di modifica del parametro %s è cambiato da %s a %s, verrà chiesto in seguito se salvare nel file."
+msgstr ""
+"Il motivo di modifica del parametro %s è cambiato da %s a %s, verrà chiesto "
+"in seguito se salvare nel file."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:705
 msgid "Are you sure you want to delete the {param_name} parameter?"

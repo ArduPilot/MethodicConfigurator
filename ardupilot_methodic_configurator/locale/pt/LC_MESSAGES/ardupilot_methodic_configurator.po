@@ -2639,7 +2639,9 @@ msgstr "O valor fornecido para {param_name} não mudaria o parâmetro."
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:354
 msgid "The value for {param_name} must be an integer for bitmask parameters."
-msgstr "O valor para {param_name} deve ser um número inteiro para parâmetros de máscara de bits."
+msgstr ""
+"O valor para {param_name} deve ser um número inteiro para parâmetros de "
+"máscara de bits."
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:363
 msgid "The value for {param_name} contains unknown bit(s)."
@@ -2648,7 +2650,9 @@ msgstr "O valor para {param_name} contém bit(s) desconhecido(s)."
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:367
 msgid ""
 "The provided bitmask value for {param_name} would not change the parameter."
-msgstr "O valor de máscara de bits fornecido para {param_name} não mudaria o parâmetro."
+msgstr ""
+"O valor de máscara de bits fornecido para {param_name} não mudaria o "
+"parâmetro."
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:379
 msgid "The value for {param_name} must be a number."
@@ -2658,7 +2662,9 @@ msgstr "O valor para {param_name} deve ser um número."
 msgid ""
 "The provided numeric value for {param_name} is within tolerance and would "
 "not change the parameter."
-msgstr "O valor numérico fornecido para {param_name} está dentro da tolerância e não mudaria o parâmetro."
+msgstr ""
+"O valor numérico fornecido para {param_name} está dentro da tolerância e não "
+"mudaria o parâmetro."
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:76
 msgid "Flight controller connection required for motor testing"
@@ -5097,7 +5103,9 @@ msgstr "Erro ao obter chaves verificadas de {param_name}: %s"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:552
 msgid "Could not get {param_name} checked keys. Please try again."
-msgstr "Não foi possível obter chaves verificadas de {param_name}. Por favor, tente novamente."
+msgstr ""
+"Não foi possível obter chaves verificadas de {param_name}. Por favor, tente "
+"novamente."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:563
 msgid "Could not set bitmask value for %s: %s"
@@ -5119,7 +5127,9 @@ msgstr "Valor de Máscara de Bits Inválido"
 msgid ""
 "The new value '{new_value_str}' is not a valid integer for the {param.name} "
 "bitmask."
-msgstr "O novo valor '{new_value_str}' não é um número inteiro válido para a máscara de bits {param.name}."
+msgstr ""
+"O novo valor '{new_value_str}' não é um número inteiro válido para a máscara "
+"de bits {param.name}."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:668
 msgid "When selected upload {param_name} new value to the flight controller"
@@ -5130,7 +5140,9 @@ msgstr ""
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if should "
 "be saved to file."
-msgstr "Razão de alteração do parâmetro %s mudou de %s para %s, será perguntado mais tarde se deve ser guardado no ficheiro."
+msgstr ""
+"Razão de alteração do parâmetro %s mudou de %s para %s, será perguntado mais "
+"tarde se deve ser guardado no ficheiro."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:705
 msgid "Are you sure you want to delete the {param_name} parameter?"

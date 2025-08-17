@@ -2541,7 +2541,8 @@ msgstr "{param_name}に提供された値はパラメータを変更しません
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:354
 msgid "The value for {param_name} must be an integer for bitmask parameters."
-msgstr "{param_name}の値はビットマスクパラメータの場合は整数である必要があります。"
+msgstr ""
+"{param_name}の値はビットマスクパラメータの場合は整数である必要があります。"
 
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:363
 msgid "The value for {param_name} contains unknown bit(s)."
@@ -2560,7 +2561,8 @@ msgstr "{param_name}の値は数値である必要があります。"
 msgid ""
 "The provided numeric value for {param_name} is within tolerance and would "
 "not change the parameter."
-msgstr "{param_name}に提供された数値は許容範囲内でありパラメータを変更しません。"
+msgstr ""
+"{param_name}に提供された数値は許容範囲内でありパラメータを変更しません。"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:76
 msgid "Flight controller connection required for motor testing"
@@ -4942,7 +4944,8 @@ msgstr "{param_name}のチェック済みキーの取得エラー: %s"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:552
 msgid "Could not get {param_name} checked keys. Please try again."
-msgstr "{param_name}のチェック済みキーを取得できませんでした。再試行してください。"
+msgstr ""
+"{param_name}のチェック済みキーを取得できませんでした。再試行してください。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:563
 msgid "Could not set bitmask value for %s: %s"
@@ -4964,7 +4967,9 @@ msgstr "無効なビットマスク値"
 msgid ""
 "The new value '{new_value_str}' is not a valid integer for the {param.name} "
 "bitmask."
-msgstr "新しい値'{new_value_str}'は{param.name}ビットマスクの有効な整数ではありません。"
+msgstr ""
+"新しい値'{new_value_str}'は{param.name}ビットマスクの有効な整数ではありませ"
+"ん。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:668
 msgid "When selected upload {param_name} new value to the flight controller"
@@ -4974,7 +4979,9 @@ msgstr "選択時、{param_name}の新しい値をフライトコントローラ
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if should "
 "be saved to file."
-msgstr "パラメータ%sの変更理由が%sから%sに変更されました。後でファイルに保存するかどうか確認します。"
+msgstr ""
+"パラメータ%sの変更理由が%sから%sに変更されました。後でファイルに保存するかど"
+"うか確認します。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:705
 msgid "Are you sure you want to delete the {param_name} parameter?"
