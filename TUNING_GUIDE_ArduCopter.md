@@ -1185,7 +1185,7 @@ Now do the flight to collect the data and analyze the logs to see if the baromet
 
 # 11. System identification for analytical PID optimization (optional)
 
-This uses [Ardupilot's system identification flight mode](https://ardupilot.org/copter/docs/systemid-mode-operation.html) to collect data to [build a mathematical model of the vehicle](https://ardupilot.org/copter/docs/systemid-mode-operation.html#identification-of-a-multicopter) that can later be used to further [optimize the control loops of the vehicle according to a set of constraints (requirements)](https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759).
+This uses [Ardupilot's system identification flight mode](https://ardupilot.org/copter/docs/common-systemid-mode-operation.html) to collect data to [build a mathematical model of the vehicle](https://ardupilot.org/copter/docs/systemid-model-development.html#identification-of-a-multicopter) that can later be used to further [optimize the control loops of the vehicle according to a set of constraints (requirements)](https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759).
 
 ## 11.1 System Identification Flights
 
