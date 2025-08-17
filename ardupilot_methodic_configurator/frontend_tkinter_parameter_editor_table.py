@@ -24,10 +24,10 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
     BitmaskHelper,
-    ConnectionRenamer,
     ParameterOutOfRangeError,
     ParameterUnchangedError,
 )
+from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
@@ -56,6 +56,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.upload_checkbutton_var: dict[str, tk.BooleanVar] = {}
         self.at_least_one_param_edited = False
         self.parameters: dict[str, ArduPilotParameter] = {}
+        self.config_step_processor = ConfigurationStepProcessor(local_filesystem)
 
         style = ttk.Style()
         style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))  # type: ignore[no-untyped-call]
@@ -120,13 +121,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         return tuple(base_headers), tuple(base_tooltips)
 
-    def repopulate(
+    def repopulate(  # pylint: disable=too-many-locals
         self, selected_file: str, fc_parameters: dict[str, float], show_only_differences: bool, gui_complexity: str
     ) -> None:
         for widget in self.view_port.winfo_children():
             widget.destroy()
         self.current_file = selected_file
-        self.parameters = {}
 
         # Check if upload column should be shown based on UI complexity
         show_upload_column = self._should_show_upload_column(gui_complexity)
@@ -141,30 +141,21 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         self.upload_checkbutton_var = {}
 
-        # re-compute derived parameters because the fc_parameters values might have changed
-        if self.local_filesystem.configuration_steps and selected_file in self.local_filesystem.configuration_steps:
-            self.variables["fc_parameters"] = fc_parameters
-            error_msg = self.local_filesystem.compute_parameters(
-                selected_file, self.local_filesystem.configuration_steps[selected_file], "derived", self.variables
-            )
-            if error_msg:
-                messagebox.showerror(_("Error in derived parameters"), error_msg)
-            # merge derived parameter values
-            elif self.local_filesystem.merge_forced_or_derived_parameters(
-                selected_file, self.local_filesystem.derived_parameters, list(fc_parameters.keys())
-            ):
-                self.at_least_one_param_edited = True
+        # Process configuration step and create domain model parameters
+        self.parameters, config_step_edited, ui_errors, ui_infos = self.config_step_processor.process_configuration_step(
+            selected_file, fc_parameters, self.variables
+        )
+        if config_step_edited:
+            self.at_least_one_param_edited = True
 
-            self._rename_fc_connection(selected_file)
-
-        # Convert file parameters to domain model parameters
-        self._create_domain_model_parameters(selected_file, fc_parameters)
+        for title, msg in ui_errors:
+            messagebox.showerror(title, msg)
+        for title, msg in ui_infos:
+            messagebox.showinfo(title, msg)
 
         if show_only_differences:
-            # recompute different_params because of renames and derived values changes
-            different_params = {
-                name: param for name, param in self.parameters.items() if param.is_different_from_fc or not param.has_fc_value
-            }
+            # Filter to show only different parameters
+            different_params = self.config_step_processor.filter_different_parameters(self.parameters)
             self._update_table(different_params, fc_parameters, self.parameter_editor.gui_complexity)
             if not different_params:
                 info_msg = _("No different parameters found in {selected_file}. Skipping...").format(**locals())
@@ -176,54 +167,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             self._update_table(self.parameters, fc_parameters, self.parameter_editor.gui_complexity)
         # Scroll to the top of the parameter table
         self.canvas.yview("moveto", 0)
-
-    def _create_domain_model_parameters(self, selected_file: str, fc_parameters: dict[str, float]) -> None:
-        """Create ArduPilotParameter objects for each parameter in the file."""
-        self.parameters = {}
-
-        for param_name, param in self.local_filesystem.file_parameters[selected_file].items():
-            # Get parameter metadata and default values
-            metadata = self.local_filesystem.doc_dict.get(param_name, {})
-            default_par = self.local_filesystem.param_default_dict.get(param_name, None)
-
-            # Check if parameter is forced or derived
-            forced_par = self.local_filesystem.forced_parameters.get(selected_file, {}).get(param_name, None)
-            derived_par = self.local_filesystem.derived_parameters.get(selected_file, {}).get(param_name, None)
-
-            # Get FC value if available
-            fc_value = fc_parameters.get(param_name)
-
-            # Create domain model parameter
-            self.parameters[param_name] = ArduPilotParameter(
-                param_name, param, metadata, default_par, fc_value, forced_par, derived_par
-            )
-
-    def _rename_fc_connection(self, selected_file: str) -> None:
-        """Rename parameters based on connection prefixes using the ConnectionRenamer."""
-        if "rename_connection" in self.local_filesystem.configuration_steps[selected_file]:
-            new_connection_prefix = self.local_filesystem.configuration_steps[selected_file]["rename_connection"]
-
-            # Apply renames to the parameters dictionary
-            duplicated_parameters, renamed_pairs = ConnectionRenamer.apply_renames(
-                self.local_filesystem.file_parameters[selected_file], new_connection_prefix, self.variables
-            )
-
-            for old_name in duplicated_parameters:
-                logging_info(_("Removing duplicate parameter %s"), old_name)
-                info_msg = _("The parameter '{old_name}' was removed due to duplication.")
-                messagebox.showinfo(_("Parameter Removed"), info_msg.format(**locals()))
-                # will ask the user to save changes before switching to another file
-                self.at_least_one_param_edited = True
-
-            for old_name, new_name in renamed_pairs:
-                logging_info(_("Renaming parameter %s to %s"), old_name, new_name)
-                info_msg = _(
-                    "The parameter '{old_name}' was renamed to '{new_name}'.\n"
-                    "to obey the flight controller connection defined in the component editor window."
-                )
-                messagebox.showinfo(_("Parameter Renamed"), info_msg.format(**locals()))
-                # will ask the user to save changes before switching to another file
-                self.at_least_one_param_edited = True
 
     def _update_table(
         self, params: dict[str, ArduPilotParameter], fc_parameters: dict[str, float], gui_complexity: str
@@ -495,8 +438,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 # Valid but no change — just refresh the UI and do not mark edited
                 valid = False
             except (ValueError, TypeError) as exc:  # invalid input according to model
-                logging_exception(_("Invalid Value for %s: %s"), param.name, exc)
-                messagebox.showerror(_("Invalid Value"), str(exc))
+                logging_exception(_("Invalid value for %s: %s"), param.name, exc)
+                messagebox.showerror(_("Invalid value"), str(exc))
                 valid = False
 
             if valid and new_value_result is not None:
@@ -563,7 +506,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 # Ask the user if they want to accept the out-of-range value
                 if messagebox.askyesno(_("Unknown bit set"), str(oor) + _(" Use out-of-range value?"), icon="warning"):
                     # Retry accepting the value while telling the model to ignore range checks
-                    new_value_result = param.set_new_value(BitmaskHelper.get_value_from_keys(checked_keys), ignore_out_of_range=True)
+                    new_value_result = param.set_new_value(
+                        BitmaskHelper.get_value_from_keys(checked_keys), ignore_out_of_range=True
+                    )
                 else:
                     valid = False
             except ParameterUnchangedError:
