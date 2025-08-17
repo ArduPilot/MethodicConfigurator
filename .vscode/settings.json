@@ -57,6 +57,11 @@
       },
       "editor.defaultFormatter": "charliermarsh.ruff"
     },
+  "python.defaultInterpreterPath": ".venv/bin/python",
+  "terminal.integrated.env.linux": {
+    "VIRTUAL_ENV": "${workspaceFolder}/.venv",
+    "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}"
+  },
     "files.eol": "\n",
     "github.copilot.chat.agent.thinkingTool": true,
     "chat.agent.enabled": true,
