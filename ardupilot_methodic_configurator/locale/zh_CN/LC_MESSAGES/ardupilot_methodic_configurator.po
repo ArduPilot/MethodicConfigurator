@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-08-16 13:39+0200\n"
+"POT-Creation-Date: 2025-08-17 13:27+0200\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -170,9 +170,8 @@ msgid "New vehicle directory does not exist: {new_vehicle_dir}"
 msgstr "新飞行器目录不存在：{new_vehicle_dir}"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:598
-#, fuzzy
 msgid "Error copying template files to new vehicle directory: {_e}"
-msgstr "将模板文件复制到新飞行器目录时出错：{_e}"
+msgstr "将模板文件复制到新车辆目录时出错：{_e}"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:618
 msgid "Parameter %s not found in the current parameter file"
@@ -316,14 +315,11 @@ msgstr ""
 "参数 '{parameter}' 无法计算：未找到 'fc_parameters'，是否已连接飞控？"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:179
-#, fuzzy
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed, no documentation metadata "
 "available for it"
-msgstr ""
-"在文件'{self.configuration_steps_filename}'中：'{filename}'的{parameter_type}"
-"参数'{parameter}'无法计算，没有可用的文档元数据"
+msgstr "在文件'{self.configuration_steps_filename}'中：'{filename}' 的 {parameter_type} 参数 '{parameter}' 无法计算，因为没有可用的文档元数据"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:195
 msgid ""
@@ -443,9 +439,8 @@ msgid "The path '{site_config_directory}' is not a directory."
 msgstr "路径 '{site_config_directory}' 不是一个目录。"
 
 #: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:263
-#, fuzzy
 msgid "site_directory: %s"
-msgstr "站點目錄：%s"
+msgstr "站点目录: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:300
 #: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:337
@@ -617,9 +612,8 @@ msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 msgstr "ChibiOS版本不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:375
-#, fuzzy
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
-msgstr "FC 固件類型不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)"
+msgstr "FC 固件类型不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:394
 msgid "Testing active, will load all parameters from the %s file"
@@ -2843,13 +2837,10 @@ msgstr ""
 "型號"
 
 #: ardupilot_methodic_configurator/data_model_template_overview.py:49
-#, fuzzy
 msgid ""
 "GNSS\n"
 "Connection"
-msgstr ""
-"GNSS\n"
-"連接"
+msgstr "GNSS\n连接"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_base.py:158
 msgid "Invalid datatype '%s' for path %s"
@@ -3185,7 +3176,6 @@ msgid "Validation failed. Please correct the errors before saving."
 msgstr "验证失败。请在保存前更正错误。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:530
-#, fuzzy
 msgid ""
 "ArduPilot Methodic Configurator only operates correctly if all component "
 "properties are correct. ArduPilot parameter values depend on the components "
@@ -3193,13 +3183,7 @@ msgid ""
 "\n"
 " Have you used the scrollbar on the right side of the window and entered the "
 "correct values for all components?"
-msgstr ""
-"ArduPilot 方法配置器僅在所有組件屬性正確的情況下才能正常運行。ArduPilot 參數"
-"值取決於所使用的組件及其連接。\n"
-"\n"
-"您是否使用了窗口右側的滾動條並為所有組件輸入了正確的值？只有当所有组件属性正"
-"确时，ArduPilot调参助手才能正常工作。参数值取决于使用的组件及其连接。请确保使"
-"用了窗口右侧的滚动条并输入了所有组件的正确值"
+msgstr "ArduPilot Methodic Configurator 仅在所有组件属性正确时才能正常运行。ArduPilot 的参数值取决于所使用的组件及其连接。\n\n您是否已使用窗口右侧的滚动条并为所有组件输入了正确的值？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:536
 msgid "Confirm that all component properties are correct"
