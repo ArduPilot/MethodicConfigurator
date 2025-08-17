@@ -420,9 +420,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         """Test parameter value tolerance checking."""
         # Setup LocalFilesystem instance
 
-        # Test cases within tolerance (default 0.1%)
-        assert is_within_tolerance(10.0, 10.009)  # +0.09% - should pass
-        assert is_within_tolerance(10.0, 9.991)  # -0.09% - should pass
+        # Test cases within tolerance (default 0.01%)
+        assert is_within_tolerance(10.0, 10.0009)  # +0.009% - should pass
+        assert is_within_tolerance(10.0, 9.9991)  # -0.009% - should pass
         assert is_within_tolerance(100, 100)  # Exact match
         assert is_within_tolerance(0.0, 0.0)  # Zero case
 
@@ -844,7 +844,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         """Test is_within_tolerance function with edge cases."""
         # Test with negative values
         assert is_within_tolerance(-100, -100)
-        assert is_within_tolerance(-100, -100.099)  # 0.099% difference
+        assert is_within_tolerance(-100, -100.0099)  # 0.0099% difference
         assert not is_within_tolerance(-100, -101)  # 1% difference
 
         # Test with very small values (where absolute tolerance dominates)
@@ -852,7 +852,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert is_within_tolerance(0, 1e-9)  # Zero case with small absolute difference
 
         # Test with very large values
-        assert is_within_tolerance(1e10, 1.0009e10)  # 0.09% difference
+        assert is_within_tolerance(1e10, 1.00009e10)  # 0.009% difference
         assert not is_within_tolerance(1e10, 1.01e10)  # 1% difference
 
         # Test with custom tolerances
