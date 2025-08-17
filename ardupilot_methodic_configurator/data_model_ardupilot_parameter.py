@@ -290,13 +290,29 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
             )
         return ""
 
+    def has_unknown_bits_set(self, value: Optional[int] = None) -> str:
+        """Check if the given value has unknown bits set."""
+        if self.is_bitmask:
+            allowed_mask = 0
+            for k in self.bitmask_dict:
+                allowed_mask |= 1 << int(k)
+
+            new_value = int(self._new_value) if value is None else value
+            if new_value & ~allowed_mask:
+                return _("The value for {param_name} contains unknown bit(s).").format(param_name=self._name)
+        return ""
+
     def fc_value_is_above_limit(self) -> str:
         """Return an error message if the FC value is above the limit for this parameter."""
         return self.is_above_limit(self._fc_value) if self._fc_value is not None else ""
 
     def fc_value_is_below_limit(self) -> str:
-        """Return an error message if the RC value is below the limit for this parameter."""
+        """Return an error message if the FC value is below the limit for this parameter."""
         return self.is_below_limit(self._fc_value) if self._fc_value is not None else ""
+
+    def fc_value_has_unknown_bits_set(self) -> str:
+        """Return an error message if the FC value has unknown bits set."""
+        return self.has_unknown_bits_set(int(self._fc_value)) if self._fc_value is not None else ""
 
     def set_new_value(self, value: str, ignore_out_of_range: bool = False) -> float:  # pylint: disable=too-many-branches
         """
@@ -354,13 +370,9 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
                     _("The value for {param_name} must be an integer for bitmask parameters.").format(param_name=self._name)
                 ) from exc
 
-            # ensure no unknown bits are set
-            allowed_mask = 0
-            for k in self.bitmask_dict:
-                allowed_mask |= 1 << int(k)
-
-            if int_value & ~allowed_mask:
-                raise ValueError(_("The value for {param_name} contains unknown bit(s).").format(param_name=self._name))
+            msg = self.has_unknown_bits_set(int_value)
+            if msg and not ignore_out_of_range:
+                raise ParameterOutOfRangeError(msg)
 
             if int_value == int(self._new_value):
                 raise ParameterUnchangedError(
