@@ -355,15 +355,15 @@ class TestUIComplexityBehavior:
         """Test change reason column index when upload column is shown."""
         column_index = parameter_editor_table._get_change_reason_column_index(show_upload_column=True)
 
-        # Base columns (5) + Upload column (1) = 6
-        assert column_index == 6
+        # Base columns (6) + Upload column (1) = 7
+        assert column_index == 7
 
     def test_get_change_reason_column_index_without_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test change reason column index when upload column is hidden."""
         column_index = parameter_editor_table._get_change_reason_column_index(show_upload_column=False)
 
-        # Base columns (5) only
-        assert column_index == 5
+        # Base columns (6) only
+        assert column_index == 6
 
 
 class TestParameterChangeStateBehavior:
@@ -410,14 +410,14 @@ class TestIntegrationBehavior:
         column_index = parameter_editor_table._get_change_reason_column_index(show_upload)
 
         assert show_upload is False
-        assert column_index == 5  # No upload column
+        assert column_index == 6  # No upload column
 
         # Change to advanced mode
         show_upload_advanced = parameter_editor_table._should_show_upload_column("advanced")
         column_index_advanced = parameter_editor_table._get_change_reason_column_index(show_upload_advanced)
 
         assert show_upload_advanced is True
-        assert column_index_advanced == 6  # With upload column
+        assert column_index_advanced == 7  # With upload column
 
 
 class TestWidgetCreationBehavior:
@@ -601,21 +601,21 @@ class TestHeaderCreationBehavior:
         """Test header creation in simple mode (no upload column)."""
         headers, tooltips = parameter_editor_table._create_headers_and_tooltips(show_upload_column=False)
 
-        expected_headers = ("-/+", "Parameter", "Current Value", "New Value", "Unit", "Change Reason")
+        expected_headers = ("-/+", "Parameter", "Current Value", " ", "New Value", "Unit", "Change Reason")
 
         assert headers == expected_headers
         assert len(tooltips) == len(headers)
-        assert len(tooltips) == 6  # No upload column tooltip
+        assert len(tooltips) == 7  # No upload column tooltip
 
     def test_create_headers_and_tooltips_advanced_mode(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test header creation in advanced mode (with upload column)."""
         headers, tooltips = parameter_editor_table._create_headers_and_tooltips(show_upload_column=True)
 
-        expected_headers = ("-/+", "Parameter", "Current Value", "New Value", "Unit", "Upload", "Change Reason")
+        expected_headers = ("-/+", "Parameter", "Current Value", " ", "New Value", "Unit", "Upload", "Change Reason")
 
         assert headers == expected_headers
         assert len(tooltips) == len(headers)
-        assert len(tooltips) == 7  # With upload column tooltip
+        assert len(tooltips) == 8  # With upload column tooltip
 
     def test_headers_and_tooltips_localization(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test that headers use localization function."""
@@ -649,7 +649,7 @@ class TestColumnManagementBehavior:
         ):
             column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
 
-            assert len(column) == 7  # With upload column
+            assert len(column) == 8  # With upload column
             mock_delete.assert_called_once()
             mock_name.assert_called_once()
             mock_fc.assert_called_once()
@@ -675,7 +675,7 @@ class TestColumnManagementBehavior:
         ):
             column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
 
-            assert len(column) == 6  # Without upload column
+            assert len(column) == 7  # Without upload column
             mock_delete.assert_called_once()
             mock_name.assert_called_once()
             mock_fc.assert_called_once()
@@ -686,9 +686,9 @@ class TestColumnManagementBehavior:
     def test_grid_column_widgets_with_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test column widget gridding with upload column."""
         # Create mock widgets
-        mock_widgets = [MagicMock() for _ in range(7)]
+        mock_widgets = [MagicMock() for _ in range(8)]
 
-        parameter_editor_table._get_change_reason_column_index = MagicMock(return_value=6)
+        parameter_editor_table._get_change_reason_column_index = MagicMock(return_value=7)
 
         parameter_editor_table._grid_column_widgets(mock_widgets, row=1, show_upload_column=True)
 
@@ -697,17 +697,17 @@ class TestColumnManagementBehavior:
             widget.grid.assert_called_once()
             call_args = widget.grid.call_args[1]  # Get keyword arguments
             assert call_args["row"] == 1
-            if i < 6:  # Regular columns
+            if i < 7:  # Regular columns
                 assert call_args["column"] == i
             else:  # Change reason column
-                assert call_args["column"] == 6
+                assert call_args["column"] == 7
 
     def test_grid_column_widgets_without_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test column widget gridding without upload column."""
         # Create mock widgets (6 widgets without upload)
-        mock_widgets = [MagicMock() for _ in range(6)]
+        mock_widgets = [MagicMock() for _ in range(7)]
 
-        parameter_editor_table._get_change_reason_column_index = MagicMock(return_value=5)
+        parameter_editor_table._get_change_reason_column_index = MagicMock(return_value=6)
 
         parameter_editor_table._grid_column_widgets(mock_widgets, row=1, show_upload_column=False)
 
@@ -716,10 +716,10 @@ class TestColumnManagementBehavior:
             widget.grid.assert_called_once()
             call_args = widget.grid.call_args[1]
             assert call_args["row"] == 1
-            if i < 5:  # Regular columns
+            if i < 6:  # Regular columns
                 assert call_args["column"] == i
             else:  # Change reason column
-                assert call_args["column"] == 5
+                assert call_args["column"] == 6
 
     def test_configure_table_columns_with_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test table column configuration with upload column."""
@@ -729,7 +729,7 @@ class TestColumnManagementBehavior:
         parameter_editor_table._configure_table_columns(show_upload_column=True)
 
         # Verify columnconfigure was called for all columns
-        assert parameter_editor_table.view_port.columnconfigure.call_count == 7
+        assert parameter_editor_table.view_port.columnconfigure.call_count == 8
 
     def test_configure_table_columns_without_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test table column configuration without upload column."""
@@ -739,7 +739,7 @@ class TestColumnManagementBehavior:
         parameter_editor_table._configure_table_columns(show_upload_column=False)
 
         # Verify columnconfigure was called for all columns (6 without upload)
-        assert parameter_editor_table.view_port.columnconfigure.call_count == 6
+        assert parameter_editor_table.view_port.columnconfigure.call_count == 7
 
 
 class TestUpdateMethodsBehavior:
@@ -782,6 +782,7 @@ class TestUpdateMethodsBehavior:
         mock_event = MagicMock()
         mock_event.width = 9
         mock_change_reason_widget = MagicMock(spec=ttk.Entry)
+        mock_value_is_different_widget = MagicMock(spec=ttk.Label)
 
         # Create a parameter where the selected value (1.5) equals the default value
         param = ArduPilotParameter(
@@ -799,7 +800,7 @@ class TestUpdateMethodsBehavior:
         # Mock the show_tooltip function to avoid creating actual Tkinter widgets
         with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"):
             parameter_editor_table._update_combobox_style_on_selection(
-                mock_combobox, param, mock_event, mock_change_reason_widget
+                mock_combobox, param, mock_event, mock_change_reason_widget, mock_value_is_different_widget
             )
 
         mock_combobox.configure.assert_called_once_with(style="default_v.TCombobox")
@@ -817,6 +818,7 @@ class TestBitmaskFunctionalityBehavior:
         mock_widget.unbind = MagicMock()
         mock_event.widget = mock_widget
         mock_change_reason_widget = MagicMock(spec=ttk.Entry)
+        mock_value_is_different_widget = MagicMock(spec=ttk.Label)
 
         param = create_mock_data_model_ardupilot_parameter(
             name="TEST_PARAM",
@@ -833,7 +835,9 @@ class TestBitmaskFunctionalityBehavior:
             patch("tkinter.ttk.Checkbutton"),
             patch("tkinter.ttk.Label"),
         ):
-            parameter_editor_table._open_bitmask_selection_window(mock_event, param, mock_change_reason_widget)
+            parameter_editor_table._open_bitmask_selection_window(
+                mock_event, param, mock_change_reason_widget, mock_value_is_different_widget
+            )
 
             # Verify window was created
             mock_toplevel.assert_called_once()
@@ -862,7 +866,7 @@ class TestCompleteIntegrationWorkflows:
         column_index_simple = parameter_editor_table._get_change_reason_column_index(
             parameter_editor_table._should_show_upload_column()
         )
-        assert column_index_simple == 5
+        assert column_index_simple == 6
 
         # Test advanced mode
         parameter_editor_table.parameter_editor.gui_complexity = "advanced"
@@ -875,4 +879,4 @@ class TestCompleteIntegrationWorkflows:
         column_index_advanced = parameter_editor_table._get_change_reason_column_index(
             parameter_editor_table._should_show_upload_column()
         )
-        assert column_index_advanced == 6
+        assert column_index_advanced == 7

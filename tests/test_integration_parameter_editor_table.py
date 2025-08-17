@@ -188,12 +188,12 @@ class TestCompleteParameterWorkflows:  # pylint: disable=too-few-public-methods
         """Test complete UI complexity workflow affecting column layout."""
         # Test advanced mode (default)
         assert parameter_editor_table._should_show_upload_column() is True
-        assert parameter_editor_table._get_change_reason_column_index(show_upload_column=True) == 6
+        assert parameter_editor_table._get_change_reason_column_index(show_upload_column=True) == 7
 
         # Test simple mode
         parameter_editor_table.parameter_editor.gui_complexity = "simple"
         assert parameter_editor_table._should_show_upload_column() is False
-        assert parameter_editor_table._get_change_reason_column_index(show_upload_column=False) == 5
+        assert parameter_editor_table._get_change_reason_column_index(show_upload_column=False) == 6
 
         # Test explicit override
         assert parameter_editor_table._should_show_upload_column("advanced") is True
@@ -282,8 +282,8 @@ class TestWidgetCreationIntegration:
 
             column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
 
-            # Should create 7 widgets (including upload column)
-            assert len(column) == 7
+            # Should create 8 widgets (including upload column)
+            assert len(column) == 8
 
             # Verify all widgets are created
             assert all(widget is not None for widget in column)
