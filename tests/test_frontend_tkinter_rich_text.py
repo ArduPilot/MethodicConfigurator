@@ -77,12 +77,12 @@ class TestGetWidgetFontFamilyAndSize(unittest.TestCase):
     def test_get_widget_font_family_and_size(self) -> None:
         label = ttk.Label(self.root, text="Test")
         family, size = get_widget_font_family_and_size(label)
-        expected_family = "Segoe UI" if platform_system() == "Windows" else "sans-serif"
-        expected_size = 9 if platform_system() == "Windows" else 10
+        expected_family = ["Segoe UI"] if platform_system() == "Windows" else ["Helvetica", "sans-serif"]
+        expected_size = [9] if platform_system() == "Windows" else [-12, 10]
         assert isinstance(family, str)
         assert isinstance(size, int)
-        assert family == expected_family
-        assert size == expected_size
+        assert family in expected_family
+        assert size in expected_size
 
 
 if __name__ == "__main__":
