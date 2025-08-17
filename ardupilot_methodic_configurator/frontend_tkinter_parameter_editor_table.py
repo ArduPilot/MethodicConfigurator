@@ -351,7 +351,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 flightcontroller_value = ttk.Label(self.view_port, text=param.fc_value_as_string, background="light blue")
             elif param.fc_value_is_below_limit():
                 flightcontroller_value = ttk.Label(self.view_port, text=param.fc_value_as_string, background="orangered")
-            elif param.fc_value_is_above_limit():
+            elif param.fc_value_is_above_limit() or param.fc_value_has_unknown_bits_set():
                 flightcontroller_value = ttk.Label(self.view_port, text=param.fc_value_as_string, background="red3")
             else:
                 # Otherwise, set the background color to the default color
@@ -403,7 +403,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             style = "default_v.TEntry"
         elif param.is_below_limit():
             style = "below_limit.TEntry"
-        elif param.is_above_limit():
+        elif param.is_above_limit() or param.has_unknown_bits_set():
             style = "above_limit.TEntry"
         else:
             style = "TEntry"
@@ -486,7 +486,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 new_value_result = param.set_new_value(new_value)
             except ParameterOutOfRangeError as oor:  # user-visible warning from model
                 # Ask the user if they want to accept the out-of-range value
-                if messagebox.askyesno(_("Out-of-bounds Value"), str(oor) + _(" Use out-of-bounds value?"), icon="warning"):
+                if messagebox.askyesno(_("Out-of-range value"), str(oor) + _(" Use out-of-range value?"), icon="warning"):
                     # Retry accepting the value while telling the model to ignore range checks
                     new_value_result = param.set_new_value(new_value, ignore_out_of_range=True)
                 else:
@@ -495,6 +495,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 # Valid but no change — just refresh the UI and do not mark edited
                 valid = False
             except (ValueError, TypeError) as exc:  # invalid input according to model
+                logging_exception(_("Invalid Value for %s: %s"), param.name, exc)
                 messagebox.showerror(_("Invalid Value"), str(exc))
                 valid = False
 
@@ -553,20 +554,31 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 )
                 return
 
+            new_value_result = None
+            valid = True
             # Update the parameter value and entry text
             try:
-                new_value = param.set_new_value(BitmaskHelper.get_value_from_keys(checked_keys))
+                new_value_result = param.set_new_value(BitmaskHelper.get_value_from_keys(checked_keys))
+            except ParameterOutOfRangeError as oor:  # user-visible warning from model
+                # Ask the user if they want to accept the out-of-range value
+                if messagebox.askyesno(_("Unknown bit set"), str(oor) + _(" Use out-of-range value?"), icon="warning"):
+                    # Retry accepting the value while telling the model to ignore range checks
+                    new_value_result = param.set_new_value(BitmaskHelper.get_value_from_keys(checked_keys), ignore_out_of_range=True)
+                else:
+                    valid = False
             except ParameterUnchangedError:
-                # valid but no change
-                pass
-            except (ValueError, TypeError) as exc:
+                # Valid but no change — just refresh the UI and do not mark edited
+                valid = False
+            except (ValueError, TypeError) as exc:  # invalid input according to model
                 logging_exception(_("Could not set bitmask value for %s: %s"), param.name, exc)
                 messagebox.showerror(_("Error"), str(exc))
-            else:
+                valid = False
+
+            if valid and new_value_result is not None:
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
                 self.at_least_one_param_edited = True
                 # Update the corresponding file parameter
-                self.local_filesystem.file_parameters[self.current_file][param.name].value = new_value
+                self.local_filesystem.file_parameters[self.current_file][param.name].value = new_value_result
 
             # Update new_value_entry with the new decimal value
             # For bitmask windows, event.widget should always be ttk.Entry (not PairTupleCombobox)
@@ -582,7 +594,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             self.root.update_idletasks()
             # Re-bind the FocusIn event to new_value_entry
             event.widget.bind(
-                "<Double-Button>",
+                "<Double-Button-1>",
                 lambda event: self._open_bitmask_selection_window(event, param, change_reason_widget),
             )
 
@@ -603,7 +615,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             close_label.config(text=get_param_value_msg(param.name, checked_keys))
 
         # Temporarily unbind the FocusIn event to prevent triggering the window again
-        event.widget.unbind("<Double-Button>")
+        event.widget.unbind("<Double-Button-1>")
         window = tk.Toplevel(self.root)
         title = _("Select {param.name} Bitmask Options")
         window.title(title.format(**locals()))

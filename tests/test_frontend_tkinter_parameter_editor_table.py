@@ -837,7 +837,7 @@ class TestBitmaskFunctionalityBehavior:
 
             # Verify window was created
             mock_toplevel.assert_called_once()
-            mock_event.widget.unbind.assert_called_once_with("<Double-Button>")
+            mock_event.widget.unbind.assert_called_once_with("<Double-Button-1>")
 
     def test_bitmask_value_calculation(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test bitmask value calculation from checkbox states."""
