@@ -398,7 +398,7 @@ msgstr "Impossibile caricare lo schema di validazione"
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:87
 msgid "Validation error"
-msgstr ""
+msgstr "Errore di validazione"
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:99
 msgid "Invalid JSON file '%s': %s"
@@ -4199,7 +4199,7 @@ msgstr "Scaricati {} di {} parametri"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
 msgid "Failed to download parameters"
-msgstr ""
+msgstr "Impossibile scaricare i parametri"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:72
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
@@ -5140,20 +5140,20 @@ msgstr "Parametro Derivato"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:432
 msgid "Out-of-range value"
-msgstr ""
+msgstr "Valore fuori intervallo"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:432
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:507
 msgid " Use out-of-range value?"
-msgstr ""
+msgstr "Utilizzare valore fuori intervallo?"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:441
 msgid "Invalid value for %s: %s"
-msgstr ""
+msgstr "Valore non valido per %s: %s"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:442
 msgid "Invalid value"
-msgstr ""
+msgstr "Valore non valido"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:446
 msgid ""
@@ -5172,7 +5172,7 @@ msgstr "Impossibile ottenere le chiavi verificate di {param_name}. Riprova."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:507
 msgid "Unknown bit set"
-msgstr ""
+msgstr "Bit sconosciuto impostato"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:518
 msgid "Could not set bitmask value for %s: %s"
