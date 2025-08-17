@@ -13,7 +13,7 @@ if %errorLevel% neq 0 (
 )
 
 :: Set download URL and temp file
-set "URL=https://github.com/mlocati/gettext-iconv-windows/releases/download/v0.23-v1.17/gettext0.23-iconv1.17-shared-64.exe"
+set "URL=https://github.com/mlocati/gettext-iconv-windows/releases/download/v0.26-v1.17/gettext0.26-iconv1.17-shared-64.exe"
 set "OUTFILE=%TEMP%\gettext-tools-windows-x64.exe"
 
 :: Download installer
