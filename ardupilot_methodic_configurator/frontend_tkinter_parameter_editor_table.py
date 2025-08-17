@@ -690,7 +690,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             change_reason_entry.config(state="disabled", background="light grey")
         else:
 
-            def on_focus_out(event: tk.Event) -> None:  # pylint: disable=unused-argument # noqa: ARG001
+            def _on_change_reason_change(event: tk.Event) -> None:  # pylint: disable=unused-argument # noqa: ARG001
                 new_comment = change_reason_entry.get()
                 # Only set the flag and update file if the comment actually changes
                 if param.set_change_reason(new_comment):
@@ -704,10 +704,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                     # Update the corresponding file parameter comment
                     self.local_filesystem.file_parameters[self.current_file][param.name].comment = new_comment
 
-            change_reason_entry.bind(
-                "<FocusOut>",
-                on_focus_out,
-            )
+            change_reason_entry.bind("<FocusOut>", _on_change_reason_change)
+            change_reason_entry.bind("<Return>", _on_change_reason_change)
+            change_reason_entry.bind("<KP_Enter>", _on_change_reason_change)
 
         show_tooltip(change_reason_entry, param.tooltip_change_reason)
         return change_reason_entry
