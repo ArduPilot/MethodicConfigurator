@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-08-17 13:27+0200\n"
+"POT-Creation-Date: 2025-08-17 21:58+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -87,7 +87,7 @@ msgid "Unknown"
 msgstr "未知"
 
 #: ardupilot_methodic_configurator/__main__.py:379
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:151
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:75
 msgid "Error in derived parameters"
 msgstr "派生参数中的错误"
 
@@ -319,7 +319,9 @@ msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed, no documentation metadata "
 "available for it"
-msgstr "在文件'{self.configuration_steps_filename}'中：'{filename}' 的 {parameter_type} 参数 '{parameter}' 无法计算，因为没有可用的文档元数据"
+msgstr ""
+"在文件'{self.configuration_steps_filename}'中：'{filename}' 的 "
+"{parameter_type} 参数 '{parameter}' 无法计算，因为没有可用的文档元数据"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:195
 msgid ""
@@ -365,6 +367,10 @@ msgstr "从文件'%s'解码JSON模式时出错。"
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:81
 msgid "Could not load validation schema"
 msgstr "无法加载验证模式"
+
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:87
+msgid "Validation error"
+msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:99
 msgid "Invalid JSON file '%s': %s"
@@ -806,7 +812,7 @@ msgstr "MCU系列"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:271
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:219
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:360
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:303
 msgid "N/A"
 msgstr "不适用"
 
@@ -2368,44 +2374,75 @@ msgstr "{param_name}的值（{value}）应该小于{max_val}\n"
 msgid "The value for {param_name} ({value}) should be greater than {min_val}\n"
 msgstr "{param_name}的值（{value}）应该大于{min_val}\n"
 
-#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:327
-msgid "This parameter is forced or derived and cannot be changed."
-msgstr "此参数是强制或派生的，无法更改。"
-
-#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:330
-msgid "Parameter value must be provided as a string."
-msgstr "参数值必须以字符串形式提供。"
-
-#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:334
-msgid "Empty value is not allowed for {param_name}"
-msgstr "{param_name}不允许空值"
-
-#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:342
-msgid "The provided value for {param_name} would not change the parameter."
-msgstr "为{param_name}提供的值不会更改参数。"
-
-#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:354
-msgid "The value for {param_name} must be an integer for bitmask parameters."
-msgstr "{param_name}的值对于位掩码参数必须是整数。"
-
-#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:363
+#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:302
 msgid "The value for {param_name} contains unknown bit(s)."
 msgstr "{param_name}的值包含未知位。"
 
-#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:367
+#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:343
+msgid "This parameter is forced or derived and cannot be changed."
+msgstr "此参数是强制或派生的，无法更改。"
+
+#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:346
+msgid "Parameter value must be provided as a string."
+msgstr "参数值必须以字符串形式提供。"
+
+#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:350
+msgid "Empty value is not allowed for {param_name}"
+msgstr "{param_name}不允许空值"
+
+#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:358
+msgid "The provided value for {param_name} would not change the parameter."
+msgstr "为{param_name}提供的值不会更改参数。"
+
+#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:370
+msgid "The value for {param_name} must be an integer for bitmask parameters."
+msgstr "{param_name}的值对于位掩码参数必须是整数。"
+
+#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:379
 msgid ""
 "The provided bitmask value for {param_name} would not change the parameter."
 msgstr "为{param_name}提供的位掩码值不会更改参数。"
 
-#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:379
+#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:391
 msgid "The value for {param_name} must be a number."
 msgstr "{param_name}的值必须是数字。"
 
-#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:394
+#: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:406
 msgid ""
 "The provided numeric value for {param_name} is within tolerance and would "
 "not change the parameter."
 msgstr "为{param_name}提供的数值在容差范围内，不会更改参数。"
+
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:121
+msgid "Removing duplicate parameter %s"
+msgstr "正在移除重复参数 %s"
+
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:122
+msgid "The parameter '{old_name}' was removed due to duplication."
+msgstr "参数 '{old_name}' 因重复而被移除。"
+
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:123
+msgid "Parameter Removed"
+msgstr "参数已移除"
+
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:128
+msgid "Renaming parameter %s to %s"
+msgstr "将参数 %s 重命名为 %s"
+
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:129
+msgid ""
+"The parameter '{old_name}' was renamed to '{new_name}'.\n"
+"to obey the flight controller connection defined in the component editor "
+"window."
+msgstr ""
+"參數 '' 已重命名為 ''。\n"
+"以遵守組件編輯器窗口中定義的飛行控制器連接。参数 '{old_name}' 已重命名为 "
+"'{new_name}'。\n"
+"以遵循组件编辑器窗口中定义的飞控连接。"
+
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:133
+msgid "Parameter Renamed"
+msgstr "参数已重命名"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:76
 msgid "Flight controller connection required for motor testing"
@@ -2419,8 +2456,8 @@ msgstr "未找到机架类别 %(class)d 和类型 %(type)d 的电机配置"
 #: ardupilot_methodic_configurator/data_model_motor_test.py:102
 #: ardupilot_methodic_configurator/data_model_motor_test.py:636
 msgid ""
-"Frame configuration updated: Class=%(class)d, Type=%(type)d, Motors="
-"%(motors)d"
+"Frame configuration updated: Class=%(class)d, Type=%(type)d, "
+"Motors=%(motors)d"
 msgstr "机架配置已更新：类别=%(class)d，类型=%(type)d，电机=%(motors)d"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:110
@@ -2840,7 +2877,9 @@ msgstr ""
 msgid ""
 "GNSS\n"
 "Connection"
-msgstr "GNSS\n连接"
+msgstr ""
+"GNSS\n"
+"连接"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_base.py:158
 msgid "Invalid datatype '%s' for path %s"
@@ -3044,9 +3083,9 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:550
 #: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:381
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:552
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:564
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:324
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:496
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:519
 msgid "Error"
 msgstr "错误"
 
@@ -3183,7 +3222,11 @@ msgid ""
 "\n"
 " Have you used the scrollbar on the right side of the window and entered the "
 "correct values for all components?"
-msgstr "ArduPilot Methodic Configurator 仅在所有组件属性正确时才能正常运行。ArduPilot 的参数值取决于所使用的组件及其连接。\n\n您是否已使用窗口右侧的滚动条并为所有组件输入了正确的值？"
+msgstr ""
+"ArduPilot Methodic Configurator 仅在所有组件属性正确时才能正常运行。"
+"ArduPilot 的参数值取决于所使用的组件及其连接。\n"
+"\n"
+"您是否已使用窗口右侧的滚动条并为所有组件输入了正确的值？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:536
 msgid "Confirm that all component properties are correct"
@@ -3769,6 +3812,10 @@ msgstr "下载飞控参数"
 msgid "Downloaded {} of {} parameters"
 msgstr "已下载 {} / {} 个参数"
 
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
+msgid "Failed to download parameters"
+msgstr ""
+
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:72
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
 msgstr "list_pair_tuple 必须是元组列表或字典，而不是 %s"
@@ -4051,27 +4098,27 @@ msgid "Change Reason\n"
 msgstr "更改原因\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:409
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:103
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:104
 msgid "Documenting change reasons is crucial because it:"
 msgstr "记录更改原因至关重要，因为它："
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:410
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:105
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:106
 msgid " * Promotes thoughtful decisions over impulsive changes"
 msgstr " * 促进深思熟虑的决策而非冲动的更改"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:411
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:107
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:108
 msgid " * Provides documentation for vehicle certification requirements"
 msgstr " * 为车辆认证要求提供文档"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:413
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:109
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:110
 msgid " * Enables validation or suggestions from team members or AI tools"
 msgstr " * 使团队成员或AI工具能够进行验证或提供建议"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:416
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:111
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:112
 msgid " * Preserves your reasoning for future reference or troubleshooting"
 msgstr " * 保存您的推理以供将来参考或故障排除"
 
@@ -4080,7 +4127,7 @@ msgid "3. Use "
 msgstr "3. 使用 "
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:419
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:323
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:266
 msgid "Del"
 msgstr "删除"
 
@@ -4089,7 +4136,7 @@ msgid " and "
 msgstr " 和 "
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:421
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:244
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:187
 msgid "Add"
 msgstr "添加"
 
@@ -4303,7 +4350,7 @@ msgstr "设置参数 {param_name} 失败：{_e}"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:751
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:789
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:867
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:172
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:163
 msgid "ArduPilot methodic configurator"
 msgstr "ArduPilot 调参助手"
 
@@ -4565,114 +4612,83 @@ msgid ""
 "Mandatory level not available for this configuration step ({current_file})"
 msgstr "此配置步骤（{current_file}）的强制级别不可用"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:85
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:86
 msgid "-/+"
 msgstr "-/+"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:86
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:87
 msgid "Parameter"
 msgstr "参数"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:87
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:88
 msgid "Current Value"
 msgstr "当前值"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:88
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:89
 msgid "New Value"
 msgstr "新值"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:89
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:90
 msgid "Unit"
 msgstr "单位"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:93
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:94
 msgid "Delete or add a parameter"
 msgstr "删除或添加参数"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:94
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:95
 msgid "Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long"
 msgstr "参数名称必须是 ^[A-Z][A-Z_0-9]* 并且最多 16 个字符长"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:95
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:96
 msgid "Current value on the flight controller "
 msgstr "飞控上的当前值"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:96
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:97
 msgid "New value from the above selected intermediate parameter file"
 msgstr "来自上述选定模版文件的新值"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:97
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:98
 msgid "Parameter Unit"
 msgstr "参数单位"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:101
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:102
 msgid "Reason why respective parameter changed."
 msgstr "相应参数更改的原因。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:115
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:116
 msgid "Upload"
 msgstr "上传"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:116
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:117
 msgid "When selected, upload the new value to the flight controller"
 msgstr "选择后，将新值上传到飞控"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:118
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:119
 msgid "Change Reason"
 msgstr "更改原因"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:170
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:161
 msgid "No different parameters found in {selected_file}. Skipping..."
 msgstr "在 {selected_file} 中未找到不同的参数，跳过..."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:212
-msgid "Removing duplicate parameter %s"
-msgstr "正在移除重复参数 %s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:213
-msgid "The parameter '{old_name}' was removed due to duplication."
-msgstr "参数 '{old_name}' 因重复而被移除。"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:214
-msgid "Parameter Removed"
-msgstr "参数已移除"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:219
-msgid "Renaming parameter %s to %s"
-msgstr "将参数 %s 重命名为 %s"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:220
-msgid ""
-"The parameter '{old_name}' was renamed to '{new_name}'.\n"
-"to obey the flight controller connection defined in the component editor "
-"window."
-msgstr ""
-"參數 '' 已重命名為 ''。\n"
-"以遵守組件編輯器窗口中定義的飛行控制器連接。参数 '{old_name}' 已重命名为 "
-"'{new_name}'。\n"
-"以遵循组件编辑器窗口中定义的飞控连接。"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:224
-msgid "Parameter Renamed"
-msgstr "参数已重命名"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:246
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:189
 msgid "Add a parameter to the {self.current_file} file"
 msgstr "将参数添加到 {self.current_file} 文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:252
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:195
 msgid "Parameter %s not found in the %s file: %s"
 msgstr "在 %s 文件中找不到参数 %s: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:325
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:268
 msgid "Delete {param_name} from the {self.current_file} file"
 msgstr "从 {self.current_file} 文件中删除 {param_name}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:379
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:322
 msgid "Could not apply the selected value: {new_value_str}"
 msgstr "无法应用所选值：{new_value_str}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:448
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:391
 msgid ""
 "This parameter already has the correct value for this configuration step.\n"
 "You must not change it, as this would defeat the purpose of this "
@@ -4686,7 +4702,7 @@ msgstr ""
 "\n"
 "如果您有充分的理由更改它，请将其添加到其他配置步骤并在那里更改。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:453
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:396
 msgid ""
 "This parameter value has been derived from information you entered in the "
 "component editor window.\n"
@@ -4695,118 +4711,127 @@ msgstr ""
 "此参数值是根据您在组件编辑器窗口中输入的信息派生的。\n"
 "您需要在该窗口上更改信息以在此处更新值。\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:461
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:404
 msgid "Forced Parameter"
 msgstr "强制参数"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:463
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:406
 msgid "Derived Parameter"
 msgstr "派生参数"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:489
-msgid " Use out-of-bounds value?"
-msgstr "使用超出范围的值？"
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:432
+msgid "Out-of-range value"
+msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:489
-msgid "Out-of-bounds Value"
-msgstr "超出范围的值"
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:432
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:507
+msgid " Use out-of-range value?"
+msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:498
-msgid "Invalid Value"
-msgstr "无效的值"
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:441
+msgid "Invalid value for %s: %s"
+msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:502
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:442
+msgid "Invalid value"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:446
 msgid ""
 "Parameter %s changed, will later ask if change(s) should be saved to file."
 msgstr "参数 %s 已更改，稍后会询问是否将更改保存到文件。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:550
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:494
 msgid "Error getting {param_name} checked keys: %s"
 msgstr "获取{param_name}检查键时出错：%s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:552
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:496
 msgid "Could not get {param_name} checked keys. Please try again."
 msgstr "无法获取{param_name}检查键。请重试。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:563
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:507
+msgid "Unknown bit set"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:518
 msgid "Could not set bitmask value for %s: %s"
 msgstr "无法为%s设置位掩码值：%s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:598
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:555
 msgid "{_param_name} Value: {_new_decimal_value}"
 msgstr "{_param_name} 值: {_new_decimal_value}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:608
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:565
 msgid "Select {param.name} Bitmask Options"
 msgstr "选择{param.name}位掩码选项"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:626
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:583
 msgid "Invalid Bitmask Value"
 msgstr "无效的位掩码值"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:627
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:584
 msgid ""
 "The new value '{new_value_str}' is not a valid integer for the {param.name} "
 "bitmask."
 msgstr "新值'{new_value_str}'不是{param.name}位掩码的有效整数。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:668
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:625
 msgid "When selected upload {param_name} new value to the flight controller"
 msgstr "选择后将 {param_name} 新值上传到飞控"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:686
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:643
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if should "
 "be saved to file."
 msgstr "参数%s更改原因从%s更改为%s，稍后将询问是否应保存到文件。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:705
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:661
 msgid "Are you sure you want to delete the {param_name} parameter?"
 msgstr "您确定要删除 {param_name} 参数吗？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:723
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:679
 msgid "Add Parameter to "
 msgstr "添加参数到 "
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:727
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:683
 msgid "Enter the parameter name to add:"
 msgstr "输入要添加的参数名称："
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:734
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:802
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:690
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:758
 msgid "Operation not possible"
 msgstr "操作不可行"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:735
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:691
 msgid ""
 "No apm.pdef.xml file and no FC connected. Not possible autocomplete "
 "parameter names."
 msgstr "没有 apm.pdef.xml 文件且未连接飞控。无法自动完成参数名称。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:776
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:732
 msgid "Parameter name can not be empty."
 msgstr "参数名称不能为空。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:776
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:780
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:789
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:799
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:732
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:736
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:745
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:755
 msgid "Invalid parameter name."
 msgstr "无效的参数名称。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:780
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:736
 msgid "Parameter already exists, edit it instead"
 msgstr "参数已存在，请编辑它"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:789
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:745
 msgid "Parameter name not found in the flight controller."
 msgstr "飞控中未找到参数名称。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:798
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:754
 msgid "'{param_name}' not found in the apm.pdef.xml file."
 msgstr "'{param_name}' 在 apm.pdef.xml 文件中未找到。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:803
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:759
 msgid ""
 "Can not add parameter when no FC is connected and no apm.pdef.xml file "
 "exists."
@@ -5332,3 +5357,12 @@ msgstr "硬件的版本或修订号"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
+
+#~ msgid " Use out-of-bounds value?"
+#~ msgstr "使用超出范围的值？"
+
+#~ msgid "Out-of-bounds Value"
+#~ msgstr "超出范围的值"
+
+#~ msgid "Invalid Value"
+#~ msgstr "无效的值"
