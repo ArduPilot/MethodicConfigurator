@@ -6,7 +6,8 @@ on:
       - master
     paths:
       - '**/*.py'
-      - '!**/tests/**'
+    paths-ignore:
+      - 'tests/**'
   workflow_dispatch:
 
 # prevent race conditions
@@ -82,7 +83,7 @@ jobs:
 
       - name: Extract strings
         run: |
-          pygettext3 -d $PYGETTEXT_DOMAIN -o $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot $(git ls-files '*.py') || exit 1
+          python create_pot_file.py
 
       - name: Stage changes
         run: |
