@@ -40,6 +40,9 @@ def extract_strings(directory: str, output_dir: str) -> None:
 
                 file_paths.append(file_path)
 
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+
     # Construct the command
     output_pot = os.path.join(output_dir, "ardupilot_methodic_configurator.pot")
     cmd = ["pygettext3", "--keyword=_", f"--output={output_pot}"]
@@ -56,6 +59,27 @@ def extract_strings(directory: str, output_dir: str) -> None:
     filenames = " ".join(file_paths).replace(directory + os.pathsep, "")
     msg = f"POT file created successfully for {filenames}"
     logging.info(msg)
+
+    if os.path.exists(output_pot):
+        remove_trailing_newline(output_pot)
+
+
+def remove_trailing_newline(file_path: str) -> None:
+    """
+    Remove a single trailing newline from the generated POT file if present.
+
+    Pre-commit does not like the stray newline at the end of files.
+    """
+    try:
+        with open(file_path, "r+", encoding="utf-8", newline="") as fh:
+            content = fh.read()
+            if content.endswith("\n"):
+                content = content[:-1]
+                with open(file_path, "w", encoding="utf-8", newline="") as fh2:
+                    fh2.write(content)
+                logging.info("Removed trailing newline from %s", file_path)
+    except OSError:  # pragma: no cover - defensive logging for file operations
+        logging.exception("Failed to post-process file %s", file_path)
 
 
 def main() -> None:
