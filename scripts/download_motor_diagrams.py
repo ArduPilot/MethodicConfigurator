@@ -11,9 +11,67 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import subprocess
 import urllib.request
 from pathlib import Path
+from typing import Optional
 from urllib.parse import urlparse
+
+# Modern SVG conversion backends (in order of preference)
+try:
+    import cairosvg
+
+    HAS_CAIROSVG = True
+except ImportError:
+    HAS_CAIROSVG = False
+
+try:
+    from wand import image as wand_image
+
+    HAS_WAND = True
+except ImportError:
+    HAS_WAND = False
+
+try:
+    from reportlab.graphics import renderPDF, renderPM
+    from svglib.svglib import renderSVG
+
+    HAS_SVGLIB = True
+except ImportError:
+    HAS_SVGLIB = False
+
+
+# Check for system tools
+def has_inkscape() -> bool:
+    """Check if Inkscape is available."""
+    try:
+        subprocess.run(["inkscape", "--version"], capture_output=True, check=True)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+def get_inkscape_version() -> tuple[int, int]:
+    """Get Inkscape major and minor version numbers."""
+    try:
+        result = subprocess.run(["inkscape", "--version"], capture_output=True, check=True, text=True)
+        # Parse version like "Inkscape 1.4.2 (2aeb623e1d, 2025-05-12)"
+        version_line = result.stdout.strip().split("\n")[0]
+        version_part = version_line.split()[1]  # Get "1.4.2"
+        major, minor = map(int, version_part.split(".")[:2])  # Get 1, 4
+        return major, minor
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError, IndexError):
+        return 0, 92  # Default to old version format
+
+
+def has_rsvg_convert() -> bool:
+    """Check if rsvg-convert is available."""
+    try:
+        subprocess.run(["rsvg-convert", "--version"], capture_output=True, check=True)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
 
 # ruff: noqa: T201
 
@@ -109,5 +167,126 @@ def download_motor_diagrams() -> None:
     print(f"\nDownload complete: {downloaded} succeeded, {failed} failed")
 
 
+def convert_svg_to_png(result_height: Optional[int] = None) -> None:
+    """
+    Convert all downloaded SVG files to PNG using the best available backend.
+
+    Args:
+        result_height: Optional target height in pixels. Width will be calculated
+                      to preserve aspect ratio. If None, uses original size.
+
+    Tries conversion backends in order of preference:
+    1. Inkscape (most reliable, high quality)
+    2. rsvg-convert (librsvg, good quality)
+    3. Wand/ImageMagick (good for complex SVGs)
+    4. svglib + reportlab (pure Python, fast)
+    5. cairosvg (fallback, sometimes has issues)
+
+    """
+    images_dir = Path("ardupilot_methodic_configurator/images")
+
+    # Determine the best available backend
+    backend = None
+    if has_inkscape():
+        backend = "inkscape"
+        print("Using Inkscape for SVG conversion (best quality)")
+    elif has_rsvg_convert():
+        backend = "rsvg-convert"
+        print("Using rsvg-convert for SVG conversion (good quality)")
+    elif HAS_WAND:
+        backend = "wand"
+        print("Using Wand/ImageMagick for SVG conversion")
+    elif HAS_SVGLIB:
+        backend = "svglib"
+        print("Using svglib for SVG conversion")
+    elif HAS_CAIROSVG:
+        backend = "cairosvg"
+        print("Using cairosvg for SVG conversion (fallback)")
+    else:
+        print("No SVG conversion backend available. Install one of:")
+        print("  - inkscape (apt install inkscape)")
+        print("  - librsvg2-bin (apt install librsvg2-bin)")
+        print("  - pip install Wand")
+        print("  - pip install svglib reportlab")
+        print("  - pip install cairosvg")
+        return
+
+    converted = 0
+    failed = 0
+
+    for filename in motor_diagrams:
+        try:
+            svg_path = images_dir / filename
+            png_path = images_dir / filename.replace(".svg", ".png")
+
+            if not svg_path.exists():
+                print(f"SVG file not found: {svg_path}")
+                failed += 1
+                continue
+
+            print(f"Converting {filename} to PNG...")
+
+            if backend == "inkscape":
+                # Use different syntax based on Inkscape version
+                major, minor = get_inkscape_version()
+
+                if major >= 1:  # Modern Inkscape (1.0+) with modern syntax
+                    cmd = ["inkscape", "--export-type=png", f"--export-filename={png_path}", str(svg_path)]
+                    if result_height is not None:
+                        cmd.insert(-1, f"--export-height={result_height}")
+                else:  # Legacy Inkscape (0.x) with old syntax
+                    cmd = ["inkscape", str(svg_path), "--export-png", str(png_path), "--export-dpi=300"]
+                    if result_height is not None:
+                        cmd.append(f"--export-height={result_height}")
+
+                subprocess.run(cmd, check=True, capture_output=True)
+
+            elif backend == "rsvg-convert":
+                cmd = [
+                    "rsvg-convert",
+                    "-f",
+                    "png",
+                    "-d",
+                    "600",  # DPI
+                    "-p",
+                    "600",  # DPI
+                ]
+
+                # Add height parameter if specified
+                if result_height is not None:
+                    cmd.extend(["-h", str(result_height)])
+
+                cmd.append(str(svg_path))
+
+                with open(png_path, "wb") as f:
+                    subprocess.run(cmd, stdout=f, check=True)
+
+            elif backend == "wand":
+                with wand_image.Image() as img:
+                    img.read(filename=str(svg_path))
+                    img.format = "png"
+                    img.resolution = (300, 300)
+                    img.save(filename=str(png_path))
+
+            elif backend == "svglib":
+                from reportlab.graphics import renderPM
+                from svglib.svglib import renderSVG
+
+                drawing = renderSVG.renderSVG(str(svg_path))
+                renderPM.drawToFile(drawing, str(png_path), fmt="PNG", dpi=300)
+
+            elif backend == "cairosvg":
+                cairosvg.svg2png(url=str(svg_path), write_to=str(png_path), dpi=300)
+
+            converted += 1
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            print(f"Failed to convert {filename}: {e}")
+            failed += 1
+
+    print(f"\nConversion complete: {converted} succeeded, {failed} failed")
+
+
 if __name__ == "__main__":
-    download_motor_diagrams()
+    # download_motor_diagrams()
+    convert_svg_to_png(result_height=320)

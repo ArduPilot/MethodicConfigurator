@@ -68,8 +68,10 @@ class ProgramSettings:
             "annotate_docs_into_param_files": False,
             "gui_complexity": "simple",  # simple or normal
             # Motor test settings
-            "motor_test_duration": 2.5,  # Default test duration in seconds
-            "motor_test_throttle_pct": 10,  # Default throttle percentage (10%)
+            "motor_test": {
+                "duration": 2.5,  # Default test duration in seconds
+                "throttle_pct": 10,  # Default throttle percentage (10%)
+            },
         }
 
     @staticmethod
