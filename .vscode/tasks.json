@@ -4,9 +4,10 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "ruff check",
+            "label": "Ruff: Check",
             "type": "shell",
-            "command": "ruff check",
+            "command": "${command:python.interpreterPath}",
+            "args": ["-m", "ruff", "check", "."],
             "problemMatcher": {
                 "owner": "ruff",
                 "fileLocation": ["relative", "${workspaceFolder}"],
@@ -21,9 +22,10 @@
             }
         },
         {
-            "label": "ruff check --fix",
+            "label": "Ruff: Fix",
             "type": "shell",
-            "command": "ruff check --fix",
+            "command": "${command:python.interpreterPath}",
+            "args": ["-m", "ruff", "check", "--fix", "."],
             "problemMatcher": {
                 "owner": "ruff",
                 "fileLocation": ["relative", "${workspaceFolder}"],
@@ -38,9 +40,10 @@
             }
         },
         {
-            "label": "ruff check --fix --unsafe-fixes",
+            "label": "Ruff: Fix (unsafe)",
             "type": "shell",
-            "command": "ruff check --fix --unsafe-fixes",
+            "command": "${command:python.interpreterPath}",
+            "args": ["-m", "ruff", "check", "--fix", "--unsafe-fixes", "."],
             "problemMatcher": {
                 "owner": "ruff",
                 "fileLocation": ["relative", "${workspaceFolder}"],
@@ -55,14 +58,16 @@
             }
         },
         {
-            "label": "ruff format",
+            "label": "Ruff: Format",
             "type": "shell",
-            "command": "ruff format"
+            "command": "${command:python.interpreterPath}",
+            "args": ["-m", "ruff", "format"]
         },
         {
-            "label": "pylint",
+            "label": "Pylint",
             "type": "shell",
-            "command": "pylint $(git ls-files '**/*.py')",
+            "command": "${command:python.interpreterPath}",
+            "args": ["-m", "pylint", "$(git ls-files '**/*.py')"],
             "problemMatcher": {
                 "owner": "pylint",
                 "fileLocation": ["relative", "${workspaceFolder}"],
@@ -87,9 +92,10 @@
             }
         },
         {
-            "label": "mypy",
+            "label": "Mypy",
             "type": "shell",
-            "command": "mypy",
+            "command": "${command:python.interpreterPath}",
+            "args": ["-m", "mypy"],
             "problemMatcher": {
                 "owner": "mypy",
                 "fileLocation": ["relative", "${workspaceFolder}"],
@@ -106,7 +112,7 @@
         {
             "label": "Extract Missing Translations",
             "type": "shell",
-            "command": "python",
+            "command": "${command:python.interpreterPath}",
             "args": [
                 "extract_missing_translations.py",
                 "--lang-code",
@@ -125,7 +131,7 @@
         {
             "label": "Insert Translations",
             "type": "shell",
-            "command": "python",
+            "command": "${command:python.interpreterPath}",
             "args": [
                 "insert_missing_translations.py",
                 "--lang-code",
@@ -142,9 +148,16 @@
             "group": "build"
         },
         {
-            "label": "pytest with coverage MD",
+            "label": "Pytest (coverage MD)",
             "type": "shell",
-            "command": "pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results.md",
+            "command": "${command:python.interpreterPath}",
+            "args": [
+                "-m",
+                "pytest",
+                "--cov=ardupilot_methodic_configurator",
+                "--cov-report=xml:tests/coverage.xml",
+                "--md=tests/results.md"
+            ],
             "group": {
                 "kind": "test",
                 "isDefault": true
@@ -174,32 +187,10 @@
             }
         },
         {
-            "label": "pytest with coverage HTML (Linux)",
+            "label": "Coverage: run tests",
             "type": "shell",
             "command": "${command:python.interpreterPath}",
-            "args": [
-                "-m",
-                "coverage",
-                "run",
-                "-m",
-                "pytest",
-                "&",
-                "${command:python.interpreterPath}",
-                "-m",
-                "coverage",
-                "html",
-                "&",
-                "firefox",
-                "htmlcov/index.html"
-            ],
-            "group": {
-                "kind": "test",
-                "isDefault": false
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
+            "args": ["-m", "coverage", "run", "-m", "pytest"],
             "problemMatcher": {
                 "owner": "python",
                 "fileLocation": ["relative", "${workspaceFolder}"],
@@ -215,13 +206,35 @@
             }
         },
         {
-            "label": "pytest with coverage HTML (Windows)",
+            "label": "Coverage: build HTML",
             "type": "shell",
-            "command": "powershell",
-            "args": [
-                "-Command",
-                "coverage run -m pytest; coverage html; Start-Process firefox -ArgumentList 'htmlcov/index.html'"
-            ]
+            "command": "${command:python.interpreterPath}",
+            "args": ["-m", "coverage", "html"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Open coverage report",
+            "type": "shell",
+            "command": "sh",
+            "args": ["-c", "(command -v xdg-open >/dev/null && xdg-open htmlcov/index.html) || (command -v open >/dev/null && open htmlcov/index.html) || (command -v firefox >/dev/null && firefox htmlcov/index.html) || echo 'Open htmlcov/index.html manually'"],
+            "windows": {
+                "command": "powershell",
+                "args": ["-Command", "Start-Process firefox -ArgumentList 'htmlcov/index.html' -ErrorAction SilentlyContinue; if (-Not $?) { Start-Process 'htmlcov/index.html' }"]
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Pytest (coverage HTML)",
+            "dependsOn": [
+                "Coverage: run tests",
+                "Coverage: build HTML",
+                "Open coverage report"
+            ],
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
         }
     ],
     "inputs": [
