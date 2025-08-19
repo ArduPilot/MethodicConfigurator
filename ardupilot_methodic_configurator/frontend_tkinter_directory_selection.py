@@ -14,7 +14,8 @@ import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from copy import deepcopy
 from logging import basicConfig as logging_basicConfig
-from logging import debug as logging_error
+from logging import debug as logging_debug
+from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
@@ -267,6 +268,9 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         )
         introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)
         template_dir, new_base_dir, vehicle_dir = LocalFilesystem.get_recently_used_dirs()
+        logging_debug("template_dir: %s", template_dir)  # this string is intentionally left untranslated
+        logging_debug("new_base_dir: %s", new_base_dir)  # this string is intentionally left untranslated
+        logging_debug("vehicle_dir: %s", vehicle_dir)  # this string is intentionally left untranslated
         self.create_option1_widgets(template_dir, new_base_dir, _("MyVehicleName"), fc_connected, connected_fc_vehicle_type)
         self.create_option2_widgets(vehicle_dir)
         self.create_option3_widgets(vehicle_dir)
@@ -485,17 +489,23 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         new_vehicle_name = self.new_dir.get_selected_directory()
 
         if template_dir == "":
-            messagebox.showerror(_("Vehicle template directory"), _("Vehicle template directory cannot be empty"))
+            messagebox.showerror(_("Vehicle template directory"), _("Vehicle template directory must not be empty"))
             return
         if not LocalFilesystem.directory_exists(template_dir):
-            messagebox.showerror(_("Vehicle template directory"), _("Vehicle template directory does not exist"))
+            msg = _("Vehicle template directory {template_dir} does not exist").format(template_dir=template_dir)
+            logging_error(msg)
+            messagebox.showerror(_("Vehicle template directory"), msg)
             return
 
         if new_vehicle_name == "":
-            messagebox.showerror(_("New vehicle directory"), _("New vehicle name cannot be empty"))
+            messagebox.showerror(_("New vehicle directory"), _("New vehicle name must not be empty"))
             return
         if not LocalFilesystem.valid_directory_name(new_vehicle_name):
-            messagebox.showerror(_("New vehicle directory"), _("New vehicle name must not contain invalid characters"))
+            msg = _("New vehicle name {new_vehicle_name} must not contain invalid characters").format(
+                new_vehicle_name=new_vehicle_name
+            )
+            logging_error(msg)
+            messagebox.showerror(_("New vehicle directory"), msg)
             return
         new_vehicle_dir = LocalFilesystem.new_vehicle_dir(new_base_dir, new_vehicle_name)
 

@@ -621,7 +621,7 @@ def test_create_new_vehicle_with_empty_template_dir(window) -> None:
         # Check that an error message was shown with correct title and message
         mock_error.assert_called_once()
         assert "Vehicle template directory" in mock_error.call_args[0][0]
-        assert "cannot be empty" in mock_error.call_args[0][1]
+        assert "must not be empty" in mock_error.call_args[0][1]
 
 
 def test_create_new_vehicle_with_nonexistent_template_dir(window) -> None:
@@ -661,7 +661,7 @@ def test_create_new_vehicle_with_empty_vehicle_name(window) -> None:
             # Check that an error message was shown with correct title and message
             mock_error.assert_called_once()
             assert "New vehicle directory" in mock_error.call_args[0][0]
-            assert "cannot be empty" in mock_error.call_args[0][1]
+            assert "must not be empty" in mock_error.call_args[0][1]
 
 
 @pytest.mark.parametrize(
