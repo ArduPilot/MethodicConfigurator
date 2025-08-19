@@ -56,7 +56,6 @@ dependencies = [
     "pymavlink==2.4.49",
     "pyserial==3.5",
     "requests==2.32.4",
-    "setuptools==80.9.0",
 ]
 
 dynamic = ["version"]
@@ -75,6 +74,7 @@ dev = [
     "pytest-mock==3.14.1",
     "python-gettext==5.0",
     "ruff==0.12.7",
+    "setuptools==80.9.0",
     "types-requests==2.32.4.20250611",
 ]
 
