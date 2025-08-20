@@ -66,8 +66,19 @@
         {
             "label": "Pylint",
             "type": "shell",
-            "command": "${command:python.interpreterPath}",
-            "args": ["-m", "pylint", "$(git ls-files '**/*.py')"],
+            "command": "sh",
+            "args": [
+                "-c",
+                "${command:python.interpreterPath} -m pylint $(git ls-files '**/*.py')"
+            ],
+            "windows": {
+                "command": "powershell",
+                "args": [
+                    "-NoProfile",
+                    "-Command",
+                    "& { $files = git ls-files \"**/*.py\"; if ($files) { & '${command:python.interpreterPath}' -m pylint $files } else { Write-Output 'No python files found'; exit 0 } }"
+                ]
+            },
             "problemMatcher": {
                 "owner": "pylint",
                 "fileLocation": ["relative", "${workspaceFolder}"],
@@ -81,14 +92,7 @@
                         "message": 5,
                         "code": 6
                     }
-                ],
-                "severity": {
-                    "E": "error",
-                    "W": "warning",
-                    "F": "error",
-                    "R": "info",
-                    "C": "info"
-                }
+                ]
             }
         },
         {
