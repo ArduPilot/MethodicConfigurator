@@ -19,7 +19,7 @@ from ardupilot_methodic_configurator.backend_filesystem_vehicle_components impor
 from ardupilot_methodic_configurator.data_model_vehicle_components_base import ComponentData, ComponentDataModelBase
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 
-# pylint: disable=protected-access,too-many-public-methods
+# pylint: disable=protected-access,too-many-public-methods,too-many-lines
 
 
 class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
@@ -718,6 +718,58 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert basic_model.get_component_value(("Battery", "Specifications", "Capacity mAh")) == 2500
         assert basic_model.get_component_value(("Frame", "Specifications", "TOW min Kg")) == 1.2
         assert basic_model.get_component_value(("New Component", "Type")) == "Test"
+
+    def test_set_configuration_template_new(self, empty_model) -> None:
+        """Test setting a configuration template on empty data."""
+        template_name = "Test Template v1.0"
+        empty_model.set_configuration_template(template_name)
+        assert empty_model._data["Configuration template"] == template_name
+
+    def test_set_configuration_template_overwrite(self, basic_model) -> None:
+        """Test overwriting an existing configuration template."""
+        template_name1 = "Initial Template"
+        template_name2 = "Updated Template"
+
+        basic_model.set_configuration_template(template_name1)
+        assert basic_model._data["Configuration template"] == template_name1
+
+        basic_model.set_configuration_template(template_name2)
+        assert basic_model._data["Configuration template"] == template_name2
+
+    def test_set_configuration_template_empty_string(self, empty_model) -> None:
+        """Test setting an empty string as configuration template."""
+        empty_model.set_configuration_template("")
+        assert empty_model._data["Configuration template"] == ""
+
+    def test_set_configuration_template_special_characters(self, empty_model) -> None:
+        """Test setting a template name with special characters."""
+        template_name = "Template-v2.1_final (test) & more!"
+        empty_model.set_configuration_template(template_name)
+        assert empty_model._data["Configuration template"] == template_name
+
+    # Template configuration robustness tests
+    def test_set_configuration_template_unicode(self, empty_model) -> None:
+        """Test setting configuration template with unicode characters."""
+        template_name = "Configuração de Drone™ 无人机配置 🚁"
+        empty_model.set_configuration_template(template_name)
+        assert empty_model._data["Configuration template"] == template_name
+
+    def test_set_configuration_template_very_long(self, empty_model) -> None:
+        """Test setting very long configuration template name."""
+        template_name = "Very" * 100 + "Long Template Name"
+        empty_model.set_configuration_template(template_name)
+        assert empty_model._data["Configuration template"] == template_name
+
+    def test_set_configuration_template_newlines(self, empty_model) -> None:
+        """Test setting configuration template with newlines."""
+        template_name = "Multi\nLine\nTemplate\nName"
+        empty_model.set_configuration_template(template_name)
+        assert empty_model._data["Configuration template"] == template_name
+
+    def test_set_configuration_template_none(self, empty_model) -> None:
+        """Test setting None as configuration template."""
+        empty_model.set_configuration_template(None)
+        assert empty_model._data["Configuration template"] is None
 
 
 class TestComponentDataModelEdgeCases:

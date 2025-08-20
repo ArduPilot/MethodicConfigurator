@@ -24,10 +24,6 @@ class ComponentDataModelTemplates(ComponentDataModelBase):
     This improves testability by isolating data operations.
     """
 
-    def set_configuration_template(self, template_name: str) -> None:
-        """Set the configuration template name in the data."""
-        self._data["Configuration template"] = template_name
-
     def update_component(self, component_name: str, component_data: dict) -> None:
         """Update a component with new data."""
         if "Components" not in self._data:

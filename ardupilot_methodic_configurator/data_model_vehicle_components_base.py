@@ -305,3 +305,11 @@ class ComponentDataModelBase:
     def get_combobox_values_for_path(self, path: ComponentPath) -> tuple[str, ...]:
         """Get valid combobox values for a given path."""
         return self._possible_choices.get(path, ())
+
+    def set_configuration_template(self, vehicle_template_name: str) -> None:
+        """Set the vehicle configuration template name in the data."""
+        self._data["Configuration template"] = vehicle_template_name
+
+    def get_configuration_template(self) -> str:
+        """Get the vehicle configuration template name in the data."""
+        return str(self._data.get("Configuration template", ""))

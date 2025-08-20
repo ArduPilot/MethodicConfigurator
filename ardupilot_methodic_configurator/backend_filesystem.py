@@ -12,16 +12,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from argparse import ArgumentParser
 from logging import debug as logging_debug
 from logging import error as logging_error
+from logging import exception as logging_exception
 from logging import info as logging_info
 from logging import warning as logging_warning
 from os import getcwd as os_getcwd
 from os import listdir as os_listdir
 from os import path as os_path
+from os import remove as os_remove
 from os import rename as os_rename
+from os import rmdir as os_rmdir
 from platform import system as platform_system
 from re import compile as re_compile
+from shutil import Error as shutil_Error
 from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
+from shutil import rmtree as shutil_rmtree
 from subprocess import SubprocessError, run
 from typing import Any, Optional, Union
 from zipfile import ZipFile
@@ -594,8 +599,51 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     shutil_copytree(source, dest)
                 else:
                     shutil_copy2(source, dest)
-        except Exception as _e:  # pylint: disable=broad-except
+        except (OSError, shutil_Error) as _e:
             error_msg = _("Error copying template files to new vehicle directory: {_e}")
+            return error_msg.format(**locals())
+        return ""
+
+    def remove_created_files_and_vehicle_dir(self) -> str:
+        # Remove the created files in the new vehicle directory
+        try:
+            if not os_path.exists(self.vehicle_dir):
+                # Use the actual vehicle_dir value to avoid KeyError from missing format keys
+                error_msg = _("New vehicle directory does not exist: {vehicle_dir}")
+                error_msg = error_msg.format(vehicle_dir=self.vehicle_dir)
+                logging_error(error_msg)
+                return error_msg
+
+            # delete all files in the vehicle directory and delete the vehicle directory
+            errors: list[str] = []
+            for item in os_listdir(self.vehicle_dir):
+                item_path = os_path.join(self.vehicle_dir, item)
+                try:
+                    # If the entry is a symlink, remove the link instead of recursing into the target
+                    if os_path.islink(item_path):
+                        os_remove(item_path)
+                    elif os_path.isdir(item_path):
+                        shutil_rmtree(item_path)
+                    else:
+                        os_remove(item_path)
+                except OSError as e:
+                    logging_exception(_("Error removing %s"), item_path, e)
+                    errors.append(str(e))
+
+            # Try to remove the now-empty vehicle directory
+            try:
+                os_rmdir(self.vehicle_dir)
+            except OSError as e:
+                logging_exception(_("Error removing directory %s"), self.vehicle_dir, e)
+                errors.append(str(e))
+
+            if errors:
+                # Return a combined, localized error message
+                error_msg = _("Error removing created files: {error_list}")
+                return error_msg.format(error_list="; ".join(errors))
+        except OSError as _e:  # filesystem-related errors
+            error_msg = _("Error removing created files: {_e}")
+            logging_exception(_("Error removing created files:"), exc_info=_e)
             return error_msg.format(**locals())
         return ""
 

@@ -116,6 +116,127 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         ):
             assert not filesystem.vehicle_configuration_files_exist(mock_vehicle_dir)
 
+    def test_remove_created_files_and_vehicle_dir_not_exists(self) -> None:
+        """
+        Remove created files and vehicle directory if they exist.
+
+        GIVEN: A LocalFilesystem whose vehicle directory does not exist
+        WHEN: remove_created_files_and_vehicle_dir is called
+        THEN: It should return a localized error message indicating the directory is missing.
+        """
+        mock_vehicle_dir = "/mock/dir"
+        filesystem = LocalFilesystem(
+            mock_vehicle_dir,
+            "ArduCopter",
+            "4.3.0",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists", return_value=False) as mock_exists,
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir") as mock_listdir,
+        ):
+            ret = filesystem.remove_created_files_and_vehicle_dir()
+            # Should return a non-empty error message mentioning the new vehicle directory
+            assert isinstance(ret, str)
+            assert "New vehicle directory does not exist" in ret
+            # listdir must not have been called when directory doesn't exist
+            assert not mock_listdir.called
+            mock_exists.assert_called()
+
+    def test_remove_created_files_and_vehicle_dir_success(self) -> None:
+        """
+        Test removing created files and vehicle directory with success.
+
+        GIVEN: A LocalFilesystem with files, a dir and a symlink in the vehicle directory
+        WHEN: remove_created_files_and_vehicle_dir is called
+        THEN: It should remove files/dirs/links and return an empty string on success.
+        """
+        mock_vehicle_dir = "/mock/dir"
+        filesystem = LocalFilesystem(
+            mock_vehicle_dir,
+            "ArduCopter",
+            "4.3.0",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
+
+        items = ["file1", "dir1", "link1"]
+
+        real_join = os_path.join
+
+        def join_side_effect(a, b) -> str:
+            return real_join(a, b)
+
+        def islink_side_effect(p) -> bool:
+            return p.endswith("link1")
+
+        def isdir_side_effect(p) -> bool:
+            return p.endswith("dir1")
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir", return_value=items),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join", side_effect=join_side_effect),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.islink", side_effect=islink_side_effect),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir", side_effect=isdir_side_effect),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_remove") as mock_remove,
+            patch("ardupilot_methodic_configurator.backend_filesystem.shutil_rmtree") as mock_rmtree,
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_rmdir") as mock_rmdir,
+        ):
+            ret = filesystem.remove_created_files_and_vehicle_dir()
+            assert ret == ""
+            # file1 and link1 should trigger os_remove twice
+            assert mock_remove.call_count == 2
+            # dir1 should trigger shutil.rmtree
+            mock_rmtree.assert_called_once()
+            # vehicle directory removal attempted
+            mock_rmdir.assert_called_once_with(mock_vehicle_dir)
+
+    def test_remove_created_files_and_vehicle_dir_with_errors(self) -> None:
+        """
+        Test removing created files and vehicle directory with errors.
+
+        GIVEN: A LocalFilesystem where removal operations raise OSError
+        WHEN: remove_created_files_and_vehicle_dir is called
+        THEN: It should collect error messages and return a combined error string.
+        """
+        mock_vehicle_dir = "/mock/dir"
+        filesystem = LocalFilesystem(
+            mock_vehicle_dir,
+            "ArduCopter",
+            "4.3.0",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
+
+        items = ["file_err"]
+
+        real_join = os_path.join
+
+        def join_side_effect(a, b) -> str:
+            return real_join(a, b)
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists", return_value=True),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir", return_value=items),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join", side_effect=join_side_effect),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.islink", return_value=False),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir", return_value=False),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_remove", side_effect=OSError("perm denied")),
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_rmdir", side_effect=OSError("dir remove failed")),
+            patch("ardupilot_methodic_configurator.backend_filesystem.logging_exception"),
+            patch("ardupilot_methodic_configurator.backend_filesystem.logging_error"),
+        ):
+            ret = filesystem.remove_created_files_and_vehicle_dir()
+            assert isinstance(ret, str)
+            # Should indicate there was an error removing created files
+            assert "Error removing created files" in ret
+            # Both error messages should be present (joined by "; ")
+            assert "perm denied" in ret
+            assert "dir remove failed" in ret
+
     def test_rename_parameter_files(self) -> None:
         """Test renaming parameter files."""
         mock_vehicle_dir = "/mock/dir"
