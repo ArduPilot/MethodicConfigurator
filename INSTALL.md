@@ -60,6 +60,7 @@ To run it, double-click on the newly created desktop item.
 Install [python pip](https://pypi.org/project/pip/). Then execute the command line:
 
 ```bash
+sudo apt install python3-tk
 pip install -U ardupilot_methodic_configurator
 ```
 
@@ -74,6 +75,7 @@ ardupilot_methodic_configurator
 You need to create and activate a new virtual environment before you can run the software.
 
 ```bash
+sudo apt install python3-tk
 python -m venv .ardupilot_methodic_configurator_venv
 source .ardupilot_methodic_configurator_venv/bin/activate
 python -m pip install --upgrade pip
