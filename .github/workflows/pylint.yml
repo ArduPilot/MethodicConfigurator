@@ -46,8 +46,8 @@ jobs:
     - name: Install dependencies
       # these extra packages are required by pylint to validate the python imports
       run: |
-        uv pip install .[dev,scripts]
+        uv pip install .[dev,scripts,pypi_dist]
 
-    - name: Analyzing the code with pylint
+    - name: Analyze the code with pylint
       run: |
-        pylint $(git ls-files '*.py')
+        pylint $(git ls-files '**/*.py')

@@ -23,11 +23,11 @@ rm -Rf build dist/ ardupilot_methodic_configurator.egg-info/
 
 uv venv --python 3.12
 source .venv/Scripts/activate
-uv pip install -U build packaging pip setuptools wheel
+uv pip install -U build packaging setuptools wheel
 
 python -m build
 
-uv pip install -U dist/ardupilot_methodic_configurator-1.0.8-py3-none-any.whl
+uv pip install -U dist/ardupilot_methodic_configurator-2.0.3-py3-none-any.whl
 
 cd ..
 

@@ -43,7 +43,13 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv pip install build packaging pip setuptools wheel
+        # Read pypi_dist from pyproject.toml and install those packages with uv
+        PKGS="$(python scripts/list_pypi_build_dependencies.py)"
+        if [ -n "$PKGS" ]; then
+          uv pip install $PKGS
+        else
+          echo "No pypi_dist entries found in pyproject.toml; skipping install"
+        fi
 
     - name: Build package
       run: python -m build

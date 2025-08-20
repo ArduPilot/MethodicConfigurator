@@ -74,12 +74,18 @@ dev = [
     "pytest-mock==3.14.1",
     "python-gettext==5.0",
     "ruff==0.12.7",
-    "setuptools==80.9.0",
     "types-requests==2.32.4.20250611",
 ]
 
 scripts = [
     "bs4",
+]
+
+pypi_dist = [
+    "build==1.3.0",
+    "packaging==25.0",
+    "setuptools==80.9.0",
+    "wheel==0.45.1",
 ]
 
 win_dist = [
