@@ -535,23 +535,29 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         )
         return messagebox.askyesno(_("Confirm that all component properties are correct"), confirm_message)
 
-    def save_component_json(self) -> None:
+    def save_component_json(self) -> bool:
         """Save component JSON data to file."""
-        save_result = self._perform_file_save()
-        self._handle_save_result(save_result)
+        try:
+            save_result = self._perform_file_save()
+        except Exception as exc:  # Catch unexpected exceptions and present them as a save error
+            # Convert exception into the expected save_result shape: (is_error: bool, message: str)
+            save_result = (True, str(exc))
+        return self._handle_save_result(save_result)
 
     def _perform_file_save(self) -> tuple[bool, str]:
         """Perform file save operation."""
         return self.data_model.save_to_filesystem(self.local_filesystem)
 
-    def _handle_save_result(self, save_result: tuple[bool, str]) -> None:
+    def _handle_save_result(self, save_result: tuple[bool, str]) -> bool:
         """Handle save operation result."""
         if save_result[0]:
             show_error_message(_("Error"), _("Failed to save data to file.") + "\n" + save_result[1])
+            ret = True
         else:
             logging_info(_("Vehicle component data saved successfully."))
+            ret = False
 
-        self.root.destroy()
+        return ret
 
     def on_closing(self) -> None:
         """Handle window closing event."""
@@ -560,11 +566,22 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         if answer is None:  # Cancel was clicked
             return
 
+        ret = False
         if answer:
-            self.save_component_json()
+            ret = self.save_component_json()
         else:
-            self.root.destroy()
-        sys_exit(0)
+            # If it just created the files from a new template and the user chooses not to save,
+            # delete the created files
+            if self.data_model.get_configuration_template():
+                # remove the files created
+                err_msg = self.local_filesystem.remove_created_files_and_vehicle_dir()
+                if err_msg:
+                    show_error_message(_("Error"), err_msg)
+                ret = bool(err_msg)
+            logging_info(_("Changes discarded. No data saved."))
+        # Close the window and exit. ret indicates if there was an error earlier (e.g. cleanup failed).
+        self.root.destroy()
+        sys_exit(int(ret))
 
     # This function will be overwritten in child classes
     def add_entry_or_combobox(
