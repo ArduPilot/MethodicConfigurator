@@ -153,7 +153,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
     def _setup_styles(self) -> None:
         """Configure the styles for UI elements."""
         style = ttk.Style()
-        style.configure("bigger.TLabel", font=("TkDefaultFont", 13))  # type: ignore[no-untyped-call]
+        style.configure("bigger.TLabel", font=("TkDefaultFont", self.calculate_scaled_font_size(9)))  # type: ignore[no-untyped-call]
         style.configure("comb_input_invalid.TCombobox", fieldbackground="red")  # type: ignore[no-untyped-call]
         style.configure("comb_input_valid.TCombobox", fieldbackground="white")  # type: ignore[no-untyped-call]
         style.configure("entry_input_invalid.TEntry", fieldbackground="red")  # type: ignore[no-untyped-call]
