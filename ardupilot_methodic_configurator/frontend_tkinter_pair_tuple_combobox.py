@@ -27,7 +27,6 @@ from typing import Union
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import update_combobox_width
-from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 
 # SPDX-SnippetBegin
 # SPDX-License-Identifier: MPL-2.0
@@ -112,7 +111,6 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         if len(combo_values) == 0:
             return
         longest_value = max(combo_values, key=len)
-        # font = tkfont.nametofont(combo.cget('font'))
         font = tkfont.nametofont("TkDefaultFont")
         width = font.measure(longest_value + "0000") - event.width
         if width < 0:
@@ -262,9 +260,12 @@ def main() -> None:
     tuple_pairs = [(str(i), random_string) for i, random_string in enumerate(random_strings)]
     combobox = PairTupleCombobox(root, tuple_pairs, None, "Random Strings")
 
-    font_family, font_size = get_widget_font_family_and_size(combobox)
-    font_size -= 2 if platform_system() == "Windows" else 1
-    combobox.config(state="readonly", width=9, font=(font_family, font_size))
+    style = ttk.Style()
+    style.theme_use("alt")  # Use an alternative theme for better appearance
+
+    font_size = tkfont.nametofont("TkDefaultFont").cget("size")
+    font_size -= 2 if platform_system() == "Windows" else -1
+    combobox.config(state="readonly", width=9, font=("TkDefaultFont", font_size))
 
     # Pack the combobox into the main window
     combobox.pack(pady=10, padx=10)

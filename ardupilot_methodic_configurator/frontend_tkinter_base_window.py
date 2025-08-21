@@ -22,6 +22,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import tkinter as tk
+import tkinter.font as tkfont
 
 # from logging import debug as logging_debug
 # from logging import info as logging_info
@@ -87,6 +88,8 @@ class BaseWindow:
         # Detect DPI scaling for HiDPI support
         self.dpi_scaling_factor = self._get_dpi_scaling_factor()
 
+        self.default_font_size: int = 0
+
         # Configure theme and styling
         self._setup_theme_and_styling()
 
@@ -134,7 +137,9 @@ class BaseWindow:
         style.theme_use("alt")
 
         # Create custom styles with DPI-aware font sizes
-        bold_font_size = self.calculate_scaled_font_size(8)
+        self.default_font_size = tkfont.nametofont("TkDefaultFont").cget("size")
+        # Warning: on linux the font size might be negative
+        bold_font_size = self.calculate_scaled_font_size(self.default_font_size)
         style.configure("Bold.TLabel", font=("TkDefaultFont", bold_font_size, "bold"))  # type: ignore[no-untyped-call]
 
     def _get_dpi_scaling_factor(self) -> float:

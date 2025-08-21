@@ -17,6 +17,7 @@ from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
+from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
 from typing import Any, Optional, Union, cast
@@ -155,7 +156,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         style = ttk.Style()
         style.configure(
             "bigger.TLabel",  # type: ignore[no-untyped-call]
-            font=("TkDefaultFont", self.calculate_scaled_font_size(9)),
+            font=("TkDefaultFont", self.calculate_scaled_font_size(self.default_font_size)),
         )
         style.configure("comb_input_invalid.TCombobox", fieldbackground="red")  # type: ignore[no-untyped-call]
         style.configure("comb_input_valid.TCombobox", fieldbackground="white")  # type: ignore[no-untyped-call]
@@ -667,6 +668,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             instance.save_button = MagicMock()
             instance.template_manager = MagicMock()
             instance.complexity_var = MagicMock()
+            instance.default_font_size = 9 if platform_system() == "Windows" else -12
 
             return instance
 

@@ -9,12 +9,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from platform import system as platform_system
 from tkinter import ttk
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
+from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
 
@@ -28,12 +30,17 @@ class DocumentationFrame:
     functionality to open these links in a web browser.
     """
 
+    BLOG_LABEL = _("💬 Forum Blog:") if platform_system() == "Windows" else _("Forum Blog:")
+    WIKI_LABEL = _("📖 Wiki:") if platform_system() == "Windows" else _("Wiki:")
+    EXTERNAL_TOOL_LABEL = _("🔧 External tool:") if platform_system() == "Windows" else _("External tool:")
+    MANDATORY_LABEL = _("❗ Mandatory:") if platform_system() == "Windows" else _("Mandatory:")
+
     DOCUMENTATION_SECTIONS = (
-        (_("Forum Blog:"), _("ArduPilot's forum Methodic configuration Blog post relevant for the current file")),
-        (_("Wiki:"), _("ArduPilot's wiki page relevant for the current file")),
-        (_("External tool:"), _("External tool or documentation relevant for the current file")),
+        (BLOG_LABEL, _("ArduPilot's forum Methodic configuration Blog post relevant for the current file")),
+        (WIKI_LABEL, _("ArduPilot's wiki page relevant for the current file")),
+        (EXTERNAL_TOOL_LABEL, _("External tool or documentation relevant for the current file")),
         (
-            _("Mandatory:"),
+            MANDATORY_LABEL,
             _(
                 "Mandatory level of the current file,\n"
                 "100% you MUST use this file to configure the vehicle,\n"
@@ -139,29 +146,30 @@ class DocumentationFrame:
         self.documentation_frame.config(text=frame_title)
 
         blog_text, blog_url = self.local_filesystem.get_documentation_text_and_url(current_file, "blog")
-        self._refresh_documentation_label(_("Forum Blog:"), _(blog_text) if blog_text else "", blog_url)
+        self._refresh_documentation_label(self.BLOG_LABEL, _(blog_text) if blog_text else "", blog_url)
         wiki_text, wiki_url = self.local_filesystem.get_documentation_text_and_url(current_file, "wiki")
-        self._refresh_documentation_label(_("Wiki:"), _(wiki_text) if wiki_text else "", wiki_url)
+        self._refresh_documentation_label(self.WIKI_LABEL, _(wiki_text) if wiki_text else "", wiki_url)
         external_tool_text, external_tool_url = self.local_filesystem.get_documentation_text_and_url(
             current_file, "external_tool"
         )
         self._refresh_documentation_label(
-            _("External tool:"), _(external_tool_text) if external_tool_text else "", external_tool_url
+            self.EXTERNAL_TOOL_LABEL, _(external_tool_text) if external_tool_text else "", external_tool_url
         )
         mandatory_text, _mandatory_url = self.local_filesystem.get_documentation_text_and_url(current_file, "mandatory")
         self._refresh_mandatory_level(current_file, mandatory_text)
 
     def _refresh_documentation_label(self, label_key: str, text: str, url: str, url_expected: bool = True) -> None:
         label = self.documentation_labels[label_key]
+        font_family, font_size = get_widget_font_family_and_size(label)
         if url:
             # Create a font with underline attribute
-            underlined_font = ("TkDefaultFont", 10, "underline")
+            underlined_font = (font_family, font_size, "underline")
             label.config(text=text, foreground="blue", cursor="hand2", font=underlined_font)
             label.bind("<Button-1>", lambda event: webbrowser_open(url))  # noqa: ARG005
             show_tooltip(label, url)
         else:
             # Use regular font without underline
-            regular_font = ("TkDefaultFont", 10)
+            regular_font = (font_family, font_size)
             label.config(text=text, foreground="black", cursor="arrow", font=regular_font)
             label.bind("<Button-1>", lambda event: None)  # noqa: ARG005
             if url_expected:

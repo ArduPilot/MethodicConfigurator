@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
 import tkinter as tk
+from platform import system as platform_system
 from tkinter import font as tkFont  # noqa: N812
 from tkinter import ttk
 
@@ -43,7 +44,7 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        default_font = tkFont.nametofont(self.cget("font"))
+        default_font = tkFont.nametofont("TkDefaultFont")
         default_size = default_font.cget("size")
 
         bold_font = tkFont.Font(**default_font.configure())  # type: ignore[arg-type]
@@ -60,10 +61,26 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
 
 
 def get_widget_font_family_and_size(widget: tk.Widget) -> tuple[str, int]:
+    """
+    Get the font family and size used by a Tkinter widget.
+
+    Args:
+        widget: The Tkinter widget to inspect.
+
+    Returns:
+        A tuple containing the font family and size.
+        WARNINGS: This function assumes the widget has a style set.
+                  On linux the font size might be negative.
+
+    """
     style = ttk.Style()
     widget_style = widget.cget("style")  # Get the style used by the widget
     font_name = style.lookup(widget_style, "font")  # type: ignore[no-untyped-call]
     font_dict = tkFont.nametofont(font_name).config()
+
+    default_font_family = "Segoe UI" if platform_system() == "Windows" else "Helvetica"
+    default_font_size = 9 if platform_system() == "Windows" else -12
+
     if font_dict is None:
-        return "Segoe UI", 9
-    return font_dict.get("family", "Segoe UI"), font_dict.get("size", 9)
+        return default_font_family, default_font_size
+    return font_dict.get("family", default_font_family), font_dict.get("size", default_font_size)
