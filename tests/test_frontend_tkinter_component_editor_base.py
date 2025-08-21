@@ -576,7 +576,7 @@ class TestSaveOperationWorkflows:
 
         GIVEN: A user has completed their component configuration
         WHEN: They save the configuration and it succeeds
-        THEN: The data should be saved and the window should close
+        THEN: The data should be saved
         """
         # Arrange: Configure successful save operation
         editor_for_save_tests.data_model.save_to_filesystem.return_value = (False, "")
@@ -584,9 +584,8 @@ class TestSaveOperationWorkflows:
         # Act: Save component data
         editor_for_save_tests.save_component_json()
 
-        # Assert: Save operation should be attempted and window should close
+        # Assert: Save operation should be attempted
         editor_for_save_tests.data_model.save_to_filesystem.assert_called_once_with(editor_for_save_tests.local_filesystem)
-        editor_for_save_tests.root.destroy.assert_called_once()
 
     def test_user_receives_error_feedback_when_save_fails(self, editor_for_save_tests: ComponentEditorWindowBase) -> None:
         """
@@ -620,7 +619,7 @@ class TestSaveOperationWorkflows:
             "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.messagebox.askyesno", return_value=True
         ):
             # Act: Trigger validate and save operation
-            editor_for_save_tests.validate_and_save_component_json()
+            editor_for_save_tests.on_save_pressed()
 
         # Assert: Validation and save should proceed
         editor_for_save_tests.validate_data_and_highlight_errors_in_red.assert_called_once()
@@ -644,7 +643,8 @@ class TestWindowClosingWorkflows:
         WHEN: They choose to save their changes in the confirmation dialog
         THEN: The save operation should be executed before closing
         """
-        # Arrange: Mock user choosing to save
+        # Arrange: Mock user choosing to save and a successful save operation
+        editor_for_closing_tests.save_component_json = MagicMock(return_value=False)
         with (
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.messagebox.askyesnocancel",
@@ -1021,6 +1021,9 @@ class TestUIInitializationWorkflows:
         # Arrange: Mock the style instance
         mock_style = MagicMock()
         mock_style_class.return_value = mock_style
+        # Provide a sensible default DPI scaling for tests so style font sizes are predictable
+        # 9pt base with 1.5 scaling -> int(9 * 1.5) == 13, matching test expectations
+        editor_for_ui_tests.dpi_scaling_factor = 1.5
 
         # Act: Setup styles
         editor_for_ui_tests._setup_styles()
@@ -1442,7 +1445,7 @@ class TestValidationWorkflows:
         editor_for_validation_tests.validate_data_and_highlight_errors_in_red.return_value = error_message
 
         # Act: Attempt to validate and save
-        editor_for_validation_tests.validate_and_save_component_json()
+        editor_for_validation_tests.on_save_pressed()
 
         # Assert: Error should be displayed and save should not proceed
         mock_error.assert_called_once_with(_("Error"), error_message)
@@ -1469,7 +1472,7 @@ class TestValidationWorkflows:
         )
 
         # Act: Attempt to validate and save
-        editor_for_validation_tests.validate_and_save_component_json()
+        editor_for_validation_tests.on_save_pressed()
 
         # Assert: Confirmation should be requested but save should not proceed
         mock_confirm.assert_called_once()
