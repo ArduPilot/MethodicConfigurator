@@ -122,6 +122,30 @@ class FlightController:
             logging_debug(_("Did not add empty connection"))
         return False
 
+    def _register_and_try_connect(
+        self,
+        comport: mavutil.SerialPort,
+        progress_callback: Union[None, Callable[[int, int], None]],
+        baudrate: int,
+        log_errors: bool,
+    ) -> str:
+        """
+        Register a device in the connection list (if missing) and attempt connection.
+
+        Returns:
+            str: empty string on success, or error message.
+
+        """
+        # set comport for subsequent calls
+        self.comport = comport
+        # Add the detected port to the list of available connections if it is not there
+        if self.comport and self.comport.device not in [t[0] for t in self.__connection_tuples]:
+            self.__connection_tuples.insert(-1, (self.comport.device, getattr(self.comport, "description", "")))
+        # Try to connect
+        return self.__create_connection_with_retry(
+            progress_callback=progress_callback, baudrate=baudrate, log_errors=log_errors
+        )
+
     def connect(
         self, device: str, progress_callback: Union[None, Callable[[int, int], None]] = None, log_errors: bool = True
     ) -> str:
@@ -130,7 +154,8 @@ class FlightController:
 
         This method attempts to connect to the FlightController using the provided device
         connection string. If no device is specified, it attempts to auto-detect a serial
-        port that matches the preferred ports list. If a device is specified as 'test',
+        port that matches the preferred ports list. If no serial device is found it tries
+        the "standard" ArduPilot UDP and TCP connections. If a device is specified as 'test',
         it sets some test parameters for debugging purposes.
 
         Args:
@@ -150,31 +175,50 @@ class FlightController:
                 return ""
             self.add_connection(device)
             self.comport = mavutil.SerialPort(device=device, description=device)
-        else:
-            autodetect_serial = self.__auto_detect_serial()
-            if autodetect_serial:
-                # Resolve the soft link if it's a Linux system
-                if os_name == "posix":
-                    try:
-                        dev = autodetect_serial[0].device
-                        logging_debug(_("Auto-detected device %s"), dev)
-                        # Get the directory part of the soft link
-                        softlink_dir = os_path.dirname(dev)
-                        # Resolve the soft link and join it with the directory part
-                        resolved_path = os_path.abspath(os_path.join(softlink_dir, os_readlink(dev)))
-                        autodetect_serial[0].device = resolved_path
-                        logging_debug(_("Resolved soft link %s to %s"), dev, resolved_path)
-                    except OSError:
-                        pass  # Not a soft link, proceed with the original device path
-                self.comport = autodetect_serial[0]
-                # Add the detected serial port to the list of available connections if it is not there
-                if self.comport and self.comport.device not in [t[0] for t in self.__connection_tuples]:
-                    self.__connection_tuples.insert(-1, (self.comport.device, getattr(self.comport, "description", "")))
-            else:
-                return _("No serial ports found. Please connect a flight controller and try again.")
-        return self.__create_connection_with_retry(
-            progress_callback=progress_callback, baudrate=self.__baudrate, log_errors=log_errors
-        )
+            return self.__create_connection_with_retry(
+                progress_callback=progress_callback, baudrate=self.__baudrate, log_errors=log_errors
+            )
+
+        # Try to autodetect serial ports
+        autodetect_serial = self.__auto_detect_serial()
+        if autodetect_serial:
+            # Resolve the soft link if it's a Linux system
+            if os_name == "posix":
+                try:
+                    dev = autodetect_serial[0].device
+                    logging_debug(_("Auto-detected device %s"), dev)
+                    # Get the directory part of the soft link
+                    softlink_dir = os_path.dirname(dev)
+                    # Resolve the soft link and join it with the directory part
+                    resolved_path = os_path.abspath(os_path.join(softlink_dir, os_readlink(dev)))
+                    autodetect_serial[0].device = resolved_path
+                    logging_debug(_("Resolved soft link %s to %s"), dev, resolved_path)
+                except OSError:
+                    pass  # Not a soft link, proceed with the original device path
+            err = self._register_and_try_connect(
+                comport=autodetect_serial[0],
+                progress_callback=progress_callback,
+                baudrate=self.__baudrate,
+                log_errors=False,
+            )
+            if err == "":
+                return ""
+
+        # Try to autodetect network ports
+        netports = FlightController.__list_network_ports()
+        for port in netports:
+            # try to connect to each "standard" ArduPilot UDP and TCP ports
+            logging_debug(_("Trying network port %s"), port)
+            err = self._register_and_try_connect(
+                comport=mavutil.SerialPort(device=port, description=port),
+                progress_callback=progress_callback,
+                baudrate=self.__baudrate,
+                log_errors=False,
+            )
+            if err == "":
+                return ""
+
+        return _("No auto-detected ports responded. Please connect a flight controller and try again.")
 
     def __request_banner(self) -> None:
         """Request banner information from the flight controller."""
