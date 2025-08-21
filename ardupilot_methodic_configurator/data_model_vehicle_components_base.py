@@ -39,6 +39,7 @@ class ComponentDataModelBase:
         self._possible_choices: dict[ComponentPath, tuple[str, ...]] = {}
         self._mot_pwm_types: tuple[str, ...] = ()
         self._component_datatypes: dict[str, Any] = component_datatypes
+        self._is_new_project: bool = False
         self.schema: VehicleComponentsJsonSchema = schema
 
     def get_component_data(self) -> ComponentData:
@@ -309,7 +310,8 @@ class ComponentDataModelBase:
     def set_configuration_template(self, vehicle_template_name: str) -> None:
         """Set the vehicle configuration template name in the data."""
         self._data["Configuration template"] = vehicle_template_name
+        self._is_new_project = True
 
-    def get_configuration_template(self) -> str:
-        """Get the vehicle configuration template name in the data."""
-        return str(self._data.get("Configuration template", ""))
+    def is_new_project(self) -> bool:
+        """Check if the project is new."""
+        return self._is_new_project

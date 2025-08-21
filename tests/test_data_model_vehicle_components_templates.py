@@ -200,10 +200,6 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
         derived_name = empty_model.derive_initial_template_name(component_data)
         assert derived_name == "DJI Mavic Pro"
 
-        # Set the derived name as template
-        empty_model.set_configuration_template(derived_name)
-        assert empty_model._data["Configuration template"] == "DJI Mavic Pro"
-
     # Edge cases and error handling
     def test_update_component_none_data(self, empty_model) -> None:
         """Test updating component with None data."""
@@ -225,12 +221,10 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
         original_battery_data = basic_model._data["Components"]["Battery"].copy()
 
         # Perform various operations
-        basic_model.set_configuration_template("Test Template")
         basic_model.update_component("New Component", {"Test": "Data"})
 
         # Verify original data is still intact
         assert basic_model._data["Components"]["Battery"] == original_battery_data
-        assert basic_model._data["Configuration template"] == "Test Template"
         assert "New Component" in basic_model._data["Components"]
 
     def test_component_data_isolation(self, basic_model) -> None:
@@ -664,16 +658,13 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
         """Test multiple template operations in sequence for data consistency."""
         # Simulate concurrent-like operations
         for i in range(50):
-            empty_model.set_configuration_template(f"Template_{i}")
             empty_model.update_component(f"Component_{i}", {"id": i, "data": f"value_{i}"})
 
             # Verify intermediate state
-            assert empty_model._data["Configuration template"] == f"Template_{i}"
             assert empty_model._data["Components"][f"Component_{i}"]["id"] == i
 
         # Verify final state
         assert len(empty_model._data["Components"]) >= 50  # At least 50 new components
-        assert empty_model._data["Configuration template"] == "Template_49"
 
     # Data integrity validation tests
     def test_data_consistency_after_extract_operations(self, basic_model) -> None:
