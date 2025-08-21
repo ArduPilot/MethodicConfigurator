@@ -601,7 +601,15 @@ class TestHeaderCreationBehavior:
         """Test header creation in simple mode (no upload column)."""
         headers, tooltips = parameter_editor_table._create_headers_and_tooltips(show_upload_column=False)
 
-        expected_headers = ("-/+", "Parameter", "Current Value", " ", "New Value", "Unit", "Change Reason")
+        expected_headers = (
+            "-/+",
+            "Parameter",
+            "Current Value",
+            " ",
+            "New Value",
+            "Unit",
+            "Why are you changing this parameter?",
+        )
 
         assert headers == expected_headers
         assert len(tooltips) == len(headers)
@@ -611,7 +619,16 @@ class TestHeaderCreationBehavior:
         """Test header creation in advanced mode (with upload column)."""
         headers, tooltips = parameter_editor_table._create_headers_and_tooltips(show_upload_column=True)
 
-        expected_headers = ("-/+", "Parameter", "Current Value", " ", "New Value", "Unit", "Upload", "Change Reason")
+        expected_headers = (
+            "-/+",
+            "Parameter",
+            "Current Value",
+            " ",
+            "New Value",
+            "Unit",
+            "Upload",
+            "Why are you changing this parameter?",
+        )
 
         assert headers == expected_headers
         assert len(tooltips) == len(headers)
