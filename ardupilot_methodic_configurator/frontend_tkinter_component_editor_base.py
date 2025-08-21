@@ -261,9 +261,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         save_frame = ttk.Frame(self.main_frame)
         save_frame.pack(side=tk.TOP, fill="x", expand=False)
 
-        self.save_button = ttk.Button(
-            save_frame, text=_("Save data and start configuration"), command=self.validate_and_save_component_json
-        )
+        self.save_button = ttk.Button(save_frame, text=_("Save data and start configuration"), command=self.on_save_pressed)
         show_tooltip(
             self.save_button,
             _("Save component data to the vehicle_components.json file\nand start parameter value configuration and tuning."),
@@ -519,14 +517,15 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
         return ""
 
-    def validate_and_save_component_json(self) -> None:
-        """Validate and save the component JSON data."""
+    def on_save_pressed(self) -> None:
+        """Validate component data, save the component JSON file and close the window."""
         error_msg = self.validate_data_and_highlight_errors_in_red()
         if error_msg:
             show_error_message(_("Error"), error_msg)
             return
         if self._confirm_component_properties():
             self.save_component_json()
+        self.root.destroy()
 
     def _confirm_component_properties(self) -> bool:
         """Show confirmation dialog for component properties."""
