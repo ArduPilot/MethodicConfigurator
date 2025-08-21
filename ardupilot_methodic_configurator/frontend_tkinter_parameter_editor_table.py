@@ -397,7 +397,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             )
             new_value_entry.set(selected_value)
             font_family, font_size = get_widget_font_family_and_size(new_value_entry)
-            font_size -= 2 if platform_system() == "Windows" else 1
+            font_size -= 2 if platform_system() == "Windows" else -1
             new_value_entry.config(state="readonly", width=NEW_VALUE_WIDGET_WIDTH, font=(font_family, font_size))
             new_value_entry.bind(  # type: ignore[call-overload] # workaround a mypy issue
                 "<<ComboboxSelected>>",

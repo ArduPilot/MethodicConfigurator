@@ -249,24 +249,23 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if self.gui_complexity != "simple":  # only display the combobox when not simple
             self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
-        font_family, _font_size = get_widget_font_family_and_size(file_selection_label)
-        self.legend_frame(config_subframe, font_family)
+        self.legend_frame(config_subframe)
 
         image_label = self.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
         image_label.bind("<Button-1>", lambda event: show_about_window(self.main_frame, version))  # noqa: ARG005
         show_tooltip(image_label, _("User Manual, Support Forum, Report a Bug, Licenses, Source Code"))
 
-    def legend_frame(self, config_subframe: ttk.Frame, font_family: str) -> None:  # pylint: disable=too-many-locals
+    def legend_frame(self, config_subframe: ttk.Frame) -> None:  # pylint: disable=too-many-locals
+        font_family, font_size = get_widget_font_family_and_size(config_subframe)
         style = ttk.Style()
-        style.configure("Legend.TLabelframe", font=(font_family, 9))  # type: ignore[no-untyped-call]
+        style.configure("Legend.TLabelframe", font=(font_family, font_size))  # type: ignore[no-untyped-call]
         legend_frame = ttk.LabelFrame(config_subframe, text=_("Legend"), style="Legend.TLabelframe")
         legend_left = ttk.Frame(legend_frame)
         legend_left.pack(side=tk.LEFT, anchor=tk.NW)
         show_tooltip(legend_frame, _("the meaning of the text background colors"), position_below=False)
 
-        font_size = 8
-        font = (font_family, font_size)
+        font = (font_family, font_size - 1 if font_size > 0 else font_size + 1)
         np_label = ttk.Label(legend_left, text=_("Normal parameter"), font=font)
         show_tooltip(np_label, _("Normal parameter - reusable in similar vehicles"))
         np_label.pack(side=tk.TOP, anchor=tk.NW)

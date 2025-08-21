@@ -1030,7 +1030,7 @@ class TestUIInitializationWorkflows:
 
         # Assert: All necessary styles should be configured
         assert mock_style.configure.call_count >= 7  # At least 7 style configurations
-        mock_style.configure.assert_any_call("bigger.TLabel", font=("TkDefaultFont", 13))
+        mock_style.configure.assert_any_call("bigger.TLabel", font=("TkDefaultFont", -18))
         mock_style.configure.assert_any_call("comb_input_invalid.TCombobox", fieldbackground="red")
         mock_style.configure.assert_any_call("comb_input_valid.TCombobox", fieldbackground="white")
 

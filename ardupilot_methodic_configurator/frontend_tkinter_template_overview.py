@@ -25,6 +25,7 @@ from ardupilot_methodic_configurator.backend_filesystem_vehicle_components impor
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_template_overview import TemplateOverview
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 
 
 class VehicleComponentsProviderProtocol(Protocol):
@@ -123,8 +124,9 @@ class TemplateOverviewWindow(BaseWindow):
 
         # Initialize instruction label
         instruction_text = self._get_instruction_text()
-        scaled_font_size = self.calculate_scaled_font_size(12)
-        self.instruction_label = ttk.Label(self.top_frame, text=instruction_text, font=("Arial", scaled_font_size))
+        font_family, font_size = get_widget_font_family_and_size(self.main_frame)
+        scaled_font_size = self.calculate_scaled_font_size(font_size)
+        self.instruction_label = ttk.Label(self.top_frame, text=instruction_text, font=(font_family, scaled_font_size))
 
         # Initialize image label
         self.image_label = ttk.Label(self.top_frame)
