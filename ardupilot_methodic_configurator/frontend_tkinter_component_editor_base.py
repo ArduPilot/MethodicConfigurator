@@ -572,7 +572,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         else:
             # If it just created the files from a new template and the user chooses not to save,
             # delete the created files
-            if self.data_model.get_configuration_template():
+            if self.data_model.is_new_project():
                 # remove the files created
                 err_msg = self.local_filesystem.remove_created_files_and_vehicle_dir()
                 if err_msg:
