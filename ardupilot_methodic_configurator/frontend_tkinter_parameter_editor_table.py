@@ -121,7 +121,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             base_headers.append(_("Upload"))
             base_tooltips.append(_("When selected, upload the new value to the flight controller"))
 
-        base_headers.append(_("Change Reason"))
+        base_headers.append(_("Why are you changing this parameter?"))
         base_tooltips.append(change_reason_tooltip)
 
         return tuple(base_headers), tuple(base_tooltips)
