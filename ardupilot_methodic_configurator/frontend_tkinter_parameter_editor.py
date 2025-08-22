@@ -151,6 +151,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.param_download_progress_window: ProgressWindow
         self.tempcal_imu_progress_window: ProgressWindow
         self.file_upload_progress_window: ProgressWindow
+        self.skip_button: ttk.Button
         self.last_time_asked_to_save: float = 0
         self.gui_complexity = str(ProgramSettings.get_setting("gui_complexity"))
 
@@ -360,8 +361,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             command=self.on_upload_selected_click,
         )
         upload_selected_button.configure(state="normal" if self.flight_controller.master else "disabled")
-        if self.gui_complexity != "simple" or self.flight_controller.master:
-            upload_selected_button.pack(side=tk.LEFT, padx=(8, 8))  # Add padding on both sides of the upload selected button
+        upload_selected_button.pack(side=tk.LEFT, padx=(8, 8))  # Add padding on both sides of the upload selected button
         show_tooltip(
             upload_selected_button,
             _(
@@ -374,11 +374,19 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
 
         # Create skip button
-        skip_button = ttk.Button(buttons_frame, text=_("Skip parameter file"), command=self.on_skip_click)
-        if self.gui_complexity != "simple" or not self.flight_controller.master:
-            skip_button.pack(side=tk.RIGHT, padx=(8, 8))  # Add right padding to the skip button
+        self.skip_button = ttk.Button(buttons_frame, text=_("Skip parameter file"), command=self.on_skip_click)
+        self.skip_button.configure(
+            state=(
+                "normal"
+                if self.gui_complexity != "simple"
+                or self._configuration_step_is_optional(self.current_file)
+                or not self.flight_controller.master
+                else "disabled"
+            )
+        )
+        self.skip_button.pack(side=tk.RIGHT, padx=(8, 8))  # Add right padding to the skip button
         show_tooltip(
-            skip_button,
+            self.skip_button,
             _(
                 "Skip to the next intermediate parameter file without uploading any changes to the flight "
                 "controller\nIf changes have been made to the current file it will ask if you want to save them"
@@ -636,6 +644,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.documentation_frame.refresh_documentation_labels(selected_file)
             self.documentation_frame.update_why_why_now_tooltip(selected_file)
             self.repopulate_parameter_table(selected_file)
+            self._update_skip_button_state()
 
     def _update_progress_bar_from_file(self, selected_file: str) -> None:
         if self.local_filesystem.configuration_phases:
@@ -826,6 +835,31 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
         self.local_filesystem.write_last_uploaded_filename(self.current_file)
 
+    def _configuration_step_is_optional(self, file_name: str, threshold_pct: int = 20) -> bool:
+        # Check if the configuration step for the given file is optional
+        mandatory_text, _mandatory_url = self.local_filesystem.get_documentation_text_and_url(file_name, "mandatory")
+        # Extract percentage from mandatory_text like "80% mandatory (20% optional)"
+        percentage = 0
+        if mandatory_text:
+            try:
+                percentage = int(mandatory_text.split("%")[0])
+            except (ValueError, IndexError):
+                percentage = 0
+
+        return percentage <= threshold_pct
+
+    def _update_skip_button_state(self) -> None:
+        """Update the skip button state based on whether the current configuration step is optional."""
+        if hasattr(self, "skip_button"):
+            skip_button_state = (
+                "normal"
+                if self.gui_complexity != "simple"
+                or self._configuration_step_is_optional(self.current_file)
+                or not self.flight_controller.master
+                else "disabled"
+            )
+            self.skip_button.configure(state=skip_button_state)
+
     def on_skip_click(self, _event: Union[None, tk.Event] = None) -> None:
         self.write_changes_to_intermediate_parameter_file()
         # Find the next filename in the file_parameters dictionary
@@ -837,17 +871,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Skip files with mandatory_level == 0
             while next_file_index < len(files):
                 next_file = files[next_file_index]
-                mandatory_text, _mandatory_url = self.local_filesystem.get_documentation_text_and_url(next_file, "mandatory")
-                # Extract percentage from mandatory_text like "80% mandatory (20% optional)"
-                percentage = 0
-                if mandatory_text:
-                    try:
-                        percentage = int(mandatory_text.split("%")[0])
-                    except (ValueError, IndexError):
-                        percentage = 0
-
-                # If the file has mandatory_level > 0, use it
-                if percentage > 0:
+                if not self._configuration_step_is_optional(next_file, 0):
                     break
 
                 next_file_index += 1
