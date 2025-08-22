@@ -34,18 +34,24 @@ then translated into language-specific `.po` files, which are compiled into bina
 1. **Extract missing translations**: Execute `python extract_missing_translations.py` in the project root directory.
    The script automatically detects all existing languages and creates/updates `missing_translations_<lang_code>.txt` files in the root directory.
 
-1. **Translate strings**: Open each `missing_translations_<lang_code>.txt` file and translate the strings from English to the target language.
+1. **Translate strings in-place**: Open each `missing_translations_<lang_code>.txt` file and **directly replace** the English text with the target language translation.
    Follow the translation guidelines defined below.
 
-   **IMPORTANT**: The translation files contain lines in the format `line_number:English text`.
-   You must replace the English text with the translated text, keeping the line number and colon.
+   **CRITICAL**: Do NOT create new files. You must edit the original `missing_translations_<lang_code>.txt` files in-place.
+   The translation files contain lines in the format `line_number:English text`.
+   You must replace the English text with the translated text, keeping the line number and colon exactly as they are.
 
    Example:
 
    ```text
-   Original: 3614:Copy vehicle image from template
-   Correct: 3614:Copiar imagem do veículo do modelo
+   Before: 3614:Copy vehicle image from template
+   After:  3614:Copiar imagem do veículo do modelo
    ```
+
+   **Do NOT do this**:
+   - Creating files with names like `missing_translations_<lang_code>_translated.txt`
+   - Changing the line numbers
+   - Removing the colon separator
 
 1. **Insert translations**: Execute `python insert_missing_translations.py` in the project root directory.
    The script automatically processes all language files and inserts the translated strings into their respective `.po` files in `ardupilot_methodic_configurator/locale/<lang_code>/LC_MESSAGES/`.
