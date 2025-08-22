@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-08-22 03:14+0200\n"
+"POT-Creation-Date: 2025-08-22 13:43+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -417,6 +417,10 @@ msgstr "Erro ao descodificar esquema JSON do ficheiro '%s'."
 msgid "Could not load validation schema"
 msgstr "Não foi possível carregar o esquema de validação"
 
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:87
+msgid "Validation error"
+msgstr ""
+
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:99
 msgid "Invalid JSON file '%s': %s"
 msgstr "Ficheiro JSON inválido '%s': %s"
@@ -587,61 +591,64 @@ msgstr "Não foi adicionada a conexão duplicada %s"
 msgid "Did not add empty connection"
 msgstr "Não foi adicionada a conexão vazia"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:160
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:189
 msgid "Auto-detected device %s"
 msgstr "Dispositivo auto-detectado %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:166
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:195
 msgid "Resolved soft link %s to %s"
 msgstr "Link simbólico resolvido %s para %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:174
-msgid ""
-"No serial ports found. Please connect a flight controller and try again."
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:211
+msgid "Trying network port %s"
 msgstr ""
-"Nenhuma porta serial encontrada. Por favor, conecte um controlador de voo e "
-"tente novamente."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:260
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:221
+msgid ""
+"No auto-detected ports responded. Please connect a flight controller and try "
+"again."
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:304
 msgid "Will connect to %s @ %u baud"
 msgstr "Irá conectar-se a %s @ %u baud"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:270
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:314
 msgid "Waiting for MAVLink heartbeat"
 msgstr "Aguardando o sinal de batimento cardíaco MAVLink"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:276
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:320
 msgid "No MAVLink heartbeat received, connection failed."
 msgstr "Nenhum batimento cardíaco MAVLink recebido, conexão falhou."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:279
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:323
 msgid "Connection established with systemID %d, componentID %d."
 msgstr "Conexão estabelecida com systemID %d, componentID %d."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:284
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:328
 msgid "Autopilot type {self.info.autopilot}"
 msgstr "Tipo de piloto automático {self.info.autopilot}"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:287
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:331
 msgid "Unsupported autopilot type {self.info.autopilot}"
 msgstr "Tipo de piloto automático não suportado {self.info.autopilot}"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:291
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:335
 msgid ""
 "Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"
 msgstr ""
 "Tipo de veículo: {self.info.mav_type} rodando firmware {self.info."
 "vehicle_type}"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:302
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:346
 msgid "Connection failed: %s"
 msgstr "Conexão falhou: %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:303
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:347
 msgid "Failed to connect after %d attempts."
 msgstr "Falha ao conectar após %d tentativas."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:324
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:368
 msgid ""
 "Permission denied accessing the serial port. This is common on Linux "
 "systems.\n"
@@ -657,7 +664,7 @@ msgstr ""
 "Depois termine a sessão e volte a iniciar sessão para que as alterações "
 "tenham efeito."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:337
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:381
 msgid ""
 "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n"
 "Only ArduPilot versions newer than 4.3.8 are supported.\n"
@@ -667,56 +674,56 @@ msgstr ""
 "Apenas versões do ArduPilot mais recentes que 4.3.8 são suportadas.\n"
 "Certifique-se de que o parâmetro SERIAL0_PROTOCOL está definido como 2"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:359
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:403
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 msgstr ""
 "Incompatibilidade de versão ChibiOS: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:375
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:419
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 msgstr "Disparidade de tipo de FC: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:394
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:438
 msgid "Testing active, will load all parameters from the %s file"
 msgstr "Teste ativo, irá carregar todos os parâmetros do ficheiro %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:404
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:448
 msgid "MAVFTP is supported by the %s flight controller"
 msgstr "MAVFTP é suportado pelo controlador de voo %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:410
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:454
 msgid ""
 "MAVFTP is not supported by the %s flight controller, fallback to MAVLink"
 msgstr ""
 "MAVFTP não é suportado pelo controlador de voo %s, retornando ao MAVLink"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:417
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:461
 msgid "Will fetch all parameters from the %s flight controller"
 msgstr "Irá buscar todos os parâmetros do controlador de voo %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:438
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:482
 msgid "Received parameter: %s = %s"
 msgstr "Parâmetro recebido: %s = %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:444
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:488
 msgid "Fetched %d parameter values from the %s flight controller"
 msgstr "Buscou %d valores de parâmetros do controlador de voo %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:448
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:492
 msgid "Error: %s"
 msgstr "Erro: %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:512
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:556
 msgid "Reset command sent to ArduPilot."
 msgstr "Comando de redefinição enviado ao ArduPilot."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:565
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:614
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:662
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:609
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:658
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:706
 msgid "No flight controller connection available for motor test"
 msgstr "Nenhuma ligação ao controlador de voo disponível para teste de motor"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:586
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:630
 msgid ""
 "Motor test command sent: Motor %(motor)d at %(throttle)d%% for %(duration)d "
 "seconds"
@@ -724,21 +731,21 @@ msgstr ""
 "Comando de teste de motor enviado: Motor %(motor)d a %(throttle)d%% durante "
 "%(duration)d segundos"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:596
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:640
 msgid "Failed to send motor test command: %(error)s"
 msgstr "Falha ao enviar comando de teste de motor: %(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:634
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:678
 msgid "All motors test command sent at %(throttle)d%% for %(duration)d seconds"
 msgstr ""
 "Comando de teste de todos os motores enviado a %(throttle)d%% durante "
 "%(duration)d segundos"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:643
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:687
 msgid "Failed to send all motors test command: %(error)s"
 msgstr "Falha ao enviar comando de teste de todos os motores: %(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:682
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:726
 msgid ""
 "Sequential motor test command sent at %(throttle)d%% for %(duration)d "
 "seconds per motor"
@@ -746,56 +753,56 @@ msgstr ""
 "Comando de teste sequencial de motores enviado a %(throttle)d%% durante "
 "%(duration)d segundos por motor"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:691
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:735
 msgid "Failed to send sequential motor test command: %(error)s"
 msgstr "Falha ao enviar comando de teste sequencial de motores: %(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:705
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:749
 msgid "No flight controller connection available for motor stop"
 msgstr "Nenhuma ligação ao controlador de voo disponível para parar motor"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:724
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:768
 msgid "Motor stop command sent"
 msgstr "Comando de paragem de motor enviado"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:728
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:772
 msgid "Failed to send motor stop command: %(error)s"
 msgstr "Falha ao enviar comando de paragem de motor: %(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:744
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:788
 msgid "No flight controller connection available for battery status request"
 msgstr ""
 "Nenhuma ligação ao controlador de voo disponível para pedido de estado da "
 "bateria"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:764
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:808
 msgid ""
 "Requested periodic BATTERY_STATUS messages every %(interval)d microseconds"
 msgstr ""
 "Solicitadas mensagens BATTERY_STATUS periódicas a cada %(interval)d "
 "microssegundos"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:770
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:814
 msgid "Failed to request periodic battery status: %(error)s"
 msgstr "Falha ao solicitar estado periódico da bateria: %(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:784
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:828
 msgid "No flight controller connection or parameters available"
 msgstr "Nenhuma ligação ao controlador de voo ou parâmetros disponíveis"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:789
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:833
 msgid "Battery monitoring is not enabled (BATT_MONITOR=0)"
 msgstr "A monitorização da bateria não está ativada (BATT_MONITOR=0)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:801
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:845
 msgid "Failed to get battery status from telemetry: %(error)s"
 msgstr "Falha ao obter estado da bateria da telemetria: %(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:803
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:847
 msgid "Battery status not available from telemetry"
 msgstr "Estado da bateria não disponível na telemetria"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:915
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:959
 msgid ""
 "MAVLink serial connection baudrate to the flight controller. Default is "
 "%(default)s"
@@ -803,15 +810,15 @@ msgstr ""
 "Taxa de transmissão da conexão serial MAVLink para o controlador de voo. O "
 "padrão é %(default)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:921
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:965
 msgid ""
 "MAVLink connection string to the flight controller. If set to \"none\" no "
 "connection is made. Default is autodetection"
 msgstr ""
-"String de conexão MAVLink para o controlador de voo. Se definido como \"none"
-"\", nenhuma conexão é estabelecida. A predefinição é deteção automática"
+"String de conexão MAVLink para o controlador de voo. Se definido como "
+"\"none\", nenhuma conexão é estabelecida. A predefinição é deteção automática"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:935
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:979
 msgid "Flight controller reboot time. Default is %(default)s"
 msgstr "Tempo de reinicialização do controlador de voo. O padrão é %(default)s"
 
@@ -2733,11 +2740,11 @@ msgstr ""
 #: ardupilot_methodic_configurator/data_model_motor_test.py:102
 #: ardupilot_methodic_configurator/data_model_motor_test.py:636
 msgid ""
-"Frame configuration updated: Class=%(class)d, Type=%(type)d, Motors="
-"%(motors)d"
+"Frame configuration updated: Class=%(class)d, Type=%(type)d, "
+"Motors=%(motors)d"
 msgstr ""
-"Configuração de quadro atualizada: Classe=%(class)d, Tipo=%(type)d, Motores="
-"%(motors)d"
+"Configuração de quadro atualizada: Classe=%(class)d, Tipo=%(type)d, "
+"Motores=%(motors)d"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:110
 #: ardupilot_methodic_configurator/data_model_motor_test.py:647
@@ -4178,6 +4185,10 @@ msgstr "Baixando parâmetros do FC"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:661
 msgid "Downloaded {} of {} parameters"
 msgstr "Baixou {} de {} parâmetros"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
+msgid "Failed to download parameters"
+msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:71
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
@@ -5794,3 +5805,9 @@ msgstr "Versão ou revisão do hardware"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "Ligação web para a página do produto ou documentação"
+
+#~ msgid ""
+#~ "No serial ports found. Please connect a flight controller and try again."
+#~ msgstr ""
+#~ "Nenhuma porta serial encontrada. Por favor, conecte um controlador de voo "
+#~ "e tente novamente."
