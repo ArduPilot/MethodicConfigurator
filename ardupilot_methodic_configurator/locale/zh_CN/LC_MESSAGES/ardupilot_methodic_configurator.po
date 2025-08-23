@@ -569,13 +569,13 @@ msgstr "已解析软链接 %s 为 %s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:211
 msgid "Trying network port %s"
-msgstr ""
+msgstr "正在尝试网络端口 %s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:221
 msgid ""
 "No auto-detected ports responded. Please connect a flight controller and try "
 "again."
-msgstr ""
+msgstr "没有自动检测到的端口响应。请连接飞行控制器并重试。"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:304
 msgid "Will connect to %s @ %u baud"

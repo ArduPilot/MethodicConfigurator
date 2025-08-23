@@ -605,13 +605,13 @@ msgstr "Symbolischer Link %s auf %s aufgelöst"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:211
 msgid "Trying network port %s"
-msgstr ""
+msgstr "Versuche Netzwerk-Port %s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:221
 msgid ""
 "No auto-detected ports responded. Please connect a flight controller and try "
 "again."
-msgstr ""
+msgstr "Keine automatisch erkannten Ports haben geantwortet. Bitte verbinden Sie einen Flugcontroller und versuchen Sie es erneut."
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:304
 msgid "Will connect to %s @ %u baud"

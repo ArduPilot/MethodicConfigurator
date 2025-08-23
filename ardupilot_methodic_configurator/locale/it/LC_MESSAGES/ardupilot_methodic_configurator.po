@@ -606,13 +606,13 @@ msgstr "Collegamento simbolico risolto da %s a %s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:211
 msgid "Trying network port %s"
-msgstr ""
+msgstr "Tentativo porta di rete %s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:221
 msgid ""
 "No auto-detected ports responded. Please connect a flight controller and try "
 "again."
-msgstr ""
+msgstr "Nessuna porta rilevata automaticamente ha risposto. Si prega di collegare un controllore di volo e riprovare."
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:304
 msgid "Will connect to %s @ %u baud"
@@ -4971,7 +4971,7 @@ msgstr "Blog Forum:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:33
 msgid "💬 Forum Blog:"
-msgstr ""
+msgstr "💬 Blog del Forum:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:34
 msgid "Wiki:"

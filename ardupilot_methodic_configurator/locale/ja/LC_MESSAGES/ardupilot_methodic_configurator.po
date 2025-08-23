@@ -593,13 +593,13 @@ msgstr "シンボリックリンク%sを%sに解決しました"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:211
 msgid "Trying network port %s"
-msgstr ""
+msgstr "ネットワークポート %s を試行中"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:221
 msgid ""
 "No auto-detected ports responded. Please connect a flight controller and try "
 "again."
-msgstr ""
+msgstr "自動検出されたポートからの応答がありません。フライトコントローラーを接続してもう一度お試しください。"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:304
 msgid "Will connect to %s @ %u baud"
