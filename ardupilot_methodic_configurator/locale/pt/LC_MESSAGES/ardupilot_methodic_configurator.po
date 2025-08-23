@@ -419,7 +419,7 @@ msgstr "Não foi possível carregar o esquema de validação"
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:87
 msgid "Validation error"
-msgstr ""
+msgstr "Erro de validação"
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:99
 msgid "Invalid JSON file '%s': %s"
@@ -601,13 +601,13 @@ msgstr "Link simbólico resolvido %s para %s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:211
 msgid "Trying network port %s"
-msgstr ""
+msgstr "A tentar porta de rede %s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:221
 msgid ""
 "No auto-detected ports responded. Please connect a flight controller and try "
 "again."
-msgstr ""
+msgstr "Nenhuma porta detectada automaticamente respondeu. Por favor ligue um controlador de voo e tente novamente."
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:304
 msgid "Will connect to %s @ %u baud"
@@ -4188,7 +4188,7 @@ msgstr "Baixou {} de {} parâmetros"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
 msgid "Failed to download parameters"
-msgstr ""
+msgstr "Falha ao transferir parâmetros"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:71
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
