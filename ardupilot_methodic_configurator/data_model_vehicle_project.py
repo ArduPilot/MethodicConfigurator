@@ -122,13 +122,12 @@ class VehicleProjectManager:
         return LocalFilesystem.new_vehicle_dir(base_dir, vehicle_name)
 
     # Vehicle project creation operations
-    def create_new_vehicle_from_template(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def create_new_vehicle_from_template(
         self,
         template_dir: str,
         new_base_dir: str,
         new_vehicle_name: str,
         settings: NewVehicleProjectSettings,
-        fc_connected: bool = False,
     ) -> str:
         """
         Create a new vehicle configuration directory from a template.
@@ -138,7 +137,6 @@ class VehicleProjectManager:
             new_base_dir: Base directory where the new vehicle directory will be created
             new_vehicle_name: Name for the new vehicle directory
             settings: Configuration settings for the new project
-            fc_connected: Whether a flight controller is connected
 
         Returns:
             The path to the newly created vehicle directory
@@ -147,6 +145,11 @@ class VehicleProjectManager:
             VehicleProjectCreationError: If creation fails for any reason
 
         """
+        fc_connected = (
+            self.flight_controller is not None
+            and hasattr(self.flight_controller, "master")
+            and self.flight_controller.master is not None
+        )
         new_path = self.creator.create_new_vehicle_from_template(
             template_dir, new_base_dir, new_vehicle_name, settings, fc_connected
         )

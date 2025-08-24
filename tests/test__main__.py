@@ -403,6 +403,8 @@ class TestVehicleDirectoryWorkflow:
         mock_fc = MagicMock()
         mock_fc.fc_parameters = {"PARAM1": 1.0}  # Connected FC
         mock_fc.info.vehicle_type = "ArduCopter"
+        mock_fc.reset_all_parameters_to_default.return_value = (True, "")  # Mock successful reset
+        mock_fc.reset_and_reconnect.return_value = ""  # Mock successful reconnect
         application_state.flight_controller = mock_fc
         application_state.vehicle_type = "ArduCopter"  # This is what actually gets used
 
@@ -443,6 +445,8 @@ class TestVehicleDirectoryWorkflow:
         mock_fc = MagicMock()
         mock_fc.fc_parameters = {}  # No connection
         mock_fc.info.vehicle_type = None
+        mock_fc.reset_all_parameters_to_default.return_value = (True, "")  # Mock successful reset
+        mock_fc.reset_and_reconnect.return_value = ""  # Mock successful reconnect
         application_state.flight_controller = mock_fc
 
         with patch("ardupilot_methodic_configurator.__main__.VehicleDirectorySelectionWindow") as mock_window_class:

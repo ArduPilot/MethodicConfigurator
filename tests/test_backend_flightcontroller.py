@@ -183,6 +183,23 @@ class TestMotorTestFunctionality:
         mock_connection.target_system = 1
         mock_connection.target_component = 1
         mock_connection.wait_heartbeat.return_value = None
+
+        # Mock COMMAND_ACK response for successful commands
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        mock_ack.progress = 100
+        mock_ack.result_param2 = 0
+
+        # Configure recv_match to return COMMAND_ACK on first call, None on subsequent calls
+        def recv_match_side_effect(*_args: tuple, **kwargs: dict) -> MagicMock | None:
+            # Check if looking for COMMAND_ACK message type
+            type_arg = kwargs.get("type")
+            if isinstance(type_arg, str) and type_arg == "COMMAND_ACK":
+                return mock_ack
+            return None
+
+        mock_connection.recv_match.side_effect = recv_match_side_effect
         return mock_connection
 
     @pytest.fixture
@@ -192,7 +209,7 @@ class TestMotorTestFunctionality:
             "ardupilot_methodic_configurator.backend_flightcontroller.mavutil.mavlink_connection",
             return_value=mock_fc_connection,
         ):
-            fc = FlightController("test_connection")
+            fc = FlightController()
             fc.master = mock_fc_connection
             return fc
 
@@ -338,7 +355,20 @@ class TestMotorTestFunctionality:
         mock_battery_status.voltages = [12100, -1, -1, -1, -1, -1, -1, -1, -1, -1]  # 12.1V in mV
         mock_battery_status.current_battery = 250  # 2.5A in cA
 
-        flight_controller.master.recv_match.return_value = mock_battery_status
+        # Configure recv_match to return BATTERY_STATUS for this specific test
+        def recv_match_battery_side_effect(*_args: tuple, **kwargs: dict) -> MagicMock | None:
+            type_arg = kwargs.get("type")
+            if isinstance(type_arg, str) and type_arg == "BATTERY_STATUS":
+                return mock_battery_status
+            if isinstance(type_arg, str) and type_arg == "COMMAND_ACK":
+                # Return the existing COMMAND_ACK mock from the fixture
+                mock_ack = MagicMock()
+                mock_ack.command = mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST
+                mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+                return mock_ack
+            return None
+
+        flight_controller.master.recv_match.side_effect = recv_match_battery_side_effect
 
         # Act: Get battery status
         battery_info, error_msg = flight_controller.get_battery_status()
@@ -395,8 +425,27 @@ class TestMotorTestCommandSending:
     def flight_controller(self) -> FlightController:
         """Fixture providing a FlightController for command sending testing."""
         with patch("ardupilot_methodic_configurator.backend_flightcontroller.mavutil.mavlink_connection"):
-            fc = FlightController("test_connection")
-            fc.master = MagicMock()
+            fc = FlightController()
+            mock_master = MagicMock()
+            mock_master.target_system = 1
+            mock_master.target_component = 1
+
+            # Mock COMMAND_ACK response for successful commands
+            mock_ack = MagicMock()
+            mock_ack.command = mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST
+            mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+            mock_ack.progress = 100
+            mock_ack.result_param2 = 0
+
+            # Configure recv_match to return COMMAND_ACK
+            def recv_match_side_effect(*_args: tuple, **kwargs: dict) -> MagicMock | None:
+                type_arg = kwargs.get("type")
+                if isinstance(type_arg, str) and type_arg == "COMMAND_ACK":
+                    return mock_ack
+                return None
+
+            mock_master.recv_match.side_effect = recv_match_side_effect
+            fc.master = mock_master
             return fc
 
     def test_motor_commands_are_sent_to_flight_controller(self, flight_controller) -> None:
