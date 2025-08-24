@@ -17,38 +17,23 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
+    NewVehicleProjectSettings,
+    VehicleProjectCreationError,
+)
+from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpenError
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import (
     DirectoryNameWidgets,
     DirectorySelectionWidgets,
     VehicleDirectorySelectionWidgets,
     VehicleDirectorySelectionWindow,
+    argument_parser,
+    main,
 )
 
-# pylint: disable=redefined-outer-name,unused-argument,line-too-long,too-many-lines
+# pylint: disable=redefined-outer-name,unused-argument,line-too-long,too-many-lines,too-few-public-methods
 # ruff: noqa: SIM117
-
-
-@pytest.fixture
-def photo_patcher() -> Generator[MagicMock, None, None]:
-    """Patch PhotoImage to avoid tkinter errors."""
-    with patch("tkinter.PhotoImage") as mock_photo:
-        yield mock_photo
-
-
-@pytest.fixture
-def icon_patcher() -> Generator[MagicMock, None, None]:
-    """Patch application_icon_filepath to return a valid path."""
-    with patch("ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.application_icon_filepath") as mock_icon:
-        mock_icon.return_value = "dummy_icon_path"
-        yield mock_icon
-
-
-@pytest.fixture
-def base_window_patcher() -> Generator[MagicMock, None, None]:
-    """Patch BaseWindow to avoid iconphoto errors."""
-    with patch.object(BaseWindow, "__init__", return_value=None) as mock_init:
-        yield mock_init
 
 
 @pytest.fixture
@@ -66,14 +51,15 @@ def mock_local_filesystem() -> MagicMock:
 @pytest.fixture
 def window(
     root: tk.Tk,
-    photo_patcher: MagicMock,  # noqa: ARG001
-    icon_patcher: MagicMock,  # noqa: ARG001
-    base_window_patcher: MagicMock,  # noqa: ARG001
     mock_local_filesystem: MagicMock,
 ) -> Generator[VehicleDirectorySelectionWindow, None, None]:
     """Create a test VehicleDirectorySelectionWindow instance with all dependencies mocked."""
     # Create a partially mocked window to avoid tkinter errors
-    with patch.object(VehicleDirectorySelectionWindow, "__init__", return_value=None):
+    with (
+        patch("tkinter.PhotoImage"),
+        patch("ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.application_icon_filepath"),
+        patch.object(VehicleDirectorySelectionWindow, "__init__", return_value=None),
+    ):
         window = VehicleDirectorySelectionWindow(mock_local_filesystem)
 
         # Set required attributes manually
@@ -84,6 +70,7 @@ def window(
         window.use_fc_params = tk.BooleanVar(value=False)
         window.blank_change_reason = tk.BooleanVar(value=False)
         window.copy_vehicle_image = tk.BooleanVar(value=False)
+        window.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
         window.configuration_template = ""
         window.local_filesystem = mock_local_filesystem
 
@@ -106,6 +93,56 @@ def window(
 
     # Clean up
     window.root.destroy()
+
+
+@pytest.fixture
+def mock_local_filesystem_with_no_files() -> MagicMock:
+    """
+    Fixture providing a mock LocalFilesystem for testing scenarios with no parameter files.
+
+    GIVEN: A file system that appears empty of parameter files
+    """
+    filesystem = MagicMock(spec=LocalFilesystem)
+    filesystem.vehicle_dir = "/test/vehicle/dir"
+    filesystem.file_parameters = {}  # No parameter files found
+    filesystem.getcwd.return_value = "/test/cwd"
+    filesystem.directory_exists.return_value = True
+    filesystem.get_recently_used_dirs.return_value = ("/template", "/base", "/vehicle")
+    return filesystem
+
+
+@pytest.fixture
+def configured_window_for_user_workflows(
+    mock_local_filesystem_with_no_files: MagicMock,
+) -> Generator[VehicleDirectorySelectionWindow, None, None]:
+    """
+    Fixture providing a fully configured window for testing user workflows.
+
+    GIVEN: A user opens the directory selection window
+    AND: The system has no existing parameter files
+    """
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.DirectorySelectionWidgets"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.DirectoryNameWidgets"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.VehicleDirectorySelectionWidgets"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_tooltip"),
+        patch("tkinter.ttk.Label") as mock_label,
+        patch("tkinter.ttk.LabelFrame") as mock_label_frame,
+        patch("tkinter.ttk.Button") as mock_button,
+        patch("tkinter.ttk.Checkbutton") as mock_checkbutton,
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.LocalFilesystem.get_recently_used_dirs",
+            return_value=("/template", "/base", "/vehicle"),
+        ),
+    ):
+        # Configure the mocked widgets
+        mock_label.return_value = MagicMock()
+        mock_label_frame.return_value = MagicMock()
+        mock_button.return_value = MagicMock()
+        mock_checkbutton.return_value = MagicMock()
+
+        window = VehicleDirectorySelectionWindow(mock_local_filesystem_with_no_files)
+        yield window
 
 
 # ==== Tests for DirectorySelectionWidgets ====
@@ -485,11 +522,11 @@ def test_vehicle_directory_selection_widgets_on_select_directory_reinit_exceptio
 
                 # Mock messagebox.showerror
                 with patch("tkinter.messagebox.showerror") as mock_error:
-                    # Call the method and expect an exception
-                    with pytest.raises(SystemExit):
-                        widget.on_select_directory()
+                    # Call the method - it should return False due to the exception being caught
+                    result = widget.on_select_directory()
 
-                    # Verify error message
+                    # Verify result and error message
+                    assert result is False
                     mock_error.assert_called_once()
                     assert "Fatal error reading parameter files" in mock_error.call_args[0][0]
                     assert "Test error" in mock_error.call_args[0][1]
@@ -542,16 +579,16 @@ def test_vehicle_directory_selection_widgets_on_select_directory_no_files(
                 # Set a non-template directory path
                 widget.directory = "/valid/vehicle/dir"
 
-                # Mock show_no_param_files_error
-                with patch(
-                    "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_no_param_files_error"
-                ) as mock_show_error:
+                # Mock messagebox.showerror
+                with patch("tkinter.messagebox.showerror") as mock_error:
                     # Call the method
                     result = widget.on_select_directory()
 
-                    # Verify result and error shown
-                    assert result is True
-                    mock_show_error.assert_called_once_with("/valid/vehicle/dir")
+                    # Verify result and error shown - should return False and show error
+                    assert result is False
+                    mock_error.assert_called_once()
+                    assert "No parameter files found" in mock_error.call_args[0][0]
+                    assert "/valid/vehicle/dir" in mock_error.call_args[0][1]
 
 
 # ==== Tests for initialization and properties ====
@@ -571,7 +608,7 @@ def test_initialization(window) -> None:
     assert isinstance(window.main_frame, ttk.Frame)
 
 
-def test_real_window_initialization(root, photo_patcher, icon_patcher, mock_local_filesystem) -> None:  # noqa: ARG001
+def test_real_window_initialization(tk_root, mock_tkinter_context, mock_local_filesystem) -> None:  # noqa: ARG001
     """Test the actual initialization of the window with real UI components."""
     # We need to directly patch the VehicleDirectorySelectionWindow.__init__ to avoid all initialization issues
     with patch.object(VehicleDirectorySelectionWindow, "__init__") as mock_init:
@@ -581,7 +618,7 @@ def test_real_window_initialization(root, photo_patcher, icon_patcher, mock_loca
         window = VehicleDirectorySelectionWindow(mock_local_filesystem)
 
         # Manually set up all the required attributes
-        window.root = tk.Toplevel(root)
+        window.root = tk.Toplevel(tk_root)
         window.main_frame = ttk.Frame(window.root)
         window.local_filesystem = mock_local_filesystem
         window.blank_component_data = tk.BooleanVar(value=False)
@@ -1050,7 +1087,10 @@ def test_open_last_vehicle_directory_button(window: VehicleDirectorySelectionWin
     ],
 )
 def test_open_last_vehicle_directory_scenarios(
-    window: VehicleDirectorySelectionWindow, last_dir: str, has_files: bool, expected_destroy_called: bool
+    window: VehicleDirectorySelectionWindow,
+    last_dir: str,
+    has_files: bool,
+    expected_destroy_called: bool,  # noqa: ARG001
 ) -> None:
     """Test multiple scenarios for opening a last vehicle directory."""
     with patch.object(window.local_filesystem, "re_init"):
@@ -1062,24 +1102,20 @@ def test_open_last_vehicle_directory_scenarios(
 
         with patch.object(window.root, "destroy") as mock_destroy:
             if last_dir:
-                with patch(
-                    "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_no_param_files_error"
-                ) as mock_show_error:
-                    # Call the method
+                if has_files:
+                    # Successful case
                     window.open_last_vehicle_directory(last_dir)
-
                     # Verify state changes
-                    if last_dir:
-                        assert window.local_filesystem.vehicle_dir == last_dir
-
+                    assert window.local_filesystem.vehicle_dir == last_dir
                     # Verify behavior
-                    if expected_destroy_called:
-                        mock_destroy.assert_called_once()
-                    else:
+                    mock_destroy.assert_called_once()
+                else:
+                    # Case with no files - should show error dialog
+                    with patch("tkinter.messagebox.showerror") as mock_error:
+                        window.open_last_vehicle_directory(last_dir)
+                        mock_error.assert_called_once()
+                        assert "No parameter files found" in mock_error.call_args[0][0]
                         mock_destroy.assert_not_called()
-
-                    if not has_files and last_dir:
-                        mock_show_error.assert_called_once_with(last_dir)
             else:
                 with patch("tkinter.messagebox.showerror") as mock_error:
                     # Call the method with empty path
@@ -1098,9 +1134,8 @@ def test_open_last_vehicle_directory_with_reinit_error(window: VehicleDirectoryS
     # Make re_init raise a SystemExit exception
     with patch.object(window.local_filesystem, "re_init", side_effect=SystemExit("Test error")):
         with patch("tkinter.messagebox.showerror") as mock_error:
-            # Expect the exception to be re-raised
-            with pytest.raises(SystemExit):
-                window.open_last_vehicle_directory(last_dir)
+            # The SystemExit should be caught and converted to VehicleProjectOpenError
+            window.open_last_vehicle_directory(last_dir)
 
             # Verify error dialog was shown
             mock_error.assert_called_once()
@@ -1131,7 +1166,7 @@ def test_widget_creation(window: VehicleDirectorySelectionWindow) -> None:
     assert window.blank_change_reason.get() is False
 
 
-def test_create_option1_widgets(root, photo_patcher, icon_patcher, mock_local_filesystem) -> None:  # noqa: ARG001
+def test_create_option1_widgets(tk_root, mock_tkinter_context, mock_local_filesystem) -> None:  # noqa: ARG001
     """Test the creation of option 1 widgets with different fc_connected states."""
     # Need a different approach to avoid UI creation issues
     # Test with fc_connected=True first
@@ -1441,3 +1476,486 @@ class TestCopyVehicleImageFeature:
 
         # Assert: Copy vehicle image state should remain enabled
         assert window.copy_vehicle_image.get() is True
+
+
+# ==================== USER WORKFLOW TESTS ====================
+
+
+class TestUserCanCreateNewVehicleFromTemplate:
+    """Test complete user workflow for creating new vehicle configurations from templates."""
+
+    def test_user_can_successfully_create_new_vehicle_from_template(
+        self, configured_window_for_user_workflows: VehicleDirectorySelectionWindow
+    ) -> None:
+        """
+        User can successfully create a new vehicle configuration from a template.
+
+        GIVEN: A user has selected a valid template directory and destination
+        WHEN: They click the create button
+        THEN: A new vehicle configuration should be created successfully
+        AND: The window should close automatically
+        """
+        # Arrange: Set up successful creation scenario
+        window = configured_window_for_user_workflows
+        window.template_dir = MagicMock()
+        window.template_dir.get_selected_directory.return_value = "/valid/template/dir"
+        window.new_base_dir = MagicMock()
+        window.new_base_dir.get_selected_directory.return_value = "/valid/base/dir"
+        window.new_dir = MagicMock()
+        window.new_dir.get_selected_directory.return_value = "MyNewVehicle"
+        window.root = MagicMock()
+
+        # Configure GUI state
+        window.blank_component_data.set(True)
+        window.copy_vehicle_image.set(True)
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.VehicleProjectCreator"
+            ) as mock_creator_class,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.LocalFilesystem.get_directory_name_from_full_path",
+                return_value="template_name",
+            ),
+        ):
+            mock_creator = MagicMock()
+            mock_creator_class.return_value = mock_creator
+
+            # Act: User creates new vehicle from template
+            window.create_new_vehicle_from_template()
+
+            # Assert: Project creation executed with correct settings
+            mock_creator.create_new_vehicle_from_template.assert_called_once()
+            call_args = mock_creator.create_new_vehicle_from_template.call_args
+
+            assert call_args[0][0] == "/valid/template/dir"  # template_dir
+            assert call_args[0][1] == "/valid/base/dir"  # new_base_dir
+            assert call_args[0][2] == "MyNewVehicle"  # new_vehicle_name
+
+            # Verify settings object
+            settings = call_args[0][3]
+            assert isinstance(settings, NewVehicleProjectSettings)
+            assert settings.blank_component_data is True
+            assert settings.copy_vehicle_image is True
+
+            # Assert: Window closed after successful creation
+            window.root.destroy.assert_called_once()
+            assert window.configuration_template == "template_name"
+
+    def test_user_receives_error_feedback_when_template_creation_fails(
+        self, configured_window_for_user_workflows: VehicleDirectorySelectionWindow
+    ) -> None:
+        """
+        User receives clear error feedback when template creation fails.
+
+        GIVEN: A user attempts to create a new vehicle configuration
+        WHEN: The creation process encounters an error
+        THEN: An error dialog should be displayed to the user
+        AND: The window should remain open for correction
+        """
+        # Arrange: Set up error scenario
+        window = configured_window_for_user_workflows
+        window.template_dir = MagicMock()
+        window.template_dir.get_selected_directory.return_value = "/invalid/template"
+        window.new_base_dir = MagicMock()
+        window.new_base_dir.get_selected_directory.return_value = "/invalid/base"
+        window.new_dir = MagicMock()
+        window.new_dir.get_selected_directory.return_value = "BadName"
+        window.root = MagicMock()
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.VehicleProjectCreator"
+            ) as mock_creator_class,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.messagebox") as mock_messagebox,
+        ):
+            mock_creator = MagicMock()
+            mock_creator_class.return_value = mock_creator
+
+            # Configure creation to fail
+            error = VehicleProjectCreationError("Creation Failed", "Invalid directory structure")
+            mock_creator.create_new_vehicle_from_template.side_effect = error
+
+            # Act: User attempts to create vehicle with invalid input
+            window.create_new_vehicle_from_template()
+
+            # Assert: Error dialog displayed and window remains open
+            mock_messagebox.showerror.assert_called_once_with("Creation Failed", "Invalid directory structure")
+            window.root.destroy.assert_not_called()
+
+
+class TestUserCanOpenExistingVehicleDirectory:
+    """Test user workflow for opening existing vehicle configurations."""
+
+    def test_user_can_open_last_used_vehicle_directory(
+        self, configured_window_for_user_workflows: VehicleDirectorySelectionWindow
+    ) -> None:
+        """
+        User can successfully open the last used vehicle directory.
+
+        GIVEN: A user has a valid last used vehicle directory
+        WHEN: They click the open last directory button
+        THEN: The directory should open successfully
+        AND: The window should close automatically
+        """
+        # Arrange: Set up successful opening scenario
+        window = configured_window_for_user_workflows
+        window.root = MagicMock()
+        last_vehicle_dir = "/valid/last/vehicle/dir"
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.VehicleProjectOpener"
+        ) as mock_opener_class:
+            mock_opener = MagicMock()
+            mock_opener_class.return_value = mock_opener
+
+            # Act: User opens last vehicle directory
+            window.open_last_vehicle_directory(last_vehicle_dir)
+
+            # Assert: Directory opened successfully and window closed
+            mock_opener.open_last_vehicle_directory.assert_called_once_with(last_vehicle_dir)
+            window.root.destroy.assert_called_once()
+
+    def test_user_receives_error_feedback_when_opening_fails(
+        self, configured_window_for_user_workflows: VehicleDirectorySelectionWindow
+    ) -> None:
+        """
+        User receives clear error feedback when opening vehicle directory fails.
+
+        GIVEN: A user attempts to open an invalid vehicle directory
+        WHEN: The opening process encounters an error
+        THEN: An error dialog should be displayed to the user
+        AND: The window should remain open for correction
+        """
+        # Arrange: Set up error scenario
+        window = configured_window_for_user_workflows
+        window.root = MagicMock()
+        invalid_vehicle_dir = "/invalid/vehicle/dir"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.VehicleProjectOpener"
+            ) as mock_opener_class,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.messagebox") as mock_messagebox,
+        ):
+            mock_opener = MagicMock()
+            mock_opener_class.return_value = mock_opener
+
+            # Configure opening to fail
+            error = VehicleProjectOpenError("Open Failed", "Directory not found or invalid")
+            mock_opener.open_last_vehicle_directory.side_effect = error
+
+            # Act: User attempts to open invalid directory
+            window.open_last_vehicle_directory(invalid_vehicle_dir)
+
+            # Assert: Error dialog displayed and window remains open
+            mock_messagebox.showerror.assert_called_once_with("Open Failed", "Directory not found or invalid")
+            window.root.destroy.assert_not_called()
+
+
+# ==================== UI COMPONENT BEHAVIOR TESTS ====================
+
+
+class TestWindowLayoutAndBehavior:
+    """Test window layout creation and component behavior."""
+
+    def test_window_creates_option2_widgets_correctly(
+        self, configured_window_for_user_workflows: VehicleDirectorySelectionWindow
+    ) -> None:
+        """
+        Window creates option 2 widgets (open existing vehicle) correctly.
+
+        GIVEN: A user opens the directory selection window
+        WHEN: The window initializes
+        THEN: Option 2 widgets should be created with proper configuration
+        """
+        # Arrange: Fresh window for testing
+        window = configured_window_for_user_workflows
+        initial_dir = "/test/initial/dir"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.VehicleDirectorySelectionWidgets"
+            ) as mock_widgets,
+            patch("tkinter.ttk.Label"),
+            patch("tkinter.ttk.LabelFrame") as mock_labelframe,
+        ):
+            mock_frame = MagicMock()
+            mock_labelframe.return_value = mock_frame
+            mock_vehicle_widgets = MagicMock()
+            mock_widgets.return_value = mock_vehicle_widgets
+
+            # Act: Create option 2 widgets
+            window.create_option2_widgets(initial_dir)
+
+            # Assert: Widgets created with correct configuration
+            mock_widgets.assert_called_once_with(
+                window,
+                mock_frame,
+                window.local_filesystem,
+                initial_dir,
+                destroy_parent_on_open=True,
+                connected_fc_vehicle_type=window.connected_fc_vehicle_type,
+            )
+            mock_vehicle_widgets.container_frame.pack.assert_called_once()
+
+    def test_window_creates_option3_widgets_correctly(
+        self, configured_window_for_user_workflows: VehicleDirectorySelectionWindow
+    ) -> None:
+        """
+        Window creates option 3 widgets (re-open last vehicle) correctly.
+
+        GIVEN: A user opens the directory selection window
+        WHEN: The window initializes
+        THEN: Option 3 widgets should be created with proper configuration
+        """
+        # Arrange: Window with last vehicle directory
+        window = configured_window_for_user_workflows
+        last_vehicle_dir = "/test/last/vehicle/dir"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.DirectorySelectionWidgets"
+            ) as mock_dir_widgets,
+            patch("tkinter.ttk.Button") as mock_button,
+            patch("tkinter.ttk.Label"),
+            patch("tkinter.ttk.LabelFrame") as mock_labelframe,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_tooltip"),
+        ):
+            mock_frame = MagicMock()
+            mock_labelframe.return_value = mock_frame
+            mock_dir_selection = MagicMock()
+            mock_dir_widgets.return_value = mock_dir_selection
+
+            # Mock filesystem to indicate directory exists
+            with patch.object(window.local_filesystem, "directory_exists", return_value=True):
+                # Act: Create option 3 widgets
+                window.create_option3_widgets(last_vehicle_dir)
+
+                # Assert: Directory widgets created correctly
+                mock_dir_widgets.assert_called_once_with(
+                    parent=window,
+                    parent_frame=mock_frame,
+                    initialdir=last_vehicle_dir,
+                    label_text="Last used vehicle configuration directory:",
+                    autoresize_width=False,
+                    dir_tooltip="Last used vehicle configuration directory",
+                    button_tooltip="",
+                    is_template_selection=False,
+                    connected_fc_vehicle_type="",
+                )
+
+                # Assert: Button created with normal state (directory exists)
+                mock_button.assert_called_once()
+                button_call_kwargs = mock_button.call_args[1]
+                assert button_call_kwargs["state"] == tk.NORMAL
+
+    def test_option3_button_disabled_when_no_last_directory(
+        self, configured_window_for_user_workflows: VehicleDirectorySelectionWindow
+    ) -> None:
+        """
+        Option 3 button is disabled when no last directory exists.
+
+        GIVEN: A user opens the window with no last used directory
+        WHEN: The option 3 widgets are created
+        THEN: The open button should be disabled
+        """
+        # Arrange: Window with no last vehicle directory
+        window = configured_window_for_user_workflows
+        last_vehicle_dir = ""  # No last directory
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.DirectorySelectionWidgets"),
+            patch("tkinter.ttk.Button") as mock_button,
+            patch("tkinter.ttk.Label"),
+            patch("tkinter.ttk.LabelFrame"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_tooltip"),
+        ):
+            # Act: Create option 3 widgets with no last directory
+            window.create_option3_widgets(last_vehicle_dir)
+
+            # Assert: Button created with disabled state
+            mock_button.assert_called_once()
+            button_call_kwargs = mock_button.call_args[1]
+            assert button_call_kwargs["state"] == tk.DISABLED
+
+
+class TestApplicationQuitBehavior:
+    """Test application quit and cleanup behavior."""
+
+    def test_user_can_close_window_cleanly(
+        self, configured_window_for_user_workflows: VehicleDirectorySelectionWindow
+    ) -> None:
+        """
+        User can close the window cleanly using the window close button.
+
+        GIVEN: A user has the directory selection window open
+        WHEN: They click the window close button
+        THEN: The application should exit cleanly
+        """
+        # Arrange: Window ready for closing
+        window = configured_window_for_user_workflows
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.sys_exit") as mock_exit:
+            # Act: User closes window
+            window.close_and_quit()
+
+            # Assert: Application exits cleanly
+            mock_exit.assert_called_once_with(0)
+
+
+# ==================== COMMAND LINE INTERFACE TESTS ====================
+
+
+class TestCommandLineInterface:
+    """Test command line argument parsing and main function behavior."""
+
+    def test_argument_parser_returns_valid_namespace(self) -> None:
+        """
+        Argument parser returns a valid namespace object.
+
+        GIVEN: The application is started from command line
+        WHEN: Arguments are parsed
+        THEN: A valid namespace should be returned with expected attributes
+        """
+        # Arrange & Act: Parse arguments
+        with (
+            patch("sys.argv", ["script_name", "--vehicle-dir", "/test/dir"]),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.LocalFilesystem.add_argparse_arguments",
+                return_value=MagicMock(),
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.add_common_arguments"
+            ) as mock_add_common,
+        ):
+            mock_parser = MagicMock()
+            mock_namespace = MagicMock()
+            mock_parser.parse_args.return_value = mock_namespace
+            mock_add_common.return_value = mock_parser
+
+            result = argument_parser()
+
+            # Assert: Valid namespace returned
+            assert result == mock_namespace
+            mock_add_common.assert_called_once()
+            mock_parser.parse_args.assert_called_once()
+
+    def test_main_function_handles_no_parameter_files_scenario(self) -> None:
+        """
+        Main function handles scenario with no parameter files correctly.
+
+        GIVEN: The application is started in a directory with no parameter files
+        WHEN: The main function executes
+        THEN: The directory selection window should be displayed
+        """
+        # Arrange: Mock environment with no parameter files
+        mock_args = MagicMock()
+        mock_args.vehicle_dir = "/empty/dir"
+        mock_args.loglevel = "INFO"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.argument_parser", return_value=mock_args
+            ),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.logging_basicConfig"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.logging_warning"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.logging_error"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.LocalFilesystem"
+            ) as mock_filesystem_class,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.VehicleDirectorySelectionWindow"
+            ) as mock_window_class,
+        ):
+            mock_filesystem = MagicMock()
+            mock_filesystem.file_parameters = {}  # No parameter files
+            mock_filesystem_class.return_value = mock_filesystem
+
+            mock_window = MagicMock()
+            mock_window_class.return_value = mock_window
+
+            # Act: Execute main function
+            main()
+
+            # Assert: Window created and displayed
+            mock_window_class.assert_called_once_with(mock_filesystem)
+            mock_window.root.mainloop.assert_called_once()
+
+
+# ==================== INTEGRATION TESTS ====================
+
+
+class TestFullUserWorkflows:
+    """Test complete end-to-end user workflows."""
+
+    def test_complete_new_vehicle_creation_workflow(self) -> None:
+        """
+        Complete workflow from window opening to vehicle creation.
+
+        GIVEN: A user wants to create a new vehicle configuration
+        WHEN: They go through the complete workflow
+        THEN: All steps should execute successfully
+        """
+        # Arrange: Set up complete workflow environment
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        mock_filesystem.vehicle_dir = "/test/dir"
+        mock_filesystem.file_parameters = {}
+        mock_filesystem.getcwd.return_value = "/test/cwd"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.DirectorySelectionWidgets"
+            ) as mock_dir_widgets,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.DirectoryNameWidgets"
+            ) as mock_name_widgets,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.VehicleDirectorySelectionWidgets"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_tooltip"),
+            patch("tkinter.ttk.Label"),
+            patch("tkinter.ttk.LabelFrame"),
+            patch("tkinter.ttk.Button"),
+            patch("tkinter.ttk.Checkbutton"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.LocalFilesystem.get_recently_used_dirs",
+                return_value=("/template", "/base", "/vehicle"),
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.VehicleProjectCreator"
+            ) as mock_creator_class,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.LocalFilesystem.get_directory_name_from_full_path",
+                return_value="TestTemplate",
+            ),
+        ):
+            # Set up widget mocks
+            mock_template_dir = MagicMock()
+            mock_template_dir.get_selected_directory.return_value = "/template/dir"
+            mock_base_dir = MagicMock()
+            mock_base_dir.get_selected_directory.return_value = "/base/dir"
+            mock_last_dir = MagicMock()
+            mock_last_dir.get_selected_directory.return_value = "/last/dir"
+            mock_new_dir = MagicMock()
+            mock_new_dir.get_selected_directory.return_value = "MyVehicle"
+
+            mock_dir_widgets.side_effect = [mock_template_dir, mock_base_dir, mock_last_dir]
+            mock_name_widgets.return_value = mock_new_dir
+
+            mock_creator = MagicMock()
+            mock_creator_class.return_value = mock_creator
+
+            # Act: Execute complete workflow
+            window = VehicleDirectorySelectionWindow(mock_filesystem)
+            window.root = MagicMock()  # Mock root for destruction
+
+            # Simulate user setting options
+            window.blank_component_data.set(False)
+            window.use_fc_params.set(True)
+
+            # Simulate user creating vehicle
+            window.create_new_vehicle_from_template()
+
+            # Assert: Complete workflow executed successfully
+            mock_creator.create_new_vehicle_from_template.assert_called_once()
+            window.root.destroy.assert_called_once()
+            assert window.configuration_template == "TestTemplate"
