@@ -533,7 +533,6 @@ class TestVehicleProjectCreationWorkflow:
         new_base_dir = "/valid/base/dir"
         new_vehicle_name = "MyQuadcopter"
         expected_vehicle_dir = "/valid/base/dir/MyQuadcopter"
-        template_name = "QuadCopter_Template"
 
         with (
             patch.object(LocalFilesystem, "directory_exists", return_value=True),
@@ -541,7 +540,6 @@ class TestVehicleProjectCreationWorkflow:
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
             patch.object(LocalFilesystem, "store_recently_used_template_dirs") as mock_store_template,
             patch.object(LocalFilesystem, "store_recently_used_vehicle_dir") as mock_store_vehicle,
-            patch.object(LocalFilesystem, "get_directory_name_from_full_path", return_value=template_name),
         ):
             # Act: Create vehicle project
             project_creator.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, default_settings)
@@ -549,90 +547,3 @@ class TestVehicleProjectCreationWorkflow:
             # Assert: Recently used directories were stored
             mock_store_template.assert_called_once_with(template_dir, new_base_dir)
             mock_store_vehicle.assert_called_once_with(expected_vehicle_dir)
-
-            # Verify template name is available
-            assert project_creator.get_configuration_template() == template_name
-
-
-class TestConfigurationTemplateTracking:
-    """Test configuration template name tracking behavior."""
-
-    def test_user_can_retrieve_template_name_after_successful_creation(
-        self, project_creator, mock_local_filesystem, default_settings
-    ) -> None:
-        """
-        User can retrieve the template name used for vehicle creation.
-
-        GIVEN: A user has successfully created a vehicle project from a template
-        WHEN: They request the configuration template name
-        THEN: They should receive the name of the template that was used
-        """
-        # Arrange: Successful vehicle creation
-        template_dir = "/templates/ArduCopter/QuadX_Template"
-        new_base_dir = "/vehicles"
-        new_vehicle_name = "MyQuad"
-        expected_template_name = "QuadX_Template"
-
-        with (
-            patch.object(LocalFilesystem, "directory_exists", return_value=True),
-            patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
-            patch.object(LocalFilesystem, "new_vehicle_dir", return_value="/vehicles/MyQuad"),
-            patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
-            patch.object(LocalFilesystem, "store_recently_used_vehicle_dir"),
-            patch.object(LocalFilesystem, "get_directory_name_from_full_path", return_value=expected_template_name),
-        ):
-            # Act: Create vehicle and get template name
-            project_creator.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, default_settings)
-            template_name = project_creator.get_configuration_template()
-
-            # Assert: Correct template name returned
-            assert template_name == expected_template_name
-
-    def test_template_name_is_empty_before_any_creation(self, project_creator) -> None:
-        """
-        Template name is empty before any vehicle creation.
-
-        GIVEN: A user has a fresh VehicleProjectCreator instance
-        WHEN: They request the configuration template name before creating any vehicle
-        THEN: They should receive an empty string
-        """
-        # Arrange: Fresh project creator
-        # Act: Get template name before any creation
-        template_name = project_creator.get_configuration_template()
-
-        # Assert: Empty template name
-        assert template_name == ""
-
-    def test_template_name_persists_across_multiple_operations(
-        self, project_creator, mock_local_filesystem, default_settings
-    ) -> None:
-        """
-        Template name persists and is updated correctly across multiple operations.
-
-        GIVEN: A user creates multiple vehicle projects with different templates
-        WHEN: They request the configuration template name after each creation
-        THEN: The name should reflect the most recent template used
-        """
-        # Arrange: Multiple template creations
-        first_template_dir = "/templates/ArduCopter/QuadX"
-        second_template_dir = "/templates/ArduCopter/Hexacopter"
-
-        with (
-            patch.object(LocalFilesystem, "directory_exists", return_value=True),
-            patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
-            patch.object(LocalFilesystem, "new_vehicle_dir", side_effect=["/vehicles/Quad1", "/vehicles/Hex1"]),
-            patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
-            patch.object(LocalFilesystem, "store_recently_used_vehicle_dir"),
-            patch.object(LocalFilesystem, "get_directory_name_from_full_path", side_effect=["QuadX", "Hexacopter"]),
-        ):
-            # Act: Create first vehicle
-            project_creator.create_new_vehicle_from_template(first_template_dir, "/vehicles", "Quad1", default_settings)
-            first_template_name = project_creator.get_configuration_template()
-
-            # Create second vehicle
-            project_creator.create_new_vehicle_from_template(second_template_dir, "/vehicles", "Hex1", default_settings)
-            second_template_name = project_creator.get_configuration_template()
-
-            # Assert: Template names reflect the respective creations
-            assert first_template_name == "QuadX"
-            assert second_template_name == "Hexacopter"

@@ -39,12 +39,12 @@ class NewVehicleProjectSettings:
     """Settings for creating a new vehicle project from a template."""
 
     # Configuration options
+    copy_vehicle_image: bool = False
     blank_component_data: bool = False
+    reset_fc_parameters_to_their_defaults: bool = False
     infer_comp_specs_and_conn_from_fc_params: bool = False
     use_fc_params: bool = False
     blank_change_reason: bool = False
-    copy_vehicle_image: bool = False
-    reset_fc_parameters_to_their_defaults: bool = False
 
     def validate_fc_dependent_settings(self, fc_connected: bool) -> None:
         """
@@ -74,7 +74,7 @@ class NewVehicleProjectSettings:
                 )
 
 
-class VehicleProjectCreator:
+class VehicleProjectCreator:  # pylint: disable=too-few-public-methods
     """Manages vehicle project creation operations."""
 
     def __init__(self, local_filesystem: LocalFilesystem) -> None:
@@ -86,9 +86,8 @@ class VehicleProjectCreator:
 
         """
         self.local_filesystem = local_filesystem
-        self.configuration_template: str = ""
 
-    def create_new_vehicle_from_template(
+    def create_new_vehicle_from_template(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         template_dir: str,
         new_base_dir: str,
@@ -160,9 +159,6 @@ class VehicleProjectCreator:
         LocalFilesystem.store_recently_used_template_dirs(template_dir, new_base_dir)
         LocalFilesystem.store_recently_used_vehicle_dir(new_vehicle_dir)
 
-        # Store the template name for reference
-        self.configuration_template = LocalFilesystem.get_directory_name_from_full_path(template_dir)
-
         return new_vehicle_dir
 
     def _validate_template_directory(self, template_dir: str) -> None:
@@ -208,13 +204,3 @@ class VehicleProjectCreator:
                     new_vehicle_name=new_vehicle_name
                 ),
             )
-
-    def get_configuration_template(self) -> str:
-        """
-        Get the name of the template used for the last created vehicle.
-
-        Returns:
-            The template name, or empty string if no template was used
-
-        """
-        return self.configuration_template
