@@ -29,6 +29,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
 # ==================== FIXTURES ====================
 
 
+# pylint: disable=duplicate-code
 @pytest.fixture
 def mock_local_filesystem() -> MagicMock:
     """Fixture providing a mock LocalFilesystem with realistic test data."""
@@ -47,6 +48,9 @@ def mock_local_filesystem() -> MagicMock:
     filesystem.re_init.return_value = None
 
     return filesystem
+
+
+# pylint: enable=duplicate-code
 
 
 @pytest.fixture

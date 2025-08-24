@@ -210,6 +210,20 @@ def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleDirecto
     vehicle_dir_window = VehicleDirectorySelectionWindow(state.vehicle_project_manager, fc_connected, state.vehicle_type)
     vehicle_dir_window.root.mainloop()
 
+    if (
+        state.vehicle_project_manager
+        and state.vehicle_project_manager.settings
+        and state.vehicle_project_manager.settings.reset_fc_parameters_to_their_defaults
+    ):
+        backup_fc_parameters(state)
+        success, error_msg = state.flight_controller.reset_all_parameters_to_default()
+        if not success:
+            logging_error(_("Failed to reset parameters to defaults: %(error)s"), {"error": error_msg})
+        state.flight_controller.reset_and_reconnect()
+        if state.flight_controller.master is not None or state.args.device == "test":
+            fciw = FlightControllerInfoWindow(state.flight_controller)
+            state.param_default_values = fciw.get_param_default_values()
+
     return vehicle_dir_window
 
 
