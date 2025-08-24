@@ -116,6 +116,8 @@ def test_window_creation(root: tk.Tk, mock_local_filesystem: MagicMock, monkeypa
         self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
         self.use_fc_params = tk.BooleanVar(value=False)
         self.blank_change_reason = tk.BooleanVar(value=False)
+        self.copy_vehicle_image = tk.BooleanVar(value=False)
+        self.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
         self.configuration_template = ""
         # Add a title to the window
         self.root.title("ArduPilot methodic configurator - Select vehicle configuration directory")
@@ -135,6 +137,8 @@ def test_window_creation(root: tk.Tk, mock_local_filesystem: MagicMock, monkeypa
                 assert window.infer_comp_specs_and_conn_from_fc_params.get() is False
                 assert window.use_fc_params.get() is False
                 assert window.blank_change_reason.get() is False
+                assert window.copy_vehicle_image.get() is False
+                assert window.reset_fc_parameters_to_their_defaults.get() is False
 
                 # Process events to ensure UI is updated
                 window.root.update()
@@ -159,6 +163,8 @@ def test_fc_connected_widgets_state(root: tk.Tk, mock_local_filesystem: MagicMoc
             self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
             self.use_fc_params = tk.BooleanVar(value=False)
             self.blank_change_reason = tk.BooleanVar(value=False)
+            self.copy_vehicle_image = tk.BooleanVar(value=False)
+            self.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
             self.configuration_template = ""
             # Set values based on fc_connected
             self.fc_connected = fc_connected
@@ -214,6 +220,7 @@ def test_create_new_vehicle_from_template_integration(
         self.use_fc_params = tk.BooleanVar(value=False)
         self.blank_change_reason = tk.BooleanVar(value=False)
         self.copy_vehicle_image = tk.BooleanVar(value=False)
+        self.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
         self.configuration_template = ""
 
     # Apply the patch
@@ -413,6 +420,8 @@ def test_directory_selection_error_handling(
         self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
         self.use_fc_params = tk.BooleanVar(value=False)
         self.blank_change_reason = tk.BooleanVar(value=False)
+        self.copy_vehicle_image = tk.BooleanVar(value=False)
+        self.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
         self.configuration_template = ""
 
     # Apply the patch

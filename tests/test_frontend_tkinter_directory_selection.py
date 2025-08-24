@@ -84,6 +84,7 @@ def window(
         window.use_fc_params = tk.BooleanVar(value=False)
         window.blank_change_reason = tk.BooleanVar(value=False)
         window.copy_vehicle_image = tk.BooleanVar(value=False)
+        window.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
         window.configuration_template = ""
         window.local_filesystem = mock_local_filesystem
 
@@ -485,11 +486,11 @@ def test_vehicle_directory_selection_widgets_on_select_directory_reinit_exceptio
 
                 # Mock messagebox.showerror
                 with patch("tkinter.messagebox.showerror") as mock_error:
-                    # Call the method and expect an exception
-                    with pytest.raises(SystemExit):
-                        widget.on_select_directory()
+                    # Call the method - it should return False due to the exception being caught
+                    result = widget.on_select_directory()
 
-                    # Verify error message
+                    # Verify result and error message
+                    assert result is False
                     mock_error.assert_called_once()
                     assert "Fatal error reading parameter files" in mock_error.call_args[0][0]
                     assert "Test error" in mock_error.call_args[0][1]
@@ -542,16 +543,16 @@ def test_vehicle_directory_selection_widgets_on_select_directory_no_files(
                 # Set a non-template directory path
                 widget.directory = "/valid/vehicle/dir"
 
-                # Mock show_no_param_files_error
-                with patch(
-                    "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_no_param_files_error"
-                ) as mock_show_error:
+                # Mock messagebox.showerror
+                with patch("tkinter.messagebox.showerror") as mock_error:
                     # Call the method
                     result = widget.on_select_directory()
 
-                    # Verify result and error shown
-                    assert result is True
-                    mock_show_error.assert_called_once_with("/valid/vehicle/dir")
+                    # Verify result and error shown - should return False and show error
+                    assert result is False
+                    mock_error.assert_called_once()
+                    assert "No parameter files found" in mock_error.call_args[0][0]
+                    assert "/valid/vehicle/dir" in mock_error.call_args[0][1]
 
 
 # ==== Tests for initialization and properties ====
@@ -1050,7 +1051,10 @@ def test_open_last_vehicle_directory_button(window: VehicleDirectorySelectionWin
     ],
 )
 def test_open_last_vehicle_directory_scenarios(
-    window: VehicleDirectorySelectionWindow, last_dir: str, has_files: bool, expected_destroy_called: bool
+    window: VehicleDirectorySelectionWindow,
+    last_dir: str,
+    has_files: bool,
+    expected_destroy_called: bool,  # noqa: ARG001
 ) -> None:
     """Test multiple scenarios for opening a last vehicle directory."""
     with patch.object(window.local_filesystem, "re_init"):
@@ -1062,24 +1066,20 @@ def test_open_last_vehicle_directory_scenarios(
 
         with patch.object(window.root, "destroy") as mock_destroy:
             if last_dir:
-                with patch(
-                    "ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_no_param_files_error"
-                ) as mock_show_error:
-                    # Call the method
+                if has_files:
+                    # Successful case
                     window.open_last_vehicle_directory(last_dir)
-
                     # Verify state changes
-                    if last_dir:
-                        assert window.local_filesystem.vehicle_dir == last_dir
-
+                    assert window.local_filesystem.vehicle_dir == last_dir
                     # Verify behavior
-                    if expected_destroy_called:
-                        mock_destroy.assert_called_once()
-                    else:
+                    mock_destroy.assert_called_once()
+                else:
+                    # Case with no files - should show error dialog
+                    with patch("tkinter.messagebox.showerror") as mock_error:
+                        window.open_last_vehicle_directory(last_dir)
+                        mock_error.assert_called_once()
+                        assert "No parameter files found" in mock_error.call_args[0][0]
                         mock_destroy.assert_not_called()
-
-                    if not has_files and last_dir:
-                        mock_show_error.assert_called_once_with(last_dir)
             else:
                 with patch("tkinter.messagebox.showerror") as mock_error:
                     # Call the method with empty path
@@ -1098,9 +1098,8 @@ def test_open_last_vehicle_directory_with_reinit_error(window: VehicleDirectoryS
     # Make re_init raise a SystemExit exception
     with patch.object(window.local_filesystem, "re_init", side_effect=SystemExit("Test error")):
         with patch("tkinter.messagebox.showerror") as mock_error:
-            # Expect the exception to be re-raised
-            with pytest.raises(SystemExit):
-                window.open_last_vehicle_directory(last_dir)
+            # The SystemExit should be caught and converted to VehicleProjectOpenError
+            window.open_last_vehicle_directory(last_dir)
 
             # Verify error dialog was shown
             mock_error.assert_called_once()
