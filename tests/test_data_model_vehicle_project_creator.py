@@ -24,6 +24,8 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     VehicleProjectCreator,
 )
 
+# pylint: disable=redefined-outer-name,unused-argument
+
 # ==================== FIXTURES ====================
 
 
