@@ -21,17 +21,17 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from sys import exit as sys_exit
 from tkinter import filedialog, messagebox, ttk
+from typing import Union
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
+from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     NewVehicleProjectSettings,
     VehicleProjectCreationError,
-    VehicleProjectCreator,
 )
-from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpener, VehicleProjectOpenError
+from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpenError
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_template_overview import TemplateOverviewWindow
@@ -48,7 +48,7 @@ class DirectorySelectionWidgets:  # pylint: disable=too-many-instance-attributes
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        parent: BaseWindow,
+        parent: Union[BaseWindow, "VehicleDirectorySelectionWindow"],
         parent_frame: tk.Widget,
         initialdir: str,
         label_text: str,
@@ -100,7 +100,10 @@ class DirectorySelectionWidgets:  # pylint: disable=too-many-instance-attributes
             if isinstance(self.parent.root, tk.Tk):  # this keeps mypy and pyright happy
                 to = TemplateOverviewWindow(self.parent.root, connected_fc_vehicle_type=self.connected_fc_vehicle_type)
                 to.run_app()
-            selected_directory = ProgramSettings.get_recently_used_dirs()[0]
+            if isinstance(self.parent, VehicleDirectorySelectionWindow):
+                selected_directory = self.parent.project_manager.get_recently_used_dirs()[0]
+            else:
+                selected_directory = ""
             logging_info(_("Selected template directory: %s"), selected_directory)
         else:
             title = _("Select {self.label_text}")
@@ -162,9 +165,8 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        parent: BaseWindow,
+        parent: Union[BaseWindow, "VehicleDirectorySelectionWindow"],
         parent_frame: ttk.Widget,
-        local_filesystem: LocalFilesystem,
         initial_dir: str,
         destroy_parent_on_open: bool,
         connected_fc_vehicle_type: str = "",
@@ -189,15 +191,14 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
             is_template_selection=False,
             connected_fc_vehicle_type=connected_fc_vehicle_type,
         )
-        self.local_filesystem = local_filesystem
         self.destroy_parent_on_open = destroy_parent_on_open
 
     def on_select_directory(self) -> bool:
         # Call the base class method to open the directory selection dialog
         if super().on_select_directory():
-            project_opener = VehicleProjectOpener(self.local_filesystem)
             try:
-                project_opener.open_vehicle_directory(self.directory)
+                if isinstance(self.parent, VehicleDirectorySelectionWindow):
+                    self.parent.project_manager.open_vehicle_directory(self.directory)
                 if self.destroy_parent_on_open:
                     self.parent.root.destroy()
                 return True
@@ -219,27 +220,26 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
     """
 
     def __init__(
-        self, local_filesystem: LocalFilesystem, fc_connected: bool = False, connected_fc_vehicle_type: str = ""
+        self, project_manager: VehicleProjectManager, fc_connected: bool = False, connected_fc_vehicle_type: str = ""
     ) -> None:
         super().__init__()
-        self.local_filesystem = local_filesystem
+        self.project_manager = project_manager
         self.connected_fc_vehicle_type = connected_fc_vehicle_type
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ")
             + __version__
             + _(" - Select vehicle configuration directory")
         )
-        self.root.geometry("800x655")  # Set the window size
+        self.root.geometry("800x675")  # Set the window size
+        self.copy_vehicle_image = tk.BooleanVar(value=False)
         self.blank_component_data = tk.BooleanVar(value=False)
+        self.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
         self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
         self.use_fc_params = tk.BooleanVar(value=False)
         self.blank_change_reason = tk.BooleanVar(value=False)
-        self.copy_vehicle_image = tk.BooleanVar(value=False)
-        self.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
-        self.configuration_template: str = ""  # will be set to a string if a template was used
 
         # Explain why we are here
-        if local_filesystem.vehicle_dir == LocalFilesystem.getcwd():
+        if self.project_manager.get_vehicle_directory() == self.project_manager.get_current_working_directory():
             introduction_text = _("No intermediate parameter files found\nin current working directory.")
         else:
             introduction_text = _("No intermediate parameter files found\nin the --vehicle-dir specified directory.")
@@ -250,7 +250,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
             text=introduction_text + _("\nChoose one of the following three options:"),
         )
         introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)
-        template_dir, new_base_dir, vehicle_dir = LocalFilesystem.get_recently_used_dirs()
+        template_dir, new_base_dir, vehicle_dir = self.project_manager.get_recently_used_dirs()
         logging_debug("template_dir: %s", template_dir)  # this string is intentionally left untranslated
         logging_debug("new_base_dir: %s", new_base_dir)  # this string is intentionally left untranslated
         logging_debug("vehicle_dir: %s", vehicle_dir)  # this string is intentionally left untranslated
@@ -296,6 +296,19 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
             connected_fc_vehicle_type=connected_fc_vehicle_type,
         )
         self.template_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
+        copy_vehicle_image_checkbox = ttk.Checkbutton(
+            option1_label_frame,
+            variable=self.copy_vehicle_image,
+            text=_("Copy vehicle image from template"),
+        )
+        copy_vehicle_image_checkbox.pack(anchor=tk.NW)
+        show_tooltip(
+            copy_vehicle_image_checkbox,
+            _(
+                "Copy the vehicle.jpg image file from the template directory to the new vehicle directory\n"
+                "if it exists. This image helps identify the vehicle configuration."
+            ),
+        )
         blank_component_data_checkbox = ttk.Checkbutton(
             option1_label_frame,
             variable=self.blank_component_data,
@@ -305,6 +318,22 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         show_tooltip(
             blank_component_data_checkbox,
             _("Create a new blank vehicle configuration, with no component data from the template."),
+        )
+        reset_fc_parameters_to_their_defaults_checkbox = ttk.Checkbutton(
+            option1_label_frame,
+            variable=self.reset_fc_parameters_to_their_defaults,
+            text=_(
+                "Reset flight controller parameters to their defaults. "
+                "WARNING: This will delete all parameters stored on the flight controller."
+            ),
+        )
+        reset_fc_parameters_to_their_defaults_checkbox.pack(anchor=tk.NW)
+        show_tooltip(
+            reset_fc_parameters_to_their_defaults_checkbox,
+            _(
+                "Reset the flight controller parameters to their default values when creating a new vehicle configuration.\n"
+                "Helps avoid issues caused by incorrect or incompatible parameter settings."
+            ),
         )
         infer_comp_specs_and_conn_from_fc_params_checkbox = ttk.Checkbutton(
             option1_label_frame,
@@ -348,40 +377,13 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
             blank_change_reason_checkbox,
             _("Do not use the parameters change reason from the template."),
         )
-        copy_vehicle_image_checkbox = ttk.Checkbutton(
-            option1_label_frame,
-            variable=self.copy_vehicle_image,
-            text=_("Copy vehicle image from template"),
-        )
-        copy_vehicle_image_checkbox.pack(anchor=tk.NW)
-        show_tooltip(
-            copy_vehicle_image_checkbox,
-            _(
-                "Copy the vehicle.jpg image file from the template directory to the new vehicle directory\n"
-                "if it exists. This image helps identify the vehicle configuration."
-            ),
-        )
-        reset_fc_parameters_to_their_defaults_checkbox = ttk.Checkbutton(
-            option1_label_frame,
-            variable=self.reset_fc_parameters_to_their_defaults,
-            text=_(
-                "Reset flight controller parameters to their defaults. "
-                "WARNING: This will delete all parameters stored on the flight controller."
-            ),
-        )
-        reset_fc_parameters_to_their_defaults_checkbox.pack(anchor=tk.NW)
-        show_tooltip(
-            reset_fc_parameters_to_their_defaults_checkbox,
-            _(
-                "Reset the flight controller parameters to their default values when creating a new vehicle configuration.\n"
-                "Helps avoid issues caused by incorrect or incompatible parameter settings."
-            ),
-        )
         if not fc_connected:
             self.infer_comp_specs_and_conn_from_fc_params.set(False)
             infer_comp_specs_and_conn_from_fc_params_checkbox.config(state=tk.DISABLED)
             self.use_fc_params.set(False)
             use_fc_params_checkbox.config(state=tk.DISABLED)
+            self.reset_fc_parameters_to_their_defaults.set(False)
+            reset_fc_parameters_to_their_defaults_checkbox.config(state=tk.DISABLED)
 
         new_base_dir_edit_tooltip = _("Existing directory where the new vehicle configuration directory will be created")
         new_base_dir_btn_tooltip = _("Select the directory where the new vehicle configuration directory will be created")
@@ -437,7 +439,6 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         self.connection_selection_widgets = VehicleDirectorySelectionWidgets(
             self,
             option2_label_frame,
-            self.local_filesystem,
             initial_dir,
             destroy_parent_on_open=True,
             connected_fc_vehicle_type=self.connected_fc_vehicle_type,
@@ -465,7 +466,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
 
         # Check if there is a last used vehicle configuration directory
         button_state = (
-            tk.NORMAL if last_vehicle_dir and self.local_filesystem.directory_exists(last_vehicle_dir) else tk.DISABLED
+            tk.NORMAL if last_vehicle_dir and self.project_manager.directory_exists(last_vehicle_dir) else tk.DISABLED
         )
         open_last_vehicle_directory_button = ttk.Button(
             option3_label_frame,
@@ -489,28 +490,25 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
 
         # Create settings object from GUI state
         settings = NewVehicleProjectSettings(
+            copy_vehicle_image=self.copy_vehicle_image.get(),
             blank_component_data=self.blank_component_data.get(),
+            reset_fc_parameters_to_their_defaults=self.reset_fc_parameters_to_their_defaults.get(),
             infer_comp_specs_and_conn_from_fc_params=self.infer_comp_specs_and_conn_from_fc_params.get(),
             use_fc_params=self.use_fc_params.get(),
             blank_change_reason=self.blank_change_reason.get(),
-            copy_vehicle_image=self.copy_vehicle_image.get(),
-            reset_fc_parameters_to_their_defaults=self.reset_fc_parameters_to_their_defaults.get(),
         )
 
         # Create the vehicle project
-        project_creator = VehicleProjectCreator(self.local_filesystem)
         try:
-            project_creator.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, settings)
-            self.configuration_template = LocalFilesystem.get_directory_name_from_full_path(template_dir)
+            self.project_manager.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, settings)
             self.root.destroy()
         except VehicleProjectCreationError as e:
             messagebox.showerror(e.title, e.message)
 
     def open_last_vehicle_directory(self, last_vehicle_dir: str) -> None:
         # Attempt to open the last opened vehicle configuration directory
-        project_opener = VehicleProjectOpener(self.local_filesystem)
         try:
-            project_opener.open_last_vehicle_directory(last_vehicle_dir)
+            self.project_manager.open_last_vehicle_directory(last_vehicle_dir)
             self.root.destroy()
         except VehicleProjectOpenError as e:
             messagebox.showerror(e.title, e.message)
@@ -554,13 +552,17 @@ def main() -> None:
         args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates
     )
 
+    # Create project manager with the local filesystem
+    project_manager = VehicleProjectManager(local_filesystem)
+
     # Get the list of intermediate parameter files files that will be processed sequentially
-    files = list(local_filesystem.file_parameters.keys())
+    files = list(project_manager.local_filesystem.file_parameters.keys())
 
     if not files:
         logging_error(_("No intermediate parameter files found in %s."), args.vehicle_dir)
-        window = VehicleDirectorySelectionWindow(local_filesystem)
-        window.root.mainloop()
+
+    window = VehicleDirectorySelectionWindow(project_manager)
+    window.root.mainloop()
 
 
 if __name__ == "__main__":

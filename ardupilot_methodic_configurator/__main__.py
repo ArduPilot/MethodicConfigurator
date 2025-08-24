@@ -37,6 +37,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller import FlightContr
 from ardupilot_methodic_configurator.backend_internet import verify_and_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_software_updates import UpdateManager, check_for_software_updates
+from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
@@ -54,7 +55,7 @@ class ApplicationState:  # pylint: disable=too-few-public-methods
         self.vehicle_type: str = ""
         self.param_default_values: dict = {}
         self.local_filesystem: LocalFilesystem = None  # type: ignore[assignment]
-        self.vehicle_dir_window: Union[VehicleDirectorySelectionWindow, None] = None
+        self.vehicle_project_manager: Union[VehicleProjectManager, None] = None
         self.param_default_values_dirty: bool = False
 
 
@@ -120,13 +121,12 @@ def check_updates(state: ApplicationState) -> bool:
 
 
 def display_first_use_documentation() -> None:
-    """Open documentation in browser if enabled in settings."""
-    if bool(ProgramSettings.get_setting("auto_open_doc_in_browser")):
-        url = (
-            "https://ardupilot.github.io/MethodicConfigurator/USECASES.html"
-            "#use-the-ardupilot-methodic-configurator-software-for-the-first-time"
-        )
-        webbrowser_open(url=url, new=0, autoraise=True)
+    """Open documentation in browser."""
+    url = (
+        "https://ardupilot.github.io/MethodicConfigurator/USECASES.html"
+        "#use-the-ardupilot-methodic-configurator-software-for-the-first-time"
+    )
+    webbrowser_open(url=url, new=0, autoraise=True)
 
 
 def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[FlightController, str]:
@@ -198,22 +198,19 @@ def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleDirecto
         VehicleDirectorySelectionWindow if selection was needed, None otherwise
 
     """
-    # Get the list of intermediate parameter files that will be processed sequentially
-    files = list(state.local_filesystem.file_parameters.keys()) if state.local_filesystem.file_parameters else []
-
-    if not files:
-        fc_connected = len(state.flight_controller.fc_parameters) > 0
-        if not state.vehicle_type:
-            logging_debug(
-                _(
-                    "Will present all vehicle templates for all vehicle types since no "
-                    "FC connected and no explicit vehicle type set on the command line"
-                )
+    state.vehicle_project_manager = VehicleProjectManager(state.local_filesystem, state.flight_controller)
+    fc_connected = len(state.flight_controller.fc_parameters) > 0
+    if not state.vehicle_type:
+        logging_debug(
+            _(
+                "Will present all vehicle templates for all vehicle types since no "
+                "FC connected and no explicit vehicle type set on the command line"
             )
-        state.vehicle_dir_window = VehicleDirectorySelectionWindow(state.local_filesystem, fc_connected, state.vehicle_type)
-        state.vehicle_dir_window.root.mainloop()
-        return state.vehicle_dir_window
-    return None
+        )
+    vehicle_dir_window = VehicleDirectorySelectionWindow(state.vehicle_project_manager, fc_connected, state.vehicle_type)
+    vehicle_dir_window.root.mainloop()
+
+    return vehicle_dir_window
 
 
 def create_and_configure_component_editor(
@@ -221,7 +218,7 @@ def create_and_configure_component_editor(
     local_filesystem: LocalFilesystem,
     flight_controller: FlightController,
     vehicle_type: str,
-    vehicle_dir_window: Union[None, VehicleDirectorySelectionWindow],
+    vehicle_project_manager: Union[None, VehicleProjectManager],
 ) -> ComponentEditorWindow:
     """
     Create and configure the component editor window.
@@ -231,7 +228,7 @@ def create_and_configure_component_editor(
         local_filesystem: Local filesystem instance
         flight_controller: Flight controller instance
         vehicle_type: Vehicle type string
-        vehicle_dir_window: Vehicle directory selection window if any
+        vehicle_project_manager: Vehicle project manager instance if any
 
     Returns:
         Configured ComponentEditorWindow instance
@@ -241,9 +238,9 @@ def create_and_configure_component_editor(
 
     # Infer component specifications from FC parameters if requested
     if (
-        vehicle_dir_window
-        and vehicle_dir_window.configuration_template
-        and vehicle_dir_window.infer_comp_specs_and_conn_from_fc_params.get()
+        vehicle_project_manager
+        and vehicle_project_manager.settings
+        and vehicle_project_manager.settings.infer_comp_specs_and_conn_from_fc_params
         and flight_controller.fc_parameters
     ):
         component_editor_window.set_values_from_fc_parameters(flight_controller.fc_parameters, local_filesystem.doc_dict)
@@ -256,8 +253,8 @@ def create_and_configure_component_editor(
     component_editor_window.set_mcu_series(flight_controller.info.mcu_series)
 
     # Set configuration template if available
-    if vehicle_dir_window and vehicle_dir_window.configuration_template:
-        component_editor_window.set_vehicle_configuration_template(vehicle_dir_window.configuration_template)
+    if vehicle_project_manager and vehicle_project_manager.configuration_template:
+        component_editor_window.set_vehicle_configuration_template(vehicle_project_manager.configuration_template)
 
     return component_editor_window
 
@@ -322,14 +319,14 @@ def component_editor(state: ApplicationState) -> None:
         state.local_filesystem,
         state.flight_controller,
         state.local_filesystem.vehicle_type,
-        state.vehicle_dir_window,
+        state.vehicle_project_manager,
     )
 
     # Handle skip component editor option
     should_skip_editor = state.args.skip_component_editor and not (
-        state.vehicle_dir_window
-        and state.vehicle_dir_window.configuration_template
-        and state.vehicle_dir_window.blank_component_data.get()
+        state.vehicle_project_manager
+        and state.vehicle_project_manager.settings
+        and state.vehicle_project_manager.settings.blank_component_data
     )
     if should_skip_editor:
         component_editor_window.root.after(10, component_editor_window.root.destroy)
@@ -343,7 +340,7 @@ def component_editor(state: ApplicationState) -> None:
 def process_component_editor_results(
     flight_controller: FlightController,
     local_filesystem: LocalFilesystem,
-    vehicle_dir_window: Union[None, VehicleDirectorySelectionWindow],
+    vehicle_project_manager: Union[None, VehicleProjectManager],
 ) -> None:
     """
     Process the results after component editor completion.
@@ -351,7 +348,7 @@ def process_component_editor_results(
     Args:
         flight_controller: Flight controller instance
         local_filesystem: Local filesystem instance
-        vehicle_dir_window: Vehicle directory selection window if any
+        vehicle_project_manager: Vehicle directory selection window if any
 
     Raises:
         SystemExit: If there's an error in derived parameters
@@ -359,7 +356,7 @@ def process_component_editor_results(
     """
     # Determine parameter source
     source_param_values: Union[dict[str, float], None] = None
-    if vehicle_dir_window and vehicle_dir_window.configuration_template and vehicle_dir_window.use_fc_params.get():
+    if vehicle_project_manager and vehicle_project_manager.settings and vehicle_project_manager.settings.use_fc_params:
         source_param_values = flight_controller.fc_parameters
 
     # Get existing FC parameters for reference
@@ -380,16 +377,15 @@ def process_component_editor_results(
         sys_exit(1)
 
 
-def write_parameter_defaults_if_dirty(state: ApplicationState) -> None:
+def write_parameter_defaults(state: ApplicationState) -> None:
     """
-    Write parameter default values to file if they have been modified.
+    Write parameter default values to file.
 
     Args:
-        state: Application state containing filesystem, parameters, and dirty flag
+        state: Application state containing filesystem, parameter
 
     """
-    if state.param_default_values_dirty:
-        state.local_filesystem.write_param_default_values_to_file(state.param_default_values)
+    state.local_filesystem.write_param_default_values_to_file(state.param_default_values)
 
 
 def backup_fc_parameters(state: ApplicationState) -> None:
@@ -497,21 +493,27 @@ def main() -> None:
     if check_updates(state):
         sys_exit(0)  # user asked to update, exit the old version
 
-    display_first_use_documentation()
+    if bool(ProgramSettings.get_setting("auto_open_doc_in_browser")):
+        display_first_use_documentation()
 
     initialize_flight_controller_and_filesystem(state)
 
-    # Handle vehicle directory selection if needed
-    vehicle_directory_selection(state)
+    # Get the list of intermediate parameter files that will be processed sequentially
+    files = list(state.local_filesystem.file_parameters.keys()) if state.local_filesystem.file_parameters else []
+
+    # Handle vehicle directory selection if no vehicle configuration files are present in the current working directory
+    if not files:
+        vehicle_directory_selection(state)
 
     # Run component editor workflow
     component_editor(state)
 
     # Process results after component editor GUI closes
-    process_component_editor_results(state.flight_controller, state.local_filesystem, state.vehicle_dir_window)
+    process_component_editor_results(state.flight_controller, state.local_filesystem, state.vehicle_project_manager)
 
-    # Write parameter default values to file if dirty
-    write_parameter_defaults_if_dirty(state)
+    # Write parameter default values to file if they have been modified
+    if state.param_default_values_dirty:
+        write_parameter_defaults(state)
 
     # Create parameter backups
     backup_fc_parameters(state)
