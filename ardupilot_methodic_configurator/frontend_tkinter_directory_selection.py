@@ -26,8 +26,14 @@ from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
+from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
+    NewVehicleProjectSettings,
+    VehicleProjectCreationError,
+    VehicleProjectCreator,
+)
+from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpener, VehicleProjectOpenError
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
-from ardupilot_methodic_configurator.frontend_tkinter_show import show_no_param_files_error, show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_template_overview import TemplateOverviewWindow
 
 
@@ -189,39 +195,15 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
     def on_select_directory(self) -> bool:
         # Call the base class method to open the directory selection dialog
         if super().on_select_directory():
-            if "vehicle_templates" in self.directory and not self.local_filesystem.allow_editing_template_files:
-                messagebox.showerror(
-                    _("Invalid Vehicle Directory Selected"),
-                    _(
-                        "Please do not edit the files provided 'vehicle_templates' directory\n"
-                        "as those are used as a template for new vehicles"
-                    ),
-                )
-                return False
-            self.local_filesystem.vehicle_dir = self.directory
-
-            if not self.local_filesystem.vehicle_configuration_files_exist(self.directory):
-                _filename = self.local_filesystem.vehicle_components_fs.json_filename
-                error_msg = _("Selected directory must contain files matching \\d\\d_*\\.param and a {_filename} file")
-                messagebox.showerror(_("Invalid Vehicle Directory Selected"), error_msg.format(**locals()))
-                return False
-
+            project_opener = VehicleProjectOpener(self.local_filesystem)
             try:
-                self.local_filesystem.re_init(self.directory, self.local_filesystem.vehicle_type)
-            except SystemExit as exp:
-                messagebox.showerror(_("Fatal error reading parameter files"), f"{exp}")
-                raise
-
-            if self.local_filesystem.file_parameters:
-                files = list(self.local_filesystem.file_parameters.keys())
-                if files:
-                    LocalFilesystem.store_recently_used_vehicle_dir(self.directory)
-                    if self.destroy_parent_on_open:
-                        self.parent.root.destroy()
-                    return True
-            # No files were found in the selected directory
-            show_no_param_files_error(self.directory)
-            return True
+                project_opener.open_vehicle_directory(self.directory)
+                if self.destroy_parent_on_open:
+                    self.parent.root.destroy()
+                return True
+            except VehicleProjectOpenError as e:
+                messagebox.showerror(e.title, e.message)
+                return False
         return False
 
 
@@ -253,6 +235,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         self.use_fc_params = tk.BooleanVar(value=False)
         self.blank_change_reason = tk.BooleanVar(value=False)
         self.copy_vehicle_image = tk.BooleanVar(value=False)
+        self.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
         self.configuration_template: str = ""  # will be set to a string if a template was used
 
         # Explain why we are here
@@ -378,6 +361,22 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
                 "if it exists. This image helps identify the vehicle configuration."
             ),
         )
+        reset_fc_parameters_to_their_defaults_checkbox = ttk.Checkbutton(
+            option1_label_frame,
+            variable=self.reset_fc_parameters_to_their_defaults,
+            text=_(
+                "Reset flight controller parameters to their defaults. "
+                "WARNING: This will delete all parameters stored on the flight controller."
+            ),
+        )
+        reset_fc_parameters_to_their_defaults_checkbox.pack(anchor=tk.NW)
+        show_tooltip(
+            reset_fc_parameters_to_their_defaults_checkbox,
+            _(
+                "Reset the flight controller parameters to their default values when creating a new vehicle configuration.\n"
+                "Helps avoid issues caused by incorrect or incompatible parameter settings."
+            ),
+        )
         if not fc_connected:
             self.infer_comp_specs_and_conn_from_fc_params.set(False)
             infer_comp_specs_and_conn_from_fc_params_checkbox.config(state=tk.DISABLED)
@@ -488,86 +487,33 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         new_base_dir = self.new_base_dir.get_selected_directory()
         new_vehicle_name = self.new_dir.get_selected_directory()
 
-        if template_dir == "":
-            messagebox.showerror(_("Vehicle template directory"), _("Vehicle template directory must not be empty"))
-            return
-        if not LocalFilesystem.directory_exists(template_dir):
-            msg = _("Vehicle template directory {template_dir} does not exist").format(template_dir=template_dir)
-            logging_error(msg)
-            messagebox.showerror(_("Vehicle template directory"), msg)
-            return
-
-        if new_vehicle_name == "":
-            messagebox.showerror(_("New vehicle directory"), _("New vehicle name must not be empty"))
-            return
-        if not LocalFilesystem.valid_directory_name(new_vehicle_name):
-            msg = _("New vehicle name {new_vehicle_name} must not contain invalid characters").format(
-                new_vehicle_name=new_vehicle_name
-            )
-            logging_error(msg)
-            messagebox.showerror(_("New vehicle directory"), msg)
-            return
-        new_vehicle_dir = LocalFilesystem.new_vehicle_dir(new_base_dir, new_vehicle_name)
-
-        error_msg = self.local_filesystem.create_new_vehicle_dir(new_vehicle_dir)
-        if error_msg:
-            messagebox.showerror(_("New vehicle directory"), error_msg)
-            return
-
-        error_msg = self.local_filesystem.copy_template_files_to_new_vehicle_dir(
-            template_dir,
-            new_vehicle_dir,
+        # Create settings object from GUI state
+        settings = NewVehicleProjectSettings(
+            blank_component_data=self.blank_component_data.get(),
+            infer_comp_specs_and_conn_from_fc_params=self.infer_comp_specs_and_conn_from_fc_params.get(),
+            use_fc_params=self.use_fc_params.get(),
             blank_change_reason=self.blank_change_reason.get(),
             copy_vehicle_image=self.copy_vehicle_image.get(),
+            reset_fc_parameters_to_their_defaults=self.reset_fc_parameters_to_their_defaults.get(),
         )
-        if error_msg:
-            messagebox.showerror(_("Copying template files"), error_msg)
-            return
 
-        # Update the local_filesystem with the new vehicle configuration directory
-        self.local_filesystem.vehicle_dir = new_vehicle_dir
-
+        # Create the vehicle project
+        project_creator = VehicleProjectCreator(self.local_filesystem)
         try:
-            self.local_filesystem.re_init(new_vehicle_dir, self.local_filesystem.vehicle_type, self.blank_component_data.get())
-        except SystemExit as exp:
-            messagebox.showerror(_("Fatal error reading parameter files"), f"{exp}")
-            raise
-
-        files = list(self.local_filesystem.file_parameters.keys())
-        if files:
-            LocalFilesystem.store_recently_used_template_dirs(template_dir, new_base_dir)
-            LocalFilesystem.store_recently_used_vehicle_dir(new_vehicle_dir)
+            project_creator.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, settings)
+            self.configuration_template = LocalFilesystem.get_directory_name_from_full_path(template_dir)
             self.root.destroy()
-        else:
-            show_no_param_files_error(template_dir)
-        self.configuration_template = LocalFilesystem.get_directory_name_from_full_path(template_dir)
+        except VehicleProjectCreationError as e:
+            messagebox.showerror(e.title, e.message)
 
     def open_last_vehicle_directory(self, last_vehicle_dir: str) -> None:
         # Attempt to open the last opened vehicle configuration directory
-        if last_vehicle_dir:
-            # If a last opened directory is found, proceed as if the user had manually selected it
-            self.local_filesystem.vehicle_dir = last_vehicle_dir
-
-            try:
-                self.local_filesystem.re_init(last_vehicle_dir, self.local_filesystem.vehicle_type)
-            except SystemExit as exp:
-                messagebox.showerror(_("Fatal error reading parameter files"), f"{exp}")
-                raise
-
-            if self.local_filesystem.file_parameters:
-                files = list(self.local_filesystem.file_parameters.keys())
-                if files:
-                    self.root.destroy()
-                else:
-                    show_no_param_files_error(last_vehicle_dir)
-            else:
-                show_no_param_files_error(last_vehicle_dir)
-        else:
-            # If no last opened directory is found, display a message to the user
-            messagebox.showerror(
-                _("No Last Vehicle Directory Found"),
-                _("No last opened vehicle configuration directory was found.\nPlease select a directory manually."),
-            )
+        project_opener = VehicleProjectOpener(self.local_filesystem)
+        try:
+            project_opener.open_last_vehicle_directory(last_vehicle_dir)
+            self.root.destroy()
+        except VehicleProjectOpenError as e:
+            messagebox.showerror(e.title, e.message)
 
 
 def argument_parser() -> Namespace:

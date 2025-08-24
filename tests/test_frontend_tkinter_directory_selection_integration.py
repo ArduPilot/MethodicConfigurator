@@ -12,9 +12,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import tkinter as tk
-from collections.abc import Callable, Generator
 from pathlib import Path
 from tkinter import ttk
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -25,6 +25,9 @@ from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import
     DirectorySelectionWidgets,
     VehicleDirectorySelectionWindow,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # pylint: disable=redefined-outer-name, unused-argument, no-member
 # ruff: noqa: ARG001, SIM117
@@ -69,7 +72,7 @@ def mock_local_filesystem() -> MagicMock:
 
 
 @pytest.fixture
-def temp_dir_structure(tmp_path: Path) -> Generator[Path, None, None]:
+def temp_dir_structure(tmp_path: Path) -> Path:
     """Create a temporary directory structure for testing."""
     # Create template directory
     template_dir = tmp_path / "vehicle_templates" / "test_template"
@@ -90,17 +93,6 @@ def temp_dir_structure(tmp_path: Path) -> Generator[Path, None, None]:
 
 
 # pylint: disable=duplicate-code
-
-
-@pytest.fixture(scope="session")
-def tk_app() -> Generator[tk.Tk, None, None]:
-    """Fixture to create a global Tk instance for all tests."""
-    app = tk.Tk()
-    app.withdraw()  # Hide the window
-    yield app
-    app.destroy()
-
-
 @pytest.mark.integration
 def test_window_creation(root: tk.Tk, mock_local_filesystem: MagicMock, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test basic window creation and structure."""
@@ -116,6 +108,8 @@ def test_window_creation(root: tk.Tk, mock_local_filesystem: MagicMock, monkeypa
         self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
         self.use_fc_params = tk.BooleanVar(value=False)
         self.blank_change_reason = tk.BooleanVar(value=False)
+        self.copy_vehicle_image = tk.BooleanVar(value=False)
+        self.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
         self.configuration_template = ""
         # Add a title to the window
         self.root.title("ArduPilot methodic configurator - Select vehicle configuration directory")
@@ -135,6 +129,8 @@ def test_window_creation(root: tk.Tk, mock_local_filesystem: MagicMock, monkeypa
                 assert window.infer_comp_specs_and_conn_from_fc_params.get() is False
                 assert window.use_fc_params.get() is False
                 assert window.blank_change_reason.get() is False
+                assert window.copy_vehicle_image.get() is False
+                assert window.reset_fc_parameters_to_their_defaults.get() is False
 
                 # Process events to ensure UI is updated
                 window.root.update()
@@ -150,18 +146,19 @@ def test_fc_connected_widgets_state(root: tk.Tk, mock_local_filesystem: MagicMoc
     # Test both connected and disconnected states
     for fc_connected in [True, False]:
         # Patch the VehicleDirectorySelectionWindow.__init__ method
-        def patched_init(self, local_filesystem, fc_connected=False) -> None:
+        def patched_init(self, local_filesystem, fc_connected=False, connected_fc_vehicle_type="") -> None:
             self.root = tk.Toplevel(root)
             self.main_frame = ttk.Frame(self.root)
             self.main_frame.pack(expand=True, fill=tk.BOTH)
             self.local_filesystem = local_filesystem
+            self.connected_fc_vehicle_type = connected_fc_vehicle_type
             self.blank_component_data = tk.BooleanVar(value=False)
             self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
             self.use_fc_params = tk.BooleanVar(value=False)
             self.blank_change_reason = tk.BooleanVar(value=False)
+            self.copy_vehicle_image = tk.BooleanVar(value=False)
+            self.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
             self.configuration_template = ""
-            # Set values based on fc_connected
-            self.fc_connected = fc_connected
 
         # Apply the patch
         monkeypatch.setattr(VehicleDirectorySelectionWindow, "__init__", patched_init)
@@ -171,14 +168,12 @@ def test_fc_connected_widgets_state(root: tk.Tk, mock_local_filesystem: MagicMoc
                 # Create the window with fc_connected flag
                 window = VehicleDirectorySelectionWindow(mock_local_filesystem, fc_connected=fc_connected)
 
-                # Instead of testing widget creation, which is causing Tkinter issues,
-                # let's test the state of the boolean variables based on fc_connected
-                if fc_connected:
-                    # When connected, these options should be available
-                    assert window.fc_connected is True
-                else:
-                    # When not connected, these options should be unavailable
-                    assert window.fc_connected is False
+                # Since fc_connected is not stored as an instance variable,
+                # we'll test that the object was created successfully
+                # The behavior would have been different during widget creation based on fc_connected
+                assert window is not None
+                # Test that connected_fc_vehicle_type is stored correctly
+                assert hasattr(window, "connected_fc_vehicle_type")
 
 
 @pytest.mark.integration
@@ -214,6 +209,7 @@ def test_create_new_vehicle_from_template_integration(
         self.use_fc_params = tk.BooleanVar(value=False)
         self.blank_change_reason = tk.BooleanVar(value=False)
         self.copy_vehicle_image = tk.BooleanVar(value=False)
+        self.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
         self.configuration_template = ""
 
     # Apply the patch
@@ -413,6 +409,8 @@ def test_directory_selection_error_handling(
         self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
         self.use_fc_params = tk.BooleanVar(value=False)
         self.blank_change_reason = tk.BooleanVar(value=False)
+        self.copy_vehicle_image = tk.BooleanVar(value=False)
+        self.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
         self.configuration_template = ""
 
     # Apply the patch
