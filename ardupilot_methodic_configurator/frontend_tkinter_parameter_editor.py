@@ -213,7 +213,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         directory_selection_frame = VehicleDirectorySelectionWidgets(
             self,
             config_subframe,
-            self.local_filesystem,
             self.local_filesystem.vehicle_dir,
             destroy_parent_on_open=False,
             connected_fc_vehicle_type=connected_vehicle_type,

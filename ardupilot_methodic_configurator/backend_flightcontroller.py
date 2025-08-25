@@ -270,6 +270,101 @@ class FlightController:
                 0,
             )
 
+    def _send_command_and_wait_ack(
+        self,
+        command: int,
+        param1: float = 0,
+        param2: float = 0,
+        param3: float = 0,
+        param4: float = 0,
+        param5: float = 0,
+        param6: float = 0,
+        param7: float = 0,
+        timeout: float = 5.0,
+    ) -> tuple[bool, str]:
+        """
+        Send a MAVLink command and wait for acknowledgment.
+
+        Args:
+            command: The MAVLink command ID
+            param1: Command parameter 1
+            param2: Command parameter 2
+            param3: Command parameter 3
+            param4: Command parameter 4
+            param5: Command parameter 5
+            param6: Command parameter 6
+            param7: Command parameter 7
+            timeout: Timeout in seconds to wait for acknowledgment
+
+        Returns:
+            tuple[bool, str]: (success, error_message) - success is True if command was acknowledged successfully,
+                             error_message is empty string on success or contains error description on failure
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for command")
+            logging_error(error_msg)
+            return False, error_msg
+
+        try:
+            # Send the command
+            self.master.mav.command_long_send(
+                self.master.target_system,
+                self.master.target_component,
+                command,
+                0,  # confirmation
+                param1,
+                param2,
+                param3,
+                param4,
+                param5,
+                param6,
+                param7,
+            )
+
+            # Wait for acknowledgment
+            start_time = time_time()
+            while time_time() - start_time < timeout:
+                msg = self.master.recv_match(type="COMMAND_ACK", blocking=False)
+                if msg and msg.command == command:
+                    # Map result codes to error messages
+                    result_messages = {
+                        mavutil.mavlink.MAV_RESULT_ACCEPTED: ("", True),
+                        mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED: (_("Command temporarily rejected"), False),
+                        mavutil.mavlink.MAV_RESULT_DENIED: (_("Command denied"), False),
+                        mavutil.mavlink.MAV_RESULT_UNSUPPORTED: (_("Command unsupported"), False),
+                        mavutil.mavlink.MAV_RESULT_FAILED: (_("Command failed"), False),
+                    }
+
+                    if msg.result in result_messages:
+                        error_msg, success = result_messages[msg.result]
+                        if not success:
+                            logging_error(error_msg)
+                        return success, error_msg
+
+                    if msg.result == mavutil.mavlink.MAV_RESULT_IN_PROGRESS:
+                        # Command is still in progress, continue waiting
+                        if msg.progress is not None and msg.progress > 0:
+                            logging_debug(_("Command in progress: %(progress)d%%"), {"progress": msg.progress})
+                        continue
+
+                    # Unknown result code
+                    error_msg = _("Command acknowledgment with unknown result: %(result)d") % {"result": msg.result}
+                    logging_error(error_msg)
+                    return False, error_msg
+
+                time_sleep(0.1)  # Sleep briefly to reduce CPU usage
+
+            # Timeout occurred
+            error_msg = _("Command acknowledgment timeout after %(timeout).1f seconds") % {"timeout": timeout}
+            logging_error(error_msg)
+            return False, error_msg
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            error_msg = _("Failed to send command: %(error)s") % {"error": str(e)}
+            logging_error(error_msg)
+            return False, error_msg
+
     def __create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         progress_callback: Union[None, Callable[[int, int], None]],
@@ -534,6 +629,52 @@ class FlightController:
             return
         self.master.param_set_send(param_name, param_value)
 
+    def reset_all_parameters_to_default(self) -> tuple[bool, str]:
+        """
+        Reset all parameters to their factory default values.
+
+        This function sends a MAV_CMD_PREFLIGHT_STORAGE command to reset all parameters
+        to their factory defaults and waits for acknowledgment from the flight controller.
+        The flight controller will need to be rebooted after this operation to apply the changes.
+
+        Returns:
+            tuple[bool, str]: (success, error_message) - success is True if command was acknowledged successfully,
+                             error_message is empty string on success or contains error description on failure
+
+        Note:
+            After calling this method, the flight controller should be rebooted to
+            apply the parameter reset. The reset operation will take effect only
+            after the reboot.
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for parameter reset")
+            logging_warning(error_msg)
+            return False, error_msg
+
+        # MAV_CMD_PREFLIGHT_STORAGE command
+        # https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_STORAGE
+        # param2 = 1: Reset all parameters to default
+        success, error_msg = self._send_command_and_wait_ack(
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_STORAGE,
+            param1=0,  # Storage action (not used for reset)
+            param2=1,  # Parameter reset (1 = reset all to defaults)
+            param3=0,  # Mission reset (not used)
+            param4=0,  # unused
+            param5=0,  # unused
+            param6=0,  # unused
+            param7=0,  # unused
+            timeout=10.0,  # Give more time for parameter reset
+        )
+
+        if success:
+            logging_info(_("Parameter reset to defaults command confirmed by flight controller"))
+        else:
+            error_msg = _("Parameter reset command failed: %(error)s") % {"error": error_msg}
+            logging_error(error_msg)
+
+        return success, error_msg
+
     def reset_and_reconnect(
         self,
         reset_progress_callback: Union[None, Callable[[int, int], None]] = None,
@@ -601,7 +742,7 @@ class FlightController:
             timeout_seconds: Test duration in seconds
 
         Returns:
-            tuple[bool, str]: (success, error_message) - success is True if command was sent successfully,
+            tuple[bool, str]: (success, error_message) - success is True if command was acknowledged successfully,
                              error_message is empty string on success or contains error description on failure
 
         """
@@ -610,36 +751,33 @@ class FlightController:
             logging_error(error_msg)
             return False, error_msg
 
-        try:
-            # MAV_CMD_DO_MOTOR_TEST command
-            # https://mavlink.io/en/messages/common.html#MAV_CMD_DO_MOTOR_TEST
-            self.master.mav.command_long_send(
-                self.master.target_system,
-                self.master.target_component,
-                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
-                0,  # confirmation
-                motor_number,  # param1: motor number
-                mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # param2: throttle type
-                throttle_percent,  # param3: throttle value
-                timeout_seconds,  # param4: timeout
-                motor_number,  # param5: motor count (same as motor number for single motor test)
-                mavutil.mavlink.MOTOR_TEST_ORDER_BOARD,  # param6: test order
-                0,  # param7: unused
-            )
+        # MAV_CMD_DO_MOTOR_TEST command
+        # https://mavlink.io/en/messages/common.html#MAV_CMD_DO_MOTOR_TEST
+        success, error_msg = self._send_command_and_wait_ack(
+            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+            param1=motor_number,  # motor number
+            param2=mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # throttle type
+            param3=throttle_percent,  # throttle value
+            param4=timeout_seconds,  # timeout
+            param5=motor_number,  # motor count (same as motor number for single motor test)
+            param6=mavutil.mavlink.MOTOR_TEST_ORDER_BOARD,  # test order
+            param7=0,  # unused
+        )
+
+        if success:
             logging_info(
-                _("Motor test command sent: Motor %(motor)d at %(throttle)d%% for %(duration)d seconds"),
+                _("Motor test command confirmed: Motor %(motor)d at %(throttle)d%% for %(duration)d seconds"),
                 {
                     "motor": motor_number,
                     "throttle": throttle_percent,
                     "duration": timeout_seconds,
                 },
             )
-            return True, ""
-
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            error_msg = _("Failed to send motor test command: %(error)s") % {"error": str(e)}
+        else:
+            error_msg = _("Motor test command failed: %(error)s") % {"error": error_msg}
             logging_error(error_msg)
-            return False, error_msg
+
+        return success, error_msg
 
     def test_all_motors(self, throttle_percent: int, timeout_seconds: int) -> tuple[bool, str]:
         """
@@ -650,7 +788,7 @@ class FlightController:
             timeout_seconds: Test duration in seconds
 
         Returns:
-            tuple[bool, str]: (success, error_message) - success is True if command was sent successfully,
+            tuple[bool, str]: (success, error_message) - success is True if command was acknowledged successfully,
                              error_message is empty string on success or contains error description on failure
 
         """
@@ -659,27 +797,31 @@ class FlightController:
             logging_error(error_msg)
             return False, error_msg
 
-        try:
-            # MAV_CMD_DO_MOTOR_TEST command for all motors
-            self.master.mav.command_long_send(
-                self.master.target_system,
-                self.master.target_component,
-                mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
-                0,  # confirmation
-                0,  # param1: motor count (all motors)
-                mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # param2: throttle type
-                throttle_percent,  # param3: throttle value
-                timeout_seconds,  # param4: timeout
-                0,  # param5: motor count
-                mavutil.mavlink.MOTOR_TEST_ORDER_BOARD,  # param6: test order
-                0,  # param7: unused
-            )
+        # MAV_CMD_DO_MOTOR_TEST command for all motors
+        success, error_msg = self._send_command_and_wait_ack(
+            mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
+            param1=0,  # motor count (all motors)
+            param2=mavutil.mavlink.MOTOR_TEST_THROTTLE_PERCENT,  # throttle type
+            param3=throttle_percent,  # throttle value
+            param4=timeout_seconds,  # timeout
+            param5=0,  # motor count
+            param6=mavutil.mavlink.MOTOR_TEST_ORDER_BOARD,  # test order
+            param7=0,  # unused
+        )
+
+        if success:
             logging_info(
-                _("All motors test command sent at %(throttle)d%% for %(duration)d seconds"),
+                _("All motors test command confirmed at %(throttle)d%% for %(duration)d seconds"),
                 {
                     "throttle": throttle_percent,
                     "duration": timeout_seconds,
                 },
+            )
+        else:
+            error_msg = _("All motors test command failed: %(error)s") % {"error": error_msg}
+            logging_error(error_msg)
+
+        return success, error_msg
             )
             return True, ""
 

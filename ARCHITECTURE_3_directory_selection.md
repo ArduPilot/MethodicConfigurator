@@ -7,6 +7,10 @@ configuration project or open an existing one. It manages the selection and crea
 handles template selection, and downloads parameter documentation metadata corresponding to the flight
 controller firmware version to the project directory.
 
+The architecture follows a clean layered design with dependency injection, where the frontend components
+depend on the VehicleProjectManager factory/container class, which provides a unified interface to all
+backend services. This ensures loose coupling and better testability.
+
 ## Requirements
 
 ### Functional Requirements
@@ -74,7 +78,33 @@ controller firmware version to the project directory.
 
 ## Architecture
 
+### Architectural Pattern
+
+The directory selection sub-application follows a **Factory/Container Pattern** with **Dependency Injection**:
+
+- **Frontend Layer**: GUI components (`VehicleDirectorySelectionWindow`, `DirectorySelectionWidgets`)
+- **Facade Layer**: `VehicleProjectManager` - provides unified interface to all backend services
+- **Backend Layer**: Specialized services (`LocalFilesystem`, project creators, openers, etc.)
+
+This architecture ensures:
+
+- **Separation of Concerns**: Each layer has distinct responsibilities
+- **Dependency Inversion**: Frontend depends on abstractions, not concrete implementations
+- **Testability**: Easy to mock dependencies for unit testing
+- **Maintainability**: Changes to backend services don't affect frontend code
+
 ### Components
+
+#### VehicleProjectManager (Facade/Factory)
+
+- **File**: `data_model_vehicle_project.py`
+- **Purpose**: Unified interface and factory for all vehicle project operations
+- **Responsibilities**:
+  - Coordinate between frontend and backend services
+  - Provide high-level operations for project creation and opening
+  - Manage project lifecycle and state transitions
+  - Abstract backend complexity from frontend components
+  - Implement factory pattern for creating project-related objects
 
 #### Directory Selection Interface
 
@@ -82,9 +112,12 @@ controller firmware version to the project directory.
 - **Purpose**: Main interface for vehicle directory selection and management
 - **Responsibilities**:
   - Present directory selection options (New, Open, Re-open)
-  - Handle directory creation and validation
-  - Manage recent directory history
-  - Integrate with template selection system
+  - Handle user interactions and input validation
+  - Delegate business logic to VehicleProjectManager
+  - Manage UI state and user feedback
+- **Dependencies**: Depends only on VehicleProjectManager interface
+
+#### Backend Services (accessed via VehicleProjectManager)
 
 #### Template Overview Interface
 
@@ -95,6 +128,29 @@ controller firmware version to the project directory.
   - Show template details and compatibility information
   - Handle template selection and preview
   - Provide template comparison features
+- **Dependencies**: Accesses templates through VehicleProjectManager interface
+
+#### Project Creation Services
+
+- **File**: `data_model_vehicle_project_creator.py`
+- **Purpose**: Handle creation of new vehicle projects from templates
+- **Responsibilities**:
+  - Template copying and customization
+  - Project directory initialization
+  - Configuration file setup
+  - Project metadata creation
+- **Access**: Through VehicleProjectManager factory methods
+
+#### Project Opening Services
+
+- **File**: `data_model_vehicle_project_opener.py`
+- **Purpose**: Handle opening and validation of existing vehicle projects
+- **Responsibilities**:
+  - Project directory validation
+  - Configuration file loading
+  - Project state reconstruction
+  - Error handling for corrupted projects
+- **Access**: Through VehicleProjectManager factory methods
 
 #### Configuration Steps Backend
 
@@ -118,40 +174,66 @@ controller firmware version to the project directory.
 
 ### Data Flow
 
-1. **Application Start**
-   - Load available templates from template directories
-   - Scan for existing vehicle directories
-   - Initialize recent directory history
-   - Prepare template metadata
+The data flow follows the layered architecture pattern with clear separation of concerns:
 
-2. **New Project Creation**
-   - User selects "New" option
-   - Template overview interface displays available options
-   - User selects appropriate template for their vehicle
-   - User specifies destination directory and project name
-   - Template files are copied to new directory
-   - Project configuration is initialized
+1. **Application Initialization**
+   - VehicleProjectManager is instantiated with required backend services
+   - Frontend components receive VehicleProjectManager instance via dependency injection
+   - Recent directories and templates are loaded through VehicleProjectManager
+   - UI components are initialized with project manager reference
 
-3. **Existing Project Opening**
-   - User selects "Open" option
-   - File browser allows directory selection
-   - Directory structure is validated
-   - Required files are checked for existence and integrity
-   - Project configuration is loaded
+2. **New Project Creation Flow**
+   - User interacts with VehicleDirectorySelectionWindow
+   - Frontend delegates to `project_manager.create_new_vehicle_from_template()`
+   - VehicleProjectManager coordinates with project creator services
+   - Template selection handled through VehicleProjectManager interface
+   - Project creation delegated to specialized creator services
+   - Success/failure feedback provided through manager interface
 
-4. **Documentation Download**
-   - System determines required documentation based on FC firmware
-   - Downloads parameter documentation if not already present
-   - Validates downloaded documentation
-   - Stores documentation in project directory
+3. **Existing Project Opening Flow**
+   - User selects existing directory through frontend
+   - Frontend calls `project_manager.open_vehicle_directory()`
+   - VehicleProjectManager validates directory through opener services
+   - Project state is reconstructed and validated
+   - Error handling managed through consistent interface
+
+4. **Architecture Benefits**
+   - Frontend never directly accesses backend services
+   - All business logic centralized in VehicleProjectManager
+   - Easy to test with mock VehicleProjectManager
+   - Changes to backend services don't affect frontend code
 
 ### Integration Points
 
-- **Flight Controller Communication**: Receives firmware version information
-- **Component Editor**: Provides project directory and configuration
-- **Parameter Editor**: Supplies configuration steps and documentation
-- **File System Backend**: Handles all file operations
-- **Internet Backend**: Downloads documentation and templates
+The directory selection sub-application integrates with other components through the VehicleProjectManager interface:
+
+- **Flight Controller Communication**: VehicleProjectManager receives firmware information
+- **Component Editor**: Receives project instance from VehicleProjectManager
+- **Parameter Editor**: Gets configuration and documentation through VehicleProjectManager
+- **Template System**: Accessed through VehicleProjectManager template methods
+- **File Operations**: All file system access goes through VehicleProjectManager facade
+
+### Dependency Management
+
+The architecture implements **Dependency Inversion Principle**:
+
+```text
+Frontend (GUI) → VehicleProjectManager (Interface) → Backend Services
+```
+
+**Dependencies Flow:**
+
+- Frontend depends on VehicleProjectManager interface (abstraction)
+- VehicleProjectManager depends on backend service interfaces
+- Backend services implement concrete functionality
+- No direct dependencies between frontend and backend services
+
+**Benefits:**
+
+- Easy unit testing with mock VehicleProjectManager
+- Backend services can be replaced without frontend changes
+- Clear separation of concerns across layers
+- Reduced coupling between components
 
 ### Template Management
 
@@ -192,22 +274,61 @@ Each template contains:
 
 ### Testing Strategy
 
-- Unit tests for directory validation logic
-- Integration tests for template copying operations
-- UI tests for template selection workflow
-- File system tests across different operating systems
-- Network simulation for documentation download testing
+The layered architecture enables comprehensive testing at each level:
+
+#### Unit Testing
+
+- **VehicleProjectManager**: Test facade methods with mocked backend services
+- **Frontend Components**: Test with mocked VehicleProjectManager interface
+- **Backend Services**: Test in isolation with mocked dependencies
+- **Integration Points**: Test VehicleProjectManager coordination logic
+
+#### Test Fixtures and Mocking
+
+- `mock_project_manager`: Mock VehicleProjectManager for frontend tests
+- `mock_local_filesystem`: Mock backend services for manager tests
+- Dependency injection enables easy test isolation
+- Clear interfaces make mocking straightforward
+
+#### Test Coverage Areas
+
+- Directory validation through VehicleProjectManager interface
+- Template operations via manager facade methods
+- Error handling across architecture layers
+- UI interactions with mocked manager dependencies
+- File system operations through abstracted interfaces
+
+#### Architecture Testing Benefits
+
+- **Isolation**: Each layer tested independently
+- **Maintainability**: Tests don't break when backend implementation changes
+- **Clarity**: Test focus matches architectural responsibilities
+- **Reliability**: Mock interfaces provide consistent test behavior
 
 ## File Structure
 
 ```text
+# Frontend Layer (GUI)
 frontend_tkinter_directory_selection.py     # Main directory selection GUI
 frontend_tkinter_template_overview.py       # Template browsing interface
+
+# Facade/Factory Layer (Business Logic Coordination)
+data_model_vehicle_project.py              # VehicleProjectManager facade/factory
+
+# Backend Services Layer (Specialized Operations)
+data_model_vehicle_project_creator.py      # New project creation services
+data_model_vehicle_project_opener.py       # Existing project opening services
+backend_filesystem.py                      # File system operations
 backend_filesystem_configuration_steps.py  # Configuration step management
 backend_filesystem_vehicle_components.py   # Vehicle component handling
+
+# Test Layer
+tests/test_frontend_tkinter_directory_selection.py  # Frontend tests with mocked dependencies
 ```
 
 ## Dependencies
+
+### External Dependencies
 
 - **Python Standard Library**:
   - `os` and `pathlib` for path operations
@@ -219,11 +340,58 @@ backend_filesystem_vehicle_components.py   # Vehicle component handling
   - `jsonschema` for configuration validation
   - `PIL` (Pillow) for image handling in templates
 
-- **ArduPilot Methodic Configurator Modules**:
-  - `backend_filesystem` for file operations
-  - `backend_internet` for documentation downloads
+### Internal Architecture Dependencies
+
+- **Frontend Layer Dependencies**:
+  - `data_model_vehicle_project.VehicleProjectManager` (facade interface)
   - `frontend_tkinter_base_window` for GUI base classes
   - `frontend_tkinter_scroll_frame` for scrollable interfaces
+
+- **VehicleProjectManager Dependencies**:
+  - `backend_filesystem.LocalFilesystem` for file operations
+  - `data_model_vehicle_project_creator` for project creation
+  - `data_model_vehicle_project_opener` for project opening
+  - Data model classes for configuration management
+
+- **Backend Services Dependencies**:
+  - Standard library modules for specific operations
+  - Configuration and schema validation libraries
+  - File system and network access modules
+
+### Dependency Injection Pattern
+
+The architecture implements dependency injection where:
+
+- Frontend receives VehicleProjectManager instance via constructor
+- VehicleProjectManager receives backend services via constructor
+- No direct frontend-to-backend dependencies
+- Easy to substitute mock objects for testing
+- Clear separation of concerns across layers
+
+## Architectural Benefits
+
+### Design Patterns Implemented
+
+1. **Facade Pattern**: VehicleProjectManager provides simplified interface to complex backend subsystems
+2. **Factory Pattern**: VehicleProjectManager creates and manages project-related objects
+3. **Dependency Injection**: Components receive dependencies via constructor parameters
+4. **Layer Architecture**: Clear separation between frontend, facade, and backend layers
+
+### Code Quality Improvements
+
+- **Loose Coupling**: Frontend components don't depend on specific backend implementations
+- **High Cohesion**: Each component has a single, well-defined responsibility
+- **Testability**: Easy to unit test with mocked dependencies
+- **Maintainability**: Changes to one layer don't cascade to other layers
+- **Extensibility**: New backend services can be added without frontend changes
+
+### Development Benefits
+
+- **Parallel Development**: Frontend and backend teams can work independently
+- **Easier Debugging**: Clear component boundaries make issue isolation simpler
+- **Better Testing**: Each layer can be tested in isolation with appropriate mocks
+- **Code Reuse**: VehicleProjectManager can be used by multiple frontend components
+- **Consistent Interface**: All vehicle project operations go through unified interface
 
 ## Template System Features
 
