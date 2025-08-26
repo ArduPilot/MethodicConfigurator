@@ -73,7 +73,7 @@ dev = [
     "pytest-md==0.2.0",
     "pytest-mock==3.14.1",
     "python-gettext==5.0",
-    "ruff==0.12.7",
+    "ruff==0.12.10",
     "types-requests==2.32.4.20250809",
 ]
 
