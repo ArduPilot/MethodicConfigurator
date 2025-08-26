@@ -884,7 +884,7 @@ class FlightController:
     @staticmethod
     def __list_network_ports() -> list[str]:
         """List all available network ports."""
-        return ["tcp:127.0.0.1:5760", "udp:127.0.0.1:14550"]
+        return ["tcp:127.0.0.1:5760", "udp:0.0.0.0:14550"]
 
     # pylint: disable=duplicate-code
     def __auto_detect_serial(self) -> list[mavutil.SerialPort]:
