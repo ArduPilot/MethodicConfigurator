@@ -353,9 +353,12 @@ To use the command line interface, execute `ardupilot_methodic_configurator` on 
 
 Here is a list of command line options:
 
+- **`--skip-check-for-updates`**: Skip check for software updates before staring the software. Default is False.
+- **`--baudrate BAUDRATE`**: MAVLink serial connection baudrate to the flight controller. Default is 115200
 - **`--device`**: The MAVLink connection string to the flight controller. It defaults to autoconnection to the first available flight controller.
 - **`--vehicle-dir`**: The directory containing intermediate parameter files. Defaults to the current working directory directory.
 - **`--n`**: Start directly on the nth intermediate parameter file (skip previous files). The default is 0.
+- **`--skip-component-editor`**: Skip the component editor window. Only use this if all components have been configured. Default is False
 - **`--loglevel`**: The logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). The default is INFO.
 - **`-t` or `--vehicle-type`**: The type of the vehicle.
   Choices are 'AP_Periph', 'AntennaTracker', 'ArduCopter', 'ArduPlane', 'ArduSub', 'Blimp', 'Heli', 'Rover', 'SITL'. Defaults to 'ArduCopter'.
@@ -378,6 +381,23 @@ ardupilot_methodic_configurator --help
 ```
 
 This will show a list of all available command line options along with a brief description of each.
+
+## Speed up software start
+
+To speed up the startup of the ArduPilot methodic configurator, consider the following tips, presented from most to least effective:
+
+All of these can be either added in the command line as a parameter, or in the "properties > link > target" of the desktop icon.
+Use and empty space to separate each option.
+
+1. `--device <devicename>` this explicitly connects to \<devicename> skipping the auto-detection process.
+1. `--vehicle-dir <vehicle-directory>` this explicitly looks for project files in \<vehicle-directory> saving you the trouble to
+ manually select it in the GUI.
+1. `--skip-component-editor` if you do not need to change the components and connections of your vehicle, this will skip the
+ component and connection editor window.
+1. `--n <number>` this will skip directly to step number \<number> so that you do not need to skip the previous steps
+1. `--skip-check-for-updates` this saves very little time on startup, but you can skip it using this.
+
+**Pro tip:** create multiple desktop icons, each one with a different project and or configuration.
 
 ## Troubleshooting
 
