@@ -446,6 +446,36 @@ def parameter_editor_and_uploader(state: ApplicationState) -> None:
     simple_gui: bool = ProgramSettings.get_setting("gui_complexity") == "simple"
     start_file = state.local_filesystem.get_start_file(state.args.n, imu_tcal_available and not simple_gui)
 
+    # Upgrade parameter names if the user is using 4.6 firmware
+    param_upgrade_dict: dict[str, str] = {
+        "GPS_CAN_NODEID1": "GPS1_CAN_NODEID",
+        "GPS_CAN_NODEID2": "GPS2_CAN_NODEID",
+        "GPS_COM_PORT": "GPS1_COM_PORT",
+        "GPS_COM_PORT2": "GPS2_COM_PORT",
+        "GPS_DELAY_MS": "GPS1_DELAY_MS",
+        "GPS_DELAY_MS2": "GPS2_DELAY_MS",
+        "GPS_GNSS_MODE": "GPS1_GNSS_MODE",
+        "GPS_GNSS_MODE2": "GPS2_GNSS_MODE",
+        "GPS_MB1_TYPE": "GPS1_MB_TYPE",
+        "GPS_MB2_TYPE": "GPS2_MB_TYPE",
+        "GPS_POS1_X": "GPS1_POS_X",
+        "GPS_POS1_Y": "GPS1_POS_Y",
+        "GPS_POS1_Z": "GPS1_POS_Z",
+        "GPS_POS2_X": "GPS2_POS_X",
+        "GPS_POS2_Y": "GPS2_POS_Y",
+        "GPS_POS2_Z": "GPS2_POS_Z",
+        "GPS_RATE_MS": "GPS1_RATE_MS",
+        "GPS_RATE_MS2": "GPS2_RATE_MS",
+        "GPS_TYPE": "GPS1_TYPE",
+        "GPS_TYPE2": "GPS2_TYPE",
+    }
+    if state.flight_controller.fc_parameters and state.flight_controller.info.flight_sw_version.startswith("4.6."):
+        for filename in state.local_filesystem.file_parameters:
+            state.local_filesystem.file_parameters[filename] = {
+                param_upgrade_dict.get(parameter_name, parameter_name): par
+                for parameter_name, par in state.local_filesystem.file_parameters[filename].items()
+            }
+
     # Call the GUI function with the starting intermediate parameter file
     ParameterEditorWindow(start_file, state.flight_controller, state.local_filesystem)
 
