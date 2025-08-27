@@ -302,8 +302,8 @@
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#616-notch-filters-setup",
             "wiki_text": "Managing Gyro Noise with the Dynamic Harmonic Notch Filters",
             "wiki_url": "https://ardupilot.org/copter/docs/common-imu-notch-filtering.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "New FFT Filter setup and review web tool",
+            "external_tool_url": "https://discuss.ardupilot.org/t/new-fft-filter-setup-and-review-web-tool/102572",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "forced_parameters": {
