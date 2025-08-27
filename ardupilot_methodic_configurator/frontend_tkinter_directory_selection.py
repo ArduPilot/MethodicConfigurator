@@ -230,19 +230,23 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
             + __version__
             + _(" - Select vehicle configuration directory")
         )
-        self.root.geometry("800x675")  # Set the window size
-        self.copy_vehicle_image = tk.BooleanVar(value=False)
-        self.blank_component_data = tk.BooleanVar(value=False)
-        self.reset_fc_parameters_to_their_defaults = tk.BooleanVar(value=False)
-        self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
-        self.use_fc_params = tk.BooleanVar(value=False)
-        self.blank_change_reason = tk.BooleanVar(value=False)
+
+        # Initialize settings variables dynamically from data model
+        self.new_project_settings_vars: dict[str, tk.BooleanVar] = {}
+        self.new_project_settings_widgets: dict[str, ttk.Checkbutton] = {}
+        new_project_settings_metadata = NewVehicleProjectSettings.get_all_settings_metadata(fc_connected)
+        new_project_settings_default_values = NewVehicleProjectSettings.get_default_values()
+        for setting_name in new_project_settings_metadata:
+            default_value = new_project_settings_default_values.get(setting_name, False)
+            self.new_project_settings_vars[setting_name] = tk.BooleanVar(value=default_value)
+
+        # Set dynamic window size based on number of settings
+        nr_new_project_settings = len(new_project_settings_metadata)
+        window_height = 550 + (nr_new_project_settings * 21)
+        self.root.geometry(f"800x{window_height}")  # Set the window size
 
         # Explain why we are here
-        if self.project_manager.get_vehicle_directory() == self.project_manager.get_current_working_directory():
-            introduction_text = _("No intermediate parameter files found\nin current working directory.")
-        else:
-            introduction_text = _("No intermediate parameter files found\nin the --vehicle-dir specified directory.")
+        introduction_text = self.project_manager.get_introduction_message()
         introduction_label = ttk.Label(
             self.main_frame,
             anchor=tk.CENTER,
@@ -254,7 +258,13 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         logging_debug("template_dir: %s", template_dir)  # this string is intentionally left untranslated
         logging_debug("new_base_dir: %s", new_base_dir)  # this string is intentionally left untranslated
         logging_debug("vehicle_dir: %s", vehicle_dir)  # this string is intentionally left untranslated
-        self.create_option1_widgets(template_dir, new_base_dir, _("MyVehicleName"), fc_connected, connected_fc_vehicle_type)
+        self.create_option1_widgets(
+            template_dir,
+            new_base_dir,
+            self.project_manager.get_default_vehicle_name(),
+            fc_connected,
+            connected_fc_vehicle_type,
+        )
         self.create_option2_widgets(vehicle_dir)
         self.create_option3_widgets(vehicle_dir)
 
@@ -296,94 +306,19 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
             connected_fc_vehicle_type=connected_fc_vehicle_type,
         )
         self.template_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
-        copy_vehicle_image_checkbox = ttk.Checkbutton(
-            option1_label_frame,
-            variable=self.copy_vehicle_image,
-            text=_("Copy vehicle image from template"),
-        )
-        copy_vehicle_image_checkbox.pack(anchor=tk.NW)
-        show_tooltip(
-            copy_vehicle_image_checkbox,
-            _(
-                "Copy the vehicle.jpg image file from the template directory to the new vehicle directory\n"
-                "if it exists. This image helps identify the vehicle configuration."
-            ),
-        )
-        blank_component_data_checkbox = ttk.Checkbutton(
-            option1_label_frame,
-            variable=self.blank_component_data,
-            text=_("Blank component data"),
-        )
-        blank_component_data_checkbox.pack(anchor=tk.NW)
-        show_tooltip(
-            blank_component_data_checkbox,
-            _("Create a new blank vehicle configuration, with no component data from the template."),
-        )
-        reset_fc_parameters_to_their_defaults_checkbox = ttk.Checkbutton(
-            option1_label_frame,
-            variable=self.reset_fc_parameters_to_their_defaults,
-            text=_(
-                "Reset flight controller parameters to their defaults. "
-                "WARNING: This will delete all parameters stored on the flight controller."
-            ),
-        )
-        reset_fc_parameters_to_their_defaults_checkbox.pack(anchor=tk.NW)
-        show_tooltip(
-            reset_fc_parameters_to_their_defaults_checkbox,
-            _(
-                "Reset the flight controller parameters to their default values when creating a new vehicle configuration.\n"
-                "Helps avoid issues caused by incorrect or incompatible parameter settings."
-            ),
-        )
-        infer_comp_specs_and_conn_from_fc_params_checkbox = ttk.Checkbutton(
-            option1_label_frame,
-            variable=self.infer_comp_specs_and_conn_from_fc_params,
-            text=_("Infer component specifications and FC connections from FC parameters, not from template files"),
-        )
-        infer_comp_specs_and_conn_from_fc_params_checkbox.pack(anchor=tk.NW)
-        show_tooltip(
-            infer_comp_specs_and_conn_from_fc_params_checkbox,
-            _(
-                "When creating a new vehicle configuration, extract component specifications\n"
-                "and connection information directly from the connected flight controller\n"
-                "instead of using the specifications defined in the template files.\n"
-                "This helps ensure the configuration accurately matches your actual hardware.\n"
-                "But you will not see the information from the correctly configured vehicle template.\n\n"
+
+        # Create checkboxes dynamically from settings metadata
+        settings_metadata = NewVehicleProjectSettings.get_all_settings_metadata(fc_connected)
+        for setting_name, metadata in settings_metadata.items():
+            checkbox = ttk.Checkbutton(
+                option1_label_frame,
+                variable=self.new_project_settings_vars[setting_name],
+                text=metadata.label,
+                state=tk.NORMAL if metadata.enabled else tk.DISABLED,
             )
-            + _("This option is only available when a flight controller is connected."),
-        )
-        use_fc_params_checkbox = ttk.Checkbutton(
-            option1_label_frame,
-            variable=self.use_fc_params,
-            text=_("Use parameter values from connected FC, not from template files"),
-        )
-        use_fc_params_checkbox.pack(anchor=tk.NW)
-        show_tooltip(
-            use_fc_params_checkbox,
-            _(
-                "Use the parameter values from the connected flight controller instead of the\n"
-                "template files when creating a new vehicle configuration directory from a template.\n"
-                "Only makes sense if your FC has already been correctly configured.\n\n"
-            )
-            + _("This option is only available when a flight controller is connected."),
-        )
-        blank_change_reason_checkbox = ttk.Checkbutton(
-            option1_label_frame,
-            variable=self.blank_change_reason,
-            text=_("Blank parameter change reason"),
-        )
-        blank_change_reason_checkbox.pack(anchor=tk.NW)
-        show_tooltip(
-            blank_change_reason_checkbox,
-            _("Do not use the parameters change reason from the template."),
-        )
-        if not fc_connected:
-            self.infer_comp_specs_and_conn_from_fc_params.set(False)
-            infer_comp_specs_and_conn_from_fc_params_checkbox.config(state=tk.DISABLED)
-            self.use_fc_params.set(False)
-            use_fc_params_checkbox.config(state=tk.DISABLED)
-            self.reset_fc_parameters_to_their_defaults.set(False)
-            reset_fc_parameters_to_their_defaults_checkbox.config(state=tk.DISABLED)
+            checkbox.pack(anchor=tk.NW)
+            show_tooltip(checkbox, metadata.tooltip)
+            self.new_project_settings_widgets[setting_name] = checkbox
 
         new_base_dir_edit_tooltip = _("Existing directory where the new vehicle configuration directory will be created")
         new_base_dir_btn_tooltip = _("Select the directory where the new vehicle configuration directory will be created")
@@ -465,9 +400,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         last_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
         # Check if there is a last used vehicle configuration directory
-        button_state = (
-            tk.NORMAL if last_vehicle_dir and self.project_manager.directory_exists(last_vehicle_dir) else tk.DISABLED
-        )
+        button_state = tk.NORMAL if self.project_manager.can_open_last_vehicle_directory(last_vehicle_dir) else tk.DISABLED
         open_last_vehicle_directory_button = ttk.Button(
             option3_label_frame,
             text=_("Open Last Used Vehicle Configuration Directory"),
@@ -488,15 +421,11 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
         new_base_dir = self.new_base_dir.get_selected_directory()
         new_vehicle_name = self.new_dir.get_selected_directory()
 
-        # Create settings object from GUI state
-        settings = NewVehicleProjectSettings(
-            copy_vehicle_image=self.copy_vehicle_image.get(),
-            blank_component_data=self.blank_component_data.get(),
-            reset_fc_parameters_to_their_defaults=self.reset_fc_parameters_to_their_defaults.get(),
-            infer_comp_specs_and_conn_from_fc_params=self.infer_comp_specs_and_conn_from_fc_params.get(),
-            use_fc_params=self.use_fc_params.get(),
-            blank_change_reason=self.blank_change_reason.get(),
-        )
+        # Create settings object from GUI state using dynamic settings
+        settings_kwargs = {}
+        for setting_name, var in self.new_project_settings_vars.items():
+            settings_kwargs[setting_name] = var.get()
+        settings = NewVehicleProjectSettings(**settings_kwargs)
 
         # Create the vehicle project
         try:
@@ -556,7 +485,7 @@ def main() -> None:
     project_manager = VehicleProjectManager(local_filesystem)
 
     # Get the list of intermediate parameter files files that will be processed sequentially
-    files = list(project_manager.local_filesystem.file_parameters.keys())
+    files = project_manager.get_file_parameters_list()
 
     if not files:
         logging_error(_("No intermediate parameter files found in %s."), args.vehicle_dir)

@@ -111,6 +111,15 @@ def test_window_creation(root: tk.Tk, mock_local_filesystem: MagicMock, monkeypa
         self.blank_change_reason = tk.BooleanVar(value=False)
         # Add a title to the window
         self.root.title("ArduPilot methodic configurator - Select vehicle configuration directory")
+        # Add the missing new_project_settings_vars attribute
+        self.new_project_settings_vars = {
+            "copy_vehicle_image": self.copy_vehicle_image,
+            "blank_component_data": self.blank_component_data,
+            "reset_fc_parameters_to_their_defaults": self.reset_fc_parameters_to_their_defaults,
+            "infer_comp_specs_and_conn_from_fc_params": self.infer_comp_specs_and_conn_from_fc_params,
+            "use_fc_params": self.use_fc_params,
+            "blank_change_reason": self.blank_change_reason,
+        }
 
     # Apply the patch
     monkeypatch.setattr(VehicleDirectorySelectionWindow, "__init__", patched_init)
@@ -122,12 +131,12 @@ def test_window_creation(root: tk.Tk, mock_local_filesystem: MagicMock, monkeypa
                 window = VehicleDirectorySelectionWindow(mock_local_filesystem, fc_connected=False)
 
                 # Just check that the window was created with the right attributes instead of testing widget creation
-                assert window.copy_vehicle_image.get() is False
-                assert window.blank_component_data.get() is False
-                assert window.reset_fc_parameters_to_their_defaults.get() is False
-                assert window.infer_comp_specs_and_conn_from_fc_params.get() is False
-                assert window.use_fc_params.get() is False
-                assert window.blank_change_reason.get() is False
+                assert window.new_project_settings_vars["copy_vehicle_image"].get() is False
+                assert window.new_project_settings_vars["blank_component_data"].get() is False
+                assert window.new_project_settings_vars["reset_fc_parameters_to_their_defaults"].get() is False
+                assert window.new_project_settings_vars["infer_comp_specs_and_conn_from_fc_params"].get() is False
+                assert window.new_project_settings_vars["use_fc_params"].get() is False
+                assert window.new_project_settings_vars["blank_change_reason"].get() is False
 
                 # Process events to ensure UI is updated
                 window.root.update()
@@ -204,6 +213,15 @@ def test_create_new_vehicle_from_template_integration(
         self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
         self.use_fc_params = tk.BooleanVar(value=False)
         self.blank_change_reason = tk.BooleanVar(value=False)
+        # Add the missing new_project_settings_vars attribute
+        self.new_project_settings_vars = {
+            "copy_vehicle_image": self.copy_vehicle_image,
+            "blank_component_data": self.blank_component_data,
+            "reset_fc_parameters_to_their_defaults": self.reset_fc_parameters_to_their_defaults,
+            "infer_comp_specs_and_conn_from_fc_params": self.infer_comp_specs_and_conn_from_fc_params,
+            "use_fc_params": self.use_fc_params,
+            "blank_change_reason": self.blank_change_reason,
+        }
         # Create a mock project manager for this window
         self.project_manager = MagicMock()
 
@@ -389,6 +407,15 @@ def test_directory_selection_error_handling(
         self.infer_comp_specs_and_conn_from_fc_params = tk.BooleanVar(value=False)
         self.use_fc_params = tk.BooleanVar(value=False)
         self.blank_change_reason = tk.BooleanVar(value=False)
+        # Add the missing new_project_settings_vars attribute
+        self.new_project_settings_vars = {
+            "copy_vehicle_image": self.copy_vehicle_image,
+            "blank_component_data": self.blank_component_data,
+            "reset_fc_parameters_to_their_defaults": self.reset_fc_parameters_to_their_defaults,
+            "infer_comp_specs_and_conn_from_fc_params": self.infer_comp_specs_and_conn_from_fc_params,
+            "use_fc_params": self.use_fc_params,
+            "blank_change_reason": self.blank_change_reason,
+        }
         # Create a mock project manager for this window
         self.project_manager = MagicMock()
 

@@ -12,14 +12,18 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
+from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     NewVehicleProjectSettings,
     VehicleProjectCreator,
 )
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpener
+
+if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 
 
 class VehicleProjectManager:
@@ -31,7 +35,7 @@ class VehicleProjectManager:
     from the frontend layer.
     """
 
-    def __init__(self, local_filesystem: LocalFilesystem, flight_controller: Optional[object] = None) -> None:
+    def __init__(self, local_filesystem: LocalFilesystem, flight_controller: Optional["FlightController"] = None) -> None:
         """
         Initialize the project manager.
 
@@ -40,10 +44,10 @@ class VehicleProjectManager:
             flight_controller: Optional flight controller interface
 
         """
-        self.local_filesystem = local_filesystem
-        self.flight_controller = flight_controller
-        self.creator = VehicleProjectCreator(local_filesystem)
-        self.opener = VehicleProjectOpener(local_filesystem)
+        self._local_filesystem = local_filesystem
+        self._flight_controller = flight_controller
+        self._creator = VehicleProjectCreator(local_filesystem)
+        self._opener = VehicleProjectOpener(local_filesystem)
         self._settings: Optional[NewVehicleProjectSettings] = None  # It will be set if a new project is created successfully
         self.configuration_template: str = ""  # It will be set if a new project is created successfully
 
@@ -107,20 +111,6 @@ class VehicleProjectManager:
         """
         return LocalFilesystem.valid_directory_name(name)
 
-    def new_vehicle_dir_path(self, base_dir: str, vehicle_name: str) -> str:
-        """
-        Generate the full path for a new vehicle directory.
-
-        Args:
-            base_dir: Base directory where vehicle directory will be created
-            vehicle_name: Name of the vehicle directory
-
-        Returns:
-            Full path to the new vehicle directory
-
-        """
-        return LocalFilesystem.new_vehicle_dir(base_dir, vehicle_name)
-
     # Vehicle project creation operations
     def create_new_vehicle_from_template(
         self,
@@ -145,12 +135,8 @@ class VehicleProjectManager:
             VehicleProjectCreationError: If creation fails for any reason
 
         """
-        fc_connected = (
-            self.flight_controller is not None
-            and hasattr(self.flight_controller, "master")
-            and self.flight_controller.master is not None
-        )
-        new_path = self.creator.create_new_vehicle_from_template(
+        fc_connected = self.is_flight_controller_connected()
+        new_path = self._creator.create_new_vehicle_from_template(
             template_dir, new_base_dir, new_vehicle_name, settings, fc_connected
         )
         if new_path:
@@ -173,7 +159,7 @@ class VehicleProjectManager:
             VehicleProjectOpenError: If opening fails for any reason
 
         """
-        return self.opener.open_vehicle_directory(vehicle_dir)
+        return self._opener.open_vehicle_directory(vehicle_dir)
 
     def open_last_vehicle_directory(self, last_vehicle_dir: str) -> str:
         """
@@ -189,21 +175,7 @@ class VehicleProjectManager:
             VehicleProjectOpenError: If opening fails for any reason
 
         """
-        return self.opener.open_last_vehicle_directory(last_vehicle_dir)
-
-    def get_flight_controller_vehicle_type(self) -> str:
-        """
-        Get the vehicle type from the connected flight controller.
-
-        Returns:
-            Vehicle type string, or empty string if not connected
-
-        """
-        if self.flight_controller is not None:
-            # Assuming flight controller has a method to get vehicle type
-            # This would need to be implemented based on the actual FlightController interface
-            return getattr(self.flight_controller, "vehicle_type", "")
-        return ""
+        return self._opener.open_last_vehicle_directory(last_vehicle_dir)
 
     # Filesystem state management
     def get_vehicle_directory(self) -> str:
@@ -214,7 +186,7 @@ class VehicleProjectManager:
             Current vehicle directory path
 
         """
-        return self.local_filesystem.vehicle_dir
+        return self._local_filesystem.vehicle_dir
 
     def store_recently_used_template_dirs(self, template_dir: str, base_dir: str) -> None:
         """
@@ -257,3 +229,62 @@ class VehicleProjectManager:
         """Whether to use flight controller parameters values instead of template values when creating a project."""
         return self._settings is not None and self._settings.use_fc_params
 
+    # Flight controller operations
+    def is_flight_controller_connected(self) -> bool:
+        """
+        Check if a flight controller is currently connected.
+
+        Returns:
+            True if flight controller is connected, False otherwise
+
+        """
+        return (
+            self._flight_controller is not None
+            and hasattr(self._flight_controller, "master")
+            and self._flight_controller.master is not None
+        )
+
+    def can_open_last_vehicle_directory(self, last_vehicle_dir: str) -> bool:
+        """
+        Check if the last used vehicle directory can be opened.
+
+        Args:
+            last_vehicle_dir: Path to the last vehicle directory
+
+        Returns:
+            True if the directory exists and can be opened, False otherwise
+
+        """
+        return bool(last_vehicle_dir and self.directory_exists(last_vehicle_dir))
+
+    def get_introduction_message(self) -> str:
+        """
+        Get the appropriate introduction message based on current project state.
+
+        Returns:
+            introduction message
+
+        """
+        if self.get_vehicle_directory() == self.get_current_working_directory():
+            return _("No intermediate parameter files found\nin current working directory.")
+        return _("No intermediate parameter files found\nin the --vehicle-dir specified directory.")
+
+    def get_file_parameters_list(self) -> list[str]:
+        """
+        Get the list of intermediate parameter files.
+
+        Returns:
+            List of intermediate parameter file names
+
+        """
+        return list(self._local_filesystem.file_parameters.keys())
+
+    def get_default_vehicle_name(self) -> str:
+        """
+        Get the default name for a new vehicle directory.
+
+        Returns:
+            Default vehicle name
+
+        """
+        return _("MyVehicleName")

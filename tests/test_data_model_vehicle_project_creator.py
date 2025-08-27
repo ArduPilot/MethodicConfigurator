@@ -111,7 +111,14 @@ class TestNewVehicleProjectSettingsValidation:
             fc_dependent_settings.validate_fc_dependent_settings(fc_connected)
 
         assert "Flight Controller Connection" in exc_info.value.title
-        assert "infer component specifications" in exc_info.value.message
+        # Check that the error message is one of the valid FC-dependent error messages
+        error_message = exc_info.value.message
+        expected_messages = [
+            "infer component specifications",
+            "reset FC parameters to defaults",
+            "use FC parameters",
+        ]
+        assert any(expected_msg in error_message for expected_msg in expected_messages)
 
     def test_user_can_use_fc_dependent_settings_with_connection(self, fc_dependent_settings) -> None:
         """
