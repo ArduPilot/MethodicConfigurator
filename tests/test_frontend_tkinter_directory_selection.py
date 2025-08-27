@@ -135,6 +135,15 @@ def vehicle_directory_selection_window_setup(mock_project_manager, root) -> Vehi
         self.new_dir = MagicMock()
         # Mock the root destroy method to prevent actual window destruction
         self.root.destroy = MagicMock()
+        # Add the missing new_project_settings_vars attribute
+        self.new_project_settings_vars = {
+            "copy_vehicle_image": self.copy_vehicle_image,
+            "blank_component_data": self.blank_component_data,
+            "reset_fc_parameters_to_their_defaults": self.reset_fc_parameters_to_their_defaults,
+            "infer_comp_specs_and_conn_from_fc_params": self.infer_comp_specs_and_conn_from_fc_params,
+            "use_fc_params": self.use_fc_params,
+            "blank_change_reason": self.blank_change_reason,
+        }
 
     with (
         patch.object(VehicleDirectorySelectionWindow, "__init__", mock_vehicle_init),
@@ -960,6 +969,15 @@ class TestVehicleDirectorySelectionWindow:
             self.new_dir = MagicMock()
             # Mock the root destroy method to prevent actual window destruction
             self.root.destroy = MagicMock()
+            # Add the missing new_project_settings_vars attribute
+            self.new_project_settings_vars = {
+                "copy_vehicle_image": self.copy_vehicle_image,
+                "blank_component_data": self.blank_component_data,
+                "reset_fc_parameters_to_their_defaults": self.reset_fc_parameters_to_their_defaults,
+                "infer_comp_specs_and_conn_from_fc_params": self.infer_comp_specs_and_conn_from_fc_params,
+                "use_fc_params": self.use_fc_params,
+                "blank_change_reason": self.blank_change_reason,
+            }
 
         # Arrange & Act: Create window with FC connected
         with (
@@ -1020,6 +1038,15 @@ class TestDirectorySelectionIntegration:
             self.new_base_dir = MagicMock()
             self.new_dir = MagicMock()
             self.root.destroy = MagicMock()
+            # Add the missing new_project_settings_vars attribute
+            self.new_project_settings_vars = {
+                "copy_vehicle_image": self.copy_vehicle_image,
+                "blank_component_data": self.blank_component_data,
+                "reset_fc_parameters_to_their_defaults": self.reset_fc_parameters_to_their_defaults,
+                "infer_comp_specs_and_conn_from_fc_params": self.infer_comp_specs_and_conn_from_fc_params,
+                "use_fc_params": self.use_fc_params,
+                "blank_change_reason": self.blank_change_reason,
+            }
 
         # Arrange: Set up complete workflow mocks
         with (
@@ -1104,6 +1131,15 @@ class TestDirectorySelectionIntegration:
             self.new_base_dir = MagicMock()
             self.new_dir = MagicMock()
             self.root.destroy = MagicMock()
+            # Add the missing new_project_settings_vars attribute
+            self.new_project_settings_vars = {
+                "copy_vehicle_image": self.copy_vehicle_image,
+                "blank_component_data": self.blank_component_data,
+                "reset_fc_parameters_to_their_defaults": self.reset_fc_parameters_to_their_defaults,
+                "infer_comp_specs_and_conn_from_fc_params": self.infer_comp_specs_and_conn_from_fc_params,
+                "use_fc_params": self.use_fc_params,
+                "blank_change_reason": self.blank_change_reason,
+            }
 
         # Arrange: Set up error conditions
         mock_project_manager.create_new_vehicle_from_template.side_effect = VehicleProjectCreationError(
