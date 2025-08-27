@@ -509,6 +509,8 @@ class FlightController:
         mavftp.cmd_getparams([complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback)
         ret = mavftp.process_ftp_reply("getparams", timeout=10)
         pdict = {}
+        # add a file sync operation to ensure the file is completely written
+        time_sleep(0.3)
         if ret.error_code == 0:
             # load the parameters from the file
             par_dict = Par.load_param_file_into_dict(complete_param_filename)
