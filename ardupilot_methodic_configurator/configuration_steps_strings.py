@@ -210,6 +210,7 @@ def configuration_steps_strings() -> None:  # noqa: PLR0915 # pylint: disable=to
     _config_steps_strings = _("Lua script provided by Yuri")
     _config_steps_strings = _("Mission Planner")
     _config_steps_strings = _("Motor/Propeller order and direction test")
+    _config_steps_strings = _("New FFT Filter setup and review web tool")
     _config_steps_strings = _("Rover Analytic Tune Tool")
     _config_steps_strings = _("VTOL-quicktune lua script")
     _config_steps_strings = _("free online tool to overlay a grid over an image")
