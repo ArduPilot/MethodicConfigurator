@@ -643,7 +643,7 @@ Land and disarm.
 
 > [!IMPORTANT]
 > If your vehicle is very overpowered and requires a [MOT_THST_HOVER](https://ardupilot.org/copter/docs/parameters.html#mot-thst-hover)
-> level close to or below 0.2 you will need to set the [MOT_HOVER_LEARN](https://ardupilot.org/copter/docs/parameters.html#mot-hover-learn)
+> level close to or below 0.125 you will need to set the [MOT_HOVER_LEARN](https://ardupilot.org/copter/docs/parameters.html#mot-hover-learn)
 > parameter to 0 (using the `Add` button on the GUI) and follow the [setting hover throttle instructions](https://ardupilot.org/copter/docs/ac_throttlemid.html)
 
 ### 7.1.1 Check for Motor Output Oscillation
