@@ -44,7 +44,7 @@ class VehicleProjectManager:
         self.flight_controller = flight_controller
         self.creator = VehicleProjectCreator(local_filesystem)
         self.opener = VehicleProjectOpener(local_filesystem)
-        self.settings: Optional[NewVehicleProjectSettings] = None  # It will be set if a new project is created successfully
+        self._settings: Optional[NewVehicleProjectSettings] = None  # It will be set if a new project is created successfully
         self.configuration_template: str = ""  # It will be set if a new project is created successfully
 
     # Directory and path operations
@@ -154,7 +154,7 @@ class VehicleProjectManager:
             template_dir, new_base_dir, new_vehicle_name, settings, fc_connected
         )
         if new_path:
-            self.settings = settings
+            self._settings = settings
             self.configuration_template = self.get_directory_name_from_path(template_dir)
         return new_path
 
@@ -236,3 +236,24 @@ class VehicleProjectManager:
 
         """
         LocalFilesystem.store_recently_used_vehicle_dir(vehicle_dir)
+
+    @property
+    def reset_fc_parameters_to_their_defaults(self) -> bool:
+        """Reset FC parameters to their defaults when a project is created."""
+        return self._settings is not None and self._settings.reset_fc_parameters_to_their_defaults
+
+    @property
+    def blank_component_data(self) -> bool:
+        """Whether to create blank component data when a project is created."""
+        return self._settings is not None and self._settings.blank_component_data
+
+    @property
+    def infer_comp_specs_and_conn_from_fc_params(self) -> bool:
+        """Whether to infer component specifications and connections from flight controller parameters."""
+        return self._settings is not None and self._settings.infer_comp_specs_and_conn_from_fc_params
+
+    @property
+    def use_fc_params(self) -> bool:
+        """Whether to use flight controller parameters values instead of template values when creating a project."""
+        return self._settings is not None and self._settings.use_fc_params
+

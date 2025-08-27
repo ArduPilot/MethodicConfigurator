@@ -210,11 +210,7 @@ def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleDirecto
     vehicle_dir_window = VehicleDirectorySelectionWindow(state.vehicle_project_manager, fc_connected, state.vehicle_type)
     vehicle_dir_window.root.mainloop()
 
-    if (
-        state.vehicle_project_manager
-        and state.vehicle_project_manager.settings
-        and state.vehicle_project_manager.settings.reset_fc_parameters_to_their_defaults
-    ):
+    if state.vehicle_project_manager.reset_fc_parameters_to_their_defaults:
         backup_fc_parameters(state)
         success, error_msg = state.flight_controller.reset_all_parameters_to_default()
         if not success:
@@ -252,9 +248,8 @@ def create_and_configure_component_editor(
 
     # Infer component specifications from FC parameters if requested
     if (
-        vehicle_project_manager
-        and vehicle_project_manager.settings
-        and vehicle_project_manager.settings.infer_comp_specs_and_conn_from_fc_params
+        vehicle_project_manager is not None
+        and vehicle_project_manager.infer_comp_specs_and_conn_from_fc_params
         and flight_controller.fc_parameters
     ):
         component_editor_window.set_values_from_fc_parameters(flight_controller.fc_parameters, local_filesystem.doc_dict)
@@ -338,9 +333,7 @@ def component_editor(state: ApplicationState) -> None:
 
     # Handle skip component editor option
     should_skip_editor = state.args.skip_component_editor and not (
-        state.vehicle_project_manager
-        and state.vehicle_project_manager.settings
-        and state.vehicle_project_manager.settings.blank_component_data
+        state.vehicle_project_manager is not None and state.vehicle_project_manager.blank_component_data
     )
     if should_skip_editor:
         component_editor_window.root.after(10, component_editor_window.root.destroy)
@@ -370,7 +363,7 @@ def process_component_editor_results(
     """
     # Determine parameter source
     source_param_values: Union[dict[str, float], None] = None
-    if vehicle_project_manager and vehicle_project_manager.settings and vehicle_project_manager.settings.use_fc_params:
+    if vehicle_project_manager is not None and vehicle_project_manager.use_fc_params:
         source_param_values = flight_controller.fc_parameters
 
     # Get existing FC parameters for reference
