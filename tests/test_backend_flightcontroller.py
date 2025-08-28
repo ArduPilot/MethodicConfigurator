@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from typing import Union
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -192,7 +193,7 @@ class TestMotorTestFunctionality:
         mock_ack.result_param2 = 0
 
         # Configure recv_match to return COMMAND_ACK on first call, None on subsequent calls
-        def recv_match_side_effect(*_args: tuple, **kwargs: dict) -> MagicMock | None:
+        def recv_match_side_effect(*_args: tuple, **kwargs: dict) -> Union[MagicMock, None]:
             # Check if looking for COMMAND_ACK message type
             type_arg = kwargs.get("type")
             if isinstance(type_arg, str) and type_arg == "COMMAND_ACK":
@@ -356,7 +357,7 @@ class TestMotorTestFunctionality:
         mock_battery_status.current_battery = 250  # 2.5A in cA
 
         # Configure recv_match to return BATTERY_STATUS for this specific test
-        def recv_match_battery_side_effect(*_args: tuple, **kwargs: dict) -> MagicMock | None:
+        def recv_match_battery_side_effect(*_args: tuple, **kwargs: dict) -> Union[MagicMock, None]:
             type_arg = kwargs.get("type")
             if isinstance(type_arg, str) and type_arg == "BATTERY_STATUS":
                 return mock_battery_status
@@ -438,7 +439,7 @@ class TestMotorTestCommandSending:
             mock_ack.result_param2 = 0
 
             # Configure recv_match to return COMMAND_ACK
-            def recv_match_side_effect(*_args: tuple, **kwargs: dict) -> MagicMock | None:
+            def recv_match_side_effect(*_args: tuple, **kwargs: dict) -> Union[MagicMock, None]:
                 type_arg = kwargs.get("type")
                 if isinstance(type_arg, str) and type_arg == "COMMAND_ACK":
                     return mock_ack
