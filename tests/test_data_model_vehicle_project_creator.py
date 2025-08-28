@@ -19,12 +19,13 @@ import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
+    NewVehicleProjectSetting,
     NewVehicleProjectSettings,
     VehicleProjectCreationError,
     VehicleProjectCreator,
 )
 
-# pylint: disable=redefined-outer-name,unused-argument
+# pylint: disable=redefined-outer-name,unused-argument,too-few-public-methods
 
 # ==================== FIXTURES ====================
 
@@ -558,3 +559,353 @@ class TestVehicleProjectCreationWorkflow:
             # Assert: Recently used directories were stored
             mock_store_template.assert_called_once_with(template_dir, new_base_dir)
             mock_store_vehicle.assert_called_once_with(expected_vehicle_dir)
+
+
+class TestNewVehicleProjectSettingsMetadata:
+    """Test metadata access and class methods for project settings."""
+
+    def test_user_can_get_specific_setting_metadata_with_fc_connected(self) -> None:
+        """
+        User can retrieve metadata for specific settings when FC is connected.
+
+        GIVEN: A user has flight controller connected
+        WHEN: They retrieve metadata for a specific setting
+        THEN: The metadata should show the setting as enabled
+        """
+        # Arrange: FC-dependent setting with connection
+        setting_name = "use_fc_params"
+        fc_connected = True
+
+        # Act: Get setting metadata
+        metadata = NewVehicleProjectSettings.get_setting_metadata(setting_name, fc_connected)
+
+        # Assert: Setting should be enabled
+        assert metadata.enabled is True
+        assert "Use parameter values from connected FC" in metadata.label
+        assert "flight controller is connected" in metadata.tooltip
+
+    def test_user_can_get_specific_setting_metadata_with_fc_disconnected(self) -> None:
+        """
+        User can retrieve metadata for specific settings when FC is disconnected.
+
+        GIVEN: A user has no flight controller connected
+        WHEN: They retrieve metadata for an FC-dependent setting
+        THEN: The metadata should show the setting as disabled
+        """
+        # Arrange: FC-dependent setting without connection
+        setting_name = "reset_fc_parameters_to_their_defaults"
+        fc_connected = False
+
+        # Act: Get setting metadata
+        metadata = NewVehicleProjectSettings.get_setting_metadata(setting_name, fc_connected)
+
+        # Assert: Setting should be disabled
+        assert metadata.enabled is False
+        assert "Reset flight controller parameters" in metadata.label
+
+    def test_user_gets_error_for_invalid_setting_name(self) -> None:
+        """
+        User receives KeyError when requesting metadata for non-existent setting.
+
+        GIVEN: A user requests metadata for an invalid setting
+        WHEN: They call get_setting_metadata with unknown setting name
+        THEN: They should receive a KeyError
+        """
+        # Arrange: Invalid setting name
+        invalid_setting = "nonexistent_setting"
+        fc_connected = True
+
+        # Act & Assert: Should raise KeyError
+        with pytest.raises(KeyError):
+            NewVehicleProjectSettings.get_setting_metadata(invalid_setting, fc_connected)
+
+    def test_user_can_get_all_settings_metadata_with_fc_connected(self) -> None:
+        """
+        User can retrieve metadata for all settings when FC is connected.
+
+        GIVEN: A user has flight controller connected
+        WHEN: They retrieve metadata for all settings
+        THEN: All FC-dependent settings should be enabled
+        """
+        # Arrange: FC connected
+        fc_connected = True
+
+        # Act: Get all settings metadata
+        all_metadata = NewVehicleProjectSettings.get_all_settings_metadata(fc_connected)
+
+        # Assert: All settings should be present and FC-dependent ones enabled
+        assert len(all_metadata) == 6  # All settings should be present
+        assert all_metadata["use_fc_params"].enabled is True
+        assert all_metadata["reset_fc_parameters_to_their_defaults"].enabled is True
+        assert all_metadata["infer_comp_specs_and_conn_from_fc_params"].enabled is True
+        assert all_metadata["copy_vehicle_image"].enabled is True  # Non-FC dependent
+
+    def test_user_can_get_all_settings_metadata_with_fc_disconnected(self) -> None:
+        """
+        User can retrieve metadata for all settings when FC is disconnected.
+
+        GIVEN: A user has no flight controller connected
+        WHEN: They retrieve metadata for all settings
+        THEN: FC-dependent settings should be disabled, others enabled
+        """
+        # Arrange: FC disconnected
+        fc_connected = False
+
+        # Act: Get all settings metadata
+        all_metadata = NewVehicleProjectSettings.get_all_settings_metadata(fc_connected)
+
+        # Assert: FC-dependent settings disabled, others enabled
+        assert all_metadata["use_fc_params"].enabled is False
+        assert all_metadata["reset_fc_parameters_to_their_defaults"].enabled is False
+        assert all_metadata["infer_comp_specs_and_conn_from_fc_params"].enabled is False
+        assert all_metadata["copy_vehicle_image"].enabled is True  # Non-FC dependent
+        assert all_metadata["blank_component_data"].enabled is True  # Non-FC dependent
+
+    def test_user_can_check_if_specific_setting_is_enabled(self) -> None:
+        """
+        User can check if a specific setting should be enabled based on FC connection.
+
+        GIVEN: A user wants to check setting availability
+        WHEN: They check if a setting is enabled for given FC connection state
+        THEN: The result should reflect FC dependency and connection status
+        """
+        # Arrange: Test different settings and connection states
+        test_cases = [
+            ("use_fc_params", True, True),  # FC-dependent, connected = enabled
+            ("use_fc_params", False, False),  # FC-dependent, disconnected = disabled
+            ("copy_vehicle_image", True, True),  # Non-FC-dependent, connected = enabled
+            ("copy_vehicle_image", False, True),  # Non-FC-dependent, disconnected = enabled
+        ]
+
+        for setting_name, fc_connected, expected_enabled in test_cases:
+            # Act: Check if setting is enabled
+            is_enabled = NewVehicleProjectSettings.is_setting_enabled(setting_name, fc_connected)
+
+            # Assert: Enabled state should match expectations
+            assert is_enabled == expected_enabled
+
+    def test_user_can_get_enabled_state_for_all_settings(self) -> None:
+        """
+        User can get enabled state for all settings at once.
+
+        GIVEN: A user wants to know which settings are available
+        WHEN: They get the settings state for given FC connection
+        THEN: They should receive a dictionary of all setting states
+        """
+        # Arrange: FC connected
+        fc_connected = True
+
+        # Act: Get all settings state
+        settings_state = NewVehicleProjectSettings.get_settings_state(fc_connected)
+
+        # Assert: All settings should be present and appropriately enabled
+        assert len(settings_state) == 6
+        assert all(isinstance(enabled, bool) for enabled in settings_state.values())
+        assert settings_state["use_fc_params"] is True  # FC-dependent with connection
+        assert settings_state["copy_vehicle_image"] is True  # Always enabled
+
+    def test_user_can_get_default_values_for_all_settings(self) -> None:
+        """
+        User can retrieve default values for all settings.
+
+        GIVEN: A user wants to know the default configuration
+        WHEN: They retrieve default values for settings
+        THEN: They should receive the correct default values from dataclass
+        """
+        # Act: Get default values
+        defaults = NewVehicleProjectSettings.get_default_values()
+
+        # Assert: Defaults should match dataclass field defaults
+        assert defaults["copy_vehicle_image"] is False
+        assert defaults["blank_component_data"] is False
+        assert defaults["reset_fc_parameters_to_their_defaults"] is False
+        assert defaults["infer_comp_specs_and_conn_from_fc_params"] is False
+        assert defaults["use_fc_params"] is False
+        assert defaults["blank_change_reason"] is False
+
+    def test_user_can_get_fc_dependent_error_message(self) -> None:
+        """
+        User can retrieve specific error messages for FC-dependent settings.
+
+        GIVEN: A user wants to understand why an FC-dependent setting is unavailable
+        WHEN: They request the error message for that setting
+        THEN: They should receive a descriptive error message
+        """
+        # Arrange: FC-dependent settings
+        test_cases = [
+            ("use_fc_params", "use FC parameters"),
+            ("reset_fc_parameters_to_their_defaults", "reset FC parameters"),
+            ("infer_comp_specs_and_conn_from_fc_params", "infer component specifications"),
+        ]
+
+        for setting_name, expected_text in test_cases:
+            # Act: Get error message
+            error_message = NewVehicleProjectSettings.get_fc_dependent_error_message(setting_name)
+
+            # Assert: Error message should be descriptive
+            assert expected_text in error_message
+            assert "no flight controller connected" in error_message
+
+    def test_user_gets_error_for_non_fc_dependent_error_message(self) -> None:
+        """
+        User receives KeyError when requesting error message for non-FC-dependent setting.
+
+        GIVEN: A user requests error message for non-FC-dependent setting
+        WHEN: They call get_fc_dependent_error_message with non-FC setting
+        THEN: They should receive a KeyError
+        """
+        # Arrange: Non-FC-dependent setting
+        non_fc_setting = "copy_vehicle_image"
+
+        # Act & Assert: Should raise KeyError
+        with pytest.raises(KeyError):
+            NewVehicleProjectSettings.get_fc_dependent_error_message(non_fc_setting)
+
+    def test_user_can_check_if_setting_is_fc_dependent(self) -> None:
+        """
+        User can check if a setting requires flight controller connection.
+
+        GIVEN: A user wants to know if a setting requires FC connection
+        WHEN: They check if a setting is FC-dependent
+        THEN: They should get correct dependency information
+        """
+        # Arrange: Test FC-dependent and non-FC-dependent settings
+        fc_dependent_cases = [
+            ("use_fc_params", True),
+            ("reset_fc_parameters_to_their_defaults", True),
+            ("infer_comp_specs_and_conn_from_fc_params", True),
+            ("copy_vehicle_image", False),
+            ("blank_component_data", False),
+            ("blank_change_reason", False),
+        ]
+
+        for setting_name, expected_dependency in fc_dependent_cases:
+            # Act: Check FC dependency
+            is_fc_dependent = NewVehicleProjectSettings.is_fc_dependent_setting(setting_name)
+
+            # Assert: Dependency should match expectations
+            assert is_fc_dependent == expected_dependency
+
+
+class TestNewVehicleProjectSettingsAdjustment:
+    """Test settings adjustment for flight controller connection state."""
+
+    def test_user_gets_same_settings_when_fc_connected(self) -> None:
+        """
+        User receives unchanged settings when FC is connected.
+
+        GIVEN: A user has settings configured and FC is connected
+        WHEN: They adjust settings for FC connection state
+        THEN: The settings should remain unchanged
+        """
+        # Arrange: Settings with FC connection
+        original_settings = NewVehicleProjectSettings(
+            use_fc_params=True,
+            reset_fc_parameters_to_their_defaults=True,
+            copy_vehicle_image=True,
+        )
+        fc_connected = True
+
+        # Act: Adjust settings for FC connection
+        adjusted_settings = original_settings.adjust_for_fc_connection(fc_connected)
+
+        # Assert: Settings should be the same object (no adjustment needed)
+        assert adjusted_settings is original_settings
+
+    def test_user_gets_adjusted_settings_when_fc_disconnected(self) -> None:
+        """
+        User receives adjusted settings with FC-dependent options disabled when FC is disconnected.
+
+        GIVEN: A user has FC-dependent settings configured but FC is disconnected
+        WHEN: They adjust settings for FC connection state
+        THEN: FC-dependent settings should be disabled, others preserved
+        """
+        # Arrange: Settings with FC-dependent options enabled but no FC connection
+        original_settings = NewVehicleProjectSettings(
+            use_fc_params=True,
+            reset_fc_parameters_to_their_defaults=True,
+            infer_comp_specs_and_conn_from_fc_params=True,
+            copy_vehicle_image=True,
+            blank_component_data=True,
+        )
+        fc_connected = False
+
+        # Act: Adjust settings for FC connection
+        adjusted_settings = original_settings.adjust_for_fc_connection(fc_connected)
+
+        # Assert: FC-dependent settings disabled, others preserved
+        assert adjusted_settings is not original_settings  # New instance created
+        assert adjusted_settings.use_fc_params is False
+        assert adjusted_settings.reset_fc_parameters_to_their_defaults is False
+        assert adjusted_settings.infer_comp_specs_and_conn_from_fc_params is False
+        assert adjusted_settings.copy_vehicle_image is True  # Non-FC-dependent preserved
+        assert adjusted_settings.blank_component_data is True  # Non-FC-dependent preserved
+
+
+class TestVehicleProjectCreationErrorHandling:
+    """Test error handling and edge cases for vehicle project creation."""
+
+    def test_vehicle_project_creation_error_stores_title_and_message(self) -> None:
+        """
+        VehicleProjectCreationError stores both title and message correctly.
+
+        GIVEN: A user encounters a project creation error
+        WHEN: The error is raised with title and message
+        THEN: Both title and message should be accessible
+        """
+        # Arrange: Error details
+        error_title = "Template Directory Error"
+        error_message = "Template directory does not exist or is not accessible"
+
+        # Act: Create error
+        error = VehicleProjectCreationError(error_title, error_message)
+
+        # Assert: Error should store both title and message
+        assert error.title == error_title
+        assert error.message == error_message
+        assert str(error) == error_message  # Exception message
+
+
+class TestNewVehicleProjectSettingsTuple:
+    """Test NewVehicleProjectSetting named tuple functionality."""
+
+    def test_user_can_create_setting_tuple_with_all_fields(self) -> None:
+        """
+        User can create setting metadata tuple with all required fields.
+
+        GIVEN: A user wants to define setting metadata
+        WHEN: They create a NewVehicleProjectSetting with all fields
+        THEN: All fields should be accessible
+        """
+        # Arrange: Setting metadata
+        label = "Test Setting"
+        tooltip = "This is a test setting for validation"
+        enabled = True
+
+        # Act: Create setting tuple
+        setting = NewVehicleProjectSetting(label, tooltip, enabled)
+
+        # Assert: All fields should be accessible
+        assert setting.label == label
+        assert setting.tooltip == tooltip
+        assert setting.enabled == enabled
+
+    def test_user_can_create_setting_tuple_with_default_enabled(self) -> None:
+        """
+        User can create setting metadata tuple with default enabled state.
+
+        GIVEN: A user wants to define setting metadata without specifying enabled state
+        WHEN: They create a NewVehicleProjectSetting with only label and tooltip
+        THEN: The enabled state should default to True
+        """
+        # Arrange: Setting metadata without enabled state
+        label = "Default Enabled Setting"
+        tooltip = "This setting defaults to enabled"
+
+        # Act: Create setting tuple with default enabled
+        setting = NewVehicleProjectSetting(label, tooltip)
+
+        # Assert: Enabled should default to True
+        assert setting.label == label
+        assert setting.tooltip == tooltip
+        assert setting.enabled is True
