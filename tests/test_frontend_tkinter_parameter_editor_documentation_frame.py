@@ -48,7 +48,7 @@ class TestDocumentationFrame(unittest.TestCase):
         assert isinstance(self.doc_frame.documentation_frame, ttk.LabelFrame)
         assert self.doc_frame.documentation_frame.cget("text") == "test_file Documentation"
 
-        expected_labels = ["Forum Blog:", "Wiki:", "External tool:"]
+        expected_labels = [self.doc_frame.BLOG_LABEL, self.doc_frame.WIKI_LABEL, self.doc_frame.EXTERNAL_TOOL_LABEL]
         for label in expected_labels:
             assert label in self.doc_frame.documentation_labels
 
@@ -118,14 +118,14 @@ class TestDocumentationFrame(unittest.TestCase):
         self.doc_frame.refresh_documentation_labels(self.current_file)
 
         # Check regular labels
-        assert self.doc_frame.documentation_labels["Forum Blog:"].cget("text") == "Blog text"
-        assert self.doc_frame.documentation_labels["Wiki:"].cget("text") == "Wiki text"
-        assert self.doc_frame.documentation_labels["External tool:"].cget("text") == "External tool text"
+        assert self.doc_frame.documentation_labels[self.doc_frame.BLOG_LABEL].cget("text") == "Blog text"
+        assert self.doc_frame.documentation_labels[self.doc_frame.WIKI_LABEL].cget("text") == "Wiki text"
+        assert self.doc_frame.documentation_labels[self.doc_frame.EXTERNAL_TOOL_LABEL].cget("text") == "External tool text"
 
         # Check colors for clickable links
-        assert str(self.doc_frame.documentation_labels["Forum Blog:"].cget("foreground")) == "blue"
-        assert str(self.doc_frame.documentation_labels["Wiki:"].cget("foreground")) == "blue"
-        assert str(self.doc_frame.documentation_labels["External tool:"].cget("foreground")) == "blue"
+        assert str(self.doc_frame.documentation_labels[self.doc_frame.BLOG_LABEL].cget("foreground")) == "blue"
+        assert str(self.doc_frame.documentation_labels[self.doc_frame.WIKI_LABEL].cget("foreground")) == "blue"
+        assert str(self.doc_frame.documentation_labels[self.doc_frame.EXTERNAL_TOOL_LABEL].cget("foreground")) == "blue"
 
         # Check mandatory level progress bar
         assert self.doc_frame.mandatory_level.cget("value") == 75
@@ -143,9 +143,9 @@ class TestDocumentationFrame(unittest.TestCase):
         self.doc_frame.refresh_documentation_labels(self.current_file)
 
         # Simulate clicking on the labels
-        self.doc_frame.documentation_labels["Forum Blog:"].event_generate("<Button-1>")
-        self.doc_frame.documentation_labels["Wiki:"].event_generate("<Button-1>")
-        self.doc_frame.documentation_labels["External tool:"].event_generate("<Button-1>")
+        self.doc_frame.documentation_labels[self.doc_frame.BLOG_LABEL].event_generate("<Button-1>")
+        self.doc_frame.documentation_labels[self.doc_frame.WIKI_LABEL].event_generate("<Button-1>")
+        self.doc_frame.documentation_labels[self.doc_frame.EXTERNAL_TOOL_LABEL].event_generate("<Button-1>")
 
         mock_webbrowser_open_.assert_any_call("http://blog.url")
         mock_webbrowser_open_.assert_any_call("http://wiki.url")
@@ -163,14 +163,14 @@ class TestDocumentationFrame(unittest.TestCase):
         self.doc_frame.refresh_documentation_labels(self.current_file)
 
         # Check regular labels
-        assert self.doc_frame.documentation_labels["Forum Blog:"].cget("text") == "Blog text"
-        assert self.doc_frame.documentation_labels["Wiki:"].cget("text") == "Wiki text"
-        assert self.doc_frame.documentation_labels["External tool:"].cget("text") == "External tool text"
+        assert self.doc_frame.documentation_labels[self.doc_frame.BLOG_LABEL].cget("text") == "Blog text"
+        assert self.doc_frame.documentation_labels[self.doc_frame.WIKI_LABEL].cget("text") == "Wiki text"
+        assert self.doc_frame.documentation_labels[self.doc_frame.EXTERNAL_TOOL_LABEL].cget("text") == "External tool text"
 
         # Check colors for non-clickable text
-        assert str(self.doc_frame.documentation_labels["Forum Blog:"].cget("foreground")) == "black"
-        assert str(self.doc_frame.documentation_labels["Wiki:"].cget("foreground")) == "black"
-        assert str(self.doc_frame.documentation_labels["External tool:"].cget("foreground")) == "black"
+        assert str(self.doc_frame.documentation_labels[self.doc_frame.BLOG_LABEL].cget("foreground")) == "black"
+        assert str(self.doc_frame.documentation_labels[self.doc_frame.WIKI_LABEL].cget("foreground")) == "black"
+        assert str(self.doc_frame.documentation_labels[self.doc_frame.EXTERNAL_TOOL_LABEL].cget("foreground")) == "black"
 
         # Check mandatory level progress bar
         assert self.doc_frame.mandatory_level.cget("value") == 0
@@ -187,17 +187,19 @@ class TestDocumentationFrame(unittest.TestCase):
 
         self.doc_frame.refresh_documentation_labels(self.current_file)
 
-        assert self.doc_frame.documentation_labels["Forum Blog:"].cget("text") == "Blog text"
-        assert self.doc_frame.documentation_labels["Wiki:"].cget("text") == "Wiki text"
-        assert self.doc_frame.documentation_labels["External tool:"].cget("text") == "External tool text"
+        assert self.doc_frame.documentation_labels[self.doc_frame.BLOG_LABEL].cget("text") == "Blog text"
+        assert self.doc_frame.documentation_labels[self.doc_frame.WIKI_LABEL].cget("text") == "Wiki text"
+        assert self.doc_frame.documentation_labels[self.doc_frame.EXTERNAL_TOOL_LABEL].cget("text") == "External tool text"
 
-        assert str(self.doc_frame.documentation_labels["Forum Blog:"].cget("foreground")) == "blue"
-        assert str(self.doc_frame.documentation_labels["Wiki:"].cget("foreground")) == "blue"
-        assert str(self.doc_frame.documentation_labels["External tool:"].cget("foreground")) == "blue"
+        assert str(self.doc_frame.documentation_labels[self.doc_frame.BLOG_LABEL].cget("foreground")) == "blue"
+        assert str(self.doc_frame.documentation_labels[self.doc_frame.WIKI_LABEL].cget("foreground")) == "blue"
+        assert str(self.doc_frame.documentation_labels[self.doc_frame.EXTERNAL_TOOL_LABEL].cget("foreground")) == "blue"
 
-        mock_show_tooltip_.assert_any_call(self.doc_frame.documentation_labels["Forum Blog:"], "http://blog.url")
-        mock_show_tooltip_.assert_any_call(self.doc_frame.documentation_labels["Wiki:"], "http://wiki.url")
-        mock_show_tooltip_.assert_any_call(self.doc_frame.documentation_labels["External tool:"], "http://external_tool.url")
+        mock_show_tooltip_.assert_any_call(self.doc_frame.documentation_labels[self.doc_frame.BLOG_LABEL], "http://blog.url")
+        mock_show_tooltip_.assert_any_call(self.doc_frame.documentation_labels[self.doc_frame.WIKI_LABEL], "http://wiki.url")
+        mock_show_tooltip_.assert_any_call(
+            self.doc_frame.documentation_labels[self.doc_frame.EXTERNAL_TOOL_LABEL], "http://external_tool.url"
+        )
         expected_tooltip = f"This configuration step ({self.current_file} intermediate parameter file) is 50% mandatory"
         mock_show_tooltip_.assert_any_call(self.doc_frame.mandatory_level, expected_tooltip)
 
@@ -219,7 +221,7 @@ class TestDocumentationFrame(unittest.TestCase):
     @pytest.mark.usefixtures("mock_show_tooltip")
     def test_refresh_documentation_label_with_url(self) -> None:
         """Test refresh_documentation_label with valid URL."""
-        label_key = "Forum Blog:"
+        label_key = self.doc_frame.BLOG_LABEL
         text = "Test text"
         url = "http://test.url"
 
@@ -237,7 +239,7 @@ class TestDocumentationFrame(unittest.TestCase):
     @pytest.mark.usefixtures("mock_show_tooltip")
     def test_refresh_documentation_label_without_url(self) -> None:
         """Test refresh_documentation_label without URL."""
-        label_key = "Forum Blog:"
+        label_key = self.doc_frame.BLOG_LABEL
         text = "Test text"
         url = ""
 
