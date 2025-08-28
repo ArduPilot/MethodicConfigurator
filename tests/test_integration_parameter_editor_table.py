@@ -275,12 +275,13 @@ class TestWidgetCreationIntegration:
             fc_value=1.5,
         )
         show_upload_column = True
+        fc_connected = True
 
         # Mock widget creation methods to return real widgets
         with patch.object(parameter_editor_table, "_create_new_value_entry") as mock_new_value:
             mock_new_value.return_value = ttk.Entry(parameter_editor_table.view_port)
 
-            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
+            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column, fc_connected)
 
             # Should create 8 widgets (including upload column)
             assert len(column) == 8
