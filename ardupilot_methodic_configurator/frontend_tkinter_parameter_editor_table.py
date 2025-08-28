@@ -181,12 +181,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         """Update the parameter table with the given parameters."""
         current_param_name: str = ""
         show_upload_column = self._should_show_upload_column(gui_complexity)
+        fc_connected = bool(fc_parameters)
 
         try:
             for i, (param_name, param) in enumerate(params.items(), 1):
                 current_param_name = param_name
 
-                column: list[tk.Widget] = self._create_column_widgets(param_name, param, show_upload_column)
+                column: list[tk.Widget] = self._create_column_widgets(param_name, param, show_upload_column, fc_connected)
                 self._grid_column_widgets(column, i, show_upload_column)
 
             # Add the "Add" button at the bottom of the table
@@ -205,7 +206,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         self._configure_table_columns(show_upload_column)
 
-    def _create_column_widgets(self, param_name: str, param: ArduPilotParameter, show_upload_column: bool) -> list[tk.Widget]:
+    def _create_column_widgets(
+        self, param_name: str, param: ArduPilotParameter, show_upload_column: bool, fc_connected: bool
+    ) -> list[tk.Widget]:
         """Create all column widgets for a parameter row."""
         column: list[tk.Widget] = []
         change_reason_widget = self._create_change_reason_entry(param)
@@ -219,7 +222,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         column.append(self._create_unit_label(param))
 
         if show_upload_column:
-            column.append(self._create_upload_checkbutton(param_name, param.has_fc_value))
+            column.append(self._create_upload_checkbutton(param_name, fc_connected))
 
         column.append(change_reason_widget)
 

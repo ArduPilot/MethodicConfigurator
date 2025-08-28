@@ -653,6 +653,7 @@ class TestColumnManagementBehavior:
         param_name = "TEST_PARAM"
         param = create_mock_data_model_ardupilot_parameter()
         show_upload_column = True
+        fc_connected = True
 
         # Mock individual widget creation methods using patch.object
         with (
@@ -664,7 +665,7 @@ class TestColumnManagementBehavior:
             patch.object(parameter_editor_table, "_create_upload_checkbutton", return_value=MagicMock()) as mock_upload,
             patch.object(parameter_editor_table, "_create_change_reason_entry", return_value=MagicMock()) as mock_reason,
         ):
-            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
+            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column, fc_connected)
 
             assert len(column) == 8  # With upload column
             mock_delete.assert_called_once()
@@ -680,6 +681,7 @@ class TestColumnManagementBehavior:
         param_name = "TEST_PARAM"
         param = create_mock_data_model_ardupilot_parameter()
         show_upload_column = False
+        fc_connected = True
 
         # Mock individual widget creation methods using patch.object
         with (
@@ -690,7 +692,7 @@ class TestColumnManagementBehavior:
             patch.object(parameter_editor_table, "_create_unit_label", return_value=MagicMock()) as mock_unit,
             patch.object(parameter_editor_table, "_create_change_reason_entry", return_value=MagicMock()) as mock_reason,
         ):
-            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
+            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column, fc_connected)
 
             assert len(column) == 7  # Without upload column
             mock_delete.assert_called_once()
