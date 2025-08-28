@@ -200,16 +200,20 @@ class TestEntryWithDynamicalyFilteredListbox:  # pylint: disable=too-many-public
 
     def test_set_var(self, setup_widget) -> None:
         _, widget = setup_widget
-        # Record initial trace id
-        initial_trace_id = widget._trace_id
+
+        # Mock the callback to verify trace is working
+        widget._on_change_entry_var = MagicMock()
 
         # Call _set_var
         widget._set_var("new_text")
 
         # Verify entry var contains new text
         assert widget._entry_var.get() == "new_text"
-        # Verify trace_id has changed
-        assert widget._trace_id != initial_trace_id
+
+        # Verify trace is properly set up by triggering it
+        widget._entry_var.set("trigger_trace")
+        # The callback should be called when the variable changes
+        widget._on_change_entry_var.assert_called()
 
     def test_update_entry_from_listbox_no_selection(self, setup_widget) -> None:
         _, widget = setup_widget

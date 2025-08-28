@@ -121,8 +121,16 @@ def mock_vehicle_directory_window() -> MagicMock:
     """Fixture providing a realistic mock vehicle directory selection window."""
     window = MagicMock()
     window.configuration_template = "QuadCopter_X"
-    window.infer_comp_specs_and_conn_from_fc_params.get.return_value = True
-    window.use_fc_params.get.return_value = True
+
+    # Mock BooleanVar objects with get() method
+    mock_infer_bool_var = MagicMock()
+    mock_infer_bool_var.get.return_value = True
+    window.infer_comp_specs_and_conn_from_fc_params = mock_infer_bool_var
+
+    mock_use_fc_bool_var = MagicMock()
+    mock_use_fc_bool_var.get.return_value = True
+    window.use_fc_params = mock_use_fc_bool_var
+
     window.root.mainloop.return_value = None
     return window
 
@@ -387,7 +395,7 @@ class TestVehicleDirectoryWorkflow:
             assert result is mock_window
             mock_window.root.mainloop.assert_called_once()
 
-    def test_user_can_select_vehicle_configuration_when_needed(self, application_state: ApplicationState) -> None:
+    def test_user_can_select_vehicle_configuration_when_needed(self, application_state: ApplicationState, root) -> None:
         """
         User can select appropriate vehicle configuration when none exists.
 
@@ -403,33 +411,40 @@ class TestVehicleDirectoryWorkflow:
         mock_fc = MagicMock()
         mock_fc.fc_parameters = {"PARAM1": 1.0}  # Connected FC
         mock_fc.info.vehicle_type = "ArduCopter"
+        mock_fc.master = None  # Ensure FC info window isn't triggered
         mock_fc.reset_all_parameters_to_default.return_value = (True, "")  # Mock successful reset
         mock_fc.reset_and_reconnect.return_value = ""  # Mock successful reconnect
         application_state.flight_controller = mock_fc
         application_state.vehicle_type = "ArduCopter"  # This is what actually gets used
+        application_state.args.device = "serial"  # Not "test" to avoid FC info window
 
-        with patch("ardupilot_methodic_configurator.__main__.VehicleDirectorySelectionWindow") as mock_window_class:
+        with (
+            patch("ardupilot_methodic_configurator.__main__.VehicleDirectorySelectionWindow") as mock_window_class,
+            patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as mock_project_manager_class,
+            patch("tkinter.Tk", return_value=root),
+        ):  # Use conftest root fixture
             mock_window = MagicMock()
-            mock_window.root.mainloop = MagicMock()
+            mock_window.root = root  # Use the conftest root which is already set up for testing
             mock_window_class.return_value = mock_window
 
-            # Mock VehicleProjectManager
-            with patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as mock_project_manager_class:
-                mock_project_manager = MagicMock()
-                mock_project_manager_class.return_value = mock_project_manager
+            mock_project_manager = MagicMock()
+            mock_project_manager_class.return_value = mock_project_manager
 
-                # Act: User selects vehicle configuration
-                result = vehicle_directory_selection(application_state)
+            # Mock mainloop to prevent blocking (conftest root has this handled)
+            root.mainloop = MagicMock()
 
-                # Assert: Directory selection interface shown
-                expected_fc_connected = True
-                expected_vehicle_type = "ArduCopter"
-                mock_project_manager_class.assert_called_once_with(mock_fs, mock_fc)
-                mock_window_class.assert_called_once_with(mock_project_manager, expected_fc_connected, expected_vehicle_type)
-                mock_window.root.mainloop.assert_called_once()
-                assert result is mock_window
+            # Act: User selects vehicle configuration
+            result = vehicle_directory_selection(application_state)
 
-    def test_user_can_configure_without_connected_hardware(self, application_state: ApplicationState) -> None:
+            # Assert: Directory selection interface shown
+            expected_fc_connected = True
+            expected_vehicle_type = "ArduCopter"
+            mock_project_manager_class.assert_called_once_with(mock_fs, mock_fc)
+            mock_window_class.assert_called_once_with(mock_project_manager, expected_fc_connected, expected_vehicle_type)
+            root.mainloop.assert_called_once()
+            assert result is mock_window
+
+    def test_user_can_configure_without_connected_hardware(self, application_state: ApplicationState, root) -> None:
         """
         User can configure vehicle directory even without connected flight controller.
 
@@ -445,27 +460,43 @@ class TestVehicleDirectoryWorkflow:
         mock_fc = MagicMock()
         mock_fc.fc_parameters = {}  # No connection
         mock_fc.info.vehicle_type = None
+        mock_fc.master = None  # Ensure FC info window isn't triggered
         mock_fc.reset_all_parameters_to_default.return_value = (True, "")  # Mock successful reset
         mock_fc.reset_and_reconnect.return_value = ""  # Mock successful reconnect
         application_state.flight_controller = mock_fc
+        application_state.args.device = "serial"  # Not "test" to avoid FC info window
 
-        with patch("ardupilot_methodic_configurator.__main__.VehicleDirectorySelectionWindow") as mock_window_class:
+        with (
+            patch("ardupilot_methodic_configurator.__main__.VehicleDirectorySelectionWindow") as mock_window_class,
+            patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as mock_project_manager_class,
+            patch("ardupilot_methodic_configurator.__main__.FlightControllerInfoWindow") as mock_fc_info,
+            patch("tkinter.Tk", return_value=root),
+        ):  # Use conftest root fixture
             mock_window = MagicMock()
+            mock_window.root = root  # Use the conftest root which is already set up for testing
             mock_window_class.return_value = mock_window
 
-            # Mock VehicleProjectManager
-            with patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as mock_project_manager_class:
-                mock_project_manager = MagicMock()
-                mock_project_manager_class.return_value = mock_project_manager
+            mock_project_manager = MagicMock()
+            mock_project_manager_class.return_value = mock_project_manager
 
-                # Act: User configures without hardware
-                vehicle_directory_selection(application_state)
+            # Mock FC info window
+            mock_fc_info_window = MagicMock()
+            mock_fc_info_window.get_param_default_values.return_value = {}
+            mock_fc_info.return_value = mock_fc_info_window
 
-                # Assert: Configuration possible without hardware
-                expected_fc_connected = False
-                expected_vehicle_type = ""
-                mock_project_manager_class.assert_called_once_with(mock_fs, mock_fc)
-                mock_window_class.assert_called_once_with(mock_project_manager, expected_fc_connected, expected_vehicle_type)
+            # Mock mainloop to prevent blocking (conftest root has this handled)
+            root.mainloop = MagicMock()
+
+            # Act: User configures without hardware
+            result = vehicle_directory_selection(application_state)
+
+            # Assert: Configuration possible without hardware
+            expected_fc_connected = False
+            expected_vehicle_type = ""
+            mock_project_manager_class.assert_called_once_with(mock_fs, mock_fc)
+            mock_window_class.assert_called_once_with(mock_project_manager, expected_fc_connected, expected_vehicle_type)
+            root.mainloop.assert_called_once()
+            assert result is mock_window
 
 
 class TestApplicationIntegration:
@@ -950,7 +981,11 @@ class TestComponentEditorHelperFunctions:
 
         mock_vehicle_dir_window = MagicMock()
         mock_vehicle_dir_window.configuration_template = "template1"
-        mock_vehicle_dir_window.infer_comp_specs_and_conn_from_fc_params.get.return_value = True
+
+        # Mock BooleanVar object with get() method
+        mock_infer_bool_var = MagicMock()
+        mock_infer_bool_var.get.return_value = True
+        mock_vehicle_dir_window.infer_comp_specs_and_conn_from_fc_params = mock_infer_bool_var
 
         with patch("ardupilot_methodic_configurator.__main__.ComponentEditorWindow") as mock_window_class:
             mock_window = MagicMock()
@@ -1082,7 +1117,11 @@ class TestComponentEditorHelperFunctions:
 
         mock_vehicle_dir_window = MagicMock()
         mock_vehicle_dir_window.configuration_template = "template1"
-        mock_vehicle_dir_window.use_fc_params.get.return_value = True
+
+        # Mock BooleanVar object with get() method
+        mock_use_fc_bool_var = MagicMock()
+        mock_use_fc_bool_var.get.return_value = True
+        mock_vehicle_dir_window.use_fc_params = mock_use_fc_bool_var
 
         # Act: Process results
         process_component_editor_results(mock_fc, mock_filesystem, mock_vehicle_dir_window)
