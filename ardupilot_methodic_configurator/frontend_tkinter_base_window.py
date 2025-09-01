@@ -20,6 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
+import io
 import os
 import tkinter as tk
 import tkinter.font as tkfont
@@ -30,7 +31,7 @@ from logging import error as logging_error
 from tkinter import ttk
 from typing import Optional, Union
 
-from PIL import Image, ImageTk
+from PIL import Image
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -262,7 +263,7 @@ class BaseWindow:
         y = parent.winfo_y() + (parent_height // 2) - (window_height // 2)
         window.geometry(f"+{x}+{y}")
 
-    def put_image_in_label(
+    def put_image_in_label(  # pylint: disable=too-many-locals
         self,
         parent: ttk.Frame,
         filepath: str,
@@ -320,25 +321,44 @@ class BaseWindow:
                 raise FileNotFoundError(msg)
 
             # Load and validate the image
-            image = Image.open(filepath)
-            if image is None:
-                msg = _("Failed to load image from %s") % filepath
-                raise ValueError(msg)
+            with Image.open(filepath) as image:
+                if image is None:
+                    msg = _("Failed to load image from %s") % filepath
+                    raise ValueError(msg)
 
-            # Calculate new dimensions while preserving aspect ratio
-            width, height = image.size
-            if height == 0:
-                msg = _("Image has zero height")
-                raise ValueError(msg)
+                # Calculate new dimensions while preserving aspect ratio
+                width, height = image.size
+                if height == 0:
+                    msg = _("Image has zero height")
+                    raise ValueError(msg)
+                if width == 0:
+                    msg = _("Image has zero width")
+                    raise ValueError(msg)
 
-            aspect_ratio = width / height
-            dpi_scaled_height = int(image_height * self.dpi_scaling_factor)
+                aspect_ratio = width / height
+                dpi_scaled_height = int(image_height * self.dpi_scaling_factor)
 
-            # Resize the image
-            resized_image = image.resize((int(dpi_scaled_height * aspect_ratio), dpi_scaled_height), Image.Resampling.LANCZOS)
+                # Ensure minimum dimensions to prevent resize errors
+                dpi_scaled_height = max(dpi_scaled_height, 1)
 
-            # Convert to PhotoImage for Tkinter
-            photo = ImageTk.PhotoImage(resized_image)
+                calculated_width = int(dpi_scaled_height * aspect_ratio)
+                calculated_width = max(calculated_width, 1)
+
+                # Resize the image
+                resized_image = image.resize((calculated_width, dpi_scaled_height), Image.Resampling.LANCZOS)
+
+                # Convert to PhotoImage for Tkinter using a buffer approach
+                buffer = io.BytesIO()
+                # Ensure the image is in a format that tk.PhotoImage can handle
+                if resized_image.mode not in ("RGB", "RGBA"):
+                    resized_image = resized_image.convert("RGB")
+
+                # Save as PNG to buffer
+                resized_image.save(buffer, format="PNG")
+                buffer.seek(0)
+
+                # Create PhotoImage from buffer
+                photo = tk.PhotoImage(data=buffer.getvalue())
 
             # Create the label with the image
             image_label = ttk.Label(parent, image=photo)

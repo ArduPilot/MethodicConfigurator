@@ -67,15 +67,27 @@ def image_test_context() -> Callable[[tuple[int, int], bool], Any]:
         with (
             patch("os.path.isfile", return_value=file_exists),
             patch("PIL.Image.open") as mock_open,
-            patch("PIL.ImageTk.PhotoImage") as mock_photo,
+            patch("tkinter.PhotoImage") as mock_photo,
             patch("tkinter.ttk.Label") as mock_label,
+            patch("io.BytesIO") as mock_buffer,
         ):
-            # Setup image mocks
+            # Setup image mocks to work with context manager
             mock_image = MagicMock()
             mock_image.size = image_size
+            mock_image.mode = "RGB"
             mock_resized_image = MagicMock()
+            mock_resized_image.mode = "RGB"
             mock_image.resize.return_value = mock_resized_image
+
+            # Mock image to work as context manager
+            mock_image.__enter__ = MagicMock(return_value=mock_image)
+            mock_image.__exit__ = MagicMock(return_value=None)
             mock_open.return_value = mock_image
+
+            # Setup buffer mock
+            mock_buffer_instance = MagicMock()
+            mock_buffer.return_value = mock_buffer_instance
+            mock_buffer_instance.getvalue.return_value = b"fake_png_data"
 
             # Setup photo and label mocks
             mock_photo_instance = MagicMock()
@@ -91,6 +103,7 @@ def image_test_context() -> Callable[[tuple[int, int], bool], Any]:
                 "open_mock": mock_open,
                 "photo_mock": mock_photo,
                 "label_mock": mock_label,
+                "buffer": mock_buffer_instance,
             }
 
     return _image_context
@@ -272,7 +285,8 @@ class TestImageDisplayBehavior:
             assert result == mocks["label"]
             mocks["open_mock"].assert_called_once_with(sample_image_file)
             mocks["image"].resize.assert_called_once()
-            mocks["photo_mock"].assert_called_once_with(mocks["resized_image"])
+            # Check that PhotoImage was called with data parameter (our new implementation)
+            mocks["photo_mock"].assert_called_once_with(data=b"fake_png_data")
 
     def test_user_sees_fallback_when_image_unavailable(self, image_test_context, mocked_base_window) -> None:
         """
