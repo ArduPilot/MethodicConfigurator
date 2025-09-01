@@ -33,6 +33,17 @@ def find_data_files(globs: list[str]) -> list[tuple[str, list[str]]]:
 
 setup(
     packages=["ardupilot_methodic_configurator"],
-    # this is used by bdist
+    include_package_data=False,
+    package_data={
+        "ardupilot_methodic_configurator": [
+            "**/*.param",
+            "**/*.jpg",
+            "**/*.json",
+            "**/*.xml",
+            "**/*.mo",
+            "**/*.png",
+        ]
+    },
+    # Keep this only for legacy bdist workflows; modern wheels use package_data above
     data_files=[*find_data_files(["*.param", "*.jpg", "*.json", "*.xml", "*.mo"])],
 )
