@@ -76,7 +76,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/__main__.py:217
 msgid "Failed to reset parameters to defaults: %(error)s"
-msgstr ""
+msgstr "Fehler beim Zurücksetzen der Parameter auf Standardwerte: %(error)s"
 
 #: ardupilot_methodic_configurator/__main__.py:284
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:101
@@ -621,39 +621,39 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:312
 msgid "No flight controller connection available for command"
-msgstr ""
+msgstr "Keine Flugcontroller-Verbindung für Befehl verfügbar"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:340
 msgid "Command temporarily rejected"
-msgstr ""
+msgstr "Befehl vorübergehend abgelehnt"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:341
 msgid "Command denied"
-msgstr ""
+msgstr "Befehl verweigert"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:342
 msgid "Command unsupported"
-msgstr ""
+msgstr "Befehl nicht unterstützt"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:343
 msgid "Command failed"
-msgstr ""
+msgstr "Befehl fehlgeschlagen"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:355
 msgid "Command in progress: %(progress)d%%"
-msgstr ""
+msgstr "Befehl läuft: %(progress)d%%"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:359
 msgid "Command acknowledgment with unknown result: %(result)d"
-msgstr ""
+msgstr "Befehlsbestätigung mit unbekanntem Ergebnis: %(result)d"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:366
 msgid "Command acknowledgment timeout after %(timeout).1f seconds"
-msgstr ""
+msgstr "Timeout der Befehlsbestätigung nach %(timeout).1f Sekunden"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:371
 msgid "Failed to send command: %(error)s"
-msgstr ""
+msgstr "Fehler beim Senden des Befehls: %(error)s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:406
 msgid "Will connect to %s @ %u baud"
@@ -762,15 +762,15 @@ msgstr "Fehler: %s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:660
 msgid "No flight controller connection available for parameter reset"
-msgstr ""
+msgstr "Keine Flugcontroller-Verbindung für Parameter-Reset verfügbar"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:680
 msgid "Parameter reset to defaults command confirmed by flight controller"
-msgstr ""
+msgstr "Parameter-Reset auf Standardwerte vom Flugcontroller bestätigt"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:682
 msgid "Parameter reset command failed: %(error)s"
-msgstr ""
+msgstr "Parameter-Reset-Befehl fehlgeschlagen: %(error)s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:706
 msgid "Reset command sent to ArduPilot."
@@ -786,30 +786,30 @@ msgstr "Keine Flugcontroller-Verbindung für Motortest verfügbar"
 msgid ""
 "Motor test command confirmed: Motor %(motor)d at %(throttle)d%% for "
 "%(duration)d seconds"
-msgstr ""
+msgstr "Motortest-Befehl bestätigt: Motor %(motor)d mit %(throttle)d%% für %(duration)d Sekunden"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:786
 msgid "Motor test command failed: %(error)s"
-msgstr ""
+msgstr "Motortest-Befehl fehlgeschlagen: %(error)s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:823
 msgid ""
 "All motors test command confirmed at %(throttle)d%% for %(duration)d seconds"
-msgstr ""
+msgstr "Alle Motoren Test-Befehl bestätigt mit %(throttle)d%% für %(duration)d Sekunden"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:830
 msgid "All motors test command failed: %(error)s"
-msgstr ""
+msgstr "Alle Motoren Test-Befehl fehlgeschlagen: %(error)s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:868
 msgid ""
 "Sequential motor test command confirmed at %(throttle)d%% for %(duration)d "
 "seconds per motor"
-msgstr ""
+msgstr "Sequenzieller Motortest-Befehl bestätigt mit %(throttle)d%% für %(duration)d Sekunden pro Motor"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:875
 msgid "Sequential motor test command failed: %(error)s"
-msgstr ""
+msgstr "Sequenzieller Motortest-Befehl fehlgeschlagen: %(error)s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:890
 msgid "No flight controller connection available for motor stop"
@@ -817,11 +817,11 @@ msgstr "Keine Flugcontroller-Verbindung für Motorstopp verfügbar"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:907
 msgid "Motor stop command confirmed"
-msgstr ""
+msgstr "Motor-Stopp-Befehl bestätigt"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:909
 msgid "Motor stop command failed: %(error)s"
-msgstr ""
+msgstr "Motor-Stopp-Befehl fehlgeschlagen: %(error)s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:927
 msgid "No flight controller connection available for battery status request"
@@ -830,7 +830,7 @@ msgstr "Keine Flugcontroller-Verbindung für Batteriestatus-Anfrage verfügbar"
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:946
 msgid ""
 "Periodic BATTERY_STATUS messages confirmed every %(interval)d microseconds"
-msgstr ""
+msgstr "Periodische BATTERY_STATUS-Nachrichten bestätigt alle %(interval)d Mikrosekunden"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:950
 msgid "Failed to request periodic battery status: %(error)s"
@@ -2159,7 +2159,7 @@ msgstr "Motor-/Propeller-Reihenfolge und Richtungstest"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:213
 msgid "New FFT Filter setup and review web tool"
-msgstr ""
+msgstr "Neues FFT-Filter-Setup und Bewertungs-Web-Tool"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:214
 msgid "Rover Analytic Tune Tool"
@@ -3463,14 +3463,14 @@ msgstr ""
 msgid ""
 "Reset flight controller parameters to their defaults. WARNING: This will "
 "delete all parameters stored on the flight controller."
-msgstr ""
+msgstr "Flugcontroller-Parameter auf Standardwerte zurücksetzen. WARNUNG: Dies löscht alle im Flugcontroller gespeicherten Parameter."
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:88
 msgid ""
 "Reset the flight controller parameters to their default values when creating "
 "a new vehicle configuration.\n"
 "Helps avoid issues caused by incorrect or incompatible parameter settings."
-msgstr ""
+msgstr "Die Flugcontroller-Parameter beim Erstellen einer neuen Fahrzeugkonfiguration auf ihre Standardwerte zurücksetzen.\nHilft, Probleme durch falsche oder inkompatible Parametereinstellungen zu vermeiden."
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:95
 msgid ""
@@ -3538,17 +3538,17 @@ msgstr "Verwenden Sie nicht den Parameter-Änderungsgrund aus der Vorlage."
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:132
 msgid "Cannot reset FC parameters to defaults: no flight controller connected"
-msgstr ""
+msgstr "FC-Parameter können nicht auf Standardwerte zurückgesetzt werden: kein Flugcontroller verbunden"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:133
 msgid ""
 "Cannot infer component specifications from FC parameters: no flight "
 "controller connected"
-msgstr ""
+msgstr "Komponentenspezifikationen können nicht aus FC-Parametern abgeleitet werden: kein Flugcontroller verbunden"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:136
 msgid "Cannot use FC parameters: no flight controller connected"
-msgstr ""
+msgstr "FC-Parameter können nicht verwendet werden: kein Flugcontroller verbunden"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:250
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:101
@@ -3569,12 +3569,12 @@ msgstr "Vorlagendateien kopieren"
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
 msgid "Fatal error reading parameter files: {exp}"
-msgstr ""
+msgstr "Schwerwiegender Fehler beim Lesen der Parameterdateien: {exp}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:402
 msgid ""
 "No intermediate parameter files found after creating vehicle from template"
-msgstr ""
+msgstr "Keine Zwischenparameterdateien nach Erstellen des Fahrzeugs aus Vorlage gefunden"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:402
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:82
@@ -3582,7 +3582,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:145
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:154
 msgid "No parameter files found"
-msgstr ""
+msgstr "Keine Parameterdateien gefunden"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:424
 msgid "Vehicle template directory must not be empty"
@@ -3624,14 +3624,14 @@ msgstr ""
 msgid ""
 "No intermediate parameter files found in the selected directory: "
 "{last_vehicle_dir}"
-msgstr ""
+msgstr "Keine Zwischenparameterdateien im ausgewählten Verzeichnis gefunden: {last_vehicle_dir}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:116
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:184
 msgid ""
 "Selected directory must contain files matching \\d\\d_*\\.param and a "
 "{filename} file"
-msgstr ""
+msgstr "Ausgewähltes Verzeichnis muss Dateien enthalten, die \\d\\d_*\\.param entsprechen und eine {filename}-Datei"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:119
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:124
@@ -3652,24 +3652,24 @@ msgstr ""
 msgid ""
 "No intermediate parameter files found in the selected directory: "
 "{vehicle_dir}"
-msgstr ""
+msgstr "Keine Zwischenparameterdateien im ausgewählten Verzeichnis gefunden: {vehicle_dir}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:175
 msgid "Vehicle directory must not be empty"
-msgstr ""
+msgstr "Fahrzeugverzeichnis darf nicht leer sein"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:175
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:179
 msgid "Vehicle directory"
-msgstr ""
+msgstr "Fahrzeugverzeichnis"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:179
 msgid "Vehicle directory {vehicle_dir} does not exist"
-msgstr ""
+msgstr "Fahrzeugverzeichnis {vehicle_dir} existiert nicht"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:187
 msgid "Invalid Vehicle Directory"
-msgstr ""
+msgstr "Ungültiges Fahrzeugverzeichnis"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_autoresize_combobox.py:60
 msgid "param_file combobox selected string '%s' not in list %s"
@@ -3706,7 +3706,7 @@ msgstr "Bild hat Höhe Null"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:335
 msgid "Image has zero width"
-msgstr ""
+msgstr "Bild hat Breite null"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:375
 msgid "Error loading image from %s: %s"
