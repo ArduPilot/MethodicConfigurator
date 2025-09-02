@@ -31,8 +31,13 @@ SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
-path = ["ardupilot_methodic_configurator/images/*.png", "ardupilot_methodic_configurator/images/*.svg", "ardupilot_methodic_configurator/*.json"]
+path = ["ardupilot_methodic_configurator/images/*.png", "ardupilot_methodic_configurator/*.json"]
 SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["ardupilot_methodic_configurator/images/motor_diagrams_png/m_*.png", "ardupilot_methodic_configurator/images/m_*.svg"]
+SPDX-FileCopyrightText = "2024 Yuri Rage"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
