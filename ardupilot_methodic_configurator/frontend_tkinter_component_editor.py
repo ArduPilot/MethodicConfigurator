@@ -184,6 +184,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 # Check if dropdown is open by examining the combobox's state
                 dropdown_is_open = getattr(widget, "dropdown_is_open", False)
                 if not dropdown_is_open:
+                    widget.master.event_generate("<MouseWheel>", delta=_event.delta)  # type: ignore[attr-defined]
                     return "break"  # Prevent default behavior
                 return None  # Allow default behavior when dropdown is open
 
