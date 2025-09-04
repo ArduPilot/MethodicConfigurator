@@ -10,3 +10,6 @@ dist/
 git_hash.txt
 
 /.coverage
+venv/
+test.txt
+test.xml
