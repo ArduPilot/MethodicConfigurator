@@ -20,10 +20,13 @@ import pytest
 from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
-from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
+from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (
+    PairTupleCombobox,
+    setup_combobox_mousewheel_handling,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 
-# pylint: disable=protected-access, redefined-outer-name, too-few-public-methods
+# pylint: disable=protected-access, redefined-outer-name, too-few-public-methods, too-many-lines
 
 
 def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments # noqa: PLR0913
@@ -904,13 +907,13 @@ class TestCompleteIntegrationWorkflows:
 class TestMousewheelHandlingBehavior:
     """Test mousewheel handling behavior for comboboxes."""
 
-    def test_setup_combobox_mousewheel_handling(self, parameter_editor_table: ParameterEditorTable) -> None:
+    def test_setup_combobox_mousewheel_handling(self, parameter_editor_table: ParameterEditorTable) -> None:  # pylint: disable=unused-argument
         """Test that mousewheel handling is properly set up for comboboxes."""
         # Create a mock PairTupleCombobox
         mock_combobox = MagicMock(spec=PairTupleCombobox)
 
-        # Call the mousewheel setup method
-        parameter_editor_table._setup_combobox_mousewheel_handling(mock_combobox)
+        # Call the shared mousewheel setup function
+        setup_combobox_mousewheel_handling(mock_combobox)
 
         # Verify that the dropdown_is_open flag is initialized
         assert hasattr(mock_combobox, "dropdown_is_open")
@@ -928,7 +931,7 @@ class TestMousewheelHandlingBehavior:
         for expected_binding in expected_bindings:
             assert any(call.args[0] == expected_binding[0] for call in bind_calls), f"Binding {expected_binding[0]} not found"
 
-    def test_mousewheel_handler_when_dropdown_closed(self, parameter_editor_table: ParameterEditorTable) -> None:
+    def test_mousewheel_handler_when_dropdown_closed(self) -> None:
         """Test mousewheel behavior when dropdown is closed."""
         with patch("tkinter.Tk"):
             mock_combobox = MagicMock(spec=PairTupleCombobox)
@@ -937,7 +940,7 @@ class TestMousewheelHandlingBehavior:
             mock_combobox.dropdown_is_open = False
 
             # Set up mousewheel handling
-            parameter_editor_table._setup_combobox_mousewheel_handling(mock_combobox)
+            setup_combobox_mousewheel_handling(mock_combobox)
 
             # Get the mousewheel handler from the bind calls
             mousewheel_bind_call = None
@@ -955,11 +958,12 @@ class TestMousewheelHandlingBehavior:
 
             result = handler(mock_event)
 
-            # Should return "break" and generate event on master
+            # Should return "break" to prevent default behavior
             assert result == "break"
+            # Event should be propagated to parent to allow scrolling
             mock_master.event_generate.assert_called_once_with("<MouseWheel>", delta=120)
 
-    def test_mousewheel_handler_when_dropdown_open(self, parameter_editor_table: ParameterEditorTable) -> None:
+    def test_mousewheel_handler_when_dropdown_open(self) -> None:
         """Test mousewheel behavior when dropdown is open."""
         with patch("tkinter.Tk"):
             mock_combobox = MagicMock(spec=PairTupleCombobox)
@@ -967,7 +971,7 @@ class TestMousewheelHandlingBehavior:
             mock_combobox.master = mock_master
 
             # Set up mousewheel handling first
-            parameter_editor_table._setup_combobox_mousewheel_handling(mock_combobox)
+            setup_combobox_mousewheel_handling(mock_combobox)
 
             # Now set dropdown as open after the handler is set up
             mock_combobox.dropdown_is_open = True
@@ -992,13 +996,13 @@ class TestMousewheelHandlingBehavior:
             assert result is None
             mock_master.event_generate.assert_not_called()
 
-    def test_dropdown_state_management(self, parameter_editor_table: ParameterEditorTable) -> None:
+    def test_dropdown_state_management(self) -> None:
         """Test that dropdown state is properly managed."""
         with patch("tkinter.Tk"):
             mock_combobox = MagicMock(spec=PairTupleCombobox)
 
             # Set up mousewheel handling
-            parameter_editor_table._setup_combobox_mousewheel_handling(mock_combobox)
+            setup_combobox_mousewheel_handling(mock_combobox)
 
             # Find the dropdown opened and closed handlers
             dropdown_opened_handler = None

@@ -22,11 +22,53 @@ from logging import warning as logging_warning
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import Label, Toplevel, ttk
-from typing import Union
+from typing import Optional, Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import update_combobox_width
+
+
+def setup_combobox_mousewheel_handling(combobox: ttk.Combobox) -> None:
+    """
+    Set up mouse wheel handling for a combobox to prevent value changes when scrolling.
+
+    This function adds event bindings to prevent the combobox value from changing
+    when the user scrolls the mouse wheel over it while the dropdown is closed.
+    When the dropdown is closed, the mouse wheel event is propagated to the parent
+    widget to allow normal scrolling behavior in the containing widget.
+
+    Args:
+        combobox: The ttk.Combobox widget to configure
+
+    """
+    # Track dropdown state to control mouse wheel behavior
+    combobox.dropdown_is_open = False  # type: ignore[attr-defined]
+
+    def handle_mousewheel(event: tk.Event) -> Optional[str]:
+        """Handle mouse wheel events - propagate to parent when dropdown is closed."""
+        if not combobox.dropdown_is_open:  # type: ignore[attr-defined]
+            # Propagate the wheel event to the parent widget
+            combobox.master.event_generate("<MouseWheel>", delta=event.delta)
+            return "break"  # Prevent default combobox behavior
+        return None  # Allow default behavior when dropdown is open
+
+    def dropdown_opened(_event: Optional[tk.Event] = None) -> None:
+        """Mark dropdown as open."""
+        combobox.dropdown_is_open = True  # type: ignore[attr-defined]
+
+    def dropdown_closed(_event: Optional[tk.Event] = None) -> None:
+        """Mark dropdown as closed."""
+        combobox.dropdown_is_open = False  # type: ignore[attr-defined]    # Bind mouse wheel events (Windows and Linux)
+
+    combobox.bind("<MouseWheel>", handle_mousewheel, add="+")
+    combobox.bind("<Button-4>", handle_mousewheel, add="+")
+    combobox.bind("<Button-5>", handle_mousewheel, add="+")
+
+    # Track dropdown open/close events
+    combobox.bind("<<ComboboxDropdown>>", dropdown_opened, add="+")
+    combobox.bind("<FocusOut>", dropdown_closed, add="+")
+
 
 # SPDX-SnippetBegin
 # SPDX-License-Identifier: MPL-2.0
@@ -57,6 +99,9 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         self.list_shows: list[str] = []
         self.set_entries_tuple(list_pair_tuple, selected_element)
         self.bind("<Configure>", self.on_combo_configure, add="+")
+
+        # Apply mouse wheel handling to this combobox instance
+        setup_combobox_mousewheel_handling(self)
 
     def set_entries_tuple(self, list_pair_tuple: list[tuple[str, str]], selected_element: Union[None, str]) -> None:
         if isinstance(list_pair_tuple, list):

@@ -18,7 +18,7 @@ from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from tkinter import ttk
-from typing import Optional, Union
+from typing import Union
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -29,6 +29,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     FC_CONNECTION_TYPE_PATHS,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
+from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import setup_combobox_mousewheel_handling
 
 # from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message, show_warning_message
@@ -179,35 +180,16 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             cb.bind("<Return>", on_validate_combobox)
             cb.bind("<ButtonRelease>", on_validate_combobox)
 
-            # Prevent mouse wheel from changing value when dropdown is not open
-            def handle_mousewheel(_event: tk.Event, widget: tk.Widget = cb) -> Optional[str]:
-                # Check if dropdown is open by examining the combobox's state
-                dropdown_is_open = getattr(widget, "dropdown_is_open", False)
-                if not dropdown_is_open:
-                    widget.master.event_generate("<MouseWheel>", delta=_event.delta)  # type: ignore[attr-defined]
-                    return "break"  # Prevent default behavior
-                return None  # Allow default behavior when dropdown is open
+            # Set up mouse wheel handling to prevent unwanted value changes
+            setup_combobox_mousewheel_handling(cb)
 
-            # Set flag when dropdown opens or closes
-            def dropdown_opened(_event: tk.Event, widget: tk.Widget = cb) -> None:
-                widget.dropdown_is_open = True  # type: ignore[attr-defined]
+            # Override the FocusOut binding to also handle validation
+            def combined_focus_out(event: tk.Event) -> None:
+                # First handle the dropdown closing logic (already done by setup function)
+                # Then handle validation
+                self._validate_combobox(event, path)
 
-            def dropdown_closed(_event: tk.Event, widget: tk.Widget = cb) -> None:
-                widget.dropdown_is_open = False  # type: ignore[attr-defined]
-
-            # Initialize the flag
-            cb.dropdown_is_open = False  # type: ignore[attr-defined]
-
-            # Bind to events for dropdown opening and closing
-            cb.bind("<<ComboboxDropdown>>", dropdown_opened)
-            cb.bind(
-                "<FocusOut>",
-                lambda e, p=path: (dropdown_closed(e), self._validate_combobox(e, p)),  # type: ignore[misc,func-returns-value]
-            )
-            # Bind mouse wheel events
-            cb.bind("<MouseWheel>", handle_mousewheel)  # Windows mouse wheel
-            cb.bind("<Button-4>", handle_mousewheel)  # Linux mouse wheel up
-            cb.bind("<Button-5>", handle_mousewheel)  # Linux mouse wheel down
+            cb.bind("<FocusOut>", combined_focus_out, add="+")
 
             if path in FC_CONNECTION_TYPE_PATHS:
                 cb.bind(  # immediate update of Protocol combobox choices after changing connection Type selection
