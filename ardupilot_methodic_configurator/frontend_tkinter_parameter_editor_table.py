@@ -16,7 +16,7 @@ from logging import info as logging_info
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
-from typing import Optional, Union
+from typing import Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import Par
@@ -30,7 +30,10 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
-from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
+from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (
+    PairTupleCombobox,
+    setup_combobox_mousewheel_handling,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
@@ -358,37 +361,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         event.width = NEW_VALUE_WIDGET_WIDTH
         combobox_widget.on_combo_configure(event)
 
-    def _setup_combobox_mousewheel_handling(self, combobox: PairTupleCombobox) -> None:
-        """Set up mouse wheel handling for combobox to prevent unwanted value changes."""
-
-        # Prevent mouse wheel from changing value when dropdown is not open
-        def handle_mousewheel(_event: tk.Event, widget: tk.Widget = combobox) -> Optional[str]:
-            # Check if dropdown is open by examining the combobox's state
-            dropdown_is_open = getattr(widget, "dropdown_is_open", False)
-            if not dropdown_is_open:
-                widget.master.event_generate("<MouseWheel>", delta=_event.delta)
-                return "break"  # Prevent default behavior
-            return None  # Allow default behavior when dropdown is open
-
-        # Set flag when dropdown opens or closes
-        def dropdown_opened(_event: tk.Event, widget: tk.Widget = combobox) -> None:
-            widget.dropdown_is_open = True  # type: ignore[attr-defined]
-
-        def dropdown_closed(_event: tk.Event, widget: tk.Widget = combobox) -> None:
-            widget.dropdown_is_open = False  # type: ignore[attr-defined]
-
-        # Initialize the flag
-        combobox.dropdown_is_open = False  # type: ignore[attr-defined]
-
-        # Bind to events for dropdown opening and closing
-        combobox.bind("<<ComboboxDropdown>>", dropdown_opened)
-        combobox.bind("<FocusOut>", dropdown_closed, "+")
-
-        # Bind mouse wheel events
-        combobox.bind("<MouseWheel>", handle_mousewheel)  # Windows mouse wheel
-        combobox.bind("<Button-4>", handle_mousewheel)  # Linux mouse wheel up
-        combobox.bind("<Button-5>", handle_mousewheel)  # Linux mouse wheel down
-
     @staticmethod
     def _update_new_value_entry_text(new_value_entry: ttk.Entry, param: ArduPilotParameter) -> None:
         """Update the new value entry text and style."""
@@ -442,7 +414,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             )
 
             # Set up mouse wheel handling to prevent unwanted value changes
-            self._setup_combobox_mousewheel_handling(new_value_entry)
+            setup_combobox_mousewheel_handling(new_value_entry)
         else:
             new_value_entry = ttk.Entry(self.view_port, width=NEW_VALUE_WIDGET_WIDTH + 1, justify=tk.RIGHT)
             self._update_new_value_entry_text(new_value_entry, param)
