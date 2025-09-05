@@ -782,6 +782,10 @@ Setup the lua script using:
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. Close *ArduPilot Methodic Configurator*
 
+WARNING: Quicktune requires moderate wind disturbances to calibrate properly.
+Flying in completely calm conditions or perfectly steady wind can cause Quicktune to calculate overly aggressive PID values.
+These excessive settings may cause dangerous oscillations and potential crashes when your vehicle later encounters normal wind conditions.
+
 Perform the flight and afterward:
 
 1. Connect the flight controller to the PC
@@ -858,6 +862,10 @@ Setup the lua script using:
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. When asked *Update file with values from FC?* select `Close` to close the application and go perform the experiment.
+
+WARNING: Quicktune requires moderate wind disturbances to calibrate properly.
+Flying in completely calm conditions or perfectly steady wind can cause Quicktune to calculate overly aggressive PID values.
+These excessive settings may cause dangerous oscillations and potential crashes when your vehicle later encounters normal wind conditions.
 
 Perform the flight and afterward:
 
