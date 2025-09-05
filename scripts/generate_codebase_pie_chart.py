@@ -21,8 +21,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
 from typing import Any
 
+import matplotlib as mpl
 import matplotlib.patches
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
+
+mpl.use("Agg")  # Use non-interactive backend that doesn't require GUI
 
 # ruff: noqa: T201
 
@@ -141,7 +145,7 @@ def create_codebase_pie_chart(sizes: list[int], categories: list[str], colors: l
     return stats
 
 
-def create_legend(ax: plt.Axes, wedges: list[matplotlib.patches.Wedge], stats: dict[str, float], total_lines: int) -> None:
+def create_legend(ax: Axes, wedges: list[matplotlib.patches.Wedge], stats: dict[str, float], total_lines: int) -> None:
     """Create the legend with line counts and percentages."""
     test_pct = stats["test_lines"] / total_lines * 100
     app_pct = stats["handwritten_app_lines"] / total_lines * 100
@@ -201,8 +205,8 @@ def save_charts() -> None:
     plt.savefig(output_file_svg, bbox_inches="tight", facecolor="white", edgecolor="none")
     print(f"SVG version saved to: {output_file_svg}")
 
-    # Show the plot
-    plt.show()
+    # Close the plot to free memory
+    plt.close()
 
 
 def print_detailed_analysis(stats: dict[str, Any]) -> None:
