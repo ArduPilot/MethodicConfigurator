@@ -31,15 +31,6 @@ from tkinter.messagebox import askyesno, showerror, showwarning
 from tkinter.simpledialog import askfloat
 from typing import Callable, Union
 
-try:
-    import tksvg
-except ImportError:
-    tksvg = None
-
-# For fallback SVG rendering
-import io
-
-import cairosvg
 from PIL import Image, ImageTk
 
 from ardupilot_methodic_configurator import _
@@ -90,11 +81,10 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self.diagram_canvas: Canvas
         self.batt_voltage_label: ttk.Label
         self.batt_current_label: ttk.Label
-        self._current_svg_image = None  # Store SVG image reference
+        self._current_svg_image: Union[ImageTk.PhotoImage, None] = None  # Store image reference (PNG or other format)
         self._first_motor_test = True  # Track if this is the first motor test
         self._frame_options_loaded = False  # Track if frame options have been loaded
-        self._diagram_loaded = False  # Track if diagram has been loaded initially
-        self._diagrams_path = ""
+        self._diagrams_path = ""  # Cache diagram path for performance
         self._content_frame = None  # Store reference to content frame for widget searches
 
         self._create_widgets()
@@ -142,28 +132,11 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self.frame_type_combobox.pack(side="left", padx=5, expand=True, fill="x")
         self.frame_type_combobox.bind("<<ComboboxSelected>>", self._on_frame_type_change)
 
-        self.diagram_canvas = Canvas(config_frame, width=400, height=300, bg="white")
+        self.diagram_canvas = Canvas(config_frame, width=260, height=260, bg="white")
         self.diagram_canvas.pack()
 
-        # --- 2. Arm and Min Throttle Configuration ---
-        motor_params_frame = ttk.LabelFrame(content_frame, text=_("2. Arm and Min Throttle Configuration"))
-        motor_params_frame.pack(padx=10, pady=5, fill="x")
-
-        button_frame = ttk.Frame(motor_params_frame)
-        button_frame.pack(fill="x", pady=5)
-        ttk.Button(
-            button_frame,
-            text=_("Set Motor Spin Arm"),
-            command=self._set_motor_spin_arm,
-        ).pack(side="left", padx=5)
-        ttk.Button(
-            button_frame,
-            text=_("Set Motor Spin Min"),
-            command=self._set_motor_spin_min,
-        ).pack(side="left", padx=5)
-
-        # --- 3. Motor Order/Direction Configuration ---
-        testing_frame = ttk.LabelFrame(content_frame, text=_("3. Motor Order/Direction Configuration"))
+        # --- 2. Motor Order/Direction Configuration ---
+        testing_frame = ttk.LabelFrame(content_frame, text=_("2. Motor Order/Direction Configuration"))
         testing_frame.pack(padx=10, pady=5, fill="x")
 
         controls_frame = ttk.Frame(testing_frame)
@@ -208,6 +181,23 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             command=self._test_motors_in_sequence,
         ).pack(side="left", padx=5)
         ttk.Button(test_controls_frame, text=_("Stop All Motors"), command=self._stop_all_motors).pack(side="right", padx=5)
+
+        # --- 3. Arm and Min Throttle Configuration ---
+        motor_params_frame = ttk.LabelFrame(content_frame, text=_("3. Arm and Min Throttle Configuration"))
+        motor_params_frame.pack(padx=10, pady=5, fill="x")
+
+        button_frame = ttk.Frame(motor_params_frame)
+        button_frame.pack(fill="x", pady=5)
+        ttk.Button(
+            button_frame,
+            text=_("Set Motor Spin Arm"),
+            command=self._set_motor_spin_arm,
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            button_frame,
+            text=_("Set Motor Spin Min"),
+            command=self._set_motor_spin_min,
+        ).pack(side="left", padx=5)
 
     def _create_motor_buttons(self, parent: Union[Frame, ttk.Frame]) -> None:
         """Create the motor test buttons and detection comboboxes."""
@@ -255,10 +245,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             self._update_frame_options()
             self._frame_options_loaded = True
 
-        # Only load diagram once during initial setup, not on every update
-        if not self._diagram_loaded:
-            self._update_diagram()
-            self._diagram_loaded = True
+        # Update diagram when needed
+        self._update_diagram()
 
         self._update_motor_buttons_layout()
         self._update_battery_status()
@@ -374,123 +362,56 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
                 diagram_path, error_msg = self.model.get_motor_diagram_path()
                 self._diagrams_path = diagram_path
 
-            if diagram_path and diagram_path.endswith(".svg"):
-                logging_error(_("Found SVG diagram at: %(path)s"), {"path": diagram_path})
-                width = 400
-                height = 300
+            if diagram_path and diagram_path.endswith(".png"):
+                logging_debug(_("Found PNG diagram at: %(path)s"), {"path": diagram_path})
+                width = 250
+                height = 250
                 canvas_width = int(self.diagram_canvas.winfo_width() or width)
                 canvas_height = int(self.diagram_canvas.winfo_height() or height)
                 if canvas_width <= 0:
                     canvas_width = max(1, int(width))
                 if canvas_height <= 0:
                     canvas_height = max(1, int(height))
+
                 try:
-                    if tksvg is not None:
-                        # Use tksvg to render SVG
-                        svg_image = tksvg.SvgImage(file=diagram_path)
-                        # Scale the image to fit the canvas
+                    # Load and display PNG image using PIL
+                    image = Image.open(diagram_path)
 
-                        # Calculate scaling to fit within canvas while maintaining aspect ratio
-                        svg_width = svg_image.width()
-                        svg_height = svg_image.height()
-                        _scale, scaled_height = self.model.get_svg_scaling_info(
-                            canvas_width, canvas_height, svg_width, svg_height
+                    # Calculate scaling to fit within canvas while maintaining aspect ratio
+                    img_width, img_height = image.size
+                    if img_width > 0 and img_height > 0:
+                        # Calculate scale factor to fit image in canvas
+                        scale_x = canvas_width / img_width
+                        scale_y = canvas_height / img_height
+                        scale = min(scale_x, scale_y)
+
+                        # Make image 30% smaller (multiply by 0.7)
+                        scale *= 0.7
+
+                        # Calculate new dimensions
+                        new_width = int(img_width * scale)
+                        new_height = int(img_height * scale)
+
+                        # Resize image
+                        resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                        tk_image = ImageTk.PhotoImage(resized_image)
+
+                        # Center the image on the canvas
+                        self.diagram_canvas.create_image(
+                            canvas_width // 2, canvas_height // 2, image=tk_image, anchor="center"
                         )
-
-                        if svg_width > 0 and svg_height > 0:
-                            # Create scaled image
-                            scaled_svg = tksvg.SvgImage(file=diagram_path, scaletoheight=scaled_height)
-                            self.diagram_canvas.create_image(
-                                canvas_width // 2, canvas_height // 2, image=scaled_svg, anchor="center"
-                            )
-                            # Keep a reference to prevent garbage collection
-                            # Store in the view instance instead of canvas
-                            self._current_svg_image = scaled_svg
-                        else:
-                            self.diagram_canvas.create_text(200, 150, text=_("Invalid SVG diagram"), fill="red")
-                    elif cairosvg is not None:
-                        # Use cairosvg to rasterize the SVG to PNG and display via PIL on the canvas.
-
-                        try:
-                            png_data = cairosvg.svg2png(
-                                url=str(diagram_path),  # output_width=canvas_width, output_height=canvas_height
-                            )
-                            # Defensive check: svg2png should return bytes; if not, log and fallback
-                            if not isinstance(png_data, (bytes, bytearray)):
-                                logging_error(
-                                    _("cairosvg.svg2png returned unexpected type: %(type)s"),
-                                    {"type": type(png_data)},
-                                )
-                                self.diagram_canvas.create_text(
-                                    canvas_width // 2,
-                                    canvas_height // 2,
-                                    text=_("SVG render returned unexpected data type for %(path)s") % {"path": diagram_path},
-                                    fill="red",
-                                    width=380,
-                                )
-                                raise TypeError("svg2png returned non-bytes data")
-
-                            try:
-                                image = Image.open(io.BytesIO(png_data))
-                            except TypeError as img_e:
-                                # Image.open failed due to bad argument type - log details
-                                logging_error(
-                                    _("PIL.Image.open TypeError: %(error)s - png_data type: %(type)s"),
-                                    {"error": img_e, "type": type(png_data)},
-                                )
-                                self.diagram_canvas.create_text(
-                                    canvas_width // 2,
-                                    canvas_height // 2,
-                                    text=_("Error opening rendered PNG for %(path)s") % {"path": diagram_path},
-                                    fill="red",
-                                    width=380,
-                                )
-                                raise
-
-                            tk_image = ImageTk.PhotoImage(image)
-                            # Center the image on the canvas
-                            self.diagram_canvas.create_image(
-                                canvas_width // 2,
-                                canvas_height // 2,
-                                image=tk_image,
-                                anchor="center",
-                            )
-                            # Keep reference to avoid garbage collection
-                            self._current_svg_image = tk_image
-                        except TypeError as e:
-                            logging_error(_("TypeError rendering SVG with cairosvg: %(error)s"), {"error": e})
-                            self.diagram_canvas.create_text(
-                                canvas_width // 2,
-                                canvas_height // 2,
-                                text=_("TypeError rendering SVG: %(path)s") % {"path": diagram_path},
-                                fill="red",
-                                width=380,
-                            )
-                        except Exception as e:  # pylint: disable=broad-exception-caught
-                            logging_error(_("Error rendering SVG with cairosvg: %(error)s"), {"error": e})
-                            # Show an informative fallback message
-                            self.diagram_canvas.create_text(
-                                canvas_width // 2,
-                                canvas_height // 2,
-                                text=_("Error rendering SVG: %(path)s") % {"path": diagram_path},
-                                fill="red",
-                                width=380,
-                            )
+                        # Keep a reference to prevent garbage collection
+                        self._current_svg_image = tk_image
                     else:
-                        # No SVG rendering backend available, show filename instead
-                        self.diagram_canvas.create_text(
-                            canvas_width // 2,
-                            canvas_height // 2,
-                            text=_("SVG diagram: %(path)s") % {"path": diagram_path},
-                            fill="black",
-                            width=380,
-                        )
+                        self.diagram_canvas.create_text(200, 150, text=_("Invalid PNG diagram"), fill="red")
+
                 except Exception as e:  # pylint: disable=broad-exception-caught
-                    logging_error(_("Error loading SVG diagram: %(error)s"), {"error": e})
+                    logging_error(_("Error loading PNG diagram: %(error)s"), {"error": e})
                     self.diagram_canvas.create_text(200, 150, text=_("Error loading diagram"), fill="red")
             else:
                 # Fallback: just show the path
-                logging_error(error_msg)
+                if error_msg:
+                    logging_error(error_msg)
                 self.diagram_canvas.create_text(
                     200, 150, text=_("Diagram: %(path)s") % {"path": diagram_path}, fill="black", width=380
                 )
@@ -529,6 +450,9 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             )
             reset_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
             connection_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
+
+            # Invalidate diagram cache since frame type changed
+            self._diagrams_path = ""
 
             # Update UI components
             self._update_motor_buttons_layout()
@@ -591,7 +515,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         current_val = self.model.get_parameter("MOT_SPIN_ARM")
         new_val = askfloat(
             _("Set Motor Spin Arm"),
-            _("Enter new value for MOT_SPIN_ARM:"),
+            _("Enter new value for MOT_SPIN_ARM with 0.02 margin:"),
             initialvalue=current_val,
         )
         if new_val is not None:
@@ -609,7 +533,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         current_val = self.model.get_parameter("MOT_SPIN_MIN")
         new_val = askfloat(
             _("Set Motor Spin Min"),
-            _("Enter new value for MOT_SPIN_MIN:"),
+            _("Enter new value for MOT_SPIN_MIN, must be at least 0.02 higher than MOT_SPIN_ARM:"),
             initialvalue=current_val,
             minvalue=0.0,
             maxvalue=1.0,

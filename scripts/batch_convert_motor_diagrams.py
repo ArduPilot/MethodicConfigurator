@@ -9,7 +9,7 @@ The conversion process:
 1. Renders SVG to 1200x1200 canvas using Firefox-geckodriver
 2. Crops whitespace around the image
 3. Removes alpha channel (converts to RGB)
-4. Anti-aliasing resize to target size (default 200x200)
+4. Anti-aliasing resize to target size (default 230x230)
 5. Saves as PNG without alpha channel
 
 This file is part of ArduPilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
@@ -24,6 +24,7 @@ import os
 import shutil
 from io import BytesIO
 from pathlib import Path
+from typing import Union
 
 from PIL import Image
 from selenium import webdriver
@@ -70,8 +71,43 @@ def crop_whitespace(image: Image.Image, margin: int = 5) -> Image.Image:
     return image.crop((left, top, right, bottom))
 
 
+def setup_firefox_service() -> tuple[Union[FirefoxService, None], str]:
+    """Set up Firefox service with geckodriver fallback logic."""
+    # Create Firefox driver with fallback for geckodriver
+    try:
+        # Try to use system geckodriver first
+        geckodriver_path = shutil.which("geckodriver")
+        if geckodriver_path:
+            return FirefoxService(executable_path=geckodriver_path), "Success"
+        # Fallback to webdriver_manager (may hit rate limit)
+        return FirefoxService(GeckoDriverManager().install()), "Success"
+    except Exception as e:
+        # If webdriver_manager fails due to rate limit, try common system paths
+        common_paths = [
+            "geckodriver.exe",  # Windows executable
+            "geckodriver",  # Unix executable
+            "/usr/bin/geckodriver",
+            "/usr/local/bin/geckodriver",
+            "/snap/bin/geckodriver",
+            "C:\\Program Files\\geckodriver\\geckodriver.exe",  # Windows common install
+            "C:\\Windows\\System32\\geckodriver.exe",  # Windows system path
+        ]
+
+        for path in common_paths:
+            if os.path.exists(path) or shutil.which(path):
+                try:
+                    print(f"Using geckodriver: {path}")  # Debug output
+                    return FirefoxService(executable_path=path), "Success"
+                except Exception as exc:
+                    # Log the exception but continue trying other paths
+                    print(f"Warning: Failed to create FirefoxService with {path}: {exc}")
+                    continue
+
+        return None, f"Geckodriver not found. Please install geckodriver. Original error: {e!s}"
+
+
 def convert_with_firefox(
-    svg_path: str, png_path: str, canvas_width: int = 1200, canvas_height: int = 1200, target_size: int = 200
+    svg_path: str, png_path: str, canvas_width: int = 1200, canvas_height: int = 1200, target_size: int = 230
 ) -> tuple[bool, str]:
     """
     Convert SVG to PNG using Firefox browser with image processing pipeline.
@@ -80,7 +116,7 @@ def convert_with_firefox(
     1. Render SVG to large canvas (default 1200x1200) for high quality
     2. Crop whitespace around image content
     3. Remove alpha channel (convert to RGB)
-    4. Anti-aliasing resize to target size (default 200x200)
+    4. Anti-aliasing resize to target size (default 230x230)
     5. Save as PNG without alpha channel
     """
     driver = None
@@ -91,48 +127,31 @@ def convert_with_firefox(
         firefox_options.add_argument("--no-sandbox")
         firefox_options.add_argument("--disable-dev-shm-usage")
 
-        # Create Firefox driver with fallback for geckodriver
-        try:
-            # Try to use system geckodriver first
-            geckodriver_path = shutil.which("geckodriver")
-            if geckodriver_path:
-                service = FirefoxService(executable_path=geckodriver_path)
-            else:
-                # Fallback to webdriver_manager (may hit rate limit)
-                service = FirefoxService(GeckoDriverManager().install())
-        except Exception as e:
-            # If webdriver_manager fails due to rate limit, try common system paths
-            common_paths = [
-                "/usr/bin/geckodriver",
-                "/usr/local/bin/geckodriver",
-                "/snap/bin/geckodriver",
-                "geckodriver",  # PATH lookup
-            ]
-
-            service = None
-            for path in common_paths:
-                if os.path.exists(path) or (path == "geckodriver" and shutil.which("geckodriver")):
-                    try:
-                        service = FirefoxService(executable_path=path)
-                        break
-                    except Exception as exc:
-                        # Log the exception but continue trying other paths
-                        print(f"Warning: Failed to create FirefoxService with {path}: {exc}")
-                        continue
-
-            if not service:
-                return False, f"Geckodriver not found. Please install geckodriver. Original error: {e!s}"
+        # Set up Firefox service
+        service, error_msg = setup_firefox_service()
+        if service is None:
+            return False, error_msg
 
         driver = webdriver.Firefox(service=service, options=firefox_options)
 
         # Set window size to large canvas for high quality rendering
         driver.set_window_size(canvas_width, canvas_height)
 
-        # Convert SVG path to absolute path
+        # Convert SVG path to absolute path and handle Windows paths
         svg_abs_path = os.path.abspath(svg_path)
 
+        # Convert Windows path to file URL format
+        if os.name == "nt":  # Windows
+            # Replace backslashes with forward slashes and handle drive letter
+            svg_abs_path = svg_abs_path.replace("\\", "/")
+            svg_abs_path = f"file:///{svg_abs_path}" if svg_abs_path[1] == ":" else f"file://{svg_abs_path}"
+        else:
+            svg_abs_path = f"file://{svg_abs_path}"
+
+        print(f"Opening URL: {svg_abs_path}")  # Debug output
+
         # Open SVG file
-        driver.get(f"file://{svg_abs_path}")
+        driver.get(svg_abs_path)
 
         # Take screenshot
         png_data = driver.get_screenshot_as_png()
@@ -215,16 +234,20 @@ def print_comparison_table(comparison_data: list[dict], png_path: Path) -> None:
 
 
 def batch_convert_and_compare(
-    svg_dir: str, png_dir: str, canvas_width: int = 1200, canvas_height: int = 1200, target_size: int = 200
+    svg_dir: str, png_dir: str, canvas_width: int = 1200, canvas_height: int = 1200, target_size: int = 230
 ) -> None:
     """Convert all SVG files with image processing pipeline and create comparison table."""
     svg_path = Path(svg_dir)
     png_path = Path(png_dir)
     png_path.mkdir(parents=True, exist_ok=True)
 
+    print(f"Looking for SVG files in: {svg_path.absolute()}")
+
     # Find all motor diagram SVG files
     svg_files = list(svg_path.glob("m_*.svg"))
     svg_files.sort()
+
+    print(f"Found {len(svg_files)} SVG files: {[f.name for f in svg_files[:5]]}{'...' if len(svg_files) > 5 else ''}")
 
     if not svg_files:
         print(f"No motor diagram SVG files found in {svg_dir}")
@@ -266,16 +289,24 @@ def batch_convert_and_compare(
 
 
 if __name__ == "__main__":
-    # Convert all motor diagrams with new processing pipeline:
-    # - 1200x1200 canvas for high quality rendering
-    # - Crop whitespace around content
-    # - Remove alpha channel
-    # - Anti-aliasing resize to 200x200
-    # - Save as optimized PNG
-    batch_convert_and_compare(
-        "../ardupilot_methodic_configurator/images/",
-        "../motor_diagrams_png_200x200/",
-        canvas_width=1200,
-        canvas_height=1200,
-        target_size=200,
-    )
+    print("Starting motor diagram batch conversion...")
+    try:
+        # Convert all motor diagrams with new processing pipeline:
+        # - 1200x1200 canvas for high quality rendering
+        # - Crop whitespace around content
+        # - Remove alpha channel
+        # - Anti-aliasing resize to 230x230
+        # - Save as optimized PNG
+        batch_convert_and_compare(
+            "../ardupilot_methodic_configurator/images/",
+            "../ardupilot_methodic_configurator/motor_diagrams_png/",
+            canvas_width=1200,
+            canvas_height=1200,
+            target_size=230,
+        )
+        print("Conversion completed successfully!")
+    except Exception as e:
+        print(f"Error during conversion: {e!s}")
+        import traceback
+
+        traceback.print_exc()
