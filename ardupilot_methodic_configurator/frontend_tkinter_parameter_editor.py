@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import sys
+import threading
 import time
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
@@ -371,6 +372,28 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
             if self.flight_controller.master
             else _("No flight controller connected, upload not available"),
+        )
+
+        # Create download last flight log button
+        download_log_button = ttk.Button(
+            buttons_frame,
+            text=_("Download last flight log"),
+            command=self.on_download_last_flight_log_click,
+        )
+        download_log_button.configure(
+            state=(
+                "normal" if (self.flight_controller.master and self.flight_controller.info.is_mavftp_supported) else "disabled"
+            )
+        )
+        download_log_button.pack(side=tk.LEFT, padx=(8, 8))  # Add padding on both sides of the download log button
+        show_tooltip(
+            download_log_button,
+            _(
+                "Download the last flight log from the flight controller\n"
+                "This will save the previous flight log to a file on your computer for analysis"
+            )
+            if (self.flight_controller.master and self.flight_controller.info.is_mavftp_supported)
+            else _("No flight controller connected or MAVFTP not supported"),
         )
 
         # Create skip button
@@ -934,6 +957,61 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
         else:
             logging_info(_("No FC parameters are missing or different from AMC parameter files"))
+
+    def on_download_last_flight_log_click(self) -> None:
+        """Handle the download last flight log button click."""
+        if not self.flight_controller.master:
+            messagebox.showerror(_("Error"), _("No flight controller connected"))
+            return
+
+        if not self.flight_controller.info.is_mavftp_supported:
+            messagebox.showerror(_("Error"), _("MAVFTP is not supported by the flight controller"))
+            return
+
+        # Show file dialog to select where to save the log file
+        filename = filedialog.asksaveasfilename(
+            title=_("Save flight log as"),
+            defaultextension=".bin",
+            filetypes=[
+                (_("Binary log files"), "*.bin"),
+                (_("All files"), "*.*"),
+            ],
+        )
+
+        if not filename:  # User cancelled the dialog
+            return
+
+        # Create a progress window for the download
+        progress_window = ProgressWindow(
+            self.root,
+            _("Downloading Flight Log"),
+            _("Downloaded {}% from {}%"),
+        )
+
+        # Start the download in a separate thread to avoid blocking the GUI
+        def download_thread() -> None:
+            try:
+                success = self.flight_controller.download_last_flight_log(filename, progress_window.update_progress_bar)
+                if success:
+                    self.root.after(
+                        0,
+                        lambda: messagebox.showinfo(_("Success"), _("Flight log downloaded successfully to:\n%s") % filename),
+                    )
+                else:
+                    self.root.after(
+                        0,
+                        lambda: messagebox.showerror(
+                            _("Error"), _("Failed to download flight log. Check the console for details.")
+                        ),
+                    )
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                error_msg = str(e)
+                self.root.after(0, lambda: messagebox.showerror(_("Error"), _("Download error: %s") % error_msg))
+            finally:
+                self.root.after(0, progress_window.destroy)
+
+        download_thread_obj = threading.Thread(target=download_thread, daemon=True)
+        download_thread_obj.start()
 
     def _configuration_step_is_optional(self, file_name: str, threshold_pct: int = 20) -> bool:
         # Check if the configuration step for the given file is optional

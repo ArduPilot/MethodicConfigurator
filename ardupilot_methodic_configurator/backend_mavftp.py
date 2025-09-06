@@ -229,6 +229,7 @@ class MAVFTPReturn:
         invalid_error_code: int = 0,
         invalid_opcode: int = 0,
         invalid_payload_size: int = 0,
+        directory_listing: Union[dict[str, int], None] = None,
     ) -> None:
         self.operation_name = operation_name
         self.error_code = error_code
@@ -236,8 +237,9 @@ class MAVFTPReturn:
         self.invalid_error_code = invalid_error_code
         self.invalid_opcode = invalid_opcode
         self.invalid_payload_size = invalid_payload_size
+        self.directory_listing = directory_listing
 
-    def display_message(self) -> None:  # pylint: disable=too-many-branches
+    def display_message(self) -> None:  # pylint: disable=too-many-branches, too-many-statements # noqa: C901, PLR0912, PLR0915
         if self.error_code == ERR_None:
             logging.info("%s succeeded", self.operation_name)
         elif self.error_code == ERR_Fail:
@@ -283,6 +285,16 @@ class MAVFTPReturn:
             logging.error("%s failed, remote reply timeout", self.operation_name)
         else:
             logging.error("%s failed, unknown error %u in display_message()", self.operation_name, self.error_code)
+
+        if self.directory_listing is not None:
+            total_size = 0
+            for name, size in self.directory_listing.items():
+                if size == -1:  # directories are defined by a size of -1
+                    logging.info("   %s/", name)
+                else:
+                    logging.info("   %s\t%u", name, size)
+                total_size += max(0, size)
+            logging.info("Total size %.2f kByte", total_size / 1024.0)
 
     @property
     def return_code(self) -> int:
@@ -357,6 +369,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.write_pending = 0
         self.write_last_send: Union[None, float] = None
         self.open_retries = 0
+        self.directory_listing: dict[str, int] = {}
 
         self.master = master
         self.target_system = target_system
@@ -464,6 +477,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.dir_offset = 0
         op = FTP_OP(self.seq, self.session, OP_ListDirectory, len(enc_dname), 0, 0, self.dir_offset, enc_dname)
         self.__send(op)
+        self.directory_listing = {}
         return self.process_ftp_reply("ListDirectory")
 
     def __handle_list_reply(self, op, _m) -> MAVFTPReturn:
@@ -477,13 +491,20 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 self.dir_offset += 1
                 try:
                     d = str(d, "ascii")  # noqa: PLW2901
-                except Exception:  # noqa: S112 pylint: disable=broad-exception-caught
+                except (TypeError, UnicodeDecodeError):
                     continue
                 if d[0] == "D":
-                    logging.info(" D %s", d[1:])
+                    name = d[1:]
+                    self.directory_listing[name] = -1  # directories are defined by a size of -1
+                    logging.info(" D %s", name)
                 elif d[0] == "F":
                     (name, size) = d[1:].split("\t")
-                    size_int = int(size)
+                    try:
+                        size_int = int(size)
+                    except (ValueError, TypeError, OverflowError):
+                        logging.error("Invalid file size: %s", size)
+                        size_int = 0
+                    self.directory_listing[name] = size_int
                     self.total_size += size_int
                     logging.info("   %s\t%u", name, size_int)
                 else:
@@ -497,7 +518,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             self.total_size = 0
         else:
             return self.__decode_ftp_ack_and_nack(op)
-        return MAVFTPReturn("ListDirectory", ERR_None)
+        return MAVFTPReturn("ListDirectory", ERR_None, directory_listing=self.directory_listing)
 
     def cmd_get(self, args, callback=None, progress_callback=None) -> MAVFTPReturn:
         """Get file."""
