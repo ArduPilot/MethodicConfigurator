@@ -1023,30 +1023,6 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             logging_error(error_msg)
             raise FrameConfigurationError(error_msg) from e
 
-    def get_svg_scaling_info(
-        self, canvas_width: int, canvas_height: int, svg_width: int, svg_height: int
-    ) -> tuple[float, int]:
-        """
-        Calculate SVG scaling information for diagram display.
-
-        Args:
-            canvas_width: Canvas width in pixels
-            canvas_height: Canvas height in pixels
-            svg_width: SVG width in pixels
-            svg_height: SVG height in pixels
-
-        Returns:
-            tuple[float, int]: (scale_factor, scaled_height)
-
-        """
-        if svg_width > 0 and svg_height > 0:
-            scale_x = canvas_width / svg_width
-            scale_y = canvas_height / svg_height
-            scale = min(scale_x, scale_y) * 0.9  # Leave some margin
-            scaled_height = int(svg_height * scale)
-            return scale, scaled_height
-        return 1.0, svg_height
-
     def get_battery_status_color(self) -> str:
         """
         Get the appropriate color for battery voltage display.
