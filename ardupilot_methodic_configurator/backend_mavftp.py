@@ -377,7 +377,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
         # Reset the flight controller FTP state-machine
         self.__send(FTP_OP(self.seq, self.session, OP_ResetSessions, 0, 0, 0, 0, None))
-        self.process_ftp_reply("ResetSessions")
+        # Increased timeout for ResetSessions to be more robust on loaded STM32 F4 controllers
+        self.process_ftp_reply("ResetSessions", timeout=10)
 
     def cmd_ftp(self, args) -> MAVFTPReturn:  # noqa PRL0911, pylint: disable=too-many-return-statements, too-many-branches
         """FTP operations."""
