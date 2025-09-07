@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   windows_installer:
-    runs-on: 'windows-latest'
+    runs-on: 'windows-2022'
     strategy:
       matrix:
         python-version: ['3.13']
@@ -285,19 +285,19 @@ jobs:
            retention-days: 7
 
       - name: Pre Release
-        uses: "rearrangement/auto-releases@e0660c0d60165d4902ebdb4fdcc3c029e94f7215" # v1.1
+        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
         if: github.ref == 'refs/heads/master'
         with:
-          automatic_release_tag: "latest"
+          tag_name: "latest"
           prerelease: true
-          title: "Development Build"
+          name: "Development Build"
           files: windows/Output/*.*
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release
-        uses: "rearrangement/auto-releases@e0660c0d60165d4902ebdb4fdcc3c029e94f7215" # v1.1
+        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           prerelease: false
           files: windows/Output/*.*
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
