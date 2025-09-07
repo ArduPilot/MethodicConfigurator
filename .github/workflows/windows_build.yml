@@ -292,6 +292,7 @@ jobs:
           prerelease: true
           name: "Development Build"
           files: windows/Output/*.*
+          generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release
@@ -300,4 +301,5 @@ jobs:
         with:
           prerelease: false
           files: windows/Output/*.*
+          generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
