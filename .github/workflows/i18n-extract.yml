@@ -23,10 +23,13 @@ jobs:
       contents: write       # for creating branches and commits
       pull-requests: write  # for creating PRs
     runs-on: ubuntu-latest
+    outputs:
+      po-files-changed: ${{ steps.check-changes.outputs.po-files-changed }}
+      translations-to-process: ${{ steps.prepare-translations.outputs.translations-to-process }}
+      translation-matrix: ${{ steps.prepare-translations.outputs.translation-matrix }}
     env:
       PYGETTEXT_DOMAIN: ardupilot_methodic_configurator
       PYGETTEXT_LOCALEDIR: ardupilot_methodic_configurator/locale
-      PO_FILES_CHANGED: false
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -84,7 +87,8 @@ jobs:
         run: |
           python create_pot_file.py
 
-      - name: Stage changes
+      - name: Stage changes and check for updates
+        id: check-changes
         run: |
           git add $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot
           if [ -n "$(git status --porcelain)" ]; then
@@ -95,25 +99,288 @@ jobs:
               git add $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.po
               PO_CHANGES=$(git status --porcelain | grep -E "\.po$" | wc -l)
               if [ $PO_CHANGES -gt 0 ]; then
-                echo "PO_FILES_CHANGED=true" >> $GITHUB_ENV
+                echo "po-files-changed=true" >> $GITHUB_OUTPUT
+                echo "✅ PO files have been updated with new strings"
+              else
+                echo "po-files-changed=false" >> $GITHUB_OUTPUT
+                echo "No PO file changes detected"
               fi
             else
+              echo "po-files-changed=false" >> $GITHUB_OUTPUT
               echo "Not enough changes to commit (only $CHANGED_LINES lines changed)"
             fi
           else
+            echo "po-files-changed=false" >> $GITHUB_OUTPUT
             echo "No changes to commit"
           fi
 
+      - name: Prepare translation matrix
+        id: prepare-translations
+        if: steps.check-changes.outputs.po-files-changed == 'true'
+        run: |
+          python extract_missing_translations.py --lang-code all --max-translations 50
+
+          # Check if any missing translation files were created
+          if ls missing_translations_*.txt 1> /dev/null 2>&1; then
+            echo "translations-to-process=true" >> $GITHUB_OUTPUT
+            echo "✅ Found missing translation files to process with AI"
+
+            # Create matrix configuration for all translation files
+            matrix_entries="["
+            first_entry=true
+
+            for file in missing_translations_*.txt; do
+              if [ -f "$file" ]; then
+                # Extract language code and file number from filename
+                base_name=$(basename "$file" .txt)
+                if [[ "$base_name" =~ missing_translations_([^_]+)(_[0-9]+)?$ ]]; then
+                  lang_code="${BASH_REMATCH[1]}"
+                  file_suffix="${BASH_REMATCH[2]:-}"
+
+                  # Define language name for better context
+                  case $lang_code in
+                    "pt") language="Portuguese (Portugal)";;
+                    "de") language="German";;
+                    "it") language="Italian";;
+                    "ja") language="Japanese";;
+                    "zh_CN") language="Chinese (Simplified)";;
+                    *) language="$lang_code";;
+                  esac
+
+                  if [ "$first_entry" = true ]; then
+                    first_entry=false
+                  else
+                    matrix_entries+=","
+                  fi
+
+                  matrix_entries+="{\"lang_code\":\"$lang_code\",\"language\":\"$language\",\"file\":\"$file\",\"suffix\":\"$file_suffix\"}"
+                fi
+              fi
+            done
+            matrix_entries+="]"
+
+            echo "translation-matrix=$matrix_entries" >> $GITHUB_OUTPUT
+            echo "Matrix configuration: $matrix_entries"
+          else
+            echo "translations-to-process=false" >> $GITHUB_OUTPUT
+            echo "translation-matrix=[]" >> $GITHUB_OUTPUT
+            echo "No missing translations found"
+          fi
+
+      - name: Upload translation files as artifacts
+        if: steps.prepare-translations.outputs.translations-to-process == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: translation-files
+          path: |
+            missing_translations_*.txt
+          retention-days: 1
+
+  # Matrix job to process translations in parallel for all languages and numbered files
+  ai_translate:
+    needs: extract_strings
+    if: needs.extract_strings.outputs.translations-to-process == 'true'
+    permissions:
+      models: read          # for AI inference
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.extract_strings.outputs.translation-matrix) }}
+      fail-fast: false  # Continue processing other languages even if one fails
+      max-parallel: 5   # Limit concurrent AI requests
+
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Download translation files
+        uses: actions/download-artifact@v4
+        with:
+          name: translation-files
+
+      - name: Create AI translation prompt
+        run: |
+          cat > "translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml" << 'EOF'
+          messages:
+            - role: system
+              content: |
+                You are a professional translator specializing in technical software localization for ArduPilot flight controller configuration software.
+
+                CRITICAL INSTRUCTIONS:
+                1. You will receive a list of English strings to translate in the format "line_number:English text"
+                2. You MUST preserve the exact line number and colon format: "line_number:Translated text"
+                3. Translate ONLY the text after the colon, keeping the line number and colon unchanged
+                4. Preserve all placeholders like {variable_name}, {0}, etc. exactly as they appear
+                5. Consider the technical aviation/drone context when translating
+                6. Use formal register appropriate for technical documentation
+                7. Maintain consistent terminology throughout
+
+                LANGUAGE-SPECIFIC GUIDELINES:
+                - Portuguese (pt): Use European Portuguese (Portugal) conventions, "ficheiro" not "arquivo" for "file", "transferir" not "baixar" for "download"
+                - German (de): Use formal "Sie" form, compound technical terms appropriately
+                - Italian (it): Use formal register, preserve technical aviation terminology
+                - Japanese (ja): Use polite form (です/ます), katakana for foreign technical terms
+                - Chinese (zh_CN): Use simplified characters, technical aviation terminology in Chinese
+
+                EXAMPLE:
+                Input: "123:Copy vehicle image from template"
+                Output: "123:Copiar imagem do veiculo do modelo" (for Portuguese)
+
+                Translate all strings while preserving the exact format.
+
+            - role: user
+              content: |
+                Language: ${{ matrix.language }}
+                Language code: ${{ matrix.lang_code }}
+                File: ${{ matrix.file }}
+
+                Translate these strings from English to ${{ matrix.language }}:
+
+          model: openai/gpt-4o
+          max_tokens: 4000
+          EOF
+
+          # Append the actual translation content to the prompt
+          cat "${{ matrix.file }}" >> "translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml"
+
+      - name: Run AI translation
+        id: ai_translate
+        uses: actions/ai-inference@v2
+        with:
+          prompt-file: 'translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml'
+
+      - name: Save translation result
+        run: |
+          # Save the AI response back to the original translation file
+          if [ -n "${{ steps.ai_translate.outputs.response-file }}" ]; then
+            cp "${{ steps.ai_translate.outputs.response-file }}" "${{ matrix.file }}"
+          elif [ -n "${{ steps.ai_translate.outputs.response }}" ]; then
+            echo "${{ steps.ai_translate.outputs.response }}" > "${{ matrix.file }}"
+          else
+            echo "⚠️ No AI response received for ${{ matrix.file }}"
+            exit 1
+          fi
+
+          echo "✅ AI translation completed for ${{ matrix.language }} (${{ matrix.file }})"
+
+      - name: Upload translated file
+        uses: actions/upload-artifact@v4
+        with:
+          name: translated-${{ matrix.lang_code }}${{ matrix.suffix }}
+          path: ${{ matrix.file }}
+          retention-days: 1
+
+  # Job to collect all translations and create the final PR
+  finalize_translations:
+    needs: [extract_strings, ai_translate]
+    if: needs.extract_strings.outputs.po-files-changed == 'true'
+    permissions:
+      contents: write       # for creating branches and commits
+      pull-requests: write  # for creating PRs
+    runs-on: ubuntu-latest
+    env:
+      PYGETTEXT_DOMAIN: ardupilot_methodic_configurator
+      PYGETTEXT_LOCALEDIR: ardupilot_methodic_configurator/locale
+
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.x'
+
+      - name: Install apt gettext package
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext=0.21-14ubuntu2
+
+      - name: Install python-gettext requirement
+        continue-on-error: true
+        run: |
+          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
+          export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
+
+          if [ -z "$PIP_VERSION" ]; then
+            echo "::warning::Could not detect pip version in pyproject.toml; falling back to latest."
+            PIP_INSTALL="pip"
+          else
+            echo "Will install pip version $PIP_VERSION."
+            PIP_INSTALL="pip==$PIP_VERSION"
+          fi
+
+          if [ -z "$PYTHON_GETTEXT_VERSION" ]; then
+            echo "::warning::Could not detect python-gettext version in pyproject.toml; falling back to 5.0."
+            PYTHON_GETTEXT_INSTALL="python-gettext==5.0"
+          else
+            echo "Will install python-gettext version $PYTHON_GETTEXT_VERSION."
+            PYTHON_GETTEXT_INSTALL="python-gettext==$PYTHON_GETTEXT_VERSION"
+          fi
+
+          python -m pip install "$PIP_INSTALL" "$PYTHON_GETTEXT_INSTALL"
+
+      - name: Download all translated files
+        if: needs.extract_strings.outputs.translations-to-process == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: translated-*
+          merge-multiple: true
+
+      - name: Insert AI translations into .po files
+        if: needs.extract_strings.outputs.translations-to-process == 'true'
+        run: |
+          # Check if we have any translated files
+          if ls missing_translations_*.txt 1> /dev/null 2>&1; then
+            echo "📥 Processing AI translations..."
+            python insert_missing_translations.py
+            echo "✅ AI translations inserted into .po files"
+          else
+            echo "ℹ️ No AI translations to process"
+          fi
+
+      - name: Compile .mo files
+        run: |
+          python create_mo_files.py
+          echo "✅ .mo files compiled successfully"
+
+      - name: Stage all changes
+        run: |
+          git add $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot
+          git add $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.po
+          git add $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.mo
+
       - name: Create Pull Request
-        if: env.PO_FILES_CHANGED == 'true'
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           labels: i18n, automated-pr
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: merge-i18n-po-strings
-          title: "Merge new un-translated string(s) to existing .po files"
-          commit-message: "chore(translations): merge new un-translated string(s) to existing .po files"
+          title: "Merge new un-translated string(s) to existing .po files with AI translations"
+          commit-message: "chore(translations): merge new un-translated string(s) to existing .po files with AI translations"
           body: |
             Update .pot file with new un-translated string(s) from the source code
             Merge .pot file strings into existing .po files
+
+            🤖 **AI-Powered Translation Applied with Matrix Processing**:
+            - Automatically extracted missing translations using `extract_missing_translations.py`
+            - Used GitHub Actions matrix strategy to process numbered files in parallel
+            - Applied AI-powered translations using GitHub Models (GPT-4o) for multiple languages
+            - Supported processing of >50 translations per language with numbered files
+            - Inserted translated strings into .po files using `insert_missing_translations.py`
+            - Compiled binary .mo files for immediate use
+
+            **Languages processed**: Portuguese (pt), German (de), Italian (it), Japanese (ja), Chinese Simplified (zh_CN)
+
+            **Matrix Processing**:
+            - Parallel processing of translation files for better performance
+            - Support for numbered files when >50 strings per language
+            - Automatic handling of file chunks with proper naming
+
+            **Translation Guidelines Applied**:
+            - Technical aviation/drone context preservation
+            - Formal register for technical documentation
+            - Language-specific conventions (e.g., European Portuguese, formal German)
+            - Consistent terminology maintenance
+            - Placeholder preservation ({variable_name} patterns)
+
+            Please review the AI-generated translations for accuracy and cultural appropriateness before merging.
           delete-branch: true
