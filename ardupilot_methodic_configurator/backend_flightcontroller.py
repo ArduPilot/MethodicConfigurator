@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import os
 from argparse import ArgumentParser
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -30,7 +31,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.argparse_check_range import CheckRange
 from ardupilot_methodic_configurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
-from ardupilot_methodic_configurator.backend_mavftp import MAVFTP
+from ardupilot_methodic_configurator.backend_mavftp import MAVFTP, MAVFTPSettings
 
 # pylint: disable=too-many-lines
 
@@ -595,12 +596,45 @@ class FlightController:  # pylint: disable=too-many-public-methods
                 break
         return parameters
 
+    def _create_robust_mavftp_settings(self) -> MAVFTPSettings:
+        """
+        Create robust MAVFTP settings optimized for STM32 F4 controllers under workload.
+
+        Returns:
+            MAVFTPSettings: Configured settings with increased timeouts and reduced burst sizes
+
+        """
+        return MAVFTPSettings(
+            [
+                ("debug", int, 0),
+                ("pkt_loss_tx", int, 0),
+                ("pkt_loss_rx", int, 0),
+                ("max_backlog", int, 3),  # Reduced backlog for better reliability
+                ("burst_read_size", int, 60),  # Smaller burst size for stability
+                ("write_size", int, 60),
+                ("write_qsize", int, 3),
+                ("idle_detection_time", float, 8.0),  # Increased for heavy workload scenarios
+                ("read_retry_time", float, 3.0),  # Increased retry time
+                ("retry_time", float, 2.0),  # Increased retry time
+            ]
+        )
+
     def download_params_via_mavftp(
         self, progress_callback: Union[None, Callable[[int, int], None]] = None
     ) -> tuple[dict[str, float], dict[str, "Par"]]:
         if self.master is None:
             return {}, {}
-        mavftp = MAVFTP(self.master, target_system=self.master.target_system, target_component=self.master.target_component)
+
+        # Create more robust MAVFTP settings for parameter download
+        # STM32 F4 controllers under workload need longer timeouts
+        mavftp_settings = self._create_robust_mavftp_settings()
+
+        mavftp = MAVFTP(
+            self.master,
+            target_system=self.master.target_system,
+            target_component=self.master.target_component,
+            settings=mavftp_settings,
+        )
 
         def get_params_progress_callback(completion: float) -> None:
             if progress_callback is not None and completion is not None:
@@ -608,8 +642,36 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
         complete_param_filename = "complete.param"
         default_param_filename = "00_default.param"
-        mavftp.cmd_getparams([complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback)
-        ret = mavftp.process_ftp_reply("getparams", timeout=10)
+
+        # Retry logic for increased robustness with STM32 F4 controllers under workload
+        max_retries = 3
+        base_timeout = 15
+
+        for attempt in range(max_retries):
+            try:
+                mavftp.cmd_getparams(
+                    [complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback
+                )
+                # Progressive timeout increase for each retry attempt
+                timeout = base_timeout * (2**attempt)  # 15s, 30s, 60s
+                logging_info(_("Attempt %d/%d: Requesting parameters with %ds timeout"), attempt + 1, max_retries, timeout)
+                ret = mavftp.process_ftp_reply("getparams", timeout=timeout)
+
+                if ret.error_code == 0:
+                    break  # Success, exit retry loop
+
+                if attempt < max_retries - 1:  # Don't sleep after last attempt
+                    sleep_time = 2**attempt  # 1s, 2s, 4s exponential backoff
+                    logging_warning(_("Parameter download attempt %d failed, retrying in %ds..."), attempt + 1, sleep_time)
+                    time_sleep(sleep_time)
+                else:
+                    logging_error(_("All %d parameter download attempts failed"), max_retries)
+
+            except Exception as e:
+                logging_error(_("Exception during parameter download attempt %d: %s"), attempt + 1, str(e))
+                if attempt < max_retries - 1:
+                    sleep_time = 2**attempt
+                    time_sleep(sleep_time)
         pdict = {}
         # add a file sync operation to ensure the file is completely written
         time_sleep(0.3)
@@ -1076,17 +1138,196 @@ class FlightController:  # pylint: disable=too-many-public-methods
         """Upload a file to the flight controller."""
         if self.master is None:
             return False
-        mavftp = MAVFTP(self.master, target_system=self.master.target_system, target_component=self.master.target_component)
+
+        # Use robust MAVFTP settings for better reliability with STM32 F4 controllers
+        mavftp_settings = self._create_robust_mavftp_settings()
+        mavftp = MAVFTP(
+            self.master,
+            target_system=self.master.target_system,
+            target_component=self.master.target_component,
+            settings=mavftp_settings,
+        )
 
         def put_progress_callback(completion: float) -> None:
             if progress_callback is not None and completion is not None:
                 progress_callback(int(completion * 100), 100)
 
         mavftp.cmd_put([local_filename, remote_filename], progress_callback=put_progress_callback)
-        ret = mavftp.process_ftp_reply("CreateFile", timeout=10)
+        # Increased timeout for better reliability
+        ret = mavftp.process_ftp_reply("CreateFile", timeout=20)
         if ret.error_code != 0:
             ret.display_message()
         return ret.error_code == 0
+
+    def download_last_flight_log(
+        self, local_filename: str, progress_callback: Union[None, Callable[[int, int], None]] = None
+    ) -> bool:
+        """Download the last flight log from the flight controller."""
+        error_msg = ""
+
+        if self.master is None:
+            error_msg = _("No flight controller connected")
+        elif not self.info.is_mavftp_supported:
+            error_msg = _("MAVFTP is not supported by the flight controller")
+
+        if error_msg:
+            logging_error(error_msg)
+            return False
+
+        # Use robust MAVFTP settings for better reliability with STM32 F4 controllers
+        mavftp_settings = self._create_robust_mavftp_settings()
+        mavftp = MAVFTP(
+            self.master,
+            target_system=self.master.target_system,
+            target_component=self.master.target_component,
+            settings=mavftp_settings,
+        )
+
+        def get_progress_callback(completion: float) -> None:
+            if progress_callback is not None and completion is not None:
+                progress_callback(int(completion * 100), 100)
+
+        try:
+            # Try to get the last log number using different methods
+            remote_filenumber = self._get_last_log_number(mavftp)
+            if remote_filenumber is None:
+                return False
+
+            # We want the previous log, not the current one (which might be incomplete)
+            remote_filenumber -= 1
+            if remote_filenumber < 1:
+                logging_error(_("No previous flight log available"))
+                return False
+
+            return self._download_log_file(mavftp, remote_filenumber, local_filename, get_progress_callback)
+
+        except Exception as e:
+            logging_error(_("Error during flight log download: %s"), str(e))
+            return False
+
+    def _get_last_log_number(self, mavftp: MAVFTP) -> Union[int, None]:
+        """Get the last log number using multiple fallback methods."""
+        # Method 1: Try to get LASTLOG.TXT
+        log_number = self._get_log_number_from_lastlog_txt(mavftp)
+        if log_number is not None:
+            return log_number
+
+        # Method 2: Try to list the logs directory and find the highest numbered log
+        log_number = self._get_log_number_from_directory_listing(mavftp)
+        if log_number is not None:
+            return log_number
+
+        # Method 3: Try common log numbers (scan backwards from a reasonable max)
+        log_number = self._get_log_number_by_scanning(mavftp)
+        if log_number is not None:
+            return log_number
+
+        logging_error(_("Could not determine the last log number using any method"))
+        return None
+
+    def _get_log_number_from_lastlog_txt(self, mavftp: MAVFTP) -> Union[int, None]:
+        """Try to get the log number from LASTLOG.TXT file."""
+        try:
+            temp_lastlog_file = "temp_lastlog.txt"
+            logging_info(_("Trying to get log number from LASTLOG.TXT"))
+            mavftp.cmd_get(["/APM/LOGS/LASTLOG.TXT", temp_lastlog_file])
+            ret = mavftp.process_ftp_reply("OpenFileRO", timeout=10)
+            if ret.error_code != 0:
+                logging_warning(_("LASTLOG.TXT not available, trying alternative methods"))
+                return None
+
+            return self._extract_log_number_from_file(temp_lastlog_file)
+        except Exception as e:
+            logging_warning(_("Failed to get log number from LASTLOG.TXT: %s"), str(e))
+            return None
+
+    def _get_log_number_from_directory_listing(self, _mavftp: MAVFTP) -> Union[int, None]:
+        """Try to get the log number by listing the logs directory."""
+        try:
+            logging_info(_("Trying to get log number from directory listing"))
+            # This would require implementing directory listing functionality
+            # For now, we'll skip this method as it's more complex
+            logging_info(_("Directory listing method not implemented yet"))
+            return None
+        except Exception as e:
+            logging_warning(_("Failed to get log number from directory listing: %s"), str(e))
+            return None
+
+    def _get_log_number_by_scanning(self, mavftp: MAVFTP) -> Union[int, None]:
+        """Try to find the last log using binary search for efficiency."""
+        try:
+            logging_info(_("Trying to find log number using binary search"))
+
+            # Binary search to find the highest log number
+            low = 1
+            high = 9999  # Reasonable upper bound for log numbers
+            last_found = None
+
+            while low <= high:
+                mid = (low + high) // 2
+                remote_filename = f"/APM/LOGS/{mid:08}.BIN"
+
+                # Test if this log file exists
+                temp_test_file = f"temp_test_{mid}.tmp"
+                mavftp.cmd_get([remote_filename, temp_test_file])
+                ret = mavftp.process_ftp_reply("OpenFileRO", timeout=2)  # Short timeout for existence check
+
+                # Clean up the temp file if it was created
+                if os.path.exists(temp_test_file):
+                    os.remove(temp_test_file)
+
+                if ret.error_code == 0:
+                    # File exists, search in upper half
+                    last_found = mid
+                    low = mid + 1
+                    logging_debug(_("Log %d exists, searching higher"), mid)
+                else:
+                    # File doesn't exist, search in lower half
+                    high = mid - 1
+                    logging_debug(_("Log %d doesn't exist, searching lower"), mid)
+
+            if last_found is not None:
+                logging_info(_("Found highest log number using binary search: %d"), last_found)
+                return last_found
+
+            logging_warning(_("No log files found using binary search"))
+            return None
+
+        except Exception as e:
+            logging_warning(_("Failed to scan for log numbers using binary search: %s"), str(e))
+            return None
+
+    def _download_log_file(
+        self, mavftp: MAVFTP, remote_filenumber: int, local_filename: str, get_progress_callback: Callable
+    ) -> bool:
+        """Download the actual log file from the flight controller."""
+        remote_filename = f"/APM/LOGS/{remote_filenumber:08}.BIN"
+        logging_info(_("Downloading flight log %s to %s"), remote_filename, local_filename)
+
+        # Download the actual log file
+        mavftp.cmd_get([remote_filename, local_filename], progress_callback=get_progress_callback)
+        ret = mavftp.process_ftp_reply("OpenFileRO", timeout=0)  # No timeout for large log files
+        if ret.error_code != 0:
+            logging_error(_("Failed to download flight log %s"), remote_filename)
+            ret.display_message()
+            return False
+
+        logging_info(_("Successfully downloaded flight log to %s"), local_filename)
+        return True
+
+    def _extract_log_number_from_file(self, temp_lastlog_file: str) -> Union[int, None]:
+        """Extract log number from LASTLOG.TXT file and clean up the temporary file."""
+        try:
+            with open(temp_lastlog_file, encoding="UTF-8") as file:
+                file_contents = file.readline()
+                return int(file_contents.strip())
+        except (FileNotFoundError, ValueError) as e:
+            logging_error(_("Could not extract last log file number from LASTLOG.TXT: %s"), e)
+            return None
+        finally:
+            # Clean up the temporary file
+            if os.path.exists(temp_lastlog_file):
+                os.remove(temp_lastlog_file)
 
     @staticmethod
     def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
