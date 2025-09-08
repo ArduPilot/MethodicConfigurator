@@ -124,7 +124,7 @@ changelog = "https://github.com/ArduPilot/MethodicConfigurator/releases"
 packages = ["ardupilot_methodic_configurator"]
 
 [tool.setuptools.package-data]
-ardupilot_methodic_configurator = ["*.param", "*.jpg", "*.json", "*.xml", "*.mo", "*.png"]
+ardupilot_methodic_configurator = ["*.param", "*.png", "*.jpg", "*.json", "*.xml", "*.mo", "*.png"]
 
 [tool.setuptools.dynamic]
 version = {attr = "ardupilot_methodic_configurator.__version__"}

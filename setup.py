@@ -34,5 +34,5 @@ def find_data_files(globs: list[str]) -> list[tuple[str, list[str]]]:
 setup(
     packages=["ardupilot_methodic_configurator"],
     # this is used by bdist
-    data_files=[*find_data_files(["*.param", "*.jpg", "*.json", "*.xml", "*.mo"])],
+    data_files=[*find_data_files(["*.param", "*.png", "*.jpg", "*.json", "*.xml", "*.mo"])],
 )
