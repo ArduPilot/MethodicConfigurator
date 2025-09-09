@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-09-01 21:56+0000\n"
+"POT-Creation-Date: 2025-09-09 13:30+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -757,11 +757,14 @@ msgstr "Erro: %s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:660
 msgid "No flight controller connection available for parameter reset"
-msgstr "Nenhuma ligação ao controlador de voo disponível para reposição de parâmetros"
+msgstr ""
+"Nenhuma ligação ao controlador de voo disponível para reposição de parâmetros"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:680
 msgid "Parameter reset to defaults command confirmed by flight controller"
-msgstr "Comando de reposição de parâmetros para valores predefinidos confirmado pelo controlador de voo"
+msgstr ""
+"Comando de reposição de parâmetros para valores predefinidos confirmado pelo "
+"controlador de voo"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:682
 msgid "Parameter reset command failed: %(error)s"
@@ -781,7 +784,9 @@ msgstr "Nenhuma ligação ao controlador de voo disponível para teste de motor"
 msgid ""
 "Motor test command confirmed: Motor %(motor)d at %(throttle)d%% for "
 "%(duration)d seconds"
-msgstr "Comando de teste de motor confirmado: Motor %(motor)d a %(throttle)d%% durante %(duration)d segundos"
+msgstr ""
+"Comando de teste de motor confirmado: Motor %(motor)d a %(throttle)d%% "
+"durante %(duration)d segundos"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:786
 msgid "Motor test command failed: %(error)s"
@@ -790,7 +795,9 @@ msgstr "Comando de teste de motor falhado: %(error)s"
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:823
 msgid ""
 "All motors test command confirmed at %(throttle)d%% for %(duration)d seconds"
-msgstr "Comando de teste de todos os motores confirmado a %(throttle)d%% durante %(duration)d segundos"
+msgstr ""
+"Comando de teste de todos os motores confirmado a %(throttle)d%% durante "
+"%(duration)d segundos"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:830
 msgid "All motors test command failed: %(error)s"
@@ -800,7 +807,9 @@ msgstr "Comando de teste de todos os motores falhado: %(error)s"
 msgid ""
 "Sequential motor test command confirmed at %(throttle)d%% for %(duration)d "
 "seconds per motor"
-msgstr "Comando de teste sequencial de motores confirmado a %(throttle)d%% durante %(duration)d segundos por motor"
+msgstr ""
+"Comando de teste sequencial de motores confirmado a %(throttle)d%% durante "
+"%(duration)d segundos por motor"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:875
 msgid "Sequential motor test command failed: %(error)s"
@@ -827,7 +836,9 @@ msgstr ""
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:946
 msgid ""
 "Periodic BATTERY_STATUS messages confirmed every %(interval)d microseconds"
-msgstr "Mensagens periódicas BATTERY_STATUS confirmadas a cada %(interval)d microssegundos"
+msgstr ""
+"Mensagens periódicas BATTERY_STATUS confirmadas a cada %(interval)d "
+"microssegundos"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller.py:950
 msgid "Failed to request periodic battery status: %(error)s"
@@ -932,7 +943,7 @@ msgstr "Série MCU"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:271
 #: ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:219
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:317
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:320
 msgid "N/A"
 msgstr "Indisponível"
 
@@ -3385,7 +3396,7 @@ msgid "is above the {limit_name} of {limit_value}"
 msgstr "está acima do {limit_name} de {limit_value}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:530
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:265
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:248
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
 "Allowed values are: {allowed_str}"
@@ -3447,14 +3458,20 @@ msgstr ""
 msgid ""
 "Reset flight controller parameters to their defaults. WARNING: This will "
 "delete all parameters stored on the flight controller."
-msgstr "Repor parâmetros do controlador de voo para valores predefinidos. AVISO: Isto irá eliminar todos os parâmetros armazenados no controlador de voo."
+msgstr ""
+"Repor parâmetros do controlador de voo para valores predefinidos. AVISO: "
+"Isto irá eliminar todos os parâmetros armazenados no controlador de voo."
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:88
 msgid ""
 "Reset the flight controller parameters to their default values when creating "
 "a new vehicle configuration.\n"
 "Helps avoid issues caused by incorrect or incompatible parameter settings."
-msgstr "Repor os parâmetros do controlador de voo para os valores predefinidos ao criar uma nova configuração de veículo.\nAjuda a evitar problemas causados por configurações de parâmetros incorretas ou incompatíveis."
+msgstr ""
+"Repor os parâmetros do controlador de voo para os valores predefinidos ao "
+"criar uma nova configuração de veículo.\n"
+"Ajuda a evitar problemas causados por configurações de parâmetros incorretas "
+"ou incompatíveis."
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:95
 msgid ""
@@ -3520,13 +3537,17 @@ msgstr "Não utilizar o motivo de alteração de parâmetros do modelo."
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:132
 msgid "Cannot reset FC parameters to defaults: no flight controller connected"
-msgstr "Não é possível repor parâmetros FC para valores predefinidos: nenhum controlador de voo ligado"
+msgstr ""
+"Não é possível repor parâmetros FC para valores predefinidos: nenhum "
+"controlador de voo ligado"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:133
 msgid ""
 "Cannot infer component specifications from FC parameters: no flight "
 "controller connected"
-msgstr "Não é possível inferir especificações de componentes a partir dos parâmetros FC: nenhum controlador de voo ligado"
+msgstr ""
+"Não é possível inferir especificações de componentes a partir dos parâmetros "
+"FC: nenhum controlador de voo ligado"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:136
 msgid "Cannot use FC parameters: no flight controller connected"
@@ -3556,7 +3577,9 @@ msgstr "Erro fatal ao ler ficheiros de parâmetros: {exp}"
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:402
 msgid ""
 "No intermediate parameter files found after creating vehicle from template"
-msgstr "Nenhum ficheiro de parâmetros intermédios encontrado após criar veículo a partir do modelo"
+msgstr ""
+"Nenhum ficheiro de parâmetros intermédios encontrado após criar veículo a "
+"partir do modelo"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:402
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:82
@@ -3607,14 +3630,18 @@ msgstr ""
 msgid ""
 "No intermediate parameter files found in the selected directory: "
 "{last_vehicle_dir}"
-msgstr "Nenhum ficheiro de parâmetros intermédios encontrado no diretório selecionado: {last_vehicle_dir}"
+msgstr ""
+"Nenhum ficheiro de parâmetros intermédios encontrado no diretório "
+"selecionado: {last_vehicle_dir}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:116
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:184
 msgid ""
 "Selected directory must contain files matching \\d\\d_*\\.param and a "
 "{filename} file"
-msgstr "O diretório selecionado deve conter ficheiros correspondentes a \\d\\d_*\\.param e um ficheiro {filename}"
+msgstr ""
+"O diretório selecionado deve conter ficheiros correspondentes a \\d\\d_*\\."
+"param e um ficheiro {filename}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:119
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:124
@@ -3635,7 +3662,9 @@ msgstr ""
 msgid ""
 "No intermediate parameter files found in the selected directory: "
 "{vehicle_dir}"
-msgstr "Nenhum ficheiro de parâmetros intermédios encontrado no diretório selecionado: {vehicle_dir}"
+msgstr ""
+"Nenhum ficheiro de parâmetros intermédios encontrado no diretório "
+"selecionado: {vehicle_dir}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:175
 msgid "Vehicle directory must not be empty"
@@ -3696,7 +3725,7 @@ msgstr "A imagem tem largura zero"
 msgid "Error loading image from %s: %s"
 msgstr "Erro ao carregar imagem de %s: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:49
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:50
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:53
 msgid ""
 "A GUI for editing JSON files that contain vehicle component configurations. "
@@ -3707,7 +3736,7 @@ msgstr ""
 "componentes de veículos. Não deve ser usada diretamente, mas através do "
 "script principal do configurador metódico do ArduPilot."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:116
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:117
 msgid ""
 "On {_component} the selected\n"
 "protocol '{selected_protocol}' is not available for the selected connection "
@@ -3716,25 +3745,25 @@ msgstr ""
 "No {_component} o protocolo selecionado\n"
 "'{selected_protocol}' não está disponível para o Tipo de conexão selecionado."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:122
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:266
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:293
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:123
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:249
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:276
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:525
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:557
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:582
 #: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:118
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:347
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:541
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:564
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:350
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:547
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:570
 msgid "Error"
 msgstr "Erro"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:137
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:138
 msgid "Warning"
 msgstr "Aviso"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:138
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:139
 msgid ""
 "Will update the cell voltage limits to the recommended\n"
 "values for {chemistry} chemistry.\n"
@@ -3744,12 +3773,12 @@ msgstr ""
 "recomendados para a química {chemistry}.\n"
 "Isto irá substituir quaisquer valores personalizados que possa ter definido."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:158
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:159
 msgid "No valid value found for {voltage_path} with chemistry {chemistry}.\n"
 msgstr ""
 "Nenhum valor válido encontrado para {voltage_path} com química {chemistry}.\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:290
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:273
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
 "{error_msg}"
@@ -4322,20 +4351,20 @@ msgstr "Baixou {} de {} parâmetros"
 msgid "Failed to download parameters"
 msgstr "Falha ao transferir parâmetros"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:71
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:116
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
 msgstr "list_pair_tuple deve ser uma lista de tuplos ou um dicionário, não %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:81
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:86
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:126
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:131
 msgid "%s combobox selected string '%s' not in list %s"
 msgstr "A string selecionada do combobox %s '%s' não está na lista %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:91
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:136
 msgid "No %s combobox element selected"
 msgstr "Nenhum elemento do combobox %s selecionado"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:229
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:274
 msgid ""
 "A GUI for testing the PairTupleCombobox. Not to be used directly, but "
 "through the main ArduPilot methodic configurator script."
@@ -4344,7 +4373,7 @@ msgstr ""
 "diretamente, mas através do script principal do configurador metódico do "
 "ArduPilot."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:243
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:288
 msgid ""
 "This main is for testing and development only, usually the PairTupleCombobox "
 "is called from another script"
@@ -4612,28 +4641,28 @@ msgid "Change Reason\n"
 msgstr "Razão da Mudança\n"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:415
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:109
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:112
 msgid "Documenting change reasons is crucial because it:"
 msgstr "Documentar as razões das alterações é crucial porque:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:416
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:111
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:114
 msgid " * Promotes thoughtful decisions over impulsive changes"
 msgstr " * Promove decisões ponderadas em vez de alterações impulsivas"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:417
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:113
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:116
 msgid " * Provides documentation for vehicle certification requirements"
 msgstr " * Fornece documentação para requisitos de certificação do veículo"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:419
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:115
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:118
 msgid " * Enables validation or suggestions from team members or AI tools"
 msgstr ""
 " * Permite validação ou sugestões de membros da equipa ou ferramentas de IA"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:422
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:117
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:120
 msgid " * Preserves your reasoning for future reference or troubleshooting"
 msgstr ""
 " * Preserva o seu raciocínio para referência futura ou resolução de problemas"
@@ -4643,7 +4672,7 @@ msgid "3. Use "
 msgstr "3. Utilize "
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:425
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:280
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:283
 msgid "Del"
 msgstr "Rem"
 
@@ -4652,7 +4681,7 @@ msgid " and "
 msgstr " e "
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:427
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:195
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:198
 msgid "Add"
 msgstr "Adicionar"
 
@@ -4875,7 +4904,7 @@ msgstr "Falha ao definir o parâmetro {param_name}: {_e}"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:758
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:796
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:889
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:170
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:173
 msgid "ArduPilot methodic configurator"
 msgstr "Configurador metódico do ArduPilot"
 
@@ -5153,88 +5182,88 @@ msgstr ""
 "Nível de obrigatoriedade não disponível para este passo de configuração "
 "({current_file})"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:89
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:92
 msgid "-/+"
 msgstr "-/+"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:90
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:93
 msgid "Parameter"
 msgstr "Parâmetro"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:91
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:94
 msgid "Current Value"
 msgstr "Valor Atual"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:93
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:96
 msgid "New Value"
 msgstr "Novo Valor"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:94
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:97
 msgid "Unit"
 msgstr "Unidade"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:98
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:101
 msgid "Delete or add a parameter"
 msgstr "Excluir ou adicionar um parâmetro"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:99
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:102
 msgid "Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long"
 msgstr ""
 "O nome do parâmetro deve ser ^[A-Z][A-Z_0-9]* e ter no máximo 16 caracteres"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:100
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:103
 msgid "Current value on the flight controller"
 msgstr "Valor atual no controlador de voo"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:101
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:104
 msgid "Is the new value different from the current FC value?"
 msgstr "O novo valor é diferente do valor FC atual?"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:102
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:105
 msgid "New value from the above selected intermediate parameter file"
 msgstr "Novo valor do ficheiro de parâmetros intermediários selecionado acima"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:103
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:106
 msgid "Parameter Unit"
 msgstr "Unidade do Parâmetro"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:107
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:110
 msgid "Reason why respective parameter changed."
 msgstr "Razão pela qual o respetivo parâmetro foi alterado."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:121
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:124
 msgid "Upload"
 msgstr "Enviar"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:122
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:125
 msgid "When selected, upload the new value to the flight controller"
 msgstr "Quando selecionado, enviar o novo valor para o controlador de voo"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:124
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:127
 msgid "Why are you changing this parameter?"
 msgstr "Por que está a alterar este parâmetro?"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:168
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:171
 msgid "No different parameters found in {selected_file}. Skipping..."
 msgstr "Nenhum parâmetro diferente encontrado em {selected_file}. Ignorando..."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:197
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:200
 msgid "Add a parameter to the {self.current_file} file"
 msgstr "Adicionar um parâmetro ao ficheiro {self.current_file}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:203
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:206
 msgid "Parameter %s not found in the %s file: %s"
 msgstr "Parâmetro %s não encontrado no ficheiro %s: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:282
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:285
 msgid "Delete {param_name} from the {self.current_file} file"
 msgstr "Excluir {param_name} do ficheiro {self.current_file}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:345
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:348
 msgid "Could not apply the selected value: {new_value_str}"
 msgstr "Não foi possível aplicar o valor selecionado: {new_value_str}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:417
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:423
 msgid ""
 "This parameter already has the correct value for this configuration step.\n"
 "You must not change it, as this would defeat the purpose of this "
@@ -5250,7 +5279,7 @@ msgstr ""
 "Adicione-o a outra etapa de configuração e altere-o lá se tiver uma boa "
 "razão para tal."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:422
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:428
 msgid ""
 "This parameter value has been derived from information you entered in the "
 "component editor window.\n"
@@ -5260,69 +5289,69 @@ msgstr ""
 "de edição de componentes.\n"
 "Precisa de alterar a informação nessa janela para atualizar o valor aqui.\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:430
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:436
 msgid "Forced Parameter"
 msgstr "Parâmetro Forçado"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:432
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:438
 msgid "Derived Parameter"
 msgstr "Parâmetro Derivado"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:476
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:482
 msgid "Out-of-range value"
 msgstr "Valor fora do intervalo"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:476
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:552
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:482
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:558
 msgid " Use out-of-range value?"
 msgstr "Utilizar valor fora do intervalo?"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:485
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:491
 msgid "Invalid value for %s: %s"
 msgstr "Valor inválido para %s: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:486
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:492
 msgid "Invalid value"
 msgstr "Valor inválido"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:490
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:496
 msgid ""
 "Parameter %s changed, will later ask if change(s) should be saved to file."
 msgstr ""
 "Parâmetro %s alterado, perguntará mais tarde se a(s) alteração(ões) devem "
 "ser salvas no ficheiro."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:539
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:545
 msgid "Error getting {param_name} checked keys: %s"
 msgstr "Erro ao obter chaves verificadas de {param_name}: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:541
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:547
 msgid "Could not get {param_name} checked keys. Please try again."
 msgstr ""
 "Não foi possível obter chaves verificadas de {param_name}. Por favor, tente "
 "novamente."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:552
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:558
 msgid "Unknown bit set"
 msgstr "Bit desconhecido definido"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:563
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:569
 msgid "Could not set bitmask value for %s: %s"
 msgstr "Não foi possível definir valor de máscara de bits para %s: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:601
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:607
 msgid "{_param_name} Value: {_new_decimal_value}"
 msgstr "{_param_name} Valor: {_new_decimal_value}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:611
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:617
 msgid "Select {param.name} Bitmask Options"
 msgstr "Selecionar Opções de Máscara de Bits {param.name}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:629
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:635
 msgid "Invalid Bitmask Value"
 msgstr "Valor de Máscara de Bits Inválido"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:630
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:636
 msgid ""
 "The new value '{new_value_str}' is not a valid integer for the {param.name} "
 "bitmask."
@@ -5330,12 +5359,12 @@ msgstr ""
 "O novo valor '{new_value_str}' não é um número inteiro válido para a máscara "
 "de bits {param.name}."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:671
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:677
 msgid "When selected upload {param_name} new value to the flight controller"
 msgstr ""
 "Quando selecionado, envie {param_name} novo valor para o controlador de voo"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:705
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:711
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if should "
 "be saved to file."
@@ -5343,24 +5372,24 @@ msgstr ""
 "Razão de alteração do parâmetro %s mudou de %s para %s, será perguntado mais "
 "tarde se deve ser guardado no ficheiro."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:723
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:729
 msgid "Are you sure you want to delete the {param_name} parameter?"
 msgstr "Tem certeza de que deseja excluir o parâmetro {param_name}?"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:741
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:747
 msgid "Add Parameter to "
 msgstr "Adicionar Parâmetro a "
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:745
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:751
 msgid "Enter the parameter name to add:"
 msgstr "Introduza o nome do parâmetro a adicionar:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:752
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:820
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:758
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:826
 msgid "Operation not possible"
 msgstr "Operação não possível"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:753
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:759
 msgid ""
 "No apm.pdef.xml file and no FC connected. Not possible autocomplete "
 "parameter names."
@@ -5368,30 +5397,30 @@ msgstr ""
 "Nenhum ficheiro apm.pdef.xml e nenhuma FC conectada. Não é possível "
 "completar automaticamente os nomes dos parâmetros."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:794
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:800
 msgid "Parameter name can not be empty."
 msgstr "O nome do parâmetro não pode estar vazio."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:794
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:798
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:807
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:817
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:800
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:804
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:813
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:823
 msgid "Invalid parameter name."
 msgstr "Nome de parâmetro inválido."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:798
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:804
 msgid "Parameter already exists, edit it instead"
 msgstr "O parâmetro já existe, edite-o em vez disso"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:807
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:813
 msgid "Parameter name not found in the flight controller."
 msgstr "Nome do parâmetro não encontrado no controlador de voo."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:816
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:822
 msgid "'{param_name}' not found in the apm.pdef.xml file."
 msgstr "'{param_name}' não encontrado no ficheiro apm.pdef.xml."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:821
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:827
 msgid ""
 "Can not add parameter when no FC is connected and no apm.pdef.xml file "
 "exists."
