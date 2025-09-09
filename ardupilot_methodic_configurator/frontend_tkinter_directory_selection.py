@@ -242,7 +242,7 @@ class VehicleDirectorySelectionWindow(BaseWindow):  # pylint: disable=too-many-i
 
         # Set dynamic window size based on number of settings
         nr_new_project_settings = len(new_project_settings_metadata)
-        window_height = 550 + (nr_new_project_settings * 21)
+        window_height = 550 + (nr_new_project_settings * 23)
         self.root.geometry(f"800x{window_height}")  # Set the window size
 
         # Explain why we are here
