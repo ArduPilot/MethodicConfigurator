@@ -28,13 +28,12 @@ from typing import Literal, Optional, Union
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
 from ardupilot_methodic_configurator import _, __version__
-from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, is_within_tolerance
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
@@ -849,24 +848,21 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         """
         # Create the compounded state of all parameters stored in the files
         compound = ParDict()
+        default = ParDict()
         for file_name, file_params in self.local_filesystem.file_parameters.items():
-            if file_name != "00_default.param":
+            if file_name == "00_default.param":
+                default = ParDict(file_params)
+            else:
                 compound.append(ParDict(file_params))
 
         # Create FC parameters dictionary
-        fc_parameters = ParDict()
-        for param_name, param_value in self.flight_controller.fc_parameters.items():
-            fc_parameters[param_name] = Par(param_value)
+        fc_parameters = ParDict.from_fc_parameters(self.flight_controller.fc_parameters)
 
         # Remove default parameters from FC parameters if default file exists
-        if "00_default.param" in self.local_filesystem.file_parameters:
-            fc_parameters.remove_if_value_is_similar(ParDict(self.local_filesystem.file_parameters["00_default.param"]))
+        fc_parameters.remove_if_value_is_similar(default)
 
         # Calculate parameters that only exist in fc_parameters or have a different value from compound
-        params_missing_in_the_amc_param_files = ParDict()
-        for param_name, param in fc_parameters.items():
-            if param_name not in compound or compound[param_name].value != param.value:
-                params_missing_in_the_amc_param_files[param_name] = param
+        params_missing_in_the_amc_param_files = fc_parameters.get_missing_or_different(compound)
 
         # Export to file if there are any missing/different parameters
         if params_missing_in_the_amc_param_files:
@@ -1005,7 +1001,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         ]
         self.write_zip_file(files_to_zip)
 
-    def write_summary_file(self, param_dict: dict, filename: str, annotate_doc: bool) -> bool:
+    def write_summary_file(self, param_dict: ParDict, filename: str, annotate_doc: bool) -> bool:
         should_write_file = True
         if param_dict:
             if self.local_filesystem.vehicle_configuration_file_exists(filename):

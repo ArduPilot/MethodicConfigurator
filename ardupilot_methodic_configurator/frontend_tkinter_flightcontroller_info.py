@@ -14,8 +14,8 @@ from tkinter import messagebox, ttk
 from typing import Callable, Optional, Union
 
 from ardupilot_methodic_configurator import _, __version__
-from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 
@@ -29,7 +29,7 @@ class FlightControllerInfoPresenter:
 
     def __init__(self, flight_controller: FlightController) -> None:
         self.flight_controller = flight_controller
-        self.param_default_values: dict[str, Par] = {}
+        self.param_default_values: ParDict = {}
 
     def get_info_data(self) -> dict[str, Union[str, dict[str, str]]]:
         """Get formatted flight controller information for display."""
@@ -39,7 +39,7 @@ class FlightControllerInfoPresenter:
         """Log flight controller information."""
         self.flight_controller.info.log_flight_controller_info()
 
-    def download_parameters(self, progress_callback: Optional[Callable[[int, int], None]] = None) -> dict[str, Par]:
+    def download_parameters(self, progress_callback: Optional[Callable[[int, int], None]] = None) -> ParDict:
         """
         Download flight controller parameters.
 
@@ -55,7 +55,7 @@ class FlightControllerInfoPresenter:
         self.param_default_values = param_default_values
         return param_default_values
 
-    def get_param_default_values(self) -> dict[str, Par]:
+    def get_param_default_values(self) -> ParDict:
         """Get parameter default values."""
         return self.param_default_values
 
@@ -120,6 +120,6 @@ class FlightControllerInfoWindow(BaseWindow):
             param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
             self.root.destroy()
 
-    def get_param_default_values(self) -> dict[str, Par]:
+    def get_param_default_values(self) -> ParDict:
         """Get parameter default values from the presenter."""
         return self.presenter.get_param_default_values()

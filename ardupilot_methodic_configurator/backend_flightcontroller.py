@@ -27,10 +27,10 @@ from pymavlink.dialects.v20.ardupilotmega import MAVLink_autopilot_version_messa
 from serial.serialutil import SerialException
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.argparse_check_range import CheckRange
 from ardupilot_methodic_configurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
 from ardupilot_methodic_configurator.backend_mavftp import MAVFTP
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
 # pylint: disable=too-many-lines
 
@@ -73,7 +73,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
     Attributes:
         device (str): The connection string to the flight controller.
         master (mavutil.mavlink_connection): The MAVLink connection object.
-        fc_parameters (Dict[str, float]): A dictionary of flight controller parameters.
+        fc_parameters (dict[str, float]): A dictionary of flight controller parameters.
 
     """
 
@@ -525,20 +525,20 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     def download_params(
         self, progress_callback: Union[None, Callable[[int, int], None]] = None
-    ) -> tuple[dict[str, float], dict[str, "Par"]]:
+    ) -> tuple[dict[str, float], ParDict]:
         """
         Requests all flight controller parameters from a MAVLink connection.
 
         Returns:
-            Dict[str, float]: A dictionary of flight controller parameters.
-            Dict[str, Par]: A dictionary of flight controller default parameters.
+            dict[str, float]: A dictionary of flight controller parameters.
+            ParDict: A dictionary of flight controller default parameters.
 
         """
         # FIXME this entire if statement is for testing only, remove it later pylint: disable=fixme
         if self.master is None and self.comport is not None and self.comport.device == "test":
             filename = "params.param"
             logging_warning(_("Testing active, will load all parameters from the %s file"), filename)
-            par_dict_with_comments = Par.load_param_file_into_dict(filename)
+            par_dict_with_comments = ParDict.load_param_file_into_dict(filename)
             return {k: v.value for k, v in par_dict_with_comments.items()}, {}
 
         if self.master is None:
@@ -597,9 +597,9 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     def download_params_via_mavftp(
         self, progress_callback: Union[None, Callable[[int, int], None]] = None
-    ) -> tuple[dict[str, float], dict[str, "Par"]]:
+    ) -> tuple[dict[str, float], ParDict]:
         if self.master is None:
-            return {}, {}
+            return {}, ParDict()
         mavftp = MAVFTP(self.master, target_system=self.master.target_system, target_component=self.master.target_component)
 
         def get_params_progress_callback(completion: float) -> None:
@@ -615,13 +615,13 @@ class FlightController:  # pylint: disable=too-many-public-methods
         time_sleep(0.3)
         if ret.error_code == 0:
             # load the parameters from the file
-            par_dict = Par.load_param_file_into_dict(complete_param_filename)
+            par_dict = ParDict.load_param_file_into_dict(complete_param_filename)
             for name, data in par_dict.items():
                 pdict[name] = data.value
-            defdict = Par.load_param_file_into_dict(default_param_filename)
+            defdict = ParDict.from_file(default_param_filename)
         else:
             ret.display_message()
-            defdict = {}
+            defdict = ParDict()
 
         return pdict, defdict
 
