@@ -19,7 +19,6 @@ from tkinter import messagebox, ttk
 from typing import Union
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
@@ -28,6 +27,7 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ParameterUnchangedError,
 )
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
+from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (

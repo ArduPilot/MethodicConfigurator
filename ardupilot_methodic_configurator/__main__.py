@@ -36,6 +36,7 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import verify_and_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_software_updates import UpdateManager, check_for_software_updates
 from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
@@ -53,7 +54,7 @@ class ApplicationState:  # pylint: disable=too-few-public-methods
         self.args = args
         self.flight_controller: FlightController = None  # type: ignore[assignment]
         self.vehicle_type: str = ""
-        self.param_default_values: dict = {}
+        self.param_default_values: ParDict = ParDict()
         self.local_filesystem: LocalFilesystem = None  # type: ignore[assignment]
         self.vehicle_project_manager: Union[VehicleProjectManager, None] = None
         self.param_default_values_dirty: bool = False
@@ -167,7 +168,8 @@ def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None
     # Get default parameter values from flight controller
     if state.flight_controller.master is not None or state.args.device == "test":
         fciw = FlightControllerInfoWindow(state.flight_controller)
-        state.param_default_values = fciw.get_param_default_values()
+        default_values = fciw.get_param_default_values()
+        state.param_default_values = ParDict(default_values) if default_values else ParDict()
 
     # Initialize local filesystem
     try:
@@ -218,7 +220,8 @@ def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleDirecto
         state.flight_controller.reset_and_reconnect()
         if state.flight_controller.master is not None or state.args.device == "test":
             fciw = FlightControllerInfoWindow(state.flight_controller)
-            state.param_default_values = fciw.get_param_default_values()
+            default_values = fciw.get_param_default_values()
+            state.param_default_values = ParDict(default_values) if default_values else ParDict()
 
     return vehicle_dir_window
 
@@ -474,10 +477,12 @@ def parameter_editor_and_uploader(state: ApplicationState) -> None:
     }
     if state.flight_controller.fc_parameters and state.flight_controller.info.flight_sw_version.startswith("4.6."):
         for filename in state.local_filesystem.file_parameters:
-            state.local_filesystem.file_parameters[filename] = {
-                param_upgrade_dict.get(parameter_name, parameter_name): par
-                for parameter_name, par in state.local_filesystem.file_parameters[filename].items()
-            }
+            state.local_filesystem.file_parameters[filename] = ParDict(
+                {
+                    param_upgrade_dict.get(parameter_name, parameter_name): par
+                    for parameter_name, par in state.local_filesystem.file_parameters[filename].items()
+                }
+            )
 
     # Call the GUI function with the starting intermediate parameter file
     ParameterEditorWindow(start_file, state.flight_controller, state.local_filesystem)

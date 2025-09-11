@@ -27,7 +27,6 @@ from defusedxml import ElementTree as DET  # noqa: N814, just parsing, no data-s
 from ardupilot_methodic_configurator.annotate_params import (
     BASE_URL,
     PARAM_DEFINITION_XML_FILE,
-    Par,
     create_doc_dict,
     extract_parameter_name_and_validate,
     format_columns,
@@ -42,8 +41,9 @@ from ardupilot_methodic_configurator.annotate_params import (
     split_into_lines,
     update_parameter_documentation,
 )
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines, protected-access
 
 
 @pytest.fixture
@@ -98,7 +98,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
 
     @patch("builtins.open", new_callable=mock.mock_open, read_data="<root></root>")
     @patch("os.path.isfile")
-    @patch("ardupilot_methodic_configurator.annotate_params.Par.load_param_file_into_dict")
+    @patch("ardupilot_methodic_configurator.data_model_par_dict.ParDict.load_param_file_into_dict")
     def test_get_xml_data_local_file(self, mock_load_param, mock_isfile, mock_open_) -> None:
         # Mock the isfile function to return True
         mock_isfile.return_value = True
@@ -135,7 +135,7 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5)
 
     @patch("os.path.isfile")
-    @patch("ardupilot_methodic_configurator.annotate_params.Par.load_param_file_into_dict")
+    @patch("ardupilot_methodic_configurator.data_model_par_dict.ParDict.load_param_file_into_dict")
     def test_get_xml_data_script_dir_file(self, mock_load_param, mock_isfile) -> None:
         # Mock the isfile function to return False for the current directory and True for the script directory
         def side_effect(_filename) -> bool:
@@ -714,26 +714,26 @@ PARAM_1\t100
             tf.flush()
 
             with pytest.raises(SystemExit):
-                Par.load_param_file_into_dict(tf.name)
+                ParDict.load_param_file_into_dict(tf.name)
 
     def test_format_params_methods(self) -> None:
-        """Test Par.format_params method."""
-        param_dict = {"PARAM1": Par(100.0, "comment1"), "PARAM2": Par(200.0), "PARAM3": 300.0}
+        """Test ParDict._format_params method."""
+        param_dict = ParDict({"PARAM1": Par(100.0, "comment1"), "PARAM2": Par(200.0), "PARAM3": Par(300.0)})
 
         # Test MissionPlanner format
-        mp_format = Par.format_params(param_dict, "missionplanner")
+        mp_format = param_dict._format_params("missionplanner")
         assert any("PARAM1,100" in line for line in mp_format)
         assert any("# comment1" in line for line in mp_format)
 
         # Test MAVProxy format
-        mavproxy_format = Par.format_params(param_dict, "mavproxy")
+        mavproxy_format = param_dict._format_params("mavproxy")
         # Use correct spacing format - 16 chars for name, 8 for value
         assert any("PARAM1           100.000000" in line for line in mavproxy_format)
         assert any("# comment1" in line for line in mavproxy_format)
 
         # Test invalid format
         with pytest.raises(SystemExit):
-            Par.format_params(param_dict, "invalid_format")
+            param_dict._format_params("invalid_format")
 
 
 class AnnotateParamsTest(unittest.TestCase):
@@ -942,7 +942,7 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
             tf.write("\n")  # empty line
             tf_name = tf.name
 
-        param_dict = Par.load_param_file_into_dict(tf_name)
+        param_dict = ParDict.load_param_file_into_dict(tf_name)
         os.unlink(tf_name)
 
         assert len(param_dict) == 3
@@ -960,7 +960,7 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
             tf_name = tf.name
 
         with pytest.raises(SystemExit):
-            Par.load_param_file_into_dict(tf_name)
+            ParDict.load_param_file_into_dict(tf_name)
         os.unlink(tf_name)
 
     def test_missionplanner_sort_function(self) -> None:
