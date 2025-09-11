@@ -14,8 +14,8 @@ from tkinter import messagebox, ttk
 from typing import Callable, Optional, Union
 
 from ardupilot_methodic_configurator import _, __version__
-from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 

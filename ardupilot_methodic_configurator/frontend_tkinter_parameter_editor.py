@@ -28,13 +28,12 @@ from typing import Literal, Optional, Union
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
 from ardupilot_methodic_configurator import _, __version__
-from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, is_within_tolerance
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
@@ -665,6 +664,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.param_download_progress_window.update_progress_bar
         )
         if param_default_values:
+            # Convert dict[str, Par] to ParDict if needed
+            if isinstance(param_default_values, dict) and not isinstance(param_default_values, ParDict):
+                param_default_values = ParDict(param_default_values)
             self.local_filesystem.write_param_default_values_to_file(param_default_values)
         self.param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
         if not redownload:
@@ -1005,7 +1007,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         ]
         self.write_zip_file(files_to_zip)
 
-    def write_summary_file(self, param_dict: dict, filename: str, annotate_doc: bool) -> bool:
+    def write_summary_file(self, param_dict: ParDict, filename: str, annotate_doc: bool) -> bool:
         should_write_file = True
         if param_dict:
             if self.local_filesystem.vehicle_configuration_file_exists(filename):

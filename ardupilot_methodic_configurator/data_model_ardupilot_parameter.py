@@ -12,8 +12,8 @@ from math import inf, isfinite, isnan, nan
 from typing import Any, Optional
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import is_within_tolerance
+from ardupilot_methodic_configurator.data_model_par_dict import Par
 
 
 class ParameterUnchangedError(Exception):
