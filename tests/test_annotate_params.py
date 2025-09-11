@@ -43,7 +43,7 @@ from ardupilot_methodic_configurator.annotate_params import (
 )
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines, protected-access
 
 
 @pytest.fixture
@@ -717,23 +717,23 @@ PARAM_1\t100
                 ParDict.load_param_file_into_dict(tf.name)
 
     def test_format_params_methods(self) -> None:
-        """Test ParDict.format_params method."""
+        """Test ParDict._format_params method."""
         param_dict = ParDict({"PARAM1": Par(100.0, "comment1"), "PARAM2": Par(200.0), "PARAM3": Par(300.0)})
 
         # Test MissionPlanner format
-        mp_format = param_dict.format_params("missionplanner")
+        mp_format = param_dict._format_params("missionplanner")
         assert any("PARAM1,100" in line for line in mp_format)
         assert any("# comment1" in line for line in mp_format)
 
         # Test MAVProxy format
-        mavproxy_format = param_dict.format_params("mavproxy")
+        mavproxy_format = param_dict._format_params("mavproxy")
         # Use correct spacing format - 16 chars for name, 8 for value
         assert any("PARAM1           100.000000" in line for line in mavproxy_format)
         assert any("# comment1" in line for line in mavproxy_format)
 
         # Test invalid format
         with pytest.raises(SystemExit):
-            param_dict.format_params("invalid_format")
+            param_dict._format_params("invalid_format")
 
 
 class AnnotateParamsTest(unittest.TestCase):

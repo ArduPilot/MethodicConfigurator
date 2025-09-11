@@ -165,28 +165,8 @@ class TestParameterMergingWorkflows:
             parameter_dict.append(invalid_data)
 
 
-class TestParameterComparisonWorkflows:
+class TestParameterComparisonWorkflows:  # pylint: disable=too-few-public-methods
     """Test parameter comparison and filtering workflows."""
-
-    def test_user_can_remove_duplicate_parameters(self, parameter_dict, alternate_parameter_dict) -> None:
-        """
-        User can remove parameters that have identical values in another dictionary.
-
-        GIVEN: A user has two parameter dictionaries with some identical parameters
-        WHEN: They remove similar parameters from their main dictionary
-        THEN: Only parameters with different values should remain
-        """
-        # Arrange: Dictionaries with one identical parameter (COMPASS_ENABLE)
-        original_count = len(parameter_dict)
-
-        # Act: User removes similar parameters
-        parameter_dict.remove_if_similar(alternate_parameter_dict)
-
-        # Assert: Only identical parameter was removed
-        assert len(parameter_dict) == original_count - 1
-        assert "COMPASS_ENABLE" not in parameter_dict  # Identical parameter removed
-        assert "ACRO_YAW_P" in parameter_dict  # Different value parameter kept
-        assert "PILOT_SPEED_UP" in parameter_dict  # Parameter not in other dict kept
 
     def test_user_can_remove_parameters_with_same_values_but_different_comments(self, parameter_dict) -> None:
         """
@@ -219,73 +199,6 @@ class TestParameterComparisonWorkflows:
         assert "GPS_TYPE" in parameter_dict  # Not in other dict, kept
 
 
-class TestParameterDictionaryUtilities:
-    """Test utility methods and helper functionality."""
-
-    def test_user_can_create_copy_of_parameter_dictionary(self, parameter_dict) -> None:
-        """
-        User can create an independent copy of their parameter configuration.
-
-        GIVEN: A user has a parameter dictionary they want to preserve
-        WHEN: They create a copy of the dictionary
-        THEN: An independent copy with identical content should be created
-        """
-        # Arrange: Original parameter dictionary
-
-        # Act: User creates a copy
-        copied_dict = parameter_dict.copy()
-
-        # Assert: Copy is independent but identical
-        assert copied_dict is not parameter_dict  # Different objects
-        assert len(copied_dict) == len(parameter_dict)
-        assert copied_dict["ACRO_YAW_P"].value == parameter_dict["ACRO_YAW_P"].value
-
-        # Modify copy to verify independence
-        copied_dict["NEW_PARAM"] = Par(999.0, "Test parameter")
-        assert "NEW_PARAM" not in parameter_dict  # Original unchanged
-
-    def test_user_sees_informative_string_representation(self, parameter_dict, empty_parameter_dict) -> None:
-        """
-        User sees helpful information when viewing parameter dictionary as string.
-
-        GIVEN: A user has parameter dictionaries of various states
-        WHEN: They view the string representation
-        THEN: Informative descriptions should be displayed
-        """
-        # Arrange: Dictionaries in different states
-
-        # Act & Assert: String representations are informative
-        param_repr = repr(parameter_dict)
-        param_str = str(parameter_dict)
-        empty_str = str(empty_parameter_dict)
-
-        assert "ParDict" in param_repr
-        assert "5 parameters" in param_repr
-        assert "5 parameters" in param_str
-        assert "ACRO_YAW_P" in param_str  # Shows parameter names
-        assert "empty" in empty_str
-
-    def test_user_sees_truncated_display_for_large_dictionaries(self) -> None:
-        """
-        User sees manageable display even for large parameter dictionaries.
-
-        GIVEN: A user has a large parameter dictionary
-        WHEN: They view the string representation
-        THEN: The display should be truncated for readability
-        """
-        # Arrange: Create large parameter dictionary
-        large_dict = ParDict()
-        for i in range(10):
-            large_dict[f"PARAM_{i:02d}"] = Par(float(i), f"Parameter {i}")
-
-        # Act: Get string representation
-        str_repr = str(large_dict)
-
-        # Assert: Display is truncated with ellipsis
-        assert "10 parameters" in str_repr
-        assert "..." in str_repr  # Truncation indicator
-
-
 class TestParameterDictionaryEdgeCases:  # pylint: disable=too-few-public-methods
     """Test edge cases and error conditions."""
 
@@ -308,7 +221,3 @@ class TestParameterDictionaryEdgeCases:  # pylint: disable=too-few-public-method
         assert len(param_dict) == 2
         assert param_dict["PARAM_1"].comment is None
         assert param_dict["PARAM_2"].comment == "Has comment"
-
-        # Copy works with None comments
-        copied = param_dict.copy()
-        assert copied["PARAM_1"].comment is None

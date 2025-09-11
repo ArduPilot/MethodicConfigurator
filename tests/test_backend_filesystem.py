@@ -650,7 +650,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         lfs.param_default_dict = {"PARAM1": MagicMock(value=1.0)}
         lfs.doc_dict = {"PARAM1": {"ReadOnly": True}, "PARAM2": {"Calibration": True}, "PARAM3": {}}
 
-        test_params = {"PARAM1": MagicMock(value=2.0), "PARAM2": MagicMock(value=2.0), "PARAM3": MagicMock(value=2.0)}
+        test_params = ParDict({"PARAM1": Par(2.0), "PARAM2": Par(2.0), "PARAM3": Par(2.0)})
 
         readonly, calibration, other = lfs.categorize_parameters(test_params)
 
@@ -681,7 +681,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
         with (
             patch.object(param_dict, "export_to_param") as mock_export,
-            patch("ardupilot_methodic_configurator.backend_filesystem.ParDict.format_params") as mock_format,
+            patch("ardupilot_methodic_configurator.backend_filesystem.ParDict._format_params") as mock_format,
         ):
             mock_format.return_value = "formatted_params"
 
@@ -894,7 +894,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             patch.object(lfs, "vehicle_configuration_file_exists", return_value=False),
             patch.object(lfs, "_LocalFilesystem__read_last_uploaded_filename", return_value=""),
             patch("ardupilot_methodic_configurator.backend_filesystem.ParDict.export_to_param") as mock_export,
-            patch("ardupilot_methodic_configurator.backend_filesystem.ParDict.format_params") as mock_format,
+            patch("ardupilot_methodic_configurator.backend_filesystem.ParDict._format_params") as mock_format,
         ):
             mock_format.return_value = "formatted_params"
             lfs.backup_fc_parameters_to_file(test_params, "backup.param")
@@ -914,7 +914,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             patch.object(lfs, "vehicle_configuration_file_exists", return_value=True),
             patch.object(lfs, "_LocalFilesystem__read_last_uploaded_filename", return_value=""),
             patch("ardupilot_methodic_configurator.backend_filesystem.ParDict.export_to_param") as mock_export,
-            patch("ardupilot_methodic_configurator.backend_filesystem.ParDict.format_params") as mock_format,
+            patch("ardupilot_methodic_configurator.backend_filesystem.ParDict._format_params") as mock_format,
         ):
             mock_format.return_value = "formatted_params"
             lfs.backup_fc_parameters_to_file(test_params, "backup.param", overwrite_existing_file=True)

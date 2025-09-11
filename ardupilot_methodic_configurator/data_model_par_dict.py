@@ -15,7 +15,7 @@ from os import path as os_path
 from os import popen as os_popen
 from sys import exc_info as sys_exc_info
 from types import TracebackType
-from typing import Optional, Union
+from typing import Callable, Optional, Union
 
 from ardupilot_methodic_configurator import _
 
@@ -107,14 +107,14 @@ class ParDict(dict[str, Par]):
                         msg = f"Missing parameter-value separator: {line} in {param_file} line {i}"
                         raise SystemExit(msg)
                     parameter = parameter.strip()
-                    ParDict.validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value)
+                    ParDict._validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value)
         except UnicodeDecodeError as exp:
             msg = f"Fatal error reading {param_file}: {exp}"
             raise SystemExit(msg) from exp
         return parameter_dict
 
     @staticmethod
-    def validate_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def _validate_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         param_file: str,
         parameter_dict: "ParDict",
         i: int,
@@ -162,7 +162,7 @@ class ParDict(dict[str, Par]):
         # Compare the parts separately
         return tuple(parts)
 
-    def format_params(self, file_format: str = "missionplanner") -> list[str]:  # pylint: disable=too-many-branches
+    def _format_params(self, file_format: str = "missionplanner") -> list[str]:  # pylint: disable=too-many-branches
         """
         Formats the parameters in this dictionary into a list of strings.
 
@@ -217,7 +217,7 @@ class ParDict(dict[str, Par]):
             file_format: File format ("missionplanner" or "mavproxy").
 
         """
-        formatted_params = self.format_params(file_format)
+        formatted_params = self._format_params(file_format)
         with open(filename_out, "w", encoding="utf-8") as output_file:
             output_file.writelines(line + "\n" for line in formatted_params)
 
@@ -278,35 +278,6 @@ class ParDict(dict[str, Par]):
         for param_name, param_value in other.items():
             self[param_name] = param_value
 
-    def remove_if_similar(self, other: "ParDict") -> None:
-        """
-        Remove parameters from this dictionary if their values match those in another dictionary.
-
-        This method compares parameter values and removes parameters from the current
-        dictionary if they have the same name and value as parameters in the other dictionary.
-
-        Args:
-            other: Another ParDict to compare against.
-
-        Raises:
-            TypeError: If other is not an ParDict instance.
-
-        """
-        if not isinstance(other, ParDict):
-            msg = _("Can only compare with another ParDict instance")
-            raise TypeError(msg)
-
-        # Create a list of keys to remove to avoid modifying dict during iteration
-        keys_to_remove = []
-
-        for param_name, param_value in self.items():
-            if param_name in other and param_value == other[param_name]:
-                keys_to_remove.append(param_name)
-
-        # Remove the parameters that matched
-        for key in keys_to_remove:
-            del self[key]
-
     def remove_if_value_is_similar(self, other: "ParDict") -> None:
         """
         Remove parameters from this dictionary if their values match those in another dictionary.
@@ -340,42 +311,6 @@ class ParDict(dict[str, Par]):
         for key in keys_to_remove:
             del self[key]
 
-    def copy(self) -> "ParDict":
-        """
-        Create a shallow copy of the ParDict.
-
-        Returns:
-            A new ParDict with the same parameters.
-
-        """
-        return ParDict(dict(self))
-
-    def __repr__(self) -> str:
-        """
-        Return a string representation of the ParDict.
-
-        Returns:
-            A string representation showing the class name and parameter count.
-
-        """
-        return f"ParDict({len(self)} parameters)"
-
-    def __str__(self) -> str:
-        """
-        Return a human-readable string representation of the ParDict.
-
-        Returns:
-            A string showing the parameter count and first few parameter names.
-
-        """
-        param_count = len(self)
-        if param_count == 0:
-            return "ParDict(empty)"
-
-        param_names = list(self.keys()) if param_count <= 3 else [*list(self.keys())[:3], "..."]
-
-        return f"ParDict({param_count} parameters: {', '.join(param_names)})"
-
     @classmethod
     def from_file(cls, param_file: str) -> "ParDict":
         """
@@ -390,3 +325,165 @@ class ParDict(dict[str, Par]):
         """
         param_dict = ParDict.load_param_file_into_dict(param_file)
         return cls(param_dict)
+
+    @classmethod
+    def from_float_dict(cls, param_dict: dict[str, float], default_comment: str = "") -> "ParDict":
+        """
+        Create a ParDict from a dictionary of parameter names to float values.
+
+        Args:
+            param_dict: Dictionary mapping parameter names to float values.
+            default_comment: Default comment to apply to all parameters.
+
+        Returns:
+            A new ParDict with Par objects created from the float values.
+
+        """
+        result = cls()
+        for param_name, param_value in param_dict.items():
+            result[param_name] = Par(float(param_value), default_comment)
+        return result
+
+    @classmethod
+    def from_fc_parameters(cls, fc_params: dict[str, float]) -> "ParDict":
+        """
+        Create a ParDict from flight controller parameters (dict[str, float]).
+
+        Args:
+            fc_params: Dictionary of flight controller parameters.
+
+        Returns:
+            A new ParDict with Par objects created from the flight controller parameters.
+
+        """
+        return cls.from_float_dict(fc_params)
+
+    def _filter_by_defaults(
+        self, default_params: "ParDict", tolerance_func: Optional[Callable[[float, float], bool]] = None
+    ) -> "ParDict":
+        """
+        Filter out parameters that have default values within tolerance.
+
+        Args:
+            default_params: ParDict containing default parameter values.
+            tolerance_func: Function to check if values are within tolerance.
+                           If None, uses exact comparison.
+
+        Returns:
+            A new ParDict containing only non-default parameters.
+
+        """
+        result = ParDict()
+        for param_name, param_info in self.items():
+            if param_name in default_params:
+                if tolerance_func:
+                    if not tolerance_func(param_info.value, default_params[param_name].value):
+                        result[param_name] = param_info
+                elif param_info.value != default_params[param_name].value:
+                    result[param_name] = param_info
+            else:
+                result[param_name] = param_info
+        return result
+
+    def _filter_by_readonly(self, doc_dict: dict) -> "ParDict":
+        """
+        Filter parameters that are marked as read-only in the documentation.
+
+        Args:
+            doc_dict: Documentation dictionary containing parameter metadata.
+
+        Returns:
+            A new ParDict containing only read-only parameters.
+
+        """
+        result = ParDict()
+        for param_name, param_info in self.items():
+            if param_name in doc_dict and doc_dict[param_name].get("ReadOnly", False):
+                result[param_name] = param_info
+        return result
+
+    def _filter_by_calibration(self, doc_dict: dict) -> "ParDict":
+        """
+        Filter parameters that are marked as calibration parameters in the documentation.
+
+        Args:
+            doc_dict: Documentation dictionary containing parameter metadata.
+
+        Returns:
+            A new ParDict containing only calibration parameters.
+
+        """
+        result = ParDict()
+        for param_name, param_info in self.items():
+            if param_name in doc_dict and doc_dict[param_name].get("Calibration", False):
+                result[param_name] = param_info
+        return result
+
+    def categorize_by_documentation(
+        self,
+        doc_dict: dict,
+        default_params: "ParDict",
+        tolerance_func: Optional[Callable[[float, float], bool]] = None,
+    ) -> tuple["ParDict", "ParDict", "ParDict"]:
+        """
+        Categorize parameters into read-only, calibration, and other non-default parameters.
+
+        Args:
+            doc_dict: Documentation dictionary containing parameter metadata.
+            default_params: ParDict containing default parameter values.
+            tolerance_func: Function to check if values are within tolerance.
+
+        Returns:
+            A tuple of three ParDict objects:
+            - Non-default read-only parameters
+            - Non-default writable calibration parameters
+            - Non-default writable non-calibration parameters
+
+        """
+        non_default_params = self._filter_by_defaults(default_params, tolerance_func)
+
+        # there are protected members from a locally created object, so it is OK to access them like this
+        read_only_params = non_default_params._filter_by_readonly(doc_dict)  # pylint: disable=protected-access # noqa: SLF001
+        calibration_params = non_default_params._filter_by_calibration(doc_dict)  # pylint: disable=protected-access # noqa: SLF001
+
+        # Non-calibration parameters are those that are not read-only and not calibration
+        other_params = ParDict()
+        for param_name, param_info in non_default_params.items():
+            if param_name not in read_only_params and param_name not in calibration_params:
+                other_params[param_name] = param_info
+
+        return read_only_params, calibration_params, other_params
+
+    def get_missing_or_different(self, other: "ParDict") -> "ParDict":
+        """
+        Get parameters that are missing in the other ParDict or have different values.
+
+        Args:
+            other: The ParDict to compare against.
+
+        Returns:
+            A new ParDict containing parameters that are missing or different.
+
+        """
+        result = ParDict()
+        for param_name, param in self.items():
+            if param_name not in other or other[param_name].value != param.value:
+                result[param_name] = param
+        return result
+
+    def annotate_with_comments(self, comment_lookup: dict[str, str]) -> "ParDict":
+        """
+        Create a new ParDict with comments added from a lookup table.
+
+        Args:
+            comment_lookup: Dictionary mapping parameter names to their comments.
+
+        Returns:
+            A new ParDict with updated comments.
+
+        """
+        result = ParDict()
+        for param_name, param in self.items():
+            new_comment = comment_lookup.get(param_name, param.comment or "")
+            result[param_name] = Par(param.value, new_comment)
+        return result

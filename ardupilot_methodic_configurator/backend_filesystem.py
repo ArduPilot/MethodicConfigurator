@@ -433,11 +433,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
           ParDict: A ParDict of parameters with intermediate parameter file comments.
 
         """
-        ret = ParDict()
         ip_comments = self.__all_intermediate_parameter_file_comments()
-        for param, value in param_dict.items():
-            ret[param] = Par(float(value), ip_comments.get(param, ""))
-        return ret
+        return ParDict.from_float_dict(param_dict).annotate_with_comments(ip_comments)
 
     def categorize_parameters(self, param: ParDict) -> tuple[ParDict, ParDict, ParDict]:
         """
@@ -456,25 +453,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                                   Each ParDict represents one of the categories mentioned above.
 
         """
-        non_default__read_only_params = ParDict()
-        non_default__writable_calibrations = ParDict()
-        non_default__writable_non_calibrations = ParDict()
-        for param_name, param_info in param.items():
-            if param_name in self.param_default_dict and is_within_tolerance(
-                param_info.value, self.param_default_dict[param_name].value
-            ):
-                continue  # parameter has a default value, ignore it
-
-            if param_name in self.doc_dict and self.doc_dict[param_name].get("ReadOnly", False):
-                non_default__read_only_params[param_name] = param_info
-                continue
-
-            if param_name in self.doc_dict and self.doc_dict[param_name].get("Calibration", False):
-                non_default__writable_calibrations[param_name] = param_info
-                continue
-            non_default__writable_non_calibrations[param_name] = param_info
-
-        return non_default__read_only_params, non_default__writable_calibrations, non_default__writable_non_calibrations
+        return param.categorize_by_documentation(self.doc_dict, self.param_default_dict, is_within_tolerance)
 
     @staticmethod
     def get_directory_name_from_full_path(full_path: str) -> str:

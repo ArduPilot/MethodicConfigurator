@@ -856,19 +856,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 compound.append(ParDict(file_params))
 
         # Create FC parameters dictionary
-        fc_parameters = ParDict()
-        for param_name, param_value in self.flight_controller.fc_parameters.items():
-            fc_parameters[param_name] = Par(param_value)
+        fc_parameters = ParDict.from_fc_parameters(self.flight_controller.fc_parameters)
 
         # Remove default parameters from FC parameters if default file exists
         if "00_default.param" in self.local_filesystem.file_parameters:
             fc_parameters.remove_if_value_is_similar(ParDict(self.local_filesystem.file_parameters["00_default.param"]))
 
         # Calculate parameters that only exist in fc_parameters or have a different value from compound
-        params_missing_in_the_amc_param_files = ParDict()
-        for param_name, param in fc_parameters.items():
-            if param_name not in compound or compound[param_name].value != param.value:
-                params_missing_in_the_amc_param_files[param_name] = param
+        params_missing_in_the_amc_param_files = fc_parameters.get_missing_or_different(compound)
 
         # Export to file if there are any missing/different parameters
         if params_missing_in_the_amc_param_files:
