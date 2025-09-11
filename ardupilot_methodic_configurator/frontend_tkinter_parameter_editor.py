@@ -34,6 +34,7 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
@@ -832,7 +833,52 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     self.upload_selected_params(selected_params)
             else:
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
+
+            # Export FC parameters that are missing or different from AMC parameter files
+            self._export_fc_params_missing_or_different_in_amc_files()
+
         self.local_filesystem.write_last_uploaded_filename(self.current_file)
+
+    def _export_fc_params_missing_or_different_in_amc_files(self) -> None:
+        """
+        Export flight controller parameters that are missing or different in AMC parameter files.
+
+        This function creates a compound state of all parameters from AMC files (excluding defaults),
+        compares them with FC parameters, and exports any parameters that are either missing from
+        AMC files or have different values to a separate parameter file.
+        """
+        # Create the compounded state of all parameters stored in the files
+        compound = ParDict()
+        for file_name, file_params in self.local_filesystem.file_parameters.items():
+            if file_name != "00_default.param":
+                compound.append(ParDict(file_params))
+
+        # Create FC parameters dictionary
+        fc_parameters = ParDict()
+        for param_name, param_value in self.flight_controller.fc_parameters.items():
+            fc_parameters[param_name] = Par(param_value)
+
+        # Remove default parameters from FC parameters if default file exists
+        if "00_default.param" in self.local_filesystem.file_parameters:
+            fc_parameters.remove_if_value_is_similar(ParDict(self.local_filesystem.file_parameters["00_default.param"]))
+
+        # Calculate parameters that only exist in fc_parameters or have a different value from compound
+        params_missing_in_the_amc_param_files = ParDict()
+        for param_name, param in fc_parameters.items():
+            if param_name not in compound or compound[param_name].value != param.value:
+                params_missing_in_the_amc_param_files[param_name] = param
+
+        # Export to file if there are any missing/different parameters
+        if params_missing_in_the_amc_param_files:
+            filename = "fc_params_missing_or_diffrent_in_the_amc_param_files.param"
+            self.local_filesystem.export_to_param(params_missing_in_the_amc_param_files, filename, annotate_doc=False)
+            logging_info(
+                _("Exported %d FC parameters missing or different in AMC files to %s"),
+                len(params_missing_in_the_amc_param_files),
+                filename,
+            )
+        else:
+            logging_info(_("No FC parameters are missing or different from AMC parameter files"))
 
     def _configuration_step_is_optional(self, file_name: str, threshold_pct: int = 20) -> bool:
         # Check if the configuration step for the given file is optional
