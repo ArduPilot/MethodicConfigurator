@@ -16,8 +16,8 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from pymavlink import mavutil
 
-from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
 
 def test_add_connection() -> None:
@@ -48,8 +48,8 @@ def test_disconnect() -> None:
 
 @patch("builtins.open", new_callable=mock_open, read_data="param1=1\nparam2=2")
 @patch(
-    "ardupilot_methodic_configurator.annotate_params.Par.load_param_file_into_dict",
-    side_effect=lambda x: {"param1": Par(1, x), "param2": Par(2, x)},
+    "ardupilot_methodic_configurator.data_model_par_dict.ParDict.load_param_file_into_dict",
+    side_effect=lambda x: ParDict({"param1": Par(1, x), "param2": Par(2, x)}),
 )
 def test_download_params(mock_load_param_file_into_dict, mock_file) -> None:
     fc = FlightController(reboot_time=7, baudrate=115200)
@@ -63,8 +63,8 @@ def test_download_params(mock_load_param_file_into_dict, mock_file) -> None:
 
 @patch("builtins.open", new_callable=mock_open, read_data="param1,1\nparam2,2")
 @patch(
-    "ardupilot_methodic_configurator.annotate_params.Par.load_param_file_into_dict",
-    side_effect=lambda x: {"param1": Par(1, x), "param2": Par(2, x)},
+    "ardupilot_methodic_configurator.data_model_par_dict.ParDict.load_param_file_into_dict",
+    side_effect=lambda x: ParDict({"param1": Par(1, x), "param2": Par(2, x)}),
 )
 def test_set_param(mock_load_param_file_into_dict, mock_file) -> None:
     fc = FlightController(reboot_time=7, baudrate=115200)
@@ -100,8 +100,8 @@ def test_get_connection_tuples() -> None:
 
 @patch("builtins.open", new_callable=mock_open, read_data="param1,1\nparam2,2")
 @patch(
-    "ardupilot_methodic_configurator.annotate_params.Par.load_param_file_into_dict",
-    side_effect=lambda x: {"param1": Par(1, x), "param2": Par(2, x)},
+    "ardupilot_methodic_configurator.data_model_par_dict.ParDict.load_param_file_into_dict",
+    side_effect=lambda x: ParDict({"param1": Par(1, x), "param2": Par(2, x)}),
 )
 def test_set_param_and_verify(mock_load_param_file_into_dict, mock_file) -> None:
     fc = FlightController(reboot_time=7, baudrate=115200)

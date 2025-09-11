@@ -23,6 +23,8 @@ from typing import Callable, Optional, Union
 import argcomplete
 from argcomplete.completers import DirectoriesCompleter, FilesCompleter
 
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+
 PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
 PARAM_NAME_MAX_LEN = 16
 VERSION = "1.0"
@@ -113,7 +115,7 @@ class Par:
         self.comment = comment
 
     @staticmethod
-    def load_param_file_into_dict(param_file: str) -> tuple[dict[str, "Par"], list[str]]:
+    def load_param_file_into_dict(param_file: str) -> tuple[ParDict, list[str]]:
         parameter_dict = {}
         content = []
         with open(param_file, encoding="utf-8") as f_handle:
@@ -153,7 +155,7 @@ class Par:
         return parameter_dict, content
 
     @staticmethod
-    def export_to_param(param_dict: dict[str, "Par"], filename_out: str, content_header: Optional[list[str]] = None) -> None:
+    def export_to_param(param_dict: ParDict, filename_out: str, content_header: Optional[list[str]] = None) -> None:
         if content_header is None:
             content_header = []
         with open(filename_out, "w", encoding="utf-8") as output_file:
@@ -168,7 +170,7 @@ class Par:
 
 def update_pid_adjustment_params(
     directory: str, optimized_param_file: str, adjustment_factor: float
-) -> tuple[dict[str, "Par"], str, list[str]]:
+) -> tuple[ParDict, str, list[str]]:
     """
     Updates the PID adjustment parameters values based on the given adjustment factor.
 
@@ -189,13 +191,13 @@ def update_pid_adjustment_params(
     pid_adjustment_file_path = os.path.join(directory, "16_pid_adjustment.param")
 
     # Load the default parameter file into a dictionary (comment source)
-    default_params_dict, _ = Par.load_param_file_into_dict(default_param_file_path)
+    default_params_dict, _ = ParDict.load_param_file_into_dict(default_param_file_path)
 
     # Load the optimized parameter file into a dictionary (source)
-    optimized_params_dict, _ = Par.load_param_file_into_dict(optimized_param_file_path)
+    optimized_params_dict, _ = ParDict.load_param_file_into_dict(optimized_param_file_path)
 
     # Load the PID adjustment parameter file into a dictionary (destination)
-    pid_adjustment_params_dict, content = Par.load_param_file_into_dict(pid_adjustment_file_path)
+    pid_adjustment_params_dict, content = ParDict.load_param_file_into_dict(pid_adjustment_file_path)
 
     if not default_params_dict:
         msg = f"Failed to load default parameters from {default_param_file_path}"
@@ -240,7 +242,7 @@ def main() -> None:
         args.directory, args.optimized_param_file, args.adjustment_factor
     )
     # export the updated PID adjust parameters to a file, preserving the first eight header lines
-    Par.export_to_param(pid_adjustment_params_dict, pid_adjustment_file_path, content_header)
+    ParDict.export_to_param(pid_adjustment_params_dict, pid_adjustment_file_path, content_header)
     # annotate each parameter with up-to date documentation
     subprocess.run(["./annotate_params.py", os.path.join(args.directory, "16_pid_adjustment.param")], check=True)  # noqa: S603
 
