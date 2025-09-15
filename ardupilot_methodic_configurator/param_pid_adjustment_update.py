@@ -174,10 +174,10 @@ def update_pid_adjustment_params(
     pid_adjustment_file_path = os.path.join(directory, "16_pid_adjustment.param")
 
     # Load the default parameter file into a dictionary (comment source)
-    default_params_dict = ParDict.load_param_file_into_dict(default_param_file_path)
+    default_params_dict = ParDict.from_file(default_param_file_path)
 
     # Load the optimized parameter file into a dictionary (source)
-    optimized_params_dict = ParDict.load_param_file_into_dict(optimized_param_file_path)
+    optimized_params_dict = ParDict.from_file(optimized_param_file_path)
 
     # Load the PID adjustment parameter file into a dictionary (destination)
     pid_adjustment_params_dict, content = load_param_file_with_content(pid_adjustment_file_path)
