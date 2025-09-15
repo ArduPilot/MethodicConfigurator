@@ -106,7 +106,9 @@ class ParDict(dict[str, Par]):
                     else:
                         msg = f"Missing parameter-value separator: {line} in {param_file} line {i}"
                         raise SystemExit(msg)
+                    # Strip whitespace from both parameter name and value immediately after splitting
                     parameter = parameter.strip()
+                    value = value.strip()
                     ParDict._validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value)
         except UnicodeDecodeError as exp:
             msg = f"Fatal error reading {param_file}: {exp}"
@@ -133,7 +135,7 @@ class ParDict(dict[str, Par]):
             msg = f"Duplicated parameter {parameter_name} in {param_file} line {i}"
             raise SystemExit(msg)
         try:
-            fvalue = float(value.strip())
+            fvalue = float(value)
             parameter_dict[parameter_name] = Par(fvalue, comment)
         except ValueError as exc:
             msg = f"Invalid parameter value {value} in {param_file} line {i}"
