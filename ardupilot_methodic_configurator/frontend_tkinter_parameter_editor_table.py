@@ -19,7 +19,6 @@ from tkinter import messagebox, ttk
 from typing import Union
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
@@ -28,6 +27,7 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ParameterUnchangedError,
 )
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (
@@ -828,14 +828,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             )
         return False
 
-    def get_upload_selected_params(self, current_file: str, gui_complexity: str) -> dict[str, Par]:
+    def get_upload_selected_params(self, current_file: str, gui_complexity: str) -> ParDict:
         """Get the parameters selected for upload."""
         # Check if we should show upload column based on GUI complexity
         if not self._should_show_upload_column(gui_complexity):
             # all parameters are selected for upload in simple mode
             return self.local_filesystem.file_parameters[current_file]
 
-        selected_params = {}
+        selected_params = ParDict()
         for param_name, checkbutton_state in self.upload_checkbutton_var.items():
             if checkbutton_state.get():
                 selected_params[param_name] = self.local_filesystem.file_parameters[current_file][param_name]

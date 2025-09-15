@@ -28,12 +28,12 @@ from typing import Literal, Optional, Union
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
 
 from ardupilot_methodic_configurator import _, __version__
-from ardupilot_methodic_configurator.annotate_params import Par
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, is_within_tolerance
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
@@ -517,7 +517,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             message_label.pack(padx=10, pady=10)
 
             # Result variable
-            result: list[Literal[None, True, False]] = [None]
+            result: list[Optional[Literal[True, False]]] = [None]
 
             # Button frame
             button_frame = tk.Frame(dialog)
@@ -832,7 +832,49 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     self.upload_selected_params(selected_params)
             else:
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
+
+            # Export FC parameters that are missing or different from AMC parameter files
+            self._export_fc_params_missing_or_different_in_amc_files()
+
         self.local_filesystem.write_last_uploaded_filename(self.current_file)
+
+    def _export_fc_params_missing_or_different_in_amc_files(self) -> None:
+        """
+        Export flight controller parameters that are missing or different in AMC parameter files.
+
+        This function creates a compound state of all parameters from AMC files (excluding defaults),
+        compares them with FC parameters, and exports any parameters that are either missing from
+        AMC files or have different values to a separate parameter file.
+        """
+        # Create the compounded state of all parameters stored in the files
+        compound = ParDict()
+        default = ParDict()
+        for file_name, file_params in self.local_filesystem.file_parameters.items():
+            if file_name == "00_default.param":
+                default = ParDict(file_params)
+            else:
+                compound.append(ParDict(file_params))
+
+        # Create FC parameters dictionary
+        fc_parameters = ParDict.from_fc_parameters(self.flight_controller.fc_parameters)
+
+        # Remove default parameters from FC parameters if default file exists
+        fc_parameters.remove_if_value_is_similar(default)
+
+        # Calculate parameters that only exist in fc_parameters or have a different value from compound
+        params_missing_in_the_amc_param_files = fc_parameters.get_missing_or_different(compound)
+
+        # Export to file if there are any missing/different parameters
+        if params_missing_in_the_amc_param_files:
+            filename = "fc_params_missing_or_different_in_the_amc_param_files.param"
+            self.local_filesystem.export_to_param(params_missing_in_the_amc_param_files, filename, annotate_doc=False)
+            logging_info(
+                _("Exported %d FC parameters missing or different in AMC files to %s"),
+                len(params_missing_in_the_amc_param_files),
+                filename,
+            )
+        else:
+            logging_info(_("No FC parameters are missing or different from AMC parameter files"))
 
     def _configuration_step_is_optional(self, file_name: str, threshold_pct: int = 20) -> bool:
         # Check if the configuration step for the given file is optional
@@ -959,7 +1001,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         ]
         self.write_zip_file(files_to_zip)
 
-    def write_summary_file(self, param_dict: dict, filename: str, annotate_doc: bool) -> bool:
+    def write_summary_file(self, param_dict: ParDict, filename: str, annotate_doc: bool) -> bool:
         should_write_file = True
         if param_dict:
             if self.local_filesystem.vehicle_configuration_file_exists(filename):

@@ -240,7 +240,7 @@ class TestComponentTemplateManager:
         WHEN: User applies the template to the component
         THEN: Only matching fields should be updated and other fields remain unchanged
         """
-        _, update_callback, _ = mock_callbacks  # pylint: disable=unused-variable
+        _, _update_callback, _ = mock_callbacks
         template = {"name": "Incomplete", "data": {"SomeOtherField": "value"}}
 
         with patch("tkinter.messagebox.showinfo"):

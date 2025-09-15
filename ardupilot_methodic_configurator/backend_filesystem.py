@@ -36,7 +36,6 @@ from argcomplete.completers import DirectoriesCompleter
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import (
     PARAM_DEFINITION_XML_FILE,
-    Par,
     format_columns,
     get_xml_dir,
     get_xml_url,
@@ -48,6 +47,7 @@ from ardupilot_methodic_configurator.annotate_params import (
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
 TOOLTIP_MAX_LENGTH = 105
 
@@ -98,14 +98,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         allow_editing_template_files: bool,
         save_component_to_system_templates: bool,
     ) -> None:
-        self.file_parameters: dict[str, dict[str, Par]] = {}
+        self.file_parameters: dict[str, ParDict] = {}
         VehicleComponents.__init__(self, save_component_to_system_templates)
         ConfigurationSteps.__init__(self, vehicle_dir, vehicle_type)
         ProgramSettings.__init__(self)
         self.vehicle_type = vehicle_type
         self.fw_version = fw_version
         self.allow_editing_template_files = allow_editing_template_files
-        self.param_default_dict: dict[str, Par] = {}
+        self.param_default_dict: ParDict = ParDict()
         self.vehicle_dir = vehicle_dir
         self.doc_dict: dict[str, Any] = {}
         if vehicle_dir is not None:
@@ -319,7 +319,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 prefix_parts_sorted += [f"Default: {default_value}"]
             param_info["doc_tooltip_sorted_numerically"] = ("\n").join(prefix_parts_sorted)
 
-    def read_params_from_files(self) -> dict[str, dict[str, "Par"]]:
+    def read_params_from_files(self) -> dict[str, ParDict]:
         """
         Reads intermediate parameter files from a directory and stores their contents in a dictionary.
 
@@ -328,11 +328,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         Files named '00_default.param' and '01_ignore_readonly.param' are ignored.
 
         Returns:
-        - Dict[str, Dict[str, 'Par']]: A dictionary with filenames as keys and as values
-                                       a dictionary with (parameter names, values) pairs.
+        - Dict[str, ParDict]: A dictionary with filenames as keys and ParDict as values.
 
         """
-        parameters: dict[str, dict[str, Par]] = {}
+        parameters: dict[str, ParDict] = {}
         if os_path.isdir(self.vehicle_dir):
             # Regular expression pattern for filenames starting with two digits followed by an underscore and ending in .param
             pattern = re_compile(r"^\d{2}_.*\.param$")
@@ -341,7 +340,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 if pattern.match(filename):
                     if filename in {"00_default.param", "01_ignore_readonly.param"}:
                         continue
-                    parameters[filename] = Par.load_param_file_into_dict(os_path.join(self.vehicle_dir, filename))
+                    parameters[filename] = ParDict.from_file(os_path.join(self.vehicle_dir, filename))
         else:
             logging_error(_("Error: %s is not a directory."), self.vehicle_dir)
         return parameters
@@ -367,7 +366,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return False
         return None
 
-    def export_to_param(self, params: dict[str, "Par"], filename_out: str, annotate_doc: bool = True) -> None:
+    def export_to_param(self, params: ParDict, filename_out: str, annotate_doc: bool = True) -> None:
         """
         Exports a dictionary of parameters to a .param file and optionally annotates the documentation.
 
@@ -375,12 +374,12 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         writes the string to the specified output file, and optionally updates the parameter documentation.
 
         Args:
-          params (Dict[str, 'Par']): A dictionary of parameters to export.
+          params (ParDict): A ParDict of parameters to export.
           filename_out (str): The name of the output file.
           annotate_doc (bool, optional): Whether to update the parameter documentation. Default is True.
 
         """
-        Par.export_to_param(Par.format_params(params), os_path.join(self.vehicle_dir, filename_out))
+        params.export_to_param(os_path.join(self.vehicle_dir, filename_out))
         if annotate_doc:
             update_parameter_documentation(
                 self.doc_dict, os_path.join(self.vehicle_dir, filename_out), "missionplanner", self.param_default_dict
@@ -419,63 +418,42 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     ret[param] = info.comment
         return ret
 
-    def annotate_intermediate_comments_to_param_dict(self, param_dict: dict[str, float]) -> dict[str, "Par"]:
+    def annotate_intermediate_comments_to_param_dict(self, param_dict: dict[str, float]) -> ParDict:
         """
         Annotates comments from intermediate parameter files to a parameter value-only dictionary.
 
         This function takes a dictionary of parameters with only values and adds comments from
-        intermediate parameter files to create a new dictionary where each parameter is represented
+        intermediate parameter files to create a new ParDict where each parameter is represented
         by a 'Par' object containing both the value and the comment.
 
         Args:
           param_dict (Dict[str, float]): A dictionary of parameters with only values.
 
         Returns:
-          Dict[str, 'Par']: A dictionary of parameters with intermediate parameter file comments.
+          ParDict: A ParDict of parameters with intermediate parameter file comments.
 
         """
-        ret = {}
         ip_comments = self.__all_intermediate_parameter_file_comments()
-        for param, value in param_dict.items():
-            ret[param] = Par(float(value), ip_comments.get(param, ""))
-        return ret
+        return ParDict.from_float_dict(param_dict).annotate_with_comments(ip_comments)
 
-    def categorize_parameters(self, param: dict[str, "Par"]) -> tuple[dict[str, "Par"], dict[str, "Par"], dict[str, "Par"]]:
+    def categorize_parameters(self, param: ParDict) -> tuple[ParDict, ParDict, ParDict]:
         """
         Categorize parameters into three categories based on their default values and documentation attributes.
 
-        This method iterates through the provided dictionary of parameters and categorizes them into three groups:
+        This method iterates through the provided ParDict of parameters and categorizes them into three groups:
         - Non-default, read-only parameters
         - Non-default, writable calibrations
         - Non-default, writable non-calibrations
 
         Args:
-          param (Dict[str, 'Par']): A dictionary mapping parameter names to their 'Par' objects.
+          param (ParDict): A ParDict mapping parameter names to their 'Par' objects.
 
         Returns:
-          Tuple[Dict[str, "Par"], Dict[str, "Par"], Dict[str, "Par"]]: A tuple of three dictionaries.
-                                  Each dictionary represents one of the categories mentioned above.
+          Tuple[ParDict, ParDict, ParDict]: A tuple of three ParDict objects.
+                                  Each ParDict represents one of the categories mentioned above.
 
         """
-        non_default__read_only_params = {}
-        non_default__writable_calibrations = {}
-        non_default__writable_non_calibrations = {}
-        for param_name, param_info in param.items():
-            if param_name in self.param_default_dict and is_within_tolerance(
-                param_info.value, self.param_default_dict[param_name].value
-            ):
-                continue  # parameter has a default value, ignore it
-
-            if param_name in self.doc_dict and self.doc_dict[param_name].get("ReadOnly", False):
-                non_default__read_only_params[param_name] = param_info
-                continue
-
-            if param_name in self.doc_dict and self.doc_dict[param_name].get("Calibration", False):
-                non_default__writable_calibrations[param_name] = param_info
-                continue
-            non_default__writable_non_calibrations[param_name] = param_info
-
-        return non_default__read_only_params, non_default__writable_calibrations, non_default__writable_non_calibrations
+        return param.categorize_by_documentation(self.doc_dict, self.param_default_dict, is_within_tolerance)
 
     @staticmethod
     def get_directory_name_from_full_path(full_path: str) -> str:
@@ -741,10 +719,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         if (even_if_last_uploaded_filename_exists or not self.__read_last_uploaded_filename()) and (
             overwrite_existing_file or not self.vehicle_configuration_file_exists(filename)
         ):
-            Par.export_to_param(
-                Par.format_params({param: Par(float(value), "") for param, value in param_dict.items()}),
-                os_path.join(self.vehicle_dir, filename),
-            )
+            param_dict_as_par = ParDict({param: Par(float(value), "") for param, value in param_dict.items()})
+            param_dict_as_par.export_to_param(os_path.join(self.vehicle_dir, filename))
 
     def get_eval_variables(self) -> dict[str, dict[str, Any]]:
         variables = {}
@@ -803,7 +779,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return ""
 
     def merge_forced_or_derived_parameters(
-        self, filename: str, new_parameters: dict[str, dict[str, Par]], existing_fc_params: Optional[list[str]]
+        self, filename: str, new_parameters: dict[str, ParDict], existing_fc_params: Optional[list[str]]
     ) -> bool:
         """
         Merge forced or derived parameter values in the self.file_parameter list.
@@ -830,18 +806,17 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.file_parameters[filename][param_name] = param
         return at_least_one_param_changed
 
-    def write_param_default_values(self, param_default_values: dict[str, "Par"]) -> bool:
-        param_default_values = dict(sorted(param_default_values.items()))
+    def write_param_default_values(self, param_default_values: ParDict) -> bool:
+        param_default_values = ParDict(dict(sorted(param_default_values.items())))
         if self.param_default_dict != param_default_values:
             self.param_default_dict = param_default_values
             return True
         return False
 
-    def write_param_default_values_to_file(
-        self, param_default_values: dict[str, "Par"], filename: str = "00_default.param"
-    ) -> None:
+    def write_param_default_values_to_file(self, param_default_values: ParDict, filename: str = "00_default.param") -> None:
         if self.write_param_default_values(param_default_values):
-            Par.export_to_param(Par.format_params(self.param_default_dict), os_path.join(self.vehicle_dir, filename))
+            self.file_parameters[filename] = param_default_values
+            self.param_default_dict.export_to_param(os_path.join(self.vehicle_dir, filename))
 
     def get_download_url_and_local_filename(self, selected_file: str) -> tuple[str, str]:
         if (
