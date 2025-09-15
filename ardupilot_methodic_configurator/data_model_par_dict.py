@@ -20,7 +20,7 @@ from typing import Callable, Optional, Union
 from ardupilot_methodic_configurator import _
 
 # ArduPilot parameter names start with a capital letter and can have capital letters, numbers and _
-PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*"
+PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
 PARAM_NAME_MAX_LEN = 16
 
 
@@ -208,17 +208,22 @@ class ParDict(dict[str, Par]):
                     formatted_params.append(f"{key:<16} {parameter:<8.6f}")
         return formatted_params
 
-    def export_to_param(self, filename_out: str, file_format: str = "missionplanner") -> None:
+    def export_to_param(
+        self, filename_out: str, file_format: str = "missionplanner", content_header: Optional[list[str]] = None
+    ) -> None:
         """
         Export parameters to a parameter file.
 
         Args:
             filename_out: Output filename.
             file_format: File format ("missionplanner" or "mavproxy").
+            content_header: Optional list of header lines to include at the top of the file.
 
         """
         formatted_params = self._format_params(file_format)
         with open(filename_out, "w", encoding="utf-8") as output_file:
+            if content_header:
+                output_file.write("\n".join(content_header) + "\n")
             output_file.writelines(line + "\n" for line in formatted_params)
 
     @staticmethod

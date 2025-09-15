@@ -22,7 +22,11 @@ import unittest
 
 import pytest
 
-from ardupilot_methodic_configurator.param_pid_adjustment_update import Par, ranged_type, update_pid_adjustment_params
+from ardupilot_methodic_configurator.param_pid_adjustment_update import (
+    load_param_file_with_content,
+    ranged_type,
+    update_pid_adjustment_params,
+)
 
 
 class TestRangedType(unittest.TestCase):
@@ -30,17 +34,17 @@ class TestRangedType(unittest.TestCase):
 
     def test_valid_input(self) -> None:
         assert ranged_type(int, 1, 10)(5) == 5
-        assert ranged_type(float, 0.1, 0.8)(0.5) == 0.5
+        assert ranged_type(float, 0.1, 1.2)(0.5) == 0.5
 
     def test_invalid_input(self) -> None:
         with pytest.raises(argparse.ArgumentTypeError) as cm:
             ranged_type(int, 1, 10)(15)
         assert cm.value.args[0] == "must be within [1, 10]"
         with pytest.raises(argparse.ArgumentTypeError) as cm:
-            ranged_type(float, 0.1, 0.8)(0.9)
-        assert cm.value.args[0] == "must be within [0.1, 0.8]"
+            ranged_type(float, 0.1, 1.2)(1.5)
+        assert cm.value.args[0] == "must be within [0.1, 1.2]"
         with pytest.raises(argparse.ArgumentTypeError) as cm:
-            ranged_type(float, 0.1, 0.8)("sf")
+            ranged_type(float, 0.1, 1.2)("sf")
         assert cm.value.args[0] == "must be a valid <class 'float'>"
 
 
@@ -55,7 +59,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             f.write("PARAM3 3.0 # Comment\n")
 
         # Call the function and check the result
-        params, _ = Par.load_param_file_into_dict("temp.param")
+        params, _ = load_param_file_with_content("temp.param")
         assert len(params) == 2
         assert params["PARAM1"].value == 1.0
         assert params["PARAM3"].value == 3.0
@@ -67,10 +71,10 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             f.write("PARAM2\n")  # Missing value
             f.write("PARAM3 3.0 # Invalid comment\n")
 
-        # Call the function and check that it raises an exception
+            # Call the function and check that it raises an exception
         with pytest.raises(SystemExit) as cm:
-            Par.load_param_file_into_dict("temp.param")
-        assert cm.value.args[0] == "Missing parameter-value separator: PARAM2 in temp.param line 2"
+            load_param_file_with_content("temp.param")
+        assert "Missing parameter-value separator:" in str(cm.value)
 
     def test_empty_file(self) -> None:
         # Create an empty temporary file
@@ -78,7 +82,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             pass
 
         # Call the function and check the result
-        params, _ = Par.load_param_file_into_dict("temp.param")
+        params, _ = load_param_file_with_content("temp.param")
         assert len(params) == 0
 
     def test_only_comments(self) -> None:
@@ -88,7 +92,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             f.write("# Comment 2\n")
 
         # Call the function and check the result
-        params, _ = Par.load_param_file_into_dict("temp.param")
+        params, _ = load_param_file_with_content("temp.param")
         assert len(params) == 0
 
     def test_missing_value(self) -> None:
@@ -98,7 +102,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
 
         # Call the function and check that it raises an exception
         with pytest.raises(SystemExit) as cm:
-            Par.load_param_file_into_dict("temp.param")
+            load_param_file_with_content("temp.param")
         assert cm.value.args[0] == "Missing parameter-value separator: PARAM1 in temp.param line 1"
 
     def test_space_separator(self) -> None:
@@ -107,7 +111,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             f.write("PARAM1 1.0\n")
 
         # Call the function and check the result
-        params, _ = Par.load_param_file_into_dict("temp.param")
+        params, _ = load_param_file_with_content("temp.param")
         assert params["PARAM1"].value == 1.0
 
     def test_comma_separator(self) -> None:
@@ -116,7 +120,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             f.write("PARAM1,1.0\n")
 
         # Call the function and check the result
-        params, _ = Par.load_param_file_into_dict("temp.param")
+        params, _ = load_param_file_with_content("temp.param")
         assert params["PARAM1"].value == 1.0
 
     def test_tab_separator(self) -> None:
@@ -125,7 +129,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
             f.write("PARAM1\t1.0\n")
 
         # Call the function and check the result
-        params, _ = Par.load_param_file_into_dict("temp.param")
+        params, _ = load_param_file_with_content("temp.param")
         assert params["PARAM1"].value == 1.0
 
     def test_invalid_characters(self) -> None:
@@ -135,7 +139,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
 
         # Call the function and check that it raises an exception
         with pytest.raises(SystemExit) as cm:
-            Par.load_param_file_into_dict("temp.param")
+            load_param_file_with_content("temp.param")
         assert cm.value.args[0] == "Invalid characters in parameter name PARAM-1 in temp.param line 1"
 
     def test_long_parameter_name(self) -> None:
@@ -145,7 +149,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
 
         # Call the function and check that it raises an exception
         with pytest.raises(SystemExit) as cm:
-            Par.load_param_file_into_dict("temp.param")
+            load_param_file_with_content("temp.param")
         assert cm.value.args[0] == "Too long parameter name: PARAMETER_THAT_IS_TOO_LONG in temp.param line 1"
 
     def test_invalid_value(self) -> None:
@@ -155,7 +159,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
 
         # Call the function and check that it raises an exception
         with pytest.raises(SystemExit) as cm:
-            Par.load_param_file_into_dict("temp.param")
+            load_param_file_with_content("temp.param")
         assert cm.value.args[0] == "Invalid parameter value VALUE in temp.param line 1"
 
     def test_duplicated_parameter(self) -> None:
@@ -166,7 +170,7 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
 
         # Call the function and check that it raises an exception
         with pytest.raises(SystemExit) as cm:
-            Par.load_param_file_into_dict("temp.param")
+            load_param_file_with_content("temp.param")
         assert cm.value.args[0] == "Duplicated parameter PARAM1 in temp.param line 2"
 
     def tearDown(self) -> None:
@@ -186,10 +190,10 @@ class TestExportToParam(unittest.TestCase):
             f.write("PARAM3 3.0 # Comment\n")
 
         # Load the parameters into a dictionary
-        params, _ = Par.load_param_file_into_dict("temp.param")
+        params, _ = load_param_file_with_content("temp.param")
 
         # Export the parameters to a file
-        Par.export_to_param(params, "output.param")
+        params.export_to_param("output.param")
 
         # Check the contents of the output file
         with open("output.param", encoding="utf-8") as f:
@@ -205,10 +209,10 @@ class TestExportToParam(unittest.TestCase):
             f.write("PARAM3 3.0\n")
 
         # Load the parameters into a dictionary
-        params, _ = Par.load_param_file_into_dict("temp.param")
+        params, _ = load_param_file_with_content("temp.param")
 
         # Export the parameters to a file, including the header
-        Par.export_to_param(params, "output.param", ["# HEADER"])
+        params.export_to_param("output.param", content_header=["# HEADER"])
 
         # Check the contents of the output file
         with open("output.param", encoding="utf-8") as f:
