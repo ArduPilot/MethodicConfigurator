@@ -132,7 +132,9 @@ def load_param_file_with_content(param_file: str) -> tuple[ParDict, list[str]]:
             else:
                 msg = f"Missing parameter-value separator: {line} in {param_file} line {n}"
                 raise SystemExit(msg)
+            # Strip whitespace from both parameter name and value immediately after splitting
             parameter = parameter.strip()
+            value = value.strip()
             if len(parameter) > PARAM_NAME_MAX_LEN:
                 msg = f"Too long parameter name: {parameter} in {param_file} line {n}"
                 raise SystemExit(msg)
@@ -140,7 +142,7 @@ def load_param_file_with_content(param_file: str) -> tuple[ParDict, list[str]]:
                 msg = f"Invalid characters in parameter name {parameter} in {param_file} line {n}"
                 raise SystemExit(msg)
             try:
-                fvalue = float(value.strip())
+                fvalue = float(value)
             except ValueError as exc:
                 msg = f"Invalid parameter value {value} in {param_file} line {n}"
                 raise SystemExit(msg) from exc

@@ -1087,6 +1087,109 @@ class TestParameterParsingEdgeCases:
             finally:
                 os.unlink(f.name)
 
+    def test_user_can_parse_parameters_with_leading_and_trailing_whitespace(self) -> None:
+        """
+        User can parse parameter files with various whitespace around parameter names and values.
+
+        GIVEN: A user has a parameter file with inconsistent whitespace formatting
+        WHEN: They load the parameter file
+        THEN: Parameters should be correctly parsed with whitespace stripped
+        """
+        # Arrange: Parameter file with various whitespace scenarios
+        whitespace_content = (
+            "  PARAM1  ,  1.5  \n"
+            "\tPARAM2\t,\t2.5\t\n"
+            "   PARAM3   3.5   \n"
+            "\t PARAM4\t \t4.5 \t\n"
+            "\t\tPARAM5\t\t,\t\t5.5\t\t"
+        )
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
+            f.write(whitespace_content)
+            f.flush()
+
+            try:
+                # Act: Load parameter file with whitespace
+                params = ParDict.load_param_file_into_dict(f.name)
+
+                # Assert: All parameters parsed correctly with whitespace stripped
+                assert len(params) == 5
+                assert params["PARAM1"].value == 1.5
+                assert params["PARAM2"].value == 2.5
+                assert params["PARAM3"].value == 3.5
+                assert params["PARAM4"].value == 4.5
+                assert params["PARAM5"].value == 5.5
+            finally:
+                os.unlink(f.name)
+
+    def test_user_can_parse_parameters_with_mixed_separator_and_whitespace_combinations(self) -> None:
+        """
+        User can parse parameter files with mixed separators and whitespace combinations.
+
+        GIVEN: A user has a parameter file mixing comma, space, and tab separators with whitespace
+        WHEN: They load the parameter file
+        THEN: All parameters should be correctly parsed regardless of separator type
+        """
+        # Arrange: Mixed separator and whitespace combinations
+        mixed_content = (
+            " COMMA1 , 1.0 \n"
+            "\tTAB2\t2.0\t\n"
+            " SPACE3   3.0  \n"
+            "\t COMMA_TAB\t,\t 4.0 \t\n"
+            "  TAB_SPACE  \t  5.0    "
+        )
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
+            f.write(mixed_content)
+            f.flush()
+
+            try:
+                # Act: Load parameter file with mixed separators
+                params = ParDict.load_param_file_into_dict(f.name)
+
+                # Assert: All parameters parsed correctly
+                assert len(params) == 5
+                assert params["COMMA1"].value == 1.0
+                assert params["TAB2"].value == 2.0
+                assert params["SPACE3"].value == 3.0
+                assert params["COMMA_TAB"].value == 4.0
+                assert params["TAB_SPACE"].value == 5.0
+            finally:
+                os.unlink(f.name)
+
+    def test_user_can_parse_parameters_with_extreme_whitespace_scenarios(self) -> None:
+        """
+        User can parse parameter files with extreme whitespace scenarios.
+
+        GIVEN: A user has a parameter file with extreme amounts of whitespace
+        WHEN: They load the parameter file
+        THEN: Parameters should be parsed correctly with all whitespace properly handled
+        """
+        # Arrange: Extreme whitespace scenarios
+        extreme_content = (
+            "\t\t\tEXTREME1\t\t\t,\t\t\t1.0\t\t\t\n"
+            "                    EXTREME2                    2.0                    \n"
+            "\t \t \tEXTREME3\t \t ,\t \t 3.0\t \t \n"
+            "        EXTREME4        ,        4.0        "
+        )
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
+            f.write(extreme_content)
+            f.flush()
+
+            try:
+                # Act: Load parameter file with extreme whitespace
+                params = ParDict.load_param_file_into_dict(f.name)
+
+                # Assert: All parameters parsed correctly despite extreme whitespace
+                assert len(params) == 4
+                assert params["EXTREME1"].value == 1.0
+                assert params["EXTREME2"].value == 2.0
+                assert params["EXTREME3"].value == 3.0
+                assert params["EXTREME4"].value == 4.0
+            finally:
+                os.unlink(f.name)
+
 
 class TestParameterDictionaryEdgeCases:
     """Test edge cases and error conditions."""
