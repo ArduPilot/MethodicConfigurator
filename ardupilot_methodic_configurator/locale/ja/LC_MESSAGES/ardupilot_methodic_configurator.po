@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2025-09-09 13:30+0000\n"
+"POT-Creation-Date: 2025-09-15 15:48+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.5\n"
 
-#: ardupilot_methodic_configurator/__main__.py:71
+#: ardupilot_methodic_configurator/__main__.py:72
 msgid ""
 "ArduPilot methodic configurator is a simple GUI with a table that lists "
 "parameters. The GUI reads intermediate parameter files from a directory and "
@@ -39,23 +39,23 @@ msgstr ""
 "にアップロードされます。「スキップ」を押すと、次の中間パラメータファイルにス"
 "キップします。このプロセスは各中間パラメータファイルに対して繰り返されます。"
 
-#: ardupilot_methodic_configurator/__main__.py:118
+#: ardupilot_methodic_configurator/__main__.py:119
 msgid "Will now exit the old software version."
 msgstr "古いソフトウェアバージョンを終了します。"
 
-#: ardupilot_methodic_configurator/__main__.py:137
+#: ardupilot_methodic_configurator/__main__.py:138
 msgid "No serial ports found"
 msgstr "シリアルポートが見つかりません"
 
-#: ardupilot_methodic_configurator/__main__.py:146
+#: ardupilot_methodic_configurator/__main__.py:147
 msgid "Vehicle type not set explicitly, auto-detected %s."
 msgstr "機体タイプが明示的に設定されていないため、%sを自動検出しました。"
 
-#: ardupilot_methodic_configurator/__main__.py:148
+#: ardupilot_methodic_configurator/__main__.py:149
 msgid "Vehicle type explicitly set to %s."
 msgstr "機体タイプを%sに明示的に設定しました。"
 
-#: ardupilot_methodic_configurator/__main__.py:182
+#: ardupilot_methodic_configurator/__main__.py:184
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:395
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
@@ -63,7 +63,7 @@ msgstr "機体タイプを%sに明示的に設定しました。"
 msgid "Fatal error reading parameter files"
 msgstr "パラメータファイルの読み込みで致命的なエラーが発生しました"
 
-#: ardupilot_methodic_configurator/__main__.py:205
+#: ardupilot_methodic_configurator/__main__.py:207
 msgid ""
 "Will present all vehicle templates for all vehicle types since no FC "
 "connected and no explicit vehicle type set on the command line"
@@ -71,11 +71,11 @@ msgstr ""
 "FCが接続されておらず、コマンドラインで明示的な車両タイプが設定されていないた"
 "め、すべての車両タイプのすべての車両テンプレートを表示します"
 
-#: ardupilot_methodic_configurator/__main__.py:217
+#: ardupilot_methodic_configurator/__main__.py:219
 msgid "Failed to reset parameters to defaults: %(error)s"
 msgstr "パラメータのデフォルト値へのリセットに失敗しました: %(error)s"
 
-#: ardupilot_methodic_configurator/__main__.py:284
+#: ardupilot_methodic_configurator/__main__.py:287
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:101
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:104
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:106
@@ -88,20 +88,20 @@ msgstr "パラメータのデフォルト値へのリセットに失敗しまし
 msgid "Unknown"
 msgstr "不明"
 
-#: ardupilot_methodic_configurator/__main__.py:383
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:75
+#: ardupilot_methodic_configurator/__main__.py:386
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:76
 msgid "Error in derived parameters"
 msgstr "派生パラメータにエラーがあります"
 
-#: ardupilot_methodic_configurator/__main__.py:424
+#: ardupilot_methodic_configurator/__main__.py:427
 msgid "Created backup file autobackup_%02d.param"
 msgstr "バックアップファイル autobackup_%02d.param を作成しました"
 
-#: ardupilot_methodic_configurator/__main__.py:426
+#: ardupilot_methodic_configurator/__main__.py:429
 msgid "Permission denied when creating backup files: %s"
 msgstr "バックアップファイルの作成時にアクセス拒否されました: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:427
+#: ardupilot_methodic_configurator/__main__.py:430
 msgid ""
 "Please check file permissions and ensure you have write access to the "
 "vehicle directory"
@@ -109,19 +109,19 @@ msgstr ""
 "ファイルの権限を確認し、車両ディレクトリへの書き込みアクセス権があることを確"
 "認してください"
 
-#: ardupilot_methodic_configurator/__main__.py:430
+#: ardupilot_methodic_configurator/__main__.py:433
 msgid "Insufficient disk space to create backup files: %s"
 msgstr "バックアップファイルを作成するためのディスク容量が不足しています: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:431
+#: ardupilot_methodic_configurator/__main__.py:434
 msgid "Please free up disk space and try again"
 msgstr "ディスク容量を解放して再試行してください"
 
-#: ardupilot_methodic_configurator/__main__.py:433
+#: ardupilot_methodic_configurator/__main__.py:436
 msgid "Failed to create backup files: %s"
 msgstr "バックアップファイルの作成に失敗しました: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:435
+#: ardupilot_methodic_configurator/__main__.py:438
 msgid "Unexpected error creating backup files: %s"
 msgstr "バックアップファイルの作成中に予期しないエラーが発生しました: %s"
 
@@ -158,107 +158,107 @@ msgid "Parameter %s has invalid metadata. Please file a bug at %s"
 msgstr ""
 "パラメータ %s に無効なメタデータがあります。%s でバグを報告してください"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:346
+#: ardupilot_methodic_configurator/backend_filesystem.py:345
 msgid "Error: %s is not a directory."
 msgstr "エラー: %sはディレクトリではありません。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:545
+#: ardupilot_methodic_configurator/backend_filesystem.py:523
 msgid "Intermediate parameter files and summary files zipped to %s"
 msgstr "中間パラメータファイルと要約ファイルは%sに圧縮されました"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:567
+#: ardupilot_methodic_configurator/backend_filesystem.py:545
 msgid "Template directory does not exist: {template_dir}"
 msgstr "テンプレートディレクトリが存在しません: {template_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:573
+#: ardupilot_methodic_configurator/backend_filesystem.py:551
 msgid "New vehicle directory does not exist: {new_vehicle_dir}"
 msgstr "新しい機体ディレクトリが存在しません: {new_vehicle_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:603
+#: ardupilot_methodic_configurator/backend_filesystem.py:581
 msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr ""
 "テンプレートファイルを新しい機体ディレクトリにコピー中にエラーが発生しまし"
 "た: {_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:612
+#: ardupilot_methodic_configurator/backend_filesystem.py:590
 msgid "New vehicle directory does not exist: {vehicle_dir}"
 msgstr "新しい機体ディレクトリが存在しません: {vehicle_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:630
+#: ardupilot_methodic_configurator/backend_filesystem.py:608
 msgid "Error removing %s"
 msgstr "%s の削除中にエラーが発生しました"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:637
+#: ardupilot_methodic_configurator/backend_filesystem.py:615
 msgid "Error removing directory %s"
 msgstr "ディレクトリ %s の削除中にエラーが発生しました"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:642
+#: ardupilot_methodic_configurator/backend_filesystem.py:620
 msgid "Error removing created files: {error_list}"
 msgstr "作成されたファイルの削除中にエラーが発生しました: {error_list}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:645
+#: ardupilot_methodic_configurator/backend_filesystem.py:623
 msgid "Error removing created files: {_e}"
 msgstr "作成されたファイルの削除中にエラーが発生しました: {_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:646
+#: ardupilot_methodic_configurator/backend_filesystem.py:624
 msgid "Error removing created files:"
 msgstr "作成されたファイルの削除中にエラーが発生しました:"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:666
+#: ardupilot_methodic_configurator/backend_filesystem.py:644
 msgid "Parameter %s not found in the current parameter file"
 msgstr "パラメータ%sは現在のパラメータファイルに見つかりませんでした"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:674
+#: ardupilot_methodic_configurator/backend_filesystem.py:652
 msgid "Error writing last uploaded filename: %s"
 msgstr ""
 "最後にアップロードされたファイル名の書き込み中にエラーが発生しました: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:681
+#: ardupilot_methodic_configurator/backend_filesystem.py:659
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr "last_uploaded_filename.txtが見つかりません: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:683
+#: ardupilot_methodic_configurator/backend_filesystem.py:661
 msgid "Error reading last uploaded filename: %s"
 msgstr ""
 "最後にアップロードされたファイル名の読み込み中にエラーが発生しました: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:699
+#: ardupilot_methodic_configurator/backend_filesystem.py:677
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr ""
 "開始ファイルインデックス%sは範囲外です。代わりにファイル%sから開始します。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:707
+#: ardupilot_methodic_configurator/backend_filesystem.py:685
 msgid "Starting with the first file."
 msgstr "最初のファイルから開始します。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:710
+#: ardupilot_methodic_configurator/backend_filesystem.py:688
 msgid "Starting with the first non-tcal file."
 msgstr "最初の非tcalファイルから開始します。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:714
+#: ardupilot_methodic_configurator/backend_filesystem.py:692
 msgid "Last uploaded file was %s."
 msgstr "最後にアップロードされたファイルは%sでした。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:716
+#: ardupilot_methodic_configurator/backend_filesystem.py:694
 msgid "No last uploaded file found. %s."
 msgstr "最後にアップロードされたファイルが見つかりません。%s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:721
+#: ardupilot_methodic_configurator/backend_filesystem.py:699
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr "最後にアップロードされたファイルがファイルリストに見つかりません。%s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:730
+#: ardupilot_methodic_configurator/backend_filesystem.py:708
 msgid ""
 "Last uploaded file is the last file in the list. Starting from the beginning."
 msgstr ""
 "最後にアップロードされたファイルがリストの最後のファイルです。最初から開始し"
 "ます。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:919
+#: ardupilot_methodic_configurator/backend_filesystem.py:894
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "機体の種類。デフォルトはArduCopterです"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:925
+#: ardupilot_methodic_configurator/backend_filesystem.py:900
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
@@ -266,7 +266,7 @@ msgstr ""
 "機体固有の中間パラメータファイルを含むディレクトリ。デフォルトは現在の作業"
 "ディレクトリです"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:933
+#: ardupilot_methodic_configurator/backend_filesystem.py:908
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -277,7 +277,7 @@ msgstr ""
 "デフォルトでは、フライトコントローラに書き込んだ最後のファイルの次のファイル"
 "から開始します。ファイルが存在しない場合は、最初のファイルから開始します。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:942
+#: ardupilot_methodic_configurator/backend_filesystem.py:917
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -285,7 +285,7 @@ msgstr ""
 "テンプレートファイルを直接開いて編集することを許可します。これは何をしている"
 "かを理解しているソフトウェア開発者のみ対象です。デフォルトは%(default)sです"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:951
+#: ardupilot_methodic_configurator/backend_filesystem.py:926
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -2657,23 +2657,23 @@ msgid ""
 msgstr ""
 "{param_name}に提供された数値は許容範囲内でありパラメータを変更しません。"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:121
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:122
 msgid "Removing duplicate parameter %s"
 msgstr "重複パラメータ%sを削除中"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:122
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:123
 msgid "The parameter '{old_name}' was removed due to duplication."
 msgstr "パラメータ'{old_name}'は重複のため削除されました。"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:123
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:124
 msgid "Parameter Removed"
 msgstr "パラメータ削除済み"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:128
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:129
 msgid "Renaming parameter %s to %s"
 msgstr "パラメータ%sを%sに名前変更中"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:129
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:130
 msgid ""
 "The parameter '{old_name}' was renamed to '{new_name}'.\n"
 "to obey the flight controller connection defined in the component editor "
@@ -2683,7 +2683,7 @@ msgstr ""
 "コンポーネントエディタウィンドウで定義されたフライトコントローラ接続に従うた"
 "めです。"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:133
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:134
 msgid "Parameter Renamed"
 msgstr "パラメータ名変更済み"
 
@@ -2994,6 +2994,15 @@ msgstr ""
 "• BATT_ARM_VOLTとMOT_BAT_VOLT_MAXパラメータを確認してください\n"
 "\n"
 "理由：%(reason)s"
+
+#: ardupilot_methodic_configurator/data_model_par_dict.py:282
+msgid "Can only append another ParDict instance"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_par_dict.py:307
+#: ardupilot_methodic_configurator/data_model_par_dict.py:330
+msgid "Can only compare with another ParDict instance"
+msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:50
 msgid "Current version: {_current_version}"
@@ -4749,7 +4758,7 @@ msgstr "パラメータ{param_name}の設定に失敗しました: {_e}"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:734
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:758
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:796
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:889
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:931
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:173
 msgid "ArduPilot methodic configurator"
 msgstr "ArduPilot方法論的コンフィギュレータ"
@@ -4835,19 +4844,27 @@ msgid "All parameters uploaded to the flight controller successfully"
 msgstr ""
 "すべてのパラメータがフライトコントローラーに正常にアップロードされました"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:889
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:872
+msgid "Exported %d FC parameters missing or different in AMC files to %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:877
+msgid "No FC parameters are missing or different from AMC parameter files"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:931
 msgid "Current file not found in the list of files"
 msgstr "現在のファイルがファイルリストに見つかりません"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:902
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:944
 msgid "Do you want to write the changes to the {self.current_file} file?"
 msgstr "{self.current_file}ファイルに変更を書き込みますか？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:903
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:945
 msgid "One or more parameters have been edited"
 msgstr "1つ以上のパラメータが編集されています"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:933
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:975
 msgid ""
 "Methodic configuration of {nr_total_params} parameters complete:\n"
 "\n"
@@ -4875,12 +4892,12 @@ msgstr ""
 "{nr_non_default__writable_non_calibrations}個の非デフォルト書き込み可能非セン"
 "サーキャリブレーション - これらは類似した機体間で再利用可能です"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:943
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:985
 msgid "Last parameter file processed"
 msgstr "最後のパラメータファイルが処理されました"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:966
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:977
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1008
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1019
 msgid ""
 "{} file already exists.\n"
 "Do you want to overwrite it?"
@@ -4888,16 +4905,16 @@ msgstr ""
 "{}ファイルはすでに存在します。\n"
 "上書きしますか？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:967
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:978
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1009
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1020
 msgid "Overwrite existing file"
 msgstr "既存のファイルを上書き"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:970
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1012
 msgid "Summary file %s written"
 msgstr "概要ファイル%sが書き込まれました"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:981
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1023
 msgid ""
 "All relevant files have been zipped into the \n"
 "{zip_file_path} file.\n"
@@ -4911,11 +4928,11 @@ msgstr ""
 "このファイルをArduPilot Methodic\n"
 "Configurationのdiscuss.ardupilot.orgのブログ投稿にアップロードできます。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:986
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1028
 msgid "Parameter files zipped"
 msgstr "パラメータファイルが圧縮されました"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1012
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1054
 msgid ""
 "A GUI for editing ArduPilot param files. Not to be used directly, but "
 "through the main ArduPilot methodic configurator script."
