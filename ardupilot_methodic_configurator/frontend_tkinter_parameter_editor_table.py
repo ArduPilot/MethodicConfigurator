@@ -835,7 +835,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             # all parameters are selected for upload in simple mode
             return self.local_filesystem.file_parameters[current_file]
 
-        selected_params = {}
+        selected_params = ParDict()
         for param_name, checkbutton_state in self.upload_checkbutton_var.items():
             if checkbutton_state.get():
                 selected_params[param_name] = self.local_filesystem.file_parameters[current_file][param_name]

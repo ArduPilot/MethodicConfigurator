@@ -539,10 +539,10 @@ class FlightController:  # pylint: disable=too-many-public-methods
             filename = "params.param"
             logging_warning(_("Testing active, will load all parameters from the %s file"), filename)
             par_dict_with_comments = ParDict.load_param_file_into_dict(filename)
-            return {k: v.value for k, v in par_dict_with_comments.items()}, {}
+            return {k: v.value for k, v in par_dict_with_comments.items()}, ParDict()
 
         if self.master is None:
-            return {}, {}
+            return {}, ParDict()
 
         # Check if MAVFTP is supported
         comport_device = getattr(self.comport, "device", "")
@@ -554,7 +554,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
                 return param_dict, default_param_dict
 
         logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), comport_device)
-        return self.__download_params_via_mavlink(progress_callback), {}
+        return self.__download_params_via_mavlink(progress_callback), ParDict()
 
     def __download_params_via_mavlink(
         self, progress_callback: Union[None, Callable[[int, int], None]] = None

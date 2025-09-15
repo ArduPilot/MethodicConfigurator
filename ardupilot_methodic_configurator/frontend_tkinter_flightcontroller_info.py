@@ -29,7 +29,7 @@ class FlightControllerInfoPresenter:
 
     def __init__(self, flight_controller: FlightController) -> None:
         self.flight_controller = flight_controller
-        self.param_default_values: ParDict = {}
+        self.param_default_values: ParDict = ParDict()
 
     def get_info_data(self) -> dict[str, Union[str, dict[str, str]]]:
         """Get formatted flight controller information for display."""
