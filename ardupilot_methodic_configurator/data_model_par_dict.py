@@ -66,7 +66,7 @@ class ParDict(dict[str, Par]):
 
         """
         super().__init__()
-        if initial_data:
+        if initial_data is not None:
             self.update(initial_data)
 
     @staticmethod
@@ -305,16 +305,48 @@ class ParDict(dict[str, Par]):
             msg = _("Can only compare with another ParDict instance")
             raise TypeError(msg)
 
-        # Create a list of keys to remove to avoid modifying dict during iteration
-        keys_to_remove = []
+        # Use the shared filtering logic and replace the contents of the current dictionary
+        filtered_params = self._get_different_or_missing_params(other)
+        self.clear()
+        self.update(filtered_params)
 
-        for param_name, param_value in self.items():
-            if param_name in other and param_value.value == other[param_name].value:
-                keys_to_remove.append(param_name)
+    def get_missing_or_different(self, other: "ParDict") -> "ParDict":
+        """
+        Get parameters that are missing in the other ParDict or have different values.
 
-        # Remove the parameters that matched
-        for key in keys_to_remove:
-            del self[key]
+        Args:
+            other: The ParDict to compare against.
+
+        Returns:
+            A new ParDict containing parameters that are missing or different.
+
+        Raises:
+            TypeError: If other is not an ParDict instance.
+
+        """
+        if not isinstance(other, ParDict):
+            msg = _("Can only compare with another ParDict instance")
+            raise TypeError(msg)
+
+        # Use the shared filtering logic to create a new ParDict
+        return ParDict(self._get_different_or_missing_params(other))
+
+    def _get_different_or_missing_params(self, other: "ParDict") -> dict[str, Par]:
+        """
+        Private helper method to get parameters that are missing or have different values.
+
+        Args:
+            other: The ParDict to compare against.
+
+        Returns:
+            A dictionary containing parameters that are missing or different.
+
+        """
+        return {
+            param_name: param_value
+            for param_name, param_value in self.items()
+            if param_name not in other or param_value.value != other[param_name].value
+        }
 
     @classmethod
     def from_file(cls, param_file: str) -> "ParDict":
@@ -458,23 +490,6 @@ class ParDict(dict[str, Par]):
                 other_params[param_name] = param_info
 
         return read_only_params, calibration_params, other_params
-
-    def get_missing_or_different(self, other: "ParDict") -> "ParDict":
-        """
-        Get parameters that are missing in the other ParDict or have different values.
-
-        Args:
-            other: The ParDict to compare against.
-
-        Returns:
-            A new ParDict containing parameters that are missing or different.
-
-        """
-        result = ParDict()
-        for param_name, param in self.items():
-            if param_name not in other or other[param_name].value != param.value:
-                result[param_name] = param
-        return result
 
     def annotate_with_comments(self, comment_lookup: dict[str, str]) -> "ParDict":
         """

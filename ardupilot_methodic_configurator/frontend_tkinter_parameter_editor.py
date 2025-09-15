@@ -866,7 +866,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # Export to file if there are any missing/different parameters
         if params_missing_in_the_amc_param_files:
-            filename = "fc_params_missing_or_diffrent_in_the_amc_param_files.param"
+            filename = "fc_params_missing_or_different_in_the_amc_param_files.param"
             self.local_filesystem.export_to_param(params_missing_in_the_amc_param_files, filename, annotate_doc=False)
             logging_info(
                 _("Exported %d FC parameters missing or different in AMC files to %s"),

@@ -538,7 +538,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         if self.master is None and self.comport is not None and self.comport.device == "test":
             filename = "params.param"
             logging_warning(_("Testing active, will load all parameters from the %s file"), filename)
-            par_dict_with_comments = ParDict.load_param_file_into_dict(filename)
+            par_dict_with_comments = ParDict.from_file(filename)
             return {k: v.value for k, v in par_dict_with_comments.items()}, ParDict()
 
         if self.master is None:
@@ -615,7 +615,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         time_sleep(0.3)
         if ret.error_code == 0:
             # load the parameters from the file
-            par_dict = ParDict.load_param_file_into_dict(complete_param_filename)
+            par_dict = ParDict.from_file(complete_param_filename)
             for name, data in par_dict.items():
                 pdict[name] = data.value
             defdict = ParDict.from_file(default_param_filename)
