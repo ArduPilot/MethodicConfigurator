@@ -22,7 +22,7 @@ from jsonschema import validate as json_validate
 from jsonschema.exceptions import ValidationError
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.data_model_par_dict import Par
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
 
 class ConfigurationSteps:
@@ -42,8 +42,8 @@ class ConfigurationSteps:
         self.configuration_steps_filename = "configuration_steps_" + vehicle_type + ".json"
         self.configuration_steps: dict[str, dict] = {}
         self.configuration_phases: dict[str, dict] = {}
-        self.forced_parameters: dict[str, dict] = {}
-        self.derived_parameters: dict[str, dict] = {}
+        self.forced_parameters: dict[str, ParDict] = {}
+        self.derived_parameters: dict[str, ParDict] = {}
         self.log_loaded_file = False
 
     def re_init(self, vehicle_dir: str, vehicle_type: str) -> None:  # pylint: disable=too-many-branches
@@ -188,7 +188,7 @@ class ConfigurationSteps:
                         continue
 
                 if filename not in destination:
-                    destination[filename] = {}
+                    destination[filename] = ParDict()
                 change_reason = _(parameter_info["Change Reason"]) if parameter_info["Change Reason"] else ""
                 destination[filename][parameter] = Par(float(result), change_reason)
             except (SyntaxError, NameError, KeyError, StopIteration) as _e:

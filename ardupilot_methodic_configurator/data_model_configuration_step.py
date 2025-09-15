@@ -17,6 +17,7 @@ from typing import Any, Optional
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
 
 class ConfigurationStepProcessor:
@@ -157,8 +158,8 @@ class ConfigurationStepProcessor:
             default_par = self.local_filesystem.param_default_dict.get(param_name, None)
 
             # Check if parameter is forced or derived
-            forced_par = self.local_filesystem.forced_parameters.get(selected_file, {}).get(param_name, None)
-            derived_par = self.local_filesystem.derived_parameters.get(selected_file, {}).get(param_name, None)
+            forced_par = self.local_filesystem.forced_parameters.get(selected_file, ParDict()).get(param_name, None)
+            derived_par = self.local_filesystem.derived_parameters.get(selected_file, ParDict()).get(param_name, None)
 
             # Get FC value if available
             fc_value = fc_parameters.get(param_name)
