@@ -815,6 +815,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     def write_param_default_values_to_file(self, param_default_values: ParDict, filename: str = "00_default.param") -> None:
         if self.write_param_default_values(param_default_values):
+            self.file_parameters[filename] = param_default_values
             self.param_default_dict.export_to_param(os_path.join(self.vehicle_dir, filename))
 
     def get_download_url_and_local_filename(self, selected_file: str) -> tuple[str, str]:
