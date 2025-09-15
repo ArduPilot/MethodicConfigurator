@@ -17,17 +17,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import os
 import re
-import subprocess
-from typing import Callable, Optional, Union
+from typing import Callable, Union
 
 import argcomplete
 from argcomplete.completers import DirectoriesCompleter, FilesCompleter
 
-from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import PARAM_NAME_MAX_LEN, PARAM_NAME_REGEX, Par, ParDict
 
-PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
-PARAM_NAME_MAX_LEN = 16
-VERSION = "1.0"
+VERSION = "1.1"
 
 
 def create_argument_parser() -> argparse.ArgumentParser:
@@ -54,9 +51,9 @@ explaining how their new value relates to the default parameter value.
     parser.add_argument(
         "-a",
         "--adjustment_factor",
-        type=ranged_type(float, 0.1, 0.8),
+        type=ranged_type(float, 0.1, 1.2),
         default=0.5,
-        help="The adjustment factor to apply to the optimized parameters. Must be in the interval 0.1 to 0.8. Default is 0.5.",
+        help="The adjustment factor to apply to the optimized parameters. Must be in the interval 0.1 to 1.2. Default is 0.5.",
     )
     parser.add_argument(
         "-v",
@@ -100,72 +97,58 @@ def ranged_type(value_type: type, min_value: float, max_value: float) -> Callabl
     return range_checker
 
 
-class Par:
+def load_param_file_with_content(param_file: str) -> tuple[ParDict, list[str]]:
     """
-    A class representing a parameter with a value and an optional comment.
+    Load parameter file into ParDict and return the file content as well.
 
-    Attributes:
-        value (float): The value of the parameter.
-        comment (str): An optional comment describing the parameter.
+    This is a helper function that extends ParDict.load_param_file_into_dict()
+    to also return the original file content lines for header preservation.
+
+    Args:
+        param_file: Path to the parameter file.
+
+    Returns:
+        A tuple of (ParDict, list of file content lines).
 
     """
-
-    def __init__(self, value: float, comment: Optional[str] = None) -> None:
-        self.value = value
-        self.comment = comment
-
-    @staticmethod
-    def load_param_file_into_dict(param_file: str) -> tuple[ParDict, list[str]]:
-        parameter_dict = {}
-        content = []
-        with open(param_file, encoding="utf-8") as f_handle:
-            for n, f_line in enumerate(f_handle, start=1):
-                line = f_line.strip()
-                content.append(line)
-                comment = None
-                if not line or line.startswith("#"):
-                    continue
-                if "#" in line:
-                    line, comment = line.split("#", 1)
-                    comment = comment.strip()
-                if "," in line:
-                    parameter, value = line.split(",", 1)
-                elif " " in line:
-                    parameter, value = line.split(" ", 1)
-                elif "\t" in line:
-                    parameter, value = line.split("\t", 1)
-                else:
-                    msg = f"Missing parameter-value separator: {line} in {param_file} line {n}"
-                    raise SystemExit(msg)
-                if len(parameter) > PARAM_NAME_MAX_LEN:
-                    msg = f"Too long parameter name: {parameter} in {param_file} line {n}"
-                    raise SystemExit(msg)
-                if not re.match(PARAM_NAME_REGEX, parameter):
-                    msg = f"Invalid characters in parameter name {parameter} in {param_file} line {n}"
-                    raise SystemExit(msg)
-                try:
-                    fvalue = float(value)
-                except ValueError as exc:
-                    msg = f"Invalid parameter value {value} in {param_file} line {n}"
-                    raise SystemExit(msg) from exc
-                if parameter in parameter_dict:
-                    msg = f"Duplicated parameter {parameter} in {param_file} line {n}"
-                    raise SystemExit(msg)
-                parameter_dict[parameter] = Par(fvalue, comment)
-        return parameter_dict, content
-
-    @staticmethod
-    def export_to_param(param_dict: ParDict, filename_out: str, content_header: Optional[list[str]] = None) -> None:
-        if content_header is None:
-            content_header = []
-        with open(filename_out, "w", encoding="utf-8") as output_file:
-            if content_header:
-                output_file.write("\n".join(content_header) + "\n")
-            for key, par in param_dict.items():
-                line = f"{key},{format(par.value, '.6f').rstrip('0').rstrip('.')}"
-                if par.comment:
-                    line += f"  # {par.comment}"
-                output_file.write(line + "\n")
+    parameter_dict = ParDict()
+    content = []
+    with open(param_file, encoding="utf-8") as f_handle:
+        for n, f_line in enumerate(f_handle, start=1):
+            line = f_line.strip()
+            content.append(line)
+            comment = None
+            if not line or line.startswith("#"):
+                continue
+            if "#" in line:
+                line, comment = line.split("#", 1)
+                comment = comment.strip()
+            if "," in line:
+                parameter, value = line.split(",", 1)
+            elif " " in line:
+                parameter, value = line.split(" ", 1)
+            elif "\t" in line:
+                parameter, value = line.split("\t", 1)
+            else:
+                msg = f"Missing parameter-value separator: {line} in {param_file} line {n}"
+                raise SystemExit(msg)
+            parameter = parameter.strip()
+            if len(parameter) > PARAM_NAME_MAX_LEN:
+                msg = f"Too long parameter name: {parameter} in {param_file} line {n}"
+                raise SystemExit(msg)
+            if not re.match(PARAM_NAME_REGEX, parameter):
+                msg = f"Invalid characters in parameter name {parameter} in {param_file} line {n}"
+                raise SystemExit(msg)
+            try:
+                fvalue = float(value.strip())
+            except ValueError as exc:
+                msg = f"Invalid parameter value {value} in {param_file} line {n}"
+                raise SystemExit(msg) from exc
+            if parameter in parameter_dict:
+                msg = f"Duplicated parameter {parameter} in {param_file} line {n}"
+                raise SystemExit(msg)
+            parameter_dict[parameter] = Par(fvalue, comment)
+    return parameter_dict, content
 
 
 def update_pid_adjustment_params(
@@ -191,13 +174,13 @@ def update_pid_adjustment_params(
     pid_adjustment_file_path = os.path.join(directory, "16_pid_adjustment.param")
 
     # Load the default parameter file into a dictionary (comment source)
-    default_params_dict, _ = ParDict.load_param_file_into_dict(default_param_file_path)
+    default_params_dict = ParDict.load_param_file_into_dict(default_param_file_path)
 
     # Load the optimized parameter file into a dictionary (source)
-    optimized_params_dict, _ = ParDict.load_param_file_into_dict(optimized_param_file_path)
+    optimized_params_dict = ParDict.load_param_file_into_dict(optimized_param_file_path)
 
     # Load the PID adjustment parameter file into a dictionary (destination)
-    pid_adjustment_params_dict, content = ParDict.load_param_file_into_dict(pid_adjustment_file_path)
+    pid_adjustment_params_dict, content = load_param_file_with_content(pid_adjustment_file_path)
 
     if not default_params_dict:
         msg = f"Failed to load default parameters from {default_param_file_path}"
@@ -242,9 +225,7 @@ def main() -> None:
         args.directory, args.optimized_param_file, args.adjustment_factor
     )
     # export the updated PID adjust parameters to a file, preserving the first eight header lines
-    ParDict.export_to_param(pid_adjustment_params_dict, pid_adjustment_file_path, content_header)
-    # annotate each parameter with up-to date documentation
-    subprocess.run(["./annotate_params.py", os.path.join(args.directory, "16_pid_adjustment.param")], check=True)  # noqa: S603
+    pid_adjustment_params_dict.export_to_param(pid_adjustment_file_path, content_header=content_header)
 
 
 if __name__ == "__main__":

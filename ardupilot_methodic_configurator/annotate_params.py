@@ -414,20 +414,24 @@ def extract_parameter_name_and_validate(line: str, filename: str, line_nr: int) 
         SystemExit: If the line is invalid or the parameter name is too long or invalid.
 
     """
-    # Extract the parameter name
-    match = re.match(PARAM_NAME_REGEX, line)
+    # Extract the parameter name from the line (until we hit a separator)
+    # Create a regex to extract parameter name followed by separator
+    param_line_pattern = r"^([A-Z][A-Z_0-9]*)[,\s\t]"
+    match = re.match(param_line_pattern, line)
     if match:
-        param_name = match.group(0)
+        param_name = match.group(1)
     else:
         logging.critical("Invalid line %d in file %s: %s", line_nr, filename, line)
         msg = "Invalid line in input file"
         raise SystemExit(msg)
-    param_len = len(param_name)
-    param_sep = line[param_len]  # the character following the parameter name must be a separator
-    if param_sep not in {",", " ", "\t"}:
+
+    # Validate the extracted parameter name against the strict parameter name regex
+    if not re.match(PARAM_NAME_REGEX, param_name):
         logging.critical("Invalid parameter name %s on line %d in file %s", param_name, line_nr, filename)
         msg = "Invalid parameter name"
         raise SystemExit(msg)
+
+    param_len = len(param_name)
     if param_len > PARAM_NAME_MAX_LEN:
         logging.critical("Too long parameter name on line %d in file %s", line_nr, filename)
         msg = "Too long parameter name"
