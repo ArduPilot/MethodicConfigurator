@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-09-09 13:30+0000\n"
+"POT-Creation-Date: 2025-09-15 15:48+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -16,7 +16,7 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.5\n"
 
-#: ardupilot_methodic_configurator/__main__.py:71
+#: ardupilot_methodic_configurator/__main__.py:72
 msgid ""
 "ArduPilot methodic configurator is a simple GUI with a table that lists "
 "parameters. The GUI reads intermediate parameter files from a directory and "
@@ -41,23 +41,23 @@ msgstr ""
 "会将选定的参数上传到飞控。当按下“跳过”时，它会跳到下一个模版。这个过程会对每"
 "个模版重复进行。"
 
-#: ardupilot_methodic_configurator/__main__.py:118
+#: ardupilot_methodic_configurator/__main__.py:119
 msgid "Will now exit the old software version."
 msgstr "即将退出旧版软件。"
 
-#: ardupilot_methodic_configurator/__main__.py:137
+#: ardupilot_methodic_configurator/__main__.py:138
 msgid "No serial ports found"
 msgstr "未找到串行端口"
 
-#: ardupilot_methodic_configurator/__main__.py:146
+#: ardupilot_methodic_configurator/__main__.py:147
 msgid "Vehicle type not set explicitly, auto-detected %s."
 msgstr "未明确设置载具类型，自动检测到 %s。"
 
-#: ardupilot_methodic_configurator/__main__.py:148
+#: ardupilot_methodic_configurator/__main__.py:149
 msgid "Vehicle type explicitly set to %s."
 msgstr "载具类型明确设置为 %s。"
 
-#: ardupilot_methodic_configurator/__main__.py:182
+#: ardupilot_methodic_configurator/__main__.py:184
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:395
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
@@ -65,7 +65,7 @@ msgstr "载具类型明确设置为 %s。"
 msgid "Fatal error reading parameter files"
 msgstr "读取参数文件时发生致命错误"
 
-#: ardupilot_methodic_configurator/__main__.py:205
+#: ardupilot_methodic_configurator/__main__.py:207
 msgid ""
 "Will present all vehicle templates for all vehicle types since no FC "
 "connected and no explicit vehicle type set on the command line"
@@ -73,11 +73,11 @@ msgstr ""
 "由于没有连接飞控且命令行上未设置明确的车辆类型，将展示所有车辆类型的所有车辆"
 "模板"
 
-#: ardupilot_methodic_configurator/__main__.py:217
+#: ardupilot_methodic_configurator/__main__.py:219
 msgid "Failed to reset parameters to defaults: %(error)s"
 msgstr "将参数重置为默认值失败: %(error)s"
 
-#: ardupilot_methodic_configurator/__main__.py:284
+#: ardupilot_methodic_configurator/__main__.py:287
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:101
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:104
 #: ardupilot_methodic_configurator/backend_flightcontroller_info.py:106
@@ -90,38 +90,38 @@ msgstr "将参数重置为默认值失败: %(error)s"
 msgid "Unknown"
 msgstr "未知"
 
-#: ardupilot_methodic_configurator/__main__.py:383
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:75
+#: ardupilot_methodic_configurator/__main__.py:386
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:76
 msgid "Error in derived parameters"
 msgstr "派生参数中的错误"
 
-#: ardupilot_methodic_configurator/__main__.py:424
+#: ardupilot_methodic_configurator/__main__.py:427
 msgid "Created backup file autobackup_%02d.param"
 msgstr "已创建备份文件 autobackup_%02d.param"
 
-#: ardupilot_methodic_configurator/__main__.py:426
+#: ardupilot_methodic_configurator/__main__.py:429
 msgid "Permission denied when creating backup files: %s"
 msgstr "创建备份文件时权限被拒绝: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:427
+#: ardupilot_methodic_configurator/__main__.py:430
 msgid ""
 "Please check file permissions and ensure you have write access to the "
 "vehicle directory"
 msgstr "请检查文件权限并确保您对车辆目录有写入权限"
 
-#: ardupilot_methodic_configurator/__main__.py:430
+#: ardupilot_methodic_configurator/__main__.py:433
 msgid "Insufficient disk space to create backup files: %s"
 msgstr "磁盘空间不足，无法创建备份文件: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:431
+#: ardupilot_methodic_configurator/__main__.py:434
 msgid "Please free up disk space and try again"
 msgstr "请释放磁盘空间并重试"
 
-#: ardupilot_methodic_configurator/__main__.py:433
+#: ardupilot_methodic_configurator/__main__.py:436
 msgid "Failed to create backup files: %s"
 msgstr "创建备份文件失败: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:435
+#: ardupilot_methodic_configurator/__main__.py:438
 msgid "Unexpected error creating backup files: %s"
 msgstr "创建备份文件时出现意外错误: %s"
 
@@ -157,106 +157,106 @@ msgstr "无法将值转换为 %s 的整数或浮点数"
 msgid "Parameter %s has invalid metadata. Please file a bug at %s"
 msgstr "参数 %s 具有无效的元数据。请在 %s 提交错误报告"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:346
+#: ardupilot_methodic_configurator/backend_filesystem.py:345
 msgid "Error: %s is not a directory."
 msgstr "错误: %s 不是一个有效目录。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:545
+#: ardupilot_methodic_configurator/backend_filesystem.py:523
 msgid "Intermediate parameter files and summary files zipped to %s"
 msgstr "模版文件和摘要文件已压缩到 %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:567
+#: ardupilot_methodic_configurator/backend_filesystem.py:545
 msgid "Template directory does not exist: {template_dir}"
 msgstr "模板目录不存在：{template_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:573
+#: ardupilot_methodic_configurator/backend_filesystem.py:551
 msgid "New vehicle directory does not exist: {new_vehicle_dir}"
 msgstr "新飞行器目录不存在：{new_vehicle_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:603
+#: ardupilot_methodic_configurator/backend_filesystem.py:581
 msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr "将模板文件复制到新车辆目录时出错：{_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:612
+#: ardupilot_methodic_configurator/backend_filesystem.py:590
 msgid "New vehicle directory does not exist: {vehicle_dir}"
 msgstr "新载具目录不存在: {vehicle_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:630
+#: ardupilot_methodic_configurator/backend_filesystem.py:608
 msgid "Error removing %s"
 msgstr "删除 %s 时出错"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:637
+#: ardupilot_methodic_configurator/backend_filesystem.py:615
 msgid "Error removing directory %s"
 msgstr "删除目录 %s 时出错"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:642
+#: ardupilot_methodic_configurator/backend_filesystem.py:620
 msgid "Error removing created files: {error_list}"
 msgstr "删除创建的文件时出错: {error_list}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:645
+#: ardupilot_methodic_configurator/backend_filesystem.py:623
 msgid "Error removing created files: {_e}"
 msgstr "删除创建的文件时出错: {_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:646
+#: ardupilot_methodic_configurator/backend_filesystem.py:624
 msgid "Error removing created files:"
 msgstr "删除创建的文件时出错:"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:666
+#: ardupilot_methodic_configurator/backend_filesystem.py:644
 msgid "Parameter %s not found in the current parameter file"
 msgstr "在当前参数文件中未找到参数 %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:674
+#: ardupilot_methodic_configurator/backend_filesystem.py:652
 msgid "Error writing last uploaded filename: %s"
 msgstr "写入上传的最后一个文件的文件名时发生错误: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:681
+#: ardupilot_methodic_configurator/backend_filesystem.py:659
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr "未找到 last_uploaded_filename.txt: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:683
+#: ardupilot_methodic_configurator/backend_filesystem.py:661
 msgid "Error reading last uploaded filename: %s"
 msgstr "读取上传的最后一个文件的文件名时发生错误: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:699
+#: ardupilot_methodic_configurator/backend_filesystem.py:677
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr "起始文件索引 %s 超出范围。改为从文件 %s 开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:707
+#: ardupilot_methodic_configurator/backend_filesystem.py:685
 msgid "Starting with the first file."
 msgstr "从第一个文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:710
+#: ardupilot_methodic_configurator/backend_filesystem.py:688
 msgid "Starting with the first non-tcal file."
 msgstr "从第一个非温度校准文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:714
+#: ardupilot_methodic_configurator/backend_filesystem.py:692
 msgid "Last uploaded file was %s."
 msgstr "最后上传的文件是 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:716
+#: ardupilot_methodic_configurator/backend_filesystem.py:694
 msgid "No last uploaded file found. %s."
 msgstr "未找到最后上传的文件。 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:721
+#: ardupilot_methodic_configurator/backend_filesystem.py:699
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr "未找到最后上传的文件。 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:730
+#: ardupilot_methodic_configurator/backend_filesystem.py:708
 msgid ""
 "Last uploaded file is the last file in the list. Starting from the beginning."
 msgstr "最后上传的文件是列表中的最后一个文件。从头开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:919
+#: ardupilot_methodic_configurator/backend_filesystem.py:894
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "飞行器类型。默认为ArduCopter"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:925
+#: ardupilot_methodic_configurator/backend_filesystem.py:900
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
 msgstr "包含飞行器特定中间参数文件的目录。默认为当前工作目录"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:933
+#: ardupilot_methodic_configurator/backend_filesystem.py:908
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -266,7 +266,7 @@ msgstr ""
 "直接从第n个中间参数文件开始（跳过之前的文件）。默认从上次写入飞控的文件之后开"
 "始。如果文件不存在，将从第一个文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:942
+#: ardupilot_methodic_configurator/backend_filesystem.py:917
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -274,7 +274,7 @@ msgstr ""
 "允许直接打开和编辑模板文件。仅供了解相关操作的软件开发人员使用。默认"
 "为%(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:951
+#: ardupilot_methodic_configurator/backend_filesystem.py:926
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -2500,23 +2500,23 @@ msgid ""
 "not change the parameter."
 msgstr "为{param_name}提供的数值在容差范围内，不会更改参数。"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:121
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:122
 msgid "Removing duplicate parameter %s"
 msgstr "正在移除重复参数 %s"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:122
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:123
 msgid "The parameter '{old_name}' was removed due to duplication."
 msgstr "参数 '{old_name}' 因重复而被移除。"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:123
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:124
 msgid "Parameter Removed"
 msgstr "参数已移除"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:128
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:129
 msgid "Renaming parameter %s to %s"
 msgstr "将参数 %s 重命名为 %s"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:129
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:130
 msgid ""
 "The parameter '{old_name}' was renamed to '{new_name}'.\n"
 "to obey the flight controller connection defined in the component editor "
@@ -2527,7 +2527,7 @@ msgstr ""
 "'{new_name}'。\n"
 "以遵循组件编辑器窗口中定义的飞控连接。"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:133
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:134
 msgid "Parameter Renamed"
 msgstr "参数已重命名"
 
@@ -2819,6 +2819,15 @@ msgstr ""
 "• 检查BATT_ARM_VOLT和MOT_BAT_VOLT_MAX参数\n"
 "\n"
 "原因：%(reason)s"
+
+#: ardupilot_methodic_configurator/data_model_par_dict.py:282
+msgid "Can only append another ParDict instance"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_par_dict.py:307
+#: ardupilot_methodic_configurator/data_model_par_dict.py:330
+msgid "Can only compare with another ParDict instance"
+msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:50
 msgid "Current version: {_current_version}"
@@ -4525,7 +4534,7 @@ msgstr "设置参数 {param_name} 失败：{_e}"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:734
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:758
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:796
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:889
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:931
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:173
 msgid "ArduPilot methodic configurator"
 msgstr "ArduPilot 调参助手"
@@ -4601,19 +4610,27 @@ msgstr "未能將以下參數上傳到飛行控制器：\n"
 msgid "All parameters uploaded to the flight controller successfully"
 msgstr "所有参数成功上传到飞控"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:889
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:872
+msgid "Exported %d FC parameters missing or different in AMC files to %s"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:877
+msgid "No FC parameters are missing or different from AMC parameter files"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:931
 msgid "Current file not found in the list of files"
 msgstr "在文件列表中找不到当前文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:902
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:944
 msgid "Do you want to write the changes to the {self.current_file} file?"
 msgstr "您想将更改写入 {self.current_file} 文件吗？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:903
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:945
 msgid "One or more parameters have been edited"
 msgstr "一个或多个参数已被编辑"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:933
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:975
 msgid ""
 "Methodic configuration of {nr_total_params} parameters complete:\n"
 "\n"
@@ -4650,12 +4667,12 @@ msgstr ""
 "{nr_non_default__writable_non_calibrations} 个非默认可写非传感器校准 - 可在相"
 "似飞行器间重用"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:943
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:985
 msgid "Last parameter file processed"
 msgstr "最后处理的参数文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:966
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:977
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1008
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1019
 msgid ""
 "{} file already exists.\n"
 "Do you want to overwrite it?"
@@ -4664,16 +4681,16 @@ msgstr ""
 "您是否要覆蓋它？{} 文件已存在。\n"
 "您想覆盖它吗？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:967
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:978
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1009
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1020
 msgid "Overwrite existing file"
 msgstr "覆盖现有文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:970
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1012
 msgid "Summary file %s written"
 msgstr "汇总文件 %s 已写入"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:981
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1023
 msgid ""
 "All relevant files have been zipped into the \n"
 "{zip_file_path} file.\n"
@@ -4691,11 +4708,11 @@ msgstr ""
 "您现在可以将此文件上传到 ArduPilot调参助手\n"
 "的博客 discuss.ardupilot.org。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:986
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1028
 msgid "Parameter files zipped"
 msgstr "参数文件已压缩"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1012
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1054
 msgid ""
 "A GUI for editing ArduPilot param files. Not to be used directly, but "
 "through the main ArduPilot methodic configurator script."
