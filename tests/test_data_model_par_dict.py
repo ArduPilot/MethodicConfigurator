@@ -20,7 +20,7 @@ import pytest
 
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name, too-many-lines
 
 
 @pytest.fixture

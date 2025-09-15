@@ -527,7 +527,7 @@ PARAM_1\t100
         mock_info.assert_has_calls([mock.call("ReadOnly parameters:"), mock.call("PARAM1")])
 
     def test_update_parameter_documentation_invalid_target(self) -> None:
-        with pytest.raises(ValueError, match="Target 'invalid_target' is neither a file nor a directory."):
+        with pytest.raises(ValueError, match=r"Target 'invalid_target' is neither a file nor a directory\."):
             update_parameter_documentation(self.doc_dict, "invalid_target")
 
     def test_invalid_parameter_name(self) -> None:
@@ -587,7 +587,7 @@ PARAM_1\t100
 
     def test_get_xml_url_invalid_vehicle(self) -> None:
         """Test get_xml_url with invalid vehicle type."""
-        with pytest.raises(ValueError, match="Vehicle type 'InvalidVehicle' is not supported."):
+        with pytest.raises(ValueError, match=r"Vehicle type 'InvalidVehicle' is not supported\."):
             get_xml_url("InvalidVehicle", "4.3")
 
     def test_split_into_lines_edge_cases(self) -> None:
@@ -809,7 +809,7 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
     @patch("ardupilot_methodic_configurator.annotate_params.get_xml_url")
     def test_get_xml_url_exception(self, mock_get_xml_url_) -> None:
         mock_get_xml_url_.side_effect = ValueError("Mocked Value Error")
-        with pytest.raises(ValueError, match="Vehicle type 'NonExistingVehicle' is not supported."):  # noqa: PT012
+        with pytest.raises(ValueError, match=r"Vehicle type 'NonExistingVehicle' is not supported\."):  # noqa: PT012
             get_xml_url("NonExistingVehicle", "4.0")
 
             @patch("requests.get")

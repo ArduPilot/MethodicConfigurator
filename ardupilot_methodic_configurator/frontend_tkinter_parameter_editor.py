@@ -517,7 +517,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             message_label.pack(padx=10, pady=10)
 
             # Result variable
-            result: list[Literal[None, True, False]] = [None]
+            result: list[Optional[Literal[True, False]]] = [None]
 
             # Button frame
             button_frame = tk.Frame(dialog)

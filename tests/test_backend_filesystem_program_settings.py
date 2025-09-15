@@ -320,7 +320,7 @@ class TestUserConfigurationAccess:
                 return_value="/missing/site/config",
             ),
             patch("os.path.exists", return_value=False),
-            pytest.raises(FileNotFoundError, match="site configuration directory.*does not exist"),
+            pytest.raises(FileNotFoundError, match=r"site configuration directory.*does not exist"),
         ):
             # Act: Attempt to access missing site configuration directory
             ProgramSettings._site_config_dir()
@@ -341,7 +341,7 @@ class TestUserConfigurationAccess:
             ),
             patch("os.path.exists", return_value=True),
             patch("os.path.isdir", return_value=False),
-            pytest.raises(NotADirectoryError, match="path.*is not a directory"),
+            pytest.raises(NotADirectoryError, match=r"path.*is not a directory"),
         ):
             # Act: Attempt to access site configuration file as directory
             ProgramSettings._site_config_dir()
