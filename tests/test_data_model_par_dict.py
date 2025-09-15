@@ -1097,11 +1097,7 @@ class TestParameterParsingEdgeCases:
         """
         # Arrange: Parameter file with various whitespace scenarios
         whitespace_content = (
-            "  PARAM1  ,  1.5  \n"
-            "\tPARAM2\t,\t2.5\t\n"
-            "   PARAM3   3.5   \n"
-            "\t PARAM4\t \t4.5 \t\n"
-            "\t\tPARAM5\t\t,\t\t5.5\t\t"
+            "  PARAM1  ,  1.5  \n\tPARAM2\t,\t2.5\t\n   PARAM3   3.5   \n\t PARAM4\t \t4.5 \t\n\t\tPARAM5\t\t,\t\t5.5\t\t"
         )
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
@@ -1131,13 +1127,7 @@ class TestParameterParsingEdgeCases:
         THEN: All parameters should be correctly parsed regardless of separator type
         """
         # Arrange: Mixed separator and whitespace combinations
-        mixed_content = (
-            " COMMA1 , 1.0 \n"
-            "\tTAB2\t2.0\t\n"
-            " SPACE3   3.0  \n"
-            "\t COMMA_TAB\t,\t 4.0 \t\n"
-            "  TAB_SPACE  \t  5.0    "
-        )
+        mixed_content = " COMMA1 , 1.0 \n\tTAB2\t2.0\t\n SPACE3   3.0  \n\t COMMA_TAB\t,\t 4.0 \t\n  TAB_SPACE  \t  5.0    "
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
             f.write(mixed_content)
