@@ -164,15 +164,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)
 
         style = ttk.Style()
-        style.map("readonly.TCombobox", fieldbackground=[("readonly", "white")])  # type: ignore[no-untyped-call]
-        style.map("readonly.TCombobox", selectbackground=[("readonly", "white")])  # type: ignore[no-untyped-call]
-        style.map("readonly.TCombobox", selectforeground=[("readonly", "black")])  # type: ignore[no-untyped-call]
-        style.map("default_v.TCombobox", fieldbackground=[("readonly", "light blue")])  # type: ignore[no-untyped-call]
-        style.map("default_v.TCombobox", selectbackground=[("readonly", "light blue")])  # type: ignore[no-untyped-call]
-        style.map("default_v.TCombobox", selectforeground=[("readonly", "black")])  # type: ignore[no-untyped-call]
-        style.configure("default_v.TEntry", fieldbackground="light blue")  # type: ignore[no-untyped-call]
-        style.configure("below_limit.TEntry", fieldbackground="orangered")  # type: ignore[no-untyped-call]
-        style.configure("above_limit.TEntry", fieldbackground="red3")  # type: ignore[no-untyped-call]
+        style.map("readonly.TCombobox", fieldbackground=[("readonly", "white")])
+        style.map("readonly.TCombobox", selectbackground=[("readonly", "white")])
+        style.map("readonly.TCombobox", selectforeground=[("readonly", "black")])
+        style.map("default_v.TCombobox", fieldbackground=[("readonly", "light blue")])
+        style.map("default_v.TCombobox", selectbackground=[("readonly", "light blue")])
+        style.map("default_v.TCombobox", selectforeground=[("readonly", "black")])
+        style.configure("default_v.TEntry", fieldbackground="light blue")
+        style.configure("below_limit.TEntry", fieldbackground="orangered")
+        style.configure("above_limit.TEntry", fieldbackground="red3")
 
         self.__create_conf_widgets(__version__)
 
@@ -259,7 +259,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def legend_frame(self, config_subframe: ttk.Frame) -> None:  # pylint: disable=too-many-locals
         font_family, font_size = get_widget_font_family_and_size(config_subframe)
         style = ttk.Style()
-        style.configure("Legend.TLabelframe", font=(font_family, font_size))  # type: ignore[no-untyped-call]
+        style.configure("Legend.TLabelframe", font=(font_family, font_size))
         legend_frame = ttk.LabelFrame(config_subframe, text=_("Legend"), style="Legend.TLabelframe")
         legend_left = ttk.Frame(legend_frame)
         legend_left.pack(side=tk.LEFT, anchor=tk.NW)
@@ -402,7 +402,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             wrap=tk.WORD,
             height=10,
             bd=0,
-            background=style.lookup("TLabel", "background"),  # type: ignore[no-untyped-call]
+            background=style.lookup("TLabel", "background"),
         )
         instructions_text.insert(tk.END, _("1. Read "))
         instructions_text.insert(tk.END, _("all"), "bold")

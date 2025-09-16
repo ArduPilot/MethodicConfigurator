@@ -150,7 +150,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         style = ttk.Style()
         # check if the combobox already has the "postoffset" property
         current_combo_style = combo.cget("style") or "TCombobox"
-        if len(style.lookup(current_combo_style, "postoffset")) > 0:  # type: ignore[no-untyped-call]
+        if len(style.lookup(current_combo_style, "postoffset")) > 0:
             return
         combo_values = combo.cget("values")
         if len(combo_values) == 0:
@@ -167,7 +167,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         style_name = current_combo_style if unique_name in current_combo_style else f"{unique_name}.{current_combo_style}"
 
         if isinstance(combo, ttk.Combobox):
-            style.configure(style_name, postoffset=(0, 0, width, 0))  # type: ignore[no-untyped-call]
+            style.configure(style_name, postoffset=(0, 0, width, 0))
             combo.configure(style=style_name)
 
 
