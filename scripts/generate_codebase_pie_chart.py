@@ -18,6 +18,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -33,19 +34,38 @@ mpl.use("Agg")  # Use non-interactive backend that doesn't require GUI
 
 def get_codebase_data() -> tuple[list[int], list[str], list[str]]:
     """Get codebase data and return sizes, categories, and colors."""
-    # Code lines data from latest analysis (December 2024)
-    test_lines = 16675  # Python test code
-    total_app_lines = 11967  # Total Python application code
-    generated_lines = 1161  # Generated Python code (677+299+98+87)
-    script_lines = 4613  # 4248 (root Python) + 365 (scripts Python + shell)
-    documentation_lines = 9170  # Markdown documentation
-    configuration_lines = 13629  # JSON configuration files
+    # Try to read from JSON file first, fallback to hardcoded values
+    stats_file = Path(__file__).parent.parent / "code_lines_statistics.json"
+
+    test_lines = 0
+    app_lines = 0
+    documentation_lines = 0
+    configuration_lines = 0
+    generated_lines = 0
+    script_lines = 0
+    if stats_file.exists():
+        try:
+            with stats_file.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+            # Handle both old format (direct stats) and new format (with metadata)
+            stats = {k: v for k, v in data.items() if k != "_metadata"} if "_metadata" in data else data
+            test_lines = stats["test_lines"]
+            app_lines = stats["app_lines"]
+            generated_lines = stats["generated_lines"]
+            script_lines = stats["script_lines"]
+            documentation_lines = stats["documentation_lines"]
+            configuration_lines = stats["configuration_lines"]
+            print(f"Loaded statistics from {stats_file}")
+        except (KeyError, json.JSONDecodeError, OSError) as e:
+            print(f"Error reading statistics file: {e}")
+            print("Using fallback hardcoded values")
+    else:
+        print("Statistics file not found, using hardcoded values")
 
     # Calculate derived values
-    handwritten_app_lines = total_app_lines - generated_lines
     sizes = [
         test_lines,
-        handwritten_app_lines,
+        app_lines,
         documentation_lines,
         configuration_lines,
         generated_lines,
@@ -58,7 +78,7 @@ def get_codebase_data() -> tuple[list[int], list[str], list[str]]:
         "Documentation\n(Markdown)",
         "Configuration\n(JSON)",
         "Generated Code\n(Python)",
-        "Utility Scripts\n(Python + Shell)",
+        "Utility Scripts\n(Hand-written Python + Shell)",
     ]
 
     colors = [
@@ -77,24 +97,24 @@ def create_codebase_pie_chart(sizes: list[int], categories: list[str], colors: l
     """Create and return codebase statistics and create the pie chart."""
     # Extract individual values for calculations
     test_lines = sizes[0]
-    handwritten_app_lines = sizes[1]
+    app_lines = sizes[1]
     documentation_lines = sizes[2]
     configuration_lines = sizes[3]
     generated_lines = sizes[4]
     script_lines = sizes[5]
 
     total_lines = sum(sizes)
-    total_app_lines = handwritten_app_lines + generated_lines
+    total_app_lines = app_lines + generated_lines
 
     # Calculate metrics
-    test_to_app_ratio = test_lines / handwritten_app_lines
+    test_to_app_ratio = test_lines / app_lines
     generated_percentage = (generated_lines / total_app_lines) * 100
-    code_lines = handwritten_app_lines + generated_lines + script_lines
+    code_lines = app_lines + generated_lines + script_lines
     doc_to_code_ratio = documentation_lines / code_lines
 
     stats = {
         "test_lines": test_lines,
-        "handwritten_app_lines": handwritten_app_lines,
+        "app_lines": app_lines,
         "generated_lines": generated_lines,
         "script_lines": script_lines,
         "documentation_lines": documentation_lines,
@@ -148,7 +168,7 @@ def create_codebase_pie_chart(sizes: list[int], categories: list[str], colors: l
 def create_legend(ax: Axes, wedges: list[matplotlib.patches.Wedge], stats: dict[str, float], total_lines: int) -> None:
     """Create the legend with line counts and percentages."""
     test_pct = stats["test_lines"] / total_lines * 100
-    app_pct = stats["handwritten_app_lines"] / total_lines * 100
+    app_pct = stats["app_lines"] / total_lines * 100
     doc_pct = stats["documentation_lines"] / total_lines * 100
     config_pct = stats["configuration_lines"] / total_lines * 100
     gen_pct = stats["generated_lines"] / total_lines * 100
@@ -156,7 +176,7 @@ def create_legend(ax: Axes, wedges: list[matplotlib.patches.Wedge], stats: dict[
 
     legend_labels = [
         f"Tests: {stats['test_lines']:,} lines ({test_pct:.1f}%)",
-        f"Core Application: {stats['handwritten_app_lines']:,} lines ({app_pct:.1f}%)",
+        f"Core Application: {stats['app_lines']:,} lines ({app_pct:.1f}%)",
         f"Documentation: {stats['documentation_lines']:,} lines ({doc_pct:.1f}%)",
         f"Configuration: {stats['configuration_lines']:,} lines ({config_pct:.1f}%)",
         f"Generated Code: {stats['generated_lines']:,} lines ({gen_pct:.1f}%)",
@@ -191,6 +211,24 @@ def add_summary_text(stats: dict[str, Any]) -> None:
     )
 
 
+def _strip_svg_trailing_whitespace(svg_file_path: Path) -> None:
+    """Strip trailing whitespace from all lines in an SVG file."""
+    try:
+        # Read the SVG file
+        with svg_file_path.open("r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        # Strip trailing whitespace from each line
+        cleaned_lines = [line.rstrip() + "\n" for line in lines]
+
+        # Write back the cleaned content
+        with svg_file_path.open("w", encoding="utf-8") as f:
+            f.writelines(cleaned_lines)
+
+    except (OSError, UnicodeDecodeError) as e:
+        print(f"Warning: Could not clean SVG file {svg_file_path}: {e}")
+
+
 def save_charts() -> None:
     """Save the chart in multiple formats."""
     output_dir = Path(__file__).parent.parent / "images"
@@ -203,6 +241,10 @@ def save_charts() -> None:
     # Also save as SVG for scalability
     output_file_svg = output_dir / "codebase_structure_pie_chart.svg"
     plt.savefig(output_file_svg, bbox_inches="tight", facecolor="white", edgecolor="none")
+
+    # Strip trailing whitespace from SVG file
+    _strip_svg_trailing_whitespace(output_file_svg)
+
     print(f"SVG version saved to: {output_file_svg}")
 
     # Close the plot to free memory
@@ -221,7 +263,7 @@ def print_detailed_analysis(stats: dict[str, Any]) -> None:
     print("   • Unit tests, integration tests, and test assets")
     print("   • Excellent test coverage indicating mature codebase")
 
-    print(f"\n⚙️  CORE APPLICATION: {stats['handwritten_app_lines']:,} lines (hand-written)")
+    print(f"\n⚙️  CORE APPLICATION: {stats['app_lines']:,} lines (hand-written)")
     print("   • GUI, business logic, backends, and core functionality")
     print("   • Clean architecture with separation of concerns")
 
@@ -247,8 +289,6 @@ def print_detailed_analysis(stats: dict[str, Any]) -> None:
     print(f"   • Documentation-to-Code Ratio: {stats['doc_to_code_ratio']:.2f}:1 (Very Good)")
     print(f"   • Generated Code Ratio: {stats['generated_percentage']:.1f}% (Reasonable)")
     print(f"   • Total Codebase Size: {stats['total_lines']:,} lines (Medium-Large)")
-
-    print("\n✅ ASSESSMENT: Healthy, well-tested codebase with excellent documentation")
 
 
 def main() -> None:

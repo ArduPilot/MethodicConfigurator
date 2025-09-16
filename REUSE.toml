@@ -58,7 +58,7 @@ SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
-path = ["uv.lock", ".codespell-exclude-file"]
+path = ["uv.lock", ".codespell-exclude-file", "code_lines_statistics.json"]
 SPDX-FileCopyrightText = "2024-2025 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 

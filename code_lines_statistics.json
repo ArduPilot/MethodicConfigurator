@@ -1,0 +1,12 @@
+{
+  "_metadata": {
+    "generated_by": "scripts/calculate_code_statistics.py",
+    "description": "This file is auto-generated. Do not edit manually - it will be overwritten"
+  },
+  "test_lines": 21563,
+  "app_lines": 12769,
+  "generated_lines": 1190,
+  "script_lines": 6893,
+  "documentation_lines": 10430,
+  "configuration_lines": 18202
+}
