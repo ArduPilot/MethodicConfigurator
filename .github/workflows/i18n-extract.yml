@@ -193,7 +193,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Download translation files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: translation-files
 
@@ -387,7 +387,7 @@ jobs:
 
       - name: Download all translated files
         if: needs.extract_strings.outputs.translations-to-process == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: translated-*
           merge-multiple: true
