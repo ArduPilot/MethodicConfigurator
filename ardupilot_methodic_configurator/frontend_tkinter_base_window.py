@@ -141,7 +141,7 @@ class BaseWindow:
         self.default_font_size = tkfont.nametofont("TkDefaultFont").cget("size")
         # Warning: on linux the font size might be negative
         bold_font_size = self.calculate_scaled_font_size(self.default_font_size)
-        style.configure("Bold.TLabel", font=("TkDefaultFont", bold_font_size, "bold"))  # type: ignore[no-untyped-call]
+        style.configure("Bold.TLabel", font=("TkDefaultFont", bold_font_size, "bold"))
 
     def _get_dpi_scaling_factor(self) -> float:
         """

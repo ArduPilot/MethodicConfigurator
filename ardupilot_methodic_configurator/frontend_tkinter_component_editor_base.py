@@ -155,15 +155,15 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         """Configure the styles for UI elements."""
         style = ttk.Style()
         style.configure(
-            "bigger.TLabel",  # type: ignore[no-untyped-call]
+            "bigger.TLabel",
             font=("TkDefaultFont", self.calculate_scaled_font_size(self.default_font_size)),
         )
-        style.configure("comb_input_invalid.TCombobox", fieldbackground="red")  # type: ignore[no-untyped-call]
-        style.configure("comb_input_valid.TCombobox", fieldbackground="white")  # type: ignore[no-untyped-call]
-        style.configure("entry_input_invalid.TEntry", fieldbackground="red")  # type: ignore[no-untyped-call]
-        style.configure("entry_input_valid.TEntry", fieldbackground="white")  # type: ignore[no-untyped-call]
-        style.configure("Optional.TLabelframe", borderwidth=2)  # type: ignore[no-untyped-call]
-        style.configure("Optional.TLabelframe.Label", foreground="gray")  # type: ignore[no-untyped-call]
+        style.configure("comb_input_invalid.TCombobox", fieldbackground="red")
+        style.configure("comb_input_valid.TCombobox", fieldbackground="white")
+        style.configure("entry_input_invalid.TEntry", fieldbackground="red")
+        style.configure("entry_input_valid.TEntry", fieldbackground="white")
+        style.configure("Optional.TLabelframe", borderwidth=2)
+        style.configure("Optional.TLabelframe.Label", foreground="gray")
 
     def _create_intro_frame(self) -> None:
         """Create the introduction frame with explanations and image."""
@@ -301,7 +301,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             wrap=tk.WORD,
             height=5,
             bd=0,
-            background=style.lookup("TLabel", "background"),  # type: ignore[no-untyped-call]
+            background=style.lookup("TLabel", "background"),
         )
         # pylint: enable=duplicate-code
         instructions_text.insert(tk.END, _("1. Describe the properties of the vehicle components in the window below.\n"))

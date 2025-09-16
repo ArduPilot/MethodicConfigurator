@@ -75,7 +75,7 @@ def get_widget_font_family_and_size(widget: tk.Widget) -> tuple[str, int]:
     """
     style = ttk.Style()
     widget_style = widget.cget("style")  # Get the style used by the widget
-    font_name = style.lookup(widget_style, "font")  # type: ignore[no-untyped-call]
+    font_name = style.lookup(widget_style, "font")
     font_dict = tkFont.nametofont(font_name).config()
 
     default_font_family = "Segoe UI" if platform_system() == "Windows" else "Helvetica"

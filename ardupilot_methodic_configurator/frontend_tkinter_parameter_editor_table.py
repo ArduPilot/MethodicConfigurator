@@ -65,7 +65,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self._last_return_values: dict[tk.Misc, str] = {}
 
         style = ttk.Style()
-        style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))  # type: ignore[no-untyped-call]
+        style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
 
         # Prepare a dictionary that maps variable names to their values
         # These variables are used by the forced_parameters and derived_parameters in configuration_steps_*.json files
@@ -295,7 +295,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             if param.is_readonly
             else "yellow"
             if param.is_calibration
-            else ttk.Style(self.root).lookup("TFrame", "background"),  # type: ignore[no-untyped-call]
+            else ttk.Style(self.root).lookup("TFrame", "background"),
         )
 
         tooltip_parameter_name = param.tooltip_new_value
