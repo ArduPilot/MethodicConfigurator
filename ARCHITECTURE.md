@@ -228,14 +228,19 @@ This improves testability and maintainability of the code.
    1. [`data_model_vehicle_project.py`](ardupilot_methodic_configurator/data_model_vehicle_project.py)
    1. [`data_model_vehicle_project_creator.py`](ardupilot_methodic_configurator/data_model_vehicle_project_creator.py)
    1. [`data_model_vehicle_project_opener.py`](ardupilot_methodic_configurator/data_model_vehicle_project_opener.py)
+   1. [`data_model_template_overview.py`](ardupilot_methodic_configurator/data_model_template_overview.py)
 1. Component editor:
    1. [`battery_cell_voltages.py`](ardupilot_methodic_configurator/battery_cell_voltages.py)
    1. [`data_model_vehicle_components_base.py`](ardupilot_methodic_configurator/data_model_vehicle_components_base.py)
+   1. [`data_model_vehicle_components_display.py`](ardupilot_methodic_configurator/data_model_vehicle_components_display.py)
    1. [`data_model_vehicle_components_import.py`](ardupilot_methodic_configurator/data_model_vehicle_components_import.py)
+   1. [`data_model_vehicle_components_json_schema.py`](ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py)
    1. [`data_model_vehicle_components_templates.py`](ardupilot_methodic_configurator/data_model_vehicle_components_templates.py)
    1. [`data_model_vehicle_components_validation.py`](ardupilot_methodic_configurator/data_model_vehicle_components_validation.py)
    1. [`data_model_vehicle_components.py`](ardupilot_methodic_configurator/data_model_vehicle_components.py)
 1. Parameter editor:
+   1. [`data_model_configuration_step.py`](ardupilot_methodic_configurator/data_model_configuration_step.py)
+   1. [`data_model_par_dict.py`](ardupilot_methodic_configurator/data_model_par_dict.py)
    1. [`data_model_ardupilot_parameter.py`](ardupilot_methodic_configurator/data_model_ardupilot_parameter.py)
 
 The detailed data models, components, and dependencies for each sub-application are documented in their respective architecture files linked above.
