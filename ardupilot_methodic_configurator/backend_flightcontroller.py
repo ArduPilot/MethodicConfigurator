@@ -610,14 +610,13 @@ class FlightController:  # pylint: disable=too-many-public-methods
         default_param_filename = "00_default.param"
         mavftp.cmd_getparams([complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback)
         ret = mavftp.process_ftp_reply("getparams", timeout=10)
-        pdict = {}
+        pdict: dict[str, float] = {}
         # add a file sync operation to ensure the file is completely written
         time_sleep(0.3)
         if ret.error_code == 0:
             # load the parameters from the file
             par_dict = ParDict.from_file(complete_param_filename)
-            for name, data in par_dict.items():
-                pdict[name] = data.value
+            pdict = {name: data.value for name, data in par_dict.items()}
             defdict = ParDict.from_file(default_param_filename)
         else:
             ret.display_message()

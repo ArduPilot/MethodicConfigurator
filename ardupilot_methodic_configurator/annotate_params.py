@@ -443,7 +443,7 @@ def update_parameter_documentation(
     doc: dict[str, Any],
     target: str = ".",
     sort_type: str = "none",
-    param_default_dict: Optional[dict] = None,
+    param_default_dict: Optional[ParDict] = None,
     delete_documentation_annotations: bool = False,
 ) -> None:
     """
@@ -461,8 +461,8 @@ def update_parameter_documentation(
         target (str, optional): The target directory or file. Default is '.'.
         sort_type (str, optional): The type of sorting to apply to the parameters.
                                    Can be 'none', 'missionplanner', or 'mavproxy'. Default is 'none'.
-        param_default_dict (Dict, optional): A dictionary of default parameter values. Default is None.
-                                              If None, an empty dictionary is used.
+        param_default_dict (ParDict, optional): A dictionary of default parameter values. Default is None.
+                                                If None, an empty dictionary is used.
         delete_documentation_annotations (bool): delete documentation annotations from file.
 
     """
@@ -478,7 +478,7 @@ def update_parameter_documentation(
         raise ValueError(msg)
 
     if param_default_dict is None:
-        param_default_dict = {}
+        param_default_dict = ParDict()
 
     # Iterate over all the target ArduPilot parameter files
     for param_file in param_files:
@@ -497,7 +497,7 @@ def update_parameter_documentation(
 def update_parameter_documentation_file(  # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
     doc: dict,
     sort_type: str,
-    param_default_dict: dict,
+    param_default_dict: ParDict,
     param_file: str,
     lines: list[str],
     delete_documentation_annotations: bool,
