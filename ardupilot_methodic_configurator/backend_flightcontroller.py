@@ -637,6 +637,43 @@ class FlightController:  # pylint: disable=too-many-public-methods
             return
         self.master.param_set_send(param_name, param_value)
 
+    def fetch_param(self, param_name: str, timeout: int = 5) -> Optional[float]:
+        """
+        Fetch a parameter from the flight controller using MAVLink PARAM_REQUEST_READ message.
+
+        Args:
+            param_name (str): The name of the parameter to fetch.
+            timeout (int): Timeout in seconds to wait for the response. Default is 5.
+
+        Returns:
+            float: The value of the parameter, or None if not found or timeout occurred.
+
+        """
+        if self.master is None:  # FIXME for testing only pylint: disable=fixme
+            return None
+
+        # Send PARAM_REQUEST_READ message
+        self.master.mav.param_request_read_send(
+            self.master.target_system,
+            self.master.target_component,
+            param_name.encode("utf-8"),
+            -1,  # param_index: -1 means use param_id instead
+        )
+
+        # Wait for PARAM_VALUE response
+        start_time = time_time()
+        while time_time() - start_time < timeout:
+            msg = self.master.recv_match(type="PARAM_VALUE", blocking=False)
+            if msg is not None:
+                # Check if this is the parameter we requested
+                received_param_name = msg.param_id.rstrip("\x00")
+                if received_param_name == param_name:
+                    logging_debug(_("Received parameter: %s = %s"), param_name, msg.param_value)
+                    return float(msg.param_value)
+            time_sleep(0.01)  # Small sleep to prevent busy waiting
+
+        raise TimeoutError(_("Timeout waiting for parameter %s") % param_name)
+
     def reset_all_parameters_to_default(self) -> tuple[bool, str]:
         """
         Reset all parameters to their factory default values.

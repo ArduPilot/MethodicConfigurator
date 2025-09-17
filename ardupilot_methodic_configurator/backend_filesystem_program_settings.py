@@ -68,8 +68,10 @@ class ProgramSettings:
             "annotate_docs_into_param_files": False,
             "gui_complexity": "simple",  # simple or normal
             # Motor test settings
-            "motor_test_duration": 2.5,  # Default test duration in seconds
-            "motor_test_throttle_pct": 10,  # Default throttle percentage (10%)
+            "motor_test": {
+                "duration": 2.5,  # Default test duration in seconds
+                "throttle_pct": 10,  # Default throttle percentage (10%)
+            },
         }
 
     @staticmethod
@@ -341,14 +343,14 @@ class ProgramSettings:
     @staticmethod
     def motor_diagram_filepath(frame_class: int, frame_type: int) -> tuple[str, str]:
         """
-        Get the filepath for the motor diagram SVG file.
+        Get the filepath for the motor diagram PNG file.
 
         Args:
             frame_class: ArduPilot frame class (1=QUAD, 2=HEXA, etc.)
             frame_type: ArduPilot frame type (0=PLUS, 1=X, etc.)
 
         Returns:
-            str: Absolute path to the motor diagram SVG file
+            str: Absolute path to the motor diagram PNG file
             str: Error message if multiple or no files found, empty string if no error
 
         """
@@ -361,12 +363,12 @@ class ProgramSettings:
             # Running as script
             application_path = os_path.dirname(os_path.dirname(os_path.abspath(__file__)))
 
-        images_dir = os_path.join(application_path, "ardupilot_methodic_configurator", "images")
+        images_dir = os_path.join(application_path, "ardupilot_methodic_configurator", "images", "motor_diagrams_png")
 
-        # Generate SVG filename based on frame configuration
-        filename = f"m_{frame_class:02d}_{frame_type:02d}_*.svg"
+        # Generate PNG filename based on frame configuration
+        filename = f"m_{frame_class:02d}_{frame_type:02d}_*.png"
 
-        # Search for matching SVG file (since exact naming varies)
+        # Search for matching PNG file (since exact naming varies)
         matching_files = glob.glob(os_path.join(images_dir, filename))
 
         err_msg = (
