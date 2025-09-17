@@ -50,13 +50,4 @@ All user-facing strings should be wrapped with `_()` for translation.
 
 ## Documentation
 
-We maintain comprehensive documentation including
-[user manuals](../USERMANUAL.md), [tuning guides](../TUNING_GUIDE_ArduCopter.md), and
-[architecture](../ARCHITECTURE.md) documentation.
 All changes should include appropriate documentation updates.
-
-For specific workflows, see detailed instructions in `.github/instructions/`:
-
-- [GUI Translation Instructions](instructions/gui_translation_instructions.md) - Complete guide for translating the user interface
-- [Pytest Testing Guidelines](instructions/pytest_testing_instructions.md) - Comprehensive testing standards
-- [Motor Diagrams Update Instructions](instructions/update_motor_diagrams.md) - Guide for updating motor diagram SVG files
