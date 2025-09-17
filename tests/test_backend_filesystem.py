@@ -16,7 +16,7 @@ from os import path as os_path
 from subprocess import SubprocessError
 from unittest.mock import MagicMock, mock_open, patch
 
-from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem, is_within_tolerance
+from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
 # pylint: disable=too-many-lines, too-many-arguments, too-many-positional-arguments
@@ -540,26 +540,6 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             assert result == test_filename
             mock_file.assert_called_once_with(expected_path, encoding="utf-8")
 
-    def test_tolerance_handling(self) -> None:
-        """Test parameter value tolerance checking."""
-        # Setup LocalFilesystem instance
-
-        # Test cases within tolerance (default 0.01%)
-        assert is_within_tolerance(10.0, 10.0009)  # +0.009% - should pass
-        assert is_within_tolerance(10.0, 9.9991)  # -0.009% - should pass
-        assert is_within_tolerance(100, 100)  # Exact match
-        assert is_within_tolerance(0.0, 0.0)  # Zero case
-
-        # Test cases outside tolerance
-        assert not is_within_tolerance(10.0, 10.02)  # +0.2% - should fail
-        assert not is_within_tolerance(10.0, 9.98)  # -0.2% - should fail
-        assert not is_within_tolerance(100, 101)  # Integer case
-
-        # Test with custom tolerance
-        custom_tolerance = 0.2  # 0.2%
-        assert is_within_tolerance(10.0, 10.015, atol=custom_tolerance)  # +0.15% - should pass
-        assert is_within_tolerance(10.0, 9.985, atol=custom_tolerance)  # -0.15% - should pass
-
     def test_write_param_default_values(self) -> None:
         lfs = LocalFilesystem(
             "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
@@ -958,25 +938,6 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             # Should not add files where the first tuple value is False
             for call_args in mock_add_file.call_args_list:
                 assert call_args[0][1] != "summary2.txt"
-
-    def test_is_within_tolerance_edge_cases(self) -> None:
-        """Test is_within_tolerance function with edge cases."""
-        # Test with negative values
-        assert is_within_tolerance(-100, -100)
-        assert is_within_tolerance(-100, -100.0099)  # 0.0099% difference
-        assert not is_within_tolerance(-100, -101)  # 1% difference
-
-        # Test with very small values (where absolute tolerance dominates)
-        assert is_within_tolerance(1e-10, 1.09e-10)  # 9% difference but absolute diff is tiny
-        assert is_within_tolerance(0, 1e-9)  # Zero case with small absolute difference
-
-        # Test with very large values
-        assert is_within_tolerance(1e10, 1.00009e10)  # 0.009% difference
-        assert not is_within_tolerance(1e10, 1.01e10)  # 1% difference
-
-        # Test with custom tolerances
-        assert is_within_tolerance(100, 102, atol=3)  # 2% difference but within atol=3
-        assert is_within_tolerance(100, 110, rtol=0.1)  # 10% difference but within rtol=0.1
 
     def test_get_download_url_and_local_filename_with_valid_config(self) -> None:
         """Test get_download_url_and_local_filename with valid configuration."""

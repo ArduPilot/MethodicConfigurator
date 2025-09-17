@@ -47,30 +47,9 @@ from ardupilot_methodic_configurator.annotate_params import (
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
-from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
 
 TOOLTIP_MAX_LENGTH = 105
-
-
-def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1e-04) -> bool:
-    """
-    Determines if the absolute difference between two numbers is within a specified tolerance.
-
-    This function checks if the absolute difference between `x` and `y` is less than or equal to
-    the sum of the absolute tolerance (`atol`) and the product of the relative tolerance (`rtol`)
-    and the absolute value of `y`.
-
-    Args:
-      x (float): The first number to compare.
-      y (float): The second number to compare.
-      atol (float, optional): The absolute tolerance. Default is 1e-08.
-      rtol (float, optional): The relative tolerance. Default is 1e-04.
-
-    Returns:
-      bool: True if the difference is within the tolerance, False otherwise.
-
-    """
-    return abs(x - y) <= atol + (rtol * abs(y))
 
 
 class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  # pylint: disable=too-many-public-methods
