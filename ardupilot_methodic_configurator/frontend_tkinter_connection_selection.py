@@ -14,14 +14,15 @@ import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
+from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
 from sys import exit as sys_exit
-from tkinter import simpledialog, ttk
+from tkinter import messagebox, simpledialog, ttk
 from typing import Union
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller import SUPPORTED_BAUDRATES, FlightController
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
@@ -44,11 +45,13 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         flight_controller: FlightController,
         destroy_parent_on_connect: bool,
         download_params_on_connect: bool,
+        default_baudrate: int = 115200,
     ) -> None:
         self.parent = parent
         self.flight_controller = flight_controller
         self.destroy_parent_on_connect = destroy_parent_on_connect
         self.download_params_on_connect = download_params_on_connect
+        self.default_baudrate = default_baudrate
         self.previous_selection: Union[None, str] = (
             flight_controller.comport.device
             if flight_controller.comport and hasattr(flight_controller.comport, "device")
@@ -63,19 +66,47 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         conn_selection_label = ttk.Label(self.container_frame, text=_("flight controller connection:"))
         conn_selection_label.pack(side=tk.TOP)  # Add the label to the top of the conn_selection_frame
 
+        # Create a frame for connection and baudrate selection
+        selection_frame = ttk.Frame(self.container_frame)
+        selection_frame.pack(side=tk.TOP, pady=(4, 0))
+
+        # Create a label for port
+        port_label = ttk.Label(selection_frame, text=_("Port:"))
+        port_label.pack(side=tk.LEFT, padx=(0, 5))
+
         # Create a read-only combobox for flight controller connection selection
         self.conn_selection_combobox = PairTupleCombobox(
-            self.container_frame,
+            selection_frame,
             self.flight_controller.get_connection_tuples(),
             self.previous_selection,
             "FC connection",
             state="readonly",
         )
         self.conn_selection_combobox.bind("<<ComboboxSelected>>", self.on_select_connection_combobox_change, "+")
-        self.conn_selection_combobox.pack(side=tk.TOP, pady=(4, 0))
+        self.conn_selection_combobox.pack(side=tk.LEFT, padx=(0, 5))
         show_tooltip(
             self.conn_selection_combobox,
             _("Select the flight controller connection\nYou can add a custom connection to the existing ones"),
+        )
+
+        # Create a label for baudrate
+        baudrate_label = ttk.Label(selection_frame, text=_("Baudrate:"))
+        baudrate_label.pack(side=tk.LEFT, padx=(10, 5))
+
+        # Create a combobox for baudrate selection
+        self.baudrate_var = tk.StringVar(value=str(self.default_baudrate))
+        self.baudrate_combobox = ttk.Combobox(
+            selection_frame,
+            textvariable=self.baudrate_var,
+            values=SUPPORTED_BAUDRATES,
+            state="normal",
+            width=10,
+        )
+        self.baudrate_combobox.pack(side=tk.LEFT, padx=(0, 5))
+        self.baudrate_combobox.bind("<<ComboboxSelected>>", self.on_baudrate_combobox_change, "+")
+        show_tooltip(
+            self.baudrate_combobox,
+            _("Select the baudrate for the connection\nMost flight controllers use 115200"),
         )
 
     def on_select_connection_combobox_change(self, _event: tk.Event) -> None:
@@ -94,6 +125,23 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
                     self.conn_selection_combobox.set(self.previous_selection)
                 return
             self.reconnect(selected_connection)  # type: ignore[arg-type] # workaround for mypy issue
+
+    def on_baudrate_combobox_change(self, _event: tk.Event) -> None:
+        """Handle baudrate combobox selection changes."""
+        selected_baudrate = self.baudrate_var.get()
+        error_msg = _("Baudrate combobox changed to: {selected_baudrate}")
+        logging_debug(error_msg.format(**locals()))
+
+        # Get the current connection
+        current_connection = (
+            self.flight_controller.comport.device
+            if self.flight_controller.comport and hasattr(self.flight_controller.comport, "device")
+            else None
+        )
+
+        # If we have an active connection, reconnect with the new baudrate
+        if self.flight_controller.master is not None and current_connection:
+            self.reconnect(current_connection)
 
     def add_connection(self) -> str:
         # Open the connection selection dialog
@@ -126,8 +174,27 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         self.connection_progress_window = ProgressWindow(
             self.parent.root, _("Connecting with the FC"), _("Connection step {} of {}")
         )
+        # Get the current baudrate from the combobox
+        try:
+            selected_baudrate = self.baudrate_var.get()
+            current_baudrate = int(selected_baudrate)
+            if str(current_baudrate) not in SUPPORTED_BAUDRATES:
+                warning_msg = _("Unsupported baudrate selected: {current_baudrate}")
+                logging_warning(warning_msg.format(**locals()))
+            if current_baudrate < 1200:
+                raise ValueError
+        except (ValueError, AttributeError):
+            error_msg = _("Invalid baudrate selected: {selected_baudrate}, reverting to default: {self.default_baudrate}")
+            error_msg = error_msg.format(**locals())
+            # Display error popup
+            messagebox.showerror(_("Invalid Baudrate"), error_msg)
+            logging_error(error_msg)
+            # Reset the combobox to the default value
+            self.baudrate_var.set(str(self.default_baudrate))
+            current_baudrate = self.default_baudrate
+
         error_message = self.flight_controller.connect(
-            selected_connection, self.connection_progress_window.update_progress_bar
+            selected_connection, self.connection_progress_window.update_progress_bar, baudrate=current_baudrate
         )
         if error_message:
             show_no_connection_error(error_message)
@@ -152,10 +219,16 @@ class ConnectionSelectionWindow(BaseWindow):
     the UI elements related to connection selection.
     """
 
-    def __init__(self, flight_controller: FlightController, connection_result_string: str) -> None:
+    def __init__(
+        self,
+        flight_controller: FlightController,
+        connection_result_string: str,
+        default_baudrate: int = 115200,
+    ) -> None:
         super().__init__()
         self.root.title(_("Flight controller connection"))
         self.root.geometry("460x462")  # Set the window size
+        self.default_baudrate = default_baudrate
 
         # Explain why we are here
         if flight_controller.comport is None:
@@ -209,9 +282,14 @@ class ConnectionSelectionWindow(BaseWindow):
         # pylint: enable=duplicate-code
         option2_label.pack(expand=False, fill=tk.X, padx=6)
         self.connection_selection_widgets = ConnectionSelectionWidgets(
-            self, option2_label_frame, flight_controller, destroy_parent_on_connect=True, download_params_on_connect=False
+            self,
+            option2_label_frame,
+            flight_controller,
+            destroy_parent_on_connect=True,
+            download_params_on_connect=False,
+            default_baudrate=self.default_baudrate,
         )
-        self.connection_selection_widgets.container_frame.pack(expand=False, fill=tk.X, padx=80, pady=6)
+        self.connection_selection_widgets.container_frame.pack(expand=False, fill=tk.X, padx=52, pady=6)
 
         # Option 3 - Skip FC connection, just edit the .param files on disk
         option3_label = ttk.Label(text=_("No connection"), style="Bold.TLabel")
@@ -289,7 +367,7 @@ def main() -> None:
     result = flight_controller.connect(device=args.device)
     if result:
         logging_warning(result)
-        window = ConnectionSelectionWindow(flight_controller, result)
+        window = ConnectionSelectionWindow(flight_controller, result, default_baudrate=args.baudrate)
         window.root.mainloop()
     flight_controller.disconnect()  # Disconnect from the flight controller
 

@@ -137,7 +137,7 @@ def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[Flight
     if error_str:
         if args.device and _("No serial ports found") not in error_str:
             logging_error(error_str)
-        conn_sel_window = ConnectionSelectionWindow(flight_controller, error_str)
+        conn_sel_window = ConnectionSelectionWindow(flight_controller, error_str, default_baudrate=args.baudrate)
         conn_sel_window.root.mainloop()
 
     vehicle_type = args.vehicle_type

@@ -65,6 +65,26 @@ class FakeSerialForTests:
 
 DEFAULT_BAUDRATE: int = 115200
 DEFAULT_REBOOT_TIME: int = 7
+# https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_SerialManager/AP_SerialManager.cpp#L741C1-L757C32
+SUPPORTED_BAUDRATES: list[str] = [
+    "1200",
+    "2400",
+    "4800",
+    "9600",
+    "19200",
+    "38400",
+    "57600",
+    "100000",
+    "111100",
+    "115200",
+    "230400",
+    "256000",
+    "460800",
+    "500000",
+    "921600",
+    "1500000",
+    "2000000",
+]
 
 
 class FlightController:
@@ -150,7 +170,11 @@ class FlightController:
         )
 
     def connect(
-        self, device: str, progress_callback: Union[None, Callable[[int, int], None]] = None, log_errors: bool = True
+        self,
+        device: str,
+        progress_callback: Union[None, Callable[[int, int], None]] = None,
+        log_errors: bool = True,
+        baudrate: Optional[int] = None,
     ) -> str:
         """
         Establishes a connection to the FlightController using a specified device.
@@ -167,19 +191,25 @@ class FlightController:
             progress_callback (callable, optional): A callback function to report the progress
                                                     of the connection attempt. Default is None.
             log_errors: log errors
+            baudrate (int, optional): The baudrate to use for the connection. If None,
+                                    uses the default baudrate from initialization.
 
         Returns:
             str: An error message if the connection fails, otherwise an empty string indicating
                 a successful connection.
 
         """
+        connection_baudrate = baudrate
+        if connection_baudrate is None:
+            connection_baudrate = self.__baudrate
+
         if device:
             if device == "none":
                 return ""
             self.add_connection(device)
             self.comport = mavutil.SerialPort(device=device, description=device)
             return self.__create_connection_with_retry(
-                progress_callback=progress_callback, baudrate=self.__baudrate, log_errors=log_errors
+                progress_callback=progress_callback, baudrate=connection_baudrate, log_errors=log_errors
             )
 
         # Try to autodetect serial ports
@@ -201,7 +231,7 @@ class FlightController:
             err = self._register_and_try_connect(
                 comport=autodetect_serial[0],
                 progress_callback=progress_callback,
-                baudrate=self.__baudrate,
+                baudrate=connection_baudrate,
                 log_errors=False,
             )
             if err == "":
