@@ -84,9 +84,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     Args:
         vehicle_dir (str): The directory path where the vehicle configuration files are stored.
         vehicle_type (str): The type of the vehicle (e.g., "ArduCopter", "Rover").
-        file_parameters (dict): A dictionary of parameters read from intermediate parameter files.
-        param_default_dict (dict): A dictionary of default parameter values.
-        doc_dict (dict): A dictionary containing documentation for each parameter.
 
     """
 
@@ -147,7 +144,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         xml_url = get_xml_url(vehicle_type, self.fw_version)
         xml_dir = get_xml_dir(vehicle_dir)
         self.doc_dict = parse_parameter_metadata(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE, vehicle_type, TOOLTIP_MAX_LENGTH)
-        self.param_default_dict = load_default_param_file(xml_dir)
+        self.param_default_dict = load_default_param_file(vehicle_dir)
 
         # Extend parameter documentation metadata if <parameter_file>.pdef.xml exists
         for filename in self.file_parameters:
