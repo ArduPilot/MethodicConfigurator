@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2025-09-15 15:48+0000\n"
+"POT-Creation-Date: 2025-09-17 14:32+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -543,119 +543,119 @@ msgstr "{filename}中的固件版本字符串{version_str}无效"
 msgid "You should uninstall ModemManager as it conflicts with ArduPilot"
 msgstr "您应该卸载 ModemManager，因为它与 ArduPilot 冲突。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:100
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:102
 msgid "Available connection ports are:"
 msgstr "可用的连接端口有:"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:104
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:106
 msgid "Add another"
 msgstr "添加另一个"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:120
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:125
 msgid "Added connection %s"
 msgstr "已添加连接 %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:122
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:127
 msgid "Did not add duplicated connection %s"
 msgstr "没有添加重复的连接 %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:124
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:129
 msgid "Did not add empty connection"
 msgstr "没有添加空连接"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:191
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:213
 msgid "Auto-detected device %s"
 msgstr "自动检测到设备 %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:197
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:219
 msgid "Resolved soft link %s to %s"
 msgstr "已解析软链接 %s 为 %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:213
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:235
 msgid "Trying network port %s"
 msgstr "正在尝试网络端口 %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:223
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:245
 msgid ""
 "No auto-detected ports responded. Please connect a flight controller and try "
 "again."
 msgstr "没有自动检测到的端口响应。请连接飞行控制器并重试。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:312
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:334
 msgid "No flight controller connection available for command"
 msgstr "没有可用于命令的飞行控制器连接"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:340
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:362
 msgid "Command temporarily rejected"
 msgstr "命令暂时被拒绝"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:341
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:363
 msgid "Command denied"
 msgstr "命令被拒绝"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:342
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:364
 msgid "Command unsupported"
 msgstr "命令不受支持"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:343
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:365
 msgid "Command failed"
 msgstr "命令失败"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:355
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:377
 msgid "Command in progress: %(progress)d%%"
 msgstr "命令进行中: %(progress)d%%"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:359
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:381
 msgid "Command acknowledgment with unknown result: %(result)d"
 msgstr "命令确认结果未知: %(result)d"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:366
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:388
 msgid "Command acknowledgment timeout after %(timeout).1f seconds"
 msgstr "命令确认在 %(timeout).1f 秒后超时"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:371
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:393
 msgid "Failed to send command: %(error)s"
 msgstr "发送命令失败: %(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:406
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:428
 msgid "Will connect to %s @ %u baud"
 msgstr "将连接到 %s @ %u 波特率"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:416
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:438
 msgid "Waiting for MAVLink heartbeat"
 msgstr "正在等待MAVLink心跳"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:422
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:444
 msgid "No MAVLink heartbeat received, connection failed."
 msgstr "没有收到MAVLINK心跳, 连接失败。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:425
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:447
 msgid "Connection established with systemID %d, componentID %d."
 msgstr "已成功连接到 systemID %d, componentID %d。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:430
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:452
 msgid "Autopilot type {self.info.autopilot}"
 msgstr "飞控类型{self.info.autopilot}"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:433
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:455
 msgid "Unsupported autopilot type {self.info.autopilot}"
 msgstr "不支持的飞控类型{self.info.autopilot}"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:437
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:459
 msgid ""
 "Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"
 msgstr ""
 "载具类型：{self.info.mav_type} 正在运行 {self.info.vehicle_type} 固件。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:448
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:470
 msgid "Connection failed: %s"
 msgstr "连接失败: %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:449
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:471
 msgid "Failed to connect after %d attempts."
 msgstr "重试 %d 次后依旧连接失败。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:470
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:492
 msgid ""
 "Permission denied accessing the serial port. This is common on Linux "
 "systems.\n"
@@ -669,7 +669,7 @@ msgstr ""
 "    sudo adduser $USER dialout\n"
 "然后注销并重新登录以使更改生效。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:483
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:505
 msgid ""
 "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n"
 "Only ArduPilot versions newer than 4.3.8 are supported.\n"
@@ -682,66 +682,66 @@ msgstr ""
 "仅支持 4.3.8 版本之后的 ArduPilot。\n"
 "请确保参数 SERIAL0_PROTOCOL 设置为 2。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:505
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:527
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 msgstr "ChibiOS版本不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:521
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:543
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 msgstr "FC 固件类型不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:540
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:562
 msgid "Testing active, will load all parameters from the %s file"
 msgstr "测试中，将从 %s 文件加载所有参数。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:550
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:572
 msgid "MAVFTP is supported by the %s flight controller"
 msgstr "MAVFTP 由 %s 飞控支持。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:556
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:578
 msgid ""
 "MAVFTP is not supported by the %s flight controller, fallback to MAVLink"
 msgstr "飞控 %s 不支持MAVFTP, 已切换为MAVLink"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:563
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:585
 msgid "Will fetch all parameters from the %s flight controller"
 msgstr "将从 %s 获取飞控所有参数"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:584
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:606
 msgid "Received parameter: %s = %s"
 msgstr "获取到参数: %s = %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:590
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:612
 msgid "Fetched %d parameter values from the %s flight controller"
 msgstr "获取到了 %d 个来自于 %s 飞控的参数"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:594
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:616
 msgid "Error: %s"
 msgstr "错误: %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:660
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:682
 msgid "No flight controller connection available for parameter reset"
 msgstr "没有可用于参数重置的飞行控制器连接"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:680
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:702
 msgid "Parameter reset to defaults command confirmed by flight controller"
 msgstr "飞行控制器确认了参数重置为默认值的命令"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:682
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:704
 msgid "Parameter reset command failed: %(error)s"
 msgstr "参数重置命令失败: %(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:706
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:728
 msgid "Reset command sent to ArduPilot."
 msgstr "重启指令已发送至飞控。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:759
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:805
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:850
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:781
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:827
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:872
 msgid "No flight controller connection available for motor test"
 msgstr "电机测试无可用的飞控连接"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:778
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:800
 msgid ""
 "Motor test command confirmed: Motor %(motor)d at %(throttle)d%% for "
 "%(duration)d seconds"
@@ -749,78 +749,78 @@ msgstr ""
 "电机测试命令已确认: 电机 %(motor)d 在 %(throttle)d%% 功率下运行 %(duration)d "
 "秒"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:786
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:808
 msgid "Motor test command failed: %(error)s"
 msgstr "电机测试命令失败: %(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:823
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:845
 msgid ""
 "All motors test command confirmed at %(throttle)d%% for %(duration)d seconds"
 msgstr "所有电机测试命令已确认在 %(throttle)d%% 功率下运行 %(duration)d 秒"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:830
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:852
 msgid "All motors test command failed: %(error)s"
 msgstr "所有电机测试命令失败: %(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:868
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:890
 msgid ""
 "Sequential motor test command confirmed at %(throttle)d%% for %(duration)d "
 "seconds per motor"
 msgstr ""
 "顺序电机测试命令已确认在 %(throttle)d%% 功率下每个电机运行 %(duration)d 秒"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:875
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:897
 msgid "Sequential motor test command failed: %(error)s"
 msgstr "顺序电机测试命令失败: %(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:890
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:912
 msgid "No flight controller connection available for motor stop"
 msgstr "电机停止无可用的飞控连接"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:907
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:929
 msgid "Motor stop command confirmed"
 msgstr "电机停止命令已确认"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:909
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:931
 msgid "Motor stop command failed: %(error)s"
 msgstr "电机停止命令失败: %(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:927
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:949
 msgid "No flight controller connection available for battery status request"
 msgstr "电池状态请求无可用的飞控连接"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:946
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:968
 msgid ""
 "Periodic BATTERY_STATUS messages confirmed every %(interval)d microseconds"
 msgstr "周期性 BATTERY_STATUS 消息已确认每 %(interval)d 微秒"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:950
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:972
 msgid "Failed to request periodic battery status: %(error)s"
 msgstr "请求定期电池状态失败：%(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:966
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:988
 msgid "No flight controller connection or parameters available"
 msgstr "无飞控连接或参数可用"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:971
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:993
 msgid "Battery monitoring is not enabled (BATT_MONITOR=0)"
 msgstr "电池监控未启用（BATT_MONITOR=0）"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:983
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:1005
 msgid "Failed to get battery status from telemetry: %(error)s"
 msgstr "从遥测获取电池状态失败：%(error)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:985
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:1007
 msgid "Battery status not available from telemetry"
 msgstr "遥测中电池状态不可用"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:1097
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:1119
 msgid ""
 "MAVLink serial connection baudrate to the flight controller. Default is "
 "%(default)s"
 msgstr "连接到飞行控制器的MAVLink串行连接波特率。默认为 %(default)s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:1103
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:1125
 msgid ""
 "MAVLink connection string to the flight controller. If set to \"none\" no "
 "connection is made. Default is autodetection"
@@ -828,7 +828,7 @@ msgstr ""
 "与飞行控制器的MAVLink连接字符串。如果设置为\"none\"则不会建立连接。默认为自动"
 "检测"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller.py:1117
+#: ardupilot_methodic_configurator/backend_flightcontroller.py:1139
 msgid "Flight controller reboot time. Default is %(default)s"
 msgstr "飞控重启时间, 默认为  %(default)s"
 
@@ -3241,7 +3241,7 @@ msgid "Cannot use FC parameters: no flight controller connected"
 msgstr "无法使用 FC 参数：没有连接飞行控制器"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:250
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:101
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:44
 msgid "Flight Controller Connection"
 msgstr "飞控连接"
 
@@ -3659,11 +3659,29 @@ msgstr "模板已应用"
 msgid "{} has been applied to {}"
 msgstr "{} 已应用到 {}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:63
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:49
+msgid "Connection string:"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:54
+msgid ""
+"Examples:\n"
+"COM4 (on Windows)\n"
+"/dev/serial/by-id/usb-xxx (on Linux)\n"
+"tcp:127.0.0.1:5761\n"
+"udp:127.0.0.1:14551"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:62
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:152
+msgid "Baudrate:"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:129
 msgid "flight controller connection:"
 msgstr "飞控连接："
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:78
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:148
 msgid ""
 "Select the flight controller connection\n"
 "You can add a custom connection to the existing ones"
@@ -3672,62 +3690,49 @@ msgstr ""
 "您可以向現有連接中添加自定義連接选择飞控连接\n"
 "您可以将自定义连接添加到现有连接中"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:83
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:167
+msgid ""
+"Select the baudrate for the connection\n"
+"Most flight controllers use 115200"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:172
 msgid "Connection combobox changed to: {selected_connection}"
 msgstr "连接 combobox 已更改为：{selected_connection}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:102
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:197
 msgid ""
-"Enter the connection string to the flight controller. Examples are:\n"
-"\n"
-"COM4 (on windows)\n"
-"/dev/serial/by-id/usb-xxx (on Linux)\n"
-"tcp:127.0.0.1:5761\n"
-"udp:127.0.0.1:14551"
+"Will add new connection: {selected_connection} with baudrate: {baudrate} if "
+"not duplicated"
 msgstr ""
-"輸入飛行控制器的連接字符串。示例如下：\n"
-"\n"
-"COM4（在 Windows 上）\n"
-"/dev/serial/by-id/usb-xxx（在 Linux 上）\n"
-"tcp:127.0.0.1:5761\n"
-"udp:127.0.0.1:14551输入飞行控制器的连接字符串。示例有：\n"
-"\n"
-"COM4 (在 Windows 上)\n"
-"/dev/serial/by-id/usb-xxx (在 Linux 上)\n"
-"tcp:127.0.0.1:5761\n"
-"udp:127.0.0.1:14551"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:111
-msgid "Will add new connection: {selected_connection} if not duplicated"
-msgstr "如果未重复，将添加新连接：{selected_connection}"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:115
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:201
 msgid ""
 "Updated connection tuples: {connection_tuples} with selected connection: "
 "{selected_connection}"
 msgstr "更新的连接元组：{connection_tuples}，选定连接：{selected_connection}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:120
-msgid "Add connection canceled or string empty {selected_connection}"
-msgstr "添加连接被取消或字符串为空 {selected_connection}"
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:208
+msgid "Add connection canceled or invalid input"
+msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:127
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:215
 msgid "Connecting with the FC"
 msgstr "正在连接飞控"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:127
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:215
 msgid "Connection step {} of {}"
 msgstr "连接步骤 {} 的 {}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:157
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:256
 msgid "Flight controller connection"
 msgstr "飞控连接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:162
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:262
 msgid "No ArduPilot flight controller was auto-detected detected yet."
 msgstr "尚未自动检测到 ArduPilot 飞控。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:171
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:271
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:254
 msgid ""
 "\n"
@@ -3737,11 +3742,11 @@ msgstr ""
 "選擇以下三個選項之一：\n"
 "选择以下三种选项之一："
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:176
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:276
 msgid "Auto connection"
 msgstr "自动连接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:183
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:283
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
@@ -3753,19 +3758,19 @@ msgstr ""
 "等待 7 秒钟让它完全启动，\n"
 "然后按下下面的自动连接按钮进行连接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:190
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:290
 msgid "Auto-connect"
 msgstr "自动连接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:192
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:292
 msgid "Auto-connect to a 'Mavlink'-talking serial device"
 msgstr "自动连接到一个使用 'Mavlink' 协议的串行设备"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:195
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:295
 msgid "Manual connection"
 msgstr "手动连接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:203
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:303
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
@@ -3775,15 +3780,15 @@ msgstr ""
 "等待 7 秒鐘讓其完全啟動，然後\n"
 "手動選擇飛行控制器連接或添加新連接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:217
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:322
 msgid "No connection"
 msgstr "无连接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:229
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:334
 msgid "Skip FC connection, just edit the .param files on disk"
 msgstr "跳过飞控连接，仅编辑磁盘上的 .param 文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:235
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:340
 msgid ""
 "No parameter values will be fetched from the FC, default parameter values "
 "from disk will be used\n"
@@ -3795,17 +3800,17 @@ msgstr ""
 "从飞控获取参数值，将使用磁盘上的默认参数值\n"
 "（如果存在 '00_default.param' 文件），并仅编辑磁盘上的中间 '.param' 文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:251
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:356
 msgid ""
 "Will proceed without FC connection. FC parameters will not be downloaded nor "
 "uploaded"
 msgstr "将继续进行，而不连接飞控。飞控参数将不会被下载或上传"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:252
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:357
 msgid "Only the intermediate '.param' files on the PC disk will be edited"
 msgstr "仅会编辑 PC 磁盘上的模版 '.param' 文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:268
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:373
 msgid ""
 "This main is for testing and development only. Usually, the "
 "ConnectionSelectionWidgets is called from another script"
@@ -3813,7 +3818,7 @@ msgstr ""
 "此主程序仅用于测试和开发。通常，ConnectionSelectionWidgets 是从其他脚本中调用"
 "的"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:284
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:389
 msgid ""
 "This main is for testing and development only, usually the "
 "ConnectionSelectionWindow is called from another script"
@@ -5567,6 +5572,32 @@ msgstr "硬件的版本或修订号"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
+
+#~ msgid ""
+#~ "Enter the connection string to the flight controller. Examples are:\n"
+#~ "\n"
+#~ "COM4 (on windows)\n"
+#~ "/dev/serial/by-id/usb-xxx (on Linux)\n"
+#~ "tcp:127.0.0.1:5761\n"
+#~ "udp:127.0.0.1:14551"
+#~ msgstr ""
+#~ "輸入飛行控制器的連接字符串。示例如下：\n"
+#~ "\n"
+#~ "COM4（在 Windows 上）\n"
+#~ "/dev/serial/by-id/usb-xxx（在 Linux 上）\n"
+#~ "tcp:127.0.0.1:5761\n"
+#~ "udp:127.0.0.1:14551输入飞行控制器的连接字符串。示例有：\n"
+#~ "\n"
+#~ "COM4 (在 Windows 上)\n"
+#~ "/dev/serial/by-id/usb-xxx (在 Linux 上)\n"
+#~ "tcp:127.0.0.1:5761\n"
+#~ "udp:127.0.0.1:14551"
+
+#~ msgid "Will add new connection: {selected_connection} if not duplicated"
+#~ msgstr "如果未重复，将添加新连接：{selected_connection}"
+
+#~ msgid "Add connection canceled or string empty {selected_connection}"
+#~ msgstr "添加连接被取消或字符串为空 {selected_connection}"
 
 #~ msgid ""
 #~ "Motor test command sent: Motor %(motor)d at %(throttle)d%% for "
