@@ -696,7 +696,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Write each selected parameter to the flight controller
         for param_name, param in selected_params.items():
             try:
-                logging_info(_("Parameter %s set to %f"), param_name, param.value)
                 if param_name not in self.flight_controller.fc_parameters or not is_within_tolerance(
                     self.flight_controller.fc_parameters[param_name], param.value
                 ):
@@ -776,24 +775,51 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.on_skip_click()
 
     # This function can recurse multiple times if there is an upload error
-    def upload_selected_params(self, selected_params: dict) -> None:
+    def upload_selected_params(self, selected_params: dict) -> None:  # pylint: disable=too-many-branches
         logging_info(_("Uploading %d selected %s parameters to flight controller..."), len(selected_params), self.current_file)
 
         self.upload_params_that_require_reset(selected_params)
 
         # Write each selected parameter to the flight controller
+        nr_changed = 0
+        nr_unchanged = 0
         for param_name, param in selected_params.items():
             try:
                 self.flight_controller.set_param(param_name, param.value)
-                logging_info(_("Parameter %s set to %f"), param_name, param.value)
                 if param_name not in self.flight_controller.fc_parameters or not is_within_tolerance(
                     self.flight_controller.fc_parameters[param_name], param.value
                 ):
                     self.at_least_one_changed_parameter_written = True
+                    if param_name in self.flight_controller.fc_parameters:
+                        logging_info(
+                            _("Parameter %s changed from %f to %f"),
+                            param_name,
+                            self.flight_controller.fc_parameters[param_name],
+                            param.value,
+                        )
+                    else:
+                        logging_info(
+                            _("Parameter %s changed to %f"),
+                            param_name,
+                            param.value,
+                        )
+                    nr_changed += 1
+                else:
+                    logging_info(_("Parameter %s unchanged from %f"), param_name, param.value)
+                    nr_unchanged += 1
             except ValueError as _e:  # noqa: PERF203
                 error_msg = _("Failed to set parameter {param_name}: {_e}").format(**locals())
                 logging_error(error_msg)
                 messagebox.showerror(_("ArduPilot methodic configurator"), error_msg)
+
+        changed_msg = _("%d FC parameter(s) changed value") % nr_changed if nr_changed else ""
+        unchanged_msg = (
+            _("%d FC parameter(s) already had the value defined in this configuration step") % nr_unchanged
+            if nr_unchanged
+            else ""
+        )
+        msg = changed_msg + (", " if nr_changed and nr_unchanged else "") + unchanged_msg
+        logging_info(msg)
 
         if self.at_least_one_changed_parameter_written:
             # Re-download all parameters, in case one of them changed, and validate that all uploads were successful
