@@ -4,14 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 4 1 */2 *'  # Run at 4:00 UTC on the 1st day of every 2nd month
-  push:
-    branches:
-      - master
-    paths:
-      - 'scripts/calculate_code_statistics.py'
-      - 'code_lines_statistics.json'
-      - 'scripts/generate_codebase_pie_chart.py'
-      - 'ardupilot_methodic_configurator/**/*.py'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

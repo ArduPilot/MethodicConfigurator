@@ -150,7 +150,7 @@ def create_codebase_pie_chart(sizes: list[int], categories: list[str], colors: l
 
     # Add title
     ax.set_title(
-        "ArduPilot Methodic Configurator\nCodebase Structure by Lines of Code\n(Including Documentation & Configuration)\n"
+        "ArduPilot Methodic Configurator\nCodebase Structure by Lines of Code "
         + datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         fontsize=16,
         fontweight="bold",

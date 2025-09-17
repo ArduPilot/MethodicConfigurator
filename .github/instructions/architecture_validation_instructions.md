@@ -72,6 +72,7 @@ The following architecture files should be validated periodically:
 3. `ARCHITECTURE_3_directory_selection.md` - Directory Selection Sub-Application
 4. `ARCHITECTURE_4_component_editor.md` - Component Editor Sub-Application
 5. `ARCHITECTURE_5_parameter_editor.md` - Parameter Editor Sub-Application
+6. `ARCHITECTURE_motor_test.md` - vehicle motor test Sub-Application
 
 ## Source Code Mapping
 
