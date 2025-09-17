@@ -108,7 +108,3 @@ then translated into language-specific `.po` files, which are compiled into bina
 - **Source files**: `missing_translations_<lang_code>.txt` (project root)
 - **Translation files**: `ardupilot_methodic_configurator/locale/<lang_code>/LC_MESSAGES/ardupilot_methodic_configurator.po`
 - **Compiled files**: `ardupilot_methodic_configurator/locale/<lang_code>/LC_MESSAGES/ardupilot_methodic_configurator.mo`
-
-## Support
-
-- **Documentation**: See [ARCHITECTURE.md](../../ARCHITECTURE.md) for detailed technical information

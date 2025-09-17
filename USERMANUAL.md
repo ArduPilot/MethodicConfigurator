@@ -382,6 +382,52 @@ ardupilot_methodic_configurator --help
 
 This will show a list of all available command line options along with a brief description of each.
 
+### Install command line completion
+
+#### Global python argcomplete
+
+For command line (tab) completion for all python scripts that support [argcomplete](https://github.com/kislyuk/argcomplete) do:
+
+```bash
+activate-global-python-argcomplete
+```
+
+#### Fine granular python argcomplete
+
+For Bash (Linux, macOS) autocompletion, add this to your `~/.bashrc`:
+
+```bash
+eval "$(register-python-argcomplete ardupilot_methodic_configurator)"
+eval "$(register-python-argcomplete extract_param_defaults)"
+eval "$(register-python-argcomplete annotate_params)"
+eval "$(register-python-argcomplete param_pid_adjustment_update)"
+eval "$(register-python-argcomplete mavftp)"
+```
+
+For Zsh (Linux, macOS) autocompletion, add these lines to your `~/.zshrc`:
+
+```zsh
+autoload -U bashcompinit
+bashcompinit
+eval "$(register-python-argcomplete ardupilot_methodic_configurator)"
+eval "$(register-python-argcomplete extract_param_defaults)"
+eval "$(register-python-argcomplete annotate_params)"
+eval "$(register-python-argcomplete param_pid_adjustment_update)"
+eval "$(register-python-argcomplete mavftp)"
+```
+
+For PowerShell (MS Windows) autocompletion, run this command in PowerShell:
+
+```powershell
+notepad $PROFILE
+```
+
+And add this line to the file:
+
+```powershell
+Import-Module  "C:\Program Files (x86)\ardupilot_methodic_configurator\ardupilot_methodic_configurator_command_line_completion.psm1"
+```
+
 ## Speed up software start
 
 To speed up the startup of the ArduPilot methodic configurator, consider the following tips, presented from most to least effective:
