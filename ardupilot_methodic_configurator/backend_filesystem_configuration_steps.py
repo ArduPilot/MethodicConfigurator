@@ -138,7 +138,14 @@ class ConfigurationSteps:
                         parameter,
                     )
 
-    def compute_parameters(self, filename: str, file_info: dict, parameter_type: str, variables: dict) -> str:  # pylint: disable=too-many-branches
+    def compute_parameters(  # pylint: disable=too-many-branches, too-many-arguments, too-many-positional-arguments
+        self,
+        filename: str,
+        file_info: dict,
+        parameter_type: str,
+        variables: dict,
+        ignore_fc_derived_param_warnings: bool = False,
+    ) -> str:
         """
         Computes the forced or derived parameters for a given configuration file.
 
@@ -161,7 +168,8 @@ class ConfigurationSteps:
                     if parameter_type == "forced":
                         logging_error(error_msg)
                         return error_msg
-                    logging_warning(error_msg)
+                    if not ignore_fc_derived_param_warnings:
+                        logging_warning(error_msg)
                     continue
                 result = eval(str(parameter_info["New Value"]), {}, variables)  # noqa: S307 pylint: disable=eval-used
 
