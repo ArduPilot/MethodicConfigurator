@@ -746,7 +746,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         Args:
             source_param_values: Dictionary mapping parameter names to their values from the
                                 source (typically flight controller). If None, no direct updates occur.
-            existing_fc_params: List of params that exist in the FC if empty or None all parameters are+
+            existing_fc_params: List of params that exist in the FC if empty or None all parameters are
                                 assumed to exist
 
         Returns:
@@ -766,7 +766,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 if error_msg:
                     return error_msg
                 self.merge_forced_or_derived_parameters(param_filename, self.forced_parameters, existing_fc_params)
-                error_msg = self.compute_parameters(param_filename, step_dict, "derived", eval_variables)
+                error_msg = self.compute_parameters(
+                    param_filename, step_dict, "derived", eval_variables, ignore_fc_derived_param_warnings=True
+                )
                 if error_msg:
                     return error_msg
                 self.merge_forced_or_derived_parameters(param_filename, self.derived_parameters, existing_fc_params)
