@@ -37,6 +37,25 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 
 
+def is_debugging() -> bool:
+    """Return True if a VS Code's debugger is attached."""
+    try:
+        # debug adapter used by VS Code Python debugger
+        import debugpy  # noqa: PLC0415,T100 # pylint: disable=import-outside-toplevel # pyright: ignore[reportMissingImports]
+    except ImportError:
+        debugpy = None
+
+    is_connected = getattr(debugpy, "is_client_connected", None)
+    if not callable(is_connected):
+        return False
+
+    try:
+        return bool(is_connected())
+    except (TypeError, RuntimeError) as e:
+        logging_error(_("Error while checking debugpy connection: %s"), e)
+        return False
+
+
 class BaseWindow:
     """
     A foundational class for creating Tkinter windows in the ArduPilot Methodic Configurator.
@@ -114,6 +133,9 @@ class BaseWindow:
         # Skip icon loading during tests to avoid tkinter issues
         if os.environ.get("PYTEST_CURRENT_TEST"):
             return
+
+        if is_debugging():
+            return  # the vscode debugger can not cope with the application icon
 
         # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
         try:
@@ -359,6 +381,9 @@ class BaseWindow:
 
                 # Create PhotoImage from buffer
                 photo = tk.PhotoImage(data=buffer.getvalue())
+
+            if is_debugging():
+                return ttk.Label(parent)  # the vscode debugger can not cope with the images
 
             # Create the label with the image
             image_label = ttk.Label(parent, image=photo)
