@@ -19,6 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -149,7 +150,8 @@ def create_codebase_pie_chart(sizes: list[int], categories: list[str], colors: l
 
     # Add title
     ax.set_title(
-        "ArduPilot Methodic Configurator\nCodebase Structure by Lines of Code\n(Including Documentation & Configuration)",
+        "ArduPilot Methodic Configurator\nCodebase Structure by Lines of Code\n(Including Documentation & Configuration)\n"
+        + datetime.now(tz=timezone.utc).isoformat(),
         fontsize=16,
         fontweight="bold",
         pad=20,

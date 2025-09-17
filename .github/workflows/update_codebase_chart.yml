@@ -27,9 +27,6 @@ jobs:
       contents: write       # for creating branches and commits
       pull-requests: write  # for creating PRs
 
-    env:
-      STATS_CHANGED: false
-
     strategy:
       matrix:
         python-version: ['3.13']
@@ -62,11 +59,13 @@ jobs:
         run: python scripts/calculate_code_statistics.py
 
       - name: Check for statistics changes
+        id: check-stats
         run: |
           if [[ -n "$(git status --porcelain code_lines_statistics.json)" ]]; then
-            echo "STATS_CHANGED=true" >> $GITHUB_ENV
+            echo "stats-changed=true" >> $GITHUB_OUTPUT
             echo "Statistics file has changes"
           else
+            echo "stats-changed=false" >> $GITHUB_OUTPUT
             echo "No statistics changes detected"
           fi
 
@@ -78,11 +77,12 @@ jobs:
           retention-days: 1
 
     outputs:
-      stats-changed: ${{ env.STATS_CHANGED }}
+      stats-changed: ${{ steps.check-stats.outputs.stats-changed }}
 
   update-chart:
     runs-on: ubuntu-latest
     needs: update-stats
+    if: needs.update-stats.outputs.stats-changed == 'true'
     permissions:
       contents: write       # for creating branches and commits
       pull-requests: write  # for creating PRs
@@ -135,7 +135,7 @@ jobs:
           fi
 
       - name: Create Pull Request
-        if: env.CHART_CHANGED == 'true' || needs.update-stats.outputs.stats-changed == 'true'
+        if: env.CHART_CHANGED == 'true'
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           labels: documentation, automated-pr, codebase-analysis
