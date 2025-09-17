@@ -169,7 +169,7 @@ jobs:
 
       - name: Upload translation files as artifacts
         if: steps.prepare-translations.outputs.translations-to-process == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: translation-files
           path: |
@@ -190,10 +190,15 @@ jobs:
       max-parallel: 5   # Limit concurrent AI requests
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Download translation files
-        uses: actions/download-artifact@v5.0.0
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: translation-files
 
@@ -244,7 +249,7 @@ jobs:
 
       - name: Run AI translation
         id: ai_translate
-        uses: actions/ai-inference@v2
+        uses: actions/ai-inference@a1c11829223a786afe3b5663db904a3aa1eac3a2 # v2.0.1
         with:
           prompt-file: 'translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml'
         continue-on-error: true
@@ -320,7 +325,7 @@ jobs:
 
       - name: Upload translated file
         if: always()  # Upload even if translation failed, for debugging
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: translated-${{ matrix.lang_code }}${{ matrix.suffix }}
           path: ${{ matrix.file }}
@@ -349,6 +354,11 @@ jobs:
       PYGETTEXT_LOCALEDIR: ardupilot_methodic_configurator/locale
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Set up Python
@@ -387,7 +397,7 @@ jobs:
 
       - name: Download all translated files
         if: needs.extract_strings.outputs.translations-to-process == 'true'
-        uses: actions/download-artifact@v5.0.0
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           pattern: translated-*
           merge-multiple: true
