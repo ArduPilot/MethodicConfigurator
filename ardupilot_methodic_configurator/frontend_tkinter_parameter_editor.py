@@ -846,23 +846,28 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         compares them with FC parameters, and exports any parameters that are either missing from
         AMC files or have different values to a separate parameter file.
         """
-        # Create the compounded state of all parameters stored in the files
+        # Create the compounded state of all parameters stored in the AMC .param files
         compound = ParDict()
-        default = ParDict()
         for file_name, file_params in self.local_filesystem.file_parameters.items():
-            if file_name == "00_default.param":
-                default = ParDict(file_params)
-            else:
-                compound.append(ParDict(file_params))
+            if file_name != "00_default.param":
+                compound.append(file_params)
 
         # Create FC parameters dictionary
         fc_parameters = ParDict.from_fc_parameters(self.flight_controller.fc_parameters)
 
         # Remove default parameters from FC parameters if default file exists
-        fc_parameters.remove_if_value_is_similar(default)
+        fc_parameters.remove_if_value_is_similar(self.local_filesystem.param_default_dict, is_within_tolerance)
+
+        # Ignore read-only parameters
+        read_only_parameter_names = [
+            param_name for param_name, metadata in self.local_filesystem.doc_dict.items() if metadata.get("ReadOnly", False)
+        ]
+        for param_name in read_only_parameter_names:
+            if param_name in fc_parameters:
+                del fc_parameters[param_name]
 
         # Calculate parameters that only exist in fc_parameters or have a different value from compound
-        params_missing_in_the_amc_param_files = fc_parameters.get_missing_or_different(compound)
+        params_missing_in_the_amc_param_files = fc_parameters.get_missing_or_different(compound, is_within_tolerance)
 
         # Export to file if there are any missing/different parameters
         if params_missing_in_the_amc_param_files:

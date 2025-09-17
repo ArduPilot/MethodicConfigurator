@@ -306,7 +306,9 @@ class ParDict(dict[str, Par]):
         for param_name, param_value in other.items():
             self[param_name] = param_value
 
-    def remove_if_value_is_similar(self, other: "ParDict") -> None:
+    def remove_if_value_is_similar(
+        self, other: "ParDict", tolerance_func: Optional[Callable[[float, float], bool]] = None
+    ) -> None:
         """
         Remove parameters from this dictionary if their values match those in another dictionary.
 
@@ -319,6 +321,7 @@ class ParDict(dict[str, Par]):
 
         Args:
             other: Another ParDict to compare against.
+            tolerance_func: the tolerance function to use to compare values
 
         Raises:
             TypeError: If other is not an ParDict instance.
@@ -329,16 +332,19 @@ class ParDict(dict[str, Par]):
             raise TypeError(msg)
 
         # Use the shared filtering logic and replace the contents of the current dictionary
-        filtered_params = self._get_different_or_missing_params(other)
+        filtered_params = self._get_different_or_missing_params(other, tolerance_func)
         self.clear()
         self.update(filtered_params)
 
-    def get_missing_or_different(self, other: "ParDict") -> "ParDict":
+    def get_missing_or_different(
+        self, other: "ParDict", tolerance_func: Optional[Callable[[float, float], bool]] = None
+    ) -> "ParDict":
         """
         Get parameters that are missing in the other ParDict or have different values.
 
         Args:
             other: The ParDict to compare against.
+            tolerance_func: the tolerance function to use to compare values
 
         Returns:
             A new ParDict containing parameters that are missing or different.
@@ -352,14 +358,17 @@ class ParDict(dict[str, Par]):
             raise TypeError(msg)
 
         # Use the shared filtering logic to create a new ParDict
-        return ParDict(self._get_different_or_missing_params(other))
+        return ParDict(self._get_different_or_missing_params(other, tolerance_func))
 
-    def _get_different_or_missing_params(self, other: "ParDict") -> dict[str, Par]:
+    def _get_different_or_missing_params(
+        self, other: "ParDict", tolerance_func: Optional[Callable[[float, float], bool]] = None
+    ) -> dict[str, Par]:
         """
         Private helper method to get parameters that are missing or have different values.
 
         Args:
             other: The ParDict to compare against.
+            tolerance_func: the tolerance function to use to compare values
 
         Returns:
             A dictionary containing parameters that are missing or different.
@@ -368,7 +377,12 @@ class ParDict(dict[str, Par]):
         return {
             param_name: param_value
             for param_name, param_value in self.items()
-            if param_name not in other or param_value.value != other[param_name].value
+            if param_name not in other
+            or (
+                not tolerance_func(param_value.value, other[param_name].value)
+                if tolerance_func
+                else param_value.value != other[param_name].value
+            )
         }
 
     @classmethod
