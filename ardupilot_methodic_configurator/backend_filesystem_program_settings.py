@@ -60,7 +60,7 @@ class ProgramSettings:
                 "parameter_editor": True,
             },
             "directory_selection": {
-                "template_dir": os_path.join(cls.get_templates_base_dir(), "ArduCopter", "diatone_taycan_mxc", "4.5.x-params"),
+                "template_dir": os_path.join(cls.get_templates_base_dir(), "ArduCopter", "empty_4.6.x"),
                 "new_base_dir": os_path.join(settings_directory, "vehicles"),
                 "vehicle_dir": os_path.join(settings_directory, "vehicles"),
             },
