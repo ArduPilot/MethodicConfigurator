@@ -450,7 +450,9 @@ class TestConnectionSelectionWindow(unittest.TestCase):  # pylint: disable=too-m
         self.addCleanup(self.basewindow_patcher.stop)
 
         # Create the test instance
-        self.window = ConnectionSelectionWindow(self.mock_flight_controller, "Test connection message")
+        self.window = ConnectionSelectionWindow(
+            self.mock_flight_controller, "Test connection message", default_baudrate=115200
+        )
 
         # Verify that connection_selection_widgets was created and is our mock
         assert hasattr(self.window, "connection_selection_widgets")
@@ -483,6 +485,240 @@ class TestConnectionSelectionWindow(unittest.TestCase):  # pylint: disable=too-m
 
         # Verify window was destroyed
         self.window.root.destroy.assert_called_once()
+
+
+class TestConnectionDialog(unittest.TestCase):
+    """ConnectionDialog test class."""
+
+    def setUp(self) -> None:
+        self.mock_parent = MagicMock()
+
+    @patch("tkinter.simpledialog.Dialog.__init__")
+    @patch("tkinter.Label")
+    @patch("tkinter.Entry")
+    @patch("tkinter.ttk.Combobox")
+    @patch("tkinter.StringVar")
+    def test_connection_dialog_initialization(
+        self,
+        mock_stringvar,
+        mock_combobox,
+        mock_entry,
+        mock_label,
+        mock_dialog_init,
+    ) -> None:
+        """
+        Test ConnectionDialog initialization with default baudrate.
+
+        GIVEN: A parent window and default baudrate of 115200
+        WHEN: ConnectionDialog is created
+        THEN: Dialog should be initialized with correct default values
+        """
+        from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionDialog
+
+        # Act: Create the dialog
+        dialog = ConnectionDialog(self.mock_parent, 115200)
+
+        # Assert: Dialog was initialized with correct values
+        assert dialog.default_baudrate == 115200
+        assert dialog.connection_string == ""
+        assert dialog.baudrate == 115200
+
+    @patch("tkinter.simpledialog.Dialog.__init__")
+    def test_connection_dialog_validate_valid_input(self, mock_dialog_init) -> None:
+        """
+        Test ConnectionDialog validate method with valid input.
+
+        GIVEN: A dialog with valid connection string and baudrate
+        WHEN: validate() is called
+        THEN: Should return True and store the values
+        """
+        from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionDialog
+
+        # Arrange: Create dialog and mock user input
+        dialog = ConnectionDialog(self.mock_parent, 115200)
+        dialog.connection_entry = MagicMock()
+        dialog.connection_entry.get.return_value = "COM3"
+        dialog.baudrate_var = MagicMock()
+        dialog.baudrate_var.get.return_value = "57600"
+
+        # Act: Validate input
+        result = dialog.validate()
+
+        # Assert: Validation succeeded and values were stored
+        assert result is True
+        assert dialog.connection_string == "COM3"
+        assert dialog.baudrate == 57600
+
+    @patch("tkinter.simpledialog.Dialog.__init__")
+    def test_connection_dialog_validate_empty_connection(self, mock_dialog_init) -> None:
+        """
+        Test ConnectionDialog validate method with empty connection string.
+
+        GIVEN: A dialog with empty connection string
+        WHEN: validate() is called
+        THEN: Should return False
+        """
+        from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionDialog
+
+        # Arrange: Create dialog and mock empty connection input
+        dialog = ConnectionDialog(self.mock_parent, 115200)
+        dialog.connection_entry = MagicMock()
+        dialog.connection_entry.get.return_value = "  "  # Empty/whitespace
+        dialog.baudrate_var = MagicMock()
+        dialog.baudrate_var.get.return_value = "57600"
+
+        # Act: Validate input
+        result = dialog.validate()
+
+        # Assert: Validation failed
+        assert result is False
+
+    @patch("tkinter.simpledialog.Dialog.__init__")
+    def test_connection_dialog_validate_invalid_baudrate(self, mock_dialog_init) -> None:
+        """
+        Test ConnectionDialog validate method with invalid baudrate.
+
+        GIVEN: A dialog with valid connection string but invalid baudrate
+        WHEN: validate() is called
+        THEN: Should return False
+        """
+        from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionDialog
+
+        # Arrange: Create dialog and mock invalid baudrate input
+        dialog = ConnectionDialog(self.mock_parent, 115200)
+        dialog.connection_entry = MagicMock()
+        dialog.connection_entry.get.return_value = "COM3"
+        dialog.baudrate_var = MagicMock()
+        dialog.baudrate_var.get.return_value = "invalid"
+
+        # Act: Validate input
+        result = dialog.validate()
+
+        # Assert: Validation failed
+        assert result is False
+
+
+class TestConnectionSelectionWidgetsBaudrate(unittest.TestCase):
+    """ConnectionSelectionWidgets baudrate functionality test class."""
+
+    def setUp(self) -> None:
+        # Mock the parent object
+        self.mock_parent = MagicMock()
+        self.mock_parent.root = MagicMock()
+
+        # Mock the parent_frame
+        self.mock_parent_frame = MagicMock(spec=tk.Frame)
+
+        # Mock the flight controller
+        self.mock_flight_controller = MagicMock()
+        self.mock_flight_controller.comport = None
+        self.mock_flight_controller.master = None
+        self.mock_flight_controller.get_connection_tuples.return_value = [
+            ("COM1", "Serial Port COM1"),
+            ("COM2", "Serial Port COM2"),
+            ("Add another", "Add another connection"),
+        ]
+        self.mock_flight_controller.get_connection_baudrate.return_value = None
+
+    @patch("tkinter.ttk.Frame")
+    @patch("tkinter.ttk.Label")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.PairTupleCombobox")
+    @patch("tkinter.ttk.Combobox")
+    @patch("tkinter.StringVar")
+    @patch("tkinter.ttk.Button")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.show_tooltip")
+    def test_baudrate_combobox_initialization(
+        self,
+        mock_show_tooltip,
+        mock_button,
+        mock_stringvar,
+        mock_combobox,
+        mock_pair_tuple_combobox,
+        mock_label,
+        mock_frame,
+    ) -> None:
+        """
+        Test that baudrate combobox is properly initialized.
+
+        GIVEN: A ConnectionSelectionWidgets instance with default baudrate 115200
+        WHEN: The widget is created
+        THEN: Baudrate combobox should be initialized with correct values
+        """
+        # Arrange: Mock return values
+        mock_stringvar_instance = MagicMock()
+        mock_stringvar.return_value = mock_stringvar_instance
+
+        # Act: Create the widget
+        widget = ConnectionSelectionWidgets(
+            self.mock_parent_frame,
+            self.mock_flight_controller,
+            self.mock_parent,
+            True,
+            True,
+            115200,
+        )
+
+        # Assert: Baudrate combobox was created with correct values
+        mock_combobox.assert_called()
+        # Check that the StringVar was set to default baudrate
+        mock_stringvar_instance.set.assert_called_with("115200")
+
+    @patch("tkinter.ttk.Frame")
+    @patch("tkinter.ttk.Label")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.PairTupleCombobox")
+    @patch("tkinter.ttk.Combobox")
+    @patch("tkinter.StringVar")
+    @patch("tkinter.ttk.Button")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.show_tooltip")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ConnectionDialog")
+    def test_add_connection_with_custom_baudrate(
+        self,
+        mock_connection_dialog,
+        mock_show_tooltip,
+        mock_button,
+        mock_stringvar,
+        mock_combobox,
+        mock_pair_tuple_combobox,
+        mock_label,
+        mock_frame,
+    ) -> None:
+        """
+        Test adding a connection with custom baudrate.
+
+        GIVEN: A ConnectionSelectionWidgets instance and a custom baudrate dialog
+        WHEN: User adds a new connection with custom baudrate
+        THEN: Flight controller should store the custom baudrate for the connection
+        """
+        # Arrange: Create widget and mock dialog
+        widget = ConnectionSelectionWidgets(
+            self.mock_parent_frame,
+            self.mock_flight_controller,
+            self.mock_parent,
+            True,
+            True,
+            115200,
+        )
+
+        # Mock dialog result
+        mock_dialog_instance = MagicMock()
+        mock_dialog_instance.result = 1  # Dialog OK result
+        mock_dialog_instance.connection_string = "COM3"
+        mock_dialog_instance.baudrate = 57600
+        mock_connection_dialog.return_value = mock_dialog_instance
+
+        # Mock StringVar and combobox
+        mock_stringvar_instance = MagicMock()
+        widget.baudrate_var = mock_stringvar_instance
+        widget.conn_selection_combobox = MagicMock()
+
+        # Act: Add a connection
+        result = widget.add_connection()
+
+        # Assert: Flight controller add_connection was called with baudrate
+        self.mock_flight_controller.add_connection.assert_called_once_with("COM3", 57600)
+        # Assert: Baudrate variable was updated
+        mock_stringvar_instance.set.assert_called_with("57600")
+        assert result == "COM3"
 
 
 if __name__ == "__main__":
