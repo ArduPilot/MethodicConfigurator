@@ -86,6 +86,8 @@ class FlightController:  # pylint: disable=too-many-public-methods
         self.__reboot_time = reboot_time
         self.__baudrate = baudrate
         self.__connection_tuples: list[tuple[str, str]] = []
+        # Dictionary to store custom baudrates for specific connections
+        self.__connection_baudrates: dict[str, int] = {}
         self.discover_connections()
         self.master: Union[mavutil.mavlink_connection, None] = None  # pyright: ignore[reportGeneralTypeIssues]
         self.comport: Union[mavutil.SerialPort, None] = None
@@ -111,18 +113,25 @@ class FlightController:  # pylint: disable=too-many-public-methods
         self.fc_parameters = {}
         self.info = BackendFlightcontrollerInfo()
 
-    def add_connection(self, connection_string: str) -> bool:
-        """Add a new connection to the list of available connections."""
+    def add_connection(self, connection_string: str, baudrate: Optional[int] = None) -> bool:
+        """Add a new connection to the list of available connections with optional custom baudrate."""
         if connection_string:
             # Check if connection_string is not the first element of any tuple in self.other_connection_tuples
             if all(connection_string != t[0] for t in self.__connection_tuples):
                 self.__connection_tuples.insert(-1, (connection_string, connection_string))
+                # Store custom baudrate if provided
+                if baudrate is not None:
+                    self.__connection_baudrates[connection_string] = baudrate
                 logging_debug(_("Added connection %s"), connection_string)
                 return True
             logging_debug(_("Did not add duplicated connection %s"), connection_string)
         else:
             logging_debug(_("Did not add empty connection"))
         return False
+
+    def get_connection_baudrate(self, connection_string: str) -> Optional[int]:
+        """Get the baudrate for a specific connection, returns None if not set."""
+        return self.__connection_baudrates.get(connection_string)
 
     def _register_and_try_connect(
         self,
@@ -149,7 +158,11 @@ class FlightController:  # pylint: disable=too-many-public-methods
         )
 
     def connect(
-        self, device: str, progress_callback: Union[None, Callable[[int, int], None]] = None, log_errors: bool = True
+        self,
+        device: str,
+        progress_callback: Union[None, Callable[[int, int], None]] = None,
+        log_errors: bool = True,
+        baudrate: Optional[int] = None,
     ) -> str:
         """
         Establishes a connection to the FlightController using a specified device.
@@ -166,19 +179,28 @@ class FlightController:  # pylint: disable=too-many-public-methods
             progress_callback (callable, optional): A callback function to report the progress
                                                     of the connection attempt. Default is None.
             log_errors: log errors
+            baudrate (int, optional): The baudrate to use for the connection. If None,
+                                    uses the default baudrate from initialization.
 
         Returns:
             str: An error message if the connection fails, otherwise an empty string indicating
                 a successful connection.
 
         """
+        # Use provided baudrate, or stored baudrate for this device, or fall back to default
+        connection_baudrate = baudrate
+        if connection_baudrate is None and device:
+            connection_baudrate = self.get_connection_baudrate(device)
+        if connection_baudrate is None:
+            connection_baudrate = self.__baudrate
+
         if device:
             if device == "none":
                 return ""
             self.add_connection(device)
             self.comport = mavutil.SerialPort(device=device, description=device)
             return self.__create_connection_with_retry(
-                progress_callback=progress_callback, baudrate=self.__baudrate, log_errors=log_errors
+                progress_callback=progress_callback, baudrate=connection_baudrate, log_errors=log_errors
             )
 
         # Try to autodetect serial ports
@@ -200,7 +222,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
             err = self._register_and_try_connect(
                 comport=autodetect_serial[0],
                 progress_callback=progress_callback,
-                baudrate=self.__baudrate,
+                baudrate=connection_baudrate,
                 log_errors=False,
             )
             if err == "":
