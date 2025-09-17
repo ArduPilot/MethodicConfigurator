@@ -179,24 +179,24 @@ Open the existing `.po` file for your language.
 Either [download the file from the locale directory in github.com](https://github.com/ArduPilot/MethodicConfigurator/tree/master/ardupilot_methodic_configurator/locale)
 or if you have a local git checkout of `ardupilot_methodic_configurator/locale` use it.
 
-![Open .po file](images/Poedit_01.png)
+![Open .po file](../../images/Poedit_01.png)
 
 Here is an example for the italian translation:
 
-![Select .po file](images/Poedit_02.png)
+![Select .po file](../../images/Poedit_02.png)
 
 Update the translation by importing the latest `.pot` file.
 
-![Update translation from .pot file](images/Poedit_03.png)
+![Update translation from .pot file](../../images/Poedit_03.png)
 
 Either [download the file from the locale directory in github.com](https://github.com/ArduPilot/MethodicConfigurator/tree/master/ardupilot_methodic_configurator/locale)
 or if you have a local git checkout of `ardupilot_methodic_configurator/locale` use it.
 
-![Select .pot file](images/Poedit_04.png)
+![Select .pot file](../../images/Poedit_04.png)
 
 Validate the translation
 
-![Validate translation](images/Poedit_05.png)
+![Validate translation](../../images/Poedit_05.png)
 
 ### 2. Update and improve each translation string
 
