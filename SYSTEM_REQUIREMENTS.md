@@ -14,7 +14,7 @@ by attending the weekly ArduPilot developers meeting and by participating in for
 - a way to save and load the configuration for later use
 - a way to document how decisions where made during the configuration process
   - to be able to not repeat errors
-  - to be able to reproduce the configuration on another similar bit different vehicle
+  - to be able to reproduce the configuration on another similar but different vehicle
   - to understand why decisions where made and their implications
 
 Then we developed, documented and tested the *clear sequence of steps to take to configure the vehicle* in the

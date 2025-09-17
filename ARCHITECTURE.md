@@ -18,7 +18,7 @@ The (main) application itself does the command line parsing and starts the sub-a
 
 - [`__main__.py`](ardupilot_methodic_configurator/__main__.py)
 
-To satisfy the [system design requirements](https://ardupilot.github.io/MethodicConfigurator/SYSTEM_REQUIREMENTS.md) the following user interface sub-applications were developed:
+To satisfy the [system design requirements](https://ardupilot.github.io/MethodicConfigurator/SYSTEM_REQUIREMENTS) the following user interface sub-applications were developed:
 
 #### Sub-Application Architecture Documentation
 
@@ -179,9 +179,10 @@ We tested using **automated static tests** in both pre-commit hooks and on githu
 - ruff
 - pylint
 - mypy
+- pyright
 - markdown-lint
 - markdown-link-check
-- spelling, grammarly
+- codespell, grammarly
 - shellcheck
 
 We tested using **automated dynamic tests** on github CI including automated test coverage reports.
