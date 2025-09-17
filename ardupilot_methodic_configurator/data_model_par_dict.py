@@ -24,6 +24,27 @@ PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
 PARAM_NAME_MAX_LEN = 16
 
 
+def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1e-04) -> bool:
+    """
+    Determines if the absolute difference between two numbers is within a specified tolerance.
+
+    This function checks if the absolute difference between `x` and `y` is less than or equal to
+    the sum of the absolute tolerance (`atol`) and the product of the relative tolerance (`rtol`)
+    and the absolute value of `y`.
+
+    Args:
+      x (float): The first number to compare.
+      y (float): The second number to compare.
+      atol (float, optional): The absolute tolerance. Default is 1e-08.
+      rtol (float, optional): The relative tolerance. Default is 1e-04.
+
+    Returns:
+      bool: True if the difference is within the tolerance, False otherwise.
+
+    """
+    return abs(x - y) <= atol + (rtol * abs(y))
+
+
 class Par:
     """
     Represents a parameter with a value and an optional comment.
