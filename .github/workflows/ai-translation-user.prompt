@@ -1,7 +1,0 @@
-Language: __LANGUAGE__
-Language code: __LANG_CODE__
-Translation file: __TRANSLATION_FILE__
-
-Please read the translation file "__TRANSLATION_FILE__" and translate all the strings from English to __LANGUAGE__.
-
-The file contains strings in the format "line_number:English text" - please translate only the text after the colon while preserving the exact line number and colon format.
