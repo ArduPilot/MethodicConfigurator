@@ -209,14 +209,14 @@ jobs:
 
       - name: Create AI translation prompt
         run: |
-          # Create prompt file from template using simple substitution
+          # Create user prompt file from template using simple substitution
           translation_file="${{ matrix.file }}"
-          prompt_file="translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml"
-          template_file=".github/workflows/ai-translation-prompt.template.yml"
+          user_prompt_file="translate_${{ matrix.lang_code }}${{ matrix.suffix }}.user.prompt"
+          user_template_file=".github/workflows/ai-translation-user.prompt"
 
           echo "🔧 Processing translation file: $translation_file"
-          echo "🔧 Creating prompt file: $prompt_file"
-          echo "🔧 Using template: $template_file"
+          echo "🔧 Creating user prompt file: $user_prompt_file"
+          echo "🔧 Using user template: $user_template_file"
 
           # Verify translation file exists
           if [ ! -f "$translation_file" ]; then
@@ -225,65 +225,59 @@ jobs:
           fi
 
           # Verify template file exists
-          if [ ! -f "$template_file" ]; then
-            echo "❌ Error: Template file '$template_file' not found"
+          if [ ! -f "$user_template_file" ]; then
+            echo "❌ Error: User template file '$user_template_file' not found"
             exit 1
           fi
 
           # Read template and perform substitutions
-          cp "$template_file" "$prompt_file"
-          sed -i "s/__LANGUAGE__/${{ matrix.language }}/g" "$prompt_file"
-          sed -i "s/__LANG_CODE__/${{ matrix.lang_code }}/g" "$prompt_file"
-          sed -i "s/__TRANSLATION_FILE__/$translation_file/g" "$prompt_file"
+          cp "$user_template_file" "$user_prompt_file"
+          sed -i "s/__LANGUAGE__/${{ matrix.language }}/g" "$user_prompt_file"
+          sed -i "s/__LANG_CODE__/${{ matrix.lang_code }}/g" "$user_prompt_file"
+          sed -i "s/__TRANSLATION_FILE__/$translation_file/g" "$user_prompt_file"
 
-          echo "✅ Created prompt file for ${{ matrix.lang_code }}${{ matrix.suffix }}"
+          echo "✅ Created user prompt file for ${{ matrix.lang_code }}${{ matrix.suffix }}"
 
           # Validate the generated file
-          file_size=$(wc -c < "$prompt_file")
-          echo "📊 Generated prompt file size: $file_size bytes"
+          file_size=$(wc -c < "$user_prompt_file")
+          echo "📊 Generated user prompt file size: $file_size bytes"
 
       - name: Validate generated prompt file
         run: |
-          prompt_file="translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml"
+          user_prompt_file="translate_${{ matrix.lang_code }}${{ matrix.suffix }}.user.prompt"
 
-          echo "🔍 Validating generated prompt file: $prompt_file"
+          echo "🔍 Validating generated user prompt file: $user_prompt_file"
 
-          if [ ! -f "$prompt_file" ]; then
-            echo "❌ Error: Prompt file was not created"
+          if [ ! -f "$user_prompt_file" ]; then
+            echo "❌ Error: User prompt file was not created"
             exit 1
           fi
 
           # Check file size
-          file_size=$(wc -c < "$prompt_file")
-          echo "📊 Prompt file size: $file_size bytes"
+          file_size=$(wc -c < "$user_prompt_file")
+          echo "📊 User prompt file size: $file_size bytes"
 
-          if [ "$file_size" -lt 100 ]; then
-            echo "❌ Error: Prompt file is too small (less than 100 bytes)"
+          if [ "$file_size" -lt 50 ]; then
+            echo "❌ Error: User prompt file is too small (less than 50 bytes)"
             exit 1
           fi
 
-          # Simple validation - check if it contains required elements
-          if grep -q "messages:" "$prompt_file" && grep -q "model:" "$prompt_file" && grep -q "max_tokens:" "$prompt_file"; then
-            echo "✅ Prompt file structure validation passed"
+          # Check if language substitution worked
+          if grep -q "${{ matrix.lang_code }}" "$user_prompt_file"; then
+            echo "✅ Language code found in user prompt file"
           else
-            echo "❌ Error: Prompt file missing required YAML structure"
-            exit 1
+            echo "⚠️ Warning: Language code not found in user prompt file"
           fi
 
-          # Check if translation content was included
-          if grep -q "${{ matrix.lang_code }}" "$prompt_file"; then
-            echo "✅ Language code found in prompt file"
-          else
-            echo "⚠️ Warning: Language code not found in prompt file"
-          fi
-
-          echo "✅ Prompt file validation completed successfully"
+          echo "✅ User prompt file validation completed successfully"
 
       - name: Run AI translation
         id: ai_translate
         uses: actions/ai-inference@a1c11829223a786afe3b5663db904a3aa1eac3a2 # v2.0.1
         with:
-          prompt-file: translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml
+          system-prompt-file: .github/workflows/ai-translation-system.prompt
+          prompt-file: translate_${{ matrix.lang_code }}${{ matrix.suffix }}.user.prompt
+          enable-github-mcp: true
         continue-on-error: true
 
       - name: Check AI translation success
@@ -555,6 +549,10 @@ jobs:
             - Automatically extracted missing translations using `extract_missing_translations.py`
             - Used GitHub Actions matrix strategy to process numbered files in parallel
             - Applied AI-powered translations using GitHub Models (GPT-4o) for multiple languages
+            - **GITHUB MCP ENABLED**: AI can read translation files directly from repository using Model Context Protocol
+            - **SEPARATED PROMPTS**: System prompt and user prompt are in separate files for better maintainability
+            - **FILE-BASED PROMPTS**: AI reads translation files directly instead of embedding content in YAML prompts
+            - **TEMPLATE-BASED PROMPTS**: Moved AI prompt templates to separate files for easier maintenance
             - Supports processing unlimited translations per language with automatic chunking
             - Inserted translated strings into .po files using `insert_missing_translations.py`
             - Compiled binary .mo files for immediate use
@@ -570,6 +568,15 @@ jobs:
             - ✅ **File validation** before and after AI processing
             - ✅ **Consistent terminology** guidelines applied across all chunks for each language
             - Robust error handling for failed AI translation requests
+
+            **Technical Improvements Made**:
+            - 🔧 **GitHub MCP enabled**: AI can read translation files directly from repository using Model Context Protocol
+            - 🔧 **Separated prompt architecture**: System prompt (`.prompt`) and user prompt (`.prompt`) in separate files for better maintainability
+            - 🔧 **File-based AI prompts**: AI reads translation files directly, eliminating YAML content embedding issues
+            - 🔧 **Reusable system prompts**: System prompt can be reused across different translation tasks
+            - 🔧 **Enhanced reliability**: No more YAML syntax issues from embedded content with special characters
+            - 🔧 **Better scalability**: File-based approach handles large translation batches without prompt size limits
+            - 🔧 **403 error fix**: Enabled GitHub MCP to resolve permission issues when reading repository files
 
             **Translation Guidelines Applied**:
             - Technical aviation/drone context preservation
