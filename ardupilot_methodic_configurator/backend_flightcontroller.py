@@ -16,6 +16,7 @@ from logging import warning as logging_warning
 from os import name as os_name
 from os import path as os_path
 from os import readlink as os_readlink
+from pathlib import Path
 from time import sleep as time_sleep
 from time import time as time_time
 from typing import Callable, NoReturn, Optional, Union
@@ -66,7 +67,7 @@ DEFAULT_BAUDRATE: int = 115200
 DEFAULT_REBOOT_TIME: int = 7
 
 
-class FlightController:  # pylint: disable=too-many-public-methods
+class FlightController:
     """
     A class to manage the connection and parameters of a flight controller.
 
@@ -524,10 +525,18 @@ class FlightController:  # pylint: disable=too-many-public-methods
         return ""
 
     def download_params(
-        self, progress_callback: Union[None, Callable[[int, int], None]] = None
+        self,
+        progress_callback: Union[None, Callable[[int, int], None]] = None,
+        parameter_values_filename: Optional[Path] = None,
+        parameter_defaults_filename: Optional[Path] = None,
     ) -> tuple[dict[str, float], ParDict]:
         """
         Requests all flight controller parameters from a MAVLink connection.
+
+        Args:
+            progress_callback (Union[None, Callable[[int, int], None]]): A callback function to report download progress.
+            parameter_values_filename (Optional[Path]): The filename to save the parameter values.
+            parameter_defaults_filename (Optional[Path]): The filename to save the parameter defaults.
 
         Returns:
             dict[str, float]: A dictionary of flight controller parameters.
@@ -549,16 +558,31 @@ class FlightController:  # pylint: disable=too-many-public-methods
         if self.info.is_mavftp_supported:
             logging_info(_("MAVFTP is supported by the %s flight controller"), comport_device)
 
-            param_dict, default_param_dict = self.download_params_via_mavftp(progress_callback)
+            param_dict, default_param_dict = self._download_params_via_mavftp(
+                progress_callback, parameter_values_filename, parameter_defaults_filename
+            )
             if param_dict:
                 return param_dict, default_param_dict
 
         logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), comport_device)
-        return self.__download_params_via_mavlink(progress_callback), ParDict()
+        return self._download_params_via_mavlink(progress_callback), ParDict()
 
-    def __download_params_via_mavlink(
+    def _download_params_via_mavlink(
         self, progress_callback: Union[None, Callable[[int, int], None]] = None
     ) -> dict[str, float]:
+        """
+        Requests all flight controller parameters from a MAVLink connection.
+
+        Gets parameters via PARAM_REQUEST_LIST and PARAM_VALUE messages
+
+        Args:
+            progress_callback (Union[None, Callable[[int, int], None]]): A callback function to report download progress.
+
+        Returns:
+            dict[str, float]: A dictionary of flight controller parameters.
+            ParDict: A dictionary of flight controller default parameters.
+
+        """
         comport_device = getattr(self.comport, "device", "")
         logging_debug(_("Will fetch all parameters from the %s flight controller"), comport_device)
 
@@ -595,9 +619,27 @@ class FlightController:  # pylint: disable=too-many-public-methods
                 break
         return parameters
 
-    def download_params_via_mavftp(
-        self, progress_callback: Union[None, Callable[[int, int], None]] = None
+    def _download_params_via_mavftp(
+        self,
+        progress_callback: Union[None, Callable[[int, int], None]] = None,
+        parameter_values_filename: Optional[Path] = None,
+        parameter_defaults_filename: Optional[Path] = None,
     ) -> tuple[dict[str, float], ParDict]:
+        """
+        Requests all flight controller parameters from a MAVLink connection.
+
+        Gets parameters via MAVFTP protocol
+
+        Args:
+            progress_callback (Union[None, Callable[[int, int], None]]): A callback function to report download progress.
+            parameter_values_filename (Optional[Path]): The filename to save the parameter values.
+            parameter_defaults_filename (Optional[Path]): The filename to save the parameter defaults.
+
+        Returns:
+            dict[str, float]: A dictionary of flight controller parameters.
+            ParDict: A dictionary of flight controller default parameters.
+
+        """
         if self.master is None:
             return {}, ParDict()
         mavftp = MAVFTP(self.master, target_system=self.master.target_system, target_component=self.master.target_component)
@@ -606,11 +648,13 @@ class FlightController:  # pylint: disable=too-many-public-methods
             if progress_callback is not None and completion is not None:
                 progress_callback(int(completion * 100), 100)
 
-        complete_param_filename = "complete.param"
-        default_param_filename = "00_default.param"
+        complete_param_filename = str(parameter_values_filename) or "complete.param"
+        default_param_filename = str(parameter_defaults_filename) or "00_default.param"
         mavftp.cmd_getparams([complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback)
         ret = mavftp.process_ftp_reply("getparams", timeout=10)
         pdict: dict[str, float] = {}
+        defdict: ParDict = ParDict()
+
         # add a file sync operation to ensure the file is completely written
         time_sleep(0.3)
         if ret.error_code == 0:
@@ -620,7 +664,6 @@ class FlightController:  # pylint: disable=too-many-public-methods
             defdict = ParDict.from_file(default_param_filename)
         else:
             ret.display_message()
-            defdict = ParDict()
 
         return pdict, defdict
 
