@@ -599,7 +599,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
             # delete all files in the vehicle directory and delete the vehicle directory
             errors: list[str] = []
-            for item_path in vehicle_path.iterdir():
+
+            def safe_remove_item(item_path: Path) -> Optional[str]:
+                """Safely remove a file or directory, returning error message if failed."""
                 try:
                     # If the entry is a symlink, remove the link instead of recursing into the target
                     if item_path.is_symlink():
@@ -608,9 +610,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                         shutil_rmtree(str(item_path))
                     else:
                         item_path.unlink()
+                    return None
                 except OSError as e:
                     logging_exception(_("Error removing %s"), item_path, e)
-                    errors.append(str(e))
+                    return str(e)
+
+            # Remove all items and collect errors
+            for item_path in vehicle_path.iterdir():
+                error = safe_remove_item(item_path)
+                if error:
+                    errors.append(error)
 
             # Try to remove the now-empty vehicle directory
             try:
