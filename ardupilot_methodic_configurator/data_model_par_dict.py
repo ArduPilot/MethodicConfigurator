@@ -208,27 +208,24 @@ class ParDict(dict[str, Par]):
             msg = f"ERROR: Unsupported file format {file_format}"
             raise SystemExit(msg)
 
-        formatted_params = []
         if file_format == "missionplanner":
-            for key, parameter in sorted_dict.items():
-                if isinstance(parameter, Par):
-                    if parameter.comment:
-                        formatted_params.append(
-                            f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}  # {parameter.comment}"
-                        )
-                    else:
-                        formatted_params.append(f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}")
-                else:
-                    formatted_params.append(f"{key},{format(parameter, '.6f').rstrip('0').rstrip('.')}")
+            formatted_params = [
+                (
+                    f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}  # {parameter.comment}"
+                    if isinstance(parameter, Par) and parameter.comment
+                    else f"{key},{format(parameter.value if isinstance(parameter, Par) else parameter, '.6f').rstrip('0').rstrip('.')}"  # noqa: E501
+                )
+                for key, parameter in sorted_dict.items()
+            ]
         elif file_format == "mavproxy":
-            for key, parameter in sorted_dict.items():
-                if isinstance(parameter, Par):
-                    if parameter.comment:
-                        formatted_params.append(f"{key:<16} {parameter.value:<8.6f}  # {parameter.comment}")
-                    else:
-                        formatted_params.append(f"{key:<16} {parameter.value:<8.6f}")
-                else:
-                    formatted_params.append(f"{key:<16} {parameter:<8.6f}")
+            formatted_params = [
+                (
+                    f"{key:<16} {parameter.value:<8.6f}  # {parameter.comment}"
+                    if isinstance(parameter, Par) and parameter.comment
+                    else f"{key:<16} {parameter.value if isinstance(parameter, Par) else parameter:<8.6f}"
+                )
+                for key, parameter in sorted_dict.items()
+            ]
         return formatted_params
 
     def export_to_param(
@@ -413,10 +410,7 @@ class ParDict(dict[str, Par]):
             A new ParDict with Par objects created from the float values.
 
         """
-        result = cls()
-        for param_name, param_value in param_dict.items():
-            result[param_name] = Par(float(param_value), default_comment)
-        return result
+        return cls({param_name: Par(float(param_value), default_comment) for param_name, param_value in param_dict.items()})
 
     @classmethod
     def from_fc_parameters(cls, fc_params: dict[str, float]) -> "ParDict":
@@ -447,17 +441,18 @@ class ParDict(dict[str, Par]):
             A new ParDict containing only non-default parameters.
 
         """
-        result = ParDict()
-        for param_name, param_info in self.items():
-            if param_name in default_params:
-                if tolerance_func:
-                    if not tolerance_func(param_info.value, default_params[param_name].value):
-                        result[param_name] = param_info
-                elif param_info.value != default_params[param_name].value:
-                    result[param_name] = param_info
-            else:
-                result[param_name] = param_info
-        return result
+        return ParDict(
+            {
+                param_name: param_info
+                for param_name, param_info in self.items()
+                if param_name not in default_params
+                or (
+                    not tolerance_func(param_info.value, default_params[param_name].value)
+                    if tolerance_func
+                    else param_info.value != default_params[param_name].value
+                )
+            }
+        )
 
     def _filter_by_readonly(self, doc_dict: dict) -> "ParDict":
         """
@@ -470,11 +465,13 @@ class ParDict(dict[str, Par]):
             A new ParDict containing only read-only parameters.
 
         """
-        result = ParDict()
-        for param_name, param_info in self.items():
-            if param_name in doc_dict and doc_dict[param_name].get("ReadOnly", False):
-                result[param_name] = param_info
-        return result
+        return ParDict(
+            {
+                param_name: param_info
+                for param_name, param_info in self.items()
+                if param_name in doc_dict and doc_dict[param_name].get("ReadOnly", False)
+            }
+        )
 
     def _filter_by_calibration(self, doc_dict: dict) -> "ParDict":
         """
@@ -487,11 +484,13 @@ class ParDict(dict[str, Par]):
             A new ParDict containing only calibration parameters.
 
         """
-        result = ParDict()
-        for param_name, param_info in self.items():
-            if param_name in doc_dict and doc_dict[param_name].get("Calibration", False):
-                result[param_name] = param_info
-        return result
+        return ParDict(
+            {
+                param_name: param_info
+                for param_name, param_info in self.items()
+                if param_name in doc_dict and doc_dict[param_name].get("Calibration", False)
+            }
+        )
 
     def categorize_by_documentation(
         self,
@@ -521,10 +520,13 @@ class ParDict(dict[str, Par]):
         calibration_params = non_default_params._filter_by_calibration(doc_dict)  # pylint: disable=protected-access # noqa: SLF001
 
         # Non-calibration parameters are those that are not read-only and not calibration
-        other_params = ParDict()
-        for param_name, param_info in non_default_params.items():
-            if param_name not in read_only_params and param_name not in calibration_params:
-                other_params[param_name] = param_info
+        other_params = ParDict(
+            {
+                param_name: param_info
+                for param_name, param_info in non_default_params.items()
+                if param_name not in read_only_params and param_name not in calibration_params
+            }
+        )
 
         return read_only_params, calibration_params, other_params
 
@@ -539,8 +541,9 @@ class ParDict(dict[str, Par]):
             A new ParDict with updated comments.
 
         """
-        result = ParDict()
-        for param_name, param in self.items():
-            new_comment = comment_lookup.get(param_name, param.comment or "")
-            result[param_name] = Par(param.value, new_comment)
-        return result
+        return ParDict(
+            {
+                param_name: Par(param.value, comment_lookup.get(param_name, param.comment or ""))
+                for param_name, param in self.items()
+            }
+        )
