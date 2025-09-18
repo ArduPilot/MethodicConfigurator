@@ -133,7 +133,7 @@ jobs:
               if [ -f "$file" ]; then
                 # Extract language code and file number from filename
                 base_name=$(basename "$file" .txt)
-                if [[ "$base_name" =~ missing_translations_([^_]+)(_[0-9]+)?$ ]]; then
+                if [[ "$base_name" =~ missing_translations_([a-zA-Z_]+)(_[0-9]+)?$ ]]; then
                   lang_code="${BASH_REMATCH[1]}"
                   file_suffix="${BASH_REMATCH[2]:-}"
 
@@ -383,7 +383,7 @@ jobs:
         id: ai_translate
         uses: actions/ai-inference@a1c11829223a786afe3b5663db904a3aa1eac3a2 # v2.0.1
         with:
-          prompt-file: 'translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml'
+          prompt-file: translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml
         continue-on-error: true
 
       - name: Check AI translation success
