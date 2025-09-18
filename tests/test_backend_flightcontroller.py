@@ -19,6 +19,8 @@ from pymavlink import mavutil
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
+# pylint: disable=protected-access
+
 
 def test_add_connection() -> None:
     fc = FlightController(reboot_time=7, baudrate=115200)
@@ -117,7 +119,7 @@ def test_set_param_and_verify(mock_load_param_file_into_dict, mock_file) -> None
 def test_download_params_via_mavftp() -> None:
     fc = FlightController(reboot_time=7, baudrate=115200)
     fc.connect(device="test")
-    params, default_params = fc.download_params_via_mavftp()
+    params, default_params = fc._download_params_via_mavftp()
     assert isinstance(params, dict)
     assert isinstance(default_params, dict)
 

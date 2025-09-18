@@ -21,6 +21,7 @@ from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
+from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 from typing import Literal, Optional, Union
 
@@ -661,7 +662,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
         # Download all parameters from the flight controller
         self.flight_controller.fc_parameters, param_default_values = self.flight_controller.download_params(
-            self.param_download_progress_window.update_progress_bar
+            self.param_download_progress_window.update_progress_bar,
+            Path(self.local_filesystem.vehicle_dir) / "complete.param",
+            Path(self.local_filesystem.vehicle_dir) / "00_default.param",
         )
         if param_default_values:
             self.local_filesystem.write_param_default_values_to_file(param_default_values)
