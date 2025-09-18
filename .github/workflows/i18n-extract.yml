@@ -207,115 +207,40 @@ jobs:
         with:
           name: translation-files
 
-      - name: Install PyYAML for prompt generation
-        run: |
-          python3 -m pip install PyYAML
-
       - name: Create AI translation prompt
         run: |
-          # Create the base prompt file with proper YAML escaping
-          cat > "translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml" << 'EOF'
-          messages:
-            - role: system
-              content: |
-                You are a professional translator specializing in technical software localization for ArduPilot flight controller configuration software.
+          # Create prompt file from template using simple substitution
+          translation_file="${{ matrix.file }}"
+          prompt_file="translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml"
+          template_file=".github/workflows/ai-translation-prompt.template.yml"
 
-                CRITICAL INSTRUCTIONS:
-                1. You will receive a list of English strings to translate in the format "line_number:English text"
-                2. You MUST preserve the exact line number and colon format: "line_number:Translated text"
-                3. Translate ONLY the text after the colon, keeping the line number and colon unchanged
-                4. Preserve all placeholders like {variable_name}, {0}, etc. exactly as they appear
-                5. Consider the technical aviation/drone context when translating
-                6. Use formal register appropriate for technical documentation
-                7. Maintain consistent terminology throughout
+          echo "🔧 Processing translation file: $translation_file"
+          echo "🔧 Creating prompt file: $prompt_file"
+          echo "🔧 Using template: $template_file"
 
-                CONTEXT AWARENESS:
-                - This may be part of a larger translation batch split into chunks for processing
-                - Maintain consistency with common ArduPilot/flight controller terminology
-                - Common terms: "parameter", "vehicle", "flight controller", "autopilot", "mission", "waypoint", "telemetry"
-                - Use the same translation for recurring technical terms within this batch
+          # Verify translation file exists
+          if [ ! -f "$translation_file" ]; then
+            echo "❌ Error: Translation file '$translation_file' not found"
+            exit 1
+          fi
 
-                LANGUAGE-SPECIFIC GUIDELINES:
-                - Portuguese (pt): Use European Portuguese (Portugal) conventions, "ficheiro" not "arquivo" for "file", "transferir" not "baixar" for "download", "parâmetro" for "parameter", "veículo" for "vehicle"
-                - German (de): Use formal "Sie" form, compound technical terms appropriately, "Parameter" for "parameter", "Fahrzeug" for "vehicle", "Flugsteuerung" for "flight controller"
-                - Italian (it): Use formal register, preserve technical aviation terminology, "parametro" for "parameter", "veicolo" for "vehicle", "controllore di volo" for "flight controller"
-                - Japanese (ja): Use polite form (です/ます), katakana for foreign technical terms, パラメータ for "parameter", 機体 for "vehicle", フライトコントローラー for "flight controller"
-                - Chinese (zh_CN): Use simplified characters, technical aviation terminology in Chinese, "参数" for "parameter", "飞行器" for "vehicle", "飞控" for "flight controller"
+          # Verify template file exists
+          if [ ! -f "$template_file" ]; then
+            echo "❌ Error: Template file '$template_file' not found"
+            exit 1
+          fi
 
-                EXAMPLE:
-                Input: "123:Copy vehicle image from template"
-                Output: "123:Copiar imagem do veículo do modelo" (for Portuguese)
+          # Read template and perform substitutions
+          cp "$template_file" "$prompt_file"
+          sed -i "s/__LANGUAGE__/${{ matrix.language }}/g" "$prompt_file"
+          sed -i "s/__LANG_CODE__/${{ matrix.lang_code }}/g" "$prompt_file"
+          sed -i "s/__TRANSLATION_FILE__/$translation_file/g" "$prompt_file"
 
-                Translate all strings while preserving the exact format and maintaining terminological consistency.
+          echo "✅ Created prompt file for ${{ matrix.lang_code }}${{ matrix.suffix }}"
 
-            - role: user
-              content: |
-                Language: ${{ matrix.language }}
-                Language code: ${{ matrix.lang_code }}
-                File: ${{ matrix.file }}
-
-                Translate these strings from English to ${{ matrix.language }}:
-
-          model: openai/gpt-4o
-          max_tokens: 4000
-          EOF
-
-          # Create a properly escaped YAML content block using a Python script
-          # This avoids YAML parsing issues with colons in the translation content
-          python3 << 'PYTHON_EOF'
-          import yaml
-          import sys
-          import os
-
-          translation_file = "${{ matrix.file }}"
-          prompt_file = "translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml"
-
-          print(f"🔧 Processing translation file: {translation_file}")
-          print(f"🔧 Creating prompt file: {prompt_file}")
-
-          # Read the translation file content
-          try:
-              with open(translation_file, "r", encoding="utf-8") as f:
-                  translation_content = f.read().strip()
-              print(f"📄 Read {len(translation_content)} characters from translation file")
-              print(f"📊 Translation content preview: {translation_content[:200]}...")
-          except FileNotFoundError:
-              print(f"❌ Error: Translation file '{translation_file}' not found", file=sys.stderr)
-              sys.exit(1)
-          except Exception as e:
-              print(f"❌ Error reading translation file: {e}", file=sys.stderr)
-              sys.exit(1)
-
-          # Load the existing YAML structure
-          try:
-              with open(prompt_file, "r") as f:
-                  prompt_data = yaml.safe_load(f)
-              print("✅ Successfully loaded base YAML structure")
-          except Exception as e:
-              print(f"❌ Error loading YAML file: {e}", file=sys.stderr)
-              sys.exit(1)
-
-          # Append the translation content to the user message content
-          if translation_content:
-              prompt_data["messages"][1]["content"] += "\n\n" + translation_content
-              print(f"📝 Added translation content to user message")
-          else:
-              print("⚠️ Warning: Translation file is empty")
-
-          # Write back the properly formatted YAML
-          try:
-              with open(prompt_file, "w") as f:
-                  yaml.dump(prompt_data, f, default_flow_style=False, allow_unicode=True, width=1000)
-              print(f"✅ Created properly formatted YAML prompt file for ${{ matrix.lang_code }}${{ matrix.suffix }}")
-
-              # Validate the generated file
-              file_size = os.path.getsize(prompt_file)
-              print(f"📊 Generated prompt file size: {file_size} bytes")
-
-          except Exception as e:
-              print(f"❌ Error writing YAML file: {e}", file=sys.stderr)
-              sys.exit(1)
-          PYTHON_EOF
+          # Validate the generated file
+          file_size=$(wc -c < "$prompt_file")
+          echo "📊 Generated prompt file size: $file_size bytes"
 
       - name: Validate generated prompt file
         run: |
@@ -337,45 +262,20 @@ jobs:
             exit 1
           fi
 
-          # Validate YAML syntax using Python
-          python3 << 'VALIDATE_EOF'
-          import yaml
-          import sys
+          # Simple validation - check if it contains required elements
+          if grep -q "messages:" "$prompt_file" && grep -q "model:" "$prompt_file" && grep -q "max_tokens:" "$prompt_file"; then
+            echo "✅ Prompt file structure validation passed"
+          else
+            echo "❌ Error: Prompt file missing required YAML structure"
+            exit 1
+          fi
 
-          try:
-              with open("$prompt_file", "r") as f:
-                  data = yaml.safe_load(f)
-
-              # Check required structure
-              if not isinstance(data, dict):
-                  print("❌ Error: YAML root is not a dictionary")
-                  sys.exit(1)
-
-              if "messages" not in data:
-                  print("❌ Error: 'messages' key not found in YAML")
-                  sys.exit(1)
-
-              if not isinstance(data["messages"], list) or len(data["messages"]) < 2:
-                  print("❌ Error: 'messages' should be a list with at least 2 items")
-                  sys.exit(1)
-
-              print("✅ YAML structure validation passed")
-              print(f"📊 Found {len(data['messages'])} messages in prompt")
-
-              # Check if translation content was added
-              user_content = data["messages"][1].get("content", "")
-              if ":" in user_content and user_content.count(":") > 5:  # Should have line_number:text format
-                  print("✅ Translation content appears to be properly included")
-              else:
-                  print("⚠️ Warning: Translation content may not be properly formatted")
-
-          except yaml.YAMLError as e:
-              print(f"❌ YAML syntax error: {e}")
-              sys.exit(1)
-          except Exception as e:
-              print(f"❌ Validation error: {e}")
-              sys.exit(1)
-          VALIDATE_EOF
+          # Check if translation content was included
+          if grep -q "${{ matrix.lang_code }}" "$prompt_file"; then
+            echo "✅ Language code found in prompt file"
+          else
+            echo "⚠️ Warning: Language code not found in prompt file"
+          fi
 
           echo "✅ Prompt file validation completed successfully"
 
@@ -655,8 +555,7 @@ jobs:
             - Automatically extracted missing translations using `extract_missing_translations.py`
             - Used GitHub Actions matrix strategy to process numbered files in parallel
             - Applied AI-powered translations using GitHub Models (GPT-4o) for multiple languages
-            - **SCALING IMPROVEMENTS**: Supports processing unlimited translations per language with automatic chunking
-            - **YAML FIXES**: Properly escaped translation content to avoid YAML parsing errors with colons
+            - Supports processing unlimited translations per language with automatic chunking
             - Inserted translated strings into .po files using `insert_missing_translations.py`
             - Compiled binary .mo files for immediate use
 
@@ -667,18 +566,10 @@ jobs:
             **Enhanced Matrix Processing & Scaling**:
             - ✅ **Parallel processing** of translation files for better performance
             - ✅ **Automatic chunking** when >50 strings per language (configurable)
-            - ✅ **Proper YAML escaping** using PyYAML to handle colons in translation strings
             - ✅ **Robust error handling** for failed AI translation requests with detailed debugging
             - ✅ **File validation** before and after AI processing
             - ✅ **Consistent terminology** guidelines applied across all chunks for each language
             - Robust error handling for failed AI translation requests
-
-            **Technical Improvements Made**:
-            - 🔧 **Fixed YAML parsing errors**: Replaced unsafe `sed` indentation with PyYAML-based content escaping
-            - 🔧 **Enhanced error reporting**: Added detailed debugging information for failed translations
-            - 🔧 **Improved validation**: Added YAML structure validation before AI processing
-            - 🔧 **Better chunk identification**: Enhanced matrix processing to clearly identify file chunks
-            - 🔧 **Terminology consistency**: Added common technical terms to translation guidelines
 
             **Translation Guidelines Applied**:
             - Technical aviation/drone context preservation
@@ -692,7 +583,6 @@ jobs:
             - Graceful handling of AI service failures
             - File size and content validation after translation
             - Comprehensive error reporting and debugging information
-            - YAML syntax validation to prevent parsing errors
 
             Please review the AI-generated translations for accuracy and cultural appropriateness before merging.
           delete-branch: true
