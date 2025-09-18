@@ -1,4 +1,4 @@
-name: Extract i18n Strings
+name: AI GUI translation
 
 on:
   push:
@@ -571,7 +571,7 @@ jobs:
 
             **Technical Improvements Made**:
             - 🔧 **GitHub MCP enabled**: AI can read translation files directly from repository using Model Context Protocol
-            - 🔧 **Separated prompt architecture**: System prompt (`.prompt`) and user prompt (`.prompt`) in separate files for better maintainability
+            - 🔧 **Separated prompt architecture**: System prompt and user prompt in separate files for better maintainability
             - 🔧 **File-based AI prompts**: AI reads translation files directly, eliminating YAML content embedding issues
             - 🔧 **Reusable system prompts**: System prompt can be reused across different translation tasks
             - 🔧 **Enhanced reliability**: No more YAML syntax issues from embedded content with special characters
