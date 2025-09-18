@@ -273,7 +273,7 @@ jobs:
 
       - name: Run AI translation
         id: ai_translate
-        uses: actions/ai-inference@a1c11829223a786afe3b5663db904a3aa1eac3a2 # v2.0.1
+        uses: actions/ai-inference@83bb5ca3e8f156d84087c125efa60e9ab9a1b5bc # v2.0.1
         with:
           system-prompt-file: .github/workflows/ai-translation-system.prompt
           prompt-file: translate_${{ matrix.lang_code }}${{ matrix.suffix }}.user.prompt
