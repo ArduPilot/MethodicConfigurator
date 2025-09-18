@@ -168,7 +168,7 @@ Following these steps should enable you to successfully add support for any new 
 
 ## Update an existing translation
 
-There is a [github action to automatically update the translations using AI](https://github.com/ArduPilot/MethodicConfigurator/tree/master/.github/workflows/i18n-extract.yml).
+There is a [github action to automatically update the translations using AI](https://github.com/ArduPilot/MethodicConfigurator/tree/master/.github/workflows/ai-translation.yml).
 To manually update an existing translation do the following steps:
 
 ### 1. Install Poedit and open the .po and pot files
