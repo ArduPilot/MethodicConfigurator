@@ -153,9 +153,7 @@ jobs:
           }
 
       - name: Generate SLSA provenance
-        uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # v2.1.0
-        with:
-          path: ${{ steps.exe_path.outputs.exe_path }}
+        uses: slsa-framework/slsa-github-generator/.github/actions/rng@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # v2.1.0
 
       - name: Debug SLSA provenance files
         run: |
