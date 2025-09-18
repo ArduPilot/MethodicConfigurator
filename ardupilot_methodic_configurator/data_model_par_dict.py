@@ -185,7 +185,7 @@ class ParDict(dict[str, Par]):
         # Compare the parts separately
         return tuple(parts)
 
-    def _format_params(self, file_format: str = "missionplanner") -> list[str]:  # pylint: disable=too-many-branches
+    def _format_params(self, file_format: str = "missionplanner") -> list[str]:
         """
         Formats the parameters in this dictionary into a list of strings.
 
@@ -213,7 +213,7 @@ class ParDict(dict[str, Par]):
                 (
                     f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}  # {parameter.comment}"
                     if isinstance(parameter, Par) and parameter.comment
-                    else f"{key},{format(parameter.value if isinstance(parameter, Par) else parameter, '.6f').rstrip('0').rstrip('.')}"  # noqa: E501
+                    else f"{key},{format(parameter.value if isinstance(parameter, Par) else parameter, '.6f').rstrip('0').rstrip('.')}"  # noqa: E501 # pylint: disable=line-too-long
                 )
                 for key, parameter in sorted_dict.items()
             ]
@@ -226,6 +226,8 @@ class ParDict(dict[str, Par]):
                 )
                 for key, parameter in sorted_dict.items()
             ]
+        else:
+            formatted_params = []
         return formatted_params
 
     def export_to_param(
