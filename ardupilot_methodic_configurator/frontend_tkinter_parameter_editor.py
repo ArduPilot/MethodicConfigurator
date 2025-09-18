@@ -862,12 +862,40 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             else:
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
 
+            non_default_non_read_only_fc_params = self._non_default_non_read_only_fc_params()
+
+            last_config_step_filename = list(self.local_filesystem.file_parameters.keys())[-1]
             # Export FC parameters that are missing or different from AMC parameter files
-            self._export_fc_params_missing_or_different_in_amc_files()
+            self._export_fc_params_missing_or_different_in_amc_files(non_default_non_read_only_fc_params, self.current_file)
+            self._export_fc_params_missing_or_different_in_amc_files(
+                non_default_non_read_only_fc_params, last_config_step_filename
+            )
 
         self.local_filesystem.write_last_uploaded_filename(self.current_file)
 
-    def _export_fc_params_missing_or_different_in_amc_files(self) -> None:
+    def _non_default_non_read_only_fc_params(self) -> ParDict:
+        # Create FC parameters dictionary
+        fc_parameters = ParDict.from_fc_parameters(self.flight_controller.fc_parameters)
+
+        # Early exit if no FC parameters available
+        if len(fc_parameters) == 0:
+            return fc_parameters
+
+        # Remove default parameters from FC parameters if default file exists
+        fc_parameters.remove_if_value_is_similar(self.local_filesystem.param_default_dict, is_within_tolerance)
+
+        # Filter out read-only parameters efficiently - only check params that exist in fc_parameters
+        readonly_params_to_remove = [
+            param_name
+            for param_name in fc_parameters
+            if self.local_filesystem.doc_dict.get(param_name, {}).get("ReadOnly", False)
+        ]
+        for param_name in readonly_params_to_remove:
+            del fc_parameters[param_name]
+
+        return fc_parameters
+
+    def _export_fc_params_missing_or_different_in_amc_files(self, fc_parameters: ParDict, last_filename: str) -> None:
         """
         Export flight controller parameters that are missing or different in AMC parameter files.
 
@@ -875,32 +903,29 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         compares them with FC parameters, and exports any parameters that are either missing from
         AMC files or have different values to a separate parameter file.
         """
+        if not self.flight_controller.fc_parameters:
+            return
+
         # Create the compounded state of all parameters stored in the AMC .param files
         compound = ParDict()
+        first_config_step_filename = None
         for file_name, file_params in self.local_filesystem.file_parameters.items():
             if file_name != "00_default.param":
+                if first_config_step_filename is None:
+                    first_config_step_filename = file_name
                 compound.append(file_params)
-
-        # Create FC parameters dictionary
-        fc_parameters = ParDict.from_fc_parameters(self.flight_controller.fc_parameters)
-
-        # Remove default parameters from FC parameters if default file exists
-        fc_parameters.remove_if_value_is_similar(self.local_filesystem.param_default_dict, is_within_tolerance)
-
-        # Ignore read-only parameters
-        read_only_parameter_names = [
-            param_name for param_name, metadata in self.local_filesystem.doc_dict.items() if metadata.get("ReadOnly", False)
-        ]
-        for param_name in read_only_parameter_names:
-            if param_name in fc_parameters:
-                del fc_parameters[param_name]
+            if file_name == last_filename:
+                break
 
         # Calculate parameters that only exist in fc_parameters or have a different value from compound
         params_missing_in_the_amc_param_files = fc_parameters.get_missing_or_different(compound, is_within_tolerance)
 
         # Export to file if there are any missing/different parameters
         if params_missing_in_the_amc_param_files:
-            filename = "fc_params_missing_or_different_in_the_amc_param_files.param"
+            # Generate filename based on the range of processed files
+            first_name_without_ext = first_config_step_filename.rsplit(".", 1)[0] if first_config_step_filename else "unknown"
+            # the last filename already has the .param extension
+            filename = f"fc_params_missing_or_different_in_the_amc_param_files_{first_name_without_ext}_to_{last_filename}"
             self.local_filesystem.export_to_param(params_missing_in_the_amc_param_files, filename, annotate_doc=False)
             logging_info(
                 _("Exported %d FC parameters missing or different in AMC files to %s"),
