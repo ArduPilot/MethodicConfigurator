@@ -225,8 +225,8 @@ jobs:
         id: ai_translate
         uses: actions/ai-inference@83bb5ca3e8f156d84087c125efa60e9ab9a1b5bc # v2.0.1
         with:
-          system-prompt-file: .github/workflows/ai-translation-system.prompt.yml
-          prompt-file: .github/workflows/ai-translation-user.prompt.yml
+          system-prompt-file: .github/prompts/ai-translation-system.prompt.yml
+          prompt-file: .github/prompts/ai-translation-user.prompt.yml
           input: |
             language: ${{ matrix.language }}
             lang_code: ${{ matrix.lang_code }}
@@ -234,8 +234,8 @@ jobs:
           file_input: |
             translation_content: ${{ matrix.file }}
           enable-github-mcp: true
-          model: openai/gpt-4o
-          max-tokens: 4000
+          model: openai/gpt-4.1
+          max-tokens: 8000
           token: ${{ secrets.AMC_COPILOT_TOKEN_CLASSIC }}
         continue-on-error: true
 
@@ -509,7 +509,8 @@ jobs:
             - Used GitHub Actions matrix strategy to process numbered files in parallel
             - Applied AI-powered translations using GitHub Models (GPT-4o) for multiple languages
             - **GITHUB PROMPT.YML FORMAT**: Using official GitHub prompt.yml template format with separated files
-            - **SEPARATED PROMPT.YML FILES**: ai-translation-system.prompt.yml and ai-translation-user.prompt.yml for clean separation
+            - **SEPARATED PROMPT.YML FILES**: Organized in .github/prompts/ directory for better structure
+            - **CLEAN ORGANIZATION**: ai-translation-system.prompt.yml and ai-translation-user.prompt.yml separated from workflows
             - **PERSONAL ACCESS TOKEN**: Using amilcarlucas PAT for GitHub MCP access instead of GITHUB_TOKEN
             - **GITHUB MCP ENABLED**: AI can read translation files directly from repository using Model Context Protocol
             - **FILE-BASED PROMPTS**: AI reads translation files directly instead of embedding content in YAML prompts
@@ -530,6 +531,7 @@ jobs:
             - Robust error handling for failed AI translation requests
 
             **Technical Improvements Made**:
+            - 🔧 **Organized prompt structure**: Moved prompt files to .github/prompts/ directory to avoid confusion with workflows
             - 🔧 **GitHub MCP enabled**: AI can read translation files directly from repository using Model Context Protocol
             - 🔧 **Separated prompt architecture**: System prompt and user prompt in separate files for better maintainability
             - 🔧 **File-based AI prompts**: AI reads translation files directly, eliminating YAML content embedding issues
