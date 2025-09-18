@@ -9,6 +9,7 @@
 
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cd ../ardupilot
-find . -type f -name "*.md" | sed 's|^\.|https://github.com/ArduPilot/ardupilot/blob/master|' > ../ardupilot_methodic_configurator/github_urllist.txt
-cd -
+(
+  cd ../ardupilot || exit 1
+  find . -type f -name "*.md" | sed 's|^\.|https://github.com/ArduPilot/ardupilot/blob/master|' > ../ardupilot_methodic_configurator/github_urllist.txt
+)

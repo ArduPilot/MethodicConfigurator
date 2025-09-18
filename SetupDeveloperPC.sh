@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 echo "This script is only meant for ArduPilot methodic configurator developers."
-read -p "Do you want to develop ArduPilot methodic Configurator software on your PC? (y/N) " response
+read -r -p "Do you want to develop ArduPilot methodic Configurator software on your PC? (y/N) " response
 
 # Convert response to lowercase
 response=${response,,}
