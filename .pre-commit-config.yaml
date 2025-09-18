@@ -80,6 +80,13 @@ repos:
             "--rcfile=.pylintrc", # Link to your config file
           ]
         stages: [pre-push]
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
 
   - repo: https://github.com/fsfe/reuse-tool
     rev: v5.1.1
