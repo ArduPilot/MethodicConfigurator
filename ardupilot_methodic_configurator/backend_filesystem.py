@@ -188,17 +188,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return []
 
         # Sort values numerically by key
-        try:
-            # Try to sort by numeric key (int first, then float)
+        def sort_key(item: tuple[str, Any]) -> Union[int, float, str]:
+            key = item[0]
             try:
-                sorted_items = sorted(values.items(), key=lambda x: int(x[0]))
+                return int(key)
             except ValueError:
-                sorted_items = sorted(values.items(), key=lambda x: float(x[0]))
-        except ValueError:
-            # Fall back to string sorting if numeric sorting fails
-            sorted_items = sorted(values.items())
+                try:
+                    return float(key)
+                except ValueError:
+                    return key  # Fall back to string sorting
 
-        # Format each key-value pair
+        sorted_items = sorted(values.items(), key=sort_key)
+
+        # Format each key-value pair using f-strings
         formatted_items = [f"{key}: {value}" for key, value in sorted_items]
 
         if not formatted_items:
@@ -230,70 +232,89 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     def __extend_and_reformat_parameter_documentation_metadata(self) -> None:  # pylint: disable=too-many-branches
         for param_name, param_info in self.doc_dict.items():
-            if "fields" in param_info:
-                param_fields = param_info["fields"]
-                if "Units" in param_fields:
-                    units_list = param_fields["Units"].split("(")
-                    param_info["unit"] = units_list[0].strip()
-                    if len(units_list) > 1:
-                        param_info["unit_tooltip"] = units_list[1].strip(")").strip()
-                if "Range" in param_fields:
-                    param_info["min"] = float(param_fields["Range"].split(" ")[0].strip())
-                    param_info["max"] = float(param_fields["Range"].split(" ")[1].strip())
-                if "Calibration" in param_fields:
-                    param_info["Calibration"] = self.str_to_bool(param_fields["Calibration"].strip())
-                if "ReadOnly" in param_fields:
-                    param_info["ReadOnly"] = self.str_to_bool(param_fields["ReadOnly"].strip())
-                if "RebootRequired" in param_fields:
-                    param_info["RebootRequired"] = self.str_to_bool(param_fields["RebootRequired"].strip())
-                if "Bitmask" in param_fields:
-                    bitmask_items = param_fields["Bitmask"].split(",")
-                    param_info["Bitmask"] = {}
-                    for item in bitmask_items:
-                        key, value = item.split(":")
-                        param_info["Bitmask"][int(key.strip())] = value.strip()
+            self._process_parameter_fields(param_info)
+            self._process_parameter_values(param_name, param_info)
+            self._create_parameter_tooltips(param_name, param_info)
 
-            if param_info.get("values"):
-                try:
-                    param_info["Values"] = {int(k): v for k, v in param_info["values"].items()}
-                except ValueError:
-                    try:
-                        param_info["Values"] = {float(k): v for k, v in param_info["values"].items()}
-                    except ValueError:
-                        logging_warning(_("Could not convert values to int or float for %s"), param_name)
-                        logging_warning(
-                            _("Parameter %s has invalid metadata. Please file a bug at %s"),
-                            param_name,
-                            "https://github.com/ArduPilot/ardupilot/issues",
-                        )
-                # print(param_info['Values'])
+    def _process_parameter_fields(self, param_info: dict[str, Any]) -> None:
+        """Process and extract parameter fields like Units, Range, etc."""
+        if "fields" not in param_info:
+            return
 
-            prefix_parts = [
-                f"{param_info['humanName']}",
-            ]
-            prefix_parts += param_info["documentation"]
-            for key, value in param_info["fields"].items():
-                if key not in {"Units", "UnitText"}:
-                    prefix_parts += split_into_lines(f"{key}: {value}", TOOLTIP_MAX_LENGTH)
-            prefix_parts += format_columns(param_info["values"], TOOLTIP_MAX_LENGTH)
-            if param_name in self.param_default_dict:
-                default_value = format(self.param_default_dict[param_name].value, ".6f").rstrip("0").rstrip(".")
-                prefix_parts += [f"Default: {default_value}"]
-            param_info["doc_tooltip"] = ("\n").join(prefix_parts)
+        param_fields = param_info["fields"]
 
-            # Create a numerically sorted version for Current Value column tooltips
-            prefix_parts_sorted = [
-                f"{param_info['humanName']}",
-            ]
-            prefix_parts_sorted += param_info["documentation"]
-            for key, value in param_info["fields"].items():
-                if key not in {"Units", "UnitText"}:
-                    prefix_parts_sorted += split_into_lines(f"{key}: {value}", TOOLTIP_MAX_LENGTH)
-            prefix_parts_sorted += self._format_columns_sorted_numerically(param_info["values"], TOOLTIP_MAX_LENGTH)
-            if param_name in self.param_default_dict:
-                default_value = format(self.param_default_dict[param_name].value, ".6f").rstrip("0").rstrip(".")
-                prefix_parts_sorted += [f"Default: {default_value}"]
-            param_info["doc_tooltip_sorted_numerically"] = ("\n").join(prefix_parts_sorted)
+        # Process Units
+        if "Units" in param_fields:
+            units_list = param_fields["Units"].split("(")
+            param_info["unit"] = units_list[0].strip()
+            if len(units_list) > 1:
+                param_info["unit_tooltip"] = units_list[1].strip(")").strip()
+
+        # Process Range
+        if "Range" in param_fields:
+            range_parts = param_fields["Range"].split(" ")
+            if len(range_parts) >= 2:
+                param_info["min"] = float(range_parts[0].strip())
+                param_info["max"] = float(range_parts[1].strip())
+
+        # Process boolean fields
+        for field_name in ["Calibration", "ReadOnly", "RebootRequired"]:
+            if field_name in param_fields:
+                param_info[field_name] = self.str_to_bool(param_fields[field_name].strip())
+
+        # Process Bitmask
+        if "Bitmask" in param_fields:
+            bitmask_items = param_fields["Bitmask"].split(",")
+            param_info["Bitmask"] = {}
+            for item in bitmask_items:
+                if ":" in item:
+                    key, value = item.split(":", 1)
+                    param_info["Bitmask"][int(key.strip())] = value.strip()
+
+    def _process_parameter_values(self, param_name: str, param_info: dict[str, Any]) -> None:
+        """Process and convert parameter values to appropriate numeric types."""
+        if not param_info.get("values"):
+            return
+
+        try:
+            param_info["Values"] = {int(k): v for k, v in param_info["values"].items()}
+        except ValueError:
+            try:
+                param_info["Values"] = {float(k): v for k, v in param_info["values"].items()}
+            except ValueError:
+                logging_warning(_("Could not convert values to int or float for %s"), param_name)
+                logging_warning(
+                    _("Parameter %s has invalid metadata. Please file a bug at %s"),
+                    param_name,
+                    "https://github.com/ArduPilot/ardupilot/issues",
+                )
+
+    def _create_parameter_tooltips(self, param_name: str, param_info: dict[str, Any]) -> None:
+        """Create tooltip documentation for parameters."""
+        # Create common prefix parts
+        prefix_parts = [f"{param_info['humanName']}"]
+        prefix_parts += param_info["documentation"]
+
+        # Add field information (excluding Units and UnitText)
+        for key, value in param_info["fields"].items():
+            if key not in {"Units", "UnitText"}:
+                prefix_parts += split_into_lines(f"{key}: {value}", TOOLTIP_MAX_LENGTH)
+
+        # Add default value if available
+        default_suffix = []
+        if param_name in self.param_default_dict:
+            default_value = format(self.param_default_dict[param_name].value, ".6f").rstrip("0").rstrip(".")
+            default_suffix = [f"Default: {default_value}"]
+
+        # Create standard tooltip with alphabetically sorted values
+        prefix_parts_with_values = prefix_parts + format_columns(param_info["values"], TOOLTIP_MAX_LENGTH) + default_suffix
+        param_info["doc_tooltip"] = "\n".join(prefix_parts_with_values)
+
+        # Create numerically sorted tooltip for Current Value column
+        prefix_parts_with_sorted_values = (
+            prefix_parts + self._format_columns_sorted_numerically(param_info["values"], TOOLTIP_MAX_LENGTH) + default_suffix
+        )
+        param_info["doc_tooltip_sorted_numerically"] = "\n".join(prefix_parts_with_sorted_values)
 
     def read_params_from_files(self) -> dict[str, ParDict]:
         """
