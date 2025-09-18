@@ -199,6 +199,7 @@ jobs:
 
       - name: Create AI translation prompt
         run: |
+          # Create the base prompt file
           cat > "translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml" << 'EOF'
           messages:
             - role: system
@@ -239,8 +240,9 @@ jobs:
           max_tokens: 4000
           EOF
 
-          # Append the actual translation content to the prompt
-          cat "${{ matrix.file }}" >> "translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml"
+          # Append the translation file content to the user message, properly indented
+          echo "" >> "translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml"
+          sed 's/^/                /' "${{ matrix.file }}" >> "translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml"
 
       - name: Run AI translation
         id: ai_translate
