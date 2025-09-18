@@ -21,6 +21,7 @@ from os import path as os_path
 from os import remove as os_remove
 from os import rename as os_rename
 from os import rmdir as os_rmdir
+from pathlib import Path
 from platform import system as platform_system
 from re import compile as re_compile
 from shutil import Error as shutil_Error
@@ -135,16 +136,21 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self.__extend_and_reformat_parameter_documentation_metadata()
 
     def vehicle_configuration_files_exist(self, vehicle_dir: str) -> bool:
-        if os_path.exists(vehicle_dir) and os_path.isdir(vehicle_dir):
-            vehicle_configuration_files = os_listdir(vehicle_dir)
-            if platform_system() == "Windows":
-                vehicle_configuration_files = [f.lower() for f in vehicle_configuration_files]
-            pattern = re_compile(r"^\d{2}_.*\.param$")
-            if self.vehicle_components_fs.json_filename in vehicle_configuration_files and any(
-                pattern.match(f) for f in vehicle_configuration_files
-            ):
-                return True
-        return False
+        vehicle_path = Path(vehicle_dir)
+        if not (vehicle_path.exists() and vehicle_path.is_dir()):
+            return False
+
+        # Use generator expression for better memory efficiency
+        files = (f.name for f in vehicle_path.iterdir() if f.is_file())
+
+        if platform_system() == "Windows":
+            files = (f.lower() for f in files)
+
+        # Convert to set for O(1) lookup performance and compile pattern once
+        file_set = set(files)
+        pattern = re_compile(r"^\d{2}_.*\.param$")
+
+        return self.vehicle_components_fs.json_filename in file_set and any(pattern.match(f) for f in file_set)
 
     def rename_parameter_files(self) -> None:
         if self.vehicle_dir is None or self.configuration_steps is None:
@@ -167,7 +173,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                         os_rename(old_filename_path, new_filename_path)
                         logging_info("Renamed %s to %s", old_filename, new_filename)
 
-    def _format_columns_sorted_numerically(
+    def _format_columns_sorted_numerically(  # pylint: disable=too-many-locals
         self, values: dict[str, Any], max_width: int = 105, max_columns: int = 4
     ) -> list[str]:
         """
@@ -230,7 +236,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         return result
 
-    def __extend_and_reformat_parameter_documentation_metadata(self) -> None:  # pylint: disable=too-many-branches
+    def __extend_and_reformat_parameter_documentation_metadata(self) -> None:
         for param_name, param_info in self.doc_dict.items():
             self._process_parameter_fields(param_info)
             self._process_parameter_values(param_name, param_info)
@@ -257,19 +263,22 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 param_info["min"] = float(range_parts[0].strip())
                 param_info["max"] = float(range_parts[1].strip())
 
-        # Process boolean fields
-        for field_name in ["Calibration", "ReadOnly", "RebootRequired"]:
-            if field_name in param_fields:
-                param_info[field_name] = self.str_to_bool(param_fields[field_name].strip())
+        # Process boolean fields using dict comprehension for better performance
+        boolean_fields = ["Calibration", "ReadOnly", "RebootRequired"]
+        param_info.update(
+            {
+                field_name: self.str_to_bool(param_fields[field_name].strip())
+                for field_name in boolean_fields
+                if field_name in param_fields
+            }
+        )
 
-        # Process Bitmask
+        # Process Bitmask using dict comprehension for better performance
         if "Bitmask" in param_fields:
             bitmask_items = param_fields["Bitmask"].split(",")
-            param_info["Bitmask"] = {}
-            for item in bitmask_items:
-                if ":" in item:
-                    key, value = item.split(":", 1)
-                    param_info["Bitmask"][int(key.strip())] = value.strip()
+            param_info["Bitmask"] = {
+                int(key.strip()): value.strip() for item in bitmask_items if ":" in item for key, value in [item.split(":", 1)]
+            }
 
     def _process_parameter_values(self, param_name: str, param_info: dict[str, Any]) -> None:
         """Process and convert parameter values to appropriate numeric types."""
@@ -357,9 +366,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
           Optional[bool]: True, False, or None if the string does not match any known boolean representation.
 
         """
-        if s.lower() == "true" or s.lower() == "yes" or s.lower() == "1":
+        # Use sets for faster O(1) lookup instead of multiple comparisons
+        lower_s = s.lower()
+        if lower_s in {"true", "yes", "1"}:
             return True
-        if s.lower() == "false" or s.lower() == "no" or s.lower() == "0":
+        if lower_s in {"false", "no", "0"}:
             return False
         return None
 
@@ -410,9 +421,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         """
         ret = {}
         for params in self.file_parameters.values():
-            for param, info in params.items():
-                if info.comment:
-                    ret[param] = info.comment
+            ret.update({param: info.comment for param, info in params.items() if info.comment})
         return ret
 
     def annotate_intermediate_comments_to_param_dict(self, param_dict: dict[str, float]) -> ParDict:
@@ -513,9 +522,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             for file_name in specific_files:
                 self.add_configuration_file_to_zip(zipf, file_name)
 
-            for wrote, filename in files_to_zip:
-                if wrote:
-                    self.add_configuration_file_to_zip(zipf, filename)
+            # Add conditional files using generator expression filtering
+            for filename in (filename for wrote, filename in files_to_zip if wrote):
+                self.add_configuration_file_to_zip(zipf, filename)
 
         logging_info(_("Intermediate parameter files and summary files zipped to %s"), zip_file_path)
 
