@@ -101,22 +101,36 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             save_component_to_system_templates=False,
         )
 
+        # Create mock file objects with name attribute
+        mock_file1 = MagicMock()
+        mock_file1.name = "vehicle_components.json"
+        mock_file1.is_file.return_value = True
+        mock_file2 = MagicMock()
+        mock_file2.name = "02_test.param"
+        mock_file2.is_file.return_value = True
+
+        mock_path = MagicMock()
+        mock_path.exists.return_value = True
+        mock_path.is_dir.return_value = True
+        mock_path.iterdir.return_value = [mock_file1, mock_file2]
+
         with (
-            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists", return_value=True),
-            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir", return_value=True),
-            patch(
-                "ardupilot_methodic_configurator.backend_filesystem.os_listdir",
-                return_value=["vehicle_components.json", "02_test.param"],
-            ),
+            patch("ardupilot_methodic_configurator.backend_filesystem.Path", return_value=mock_path),
             patch("ardupilot_methodic_configurator.backend_filesystem.platform_system", return_value="Linux"),
         ):
             assert filesystem.vehicle_configuration_files_exist(mock_vehicle_dir)
 
-        with (
-            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists", return_value=True),
-            patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir", return_value=True),
-            patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir", return_value=["invalid.txt"]),
-        ):
+        # Test with invalid files
+        mock_invalid_file = MagicMock()
+        mock_invalid_file.name = "invalid.txt"
+        mock_invalid_file.is_file.return_value = True
+
+        mock_path_invalid = MagicMock()
+        mock_path_invalid.exists.return_value = True
+        mock_path_invalid.is_dir.return_value = True
+        mock_path_invalid.iterdir.return_value = [mock_invalid_file]
+
+        with patch("ardupilot_methodic_configurator.backend_filesystem.Path", return_value=mock_path_invalid):
             assert not filesystem.vehicle_configuration_files_exist(mock_vehicle_dir)
 
     def test_remove_created_files_and_vehicle_dir_not_exists(self) -> None:
