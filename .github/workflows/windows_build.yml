@@ -122,21 +122,22 @@ jobs:
           retention-days: 7
 
   # Generate SLSA provenance using the official generic workflow
-  provenance:
-    needs: [build]
-    permissions:
-      actions: read    # To read the workflow path
-      id-token: write  # To sign the provenance
-      contents: write  # To add assets to a release
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@4876e96b8268fd8b7b8d8574718d06c0d0426d40 # latest commit
-    with:
-      base64-subjects: "${{ needs.build.outputs.hashes }}"
-      upload-assets: ${{ startsWith(github.ref, 'refs/tags/v') }}  # Only upload to releases for v* tags
-      continue-on-error: false  # Explicit error handling - fail fast for security issues
+#  provenance:
+#    needs: [build]
+#    permissions:
+#      actions: read    # To read the workflow path
+#      id-token: write  # To sign the provenance
+#      contents: write  # To add assets to a release
+#    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@4876e96b8268fd8b7b8d8574718d06c0d0426d40 # latest commit
+#    with:
+#      base64-subjects: "${{ needs.build.outputs.hashes }}"
+#      upload-assets: ${{ startsWith(github.ref, 'refs/tags/v') }}  # Only upload to releases for v* tags
+#      continue-on-error: false  # Explicit error handling - fail fast for security issues
 
   # Release job that depends on provenance generation
   release:
-    needs: [build, provenance]
+#    needs: [build, provenance]
+    needs: [build]
     runs-on: windows-latest
     if: startsWith(github.ref, 'refs/tags/v') || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     permissions:
