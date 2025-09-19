@@ -30,10 +30,9 @@
             "program": "ardupilot_methodic_configurator/__main__.py",
             "args": [
                 "--allow-editing-template-files",
-                "--device=COM6",
+                "--skip-check-for-updates",
                 "--skip-component-editor",
-                "--n=7",
-                "--vehicle-dir=D:\\Projekte\\Multicopter\\MethodicConfigurator\\ardupilot_methodic_configurator\\vehicle_templates\\ArduCopter\\diatone_taycan_mxc\\4.6.x-params"
+                "--vehicle-dir=D:\\Projekte\\Multicopter\\fabian_bredemeier_thesis\\data\\X500_IAV6"
             ]
         },
         {
