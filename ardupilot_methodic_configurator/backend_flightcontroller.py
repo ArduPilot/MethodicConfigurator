@@ -681,8 +681,8 @@ class FlightController:
             if progress_callback is not None and completion is not None:
                 progress_callback(int(completion * 100), 100)
 
-        complete_param_filename = str(parameter_values_filename) or "complete.param"
-        default_param_filename = str(parameter_defaults_filename) or "00_default.param"
+        complete_param_filename = str(parameter_values_filename) if parameter_values_filename else "complete.param"
+        default_param_filename = str(parameter_defaults_filename) if parameter_defaults_filename else "00_default.param"
         mavftp.cmd_getparams([complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback)
         ret = mavftp.process_ftp_reply("getparams", timeout=10)
         pdict: dict[str, float] = {}

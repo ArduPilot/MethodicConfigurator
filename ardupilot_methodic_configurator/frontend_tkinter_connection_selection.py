@@ -228,7 +228,7 @@ class ConnectionSelectionWindow(BaseWindow):
     ) -> None:
         super().__init__()
         self.root.title(_("Flight controller connection"))
-        self.root.geometry("460x462")  # Set the window size
+        self.root.geometry("520x462")  # Set the window size
         self.default_baudrate = default_baudrate
 
         # Explain why we are here
@@ -290,7 +290,7 @@ class ConnectionSelectionWindow(BaseWindow):
             download_params_on_connect=False,
             default_baudrate=self.default_baudrate,
         )
-        self.connection_selection_widgets.container_frame.pack(expand=False, fill=tk.X, padx=52, pady=6)
+        self.connection_selection_widgets.container_frame.pack(expand=False, fill=tk.X, padx=5, pady=6)
 
         # Option 3 - Skip FC connection, just edit the .param files on disk
         option3_label = ttk.Label(text=_("No connection"), style="Bold.TLabel")
