@@ -17,7 +17,6 @@ from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
-from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 
 
 class FlightControllerInfoPresenter:
@@ -66,7 +65,7 @@ class FlightControllerInfoWindow(BaseWindow):
     def __init__(self, flight_controller: FlightController) -> None:
         super().__init__()
         self.root.title(_("ArduPilot methodic configurator ") + __version__ + _(" - Flight Controller Info"))
-        self.root.geometry("500x350")  # Adjust the window size as needed
+        self.root.geometry("500x420")  # Adjust the window size as needed
 
         self.presenter = FlightControllerInfoPresenter(flight_controller)
 
@@ -81,7 +80,7 @@ class FlightControllerInfoWindow(BaseWindow):
         """Create the flight controller information display."""
         # Create a frame to hold all the labels and text fields
         self.info_frame = ttk.Frame(self.main_frame)
-        self.info_frame.pack(fill=tk.BOTH, padx=20, pady=20)
+        self.info_frame.pack(fill=tk.BOTH, padx=20, pady=(20, 10))
 
         # Dynamically create labels and text fields for each attribute
         info_data = self.presenter.get_info_data()
@@ -89,6 +88,18 @@ class FlightControllerInfoWindow(BaseWindow):
             self._create_info_row(row_nr, description, attr_value)
 
         self.info_frame.columnconfigure(1, weight=1)
+
+        # Create progress frame at the bottom
+        self.progress_frame = ttk.Frame(self.main_frame)
+        self.progress_frame.pack(fill=tk.X, padx=20, pady=(10, 20))
+
+        # Create progress bar
+        self.progress_bar = ttk.Progressbar(self.progress_frame, length=100, mode="determinate")
+        self.progress_bar.pack(side=tk.TOP, fill=tk.X, expand=False, pady=(0, 5))
+
+        # Create progress label
+        self.progress_label = ttk.Label(self.progress_frame, text=_("Ready to download parameters..."))
+        self.progress_label.pack(side=tk.TOP, fill=tk.X, expand=False)
 
     def _create_info_row(self, row_nr: int, description: str, attr_value: Union[str, dict[str, str]]) -> None:
         """Create a single row of information display."""
@@ -103,21 +114,58 @@ class FlightControllerInfoWindow(BaseWindow):
         text_field.insert(tk.END, display_value)
         text_field.configure(state="readonly")
 
+    def update_progress_bar(self, current_value: int, max_value: int) -> None:
+        """
+        Update the progress bar and the progress message with the current progress.
+
+        Args:
+            current_value (int): The current progress value.
+            max_value (int): The maximum progress value.
+
+        """
+        try:
+            # Check if progress widgets still exist
+            if not hasattr(self, "progress_bar") or self.progress_bar is None:
+                return
+
+            # Bring the main window to front (similar to original progress_window.lift())
+            self.root.lift()
+        except tk.TclError as _e:
+            msg = _("Lifting window: {_e}")
+            logging.error(msg.format(**locals()))
+            return
+
+        self.progress_bar["value"] = current_value
+        self.progress_bar["maximum"] = max_value
+
+        # Update the progress message
+        progress_message = _("Downloaded {} of {} parameters").format(current_value, max_value)
+        self.progress_label.config(text=progress_message)
+
+        # Update the display
+        self.progress_bar.update()
+        self.root.update_idletasks()
+
+        # Hide progress bar when complete
+        if current_value == max_value:
+            self.progress_frame.pack_forget()
+
     def _download_flight_controller_parameters(self) -> None:
         """Download flight controller parameters with progress feedback."""
-        param_download_progress_window = ProgressWindow(
-            self.root, _("Downloading FC parameters"), _("Downloaded {} of {} parameters")
-        )
+        # Update progress label to show we're starting
+        self.progress_label.config(text=_("Starting parameter download..."))
+        self.root.update_idletasks()
 
         try:
-            self.presenter.download_parameters(param_download_progress_window.update_progress_bar)
+            self.presenter.download_parameters(self.update_progress_bar)
         except Exception as e:  # pylint: disable=broad-exception-caught
             # Log the error
             logging.error("Failed to download parameters: %s", e)
             # Show an error message to the user
             messagebox.showerror(_("Error"), f"{_('Failed to download parameters')}: {e}")
+            # Hide progress bar on error
+            self.progress_frame.pack_forget()
         finally:
-            param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
             self.root.destroy()
 
     def get_param_default_values(self) -> ParDict:
