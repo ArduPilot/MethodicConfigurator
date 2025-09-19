@@ -194,15 +194,15 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return []
 
         # Sort values numerically by key
-        def sort_key(item: tuple[str, Any]) -> Union[int, float, str]:
+        def sort_key(item: tuple[str, Any]) -> tuple[int, Union[int, float, str]]:
             key = item[0]
             try:
-                return int(key)
+                return (0, int(key))  # sort integers and floats together
             except ValueError:
                 try:
-                    return float(key)
+                    return (0, float(key))  # sort integers and floats together
                 except ValueError:
-                    return key  # Fall back to string sorting
+                    return (1, str(key))  # Fall back to string sorting and sort them after
 
         sorted_items = sorted(values.items(), key=sort_key)
 
