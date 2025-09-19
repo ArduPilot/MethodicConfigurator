@@ -2,11 +2,11 @@ name: Windows Installer
 
 on:
   release:
-     types: [published]
+    types: [published]
   workflow_dispatch:
   push:
     paths:
-      - '**/*.py'        # Watch for changes in any Python files
+      - '**/*.py'  # Watch for changes in any Python files
 
 concurrency:
   group: ci-${{github.workflow}}-${{ github.ref }}
@@ -16,18 +16,18 @@ permissions:
   contents: read
 
 jobs:
-  windows_installer:
+  build:
     runs-on: 'windows-latest'
     strategy:
       matrix:
         python-version: ['3.13']
 
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+
     permissions:
       contents: write
-      id-token: write    # Needed for keyless signing
-      actions: read      # Needed for provenance generation
-      packages: write    # Add this permission for attestations
-      attestations: write # Add permissions for attestations
+      id-token: write
 
     steps:
       # step-security/harden-runner does not (yet) run on windows, so do not use it
@@ -39,8 +39,8 @@ jobs:
       - name: Install uv and set the python version
         uses: astral-sh/setup-uv@b75a909f75acd358c2196fb9a5f1299a9a8868a4 # v6.7.0
         with:
-            python-version: ${{ matrix.python-version }}
-            activate-environment: true
+          python-version: ${{ matrix.python-version }}
+          activate-environment: true
 
       - name: Install dependencies
         run: |
@@ -104,194 +104,59 @@ jobs:
           ISCC.exe /dMyAppVersion=$env:VERSION ardupilot_methodic_configurator.iss
           ls Output
 
-      - name: Generate GitHub Actions build provenance
-        id: gh_provenance_step # Added id
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
-        with:
-          subject-path: windows/Output/*.exe
-          subject-name: 'ardupilot_methodic_configurator'
-          push-to-registry: false
-          # Use the built-in token instead of secrets
-          github-token: ${{ github.token }}
-          show-summary: true
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62
-
+      # https://github.com/slsa-framework/slsa-github-generator/blob/main/internal/builders/generic/README.md
       - name: Generate hashes
         id: hash
+        shell: bash
         run: |
           cd windows/Output
-          $files = Get-ChildItem -Filter *.exe | ForEach-Object { $_.Name }
-          $hashes = $files | ForEach-Object {
-            $hash = (Get-FileHash -Algorithm SHA256 $_).Hash
-            $encoded = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("$($hash)  $_"))
-            $encoded
-          }
-          $hashesJoined = $hashes -join ','
-          "hashes=$hashesJoined" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          # Generate SHA256 hashes in the format expected by SLSA (sha256sum format)
+          sha256sum *.exe > checksums.txt
+          echo "hashes=$(cat checksums.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
 
-      - name: Store Executable Path
-        id: exe_path
-        run: |
-          cd windows/Output
-          $exePath = Get-ChildItem -Filter *.exe | Select-Object -First 1 -ExpandProperty FullName
-          "exe_path=$exePath" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
-      - name: Install SLSA Verifier
-        run: |
-          $version = "v2.7.0"
-          $url = "https://github.com/slsa-framework/slsa-verifier/releases/download/$version/slsa-verifier-windows-amd64.exe"
-          Invoke-WebRequest -Uri $url -OutFile "slsa-verifier.exe"
-
-          # Verify the download was successful
-          if (Test-Path "slsa-verifier.exe") {
-            Write-Host "SLSA verifier downloaded successfully to $(Get-Location)\slsa-verifier.exe"
-          } else {
-            Write-Host "::error::Failed to download SLSA verifier"
-            exit 1
-          }
-
-      - name: Generate SLSA provenance
-        uses: slsa-framework/slsa-github-generator/actions/generator/generic/create-base64-subjects-from-file@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # v2.1.0
-        with:
-          path: ${{ steps.exe_path.outputs.exe_path }}
-
-      - name: Debug SLSA provenance files
-        run: |
-          Write-Host "Looking for provenance files..."
-          $ghProvenanceFile = "${{ steps.gh_provenance_step.outputs.bundle-path }}"
-          if ($ghProvenanceFile) {
-            Write-Host "Expected provenance file from gh_provenance_step: $ghProvenanceFile"
-            if (Test-Path $ghProvenanceFile) {
-              Write-Host "Found it at the expected path."
-            } else {
-              Write-Host "::warning::Expected provenance file from gh_provenance_step NOT FOUND at path: $ghProvenanceFile"
-            }
-          } else {
-            Write-Host "::warning::No bundle-path output from gh_provenance_step."
-          }
-          $files = Get-ChildItem -Path ".", "..", "../.." -Recurse -Filter "*.intoto.jsonl" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
-          Write-Host "Found provenance files via general search:"
-          $files | ForEach-Object { Write-Host $_ }
-
-      - name: Verify SLSA Provenance
-        continue-on-error: true
-        run: |
-          $provenance = ""
-          $ghProvenanceFile = "${{ steps.gh_provenance_step.outputs.bundle-path }}"
-
-          if (-not ([string]::IsNullOrEmpty($ghProvenanceFile)) -and (Test-Path $ghProvenanceFile)) {
-            $provenance = $ghProvenanceFile
-            Write-Host "Using provenance file from 'Generate GitHub Actions build provenance' step: $provenance"
-          } else {
-            Write-Host "::warning::Provenance file from 'Generate GitHub Actions build provenance' step output not found (path: '$ghProvenanceFile'). Falling back to search..."
-            # Fallback: Find the provenance file using existing search logic
-            $provenance = Get-ChildItem -Path "." -Filter "*.intoto.jsonl" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
-            if (-not $provenance) {
-              # Try a broader search but exclude test files
-              $provenance = Get-ChildItem -Path ".", "..", "../.." -Recurse -Filter "*.intoto.jsonl" -ErrorAction SilentlyContinue |
-                Where-Object { $_.FullName -notlike "*\\\\testdata\\\\*" -and $_.FullName -notlike "*\\\\test\\\\*" } |
-                Select-Object -First 1 -ExpandProperty FullName
-            }
-          }
-
-          if (-not $provenance) {
-            Write-Host "::warning::SLSA provenance file not found, skipping verification"
-            exit 0  # Don't fail the build, but warn about it
-          }
-
-          Write-Host "Found provenance file at: $provenance"
-
-          # Verify provenance for each executable
-          cd windows/Output
-          Get-ChildItem -Filter *.exe | ForEach-Object {
-            Write-Host "Verifying SLSA provenance for $_..."
-            & "../../slsa-verifier.exe" verify-artifact $_.FullName `
-              --provenance-path "$provenance" `
-              --source-uri "github.com/${{ github.repository }}" `
-              --builder-id "https://github.com/${{ github.repository }}/.github/workflows/windows_build.yml@${{ github.ref }}"
-
-            if ($LASTEXITCODE -ne 0) {
-              Write-Host "::warning::SLSA verification failed for $_, but continuing"
-            } else {
-              Write-Host "✅ SLSA provenance verified for $_"
-            }
-          }
-
-      - name: Sign artifacts
-        run: |
-          cd windows/Output
-          # Sign each installer file with bundle output
-          Get-ChildItem -Filter *.exe | ForEach-Object {
-            cosign sign-blob --yes --output-signature "$($_.Name).sig" --bundle "$($_.Name).bundle" $_.Name
-          }
-
-      - name: Verify signatures
-        continue-on-error: true
-        run: |
-          cd windows/Output
-          # Verify each signature
-          $verificationSuccess = $true
-          Get-ChildItem -Filter *.exe | ForEach-Object {
-            Write-Host "Verifying signature for $_..."
-
-            # Check if bundle exists and use it
-            if (Test-Path "$($_.Name).bundle") {
-              Write-Host "Using bundle verification"
-              cosign verify-blob --signature "$($_.Name).sig" --bundle "$($_.Name).bundle" $_.Name `
-                --certificate-identity-regexp "https://github.com/${{ github.repository }}/.+" `
-                --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
-
-              if ($LASTEXITCODE -eq 0) {
-                Write-Host "✅ Signature verified for $_ using bundle"
-              } else {
-                Write-Host "❌ Bundle verification failed for $_"
-                $verificationSuccess = $false
-              }
-            } else {
-              Write-Host "Bundle not found, using keyless verification"
-              cosign verify-blob --signature "$($_.Name).sig" $_.Name `
-                --certificate-identity-regexp "https://github.com/${{ github.repository }}/.+" `
-                --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
-
-              if ($LASTEXITCODE -ne 0) {
-                Write-Host "❌ Signature verification failed for $_"
-                $verificationSuccess = $false
-              } else {
-                Write-Host "✅ Signature verified for $_"
-              }
-            }
-          }
-          if (-not $verificationSuccess) {
-            Write-Host "::error::Signature verification failed for one or more artifacts"
-            exit 1
-          }
-
-      - name: Upload signatures
+      - name: Upload build artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: signatures
-          path: |
-            windows/Output/*.sig
-            *.intoto.jsonl
+          name: windows-installer
+          path: windows/Output/*.exe
           retention-days: 7
 
-      - name: Archive build
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+  # Generate SLSA provenance using the official generic workflow
+  provenance:
+    needs: [build]
+    permissions:
+      actions: read    # To read the workflow path
+      id-token: write  # To sign the provenance
+      contents: write  # To add assets to a release
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@4876e96b8268fd8b7b8d8574718d06c0d0426d40 # latest commit
+    with:
+      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      upload-assets: ${{ startsWith(github.ref, 'refs/tags/v') }}  # Only upload to releases for v* tags
+      continue-on-error: false  # Explicit error handling - fail fast for security issues
+
+  # Release job that depends on provenance generation
+  release:
+    needs: [build, provenance]
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
         with:
-           name: ardupilot_methodic_configurator_setup
-           path: windows/Output
-           retention-days: 7
+          name: windows-installer
+          path: release-artifacts
 
       - name: Pre Release
         uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         with:
           tag_name: "latest"
           prerelease: true
           name: "Development Build"
-          files: windows/Output/*.*
+          files: release-artifacts/*
           generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
           append_body: false
@@ -301,7 +166,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           prerelease: false
-          files: windows/Output/*.*
+          files: release-artifacts/*
           generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
           make_latest: true
