@@ -265,7 +265,6 @@ strict_equality = true
 warn_unused_configs = true
 
 files = ["ardupilot_methodic_configurator/*.py"]
-exclude = ["tests"]
 
 [tool.pyright]
 exclude = [".venv"]
