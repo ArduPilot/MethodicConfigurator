@@ -69,8 +69,10 @@ jobs:
           fi
 
       - name: Lint the code with mypy
-        uses: sasanquaneuf/mypy-github-action@a3f3a66f97792cac0cfd11d3e5c87088e5c8f6a9 # releases/v1.3
+        uses: amilcarlucas/mypy-github-action@95c454291156b50127b2e147e807df96cb511b2c # v2.0.0
         with:
           checkName: 'mypy'   # NOTE: this needs to be the same as the job name
+          mypyFlags: ''
+          mypyFiles: ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
