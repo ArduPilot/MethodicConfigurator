@@ -12,6 +12,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from csv import writer as csv_writer
 from logging import error as logging_error
 from logging import info as logging_info
 from pathlib import Path
@@ -528,7 +529,70 @@ class ConfigurationManager:
         msg = changed_msg + (", " if nr_changed and nr_unchanged else "") + unchanged_msg
         logging_info(msg)
 
+        self._update_tuning_report()
         return nr_changed
+
+    def _update_tuning_report(self) -> None:
+        report_params = [
+            "ATC_ACCEL_P_MAX",
+            "ATC_ACCEL_R_MAX",
+            "ATC_ACCEL_Y_MAX",
+            "ATC_ANG_PIT_P",
+            "ATC_ANG_RLL_P",
+            "ATC_ANG_YAW_P",
+            "ATC_RAT_PIT_FLTD",
+            "ATC_RAT_PIT_FLTE",
+            "ATC_RAT_PIT_FLTT",
+            "ATC_RAT_RLL_FLTD",
+            "ATC_RAT_RLL_FLTE",
+            "ATC_RAT_RLL_FLTT",
+            "ATC_RAT_YAW_FLTD",
+            "ATC_RAT_YAW_FLTE",
+            "ATC_RAT_YAW_FLTT",
+            "ATC_RAT_PIT_D",
+            "ATC_RAT_PIT_I",
+            "ATC_RAT_PIT_P",
+            "ATC_RAT_RLL_D",
+            "ATC_RAT_RLL_I",
+            "ATC_RAT_RLL_P",
+            "ATC_RAT_YAW_D",
+            "ATC_RAT_YAW_I",
+            "ATC_RAT_YAW_P",
+            "INS_ACCEL_FILTER",
+            "INS_GYRO_FILTER",
+        ]
+        report_files = [
+            "00_default.param",
+            "11_initial_atc.param",
+            "16_pid_adjustment.param",
+            "23_quick_tune_results.param",
+            "31_autotune_roll_results.param",
+            "33_autotune_pitch_results.param",
+            "35_autotune_yaw_results.param",
+            "37_autotune_yawd_results.param",
+            "39_autotune_roll_pitch_results.param",
+        ]
+
+        report_file_path = Path(getattr(self.filesystem, "vehicle_dir", ".")) / "tuning_report.csv"
+
+        # Write a CSV with a header ("param", <list of files>) and one row per parameter.
+        with open(report_file_path, "w", newline="", encoding="utf-8") as file:
+            writer = csv_writer(file)
+            writer.writerow(["param", *report_files])
+
+            for param_name in report_params:
+                row = [param_name]
+                for param_file in report_files:
+                    try:
+                        if param_file == "00_default.param":
+                            value = str(self.filesystem.param_default_dict[param_name].value)
+                        else:
+                            value = str(self.filesystem.file_parameters[param_file][param_name].value)
+                    except (KeyError, ValueError):
+                        # On any unexpected structure, leave the value empty (don't crash)
+                        value = ""
+                    row.append(value)
+                writer.writerow(row)
 
     def validate_uploaded_parameters(self, selected_params: dict) -> list[str]:
         logging_info(_("Re-downloaded all parameters from the flight controller"))
