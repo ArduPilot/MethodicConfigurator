@@ -140,7 +140,7 @@ def test_init_creates_instance_with_correct_attributes(
     parameter_editor_table, mock_master, mock_local_filesystem, mock_parameter_editor
 ) -> None:
     """Test that ParameterEditorTable initializes with correct attributes."""
-    assert parameter_editor_table.root == mock_master
+    assert parameter_editor_table.main_frame == mock_master
     assert parameter_editor_table.local_filesystem == mock_local_filesystem
     assert parameter_editor_table.parameter_editor == mock_parameter_editor
     assert parameter_editor_table.current_file == ""
@@ -158,7 +158,7 @@ def test_init_configures_style(parameter_editor_table: ParameterEditorTable) -> 
 
         # Create a new instance to trigger style configuration
         ParameterEditorTable(
-            parameter_editor_table.root, parameter_editor_table.local_filesystem, parameter_editor_table.parameter_editor
+            parameter_editor_table.main_frame, parameter_editor_table.local_filesystem, parameter_editor_table.parameter_editor
         )
 
         # Verify the style was configured with expected parameters
@@ -848,7 +848,7 @@ class TestBitmaskFunctionalityBehavior:
             is_bitmask=True,
         )
 
-        parameter_editor_table.root = MagicMock()
+        parameter_editor_table.main_frame = MagicMock()
         parameter_editor_table.local_filesystem.param_default_dict = {"TEST_PARAM": Par(0.0, "default")}
 
         with (

@@ -53,7 +53,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
     def __init__(self, master, local_filesystem: LocalFilesystem, parameter_editor) -> None:  # noqa: ANN001
         super().__init__(master)
-        self.root = master
+        self.main_frame = master
         self.local_filesystem = local_filesystem
         self.parameter_editor = parameter_editor  # the parent window that contains this table
         self.current_file = ""
@@ -295,7 +295,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             if param.is_readonly
             else "yellow"
             if param.is_calibration
-            else ttk.Style(self.root).lookup("TFrame", "background"),
+            else ttk.Style(self.main_frame).lookup("TFrame", "background"),
         )
 
         tooltip_parameter_name = param.tooltip_new_value
@@ -586,9 +586,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             # Destroy the window
             window.destroy()
             # Issue a FocusIn event on something else than new_value_entry to prevent endless looping
-            self.root.focus_set()
+            self.main_frame.focus_set()
             # Run the Tk event loop once to process the event
-            self.root.update_idletasks()
+            self.main_frame.update_idletasks()
             # Re-bind the FocusIn event to new_value_entry
             event.widget.bind(
                 "<Double-Button-1>",
@@ -613,7 +613,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         # Temporarily unbind the FocusIn event to prevent triggering the window again
         event.widget.unbind("<Double-Button-1>")
-        window = tk.Toplevel(self.root)
+        window = tk.Toplevel(self.main_frame.master)
+        window.withdraw()  # Hide the window until it's fully set up
         title = _("Select {param.name} Bitmask Options")
         window.title(title.format(**locals()))
         checkbox_vars = {}
@@ -656,8 +657,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         # Make sure the window is visible before disabling the parent window
         window.deiconify()
-        self.root.update_idletasks()
-        window.grab_set()
+
+        # Center the window on the parent window using the utility function
+        BaseWindow.center_window(window, self.main_frame.master)
+
+        window.grab_set()  # Make the window modal, disable the parent window
 
         window.wait_window()  # Wait for the window to be closed
 
@@ -743,7 +747,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
     def _on_parameter_add(self, fc_parameters: dict[str, float]) -> None:
         """Handle parameter addition."""
-        add_parameter_window = BaseWindow(self.root)
+        add_parameter_window = BaseWindow(self.main_frame.master)
         add_parameter_window.root.title(_("Add Parameter to ") + self.current_file)
         add_parameter_window.root.geometry("450x300")
 
@@ -779,7 +783,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             width=28,
         )
         parameter_name_combobox.pack(padx=5, pady=5)
-        BaseWindow.center_window(add_parameter_window.root, self.root)
+        BaseWindow.center_window(add_parameter_window.root, self.main_frame.master)
         parameter_name_combobox.focus()
 
         def custom_selection_handler(event: tk.Event) -> None:

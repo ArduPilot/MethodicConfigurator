@@ -26,10 +26,22 @@ class ProgressWindow:
     a task. It includes a progress bar and a label to display the progress message.
     """
 
-    def __init__(self, master, title: str, message: str = "", width: int = 300, height: int = 80) -> None:  # noqa: ANN001, pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        master,  # noqa: ANN001
+        title: str,
+        message: str = "",
+        width: int = 300,
+        height: int = 80,
+        only_show_when_update_progress_called: bool = False,
+    ) -> None:
         self.parent = master
         self.message = message
+        self.only_show_when_update_progress_called = only_show_when_update_progress_called
+        self._shown = False
         self.progress_window = tk.Toplevel(self.parent)
+        # Withdraw immediately to prevent flicker while setting up
+        self.progress_window.withdraw()
         self.progress_window.title(title)
         self.progress_window.geometry(f"{width}x{height}")
 
@@ -44,12 +56,20 @@ class ProgressWindow:
         self.progress_label = ttk.Label(main_frame, text=message.format(0, 0))
         self.progress_label.pack(side=tk.TOP, fill=tk.X, expand=False, pady=(10, 10))
 
-        self.progress_window.lift()
+        if not isinstance(master, tk.Tk):
+            logging_error("ProgressWindow: master is not a tk.Tk instance, window centering will fail")
 
-        # Center the progress window on the parent window
+        if not self.only_show_when_update_progress_called:
+            self.progress_window.deiconify()  # needs to be done before centering, but it does flicker :(
+
+        # Center the progress window on the parent window while still withdrawn
         BaseWindow.center_window(self.progress_window, self.parent)
 
-        self.progress_bar.update()
+        if not self.only_show_when_update_progress_called:
+            # Show the window now that it's properly positioned
+            self.progress_window.lift()
+            self._shown = True
+            self.progress_bar.update()
 
     def update_progress_bar_300_pct(self, percent: int) -> None:
         self.message = _("Please be patient, {:.1f}% of {}% complete")
@@ -65,25 +85,44 @@ class ProgressWindow:
 
         """
         try:
-            if hasattr(self, "progress_window") is False or self.progress_window is None:
+            # Double check that the window still exists before updating
+            if (
+                hasattr(self, "progress_window") is False
+                or self.progress_window is None
+                or not self.progress_window.winfo_exists()
+            ):
                 return
-            self.progress_window.lift()
+
+            if self.only_show_when_update_progress_called and not self._shown:
+                self.progress_window.deiconify()
+                # Re-center the window when it's first shown
+                BaseWindow.center_window(self.progress_window, self.parent)
+                self.progress_window.lift()
+                self._shown = True
+            elif not self.only_show_when_update_progress_called:
+                self.progress_window.lift()
+
+            # Additional safety checks before updating widgets
+            if (
+                hasattr(self, "progress_bar")
+                and self.progress_bar is not None
+                and hasattr(self, "progress_label")
+                and self.progress_label is not None
+            ):
+                self.progress_bar["value"] = current_value
+                self.progress_bar["maximum"] = max_value
+
+                # Update the progress message
+                self.progress_label.config(text=self.message.format(current_value, max_value))
+
+                self.progress_bar.update()
+
+                # Close the progress window when the process is complete
+                if current_value == max_value:
+                    self.progress_window.destroy()
         except tk.TclError as _e:
-            msg = _("Lifting window: {_e}")
+            msg = _("Updating progress widgets: {_e}")
             logging_error(msg.format(**locals()))
-            return
-
-        self.progress_bar["value"] = current_value
-        self.progress_bar["maximum"] = max_value
-
-        # Update the progress message
-        self.progress_label.config(text=self.message.format(current_value, max_value))
-
-        self.progress_bar.update()
-
-        # Close the progress window when the process is complete
-        if current_value == max_value:
-            self.progress_window.destroy()
 
     def destroy(self) -> None:
         self.progress_window.destroy()
