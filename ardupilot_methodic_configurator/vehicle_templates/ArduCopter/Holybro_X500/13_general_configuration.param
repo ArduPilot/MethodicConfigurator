@@ -1,0 +1,29 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+AUTO_OPTIONS,0
+BRD_RTC_TZ_MIN,60  # Berlin time zone
+BRD_SAFETY_MASK,16383  # Main motors can operate
+BRD_SAFETYOPTION,0  # No safety button
+EK3_SRC1_POSZ,1  # Use the default, it is safer, only barometer will be used
+FENCE_TYPE,7  # obey local regulations and safety measures
+FS_EKF_ACTION,1
+FS_OPTIONS,24  # No need to failsafe if already landing
+INS_ACCEL_FILTER,10  # the default is 20 and that lets too much noise in
+INS_POS1_X,0
+INS_POS1_Y,0
+INS_POS2_X,0
+INS_POS2_Y,0
+LAND_ALT_LOW,1000
+NTF_BUZZ_PIN,-1
+PRX1_TYPE,0
+RNGFND1_TYPE,0
+RTL_ALT,500  # RTL at 5m is needed inside the hangar
+RTL_LOIT_TIME,2000  # The default is too long. This reduces the time
+SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation
+SERIAL2_BAUD,57  # The FrSky Archer R6 telemetry baudrate
+SERIAL2_OPTIONS,7  # The FrSky Archer R6 telemetry needs this to work
+SERIAL2_PROTOCOL,10  # The FrSky Archer R6 telemetry protocol
+SERIAL4_BAUD,230
+SERIAL4_PROTOCOL,-1
+SERIAL7_BAUD,115
+SERIAL7_PROTOCOL,-1
