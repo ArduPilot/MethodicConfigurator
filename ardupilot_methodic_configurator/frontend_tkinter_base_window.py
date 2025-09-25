@@ -24,6 +24,7 @@ import io
 import os
 import tkinter as tk
 import tkinter.font as tkfont
+from platform import system as platform_system
 
 # from logging import debug as logging_debug
 # from logging import info as logging_info
@@ -54,6 +55,58 @@ def is_debugging() -> bool:
     except (TypeError, RuntimeError) as e:
         logging_error(_("Error while checking debugpy connection: %s"), e)
         return False
+
+
+def safe_font_nametofont(font_name: str, root: Optional[Union[tk.Tk, tk.Toplevel]] = None) -> Optional[tkfont.Font]:
+    """
+    Safely get a named font, with platform-specific fallbacks for macOS.
+    
+    Args:
+        font_name: Name of the font to retrieve (e.g., "TkDefaultFont")
+        root: Optional tkinter root window for context
+        
+    Returns:
+        Font object if available, None if not found
+        
+    Note:
+        On macOS, TkDefaultFont may not be available during initialization.
+        This function provides safe fallbacks for such cases.
+    """
+    try:
+        return tkfont.nametofont(font_name, root=root)
+    except tk.TclError:
+        # On macOS and some configurations, named fonts may not be available
+        # Return None to allow calling code to handle the fallback
+        return None
+
+
+def get_safe_default_font_size(root: Optional[Union[tk.Tk, tk.Toplevel]] = None) -> int:
+    """
+    Get a safe default font size with platform-specific fallbacks.
+    
+    Args:
+        root: Optional tkinter root window for context
+        
+    Returns:
+        Font size as integer, with appropriate fallbacks for each platform
+    """
+    # Try to get TkDefaultFont first
+    font = safe_font_nametofont("TkDefaultFont", root)
+    if font:
+        try:
+            size = font.cget("size")
+            # Handle negative font sizes (common on Linux)
+            return abs(size) if size < 0 else size
+        except tk.TclError:
+            pass
+    
+    # Platform-specific fallbacks
+    if platform_system() == "Windows":
+        return 9
+    elif platform_system() == "Darwin":  # macOS
+        return 13
+    else:  # Linux and others
+        return 12
 
 
 class BaseWindow:
@@ -160,7 +213,7 @@ class BaseWindow:
         style.theme_use("alt")
 
         # Create custom styles with DPI-aware font sizes
-        self.default_font_size = tkfont.nametofont("TkDefaultFont").cget("size")
+        self.default_font_size = get_safe_default_font_size(self.root)
         # Warning: on linux the font size might be negative
         bold_font_size = self.calculate_scaled_font_size(self.default_font_size)
         style.configure("Bold.TLabel", font=("TkDefaultFont", bold_font_size, "bold"))
