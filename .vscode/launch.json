@@ -58,6 +58,15 @@
                 "--allow-editing-template-files",
                 "--loglevel=DEBUG"
             ]
+        },
+        {
+            "name": "Python Debugger: frontend_tkinter_motor_test.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "ardupilot_methodic_configurator/frontend_tkinter_motor_test.py",
+            "args": [
+                "--loglevel=DEBUG"
+            ]
         }
     ]
 }
