@@ -11,9 +11,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
 import tkinter as tk
-from platform import system as platform_system
 from tkinter import font as tkFont  # noqa: N812
 from tkinter import ttk
+
+from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config, safe_font_nametofont
 
 
 class RichText(tk.Text):  # pylint: disable=too-many-ancestors
@@ -44,12 +45,21 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        default_font = tkFont.nametofont("TkDefaultFont")
-        default_size = default_font.cget("size")
-
-        bold_font = tkFont.Font(**default_font.configure())  # type: ignore[arg-type]
-        italic_font = tkFont.Font(**default_font.configure())  # type: ignore[arg-type]
-        h1_font = tkFont.Font(**default_font.configure())  # type: ignore[arg-type]
+        default_font = safe_font_nametofont()
+        if default_font:
+            # Use the actual font configuration if available
+            bold_font = tkFont.Font(**default_font.configure())  # type: ignore[arg-type]
+            italic_font = tkFont.Font(**default_font.configure())  # type: ignore[arg-type]
+            h1_font = tkFont.Font(**default_font.configure())  # type: ignore[arg-type]
+            default_size = default_font.cget("size")
+        else:
+            # Get safe default font configuration
+            default_config = get_safe_font_config()
+            # Create fonts with safe config
+            bold_font = tkFont.Font(**default_config)  # type: ignore[arg-type]
+            italic_font = tkFont.Font(**default_config)  # type: ignore[arg-type]
+            h1_font = tkFont.Font(**default_config)  # type: ignore[arg-type]
+            default_size = int(default_config.get("size", 0))
 
         bold_font.configure(weight="bold")
         italic_font.configure(slant="italic")
@@ -76,11 +86,9 @@ def get_widget_font_family_and_size(widget: tk.Widget) -> tuple[str, int]:
     style = ttk.Style()
     widget_style = widget.cget("style")  # Get the style used by the widget
     font_name = style.lookup(widget_style, "font")
-    font_dict = tkFont.nametofont(font_name).config()
 
-    default_font_family = "Segoe UI" if platform_system() == "Windows" else "Helvetica"
-    default_font_size = 9 if platform_system() == "Windows" else -12
-
-    if font_dict is None:
-        return default_font_family, default_font_size
-    return font_dict.get("family", default_font_family), font_dict.get("size", default_font_size)
+    # Safely get platform-specific font configuration
+    font_dict = get_safe_font_config(font_name)
+    family = font_dict.get("family", "")
+    size = font_dict.get("size", 0)
+    return str(family), int(size)
