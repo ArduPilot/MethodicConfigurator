@@ -1,0 +1,5 @@
+ATC_ACCEL_R_MAX,189720.921875  # Vehicle has high power-to-weight ratio and is very fast
+ATC_ANG_RLL_P,18.379057  # higher value mean a tighter tune
+ATC_RAT_RLL_D,0.00528
+ATC_RAT_RLL_I,0.155054
+ATC_RAT_RLL_P,0.155054

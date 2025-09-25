@@ -1,0 +1,10 @@
+ARMING_RUDDER,2
+FS_THR_VALUE,970  # A bit lower to be on the safe side
+RC_OPTIONS,32
+RC_PROTOCOLS,8  # Selected in the component editor
+RC10_OPTION,0
+RC6_OPTION,4  # Return home automatically if needed
+RC7_OPTION,300  # For emergencies, be able to stop all motors at once
+RC8_OPTION,31
+RC9_OPTION,0
+RSSI_TYPE,0

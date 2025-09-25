@@ -1,0 +1,4 @@
+ATC_RATE_FF_ENAB,0  # test the stabilization loops independent of the input shaping
+INS_LOG_BAT_MASK,0  # IMU batch logging no longer required, notch filter setup is complete, this reduces processor load and log file size
+INS_RAW_LOG_OPT,0  # Gyro raw logging no longer required, notch filter setup is complete, this reduces processor load and log file size
+LOG_BITMASK,145118  # Disable fast harmonic notch logging

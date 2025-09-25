@@ -1,0 +1,8 @@
+BRD_HEAT_TARG,65  # Reasonable for most places on this planet
+INS_TCAL1_ENABLE,2  # Activates the temperature calibration for IMU 1 at the next start
+INS_TCAL1_TMAX,70  # CubeOrange has an heater that heats up the board to almost 70 deg
+INS_TCAL2_ENABLE,2  # Activates the temperature calibration for IMU 2 at the next start
+INS_TCAL2_TMAX,70  # CubeOrange has an heater that heats up the board to almost 70 deg
+INS_TCAL3_ENABLE,2  # Activates the temperature calibration for IMU 3 at the next start
+LOG_BITMASK,524416  # Only for IMU and Raw-IMU
+LOG_DISARMED,1  # Gather data for the offline IMU temperature calibration while the FC is disarmed

@@ -3,24 +3,24 @@
     "Components": {
         "Flight Controller": {
             "Product": {
-                "Manufacturer": "Holybro",
-                "Model": "Pixhawk6C-bdshot",
+                "Manufacturer": "ArduPilot,AET,Airvolute,Aocoda-RC-H743Dual,DM,CSKY,GreenSight,Japan Aviation Electronics Industry Ltd.,mRo,ORBITH743,Horizon31,Dheeran labs,Qiotek,Sierra Aerospace,SkySakura",
+                "Model": "Pixhawk4",
                 "URL": "https://holybro.com/products/pixhawk-6c?srsltid=AfmBOoqx6fEclM8l4wICaZcGtR5ecABosliproB7TozPMEdYY7SG0A_t",
                 "Version": "1.0"
             },
             "Firmware": {
                 "Type": "ArduCopter",
-                "Version": "4.5.7 official"
+                "Version": "4.6.2 official"
             },
             "Specifications": {
-                "MCU Series": "STM32H7xx"
+                "MCU Series": "STM32F7xx"
             },
-            "Notes": "The Pixhawk 6C with dimensions: 84.8 * 44 * 12.4 mm"
+            "Notes": ""
         },
         "Frame": {
             "Product": {
                 "Manufacturer": "Holybro",
-                "Model": "X500 V2",
+                "Model": "X500",
                 "URL": "https://holybro.com/products/x500-v2-kits?srsltid=AfmBOor9p_QpA5CNDhM99OCZ4DMVM1eUJ8H_dLW4FpDZgz0VR01YJ_M8",
                 "Version": "Payload: 1500g (without Battery, 70% Throttle)"
             },
@@ -28,50 +28,50 @@
                 "TOW min Kg": 1.09,
                 "TOW max Kg": 2.11
             },
-            "Notes": "Frame is X500 V2 type. Look on holybro site for more specifications"
+            "Notes": "Frame is X500 type. Look on holybro site for more specifications"
         },
         "RC Controller": {
             "Product": {
-                "Manufacturer": "FlySky",
-                "Model": "FS-i6X",
-                "URL": "https://www.flysky-cn.com/fsi6x",
-                "Version": "1.0"
+                "Manufacturer": "FrSky",
+                "Model": "Taranis Q X7",
+                "URL": "https://www.frsky-rc.com/product/taranis-q-x7-2/",
+                "Version": ""
             },
             "Firmware": {
-                "Type": "AFHDS 2A",
-                "Version": "V1.0.52"
+                "Type": "OpenTx",
+                "Version": "2.3.10-otx (7ac1ecb6)"
             },
-            "Notes": "It has 10 channels, but only 6 can be used by the receiver."
+            "Notes": "With yappu 2.9.5"
         },
         "RC Transmitter": {
             "Product": {
-                "Manufacturer": "FlySky",
-                "Model": "FS-i6X",
-                "URL": "ttps://www.flysky-cn.com/fsi6x",
-                "Version": "1.0"
+                "Manufacturer": "FrSky",
+                "Model": "ISRM-N 1.1.1/2.1.0EU",
+                "URL": "https://www.frsky-rc.com/product/taranis-q-x7-2/",
+                "Version": "1.1.1"
             },
             "Firmware": {
-                "Type": "AFHDS 2A",
-                "Version": "V1.0.52"
+                "Type": "ISRM-M",
+                "Version": "2.1.10EU"
             },
             "Notes": "integrated in RC controller"
         },
         "RC Receiver": {
             "Product": {
-                "Manufacturer": "FlySky",
-                "Model": "FS-IA6B",
-                "URL": "https://www.flysky-cn.com/ia6b-canshu",
-                "Version": "V1.0"
+                "Manufacturer": "FrSky",
+                "Model": "Archer R6",
+                "URL": "https://www.frsky-rc.com/archer-r6/",
+                "Version": "1.2.0"
             },
             "Firmware": {
-                "Type": "AFHDS 2A",
-                "Version": "V1.0.52"
+                "Type": "Archer-X",
+                "Version": "2.1.14"
             },
             "FC Connection": {
                 "Type": "RCin/SBUS",
-                "Protocol": "PPM"
+                "Protocol": "SBUS"
             },
-            "Notes": "This receiver is connected to the pixhawk 6C PPM/SBUS RC entrance and uses PPM protocol"
+            "Notes": ""
         },
         "Telemetry": {
             "Product": {
@@ -139,19 +139,19 @@
                 "Type": "Main Out",
                 "Protocol": "Normal"
             },
-            "Notes": "Main Out connectie want All in one has the current and the pwm modulation for the ESC's"
+            "Notes": ""
         },
         "Motors": {
             "Product": {
                 "Manufacturer": "Holybro",
-                "Model": "2216-920KV",
-                "URL": "https://nl.aliexpress.com/item/1005003954474597.html?gatewayAdapt=glo2nld",
+                "Model": "2216-880KV",
+                "URL": "https://www.mybotshop.de/Holybro-Brushless-S500-V2-Motor",
                 "Version": ""
             },
             "Specifications": {
                 "Poles": 14
             },
-            "Notes": "High thrust and powerful motors"
+            "Notes": ""
         },
         "Propellers": {
             "Product": {
@@ -167,22 +167,22 @@
         },
         "GNSS Receiver": {
             "Product": {
-                "Manufacturer": "Holybro",
-                "Model": "M10",
-                "URL": "https://holybro.com/products/m10-gps?srsltid=AfmBOootSZi5Pc_2XhliqsKy-u3_8l8SKZ8tzd5wDuPMENtL-ZeLngUL",
-                "Version": "1"
+                "Manufacturer": "CubePilot",
+                "Model": "Here+",
+                "URL": "https://ardupilot.org/copter/docs/common-here-plus-gps.html",
+                "Version": ""
             },
             "Firmware": {
-                "Type": "Ublox",
-                "Version": "M10"
+                "Type": "uBlox",
+                "Version": ""
             },
             "FC Connection": {
                 "Type": "SERIAL3",
                 "Protocol": "uBlox"
             },
-            "Notes": "uBlox M10 GNSS"
+            "Notes": ""
         }
     },
-    "Program version": "2.0.1",
-    "Configuration template": "X11_plus"
+    "Program version": "2.2.0",
+    "Configuration template": "Holybro_X500_V2"
 }
