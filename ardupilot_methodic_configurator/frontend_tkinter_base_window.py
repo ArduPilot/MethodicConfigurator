@@ -24,11 +24,11 @@ import io
 import os
 import tkinter as tk
 import tkinter.font as tkfont
-from platform import system as platform_system
 
 # from logging import debug as logging_debug
 # from logging import info as logging_info
 from logging import error as logging_error
+from platform import system as platform_system
 from tkinter import ttk
 from typing import Optional, Union
 
@@ -60,17 +60,18 @@ def is_debugging() -> bool:
 def safe_font_nametofont(font_name: str, root: Optional[Union[tk.Tk, tk.Toplevel]] = None) -> Optional[tkfont.Font]:
     """
     Safely get a named font, with platform-specific fallbacks for macOS.
-    
+
     Args:
         font_name: Name of the font to retrieve (e.g., "TkDefaultFont")
         root: Optional tkinter root window for context
-        
+
     Returns:
         Font object if available, None if not found
-        
+
     Note:
         On macOS, TkDefaultFont may not be available during initialization.
         This function provides safe fallbacks for such cases.
+
     """
     try:
         return tkfont.nametofont(font_name, root=root)
@@ -83,12 +84,13 @@ def safe_font_nametofont(font_name: str, root: Optional[Union[tk.Tk, tk.Toplevel
 def get_safe_default_font_size(root: Optional[Union[tk.Tk, tk.Toplevel]] = None) -> int:
     """
     Get a safe default font size with platform-specific fallbacks.
-    
+
     Args:
         root: Optional tkinter root window for context
-        
+
     Returns:
         Font size as integer, with appropriate fallbacks for each platform
+
     """
     # Try to get TkDefaultFont first
     font = safe_font_nametofont("TkDefaultFont", root)
@@ -99,14 +101,14 @@ def get_safe_default_font_size(root: Optional[Union[tk.Tk, tk.Toplevel]] = None)
             return abs(size) if size < 0 else size
         except tk.TclError:
             pass
-    
+
     # Platform-specific fallbacks
     if platform_system() == "Windows":
         return 9
-    elif platform_system() == "Darwin":  # macOS
+    if platform_system() == "Darwin":  # macOS
         return 13
-    else:  # Linux and others
-        return 12
+    # Linux and others
+    return 12
 
 
 class BaseWindow:

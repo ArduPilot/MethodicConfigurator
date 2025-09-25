@@ -20,17 +20,18 @@ from typing import Optional, Union
 def safe_font_nametofont(font_name: str, root: Optional[Union[tk.Tk, tk.Toplevel]] = None) -> Optional[tkFont.Font]:
     """
     Safely get a named font, with platform-specific fallbacks for macOS.
-    
+
     Args:
         font_name: Name of the font to retrieve (e.g., "TkDefaultFont")
         root: Optional tkinter root window for context
-        
+
     Returns:
         Font object if available, None if not found
-        
+
     Note:
         On macOS, TkDefaultFont may not be available during initialization.
         This function provides safe fallbacks for such cases.
+
     """
     try:
         return tkFont.nametofont(font_name, root=root)
@@ -43,12 +44,13 @@ def safe_font_nametofont(font_name: str, root: Optional[Union[tk.Tk, tk.Toplevel
 def get_safe_default_font_config(root: Optional[Union[tk.Tk, tk.Toplevel]] = None) -> dict[str, str | int]:
     """
     Get safe default font configuration with platform-specific fallbacks.
-    
+
     Args:
         root: Optional tkinter root window for context
-        
+
     Returns:
         Font configuration dict with 'family' and 'size' keys
+
     """
     # Try to get TkDefaultFont first
     font = safe_font_nametofont("TkDefaultFont", root)
@@ -63,14 +65,14 @@ def get_safe_default_font_config(root: Optional[Union[tk.Tk, tk.Toplevel]] = Non
                 return config
         except tk.TclError:
             pass
-    
+
     # Platform-specific fallbacks
     if platform_system() == "Windows":
         return {"family": "Segoe UI", "size": 9}
-    elif platform_system() == "Darwin":  # macOS
+    if platform_system() == "Darwin":  # macOS
         return {"family": "Helvetica", "size": 13}
-    else:  # Linux and others
-        return {"family": "Helvetica", "size": 12}
+    # Linux and others
+    return {"family": "Helvetica", "size": 12}
 
 
 class RichText(tk.Text):  # pylint: disable=too-many-ancestors
@@ -104,7 +106,7 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
         # Get safe default font configuration
         default_config = get_safe_default_font_config()
         default_size = default_config["size"]
-        
+
         # Try to use TkDefaultFont if available, otherwise use safe config
         default_font = safe_font_nametofont("TkDefaultFont")
         if default_font:
@@ -152,7 +154,7 @@ def get_widget_font_family_and_size(widget: tk.Widget) -> tuple[str, int]:
     style = ttk.Style()
     widget_style = widget.cget("style")  # Get the style used by the widget
     font_name = style.lookup(widget_style, "font")
-    
+
     # Safely get font configuration
     font = safe_font_nametofont(font_name)
     if font:
