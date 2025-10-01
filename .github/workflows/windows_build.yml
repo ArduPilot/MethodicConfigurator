@@ -46,8 +46,16 @@ jobs:
         run: |
           uv pip install .[win_dist]
 
+      - name: Restore Inno Setup installer from cache
+        id: cache-innosetup
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: installer.exe
+          key: innosetup-6.5.4-exe
+
       - name: Download Inno Setup installer
-        run: curl -L -o installer.exe http://files.jrsoftware.org/is/6/innosetup-6.4.3.exe
+        if: steps.cache-innosetup.outputs.cache-hit != 'true'
+        run: curl -L -o installer.exe http://files.jrsoftware.org/is/6/innosetup-6.5.4.exe
 
       - name: Install Inno Setup
         run: ./installer.exe /verysilent /allusers /dir=inst
@@ -96,13 +104,26 @@ jobs:
             Write-Host "::warning::Running in a fork which may have limited permissions"
           }
 
+      - name: Restore ChineseSimplified.isl from cache
+        id: cache-chinese-isl
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: ChineseSimplified.isl
+          key: chinese-simplified-isl-6.5
+
+      - name: Download ChineseSimplified.isl
+        if: steps.cache-chinese-isl.outputs.cache-hit != 'true'
+        run: |
+          curl -L -o ChineseSimplified.isl https://raw.githubusercontent.com/jrsoftware/issrc/refs/heads/main/Files/Languages/Unofficial/ChineseSimplified.isl
+
       - name: Build installer
         run: |
+          New-Item -ItemType Directory -Force -Path "inst\Languages"
+          Copy-Item "ChineseSimplified.isl" -Destination "inst\Languages\ChineseSimplified.isl"
           cd windows
           $env:VERSION=$(python return_version.py)
-          curl -L -o "c:\program files (x86)\inno setup 6\Languages\ChineseSimplified.isl" https://raw.githubusercontent.com/jrsoftware/issrc/refs/heads/main/Files/Languages/Unofficial/ChineseSimplified.isl
-          ISCC.exe /dMyAppVersion=$env:VERSION ardupilot_methodic_configurator.iss
-          ls Output
+          Start-Process -FilePath "..\inst\ISCC.exe" -ArgumentList "/dMyAppVersion=$env:VERSION", "ardupilot_methodic_configurator.iss" -Wait -NoNewWindow
+          Get-ChildItem Output
 
       # https://github.com/slsa-framework/slsa-github-generator/blob/main/internal/builders/generic/README.md
       - name: Generate hashes
