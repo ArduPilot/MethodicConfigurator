@@ -171,6 +171,246 @@ jobs:
           name: windows-installer
           path: release-artifacts
 
+      - name: Rename installer for pre-release
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem release-artifacts\*.exe
+          foreach ($file in $files) {
+            $newName = $file.Name -replace '_setup_.*\.exe$', '_setup_latest_pre_release.exe'
+            Rename-Item $file.FullName $newName
+            Write-Host "Renamed $($file.Name) to $newName"
+          }
+
+      - name: Generate categorized release notes
+        id: release_notes
+        shell: pwsh
+        run: |
+          # Determine if this is a pre-release or stable release
+          $isPreRelease = "${{ github.ref }}" -eq "refs/heads/${{ github.event.repository.default_branch }}"
+          $isStableRelease = "${{ github.ref }}" -like "refs/tags/v*"
+
+          try {
+            if ($isPreRelease) {
+              # For pre-releases, compare against latest stable release
+              Write-Host "Fetching latest stable release..."
+              $releases = gh release list --limit 50 --json tagName,isPrerelease 2>$null
+              if (-not $releases) {
+                Write-Host "Failed to fetch releases"
+                echo "notes=" >> $env:GITHUB_OUTPUT
+                return
+              }
+
+              $releaseList = $releases | ConvertFrom-Json
+              $latestStable = $releaseList | Where-Object { -not $_.isPrerelease -and $_.tagName } | Select-Object -First 1
+
+              if ($latestStable -and $latestStable.tagName) {
+                $compareFrom = $latestStable.tagName
+                $releaseType = "pre-release"
+                $releaseTitle = "🚧 Development Build"
+                $releaseWarning = "**⚠️ This is an unstable development build. Use at your own risk!**"
+                Write-Host "Pre-release: Comparing against latest stable release: $compareFrom"
+              } else {
+                $compareFrom = ""
+                Write-Host "No stable release found for comparison"
+              }
+            } elseif ($isStableRelease) {
+              # For stable releases, compare against previous release (stable or pre-release)
+              Write-Host "Fetching previous releases..."
+              $releases = gh release list --limit 50 --json tagName 2>$null
+              if (-not $releases) {
+                Write-Host "Failed to fetch releases"
+                echo "notes=" >> $env:GITHUB_OUTPUT
+                return
+              }
+
+              $allReleases = $releases | ConvertFrom-Json
+              $currentTag = "${{ github.ref }}" -replace "refs/tags/", ""
+              $previousRelease = $allReleases | Where-Object { $_.tagName -ne $currentTag -and $_.tagName } | Select-Object -First 1
+
+              if ($previousRelease -and $previousRelease.tagName) {
+                $compareFrom = $previousRelease.tagName
+                $releaseType = "stable"
+                $releaseTitle = "🎉 Stable Release"
+                $releaseWarning = ""
+                Write-Host "Stable release: Comparing against previous release: $compareFrom"
+              } else {
+                $compareFrom = ""
+                Write-Host "No previous release found for comparison"
+              }
+            } else {
+              Write-Host "Neither pre-release nor stable release, skipping"
+              echo "notes=" >> $env:GITHUB_OUTPUT
+              return
+            }
+          }
+          catch {
+            Write-Host "Error during release detection: $($_.Exception.Message). Using auto-generated notes."
+            echo "notes=" >> $env:GITHUB_OUTPUT
+            return
+          }
+
+          if ($compareFrom) {
+            try {
+              # Get commits since comparison point with error handling
+              Write-Host "Fetching commits from $compareFrom to ${{ github.sha }}"
+              $commits = gh api "repos/${{ github.repository }}/compare/$compareFrom...${{ github.sha }}" --jq '.commits[] | {message: .commit.message, sha: .sha, author: .commit.author.name, url: .html_url}' 2>$null
+
+              if (-not $commits) {
+                Write-Host "No commits found or API call failed, falling back to auto-generated notes"
+                echo "notes=" >> $env:GITHUB_OUTPUT
+                return
+              }
+
+              $commitList = $commits | ConvertFrom-Json
+              if (-not $commitList -or $commitList.Count -eq 0) {
+                Write-Host "No commits to process"
+                echo "notes=" >> $env:GITHUB_OUTPUT
+                return
+              }
+            }
+            catch {
+              Write-Host "Error fetching commits: $($_.Exception.Message). Using auto-generated notes."
+              echo "notes=" >> $env:GITHUB_OUTPUT
+              return
+            }
+
+            # Initialize grouped commits using ArrayList for better performance
+            $grouped = @{
+              'feat' = New-Object System.Collections.ArrayList
+              'fix' = New-Object System.Collections.ArrayList
+              'docs' = New-Object System.Collections.ArrayList
+              'style' = New-Object System.Collections.ArrayList
+              'refactor' = New-Object System.Collections.ArrayList
+              'perf' = New-Object System.Collections.ArrayList
+              'test' = New-Object System.Collections.ArrayList
+              'build' = New-Object System.Collections.ArrayList
+              'ci' = New-Object System.Collections.ArrayList
+              'chore' = New-Object System.Collections.ArrayList
+              'revert' = New-Object System.Collections.ArrayList
+              'other' = New-Object System.Collections.ArrayList
+            }
+
+            foreach ($commit in $commitList) {
+              # Input validation
+              if (-not $commit.message -or -not $commit.sha -or -not $commit.url) {
+                Write-Host "Skipping invalid commit object"
+                continue
+              }
+
+              $message = ($commit.message -split "`n" | Select-Object -First 1).Trim()
+
+              # Safe substring operation
+              $shortSha = if ($commit.sha.Length -ge 7) {
+                $commit.sha.Substring(0, 7)
+              } else {
+                $commit.sha
+              }
+
+              $commitUrl = $commit.url
+
+              # Sanitize message to prevent markdown injection
+              $sanitizedMessage = $message -replace '[<>&"]', '' -replace '\[', '\\[' -replace '\]', '\\]' -replace '`', '\\`'
+
+              # Parse conventional commit format
+              if ($sanitizedMessage -match '^(\w+)(\(.+\))?\s*!?\s*:\s*(.+)$') {
+                $type = $matches[1].ToLower()
+                $description = $matches[3].Trim()
+
+                # Limit description length
+                if ($description.Length -gt 100) {
+                  $description = $description.Substring(0, 97) + "..."
+                }
+
+                if ($grouped.ContainsKey($type)) {
+                  $null = $grouped[$type].Add("- **$description** ([$shortSha]($commitUrl))")
+                } else {
+                  $null = $grouped['other'].Add("- **$description** ([$shortSha]($commitUrl))")
+                }
+              } else {
+                # Non-conventional commit
+                $truncatedMessage = if ($sanitizedMessage.Length -gt 100) {
+                  $sanitizedMessage.Substring(0, 97) + "..."
+                } else {
+                  $sanitizedMessage
+                }
+                $null = $grouped['other'].Add("- **$truncatedMessage** ([$shortSha]($commitUrl))")
+              }
+            }
+
+            # Build categorized release notes
+            $sections = @()
+
+            # Define section mappings with emojis
+            $sectionMap = @{
+              'feat' = @{ title = '🚀 New Features'; items = $grouped['feat'] }
+              'fix' = @{ title = '🐛 Bug Fixes'; items = $grouped['fix'] }
+              'docs' = @{ title = '📚 Documentation'; items = $grouped['docs'] }
+              'perf' = @{ title = '⚡ Performance'; items = $grouped['perf'] }
+              'refactor' = @{ title = '♻️ Code Refactoring'; items = $grouped['refactor'] }
+              'style' = @{ title = '💎 Style Changes'; items = $grouped['style'] }
+              'test' = @{ title = '🧪 Tests'; items = $grouped['test'] }
+              'build' = @{ title = '📦 Build System'; items = $grouped['build'] }
+              'ci' = @{ title = '⚙️ CI/CD'; items = $grouped['ci'] }
+              'chore' = @{ title = '🔧 Maintenance'; items = $grouped['chore'] }
+              'revert' = @{ title = '⏪ Reverts'; items = $grouped['revert'] }
+              'other' = @{ title = '📋 Other Changes'; items = $grouped['other'] }
+            }
+
+            # Process sections in a defined order for consistency
+            $orderedKeys = @('feat', 'fix', 'perf', 'refactor', 'docs', 'style', 'test', 'build', 'ci', 'chore', 'revert', 'other')
+            foreach ($key in $orderedKeys) {
+              if ($sectionMap.ContainsKey($key) -and $sectionMap[$key].items.Count -gt 0) {
+                $sections += ""
+                $sections += "### $($sectionMap[$key].title)"
+                $sections += ""
+                $sections += $sectionMap[$key].items.ToArray()
+              }
+            }
+
+            $changesSummary = if ($sections.Count -gt 0) { $sections -join "`n" } else { "No changes found." }
+
+            # Build release notes based on release type
+            if ($isPreRelease) {
+              $fullNotes = @"
+          ## $releaseTitle
+
+          $releaseWarning
+
+          ### Changes since last stable release ($compareFrom):
+          $changesSummary
+
+          ---
+          **Build Info:**
+          - Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+          - Build: #${{ github.run_number }}
+          - Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+          "@
+            } else {
+              $currentVersion = "${{ github.ref }}" -replace "refs/tags/", ""
+              $fullNotes = @"
+          ## $releaseTitle
+
+          ### Changes since previous release ($compareFrom):
+          $changesSummary
+
+          ---
+          **Release Info:**
+          - Version: $currentVersion
+          - Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+          "@
+            }
+
+            # Output the notes for next step (escape for multiline)
+            $fullNotes = $fullNotes -replace "(\r\n|\r|\n)", "%0A"
+            echo "notes=$fullNotes" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "No comparison point found, using auto-generated notes"
+            echo "notes=" >> $env:GITHUB_OUTPUT
+          }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Pre Release
         uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
         if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
@@ -179,9 +419,9 @@ jobs:
           prerelease: true
           name: "Development Build"
           files: release-artifacts/*
-          generate_release_notes: true
+          body: ${{ steps.release_notes.outputs.notes || '' }}
+          generate_release_notes: ${{ steps.release_notes.outputs.notes == '' }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          append_body: false
 
       - name: Release
         uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
@@ -189,6 +429,7 @@ jobs:
         with:
           prerelease: false
           files: release-artifacts/*
-          generate_release_notes: true
+          body: ${{ steps.release_notes.outputs.notes || '' }}
+          generate_release_notes: ${{ steps.release_notes.outputs.notes == '' }}
           token: ${{ secrets.GITHUB_TOKEN }}
           make_latest: true
