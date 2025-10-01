@@ -69,7 +69,7 @@ jobs:
           fi
 
       - name: Lint the code with mypy
-        uses: amilcarlucas/mypy-github-action@95c454291156b50127b2e147e807df96cb511b2c # v2.0.0
+        uses: amilcarlucas/mypy-github-action@1c66c3e030d835206f4fda2bbc8b0ed4c8a75769 # v2.0.1
         with:
           checkName: 'mypy'   # NOTE: this needs to be the same as the job name
           mypyFlags: ''
