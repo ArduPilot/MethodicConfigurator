@@ -194,10 +194,57 @@ jobs:
             if ($isPreRelease) {
               # For pre-releases, compare against latest stable release
               Write-Host "Fetching latest stable release..."
-              $releases = gh release list --limit 50 --json tagName,isPrerelease 2>$null
+              Write-Host "GitHub token available: $($env:GH_TOKEN -ne $null -and $env:GH_TOKEN -ne '')"
+              Write-Host "Repository: ${{ github.repository }}"
+
+              # Try multiple approaches to fetch releases
+              $releases = $null
+
+              # First try with gh CLI
+              try {
+                $releases = gh release list --repo "${{ github.repository }}" --limit 50 --json tagName,isPrerelease 2>$null
+                if ($LASTEXITCODE -ne 0) {
+                  # Capture stderr for logging
+                  $ghError = gh release list --repo "${{ github.repository }}" --limit 50 --json tagName,isPrerelease 1>$null 2>&1
+                  Write-Host "gh CLI failed with exit code: $LASTEXITCODE"
+                  Write-Host "gh CLI stderr: $ghError"
+                  $releases = $null
+                }
+              }
+              catch {
+                Write-Host "gh CLI exception: $($_.Exception.Message)"
+                $releases = $null
+              }
+
+              # Fallback to REST API if gh CLI fails
               if (-not $releases) {
-                Write-Host "Failed to fetch releases"
-                echo "notes=" >> $env:GITHUB_OUTPUT
+                Write-Host "Trying REST API fallback..."
+                try {
+                  $releases = gh api "repos/${{ github.repository }}/releases?per_page=50" --jq '[.[] | {tagName: .tag_name, isPrerelease: .prerelease}]' | ConvertFrom-Json
+                }
+                catch {
+                  Write-Host "REST API also failed: $($_.Exception.Message)"
+                }
+              }
+
+              if (-not $releases) {
+                Write-Host "All methods failed to fetch releases, using fallback"
+                $fallbackNotes = @"
+          ## 🚧 Development Build
+
+          **⚠️ This is an unstable development build. Use at your own risk!**
+
+          ### Recent Changes:
+          Unable to fetch detailed change log. This build contains the latest development changes.
+
+          ---
+          **Build Info:**
+          - Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+          - Build: #${{ github.run_number }}
+          - Date: $(Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss') + ' UTC'
+          "@
+                $fallbackNotes = $fallbackNotes -replace "(\r\n|\r|\n)", "%0A"
+                echo "notes=$fallbackNotes" >> $env:GITHUB_OUTPUT
                 return
               }
 
@@ -217,10 +264,53 @@ jobs:
             } elseif ($isStableRelease) {
               # For stable releases, compare against previous release (stable or pre-release)
               Write-Host "Fetching previous releases..."
-              $releases = gh release list --limit 50 --json tagName 2>$null
+              Write-Host "Repository: ${{ github.repository }}"
+
+              # Try multiple approaches to fetch releases
+              $releases = $null
+
+              # First try with gh CLI
+              try {
+                $releases = gh release list --repo "${{ github.repository }}" --limit 50 --json tagName 2>$null
+                if ($LASTEXITCODE -ne 0) {
+                  $errorOutput = gh release list --repo "${{ github.repository }}" --limit 50 --json tagName 2>&1
+                  Write-Host "gh CLI failed with exit code: $LASTEXITCODE"
+                  Write-Host "gh CLI error output: $errorOutput"
+                  $releases = $null
+                }
+              }
+              catch {
+                Write-Host "gh CLI exception: $($_.Exception.Message)"
+                $releases = $null
+              }
+
+              # Fallback to REST API if gh CLI fails
               if (-not $releases) {
-                Write-Host "Failed to fetch releases"
-                echo "notes=" >> $env:GITHUB_OUTPUT
+                Write-Host "Trying REST API fallback..."
+                try {
+                  $releases = gh api "repos/${{ github.repository }}/releases?per_page=50" --jq '[.[] | {tagName: .tag_name}]' | ConvertFrom-Json
+                }
+                catch {
+                  Write-Host "REST API also failed: $($_.Exception.Message)"
+                }
+              }
+
+              if (-not $releases) {
+                Write-Host "All methods failed to fetch releases, using fallback"
+                $currentVersion = "${{ github.ref }}" -replace "refs/tags/", ""
+                $fallbackNotes = @"
+          ## 🎉 Stable Release
+
+          ### Release $currentVersion:
+          Unable to fetch detailed change log. Please refer to the commit history for changes.
+
+          ---
+          **Release Info:**
+          - Version: $currentVersion
+          - Date: $(Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss') + ' UTC'
+          "@
+                $fallbackNotes = $fallbackNotes -replace "(\r\n|\r|\n)", "%0A"
+                echo "notes=$fallbackNotes" >> $env:GITHUB_OUTPUT
                 return
               }
 
