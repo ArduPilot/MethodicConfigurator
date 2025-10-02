@@ -241,7 +241,7 @@ jobs:
           **Build Info:**
           - Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
           - Build: #${{ github.run_number }}
-          - Date: $(Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss') + ' UTC'
+          - Date: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC
           "@
                 $fallbackNotes = $fallbackNotes -replace "(\r\n|\r|\n)", "%0A"
                 echo "notes=$fallbackNotes" >> $env:GITHUB_OUTPUT
@@ -301,13 +301,13 @@ jobs:
                 $fallbackNotes = @"
           ## 🎉 Stable Release
 
-          ### Release $currentVersion:
+          ### Release ${currentVersion}:
           Unable to fetch detailed change log. Please refer to the commit history for changes.
 
           ---
           **Release Info:**
-          - Version: $currentVersion
-          - Date: $(Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss') + ' UTC'
+          - Version: ${currentVersion}
+          - Date: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC
           "@
                 $fallbackNotes = $fallbackNotes -replace "(\r\n|\r|\n)", "%0A"
                 echo "notes=$fallbackNotes" >> $env:GITHUB_OUTPUT
@@ -474,7 +474,7 @@ jobs:
           **Build Info:**
           - Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
           - Build: #${{ github.run_number }}
-          - Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+          - Date: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC
           "@
             } else {
               $currentVersion = "${{ github.ref }}" -replace "refs/tags/", ""
@@ -486,8 +486,8 @@ jobs:
 
           ---
           **Release Info:**
-          - Version: $currentVersion
-          - Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+          - Version: ${currentVersion}
+          - Date: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC
           "@
             }
 
