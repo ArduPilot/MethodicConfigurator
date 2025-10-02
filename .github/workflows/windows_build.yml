@@ -230,7 +230,6 @@ jobs:
               if (-not $releases) {
                 Write-Host "All methods failed to fetch releases, using fallback"
                 $fallbackNotes = @"
-          ## 🚧 Development Build
 
           **⚠️ This is an unstable development build. Use at your own risk!**
 
@@ -257,7 +256,6 @@ jobs:
               if ($latestStable -and $latestStable.tagName) {
                 $compareFrom = $latestStable.tagName
                 $releaseType = "pre-release"
-                $releaseTitle = "🚧 Development Build"
                 $releaseWarning = "**⚠️ This is an unstable development build. Use at your own risk!**"
                 Write-Host "Pre-release: Comparing against latest stable release: $compareFrom"
               } else {
@@ -327,7 +325,6 @@ jobs:
               if ($previousRelease -and $previousRelease.tagName) {
                 $compareFrom = $previousRelease.tagName
                 $releaseType = "stable"
-                $releaseTitle = "🎉 Stable Release"
                 $releaseWarning = ""
                 Write-Host "Stable release: Comparing against previous release: $compareFrom"
               } else {
@@ -421,17 +418,25 @@ jobs:
               # Parse conventional commit format
               if ($sanitizedMessage -match '^(\w+)(\(.+\))?\s*!?\s*:\s*(.+)$') {
                 $type = $matches[1].ToLower()
+                $scope = if ($matches[2]) { ($matches[2] -replace '[()]', '') + ": " } else { "" }
                 $description = $matches[3].Trim()
 
-                # Limit description length
-                if ($description.Length -gt 100) {
-                  $description = $description.Substring(0, 97) + "..."
+                # Limit description length (accounting for scope)
+                $maxLength = 100 - $scope.Length
+                if ($description.Length -gt $maxLength) {
+                  if ($maxLength - 3 -gt 0) {
+                    $description = $description.Substring(0, $maxLength - 3) + "..."
+                  } else {
+                    $description = "..."
+                  }
                 }
 
+                $formattedDescription = $scope + $description
+
                 if ($grouped.ContainsKey($type)) {
-                  $null = $grouped[$type].Add("- **$description** ([$shortSha]($commitUrl))")
+                  $null = $grouped[$type].Add("- $formattedDescription ([$shortSha]($commitUrl))")
                 } else {
-                  $null = $grouped['other'].Add("- **$description** ([$shortSha]($commitUrl))")
+                  $null = $grouped['other'].Add("- $formattedDescription ([$shortSha]($commitUrl))")
                 }
               } else {
                 # Non-conventional commit
@@ -440,7 +445,7 @@ jobs:
                 } else {
                   $sanitizedMessage
                 }
-                $null = $grouped['other'].Add("- **$truncatedMessage** ([$shortSha]($commitUrl))")
+                $null = $grouped['other'].Add("- $truncatedMessage ([$shortSha]($commitUrl))")
               }
             }
 
@@ -479,8 +484,6 @@ jobs:
             # Build release notes based on release type
             if ($isPreRelease) {
               $fullNotes = @"
-          ## ${releaseTitle}
-
           ${releaseWarning}
 
           ### Changes since last stable release (${compareFrom}):
@@ -497,8 +500,6 @@ jobs:
             } else {
               $currentVersion = "${{ github.ref }}" -replace "refs/tags/", ""
               $fullNotes = @"
-          ## ${releaseTitle}
-
           ### Changes since previous release (${compareFrom}):
           ${changesSummary}
 
@@ -530,7 +531,7 @@ jobs:
         with:
           tag_name: "latest"
           prerelease: true
-          name: "Development Build"
+          name: "🚧 Development Build 🚧"
           files: release-artifacts/*
           body: ${{ steps.release_notes.outputs.notes || '' }}
           generate_release_notes: ${{ steps.release_notes.outputs.notes == '' }}
