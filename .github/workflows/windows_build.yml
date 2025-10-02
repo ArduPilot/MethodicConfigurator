@@ -243,8 +243,9 @@ jobs:
           - Build: #${{ github.run_number }}
           - Date: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC
           "@
-                $fallbackNotes = $fallbackNotes -replace "(\r\n|\r|\n)", "%0A"
-                echo "notes=$fallbackNotes" >> $env:GITHUB_OUTPUT
+                "notes<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+                $fallbackNotes | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+                "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
                 return
               }
 
@@ -309,8 +310,9 @@ jobs:
           - Version: ${currentVersion}
           - Date: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC
           "@
-                $fallbackNotes = $fallbackNotes -replace "(\r\n|\r|\n)", "%0A"
-                echo "notes=$fallbackNotes" >> $env:GITHUB_OUTPUT
+                "notes<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+                $fallbackNotes | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+                "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
                 return
               }
 
@@ -330,13 +332,17 @@ jobs:
               }
             } else {
               Write-Host "Neither pre-release nor stable release, skipping"
-              echo "notes=" >> $env:GITHUB_OUTPUT
+              "notes<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+              "" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+              "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
               return
             }
           }
           catch {
             Write-Host "Error during release detection: $($_.Exception.Message). Using auto-generated notes."
-            echo "notes=" >> $env:GITHUB_OUTPUT
+            "notes<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            "" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
             return
           }
 
@@ -348,20 +354,26 @@ jobs:
 
               if (-not $commits) {
                 Write-Host "No commits found or API call failed, falling back to auto-generated notes"
-                echo "notes=" >> $env:GITHUB_OUTPUT
+                "notes<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+                "" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+                "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
                 return
               }
 
               $commitList = $commits | ConvertFrom-Json
               if (-not $commitList -or $commitList.Count -eq 0) {
                 Write-Host "No commits to process"
-                echo "notes=" >> $env:GITHUB_OUTPUT
+                "notes<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+                "" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+                "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
                 return
               }
             }
             catch {
               Write-Host "Error fetching commits: $($_.Exception.Message). Using auto-generated notes."
-              echo "notes=" >> $env:GITHUB_OUTPUT
+              "notes<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+              "" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+              "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
               return
             }
 
@@ -491,12 +503,15 @@ jobs:
           "@
             }
 
-            # Output the notes for next step (escape for multiline)
-            $fullNotes = $fullNotes -replace "(\r\n|\r|\n)", "%0A"
-            echo "notes=$fullNotes" >> $env:GITHUB_OUTPUT
+            # Output the notes for next step (properly handle multiline)
+            "notes<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            $fullNotes | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           } else {
             Write-Host "No comparison point found, using auto-generated notes"
-            echo "notes=" >> $env:GITHUB_OUTPUT
+            "notes<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            "" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           }
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
