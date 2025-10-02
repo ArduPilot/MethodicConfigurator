@@ -242,6 +242,8 @@ jobs:
           - Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
           - Build: #${{ github.run_number }}
           - Date: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ github.event.repository.default_branch }}
           "@
                 "notes<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
                 $fallbackNotes | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
@@ -309,6 +311,8 @@ jobs:
           **Release Info:**
           - Version: ${currentVersion}
           - Date: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/commits/${currentVersion}
           "@
                 "notes<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
                 $fallbackNotes | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
@@ -475,31 +479,35 @@ jobs:
             # Build release notes based on release type
             if ($isPreRelease) {
               $fullNotes = @"
-          ## $releaseTitle
+          ## ${releaseTitle}
 
-          $releaseWarning
+          ${releaseWarning}
 
-          ### Changes since last stable release ($compareFrom):
-          $changesSummary
+          ### Changes since last stable release (${compareFrom}):
+          ${changesSummary}
 
           ---
           **Build Info:**
           - Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
           - Build: #${{ github.run_number }}
           - Date: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${compareFrom}...${{ github.sha }}
           "@
             } else {
               $currentVersion = "${{ github.ref }}" -replace "refs/tags/", ""
               $fullNotes = @"
-          ## $releaseTitle
+          ## ${releaseTitle}
 
-          ### Changes since previous release ($compareFrom):
-          $changesSummary
+          ### Changes since previous release (${compareFrom}):
+          ${changesSummary}
 
           ---
           **Release Info:**
           - Version: ${currentVersion}
           - Date: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${compareFrom}...${currentVersion}
           "@
             }
 
