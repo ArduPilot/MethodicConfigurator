@@ -54,7 +54,7 @@ class ProgramSettingsProviderProtocol(Protocol):  # pylint: disable=too-few-publ
 IMAGE_HEIGHT_PX = 100
 
 
-class TemplateOverviewWindow(BaseWindow):
+class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """
     Represents the window for viewing and managing ArduPilot vehicle templates.
 
@@ -131,9 +131,14 @@ class TemplateOverviewWindow(BaseWindow):
         # Initialize image label
         self.image_label = ttk.Label(self.top_frame)
 
-        # Initialize treeview
+        # Initialize treeview with scrollbar
+        self.tree_frame = ttk.Frame(self.main_frame)
         columns = TemplateOverview.columns()
-        self.tree = ttk.Treeview(self.main_frame, columns=columns, show="headings")
+        self.tree = ttk.Treeview(self.tree_frame, columns=columns, show="headings")
+
+        # Create vertical scrollbar
+        self.scrollbar = ttk.Scrollbar(self.tree_frame, orient=tk.VERTICAL, command=self.tree.yview)
+        self.tree.configure(yscrollcommand=self.scrollbar.set)
 
     def _get_instruction_text(self) -> str:
         """Get the instruction text for the user interface."""
@@ -158,6 +163,13 @@ class TemplateOverviewWindow(BaseWindow):
         scaled_pady_value = int(IMAGE_HEIGHT_PX * self.dpi_scaling_factor / 2)
         self.image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=scaled_padx, pady=scaled_pady_value)
 
+        # Pack tree frame
+        self.tree_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Pack treeview and scrollbar within tree frame
+        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
     def run_app(self) -> None:
         """Run the TemplateOverviewWindow application."""
         if isinstance(self.root, tk.Toplevel):
@@ -176,7 +188,6 @@ class TemplateOverviewWindow(BaseWindow):
         self._setup_treeview_columns()
         self._populate_treeview(connected_fc_vehicle_type)
         self._adjust_treeview_column_widths()
-        self.tree.pack(fill=tk.BOTH, expand=True)
 
     def _setup_treeview_style(self) -> None:
         """Setup treeview styling with DPI scaling."""

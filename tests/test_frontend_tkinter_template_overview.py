@@ -455,6 +455,9 @@ class TestUIComponentInitialization:
         template_window.top_frame = MagicMock()
         template_window.instruction_label = MagicMock()
         template_window.image_label = MagicMock()
+        template_window.tree_frame = MagicMock()
+        template_window.tree = MagicMock()
+        template_window.scrollbar = MagicMock()
 
         # Act: Test layout setup
         try:
