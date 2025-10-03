@@ -251,7 +251,7 @@ class TemplateOverviewWindow(BaseWindow):
             # Update the column's width property to accommodate the largest text width
             # Scale the padding and multiplication factor for HiDPI
             scaled_padding = int(10 * self.dpi_scaling_factor)
-            self.tree.column(col, width=int(max_width * 0.6 + scaled_padding))
+            self.tree.column(col, width=int(min(max_width * 0.6 + scaled_padding, 300)))
 
     def _bind_events(self) -> None:
         """Bind events to the treeview."""
