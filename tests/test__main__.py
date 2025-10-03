@@ -383,7 +383,7 @@ class TestVehicleDirectoryWorkflow:
         application_state.flight_controller = MagicMock()
 
         # Mock the window to prevent sys_exit(0) call
-        with patch("ardupilot_methodic_configurator.__main__.VehicleDirectorySelectionWindow") as mock_window_class:
+        with patch("ardupilot_methodic_configurator.__main__.VehicleProjectOpenerWindow") as mock_window_class:
             mock_window = MagicMock()
             mock_window.root.mainloop = MagicMock()
             mock_window_class.return_value = mock_window
@@ -419,7 +419,7 @@ class TestVehicleDirectoryWorkflow:
         application_state.args.device = "serial"  # Not "test" to avoid FC info window
 
         with (
-            patch("ardupilot_methodic_configurator.__main__.VehicleDirectorySelectionWindow") as mock_window_class,
+            patch("ardupilot_methodic_configurator.__main__.VehicleProjectOpenerWindow") as mock_window_class,
             patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as mock_project_manager_class,
             patch("tkinter.Tk", return_value=root),
         ):  # Use conftest root fixture
@@ -437,10 +437,8 @@ class TestVehicleDirectoryWorkflow:
             result = vehicle_directory_selection(application_state)
 
             # Assert: Directory selection interface shown
-            expected_fc_connected = True
-            expected_vehicle_type = "ArduCopter"
             mock_project_manager_class.assert_called_once_with(mock_fs, mock_fc)
-            mock_window_class.assert_called_once_with(mock_project_manager, expected_fc_connected, expected_vehicle_type)
+            mock_window_class.assert_called_once_with(mock_project_manager)
             root.mainloop.assert_called_once()
             assert result is mock_window
 
@@ -467,7 +465,7 @@ class TestVehicleDirectoryWorkflow:
         application_state.args.device = "serial"  # Not "test" to avoid FC info window
 
         with (
-            patch("ardupilot_methodic_configurator.__main__.VehicleDirectorySelectionWindow") as mock_window_class,
+            patch("ardupilot_methodic_configurator.__main__.VehicleProjectOpenerWindow") as mock_window_class,
             patch("ardupilot_methodic_configurator.__main__.VehicleProjectManager") as mock_project_manager_class,
             patch("ardupilot_methodic_configurator.__main__.FlightControllerInfoWindow") as mock_fc_info,
             patch("tkinter.Tk", return_value=root),
@@ -491,10 +489,8 @@ class TestVehicleDirectoryWorkflow:
             result = vehicle_directory_selection(application_state)
 
             # Assert: Configuration possible without hardware
-            expected_fc_connected = False
-            expected_vehicle_type = ""
             mock_project_manager_class.assert_called_once_with(mock_fs, mock_fc)
-            mock_window_class.assert_called_once_with(mock_project_manager, expected_fc_connected, expected_vehicle_type)
+            mock_window_class.assert_called_once_with(mock_project_manager)
             root.mainloop.assert_called_once()
             assert result is mock_window
 
@@ -518,7 +514,7 @@ class TestApplicationIntegration:
             patch("ardupilot_methodic_configurator.__main__.connect_to_fc_and_set_vehicle_type") as mock_connect,
             patch("ardupilot_methodic_configurator.__main__.FlightControllerInfoWindow"),
             patch("ardupilot_methodic_configurator.__main__.LocalFilesystem") as mock_fs_class,
-            patch("ardupilot_methodic_configurator.__main__.VehicleDirectorySelectionWindow") as mock_window_class,
+            patch("ardupilot_methodic_configurator.__main__.VehicleProjectOpenerWindow") as mock_window_class,
         ):
             # Configure successful workflow
             mock_fc = MagicMock()
