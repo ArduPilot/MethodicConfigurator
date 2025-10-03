@@ -137,8 +137,11 @@ class TemplateOverviewWindow(BaseWindow):
 
     def _get_instruction_text(self) -> str:
         """Get the instruction text for the user interface."""
-        instruction_text = _("Please double-click the template below that most resembles your own vehicle components")
-        instruction_text += _("\nit does not need to exactly match your vehicle's components.")
+        instruction_text = _("Double-click the template below that best matches your vehicle's components.")
+        instruction_text += _("\nDon't worry about finding a perfect match - choose the closest one available.")
+        instruction_text += _(
+            "\nIf unsure, select the 'empty' template for your firmware version (provides minimal starting configuration)."
+        )
         return instruction_text
 
     def _setup_layout(self) -> None:
