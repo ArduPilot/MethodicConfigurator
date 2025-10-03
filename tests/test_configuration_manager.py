@@ -24,7 +24,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 def mock_flight_controller() -> MagicMock:
     """Fixture providing a mock flight controller with realistic test data."""
     mock_fc = MagicMock()
-    mock_fc.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
+    mock_fc.fc_parameters = {"PARAM1": 1.0, "PARAM2": 3.0}
     return mock_fc
 
 
@@ -32,7 +32,7 @@ def mock_flight_controller() -> MagicMock:
 def mock_local_filesystem() -> MagicMock:
     """Fixture providing a mock local filesystem with realistic test data."""
     mock_fs = MagicMock()
-    mock_fs.file_parameters = {"test_file.param": {"PARAM1": Par(1.0), "PARAM2": Par(2.0)}}
+    mock_fs.file_parameters = {"test_file.param": {"PARAM1": Par(1.0), "PARAM2": Par(3.0)}}
     mock_fs.param_default_dict = ParDict()
     mock_fs.doc_dict = {}
     mock_fs.export_to_param = MagicMock()
