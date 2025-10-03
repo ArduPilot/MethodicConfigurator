@@ -42,9 +42,9 @@ from ardupilot_methodic_configurator.data_model_software_updates import UpdateMa
 from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
-from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWindow
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message
 
 
@@ -189,7 +189,7 @@ def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None
         state.param_default_values_dirty = state.local_filesystem.write_param_default_values(state.param_default_values)
 
 
-def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleDirectorySelectionWindow, None]:
+def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleProjectOpenerWindow, None]:
     """
     Handle vehicle directory selection if no parameter files are found in the current working directory.
 
@@ -197,11 +197,10 @@ def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleDirecto
         state: Application state containing filesystem and flight controller info
 
     Returns:
-        VehicleDirectorySelectionWindow if selection was needed, None otherwise
+        VehicleProjectOpenerWindow if selection was needed, None otherwise
 
     """
     state.vehicle_project_manager = VehicleProjectManager(state.local_filesystem, state.flight_controller)
-    fc_connected = len(state.flight_controller.fc_parameters) > 0
     if not state.vehicle_type:
         logging_debug(
             _(
@@ -209,7 +208,7 @@ def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleDirecto
                 "FC connected and no explicit vehicle type set on the command line"
             )
         )
-    vehicle_dir_window = VehicleDirectorySelectionWindow(state.vehicle_project_manager, fc_connected, state.vehicle_type)
+    vehicle_dir_window = VehicleProjectOpenerWindow(state.vehicle_project_manager)
     vehicle_dir_window.root.mainloop()
 
     if state.vehicle_project_manager.reset_fc_parameters_to_their_defaults:

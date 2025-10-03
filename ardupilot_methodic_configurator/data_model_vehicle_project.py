@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 
 
-class VehicleProjectManager:
+class VehicleProjectManager:  # pylint: disable=too-many-public-methods
     """
     Factory/Container for vehicle project operations.
 
@@ -288,3 +288,13 @@ class VehicleProjectManager:
 
         """
         return _("MyVehicleName")
+
+    def get_vehicle_type(self) -> str:
+        """
+        Get the vehicle type.
+
+        Returns:
+            Vehicle type
+
+        """
+        return self._local_filesystem.vehicle_type
