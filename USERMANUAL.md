@@ -2,18 +2,138 @@
 
 ## Overview
 
-*ArduPilot Methodic Configurator* is a PC software designed by ArduPilot developers to simplify the configuration of ArduPilot drones.
-It's graphical user interface (GUI) manages, edits and visualizes drone parameter files, as well as uploads parameters to the vehicle.
+*ArduPilot Methodic Configurator* is a PC software designed by ArduPilot developers to simplify the configuration of ArduPilot vehicles.
+Its graphical user interface (GUI) manages, edits and visualizes parameter files, as well as uploads parameters to the vehicle.
 It automates the tasks described in the [How to methodically tune any ArduCopter](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter) tuning guide.
 
-This user manual gives a general overview of the Software functionality.
-There are also [quick start instructions](README.md) and [specific use case instructions](USECASES.md).
+This user manual gives a general overview of the software functionality.
+There are also [quick start instructions](README.md), [specific use case instructions](USECASES.md), and [frequently asked questions](FAQ.md).
 
-## Usage
+## Table of Contents
 
-Before starting the application on your PC you should connect a flight controller to the PC and wait at least seven seconds.
+1. [Quick Start Guide](#quick-start-guide)
+2. [Prerequisites and System Requirements](#prerequisites-and-system-requirements)
+3. [Step-by-Step Workflow](#step-by-step-workflow)
+4. [Configuration Details](#configuration-details)
+5. [Command Line Reference](#command-line-usage)
+6. [Troubleshooting](#troubleshooting)
+7. [Support](SUPPORT.md) (External Document)
+8. [Installation and Security](INSTALL.md) (External Document)
+9. [FAQ](FAQ.md) (External Document)
+10. [Glossary](#glossary)
 
-### Flight Controller Connection Selection Interface
+## Prerequisites and System Requirements
+
+### Hardware Requirements
+
+- **Flight Controller**: Any ArduPilot-compatible flight controller
+- **USB Cable**: For connecting flight controller to PC (data cable, not just power)
+- **PC Requirements**:
+  - Windows 10/11, Linux, or macOS
+  - Minimum 2GB RAM
+  - 100MB free disk space
+  - USB port
+
+### Software Prerequisites
+
+- **No additional software needed** - ArduPilot Methodic Configurator is self-contained
+- **Optional**: Text editor (Notepad++, VS Code) for manual parameter file editing
+
+### Before You Begin
+
+⚠️ **IMPORTANT**: Connect your flight controller to the PC and wait **at least 7 seconds** before starting the software.
+
+💡 **TIP**: Have your vehicle's component documentation ready (motor specifications, ESC type, etc.)
+
+## Quick Start Guide
+
+### For First-Time Users (Recommended Path)
+
+1. **Connect** your flight controller to PC via USB
+2. **Wait** 7 seconds for boot completion
+3. **Launch** ArduPilot Methodic Configurator
+4. **Auto-connection** happens automatically (if successful, you won't see a connection dialog)
+5. **Create new** vehicle configuration from template
+6. **Configure** vehicle components in the editor
+7. **Follow** the sequential parameter configuration
+
+### For Experienced Users (Fast Path)
+
+Use command line parameters to skip steps:
+
+```bash
+ardupilot_methodic_configurator --device="COM3" --vehicle-dir="C:\MyDrone" --skip-component-editor
+```
+
+### What You'll Accomplish
+
+By the end of this process, your flight controller will be fully configured with:
+
+- ✅ All parameters optimized for your specific vehicle
+- ✅ Complete documentation of every change made
+- ✅ Backup files for easy restoration
+- ✅ Ready-to-fly configuration
+
+### Configuration Workflow Overview
+
+```mermaid
+flowchart TD
+    A[Connect Flight Controller] --> B{Auto-Detect?}
+    B -->|Yes| C[Download FC Info]
+    B -->|No| D[Manual Connection]
+    D --> C
+    C --> E{Existing Project?}
+    E -->|Yes| F[Open Vehicle Directory]
+    E -->|No| G[Select Template]
+    G --> H[Create New Project]
+    F --> I[Component Editor]
+    H --> I
+    I --> J[Validate Components]
+    J --> K{Valid?}
+    K -->|No| I
+    K -->|Yes| L[Parameter Editor]
+    L --> M[Configure Parameters]
+    M --> N[Upload to FC]
+    N --> O{More Files?}
+    O -->|Yes| L
+    O -->|No| P[Generate Summary]
+    P -->     Q[Configuration Complete]
+```
+
+### Important Tips for Success
+
+💡 **Pro Tips:**
+
+- **Take your time**: Read parameter descriptions - they contain valuable insights
+- **Test incrementally**: The step-by-step approach allows testing between changes
+- **Keep backups**: The software creates them automatically in the vehicle project directory, but know where they are
+- **Document changes**: Always fill in the "Change Reason" field - future you will thank you
+- **Start conservative**: Use recommended values first, then fine-tune after test flights
+
+⚠️ **Common Mistakes to Avoid:**
+
+- **Rushing through steps**: Each parameter has a purpose - understand before changing
+- **Skipping component validation**: Incorrect component settings can cause crashes
+- **Ignoring warnings**: Red backgrounds and error messages are there for your safety
+- **Forgetting calibrations**: Some parameters require physical calibration procedures
+
+## Step-by-Step Workflow
+
+This section guides you through the complete configuration process. Follow these steps in order:
+
+### Step 1: Preparation
+
+1. **Connect** your flight controller to the PC via USB cable
+2. **Wait** at least 7 seconds for the flight controller to fully boot
+3. **Launch** ArduPilot Methodic Configurator
+
+### Step 2: Flight Controller Connection
+
+If the software successfully auto-detects your flight controller, this step will be skipped automatically and you'll proceed directly to Step 3.
+
+The connection selection interface is only presented **if auto-connection fails** or if no flight controller is detected.
+
+#### Flight Controller Connection Selection Interface
 
 This interface allows users to select or add a connection to a flight controller **if one was not yet auto-detected**.
 
@@ -25,25 +145,47 @@ This interface allows users to select or add a connection to a flight controller
 
 It provides three main options for connecting to a flight controller:
 
-#### Option 1: Auto-connect to flight controller
+**Choose your connection method:**
 
-This option automatically attempts to connect to a flight controller that has been connected to the PC.
-The user must wait for at least 7 seconds for the flight controller to fully boot before attempting the connection.
+#### Option 1: Auto-connect to flight controller ⭐ **Recommended for most users**
 
-#### Option 2: Select flight controller connection
+This option automatically detects and connects to your flight controller.
 
-Manually select an existing flight controller connection or add a new one.
-It provides a dropdown menu listing all available connections, including an option to add a new connection.
+- ✅ **Use when**: Your flight controller is connected via USB and powered on
+- ⏱️ **Wait time**: Ensure 7+ seconds have passed since connecting
+- 🔧 **Troubleshooting**: If auto-detection fails, try Option 2
 
-- To select an existing connection, use the dropdown menu to choose the desired connection.
-- To add a new connection, select "Add another" from the dropdown menu. A dialog box will prompt you to enter the connection string for the new flight controller.
+#### Option 2: Select flight controller connection ⚙️ **For advanced users**
 
-#### Option 3: No flight controller Connection
+Manually specify your connection details.
 
-Skip the flight controller connection process.
-It proceeds with editing the intermediate `.param` files on disk without fetching parameter values nor parameter default parameter values from the flight controller.
+- ✅ **Use when**:
+  - Auto-connect doesn't work
+  - Using network connections (TCP/UDP)
+  - Multiple flight controllers connected
+  - A baudrate other than 115200 is to be used
+- 📝 **How to**:
+  - Select existing connection from dropdown, OR
+  - Choose "Add another" to enter custom connection string
+  - For serial connection select the correct baudrate
+- 💡 **Examples**:
+  - Serial: `COM3` (Windows) or `/dev/ttyUSB0` (Linux)
+  - Network: `tcp:192.168.1.100:5760`
 
-### Flight Controller Info and parameter download
+#### Option 3: No flight controller connection 📝 **For offline editing**
+
+Work with parameter files without connecting to hardware.
+
+- ✅ **Use when**:
+  - Flight controller not available
+  - Pre-planning configurations
+  - Reviewing existing configurations
+- ⚠️ **Limitations**:
+  - Cannot read current parameter values
+  - Cannot upload parameters
+  - No parameter validation against hardware
+
+### Step 3: Flight Controller Info and Parameter Download
 
 If a flight controller is connected the software will now get information from it.
 The information is presented in the corresponding window and at the same time all flight controller parameters are downloaded to the PC.
@@ -54,12 +196,12 @@ The information is presented in the corresponding window and at the same time al
   <ins><b><i>Flight controller info and parameter download</i></b></ins>
 </figure>
 
-### Vehicle Configuration Directory Selection Interface
+### Step 4: Vehicle Configuration Directory Selection
 
 This interface allows users to select a vehicle directory that contains intermediate parameter files for ArduPilot
-**if one was not specified with the `--vehicle-dir` command line parameter**.
+**if one was not specified with the `--vehicle-dir` command line parameter** and if no configuration files were found in the current working directory.
 
-![Vehicle Selection Window](images/App_screenshot_Vehicle_directory.png)
+![Vehicle Selection Window](images/App_screenshot_Vehicle_directory10.png)
 <figure align="center">
 <br>
   <ins><b><i>Vehicle Selection Window</i></b></ins>
@@ -69,18 +211,7 @@ It provides three main options for selecting a vehicle directory:
 
 #### New
 
-Create a new vehicle configuration directory by copying files from an existing template directory.
-It's useful for setting up a new vehicle configuration quickly.
-
-- Use the "Source template directory" `...` button to select the existing vehicle template directory containing the intermediate parameter files to be copied.
-  Use the overview window to select the template that better matches the components of your vehicle.
-![Vehicle template overview](images/App_screenshot_Vehicle_overview.png)
-- By default, the new vehicle parameter values are taken from the source template.
-  But if your connected vehicle has already been correctly configured, checking the `Use parameter values from connected FC, not from template files`
-  will use the parameter values from the FC instead.
-- Use the "Destination base directory" `...` button to select the existing directory where the new vehicle directory will be created.
-- Enter the name for the new vehicle directory in the "Destination new vehicle name" field.
-- Click the "Create vehicle directory from template" button to create the new vehicle directory on the base directory and copy the template files to it.
+Create a new vehicle configuration directory
 
 #### Open
 
@@ -93,7 +224,28 @@ It's useful for editing an existing vehicle configuration.
 
 Re-open the last used vehicle configuration directory.
 
-### Vehicle Component Editor Interface
+### Create a New Vehicle Configuration Directory
+
+![Create new Vehicle Window](images/App_screenshot_Vehicle_directory11.png)
+<figure align="center">
+<br>
+  <ins><b><i>Create new Vehicle Window</i></b></ins>
+</figure>
+
+Create a new vehicle configuration directory by copying files from an existing template directory.
+It's useful for setting up a new vehicle configuration quickly.
+
+- Use the "Source template directory" `...` button to select the existing vehicle template directory containing the intermediate parameter files to be copied.
+  Use the overview window to select the template that better matches the components of your vehicle.
+![Vehicle template overview](images/App_screenshot_Vehicle_overview.png)
+- By default, the new vehicle parameter values are taken from the source template.
+  But if your connected vehicle has already been correctly configured, checking the `Use parameter values from connected FC, not from template files`
+  will use the parameter values from the flight controller instead.
+- Use the "Destination base directory" `...` button to select the existing directory where the new vehicle directory will be created.
+- Enter the name for the new vehicle directory in the "Destination new vehicle name" field.
+- Click the "Create vehicle directory from template" button to create the new vehicle directory on the base directory and copy the template files to it.
+
+### Step 5: Vehicle Component Editor Interface
 
 Here you specify the components of your vehicle, their properties and how they are connected to the flight controller.
 
@@ -104,11 +256,11 @@ On the left with simple GUI complexity for beginners, on the right with normal G
 Change every field to match your vehicle's.
 When finished press the `Save data and start configuration` button.
 
-The application will validate your input.
+The software will validate your input.
 If issues are found the problematic fields' background will be marked in red color.
 Correct those entries and press the `Save data and start configuration` button again.
 
-### Parameter File Editor and uploader interface
+### Step 6: Parameter File Editor and uploader interface
 
 Here you sequentially configure the parameters of your flight controller to meet your needs while having all the available documentation at your fingertips.
 
@@ -211,12 +363,12 @@ There are mouse-over hints for each phase.
   - ReadOnly parameters are presented on a *red background*🟥, they should not be present in an intermediate configuration file because
     under normal conditions they can not be changed
   - Sensor calibration parameters are presented on a *yellow background*🟨, they are vehicle-instance dependent and can NOT be reused between similar vehicles
-- The current parameter value downloaded from your FC is in the `Current Value` column.
+- The current parameter value downloaded from your flight controller is in the `Current Value` column.
   - Not available parameter values are presented as `N/A` on an *orange background*🟧
   - Parameters that have the default parameter value are presented on a *light blue background* 🟦
 - The new value is the value in the intermediate file and will be uploaded to the flight controller.
   **You MUST change the value to meet your needs**. The provided values in the `vehicle_template` directory are just examples.
-  - parameters that should not be changed by the users, or are derived from information in the [*component editor*](#vehicle-component-editor-interface)
+  - parameters that should not be changed by the users, or are derived from information in the [*component editor*](#step-5-vehicle-component-editor-interface)
     are greyed out and can not be edited.
   - bitmask parameters are editable in two ways:
     - *Decimal* - enter the decimal value of the bitmask as you would with any other parameter.
@@ -244,13 +396,13 @@ It will create bigger and harder-to-compare parameter files but is more suitable
 - **After editing parameters, click the `Upload selected params to FC, and advance to next param file`**
   **button to upload the (`Upload` checkbox) selected parameters to the flight controller.**
 - All parameter' `New Value` and `Change Reason` will be written to the current intermediate parameter file, irrespective of the `Upload` checkboxes
-- The application will then:
+- The software will then:
   - upload the selected and changed parameters to the flight controller
   - reset the flight controller if necessary for the new parameter values to take effect
   - upload the parameters again, because before the reset some parameters might have been not visible/uploadable
   - download all the parameters from the flight controller, and validate their value
     - if some parameters fail to upload correctly it asks the user if he wants to retry
-- **The application will then advance to the next parameter file.**
+- **The software will then advance to the next parameter file.**
 
 #### 8. Skipping to the Next Parameter File (optional)
 
@@ -305,17 +457,19 @@ You should upload this `.zip` file or the `non-default_writable_non-calibrations
 
 Once the summary files are written, the application will close the connection to the flight controller and terminate.
 
-## Configuring
+## Configuration Details
 
-### 1. Configuration files
+This section provides detailed information about configuration files, customization options, and advanced setup procedures.
+
+### Configuration Files
 
 Most users will not need to configure the tool, but if you do want to do it you can.
 
-The ArduPilot Methodic Configurator uses several configuration files to manage and visualize drone parameters.
+The ArduPilot Methodic Configurator uses several configuration files to manage and visualize vehicle parameters.
 These files are crucial for the tool's operation and are organized in a specific directory structure.
 
 - **Intermediate Parameter Files**: These files are located in the vehicle-specific directory and are named with two digits followed by an underscore, ending in `.param`.
-  They contain the parameters that need to be configured for the drone. Each file corresponds to a specific configuration step or aspect of the drone's setup.
+  They contain the parameters that need to be configured for the vehicle. Each file corresponds to a specific configuration step or aspect of the vehicle's setup.
 
 - **Documentation File**: This file provides documentation for each intermediate parameter file.
   It is used to display relevant information about the parameters and their configuration process.
@@ -365,16 +519,84 @@ Here is a list of command line options:
 - **`-r` or `--reboot-time`**: Flight controller reboot time. The default is 7.
 - **`-v` or `--version`**: Display version information and exit.
 
-Example usage:
+### Example Usage Scenarios
+
+#### Basic Usage (Auto-detection)
 
 ```bash
-ardupilot_methodic_configurator --device="tcp:127.0.0.1:5760" --vehicle-dir="/path/to/params" --n=0 --loglevel=INFO -t=ArduCopter
+# Simplest form - auto-detect flight controller and use current directory
+ardupilot_methodic_configurator
 ```
 
-This command will connect to the flight controller at `tcp:127.0.0.1:5760`, use the parameter files in the specified directory,
-start with the first parameter file, set the logging level to INFO, and target the ArduCopter vehicle type.
+#### Specific Connection and Directory
 
-For more detailed information on the command line options, you can run the script with the `-h` or `--help` flag to display the help message:
+```bash
+# Windows - specify COM port and project directory
+ardupilot_methodic_configurator --device="COM3" --vehicle-dir="C:\MyQuadcopter"
+
+# Linux - specify USB device and project directory  
+ardupilot_methodic_configurator --device="/dev/ttyUSB0" --vehicle-dir="/home/user/MyQuadcopter"
+
+# Network connection (SITL or network-connected FC)
+ardupilot_methodic_configurator --device="tcp:127.0.0.1:5760" --vehicle-dir="/path/to/params"
+```
+
+#### Skip Steps for Faster Workflow
+
+```bash
+# Skip component editor (when components already configured)
+ardupilot_methodic_configurator --skip-component-editor --vehicle-dir="C:\MyDrone"
+
+# Start from specific parameter file (skip earlier steps)
+ardupilot_methodic_configurator --n=5 --vehicle-dir="C:\MyDrone"
+
+# Combine multiple options for fastest startup
+ardupilot_methodic_configurator --device="COM3" --vehicle-dir="C:\MyDrone" --skip-component-editor --n=3
+```
+
+#### Different Vehicle Types
+
+```bash
+# Fixed-wing aircraft
+ardupilot_methodic_configurator -t ArduPlane --vehicle-dir="C:\MyPlane"
+
+# Rover/boat
+ardupilot_methodic_configurator -t Rover --vehicle-dir="C:\MyRover"
+
+# Helicopter
+ardupilot_methodic_configurator -t Heli --vehicle-dir="C:\MyHeli"
+```
+
+#### Debugging and Development
+
+```bash
+# Enable debug logging for troubleshooting
+ardupilot_methodic_configurator --loglevel=DEBUG --vehicle-dir="C:\MyDrone"
+
+# Skip update check (for offline use)
+ardupilot_methodic_configurator --skip-check-for-updates --device="COM3"
+
+# Combine debugging options
+ardupilot_methodic_configurator --loglevel=DEBUG --skip-check-for-updates --device="COM3"
+```
+
+#### Pro Tip: Desktop Shortcuts
+
+Create multiple desktop shortcuts for different projects:
+
+**Shortcut 1** (MyQuadcopter):
+
+```text
+Target: ardupilot_methodic_configurator.exe --device="COM3" --vehicle-dir="C:\MyQuadcopter"
+```
+
+**Shortcut 2** (MyPlane):
+
+```text
+Target: ardupilot_methodic_configurator.exe --device="COM4" --vehicle-dir="C:\MyPlane" -t ArduPlane
+```
+
+For more detailed information on command line options, run:
 
 ```bash
 ardupilot_methodic_configurator --help
@@ -382,51 +604,7 @@ ardupilot_methodic_configurator --help
 
 This will show a list of all available command line options along with a brief description of each.
 
-### Install command line completion
-
-#### Global python argcomplete
-
-For command line (tab) completion for all python scripts that support [argcomplete](https://github.com/kislyuk/argcomplete) do:
-
-```bash
-activate-global-python-argcomplete
-```
-
-#### Fine granular python argcomplete
-
-For Bash (Linux, macOS) autocompletion, add this to your `~/.bashrc`:
-
-```bash
-eval "$(register-python-argcomplete ardupilot_methodic_configurator)"
-eval "$(register-python-argcomplete extract_param_defaults)"
-eval "$(register-python-argcomplete annotate_params)"
-eval "$(register-python-argcomplete param_pid_adjustment_update)"
-eval "$(register-python-argcomplete mavftp)"
-```
-
-For Zsh (Linux, macOS) autocompletion, add these lines to your `~/.zshrc`:
-
-```zsh
-autoload -U bashcompinit
-bashcompinit
-eval "$(register-python-argcomplete ardupilot_methodic_configurator)"
-eval "$(register-python-argcomplete extract_param_defaults)"
-eval "$(register-python-argcomplete annotate_params)"
-eval "$(register-python-argcomplete param_pid_adjustment_update)"
-eval "$(register-python-argcomplete mavftp)"
-```
-
-For PowerShell (MS Windows) autocompletion, run this command in PowerShell:
-
-```powershell
-notepad $PROFILE
-```
-
-And add this line to the file:
-
-```powershell
-Import-Module  "C:\Program Files (x86)\ardupilot_methodic_configurator\ardupilot_methodic_configurator_command_line_completion.psm1"
-```
+For command line completion setup, see the **[Installation Guide](INSTALL.md#install-command-line-completion)**.
 
 ## Speed up software start
 
@@ -447,135 +625,137 @@ Use and empty space to separate each option.
 
 ## Troubleshooting
 
-If you encounter any issues during the configuration process, refer to the error messages provided by the application.
-These messages can guide you to the specific problem and suggest possible solutions.
-If the issue persists, consult the [documentation and support page](https://ardupilot.github.io/MethodicConfigurator/SUPPORT.html)
+### Common Issues and Solutions
 
-## Verify Installer Security and Integrity
+#### Connection Problems
 
-**Why verify?** The ArduPilot Methodic Configurator installer is cryptographically signed and includes SLSA Level 3 provenance attestations.
-Verification ensures that:
+**Issue**: "No flight controller detected" or auto-connect fails
 
-- The installer was built by the official ArduPilot project (not a malicious copy)
-- The installer hasn't been tampered with during download
-- The build process followed secure supply chain practices
+**Solutions**:
 
-### Download Required Files
+1. **Check physical connection**: Ensure USB cable is properly connected
+2. **Incorrect serial baudrate**: If the serial baudrate is different from 115200 you must connect manually
+3. **Wait longer**: Flight controller needs 7+ seconds to boot fully
+4. **Try different USB port**: Some ports may have power/data issues
+5. **Check USB cable**: Try a different cable (data cable, not just power)
+6. **Manual connection**: Use Option 2 and select the correct COM port
+7. **Driver issues**: Install flight controller drivers if needed
 
-When downloading from the [GitHub releases page](https://github.com/ArduPilot/MethodicConfigurator/releases), you'll need both:
+**Issue**: "Connection lost during operation"
 
-1. **The installer**: `ardupilot_methodic_configurator_setup.exe`
-2. **The provenance file**: `ardupilot_methodic_configurator_setup.exe.intoto.jsonl` (automatically generated by our build system)
+**Solutions**:
 
-### Verification Methods
+1. **Check USB connection**: Ensure cable isn't loose
+2. **Restart software**: Close and reopen the configurator
 
-Choose the method that best fits your operating system and security requirements:
+#### Parameter File Issues
 
-#### Method 1: SLSA Verification (Recommended - Highest Security)
+**Issue**: "Parameter file not found" or "Invalid parameter file"
 
-This method uses the official SLSA verifier to check the cryptographic provenance of the installer.
+**Solutions**:
 
-**For Linux/macOS:**
+1. **Check file location**: Ensure parameter files are in the correct directory
+2. **File permissions**: Verify you have read/write access to the directory
+3. **File format**: Ensure parameter files follow the correct format
+4. **Regenerate defaults**: Use `extract_param_defaults` if `00_default.param` is missing
 
-```bash
-# Download the latest SLSA verifier (recommended: check https://github.com/slsa-framework/slsa-verifier/releases for the latest version)
-# Replace <latest-version> with the latest release tag, e.g. v2.7.0
-curl -sSLO https://github.com/slsa-framework/slsa-verifier/releases/latest/download/slsa-verifier-linux-amd64
-chmod +x slsa-verifier-linux-amd64
-# Alternatively, to use a specific version, replace 'latest' with the desired version tag (e.g. v2.7.0), but ensure you check for updates regularly.
+**Issue**: "Parameter upload failed" or "Parameter validation error"
 
-# Verify the installer
-./slsa-verifier-linux-amd64 verify-artifact \
-  ardupilot_methodic_configurator_setup.exe \
-  --provenance-path ardupilot_methodic_configurator_setup.exe.intoto.jsonl \
-  --source-uri github.com/ArduPilot/MethodicConfigurator
+**Solutions**:
 
-# Successful verification will show:
-# ✓ Verified SLSA provenance
-```
+1. **Check parameter values**: Ensure values are within valid ranges
+2. **Flight controller firmware**: Verify firmware version compatibility
+3. **Retry upload**: Some parameters require multiple attempts
 
-**For Windows (PowerShell):**
+#### Component Issues
 
-```powershell
-# Download the SLSA verifier
-Invoke-WebRequest -Uri "https://github.com/slsa-framework/slsa-verifier/releases/download/v2.7.0/slsa-verifier-windows-amd64.exe" -OutFile "slsa-verifier.exe"
+**Issue**: "Component validation failed"
 
-# Verify the installer
-.\slsa-verifier.exe verify-artifact `
-  ardupilot_methodic_configurator_setup.exe `
-  --provenance-path ardupilot_methodic_configurator_setup.exe.intoto.jsonl `
-  --source-uri github.com/ArduPilot/MethodicConfigurator
+**Solutions**:
 
-# Successful verification will show:
-# ✓ Verified SLSA provenance
-```
+1. **Review component settings**: Check all required fields are filled
+2. **Component compatibility**: Ensure components are compatible with your flight controller
+3. **Firmware limitations**: Some components require specific firmware versions
+4. **Documentation**: Consult component manufacturer specifications
 
-#### Method 2: Cosign Verification (Alternative)
+#### Application Issues
 
-If Cosign signatures are available, you can also verify using Cosign:
+**Issue**: Software crashes or freezes
 
-**For Linux/macOS:**
+**Solutions**:
 
-```bash
-# Install Cosign (if not already installed)
-curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-chmod +x cosign-linux-amd64
-sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+1. **Restart software**: Close and reopen the configurator
+2. **Check system resources**: Ensure adequate RAM and disk space
+3. **Update software**: Check for newer version of the configurator
+4. **Log files**: Check application logs for detailed error information
+5. **Safe mode**: Try running with `--loglevel DEBUG` for more information
 
-# Verify the signature (if .sig and .bundle files are present)
-cosign verify-blob \
-  --signature ardupilot_methodic_configurator_setup.exe.sig \
-  --bundle ardupilot_methodic_configurator_setup.exe.bundle \
-  ardupilot_methodic_configurator_setup.exe \
-  --certificate-identity-regexp "https://github.com/ArduPilot/MethodicConfigurator/.*" \
-  --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
-```
+**Issue**: GUI elements not displaying correctly
 
-#### Method 3: Basic Checksum Verification (Minimum Security)
+**Solutions**:
 
-If the above tools are not available, you can at least verify the file integrity using checksums:
+1. **Display scaling**: Adjust Windows display scaling settings
+2. **Screen resolution**: Ensure minimum resolution requirements are met
+3. **Graphics drivers**: Update graphics card drivers
+4. **Compatibility mode**: Try running in compatibility mode (Windows)
 
-**For Linux/macOS:**
+### Getting Help
 
-```bash
-# Generate SHA256 checksum
-sha256sum ardupilot_methodic_configurator_setup.exe
+For detailed support information, troubleshooting guidance, and how to report issues, see the **[Support Guide](SUPPORT.md)**.
 
-# Compare with the published checksum from the GitHub release page
-```
+## Installation and Security Verification
 
-**For Windows (PowerShell):**
+For detailed installation instructions and installer security verification, see the **[Installation Guide](INSTALL.md)**.
 
-```powershell
-# Generate SHA256 checksum
-Get-FileHash -Algorithm SHA256 ardupilot_methodic_configurator_setup.exe
+## Frequently Asked Questions
 
-# Compare with the published checksum from the GitHub release page
-```
+For comprehensive answers to common questions about the ArduPilot Methodic Configurator, please see our dedicated **[FAQ document](FAQ.md)**.
 
-### Understanding Verification Results
+The FAQ covers:
 
-- **✅ Success**: Verification passed - the installer is authentic and untampered
-- **❌ Failure**: Verification failed - **DO NOT** install the software, download again from official sources
-- **⚠️ Warning**: Some verification methods may show warnings about experimental features - this is normal for SLSA
+- **General Questions**: Internet requirements, supported vehicles, timing expectations
+- **Technical Questions**: Parameter editing, templates, firmware compatibility  
+- **Workflow Questions**: Component editor, configuration changes, vehicle comparisons
 
-### Security Best Practices
+> 💡 **Quick Access**: [View Complete FAQ →](FAQ.md)
 
-1. **Always download from official sources**: Only download from [github.com/ArduPilot/MethodicConfigurator/releases](https://github.com/ArduPilot/MethodicConfigurator/releases)
-2. **Verify before installing**: Run verification before executing the installer
-3. **Keep verifier tools updated**: Use the latest versions of verification tools
-4. **Report issues**: If verification fails, report it on our [GitHub issues page](https://github.com/ArduPilot/MethodicConfigurator/issues)
+## Glossary
 
-### What This Protects Against
+**ArduPilot**: Open-source autopilot software suite for unmanned vehicles, providing autonomous flight capabilities
 
-Our verification system protects against:
+**Bitmask Parameter**: A parameter where each bit represents a different option that can be enabled/disabled independently
 
-- **Supply chain attacks**: Malicious code injected during the build process
-- **Man-in-the-middle attacks**: Files modified during download
-- **Compromised releases**: Unauthorized uploads to the release page
-- **Malicious mirrors**: Fake copies hosted on other websites
+**Component Editor**: Interface for specifying vehicle hardware components and their connections to the flight controller
 
-This security model follows industry best practices and provides the same level of assurance used by major software projects.
+**ESC**: Electronic Speed Controller - controls motor speed based on flight controller commands
+
+**FC**: Flight Controller - the main computer hardware that runs ArduPilot firmware and controls the vehicle
+
+**Firmware**: The ArduPilot software program running on the flight controller hardware
+
+**Flight Mode**: Different operational modes of the vehicle (Manual, Stabilize, Auto, etc.)
+
+**IMU**: Inertial Measurement Unit - sensors that measure acceleration and rotation (accelerometer + gyroscope)
+
+**Intermediate Parameter File**: A `.param` text file containing a subset of parameters for a specific configuration step
+
+**MAVLink**: The communication protocol used between ground control software and flight controllers
+
+**Parameter**: A configuration value that controls flight controller behavior (over 1200 available)
+
+**Parameter Documentation**: Detailed descriptions of what each parameter controls, including valid ranges and units
+
+**Parameter Template**: A pre-configured set of parameter files for a specific vehicle type or configuration
+
+**PID Controller**: Proportional-Integral-Derivative controller used for flight stabilization and navigation
+
+**SITL**: Software In The Loop - ArduPilot simulation environment for testing without hardware
+
+**Template Directory**: Folder containing pre-configured parameter files that can be copied for new vehicle setups
+
+**Vehicle Instance**: A specific physical vehicle with unique calibration parameters (vs. reusable template parameters)
+
+**Vehicle Type**: The category of vehicle (ArduCopter, ArduPlane, etc.) that determines available parameters and features
 
 <!-- Gurubase Widget -->
 <script async src="https://widget.gurubase.io/widget.latest.min.js"
