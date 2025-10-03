@@ -123,6 +123,9 @@ def show_about_window(root: ttk.Frame, _version: str) -> None:  # pylint: disabl
     # Configure the grid to ensure equal spacing and expansion
     main_frame.columnconfigure([0, 1, 2, 3, 4], weight=1)
 
+    # Center the about window on its parent
+    BaseWindow.center_window(about_window, root.winfo_toplevel())
+
 
 def show_info_popup(title: str, message: str) -> None:
     messagebox.showinfo(title, message)
