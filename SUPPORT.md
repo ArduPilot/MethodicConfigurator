@@ -15,13 +15,34 @@ To help yourself, read the extensive documentation:
   [rover](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover.html),
   [heli](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli.html)
 
-To get help from others on how to use the software (in order of preference):
+## Getting Help
+
+If [troubleshooting steps in the Usermanual](USERMANUAL.md#Troubleshooting) don't resolve your issue:
+
+1. **Check error messages**: Read the full error message for specific guidance
+2. **Enable debug logging**: Run with `--loglevel DEBUG` to get detailed information
+3. **Consult documentation**: Review the extensive documentation linked above
+4. **Community support**: Ask questions on the [ArduPilot forum](https://discuss.ardupilot.org/)
+5. **Report bugs**: Create an issue on [GitHub](https://github.com/ArduPilot/MethodicConfigurator/issues)
+
+### How to Get Help (in order of preference):
 
 * Use the [user support forum](http://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/1) and
   include a `.bin` log file and a `.zip` file with all the intermediate `.param` files if possible.
   If you're not sure you have a bug, you should seek support first.
 * Use the [discord channel](https://discord.com/channels/674039678562861068/1308233496535371856)
 * [Report a bug/issue/missing feature on github](https://github.com/ArduPilot/MethodicConfigurator/issues/new/choose). Only report one bug per issue report.
+
+### Information to Include When Reporting Issues
+
+When reporting issues, please include:
+
+* **Software version**: ArduPilot Methodic Configurator version
+* **Operating system**: Windows/Linux/macOS version
+* **Flight controller**: Type and firmware version
+* **Error messages**: Complete error text or screenshots
+* **Log files**: Debug logs (the ArduPilot methodic configurator outputs text to a console) if available
+* **Steps to reproduce**: What you were doing when the problem occurred
 
 For paid consultancy support:
 

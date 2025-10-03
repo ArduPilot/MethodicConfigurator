@@ -82,7 +82,7 @@ backend services. This ensures loose coupling and better testability.
 
 The directory selection sub-application follows a **Factory/Container Pattern** with **Dependency Injection**:
 
-- **Frontend Layer**: GUI components (`VehicleDirectorySelectionWindow`, `DirectorySelectionWidgets`)
+- **Frontend Layer**: GUI components (`VehicleProjectOpenerWindow`, `VehicleProjectCreatorWindow`, `DirectorySelectionWidgets`)
 - **Facade Layer**: `VehicleProjectManager` - provides unified interface to all backend services
 - **Backend Layer**: Specialized services (`LocalFilesystem`, project creators, openers, etc.)
 
@@ -93,7 +93,59 @@ This architecture ensures:
 - **Testability**: Easy to mock dependencies for unit testing
 - **Maintainability**: Changes to backend services don't affect frontend code
 
-### Components
+### GUI Frontend Components
+
+#### Project Opener Window
+
+![frontend_tkinter_project_opener](images/App_screenshot_Vehicle_directory10.png)
+
+- **File**: `frontend_tkinter_project_opener.py`
+- **Purpose**: Main interface for opening existing vehicle projects and launching new project creation
+- **Responsibilities**:
+  - Present three main options: Create New, Open Existing, Re-open Last Used
+  - Handle user interactions and directory selection through callback patterns
+  - Launch VehicleProjectCreatorWindow for new project creation
+  - Delegate business logic to VehicleProjectManager
+  - Manage UI state and user feedback for project opening operations
+- **Dependencies**: Depends only on VehicleProjectManager interface
+
+#### Project Creator Window
+
+![frontend_tkinter_project_creator](images/App_screenshot_Vehicle_directory11.png)
+
+- **File**: `frontend_tkinter_project_creator.py`
+- **Purpose**: Dedicated interface for creating new vehicle projects from templates
+- **Responsibilities**:
+  - Present template selection and project configuration options
+  - Handle new project settings and customization dynamically based on flight controller connection state
+  - Coordinate template selection through TemplateOverviewWindow
+  - Delegate project creation to VehicleProjectManager
+  - Provide feedback on creation progress and results
+- **Dependencies**: Depends only on VehicleProjectManager interface
+
+#### Template Overview Window
+
+- **File**: `frontend_tkinter_template_overview.py`
+- **Purpose**: Visual interface for template browsing and selection
+- **Responsibilities**:
+  - Display available vehicle templates
+  - Show template details and compatibility information
+  - Handle template selection and preview
+  - Provide template comparison features
+- **Dependencies**: Accesses templates through VehicleProjectManager interface
+
+#### Directory Selection Widgets
+
+- **File**: `frontend_tkinter_directory_selection.py`
+- **Purpose**: Reusable directory and path selection widgets
+- **Responsibilities**:
+  - Provide common directory selection functionality through DirectorySelectionWidgets
+  - Handle path entry and validation through PathEntryWidget
+  - Support callback-based directory selection for flexible integration
+  - Manage widget state and user interactions
+- **Dependencies**: No direct VehicleProjectManager dependency; uses callback patterns
+
+### Business logic components
 
 #### VehicleProjectManager (Facade/Factory)
 
@@ -106,29 +158,7 @@ This architecture ensures:
   - Abstract backend complexity from frontend components
   - Implement factory pattern for creating project-related objects
 
-#### Directory Selection Interface
-
-- **File**: `frontend_tkinter_directory_selection.py`
-- **Purpose**: Main interface for vehicle directory selection and management
-- **Responsibilities**:
-  - Present directory selection options (New, Open, Re-open)
-  - Handle user interactions and input validation
-  - Delegate business logic to VehicleProjectManager
-  - Manage UI state and user feedback
-- **Dependencies**: Depends only on VehicleProjectManager interface
-
-#### Backend Services (accessed via VehicleProjectManager)
-
-#### Template Overview Interface
-
-- **File**: `frontend_tkinter_template_overview.py`
-- **Purpose**: Visual interface for template browsing and selection
-- **Responsibilities**:
-  - Display available vehicle templates
-  - Show template details and compatibility information
-  - Handle template selection and preview
-  - Provide template comparison features
-- **Dependencies**: Accesses templates through VehicleProjectManager interface
+### Backend Components (accessed via VehicleProjectManager)
 
 #### Project Creation Services
 
@@ -178,35 +208,46 @@ The data flow follows the layered architecture pattern with clear separation of 
 
 1. **Application Initialization**
    - VehicleProjectManager is instantiated with required backend services
-   - Frontend components receive VehicleProjectManager instance via dependency injection
+   - VehicleProjectOpenerWindow receives VehicleProjectManager instance via dependency injection
    - Recent directories and templates are loaded through VehicleProjectManager
    - UI components are initialized with project manager reference
 
-2. **New Project Creation Flow**
-   - User interacts with VehicleDirectorySelectionWindow
+2. **Project Selection Flow**
+   - User interacts with VehicleProjectOpenerWindow main interface
+   - Three options presented: Create New, Open Existing, Re-open Last Used
+   - For new projects: VehicleProjectOpenerWindow launches VehicleProjectCreatorWindow
+   - For existing projects: callback functions handle directory selection through VehicleDirectorySelectionWidgets
+
+3. **New Project Creation Flow**
+   - VehicleProjectCreatorWindow instantiated with project_manager reference
+   - Frontend presents template selection and project configuration options
+   - User selects template through TemplateOverviewWindow integration
    - Frontend delegates to `project_manager.create_new_vehicle_from_template()`
    - VehicleProjectManager coordinates with project creator services
-   - Template selection handled through VehicleProjectManager interface
    - Project creation delegated to specialized creator services
    - Success/failure feedback provided through manager interface
 
-3. **Existing Project Opening Flow**
-   - User selects existing directory through frontend
-   - Frontend calls `project_manager.open_vehicle_directory()`
+4. **Existing Project Opening Flow**
+   - User interacts with VehicleProjectOpenerWindow
+   - Frontend presents project opening and re-opening options
+   - User selects existing directory through DirectorySelectionWidgets with callbacks
+   - Callback functions call `project_manager.open_vehicle_directory()` or `project_manager.open_last_vehicle_directory()`
    - VehicleProjectManager validates directory through opener services
    - Project state is reconstructed and validated
    - Error handling managed through consistent interface
 
-4. **Architecture Benefits**
+5. **Architecture Benefits**
    - Frontend never directly accesses backend services
    - All business logic centralized in VehicleProjectManager
    - Easy to test with mock VehicleProjectManager
    - Changes to backend services don't affect frontend code
+   - Clean separation between project opening and project creation concerns
 
 ### Integration Points
 
 The directory selection sub-application integrates with other components through the VehicleProjectManager interface:
 
+- **Main Application (`__main__.py`)**: Creates VehicleProjectManager and launches VehicleProjectOpenerWindow
 - **Flight Controller Communication**: VehicleProjectManager receives firmware information
 - **Component Editor**: Receives project instance from VehicleProjectManager
 - **Parameter Editor**: Gets configuration and documentation through VehicleProjectManager
@@ -309,8 +350,10 @@ The layered architecture enables comprehensive testing at each level:
 
 ```text
 # Frontend Layer (GUI)
-frontend_tkinter_directory_selection.py     # Main directory selection GUI
-frontend_tkinter_template_overview.py       # Template browsing interface
+frontend_tkinter_project_opener.py         # Main vehicle project selection interface
+frontend_tkinter_project_creator.py        # Dedicated new project creation interface
+frontend_tkinter_directory_selection.py    # Reusable directory selection widgets with callback support
+frontend_tkinter_template_overview.py      # Template browsing and selection interface
 
 # Facade/Factory Layer (Business Logic Coordination)
 data_model_vehicle_project.py              # VehicleProjectManager facade/factory
@@ -323,7 +366,10 @@ backend_filesystem_configuration_steps.py  # Configuration step management
 backend_filesystem_vehicle_components.py   # Vehicle component handling
 
 # Test Layer
-tests/test_frontend_tkinter_directory_selection.py  # Frontend tests with mocked dependencies
+tests/test_frontend_tkinter_project_opener.py      # Project opener tests with mocked dependencies
+tests/test_frontend_tkinter_project_creator.py     # Project creator tests with mocked dependencies
+tests/test_frontend_tkinter_directory_selection.py # Directory widgets tests
+tests/test_frontend_tkinter_template_overview.py   # Template overview tests
 ```
 
 ## Dependencies
@@ -345,6 +391,8 @@ tests/test_frontend_tkinter_directory_selection.py  # Frontend tests with mocked
 - **Frontend Layer Dependencies**:
   - `data_model_vehicle_project.VehicleProjectManager` (facade interface)
   - `frontend_tkinter_base_window` for GUI base classes
+  - `frontend_tkinter_directory_selection` for reusable widgets
+  - `frontend_tkinter_template_overview` for template selection
   - `frontend_tkinter_scroll_frame` for scrollable interfaces
 
 - **VehicleProjectManager Dependencies**:
