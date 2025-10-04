@@ -82,6 +82,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             "FC connection",
             state="readonly",
         )
+        self.conn_selection_combobox.config(width=20)
         self.conn_selection_combobox.bind("<<ComboboxSelected>>", self.on_select_connection_combobox_change, "+")
         self.conn_selection_combobox.pack(side=tk.LEFT, padx=(0, 5))
         show_tooltip(
