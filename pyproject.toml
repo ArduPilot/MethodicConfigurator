@@ -79,6 +79,8 @@ dev = [
 
 scripts = [
     "bs4",
+    "selenium",
+    "webdriver_manager",
 ]
 
 pypi_dist = [
