@@ -95,7 +95,12 @@ def get_safe_font_config(font_name: str = "TkDefaultFont") -> dict[str, Union[st
             config = font.configure()
             if config and isinstance(config, dict):
                 # Extract only the family and size values, converting to proper types
-                family = str(config.get("family", ""))
+                family_val = config.get("family", "")
+                # Only accept string family names that are not empty
+                family = ""
+                if isinstance(family_val, str) and family_val.strip():
+                    family = family_val.strip()
+
                 size_val = config.get("size")
                 size = 0
                 if size_val is not None:
@@ -103,7 +108,10 @@ def get_safe_font_config(font_name: str = "TkDefaultFont") -> dict[str, Union[st
                         size = int(size_val)
                     except (ValueError, TypeError, OverflowError):
                         size = 0
-                return {"family": family, "size": size}
+
+                # Only return if we have valid values, otherwise fall back to platform defaults
+                if family:  # Family is the key indicator of a valid font configuration
+                    return {"family": family, "size": size}
         except tk.TclError:
             pass
 
@@ -159,4 +167,8 @@ def get_safe_font_size(font_name: str = "TkDefaultFont") -> int:
 
     """
     config = get_safe_font_config(font_name)
-    return int(config.get("size", 0))
+    size_val = config.get("size", 0)
+    try:
+        return int(size_val) if size_val is not None else 0
+    except (ValueError, TypeError, OverflowError):
+        return 0

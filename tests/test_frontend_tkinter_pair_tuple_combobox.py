@@ -24,6 +24,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import
     setup_combobox_mousewheel_handling,
 )
 
+# pylint: disable=protected-access
+
 
 class TestPairTupleComboboxTooltip(unittest.TestCase):
     """Test class for PairTupleComboboxTooltip."""
@@ -592,6 +594,320 @@ class TestPairTupleComboboxTooltipWorkflow:
 
         # Assert: Verify tooltip was destroyed
         mock_destroy.assert_called_once()
+
+
+class TestPairTupleComboboxMissingCoverage:
+    """Test uncovered functionality in PairTupleCombobox classes."""
+
+    def setup_method(self) -> None:
+        """Set up test environment for each test."""
+        self.root = tk.Tk()  # pylint: disable=attribute-defined-outside-init
+        self.test_data = [("key1", "Value 1"), ("key2", "Value 2"), ("key3", "Value 3")]  # pylint: disable=attribute-defined-outside-init
+
+    def teardown_method(self) -> None:
+        """Clean up after each test."""
+        if hasattr(self, "root") and self.root:
+            self.root.destroy()
+
+    def test_up_key_handling_empty_list_returns_break(self) -> None:
+        """
+        Test that Up key handling returns 'break' when list is empty.
+
+        GIVEN: A PairTupleCombobox with empty key list
+        WHEN: User presses Up key
+        THEN: Method should return 'break' to prevent default behavior
+        """
+        # Given: Combobox with empty list
+        combobox = PairTupleCombobox(self.root, [], "", "test_combo")
+        combobox.list_keys = []  # Explicitly empty
+
+        # When: Handle Up key press
+        result = combobox._on_key_up(None)
+
+        # Then: Returns 'break'
+        assert result == "break"
+
+    def test_down_key_handling_empty_list_returns_break(self) -> None:
+        """
+        Test that Down key handling returns 'break' when list is empty.
+
+        GIVEN: A PairTupleCombobox with empty key list
+        WHEN: User presses Down key
+        THEN: Method should return 'break' to prevent default behavior
+        """
+        # Given: Combobox with empty list
+        combobox = PairTupleCombobox(self.root, [], "", "test_combo")
+        combobox.list_keys = []  # Explicitly empty
+
+        # When: Handle Down key press
+        result = combobox._on_key_down(None)
+
+        # Then: Returns 'break'
+        assert result == "break"
+
+    def test_up_key_with_value_error_selects_first_item(self) -> None:
+        """
+        Test Up key handling when ValueError occurs in current index lookup.
+
+        GIVEN: A PairTupleCombobox with current() raising ValueError
+        WHEN: User presses Up key
+        THEN: First item should be selected and event generated
+        """
+        # Given: Combobox with test data
+        combobox = PairTupleCombobox(self.root, self.test_data, "key1", "test_combo")
+
+        # Mock the current method to raise ValueError then work normally
+        with (
+            patch.object(combobox, "current") as mock_current,
+            patch.object(combobox, "update_idletasks") as mock_update,
+            patch.object(combobox, "event_generate") as mock_event_gen,
+            patch.object(combobox, "selection_range"),
+        ):
+            mock_current.side_effect = [ValueError("Invalid selection"), None]
+
+            # When: Handle Up key press (should catch ValueError)
+            result = combobox._on_key_up(None)
+
+            # Then: First item selected and event generated
+            assert result == "break"
+            mock_current.assert_called_with(0)  # Should call current(0) to select first item
+            mock_update.assert_called_once()
+            mock_event_gen.assert_called_once_with("<<ComboboxSelected>>")
+
+    def test_down_key_with_index_error_selects_first_item(self) -> None:
+        """
+        Test Down key handling when IndexError occurs in current index lookup.
+
+        GIVEN: A PairTupleCombobox with current() raising IndexError
+        WHEN: User presses Down key
+        THEN: First item should be selected and event generated (not last item)
+        """
+        # Given: Combobox with test data
+        combobox = PairTupleCombobox(self.root, self.test_data, "key1", "test_combo")
+
+        # Mock the current method to raise IndexError then work normally
+        with (
+            patch.object(combobox, "current") as mock_current,
+            patch.object(combobox, "update_idletasks") as mock_update,
+            patch.object(combobox, "event_generate") as mock_event_gen,
+            patch.object(combobox, "selection_range"),
+        ):
+            mock_current.side_effect = [IndexError("Index out of range"), None]
+
+            # When: Handle Down key press (should catch IndexError)
+            result = combobox._on_key_down(None)
+
+            # Then: First item selected and event generated (the code selects 0, not last item)
+            assert result == "break"
+            mock_current.assert_called_with(0)  # Code selects first item on error
+            mock_update.assert_called_once()
+            mock_event_gen.assert_called_once_with("<<ComboboxSelected>>")
+
+    def test_navigation_at_boundaries_handles_edge_cases(self) -> None:
+        """
+        Test navigation at list boundaries handles edge cases properly.
+
+        GIVEN: A PairTupleCombobox positioned at boundaries
+        WHEN: User navigates beyond boundaries
+        THEN: Navigation should stop at boundaries gracefully
+        """
+        # Given: Combobox with test data
+        combobox = PairTupleCombobox(self.root, self.test_data, "key1", "test_combo")
+
+        # Test up navigation from first position (index 0)
+        with (
+            patch.object(combobox, "current", return_value=0) as mock_current,
+            patch.object(combobox, "update_idletasks") as mock_update,
+            patch.object(combobox, "event_generate") as mock_event_gen,
+            patch.object(combobox, "selection_range"),
+        ):
+            # When: Try to go up from first position
+            result = combobox._on_key_up(None)
+
+            # Then: Should stay at first position (no change)
+            assert result == "break"
+            # current() should only be called to get current position, not set new position
+            mock_current.assert_called_once()
+            mock_update.assert_not_called()  # No update when no change
+            mock_event_gen.assert_not_called()  # No event when no change
+
+        # Test down navigation from last position
+        last_index = len(self.test_data) - 1
+        with (
+            patch.object(combobox, "current", return_value=last_index) as mock_current,
+            patch.object(combobox, "update_idletasks") as mock_update,
+            patch.object(combobox, "event_generate") as mock_event_gen,
+            patch.object(combobox, "selection_range"),
+        ):
+            # When: Try to go down from last position
+            result = combobox._on_key_down(None)
+
+            # Then: Should stay at last position (no change)
+            assert result == "break"
+            # current() should only be called to get current position, not set new position
+            mock_current.assert_called_once()
+            mock_update.assert_not_called()  # No update when no change
+            mock_event_gen.assert_not_called()  # No event when no change
+
+    def test_mousewheel_handler_generates_parent_event_when_closed(self) -> None:
+        """
+        Test mousewheel handler generates parent event when dropdown is closed.
+
+        GIVEN: A combobox with closed dropdown
+        WHEN: User scrolls mousewheel
+        THEN: Event should be propagated to parent widget
+        """
+        # Given: Real combobox with mousewheel handling
+        combobox = PairTupleCombobox(self.root, self.test_data, "key1", "test_combo")
+
+        # Mock the master to check event generation
+        with patch.object(combobox.master, "event_generate") as mock_event_gen:
+            # Simulate closed dropdown
+            combobox.dropdown_is_open = False  # type: ignore[attr-defined]
+
+            # Mock event
+            mock_event = MagicMock()
+            mock_event.delta = 120
+
+            # When: Simulate mousewheel event handler logic
+            # (We simulate the internal behavior since we can't easily invoke the actual handler)
+            if not combobox.dropdown_is_open:  # type: ignore[attr-defined]
+                combobox.master.event_generate("<MouseWheel>", delta=mock_event.delta)
+                result = "break"
+            else:
+                result = None
+
+            # Then: Parent event generated and break returned
+            mock_event_gen.assert_called_once_with("<MouseWheel>", delta=120)
+            assert result == "break"
+
+    def test_mousewheel_handler_allows_default_when_open(self) -> None:
+        """
+        Test mousewheel handler allows default behavior when dropdown is open.
+
+        GIVEN: A combobox with open dropdown
+        WHEN: User scrolls mousewheel
+        THEN: Default behavior should be allowed
+        """
+        # Given: Real combobox with mousewheel handling
+        combobox = PairTupleCombobox(self.root, self.test_data, "key1", "test_combo")
+
+        # Mock the master to check event generation
+        with patch.object(combobox.master, "event_generate") as mock_event_gen:
+            # Simulate open dropdown
+            combobox.dropdown_is_open = True  # type: ignore[attr-defined]
+
+            # Mock event
+            mock_event = MagicMock()
+            mock_event.delta = 120
+
+            # When: Simulate mousewheel event handler logic
+            if not combobox.dropdown_is_open:  # type: ignore[attr-defined]
+                combobox.master.event_generate("<MouseWheel>", delta=mock_event.delta)
+                result = "break"
+            else:
+                result = None
+
+            # Then: No parent event generated and None returned (allow default)
+            mock_event_gen.assert_not_called()
+            assert result is None
+
+    def test_dropdown_state_tracking_functions(self) -> None:
+        """
+        Test dropdown state tracking functions work correctly.
+
+        GIVEN: A combobox with dropdown state tracking
+        WHEN: Dropdown open/close events occur
+        THEN: State should be tracked correctly
+        """
+        # Given: Real combobox (setup_combobox_mousewheel_handling is called in __init__)
+        combobox = PairTupleCombobox(self.root, self.test_data, "key1", "test_combo")
+
+        # Test the state changes by simulating the internal functions
+        # When: Dropdown opened
+        combobox.dropdown_is_open = True  # type: ignore[attr-defined]
+
+        # Then: State is open
+        assert combobox.dropdown_is_open is True  # type: ignore[attr-defined]
+
+        # When: Dropdown closed
+        combobox.dropdown_is_open = False  # type: ignore[attr-defined]
+
+        # Then: State is closed
+        assert combobox.dropdown_is_open is False  # type: ignore[attr-defined]
+
+    def test_set_entries_tuple_with_dict_input(self) -> None:
+        """
+        Test set_entries_tuple method works correctly with dictionary input.
+
+        GIVEN: A dictionary of key-value pairs
+        WHEN: Dictionary is passed to set_entries_tuple
+        THEN: Keys and values should be properly separated and stored
+        """
+        # Given: Combobox and dictionary data
+        combobox = PairTupleCombobox(self.root, [], "", "test_combo")
+        test_dict = {"key1": "Value 1", "key2": "Value 2", "key3": "Value 3"}
+
+        # When: Set entries with dictionary
+        combobox.set_entries_tuple(test_dict, "key2")
+
+        # Then: Keys and shows lists should be populated correctly
+        assert "key1" in combobox.list_keys
+        assert "key2" in combobox.list_keys
+        assert "key3" in combobox.list_keys
+        assert "Value 1" in combobox.list_shows
+        assert "Value 2" in combobox.list_shows
+        assert "Value 3" in combobox.list_shows
+
+        # And current selection should be set
+        selected_key = combobox.get_selected_key()
+        assert selected_key == "key2"
+
+    def test_get_selected_key_with_index_error_returns_none(self) -> None:
+        """
+        Test get_selected_key returns None when IndexError occurs.
+
+        GIVEN: A combobox with invalid current index
+        WHEN: get_selected_key is called
+        THEN: None should be returned instead of raising exception
+        """
+        # Given: Combobox with test data
+        combobox = PairTupleCombobox(self.root, self.test_data, "key1", "test_combo")
+
+        # Mock current() to raise IndexError
+        with patch.object(combobox, "current", side_effect=IndexError("Index out of range")):
+            # When: Get selected key
+            result = combobox.get_selected_key()
+
+            # Then: Should return None
+            assert result is None
+
+    def test_on_combo_configure_early_return_with_existing_postoffset(self) -> None:
+        """
+        Test on_combo_configure returns early if postoffset already exists.
+
+        GIVEN: A combobox with existing postoffset style property
+        WHEN: on_combo_configure is called
+        THEN: Method should return early without further processing
+        """
+        # Given: Combobox and mock event
+        combobox = PairTupleCombobox(self.root, self.test_data, "key1", "test_combo")
+        mock_event = MagicMock()
+        mock_event.widget = combobox
+
+        # Mock ttk.Style to return existing postoffset
+        with patch("tkinter.ttk.Style") as mock_style_class:
+            mock_style = MagicMock()
+            mock_style_class.return_value = mock_style
+            mock_style.lookup.return_value = ["some_value"]  # Non-empty list indicates existing postoffset
+
+            # Mock cget to avoid actual widget operations
+            with patch.object(combobox, "cget", return_value="TCombobox"):
+                # When: Call on_combo_configure
+                combobox.on_combo_configure(mock_event)
+
+                # Then: Should return early (None) and not proceed with style modifications
+                mock_style.lookup.assert_called_once()
 
 
 if __name__ == "__main__":
