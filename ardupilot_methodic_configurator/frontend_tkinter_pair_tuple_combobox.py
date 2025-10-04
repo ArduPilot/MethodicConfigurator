@@ -100,6 +100,13 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         self.set_entries_tuple(list_pair_tuple, selected_element)
         self.bind("<Configure>", self.on_combo_configure, add="+")
 
+        # Add keyboard navigation for up/down arrow keys
+        self.bind("<Up>", self._on_key_up, add="+")
+        self.bind("<Down>", self._on_key_down, add="+")
+
+        # Add focus handling for keyboard events (enable focus reception)
+        self.bind("<FocusIn>", lambda _: None, add="+")
+
         # Apply mouse wheel handling to this combobox instance
         setup_combobox_mousewheel_handling(self)
 
@@ -143,6 +150,64 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
             return None
 
     # SPDX-SnippetEnd
+
+    def _on_key_up(self, _event: tk.Event) -> str:
+        """Handle up arrow key navigation."""
+        if not self.list_keys:
+            return "break"
+
+        try:
+            current_index = self.current()
+            # Move up (decrease index), stop at the beginning
+            if current_index > 0:
+                new_index = current_index - 1
+                self.current(new_index)
+                # Highlight the text to show selection
+                self.selection_range(0, tk.END)
+                # Force the combobox to update visually
+                self.update_idletasks()
+                # Generate a virtual ComboboxSelected event to trigger callbacks
+                self.event_generate("<<ComboboxSelected>>")
+
+        except (ValueError, IndexError):
+            # Current selection not found or invalid, select first item
+            if self.list_keys:
+                self.current(0)
+                self.update_idletasks()
+                self.event_generate("<<ComboboxSelected>>")
+
+        # Prevent the default behavior
+        return "break"
+
+    def _on_key_down(self, _event: tk.Event) -> str:
+        """Handle down arrow key navigation."""
+        if not self.list_keys:
+            return "break"
+
+        try:
+            current_index = self.current()
+            # Move down (increase index), stop at the end
+            if current_index < len(self.list_keys) - 1:
+                new_index = current_index + 1
+                self.current(new_index)
+                # Highlight the text to show selection
+                self.selection_range(0, tk.END)
+                # Force the combobox to update visually
+                self.update_idletasks()
+                # Generate a virtual ComboboxSelected event to trigger callbacks
+                self.event_generate("<<ComboboxSelected>>")
+
+        except (ValueError, IndexError):
+            # Current selection not found or invalid, select first item
+            if self.list_keys:
+                self.current(0)
+                # Highlight the text to show selection
+                self.selection_range(0, tk.END)
+                self.update_idletasks()
+                self.event_generate("<<ComboboxSelected>>")
+
+        # Prevent the default behavior
+        return "break"
 
     # https://stackoverflow.com/questions/39915275/change-width-of-dropdown-listbox-of-a-ttk-combobox
     def on_combo_configure(self, event: tk.Event) -> None:
