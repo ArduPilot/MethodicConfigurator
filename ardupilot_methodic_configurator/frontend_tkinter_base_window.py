@@ -27,7 +27,7 @@ import tkinter as tk
 # from logging import debug as logging_debug
 # from logging import info as logging_info
 from logging import error as logging_error
-from tkinter import ttk
+from tkinter import messagebox, ttk
 from typing import Optional, Union
 
 from PIL import Image
@@ -401,3 +401,19 @@ class BaseWindow:
 
             # Create fallback label
             return ttk.Label(parent, text=fallback_text) if fallback_text else ttk.Label(parent)
+
+
+def show_info_popup(title: str, message: str) -> None:
+    messagebox.showinfo(title, message)
+
+
+def show_warning_popup(title: str, message: str) -> None:
+    messagebox.showwarning(title, message)
+
+
+def show_error_popup(title: str, message: str) -> None:
+    messagebox.showerror(title, message)
+
+
+def ask_yesno_popup(title: str, message: str) -> bool:
+    return messagebox.askyesno(title, message)
