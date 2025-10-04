@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from typing import Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -67,7 +68,7 @@ def mock_flight_controller() -> MagicMock:
     fc.set_param.side_effect = set_param_side_effect
 
     # Configure fetch_param to return values from fc_parameters
-    def fetch_param_side_effect(param_name: str) -> float | None:
+    def fetch_param_side_effect(param_name: str) -> Optional[float]:
         return fc.fc_parameters.get(param_name)
 
     fc.fetch_param.side_effect = fetch_param_side_effect

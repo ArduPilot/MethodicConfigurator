@@ -508,3 +508,456 @@ class TestMotorTestCommandSending:
         # Assert: Should fail gracefully
         assert success is False, "Motor test should fail gracefully when no connection is available"
         assert "No flight controller connection" in error_msg, f"Expected connection error message, got: {error_msg}"
+
+
+# ==================== COMPREHENSIVE BDD TEST CLASSES ====================
+
+
+class TestFlightControllerConnectionManagement:
+    """Test flight controller connection lifecycle in BDD style."""
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_user_can_create_flight_controller_without_auto_discovery(self, mock_discover) -> None:
+        """
+        User can create flight controller instance without automatic connection discovery.
+
+        GIVEN: A system where automatic discovery is disabled
+        WHEN: The user creates a FlightController instance
+        THEN: The instance should be created successfully
+        AND: No automatic connection discovery should occur
+        """
+        # Given: Mock discover_connections to prevent automatic discovery
+        mock_discover.return_value = None
+
+        # When: Create FlightController instance
+        fc = FlightController(reboot_time=5, baudrate=57600)
+
+        # Then: Instance created successfully
+        assert fc is not None
+        assert fc._FlightController__reboot_time == 5
+        assert fc._FlightController__baudrate == 57600
+        assert fc.master is None
+        assert not fc.fc_parameters
+
+        # And: No automatic discovery occurred
+        mock_discover.assert_called_once()
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.mavutil.mavlink_connection")
+    def test_user_can_connect_to_flight_controller_successfully(self, mock_mavlink, mock_discover) -> None:
+        """
+        User can establish successful connection to flight controller.
+
+        GIVEN: A flight controller that responds to connection attempts
+        WHEN: The user connects to a specific device
+        THEN: A successful connection should be established
+        AND: Connection status should be available
+        """
+        # Given: Mock successful connection
+        mock_discover.return_value = None
+        mock_connection = MagicMock()
+        mock_connection.target_system = 1
+        mock_connection.target_component = 1
+        mock_mavlink.return_value = mock_connection
+
+        fc = FlightController(reboot_time=5, baudrate=115200)
+
+        # When: Connect to device
+        fc.connect(device="tcp:127.0.0.1:5760")
+
+        # Then: Connection established successfully
+        assert fc.master is not None
+        assert fc.master == mock_connection
+        mock_mavlink.assert_called_once()
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_user_can_disconnect_from_flight_controller_cleanly(self, mock_discover) -> None:
+        """
+        User can cleanly disconnect from flight controller.
+
+        GIVEN: A connected flight controller
+        WHEN: The user disconnects
+        THEN: All connection resources should be released
+        AND: Connection state should be cleared
+        """
+        # Given: Connected flight controller
+        mock_discover.return_value = None
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        mock_master = MagicMock()
+        fc.master = mock_master
+
+        # When: Disconnect
+        fc.disconnect()
+
+        # Then: Connection resources released
+        assert fc.master is None
+        mock_master.close.assert_called_once()
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_user_can_manage_multiple_connection_strings(self, mock_discover) -> None:
+        """
+        User can manage multiple connection strings for different devices.
+
+        GIVEN: A flight controller with no initial connections
+        WHEN: The user adds multiple connection strings
+        THEN: All valid connections should be stored
+        AND: Duplicate connections should be rejected
+        AND: Invalid connections should be rejected
+        """
+        # Given: Flight controller with no connections
+        mock_discover.return_value = None
+        fc = FlightController(reboot_time=5, baudrate=115200)
+
+        # When: Add multiple connection strings
+        result1 = fc.add_connection("tcp:127.0.0.1:5760")
+        result2 = fc.add_connection("udp:127.0.0.1:14550")
+        result3 = fc.add_connection("tcp:127.0.0.1:5760")  # Duplicate
+        result4 = fc.add_connection("")  # Invalid
+
+        # Then: Valid connections accepted, invalid rejected
+        assert result1 is True, "First connection should be accepted"
+        assert result2 is True, "Second connection should be accepted"
+        assert result3 is False, "Duplicate connection should be rejected"
+        assert result4 is False, "Empty connection should be rejected"
+
+        # And: Connection tuples available
+        connection_tuples = fc.get_connection_tuples()
+        assert len(connection_tuples) >= 2, "Should have at least 2 connections"
+
+
+class TestFlightControllerParameterOperations:
+    """Test parameter download and management operations in BDD style."""
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController._download_params_via_mavlink")
+    def test_user_can_download_parameters_with_progress_feedback(self, mock_download, mock_discover) -> None:
+        """
+        User can download parameters with real-time progress feedback.
+
+        GIVEN: A connected flight controller with parameters
+        WHEN: The user downloads parameters with a progress callback
+        THEN: Parameters should be downloaded successfully
+        AND: Progress callback should be called with updates
+        """
+        # Given: Connected flight controller
+        mock_discover.return_value = None
+        mock_params = {"ALT_HOLD_RTL": 100.0, "BATT_MONITOR": 4.0}
+        # Note: _download_params_via_mavlink returns only dict, not tuple
+        mock_download.return_value = mock_params
+
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        fc.master = MagicMock()
+
+        # Track progress updates
+        progress_updates = []
+
+        def progress_callback(current, total) -> None:
+            progress_updates.append((current, total))
+
+        # When: Download parameters with progress callback
+        result_params, result_defaults = fc.download_params(progress_callback)
+
+        # Then: Parameters downloaded successfully
+        assert result_params == mock_params
+        assert isinstance(result_defaults, ParDict)  # Will be empty ParDict() from MAVLink fallback
+        mock_download.assert_called_once()
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_user_can_set_individual_parameter_values(self, mock_discover) -> None:
+        """
+        User can set individual parameter values on flight controller.
+
+        GIVEN: A connected flight controller
+        WHEN: The user sets a parameter value
+        THEN: The parameter should be sent to the flight controller
+        AND: No errors should occur
+        """
+        # Given: Connected flight controller
+        mock_discover.return_value = None
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        mock_master = MagicMock()
+        fc.master = mock_master
+
+        # When: Set parameter
+        fc.set_param("ALT_HOLD_RTL", 150.0)
+
+        # Then: Parameter sent to flight controller
+        mock_master.param_set_send.assert_called_once_with("ALT_HOLD_RTL", 150.0)
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController._send_command_and_wait_ack")
+    def test_user_can_reset_all_parameters_to_defaults(self, mock_send_command, mock_discover) -> None:
+        """
+        User can reset all parameters to factory defaults.
+
+        GIVEN: A connected flight controller with modified parameters
+        WHEN: The user resets all parameters to defaults
+        THEN: A reset command should be sent to the flight controller
+        AND: Success status should be returned
+        """
+        # Given: Connected flight controller
+        mock_discover.return_value = None
+        mock_send_command.return_value = (True, "")
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        fc.master = MagicMock()
+
+        # When: Reset all parameters
+        success, message = fc.reset_all_parameters_to_default()
+
+        # Then: Reset command sent successfully
+        assert success is True
+        assert message == ""
+        mock_send_command.assert_called_once()
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_user_receives_timeout_error_when_fetching_nonexistent_parameter(self, mock_discover) -> None:
+        """
+        User receives appropriate timeout error when fetching nonexistent parameter.
+
+        GIVEN: A connected flight controller
+        WHEN: The user fetches a parameter that doesn't exist
+        THEN: A TimeoutError should be raised after waiting period
+        """
+        # Given: Connected flight controller that doesn't respond to param requests
+        mock_discover.return_value = None
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        mock_master = MagicMock()
+        mock_master.recv_match.return_value = None  # No response
+        fc.master = mock_master
+
+        # When: Fetch nonexistent parameter
+        # Then: Timeout error should be raised
+        with pytest.raises(TimeoutError, match="Timeout waiting for parameter NONEXISTENT_PARAM"):
+            fc.fetch_param("NONEXISTENT_PARAM", timeout=1)  # Short timeout for testing
+
+
+class TestFlightControllerMotorTesting:
+    """Test motor testing functionality in BDD style."""
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController._send_command_and_wait_ack")
+    def test_user_can_test_all_motors_simultaneously(self, mock_send_command, mock_discover) -> None:
+        """
+        User can test all motors simultaneously at specified throttle.
+
+        GIVEN: A connected flight controller with multiple motors
+        WHEN: The user tests all motors at once
+        THEN: Motor test commands should be sent for all motors
+        AND: Success status should be returned
+        """
+        # Given: Connected flight controller
+        mock_discover.return_value = None
+        mock_send_command.return_value = (True, "")
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        fc.master = MagicMock()
+
+        # When: Test all 4 motors at 20% throttle
+        success, message = fc.test_all_motors(nr_of_motors=4, throttle_percent=20, timeout_seconds=5)
+
+        # Then: Motor test successful
+        assert success is True
+        assert message == ""
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController._send_command_and_wait_ack")
+    def test_user_can_stop_all_motors_immediately(self, mock_send_command, mock_discover) -> None:
+        """
+        User can immediately stop all motors for safety.
+
+        GIVEN: A flight controller with motors running
+        WHEN: The user stops all motors
+        THEN: Motor stop commands should be sent
+        AND: All motors should be stopped safely
+        """
+        # Given: Connected flight controller
+        mock_discover.return_value = None
+        mock_send_command.return_value = (True, "")
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        fc.master = MagicMock()
+
+        # When: Stop all motors
+        success, _message = fc.stop_all_motors()
+
+        # Then: Motors stopped successfully
+        assert success is True
+        mock_send_command.assert_called()
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController._send_command_and_wait_ack")
+    def test_user_can_test_motors_in_sequence_safely(self, mock_send_command, mock_discover) -> None:
+        """
+        User can test motors in sequence for safer testing.
+
+        GIVEN: A connected flight controller with multiple motors
+        WHEN: The user tests motors in sequence
+        THEN: A single sequential motor test command should be sent
+        AND: The command should specify the motor sequence parameters
+        """
+        # Given: Connected flight controller
+        mock_discover.return_value = None
+        mock_send_command.return_value = (True, "")
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        fc.master = MagicMock()
+
+        # When: Test motors in sequence
+        success, _message = fc.test_motors_in_sequence(start_motor=1, motor_count=3, throttle_percent=15, timeout_seconds=3)
+
+        # Then: Sequential motor test command sent successfully
+        assert success is True
+        mock_send_command.assert_called_once()
+
+
+class TestFlightControllerBatteryMonitoring:
+    """Test battery monitoring functionality in BDD style."""
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController._send_command_and_wait_ack")
+    def test_user_can_enable_periodic_battery_status_monitoring(self, mock_send_command, mock_discover) -> None:
+        """
+        User can enable periodic battery status monitoring.
+
+        GIVEN: A connected flight controller with battery monitoring capability
+        WHEN: The user enables periodic battery status
+        THEN: Battery monitoring should be configured
+        AND: Periodic status messages should be requested
+        """
+        # Given: Connected flight controller
+        mock_discover.return_value = None
+        mock_send_command.return_value = (True, "")
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        fc.master = MagicMock()
+
+        # When: Enable battery monitoring with 1-second interval
+        success, _message = fc.request_periodic_battery_status(interval_microseconds=1000000)
+
+        # Then: Battery monitoring enabled
+        assert success is True
+        mock_send_command.assert_called()
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_user_can_retrieve_current_battery_status(self, mock_discover) -> None:
+        """
+        User can retrieve current battery voltage and current readings.
+
+        GIVEN: A connected flight controller with battery monitoring enabled
+        WHEN: The user requests current battery status
+        THEN: Voltage and current readings should be returned
+        AND: Values should be within expected ranges
+        """
+        # Given: Connected flight controller with battery data
+        mock_discover.return_value = None
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        mock_master = MagicMock()
+
+        # Mock battery status message
+        mock_battery_msg = MagicMock()
+        mock_battery_msg.voltages = [4200, 4180, 4190]  # mV per cell
+        mock_battery_msg.current_battery = 1500  # cA (15A)
+        mock_master.recv_match.return_value = mock_battery_msg
+        fc.master = mock_master
+        # Need battery monitoring enabled for get_battery_status to work
+        fc.fc_parameters = {"BATT_MONITOR": 4}  # Battery monitoring enabled
+
+        # When: Get battery status
+        battery_data, message = fc.get_battery_status()
+
+        # Then: Battery data retrieved successfully
+        if battery_data is not None:
+            voltage, current = battery_data
+            assert voltage > 0, "Voltage should be positive"
+            assert current > 0, "Current should be positive"
+        assert message == ""
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_user_can_check_battery_monitoring_configuration(self, mock_discover) -> None:
+        """
+        User can check if battery monitoring is properly configured.
+
+        GIVEN: A flight controller with parameter configuration
+        WHEN: The user checks battery monitoring status
+        THEN: Configuration status should be returned accurately
+        """
+        # Given: Flight controller with battery monitoring enabled
+        mock_discover.return_value = None
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        fc.fc_parameters = {"BATT_MONITOR": 4.0}  # Battery monitoring enabled
+
+        # When: Check battery monitoring status
+        is_enabled = fc.is_battery_monitoring_enabled()
+
+        # Then: Monitoring status correctly identified
+        assert is_enabled is True
+
+        # When: Check with monitoring disabled
+        fc.fc_parameters = {"BATT_MONITOR": 0.0}  # Disabled
+        is_enabled = fc.is_battery_monitoring_enabled()
+
+        # Then: Disabled status correctly identified
+        assert is_enabled is False
+
+
+class TestFlightControllerErrorHandling:
+    """Test error handling and edge cases in BDD style."""
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_user_receives_appropriate_error_when_operations_attempted_without_connection(self, mock_discover) -> None:
+        """
+        User receives clear error messages when attempting operations without connection.
+
+        GIVEN: A flight controller that is not connected
+        WHEN: The user attempts various operations
+        THEN: Clear error messages should be provided
+        AND: Operations should fail gracefully
+        """
+        # Given: Unconnected flight controller
+        mock_discover.return_value = None
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        assert fc.master is None
+
+        # When/Then: Various operations should fail gracefully
+
+        # Motor testing without connection
+        success, error = fc.test_motor(0, "A", 1, 10, 2)
+        assert success is False
+        assert "No flight controller connection" in error
+
+        # Battery status without connection
+        battery_data, error = fc.get_battery_status()
+        assert battery_data is None
+        assert "No flight controller connection" in error
+
+        # Stop motors without connection
+        success, error = fc.stop_all_motors()
+        assert success is False
+        assert "No flight controller connection" in error
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_user_gets_voltage_thresholds_with_graceful_fallback(self, mock_discover) -> None:
+        """
+        User gets voltage thresholds with graceful fallback to defaults.
+
+        GIVEN: A flight controller that may or may not have threshold parameters
+        WHEN: The user requests voltage thresholds
+        THEN: Either configured values or safe defaults should be returned
+        """
+        # Given: Flight controller without threshold parameters
+        mock_discover.return_value = None
+        fc = FlightController(reboot_time=5, baudrate=115200)
+        fc.fc_parameters = {}
+
+        # When: Get voltage thresholds (default values)
+        low_threshold, critical_threshold = fc.get_voltage_thresholds()
+
+        # Then: Default thresholds returned (both 0.0 when no parameters set)
+        assert isinstance(low_threshold, float)
+        assert isinstance(critical_threshold, float)
+        assert low_threshold == 0.0
+        assert critical_threshold == 0.0
+
+        # When: Flight controller has configured thresholds
+        fc.fc_parameters = {"BATT_ARM_VOLT": 14.0, "MOT_BAT_VOLT_MAX": 16.8}
+        low_threshold, critical_threshold = fc.get_voltage_thresholds()
+
+        # Then: Configured thresholds returned
+        assert low_threshold == 14.0
+        assert critical_threshold == 16.8

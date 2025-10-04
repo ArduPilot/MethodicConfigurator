@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import contextlib
 import os
+import sys
 import tempfile
 import time
 import tkinter as tk
@@ -27,9 +28,16 @@ import pytest
 from conftest import MockConfiguration
 from PIL import Image
 
-from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
+    BaseWindow,
+    ask_yesno_popup,
+    is_debugging,
+    show_error_popup,
+    show_info_popup,
+    show_warning_popup,
+)
 
-# pylint: disable=protected-access, redefined-outer-name, unused-argument
+# pylint: disable=protected-access, redefined-outer-name, unused-argument, too-many-lines
 
 
 # ==================== ADDITIONAL TEST FIXTURES ====================
@@ -964,6 +972,498 @@ class TestPerformanceIntegration:
         finally:
             # Cleanup: Don't destroy the session root, it's managed by conftest.py
             pass
+
+
+# ==================== ADDITIONAL BDD TESTS FOR MISSING COVERAGE ====================
+
+
+class TestDebuggerDetectionBehavior:
+    """Test debugger detection functionality for development environments."""
+
+    def test_developer_can_work_without_debugpy_installed(self) -> None:
+        """
+        Developer can work without debugpy installed.
+
+        GIVEN: Developer environment without debugpy (production deployment)
+        WHEN: Application checks for debugger attachment
+        THEN: Should gracefully return False without errors
+        """
+        # Given: Environment without debugpy module
+        with patch.dict(sys.modules, {"debugpy": None}):
+            # When: Application checks for debugger
+            result = is_debugging()
+
+            # Then: Should return False gracefully
+            assert result is False
+
+    def test_developer_sees_graceful_handling_when_debugpy_check_fails(self) -> None:
+        """
+        Developer sees graceful handling when debugpy check fails.
+
+        GIVEN: Developer environment with broken debugpy installation
+        WHEN: Debugpy check encounters runtime errors
+        THEN: Should log error and return False to continue operation
+        """
+        # Arrange: Mock debugpy with failing is_client_connected method
+        mock_debugpy = MagicMock()
+        mock_debugpy.is_client_connected.side_effect = RuntimeError("Connection check failed")
+
+        with (
+            patch.dict("sys.modules", {"debugpy": mock_debugpy}),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.logging_error") as mock_log,
+        ):
+            # When: Application checks debugger status with failing debugpy
+            result = is_debugging()
+
+            # Then: Should log error and return False
+            assert result is False
+            mock_log.assert_called_once()
+
+    def test_developer_detects_active_debugger_connection(self) -> None:
+        """
+        Developer detects active debugger connection.
+
+        GIVEN: Developer has VS Code debugger attached
+        WHEN: Application checks debugger status
+        THEN: Should detect and return True for debugger-aware behavior
+        """
+        # Arrange: Mock debugpy with active connection
+        mock_debugpy = MagicMock()
+        mock_debugpy.is_client_connected.return_value = True
+
+        with patch.dict("sys.modules", {"debugpy": mock_debugpy}):
+            # When: Application checks debugger status with active debugger
+            result = is_debugging()
+
+            # Then: Should detect debugger
+            assert result is True
+
+
+class TestDpiScalingEdgeCases:
+    """Test edge cases in DPI scaling calculations."""
+
+    def test_user_gets_reasonable_scaling_with_zero_dpi(self, dpi_test_window) -> None:
+        """
+        User gets reasonable scaling with zero DPI.
+
+        GIVEN: User's system reports invalid zero DPI (rare hardware issue)
+        WHEN: Application calculates scaling factor
+        THEN: Should use fallback value to prevent division by zero
+        """
+        # Arrange: Create window with zero DPI reporting
+        window, stack = dpi_test_window(0.0)
+
+        with stack:
+            # When: Calculate scaling factor with zero DPI
+            scaling_factor = window._get_dpi_scaling_factor()
+
+            # Then: Should use safe fallback (not crash with division by zero)
+            assert scaling_factor >= 0.0
+            assert scaling_factor <= 10.0  # Reasonable upper bound
+
+    def test_user_gets_reasonable_scaling_with_negative_tk_scaling(self, mock_tkinter_context) -> None:
+        """
+        User gets reasonable scaling with negative tk scaling.
+
+        GIVEN: User's system has unusual negative tk scaling values
+        WHEN: Application detects DPI scaling
+        THEN: Should handle gracefully and provide usable scaling factor
+        """
+        # Arrange: Mock negative tk scaling
+        config = MockConfiguration(patch_dpi_detection=False)
+        stack, patches = mock_tkinter_context(config)
+
+        with stack:
+            for patch_obj in patches:
+                stack.enter_context(patch_obj)
+
+            mock_tk = stack.enter_context(patch("tkinter.Tk"))
+            mock_root = MagicMock()
+            mock_root.winfo_fpixels.return_value = 96.0  # Normal DPI
+            mock_root.tk.call.return_value = -1.0  # Negative scaling
+            mock_tk.return_value = mock_root
+
+            # When: Create window with negative tk scaling
+            window = BaseWindow()
+            scaling_factor = window._get_dpi_scaling_factor()
+
+            # Then: Should use DPI-based scaling and ignore negative tk scaling
+            assert scaling_factor == 1.0  # Should fall back to DPI calculation
+
+
+class TestImageParameterValidation:
+    """Test image loading parameter validation and edge cases."""
+
+    def test_user_sees_error_for_empty_filepath(self, mocked_base_window) -> None:
+        """
+        User sees graceful fallback for empty filepath.
+
+        GIVEN: User provides empty string as image filepath
+        WHEN: Application attempts to load image
+        THEN: Should return fallback label without crashing
+        """
+        # Given: User provides empty filepath
+        parent_frame = MagicMock()
+
+        with patch("tkinter.ttk.Label") as mock_label:
+            mock_label_instance = MagicMock()
+            mock_label.return_value = mock_label_instance
+
+            # When: User attempts to load image with empty filepath
+            result = mocked_base_window.put_image_in_label(parent_frame, "", image_height=40)
+
+            # Then: Should return fallback label (graceful degradation)
+            assert result == mock_label_instance
+            mock_label.assert_called_once_with(parent_frame)
+
+    def test_user_sees_error_for_invalid_image_height(self, mocked_base_window) -> None:
+        """
+        User sees graceful fallback for invalid image height.
+
+        GIVEN: User provides negative or zero image height
+        WHEN: Application attempts to resize image
+        THEN: Should return fallback label without crashing
+        """
+        # Given: User provides invalid image height
+        parent_frame = MagicMock()
+
+        with patch("tkinter.ttk.Label") as mock_label:
+            mock_label_instance = MagicMock()
+            mock_label.return_value = mock_label_instance
+
+            # When: User attempts to load image with invalid height (zero)
+            result = mocked_base_window.put_image_in_label(parent_frame, "test.png", image_height=0)
+
+            # Then: Should return fallback label
+            assert result == mock_label_instance
+
+            # When: User attempts to load image with negative height
+            result = mocked_base_window.put_image_in_label(parent_frame, "test.png", image_height=-10)
+
+            # Then: Should return fallback label
+            assert result == mock_label_instance
+
+    def test_user_sees_fallback_for_corrupted_image_data(self, mocked_base_window) -> None:
+        """
+        User sees fallback behavior for corrupted image data.
+
+        GIVEN: User has image file with corrupted or invalid data
+        WHEN: Application attempts to load the corrupted image
+        THEN: Should provide fallback label with specified text
+        """
+        # Arrange: Mock corrupted image scenario
+        parent_frame = MagicMock()
+
+        with (
+            patch("os.path.isfile", return_value=True),
+            patch("PIL.Image.open", side_effect=OSError("Corrupted image data")),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.logging_error") as mock_log,
+        ):
+            # When: User attempts to load corrupted image
+            result_label = mocked_base_window.put_image_in_label(
+                parent_frame, "corrupted.png", image_height=40, fallback_text="Image Error"
+            )
+
+            # Then: Should create fallback label and log error
+            assert result_label is not None
+            mock_log.assert_called_once()
+
+    def test_user_gets_minimal_image_dimensions_for_tiny_scaling(self, mocked_base_window) -> None:  # pylint: disable=too-many-locals
+        """
+        User gets minimal image dimensions for tiny scaling.
+
+        GIVEN: User has very small DPI scaling and image dimensions
+        WHEN: Application calculates scaled image size
+        THEN: Should ensure minimum 1x1 pixel dimensions to prevent errors
+        """
+        # Arrange: Mock very small scaling and image
+        parent_frame = MagicMock()
+
+        # Mock tiny DPI scaling factor
+        mocked_base_window.dpi_scaling_factor = 0.01  # Very small scaling
+
+        with (
+            patch("os.path.isfile", return_value=True),
+            patch("PIL.Image.open") as mock_open,
+            patch("tkinter.PhotoImage") as mock_photo,
+            patch("tkinter.ttk.Label") as mock_label,
+            patch("io.BytesIO") as mock_buffer,
+        ):
+            # Setup image mocks
+            mock_image = MagicMock()
+            mock_image.size = (10, 10)  # Small image
+            mock_image.mode = "RGB"
+            mock_resized_image = MagicMock()
+            mock_resized_image.mode = "RGB"
+            mock_image.resize.return_value = mock_resized_image
+
+            # Mock image as context manager
+            mock_image.__enter__ = MagicMock(return_value=mock_image)
+            mock_image.__exit__ = MagicMock(return_value=None)
+            mock_open.return_value = mock_image
+
+            # Setup other mocks
+            mock_buffer_instance = MagicMock()
+            mock_buffer.return_value = mock_buffer_instance
+            mock_buffer_instance.getvalue.return_value = b"fake_png_data"
+
+            mock_photo_instance = MagicMock()
+            mock_photo.return_value = mock_photo_instance
+            mock_label_instance = MagicMock()
+            mock_label.return_value = mock_label_instance
+
+            # When: User loads image with tiny scaling
+            result = mocked_base_window.put_image_in_label(parent_frame, "tiny.png", image_height=1)
+
+            # Then: Should ensure minimum dimensions (at least 1x1)
+            resize_call_args = mock_image.resize.call_args[0][0]  # First argument tuple
+            width, height = resize_call_args
+            assert width >= 1
+            assert height >= 1
+            assert result == mock_label_instance
+
+    def test_developer_sees_debug_mode_image_fallback(self, mocked_base_window) -> None:
+        """
+        Developer sees debug mode image fallback behavior.
+
+        GIVEN: Developer is running application in VS Code debugger
+        WHEN: Application attempts to load images during debugging
+        THEN: Should return empty label to avoid debugger image issues
+        """
+        # Arrange: Mock debugging environment and successful image processing
+        parent_frame = MagicMock()
+
+        with (
+            patch("os.path.isfile", return_value=True),
+            patch("PIL.Image.open") as mock_open,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.is_debugging", return_value=True),
+            patch("tkinter.ttk.Label") as mock_label,
+        ):
+            # Setup minimal successful image processing
+            mock_image = MagicMock()
+            mock_image.size = (100, 50)
+            mock_image.mode = "RGB"
+            mock_image.__enter__ = MagicMock(return_value=mock_image)
+            mock_image.__exit__ = MagicMock(return_value=None)
+            mock_open.return_value = mock_image
+
+            mock_label_instance = MagicMock()
+            mock_label.return_value = mock_label_instance
+
+            # When: Developer loads image in debug mode
+            result = mocked_base_window.put_image_in_label(parent_frame, "debug_test.png", image_height=40)
+
+            # Then: Should return simple label (debugger fallback)
+            assert result == mock_label_instance
+            mock_label.assert_called_once_with(parent_frame)  # Empty label for debugger
+
+
+class TestScalingCalculationMethods:
+    """Test the various DPI scaling calculation methods."""
+
+    def test_user_gets_properly_scaled_image_sizes(self, mocked_base_window) -> None:
+        """
+        User gets properly scaled image sizes.
+
+        GIVEN: User has application running with specific DPI scaling
+        WHEN: Application calculates scaled image dimensions
+        THEN: Should return proportionally scaled values
+        """
+        # Arrange: Set known scaling factor
+        mocked_base_window.dpi_scaling_factor = 2.0
+
+        # When: User requests scaled image size
+        result = mocked_base_window.calculate_scaled_image_size(50)
+
+        # Then: Should double the base size
+        assert result == 100
+
+    def test_user_gets_properly_scaled_padding_tuples(self, mocked_base_window) -> None:
+        """
+        User gets properly scaled padding tuples.
+
+        GIVEN: User needs consistent padding across different DPI settings
+        WHEN: Application calculates padding tuples for UI layout
+        THEN: Should scale both values proportionally
+        """
+        # Arrange: Set known scaling factor
+        mocked_base_window.dpi_scaling_factor = 1.5
+
+        # When: User requests scaled padding tuple
+        result = mocked_base_window.calculate_scaled_padding_tuple(10, 20)
+
+        # Then: Should scale both values
+        expected = (15, 30)  # 10*1.5, 20*1.5
+        assert result == expected
+
+    @pytest.mark.parametrize(
+        ("scaling_factor", "base_values", "expected_results"),
+        [
+            (0.5, [10, 20, 30], [5, 10, 15]),  # 50% scaling
+            (1.0, [8, 12, 16], [8, 12, 16]),  # No scaling
+            (3.0, [5, 7, 9], [15, 21, 27]),  # 300% scaling
+        ],
+    )
+    def test_user_experiences_consistent_scaling_across_all_methods(
+        self, mocked_base_window, scaling_factor, base_values, expected_results
+    ) -> None:
+        """
+        User experiences consistent scaling across all calculation methods.
+
+        GIVEN: User has specific DPI scaling configuration
+        WHEN: Application calculates scaled values for fonts, images, and padding
+        THEN: Should apply consistent scaling factor across all methods
+        """
+        # Arrange: Set scaling factor
+        mocked_base_window.dpi_scaling_factor = scaling_factor
+
+        # When: User requests various scaled calculations
+        font_results = [mocked_base_window.calculate_scaled_font_size(val) for val in base_values]
+        image_results = [mocked_base_window.calculate_scaled_image_size(val) for val in base_values]
+        padding_results = [mocked_base_window.calculate_scaled_padding(val) for val in base_values]
+
+        # Then: All methods should produce consistent results
+        assert font_results == expected_results
+        assert image_results == expected_results
+        assert padding_results == expected_results
+
+
+class TestPopupFunctionsBehavior:
+    """Test popup utility functions for user notifications."""
+
+    def test_user_sees_info_popup_with_correct_parameters(self) -> None:
+        """
+        User sees info popup with correct parameters.
+
+        GIVEN: Application needs to show information to user
+        WHEN: Info popup is triggered with title and message
+        THEN: Should call messagebox.showinfo with correct parameters
+        """
+        # Arrange & Act: User triggers info popup
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.messagebox.showinfo") as mock_info:
+            show_info_popup("Test Title", "Test Message")
+
+            # Then: Should call messagebox with correct parameters
+            mock_info.assert_called_once_with("Test Title", "Test Message")
+
+    def test_user_sees_warning_popup_with_correct_parameters(self) -> None:
+        """
+        User sees warning popup with correct parameters.
+
+        GIVEN: Application needs to warn user about something
+        WHEN: Warning popup is triggered
+        THEN: Should display warning messagebox
+        """
+        # Arrange & Act: User triggers warning popup
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.messagebox.showwarning") as mock_warning:
+            show_warning_popup("Warning Title", "Warning Message")
+
+            # Then: Should call messagebox with correct parameters
+            mock_warning.assert_called_once_with("Warning Title", "Warning Message")
+
+    def test_user_sees_error_popup_with_correct_parameters(self) -> None:
+        """
+        User sees error popup with correct parameters.
+
+        GIVEN: Application encounters error needing user notification
+        WHEN: Error popup is triggered
+        THEN: Should display error messagebox
+        """
+        # Arrange & Act: User encounters error popup
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.messagebox.showerror") as mock_error:
+            show_error_popup("Error Title", "Error Message")
+
+            # Then: Should call messagebox with correct parameters
+            mock_error.assert_called_once_with("Error Title", "Error Message")
+
+    def test_user_can_confirm_actions_with_yesno_popup(self) -> None:
+        """
+        User can confirm actions with yes/no popup.
+
+        GIVEN: Application needs user confirmation for important actions
+        WHEN: Yes/No popup is displayed
+        THEN: Should return boolean result based on user choice
+        """
+        # Arrange & Act: User sees confirmation dialog
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_base_window.messagebox.askyesno",
+            return_value=True,
+        ) as mock_yesno:
+            result = ask_yesno_popup("Confirm Action", "Are you sure?")
+
+            # Then: Should return user's choice
+            assert result is True
+            mock_yesno.assert_called_once_with("Confirm Action", "Are you sure?")
+
+
+class TestWindowLifecycleBehavior:
+    """Test complete window lifecycle from creation to destruction."""
+
+    def test_user_can_create_and_destroy_main_windows_properly(self) -> None:
+        """
+        User can create and destroy main windows properly.
+
+        GIVEN: User manages application lifecycle
+        WHEN: User creates and closes main application windows
+        THEN: Should handle full lifecycle without resource leaks
+        """
+        # Arrange: Prepare for window lifecycle test
+        window = None
+
+        try:
+            # Act: User creates main window
+            with (
+                patch("tkinter.Tk") as mock_tk,
+                patch.object(BaseWindow, "_setup_application_icon"),
+                patch.object(BaseWindow, "_setup_theme_and_styling"),
+                patch.object(BaseWindow, "_get_dpi_scaling_factor", return_value=1.0),
+                patch("tkinter.ttk.Frame") as mock_frame,
+            ):
+                mock_root = MagicMock()
+                mock_tk.return_value = mock_root
+                mock_frame_instance = MagicMock()
+                mock_frame.return_value = mock_frame_instance
+
+                window = BaseWindow()
+
+                # Then: Window should be properly initialized
+                assert window.root == mock_root
+                assert window.main_frame == mock_frame_instance
+                mock_tk.assert_called_once()
+
+        finally:
+            # Cleanup should not raise exceptions
+            if window and hasattr(window, "root"):
+                with contextlib.suppress(Exception):
+                    window.root.destroy()
+
+    def test_user_experiences_proper_parent_child_relationship(self, tk_root) -> None:
+        """
+        User experiences proper parent-child window relationship.
+
+        GIVEN: User opens child dialogs from main windows
+        WHEN: Parent-child windows are created
+        THEN: Should maintain proper hierarchical relationship
+        """
+        # Arrange & Act: User creates parent-child window relationship
+        with (
+            patch.object(BaseWindow, "_setup_application_icon"),
+            patch.object(BaseWindow, "_setup_theme_and_styling"),
+            patch.object(BaseWindow, "_get_dpi_scaling_factor", return_value=1.0),
+        ):
+            # When: User creates child window from parent
+            child_window = BaseWindow(tk_root)
+
+            # Then: Should establish proper parent-child relationship
+            assert isinstance(child_window.root, tk.Toplevel)
+            assert child_window.root.master == tk_root
+
+            # Verify child doesn't interfere with parent
+            assert hasattr(child_window, "main_frame")
+            assert hasattr(child_window, "dpi_scaling_factor")
+
+            # Cleanup
+            child_window.root.destroy()
 
 
 if __name__ == "__main__":
