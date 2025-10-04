@@ -34,7 +34,13 @@ from ardupilot_methodic_configurator.backend_flightcontroller import FlightContr
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
-from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
+    BaseWindow,
+    ask_yesno_popup,
+    show_error_popup,
+    show_info_popup,
+    show_warning_popup,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
@@ -125,22 +131,6 @@ def show_about_window(root: ttk.Frame, _version: str) -> None:  # pylint: disabl
 
     # Center the about window on its parent
     BaseWindow.center_window(about_window, root.winfo_toplevel())
-
-
-def show_info_popup(title: str, message: str) -> None:
-    messagebox.showinfo(title, message)
-
-
-def show_warning_popup(title: str, message: str) -> None:
-    messagebox.showwarning(title, message)
-
-
-def show_error_popup(title: str, message: str) -> None:
-    messagebox.showerror(title, message)
-
-
-def ask_yesno_popup(title: str, message: str) -> bool:
-    return messagebox.askyesno(title, message)
 
 
 class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
