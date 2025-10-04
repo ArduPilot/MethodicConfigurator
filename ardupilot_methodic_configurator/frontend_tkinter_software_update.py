@@ -22,7 +22,11 @@ class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self, version_info: str, download_callback: Optional[Callable[[], bool]] = None) -> None:
         super().__init__()
-        self.root.title(_("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - New version available"))
+        self.root.title(
+            _("Amilcar Lucas's - ArduPilot methodic configurator {version} - New version available").format(
+                version=__version__
+            )
+        )
         self.root.geometry("700x600")
         self.download_callback = download_callback
         self.root.protocol("WM_DELETE_WINDOW", self.on_cancel)

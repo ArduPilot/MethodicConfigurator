@@ -64,7 +64,7 @@ class FlightControllerInfoWindow(BaseWindow):
 
     def __init__(self, flight_controller: FlightController) -> None:
         super().__init__()
-        self.root.title(_("ArduPilot methodic configurator ") + __version__ + _(" - Flight Controller Info"))
+        self.root.title(_("AMC {version} - Flight Controller Info").format(version=__version__))  # Set the window title
         self.root.geometry("500x420")  # Adjust the window size as needed
 
         self.presenter = FlightControllerInfoPresenter(flight_controller)
