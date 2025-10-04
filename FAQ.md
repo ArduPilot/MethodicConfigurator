@@ -202,6 +202,6 @@ If your question isn't answered here:
 
 ---
 
-**Last Updated**: October 2025  
-**Document Version**: 1.0  
+**Last Updated**: October 2025
+**Document Version**: 1.0
 **Software Version**: Compatible with ArduPilot Methodic Configurator 2.3.0+

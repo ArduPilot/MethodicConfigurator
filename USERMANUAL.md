@@ -534,7 +534,7 @@ ardupilot_methodic_configurator
 # Windows - specify COM port and project directory
 ardupilot_methodic_configurator --device="COM3" --vehicle-dir="C:\MyQuadcopter"
 
-# Linux - specify USB device and project directory  
+# Linux - specify USB device and project directory
 ardupilot_methodic_configurator --device="/dev/ttyUSB0" --vehicle-dir="/home/user/MyQuadcopter"
 
 # Network connection (SITL or network-connected FC)
@@ -714,7 +714,7 @@ For comprehensive answers to common questions about the ArduPilot Methodic Confi
 The FAQ covers:
 
 - **General Questions**: Internet requirements, supported vehicles, timing expectations
-- **Technical Questions**: Parameter editing, templates, firmware compatibility  
+- **Technical Questions**: Parameter editing, templates, firmware compatibility
 - **Workflow Questions**: Component editor, configuration changes, vehicle comparisons
 
 > 💡 **Quick Access**: [View Complete FAQ →](FAQ.md)
