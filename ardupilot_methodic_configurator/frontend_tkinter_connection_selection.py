@@ -21,7 +21,7 @@ from sys import exit as sys_exit
 from tkinter import messagebox, simpledialog, ttk
 from typing import Union
 
-from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_flightcontroller import SUPPORTED_BAUDRATES, FlightController
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
@@ -227,7 +227,7 @@ class ConnectionSelectionWindow(BaseWindow):
         default_baudrate: int = 115200,
     ) -> None:
         super().__init__()
-        self.root.title(_("Flight controller connection"))
+        self.root.title(_("AMC {version} - Flight controller connection").format(version=__version__))  # Set the window title
         self.root.geometry("520x462")  # Set the window size
         self.default_baudrate = default_baudrate
 
