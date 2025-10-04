@@ -78,9 +78,9 @@ dev = [
 ]
 
 scripts = [
-    "bs4",
-    "selenium",
-    "webdriver_manager",
+    "bs4==0.0.2",
+    "selenium==4.35.0",
+    "webdriver_manager==4.0.2",
 ]
 
 pypi_dist = [
