@@ -120,6 +120,7 @@ def parameter_editor_table(
         table.view_port = mock_master
         table.canvas = MagicMock()
         table.canvas.yview = MagicMock()
+        table.canvas.yview_moveto = MagicMock()
 
         # Mock grid_slaves to handle widget cleanup
         table.grid_slaves = MagicMock(return_value=[])
@@ -324,6 +325,43 @@ def test_repopulate_show_only_differences(parameter_editor_table: ParameterEdito
     parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=True, gui_complexity="simple")
     # Should only show PARAM2 and PARAM3 as they differ from FC
     # assert parameter_editor_table.add_parameter_row.call_count == 2
+
+
+@pytest.mark.parametrize("pending_scroll", [True, False])
+def test_repopulate_uses_scroll_helper(parameter_editor_table: ParameterEditorTable, pending_scroll: bool) -> None:
+    """Ensure repopulate delegates scroll handling to helper and resets the flag."""
+    parameter_editor_table._pending_scroll_to_bottom = pending_scroll
+    parameter_editor_table.local_filesystem.file_parameters = {"test_file": {}}
+    parameter_editor_table.config_step_processor.process_configuration_step = MagicMock(return_value=({}, False, [], []))
+    parameter_editor_table._update_table = MagicMock()
+    parameter_editor_table.view_port.winfo_children = MagicMock(return_value=[])
+    parameter_editor_table._create_headers_and_tooltips = MagicMock(return_value=((), ()))
+    parameter_editor_table._should_show_upload_column = MagicMock(return_value=False)
+
+    with patch.object(parameter_editor_table, "_apply_scroll_position") as mock_scroll:
+        parameter_editor_table.repopulate("test_file", {}, show_only_differences=False, gui_complexity="simple")
+
+    mock_scroll.assert_called_once_with(pending_scroll)
+    assert parameter_editor_table._pending_scroll_to_bottom is False
+
+
+@pytest.mark.parametrize(
+    ("scroll_to_bottom", "expected_position"),
+    [(True, 1.0), (False, 0.0)],
+)
+def test_apply_scroll_position_moves_canvas(
+    parameter_editor_table: ParameterEditorTable, scroll_to_bottom: bool, expected_position: float
+) -> None:
+    """Verify that the scroll helper updates the canvas position appropriately."""
+    canvas_yview = parameter_editor_table.canvas.yview_moveto
+    assert isinstance(canvas_yview, MagicMock)
+    canvas_yview.reset_mock()
+
+    with patch.object(parameter_editor_table, "update_idletasks") as mock_update_idletasks:
+        parameter_editor_table._apply_scroll_position(scroll_to_bottom)
+
+    mock_update_idletasks.assert_called_once_with()
+    canvas_yview.assert_called_once_with(expected_position)
 
 
 class TestUIComplexityBehavior:

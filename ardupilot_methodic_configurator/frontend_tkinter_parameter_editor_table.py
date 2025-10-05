@@ -59,10 +59,16 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.current_file = ""
         self.upload_checkbutton_var: dict[str, tk.BooleanVar] = {}
         self.at_least_one_param_edited = False
+
+        # self.parameters is rebuilt on every repopulate(...) call and only contains the ArduPilotParameter
+        # objects needed for the current table view.
+        # When you flip to “differences only,” it can even hold just a subset of the file.
         self.parameters: dict[str, ArduPilotParameter] = {}
+
         self.config_step_processor = ConfigurationStepProcessor(local_filesystem)
         # Track last return values to prevent duplicate event processing
         self._last_return_values: dict[tk.Misc, str] = {}
+        self._pending_scroll_to_bottom = False
 
         style = ttk.Style()
         style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
@@ -137,6 +143,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.current_file = selected_file
         # Clear the last return values tracking dictionary when repopulating
         self._last_return_values.clear()
+        scroll_to_bottom = self._pending_scroll_to_bottom
+        self._pending_scroll_to_bottom = False
 
         # Check if upload column should be shown based on UI complexity
         show_upload_column = self._should_show_upload_column(gui_complexity)
@@ -175,8 +183,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 return
         else:
             self._update_table(self.parameters, fc_parameters, self.parameter_editor.gui_complexity)
-        # Scroll to the top of the parameter table
-        self.canvas.yview("moveto", 0)
+        self._apply_scroll_position(scroll_to_bottom)
+
+    def _apply_scroll_position(self, scroll_to_bottom: bool) -> None:
+        """Apply the requested scroll position to the canvas."""
+        self.update_idletasks()
+        position = 1.0 if scroll_to_bottom else 0.0
+        self.canvas.yview_moveto(position)
 
     def _update_table(
         self, params: dict[str, ArduPilotParameter], fc_parameters: dict[str, float], gui_complexity: str
@@ -812,6 +825,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             if param_name in fc_parameters:
                 self.local_filesystem.file_parameters[self.current_file][param_name] = Par(fc_parameters[param_name], "")
                 self.at_least_one_param_edited = True
+                self._pending_scroll_to_bottom = True
                 self.parameter_editor.repopulate_parameter_table(self.current_file)
                 return True
             messagebox.showerror(_("Invalid parameter name."), _("Parameter name not found in the flight controller."))
@@ -821,6 +835,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                     self.local_filesystem.param_default_dict.get(param_name, Par(0, "")).value, ""
                 )
                 self.at_least_one_param_edited = True
+                self._pending_scroll_to_bottom = True
                 self.parameter_editor.repopulate_parameter_table(self.current_file)
                 return True
             error_msg = _("'{param_name}' not found in the apm.pdef.xml file.")
