@@ -41,16 +41,28 @@ class TestExtractMissingTranslations(unittest.TestCase):
             assert args.lang_code == "all"  # Default value
             assert args.output_file == "missing_translations"  # Default value
             assert args.max_translations == 60  # Default value
+            assert args.max_characters == 6000  # Default value
 
         # Test with custom arguments
         with patch(
             "sys.argv",
-            ["extract_missing_translations.py", "--lang-code", "ja", "--output-file", "test_out", "--max-translations", "30"],
+            [
+                "extract_missing_translations.py",
+                "--lang-code",
+                "ja",
+                "--output-file",
+                "test_out",
+                "--max-translations",
+                "30",
+                "--max-characters",
+                "4500",
+            ],
         ):
             args = extract_missing_translations.parse_arguments()
             assert args.lang_code == "ja"
             assert args.output_file == "test_out"
             assert args.max_translations == 30
+            assert args.max_characters == 4500
 
     @patch("extract_missing_translations.argparse.ArgumentParser.parse_args")
     def test_parse_arguments_mock(self, mock_parse_args) -> None:
@@ -59,12 +71,14 @@ class TestExtractMissingTranslations(unittest.TestCase):
         mock_args.lang_code = "zh_CN"
         mock_args.output_file = "missing_translations"
         mock_args.max_translations = 60
+        mock_args.max_characters = 6000
         mock_parse_args.return_value = mock_args
 
         args = extract_missing_translations.parse_arguments()
         assert args.lang_code == "zh_CN"
         assert args.output_file == "missing_translations"
         assert args.max_translations == 60
+        assert args.max_characters == 6000
 
     @patch("extract_missing_translations.open")
     @patch("extract_missing_translations.gettext.translation")
@@ -234,6 +248,7 @@ class TestExtractMissingTranslations(unittest.TestCase):
         mock_args_instance.lang_code = "fr"
         mock_args_instance.output_file = "test_large"
         mock_args_instance.max_translations = 5
+        mock_args_instance.max_characters = 4000
         mock_args.return_value = mock_args_instance
 
         # Create a large list of translations
@@ -244,7 +259,7 @@ class TestExtractMissingTranslations(unittest.TestCase):
 
         # Verify the function was called with the correct parameters
         mock_extract.assert_called_once_with("fr")
-        mock_output.assert_called_once_with(large_translations, "test_large_fr", 5)
+        mock_output.assert_called_once_with(large_translations, "test_large_fr", 5, 4000)
 
     @patch("extract_missing_translations.open")
     @patch("extract_missing_translations.gettext.translation")
@@ -287,6 +302,7 @@ class TestExtractMissingTranslations(unittest.TestCase):
         mock_args_instance.lang_code = "ja"
         mock_args_instance.output_file = "test_output"
         mock_args_instance.max_translations = 50
+        mock_args_instance.max_characters = 6000
         mock_args.return_value = mock_args_instance
 
         mock_extract.return_value = [(1, "Test string 1")]
@@ -294,7 +310,7 @@ class TestExtractMissingTranslations(unittest.TestCase):
         extract_missing_translations.main()
 
         mock_extract.assert_called_once_with("ja")
-        mock_output.assert_called_once_with([(1, "Test string 1")], "test_output_ja", 50)
+        mock_output.assert_called_once_with([(1, "Test string 1")], "test_output_ja", 50, 6000)
         mock_logging.assert_called_once()
 
 
