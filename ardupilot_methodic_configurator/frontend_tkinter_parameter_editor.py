@@ -726,9 +726,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def on_upload_selected_click(self) -> None:
         self.write_changes_to_intermediate_parameter_file()
-        selected_params = self.parameter_editor_table.get_upload_selected_params(
-            self.configuration_manager.current_file, str(self.gui_complexity)
-        )
+        selected_params = self.parameter_editor_table.get_upload_selected_params(str(self.gui_complexity))
         if selected_params:
             if self.configuration_manager.fc_parameters:
                 self.upload_selected_params(selected_params)

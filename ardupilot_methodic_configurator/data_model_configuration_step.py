@@ -17,7 +17,7 @@ from typing import Any, Optional
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
-from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
 
 class ConfigurationStepProcessor:
@@ -38,11 +38,14 @@ class ConfigurationStepProcessor:
         """
         self.local_filesystem = local_filesystem
 
+        # A dictionary that maps variable names to their values
+        # These variables are used by the forced_parameters and derived_parameters in configuration_steps_*.json files
+        self.variables = self.local_filesystem.get_eval_variables()
+
     def process_configuration_step(
         self,
         selected_file: str,
         fc_parameters: dict[str, float],
-        variables: dict,
     ) -> tuple[dict[str, ArduPilotParameter], bool, list[tuple[str, str]], list[tuple[str, str]]]:
         """
         Process a configuration step including parameter computation and domain model creation.
@@ -50,7 +53,6 @@ class ConfigurationStepProcessor:
         Args:
             selected_file: The name of the selected parameter file
             fc_parameters: Dictionary of flight controller parameters
-            variables: Variables dictionary for evaluation
 
         Returns:
             Tuple containing:
@@ -66,6 +68,7 @@ class ConfigurationStepProcessor:
 
         # Process configuration step operations if configuration steps exist
         if self.local_filesystem.configuration_steps and selected_file in self.local_filesystem.configuration_steps:
+            variables = self.variables
             variables["fc_parameters"] = fc_parameters
 
             # Compute derived parameters
@@ -261,3 +264,37 @@ class ConfigurationStepProcessor:
                     renamed_pairs.append((old_name, new_name))
 
         return duplicates, renamed_pairs
+
+    def create_ardupilot_parameter(
+        self,
+        param_name: str,
+        param: Par,
+        selected_file: str,
+        fc_parameters: dict[str, float],
+    ) -> ArduPilotParameter:
+        """
+        Create an ArduPilotParameter domain model object.
+
+        Args:
+            param_name: The name of the parameter
+            param: The parameter object from the file
+            selected_file: The name of the selected parameter file
+            fc_parameters: Dictionary of flight controller parameters
+
+        Returns:
+            ArduPilotParameter: The created domain model parameter
+
+        """
+        # Get parameter metadata and default values
+        metadata = self.local_filesystem.doc_dict.get(param_name, {})
+        default_par = self.local_filesystem.param_default_dict.get(param_name, None)
+
+        # Check if parameter is forced or derived
+        forced_par = self.local_filesystem.forced_parameters.get(selected_file, ParDict()).get(param_name, None)
+        derived_par = self.local_filesystem.derived_parameters.get(selected_file, ParDict()).get(param_name, None)
+
+        # Get FC value if available
+        fc_value = fc_parameters.get(param_name)
+
+        # Create domain model parameter
+        return ArduPilotParameter(param_name, param, metadata, default_par, fc_value, forced_par, derived_par)
