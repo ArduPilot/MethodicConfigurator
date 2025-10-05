@@ -2,14 +2,16 @@
 
 sudo pip uninstall -y MethodicConfigurator
 pip uninstall -y MethodicConfigurator
+uv pip uninstall -y MethodicConfigurator
 sudo rm -Rf /usr/local/MethodicConfigurator/
 
 sudo pip uninstall -y ardupilot_methodic_configurator
 pip uninstall -y ardupilot_methodic_configurator
+uv pip uninstall -y ardupilot_methodic_configurator
 sudo rm -Rf /usr/local/ardupilot_methodic_configurator/
 
 sudo rm -Rf /usr/local/vehicle_templates/
-sudo rm -Rf /usr/local/locale/
+#sudo rm -Rf /usr/local/locale/
 rm -Rf ~/.local/locale
 rm -Rf ~/.local/vehicle_templates
 
@@ -28,11 +30,11 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
 else
     source .venv/bin/activate
 fi
-uv pip install -U build packaging setuptools wheel
+uv pip install -U "build==1.3.0" "packaging==25.0" "setuptools==66.1.1" "wheel==0.38.4"
 
 python -m build
 
-uv pip install -U dist/ardupilot_methodic_configurator-2.0.3-py3-none-any.whl
+uv pip install -U dist/ardupilot_methodic_configurator-2.4.0-py3-none-any.whl
 
 cd ..
 
