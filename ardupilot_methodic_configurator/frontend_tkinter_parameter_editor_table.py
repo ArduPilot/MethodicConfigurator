@@ -16,18 +16,21 @@ from logging import info as logging_info
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
-from typing import TYPE_CHECKING, Union
+from typing import Union
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
+from ardupilot_methodic_configurator.configuration_manager import (
+    ConfigurationManager,
+    InvalidParameterNameError,
+    OperationNotPossibleError,
+)
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
     BitmaskHelper,
     ParameterOutOfRangeError,
     ParameterUnchangedError,
 )
-from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
-from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (
@@ -38,14 +41,11 @@ from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widge
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
-if TYPE_CHECKING:
-    from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-
 NEW_VALUE_WIDGET_WIDTH = 9
 NEW_VALUE_DIFFERENT_STR = "\u2260" if platform_system() == "Windows" else "!="
 
 
-class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, too-many-instance-attributes
+class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     """
     A class to manage and display the parameter editor table within the GUI.
 
@@ -58,27 +58,16 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         super().__init__(master)
         self.main_frame = master
         self.configuration_manager = configuration_manager
-        self.local_filesystem: LocalFilesystem = self.configuration_manager.filesystem
         self.parameter_editor = parameter_editor  # the parent window that contains this table
         self.upload_checkbutton_var: dict[str, tk.BooleanVar] = {}
         self.at_least_one_param_edited = False
 
-        # self.parameters is rebuilt on every repopulate(...) call and only contains the ArduPilotParameter
-        # objects needed for the current table view.
-        # When you flip to “differences only,” it can even hold just a subset of the file.
-        self.parameters: dict[str, ArduPilotParameter] = {}
-
-        self.config_step_processor = ConfigurationStepProcessor(self.local_filesystem)
         # Track last return values to prevent duplicate event processing
         self._last_return_values: dict[tk.Misc, str] = {}
         self._pending_scroll_to_bottom = False
 
         style = ttk.Style()
         style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
-
-        # Prepare a dictionary that maps variable names to their values
-        # These variables are used by the forced_parameters and derived_parameters in configuration_steps_*.json files
-        self.variables = self.local_filesystem.get_eval_variables()
 
     def _should_show_upload_column(self, gui_complexity: Union[str, None] = None) -> bool:
         """
@@ -141,6 +130,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
     def repopulate(  # pylint: disable=too-many-locals
         self, _selected_file: str, fc_parameters: dict[str, float], show_only_differences: bool, gui_complexity: str
     ) -> None:
+        # Update current file in configuration manager if changed
+        if self.configuration_manager.current_file != _selected_file:
+            self.configuration_manager.current_file = _selected_file
         for widget in self.view_port.winfo_children():
             widget.destroy()
         # Clear the last return values tracking dictionary when repopulating
@@ -162,9 +154,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.upload_checkbutton_var = {}
 
         # Process configuration step and create domain model parameters
-        self.parameters, config_step_edited, ui_errors, ui_infos = self.config_step_processor.process_configuration_step(
-            self.configuration_manager.current_file, fc_parameters, self.variables
-        )
+        (config_step_edited, ui_errors, ui_infos) = self.configuration_manager.repopulate_configuration_step_parameters()
         if config_step_edited:
             self.at_least_one_param_edited = True
 
@@ -175,7 +165,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         if show_only_differences:
             # Filter to show only different parameters
-            different_params = self.config_step_processor.filter_different_parameters(self.parameters)
+            different_params = self.configuration_manager.get_different_parameters()
             self._update_table(different_params, fc_parameters, self.parameter_editor.gui_complexity)
             if not different_params:
                 info_msg = _("No different parameters found in {selected_file}. Skipping...").format(
@@ -186,7 +176,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 self.parameter_editor.on_skip_click()
                 return
         else:
-            self._update_table(self.parameters, fc_parameters, self.parameter_editor.gui_complexity)
+            self._update_table(self.configuration_manager.parameters, fc_parameters, self.parameter_editor.gui_complexity)
         self._apply_scroll_position(scroll_to_bottom)
 
     def _apply_scroll_position(self, scroll_to_bottom: bool) -> None:
@@ -211,9 +201,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 self._grid_column_widgets(column, i, show_upload_column)
 
             # Add the "Add" button at the bottom of the table
-            add_button = ttk.Button(
-                self.view_port, text=_("Add"), style="narrow.TButton", command=lambda: self._on_parameter_add(fc_parameters)
-            )
+            add_button = ttk.Button(self.view_port, text=_("Add"), style="narrow.TButton", command=self._on_parameter_add)
             tooltip_msg = _("Add a parameter to the {self.configuration_manager.current_file} file")
             show_tooltip(add_button, tooltip_msg.format(**locals()))
             add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
@@ -404,8 +392,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self, param: ArduPilotParameter, change_reason_widget: ttk.Entry, value_is_different: ttk.Label
     ) -> Union[PairTupleCombobox, ttk.Entry]:
         """Create an entry widget for editing the parameter value."""
-        # if param.is_dirty:
-        #    self.at_least_one_param_edited = True
         new_value_entry: Union[PairTupleCombobox, ttk.Entry]
 
         # Check if parameter has values dictionary
@@ -757,16 +743,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             current_scroll_position = self.canvas.yview()[0]
 
             # Delete the parameter
-            del self.configuration_manager.current_file_parameters[param_name]
-            if param_name in self.parameters:
-                del self.parameters[param_name]
+            self.configuration_manager.delete_parameter_from_current_file(param_name)
             self.at_least_one_param_edited = True
             self.parameter_editor.repopulate_parameter_table(self.configuration_manager.current_file)
 
             # Restore the scroll position
             self.canvas.yview_moveto(current_scroll_position)
 
-    def _on_parameter_add(self, fc_parameters: dict[str, float]) -> None:
+    def _on_parameter_add(self) -> None:
         """Handle parameter addition."""
         add_parameter_window = BaseWindow(self.main_frame.master)
         add_parameter_window.root.title(_("Add Parameter to ") + self.configuration_manager.current_file)
@@ -776,21 +760,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         instruction_label = ttk.Label(add_parameter_window.main_frame, text=_("Enter the parameter name to add:"))
         instruction_label.pack(pady=5)
 
-        param_dict = self.local_filesystem.doc_dict or fc_parameters
-
-        if not param_dict:
-            messagebox.showerror(
-                _("Operation not possible"),
-                _("No apm.pdef.xml file and no FC connected. Not possible autocomplete parameter names."),
-            )
+        try:
+            possible_add_param_names = self.configuration_manager.get_possible_add_param_names()
+        except OperationNotPossibleError as e:
+            messagebox.showerror(_("Operation not possible"), str(e))
             return
-
-        # Remove the parameters that are already displayed in this configuration step
-        possible_add_param_names = [
-            param_name for param_name in param_dict if param_name not in self.configuration_manager.current_file_parameters
-        ]
-
-        possible_add_param_names.sort()
 
         # Prompt the user for a parameter name
         parameter_name_combobox = EntryWithDynamicalyFilteredListbox(
@@ -808,7 +782,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         def custom_selection_handler(event: tk.Event) -> None:
             parameter_name_combobox.update_entry_from_listbox(event)
             param_name = parameter_name_combobox.get().upper()
-            if self._confirm_parameter_addition(param_name, fc_parameters):
+            if self._confirm_parameter_addition(param_name):
                 add_parameter_window.root.destroy()
             else:
                 add_parameter_window.root.focus()
@@ -817,53 +791,33 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         parameter_name_combobox.bind("<Return>", custom_selection_handler)
         parameter_name_combobox.bind("<<ComboboxSelected>>", custom_selection_handler)
 
-    def _confirm_parameter_addition(self, param_name: str, fc_parameters: dict[str, float]) -> bool:
-        """Confirm and process parameter addition."""
-        if not param_name:
-            messagebox.showerror(_("Invalid parameter name."), _("Parameter name can not be empty."))
-            return False
-
-        if param_name in self.configuration_manager.current_file_parameters:
-            messagebox.showerror(_("Invalid parameter name."), _("Parameter already exists, edit it instead"))
-            return False
-
-        if fc_parameters:
-            if param_name in fc_parameters:
-                self.configuration_manager.current_file_parameters[param_name] = Par(fc_parameters[param_name], "")
+    def _confirm_parameter_addition(self, param_name: str) -> bool:
+        """Confirm and process parameter addition using ConfigurationManager."""
+        try:
+            if self.configuration_manager.add_parameter_to_current_file(param_name):
                 self.at_least_one_param_edited = True
                 self._pending_scroll_to_bottom = True
                 self.parameter_editor.repopulate_parameter_table(self.configuration_manager.current_file)
                 return True
-            messagebox.showerror(_("Invalid parameter name."), _("Parameter name not found in the flight controller."))
-        if self.local_filesystem.doc_dict:
-            if param_name in self.local_filesystem.doc_dict:
-                self.configuration_manager.current_file_parameters[param_name] = Par(
-                    self.local_filesystem.param_default_dict.get(param_name, Par(0, "")).value, ""
-                )
-                self.at_least_one_param_edited = True
-                self._pending_scroll_to_bottom = True
-                self.parameter_editor.repopulate_parameter_table(self.configuration_manager.current_file)
-                return True
-            error_msg = _("'{param_name}' not found in the apm.pdef.xml file.")
-            messagebox.showerror(_("Invalid parameter name."), error_msg.format(**locals()))
-        if not fc_parameters and not self.local_filesystem.doc_dict:
-            messagebox.showerror(
-                _("Operation not possible"),
-                _("Can not add parameter when no FC is connected and no apm.pdef.xml file exists."),
-            )
+        except InvalidParameterNameError as exc:
+            messagebox.showerror(_("Invalid parameter name."), str(exc))
+            return False
+        except OperationNotPossibleError as exc:
+            messagebox.showerror(_("Operation not possible"), str(exc))
+            return False
         return False
 
-    def get_upload_selected_params(self, current_file: str, gui_complexity: str) -> ParDict:
+    def get_upload_selected_params(self, gui_complexity: str) -> ParDict:
         """Get the parameters selected for upload."""
         # Check if we should show upload column based on GUI complexity
         if not self._should_show_upload_column(gui_complexity):
             # all parameters are selected for upload in simple mode
-            return self.local_filesystem.file_parameters[current_file]
+            return self.configuration_manager.current_file_parameters
 
         selected_params = ParDict()
         for param_name, checkbutton_state in self.upload_checkbutton_var.items():
             if checkbutton_state.get():
-                selected_params[param_name] = self.local_filesystem.file_parameters[current_file][param_name]
+                selected_params[param_name] = self.configuration_manager.current_file_parameters[param_name]
         return selected_params
 
     def get_at_least_one_param_edited(self) -> bool:

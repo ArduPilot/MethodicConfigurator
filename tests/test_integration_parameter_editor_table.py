@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager, InvalidParameterNameError
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
@@ -167,11 +168,20 @@ def parameter_editor_table(
     mock_root: tk.Tk, mock_local_filesystem: MagicMock, mock_parameter_editor: MagicMock
 ) -> ParameterEditorTable:
     """Create a ParameterEditorTable instance for integration testing."""
+    # Create a mock flight controller with proper FC parameters that can be updated by tests
+    mock_flight_controller = MagicMock()
+    # Use a dict that tests can modify directly
+    fc_params_dict = {}
+    mock_flight_controller.fc_parameters = fc_params_dict
+    # Create a ConfigurationManager with the mock filesystem
+    config_manager = ConfigurationManager(
+        current_file="01_first_step.param", flight_controller=mock_flight_controller, filesystem=mock_local_filesystem
+    )
     with patch("tkinter.ttk.Style") as mock_style:
         style_instance = mock_style.return_value
         style_instance.lookup.return_value = "white"  # Return valid color instead of memory address
 
-        table = ParameterEditorTable(mock_root, mock_local_filesystem, mock_parameter_editor)
+        table = ParameterEditorTable(mock_root, config_manager, mock_parameter_editor)
 
         # Create a real frame for the view_port to enable actual widget testing
         table.view_port = ttk.Frame(mock_root)
@@ -204,50 +214,52 @@ class TestParameterAdditionAndDeletion:
 
     def test_parameter_addition_workflow(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test complete parameter addition workflow."""
-        parameter_editor_table.current_file = "01_first_step.param"
-        fc_parameters = {"NEW_PARAM": 42.0}
+        config_manager = parameter_editor_table.configuration_manager
+        config_manager.current_file = "01_first_step.param"
+        # Simulate FC parameter available
+        config_manager.flight_controller.fc_parameters = {"NEW_PARAM": 42.0}
 
-        # Test successful parameter addition
-        result = parameter_editor_table._confirm_parameter_addition("NEW_PARAM", fc_parameters)
+        # Test successful parameter addition using ConfigurationManager
+        result = config_manager.add_parameter_to_current_file("NEW_PARAM")
 
         assert result is True
-        assert "NEW_PARAM" in parameter_editor_table.local_filesystem.file_parameters["01_first_step.param"]
-        assert parameter_editor_table.local_filesystem.file_parameters["01_first_step.param"]["NEW_PARAM"].value == 42.0
-        assert parameter_editor_table.at_least_one_param_edited is True
+        assert "NEW_PARAM" in config_manager.current_file_parameters
+        assert config_manager.current_file_parameters["NEW_PARAM"].value == 42.0
 
     def test_parameter_addition_validation_workflow(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter addition validation workflow."""
-        parameter_editor_table.current_file = "01_first_step.param"
+        config_manager = parameter_editor_table.configuration_manager
+        config_manager.current_file = "01_first_step.param"
 
         # Test empty parameter name
-        with patch("tkinter.messagebox.showerror") as mock_error:
-            result = parameter_editor_table._confirm_parameter_addition("", {})
-            assert result is False
-            mock_error.assert_called_once()
+        with pytest.raises(InvalidParameterNameError):
+            config_manager.add_parameter_to_current_file("")
 
         # Test existing parameter name
-        with patch("tkinter.messagebox.showerror") as mock_error:
-            result = parameter_editor_table._confirm_parameter_addition("PARAM_1", {})
-            assert result is False
-            mock_error.assert_called_once()
+        # Add PARAM_1 first
+        config_manager.current_file_parameters["PARAM_1"] = Par(1.0, "First parameter comment")
+        with pytest.raises(InvalidParameterNameError):
+            config_manager.add_parameter_to_current_file("PARAM_1")
 
     def test_parameter_deletion_workflow(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test complete parameter deletion workflow."""
-        parameter_editor_table.current_file = "01_first_step.param"
+        config_manager = parameter_editor_table.configuration_manager
+        config_manager.current_file = "01_first_step.param"
         parameter_editor_table.canvas.yview.return_value = [0.5, 0.8]
+
+        # Add PARAM_1 for deletion test
+        config_manager.current_file_parameters["PARAM_1"] = Par(1.0, "First parameter comment")
 
         # Test confirmed deletion
         with patch("tkinter.messagebox.askyesno", return_value=True):
             parameter_editor_table._on_parameter_delete("PARAM_1")
 
-            assert "PARAM_1" not in parameter_editor_table.local_filesystem.file_parameters["01_first_step.param"]
+            assert "PARAM_1" not in config_manager.current_file_parameters
             assert parameter_editor_table.at_least_one_param_edited is True
             parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once_with("01_first_step.param")
 
         # Reset for next test
-        parameter_editor_table.local_filesystem.file_parameters["01_first_step.param"]["PARAM_2"] = Par(
-            2.5, "Second parameter comment"
-        )
+        config_manager.current_file_parameters["PARAM_2"] = Par(2.5, "Second parameter comment")
         parameter_editor_table.at_least_one_param_edited = False
         parameter_editor_table.parameter_editor.repopulate_parameter_table.reset_mock()
 
@@ -255,7 +267,7 @@ class TestParameterAdditionAndDeletion:
         with patch("tkinter.messagebox.askyesno", return_value=False):
             parameter_editor_table._on_parameter_delete("PARAM_2")
 
-            assert "PARAM_2" in parameter_editor_table.local_filesystem.file_parameters["01_first_step.param"]
+            assert "PARAM_2" in config_manager.current_file_parameters
             assert parameter_editor_table.at_least_one_param_edited is False
             parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_not_called()
 
@@ -266,7 +278,7 @@ class TestWidgetCreationIntegration:
     def test_complete_widget_creation_workflow(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test creating a complete set of widgets for a parameter row."""
         param_name = "PARAM_1"
-        param_metadata = parameter_editor_table.local_filesystem.doc_dict["PARAM_1"]
+        param_metadata = parameter_editor_table.configuration_manager.filesystem.doc_dict["PARAM_1"]
         param = ArduPilotParameter(
             param_name,
             Par(1.5, "Test parameter"),
@@ -312,6 +324,9 @@ class TestFileOperationsIntegration:
         test_file = "01_first_step.param"
         fc_parameters = {"PARAM_1": 1.0, "PARAM_2": 2.5, "FORCED_PARAM": 5.0, "DERIVED_PARAM": 800.0}
 
+        # Update flight controller parameters to match test data
+        parameter_editor_table.configuration_manager.flight_controller.fc_parameters.update(fc_parameters)
+
         # Clear existing widgets
         for widget in parameter_editor_table.view_port.winfo_children():
             widget.destroy()
@@ -320,7 +335,7 @@ class TestFileOperationsIntegration:
         parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
 
         # Verify current file is set
-        assert parameter_editor_table.current_file == test_file
+        assert parameter_editor_table.configuration_manager.current_file == test_file
 
     def test_show_only_differences_workflow(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test show only differences workflow."""
@@ -332,25 +347,33 @@ class TestFileOperationsIntegration:
             # FORCED_PARAM not in FC - should show as difference
         }
 
+        # Update flight controller parameters to match test data
+        parameter_editor_table.configuration_manager.flight_controller.fc_parameters.update(fc_parameters)
+
         # Test with show_only_differences=True
         parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=True, gui_complexity="simple")
 
         # Verify current file is set
-        assert parameter_editor_table.current_file == test_file
+        assert parameter_editor_table.configuration_manager.current_file == test_file
 
     def test_multi_file_workflow(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test workflow with multiple parameter files."""
         # Test first file
         test_file1 = "01_first_step.param"
         fc_parameters1 = {"PARAM_1": 1.0, "PARAM_2": 2.5}
+        # Update flight controller parameters to match test data
+        parameter_editor_table.configuration_manager.flight_controller.fc_parameters.update(fc_parameters1)
         parameter_editor_table.repopulate(test_file1, fc_parameters1, show_only_differences=False, gui_complexity="simple")
-        assert parameter_editor_table.current_file == test_file1
+        assert parameter_editor_table.configuration_manager.current_file == test_file1
 
         # Test second file
         test_file2 = "02_second_step.param"
         fc_parameters2 = {"PARAM_3": 3.14, "PARAM_4": -1.5}
+        # Update flight controller parameters to match test data
+        parameter_editor_table.configuration_manager.flight_controller.fc_parameters.clear()
+        parameter_editor_table.configuration_manager.flight_controller.fc_parameters.update(fc_parameters2)
         parameter_editor_table.repopulate(test_file2, fc_parameters2, show_only_differences=False, gui_complexity="simple")
-        assert parameter_editor_table.current_file == test_file2
+        assert parameter_editor_table.configuration_manager.current_file == test_file2
 
 
 if __name__ == "__main__":

@@ -52,6 +52,11 @@ def mock_local_filesystem() -> MagicMock:
     # Mock methods
     filesystem.compute_parameters.return_value = None
     filesystem.merge_forced_or_derived_parameters.return_value = False
+    filesystem.get_eval_variables.return_value = {
+        "selected_can": "CAN2",
+        "selected_serial": "SERIAL3",
+        "test_value": 42,
+    }
 
     return filesystem
 
@@ -70,16 +75,6 @@ def fc_parameters() -> dict[str, float]:
         "SERIAL1_BAUD": 115200.0,  # Different from file parameter
         "CAN_P1_DRIVER": 1.0,
         "EXTRA_PARAM": 10.0,  # Only exists on FC
-    }
-
-
-@pytest.fixture
-def variables() -> dict[str, Any]:
-    """Fixture providing test variables for configuration processing."""
-    return {
-        "selected_can": "CAN2",
-        "selected_serial": "SERIAL3",
-        "test_value": 42,
     }
 
 
@@ -119,9 +114,7 @@ def connection_params() -> dict[str, Any]:
 class TestConfigurationStepProcessorWorkflows:
     """Test complete user workflows for configuration step processing."""
 
-    def test_user_can_process_basic_configuration_step_without_special_operations(
-        self, processor, fc_parameters, variables
-    ) -> None:
+    def test_user_can_process_basic_configuration_step_without_special_operations(self, processor, fc_parameters) -> None:
         """
         User can process a basic configuration step with standard parameters.
 
@@ -135,7 +128,7 @@ class TestConfigurationStepProcessorWorkflows:
 
         # Act: Process the configuration step
         parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
-            selected_file, fc_parameters, variables
+            selected_file, fc_parameters
         )
 
         # Assert: Basic processing completed successfully
@@ -148,7 +141,7 @@ class TestConfigurationStepProcessorWorkflows:
         assert ui_infos == []
 
     def test_user_can_process_configuration_step_with_derived_parameters(
-        self, processor, fc_parameters, variables, configuration_steps
+        self, processor, fc_parameters, configuration_steps
     ) -> None:
         """
         User can process configuration steps that include derived parameter calculations.
@@ -165,7 +158,7 @@ class TestConfigurationStepProcessorWorkflows:
 
         # Act: Process configuration step with derived parameters
         parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
-            selected_file, fc_parameters, variables
+            selected_file, fc_parameters
         )
 
         # Assert: Derived parameters were processed
@@ -178,7 +171,7 @@ class TestConfigurationStepProcessorWorkflows:
         assert len(ui_infos) > 0
 
     def test_user_receives_error_feedback_when_derived_parameter_computation_fails(
-        self, processor, fc_parameters, variables, configuration_steps
+        self, processor, fc_parameters, configuration_steps
     ) -> None:
         """
         User receives clear error feedback when derived parameter computation fails.
@@ -194,9 +187,7 @@ class TestConfigurationStepProcessorWorkflows:
         processor.local_filesystem.compute_parameters.return_value = "Computation error: Invalid expression"
 
         # Act: Process configuration step with failing computation
-        parameters, _edited, ui_errors, ui_infos = processor.process_configuration_step(
-            selected_file, fc_parameters, variables
-        )
+        parameters, _edited, ui_errors, ui_infos = processor.process_configuration_step(selected_file, fc_parameters)
 
         # Assert: Error feedback provided to UI layer
         assert len(ui_errors) == 1
@@ -210,7 +201,7 @@ class TestConfigurationStepProcessorWorkflows:
 class TestConfigurationStepProcessorConnectionRenaming:
     """Test connection renaming workflows and edge cases."""
 
-    def test_user_can_rename_connection_parameters_successfully(self, processor, fc_parameters, variables) -> None:
+    def test_user_can_rename_connection_parameters_successfully(self, processor, fc_parameters) -> None:
         """
         User can successfully rename connection parameters to match hardware configuration.
 
@@ -226,7 +217,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
 
         # Act: Process configuration step with connection renaming
         parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
-            selected_file, fc_parameters, variables
+            selected_file, fc_parameters
         )
 
         # Assert: Connection renaming completed successfully
@@ -235,7 +226,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
         assert ui_errors == []
         assert isinstance(parameters, dict)
 
-    def test_user_receives_feedback_about_duplicate_parameter_removal(self, processor, fc_parameters, variables) -> None:
+    def test_user_receives_feedback_about_duplicate_parameter_removal(self, processor, fc_parameters) -> None:
         """
         User receives clear feedback when duplicate parameters are removed during renaming.
 
@@ -253,7 +244,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
         with patch.object(processor, "_apply_connection_renames") as mock_apply:
             mock_apply.return_value = ({"CAN_P2_DRIVER"}, [("CAN_P1_DRIVER", "CAN_P2_DRIVER")])
             _parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
-                selected_file, fc_parameters, variables
+                selected_file, fc_parameters
             )
 
         # Assert: User informed about duplicate removal
@@ -261,9 +252,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
         assert len(ui_infos) > 0  # Should have info about parameter removal
         assert ui_errors == []
 
-    def test_user_can_process_configuration_step_without_connection_renaming(
-        self, processor, fc_parameters, variables
-    ) -> None:
+    def test_user_can_process_configuration_step_without_connection_renaming(self, processor, fc_parameters) -> None:
         """
         User can process configuration steps that don't include connection renaming.
 
@@ -285,7 +274,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
 
         # Act: Process configuration step without connection renaming
         parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
-            selected_file, fc_parameters, variables
+            selected_file, fc_parameters
         )
 
         # Assert: Only derived parameters processed, no connection renaming
@@ -661,7 +650,7 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
 class TestConfigurationStepProcessorErrorHandling:
     """Test error handling and edge cases in configuration processing."""
 
-    def test_processor_handles_missing_configuration_steps_gracefully(self, processor, fc_parameters, variables) -> None:
+    def test_processor_handles_missing_configuration_steps_gracefully(self, processor, fc_parameters) -> None:
         """
         User can process files without configuration steps without errors.
 
@@ -677,7 +666,7 @@ class TestConfigurationStepProcessorErrorHandling:
 
         # Act: Process configuration step
         parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
-            selected_file, fc_parameters, variables
+            selected_file, fc_parameters
         )
 
         # Assert: Processing completed without errors
@@ -687,7 +676,7 @@ class TestConfigurationStepProcessorErrorHandling:
         assert ui_infos == []
         processor.local_filesystem.compute_parameters.assert_not_called()
 
-    def test_processor_handles_empty_parameter_files_gracefully(self, processor, fc_parameters, variables) -> None:
+    def test_processor_handles_empty_parameter_files_gracefully(self, processor, fc_parameters) -> None:
         """
         User can process empty parameter files without errors.
 
@@ -702,7 +691,7 @@ class TestConfigurationStepProcessorErrorHandling:
 
         # Act: Process configuration step
         parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
-            selected_file, fc_parameters, variables
+            selected_file, fc_parameters
         )
 
         # Assert: Empty file handled gracefully
@@ -712,7 +701,7 @@ class TestConfigurationStepProcessorErrorHandling:
         assert ui_errors == []
         assert ui_infos == []
 
-    def test_processor_handles_missing_parameter_metadata_gracefully(self, processor, fc_parameters, variables) -> None:  # pylint: disable=unused-argument
+    def test_processor_handles_missing_parameter_metadata_gracefully(self, processor, fc_parameters) -> None:
         """
         User can process parameters that lack complete metadata.
 
@@ -736,7 +725,7 @@ class TestConfigurationStepProcessorErrorHandling:
         for param_obj in parameters.values():
             assert isinstance(param_obj, ArduPilotParameter)
 
-    def test_processor_handles_complex_connection_renaming_edge_cases(self, processor, fc_parameters, variables) -> None:
+    def test_processor_handles_complex_connection_renaming_edge_cases(self, processor, fc_parameters) -> None:
         """
         User can process complex connection renaming scenarios with edge cases.
 
@@ -761,7 +750,7 @@ class TestConfigurationStepProcessorErrorHandling:
 
         # Act: Process complex connection renaming
         parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
-            selected_file, fc_parameters, variables
+            selected_file, fc_parameters
         )
 
         # Assert: Complex scenarios handled correctly
@@ -781,13 +770,11 @@ class TestConfigurationStepProcessorErrorHandling:
         THEN: Processing should complete without errors
         AND: Default behavior should be maintained
         """
-        # Arrange: Empty variables dictionary
-        empty_variables: dict[str, Any] = {}
         selected_file = "test_file.param"
 
         # Act: Process with empty variables
         parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
-            selected_file, fc_parameters, empty_variables
+            selected_file, fc_parameters
         )
 
         # Assert: Processing completed successfully

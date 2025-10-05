@@ -22,6 +22,8 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
+from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
@@ -32,10 +34,19 @@ ShowWarningCallback = Callable[[str, str], None]  # (title, message) -> None
 ShowErrorCallback = Callable[[str, str], None]  # (title, message) -> None
 ShowInfoCallback = Callable[[str, str], None]  # (title, message) -> None
 
+
+class OperationNotPossibleError(Exception):
+    """Raised when an operation cannot be performed due to missing prerequisites or state."""
+
+
+class InvalidParameterNameError(Exception):
+    """Raised when a parameter name is invalid or already exists."""
+
+
 # pylint: disable=too-many-lines
 
 
-class ConfigurationManager:
+class ConfigurationManager:  # pylint: disable=too-many-public-methods
     """
     Manages configuration state, including flight controller and filesystem access.
 
@@ -48,6 +59,11 @@ class ConfigurationManager:
         self.current_file = current_file
         self.flight_controller = flight_controller
         self.filesystem = filesystem
+        self.config_step_processor = ConfigurationStepProcessor(self.filesystem)
+
+        # self.parameters is rebuilt on every repopulate(...) call and only contains the ArduPilotParameter
+        # objects needed for the current table view.
+        self.parameters: dict[str, ArduPilotParameter] = {}
 
     @property
     def connected_vehicle_type(self) -> str:
@@ -1042,3 +1058,95 @@ class ConfigurationManager:
             show_info(_("Parameter files zipped"), msg.format(zip_file_path=zip_file_path))
 
         return should_write_file
+
+    def repopulate_configuration_step_parameters(
+        self,
+    ) -> tuple[bool, list[tuple[str, str]], list[tuple[str, str]]]:
+        """
+        Process the configuration step for the current file and update the self.parameters.
+
+        Returns:
+            tuple: (config_step_edited, ui_errors, ui_infos)
+
+        """
+        self.parameters, config_step_edited, ui_errors, ui_infos = self.config_step_processor.process_configuration_step(
+            self.current_file, self.fc_parameters
+        )
+        return config_step_edited, ui_errors, ui_infos
+
+    def get_different_parameters(self) -> dict[str, ArduPilotParameter]:
+        """
+        Get parameters that are different from FC values or missing from FC.
+
+        Returns:
+            Dictionary of parameters that are different from FC
+
+        """
+        return self.config_step_processor.filter_different_parameters(self.parameters)
+
+    def delete_parameter_from_current_file(self, param_name: str) -> None:
+        """
+        Delete a parameter from the current file parameters.
+
+        Args:
+            param_name: The name of the parameter to delete
+
+        """
+        del self.current_file_parameters[param_name]
+        if param_name in self.parameters:
+            del self.parameters[param_name]
+
+    def get_possible_add_param_names(self) -> list[str]:
+        """Return a sorted list of possible parameter names to add, or raise OperationNotPossibleError if not possible."""
+        param_dict = self.filesystem.doc_dict or self.fc_parameters
+        if not param_dict:
+            raise OperationNotPossibleError(
+                _("No apm.pdef.xml file and no FC connected. Not possible autocomplete parameter names.")
+            )
+        possible_add_param_names = [param_name for param_name in param_dict if param_name not in self.current_file_parameters]
+        possible_add_param_names.sort()
+        return possible_add_param_names
+
+    def add_parameter_to_current_file(self, param_name: str) -> bool:
+        """
+        Add a parameter to the current file.
+
+        Returns True if the parameter was added, False if not.
+
+        Raises InvalidParameterNameError or OperationNotPossibleError if not possible.
+        """
+        param_name = param_name.upper()
+        if not param_name:
+            raise InvalidParameterNameError(_("Parameter name can not be empty."))
+
+        if param_name in self.current_file_parameters:
+            raise InvalidParameterNameError(_("Parameter already exists, edit it instead"))
+
+        fc_parameters = self.fc_parameters
+        if fc_parameters:
+            if param_name in fc_parameters:
+                self.current_file_parameters[param_name] = Par(fc_parameters[param_name], "")
+                self.parameters[param_name] = self.config_step_processor.create_ardupilot_parameter(
+                    param_name, self.current_file_parameters[param_name], self.current_file, fc_parameters
+                )
+                return True
+            raise InvalidParameterNameError(_("Parameter name not found in the flight controller."))
+
+        if self.filesystem.doc_dict:
+            if param_name in self.filesystem.doc_dict:
+                self.current_file_parameters[param_name] = Par(
+                    self.filesystem.param_default_dict.get(param_name, Par(0, "")).value, ""
+                )
+                self.parameters[param_name] = self.config_step_processor.create_ardupilot_parameter(
+                    param_name, self.current_file_parameters[param_name], self.current_file, fc_parameters
+                )
+                return True
+            raise InvalidParameterNameError(
+                _("'{param_name}' not found in the apm.pdef.xml file.").format(param_name=param_name)
+            )
+
+        if not fc_parameters and not self.filesystem.doc_dict:
+            raise OperationNotPossibleError(
+                _("Can not add parameter when no FC is connected and no apm.pdef.xml file exists.")
+            )
+        return False
