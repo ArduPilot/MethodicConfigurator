@@ -57,6 +57,7 @@ class ProgramSettings:
             "Format version": 1,
             "display_usage_popup": {
                 "component_editor": True,
+                "component_editor_validation": True,
                 "parameter_editor": True,
             },
             "directory_selection": {
@@ -286,7 +287,7 @@ class ProgramSettings:
 
     @staticmethod
     def set_display_usage_popup(ptype: str, value: bool) -> None:
-        if ptype in {"component_editor", "parameter_editor"}:
+        if ptype in {"component_editor", "component_editor_validation", "parameter_editor"}:
             settings = ProgramSettings._get_settings_as_dict()
             settings["display_usage_popup"][ptype] = value
             ProgramSettings._set_settings_from_dict(settings)

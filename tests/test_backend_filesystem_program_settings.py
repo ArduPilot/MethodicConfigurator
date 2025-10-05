@@ -365,6 +365,7 @@ class TestSettingsFileOperations:
         expected_result["annotate_docs_into_param_files"] = False  # Added by default
         expected_result["gui_complexity"] = "simple"  # Added by default
         expected_result["motor_test"] = {"duration": 2, "throttle_pct": 10}  # Added by default
+        expected_result["display_usage_popup"]["component_editor_validation"] = True  # Added by default
 
         # Update directory_selection with the defaults that would be merged in
         expected_result["directory_selection"]["new_base_dir"] = os_path.join(mock_user_config["config_dir"], "vehicles")
