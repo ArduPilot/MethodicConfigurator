@@ -32,7 +32,10 @@
                 "--allow-editing-template-files",
                 "--skip-check-for-updates",
                 "--skip-component-editor",
-                "--vehicle-dir=D:\\Projekte\\Multicopter\\fabian_bredemeier_thesis\\data\\X500_IAV6"
+                "--vehicle-dir=/home/amilcar/iav/CUSTOMERS/CubeBlackDefaults",
+                "--loglevel=DEBUG",
+                "--device=none",
+                "--n=7"
             ]
         },
         {
