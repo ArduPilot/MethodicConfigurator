@@ -42,6 +42,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     show_warning_popup,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
+from ardupilot_methodic_configurator.frontend_tkinter_font import create_scaled_font, get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
@@ -429,9 +430,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         instructions_text = RichText(
             usage_popup_window.main_frame,
             wrap=tk.WORD,
-            height=10,
+            height=11,
             bd=0,
             background=style.lookup("TLabel", "background"),
+            font=create_scaled_font(get_safe_font_config(), 1.5),
         )
         instructions_text.insert(tk.END, _("1. Read "))
         instructions_text.insert(tk.END, _("all"), "bold")
@@ -466,7 +468,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             usage_popup_window,
             _("How to use the parameter file editor and uploader window"),
             "parameter_editor",
-            "690x300",
+            "690x360",
             instructions_text,
         )
 

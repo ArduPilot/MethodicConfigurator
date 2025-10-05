@@ -32,6 +32,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_base import C
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_component_template_manager import ComponentTemplateManager
+from ardupilot_methodic_configurator.frontend_tkinter_font import create_scaled_font, get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message, show_tooltip
@@ -299,9 +300,10 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         instructions_text = RichText(
             usage_popup_window.main_frame,
             wrap=tk.WORD,
-            height=5,
+            height=6,
             bd=0,
             background=style.lookup("TLabel", "background"),
+            font=create_scaled_font(get_safe_font_config(), 1.2),
         )
         # pylint: enable=duplicate-code
         instructions_text.insert(tk.END, _("1. Describe the properties of the vehicle components in the window below.\n"))
@@ -318,7 +320,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             usage_popup_window,
             _("How to use the component editor window"),
             "component_editor",
-            "690x200",
+            "690x210",
             instructions_text,
         )
 
@@ -526,7 +528,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             return
         if self._confirm_component_properties():
             self.save_component_json()
-        self.root.destroy()
+            self.root.destroy()
 
     def _confirm_component_properties(self) -> bool:
         """Show confirmation dialog for component properties."""
