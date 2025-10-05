@@ -118,7 +118,7 @@ jobs:
         id: prepare-translations
         if: steps.check-changes.outputs.po-files-changed == 'true'
         run: |
-          python extract_missing_translations.py --lang-code all --max-translations 50
+          python extract_missing_translations.py --lang-code all --max-translations 25 --max-characters 4500
 
           # Check if any missing translation files were created
           if ls missing_translations_*.txt 1> /dev/null 2>&1; then
@@ -233,7 +233,7 @@ jobs:
             translation_file: ${{ matrix.file }}
           file_input: |
             translation_content: ${{ matrix.file }}
-          enable-github-mcp: true
+          enable-github-mcp: false
           model: openai/gpt-4.1
           max-tokens: 8000
           token: ${{ secrets.AMC_COPILOT_TOKEN_CLASSIC }}

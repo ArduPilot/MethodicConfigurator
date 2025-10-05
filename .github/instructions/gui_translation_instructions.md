@@ -33,6 +33,11 @@ then translated into language-specific `.po` files, which are compiled into bina
 
 1. **Extract missing translations**: Execute `python extract_missing_translations.py` in the project root directory.
    The script automatically detects all existing languages and creates/updates `missing_translations_<lang_code>.txt` files in the root directory.
+   Each output file is limited both by the number of untranslated strings and by an approximate
+   character budget to keep AI translation prompts small.
+   If you need tighter control (for example, when working manually with very long strings), you can run
+   `python extract_missing_translations.py --max-translations 20 --max-characters 4000`
+   to reduce the chunk size further.
 
 1. **Translate strings in-place**: Open each `missing_translations_<lang_code>.txt` file and **directly replace** the English text with the target language translation.
    Follow the translation guidelines defined below.

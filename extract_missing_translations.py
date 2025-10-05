@@ -49,6 +49,13 @@ def parse_arguments() -> argparse.Namespace:
         help="The maximum number of missing translations to write to each output file. Default is %(default)s",
     )
 
+    parser.add_argument(
+        "--max-characters",
+        default=6000,
+        type=int,
+        help="The approximate maximum number of characters to include in each output file. Default is %(default)s",
+    )
+
     return parser.parse_args()
 
 
@@ -187,7 +194,12 @@ def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:  # no
     return missing_translations
 
 
-def output_to_files(missing_translations: list[tuple[int, str]], output_file_base_name: str, max_translations: int) -> None:
+def output_to_files(
+    missing_translations: list[tuple[int, str]],
+    output_file_base_name: str,
+    max_translations: int,
+    max_characters: int = 6000,
+) -> None:
     # Remove any existing output files with the same base name
     existing_files = glob.glob(f"{output_file_base_name}.txt")
     existing_files += glob.glob(f"{output_file_base_name}_*.txt")
@@ -195,23 +207,49 @@ def output_to_files(missing_translations: list[tuple[int, str]], output_file_bas
     for existing_file in existing_files:
         os.remove(existing_file)
 
-    # Determine the number of files needed
-    total_missing = len(missing_translations)
-    num_files = (total_missing // max_translations) + (1 if total_missing % max_translations else 0)
+    if max_translations <= 0:
+        msg = "max_translations must be greater than zero"
+        raise ValueError(msg)
 
-    # Write untranslated msgids along with their indices to the output file(s)
-    for file_index in range(num_files):
-        start_index = file_index * max_translations
-        end_index = start_index + max_translations
+    if max_characters <= 0:
+        msg = "max_characters must be greater than zero"
+        raise ValueError(msg)
 
-        # Set the name of the output file based on the index
+    chunks: list[list[tuple[int, str]]] = []
+    current_chunk: list[tuple[int, str]] = []
+    current_length = 0
+
+    for index, item in missing_translations:
+        line = f"{index}:{item}\n"
+
+        if not current_chunk and len(line) > max_characters:
+            logging.warning(
+                "Single translation with index %d exceeds max-characters limit (%d > %d)",
+                index,
+                len(line),
+                max_characters,
+            )
+
+        if current_chunk and (len(current_chunk) >= max_translations or current_length + len(line) > max_characters):
+            chunks.append(current_chunk)
+            current_chunk = []
+            current_length = 0
+
+        current_chunk.append((index, item))
+        current_length += len(line)
+
+    if current_chunk:
+        chunks.append(current_chunk)
+
+    num_files = len(chunks)
+
+    for file_index, chunk in enumerate(chunks, start=1):
         current_output_file = output_file_base_name
-        current_output_file += f"_{file_index + 1}" if num_files > 1 else ""
+        current_output_file += f"_{file_index}" if num_files > 1 else ""
         current_output_file += ".txt"
 
-        # Write untranslated msgids along with their indices to the output file
         with open(current_output_file, "w", encoding="utf-8") as f:
-            f.writelines(f"{index}:{item}\n" for index, item in missing_translations[start_index:end_index])
+            f.writelines(f"{index}:{item}\n" for index, item in chunk)
 
 
 def main() -> None:
@@ -222,7 +260,12 @@ def main() -> None:
         missing_translations = extract_missing_translations(lang_code)
         logging.info("Found %d missing translations for language '%s'", len(missing_translations), lang_code)
         if missing_translations:
-            output_to_files(missing_translations, args.output_file + "_" + lang_code, args.max_translations)
+            output_to_files(
+                missing_translations,
+                args.output_file + "_" + lang_code,
+                args.max_translations,
+                args.max_characters,
+            )
             logging.debug("Created translation file(s) for language '%s'", lang_code)
         else:
             logging.info("No missing translations found for language '%s', no file created", lang_code)
