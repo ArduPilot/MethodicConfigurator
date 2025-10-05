@@ -69,7 +69,7 @@ class ProgramSettings:
             "gui_complexity": "simple",  # simple or normal
             # Motor test settings
             "motor_test": {
-                "duration": 2.5,  # Default test duration in seconds
+                "duration": 2,  # Default test duration in seconds
                 "throttle_pct": 10,  # Default throttle percentage (10%)
             },
         }
