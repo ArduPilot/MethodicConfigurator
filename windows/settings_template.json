@@ -1,8 +1,20 @@
 {
     "Format version": 1,
+    "display_usage_popup": {
+        "component_editor": true,
+        "component_editor_validation": true,
+        "parameter_editor": true
+    },
     "directory_selection": {
         "template_dir": "{PROGRAM_DATA}\\.ardupilot_methodic_configurator\\vehicle_templates\\ArduCopter\\empty_4.6.x",
         "new_base_dir": "{USER_DATA}\\.ardupilot_methodic_configurator\\vehicles",
         "vehicle_dir": "{USER_DATA}\\.ardupilot_methodic_configurator\\vehicles"
+    },
+    "auto_open_doc_in_browser": true,
+    "annotate_docs_into_param_files": false,
+    "gui_complexity": "simple",
+    "motor_test": {
+        "duration": 2,
+        "throttle_pct": 10
     }
 }

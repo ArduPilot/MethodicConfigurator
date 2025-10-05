@@ -364,7 +364,7 @@ class TestSettingsFileOperations:
         # Add all missing defaults that would be added by _recursive_merge_defaults
         expected_result["annotate_docs_into_param_files"] = False  # Added by default
         expected_result["gui_complexity"] = "simple"  # Added by default
-        expected_result["motor_test"] = {"duration": 2.5, "throttle_pct": 10}  # Added by default
+        expected_result["motor_test"] = {"duration": 2, "throttle_pct": 10}  # Added by default
 
         # Update directory_selection with the defaults that would be merged in
         expected_result["directory_selection"]["new_base_dir"] = os_path.join(mock_user_config["config_dir"], "vehicles")
