@@ -58,7 +58,15 @@ jobs:
         run: curl -L -o installer.exe http://files.jrsoftware.org/is/6/innosetup-6.5.4.exe
 
       - name: Install Inno Setup
-        run: ./installer.exe /verysilent /allusers /dir=inst
+        run: |
+          Start-Process -FilePath ./installer.exe -ArgumentList '/VERYSILENT','/ALLUSERS','/DIR=inst' -Wait -NoNewWindow
+
+      - name: Validate Inno Setup installation
+        run: |
+          if (-not (Test-Path "$env:GITHUB_WORKSPACE\inst\ISCC.exe")) {
+            Get-ChildItem inst -Recurse -ErrorAction SilentlyContinue | Format-List FullName, Length
+            throw 'Inno Setup compiler not found at inst\\ISCC.exe. Ensure the installer step completed successfully.'
+          }
 
       - name: List installed software versions
         run: |
