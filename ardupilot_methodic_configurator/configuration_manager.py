@@ -77,6 +77,10 @@ class ConfigurationManager:
             else False
         )
 
+    @property
+    def current_file_parameters(self) -> ParDict:
+        return self.filesystem.file_parameters.get(self.current_file, ParDict())
+
     def handle_imu_temperature_calibration_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         selected_file: str,

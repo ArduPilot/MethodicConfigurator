@@ -325,7 +325,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
 
         # Create a Scrollable parameter editor table
-        self.parameter_editor_table = ParameterEditorTable(self.main_frame, self.local_filesystem, self)
+        self.parameter_editor_table = ParameterEditorTable(self.main_frame, self.configuration_manager, self)
         self.repopulate_parameter_table(self.configuration_manager.current_file)
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 
