@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (
@@ -107,13 +108,19 @@ def mock_parameter_editor() -> MagicMock:
 def parameter_editor_table(
     mock_master: tk.Tk, mock_local_filesystem: MagicMock, mock_parameter_editor: MagicMock
 ) -> ParameterEditorTable:
-    """Create a ParameterEditorTable instance for testing."""
+    """Create a ParameterEditorTable instance for testing, using ConfigurationManager abstraction."""
     with patch("tkinter.ttk.Style") as mock_style:
         style_instance = mock_style.return_value
         style_instance.lookup.return_value = "white"
 
+        # Create a mock ConfigurationManager
+        mock_config_manager = MagicMock(spec=ConfigurationManager)
+        mock_config_manager.filesystem = mock_local_filesystem
+        mock_config_manager.current_file = "test_file"
+        mock_config_manager.current_file_parameters = mock_local_filesystem.file_parameters.get("test_file", {})
+
         # Create the table instance
-        table = ParameterEditorTable(mock_master, mock_local_filesystem, mock_parameter_editor)
+        table = ParameterEditorTable(mock_master, mock_config_manager, mock_parameter_editor)
 
         # Mock necessary tkinter widgets and methods
         table.add_parameter_row = MagicMock()
@@ -131,9 +138,6 @@ def parameter_editor_table(
         # Initialize upload_checkbutton_var dict
         table.upload_checkbutton_var = {}
 
-        # Reset state
-        table.current_file = ""
-
         return table
 
 
@@ -144,7 +148,8 @@ def test_init_creates_instance_with_correct_attributes(
     assert parameter_editor_table.main_frame == mock_master
     assert parameter_editor_table.local_filesystem == mock_local_filesystem
     assert parameter_editor_table.parameter_editor == mock_parameter_editor
-    assert parameter_editor_table.current_file == ""
+    # current_file is now managed by configuration_manager
+    assert parameter_editor_table.configuration_manager.current_file == "test_file"
     assert isinstance(parameter_editor_table.upload_checkbutton_var, dict)
     assert parameter_editor_table.at_least_one_param_edited is False
 
@@ -157,10 +162,16 @@ def test_init_configures_style(parameter_editor_table: ParameterEditorTable) -> 
         mock_style_instance.lookup.return_value = "#ffffff"  # Use a valid hex color
         mock_style_instance.configure.return_value = None
 
-        # Create a new instance to trigger style configuration
-        ParameterEditorTable(
-            parameter_editor_table.main_frame, parameter_editor_table.local_filesystem, parameter_editor_table.parameter_editor
+        # Create a mock ConfigurationManager for the new instance
+        mock_config_manager = MagicMock(spec=ConfigurationManager)
+        mock_config_manager.filesystem = parameter_editor_table.local_filesystem
+        mock_config_manager.current_file = "test_file"
+        mock_config_manager.current_file_parameters = parameter_editor_table.local_filesystem.file_parameters.get(
+            "test_file", {}
         )
+
+        # Create a new instance to trigger style configuration
+        ParameterEditorTable(parameter_editor_table.main_frame, mock_config_manager, parameter_editor_table.parameter_editor)
 
         # Verify the style was configured with expected parameters
         mock_style_instance.configure.assert_called_with("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
@@ -172,7 +183,12 @@ def test_init_with_style_lookup_failure(mock_master, mock_local_filesystem, mock
         style_instance = mock_style.return_value
         style_instance.lookup.return_value = None  # Simulate style lookup failure
 
-        table = ParameterEditorTable(mock_master, mock_local_filesystem, mock_parameter_editor)
+        mock_config_manager = MagicMock(spec=ConfigurationManager)
+        mock_config_manager.filesystem = mock_local_filesystem
+        mock_config_manager.current_file = "test_file"
+        mock_config_manager.current_file_parameters = {}
+
+        table = ParameterEditorTable(mock_master, mock_config_manager, mock_parameter_editor)
 
         assert table is not None
         # Check that Style was initialized
@@ -214,6 +230,8 @@ def test_repopulate_handles_none_current_file(parameter_editor_table: ParameterE
     fc_parameters = {}
     # Set up file parameters with None key and empty metadata
     parameter_editor_table.local_filesystem.file_parameters = {None: {}}
+    parameter_editor_table.configuration_manager.current_file = None
+    parameter_editor_table.configuration_manager.current_file_parameters = {}
     parameter_editor_table.local_filesystem.doc_dict = {}
     parameter_editor_table.local_filesystem.param_default_dict = {}
 
@@ -224,21 +242,23 @@ def test_repopulate_handles_none_current_file(parameter_editor_table: ParameterE
 def test_repopulate_single_parameter(parameter_editor_table: ParameterEditorTable) -> None:
     """Test repopulate with a single parameter."""
     test_file = "test_file"
-    parameter_editor_table.current_file = test_file
+    parameter_editor_table.configuration_manager.current_file = test_file
     parameter_editor_table.local_filesystem.file_parameters = {test_file: {"PARAM1": Par(1.0, "test comment")}}
+    parameter_editor_table.configuration_manager.current_file_parameters = (
+        parameter_editor_table.local_filesystem.file_parameters[test_file]
+    )
     fc_parameters = {"PARAM1": 1.0}
     parameter_editor_table.local_filesystem.doc_dict = {"PARAM1": {"units": "none"}}
     parameter_editor_table.local_filesystem.param_default_dict = {"PARAM1": Par(0.0, "default")}
 
     with patch.object(parameter_editor_table, "grid_slaves", return_value=[]):
         parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
-        # parameter_editor_table.add_parameter_row.assert_called_once()
 
 
 def test_repopulate_multiple_parameters(parameter_editor_table: ParameterEditorTable) -> None:
     """Test repopulate with multiple parameters."""
     test_file = "test_file"
-    parameter_editor_table.current_file = test_file
+    parameter_editor_table.configuration_manager.current_file = test_file
     parameter_editor_table.local_filesystem.file_parameters = {
         test_file: {
             "PARAM1": Par(1.0, "test comment 1"),
@@ -246,6 +266,9 @@ def test_repopulate_multiple_parameters(parameter_editor_table: ParameterEditorT
             "PARAM3": Par(3.0, "test comment 3"),
         }
     }
+    parameter_editor_table.configuration_manager.current_file_parameters = (
+        parameter_editor_table.local_filesystem.file_parameters[test_file]
+    )
     fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0, "PARAM3": 3.0}
     parameter_editor_table.local_filesystem.doc_dict = {
         "PARAM1": {"units": "none"},
@@ -260,7 +283,6 @@ def test_repopulate_multiple_parameters(parameter_editor_table: ParameterEditorT
 
     with patch.object(parameter_editor_table, "grid_slaves", return_value=[]):
         parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
-        # assert parameter_editor_table.add_parameter_row.call_count == 3
 
 
 def test_repopulate_preserves_checkbutton_states(parameter_editor_table: ParameterEditorTable) -> None:
@@ -577,8 +599,11 @@ class TestEventHandlerBehavior:
 
     def test_on_parameter_delete_confirmed(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter deletion when user confirms."""
-        parameter_editor_table.current_file = "test_file"
+        parameter_editor_table.configuration_manager.current_file = "test_file"
         parameter_editor_table.local_filesystem.file_parameters = {"test_file": {"TEST_PARAM": Par(1.0, "comment")}}
+        parameter_editor_table.configuration_manager.current_file_parameters = (
+            parameter_editor_table.local_filesystem.file_parameters["test_file"]
+        )
         parameter_editor_table.parameter_editor.repopulate_parameter_table = MagicMock()
         parameter_editor_table.canvas = MagicMock()
         parameter_editor_table.canvas.yview.return_value = [0.5, 0.8]
@@ -603,15 +628,18 @@ class TestEventHandlerBehavior:
 
     def test_confirm_parameter_addition_valid_fc_param(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter addition with valid FC parameter."""
-        parameter_editor_table.current_file = "test_file"
+        parameter_editor_table.configuration_manager.current_file = "test_file"
         parameter_editor_table.local_filesystem.file_parameters = {"test_file": {}}
+        parameter_editor_table.configuration_manager.current_file_parameters = (
+            parameter_editor_table.local_filesystem.file_parameters["test_file"]
+        )
         parameter_editor_table.parameter_editor.repopulate_parameter_table = MagicMock()
         fc_parameters = {"NEW_PARAM": 5.0}
 
         result = parameter_editor_table._confirm_parameter_addition("NEW_PARAM", fc_parameters)
 
         assert result is True
-        assert "NEW_PARAM" in parameter_editor_table.local_filesystem.file_parameters["test_file"]
+        assert "NEW_PARAM" in parameter_editor_table.configuration_manager.current_file_parameters
         assert parameter_editor_table.local_filesystem.file_parameters["test_file"]["NEW_PARAM"].value == 5.0
         assert parameter_editor_table.at_least_one_param_edited is True
 
@@ -855,7 +883,10 @@ class TestUpdateMethodsBehavior:
 
         # Mock the local filesystem since set_new_value tries to update it
         parameter_editor_table.local_filesystem.file_parameters = {"test_file": {"TEST_PARAM": Par(1.0, "test")}}
-        parameter_editor_table.current_file = "test_file"
+        parameter_editor_table.configuration_manager.current_file = "test_file"
+        parameter_editor_table.configuration_manager.current_file_parameters = (
+            parameter_editor_table.local_filesystem.file_parameters["test_file"]
+        )
 
         # Mock the show_tooltip function to avoid creating actual Tkinter widgets
         with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"):

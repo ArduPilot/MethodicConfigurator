@@ -16,10 +16,10 @@ from logging import info as logging_info
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
     BitmaskHelper,
@@ -38,6 +38,9 @@ from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widge
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
+if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+
 NEW_VALUE_WIDGET_WIDTH = 9
 NEW_VALUE_DIFFERENT_STR = "\u2260" if platform_system() == "Windows" else "!="
 
@@ -51,12 +54,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
     It uses the ArduPilotParameter domain model to handle parameter operations.
     """
 
-    def __init__(self, master, local_filesystem: LocalFilesystem, parameter_editor) -> None:  # noqa: ANN001
+    def __init__(self, master, configuration_manager: ConfigurationManager, parameter_editor) -> None:  # noqa: ANN001
         super().__init__(master)
         self.main_frame = master
-        self.local_filesystem = local_filesystem
+        self.configuration_manager = configuration_manager
+        self.local_filesystem: LocalFilesystem = self.configuration_manager.filesystem
         self.parameter_editor = parameter_editor  # the parent window that contains this table
-        self.current_file = ""
         self.upload_checkbutton_var: dict[str, tk.BooleanVar] = {}
         self.at_least_one_param_edited = False
 
@@ -65,7 +68,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         # When you flip to “differences only,” it can even hold just a subset of the file.
         self.parameters: dict[str, ArduPilotParameter] = {}
 
-        self.config_step_processor = ConfigurationStepProcessor(local_filesystem)
+        self.config_step_processor = ConfigurationStepProcessor(self.local_filesystem)
         # Track last return values to prevent duplicate event processing
         self._last_return_values: dict[tk.Misc, str] = {}
         self._pending_scroll_to_bottom = False
@@ -75,7 +78,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         # Prepare a dictionary that maps variable names to their values
         # These variables are used by the forced_parameters and derived_parameters in configuration_steps_*.json files
-        self.variables = local_filesystem.get_eval_variables()
+        self.variables = self.local_filesystem.get_eval_variables()
 
     def _should_show_upload_column(self, gui_complexity: Union[str, None] = None) -> bool:
         """
@@ -136,11 +139,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         return tuple(base_headers), tuple(base_tooltips)
 
     def repopulate(  # pylint: disable=too-many-locals
-        self, selected_file: str, fc_parameters: dict[str, float], show_only_differences: bool, gui_complexity: str
+        self, _selected_file: str, fc_parameters: dict[str, float], show_only_differences: bool, gui_complexity: str
     ) -> None:
         for widget in self.view_port.winfo_children():
             widget.destroy()
-        self.current_file = selected_file
         # Clear the last return values tracking dictionary when repopulating
         self._last_return_values.clear()
         scroll_to_bottom = self._pending_scroll_to_bottom
@@ -161,7 +163,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         # Process configuration step and create domain model parameters
         self.parameters, config_step_edited, ui_errors, ui_infos = self.config_step_processor.process_configuration_step(
-            selected_file, fc_parameters, self.variables
+            self.configuration_manager.current_file, fc_parameters, self.variables
         )
         if config_step_edited:
             self.at_least_one_param_edited = True
@@ -176,7 +178,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             different_params = self.config_step_processor.filter_different_parameters(self.parameters)
             self._update_table(different_params, fc_parameters, self.parameter_editor.gui_complexity)
             if not different_params:
-                info_msg = _("No different parameters found in {selected_file}. Skipping...").format(**locals())
+                info_msg = _("No different parameters found in {selected_file}. Skipping...").format(
+                    selected_file=self.configuration_manager.current_file
+                )
                 logging_info(info_msg)
                 messagebox.showinfo(_("ArduPilot methodic configurator"), info_msg)
                 self.parameter_editor.on_skip_click()
@@ -210,13 +214,17 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             add_button = ttk.Button(
                 self.view_port, text=_("Add"), style="narrow.TButton", command=lambda: self._on_parameter_add(fc_parameters)
             )
-            tooltip_msg = _("Add a parameter to the {self.current_file} file")
+            tooltip_msg = _("Add a parameter to the {self.configuration_manager.current_file} file")
             show_tooltip(add_button, tooltip_msg.format(**locals()))
             add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
 
         except KeyError as e:
             logging_critical(
-                _("Parameter %s not found in the %s file: %s"), current_param_name, self.current_file, e, exc_info=True
+                _("Parameter %s not found in the %s file: %s"),
+                current_param_name,
+                self.configuration_manager.current_file,
+                e,
+                exc_info=True,
             )
             sys_exit(1)
 
@@ -295,7 +303,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         delete_button = ttk.Button(
             self.view_port, text=_("Del"), style="narrow.TButton", command=lambda: self._on_parameter_delete(param_name)
         )
-        tooltip_msg = _("Delete {param_name} from the {self.current_file} file")
+        tooltip_msg = _("Delete {param_name} from the {self.configuration_manager.current_file} file")
         show_tooltip(delete_button, tooltip_msg.format(**locals()))
         return delete_button
 
@@ -365,7 +373,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             # Success: mark edited and update the stored file parameter value
             show_tooltip(change_reason_widget, param.tooltip_change_reason)
             self.at_least_one_param_edited = True
-            self.local_filesystem.file_parameters[self.current_file][param.name].value = new_value
+            self.configuration_manager.current_file_parameters[param.name].value = new_value
             value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
         combobox_widget.configure(
@@ -511,7 +519,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 self.at_least_one_param_edited = True
                 # Update the corresponding file parameter with the model-returned value
                 # (model returns the canonical numeric/string representation)
-                self.local_filesystem.file_parameters[self.current_file][param.name].value = new_value_result
+                self.configuration_manager.current_file_parameters[param.name].value = new_value_result
                 value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update the displayed value in the Entry or Combobox
@@ -587,7 +595,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
                 self.at_least_one_param_edited = True
                 # Update the corresponding file parameter
-                self.local_filesystem.file_parameters[self.current_file][param.name].value = new_value_result
+                self.configuration_manager.current_file_parameters[param.name].value = new_value_result
                 value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update new_value_entry with the new decimal value
@@ -732,7 +740,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
                     )
                     self.at_least_one_param_edited = True
                     # Update the corresponding file parameter comment
-                    self.local_filesystem.file_parameters[self.current_file][param.name].comment = new_comment
+                    self.configuration_manager.current_file_parameters[param.name].comment = new_comment
 
             change_reason_entry.bind("<FocusOut>", _on_change_reason_change)
             change_reason_entry.bind("<Return>", _on_change_reason_change)
@@ -744,16 +752,16 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
     def _on_parameter_delete(self, param_name: str) -> None:
         """Handle parameter deletion."""
         msg = _("Are you sure you want to delete the {param_name} parameter?")
-        if messagebox.askyesno(f"{self.current_file}", msg.format(**locals())):
+        if messagebox.askyesno(f"{self.configuration_manager.current_file}", msg.format(**locals())):
             # Capture current vertical scroll position
             current_scroll_position = self.canvas.yview()[0]
 
             # Delete the parameter
-            del self.local_filesystem.file_parameters[self.current_file][param_name]
+            del self.configuration_manager.current_file_parameters[param_name]
             if param_name in self.parameters:
                 del self.parameters[param_name]
             self.at_least_one_param_edited = True
-            self.parameter_editor.repopulate_parameter_table(self.current_file)
+            self.parameter_editor.repopulate_parameter_table(self.configuration_manager.current_file)
 
             # Restore the scroll position
             self.canvas.yview_moveto(current_scroll_position)
@@ -761,7 +769,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
     def _on_parameter_add(self, fc_parameters: dict[str, float]) -> None:
         """Handle parameter addition."""
         add_parameter_window = BaseWindow(self.main_frame.master)
-        add_parameter_window.root.title(_("Add Parameter to ") + self.current_file)
+        add_parameter_window.root.title(_("Add Parameter to ") + self.configuration_manager.current_file)
         add_parameter_window.root.geometry("450x300")
 
         # Label for instruction
@@ -779,9 +787,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
 
         # Remove the parameters that are already displayed in this configuration step
         possible_add_param_names = [
-            param_name
-            for param_name in param_dict
-            if param_name not in self.local_filesystem.file_parameters[self.current_file]
+            param_name for param_name in param_dict if param_name not in self.configuration_manager.current_file_parameters
         ]
 
         possible_add_param_names.sort()
@@ -817,26 +823,26 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
             messagebox.showerror(_("Invalid parameter name."), _("Parameter name can not be empty."))
             return False
 
-        if param_name in self.local_filesystem.file_parameters[self.current_file]:
+        if param_name in self.configuration_manager.current_file_parameters:
             messagebox.showerror(_("Invalid parameter name."), _("Parameter already exists, edit it instead"))
             return False
 
         if fc_parameters:
             if param_name in fc_parameters:
-                self.local_filesystem.file_parameters[self.current_file][param_name] = Par(fc_parameters[param_name], "")
+                self.configuration_manager.current_file_parameters[param_name] = Par(fc_parameters[param_name], "")
                 self.at_least_one_param_edited = True
                 self._pending_scroll_to_bottom = True
-                self.parameter_editor.repopulate_parameter_table(self.current_file)
+                self.parameter_editor.repopulate_parameter_table(self.configuration_manager.current_file)
                 return True
             messagebox.showerror(_("Invalid parameter name."), _("Parameter name not found in the flight controller."))
         if self.local_filesystem.doc_dict:
             if param_name in self.local_filesystem.doc_dict:
-                self.local_filesystem.file_parameters[self.current_file][param_name] = Par(
+                self.configuration_manager.current_file_parameters[param_name] = Par(
                     self.local_filesystem.param_default_dict.get(param_name, Par(0, "")).value, ""
                 )
                 self.at_least_one_param_edited = True
                 self._pending_scroll_to_bottom = True
-                self.parameter_editor.repopulate_parameter_table(self.current_file)
+                self.parameter_editor.repopulate_parameter_table(self.configuration_manager.current_file)
                 return True
             error_msg = _("'{param_name}' not found in the apm.pdef.xml file.")
             messagebox.showerror(_("Invalid parameter name."), error_msg.format(**locals()))
