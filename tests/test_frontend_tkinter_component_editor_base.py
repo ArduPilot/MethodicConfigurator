@@ -614,9 +614,14 @@ class TestSaveOperationWorkflows:
         WHEN: They trigger the save operation
         THEN: They should be prompted to confirm their data is correct
         """
-        # Arrange: Mock the confirmation dialog
-        with patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.messagebox.askyesno", return_value=True
+        # Arrange: Mock should_display to skip the confirmation popup entirely
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base."
+                "ConfirmationPopupWindow.should_display",
+                return_value=False,
+            ),
+            patch.object(editor_for_save_tests.root, "destroy"),
         ):
             # Act: Trigger validate and save operation
             editor_for_save_tests.on_save_pressed()
@@ -1451,9 +1456,8 @@ class TestValidationWorkflows:
         mock_error.assert_called_once_with(_("Error"), error_message)
         editor_for_validation_tests._confirm_component_properties.assert_not_called()
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.messagebox.askyesno")
     def test_user_must_confirm_component_properties_before_save(
-        self, mock_confirm: MagicMock, editor_for_validation_tests: ComponentEditorWindowBase
+        self, editor_for_validation_tests: ComponentEditorWindowBase
     ) -> None:
         """
         User must confirm that component properties are correct before saving.
@@ -1462,8 +1466,7 @@ class TestValidationWorkflows:
         WHEN: They attempt to save the configuration
         THEN: They should be asked to confirm all properties are correct
         """
-        # Arrange: Configure successful validation but user cancels confirmation
-        mock_confirm.return_value = False
+        # Arrange: Configure successful validation
         editor_for_validation_tests.save_component_json = MagicMock()
 
         # Remove the mock to test the actual method behavior
@@ -1471,12 +1474,50 @@ class TestValidationWorkflows:
             ComponentEditorWindowBase._confirm_component_properties.__get__(editor_for_validation_tests)  # pylint: disable=no-value-for-parameter
         )
 
-        # Act: Attempt to validate and save
-        editor_for_validation_tests.on_save_pressed()
+        # Track if should_display was called, then return False to skip popup creation
+        # This simulates the popup being disabled by user preference
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base."
+                "ConfirmationPopupWindow.should_display",
+                return_value=False,
+            ) as mock_should_display,
+            patch.object(editor_for_validation_tests.root, "destroy"),
+        ):
+            # Act: Attempt to validate and save
+            editor_for_validation_tests.on_save_pressed()
 
-        # Assert: Confirmation should be requested but save should not proceed
-        mock_confirm.assert_called_once()
-        editor_for_validation_tests.save_component_json.assert_not_called()
+            # Assert: should_display should be checked
+            mock_should_display.assert_called_once_with("component_editor_validation")
+            # When popup is skipped, save should proceed
+            editor_for_validation_tests.save_component_json.assert_called_once()
+
+    def test_user_can_cancel_save_by_clicking_no_in_confirmation(
+        self, editor_for_validation_tests: ComponentEditorWindowBase
+    ) -> None:
+        """
+        User can cancel the save operation by clicking No in the confirmation dialog.
+
+        GIVEN: A user has valid component data
+        WHEN: They attempt to save but click "No" in the confirmation dialog
+        THEN: The save should be cancelled and the window should remain open
+        """
+        # Arrange: Configure successful validation
+        editor_for_validation_tests.save_component_json = MagicMock()
+        # Mock _confirm_component_properties to return False (user clicked No)
+        editor_for_validation_tests._confirm_component_properties = MagicMock(return_value=False)
+
+        # Mock destroy to track if it's called
+        with patch.object(editor_for_validation_tests.root, "destroy") as mock_destroy:
+            # Act: Attempt to validate and save
+            editor_for_validation_tests.on_save_pressed()
+
+            # Assert: Confirmation was checked
+            editor_for_validation_tests._confirm_component_properties.assert_called_once()
+            # Save should NOT be called when user clicks No
+            editor_for_validation_tests.save_component_json.assert_not_called()
+            # Window should NOT be destroyed when user clicks No
+            mock_destroy.assert_not_called()
 
 
 class TestMainScriptExecutionWorkflows:

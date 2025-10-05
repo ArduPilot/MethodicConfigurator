@@ -56,7 +56,7 @@ def show_about_window(root: ttk.Frame, _version: str) -> None:  # pylint: disabl
     # Create a new window for the custom "About" message
     about_window = tk.Toplevel(root)
     about_window.title(_("About"))
-    about_window.geometry("650x320")
+    about_window.geometry("650x340")
 
     main_frame = ttk.Frame(about_window)
     main_frame.pack(expand=True, fill=tk.BOTH)
@@ -80,11 +80,22 @@ def show_about_window(root: ttk.Frame, _version: str) -> None:  # pylint: disabl
     component_editor_var = tk.BooleanVar(value=ProgramSettings.display_usage_popup("component_editor"))
     component_editor_checkbox = ttk.Checkbutton(
         usage_popup_frame,
-        text=_("Component editor window"),
+        text=_("Component editor window introduction"),
         variable=component_editor_var,
         command=lambda: ProgramSettings.set_display_usage_popup("component_editor", component_editor_var.get()),
     )
     component_editor_checkbox.pack(side=tk.TOP, anchor=tk.W)
+
+    component_editor_validation_var = tk.BooleanVar(value=ProgramSettings.display_usage_popup("component_editor_validation"))
+    component_editor_validation_checkbox = ttk.Checkbutton(
+        usage_popup_frame,
+        text=_("Component editor window data validation"),
+        variable=component_editor_validation_var,
+        command=lambda: ProgramSettings.set_display_usage_popup(
+            "component_editor_validation", component_editor_validation_var.get()
+        ),
+    )
+    component_editor_validation_checkbox.pack(side=tk.TOP, anchor=tk.W)
 
     parameter_editor_var = tk.BooleanVar(value=ProgramSettings.display_usage_popup("parameter_editor"))
     parameter_editor_checkbox = ttk.Checkbutton(

@@ -36,7 +36,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_font import create_scaled_
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message, show_tooltip
-from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import ConfirmationPopupWindow, UsagePopupWindow
 
 
 def argument_parser() -> Namespace:
@@ -532,13 +532,45 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
     def _confirm_component_properties(self) -> bool:
         """Show confirmation dialog for component properties."""
-        confirm_message = _(
-            "ArduPilot Methodic Configurator only operates correctly if all component properties are correct."
-            " ArduPilot parameter values depend on the components used and their connections.\n\n"
-            " Have you used the scrollbar on the right side of the window and "
-            "entered the correct values for all components?"
+        if not ConfirmationPopupWindow.should_display("component_editor_validation"):
+            return True
+
+        # Create a popup window similar to the usage instructions
+        validation_popup_window = BaseWindow(cast("tk.Tk", self.root))
+        style = ttk.Style()
+
+        # Create a 20% larger font
+        font_config = get_safe_font_config()
+        larger_font = create_scaled_font(font_config, 1.2)
+
+        confirmation_text = RichText(
+            validation_popup_window.main_frame,
+            wrap=tk.WORD,
+            height=6,
+            bd=0,
+            background=style.lookup("TLabel", "background"),
+            font=larger_font,
         )
-        return messagebox.askyesno(_("Confirm that all component properties are correct"), confirm_message)
+        confirmation_text.insert(
+            tk.END,
+            _(
+                "ArduPilot Methodic Configurator only operates correctly if all component properties are correct."
+                " ArduPilot parameter values depend on the components used and their connections.\n\n"
+                " Have you used the scrollbar on the right side of the window and "
+                "entered the correct values for all components?"
+            ),
+        )
+        confirmation_text.config(state=tk.DISABLED)
+
+        # Use ConfirmationPopupWindow.display with yes/no buttons
+        return ConfirmationPopupWindow.display(
+            cast("tk.Tk", self.root),
+            validation_popup_window,
+            _("Confirm that all component properties are correct"),
+            "component_editor_validation",
+            "600x220",
+            confirmation_text,
+        )
 
     def save_component_json(self) -> bool:
         """Save component JSON data to file."""
