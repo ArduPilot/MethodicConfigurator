@@ -172,3 +172,34 @@ def get_safe_font_size(font_name: str = "TkDefaultFont") -> int:
         return int(size_val) if size_val is not None else 0
     except (ValueError, TypeError, OverflowError):
         return 0
+
+
+def create_scaled_font(font_config: dict[str, Union[str, int]], scale_factor: float = 1.0) -> tkfont.Font:
+    """
+    Create a tkinter Font object from a font configuration dictionary with optional scaling.
+
+    Takes a font configuration dictionary (as returned by get_safe_font_config) and creates
+    an actual tkinter Font object, optionally scaling the font size by a given factor.
+
+    Args:
+        font_config: Dictionary containing 'family' (str) and 'size' (int) keys.
+                     Typically obtained from get_safe_font_config().
+        scale_factor: Multiplier for the font size. For example, 1.2 creates a font
+                     20% larger than the original. Defaults to 1.0 (no scaling).
+
+    Returns:
+        A tkinter Font object configured with the specified family and scaled size.
+
+    Example:
+        >>> config = get_safe_font_config("TkDefaultFont")
+        >>> larger_font = create_scaled_font(config, 1.2)  # 20% larger
+        >>> smaller_font = create_scaled_font(config, 0.8)  # 20% smaller
+
+    Note:
+        This function modifies the font_config dictionary in-place to scale the size.
+        If you need to preserve the original config, pass a copy.
+
+    """
+    if isinstance(font_config["size"], int):
+        font_config["size"] = int(font_config["size"] * scale_factor)
+    return tkfont.Font(**font_config)  # type: ignore[arg-type]

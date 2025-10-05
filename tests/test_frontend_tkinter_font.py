@@ -15,16 +15,28 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 import tkinter.font as tkfont
+from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from ardupilot_methodic_configurator.frontend_tkinter_font import (
+    create_scaled_font,
     get_safe_font_config,
     get_safe_font_family,
     get_safe_font_size,
     safe_font_nametofont,
 )
+
+# pylint: disable=unused-argument, redefined-outer-name
+
+
+@pytest.fixture
+def tk_root() -> Generator[tk.Tk, None, None]:
+    """Create and manage a Tkinter root window for tests."""
+    root = tk.Tk()
+    yield root
+    root.destroy()
 
 
 class TestSafeFontNameToFont:
@@ -411,3 +423,174 @@ class TestFontUtilitiesIntegration:
                     pytest.fail(
                         f"Font utilities should not raise exceptions during startup. Scenario: {description}, Error: {e}"
                     )
+
+
+class TestCreateScaledFont:
+    """Test create_scaled_font function for creating scaled Font objects."""
+
+    def test_user_can_create_larger_font_for_better_readability(self, tk_root: tk.Tk) -> None:
+        """
+        User can create a larger font by applying a scale factor greater than 1.0.
+
+        GIVEN: A font configuration with a specific size
+        WHEN: User applies a scale factor of 1.2 (20% larger)
+        THEN: Should create a Font object with size increased by 20%
+        """
+        # Arrange: Create a font configuration
+        font_config: dict[str, str | int] = {"family": "Arial", "size": 10}
+
+        # Act: Create scaled font with 1.2x multiplier
+        result_font = create_scaled_font(font_config, 1.2)
+
+        # Assert: Should return a Font object with scaled size
+        assert isinstance(result_font, tkfont.Font)
+        # Font config should be modified in place
+        assert font_config["size"] == 12  # 10 * 1.2 = 12
+        assert result_font.cget("family") == "Arial"
+        assert result_font.cget("size") == 12
+
+    def test_user_can_create_smaller_font_for_compact_display(self, tk_root: tk.Tk) -> None:
+        """
+        User can create a smaller font by applying a scale factor less than 1.0.
+
+        GIVEN: A font configuration with a specific size
+        WHEN: User applies a scale factor of 0.8 (20% smaller)
+        THEN: Should create a Font object with size decreased by 20%
+        """
+        # Arrange: Create a font configuration
+        font_config: dict[str, str | int] = {"family": "Helvetica", "size": 20}
+
+        # Act: Create scaled font with 0.8x multiplier
+        result_font = create_scaled_font(font_config, 0.8)
+
+        # Assert: Should return a Font object with scaled size
+        assert isinstance(result_font, tkfont.Font)
+        assert font_config["size"] == 16  # 20 * 0.8 = 16
+        assert result_font.cget("family") == "Helvetica"
+        assert result_font.cget("size") == 16
+
+    def test_user_can_create_unscaled_font_with_default_factor(self, tk_root: tk.Tk) -> None:
+        """
+        User can create an unscaled font using default scale factor.
+
+        GIVEN: A font configuration
+        WHEN: User creates font without specifying scale factor (defaults to 1.0)
+        THEN: Should create a Font object with original size unchanged
+        """
+        # Arrange: Create a font configuration
+        font_config: dict[str, str | int] = {"family": "Courier", "size": 12}
+
+        # Act: Create font with default scale factor
+        result_font = create_scaled_font(font_config)
+
+        # Assert: Should return a Font object with original size
+        assert isinstance(result_font, tkfont.Font)
+        assert font_config["size"] == 12  # 12 * 1.0 = 12
+        assert result_font.cget("family") == "Courier"
+        assert result_font.cget("size") == 12
+
+    def test_user_can_scale_fonts_from_safe_config_function(self, tk_root: tk.Tk) -> None:
+        """
+        User can combine get_safe_font_config with create_scaled_font for robust scaling.
+
+        GIVEN: A system with available fonts
+        WHEN: User gets safe font config and scales it
+        THEN: Should create a properly scaled Font object with system defaults
+        """
+        # Arrange: Get a safe font configuration
+        font_config = get_safe_font_config()
+        original_size = font_config["size"]
+
+        # Act: Create a 1.5x scaled font
+        result_font = create_scaled_font(font_config.copy(), 1.5)
+
+        # Assert: Should create properly scaled font
+        assert isinstance(result_font, tkfont.Font)
+        expected_size = int(original_size * 1.5) if isinstance(original_size, int) else original_size
+        assert result_font.cget("size") == expected_size
+
+    def test_user_can_create_fonts_with_precise_scaling_factors(self, tk_root: tk.Tk) -> None:
+        """
+        User can apply precise scaling factors for fine-tuned typography.
+
+        GIVEN: Various scaling scenarios
+        WHEN: User applies different scale factors
+        THEN: Should correctly calculate scaled sizes using integer conversion
+        """
+        # Test various scaling scenarios
+        test_cases: list[tuple[dict[str, str | int], float, int]] = [
+            ({"family": "Times", "size": 10}, 1.1, 11),  # 10 * 1.1 = 11
+            ({"family": "Arial", "size": 12}, 1.25, 15),  # 12 * 1.25 = 15
+            ({"family": "Verdana", "size": 14}, 1.5, 21),  # 14 * 1.5 = 21
+            ({"family": "Georgia", "size": 16}, 0.75, 12),  # 16 * 0.75 = 12
+        ]
+
+        for config, scale, expected_size in test_cases:
+            # Act: Create scaled font
+            result_font = create_scaled_font(config.copy(), scale)
+
+            # Assert: Size should be correctly scaled and converted to int
+            assert result_font.cget("size") == expected_size, f"Failed for scale {scale}"
+
+    def test_user_font_config_is_modified_in_place_for_efficiency(self, tk_root: tk.Tk) -> None:
+        """
+        User's font configuration dictionary is modified in-place for memory efficiency.
+
+        GIVEN: A font configuration dictionary
+        WHEN: User creates a scaled font
+        THEN: The original dictionary should have its size modified (side effect)
+        """
+        # Arrange: Create a font configuration
+        font_config: dict[str, str | int] = {"family": "Segoe UI", "size": 9}
+        original_id = id(font_config)
+
+        # Act: Create scaled font
+        create_scaled_font(font_config, 1.3)
+
+        # Assert: Dictionary should be modified in place (same object)
+        assert id(font_config) == original_id
+        assert font_config["size"] == 11  # 9 * 1.3 = 11.7, int() = 11
+
+    def test_user_can_preserve_original_config_by_passing_copy(self, tk_root: tk.Tk) -> None:
+        """
+        User can preserve original font config by passing a copy.
+
+        GIVEN: A font configuration that should be preserved
+        WHEN: User passes a copy of the config to create_scaled_font
+        THEN: The original config should remain unchanged
+        """
+        # Arrange: Create original font configuration
+        original_config: dict[str, str | int] = {"family": "Calibri", "size": 11}
+        original_size = original_config["size"]
+
+        # Act: Create scaled font with a copy
+        create_scaled_font(original_config.copy(), 2.0)
+
+        # Assert: Original should be unchanged
+        assert original_config["size"] == original_size
+        assert original_config["family"] == "Calibri"
+
+    def test_user_can_create_fonts_for_different_ui_contexts(self, tk_root: tk.Tk) -> None:
+        """
+        User can create appropriately scaled fonts for different UI contexts.
+
+        GIVEN: A base font configuration
+        WHEN: User creates fonts for headers, body text, and captions
+        THEN: Should create Font objects with appropriate relative sizing
+        """
+        # Arrange: Base font configuration
+        base_config: dict[str, str | int] = {"family": "Roboto", "size": 10}
+
+        # Act: Create fonts for different contexts
+        header_font = create_scaled_font(base_config.copy(), 1.6)  # 60% larger
+        body_font = create_scaled_font(base_config.copy(), 1.0)  # Normal
+        caption_font = create_scaled_font(base_config.copy(), 0.85)  # 15% smaller
+
+        # Assert: All should be valid Font objects with correct scaling
+        assert isinstance(header_font, tkfont.Font)
+        assert isinstance(body_font, tkfont.Font)
+        assert isinstance(caption_font, tkfont.Font)
+
+        assert header_font.cget("size") == 16  # 10 * 1.6 = 16
+        assert body_font.cget("size") == 10  # 10 * 1.0 = 10
+        assert caption_font.cget("size") == 8  # 10 * 0.85 = 8.5, int() = 8
