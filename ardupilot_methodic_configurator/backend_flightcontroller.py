@@ -31,7 +31,7 @@ from serial.serialutil import SerialException
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.argparse_check_range import CheckRange
 from ardupilot_methodic_configurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
-from ardupilot_methodic_configurator.backend_mavftp import MAVFTP
+from ardupilot_methodic_configurator.backend_mavftp import MAVFTP, MAVFTPSettings
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
 # pylint: disable=too-many-lines
@@ -657,7 +657,30 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
                 break
         return parameters
 
-    def _download_params_via_mavftp(
+    def _create_robust_mavftp_settings(self) -> MAVFTPSettings:
+        """
+        Create robust MAVFTP settings optimized for STM32 F4 controllers under workload.
+
+        Returns:
+            MAVFTPSettings: Configured settings with increased timeouts and reduced burst sizes
+
+        """
+        return MAVFTPSettings(
+            [
+                ("debug", int, 0),
+                ("pkt_loss_tx", int, 0),
+                ("pkt_loss_rx", int, 0),
+                ("max_backlog", int, 3),  # Reduced backlog for better reliability
+                ("burst_read_size", int, 60),  # Smaller burst size for stability
+                ("write_size", int, 60),
+                ("write_qsize", int, 3),
+                ("idle_detection_time", float, 3.7),
+                ("read_retry_time", float, 3.0),  # Increased retry time
+                ("retry_time", float, 2.0),  # Increased retry time
+            ]
+        )
+
+    def _download_params_via_mavftp(  # pylint: disable=too-many-locals
         self,
         progress_callback: Union[None, Callable[[int, int], None]] = None,
         parameter_values_filename: Optional[Path] = None,
@@ -680,7 +703,17 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """
         if self.master is None:
             return {}, ParDict()
-        mavftp = MAVFTP(self.master, target_system=self.master.target_system, target_component=self.master.target_component)
+
+        # Create more robust MAVFTP settings for parameter download
+        # STM32 F4 controllers under workload need longer timeouts
+        mavftp_settings = self._create_robust_mavftp_settings()
+
+        mavftp = MAVFTP(
+            self.master,
+            target_system=self.master.target_system,
+            target_component=self.master.target_component,
+            settings=mavftp_settings,
+        )
 
         def get_params_progress_callback(completion: float) -> None:
             if progress_callback is not None and completion is not None:
@@ -688,13 +721,42 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
 
         complete_param_filename = str(parameter_values_filename) if parameter_values_filename else "complete.param"
         default_param_filename = str(parameter_defaults_filename) if parameter_defaults_filename else "00_default.param"
-        mavftp.cmd_getparams([complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback)
-        ret = mavftp.process_ftp_reply("getparams", timeout=40)  #  on slow links it might take a long time
-        pdict: dict[str, float] = {}
-        defdict: ParDict = ParDict()
+
+        # Retry logic for increased robustness with STM32 F4 controllers under workload
+        max_retries = 3
+        base_timeout = 15
+
+        for attempt in range(max_retries):
+            try:
+                mavftp.cmd_getparams(
+                    [complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback
+                )
+                # Progressive timeout increase for each retry attempt
+                timeout = base_timeout * (2**attempt)  # 15s, 30s, 60s
+                logging_info(_("Attempt %d/%d: Requesting parameters with %ds timeout"), attempt + 1, max_retries, timeout)
+                ret = mavftp.process_ftp_reply("getparams", timeout=timeout)
+
+                if ret.error_code == 0:
+                    break  # Success, exit retry loop
+
+                if attempt < max_retries - 1:  # Don't sleep after last attempt
+                    sleep_time = 2**attempt  # 1s, 2s, 4s exponential backoff
+                    logging_warning(_("Parameter download attempt %d failed, retrying in %ds..."), attempt + 1, sleep_time)
+                    time_sleep(sleep_time)
+                else:
+                    logging_error(_("All %d parameter download attempts failed"), max_retries)
+
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logging_error(_("Exception during parameter download attempt %d: %s"), attempt + 1, str(e))
+                if attempt < max_retries - 1:
+                    sleep_time = 2**attempt
+                    time_sleep(sleep_time)
 
         # add a file sync operation to ensure the file is completely written
         time_sleep(0.3)
+
+        pdict: dict[str, float] = {}
+        defdict: ParDict = ParDict()
         if ret.error_code == 0:
             # load the parameters from the file
             par_dict = ParDict.from_file(complete_param_filename)
@@ -1205,14 +1267,23 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         """Upload a file to the flight controller."""
         if self.master is None:
             return False
-        mavftp = MAVFTP(self.master, target_system=self.master.target_system, target_component=self.master.target_component)
+
+        # Use robust MAVFTP settings for better reliability with STM32 F4 controllers
+        mavftp_settings = self._create_robust_mavftp_settings()
+        mavftp = MAVFTP(
+            self.master,
+            target_system=self.master.target_system,
+            target_component=self.master.target_component,
+            settings=mavftp_settings,
+        )
 
         def put_progress_callback(completion: float) -> None:
             if progress_callback is not None and completion is not None:
                 progress_callback(int(completion * 100), 100)
 
         mavftp.cmd_put([local_filename, remote_filename], progress_callback=put_progress_callback)
-        ret = mavftp.process_ftp_reply("CreateFile", timeout=10)
+        # Increased timeout for better reliability
+        ret = mavftp.process_ftp_reply("CreateFile", timeout=20)
         if ret.error_code != 0:
             ret.display_message()
         return ret.error_code == 0
@@ -1230,7 +1301,14 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
             logging_error(error_msg)
             return False
 
-        mavftp = MAVFTP(self.master, target_system=self.master.target_system, target_component=self.master.target_component)
+        # Use robust MAVFTP settings for better reliability with STM32 F4 controllers
+        mavftp_settings = self._create_robust_mavftp_settings()
+        mavftp = MAVFTP(
+            self.master,
+            target_system=self.master.target_system,
+            target_component=self.master.target_component,
+            settings=mavftp_settings,
+        )
 
         def get_progress_callback(completion: float) -> None:
             if progress_callback is not None and completion is not None:
