@@ -11,111 +11,20 @@ There are also [quick start instructions](README.md), [specific use case instruc
 
 ## Table of Contents
 
-1. [Quick Start Guide](#quick-start-guide)
-2. [Prerequisites and System Requirements](#prerequisites-and-system-requirements)
-3. [Step-by-Step Workflow](#step-by-step-workflow)
-4. [Configuration Details](#configuration-details)
-5. [Command Line Reference](#command-line-usage)
-6. [Troubleshooting](#troubleshooting)
-7. [Support](SUPPORT.md) (External Document)
-8. [Installation and Security](INSTALL.md) (External Document)
-9. [FAQ](FAQ.md) (External Document)
-10. [Glossary](#glossary)
+1. [Step-by-Step Workflow](#step-by-step-workflow)
+2. [Configuration Details](#configuration-details)
+3. [Command Line Usage](#command-line-usage)
+4. [Troubleshooting](#troubleshooting)
+5. [Support](SUPPORT.md) (External Document)
+6. [Installation and Security](INSTALL.md) (External Document)
+7. [FAQ](FAQ.md) (External Document)
+8. [Glossary](#glossary)
 
-## Prerequisites and System Requirements
-
-### Hardware Requirements
-
-- **Flight Controller**: Any ArduPilot-compatible flight controller
-- **USB Cable**: For connecting flight controller to PC (data cable, not just power)
-- **PC Requirements**:
-  - Windows 10/11, Linux, or macOS
-  - Minimum 2GB RAM
-  - 100MB free disk space
-  - USB port
-
-### Software Prerequisites
-
-- **No additional software needed** - ArduPilot Methodic Configurator is self-contained
-- **Optional**: Text editor (Notepad++, VS Code) for manual parameter file editing
-
-### Before You Begin
+## Before You Begin
 
 ⚠️ **IMPORTANT**: Connect your flight controller to the PC and wait **at least 7 seconds** before starting the software.
 
 💡 **TIP**: Have your vehicle's component documentation ready (motor specifications, ESC type, etc.)
-
-## Quick Start Guide
-
-### For First-Time Users (Recommended Path)
-
-1. **Connect** your flight controller to PC via USB
-2. **Wait** 7 seconds for boot completion
-3. **Launch** ArduPilot Methodic Configurator
-4. **Auto-connection** happens automatically (if successful, you won't see a connection dialog)
-5. **Create new** vehicle configuration from template
-6. **Configure** vehicle components in the editor
-7. **Follow** the sequential parameter configuration
-
-### For Experienced Users (Fast Path)
-
-Use command line parameters to skip steps:
-
-```bash
-ardupilot_methodic_configurator --device="COM3" --vehicle-dir="C:\MyDrone" --skip-component-editor
-```
-
-### What You'll Accomplish
-
-By the end of this process, your flight controller will be fully configured with:
-
-- ✅ All parameters optimized for your specific vehicle
-- ✅ Complete documentation of every change made
-- ✅ Backup files for easy restoration
-- ✅ Ready-to-fly configuration
-
-### Configuration Workflow Overview
-
-```mermaid
-flowchart TD
-    A[Connect Flight Controller] --> B{Auto-Detect?}
-    B -->|Yes| C[Download FC Info]
-    B -->|No| D[Manual Connection]
-    D --> C
-    C --> E{Existing Project?}
-    E -->|Yes| F[Open Vehicle Directory]
-    E -->|No| G[Select Template]
-    G --> H[Create New Project]
-    F --> I[Component Editor]
-    H --> I
-    I --> J[Validate Components]
-    J --> K{Valid?}
-    K -->|No| I
-    K -->|Yes| L[Parameter Editor]
-    L --> M[Configure Parameters]
-    M --> N[Upload to FC]
-    N --> O{More Files?}
-    O -->|Yes| L
-    O -->|No| P[Generate Summary]
-    P -->     Q[Configuration Complete]
-```
-
-### Important Tips for Success
-
-💡 **Pro Tips:**
-
-- **Take your time**: Read parameter descriptions - they contain valuable insights
-- **Test incrementally**: The step-by-step approach allows testing between changes
-- **Keep backups**: The software creates them automatically in the vehicle project directory, but know where they are
-- **Document changes**: Always fill in the "Change Reason" field - future you will thank you
-- **Start conservative**: Use recommended values first, then fine-tune after test flights
-
-⚠️ **Common Mistakes to Avoid:**
-
-- **Rushing through steps**: Each parameter has a purpose - understand before changing
-- **Skipping component validation**: Incorrect component settings can cause crashes
-- **Ignoring warnings**: Red backgrounds and error messages are there for your safety
-- **Forgetting calibrations**: Some parameters require physical calibration procedures
 
 ## Step-by-Step Workflow
 
@@ -264,41 +173,6 @@ Correct those entries and press the `Save data and start configuration` button a
 
 Here you sequentially configure the parameters of your flight controller to meet your needs while having all the available documentation at your fingertips.
 
-For reproducibility and quality purposes, we configure the vehicle with a well-defined sequence of intermediate parameter files.
-
-Each file modifies just a small set of the [over 1200 parameters on the flight controller](https://ardupilot.org/copter/docs/parameters.html).
-By splitting the process into small manageable steps, we reduce the probability of making a mistake or missing a step and allow interleaving parameter changes with test flights.
-Each intermediate parameter file is a text file, editable in any common text editor (excluding MS Word) like [Notepad++](https://notepad-plus-plus.org/),
-[nano](https://www.nano-editor.org/) or [code](https://code.visualstudio.com/).
-It contains the *official ArduPilot parameter documentation* in the form of comments in the lines preceding the parameter.
-By using this you save the time of looking up the online documentation for each parameter.
-It contains the **reason why we changed the parameter** in a comment on the same line as the parameter and is used to
-trace each parameter change to the reason for that parameter change.
-
-Comments start with the '#' character.
-A small example with a single parameter is shown below:
-
-```text
-
-# Arming with Rudder enable/disable
-# Allow arm/disarm by rudder input. When enabled arming can be done with right rudder, disarming with left rudder.
-# 0: Disabled
-# 1: ArmingOnly
-# 2: ArmOrDisarm
-ARMING_RUDDER,0 # We find it safer to use only a switch to arm instead of through rudder inputs
-```
-
-If you are working with multiple vehicles, create a separate directory for each vehicle with a descriptive identifiable name.
-Copy the approx. 50 *intermediate parameter files* into them.
-Edit the files to match the specific requirements of each vehicle.
-Now you have traceable documentation records for every parameter change on each of your vehicles.
-
-If you are in the business of manufacturing multicopters and maintain **high-quality standards that result in the production of multiple, nearly identical vehicles**,
-you can reuse most intermediate parameter files across these vehicles.
-Only three intermediate parameter files: `03_imu_temperature_calibration_results.param`, `12_mp_setup_mandatory_hardware.param` and
-`25_inflight_magnetometer_fit_results.param` are specific to each vehicle instance.
-All other intermediate parameter files can be used without modifications across all instances (or serial numbers) of the same product model.
-
 ![Parameter File Editor and Uploader Window (main application)](images/App_screenshot_Parameter_file_editor_and_uploader4_4_simple.png)
 <figure align="center">
 <br>
@@ -314,6 +188,22 @@ All other intermediate parameter files can be used without modifications across 
 The GUI complexity (simple or normal) is selected in the vehicle component editor window in the previous step.
 The normal layout is explained below, the simple layout is similar but has less elements.
 
+#### Parameter editor and uploader workflow overview
+
+Do this in a loop until the software tells you the process is finished and automatically closes:
+
+- Read all the documentation links displayed at the top of the GUI (marked with the big red number 4),
+- Edit the parameter's *New value* and *Reason changed* fields to match your vehicle (marked with the big red number 5),
+  documenting change reasons is crucial because it:
+  - Promotes thoughtful decisions over impulsive changes
+  - Provides documentation for vehicle certification requirements
+  - Enables validation or suggestions from team members or AI tools
+  - Preserves your reasoning for future reference or troubleshooting
+- Press *Del* and/or *Add* buttons to delete or add parameters respectively (marked with the big red number 5),
+- If necessary scroll down using the scroll bar on the right and make sure you edit all parameters,
+- Press *Upload selected params to FC, and advance to next param file* (marked with the big red number 7),
+- Repeat from the top until the software tells you the process is finished.
+
 #### 1. See the Current Vehicle Directory (optional)
 
 - this vehicle configuration directory contains the files to be edited and uploaded
@@ -325,6 +215,8 @@ The normal layout is explained below, the simple layout is similar but has less 
 - The first available intermediate parameter file not named `00_default.param` will be selected by default
 - If the selection changes, the parameter table will update to display the parameters from the selected file.
 - The sequence is defined by the order of the intermediate parameter files in the vehicle configuration directory.
+
+For more details on intermediate parameter files, see [Intermediate Parameter Files](#intermediate-parameter-files).
 
 #### 3. About information and help links (optional)
 
@@ -395,7 +287,7 @@ It will create bigger and harder-to-compare parameter files but is more suitable
 - You can also jump to a particular file using the Combobox as explained in [2. Select an intermediate parameter file](#2-select-an-intermediate-parameter-file-optional)
 - **After editing parameters, click the `Upload selected params to FC, and advance to next param file`**
   **button to upload the (`Upload` checkbox) selected parameters to the flight controller.**
-- All parameter' `New Value` and `Change Reason` will be written to the current intermediate parameter file, irrespective of the `Upload` checkboxes
+- All parameters' `New Value` and `Change Reason` will be written to the current intermediate parameter file, irrespective of the `Upload` checkboxes
 - The software will then:
   - upload the selected and changed parameters to the flight controller
   - reset the flight controller if necessary for the new parameter values to take effect
@@ -498,6 +390,45 @@ The tool uses these files to manage the configuration process, allowing users to
 The intermediate parameter files are the primary focus of the user interface, as they contain the parameters that the user can modify.
 The documentation files provide context and guidance for each parameter.
 
+### Intermediate Parameter Files
+
+Building on the configuration files described above, intermediate parameter files are the primary files you'll interact with during vehicle setup.
+
+For reproducibility and quality purposes, we configure the vehicle with a well-defined sequence of intermediate parameter files.
+
+Each file modifies just a small set of the [over 1200 parameters on the flight controller](https://ardupilot.org/copter/docs/parameters.html).
+By splitting the process into small manageable steps, we reduce the probability of making a mistake or missing a step and allow interleaving parameter changes with test flights.
+Each intermediate parameter file is a text file, editable in any common text editor (excluding MS Word) like [Notepad++](https://notepad-plus-plus.org/),
+[nano](https://www.nano-editor.org/) or [code](https://code.visualstudio.com/).
+It contains the *official ArduPilot parameter documentation* in the form of comments in the lines preceding the parameter.
+By using this you save the time of looking up the online documentation for each parameter.
+It contains the **reason why we changed the parameter** in a comment on the same line as the parameter and is used to
+trace each parameter change to the reason for that parameter change.
+
+Comments start with the '#' character.
+A small example with a single parameter is shown below:
+
+```text
+
+# Arming with Rudder enable/disable
+# Allow arm/disarm by rudder input. When enabled arming can be done with right rudder, disarming with left rudder.
+# 0: Disabled
+# 1: ArmingOnly
+# 2: ArmOrDisarm
+ARMING_RUDDER,0 # We find it safer to use only a switch to arm instead of through rudder inputs
+```
+
+If you are working with multiple vehicles, create a separate directory for each vehicle with a descriptive identifiable name.
+Copy the approx. 50 *intermediate parameter files* into them.
+Edit the files to match the specific requirements of each vehicle.
+Now you have traceable documentation records for every parameter change on each of your vehicles.
+
+If you are in the business of manufacturing multicopters and maintain **high-quality standards that result in the production of multiple, nearly identical vehicles**,
+you can reuse most intermediate parameter files across these vehicles.
+Only three intermediate parameter files: `03_imu_temperature_calibration_results.param`, `12_mp_setup_mandatory_hardware.param` and
+`25_inflight_magnetometer_fit_results.param` are specific to each vehicle instance.
+All other intermediate parameter files can be used without modifications across all instances (or serial numbers) of the same product model.
+
 ## Command Line Usage
 
 The *ArduPilot Methodic Configurator* can be started from the command line.
@@ -507,7 +438,7 @@ To use the command line interface, execute `ardupilot_methodic_configurator` on 
 
 Here is a list of command line options:
 
-- **`--skip-check-for-updates`**: Skip check for software updates before staring the software. Default is False.
+- **`--skip-check-for-updates`**: Skip check for software updates before starting the software. Default is False.
 - **`--baudrate BAUDRATE`**: MAVLink serial connection baudrate to the flight controller. Default is 115200
 - **`--device`**: The MAVLink connection string to the flight controller. It defaults to autoconnection to the first available flight controller.
 - **`--vehicle-dir`**: The directory containing intermediate parameter files. Defaults to the current working directory directory.
@@ -611,7 +542,7 @@ For command line completion setup, see the **[Installation Guide](INSTALL.md#ins
 To speed up the startup of the ArduPilot methodic configurator, consider the following tips, presented from most to least effective:
 
 All of these can be either added in the command line as a parameter, or in the "properties > link > target" of the desktop icon.
-Use and empty space to separate each option.
+Use an empty space to separate each option.
 
 1. `--device <devicename>` this explicitly connects to \<devicename> skipping the auto-detection process.
 1. `--vehicle-dir <vehicle-directory>` this explicitly looks for project files in \<vehicle-directory> saving you the trouble to

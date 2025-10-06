@@ -15,9 +15,12 @@ We are working on extending it to [ArduPlane](https://ardupilot.github.io/Method
 [Rover](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover) vehicles.
 But for those it is still very incomplete.
 
-- **clear**: the sequence is linear, executed one step at the time with no hidden complex dependencies
+- **clear**: the semi-automated sequence is linear, executed one step at the time with no hidden complex dependencies
 - **proven**: the software has been used by hundreds of ArduPilot developers and users. From beginners to advanced. On big and small vehicles.
-- **safe**: the sequence reduces trial-and-error and reduces the amount of flights required to configure the vehicle
+- **safe**: the sequence reduces trial-and-error by following established best practices and reduces the amount of flights required to configure the vehicle
+- **Parameter management**: Upload, download, and edit parameters with full documentation
+- **Vehicle templates**: Start from empty templates or from pre-configured settings for common vehicle types
+- **Traceability**: Documents every parameter change with reasons
 
 Here are some YouTube video tutorials from the [AMC YouTube Channel](https://www.youtube.com/@AmilcardoCarmoLucas):
 
@@ -61,9 +64,89 @@ It's simple graphical user interface (GUI) manages and visualizes ArduPilot para
 
 No visible menus, no hidden menus, no complicated options, what you see is what gets changed.
 
+## Table of Contents
+
+- [Correctly configure ArduPilot for your vehicles on your first attempt](#correctly-configure-ardupilot-for-your-vehicles-on-your-first-attempt)
+  - [Table of Contents](#table-of-contents)
+  - [Quick Start](#quick-start)
+    - [What You'll Accomplish](#what-youll-accomplish)
+    - [Important Tips for Success](#important-tips-for-success)
+  - [1. Quick overview of the entire process](#1-quick-overview-of-the-entire-process)
+    - [1.1 Select the vehicle components](#11-select-the-vehicle-components)
+    - [1.2 Download and install software](#12-download-and-install-software)
+    - [1.3 Input vehicle components and component connections into ArduPilot Methodic Configurator](#13-input-vehicle-components-and-component-connections-into-ardupilot-methodic-configurator)
+    - [1.4 Perform IMU temperature calibration before assembling the autopilot into the vehicle (optional)](#14-perform-imu-temperature-calibration-before-assembling-the-autopilot-into-the-vehicle-optional)
+    - [1.5 Assemble all components except the propellers](#15-assemble-all-components-except-the-propellers)
+    - [1.6 Basic mandatory configuration](#16-basic-mandatory-configuration)
+    - [1.7 Assemble propellers and perform the first flight](#17-assemble-propellers-and-perform-the-first-flight)
+    - [1.8 Minimalistic mandatory tuning](#18-minimalistic-mandatory-tuning)
+    - [1.9 Standard tuning (optional)](#19-standard-tuning-optional)
+    - [1.10 Improve altitude under windy conditions (optional)](#110-improve-altitude-under-windy-conditions-optional)
+    - [1.11 System identification for analytical PID optimization (optional)](#111-system-identification-for-analytical-pid-optimization-optional)
+    - [1.12 Position controller tuning (optional)](#112-position-controller-tuning-optional)
+    - [1.13 Everyday use](#113-everyday-use)
+  - [Documentation and Support](#documentation-and-support)
+  - [Contributing](#contributing)
+  - [Internationalization](#internationalization)
+  - [Code of Conduct](#code-of-conduct)
+  - [License](#license)
+  - [Credits](#credits)
+
+## Quick Start
+
+### What You'll Accomplish
+
+By the end of this process, your flight controller will be fully configured with:
+
+- ✅ All parameters optimized for your specific vehicle
+- ✅ Complete documentation of every change made
+- ✅ Backup files for easy restoration
+- ✅ Ready-to-fly configuration
+
+### Important Tips for Success
+
+💡 **Pro Tips:**
+
+- **Take your time**: Read parameter descriptions - they contain valuable insights
+- **Test incrementally**: The step-by-step approach allows testing between changes
+- **Keep backups**: The software creates them automatically in the vehicle project directory
+- **Document changes**: Always fill in the "Change Reason" field - future you will thank you
+
+⚠️ **Common Mistakes to Avoid:**
+
+- **Rushing through steps**: Each parameter has a purpose - understand before changing
+- **Skipping component validation**: Incorrect component settings can cause crashes
+- **Ignoring warnings**: Red backgrounds and error messages are there for your safety
+- **Forgetting calibrations**: Some parameters require physical calibration procedures:
+  - IMU temperature, analog voltage and current measurement, gyro, accelerometers
+
 ## 1. Quick overview of the entire process
 
 To methodically build, configure and tune ArduPilot vehicles follow this sequence of steps:
+
+```mermaid
+flowchart TD
+    A[Connect Flight Controller] --> B{Auto-Detect?}
+    B -->|Yes| C[Download FC Info]
+    B -->|No| D[Manual Connection]
+    D --> C
+    C --> E{Existing Project?}
+    E -->|Yes| F[Open Vehicle Directory]
+    E -->|No| G[Select Template]
+    G --> H[Create New Project]
+    F --> I[Component Editor]
+    H --> I
+    I --> J[Validate Components]
+    J --> K{Valid?}
+    K -->|No| I
+    K -->|Yes| L[Parameter Editor]
+    L --> M[Configure Parameters]
+    M --> N[Upload to FC]
+    N --> O{More Files?}
+    O -->|Yes| L
+    O -->|No| P[Generate Summary]
+    P -->     Q[Configuration Complete]
+```
 
 ### 1.1 Select the vehicle components
 
@@ -73,7 +156,7 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 - Use [ecalc for multirotor](https://www.ecalc.ch/index.htm) to select the propulsion system.
 - follow [hardware best practices](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#11-multicopter-hardware-best-practices)
 
-### 1.2 Install Software
+### 1.2 Download and install software
 
 - Install ArduPilot Methodic Configurator on [MS windows](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#ms-windows-installation),
   [Linux](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#linux-installation) or
@@ -85,7 +168,7 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 
 The software needs this information to automatically pre-select configuration settings relevant to your specific vehicle
 
-- [Start the ArduPilot Methodic Configurator and select a vehicle that resembles yours](#5-use-the-ardupilot-methodic-configurator-software-for-the-first-time)
+- [Start the ArduPilot Methodic Configurator and select a vehicle that resembles yours](https://ardupilot.github.io/MethodicConfigurator/USECASES.html#use-the-ardupilot-methodic-configurator-software-for-the-first-time)
   and input vehicle components and component connections information into the ArduPilot Methodic Configurator *component editor window*
 
 ### 1.4 Perform IMU temperature calibration before assembling the autopilot into the vehicle (optional)
@@ -96,6 +179,9 @@ That is harder to do once the autopilot is assembled inside the vehicle, hence i
 
 - [start the software](https://ardupilot.github.io/MethodicConfigurator/USECASES.html#use-the-ardupilot-methodic-configurator-software-for-the-first-time)
 - Perform [IMU temperature calibration](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#41-setup-imu-temperature-calibration)
+
+Follow [starting the software after having created a new vehicle](https://ardupilot.github.io/MethodicConfigurator/USECASES.html#use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template)
+instructions once the calibration procedure is finished.
 
 ### 1.5 Assemble all components except the propellers
 
@@ -205,74 +291,20 @@ Now that tuning and configuration are done, some logging and tests can be disabl
 
 - [53_everyday_use.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#13-productive-configuration)
 
-Enjoy your properly configured vehicle.
-
-The following sections describe each step of the procedure in more detail.
-
-## 2. Install *ArduPilot Methodic Configurator* software on a PC or Mac
-
-Install ArduPilot Methodic Configurator on [MS windows](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#ms-windows-installation),
-[Linux](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#linux-installation) or
-[macOS](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#macos-installation)
-
-## 3. Install *Mission Planner* software on a PC or Mac
-
-[Install the latest Mission Planner version](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#install-mission-planner-software-on-a-pc-or-mac)
-
-## 4. Install *ArduPilot* firmware on the flight controller
-
-[Install the latest ArduPilot firmware on your flight controller board](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html#install-ardupilot-firmware-on-the-flight-controller)
-
-## 5. Use the *ArduPilot Methodic Configurator* software for the first time
-
-See the [Use the *ArduPilot Methodic Configurator* software for the first time](https://ardupilot.github.io/MethodicConfigurator/USECASES.html#use-the-ardupilot-methodic-configurator-software-for-the-first-time)
-usecase.
-
-## 6. Configure the vehicle's parameters in a traceable way
-
-The following simple loop is presented as welcome instructions:
-![AMC welcome instructions](https://github.com/ArduPilot/MethodicConfigurator/blob/master/images/App_screenshot_instructions.png?raw=true)
-
-Now do this in a loop until the software automatically closes or you are asked to close the software:
-
-- Read all the documentation links displayed at the top of the GUI (marked with the big red number 4),
-- Edit the parameter's *New value* and *Reason changed* fields to match your vehicle (marked with the big red number 5),
-  documenting change reasons is crucial because it:
-  - Promotes thoughtful decisions over impulsive changes
-  - Provides documentation for vehicle certification requirements
-  - Enables validation or suggestions from team members or AI tools
-  - Preserves your reasoning for future reference or troubleshooting
-- Press *Del* and/or *Add* buttons to delete or add parameters respectively (marked with the big red number 5),
-- If necessary scroll down using the scroll bar on the right and make sure you edit all parameters,
-- Press *Upload selected params to FC, and advance to next param file* (marked with the big red number 7),
-- Repeat from the top until the program automatically closes.
-
-## 7. Use the *ArduPilot Methodic Configurator* software after having created a vehicle from a template
-
-See the [Use the *ArduPilot Methodic Configurator* software after having created a vehicle from a template](https://ardupilot.github.io/MethodicConfigurator/USECASES.html#use-the-ardupilot-methodic-configurator-software-after-having-created-a-vehicle-from-a-template)
-usecase.
-
 Congratulations your flight controller is now fully configured in the safest and fastest way publicly known.
 
-There is also [documentation on other use cases](https://ardupilot.github.io/MethodicConfigurator/USECASES.html)
-and a detailed but generic [Usermanual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html).
-
-## Install
-
-See the [install instructions](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html)
+Enjoy your properly configured vehicle.
 
 ## Documentation and Support
 
 Need [help or support](https://ardupilot.github.io/MethodicConfigurator/SUPPORT.html)
 
+There is also [documentation on other use cases](https://ardupilot.github.io/MethodicConfigurator/USECASES.html)
+and a detailed but generic [Usermanual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html).
+
 ## Contributing
 
 Want [to help us and contribute](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md)?
-
-## Software design and development
-
-To meet the [Software requirements](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#software-requirements) a
-[software architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html#the-software-architecture) was designed and implemented.
 
 ## Internationalization
 
@@ -283,75 +315,9 @@ On Linux and macOS the language is selectable by the `--language` command line a
 
 See [contributing page](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md) if you want to help us translate the software into your language.
 
-## Code of conduct
+## Code of Conduct
 
 To use and develop this software you must obey the [ArduPilot Methodic Configurator Code of Conduct](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CODE_OF_CONDUCT.md).
-
-## Compliance
-
-ArduPilot Methodic Configurator adheres to multiple compliance standards and best practices:
-
-### Usability
-
-- [Wizard like interface](https://www.nngroup.com/articles/wizards/), allows user to concentrate in one task at a time
-- All GUI elements contain [mouse over tooltips](https://www.nngroup.com/articles/tooltip-guidelines/) explaining their function
-- Relevant documentation opens automatically in a browser window
-- Uses *What you see is what gets changed* paradigm. No parameters are changed without the users's knowledge
-- Translated into multiple languages
-- No visible menus, no hidden menus.
-
-### Code Quality
-
-- Follows [PEP 8](https://peps.python.org/pep-0008/) Python code style guidelines
-- Maintains high code quality through automated linting (static code analysis), all using strict settings:
-  - [Pylint](https://www.pylint.org/) [automated workflow](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pylint.yml),
-  - [Ruff](https://docs.astral.sh/ruff/) [automated workflow](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/ruff.yml),
-  - [mypy](https://www.mypy-lang.org/) [automated workflow](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/mypy.yml) and
-  - [pyright](https://microsoft.github.io/pyright/#/) [automated workflow](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pyright.yml)
-- Uses [PEP 484](https://peps.python.org/pep-0484/) [type hints](https://docs.python.org/3/library/typing.html)
-  - Enforces type checking with [MyPy](https://www.mypy-lang.org/) and [pyright](https://microsoft.github.io/pyright/#/) type checkers
-- Automated code formatting using [ruff](https://docs.astral.sh/ruff/) for consistency
-- Code and documentation are [spell checked](https://streetsidesoftware.com/vscode-spell-checker/)
-  and [english grammar checked](https://app.grammarly.com/)
-  - [markdown-lint](https://github.com/DavidAnson/markdownlint-cli2)
-  [automated workflow](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/markdown-lint.yml) and
-  - [markdown-link-check](https://github.com/tcort/markdown-link-check) [automated workflow](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/markdown-link-check.yml)
-- Follows object-oriented design principles and [clean code practices](https://www.oreilly.com/library/view/clean-code/9780136083238/)
-- Implements comprehensive error handling and logging, with 5 verbosity levels
-- Implements [PEP 621](https://peps.python.org/pep-0621/) project metadata standards
-- Adheres to [Keep a Changelog](https://keepachangelog.com/) format
-- Complies with [Python Packaging Authority](https://www.pypa.io/) guidelines
-
-### Software Development
-
-- Implements [continuous integration/continuous deployment](https://github.com/ArduPilot/MethodicConfigurator/actions) (CI/CD) practices
-- Maintains comprehensive [assertion-based test coverage](https://coveralls.io/github/ArduPilot/MethodicConfigurator?branch=master) through [pytest](https://docs.pytest.org/en/stable/)
-- Uses [semantic versioning](https://semver.org/) for releases
-- Follows [git-flow branching model](https://www.gitkraken.com/learn/git/git-flow)
-- Implements [automated security scanning and vulnerability checks](https://app.snyk.io/org/amilcarlucas/project/c8fd6e29-715b-4949-b828-64eff84f5fe1)
-- Implements [git pre-commit hooks](https://pre-commit.com/) to ensure code quality and compliance on every commit
-- Implements reproducible builds with locked dependencies
-- Uses containerized CI/CD environments for consistency
-- Uses automated changelog generation
-- Implements automated dependency updates and security patches using [renovate](https://www.mend.io/renovate/) and [dependabot](https://github.com/dependabot)
-
-### Open Source
-
-- Complies with [OpenSSF Best Practices](https://www.bestpractices.dev/projects/9101) for open source projects
-- Uses [REUSE specification](https://reuse.software/spec-3.3/) for license compliance
-  - Uses CI job to ensure compliance
-  - Uses [SPDX license identifiers](https://spdx.org/licenses/)
-- Maintains comprehensive (more than 5000 lines) documentation
-- Implements [inclusive community guidelines](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CODE_OF_CONDUCT.md)
-- Provides [clear contribution procedures](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md)
-
-### Security
-
-- Regular security audits through [Snyk](https://snyk.io/), [codacy](https://www.codacy.com/), [black duck](https://www.blackduck.com/) and other tools
-- Follows [OpenSSF Security Scorecard](https://securityscorecards.dev/) best practices
-- Uses [gitleaks](https://github.com/gitleaks/gitleaks) pre-commit hook to ensure no secrets are leaked
-- Implements secure coding practices, runs [anti-virus in CI](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/gitavscan.yml)
-- Maintains [security policy and vulnerability reporting process](https://github.com/ArduPilot/MethodicConfigurator/blob/master/SECURITY.md)
 
 ## License
 

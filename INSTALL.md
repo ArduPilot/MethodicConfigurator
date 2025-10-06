@@ -11,6 +11,23 @@ After installing it you must also:
 - [Install the latest Mission Planner version](#install-mission-planner-software-on-a-pc-or-mac)
 - [Install the latest ArduPilot firmware on your flight controller board](#install-ardupilot-firmware-on-the-flight-controller)
 
+## Prerequisites and System Requirements
+
+### Hardware Requirements
+
+- **Flight Controller**: Any ArduPilot-compatible flight controller
+- **USB Cable**: For connecting flight controller to PC (data cable, not just power)
+- **PC Requirements**:
+  - Windows 10/11, Linux, or macOS
+  - Minimum 2GB RAM
+  - 100MB free disk space
+  - USB port
+
+### Software Prerequisites
+
+- **No additional software needed** - ArduPilot Methodic Configurator is self-contained
+- **Optional**: Text editor (Notepad++, VS Code) for manual parameter file editing
+
 ## MS Windows Installation
 
 The MS Windows Installation file is at the bottom of
