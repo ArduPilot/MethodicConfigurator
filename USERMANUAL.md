@@ -28,6 +28,41 @@ There are also [quick start instructions](README.md), [specific use case instruc
 
 ## Step-by-Step Workflow
 
+Don't worry! It looks more complicated than it actually is. And **you do not need to understand the diagram** to use the software.
+
+```mermaid
+flowchart TD
+    A[Connect Flight Controller] --> B{Auto-Detect?}
+    B -->|Yes| C[Download FC Info]
+    B -->|No| D[Manual Connection]
+    D --> C
+    C --> E{Existing Project?}
+    E -->|Yes| F[Open Vehicle Directory]
+    E -->|No| G[Select Template]
+    G --> H[Create New Project]
+    F --> I[Component Editor]
+    H --> I
+    I --> J[Validate Components]
+    J --> K{Valid?}
+    K -->|No| I
+    K -->|Yes| L[Parameter Editor]
+    L --> M[Configure Parameters]
+    M --> N[Upload to FC]
+    N --> O{Experiment Required?}
+    O -->|Yes| P[Close AMC]
+    P --> Q[Perform Experiment/Flight]
+    Q --> R[Start AMC]
+    R --> S[Read Results from FC]
+    S --> T[Write Results to File]
+    T --> U{More Files?}
+    O -->|No| U
+    U -->|Yes| L
+    U -->|No| V[Generate Summary]
+    V -->     W[Configuration Complete]
+```
+
+If the diagram above does not display correctly [look here](https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md#step-by-step-workflow)
+
 This section guides you through the complete configuration process. Follow these steps in order:
 
 ### Step 1: Preparation
@@ -320,6 +355,8 @@ pie title Summary files example
     "Non-default writable sensor calibrations - non-default_writable_calibrations.param" : 71
     "Non-default writable non-sensor-calibrations - non-default_writable_non-calibrations.param" : 217
 ```
+
+If the diagram above does not display correctly [look here](https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md#9-completing-the-configuration-process)
 
 - **Unchanged parameters**: These parameters are left unchanged and are displayed on a light blue background 🟦.
 

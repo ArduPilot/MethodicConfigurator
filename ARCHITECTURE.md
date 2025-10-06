@@ -6,6 +6,51 @@ It was augmented with [DevOps](https://en.wikipedia.org/wiki/DevOps) and [CI/CD 
 
 ## V-model
 
+Development started by using the classic V-model development methodology.
+
+```mermaid
+flowchart TB
+    subgraph requirements["Requirements & Design"]
+        direction LR
+        Z([User Requirements]) --> A
+        A([System Requirements<br/>SYSTEM_REQUIREMENTS.md]) --> B([Software Architecture<br/>#the-software-architecture])
+        B --> C([Module Design<br/>#module-design])
+    end
+
+    subgraph testing["Testing"]
+        direction LR
+        F --> G([Acceptance Testing<br/>#acceptance-testing])
+        E --> F([System Testing<br/>#system-testing])
+        D([Module Testing<br/>#module-testing]) --> E([Integration Testing<br/>#integration-testing])
+    end
+
+    %% V-shape connections (crossing levels)
+    Z --> G
+    A --> F
+    B --> E
+    C --> D
+
+    %% Clickable links
+    click A "SYSTEM_REQUIREMENTS.md"
+    click B "#the-software-architecture"
+    click C "#module-design"
+    click D "#module-testing"
+    click E "#integration-testing"
+    click F "#system-testing"
+    click G "#acceptance-testing"
+
+    %% Styling
+    classDef requirement fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef design fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef testing fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+
+    class A,Z requirement
+    class B,C design
+    class D,E,F,G testing
+```
+
+If the diagram above does not display correctly, [see here](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ARCHITECTURE.md#v-model)
+
 ### The Software architecture
 
 We decided to use python as programming language, and the following libraries and frameworks:
