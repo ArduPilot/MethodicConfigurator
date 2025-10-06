@@ -3,7 +3,7 @@
     "Components": {
         "Flight Controller": {
             "Product": {
-                "Manufacturer": "ArduPilot,AET,Airvolute,Aocoda-RC-H743Dual,DM,CSKY,GreenSight,Japan Aviation Electronics Industry Ltd.,mRo,ORBITH743,Horizon31,Dheeran labs,Qiotek,Sierra Aerospace,SkySakura",
+                "Manufacturer": "Holybro",
                 "Model": "Pixhawk4",
                 "URL": "https://holybro.com/products/pixhawk-6c?srsltid=AfmBOoqx6fEclM8l4wICaZcGtR5ecABosliproB7TozPMEdYY7SG0A_t",
                 "Version": "1.0"
@@ -183,6 +183,5 @@
             "Notes": ""
         }
     },
-    "Program version": "2.2.0",
-    "Configuration template": "Holybro_X500_V2"
+    "Program version": "2.5.0"
 }
