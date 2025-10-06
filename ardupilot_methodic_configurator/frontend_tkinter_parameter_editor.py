@@ -326,7 +326,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # Create a Scrollable parameter editor table
         self.parameter_editor_table = ParameterEditorTable(self.main_frame, self.configuration_manager, self)
-        self.repopulate_parameter_table(self.configuration_manager.current_file)
+        self.repopulate_parameter_table()
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 
         # Create a frame for the buttons
@@ -668,7 +668,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.at_least_one_changed_parameter_written = False
             self.documentation_frame.refresh_documentation_labels(selected_file)
             self.documentation_frame.update_why_why_now_tooltip(selected_file)
-            self.repopulate_parameter_table(selected_file)
+            self.repopulate_parameter_table()
             self._update_skip_button_state()
 
     def _update_progress_bar_from_file(self, selected_file: str) -> None:
@@ -690,16 +690,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if not redownload:
             self.on_param_file_combobox_change(None, forced=True)  # the initial param read will trigger a table update
 
-    def repopulate_parameter_table(self, selected_file: Union[None, str]) -> None:
-        if not selected_file:
+    def repopulate_parameter_table(self) -> None:
+        if not self.configuration_manager.current_file:
             return  # no file was yet selected, so skip it
         # Re-populate the table with the new parameters
-        self.parameter_editor_table.repopulate(
-            selected_file, self.configuration_manager.fc_parameters, self.show_only_differences.get(), self.gui_complexity
-        )
+        self.parameter_editor_table.repopulate(self.show_only_differences.get(), self.gui_complexity)
 
     def on_show_only_changed_checkbox_change(self) -> None:
-        self.repopulate_parameter_table(self.configuration_manager.current_file)
+        self.repopulate_parameter_table()
 
     def upload_params_that_require_reset(self, selected_params: dict) -> None:
         """

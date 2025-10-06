@@ -128,11 +128,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         return tuple(base_headers), tuple(base_tooltips)
 
     def repopulate(  # pylint: disable=too-many-locals
-        self, _selected_file: str, fc_parameters: dict[str, float], show_only_differences: bool, gui_complexity: str
+        self, show_only_differences: bool, gui_complexity: str
     ) -> None:
-        # Update current file in configuration manager if changed
-        if self.configuration_manager.current_file != _selected_file:
-            self.configuration_manager.current_file = _selected_file
         for widget in self.view_port.winfo_children():
             widget.destroy()
         # Clear the last return values tracking dictionary when repopulating
@@ -166,7 +163,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         if show_only_differences:
             # Filter to show only different parameters
             different_params = self.configuration_manager.get_different_parameters()
-            self._update_table(different_params, fc_parameters, self.parameter_editor.gui_complexity)
+            self._update_table(different_params, self.parameter_editor.gui_complexity)
             if not different_params:
                 info_msg = _("No different parameters found in {selected_file}. Skipping...").format(
                     selected_file=self.configuration_manager.current_file
@@ -176,7 +173,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 self.parameter_editor.on_skip_click()
                 return
         else:
-            self._update_table(self.configuration_manager.parameters, fc_parameters, self.parameter_editor.gui_complexity)
+            self._update_table(self.configuration_manager.parameters, self.parameter_editor.gui_complexity)
         self._apply_scroll_position(scroll_to_bottom)
 
     def _apply_scroll_position(self, scroll_to_bottom: bool) -> None:
@@ -185,19 +182,16 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         position = 1.0 if scroll_to_bottom else 0.0
         self.canvas.yview_moveto(position)
 
-    def _update_table(
-        self, params: dict[str, ArduPilotParameter], fc_parameters: dict[str, float], gui_complexity: str
-    ) -> None:
+    def _update_table(self, params: dict[str, ArduPilotParameter], gui_complexity: str) -> None:
         """Update the parameter table with the given parameters."""
         current_param_name: str = ""
         show_upload_column = self._should_show_upload_column(gui_complexity)
-        fc_connected = bool(fc_parameters)
 
         try:
             for i, (param_name, param) in enumerate(params.items(), 1):
                 current_param_name = param_name
 
-                column: list[tk.Widget] = self._create_column_widgets(param_name, param, show_upload_column, fc_connected)
+                column: list[tk.Widget] = self._create_column_widgets(param_name, param, show_upload_column)
                 self._grid_column_widgets(column, i, show_upload_column)
 
             # Add the "Add" button at the bottom of the table
@@ -218,9 +212,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         self._configure_table_columns(show_upload_column)
 
-    def _create_column_widgets(
-        self, param_name: str, param: ArduPilotParameter, show_upload_column: bool, fc_connected: bool
-    ) -> list[tk.Widget]:
+    def _create_column_widgets(self, param_name: str, param: ArduPilotParameter, show_upload_column: bool) -> list[tk.Widget]:
         """Create all column widgets for a parameter row."""
         column: list[tk.Widget] = []
         change_reason_widget = self._create_change_reason_entry(param)
@@ -234,7 +226,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         column.append(self._create_unit_label(param))
 
         if show_upload_column:
-            column.append(self._create_upload_checkbutton(param_name, fc_connected))
+            column.append(self._create_upload_checkbutton(param_name))
 
         column.append(change_reason_widget)
 
@@ -680,8 +672,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(unit_label, unit_tooltip)
         return unit_label
 
-    def _create_upload_checkbutton(self, param_name: str, fc_connected: bool) -> ttk.Checkbutton:
+    def _create_upload_checkbutton(self, param_name: str) -> ttk.Checkbutton:
         """Create a checkbutton for upload selection."""
+        fc_connected: bool = self.configuration_manager.is_fc_connected
         self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=fc_connected)
         upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
         upload_checkbutton.configure(state="normal" if fc_connected else "disabled")
@@ -745,7 +738,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             # Delete the parameter
             self.configuration_manager.delete_parameter_from_current_file(param_name)
             self.at_least_one_param_edited = True
-            self.parameter_editor.repopulate_parameter_table(self.configuration_manager.current_file)
+            self.parameter_editor.repopulate_parameter_table()
 
             # Restore the scroll position
             self.canvas.yview_moveto(current_scroll_position)
@@ -797,7 +790,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if self.configuration_manager.add_parameter_to_current_file(param_name):
                 self.at_least_one_param_edited = True
                 self._pending_scroll_to_bottom = True
-                self.parameter_editor.repopulate_parameter_table(self.configuration_manager.current_file)
+                self.parameter_editor.repopulate_parameter_table()
                 return True
         except InvalidParameterNameError as exc:
             messagebox.showerror(_("Invalid parameter name."), str(exc))
@@ -814,11 +807,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             # all parameters are selected for upload in simple mode
             return self.configuration_manager.current_file_parameters
 
-        selected_params = ParDict()
-        for param_name, checkbutton_state in self.upload_checkbutton_var.items():
-            if checkbutton_state.get():
-                selected_params[param_name] = self.configuration_manager.current_file_parameters[param_name]
-        return selected_params
+        return ParDict(
+            {
+                param_name: self.configuration_manager.current_file_parameters[param_name]
+                for param_name, checkbutton_state in self.upload_checkbutton_var.items()
+                if checkbutton_state.get()
+            }
+        )
 
     def get_at_least_one_param_edited(self) -> bool:
         """Get whether at least one parameter has been edited."""
