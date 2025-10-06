@@ -1,0 +1,15 @@
+BATT_AMP_PERVLT,117.6  # 6 motors, but only 4 on the current sensing ESC, so 1.5*(1/((12.5mV/A)) = 117.6 A/V https://discuss.ardupilot.org/t/battery-monitoring-from-two-current-sensors-two-4-in-1-escs/133971/10
+BATT_ARM_VOLT,23  # Do not allow arming below this voltage
+BATT_CAPACITY,5500  # Total battery capacity specified in the component editor
+BATT_CRT_MAH,0  # No capacity based failsafes, too unreliable
+BATT_CRT_VOLT,20.7  # (Critical voltage + 0.0) x no. of cells
+BATT_FS_CRT_ACT,1  # Land ASAP
+BATT_FS_LOW_ACT,2  # Return and land at home or rally point
+BATT_FS_VOLTSRC,0
+BATT_I2C_BUS,4  # Selected in component editor window
+BATT_LOW_MAH,100  # Fail-safe needs to be responsive at 1000 mAh, no risk taking
+BATT_LOW_VOLT,21  # (Low voltage + 0.0) x no. of cells
+BATT_MONITOR,4  # Selected in component editor window
+BATT_VOLT_MULT,21.35235  # measured with multimeter
+MOT_BAT_VOLT_MAX,25.2  # (Max voltage + 0.0) x no. of cells
+MOT_BAT_VOLT_MIN,20.7  # (Critical voltage + 0.0) x no. of cells

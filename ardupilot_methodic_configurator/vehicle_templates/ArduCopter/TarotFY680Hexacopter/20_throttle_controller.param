@@ -1,0 +1,5 @@
+ATC_THR_MIX_MAN,0.5  # because we have learned the MOT_THST_HOVER value
+MOT_HOVER_LEARN,0  # Disabled because hover thrust is < 0.125
+MOT_THST_HOVER,0.08
+PSC_ACCZ_I,0.16  # Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
+PSC_ACCZ_P,0.08  # Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
