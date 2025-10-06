@@ -16,7 +16,7 @@ To help yourself, read the extensive documentation:
   [heli](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli.html)
 * [FAQ](https://ardupilot.github.io/MethodicConfigurator/FAQ.md) Frequently asked questions
 * [Glossary](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html#glossary)
-* [System requirements](https://ardupilot.github.io/MethodicConfigurator/REQUIREMENTS.html)
+* [System requirements](https://ardupilot.github.io/MethodicConfigurator/SYSTEM_REQUIREMENTS.html)
 * [Software architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html)
 * [Compliance](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE.html)
 

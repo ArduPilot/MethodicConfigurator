@@ -66,31 +66,29 @@ No visible menus, no hidden menus, no complicated options, what you see is what 
 
 ## Table of Contents
 
-- [Correctly configure ArduPilot for your vehicles on your first attempt](#correctly-configure-ardupilot-for-your-vehicles-on-your-first-attempt)
-  - [Table of Contents](#table-of-contents)
-  - [Quick Start](#quick-start)
-    - [What You'll Accomplish](#what-youll-accomplish)
-    - [Important Tips for Success](#important-tips-for-success)
-  - [1. Quick overview of the entire process](#1-quick-overview-of-the-entire-process)
-    - [1.1 Select the vehicle components](#11-select-the-vehicle-components)
-    - [1.2 Download and install software](#12-download-and-install-software)
-    - [1.3 Input vehicle components and component connections into ArduPilot Methodic Configurator](#13-input-vehicle-components-and-component-connections-into-ardupilot-methodic-configurator)
-    - [1.4 Perform IMU temperature calibration before assembling the autopilot into the vehicle (optional)](#14-perform-imu-temperature-calibration-before-assembling-the-autopilot-into-the-vehicle-optional)
-    - [1.5 Assemble all components except the propellers](#15-assemble-all-components-except-the-propellers)
-    - [1.6 Basic mandatory configuration](#16-basic-mandatory-configuration)
-    - [1.7 Assemble propellers and perform the first flight](#17-assemble-propellers-and-perform-the-first-flight)
-    - [1.8 Minimalistic mandatory tuning](#18-minimalistic-mandatory-tuning)
-    - [1.9 Standard tuning (optional)](#19-standard-tuning-optional)
-    - [1.10 Improve altitude under windy conditions (optional)](#110-improve-altitude-under-windy-conditions-optional)
-    - [1.11 System identification for analytical PID optimization (optional)](#111-system-identification-for-analytical-pid-optimization-optional)
-    - [1.12 Position controller tuning (optional)](#112-position-controller-tuning-optional)
-    - [1.13 Everyday use](#113-everyday-use)
-  - [Documentation and Support](#documentation-and-support)
-  - [Contributing](#contributing)
-  - [Internationalization](#internationalization)
-  - [Code of Conduct](#code-of-conduct)
-  - [License](#license)
-  - [Credits](#credits)
+- [Quick Start](#quick-start)
+  - [What You'll Accomplish](#what-youll-accomplish)
+  - [Important Tips for Success](#important-tips-for-success)
+- [1. Quick overview of the entire process](#1-quick-overview-of-the-entire-process)
+  - [1.1 Select the vehicle components](#11-select-the-vehicle-components)
+  - [1.2 Download and install software](#12-download-and-install-software)
+  - [1.3 Input vehicle components and component connections into ArduPilot Methodic Configurator](#13-input-vehicle-components-and-component-connections-into-ardupilot-methodic-configurator)
+  - [1.4 Perform IMU temperature calibration before assembling the autopilot into the vehicle (optional)](#14-perform-imu-temperature-calibration-before-assembling-the-autopilot-into-the-vehicle-optional)
+  - [1.5 Assemble all components except the propellers](#15-assemble-all-components-except-the-propellers)
+  - [1.6 Basic mandatory configuration](#16-basic-mandatory-configuration)
+  - [1.7 Assemble propellers and perform the first flight](#17-assemble-propellers-and-perform-the-first-flight)
+  - [1.8 Minimalistic mandatory tuning](#18-minimalistic-mandatory-tuning)
+  - [1.9 Standard tuning (optional)](#19-standard-tuning-optional)
+  - [1.10 Improve altitude under windy conditions (optional)](#110-improve-altitude-under-windy-conditions-optional)
+  - [1.11 System identification for analytical PID optimization (optional)](#111-system-identification-for-analytical-pid-optimization-optional)
+  - [1.12 Position controller tuning (optional)](#112-position-controller-tuning-optional)
+  - [1.13 Everyday use](#113-everyday-use)
+- [Documentation and Support](#documentation-and-support)
+- [Contributing](#contributing)
+- [Internationalization](#internationalization)
+- [Code of Conduct](#code-of-conduct)
+- [License](#license)
+- [Credits](#credits)
 
 ## Quick Start
 
@@ -123,30 +121,6 @@ By the end of this process, your flight controller will be fully configured with
 ## 1. Quick overview of the entire process
 
 To methodically build, configure and tune ArduPilot vehicles follow this sequence of steps:
-
-```mermaid
-flowchart TD
-    A[Connect Flight Controller] --> B{Auto-Detect?}
-    B -->|Yes| C[Download FC Info]
-    B -->|No| D[Manual Connection]
-    D --> C
-    C --> E{Existing Project?}
-    E -->|Yes| F[Open Vehicle Directory]
-    E -->|No| G[Select Template]
-    G --> H[Create New Project]
-    F --> I[Component Editor]
-    H --> I
-    I --> J[Validate Components]
-    J --> K{Valid?}
-    K -->|No| I
-    K -->|Yes| L[Parameter Editor]
-    L --> M[Configure Parameters]
-    M --> N[Upload to FC]
-    N --> O{More Files?}
-    O -->|Yes| L
-    O -->|No| P[Generate Summary]
-    P -->     Q[Configuration Complete]
-```
 
 ### 1.1 Select the vehicle components
 
