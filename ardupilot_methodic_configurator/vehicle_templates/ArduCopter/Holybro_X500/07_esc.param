@@ -6,7 +6,7 @@ MOT_PWM_MAX,1920
 MOT_PWM_MIN,1120
 MOT_PWM_TYPE,0  # Specified in component editor window
 MOT_SPOOL_TIME,0.5
-NTF_BUZZ_TYPES,5  # Our CubeOrange have it self buzzer.
+NTF_BUZZ_TYPES,5  # Our FC has a buzzer.
 NTF_LED_TYPES,123079
 PSC_ACCZ_SMAX,1000  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 SERVO_BLH_POLES,14  # Specified in component editor window
