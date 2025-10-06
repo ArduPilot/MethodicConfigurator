@@ -95,51 +95,43 @@ jobs:
             echo "updates_available=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Check for existing issues
-        id: check-issues
+      - name: Handle issue creation/update
         if: steps.check-updates.outputs.updates_available == 'true'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
-            const issueTitle = 'Outdated apt packages in workflows';
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'dependencies,apt'
-            });
-
-            const existingIssue = issues.data.find(issue => issue.title === issueTitle);
-            if (existingIssue) {
-              console.log(`Found existing issue #${existingIssue.number}`);
-              core.exportVariable('ISSUE_NUMBER', existingIssue.number);
-              core.exportVariable('ISSUE_EXISTS', 'true');
-            } else {
-              console.log('No existing issue found');
-              core.exportVariable('ISSUE_EXISTS', 'false');
-            }
-
-      - name: Update existing issue
-        if: steps.check-updates.outputs.updates_available == 'true' && env.ISSUE_EXISTS == 'true'
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
-        with:
-          script: |
             const fs = require('fs');
-            const issueNumber = parseInt(process.env.ISSUE_NUMBER);
             const content = fs.readFileSync('./apt_update_report.md', 'utf8');
 
-            await github.rest.issues.update({
+            // Check if issue already exists by searching for it
+            const existingIssues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: issueNumber,
-              body: content
+              labels: 'dependencies,apt',
+              state: 'open'
             });
-            console.log(`Updated issue #${issueNumber}`);
 
-      - name: Create new issue for outdated packages
-        if: steps.check-updates.outputs.updates_available == 'true' && env.ISSUE_EXISTS == 'false'
-        uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6.0.0
-        with:
-          title: Outdated apt packages in workflows
-          content-filepath: ./apt_update_report.md
-          labels: dependencies, apt
+            const existingIssue = existingIssues.data.find(issue =>
+              issue.title === 'Outdated apt packages in workflows'
+            );
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: content
+              });
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Outdated apt packages in workflows',
+                body: content,
+                labels: ['dependencies', 'apt']
+              });
+              console.log('Created new issue for outdated packages');
+            }
