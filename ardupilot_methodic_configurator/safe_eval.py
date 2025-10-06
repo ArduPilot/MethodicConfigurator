@@ -20,12 +20,13 @@ MathFunc = Callable[..., Number]
 BinOperator = Callable[[Number, Number], Number]
 UnOperator = Callable[[Number], Number]
 
+
 def safe_eval(s: str) -> Number:
     def checkmath(x: str, *args: Number) -> Number:
         if x not in [x for x in dir(math) if "__" not in x]:
             msg = f"Unknown func {x}()"
             raise SyntaxError(msg)
-        fun = cast(MathFunc, getattr(math, x))
+        fun = cast("MathFunc", getattr(math, x))
         try:
             return fun(*args)
         except TypeError as e:
@@ -57,12 +58,12 @@ def safe_eval(s: str) -> Number:
             return _eval(node.body)
         if isinstance(node, ast.Constant):
             logger.info("Const")
-            return cast(Number, node.value)
+            return cast("Number", node.value)
         if isinstance(node, ast.Name):
             # Handle math constants like pi, e, etc.
             logger.info("MathConst")
             if hasattr(math, node.id):
-                return cast(Number, getattr(math, node.id))
+                return cast("Number", getattr(math, node.id))
             msg = f"Unknown constant: {node.id}"
             raise SyntaxError(msg)
         if isinstance(node, ast.BinOp):
