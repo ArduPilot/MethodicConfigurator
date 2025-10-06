@@ -256,7 +256,7 @@ class TestParameterAdditionAndDeletion:
 
             assert "PARAM_1" not in config_manager.current_file_parameters
             assert parameter_editor_table.at_least_one_param_edited is True
-            parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once_with("01_first_step.param")
+            parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once_with()
 
         # Reset for next test
         config_manager.current_file_parameters["PARAM_2"] = Par(2.5, "Second parameter comment")
@@ -287,13 +287,12 @@ class TestWidgetCreationIntegration:
             fc_value=1.5,
         )
         show_upload_column = True
-        fc_connected = True
 
         # Mock widget creation methods to return real widgets
         with patch.object(parameter_editor_table, "_create_new_value_entry") as mock_new_value:
             mock_new_value.return_value = ttk.Entry(parameter_editor_table.view_port)
 
-            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column, fc_connected)
+            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
 
             # Should create 8 widgets (including upload column)
             assert len(column) == 8
@@ -304,13 +303,15 @@ class TestWidgetCreationIntegration:
     def test_upload_checkbutton_creation_workflow(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test upload checkbutton creation in different connection states."""
         # Test connected state
-        checkbutton = parameter_editor_table._create_upload_checkbutton("TEST_PARAM", fc_connected=True)
+        parameter_editor_table.configuration_manager.flight_controller.master = MagicMock()
+        checkbutton = parameter_editor_table._create_upload_checkbutton("TEST_PARAM")
         assert isinstance(checkbutton, ttk.Checkbutton)
         assert str(checkbutton.cget("state")) == "normal"
         assert parameter_editor_table.upload_checkbutton_var["TEST_PARAM"].get() is True
 
         # Test disconnected state
-        checkbutton = parameter_editor_table._create_upload_checkbutton("TEST_PARAM2", fc_connected=False)
+        parameter_editor_table.configuration_manager.flight_controller.master = None
+        checkbutton = parameter_editor_table._create_upload_checkbutton("TEST_PARAM2")
         assert isinstance(checkbutton, ttk.Checkbutton)
         assert str(checkbutton.cget("state")) == "disabled"
         assert parameter_editor_table.upload_checkbutton_var["TEST_PARAM2"].get() is False
@@ -332,7 +333,7 @@ class TestFileOperationsIntegration:
             widget.destroy()
 
         # Test repopulate
-        parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
+        parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
 
         # Verify current file is set
         assert parameter_editor_table.configuration_manager.current_file == test_file
@@ -351,7 +352,7 @@ class TestFileOperationsIntegration:
         parameter_editor_table.configuration_manager.flight_controller.fc_parameters.update(fc_parameters)
 
         # Test with show_only_differences=True
-        parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=True, gui_complexity="simple")
+        parameter_editor_table.repopulate(show_only_differences=True, gui_complexity="simple")
 
         # Verify current file is set
         assert parameter_editor_table.configuration_manager.current_file == test_file
@@ -361,18 +362,20 @@ class TestFileOperationsIntegration:
         # Test first file
         test_file1 = "01_first_step.param"
         fc_parameters1 = {"PARAM_1": 1.0, "PARAM_2": 2.5}
-        # Update flight controller parameters to match test data
+        # Set current file and update flight controller parameters
+        parameter_editor_table.configuration_manager.current_file = test_file1
         parameter_editor_table.configuration_manager.flight_controller.fc_parameters.update(fc_parameters1)
-        parameter_editor_table.repopulate(test_file1, fc_parameters1, show_only_differences=False, gui_complexity="simple")
+        parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
         assert parameter_editor_table.configuration_manager.current_file == test_file1
 
         # Test second file
         test_file2 = "02_second_step.param"
         fc_parameters2 = {"PARAM_3": 3.14, "PARAM_4": -1.5}
-        # Update flight controller parameters to match test data
+        # Set current file and update flight controller parameters
+        parameter_editor_table.configuration_manager.current_file = test_file2
         parameter_editor_table.configuration_manager.flight_controller.fc_parameters.clear()
         parameter_editor_table.configuration_manager.flight_controller.fc_parameters.update(fc_parameters2)
-        parameter_editor_table.repopulate(test_file2, fc_parameters2, show_only_differences=False, gui_complexity="simple")
+        parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
         assert parameter_editor_table.configuration_manager.current_file == test_file2
 
 

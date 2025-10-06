@@ -117,6 +117,7 @@ def parameter_editor_table(
         mock_config_manager = MagicMock(spec=ConfigurationManager)
         mock_config_manager.filesystem = mock_local_filesystem
         mock_config_manager.current_file = "test_file"
+        mock_config_manager.is_fc_connected = True
 
         # Set up current_file_parameters as a property that returns the right parameters
         def get_current_file_parameters() -> ParDict:
@@ -225,8 +226,7 @@ def test_repopulate_empty_parameters(parameter_editor_table: ParameterEditorTabl
     """Test repopulate with empty parameters dictionary."""
     test_file = "test_file"
     parameter_editor_table.configuration_manager.filesystem.file_parameters = ParDict({test_file: ParDict({})})
-    fc_parameters = {}
-    parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
+    parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
     parameter_editor_table.add_parameter_row.assert_not_called()
 
 
@@ -238,21 +238,19 @@ def test_repopulate_clears_existing_content(parameter_editor_table: ParameterEdi
     parameter_editor_table.configuration_manager.filesystem.file_parameters = ParDict(
         {test_file: ParDict({"PARAM1": Par(1.0, "test comment")})}
     )
-    fc_parameters = {"PARAM1": 1.0}
     parameter_editor_table.configuration_manager.filesystem.doc_dict = {"PARAM1": {"units": "none"}}
     parameter_editor_table.configuration_manager.filesystem.param_default_dict = ParDict({"PARAM1": Par(0.0, "default")})
-    parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
+    parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
     assert not dummy_widget.winfo_exists()
 
 
 def test_repopulate_handles_none_current_file(parameter_editor_table: ParameterEditorTable) -> None:
     """Test repopulate handles None current_file gracefully."""
-    fc_parameters = {}
     parameter_editor_table.configuration_manager.filesystem.file_parameters = ParDict({"": ParDict({})})
     parameter_editor_table.configuration_manager.current_file = ""
     parameter_editor_table.configuration_manager.filesystem.doc_dict = {}
     parameter_editor_table.configuration_manager.filesystem.param_default_dict = ParDict({})
-    parameter_editor_table.repopulate("", fc_parameters, show_only_differences=False, gui_complexity="simple")
+    parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
     parameter_editor_table.add_parameter_row.assert_not_called()
 
 
@@ -263,11 +261,10 @@ def test_repopulate_single_parameter(parameter_editor_table: ParameterEditorTabl
     parameter_editor_table.configuration_manager.filesystem.file_parameters = ParDict(
         {test_file: ParDict({"PARAM1": Par(1.0, "test comment")})}
     )
-    fc_parameters = {"PARAM1": 1.0}
     parameter_editor_table.configuration_manager.filesystem.doc_dict = {"PARAM1": {"units": "none"}}
     parameter_editor_table.configuration_manager.filesystem.param_default_dict = ParDict({"PARAM1": Par(0.0, "default")})
     with patch.object(parameter_editor_table, "grid_slaves", return_value=[]):
-        parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
+        parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
 
 
 def test_repopulate_multiple_parameters(parameter_editor_table: ParameterEditorTable) -> None:
@@ -285,7 +282,6 @@ def test_repopulate_multiple_parameters(parameter_editor_table: ParameterEditorT
             )
         }
     )
-    fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0, "PARAM3": 3.0}
     parameter_editor_table.configuration_manager.filesystem.doc_dict = {
         "PARAM1": {"units": "none"},
         "PARAM2": {"units": "none"},
@@ -299,7 +295,7 @@ def test_repopulate_multiple_parameters(parameter_editor_table: ParameterEditorT
         }
     )
     with patch.object(parameter_editor_table, "grid_slaves", return_value=[]):
-        parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
+        parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
 
 
 def test_repopulate_preserves_checkbutton_states(parameter_editor_table: ParameterEditorTable) -> None:
@@ -311,7 +307,6 @@ def test_repopulate_preserves_checkbutton_states(parameter_editor_table: Paramet
     parameter_editor_table.configuration_manager.filesystem.file_parameters = ParDict(
         {test_file: ParDict({"PARAM1": Par(1.0, "test comment"), "PARAM2": Par(2.0, "test comment")})}
     )
-    fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
     parameter_editor_table.configuration_manager.filesystem.doc_dict = {
         "PARAM1": {"units": "none"},
         "PARAM2": {"units": "none"},
@@ -319,7 +314,7 @@ def test_repopulate_preserves_checkbutton_states(parameter_editor_table: Paramet
     parameter_editor_table.configuration_manager.filesystem.param_default_dict = ParDict(
         {"PARAM1": Par(0.0, "default"), "PARAM2": Par(0.0, "default")}
     )
-    parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=False, gui_complexity="simple")
+    parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
 
 
 def test_repopulate_show_only_differences(parameter_editor_table: ParameterEditorTable) -> None:
@@ -336,11 +331,6 @@ def test_repopulate_show_only_differences(parameter_editor_table: ParameterEdito
             )
         }
     )
-    fc_parameters = {
-        "PARAM1": 1.0,
-        "PARAM2": 2.0,
-        # PARAM3 missing from FC
-    }
     parameter_editor_table.configuration_manager.filesystem.doc_dict = {
         "PARAM1": {"units": "none"},
         "PARAM2": {"units": "none"},
@@ -353,7 +343,7 @@ def test_repopulate_show_only_differences(parameter_editor_table: ParameterEdito
             "PARAM3": Par(0.0, "default"),
         }
     )
-    parameter_editor_table.repopulate(test_file, fc_parameters, show_only_differences=True, gui_complexity="simple")
+    parameter_editor_table.repopulate(show_only_differences=True, gui_complexity="simple")
 
 
 @pytest.mark.parametrize("pending_scroll", [True, False])
@@ -369,7 +359,7 @@ def test_repopulate_uses_scroll_helper(parameter_editor_table: ParameterEditorTa
     parameter_editor_table._create_headers_and_tooltips = MagicMock(return_value=((), ()))
     parameter_editor_table._should_show_upload_column = MagicMock(return_value=False)
     with patch.object(parameter_editor_table, "_apply_scroll_position") as mock_scroll:
-        parameter_editor_table.repopulate("test_file", {}, show_only_differences=False, gui_complexity="simple")
+        parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
     mock_scroll.assert_called_once_with(pending_scroll)
     assert parameter_editor_table._pending_scroll_to_bottom is False
 
@@ -563,7 +553,7 @@ class TestWidgetCreationBehavior:
     def test_create_upload_checkbutton_connected(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test upload checkbutton creation when FC is connected."""
         with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip:
-            checkbutton = parameter_editor_table._create_upload_checkbutton("TEST_PARAM", fc_connected=True)
+            checkbutton = parameter_editor_table._create_upload_checkbutton("TEST_PARAM")
 
             assert isinstance(checkbutton, ttk.Checkbutton)
             assert str(checkbutton.cget("state")) == "normal"
@@ -573,7 +563,8 @@ class TestWidgetCreationBehavior:
 
     def test_create_upload_checkbutton_disconnected(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test upload checkbutton creation when FC is disconnected."""
-        checkbutton = parameter_editor_table._create_upload_checkbutton("TEST_PARAM", fc_connected=False)
+        parameter_editor_table.configuration_manager.is_fc_connected = False
+        checkbutton = parameter_editor_table._create_upload_checkbutton("TEST_PARAM")
 
         assert isinstance(checkbutton, ttk.Checkbutton)
         assert str(checkbutton.cget("state")) == "disabled"
@@ -620,11 +611,11 @@ class TestEventHandlerBehavior:
 
             assert "TEST_PARAM" not in parameter_editor_table.configuration_manager.filesystem.file_parameters["test_file"]
             assert parameter_editor_table.at_least_one_param_edited is True
-            parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once_with("test_file")
+            parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once_with()
 
     def test_on_parameter_delete_cancelled(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter deletion when user cancels."""
-        parameter_editor_table.current_file = "test_file"
+        parameter_editor_table.configuration_manager.current_file = "test_file"
         parameter_editor_table.configuration_manager.filesystem.file_parameters = {
             "test_file": {"TEST_PARAM": Par(1.0, "comment")}
         }
@@ -742,7 +733,6 @@ class TestColumnManagementBehavior:
         param_name = "TEST_PARAM"
         param = create_mock_data_model_ardupilot_parameter()
         show_upload_column = True
-        fc_connected = True
 
         # Mock individual widget creation methods using patch.object
         with (
@@ -754,7 +744,7 @@ class TestColumnManagementBehavior:
             patch.object(parameter_editor_table, "_create_upload_checkbutton", return_value=MagicMock()) as mock_upload,
             patch.object(parameter_editor_table, "_create_change_reason_entry", return_value=MagicMock()) as mock_reason,
         ):
-            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column, fc_connected)
+            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
 
             assert len(column) == 8  # With upload column
             mock_delete.assert_called_once()
@@ -770,7 +760,6 @@ class TestColumnManagementBehavior:
         param_name = "TEST_PARAM"
         param = create_mock_data_model_ardupilot_parameter()
         show_upload_column = False
-        fc_connected = True
 
         # Mock individual widget creation methods using patch.object
         with (
@@ -781,7 +770,7 @@ class TestColumnManagementBehavior:
             patch.object(parameter_editor_table, "_create_unit_label", return_value=MagicMock()) as mock_unit,
             patch.object(parameter_editor_table, "_create_change_reason_entry", return_value=MagicMock()) as mock_reason,
         ):
-            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column, fc_connected)
+            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
 
             assert len(column) == 7  # Without upload column
             mock_delete.assert_called_once()
