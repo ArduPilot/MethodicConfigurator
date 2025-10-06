@@ -1,0 +1,4 @@
+BRD_SER1_RTSCTS,2  # we have no RTS/CTS pins connected, telemetry was working fine already
+SERIAL1_BAUD,57  # 5760 baud rate is maximum
+SERIAL1_OPTIONS,0
+SERIAL1_PROTOCOL,2
