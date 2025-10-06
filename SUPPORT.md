@@ -14,10 +14,15 @@ To help yourself, read the extensive documentation:
   [plane](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane.html),
   [rover](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover.html),
   [heli](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli.html)
+* [FAQ](https://ardupilot.github.io/MethodicConfigurator/FAQ.md) Frequently asked questions
+* [Glossary](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html#glossary)
+* [System requirements](https://ardupilot.github.io/MethodicConfigurator/REQUIREMENTS.html)
+* [Software architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html)
+* [Compliance](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE.html)
 
-## Getting Help
+## Troubleshooting
 
-If [troubleshooting steps in the Usermanual](USERMANUAL.md#Troubleshooting) don't resolve your issue:
+If [troubleshooting steps in the Usermanual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html#Troubleshooting) don't resolve your issue:
 
 1. **Check error messages**: Read the full error message for specific guidance
 2. **Enable debug logging**: Run with `--loglevel DEBUG` to get detailed information
@@ -25,7 +30,7 @@ If [troubleshooting steps in the Usermanual](USERMANUAL.md#Troubleshooting) don'
 4. **Community support**: Ask questions on the [ArduPilot forum](https://discuss.ardupilot.org/)
 5. **Report bugs**: Create an issue on [GitHub](https://github.com/ArduPilot/MethodicConfigurator/issues)
 
-### How to Get Help (in order of preference):
+## Support (in order of preference):
 
 * Use the [user support forum](http://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/1) and
   include a `.bin` log file and a `.zip` file with all the intermediate `.param` files if possible.
@@ -42,9 +47,11 @@ When reporting issues, please include:
 * **Flight controller**: Type and firmware version
 * **Error messages**: Complete error text or screenshots
 * **Log files**: Debug logs (the ArduPilot methodic configurator outputs text to a console) if available
+* **`.bin` log file**: A dataflash log file from the flight controller
+* **`.zip` file**: with all the AMC intermediate `.param` files if possible
 * **Steps to reproduce**: What you were doing when the problem occurred
 
-For paid consultancy support:
+### Paid consultancy support:
 
 Send a [private message to amilcarlucas at ardupilot support forum](https://discuss.ardupilot.org/u/amilcarlucas/summary) to inquire about the availability
 and pricing of paid support services.

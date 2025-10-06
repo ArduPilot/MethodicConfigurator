@@ -23,6 +23,11 @@ cd MethodicConfigurator
 
 and read [our architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html) to get a better understanding of the project.
 
+and also:
+
+* [System requirements](https://ardupilot.github.io/MethodicConfigurator/REQUIREMENTS.html)
+* [Compliance](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE.html)
+
 ## Submitting patches
 
 Please see our [wiki article](https://ardupilot.org/dev/docs/submitting-patches-back-to-master.html).
