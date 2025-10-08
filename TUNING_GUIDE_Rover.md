@@ -131,7 +131,7 @@ So, [start the ArduPilot Methodic Configurator and select a vehicle that resembl
 
 1. Close Mission Planner, if it is open on the PC.
 1. Connect the flight controller to the PC via a USB cable and wait 7 seconds.
-1. Open *ArduPilot Methodic Configurator*, and [connect it to the vehicle](USERMANUAL.md#usage).
+1. Open *ArduPilot Methodic Configurator*, and [connect it to the vehicle](USERMANUAL.md#step-1-flight-controller-connection).
    ![FC connection and parameter download](images/App_screenshot_FC_info_and_param_download.png)
 1. Now using [New](USERMANUAL.md#new) subsection
    ![New vehicle](images/App_screenshot_Vehicle_directory1.png)
@@ -185,7 +185,7 @@ Now that the optional IMU temperature calibration is done we must [assemble and 
 
 Read the [Multicopter hardware best-practices](#11-multicopter-hardware-best-practices) section again before assembling the vehicle.
 
-If you changed the way the components are connected to the flight controller (FC), re-enter the updated information into ArduPilot Methodic Configurator [component editor window](USERMANUAL.md#vehicle-component-editor-interface).
+If you changed the way the components are connected to the flight controller (FC), re-enter the updated information into ArduPilot Methodic Configurator [component editor window](USERMANUAL.md#step-3-vehicle-component-editor-interface).
 
 Always connect the vehicle battery before connecting the USB cable (if you are using one) between the PC and the flight controller.
 Always disconnect the USB cable (if you are using one) between the PC and the flight controller before disconnecting the vehicle battery.

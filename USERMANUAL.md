@@ -32,46 +32,58 @@ Don't worry! It looks more complicated than it actually is. And **you do not nee
 
 ```mermaid
 flowchart TD
-    A[Connect Flight Controller] --> B{Auto-Detect?}
-    B -->|Yes| C[Download FC Info]
-    B -->|No| D[Manual Connection]
-    D --> C
-    C --> E{Existing Project?}
-    E -->|Yes| F[Open Vehicle Directory]
-    E -->|No| G[Select Template]
-    G --> H[Create New Project]
-    F --> I[Component Editor]
-    H --> I
-    I --> J[Validate Components]
-    J --> K{Valid?}
-    K -->|No| I
-    K -->|Yes| L[Parameter Editor]
-    L --> M[Configure Parameters]
-    M --> N[Upload to FC]
-    N --> O{Experiment Required?}
-    O -->|Yes| P[Close AMC]
-    P --> Q[Perform Experiment/Flight]
-    Q --> R[Start AMC]
-    R --> S[Read Results from FC]
-    S --> T[Write Results to File]
-    T --> U{More Files?}
-    O -->|No| U
-    U -->|Yes| L
-    U -->|No| V[Generate Summary]
-    V -->     W[Configuration Complete]
+    subgraph "Step 1: Connect to Vehicle"
+        A[Connect Flight Controller] --> B{Auto-Detect?}
+        B -->|Yes| C[Download FC Info]
+        B -->|No| D[Manual Connection]
+        D --> C
+    end
+    
+    subgraph "Step 2: Select Project"
+        C --> E{Existing Project?}
+        E -->|Yes| F[Open Vehicle Directory]
+        E -->|No| G[Select Template]
+        G --> H[Create New Project]
+        F --> I[Component Editor]
+        H --> I
+    end
+    
+    subgraph "Step 3: Edit FC Components"
+        I --> J[Validate Components]
+        J --> K{Valid?}
+        K -->|No| I
+        K -->|Yes| L[Parameter Editor]
+    end
+    
+    subgraph "Step 4: Edit FC Parameters"
+        L --> M[Configure Parameters]
+        M --> N[Upload to FC]
+        N --> O{Experiment Required?}
+        O -->|Yes| P[Close AMC]
+        P --> Q[Perform Experiment/Flight]
+        Q --> R[Start AMC]
+        R --> S[Read Results from FC]
+        S --> T[Write Results to File]
+        T --> U{More Files?}
+        O -->|No| U
+        U -->|Yes| L
+        U -->|No| V[Generate Summary]
+        V -->     W[Configuration Complete]
+    end
 ```
 
 If the diagram above does not display correctly [look here](https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md#step-by-step-workflow)
 
 This section guides you through the complete configuration process. Follow these steps in order:
 
-### Step 1: Preparation
+### Preparation
 
+1. **Collect** your vehicle's component documentation (motor specifications, ESC type, GPS Type, etc.)
 1. **Connect** your flight controller to the PC via USB cable
-2. **Wait** at least 7 seconds for the flight controller to fully boot
-3. **Launch** ArduPilot Methodic Configurator
+1. **Wait** at least 7 seconds for the flight controller to fully boot
+1. **Launch** ArduPilot Methodic Configurator
 
-### Step 2: Flight Controller Connection
+### Step 1: Flight Controller Connection
 
 If the software successfully auto-detects your flight controller, this step will be skipped automatically and you'll proceed directly to Step 3.
 
@@ -129,7 +141,7 @@ Work with parameter files without connecting to hardware.
   - Cannot upload parameters
   - No parameter validation against hardware
 
-### Step 3: Flight Controller Info and Parameter Download
+#### Flight Controller Info and Parameter Download
 
 If a flight controller is connected the software will now get information from it.
 The information is presented in the corresponding window and at the same time all flight controller parameters are downloaded to the PC.
@@ -140,7 +152,7 @@ The information is presented in the corresponding window and at the same time al
   <ins><b><i>Flight controller info and parameter download</i></b></ins>
 </figure>
 
-### Step 4: Vehicle Configuration Directory Selection
+### Step 2: Vehicle Configuration Directory Selection
 
 This interface allows users to select a vehicle directory that contains intermediate parameter files for ArduPilot
 **if one was not specified with the `--vehicle-dir` command line parameter** and if no configuration files were found in the current working directory.
@@ -189,7 +201,7 @@ It's useful for setting up a new vehicle configuration quickly.
 - Enter the name for the new vehicle directory in the "Destination new vehicle name" field.
 - Click the "Create vehicle directory from template" button to create the new vehicle directory on the base directory and copy the template files to it.
 
-### Step 5: Vehicle Component Editor Interface
+### Step 3: Vehicle Component Editor Interface
 
 Here you specify the components of your vehicle, their properties and how they are connected to the flight controller.
 
@@ -204,7 +216,7 @@ The software will validate your input.
 If issues are found the problematic fields' background will be marked in red color.
 Correct those entries and press the `Save data and start configuration` button again.
 
-### Step 6: Parameter File Editor and uploader interface
+### Step 4: Parameter File Editor and uploader interface
 
 Here you sequentially configure the parameters of your flight controller to meet your needs while having all the available documentation at your fingertips.
 
@@ -295,7 +307,7 @@ There are mouse-over hints for each phase.
   - Parameters that have the default parameter value are presented on a *light blue background* 🟦
 - The new value is the value in the intermediate file and will be uploaded to the flight controller.
   **You MUST change the value to meet your needs**. The provided values in the `vehicle_template` directory are just examples.
-  - parameters that should not be changed by the users, or are derived from information in the [*component editor*](#step-5-vehicle-component-editor-interface)
+  - parameters that should not be changed by the users, or are derived from information in the [*component editor*](#step-3-vehicle-component-editor-interface)
     are greyed out and can not be edited.
   - bitmask parameters are editable in two ways:
     - *Decimal* - enter the decimal value of the bitmask as you would with any other parameter.

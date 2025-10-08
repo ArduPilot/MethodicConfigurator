@@ -55,6 +55,23 @@ A: Yes! This is one of the key benefits:
 - All other files can be shared between identical vehicle builds
 - Great for commercial manufacturers or fleet operations
 
+**Q: My vehicle doesn't match any of the existing templates. Which template should I choose?**
+
+A: For vehicles that don't match existing templates, you have two main options:
+
+1. **Start with the empty template**: This is the most conservative approach, providing only
+   default ArduPilot parameters with no customizations. It's ideal when you want complete
+   control over every parameter.
+
+2. **Choose the closest matching template**: For better guidance, select the template that most
+   closely resembles your vehicle. Then carefully review the "Change Reason" comments for each
+   parameter:
+   - If the reasoning applies to your use case, keep the recommended value
+   - If the reasoning doesn't match your needs, adjust the value accordingly
+
+The second approach often provides valuable insights and starting points, even for unique
+vehicle configurations.
+
 ## Technical Questions
 
 **Q: What if I make a mistake during configuration?**
