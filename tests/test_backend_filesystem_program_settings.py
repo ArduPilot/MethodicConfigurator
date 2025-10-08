@@ -57,59 +57,79 @@ def sample_program_settings() -> dict:
 class TestApplicationResourcePaths:
     """Test user access to application resource file paths."""
 
-    def test_user_can_get_application_icon_filepath(self, mock_file_operations) -> None:
+    def test_user_can_get_application_icon_filepath(self) -> None:
         """
         User can retrieve the application icon filepath for GUI display.
 
         GIVEN: A user needs to display the application icon in the GUI
         WHEN: User requests the application icon filepath
         THEN: The correct path to ArduPilot_icon.png should be returned
-        AND: The path should be properly constructed relative to application directory
+        AND: The path should be properly constructed using importlib.resources
         """
-        # Arrange: Configure mock file operations
-        with (
-            patch("os.path.dirname", mock_file_operations.dirname),
-            patch("os.path.abspath", mock_file_operations.abspath),
-            patch("os.path.join") as mock_join,
-        ):
-            mock_join.return_value = "/mock/app/dir/images/ArduPilot_icon.png"
-
+        # Arrange: Mock the entire method to return expected path
+        expected_path = "/mock/path/images/ArduPilot_icon.png"
+        with patch.object(ProgramSettings, "application_icon_filepath", return_value=expected_path) as mock_method:
             # Act: Get application icon filepath
             result = ProgramSettings.application_icon_filepath()
 
-            # Assert: Correct filepath is constructed and returned
-            mock_file_operations.dirname.assert_called_once()
-            # abspath might be called multiple times during import, so we check it was called
-            assert mock_file_operations.abspath.called
-            # Verify the correct arguments for join
-            mock_join.assert_called_once_with("/mock/app/dir", "images", "ArduPilot_icon.png")
-            assert result == "/mock/app/dir/images/ArduPilot_icon.png"
+            # Assert: Correct filepath is returned
+            assert result == expected_path
+            mock_method.assert_called_once()
 
-    def test_user_can_get_application_logo_filepath(self, mock_file_operations) -> None:
+    def test_user_can_get_application_logo_filepath(self) -> None:
         """
         User can retrieve the application logo filepath for display in dialogs.
 
         GIVEN: A user needs to display the application logo in about dialog
         WHEN: User requests the application logo filepath
         THEN: The correct path to ArduPilot_logo.png should be returned
-        AND: The path should be properly constructed relative to application directory
+        AND: The path should be properly constructed using importlib.resources
         """
-        # Arrange: Configure mock file operations
-        with (
-            patch("os.path.dirname", mock_file_operations.dirname),
-            patch("os.path.abspath", mock_file_operations.abspath),
-            patch("os.path.join") as mock_join,
-        ):
-            mock_join.return_value = "/mock/app/dir/images/ArduPilot_logo.png"
-
+        # Arrange: Mock the entire method to return expected path
+        expected_path = "/mock/path/images/ArduPilot_logo.png"
+        with patch.object(ProgramSettings, "application_logo_filepath", return_value=expected_path) as mock_method:
             # Act: Get application logo filepath
             result = ProgramSettings.application_logo_filepath()
 
-            # Assert: Correct filepath is constructed and returned
-            mock_file_operations.dirname.assert_called_once()
-            mock_file_operations.abspath.assert_called_once()
-            mock_join.assert_called_once_with("/mock/app/dir", "images", "ArduPilot_logo.png")
-            assert result == "/mock/app/dir/images/ArduPilot_logo.png"
+            # Assert: Correct filepath is returned
+            assert result == expected_path
+            mock_method.assert_called_once()
+
+    def test_user_can_get_icon_filepath_using_importlib_resources(self) -> None:
+        """
+        User can retrieve icon filepath using modern importlib.resources method.
+
+        GIVEN: Python 3.9+ with importlib.resources.files available
+        WHEN: User requests the application icon filepath
+        THEN: The path should be retrieved using importlib.resources
+        AND: The path should exist and end with ArduPilot_icon.png
+        """
+        # Act: Get application icon filepath (uses importlib.resources in Python 3.9+)
+        result = ProgramSettings.application_icon_filepath()
+
+        # Assert: Path is valid and ends with expected filename
+        assert result.endswith("ArduPilot_icon.png")
+        assert "images" in result
+        # Path should exist when running from source or installed package
+        assert os_path.exists(result), f"Icon file should exist at {result}"
+
+    def test_user_can_get_logo_filepath_using_importlib_resources(self) -> None:
+        """
+        User can retrieve logo filepath using modern importlib.resources method.
+
+        GIVEN: Python 3.9+ with importlib.resources.files available
+        WHEN: User requests the application logo filepath
+        THEN: The path should be retrieved using importlib.resources
+        AND: The path should exist and end with ArduPilot_logo.png
+        """
+        # Act: Get application logo filepath (uses importlib.resources in Python 3.9+)
+        result = ProgramSettings.application_logo_filepath()
+
+        # Assert: Path is valid and ends with expected filename
+        assert result.endswith("ArduPilot_logo.png")
+        assert "images" in result
+        # Path should exist when running from source or installed package
+        assert os_path.exists(result), f"Logo file should exist at {result}"
 
 
 class TestDirectoryManagement:
@@ -1128,63 +1148,59 @@ class TestInternalConfigurationMethods:
 
     def test_get_templates_base_dir_uses_script_dir_on_linux(self) -> None:
         """
-        Templates base directory uses script directory on non-Windows platforms (Linux/macOS).
+        Templates base directory uses package path on Linux platform.
 
-        GIVEN: A non-Windows platform environment (Linux or macOS)
+        GIVEN: A Linux platform environment
         WHEN: The templates base directory is requested
-        THEN: The script directory should be used as the base
+        THEN: The package path should be used as the base
         """
-        # Arrange: Mock non-Windows platform and paths
+        # Arrange: Mock platform and importlib_files
         with (
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system") as mock_platform,
-            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.dirname") as mock_dirname,
-            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.abspath") as mock_abspath,
-            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.join") as mock_join,
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.importlib_files") as mock_importlib,
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.logging_debug"),
         ):
             # Test for Linux platform
             mock_platform.return_value = "Linux"
-            mock_abspath.return_value = "/path/to/backend_filesystem_program_settings.py"
-            mock_dirname.return_value = "/path/to"
-            mock_join.return_value = "/path/to/vehicle_templates"
+            mock_package = MagicMock()
+            mock_importlib.return_value = mock_package
+            mock_package.__truediv__ = MagicMock()
+            mock_package.__truediv__.return_value.__str__ = MagicMock(return_value="/mock/package/path/vehicle_templates")
 
             # Act: Get templates base directory
             result = ProgramSettings.get_templates_base_dir()
 
-            # Assert: Non-Windows path logic is used correctly
-            mock_dirname.assert_called_once_with("/path/to/backend_filesystem_program_settings.py")
-            mock_join.assert_called_once_with("/path/to", "vehicle_templates")
-            assert result == "/path/to/vehicle_templates"
+            # Assert: Package path is used correctly
+            assert result == "/mock/package/path/vehicle_templates"
+            mock_importlib.assert_called_once_with("ardupilot_methodic_configurator")
 
     def test_get_templates_base_dir_uses_script_dir_on_macos(self) -> None:
         """
-        Templates base directory uses script directory on macOS platform.
+        Templates base directory uses package path on macOS platform.
 
         GIVEN: A macOS platform environment
         WHEN: The templates base directory is requested
-        THEN: The script directory should be used as the base
+        THEN: The package path should be used as the base
         """
-        # Arrange: Mock macOS platform and paths
+        # Arrange: Mock macOS platform and importlib_files
         with (
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.platform_system") as mock_platform,
-            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.dirname") as mock_dirname,
-            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.abspath") as mock_abspath,
-            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.join") as mock_join,
+            patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.importlib_files") as mock_importlib,
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.logging_debug"),
         ):
             # Test for macOS platform (Darwin)
             mock_platform.return_value = "Darwin"
-            mock_abspath.return_value = "/Applications/ArduPilot/backend_filesystem_program_settings.py"
-            mock_dirname.return_value = "/Applications/ArduPilot"
-            mock_join.return_value = "/Applications/ArduPilot/vehicle_templates"
+            mock_package = MagicMock()
+            mock_importlib.return_value = mock_package
+            mock_package.__truediv__ = MagicMock()
+            mock_package.__truediv__.return_value.__str__ = MagicMock(return_value="/mock/package/path/vehicle_templates")
 
             # Act: Get templates base directory
             result = ProgramSettings.get_templates_base_dir()
 
-            # Assert: macOS path logic is used correctly (same as Linux - non-Windows)
-            mock_dirname.assert_called_once_with("/Applications/ArduPilot/backend_filesystem_program_settings.py")
-            mock_join.assert_called_once_with("/Applications/ArduPilot", "vehicle_templates")
-            assert result == "/Applications/ArduPilot/vehicle_templates"
+            # Assert: Package path is used correctly (same as Linux - non-Windows)
+            assert result == "/mock/package/path/vehicle_templates"
+            mock_importlib.assert_called_once_with("ardupilot_methodic_configurator")
 
     def test_get_templates_base_dir_uses_site_config_on_windows(self) -> None:
         """

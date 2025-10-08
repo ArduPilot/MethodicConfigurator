@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # from sys import exit as sys_exit
 import glob
-import sys
+from importlib.resources import files as importlib_files
 from json import dump as json_dump
 from json import load as json_load
 from logging import debug as logging_debug
@@ -18,6 +18,7 @@ from logging import error as logging_error
 from os import makedirs as os_makedirs
 from os import path as os_path
 from os import sep as os_sep
+from pathlib import Path
 from platform import system as platform_system
 from re import escape as re_escape
 from re import match as re_match
@@ -107,13 +108,13 @@ class ProgramSettings:
 
     @staticmethod
     def application_icon_filepath() -> str:
-        script_dir = os_path.dirname(os_path.abspath(__file__))
-        return os_path.join(script_dir, "images", "ArduPilot_icon.png")
+        package_path = importlib_files("ardupilot_methodic_configurator")
+        return str(package_path / "images" / "ArduPilot_icon.png")
 
     @staticmethod
     def application_logo_filepath() -> str:
-        script_dir = os_path.dirname(os_path.abspath(__file__))
-        return os_path.join(script_dir, "images", "ArduPilot_logo.png")
+        package_path = importlib_files("ardupilot_methodic_configurator")
+        return str(package_path / "images" / "ArduPilot_logo.png")
 
     @staticmethod
     def create_new_vehicle_dir(new_vehicle_dir: str) -> str:
@@ -256,15 +257,14 @@ class ProgramSettings:
 
     @staticmethod
     def get_templates_base_dir() -> str:
-        current_script_dir = os_path.dirname(os_path.abspath(__file__))
+        package_path = importlib_files("ardupilot_methodic_configurator")
+        logging_debug("current script directory1: %s", package_path)
         if platform_system() == "Windows":
-            site_directory = ProgramSettings._site_config_dir()
-        else:
-            logging_debug("current script directory: %s", current_script_dir)
-            site_directory = current_script_dir
+            package_path = Path(ProgramSettings._site_config_dir())
+        logging_debug("current script directory2: %s", package_path)
 
-        logging_debug(_("site_directory: %s"), site_directory)
-        return os_path.join(site_directory, "vehicle_templates")
+        logging_debug(_("site_directory: %s"), package_path)
+        return str(package_path / "vehicle_templates")
 
     @staticmethod
     def get_recently_used_dirs() -> tuple[str, str, str]:
@@ -357,20 +357,15 @@ class ProgramSettings:
         """
         # See https://github.com/ArduPilot/ardupilot_wiki/pull/6215
         # Determine the application directory (where images are stored)
-        if getattr(sys, "frozen", False):
-            # Running as compiled executable
-            application_path = os_path.dirname(sys.executable)
-        else:
-            # Running as script
-            application_path = os_path.dirname(os_path.dirname(os_path.abspath(__file__)))
+        package_path = importlib_files("ardupilot_methodic_configurator")
 
-        images_dir = os_path.join(application_path, "ardupilot_methodic_configurator", "images", "motor_diagrams_png")
+        images_dir = package_path / "images" / "motor_diagrams_png"
 
         # Generate PNG filename based on frame configuration
         filename = f"m_{frame_class:02d}_{frame_type:02d}_*.png"
 
         # Search for matching PNG file (since exact naming varies)
-        matching_files = glob.glob(os_path.join(images_dir, filename))
+        matching_files = glob.glob(str(images_dir / filename))
 
         err_msg = (
             ""
