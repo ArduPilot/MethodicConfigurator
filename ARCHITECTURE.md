@@ -13,15 +13,15 @@ flowchart TB
     subgraph requirements["Requirements & Design"]
         direction LR
         Z([User Requirements]) --> A
-        A([System Requirements<br/>SYSTEM_REQUIREMENTS.md]) --> B([Software Architecture<br/>#the-software-architecture])
-        B --> C([Module Design<br/>#module-design])
+        A([System Requirements]) --> B([Software Architecture])
+        B --> C([Module Design])
     end
 
     subgraph testing["Testing"]
         direction LR
-        F --> G([Acceptance Testing<br/>#acceptance-testing])
-        E --> F([System Testing<br/>#system-testing])
-        D([Module Testing<br/>#module-testing]) --> E([Integration Testing<br/>#integration-testing])
+        F --> G([Acceptance Testing])
+        E --> F([System Testing])
+        D([Module Testing]) --> E([Integration Testing])
     end
 
     %% V-shape connections (crossing levels)
