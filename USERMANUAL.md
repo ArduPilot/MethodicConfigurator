@@ -38,7 +38,7 @@ flowchart TD
         B -->|No| D[Manual Connection]
         D --> C
     end
-    
+
     subgraph "Step 2: Select Project"
         C --> E{Existing Project?}
         E -->|Yes| F[Open Vehicle Directory]
@@ -47,14 +47,14 @@ flowchart TD
         F --> I[Component Editor]
         H --> I
     end
-    
+
     subgraph "Step 3: Edit FC Components"
         I --> J[Validate Components]
         J --> K{Valid?}
         K -->|No| I
         K -->|Yes| L[Parameter Editor]
     end
-    
+
     subgraph "Step 4: Edit FC Parameters"
         L --> M[Configure Parameters]
         M --> N[Upload to FC]
