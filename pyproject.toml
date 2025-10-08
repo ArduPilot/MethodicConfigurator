@@ -130,7 +130,7 @@ include-package-data = false
 include = ["ardupilot_methodic_configurator"]
 
 [tool.setuptools.package-data]
-ardupilot_methodic_configurator = ["**/*.param", "**/*.png", "**/*.jpg", "**/*.json", "**/*.xml", "**/*.mo", "**/*.png"]
+ardupilot_methodic_configurator = ["**/*.param", "**/*.png", "**/*.jpg", "**/*.json", "**/*.xml", "**/*.mo"]
 
 [tool.setuptools.dynamic]
 version = {attr = "ardupilot_methodic_configurator.__version__"}
