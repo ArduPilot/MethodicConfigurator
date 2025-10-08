@@ -28,6 +28,12 @@ from platformdirs import site_config_dir, user_config_dir
 
 from ardupilot_methodic_configurator import _
 
+# Try to import importlib.resources.files for Python 3.9+
+try:
+    from importlib.resources import files as importlib_files
+except (ImportError, AttributeError):
+    importlib_files = None  # type: ignore[assignment]
+
 
 class ProgramSettings:
     """
@@ -107,11 +113,35 @@ class ProgramSettings:
 
     @staticmethod
     def application_icon_filepath() -> str:
+        """
+        Get the filepath for the application icon.
+
+        Returns:
+            str: Absolute path to the application icon PNG file
+
+        """
+        if importlib_files is not None:
+            # Python 3.9+ approach using importlib.resources
+            icon_path = importlib_files("ardupilot_methodic_configurator") / "images" / "ArduPilot_icon.png"
+            return str(icon_path)
+        # Fallback for when importlib.resources.files is not available
         script_dir = os_path.dirname(os_path.abspath(__file__))
         return os_path.join(script_dir, "images", "ArduPilot_icon.png")
 
     @staticmethod
     def application_logo_filepath() -> str:
+        """
+        Get the filepath for the application logo.
+
+        Returns:
+            str: Absolute path to the application logo PNG file
+
+        """
+        if importlib_files is not None:
+            # Python 3.9+ approach using importlib.resources
+            logo_path = importlib_files("ardupilot_methodic_configurator") / "images" / "ArduPilot_logo.png"
+            return str(logo_path)
+        # Fallback for when importlib.resources.files is not available
         script_dir = os_path.dirname(os_path.abspath(__file__))
         return os_path.join(script_dir, "images", "ArduPilot_logo.png")
 

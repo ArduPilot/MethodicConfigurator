@@ -111,6 +111,42 @@ class TestApplicationResourcePaths:
             mock_join.assert_called_once_with("/mock/app/dir", "images", "ArduPilot_logo.png")
             assert result == "/mock/app/dir/images/ArduPilot_logo.png"
 
+    def test_user_can_get_icon_filepath_using_importlib_resources(self) -> None:
+        """
+        User can retrieve icon filepath using modern importlib.resources method.
+
+        GIVEN: Python 3.9+ with importlib.resources.files available
+        WHEN: User requests the application icon filepath
+        THEN: The path should be retrieved using importlib.resources
+        AND: The path should exist and end with ArduPilot_icon.png
+        """
+        # Act: Get application icon filepath (uses importlib.resources in Python 3.9+)
+        result = ProgramSettings.application_icon_filepath()
+
+        # Assert: Path is valid and ends with expected filename
+        assert result.endswith("ArduPilot_icon.png")
+        assert "images" in result
+        # Path should exist when running from source or installed package
+        assert os_path.exists(result), f"Icon file should exist at {result}"
+
+    def test_user_can_get_logo_filepath_using_importlib_resources(self) -> None:
+        """
+        User can retrieve logo filepath using modern importlib.resources method.
+
+        GIVEN: Python 3.9+ with importlib.resources.files available
+        WHEN: User requests the application logo filepath
+        THEN: The path should be retrieved using importlib.resources
+        AND: The path should exist and end with ArduPilot_logo.png
+        """
+        # Act: Get application logo filepath (uses importlib.resources in Python 3.9+)
+        result = ProgramSettings.application_logo_filepath()
+
+        # Assert: Path is valid and ends with expected filename
+        assert result.endswith("ArduPilot_logo.png")
+        assert "images" in result
+        # Path should exist when running from source or installed package
+        assert os_path.exists(result), f"Logo file should exist at {result}"
+
 
 class TestDirectoryManagement:
     """Test user directory creation and validation workflows."""
