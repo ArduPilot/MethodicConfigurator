@@ -220,19 +220,24 @@ jobs:
         with:
           name: translation-files
 
-      - name: Validate translation file exists
+      - name: Read translation file content
+        id: read_translation
         run: |
           translation_file="${{ matrix.file }}"
-          echo "🔍 Validating translation file: $translation_file"
+          echo "� Reading translation file: $translation_file"
 
           if [ ! -f "$translation_file" ]; then
             echo "❌ Error: Translation file '$translation_file' not found"
             exit 1
           fi
 
-          file_size=$(wc -c < "$translation_file")
-          echo "📊 Translation file size: $file_size bytes"
-          echo "✅ Translation file validation completed successfully"
+          # Read file content and escape for YAML
+          content=$(cat "$translation_file" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed 's/$/\\n/g' | tr -d '\n')
+          echo "translation_content<<EOF" >> $GITHUB_OUTPUT
+          echo "$content" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "✅ Translation file content read successfully"
 
       - name: Run AI translation
         id: ai_translate
@@ -244,8 +249,7 @@ jobs:
             language: ${{ matrix.language }}
             lang_code: ${{ matrix.lang_code }}
             translation_file: ${{ matrix.file }}
-          file_input: |
-            translation_content: ${{ matrix.file }}
+          file_input: ${{ matrix.file }}
           enable-github-mcp: false
           model: openai/gpt-4.1
           max-tokens: 8000
