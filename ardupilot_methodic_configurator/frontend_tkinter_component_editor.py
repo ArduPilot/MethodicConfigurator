@@ -103,8 +103,17 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         """
         Get the value from a combobox, handling both regular and PairTuple comboboxes.
 
-        For PairTupleCombobox, returns the key (internal value).
-        For regular Combobox, returns the displayed value.
+        For PairTupleCombobox (used for FC Connection Type with bus labels):
+            Returns the key (internal value), e.g., "SERIAL3" when display shows "GPS1 (SERIAL3)"
+        For regular Combobox:
+            Returns the displayed value directly
+
+        Args:
+            combobox: The combobox widget to get the value from
+
+        Returns:
+            The internal value of the selected item
+
         """
         if isinstance(combobox, PairTupleCombobox):
             value = combobox.get_selected_key()

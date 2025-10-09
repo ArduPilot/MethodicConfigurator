@@ -37,6 +37,10 @@ SPI_PORTS = ["SPI"]
 OTHER_PORTS = ["other"]
 
 # Bus labels for SERIAL ports - maps SERIAL port names to their common bus labels
+# These labels help users identify ports by their typical usage on flight controllers:
+# - Telem1/Telem2: Commonly used for telemetry connections
+# - GPS1/GPS2: Commonly used for GNSS receiver connections
+# - SERIAL5-8: No standard labels, use port name as label
 SERIAL_BUS_LABELS: dict[str, str] = {
     "SERIAL1": "Telem1",
     "SERIAL2": "Telem2",
