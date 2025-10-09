@@ -259,7 +259,7 @@ jobs:
               }
 
               $releaseList = $releases | ConvertFrom-Json
-              $latestStable = $releaseList | Where-Object { -not $_.isPrerelease -and $_.tagName } | Select-Object -First 1
+              $latestStable = $releaseList | Where-Object { $_.tagName -like "v*" } | Select-Object -First 1
 
               if ($latestStable -and $latestStable.tagName) {
                 $compareFrom = $latestStable.tagName
@@ -271,7 +271,7 @@ jobs:
                 Write-Host "No stable release found for comparison"
               }
             } elseif ($isStableRelease) {
-              # For stable releases, compare against previous release (stable or pre-release)
+              # For stable releases, compare against previous stable release
               Write-Host "Fetching previous releases..."
               Write-Host "Repository: ${{ github.repository }}"
 
@@ -328,7 +328,7 @@ jobs:
 
               $allReleases = $releases | ConvertFrom-Json
               $currentTag = "${{ github.ref }}" -replace "refs/tags/", ""
-              $previousRelease = $allReleases | Where-Object { $_.tagName -ne $currentTag -and $_.tagName } | Select-Object -First 1
+              $previousRelease = $allReleases | Where-Object { $_.tagName -ne $currentTag -and $_.tagName -like "v*" } | Select-Object -First 1
 
               if ($previousRelease -and $previousRelease.tagName) {
                 $compareFrom = $previousRelease.tagName
@@ -533,9 +533,30 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check for stable tags on current commit
+        id: check_tags
+        shell: pwsh
+        run: |
+          try {
+            $tags = gh api "repos/${{ github.repository }}/tags" --jq '[.[] | select(.name | startswith("v")) | select(.commit.sha == "${{ github.sha }}") | .name]'
+            $tagList = $tags | ConvertFrom-Json
+            if ($tagList -and $tagList.Count -gt 0) {
+              Write-Host "Found stable tags: $($tagList -join ', ')"
+              "has_stable_tag=true" >> "$GITHUB_OUTPUT"
+            } else {
+              Write-Host "No stable tags found on this commit"
+              "has_stable_tag=false" >> "$GITHUB_OUTPUT"
+            }
+          } catch {
+            Write-Host "Error checking tags: $($_.Exception.Message)"
+            "has_stable_tag=false" >> "$GITHUB_OUTPUT"
+          }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Pre Release
         uses: softprops/action-gh-release@aec2ec56f94eb8180ceec724245f64ef008b89f5 # v2.4.0
-        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.check_tags.outputs.has_stable_tag == 'false'
         with:
           tag_name: "latest"
           prerelease: true
