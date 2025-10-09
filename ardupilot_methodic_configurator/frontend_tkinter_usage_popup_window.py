@@ -14,7 +14,6 @@ import tkinter as tk
 
 # from logging import debug as logging_debug
 # from logging import info as logging_info
-from platform import system as platform_system
 from tkinter import BooleanVar, ttk
 from typing import Callable
 
@@ -81,20 +80,19 @@ class PopupWindow:
     def finalize_window_setup(popup_window: BaseWindow, parent: tk.Tk, close_callback: Callable[[], None]) -> None:
         """Finalize window setup: center, make topmost, disable parent, set close handler."""
         BaseWindow.center_window(popup_window.root, parent)
+        popup_window.root.deiconify()  # Show the window now that it's positioned
         popup_window.root.attributes("-topmost", True)  # noqa: FBT003
-
-        if platform_system() == "Windows":
-            parent.attributes("-disabled", True)  # noqa: FBT003  # Disable parent window input
+        popup_window.root.grab_set()  # Make the popup modal
 
         popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
 
     @staticmethod
     def close(popup_window: BaseWindow, parent: tk.Tk) -> None:
         """Close the popup window and re-enable the parent window."""
+        popup_window.root.grab_release()  # Release the modal grab
         popup_window.root.destroy()
-        if platform_system() == "Windows":
-            parent.attributes("-disabled", False)  # noqa: FBT003  # Re-enable the parent window
         parent.focus_set()
+        parent.lift()
 
 
 class UsagePopupWindow(PopupWindow):
@@ -115,6 +113,9 @@ class UsagePopupWindow(PopupWindow):
         instructions_text: RichText,
     ) -> None:
         """Display a usage popup with a Dismiss button."""
+        # Hide the window until it's properly positioned
+        usage_popup_window.root.withdraw()
+
         # Set up the window
         PopupWindow.setup_window(usage_popup_window, title, geometry, instructions_text)
 
@@ -165,6 +166,9 @@ class ConfirmationPopupWindow(PopupWindow):
             bool: True if user clicked Yes, False if user clicked No
 
         """
+        # Hide the window until it's properly positioned
+        usage_popup_window.root.withdraw()
+
         # Set up the window
         PopupWindow.setup_window(usage_popup_window, title, geometry, instructions_text)
 

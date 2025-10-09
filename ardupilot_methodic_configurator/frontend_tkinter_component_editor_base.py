@@ -289,7 +289,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         """Check if usage instructions should be displayed."""
         if UsagePopupWindow.should_display("component_editor"):
             # Cast to Tk since we know root is a Tk instance in this context
-            self.root.after(10, lambda: self._display_component_editor_usage_instructions(cast("tk.Tk", self.root)))
+            self.root.after(1, lambda: self._display_component_editor_usage_instructions(cast("tk.Tk", self.root)))
 
     def _display_component_editor_usage_instructions(self, parent: tk.Tk) -> None:
         """Display usage instructions for the component editor."""

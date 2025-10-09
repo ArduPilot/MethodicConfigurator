@@ -24,7 +24,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import 
     UsagePopupWindow,
 )
 
-# pylint: disable=redefined-outer-name, unused-argument
+# pylint: disable=redefined-outer-name
 
 
 @pytest.fixture
@@ -140,80 +140,52 @@ class TestPopupWindowBase:
         # Assert: Settings updated correctly
         mock_program_settings.set_display_usage_popup.assert_called_with("test_popup", show=False)
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.platform_system", return_value="Windows")
-    def test_windows_platform_disables_parent_window(
+    def test_grab_set_makes_popup_modal(
         self,
-        mock_platform,  # pylint: disable= unused-argument
         popup_window,
         tk_root,
     ) -> None:
         """
-        On Windows platform, parent window is disabled to ensure modal behavior.
+        Popup window uses grab_set to become modal on all platforms.
 
-        GIVEN: Application running on Windows operating system
-        WHEN: A popup window is finalized for display
-        THEN: The parent window should be disabled to enforce modality
+        GIVEN: A popup window instance
+        WHEN: Window setup is finalized
+        THEN: grab_set is called to make the popup modal
         """
-        # Arrange: Mock parent window attributes
-        with patch.object(tk_root, "attributes") as mock_attributes:
+        # Arrange: Mock popup window grab_set
+        with patch.object(popup_window.root, "grab_set") as mock_grab_set:
             close_callback = MagicMock()
 
-            # Act: Finalize window setup on Windows
+            # Act: Finalize window setup
             PopupWindow.finalize_window_setup(popup_window, tk_root, close_callback)
 
-            # Assert: Parent window is disabled
-            mock_attributes.assert_called_with("-disabled", True)  # noqa: FBT003
+            # Assert: grab_set is called
+            mock_grab_set.assert_called_once()
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.platform_system", return_value="Linux")
-    def test_non_windows_platform_does_not_disable_parent(
+    def test_close_window_releases_grab_and_focuses_parent(
         self,
-        mock_platform,  # pylint: disable=unused-argument
         popup_window,
         tk_root,
     ) -> None:
         """
-        On non-Windows platforms, parent window is not disabled.
+        Closing popup window releases grab and focuses parent.
 
-        GIVEN: Application running on Linux or other non-Windows OS
-        WHEN: A popup window is finalized for display
-        THEN: The parent window should remain enabled
-        """
-        # Arrange: Mock parent window attributes
-        with patch.object(tk_root, "attributes") as mock_attributes:
-            close_callback = MagicMock()
-
-            # Act: Finalize window setup on Linux
-            PopupWindow.finalize_window_setup(popup_window, tk_root, close_callback)
-
-            # Assert: Parent window attributes not modified
-            mock_attributes.assert_not_called()
-
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.platform_system", return_value="Windows")
-    def test_close_window_re_enables_parent_on_windows(
-        self,
-        mock_platform,
-        popup_window,
-        tk_root,
-    ) -> None:
-        """
-        Closing popup window re-enables parent window on Windows.
-
-        GIVEN: A popup window is displayed on Windows with disabled parent
+        GIVEN: A popup window is displayed with modal grab
         WHEN: The popup window is closed
-        THEN: The parent window should be re-enabled and receive focus
+        THEN: The grab is released and parent receives focus
         """
         # Arrange: Mock window methods
         with (
+            patch.object(popup_window.root, "grab_release") as mock_grab_release,
             patch.object(popup_window.root, "destroy") as mock_destroy,
-            patch.object(tk_root, "attributes") as mock_attributes,
             patch.object(tk_root, "focus_set") as mock_focus,
         ):
             # Act: Close the popup window
             PopupWindow.close(popup_window, tk_root)
 
-            # Assert: Window destroyed, parent re-enabled and focused
+            # Assert: Grab released, window destroyed, parent focused
+            mock_grab_release.assert_called_once()
             mock_destroy.assert_called_once()
-            mock_attributes.assert_called_with("-disabled", False)  # noqa: FBT003
             mock_focus.assert_called_once()
 
 
@@ -222,7 +194,10 @@ class TestUsagePopupWindow:
 
     def test_display_sets_window_properties(self, tk_root, popup_window, rich_text_widget) -> None:
         """Test display method sets window properties correctly."""
-        with patch("tkinter.BooleanVar") as mock_bool_var:
+        with (
+            patch("tkinter.BooleanVar") as mock_bool_var,
+            patch.object(popup_window.root, "grab_set"),
+        ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
             mock_var_instance.get.return_value = True
@@ -250,7 +225,10 @@ class TestUsagePopupWindow:
 
     def test_dismiss_button_closes_window(self, tk_root, popup_window, rich_text_widget) -> None:
         """Test dismiss button closes the window."""
-        with patch("tkinter.BooleanVar"):
+        with (
+            patch("tkinter.BooleanVar"),
+            patch.object(popup_window.root, "grab_set"),
+        ):
             UsagePopupWindow.display(
                 parent=tk_root,
                 usage_popup_window=popup_window,
@@ -273,11 +251,15 @@ class TestUsagePopupWindow:
                 # Verify window destroy was called
                 mock_destroy.assert_called_once()
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.platform_system", return_value="Windows")
-    def test_windows_specific_behavior(self, mock_platform, tk_root, popup_window, rich_text_widget) -> None:
-        """Test Windows-specific behavior for disabling parent window."""
-        # Add mock for attributes method
-        with patch.object(tk_root, "attributes") as mock_attributes, patch("tkinter.BooleanVar"):
+    def test_display_uses_grab_set_for_modality(self, tk_root, popup_window, rich_text_widget) -> None:
+        """Test that display uses grab_set to make popup modal."""
+        # Mock grab_set and other methods
+        with (
+            patch.object(popup_window.root, "grab_set") as mock_grab_set,
+            patch.object(popup_window.root, "withdraw"),
+            patch.object(popup_window.root, "deiconify"),
+            patch("tkinter.BooleanVar"),
+        ):
             UsagePopupWindow.display(
                 parent=tk_root,
                 usage_popup_window=popup_window,
@@ -287,72 +269,35 @@ class TestUsagePopupWindow:
                 instructions_text=rich_text_widget,
             )
 
-            # On Windows, parent window should be disabled
-            mock_attributes.assert_called_with("-disabled", True)  # noqa: FBT003
+            # Verify grab_set is called for modal behavior
+            mock_grab_set.assert_called_once()
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.platform_system", return_value="Linux")
-    def test_non_windows_behavior(self, mock_platform, tk_root, popup_window, rich_text_widget) -> None:
-        """Test non-Windows behavior where parent window is not disabled."""
-        # Add mock for attributes method
-        with patch.object(tk_root, "attributes") as mock_attributes, patch("tkinter.BooleanVar"):
-            UsagePopupWindow.display(
-                parent=tk_root,
-                usage_popup_window=popup_window,
-                title="Test Usage",
-                ptype="test_type",
-                geometry="300x200",
-                instructions_text=rich_text_widget,
-            )
-
-            # On non-Windows, parent window should not be disabled with -disabled attribute
-            mock_attributes.assert_not_called()  # This assumes attributes is never called for non-Windows platforms
-
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.platform_system")
-    def test_close_window(self, mock_platform, tk_root, popup_window) -> None:
+    def test_close_window(self, tk_root, popup_window) -> None:
         """Test close method behavior."""
-        # Test Windows behavior
-        mock_platform.return_value = "Windows"
-
-        # Mock attributes, destroy and focus_set methods
+        # Mock grab_release, destroy and focus_set methods
         with (
+            patch.object(popup_window.root, "grab_release") as mock_grab_release,
             patch.object(popup_window.root, "destroy") as mock_destroy,
             patch.object(tk_root, "focus_set") as mock_focus,
-            patch.object(tk_root, "attributes") as mock_attributes,
         ):
             UsagePopupWindow.close(popup_window, tk_root)
 
-            # Verify window is destroyed
-            mock_destroy.assert_called_once()
-
-            # Verify parent window is re-enabled on Windows
-            mock_attributes.assert_called_with("-disabled", False)  # noqa: FBT003
-
-            # Verify parent window gets focus
-            mock_focus.assert_called_once()
-
-        # Reset mocks for Linux test
-        mock_platform.return_value = "Linux"
-
-        # Mock methods again for Linux test
-        with (
-            patch.object(popup_window.root, "destroy") as mock_destroy,
-            patch.object(tk_root, "focus_set") as mock_focus,
-            patch.object(tk_root, "attributes") as mock_attributes,
-        ):
-            UsagePopupWindow.close(popup_window, tk_root)
+            # Verify grab is released
+            mock_grab_release.assert_called_once()
 
             # Verify window is destroyed
             mock_destroy.assert_called_once()
-
-            # Verify parent window attributes are not called on non-Windows
-            mock_attributes.assert_not_called()
 
             # Verify parent window gets focus
             mock_focus.assert_called_once()
 
     def test_window_delete_protocol(self, tk_root, popup_window, rich_text_widget) -> None:
         """Test window delete protocol is set correctly."""
-        with patch("tkinter.BooleanVar"), patch.object(popup_window.root, "protocol") as mock_protocol:
+        with (
+            patch("tkinter.BooleanVar"),
+            patch.object(popup_window.root, "protocol") as mock_protocol,
+            patch.object(popup_window.root, "grab_set"),
+        ):
             UsagePopupWindow.display(
                 parent=tk_root,
                 usage_popup_window=popup_window,
@@ -362,9 +307,12 @@ class TestUsagePopupWindow:
                 instructions_text=rich_text_widget,
             )
 
-            # Verify WM_DELETE_WINDOW protocol is set
+            # Verify protocol is set with close callback
             mock_protocol.assert_called_once()
-            assert mock_protocol.call_args[0][0] == "WM_DELETE_WINDOW"
+            args, _kwargs = mock_protocol.call_args
+            assert args[0] == "WM_DELETE_WINDOW"
+            # The callback should be a lambda that calls close
+            assert callable(args[1])
 
 
 class TestConfirmationPopupWindow:
@@ -388,6 +336,7 @@ class TestConfirmationPopupWindow:
             patch("tkinter.BooleanVar") as mock_bool_var,
             patch.object(tk_root, "wait_window"),
             patch.object(PopupWindow, "close"),
+            patch.object(popup_window.root, "grab_set"),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -434,6 +383,7 @@ class TestConfirmationPopupWindow:
             patch("tkinter.BooleanVar") as mock_bool_var,
             patch.object(tk_root, "wait_window"),
             patch.object(PopupWindow, "close"),
+            patch.object(popup_window.root, "grab_set"),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -470,6 +420,7 @@ class TestConfirmationPopupWindow:
             patch("tkinter.BooleanVar"),
             patch.object(tk_root, "wait_window") as mock_wait,
             patch.object(PopupWindow, "close"),
+            patch.object(popup_window.root, "grab_set"),
         ):
             # Simulate window closing without button click
             mock_wait.return_value = None

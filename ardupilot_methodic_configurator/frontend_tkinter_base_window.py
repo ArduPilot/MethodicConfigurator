@@ -281,9 +281,13 @@ class BaseWindow:
         parent_height = parent.winfo_height()
         window_width = window.winfo_width()
         window_height = window.winfo_height()
+        # logging_error(_("Parent position: %d,%d"), parent.winfo_x(), parent.winfo_y())
+        # logging_error(_("Parent size: %dx%d"), parent_width, parent_height)
+        # logging_error(_("Window size: %dx%d"), window_width, window_height)
         x = parent.winfo_x() + (parent_width // 2) - (window_width // 2)
         y = parent.winfo_y() + (parent_height // 2) - (window_height // 2)
         window.geometry(f"+{x}+{y}")
+        window.update()
 
     def put_image_in_label(  # pylint: disable=too-many-locals
         self,
