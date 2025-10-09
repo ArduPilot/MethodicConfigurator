@@ -10,8 +10,6 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import pytest
-
 from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (
     SERIAL_BUS_LABELS,
     SERIAL_PORTS,

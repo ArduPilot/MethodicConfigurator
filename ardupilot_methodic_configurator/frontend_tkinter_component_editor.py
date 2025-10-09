@@ -191,6 +191,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         if combobox_values:
             # Use PairTupleCombobox for FC Connection Type paths to show bus labels
+            cb: Union[PairTupleCombobox, ttk.Combobox]
             if path in FC_CONNECTION_TYPE_PATHS:
                 # Convert connection types to tuples with bus labels
                 connection_type_tuples = get_connection_type_tuples_with_labels(combobox_values)
@@ -259,10 +260,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         value = self._get_combobox_value(combobox)
 
         # Get allowed values - for PairTupleCombobox, use list_keys; for regular Combobox, use cget("values")
-        if isinstance(combobox, PairTupleCombobox):
-            allowed_values = combobox.list_keys
-        else:
-            allowed_values = combobox.cget("values")
+        allowed_values = combobox.list_keys if isinstance(combobox, PairTupleCombobox) else combobox.cget("values")
 
         # Events that should trigger data model update (when value is valid)
         should_update_data_model = event.type in {
