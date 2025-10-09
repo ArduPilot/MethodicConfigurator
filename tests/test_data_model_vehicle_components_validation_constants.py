@@ -26,9 +26,11 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     PWM_OUT_PORTS,
     RC_PORTS,
     RC_PROTOCOLS_DICT,
+    SERIAL_BUS_LABELS,
     SERIAL_PORTS,
     SERIAL_PROTOCOLS_DICT,
     SPI_PORTS,
+    get_connection_type_tuples_with_labels,
 )
 
 
@@ -468,3 +470,51 @@ class TestValidationConstants:
             assert uniqueness_ratio >= 0.8, (
                 f"Too many duplicate protocol names in {dict_name}: {len(unique_names)}/{len(protocol_names)} unique"
             )
+
+    def test_serial_bus_labels_structure(self) -> None:
+        """Test SERIAL_BUS_LABELS structure and data types."""
+        # Should be a dictionary
+        assert isinstance(SERIAL_BUS_LABELS, dict)
+
+        # Should have 8 entries (one for each SERIAL port)
+        assert len(SERIAL_BUS_LABELS) == 8
+
+        # Keys should be SERIAL port names
+        for port in SERIAL_PORTS:
+            assert port in SERIAL_BUS_LABELS, f"Missing bus label for {port}"
+
+        # Values should be strings
+        for key, value in SERIAL_BUS_LABELS.items():
+            assert isinstance(key, str), f"Key {key} is not a string"
+            assert isinstance(value, str), f"Value {value} is not a string"
+
+        # Check specific well-known mappings
+        assert SERIAL_BUS_LABELS["SERIAL1"] == "Telem1 (SERIAL1)"
+        assert SERIAL_BUS_LABELS["SERIAL2"] == "Telem2 (SERIAL2)"
+        assert SERIAL_BUS_LABELS["SERIAL3"] == "GPS1 (SERIAL3)"
+        assert SERIAL_BUS_LABELS["SERIAL4"] == "GPS2 (SERIAL4)"
+
+    def test_get_connection_type_tuples_with_labels_function(self) -> None:
+        """Test get_connection_type_tuples_with_labels function."""
+        # Test with SERIAL ports
+        result = get_connection_type_tuples_with_labels(("SERIAL1", "SERIAL3"))
+        assert len(result) == 2
+        assert result[0] == ("SERIAL1", "Telem1 (SERIAL1)")
+        assert result[1] == ("SERIAL3", "GPS1 (SERIAL3)")
+
+        # Test with non-SERIAL ports
+        result = get_connection_type_tuples_with_labels(("CAN1", "I2C1"))
+        assert len(result) == 2
+        assert result[0] == ("CAN1", "CAN1")
+        assert result[1] == ("I2C1", "I2C1")
+
+        # Test with mixed ports
+        result = get_connection_type_tuples_with_labels(("None", "SERIAL2", "CAN1"))
+        assert len(result) == 3
+        assert result[0] == ("None", "None")
+        assert result[1] == ("SERIAL2", "Telem2 (SERIAL2)")
+        assert result[2] == ("CAN1", "CAN1")
+
+        # Test with empty tuple
+        result = get_connection_type_tuples_with_labels(())
+        assert not result

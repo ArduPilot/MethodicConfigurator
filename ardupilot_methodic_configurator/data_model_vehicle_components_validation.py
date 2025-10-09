@@ -36,6 +36,46 @@ RC_PORTS = ["RCin/SBUS"]
 SPI_PORTS = ["SPI"]
 OTHER_PORTS = ["other"]
 
+# Bus labels for SERIAL ports - maps SERIAL port names to their common bus labels
+# These labels help users identify ports by their typical usage on flight controllers:
+# - Telem1/Telem2: Commonly used for telemetry connections
+# - GPS1/GPS2: Commonly used for GNSS receiver connections
+# - SERIAL5-8: No standard labels, use port name as label
+SERIAL_BUS_LABELS: dict[str, str] = {
+    "SERIAL1": "Telem1 (SERIAL1)",
+    "SERIAL2": "Telem2 (SERIAL2)",
+    "SERIAL3": "GPS1 (SERIAL3)",
+    "SERIAL4": "GPS2 (SERIAL4)",
+    "SERIAL5": "SERIAL5",
+    "SERIAL6": "SERIAL6",
+    "SERIAL7": "SERIAL7",
+    "SERIAL8": "SERIAL8",
+}
+
+
+def get_connection_type_tuples_with_labels(connection_types: tuple[str, ...]) -> list[tuple[str, str]]:
+    """
+    Convert connection type values to tuples with bus labels for display.
+
+    Args:
+        connection_types: Tuple of connection type values (e.g., ("SERIAL1", "SERIAL2", ...))
+
+    Returns:
+        List of tuples where first element is the value and second is the display string.
+        For SERIAL ports, returns (value, "Label (value)"), e.g., ("SERIAL3", "GPS1 (SERIAL3)")
+        For other ports, returns (value, value), e.g., ("CAN1", "CAN1")
+
+    """
+    result = []
+    for conn_type in connection_types:
+        if conn_type in SERIAL_BUS_LABELS:
+            label = SERIAL_BUS_LABELS[conn_type]
+            result.append((conn_type, label))
+        else:
+            result.append((conn_type, conn_type))
+    return result
+
+
 # Map paths to component names for unified protocol update
 FC_CONNECTION_TYPE_PATHS: list[ComponentPath] = [
     ("RC Receiver", "FC Connection", "Type"),
