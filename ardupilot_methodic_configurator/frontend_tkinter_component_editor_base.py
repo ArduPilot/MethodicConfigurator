@@ -33,6 +33,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema i
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_component_template_manager import ComponentTemplateManager
 from ardupilot_methodic_configurator.frontend_tkinter_font import create_scaled_font, get_safe_font_config
+from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message, show_tooltip
@@ -63,7 +64,7 @@ def argument_parser() -> Namespace:
 
 
 # Type aliases to improve code readability
-EntryWidget = Union[ttk.Entry, ttk.Combobox]
+EntryWidget = Union[ttk.Entry, ttk.Combobox, PairTupleCombobox]
 
 WINDOW_WIDTH_PIX = 880
 VEHICLE_IMAGE_WIDTH_PIX = 100
