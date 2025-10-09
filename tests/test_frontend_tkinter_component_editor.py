@@ -24,6 +24,7 @@ from test_frontend_tkinter_component_editor_base import (
 )
 
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
+from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 
 # pylint: disable=protected-access,redefined-outer-name
 
@@ -328,7 +329,13 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
 
         editor_with_mocked_root.data_model.get_combobox_values_for_path = MagicMock(return_value=("PWM", "SBUS", "PPM"))
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.ttk.Combobox") as mock_combobox_class:
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor.PairTupleCombobox"
+            ) as mock_combobox_class,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox.update_combobox_width"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.update_combobox_width"),
+        ):
             mock_combobox = MagicMock()
             mock_combobox_class.return_value = mock_combobox
 
@@ -337,7 +344,6 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
             # Should create combobox with proper values and bindings
             mock_combobox_class.assert_called_once()
             mock_combobox.bind.assert_called()  # Should bind various events
-            mock_combobox.set.assert_called_once_with(value)
             assert result == mock_combobox
 
     def test_add_entry_or_combobox_optional_field(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
@@ -368,7 +374,13 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
 
         editor_with_mocked_root.data_model.get_combobox_values_for_path = MagicMock(return_value=("UART", "SPI", "I2C"))
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.ttk.Combobox") as mock_combobox_class:
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor.PairTupleCombobox"
+            ) as mock_combobox_class,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox.update_combobox_width"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.update_combobox_width"),
+        ):
             mock_combobox = MagicMock()
             mock_combobox_class.return_value = mock_combobox
 
@@ -377,7 +389,6 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
             # Should create combobox with proper values and bindings
             mock_combobox_class.assert_called_once()
             mock_combobox.bind.assert_called()  # Should bind various events
-            mock_combobox.set.assert_called_once_with(value)
             assert result == mock_combobox
 
     def test_add_entry_or_combobox_battery_chemistry(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
@@ -388,7 +399,13 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
 
         editor_with_mocked_root.data_model.get_combobox_values_for_path = MagicMock(return_value=("LiPo", "LiIon", "NiMH"))
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.ttk.Combobox") as mock_combobox_class:
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor.PairTupleCombobox"
+            ) as mock_combobox_class,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox.update_combobox_width"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.update_combobox_width"),
+        ):
             mock_combobox = MagicMock()
             mock_combobox_class.return_value = mock_combobox
 
@@ -424,10 +441,10 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         mock_event = MagicMock()
         mock_event.type = "10"  # FocusOut event
 
-        # Create a mock that actually behaves like a ttk.Combobox instance
-        mock_combobox = MagicMock(spec=ttk.Combobox)
-        mock_combobox.get.return_value = "PWM"
-        mock_combobox.cget.return_value = ("PWM", "SBUS", "PPM")
+        # Create a mock that behaves like a PairTupleCombobox
+        mock_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_combobox.get_selected_key.return_value = "PWM"
+        mock_combobox.list_keys = ["PWM", "SBUS", "PPM"]
         mock_event.widget = mock_combobox
 
         path = ("RC Receiver", "FC Connection", "Protocol")  # Use proper path structure
@@ -442,10 +459,10 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         mock_event = MagicMock()
         mock_event.type = "10"  # FocusOut event
 
-        # Create a mock that actually behaves like a ttk.Combobox instance
-        mock_combobox = MagicMock(spec=ttk.Combobox)
-        mock_combobox.get.return_value = "INVALID"
-        mock_combobox.cget.return_value = ("PWM", "SBUS", "PPM")
+        # Create a mock that behaves like a PairTupleCombobox
+        mock_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_combobox.get_selected_key.return_value = "INVALID"
+        mock_combobox.list_keys = ["PWM", "SBUS", "PPM"]
         mock_combobox.dropdown_is_open = True  # Simulate dropdown was open
         mock_event.widget = mock_combobox
 
@@ -463,10 +480,10 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         mock_event = MagicMock()
         mock_event.type = "3"  # Not FocusOut event (10) or Return KeyPress (2)
 
-        # Create a mock that actually behaves like a ttk.Combobox instance
-        mock_combobox = MagicMock(spec=ttk.Combobox)
-        mock_combobox.get.return_value = "INVALID"
-        mock_combobox.cget.return_value = ("PWM", "SBUS", "PPM")
+        # Create a mock that behaves like a PairTupleCombobox
+        mock_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_combobox.get_selected_key.return_value = "INVALID"
+        mock_combobox.list_keys = ["PWM", "SBUS", "PPM"]
         mock_event.widget = mock_combobox
 
         path = ("RC", "Protocol")

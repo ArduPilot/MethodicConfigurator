@@ -30,6 +30,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base impo
     EntryWidget,
     argument_parser,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 
 # pylint: disable=protected-access, too-many-lines, redefined-outer-name, unused-argument, too-few-public-methods
 
@@ -353,8 +354,9 @@ class TestDataValidationWorkflows:
         THEN: Invalid comboboxes should be highlighted in red
         """
         # Arrange: Set up invalid combobox selection
-        mock_invalid_combobox = MagicMock(spec=ttk.Combobox)
-        mock_invalid_combobox.get.return_value = "INVALID_PROTOCOL"
+        mock_invalid_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_invalid_combobox.get_selected_key.return_value = "INVALID_PROTOCOL"
+        mock_invalid_combobox.list_keys = ("PWM", "SBUS", "PPM")
 
         editor_with_mocked_root.entry_widgets = {
             ("RC Receiver", "FC Connection", "Protocol"): mock_invalid_combobox,
@@ -383,8 +385,9 @@ class TestDataValidationWorkflows:
         THEN: The combobox should be highlighted as valid
         """
         # Arrange: Set up valid combobox selection
-        mock_valid_combobox = MagicMock(spec=ttk.Combobox)
-        mock_valid_combobox.get.return_value = "PWM"
+        mock_valid_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_valid_combobox.get_selected_key.return_value = "PWM"
+        mock_valid_combobox.list_keys = ("PWM", "SBUS", "PPM")
 
         editor_with_mocked_root.entry_widgets = {
             ("RC Receiver", "FC Connection", "Protocol"): mock_valid_combobox,
@@ -1704,8 +1707,12 @@ class TestUsageInstructionsWorkflows:
     @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.BaseWindow")
     @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.RichText")
     @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.ttk.Style")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.create_scaled_font")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.get_safe_font_config")
     def test_user_sees_helpful_usage_instructions_on_first_use(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
+        mock_get_safe_font_config: MagicMock,
+        mock_create_scaled_font: MagicMock,
         mock_style_class: MagicMock,
         mock_rich_text_class: MagicMock,
         mock_base_window_class: MagicMock,
@@ -1726,6 +1733,12 @@ class TestUsageInstructionsWorkflows:
         mock_rich_text_class.return_value = mock_rich_text
         mock_style = MagicMock()
         mock_style_class.return_value = mock_style
+
+        # Mock font functions to avoid tkinter initialization issues
+        mock_font_config = {"family": "Arial", "size": 10}
+        mock_get_safe_font_config.return_value = mock_font_config
+        mock_font = MagicMock()
+        mock_create_scaled_font.return_value = mock_font
 
         # Create a mock Tk parent for testing
         mock_parent = MagicMock()

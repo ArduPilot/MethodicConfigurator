@@ -27,9 +27,10 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_base import C
 from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (
     BATTERY_CELL_VOLTAGE_PATHS,
     FC_CONNECTION_TYPE_PATHS,
+    get_connection_type_tuples_with_labels,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
-from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import setup_combobox_mousewheel_handling
+from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 
 # from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message, show_warning_message
@@ -163,7 +164,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
     def add_entry_or_combobox(
         self, value: Union[str, float], entry_frame: ttk.Frame, path: ComponentPath, is_optional: bool = False
-    ) -> Union[ttk.Entry, ttk.Combobox]:
+    ) -> Union[ttk.Entry, PairTupleCombobox]:
         # Get combobox values from data model
         combobox_values = self.data_model.get_combobox_values_for_path(path)
 
@@ -174,14 +175,26 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             return self._validate_combobox(event, path)
 
         if combobox_values:
-            cb = ttk.Combobox(entry_frame, values=combobox_values, foreground=fg_color)
+            # Convert all combobox values to tuples for PairTupleCombobox
+            # For FC Connection Type paths, add bus labels; for others, use value as both key and display
+            if path in FC_CONNECTION_TYPE_PATHS:
+                combobox_tuples = get_connection_type_tuples_with_labels(combobox_values)
+            else:
+                combobox_tuples = [(val, val) for val in combobox_values]
+
+            # Always use PairTupleCombobox for consistency and simplicity
+            cb = PairTupleCombobox(
+                entry_frame,
+                combobox_tuples,
+                str(value) if value else None,
+                f"{' > '.join(path)}",
+            )
+            cb.config(foreground=fg_color)
+
             cb.bind("<FocusOut>", on_validate_combobox)
             cb.bind("<KeyRelease>", on_validate_combobox)
             cb.bind("<Return>", on_validate_combobox)
             cb.bind("<ButtonRelease>", on_validate_combobox)
-
-            # Set up mouse wheel handling to prevent unwanted value changes
-            setup_combobox_mousewheel_handling(cb)
 
             # Override the FocusOut binding to also handle validation
             def combined_focus_out(event: tk.Event) -> None:
@@ -192,9 +205,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             cb.bind("<FocusOut>", combined_focus_out, add="+")
 
             if path in FC_CONNECTION_TYPE_PATHS:
-                cb.bind(  # immediate update of Protocol combobox choices after changing connection Type selection
+                # immediate update of Protocol combobox choices after changing connection Type selection
+                cb.bind(
                     "<<ComboboxSelected>>",
-                    lambda event: self.update_component_protocol_combobox_entries(path, cb.get()),  # noqa: ARG005
+                    lambda _event: self.update_component_protocol_combobox_entries(path, cb.get_selected_key() or ""),
                 )
 
             # When battery chemistry changes, the max, low and crit voltages will change to the
@@ -202,10 +216,9 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             if path == ("Battery", "Specifications", "Chemistry"):
                 cb.bind(
                     "<<ComboboxSelected>>",
-                    lambda event: self.update_cell_voltage_limits_entries(path, cb.get()),  # noqa: ARG005
+                    lambda _event: self.update_cell_voltage_limits_entries(path, cb.get_selected_key() or ""),
                 )
 
-            cb.set(value)
             return cb
 
         entry = ttk.Entry(entry_frame, foreground=fg_color)
@@ -220,12 +233,18 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         return entry
 
     def _validate_combobox(self, event: tk.Event, path: ComponentPath) -> bool:
-        """Validates the value of a combobox."""
+        """Validates the value of a PairTupleCombobox."""
         combobox = event.widget  # Get the combobox widget that triggered the event
-        if not isinstance(combobox, ttk.Combobox):
+        if not isinstance(combobox, PairTupleCombobox):
             return False
-        value = combobox.get()  # Get the current value of the combobox
-        allowed_values = combobox.cget("values")  # Get the list of allowed values
+
+        # Get the selected key (internal value)
+        value = combobox.get_selected_key()
+        if value is None:
+            value = ""
+
+        # Get allowed values from list_keys
+        allowed_values = combobox.list_keys
 
         # Events that should trigger data model update (when value is valid)
         should_update_data_model = event.type in {
