@@ -53,6 +53,7 @@ class PopupWindow:
         """Set up the basic window properties and add the instructions text."""
         popup_window.root.title(title)
         popup_window.root.geometry(geometry)
+        instructions_text.config(borderwidth=0, relief="flat")
         instructions_text.pack(padx=6, pady=10)
 
     @staticmethod
