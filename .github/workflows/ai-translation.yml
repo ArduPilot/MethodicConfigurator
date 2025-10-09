@@ -52,7 +52,7 @@ jobs:
           path: |
             /var/cache/apt/archives/*.deb
             /var/lib/apt/lists/*
-          key: ${{ runner.os }}-apt-gettext-${{ hashFiles('**/ai-translation.yml') }}
+          key: ${{ runner.os }}-apt-gettext-ubuntu2204
           restore-keys: |
             ${{ runner.os }}-apt-gettext-
             ${{ runner.os }}-apt-
@@ -390,7 +390,7 @@ jobs:
           path: |
             /var/cache/apt/archives/*.deb
             /var/lib/apt/lists/*
-          key: ${{ runner.os }}-apt-gettext-${{ hashFiles('**/ai-translation.yml') }}
+          key: ${{ runner.os }}-apt-gettext-ubuntu2204
           restore-keys: |
             ${{ runner.os }}-apt-gettext-
             ${{ runner.os }}-apt-
