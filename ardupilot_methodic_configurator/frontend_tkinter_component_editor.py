@@ -27,9 +27,13 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_base import C
 from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (
     BATTERY_CELL_VOLTAGE_PATHS,
     FC_CONNECTION_TYPE_PATHS,
+    get_connection_type_tuples_with_labels,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
-from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import setup_combobox_mousewheel_handling
+from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (
+    PairTupleCombobox,
+    setup_combobox_mousewheel_handling,
+)
 
 # from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message, show_warning_message
@@ -94,6 +98,18 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             self.set_component_value_and_update_ui(("Flight Controller", "Specifications", "MCU Series"), mcu)
             if mcu.upper() in ("STM32F4XX", "STM32F7XX", "STM32H7XX"):
                 self.data_model.schema.modify_schema_for_mcu_series(is_optional=True)
+
+    def _get_combobox_value(self, combobox: Union[ttk.Combobox, PairTupleCombobox]) -> str:
+        """
+        Get the value from a combobox, handling both regular and PairTuple comboboxes.
+
+        For PairTupleCombobox, returns the key (internal value).
+        For regular Combobox, returns the displayed value.
+        """
+        if isinstance(combobox, PairTupleCombobox):
+            value = combobox.get_selected_key()
+            return value if value is not None else ""
+        return combobox.get()
 
     def update_component_protocol_combobox_entries(self, component_path: ComponentPath, connection_type: str) -> str:
         """Updates the Protocol combobox entries based on the selected component connection Type."""
@@ -163,7 +179,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
     def add_entry_or_combobox(
         self, value: Union[str, float], entry_frame: ttk.Frame, path: ComponentPath, is_optional: bool = False
-    ) -> Union[ttk.Entry, ttk.Combobox]:
+    ) -> Union[ttk.Entry, ttk.Combobox, PairTupleCombobox]:
         # Get combobox values from data model
         combobox_values = self.data_model.get_combobox_values_for_path(path)
 
@@ -174,14 +190,29 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             return self._validate_combobox(event, path)
 
         if combobox_values:
-            cb = ttk.Combobox(entry_frame, values=combobox_values, foreground=fg_color)
+            # Use PairTupleCombobox for FC Connection Type paths to show bus labels
+            if path in FC_CONNECTION_TYPE_PATHS:
+                # Convert connection types to tuples with bus labels
+                connection_type_tuples = get_connection_type_tuples_with_labels(combobox_values)
+                cb = PairTupleCombobox(
+                    entry_frame,
+                    connection_type_tuples,
+                    str(value) if value else None,
+                    f"{path[0]} FC Connection Type",
+                )
+                cb.config(foreground=fg_color)
+            else:
+                cb = ttk.Combobox(entry_frame, values=combobox_values, foreground=fg_color)
+                cb.set(value)
+
             cb.bind("<FocusOut>", on_validate_combobox)
             cb.bind("<KeyRelease>", on_validate_combobox)
             cb.bind("<Return>", on_validate_combobox)
             cb.bind("<ButtonRelease>", on_validate_combobox)
 
             # Set up mouse wheel handling to prevent unwanted value changes
-            setup_combobox_mousewheel_handling(cb)
+            if not isinstance(cb, PairTupleCombobox):  # PairTupleCombobox already handles this
+                setup_combobox_mousewheel_handling(cb)
 
             # Override the FocusOut binding to also handle validation
             def combined_focus_out(event: tk.Event) -> None:
@@ -194,7 +225,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             if path in FC_CONNECTION_TYPE_PATHS:
                 cb.bind(  # immediate update of Protocol combobox choices after changing connection Type selection
                     "<<ComboboxSelected>>",
-                    lambda event: self.update_component_protocol_combobox_entries(path, cb.get()),  # noqa: ARG005
+                    lambda event: self.update_component_protocol_combobox_entries(path, self._get_combobox_value(cb)),  # noqa: ARG005
                 )
 
             # When battery chemistry changes, the max, low and crit voltages will change to the
@@ -205,7 +236,6 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                     lambda event: self.update_cell_voltage_limits_entries(path, cb.get()),  # noqa: ARG005
                 )
 
-            cb.set(value)
             return cb
 
         entry = ttk.Entry(entry_frame, foreground=fg_color)
@@ -222,10 +252,17 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
     def _validate_combobox(self, event: tk.Event, path: ComponentPath) -> bool:
         """Validates the value of a combobox."""
         combobox = event.widget  # Get the combobox widget that triggered the event
-        if not isinstance(combobox, ttk.Combobox):
+        if not isinstance(combobox, (ttk.Combobox, PairTupleCombobox)):
             return False
-        value = combobox.get()  # Get the current value of the combobox
-        allowed_values = combobox.cget("values")  # Get the list of allowed values
+
+        # Get the actual value (for PairTupleCombobox, get the key; for regular Combobox, get the display value)
+        value = self._get_combobox_value(combobox)
+
+        # Get allowed values - for PairTupleCombobox, use list_keys; for regular Combobox, use cget("values")
+        if isinstance(combobox, PairTupleCombobox):
+            allowed_values = combobox.list_keys
+        else:
+            allowed_values = combobox.cget("values")
 
         # Events that should trigger data model update (when value is valid)
         should_update_data_model = event.type in {
