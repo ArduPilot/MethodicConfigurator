@@ -199,6 +199,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
             if component == "RC Receiver" and rc == 1:
                 self.set_component_value(("RC Receiver", "FC Connection", "Type"), serial)
+                # Note: Protocol is set by RC_PROTOCOLS processing, not SERIAL_PROTOCOLS
                 rc += 1
             elif component == "Telemetry" and telem == 1:
                 self.set_component_value(("Telemetry", "FC Connection", "Type"), serial)

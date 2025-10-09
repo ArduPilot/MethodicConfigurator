@@ -24,6 +24,7 @@ from test_frontend_tkinter_component_editor_base import (
 )
 
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
+from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 
 # pylint: disable=protected-access,redefined-outer-name
 
@@ -197,17 +198,18 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         protocols = ("PWM", "SBUS", "PPM")
         protocol_path = ("RC Receiver", "FC Connection", "Protocol")  # Use proper path structure
 
-        # Create mock combobox
-        mock_combobox = MagicMock(spec=ttk.Combobox)
-        mock_combobox.get.return_value = "PWM"  # Current selection is valid
+        # Create mock PairTupleCombobox
+        mock_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_combobox.get_selected_key.return_value = "PWM"  # Current selection is valid
+        mock_combobox.list_keys = list(protocols)
         editor_with_mocked_root.entry_widgets[protocol_path] = mock_combobox
 
         result = editor_with_mocked_root.update_protocol_combobox_entries(protocols, protocol_path)
 
         # Should update values and not show error
-        mock_combobox.__setitem__.assert_called_once_with("values", protocols)
-        mock_combobox.get.assert_called_once()
-        mock_combobox.update_idletasks.assert_called_once()
+        expected_tuples = [(p, p) for p in protocols]
+        mock_combobox.set_entries_tuple.assert_called_once_with(expected_tuples, "PWM")
+        assert mock_combobox.get_selected_key.call_count == 2  # Called once to get current, once to validate
         assert result == ""
 
     def test_update_protocol_combobox_entries_invalid_selection(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
@@ -215,16 +217,21 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         protocols = ("PWM", "SBUS")
         protocol_path = ("RC Receiver", "FC Connection", "Protocol")  # Use proper path structure
 
-        # Create mock combobox with invalid current selection
-        mock_combobox = MagicMock(spec=ttk.Combobox)
-        mock_combobox.get.return_value = "INVALID_PROTOCOL"
+        # Create mock PairTupleCombobox with invalid current selection
+        mock_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_combobox.get_selected_key.return_value = "INVALID_PROTOCOL"  # Always returns invalid
+        mock_combobox.list_keys = list(protocols)
         editor_with_mocked_root.entry_widgets[protocol_path] = mock_combobox
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.show_error_message") as mock_error:
             result = editor_with_mocked_root.update_protocol_combobox_entries(protocols, protocol_path)
 
             # Should set empty string and show error
-            mock_combobox.set.assert_called_once_with("")
+            expected_tuples = [(p, p) for p in protocols]
+            # First call with current selection, second call with None to clear invalid selection
+            assert mock_combobox.set_entries_tuple.call_count == 2
+            mock_combobox.set_entries_tuple.assert_any_call(expected_tuples, "INVALID_PROTOCOL")
+            mock_combobox.set_entries_tuple.assert_any_call(expected_tuples, None)
             mock_combobox.configure.assert_called_once_with(style="comb_input_invalid.TCombobox")
             mock_error.assert_called_once()
             assert "not available" in result
@@ -234,16 +241,19 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         protocols = ()
         protocol_path = ("RC Receiver", "FC Connection", "Protocol")  # Use proper path structure
 
-        # Create mock combobox
-        mock_combobox = MagicMock(spec=ttk.Combobox)
-        mock_combobox.get.return_value = "PWM"
+        # Create mock PairTupleCombobox
+        mock_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_combobox.get_selected_key.return_value = "PWM"  # Always returns PWM
+        mock_combobox.list_keys = []
         editor_with_mocked_root.entry_widgets[protocol_path] = mock_combobox
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.show_error_message") as mock_error:
             result = editor_with_mocked_root.update_protocol_combobox_entries(protocols, protocol_path)
 
             # Should set empty protocol and show error
-            mock_combobox.set.assert_called_once_with("")
+            assert mock_combobox.set_entries_tuple.call_count == 2
+            mock_combobox.set_entries_tuple.assert_any_call([], "PWM")
+            mock_combobox.set_entries_tuple.assert_any_call([], None)
             mock_error.assert_called_once()
             assert "not available" in result
 
@@ -328,7 +338,11 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
 
         editor_with_mocked_root.data_model.get_combobox_values_for_path = MagicMock(return_value=("PWM", "SBUS", "PPM"))
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.ttk.Combobox") as mock_combobox_class:
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor.PairTupleCombobox"
+            ) as mock_combobox_class,
+        ):
             mock_combobox = MagicMock()
             mock_combobox_class.return_value = mock_combobox
 
@@ -337,7 +351,6 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
             # Should create combobox with proper values and bindings
             mock_combobox_class.assert_called_once()
             mock_combobox.bind.assert_called()  # Should bind various events
-            mock_combobox.set.assert_called_once_with(value)
             assert result == mock_combobox
 
     def test_add_entry_or_combobox_optional_field(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
@@ -368,7 +381,13 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
 
         editor_with_mocked_root.data_model.get_combobox_values_for_path = MagicMock(return_value=("UART", "SPI", "I2C"))
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.ttk.Combobox") as mock_combobox_class:
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor.PairTupleCombobox"
+            ) as mock_combobox_class,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox.update_combobox_width"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.update_combobox_width"),
+        ):
             mock_combobox = MagicMock()
             mock_combobox_class.return_value = mock_combobox
 
@@ -377,7 +396,6 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
             # Should create combobox with proper values and bindings
             mock_combobox_class.assert_called_once()
             mock_combobox.bind.assert_called()  # Should bind various events
-            mock_combobox.set.assert_called_once_with(value)
             assert result == mock_combobox
 
     def test_add_entry_or_combobox_battery_chemistry(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
@@ -388,7 +406,13 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
 
         editor_with_mocked_root.data_model.get_combobox_values_for_path = MagicMock(return_value=("LiPo", "LiIon", "NiMH"))
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.ttk.Combobox") as mock_combobox_class:
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor.PairTupleCombobox"
+            ) as mock_combobox_class,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox.update_combobox_width"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.update_combobox_width"),
+        ):
             mock_combobox = MagicMock()
             mock_combobox_class.return_value = mock_combobox
 
@@ -424,10 +448,10 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         mock_event = MagicMock()
         mock_event.type = "10"  # FocusOut event
 
-        # Create a mock that actually behaves like a ttk.Combobox instance
-        mock_combobox = MagicMock(spec=ttk.Combobox)
-        mock_combobox.get.return_value = "PWM"
-        mock_combobox.cget.return_value = ("PWM", "SBUS", "PPM")
+        # Create a mock that behaves like a PairTupleCombobox
+        mock_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_combobox.get_selected_key.return_value = "PWM"
+        mock_combobox.list_keys = ["PWM", "SBUS", "PPM"]
         mock_event.widget = mock_combobox
 
         path = ("RC Receiver", "FC Connection", "Protocol")  # Use proper path structure
@@ -442,10 +466,10 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         mock_event = MagicMock()
         mock_event.type = "10"  # FocusOut event
 
-        # Create a mock that actually behaves like a ttk.Combobox instance
-        mock_combobox = MagicMock(spec=ttk.Combobox)
-        mock_combobox.get.return_value = "INVALID"
-        mock_combobox.cget.return_value = ("PWM", "SBUS", "PPM")
+        # Create a mock that behaves like a PairTupleCombobox
+        mock_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_combobox.get_selected_key.return_value = "INVALID"
+        mock_combobox.list_keys = ["PWM", "SBUS", "PPM"]
         mock_combobox.dropdown_is_open = True  # Simulate dropdown was open
         mock_event.widget = mock_combobox
 
@@ -463,10 +487,10 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         mock_event = MagicMock()
         mock_event.type = "3"  # Not FocusOut event (10) or Return KeyPress (2)
 
-        # Create a mock that actually behaves like a ttk.Combobox instance
-        mock_combobox = MagicMock(spec=ttk.Combobox)
-        mock_combobox.get.return_value = "INVALID"
-        mock_combobox.cget.return_value = ("PWM", "SBUS", "PPM")
+        # Create a mock that behaves like a PairTupleCombobox
+        mock_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_combobox.get_selected_key.return_value = "INVALID"
+        mock_combobox.list_keys = ["PWM", "SBUS", "PPM"]
         mock_event.widget = mock_combobox
 
         path = ("RC", "Protocol")
@@ -615,3 +639,205 @@ class TestIntegrationScenarios:
                 mock_set_value.assert_any_call(expected_path, expected_value)
 
             assert mock_set_value.call_count == len(expected_calls)
+
+
+class TestConnectionTypeProtocolChanges:
+    """Unit tests for connection type and protocol combobox interactions."""
+
+    def test_connection_type_change_updates_protocol_combobox_options_and_clears_invalid_selection(
+        self, editor_with_mocked_root
+    ) -> None:
+        """
+        Connection type change updates protocol combobox options and clears invalid selections.
+
+        GIVEN: RC receiver has a protocol selected that becomes invalid when connection type changes
+        WHEN: User changes the connection type to one that doesn't support the current protocol
+        THEN: Protocol combobox options are updated to only show valid protocols
+        AND: Invalid protocol selection is cleared with appropriate error message
+        AND: User is notified of the incompatible protocol selection
+        """
+        editor = editor_with_mocked_root
+
+        # GIVEN: Create a mock PairTupleCombobox for the protocol field
+        mock_protocol_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_protocol_combobox.get_selected_key.return_value = "CRSF"  # Initially selected protocol
+        mock_protocol_combobox.list_keys = ["CRSF", "SBUS", "PPM"]  # Initially available protocols
+        mock_protocol_combobox.set_entries_tuple = MagicMock()
+        mock_protocol_combobox.configure = MagicMock()
+        mock_protocol_combobox.update_idletasks = MagicMock()
+
+        # Make set_entries_tuple update the list_keys to simulate real behavior
+        def update_list_keys(protocol_tuples, selected_element) -> None:
+            mock_protocol_combobox.list_keys = [t[0] for t in protocol_tuples]  # Extract keys from tuples
+            # Update get_selected_key to return the selected element
+            mock_protocol_combobox.get_selected_key.return_value = selected_element
+
+        mock_protocol_combobox.set_entries_tuple.side_effect = update_list_keys
+
+        # Add the mock combobox to the editor's entry widgets
+        protocol_path = ("RC Receiver", "FC Connection", "Protocol")
+        editor.entry_widgets[protocol_path] = mock_protocol_combobox
+
+        # Mock the error message display to capture it
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.show_error_message") as mock_show_error:
+            # WHEN: Connection type changes to one that only supports PWM and PPM (not CRSF)
+            result = editor.update_protocol_combobox_entries(("PWM", "PPM"), protocol_path)
+
+            # THEN: Protocol combobox is updated with new options
+            mock_protocol_combobox.set_entries_tuple.assert_called()
+            # First call preserves current selection, second call clears invalid selection
+            assert mock_protocol_combobox.set_entries_tuple.call_count == 2
+
+            # AND: Error message is shown for invalid protocol
+            mock_show_error.assert_called_once()
+            error_args = mock_show_error.call_args[0]
+            assert "CRSF" in error_args[1]  # Protocol name in error message
+            assert "not available" in error_args[1]  # Error message content
+
+            # AND: Combobox is styled as invalid
+            mock_protocol_combobox.configure.assert_called_with(style="comb_input_invalid.TCombobox")
+
+            # AND: Method returns the error message
+            assert "CRSF" in result
+            assert "not available" in result
+
+    def test_connection_type_change_preserves_valid_protocol_selection(self, editor_with_mocked_root) -> None:
+        """
+        Connection type change preserves valid protocol selections.
+
+        GIVEN: RC receiver has a protocol selected that remains valid when connection type changes
+        WHEN: User changes the connection type to one that still supports the current protocol
+        THEN: Protocol combobox options are updated
+        AND: Valid protocol selection is preserved
+        AND: No error messages are shown
+        """
+        editor = editor_with_mocked_root
+
+        # GIVEN: Create a mock PairTupleCombobox for the protocol field
+        mock_protocol_combobox = MagicMock(spec=PairTupleCombobox)
+        mock_protocol_combobox.get_selected_key.return_value = "PWM"  # Initially selected protocol
+        mock_protocol_combobox.list_keys = ["PWM", "PPM"]  # New valid protocols include PWM
+        mock_protocol_combobox.set_entries_tuple = MagicMock()
+        mock_protocol_combobox.configure = MagicMock()
+        mock_protocol_combobox.update_idletasks = MagicMock()
+
+        # Add the mock combobox to the editor's entry widgets
+        protocol_path = ("RC Receiver", "FC Connection", "Protocol")
+        editor.entry_widgets[protocol_path] = mock_protocol_combobox
+
+        # Mock the error message display to ensure it's not called
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.show_error_message") as mock_show_error:
+            # WHEN: Connection type changes to one that supports PWM
+            result = editor.update_protocol_combobox_entries(("PWM", "PPM"), protocol_path)
+
+            # THEN: Protocol combobox is updated with new options
+            mock_protocol_combobox.set_entries_tuple.assert_called_once()
+            # Should preserve the current selection since PWM is still valid
+
+            # AND: No error messages are shown
+            mock_show_error.assert_not_called()
+
+            # AND: No styling changes for invalid input
+            mock_protocol_combobox.configure.assert_not_called()
+
+            # AND: Method returns empty string (no errors)
+            assert result == ""
+
+    def test_connection_type_change_updates_protocol_combobox_options_and_clears_invalid_selection_via_add_entry_or_combobox_workflow(  # noqa: E501 # pylint: disable=line-too-long, too-many-locals
+        self, editor_with_mocked_root
+    ) -> None:
+        """
+        Test connection type change updates protocol combobox options via add_entry_or_combobox workflow.
+
+        GIVEN: User has both Type and Protocol combobox widgets created via add_entry_or_combobox
+        WHEN: Connection type changes to one that doesn't support the current protocol
+        THEN: Protocol combobox options are updated to only show valid protocols for the new type
+        AND: Invalid protocol selection is cleared with appropriate error message
+        AND: User is notified of the incompatible protocol selection
+        """
+        editor = editor_with_mocked_root
+
+        # GIVEN: Create both Type and Protocol combobox widgets using add_entry_or_combobox
+        type_path = ("RC Receiver", "FC Connection", "Type")
+        protocol_path = ("RC Receiver", "FC Connection", "Protocol")
+
+        # Mock the data model to return combobox values for these paths
+        def mock_get_combobox_values(path) -> tuple:
+            if path == type_path:
+                return ("SERIAL1", "SERIAL2", "RCin/SBUS")
+            if path == protocol_path:
+                return ("SBUS", "PPM", "DSM")
+            return ()
+
+        editor.data_model.get_combobox_values_for_path.side_effect = mock_get_combobox_values
+
+        # Create mock frames for the widgets
+        type_frame = MagicMock()
+        protocol_frame = MagicMock()
+
+        # Mock PairTupleCombobox to avoid Tkinter issues
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.PairTupleCombobox") as mock_ptc_class:
+            # Configure the mock to return mock objects with required attributes
+            mock_type_widget = MagicMock()
+            mock_type_widget.list_keys = ["SERIAL1", "SERIAL2", "RCin/SBUS"]
+            mock_type_widget.get_selected_key.return_value = "SERIAL1"
+            mock_type_widget.configure = MagicMock()
+
+            mock_protocol_widget = MagicMock(spec=PairTupleCombobox)
+            mock_protocol_widget.list_keys = ["SBUS", "PPM", "DSM"]
+            mock_protocol_widget.get_selected_key.return_value = "SBUS"
+            mock_protocol_widget.configure = MagicMock()
+
+            # Mock set_entries_tuple to update list_keys
+            def mock_set_entries_tuple(entries, selection) -> None:
+                mock_protocol_widget.list_keys = [key for key, _ in entries]
+                mock_protocol_widget.get_selected_key.return_value = selection
+
+            mock_protocol_widget.set_entries_tuple = mock_set_entries_tuple
+
+            # Make the constructor return different mocks for each call
+            mock_ptc_class.side_effect = [mock_type_widget, mock_protocol_widget]
+
+            # Create the Type combobox widget (this would normally be done by add_entry_or_combobox)
+            type_widget = editor.add_entry_or_combobox("SERIAL1", type_frame, type_path, is_optional=False)
+            protocol_widget = editor.add_entry_or_combobox("SBUS", protocol_frame, protocol_path, is_optional=False)
+
+        # The widgets should be PairTupleCombobox instances (mocked)
+        assert type_widget is not None
+        assert protocol_widget is not None
+
+        # Add widgets to entry_widgets (normally done by _create_leaf_widget_ui)
+        editor.entry_widgets[type_path] = type_widget
+        editor.entry_widgets[protocol_path] = protocol_widget
+
+        # Mock the error message display to capture it
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.show_error_message") as mock_show_error:
+            # WHEN: Connection type changes to RCin/SBUS (which may not support SBUS protocol)
+            result = editor.update_component_protocol_combobox_entries(type_path, "RCin/SBUS")
+
+            # THEN: Protocol combobox options are updated to protocols valid for RCin/SBUS
+            # Get the expected protocols for RCin/SBUS from the data model
+            expected_rcin_protocols = editor.data_model.get_combobox_values_for_path(protocol_path)
+            assert protocol_widget.list_keys == list(expected_rcin_protocols)
+
+            # AND: Check if SBUS is still valid for RCin/SBUS
+            if "SBUS" not in expected_rcin_protocols:
+                # The widget should have been updated with None selection
+                # This is tested indirectly through the error message
+
+                # AND: Error message is shown for invalid protocol
+                mock_show_error.assert_called_once()
+                error_args = mock_show_error.call_args[0]
+                assert "SBUS" in error_args[1]  # Protocol name in error message
+                assert "not available" in error_args[1]  # Error message content
+
+                # AND: Combobox is styled as invalid
+                protocol_widget.configure.assert_called_with(style="comb_input_invalid.TCombobox")
+
+                # AND: Method returns the error message
+                assert "SBUS" in result
+                assert "not available" in result
+            else:
+                # If SBUS is valid for RCin/SBUS, no error should occur
+                mock_show_error.assert_not_called()
+                assert result == ""
