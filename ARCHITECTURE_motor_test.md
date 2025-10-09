@@ -8,6 +8,8 @@
 
 ## Overview
 
+![motor test screenshot](images/App_screenshot_motor_test.png)
+
 The Motor Test sub-application provides a graphical interface for testing individual motors on ArduPilot vehicles, similar to Mission Planner's motor test functionality.
 It allows users to test motor functionality, verify motor order and direction, and configure motor parameters before flight.
 
@@ -17,7 +19,8 @@ It allows users to test motor functionality, verify motor order and direction, a
 
 1. **Frame Configuration Interface**
    - ✅ FRAME_TYPE dropdown populated from parameter documentation metadata
-   - ✅ Immediate parameter application to flight controller on selection
+   - ✅ Immediate parameter application to flight controller on selection with progress feedback
+   - ✅ Progress windows showing flight controller reset and reconnection status
    - ✅ Dynamic motor count calculation based on frame configuration
    - ✅ Motor diagram display showing the currently selected frame configuration
    - ✅ PNG motor diagrams loaded from local images directory (converted from ArduPilot documentation SVG files)
@@ -31,11 +34,15 @@ It allows users to test motor functionality, verify motor order and direction, a
 
 3. **Motor Testing Interface**
    - ✅ Display N motor test buttons based on detected/configured frame
-   - ✅ Label buttons with letters (A, B, C, D...) following ArduPilot conventions
+   - ✅ Label buttons with "Test Motor" prefix followed by letters (A, B, C, D...) following ArduPilot conventions
    - ✅ Expected direction labels (CW/CCW) for each motor position
    - ✅ Detected order dropdown comboboxes for user feedback
+   - ✅ Status labels showing real-time feedback ("Ready", "Command sent", "Stop sent", "Safety Check Failed", "Invalid Parameters", "Test Failed", "Error") with color coding
    - ✅ Configurable test duration (default: 2 seconds)
    - ✅ Real-time BATT1 voltage and current display with color-coded status
+   - ✅ "Test All" button for simultaneous motor testing
+   - ✅ "Test in Sequence" button for automated sequential testing
+   - ✅ "Stop All Motors" emergency stop button
 
 4. **Battery Status Display**
    - ✅ Current BATT1 voltage and current readings (only when BATT_MONITOR != 0)
@@ -68,7 +75,7 @@ It allows users to test motor functionality, verify motor order and direction, a
 - ✅ Keyboard shortcuts for critical functions:
   - Escape: Emergency stop all motors
   - Ctrl+A: Test all motors simultaneously
-  - Ctrl+S: Test motors in sequence
+  - Ctrl+Q: Test motors in sequence
 - ✅ Settings persistence for test duration and throttle percentage
 - ✅ Enhanced error handling and user feedback messages
 - ✅ PNG diagram display with improved compatibility (no external tksvg dependency required)
@@ -94,6 +101,7 @@ It allows users to test motor functionality, verify motor order and direction, a
    - ✅ Immediate parameter application with confirmation
    - ✅ Responsive UI with real-time feedback
    - ✅ Keyboard shortcuts for critical functions
+   - ✅ Scrollable interface for frames with many motors
 
 3. **Reliability**
    - ✅ Active flight controller connection required for all motor testing operations
@@ -337,7 +345,7 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 - ✅ Keyboard shortcuts:
   - Escape: Emergency stop all motors
   - Ctrl+A: Test all motors simultaneously
-  - Ctrl+S: Test motors in sequence
+  - Ctrl+Q: Test motors in sequence
 - ✅ Settings persistence for user preferences
 - ✅ Enhanced error handling and logging
 - ✅ **Comprehensive test coverage** - 34 BDD pytest tests ensuring reliability
@@ -347,9 +355,8 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 ```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │ Information & Safety Warnings                                       │
-│ • Remove propellers before testing                                  │
-│ • Ensure vehicle is secured                                         │
-│ • Emergency stop always available                                   │
+│ • PROPELLERS MUST BE REMOVED before proceeding!                    │
+│ • Ensure the vehicle is properly secured and cannot move.          │
 ├─────────────────────────────────────────────────────────────────────┤
 │ 1. Frame configuration                                              │
 │ Frame Type: [FRAME_TYPE ▼]                                          │
@@ -357,19 +364,19 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
 │                     Frame Type PNG diagram                          │
 │                                                                     │
 ├─────────────────────────────────────────────────────────────────────┤
-│ 2. Arm and min throttle configuration                               │
-│ [Set Motor Spin Arm] [Set Motor Spin Min]                           │
-├─────────────────────────────────────────────────────────────────────┤
-│ 3. Motor order/direction configuration                              │
-│ Throttle: [____] %   Duration: [____] seconds  Battery: 12.4V/2.1A  |
+│ 2. Motor order/direction configuration                              │
+│ Throttle: [____] %   Duration: [____] seconds  Battery: 12.4V/2.1A  │
 │                                                                     │
-│ [Motor A] Motor 1 CW  [Detected: ▼]                                 │
-│ [Motor B] Motor 2 CCW [Detected: ▼]                                 │
-│ [Motor C] Motor 3 CCW [Detected: ▼]                                 │
-│ [Motor D] Motor 4 CW  [Detected: ▼]                                 │
+│ [Test Motor A] Motor 1 CW  [Detected: ▼]   [Ready]                  │
+│ [Test Motor B] Motor 2 CCW [Detected: ▼]   [Ready]                  │
+│ [Test Motor C] Motor 3 CCW [Detected: ▼]   [Ready]                  │
+│ [Test Motor D] Motor 4 CW  [Detected: ▼]   [Ready]                  │
 │ ...                                                                 │
 │                                                                     │
-│ [🛑 STOP ALL MOTORS] [Test in Sequence]                            │
+│ [Test All] [Test in Sequence] [🛑 STOP ALL MOTORS]                 │
+├─────────────────────────────────────────────────────────────────────┤
+│ 3. Arm and min throttle configuration                               │
+│ [Set Motor Spin Arm] [Set Motor Spin Min]                           │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -385,17 +392,19 @@ def motor_diagram_exists(frame_class: int, frame_type: int) -> bool
    - User selects appropriate FRAME_TYPE from dropdown (populated from parameter documentation)
    - Parameters are immediately applied to flight controller on selection
 
-3. **Motor Parameter Configuration**
-   - User clicks "Set Motor Spin Arm" to configure MOT_SPIN_ARM parameter
-   - User clicks "Set Motor Spin Min" to configure MOT_SPIN_MIN parameter
-   - Each button opens parameter dialog and saves/uploads value immediately
-
-4. **Motor Testing and Order Detection**
+3. **Motor Testing and Order Detection**
    - User monitors real-time battery voltage and current display (if BATT_MONITOR != 0)
    - User sets throttle % (default: 1%)
    - User sets test duration (default: 2 seconds)
-   - User tests individual motors using labeled buttons (Motor A, B, C, etc.)
+   - User tests individual motors using labeled buttons (Test Motor A, B, C, etc.)
    - User observes actual motor spinning and records in "Detected" comboboxes
+   - User can test all motors simultaneously or in sequence
+   - Real-time status feedback shows "Ready", "Command sent", or error messages for each motor
+
+4. **Motor Parameter Configuration**
+   - User clicks "Set Motor Spin Arm" to configure MOT_SPIN_ARM parameter
+   - User clicks "Set Motor Spin Min" to configure MOT_SPIN_MIN parameter
+   - Each button opens parameter dialog and saves/uploads value immediately
    - System provides color-coded voltage feedback (green=safe, red=outside safe range)
    - Safety popup appears when attempting motor test with voltage outside BATT_ARM_VOLT to MOT_BAT_VOLT_MAX range
    - User can run "Test in Sequence" to automatically test all motors
