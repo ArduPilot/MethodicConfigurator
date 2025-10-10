@@ -64,7 +64,7 @@ def argument_parser() -> Namespace:
 
 
 # Type aliases to improve code readability
-EntryWidget = Union[ttk.Entry, ttk.Combobox, PairTupleCombobox]
+EntryWidget = Union[ttk.Entry, PairTupleCombobox]
 
 WINDOW_WIDTH_PIX = 880
 VEHICLE_IMAGE_WIDTH_PIX = 100
@@ -483,28 +483,32 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
     def validate_data_and_highlight_errors_in_red(self) -> str:
         """Validate all data using the data model."""
         # Collect all entry values
-        entry_values = {
-            path: entry.get() for path, entry in self.entry_widgets.items() if isinstance(entry, (ttk.Entry, ttk.Combobox))
-        }
+        # For PairTupleCombobox, get the selected key; for ttk.Entry, get the text
+        entry_values = {}
+        for path, entry in self.entry_widgets.items():
+            if isinstance(entry, PairTupleCombobox):
+                value = entry.get_selected_key()
+                entry_values[path] = value if value is not None else ""
+            elif isinstance(entry, ttk.Entry):
+                entry_values[path] = entry.get()
 
         # Use data model for validation
         is_valid, errors = self.data_model.validate_all_data(entry_values)
 
         if not is_valid:
             # Update UI to show invalid states and display errors
-            for path, entry in (
-                (path, entry) for path, entry in self.entry_widgets.items() if isinstance(entry, (ttk.Entry, ttk.Combobox))
-            ):
-                value = entry.get()
-
-                # Check combobox validation
-                if isinstance(entry, ttk.Combobox):
-                    combobox_values = self.data_model.get_combobox_values_for_path(path)
-                    if combobox_values and value not in combobox_values:
+            for path, entry in self.entry_widgets.items():
+                if isinstance(entry, PairTupleCombobox):
+                    value = entry.get_selected_key()
+                    if value is None:
+                        value = ""
+                    # Check combobox validation
+                    if value not in entry.list_keys:
                         entry.configure(style="comb_input_invalid.TCombobox")
                     else:
                         entry.configure(style="comb_input_valid.TCombobox")
-                else:
+                elif isinstance(entry, ttk.Entry):
+                    value = entry.get()
                     # Check entry validation
                     error_message, _corr = self.data_model.validate_entry_limits(value, path)
                     if error_message:
