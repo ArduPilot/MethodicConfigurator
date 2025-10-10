@@ -183,6 +183,6 @@
             "Notes": "uBlox M10 GNSS with compass running on the I2C bus"
         }
     },
-    "Program version": "2.3.0",
+    "Program version": "2.6.1",
     "Configuration template": "Holybro_X500_V2"
 }
