@@ -42,10 +42,10 @@ OTHER_PORTS = ["other"]
 # - GPS1/GPS2: Commonly used for GNSS receiver connections
 # - SERIAL5-8: No standard labels, use port name as label
 SERIAL_BUS_LABELS: dict[str, str] = {
-    "SERIAL1": "Telem1",
-    "SERIAL2": "Telem2",
-    "SERIAL3": "GPS1",
-    "SERIAL4": "GPS2",
+    "SERIAL1": "Telem1 (SERIAL1)",
+    "SERIAL2": "Telem2 (SERIAL2)",
+    "SERIAL3": "GPS1 (SERIAL3)",
+    "SERIAL4": "GPS2 (SERIAL4)",
     "SERIAL5": "SERIAL5",
     "SERIAL6": "SERIAL6",
     "SERIAL7": "SERIAL7",
@@ -70,8 +70,7 @@ def get_connection_type_tuples_with_labels(connection_types: tuple[str, ...]) ->
     for conn_type in connection_types:
         if conn_type in SERIAL_BUS_LABELS:
             label = SERIAL_BUS_LABELS[conn_type]
-            display = f"{label} ({conn_type})"
-            result.append((conn_type, display))
+            result.append((conn_type, label))
         else:
             result.append((conn_type, conn_type))
     return result
