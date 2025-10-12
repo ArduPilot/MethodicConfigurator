@@ -782,3 +782,115 @@ class TestConfigurationStepProcessorErrorHandling:
         assert isinstance(at_least_one_param_edited, bool)
         assert isinstance(ui_errors, list)
         assert isinstance(ui_infos, list)
+
+    def test_user_receives_expresslrs_warning_when_fltmode_ch_is_5_and_expresslrs_detected(
+        self, processor, fc_parameters
+    ) -> None:
+        """
+        User receives ExpressLRS configuration warning when FLTMODE_CH is 5 and ExpressLRS is detected.
+
+        GIVEN: A user has RC_OPTIONS with ExpressLRS bits set and FLTMODE_CH set to 5
+        WHEN: They process the configuration step
+        THEN: A warning should be added about FLTMODE_CH conflict with RC5 arming channel
+        """
+        # Arrange: Set up ExpressLRS detection with FLTMODE_CH = 5
+        selected_file = "test_file.param"
+        processor.local_filesystem.configuration_steps = {selected_file: {}}
+        processor.local_filesystem.file_parameters[selected_file]["RC_OPTIONS"] = Par(value=1.0, comment="RC options")
+        processor.local_filesystem.file_parameters[selected_file]["FLTMODE_CH"] = Par(value=1.0, comment="Flight mode channel")
+
+        # Set FC parameters with ExpressLRS bit 9 set (512) and FLTMODE_CH = 5
+        test_fc_params = fc_parameters.copy()
+        test_fc_params["RC_OPTIONS"] = 1 << 9  # Bit 9 set for ExpressLRS
+        test_fc_params["FLTMODE_CH"] = 5
+
+        # Act: Process configuration step
+        _, _, ui_errors, ui_infos = processor.process_configuration_step(selected_file, test_fc_params)
+
+        # Assert: ExpressLRS warning is present
+        assert len(ui_infos) == 1
+        assert ui_infos[0][0] == "ExpressLRS Configuration Warning"
+        assert "FLTMODE_CH must be set to a channel other than 5" in ui_infos[0][1]
+        assert "RC5 arming channel" in ui_infos[0][1]
+        assert ui_errors == []
+
+    def test_user_does_not_receive_expresslrs_warning_when_fltmode_ch_is_not_5_and_expresslrs_detected(
+        self, processor, fc_parameters
+    ) -> None:
+        """
+        User does not receive ExpressLRS warning when FLTMODE_CH is not 5, even if ExpressLRS is detected.
+
+        GIVEN: A user has RC_OPTIONS with ExpressLRS bits set but FLTMODE_CH set to 6
+        WHEN: They process the configuration step
+        THEN: No warning should be added
+        """
+        # Arrange: Set up ExpressLRS detection with FLTMODE_CH = 6
+        selected_file = "test_file.param"
+        processor.local_filesystem.configuration_steps = {selected_file: {}}
+        processor.local_filesystem.file_parameters[selected_file]["RC_OPTIONS"] = Par(value=1.0, comment="RC options")
+        processor.local_filesystem.file_parameters[selected_file]["FLTMODE_CH"] = Par(value=1.0, comment="Flight mode channel")
+
+        # Set FC parameters with ExpressLRS bit 13 set and FLTMODE_CH = 6
+        test_fc_params = fc_parameters.copy()
+        test_fc_params["RC_OPTIONS"] = 1 << 13  # Bit 13 set for ExpressLRS
+        test_fc_params["FLTMODE_CH"] = 6
+
+        # Act: Process configuration step
+        _, _, ui_errors, ui_infos = processor.process_configuration_step(selected_file, test_fc_params)
+
+        # Assert: No ExpressLRS warning
+        assert ui_infos == []
+        assert ui_errors == []
+
+    def test_user_does_not_receive_expresslrs_warning_when_expresslrs_not_detected(self, processor, fc_parameters) -> None:
+        """
+        User does not receive ExpressLRS warning when ExpressLRS bits are not set in RC_OPTIONS.
+
+        GIVEN: A user has RC_OPTIONS without ExpressLRS bits set and FLTMODE_CH set to 5
+        WHEN: They process the configuration step
+        THEN: No warning should be added
+        """
+        # Arrange: Set up non-ExpressLRS with FLTMODE_CH = 5
+        selected_file = "test_file.param"
+        processor.local_filesystem.configuration_steps = {selected_file: {}}
+        processor.local_filesystem.file_parameters[selected_file]["RC_OPTIONS"] = Par(value=1.0, comment="RC options")
+        processor.local_filesystem.file_parameters[selected_file]["FLTMODE_CH"] = Par(value=1.0, comment="Flight mode channel")
+
+        # Set FC parameters without ExpressLRS bits and FLTMODE_CH = 5
+        test_fc_params = fc_parameters.copy()
+        test_fc_params["RC_OPTIONS"] = 0  # No ExpressLRS bits
+        test_fc_params["FLTMODE_CH"] = 5
+
+        # Act: Process configuration step
+        _, _, ui_errors, ui_infos = processor.process_configuration_step(selected_file, test_fc_params)
+
+        # Assert: No ExpressLRS warning
+        assert ui_infos == []
+        assert ui_errors == []
+
+    def test_user_receives_expresslrs_warning_with_both_bits_set_and_fltmode_ch_5(self, processor, fc_parameters) -> None:
+        """
+        User receives ExpressLRS warning when both ExpressLRS bits are set and FLTMODE_CH is 5.
+
+        GIVEN: A user has RC_OPTIONS with both ExpressLRS bits (9 and 13) set and FLTMODE_CH = 5
+        WHEN: They process the configuration step
+        THEN: A warning should be added
+        """
+        # Arrange: Set up both ExpressLRS bits with FLTMODE_CH = 5
+        selected_file = "test_file.param"
+        processor.local_filesystem.configuration_steps = {selected_file: {}}
+        processor.local_filesystem.file_parameters[selected_file]["RC_OPTIONS"] = Par(value=1.0, comment="RC options")
+        processor.local_filesystem.file_parameters[selected_file]["FLTMODE_CH"] = Par(value=1.0, comment="Flight mode channel")
+
+        # Set FC parameters with both bits set and FLTMODE_CH = 5
+        test_fc_params = fc_parameters.copy()
+        test_fc_params["RC_OPTIONS"] = (1 << 9) | (1 << 13)  # Both bits set
+        test_fc_params["FLTMODE_CH"] = 5
+
+        # Act: Process configuration step
+        _, _, ui_errors, ui_infos = processor.process_configuration_step(selected_file, test_fc_params)
+
+        # Assert: ExpressLRS warning is present
+        assert len(ui_infos) == 1
+        assert ui_infos[0][0] == "ExpressLRS Configuration Warning"
+        assert ui_errors == []

@@ -69,7 +69,9 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "derived_parameters": {
-                "RC_PROTOCOLS": { "New Value": "vehicle_components['RC Receiver']['FC Connection']['Protocol']", "Change Reason": "Selected in the component editor" }
+                "RC_PROTOCOLS": { "New Value": "vehicle_components['RC Receiver']['FC Connection']['Protocol']", "Change Reason": "Selected in the component editor" },
+                "RC5_OPTION": { "New Value": "1 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS' else fc_parameters.get('RC5_OPTION', 0)", "Change Reason": "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)" },
+                "FLTMODE_CH": { "New Value": "6 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS' else fc_parameters.get('FLTMODE_CH', 5)", "Change Reason": "ExpressLRS requires FLTMODE_CH != 5" }
             },
             "rename_connection": "vehicle_components['RC Receiver']['FC Connection']['Type']",
             "old_filenames": []
