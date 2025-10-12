@@ -28,6 +28,11 @@ class ConfigurationStepProcessor:
     including parameter computation, domain model creation, and connection renaming.
     """
 
+    # Bits indicating ExpressLRS in RC_OPTIONS parameter
+    # 9: Suppress CRSF mode/rate message for ELRS systems
+    # 13: Use 420kbaud for ELRS protocol
+    ELRS_RC_OPTIONS_BITS = (9, 13)
+
     def __init__(self, local_filesystem: LocalFilesystem) -> None:
         """
         Initialize the configuration step processor.
@@ -87,6 +92,26 @@ class ConfigurationStepProcessor:
             connection_edited, ui_infos = self._handle_connection_renaming(selected_file, variables)
             if connection_edited:
                 at_least_one_param_edited = True
+
+            # Check for ExpressLRS and add FLTMODE_CH warning
+            if (
+                self.local_filesystem.file_parameters[selected_file].get("RC_OPTIONS") is not None
+                or self.local_filesystem.file_parameters[selected_file].get("FLTMODE_CH") is not None
+            ):
+                rc_options = int(fc_parameters.get("RC_OPTIONS", 32))
+                if (rc_options & (1 << self.ELRS_RC_OPTIONS_BITS[0])) or (rc_options & (1 << self.ELRS_RC_OPTIONS_BITS[1])):
+                    fltmode_ch = fc_parameters.get("FLTMODE_CH", 5)
+                    if fltmode_ch == 5:
+                        ui_infos.append(
+                            (
+                                _("ExpressLRS Configuration Warning"),
+                                _(
+                                    "FLTMODE_CH must be set to a channel other than 5 (currently set to 5).\n"
+                                    "Please change FLTMODE_CH to a different channel (e.g., 6, 7, 8, etc.)\n"
+                                    "to avoid conflicts with the required RC5 arming channel."
+                                ),
+                            )
+                        )
 
         # Create domain model parameters
         parameters = self._create_domain_model_parameters(selected_file, fc_parameters)
