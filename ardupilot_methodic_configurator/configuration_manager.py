@@ -17,6 +17,7 @@ from logging import error as logging_error
 from logging import info as logging_info
 from pathlib import Path
 from typing import Callable, Optional
+from webbrowser import open as webbrowser_open  # to open the web documentation
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -1166,4 +1167,64 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
     def get_sorted_phases_with_end_and_weight(self, last_step_nr: int) -> dict[str, PhaseData]:
         return self.filesystem.get_sorted_phases_with_end_and_weight(last_step_nr)
 
+    def open_documentation_in_browser(self, filename: str) -> None:
+        _blog_text, blog_url = self.get_documentation_text_and_url("blog", filename)
+        _wiki_text, wiki_url = self.get_documentation_text_and_url("wiki", filename)
+        _external_tool_text, external_tool_url = self.get_documentation_text_and_url("external_tool", filename)
+        if wiki_url:
+            webbrowser_open(url=wiki_url, new=0, autoraise=False)
+        if external_tool_url:
+            webbrowser_open(url=external_tool_url, new=0, autoraise=False)
+        if blog_url:
+            webbrowser_open(url=blog_url, new=0, autoraise=True)
+
     # frontend_tkinter_parameter_editor.py API end
+
+    # frontend_tkinter_parameter_editor_documentation_frame.py API start
+    def get_documentation_text_and_url(self, key: str, filename: Optional[str] = None) -> tuple[str, str]:
+        if filename is None:
+            filename = self.current_file
+        return self.filesystem.get_documentation_text_and_url(filename, key)
+
+    def get_why_why_now_tooltip(self) -> str:
+        why_tooltip_text = self.filesystem.get_seq_tooltip_text(self.current_file, "why")
+        why_now_tooltip_text = self.filesystem.get_seq_tooltip_text(self.current_file, "why_now")
+        tooltip_text = ""
+        if why_tooltip_text:
+            tooltip_text += _("Why: ") + _(why_tooltip_text) + "\n"
+        if why_now_tooltip_text:
+            tooltip_text += _("Why now: ") + _(why_now_tooltip_text)
+        return tooltip_text
+
+    def get_documentation_frame_title(self) -> str:
+        if self.current_file:
+            title = _("{current_file} Documentation")
+            return title.format(current_file=self.current_file)
+        return _("Documentation")
+
+    def parse_mandatory_level_percentage(self, text: str) -> tuple[int, str]:
+        """
+        Parse and validate the mandatory level percentage from text.
+
+        Args:
+            text: The text containing the mandatory level information
+
+        Returns:
+            tuple: (percentage_value, tooltip_text)
+                   percentage_value: 0-100 for valid percentage, 0 for invalid
+                   tooltip_text: Formatted tooltip text
+
+        """
+        current_file = self.current_file or ""
+        try:
+            # Extract up to 3 digits from the start of the mandatory text
+            percentage = int("".join([c for c in text[:3] if c.isdigit()]))
+            if 0 <= percentage <= 100:
+                tooltip = _("This configuration step ({current_file} intermediate parameter file) is {percentage}% mandatory")
+                return percentage, tooltip.format(current_file=current_file)
+            raise ValueError
+        except ValueError:
+            tooltip = _("Mandatory level not available for this configuration step ({current_file})")
+            return 0, tooltip.format(current_file=current_file)
+
+    # frontend_tkinter_parameter_editor_documentation_frame.py API end
