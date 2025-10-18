@@ -54,10 +54,10 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
     """Stage-segmented Configuration sequence progress UI."""
 
     def __init__(
-        self, master: Union[tk.Widget, tk.Tk], phases: dict[str, dict], total_steps: int, gui_complexity: str, **kwargs
+        self, master: Union[tk.Widget, tk.Tk], sorted_phases: dict[str, dict], total_steps: int, gui_complexity: str, **kwargs
     ) -> None:
         super().__init__(master, text=_("Configuration sequence progress"), **kwargs)
-        self.phases = phases
+        self.phases = sorted_phases
         self.total_files = total_steps
         self.phase_frames: dict[str, ttk.Frame] = {}
         self.phase_bars: list[dict[str, Union[ttk.Progressbar, int]]] = []
@@ -78,26 +78,10 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
 
     def create_phase_frames(self, gui_complexity: str) -> None:
         """Create frames for each phase with progress bars and labels."""
-        # Get phases with start positions
-        active_phases = {k: v for k, v in self.phases.items() if "start" in v}
-
-        # Sort phases by start position
-        sorted_phases = dict(sorted(active_phases.items(), key=lambda x: x[1]["start"]))
-
-        # Add the end information to each phase using the start of the next phase
-        phase_names = list(sorted_phases.keys())
-        for i, phase_name in enumerate(phase_names):
-            if i < len(phase_names) - 1:
-                next_phase_name = phase_names[i + 1]
-                sorted_phases[phase_name]["end"] = sorted_phases[next_phase_name]["start"]
-            else:
-                sorted_phases[phase_name]["end"] = self.total_files
-            sorted_phases[phase_name]["weight"] = max(2, sorted_phases[phase_name]["end"] - sorted_phases[phase_name]["start"])
-
         # Calculate non-optional phases
-        non_optional_sorted_phases = {name: data for name, data in sorted_phases.items() if not data.get("optional", False)}
+        non_optional_phases = {name: data for name, data in self.phases.items() if not data.get("optional", False)}
 
-        phases_to_display = non_optional_sorted_phases if gui_complexity == "simple" else sorted_phases
+        phases_to_display = non_optional_phases if gui_complexity == "simple" else self.phases
 
         # Create container frame that will expand
         container = ttk.Frame(self)
@@ -244,7 +228,8 @@ def main() -> None:
     config_steps = ConfigurationSteps("", "ArduCopter")
     config_steps.re_init("", "ArduCopter")
 
-    progress = StageProgressBar(root, config_steps.configuration_phases, 54, "normal")
+    processed_phases = config_steps.get_sorted_phases_with_end_and_weight(54)
+    progress = StageProgressBar(root, processed_phases, 54, "normal")
     progress.pack(padx=10, pady=10, fill="both", expand=True)
 
     # Demo update function

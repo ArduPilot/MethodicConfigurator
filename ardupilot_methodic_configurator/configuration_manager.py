@@ -65,6 +65,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         # objects needed for the current table view.
         self.parameters: dict[str, ArduPilotParameter] = {}
 
+    # frontend_tkinter_parameter_editor_table.py API start
     @property
     def connected_vehicle_type(self) -> str:
         return (
@@ -92,10 +93,6 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             if hasattr(self.flight_controller, "info") and self.flight_controller.info is not None
             else False
         )
-
-    @property
-    def current_file_parameters(self) -> ParDict:
-        return self.filesystem.file_parameters.get(self.current_file, ParDict())
 
     def handle_imu_temperature_calibration_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
@@ -613,6 +610,13 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
                         value = ""
                     row.append(value)
                 writer.writerow(row)
+
+    # frontend_tkinter_parameter_editor_table.py API end
+
+    # frontend_tkinter_parameter_editor.py API start
+    @property
+    def current_file_parameters(self) -> ParDict:
+        return self.filesystem.file_parameters.get(self.current_file, ParDict())
 
     def validate_uploaded_parameters(self, selected_params: dict) -> list[str]:
         logging_info(_("Re-downloaded all parameters from the flight controller"))
@@ -1150,3 +1154,15 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
                 _("Can not add parameter when no FC is connected and no apm.pdef.xml file exists.")
             )
         return False
+
+    def get_last_configuration_step_number(self) -> Optional[int]:
+        if self.filesystem.configuration_phases:
+            # Get the first two characters of the last configuration step filename
+            last_step_filename = next(reversed(self.filesystem.file_parameters.keys()))
+            return int(last_step_filename[:2]) + 1 if len(last_step_filename) >= 2 else 1
+        return None
+
+    def get_sorted_phases_with_end_and_weight(self, last_step_nr: int) -> dict[str, dict]:
+        return self.filesystem.get_sorted_phases_with_end_and_weight(last_step_nr)
+
+    # frontend_tkinter_parameter_editor.py API end

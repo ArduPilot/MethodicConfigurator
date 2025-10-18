@@ -246,3 +246,28 @@ class ConfigurationSteps:
             text = _("No documentation available for {selected_file} in the {self.configuration_steps_filename} file")
             text = documentation.get(tooltip_key, text.format(**locals()))
         return text
+
+    def get_sorted_phases_with_end_and_weight(self, total_files: int) -> dict[str, dict]:
+        """
+        Get sorted phases with added 'end' and 'weight' information.
+
+        Returns phases sorted by start position, with each phase containing:
+        - 'end': The end file number (start of next phase or total_files)
+        - 'weight': Weight for UI layout (max(2, end - start))
+        """
+        active_phases = {k: v for k, v in self.configuration_phases.items() if "start" in v}
+
+        # Sort phases by start position
+        sorted_phases = dict(sorted(active_phases.items(), key=lambda x: x[1]["start"]))
+
+        # Add the end information to each phase using the start of the next phase
+        phase_names = list(sorted_phases.keys())
+        for i, phase_name in enumerate(phase_names):
+            if i < len(phase_names) - 1:
+                next_phase_name = phase_names[i + 1]
+                sorted_phases[phase_name]["end"] = sorted_phases[next_phase_name]["start"]
+            else:
+                sorted_phases[phase_name]["end"] = total_files
+            sorted_phases[phase_name]["weight"] = max(2, sorted_phases[phase_name]["end"] - sorted_phases[phase_name]["start"])
+
+        return sorted_phases

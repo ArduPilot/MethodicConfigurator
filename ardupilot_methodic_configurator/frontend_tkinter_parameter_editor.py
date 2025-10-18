@@ -193,14 +193,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.__create_conf_widgets(__version__)
 
-        if self.local_filesystem.configuration_phases:
-            # Get the first two characters of the last configuration step filename
-            last_step_filename = next(reversed(self.local_filesystem.file_parameters.keys()))
-            last_step_nr = int(last_step_filename[:2]) + 1 if len(last_step_filename) >= 2 else 1
+        last_step_nr = self.configuration_manager.get_last_configuration_step_number()
+        if last_step_nr is not None:
+            phases = self.configuration_manager.get_sorted_phases_with_end_and_weight(last_step_nr)
 
-            self.stage_progress_bar = StageProgressBar(
-                self.main_frame, self.local_filesystem.configuration_phases, last_step_nr, self.gui_complexity
-            )
+            self.stage_progress_bar = StageProgressBar(self.main_frame, phases, last_step_nr, self.gui_complexity)
             self.stage_progress_bar.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
 
         # Create a DocumentationFrame object for the Documentation Content

@@ -11,79 +11,254 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-import unittest
-from unittest.mock import patch
+from collections.abc import Generator
 
+import pytest
+
+from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 
+# pylint: disable=redefined-outer-name
 
-class TestStageProgressBar(unittest.TestCase):
-    """Test cases for the StageProgressBar class."""
 
-    def setUp(self) -> None:
-        """Set up test fixtures."""
-        self.root = tk.Tk()
-        self.test_phases = {
-            "Phase 1": {"start": 1, "description": "First phase"},
-            "Phase 2": {"start": 10, "description": "Second phase", "optional": True},
-            "Phase 3": {"start": 20},
-            "Milestone": {"description": "A milestone without start"},
-        }
-        self.total_steps = 30
-        self.progress_bar = StageProgressBar(self.root, self.test_phases, self.total_steps, gui_complexity="normal")
+@pytest.fixture
+def root_window() -> Generator[tk.Tk, None, None]:
+    """Fixture providing a tkinter root window for testing."""
+    root = tk.Tk()
+    yield root
+    root.destroy()
 
-    def tearDown(self) -> None:
-        """Clean up after tests."""
-        self.root.destroy()
 
-    def test_initialization(self) -> None:
-        """Test proper initialization of StageProgressBar."""
-        assert self.progress_bar.total_files == self.total_steps
-        assert self.progress_bar.phases == self.test_phases
+@pytest.fixture
+def raw_phases() -> dict[str, dict]:
+    """Fixture providing raw phase configuration data."""
+    return {
+        "Phase 1": {"start": 1, "description": "First phase"},
+        "Phase 2": {"start": 10, "description": "Second phase", "optional": True},
+        "Phase 3": {"start": 20},
+        "Milestone": {"description": "A milestone without start"},
+    }
 
+
+@pytest.fixture
+def processed_phases(raw_phases) -> dict[str, dict]:
+    """Fixture providing processed phase data with end and weight keys."""
+    # Use the actual ConfigurationSteps method to process phases
+    # This ensures the fixture stays in sync with production code
+    config_steps = ConfigurationSteps("", "ArduCopter")
+
+    # Temporarily set phases to our test data
+    config_steps.configuration_phases = raw_phases
+
+    # Use the actual method to process phases
+    return config_steps.get_sorted_phases_with_end_and_weight(30)
+
+
+@pytest.fixture
+def progress_bar(root_window: tk.Tk, processed_phases: dict[str, dict]) -> StageProgressBar:
+    """Fixture providing a configured StageProgressBar instance."""
+    return StageProgressBar(root_window, processed_phases, 30, gui_complexity="normal")
+
+
+class TestStageProgressBarInitialization:
+    """Test StageProgressBar initialization and basic setup."""
+
+    def test_user_sees_progress_bar_with_correct_total_steps(self, progress_bar) -> None:
+        """
+        User sees progress bar initialized with correct total configuration steps.
+
+        GIVEN: A progress bar is created with 30 total steps
+        WHEN: The progress bar is initialized
+        THEN: It should track the correct total number of steps
+        """
+        assert progress_bar.total_files == 30
+
+    def test_user_sees_progress_bar_with_processed_phase_data(self, progress_bar, processed_phases) -> None:
+        """
+        User sees progress bar configured with processed phase information.
+
+        GIVEN: Phase data has been processed to include end positions and weights
+        WHEN: The progress bar is initialized
+        THEN: It should contain the processed phase configuration
+        """
+        assert progress_bar.phases == processed_phases
+
+    def test_user_sees_only_active_phases_displayed(self, progress_bar) -> None:
+        """
+        User sees only phases with start positions displayed in the progress bar.
+
+        GIVEN: Phase configuration includes both active phases and milestones
+        WHEN: The progress bar creates phase frames
+        THEN: Only phases with start positions should be displayed
+        AND: Milestones without start positions should be excluded
+        """
         # Should only create frames for phases with start positions
-        assert len(self.progress_bar.phase_frames) == 3
-        assert "Milestone" not in self.progress_bar.phase_frames
+        assert len(progress_bar.phase_frames) == 3
+        assert "Milestone" not in progress_bar.phase_frames
+        assert "Phase 1" in progress_bar.phase_frames
+        assert "Phase 2" in progress_bar.phase_frames
+        assert "Phase 3" in progress_bar.phase_frames
 
-    def test_phase_ordering(self) -> None:
-        """Test that phases are ordered correctly by start position."""
-        phase_names = list(self.progress_bar.phase_frames.keys())
+
+class TestPhaseOrdering:
+    """Test that phases are ordered correctly in the progress bar."""
+
+    def test_user_sees_phases_ordered_by_start_position(self, progress_bar) -> None:
+        """
+        User sees configuration phases ordered by their start positions.
+
+        GIVEN: Multiple phases with different start positions
+        WHEN: The progress bar displays the phases
+        THEN: Phases should be ordered from left to right by start position
+        """
+        phase_names = list(progress_bar.phase_frames.keys())
         assert phase_names == ["Phase 1", "Phase 2", "Phase 3"]
 
-    def test_progress_updates(self) -> None:
-        """Test progress bar updates for different file positions."""
-        test_cases = [
-            (5, [4, 0, 0]),  # In Phase 1 (1-9)
-            (15, [9, 5, 0]),  # In Phase 2 (10-19)
-            (25, [9, 10, 5]),  # In Phase 3 (20-30)
-            (29, [9, 10, 9]),  # Still in Phase 3, but not beyond total
-        ]
 
-        for current_file, expected_values in test_cases:
-            self.progress_bar.update_progress(current_file)
-            for test_bar, expected in zip(self.progress_bar.phase_bars, expected_values):
-                assert test_bar["bar"]["value"] == expected
+class TestProgressUpdates:
+    """Test progress bar updates as configuration advances."""
 
-    def test_invalid_progress_update(self) -> None:
-        """Test handling of invalid progress updates."""
-        with self.assertLogs(level="ERROR"):
-            self.progress_bar.update_progress(0)
-            self.progress_bar.update_progress(31)
+    def test_user_sees_progress_update_within_first_phase(self, progress_bar) -> None:
+        """
+        User sees progress bar update correctly within the first configuration phase.
 
-    @patch("tkinter.ttk.Label.configure")
-    def test_resize_handling(self, mock_configure) -> None:
-        """Test window resize handling."""
-        self.root.geometry("400x300")
-        self.progress_bar._on_resize()  # pylint: disable=protected-access
+        GIVEN: Configuration is in progress within Phase 1 (files 1-9)
+        WHEN: Progress advances to file 5
+        THEN: Phase 1 should show 4/9 progress
+        AND: Other phases should remain at 0%
+        """
+        progress_bar.update_progress(5)
 
-        # Should update wraplength for all phase labels
-        expected_calls = len(self.progress_bar.phase_frames)
-        assert mock_configure.call_count == expected_calls
+        phase_1_bar = progress_bar.phase_bars[0]["bar"]
+        phase_2_bar = progress_bar.phase_bars[1]["bar"]
+        phase_3_bar = progress_bar.phase_bars[2]["bar"]
 
-    def test_optional_phase_styling(self) -> None:
-        """Test that optional phases are styled correctly."""
-        optional_frame = self.progress_bar.phase_frames["Phase 2"]
-        normal_frame = self.progress_bar.phase_frames["Phase 1"]
+        assert phase_1_bar["value"] == 4  # 5 - 1 = 4
+        assert phase_2_bar["value"] == 0
+        assert phase_3_bar["value"] == 0
+
+    def test_user_sees_progress_update_within_second_phase(self, progress_bar) -> None:
+        """
+        User sees progress bar update correctly within the second configuration phase.
+
+        GIVEN: Configuration has completed Phase 1 and is in Phase 2 (files 10-19)
+        WHEN: Progress advances to file 15
+        THEN: Phase 1 should be complete (9/9)
+        AND: Phase 2 should show 5/10 progress
+        AND: Phase 3 should remain at 0%
+        """
+        progress_bar.update_progress(15)
+
+        phase_1_bar = progress_bar.phase_bars[0]["bar"]
+        phase_2_bar = progress_bar.phase_bars[1]["bar"]
+        phase_3_bar = progress_bar.phase_bars[2]["bar"]
+
+        assert phase_1_bar["value"] == 9  # Phase 1 complete
+        assert phase_2_bar["value"] == 5  # 15 - 10 = 5
+        assert phase_3_bar["value"] == 0
+
+    def test_user_sees_progress_update_within_third_phase(self, progress_bar) -> None:
+        """
+        User sees progress bar update correctly within the third configuration phase.
+
+        GIVEN: Configuration has completed Phases 1-2 and is in Phase 3 (files 20-30)
+        WHEN: Progress advances to file 25
+        THEN: Phase 1 should be complete (9/9)
+        AND: Phase 2 should be complete (10/10)
+        AND: Phase 3 should show 5/10 progress
+        """
+        progress_bar.update_progress(25)
+
+        phase_1_bar = progress_bar.phase_bars[0]["bar"]
+        phase_2_bar = progress_bar.phase_bars[1]["bar"]
+        phase_3_bar = progress_bar.phase_bars[2]["bar"]
+
+        assert phase_1_bar["value"] == 9  # Phase 1 complete
+        assert phase_2_bar["value"] == 10  # Phase 2 complete
+        assert phase_3_bar["value"] == 5  # 25 - 20 = 5
+
+    def test_user_sees_all_phases_complete_at_final_step(self, progress_bar) -> None:
+        """
+        User sees all phases complete when configuration reaches the final step.
+
+        GIVEN: Configuration is at the final step
+        WHEN: Progress advances to file 29 (last file in Phase 3)
+        THEN: All phases should show complete progress
+        """
+        progress_bar.update_progress(29)
+
+        phase_1_bar = progress_bar.phase_bars[0]["bar"]
+        phase_2_bar = progress_bar.phase_bars[1]["bar"]
+        phase_3_bar = progress_bar.phase_bars[2]["bar"]
+
+        assert phase_1_bar["value"] == 9  # Phase 1 complete
+        assert phase_2_bar["value"] == 10  # Phase 2 complete
+        assert phase_3_bar["value"] == 9  # 29 - 20 = 9
+
+
+class TestErrorHandling:
+    """Test error handling for invalid progress updates."""
+
+    def test_user_sees_error_logged_for_invalid_progress_values(self, progress_bar, caplog) -> None:
+        """
+        User sees error logged when invalid progress values are provided.
+
+        GIVEN: A progress bar is configured with valid range
+        WHEN: Invalid progress values are provided (0 or out of range)
+        THEN: Error messages should be logged
+        """
+        with caplog.at_level("ERROR"):
+            progress_bar.update_progress(0)  # Below minimum
+            progress_bar.update_progress(31)  # Above maximum
+
+        assert "Out of expected range" in caplog.text
+
+
+class TestWindowResizing:
+    """Test progress bar behavior during window resizing."""
+
+    def test_user_sees_labels_adjust_when_window_resizes(self, progress_bar) -> None:
+        """
+        User sees progress bar labels adjust when window is resized.
+
+        GIVEN: A progress bar with multiple phase labels
+        WHEN: The window is resized
+        THEN: Label wraplength should be updated for all labels
+        """
+        # Store initial wraplength values
+        initial_wraplengths = {}
+        for phase_name, frame in progress_bar.phase_frames.items():
+            for child in frame.winfo_children():
+                if isinstance(child, tk.ttk.Label):
+                    initial_wraplengths[phase_name] = child.cget("wraplength")
+
+        # Simulate window resize by updating width and calling resize handler
+        progress_bar.winfo_width = lambda: 800  # Simulate wider window
+        progress_bar._on_resize()  # pylint: disable=protected-access
+
+        # Verify wraplength has been updated for all phase labels
+        for phase_name, frame in progress_bar.phase_frames.items():
+            for child in frame.winfo_children():
+                if isinstance(child, tk.ttk.Label):
+                    # Wraplength should be set to a positive value
+                    current_wraplength = child.cget("wraplength")
+                    assert current_wraplength > 0, f"Label for {phase_name} should have wraplength > 0"
+
+
+class TestOptionalPhaseStyling:
+    """Test visual styling of optional phases."""
+
+    def test_user_sees_optional_phases_displayed_in_gray(self, progress_bar) -> None:
+        """
+        User sees optional phases displayed in gray text color.
+
+        GIVEN: Phase configuration includes optional phases
+        WHEN: The progress bar displays phase labels
+        THEN: Optional phases should be styled in gray
+        AND: Required phases should be styled in black
+        """
+        optional_frame = progress_bar.phase_frames["Phase 2"]  # Optional phase
+        normal_frame = progress_bar.phase_frames["Phase 1"]  # Required phase
 
         # Find labels in frames
         optional_label = None
@@ -95,12 +270,25 @@ class TestStageProgressBar(unittest.TestCase):
             if isinstance(child, tk.ttk.Label):
                 normal_label = child
 
+        assert optional_label is not None
+        assert normal_label is not None
         assert str(optional_label.cget("foreground")) == "gray"
         assert str(normal_label.cget("foreground")) == "black"
 
-    def test_phase_frame_creation(self) -> None:
-        """Test that phase frames are created with correct structure."""
-        test_frame = self.progress_bar.phase_frames["Phase 1"]
+
+class TestPhaseFrameStructure:
+    """Test the internal structure of phase frames."""
+
+    def test_user_sees_correct_frame_structure_for_each_phase(self, progress_bar) -> None:
+        """
+        User sees each phase frame contains the expected UI components.
+
+        GIVEN: A progress bar with multiple phases
+        WHEN: Phase frames are created
+        THEN: Each frame should contain a progress bar and label
+        AND: Progress bars should be configured horizontally and determinately
+        """
+        test_frame = progress_bar.phase_frames["Phase 1"]
 
         # Check frame structure
         children = test_frame.winfo_children()
@@ -117,50 +305,95 @@ class TestStageProgressBar(unittest.TestCase):
         assert str(progressbar.cget("orient")) == "horizontal"
         assert str(progressbar.cget("mode")) == "determinate"
 
-    def test_progress_bar_limits(self) -> None:
-        """Test progress bar maximum values are set correctly."""
-        for i, phase in enumerate(self.progress_bar.phase_bars):
+
+class TestProgressBarLimits:
+    """Test that progress bars have correct maximum values."""
+
+    def test_user_sees_progress_bars_with_correct_maximum_values(self, progress_bar) -> None:
+        """
+        User sees progress bars configured with correct maximum values for each phase.
+
+        GIVEN: Phases have defined start and end positions
+        WHEN: Progress bars are created
+        THEN: Each progress bar should have maximum set to phase range (end - start)
+        """
+        for i, phase in enumerate(progress_bar.phase_bars):
             test_bar = phase["bar"]
             start = phase["start"]
             end = phase["end"]
 
             # Check maximum is correctly set to phase range
-            assert test_bar.cget("maximum") == end - start, f"Phase {i + 1} maximum should be {end - start}"
-
-    def test_label_text_splitting(self) -> None:
-        """Test text splitting behavior for different label lengths."""
-        test_texts = {
-            "A": {"start": 1},  # Very short
-            "Short": {"start": 2},  # Short
-            "Medium Text": {"start": 3},  # Medium with space
-            "MediumNoSpace": {"start": 4},  # Medium without space
-            "Very Long Phase Name Example": {"start": 5},  # Long with spaces
-        }
-
-        test_progress = StageProgressBar(self.root, test_texts, 10, "normal")
-
-        for phase_name, frame in test_progress.phase_frames.items():
-            label = None
-            for child in frame.winfo_children():
-                if isinstance(child, tk.ttk.Label):
-                    label = child
-                    break
-
-            assert label is not None
-            text = label.cget("text")
-
-            if len(phase_name) <= 1:
-                # Very short text should have padding newline
-                assert text.endswith("\n "), f"Very short text '{phase_name}' missing padding newline"
-            elif len(phase_name) < 6:
-                # Short text should have newline
-                assert "\n" in text, f"Short text '{phase_name}' missing newline"
-            elif " " in phase_name and len(phase_name) < 20:
-                # Medium text with space should split at first space
-                first_space_pos = phase_name.find(" ")
-                expected_newline_pos = text.find("\n")
-                assert expected_newline_pos == first_space_pos, f"Medium text '{phase_name}' not split at first space"
+            expected_max = end - start
+            assert test_bar.cget("maximum") == expected_max, f"Phase {i + 1} maximum should be {expected_max}"
 
 
-if __name__ == "__main__":
-    unittest.main()
+class TestLabelTextFormatting:
+    """Test automatic text formatting for phase labels."""
+
+    def test_user_sees_very_short_labels_formatted_with_padding(self, root_window) -> None:
+        """
+        User sees very short phase names formatted with padding newlines.
+
+        GIVEN: A phase with a very short name (1 character or less)
+        WHEN: The progress bar creates the label
+        THEN: The label should end with padding newline and space
+        """
+        test_phases = {"A": {"start": 1, "end": 5, "weight": 4}}
+        progress = StageProgressBar(root_window, test_phases, 10, "normal")
+
+        frame = progress.phase_frames["A"]
+        label = None
+        for child in frame.winfo_children():
+            if isinstance(child, tk.ttk.Label):
+                label = child
+                break
+
+        assert label is not None
+        text = label.cget("text")
+        assert text.endswith("\n "), "Very short text 'A' missing padding newline"
+
+    def test_user_sees_short_labels_formatted_with_newlines(self, root_window) -> None:
+        """
+        User sees short phase names formatted with newlines.
+
+        GIVEN: A phase with a short name (2-5 characters)
+        WHEN: The progress bar creates the label
+        THEN: The label should contain a newline
+        """
+        test_phases = {"Short": {"start": 1, "end": 5, "weight": 4}}
+        progress = StageProgressBar(root_window, test_phases, 10, "normal")
+
+        frame = progress.phase_frames["Short"]
+        label = None
+        for child in frame.winfo_children():
+            if isinstance(child, tk.ttk.Label):
+                label = child
+                break
+
+        assert label is not None
+        text = label.cget("text")
+        assert "\n" in text, "Short text 'Short' missing newline"
+
+    def test_user_sees_medium_labels_with_spaces_split_at_first_space(self, root_window) -> None:
+        """
+        User sees medium-length phase names with spaces split at the first space.
+
+        GIVEN: A phase with medium-length name containing spaces
+        WHEN: The progress bar creates the label
+        THEN: The label should be split at the first space position
+        """
+        test_phases = {"Medium Text": {"start": 1, "end": 5, "weight": 4}}
+        progress = StageProgressBar(root_window, test_phases, 10, "normal")
+
+        frame = progress.phase_frames["Medium Text"]
+        label = None
+        for child in frame.winfo_children():
+            if isinstance(child, tk.ttk.Label):
+                label = child
+                break
+
+        assert label is not None
+        text = label.cget("text")
+        first_space_pos = "Medium Text".find(" ")
+        expected_newline_pos = text.find("\n")
+        assert expected_newline_pos == first_space_pos, "Medium text 'Medium Text' not split at first space"
