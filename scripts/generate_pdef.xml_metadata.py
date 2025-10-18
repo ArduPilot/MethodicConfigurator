@@ -179,6 +179,10 @@ def main() -> None:
                 continue  # Skip ArduPilot 3.x versions, as param_parse.py does not support them out of the box
             if version[0] == "4" and version[2] == "0" and vehicle_type != "ArduSub":
                 continue  # Skip ArduPilot 4.0.x versions, as param_parse.py does not support them out of the box
+            if int(version[0]) < 4:
+                continue  # Skip versions below 4.x.x, those have been done already
+            if int(version[0]) == 4 and int(version[2]) < 6:
+                continue  # Skip versions below 4.6.x, those have been done already
             create_one_pdef_xml_file(
                 vehicle_type,
                 f"{vehicle_dir}/stable-{version}",
