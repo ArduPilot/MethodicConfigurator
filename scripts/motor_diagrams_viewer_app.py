@@ -6,7 +6,7 @@ A Tkinter application that allows users to select and view SVG files from the
 ../ardupilot_methodic_configurator/images directory. The SVG files are rendered
 using Firefox-geckodriver and displayed as resized images with antialiasing.
 
-This file is part of ArduPilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

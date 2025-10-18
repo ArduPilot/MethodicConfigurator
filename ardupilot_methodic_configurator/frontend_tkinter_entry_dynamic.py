@@ -3,7 +3,7 @@
 """
 GUI entry Widget with autocompletion features.
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 https://code.activestate.com/recipes/580770-combobox-autocomplete/
 

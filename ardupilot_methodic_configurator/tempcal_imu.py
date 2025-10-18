@@ -5,7 +5,7 @@ Create temperature calibration parameters for IMUs based on log data.
 The original (python2) version of this file is part of the Ardupilot project.
 This version has been modified to work with >= python3.6 and to pass pylint and ruff checks.
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2021 Andrew Tridgell <andrew@tridgell.net>, 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

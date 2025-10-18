@@ -6,7 +6,7 @@ Behavior-driven tests for vehicle project opening data model.
 This file contains comprehensive BDD tests for the VehicleProjectOpener class
 following the project's testing guidelines and behavior-driven development principles.
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

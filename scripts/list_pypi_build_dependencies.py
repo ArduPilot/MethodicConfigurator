@@ -2,7 +2,7 @@
 """
 List all packages that are required for building the project for distribution on PyPI.org.
 
-This file is part of ArduPilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

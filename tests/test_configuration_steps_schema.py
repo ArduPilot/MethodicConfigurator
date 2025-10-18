@@ -6,7 +6,7 @@ Validates all configuration_steps_*.json files against a JSON schema.
 Finds all configuration_steps_*.json files in the project and its subdirectories, and validates them
 against the JSON schema defined in "ardupilot_methodic_configurator/configuration_steps_schema.json".
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
