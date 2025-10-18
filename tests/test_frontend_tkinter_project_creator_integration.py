@@ -6,7 +6,7 @@ High-level BDD integration tests for vehicle project management workflows.
 This file tests complete user workflows that span across VehicleProjectCreatorWindow
 and VehicleProjectOpenerWindow, focusing on end-to-end integration scenarios.
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

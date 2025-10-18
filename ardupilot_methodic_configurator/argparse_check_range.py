@@ -1,7 +1,7 @@
 """
 Check the range of an Argparse parameter.
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024 Dmitriy Kovalev
 

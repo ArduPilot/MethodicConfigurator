@@ -5,7 +5,7 @@ This file contains the unified interface for all vehicle project operations,
 acting as a facade that coordinates between different data models and provides
 a single point of contact for the frontend layer.
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

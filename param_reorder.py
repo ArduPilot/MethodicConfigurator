@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 """
 Inserts and/or removes parameter files in the configuration sequence defined in the configuration_steps_ArduCopter.json.
@@ -7,7 +7,7 @@ It also replaces all occurrences of the old names with the new names
  in all *.py and *.md files in the current directory.
 Finally, it renames the actual files on disk.
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

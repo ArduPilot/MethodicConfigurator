@@ -4,7 +4,7 @@ Data model for vehicle project opening.
 This file contains the business logic for opening existing vehicle configurations,
 separated from the GUI layer.
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

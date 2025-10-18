@@ -6,7 +6,7 @@ Validates all vehicle_components.json files against a JSON schema.
 Finds all vehicle_components.json files in the project and its subdirectories, and validates them
 against the JSON schema defined in "ardupilot_methodic_configurator/vehicle_components_schema.json".
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

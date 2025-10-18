@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 """
 Tests for the param_pid_adjustment_update.py file.
@@ -8,7 +8,7 @@ Updates the PID adjustment parameters to be factor of the corresponding autotune
 Usage:
     ./param_pid_adjustment_update.py -d /path/to/directory optimized_parameter_file.param
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

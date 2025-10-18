@@ -10,7 +10,7 @@ The module offers functions to safely retrieve font configurations, families,
 and sizes with appropriate platform-specific fallbacks. This ensures consistent
 text rendering across Windows, macOS, and Linux systems.
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

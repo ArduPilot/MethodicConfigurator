@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 """
 Tests for the argcomplete command line completions for the user-facing scripts.

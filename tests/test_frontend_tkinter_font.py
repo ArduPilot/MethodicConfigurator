@@ -6,7 +6,7 @@ Test suite for frontend_tkinter_font module.
 This module tests the font utility functions that provide safe access to TKinter
 font information with platform-specific fallbacks.
 
-This file is part of Ardupilot methodic configurator. https://github.com/ArduPilot/MethodicConfigurator
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
 SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
