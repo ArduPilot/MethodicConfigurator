@@ -15,10 +15,10 @@ from collections.abc import Generator
 
 import pytest
 
-from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
+from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps, PhaseData
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name, too-few-public-methods
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def root_window() -> Generator[tk.Tk, None, None]:
 
 
 @pytest.fixture
-def raw_phases() -> dict[str, dict]:
+def raw_phases() -> dict[str, PhaseData]:
     """Fixture providing raw phase configuration data."""
     return {
         "Phase 1": {"start": 1, "description": "First phase"},
@@ -41,7 +41,7 @@ def raw_phases() -> dict[str, dict]:
 
 
 @pytest.fixture
-def processed_phases(raw_phases) -> dict[str, dict]:
+def processed_phases(raw_phases) -> dict[str, PhaseData]:
     """Fixture providing processed phase data with end and weight keys."""
     # Use the actual ConfigurationSteps method to process phases
     # This ensures the fixture stays in sync with production code
@@ -55,7 +55,7 @@ def processed_phases(raw_phases) -> dict[str, dict]:
 
 
 @pytest.fixture
-def progress_bar(root_window: tk.Tk, processed_phases: dict[str, dict]) -> StageProgressBar:
+def progress_bar(root_window: tk.Tk, processed_phases: dict[str, PhaseData]) -> StageProgressBar:
     """Fixture providing a configured StageProgressBar instance."""
     return StageProgressBar(root_window, processed_phases, 30, gui_complexity="normal")
 
@@ -224,6 +224,7 @@ class TestWindowResizing:
         GIVEN: A progress bar with multiple phase labels
         WHEN: The window is resized
         THEN: Label wraplength should be updated for all labels
+        AND: Wraplength should change from initial values
         """
         # Store initial wraplength values
         initial_wraplengths = {}
@@ -242,7 +243,11 @@ class TestWindowResizing:
                 if isinstance(child, tk.ttk.Label):
                     # Wraplength should be set to a positive value
                     current_wraplength = child.cget("wraplength")
+                    initial_wraplength = initial_wraplengths[phase_name]
                     assert current_wraplength > 0, f"Label for {phase_name} should have wraplength > 0"
+                    assert current_wraplength != initial_wraplength, (
+                        f"Label for {phase_name} wraplength should change after resize"
+                    )
 
 
 class TestOptionalPhaseStyling:
@@ -338,7 +343,7 @@ class TestLabelTextFormatting:
         WHEN: The progress bar creates the label
         THEN: The label should end with padding newline and space
         """
-        test_phases = {"A": {"start": 1, "end": 5, "weight": 4}}
+        test_phases: dict[str, PhaseData] = {"A": {"start": 1, "end": 5, "weight": 4}}
         progress = StageProgressBar(root_window, test_phases, 10, "normal")
 
         frame = progress.phase_frames["A"]
@@ -360,7 +365,7 @@ class TestLabelTextFormatting:
         WHEN: The progress bar creates the label
         THEN: The label should contain a newline
         """
-        test_phases = {"Short": {"start": 1, "end": 5, "weight": 4}}
+        test_phases: dict[str, PhaseData] = {"Short": {"start": 1, "end": 5, "weight": 4}}
         progress = StageProgressBar(root_window, test_phases, 10, "normal")
 
         frame = progress.phase_frames["Short"]
@@ -382,7 +387,7 @@ class TestLabelTextFormatting:
         WHEN: The progress bar creates the label
         THEN: The label should be split at the first space position
         """
-        test_phases = {"Medium Text": {"start": 1, "end": 5, "weight": 4}}
+        test_phases: dict[str, PhaseData] = {"Medium Text": {"start": 1, "end": 5, "weight": 4}}
         progress = StageProgressBar(root_window, test_phases, 10, "normal")
 
         frame = progress.phase_frames["Medium Text"]

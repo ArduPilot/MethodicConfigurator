@@ -45,7 +45,7 @@ from tkinter import ttk
 from typing import Union
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
+from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps, PhaseData
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
@@ -54,7 +54,12 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
     """Stage-segmented Configuration sequence progress UI."""
 
     def __init__(
-        self, master: Union[tk.Widget, tk.Tk], sorted_phases: dict[str, dict], total_steps: int, gui_complexity: str, **kwargs
+        self,
+        master: Union[tk.Widget, tk.Tk],
+        sorted_phases: dict[str, PhaseData],
+        total_steps: int,
+        gui_complexity: str,
+        **kwargs,
     ) -> None:
         super().__init__(master, text=_("Configuration sequence progress"), **kwargs)
         self.phases = sorted_phases
@@ -90,14 +95,14 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
         # Configure container columns to expand equally
         for i, (phase_name, phase_data) in enumerate(phases_to_display.items()):
             container.grid_columnconfigure(
-                i, weight=phase_data["weight"] if gui_complexity == "simple" else 1, uniform="phase"
+                i, weight=phase_data.get("weight", 1) if gui_complexity == "simple" else 1, uniform="phase"
             )
-            start = phase_data["start"]
-            end = phase_data["end"]
+            start = phase_data.get("start", 0)
+            end = phase_data.get("end", self.total_files)
             self.phase_frames[phase_name] = self._create_phase_frame(container, i, phase_name, phase_data, (start, end))
 
     def _create_phase_frame(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-        self, container: ttk.Frame, i: int, phase_name: str, phase_data: dict[str, Union[str, bool]], limits: tuple[int, int]
+        self, container: ttk.Frame, i: int, phase_name: str, phase_data: PhaseData, limits: tuple[int, int]
     ) -> ttk.Frame:
         frame = ttk.Frame(container)
         frame.grid(row=0, column=i, sticky="nsew", padx=1)
@@ -120,7 +125,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
         # Use gray text color if phase is marked as optional
         is_optional = False
         if "optional" in phase_data and isinstance(phase_data["optional"], bool):
-            is_optional = phase_data.get("optional", False)  # type: ignore[assignment]
+            is_optional = phase_data.get("optional", False)
         label_fg = "gray" if is_optional else "black"
 
         label = ttk.Label(
@@ -134,7 +139,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
         label.grid(row=1, column=0, sticky="ew")
 
         if "description" in phase_data and isinstance(phase_data["description"], str):
-            tooltip_msg = _(phase_data.get("description", ""))  # type: ignore[arg-type]
+            tooltip_msg = _(phase_data.get("description", ""))
             if is_optional:
                 tooltip_msg += "\n" + _("This phase is optional.")
             show_tooltip(frame, tooltip_msg)
