@@ -20,6 +20,7 @@ from typing import Callable, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
@@ -1162,7 +1163,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             return int(last_step_filename[:2]) + 1 if len(last_step_filename) >= 2 else 1
         return None
 
-    def get_sorted_phases_with_end_and_weight(self, last_step_nr: int) -> dict[str, dict]:
+    def get_sorted_phases_with_end_and_weight(self, last_step_nr: int) -> dict[str, PhaseData]:
         return self.filesystem.get_sorted_phases_with_end_and_weight(last_step_nr)
 
     # frontend_tkinter_parameter_editor.py API end

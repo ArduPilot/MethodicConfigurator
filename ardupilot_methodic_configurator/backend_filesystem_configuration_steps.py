@@ -10,19 +10,39 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from json import JSONDecodeError
 from json import load as json_load
-
-# from sys import exit as sys_exit
-# from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from logging import warning as logging_warning
 from os import path as os_path
+from typing import TypedDict
 
+# from sys import exit as sys_exit
+# from logging import debug as logging_debug
 from jsonschema import validate as json_validate
 from jsonschema.exceptions import ValidationError
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+
+
+class PhaseData(TypedDict, total=False):
+    """
+    Type definition for configuration phase data.
+
+    Attributes:
+        start: The starting file number for this phase
+        end: The ending file number for this phase (computed)
+        weight: The weight for UI layout proportions (computed)
+        description: Human-readable description of the phase
+        optional: Whether this phase is optional
+
+    """
+
+    start: int
+    end: int
+    weight: int
+    description: str
+    optional: bool
 
 
 class ConfigurationSteps:
@@ -41,7 +61,7 @@ class ConfigurationSteps:
     def __init__(self, _vehicle_dir: str, vehicle_type: str) -> None:
         self.configuration_steps_filename = "configuration_steps_" + vehicle_type + ".json"
         self.configuration_steps: dict[str, dict] = {}
-        self.configuration_phases: dict[str, dict] = {}
+        self.configuration_phases: dict[str, PhaseData] = {}
         self.forced_parameters: dict[str, ParDict] = {}
         self.derived_parameters: dict[str, ParDict] = {}
         self.log_loaded_file = False
@@ -247,7 +267,7 @@ class ConfigurationSteps:
             text = documentation.get(tooltip_key, text.format(**locals()))
         return text
 
-    def get_sorted_phases_with_end_and_weight(self, total_files: int) -> dict[str, dict]:
+    def get_sorted_phases_with_end_and_weight(self, total_files: int) -> dict[str, PhaseData]:
         """
         Get sorted phases with added 'end' and 'weight' information.
 
@@ -258,16 +278,18 @@ class ConfigurationSteps:
         active_phases = {k: v for k, v in self.configuration_phases.items() if "start" in v}
 
         # Sort phases by start position
-        sorted_phases = dict(sorted(active_phases.items(), key=lambda x: x[1]["start"]))
+        sorted_phases: dict[str, PhaseData] = dict(sorted(active_phases.items(), key=lambda x: x[1].get("start", 0)))
 
         # Add the end information to each phase using the start of the next phase
         phase_names = list(sorted_phases.keys())
         for i, phase_name in enumerate(phase_names):
             if i < len(phase_names) - 1:
                 next_phase_name = phase_names[i + 1]
-                sorted_phases[phase_name]["end"] = sorted_phases[next_phase_name]["start"]
+                sorted_phases[phase_name]["end"] = sorted_phases[next_phase_name].get("start", total_files)
             else:
                 sorted_phases[phase_name]["end"] = total_files
-            sorted_phases[phase_name]["weight"] = max(2, sorted_phases[phase_name]["end"] - sorted_phases[phase_name]["start"])
+            phase_start = sorted_phases[phase_name].get("start", 0)
+            phase_end = sorted_phases[phase_name].get("end", total_files)
+            sorted_phases[phase_name]["weight"] = max(2, phase_end - phase_start)
 
         return sorted_phases
