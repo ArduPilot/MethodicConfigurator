@@ -201,9 +201,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.stage_progress_bar.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
 
         # Create a DocumentationFrame object for the Documentation Content
-        self.documentation_frame = DocumentationFrame(
-            self.main_frame, self.local_filesystem, self.configuration_manager.current_file
-        )
+        self.documentation_frame = DocumentationFrame(self.main_frame, self.configuration_manager)
         self.documentation_frame.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
 
         self.__create_parameter_area_widgets()
@@ -654,17 +652,18 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.__do_tempcal_imu(selected_file)
             # open the documentation of the next step in the browser,
             # before giving the user the option to close the SW in the __should_copy_fc_values_to_file method
-            self.documentation_frame.open_documentation_in_browser(selected_file)
+            if self.documentation_frame.get_auto_open_documentation_in_browser() or self.gui_complexity == "simple":
+                self.configuration_manager.open_documentation_in_browser(selected_file)
             self.__should_copy_fc_values_to_file(selected_file)
             selected_file = self.__should_jump_to_file(selected_file)
             self.__should_download_file_from_url(selected_file)
             self.__should_upload_file_to_fc(selected_file)
 
-            # Update the current_file attribute to the selected file
+            # current_file might have been changed by jump, so update again
             self.configuration_manager.current_file = selected_file
             self.at_least_one_changed_parameter_written = False
-            self.documentation_frame.refresh_documentation_labels(selected_file)
-            self.documentation_frame.update_why_why_now_tooltip(selected_file)
+            self.documentation_frame.refresh_documentation_labels()
+            self.documentation_frame.update_why_why_now_tooltip()
             self.repopulate_parameter_table()
             self._update_skip_button_state()
 

@@ -11,11 +11,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from platform import system as platform_system
 from tkinter import ttk
-from webbrowser import open as webbrowser_open  # to open the blog post documentation
+from webbrowser import open as webbrowser_open  # to open the web documentation
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
+from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
@@ -49,16 +49,16 @@ class DocumentationFrame:
         ),
     )
 
-    def __init__(self, root: tk.Widget, local_filesystem: LocalFilesystem, current_file: str) -> None:
+    def __init__(self, root: tk.Widget, configuration_manager: ConfigurationManager) -> None:
         self.root = root
-        self.local_filesystem = local_filesystem
+        self.configuration_manager = configuration_manager
         self.documentation_frame: ttk.LabelFrame
         self.documentation_labels: dict[str, ttk.Label] = {}
         self.mandatory_level: ttk.Progressbar
         self.auto_open_var = tk.BooleanVar(value=bool(ProgramSettings.get_setting("auto_open_doc_in_browser")))
-        self._create_documentation_frame(current_file)
+        self._create_documentation_frame()
 
-    def _create_documentation_frame(self, current_file: str) -> None:
+    def _create_documentation_frame(self) -> None:
         self.documentation_frame = ttk.LabelFrame(self.root, text=_("Documentation"))
 
         # Create a grid structure within the documentation_frame
@@ -86,8 +86,8 @@ class DocumentationFrame:
         documentation_grid.columnconfigure(1, weight=1)
 
         # Dynamically update the documentation text and URL links
-        self.refresh_documentation_labels(current_file)
-        self.update_why_why_now_tooltip(current_file)
+        self.refresh_documentation_labels()
+        self.update_why_why_now_tooltip()
 
     def _create_bottom_row(self, documentation_grid: ttk.Frame, row: int) -> None:
         bottom_frame = ttk.Frame(documentation_grid)
@@ -111,52 +111,28 @@ class DocumentationFrame:
         )
         auto_open_checkbox.pack(side=tk.LEFT, expand=False)
 
-    def update_why_why_now_tooltip(self, current_file: str) -> None:
-        why_tooltip_text = self.local_filesystem.get_seq_tooltip_text(current_file, "why")
-        why_now_tooltip_text = self.local_filesystem.get_seq_tooltip_text(current_file, "why_now")
-        tooltip_text = ""
-        if why_tooltip_text:
-            tooltip_text += _("Why: ") + _(why_tooltip_text) + "\n"
-        if why_now_tooltip_text:
-            tooltip_text += _("Why now: ") + _(why_now_tooltip_text)
+    def update_why_why_now_tooltip(self) -> None:
+        tooltip_text = self.configuration_manager.get_why_why_now_tooltip()
         if tooltip_text:
             show_tooltip(self.documentation_frame, tooltip_text, position_below=False)
 
-    def open_documentation_in_browser(self, current_file: str) -> None:
-        _blog_text, blog_url = self.local_filesystem.get_documentation_text_and_url(current_file, "blog")
-        _wiki_text, wiki_url = self.local_filesystem.get_documentation_text_and_url(current_file, "wiki")
-        _external_tool_text, external_tool_url = self.local_filesystem.get_documentation_text_and_url(
-            current_file, "external_tool"
-        )
+    def get_auto_open_documentation_in_browser(self) -> bool:
+        return self.auto_open_var.get()
 
-        if self.auto_open_var.get() or ProgramSettings.get_setting("gui_complexity") == "simple":
-            if wiki_url:
-                webbrowser_open(url=wiki_url, new=0, autoraise=False)
-            if external_tool_url:
-                webbrowser_open(url=external_tool_url, new=0, autoraise=False)
-            if blog_url:
-                webbrowser_open(url=blog_url, new=0, autoraise=True)
-
-    def refresh_documentation_labels(self, current_file: str) -> None:
-        if current_file:
-            title = _("{current_file} Documentation")
-            frame_title = title.format(**locals())
-        else:
-            frame_title = _("Documentation")
+    def refresh_documentation_labels(self) -> None:
+        frame_title = self.configuration_manager.get_documentation_frame_title()
         self.documentation_frame.config(text=frame_title)
 
-        blog_text, blog_url = self.local_filesystem.get_documentation_text_and_url(current_file, "blog")
+        blog_text, blog_url = self.configuration_manager.get_documentation_text_and_url("blog")
         self._refresh_documentation_label(self.BLOG_LABEL, _(blog_text) if blog_text else "", blog_url)
-        wiki_text, wiki_url = self.local_filesystem.get_documentation_text_and_url(current_file, "wiki")
+        wiki_text, wiki_url = self.configuration_manager.get_documentation_text_and_url("wiki")
         self._refresh_documentation_label(self.WIKI_LABEL, _(wiki_text) if wiki_text else "", wiki_url)
-        external_tool_text, external_tool_url = self.local_filesystem.get_documentation_text_and_url(
-            current_file, "external_tool"
-        )
+        external_tool_text, external_tool_url = self.configuration_manager.get_documentation_text_and_url("external_tool")
         self._refresh_documentation_label(
             self.EXTERNAL_TOOL_LABEL, _(external_tool_text) if external_tool_text else "", external_tool_url
         )
-        mandatory_text, _mandatory_url = self.local_filesystem.get_documentation_text_and_url(current_file, "mandatory")
-        self._refresh_mandatory_level(current_file, mandatory_text)
+        mandatory_text, _mandatory_url = self.configuration_manager.get_documentation_text_and_url("mandatory")
+        self._refresh_mandatory_level(mandatory_text)
 
     def _refresh_documentation_label(self, label_key: str, text: str, url: str, url_expected: bool = True) -> None:
         label = self.documentation_labels[label_key]
@@ -175,17 +151,7 @@ class DocumentationFrame:
             if url_expected:
                 show_tooltip(label, _("Documentation URL not available"))
 
-    def _refresh_mandatory_level(self, current_file: str, text: str) -> None:
-        _used_indirectly_by_the_tooltip = current_file
-        try:
-            # Extract up to 3 digits from the start of the mandatory text
-            percentage = int("".join([c for c in text[:3] if c.isdigit()]))
-            if 0 <= percentage <= 100:
-                self.mandatory_level.config(value=percentage)
-                tooltip = _("This configuration step ({current_file} intermediate parameter file) is {percentage}% mandatory")
-            else:
-                raise ValueError
-        except ValueError:
-            self.mandatory_level.config(value=0)
-            tooltip = _("Mandatory level not available for this configuration step ({current_file})")
-        show_tooltip(self.mandatory_level, tooltip.format(**locals()))
+    def _refresh_mandatory_level(self, text: str) -> None:
+        percentage, tooltip = self.configuration_manager.parse_mandatory_level_percentage(text)
+        self.mandatory_level.config(value=percentage)
+        show_tooltip(self.mandatory_level, tooltip)
