@@ -1163,6 +1163,51 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             )
         return False
 
+    def sync_parameter_to_filesystem(self, param_name: str) -> None:
+        """
+        Sync an ArduPilotParameter value and change reason back to the filesystem.
+
+        This method extracts the value and change reason from the ArduPilotParameter
+        and writes them back to the filesystem's file_parameters dict.
+
+        Args:
+            param_name: The name of the parameter to sync
+
+        """
+        if param_name in self.parameters:
+            ardupilot_param = self.parameters[param_name]
+            # Extract the current value and change reason from ArduPilotParameter
+            par_value = ardupilot_param.get_new_value()
+            par_comment = ardupilot_param.change_reason
+            # Update the filesystem's file_parameters dict
+            self.current_file_parameters[param_name] = Par(par_value, par_comment)
+
+    def get_parameters_as_par_dict(self, param_names: Optional[list[str]] = None) -> ParDict:
+        """
+        Extract Par objects from ArduPilotParameter domain models.
+
+        This method converts the domain model objects to data transfer objects (Par)
+        that can be used for file operations or flight controller uploads.
+
+        Args:
+            param_names: Optional list of parameter names to include.
+                        If None, includes all parameters.
+
+        Returns:
+            ParDict containing Par objects with current values and change reasons
+
+        """
+        if param_names is None:
+            param_names = list(self.parameters.keys())
+
+        return ParDict(
+            {
+                name: Par(self.parameters[name].get_new_value(), self.parameters[name].change_reason)
+                for name in param_names
+                if name in self.parameters
+            }
+        )
+
     def get_last_configuration_step_number(self) -> Optional[int]:
         if self.filesystem.configuration_phases:
             # Get the first two characters of the last configuration step filename
