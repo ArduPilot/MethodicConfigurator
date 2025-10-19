@@ -185,7 +185,7 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         value_dirty = (
             self._new_value != self._value_on_file
             if self.is_bitmask or self.is_multiple_choice
-            else is_within_tolerance(self._new_value, self._value_on_file)
+            else not is_within_tolerance(self._new_value, self._value_on_file)
         )
         return value_dirty or self._change_reason != self._change_reason_on_file
 

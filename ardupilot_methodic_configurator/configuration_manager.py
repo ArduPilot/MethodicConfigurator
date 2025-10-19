@@ -67,6 +67,12 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         # objects needed for the current table view.
         self.parameters: dict[str, ArduPilotParameter] = {}
 
+        # Track parameters added by user (not in original file) or renamed by the system
+        self._added_parameters: set[str] = set()
+
+        # Track parameters deleted by user (were in original file) or renamed by the system
+        self._deleted_parameters: set[str] = set()
+
     # frontend_tkinter_parameter_editor_table.py API start
     @property
     def connected_vehicle_type(self) -> str:
@@ -189,9 +195,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         if auto_changed_by and self.flight_controller.fc_parameters:
             # Filter relevant FC parameters for this file
             relevant_fc_params = {
-                key: value
-                for key, value in self.flight_controller.fc_parameters.items()
-                if key in self.filesystem.file_parameters[selected_file]
+                key: value for key, value in self.flight_controller.fc_parameters.items() if key in self.parameters
             }
             return True, relevant_fc_params, auto_changed_by
         return False, None, auto_changed_by
@@ -422,10 +426,9 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             int: Extra sleep time in seconds.
 
         """
-        current_file_params: ParDict = self.filesystem.file_parameters.get(self.current_file, ParDict())
-        filesystem_boot_delay = current_file_params.get("BRD_BOOT_DELAY", Par(0.0))
+        param_boot_delay = self.parameters["BRD_BOOT_DELAY"].get_new_value() if "BRD_BOOT_DELAY" in self.parameters else 0.0
         flightcontroller_boot_delay = self.flight_controller.fc_parameters.get("BRD_BOOT_DELAY", 0)
-        return int(max(filesystem_boot_delay.value, flightcontroller_boot_delay) // 1000 + 1)  # round up
+        return int(max(param_boot_delay, flightcontroller_boot_delay) // 1000 + 1)  # round up
 
     def _reset_and_reconnect_flight_controller(
         self, progress_callback: Optional[Callable] = None, sleep_time: Optional[int] = None
@@ -616,10 +619,6 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
     # frontend_tkinter_parameter_editor_table.py API end
 
     # frontend_tkinter_parameter_editor.py API start
-    @property
-    def current_file_parameters(self) -> ParDict:
-        return self.filesystem.file_parameters.get(self.current_file, ParDict())
-
     def validate_uploaded_parameters(self, selected_params: dict) -> list[str]:
         logging_info(_("Re-downloaded all parameters from the flight controller"))
 
@@ -1073,18 +1072,61 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
 
     def repopulate_configuration_step_parameters(
         self,
-    ) -> tuple[bool, list[tuple[str, str]], list[tuple[str, str]]]:
+    ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
         """
         Process the configuration step for the current file and update the self.parameters.
 
         Returns:
-            tuple: (config_step_edited, ui_errors, ui_infos)
+            tuple: (ui_errors, ui_infos)
 
         """
-        self.parameters, config_step_edited, ui_errors, ui_infos = self.config_step_processor.process_configuration_step(
-            self.current_file, self.fc_parameters
+        # Reset tracking sets when navigating to new file
+        self._added_parameters.clear()
+        self._deleted_parameters.clear()
+
+        # Process configuration step and get operations to apply
+        self.parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params = (
+            self.config_step_processor.process_configuration_step(self.current_file, self.fc_parameters)
         )
-        return config_step_edited, ui_errors, ui_infos
+
+        # Apply derived parameters to domain model
+        for param_name, derived_par in derived_params.items():
+            if param_name in self.parameters:
+                # Update existing parameter with derived value
+                self.parameters[param_name].set_new_value(str(derived_par.value))
+                if derived_par.comment:
+                    self.parameters[param_name].set_change_reason(derived_par.comment)
+
+        # Apply rename operations to domain model using add/delete tracking
+        for old_name in duplicates_to_remove:
+            # Mark duplicate as deleted
+            if old_name in self.filesystem.file_parameters.get(self.current_file, ParDict()):
+                self._deleted_parameters.add(old_name)
+            # Remove from domain model
+            if old_name in self.parameters:
+                del self.parameters[old_name]
+
+        for old_name, new_name in renames_to_apply:
+            # Get the parameter value from the original file
+            original_params = self.filesystem.file_parameters.get(self.current_file, ParDict())
+            if old_name in original_params:
+                # Mark old parameter as deleted
+                self._deleted_parameters.add(old_name)
+
+                # Create new parameter with renamed name
+                old_par = original_params[old_name]
+                self.parameters[new_name] = self.config_step_processor.create_ardupilot_parameter(
+                    new_name, old_par, self.current_file, self.fc_parameters
+                )
+
+                # Mark new parameter as added
+                self._added_parameters.add(new_name)
+
+                # Remove old parameter from domain model
+                if old_name in self.parameters:
+                    del self.parameters[old_name]
+
+        return ui_errors, ui_infos
 
     def get_different_parameters(self) -> dict[str, ArduPilotParameter]:
         """
@@ -1104,7 +1146,14 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             param_name: The name of the parameter to delete
 
         """
-        del self.current_file_parameters[param_name]
+        # If parameter was in original file, mark as deleted
+        if param_name in self.filesystem.file_parameters.get(self.current_file, ParDict()):
+            self._deleted_parameters.add(param_name)
+
+        # If it was previously added in this session, remove from added set
+        self._added_parameters.discard(param_name)
+
+        # Remove from runtime state
         if param_name in self.parameters:
             del self.parameters[param_name]
 
@@ -1115,7 +1164,12 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             raise OperationNotPossibleError(
                 _("No apm.pdef.xml file and no FC connected. Not possible autocomplete parameter names.")
             )
-        possible_add_param_names = [param_name for param_name in param_dict if param_name not in self.current_file_parameters]
+
+        # Build set of currently active parameters from domain model
+        active_params = set(self.parameters.keys())
+
+        # Find parameters that aren't currently active
+        possible_add_param_names = [param_name for param_name in param_dict if param_name not in active_params]
         possible_add_param_names.sort()
         return possible_add_param_names
 
@@ -1131,27 +1185,47 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         if not param_name:
             raise InvalidParameterNameError(_("Parameter name can not be empty."))
 
-        if param_name in self.current_file_parameters:
+        # Check if parameter already exists (in original file, added, or not deleted)
+        original_file_params = self.filesystem.file_parameters.get(self.current_file, ParDict())
+        is_in_original = param_name in original_file_params
+        is_already_added = param_name in self._added_parameters
+        is_deleted = param_name in self._deleted_parameters
+
+        if (is_in_original and not is_deleted) or is_already_added:
             raise InvalidParameterNameError(_("Parameter already exists, edit it instead"))
 
         fc_parameters = self.fc_parameters
         if fc_parameters:
             if param_name in fc_parameters:
-                self.current_file_parameters[param_name] = Par(fc_parameters[param_name], "")
+                # Create the parameter in domain model
+                par = Par(fc_parameters[param_name], "")
                 self.parameters[param_name] = self.config_step_processor.create_ardupilot_parameter(
-                    param_name, self.current_file_parameters[param_name], self.current_file, fc_parameters
+                    param_name, par, self.current_file, fc_parameters
                 )
+
+                # Track addition
+                if not is_in_original:
+                    self._added_parameters.add(param_name)
+                # If was previously deleted, remove from deleted set
+                self._deleted_parameters.discard(param_name)
+
                 return True
             raise InvalidParameterNameError(_("Parameter name not found in the flight controller."))
 
         if self.filesystem.doc_dict:
             if param_name in self.filesystem.doc_dict:
-                self.current_file_parameters[param_name] = Par(
-                    self.filesystem.param_default_dict.get(param_name, Par(0, "")).value, ""
-                )
+                # Create the parameter in domain model
+                par = Par(self.filesystem.param_default_dict.get(param_name, Par(0, "")).value, "")
                 self.parameters[param_name] = self.config_step_processor.create_ardupilot_parameter(
-                    param_name, self.current_file_parameters[param_name], self.current_file, fc_parameters
+                    param_name, par, self.current_file, fc_parameters
                 )
+
+                # Track addition
+                if not is_in_original:
+                    self._added_parameters.add(param_name)
+                # If was previously deleted, remove from deleted set
+                self._deleted_parameters.discard(param_name)
+
                 return True
             raise InvalidParameterNameError(
                 _("'{param_name}' not found in the apm.pdef.xml file.").format(param_name=param_name)
@@ -1162,25 +1236,6 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
                 _("Can not add parameter when no FC is connected and no apm.pdef.xml file exists.")
             )
         return False
-
-    def sync_parameter_to_filesystem(self, param_name: str) -> None:
-        """
-        Sync an ArduPilotParameter value and change reason back to the filesystem.
-
-        This method extracts the value and change reason from the ArduPilotParameter
-        and writes them back to the filesystem's file_parameters dict.
-
-        Args:
-            param_name: The name of the parameter to sync
-
-        """
-        if param_name in self.parameters:
-            ardupilot_param = self.parameters[param_name]
-            # Extract the current value and change reason from ArduPilotParameter
-            par_value = ardupilot_param.get_new_value()
-            par_comment = ardupilot_param.change_reason
-            # Update the filesystem's file_parameters dict
-            self.current_file_parameters[param_name] = Par(par_value, par_comment)
 
     def get_parameters_as_par_dict(self, param_names: Optional[list[str]] = None) -> ParDict:
         """
@@ -1208,6 +1263,29 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             }
         )
 
+    def has_unsaved_changes(self) -> bool:
+        """
+        Check if any changes have been made that need to be saved.
+
+        This includes:
+        - User edits to parameter values
+        - Derived parameter changes (tracked via is_dirty)
+        - Forced parameter changes (tracked via is_dirty)
+        - Connection renaming changes (tracked via _added_parameters and _deleted_parameters)
+        - Parameter additions
+        - Parameter deletions
+
+        Returns:
+            True if there are unsaved changes, False otherwise
+
+        """
+        # Check for structural changes (additions/deletions, including from renames)
+        if self._added_parameters or self._deleted_parameters:
+            return True
+
+        # Check individual parameter edits (value or comment changes)
+        return any(param.is_dirty for param in self.parameters.values())
+
     def get_last_configuration_step_number(self) -> Optional[int]:
         if self.filesystem.configuration_phases:
             # Get the first two characters of the last configuration step filename
@@ -1234,7 +1312,19 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         self.filesystem.write_last_uploaded_filename(self.current_file)
 
     def export_current_file(self, annotate_doc: bool) -> None:
-        self.filesystem.export_to_param(self.filesystem.file_parameters[self.current_file], self.current_file, annotate_doc)
+        # Convert domain model parameters to Par objects for export
+        export_params = self.get_parameters_as_par_dict()
+
+        # Export to file
+        self.filesystem.export_to_param(export_params, self.current_file, annotate_doc)
+
+        # Update the filesystem's file_parameters to match what was saved
+        self.filesystem.file_parameters[self.current_file] = export_params
+
+        # Note: We don't need to clear tracking sets or dirty flags on domain model parameters
+        # because after export, the user always navigates to a different file, which triggers
+        # repopulate_configuration_step_parameters() that clears tracking sets and rebuilds
+        # self.parameters fresh.
 
     def open_documentation_in_browser(self, filename: str) -> None:
         _blog_text, blog_url = self.get_documentation_text_and_url("blog", filename)

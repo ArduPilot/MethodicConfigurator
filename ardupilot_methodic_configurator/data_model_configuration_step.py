@@ -51,7 +51,14 @@ class ConfigurationStepProcessor:
         self,
         selected_file: str,
         fc_parameters: dict[str, float],
-    ) -> tuple[dict[str, ArduPilotParameter], bool, list[tuple[str, str]], list[tuple[str, str]]]:
+    ) -> tuple[
+        dict[str, ArduPilotParameter],
+        list[tuple[str, str]],
+        list[tuple[str, str]],
+        set[str],
+        list[tuple[str, str]],
+        ParDict,
+    ]:
         """
         Process a configuration step including parameter computation and domain model creation.
 
@@ -62,36 +69,50 @@ class ConfigurationStepProcessor:
         Returns:
             Tuple containing:
             - Dictionary of ArduPilotParameter domain model objects
-            - Boolean indicating if at least one parameter was edited
             - List of (title, message) tuples for UI error feedback
             - List of (title, message) tuples for UI info feedback
+            - Set of parameter names to remove (duplicates from rename operations)
+            - List of (old_name, new_name) pairs to rename
+            - ParDict of derived parameters to apply to domain model
 
         """
-        at_least_one_param_edited = False
         ui_errors: list[tuple[str, str]] = []
         ui_infos: list[tuple[str, str]] = []
+        duplicates_to_remove: set[str] = set()
+        renames_to_apply: list[tuple[str, str]] = []
+        derived_params_to_apply: ParDict = ParDict()
 
         # Process configuration step operations if configuration steps exist
         if self.local_filesystem.configuration_steps and selected_file in self.local_filesystem.configuration_steps:
             variables = self.variables
             variables["fc_parameters"] = fc_parameters
 
-            # Compute derived parameters
+            # Compute derived parameters (does NOT mutate filesystem.file_parameters)
             error_msg = self.local_filesystem.compute_parameters(
                 selected_file, self.local_filesystem.configuration_steps[selected_file], "derived", variables
             )
             if error_msg:
                 ui_errors.append((_("Error in derived parameters"), error_msg))
-            # Merge derived parameter values
-            elif self.local_filesystem.merge_forced_or_derived_parameters(
-                selected_file, self.local_filesystem.derived_parameters, list(fc_parameters.keys())
-            ):
-                at_least_one_param_edited = True
+            # Collect derived parameter values to apply later in domain model
+            elif selected_file in self.local_filesystem.derived_parameters:
+                # Filter derived parameters that exist in FC (if fc_parameters provided)
+                fc_param_names = set(fc_parameters.keys()) if fc_parameters else set()
+                for param_name, param in self.local_filesystem.derived_parameters[selected_file].items():
+                    # Only include if no FC filter OR parameter exists in FC
+                    if not fc_param_names or param_name in fc_param_names:
+                        derived_params_to_apply[param_name] = param
 
-            # Handle connection renaming
-            connection_edited, ui_infos = self._handle_connection_renaming(selected_file, variables)
-            if connection_edited:
-                at_least_one_param_edited = True
+            # Populate new_connection_prefix from rename_connection configuration step
+            if "rename_connection" in self.local_filesystem.configuration_steps.get(selected_file, {}):
+                variables["new_connection_prefix"] = self.local_filesystem.configuration_steps[selected_file][
+                    "rename_connection"
+                ]
+
+            # Calculate connection rename operations (does NOT mutate filesystem.file_parameters)
+            rename_ui_infos, duplicates_to_remove, renames_to_apply = self._handle_connection_renaming(
+                selected_file, variables
+            )
+            ui_infos.extend(rename_ui_infos)
 
             # Check for ExpressLRS and add FLTMODE_CH warning
             if (
@@ -116,33 +137,38 @@ class ConfigurationStepProcessor:
         # Create domain model parameters
         parameters = self._create_domain_model_parameters(selected_file, fc_parameters)
 
-        return parameters, at_least_one_param_edited, ui_errors, ui_infos
+        return parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params_to_apply
 
-    def _handle_connection_renaming(self, selected_file: str, variables: dict) -> tuple[bool, list[tuple[str, str]]]:
+    def _handle_connection_renaming(
+        self, selected_file: str, variables: dict
+    ) -> tuple[list[tuple[str, str]], set[str], list[tuple[str, str]]]:
         """
-        Handle connection renaming operations for the selected file.
+        Calculate connection renaming operations for the selected file.
+
+        This method calculates what renames should happen but does NOT modify
+        filesystem.file_parameters. The operations are returned for the caller
+        to apply to the domain model.
 
         Args:
             selected_file: The name of the selected parameter file
-            variables: Variables dictionary for evaluation
+            variables: Dictionary of variables for parameter evaluation
 
         Returns:
             Tuple containing:
-            - True if parameters were modified, False otherwise
             - List of (title, message) tuples for UI info feedback
+            - Set of parameter names to remove (duplicates)
+            - List of (old_name, new_name) pairs to rename
 
         """
-        if "rename_connection" not in self.local_filesystem.configuration_steps[selected_file]:
-            return False, []
+        new_connection_prefix = variables.get("new_connection_prefix")
+        if not new_connection_prefix:
+            return [], set(), []
 
-        new_connection_prefix = self.local_filesystem.configuration_steps[selected_file]["rename_connection"]
-
-        # Apply renames to the parameters dictionary
-        duplicated_parameters, renamed_pairs = self._apply_connection_renames(
+        # Calculate rename operations WITHOUT mutating file_parameters
+        duplicated_parameters, renamed_pairs = self._calculate_connection_rename_operations(
             self.local_filesystem.file_parameters[selected_file], new_connection_prefix, variables
         )
 
-        at_least_one_param_edited = False
         ui_infos: list[tuple[str, str]] = []
 
         # Handle duplicated parameters
@@ -150,7 +176,6 @@ class ConfigurationStepProcessor:
             logging_info(_("Removing duplicate parameter %s"), old_name)
             info_msg = _("The parameter '{old_name}' was removed due to duplication.")
             ui_infos.append((_("Parameter Removed"), info_msg.format(**locals())))
-            at_least_one_param_edited = True
 
         # Handle renamed parameters
         for old_name, new_name in renamed_pairs:
@@ -160,9 +185,8 @@ class ConfigurationStepProcessor:
                 "to obey the flight controller connection defined in the component editor window."
             )
             ui_infos.append((_("Parameter Renamed"), info_msg.format(**locals())))
-            at_least_one_param_edited = True
 
-        return at_least_one_param_edited, ui_infos
+        return ui_infos, duplicated_parameters, renamed_pairs
 
     def _create_domain_model_parameters(
         self, selected_file: str, fc_parameters: dict[str, float]
@@ -250,21 +274,25 @@ class ConfigurationStepProcessor:
         return renames
 
     @staticmethod
-    def _apply_connection_renames(
+    def _calculate_connection_rename_operations(
         parameters: dict[str, Any], new_connection_prefix: str, variables: Optional[dict[str, Any]] = None
     ) -> tuple[set[str], list[tuple[str, str]]]:
         """
-        Apply connection prefix renames to a parameter dictionary.
+        Calculate connection prefix rename operations without mutating the parameters dictionary.
+
+        This method determines which parameters should be renamed and which are duplicates,
+        but does NOT modify the input dictionary. The caller is responsible for applying
+        the operations to their domain model.
 
         Args:
-            parameters: Dictionary of parameter objects to rename, it will modify it
+            parameters: Dictionary of parameter objects to analyze (NOT modified)
             new_connection_prefix: The new prefix to apply
             variables: Optional dictionary of variables for evaluation
 
         Returns:
             Tuple containing:
-            - Set of duplicated parameter names that got removed
-            - List of (old_name, new_name) pairs that were renamed
+            - Set of parameter names that should be removed (duplicates)
+            - List of (old_name, new_name) pairs that should be renamed
 
         """
         if variables:
@@ -274,18 +302,17 @@ class ConfigurationStepProcessor:
         # Generate the rename mapping
         renames = ConfigurationStepProcessor._generate_connection_renames(list(parameters.keys()), new_connection_prefix)
 
-        # Track unique new names and actual renames performed
+        # Track unique new names and actual renames to perform
         new_names = set()
         duplicates = set()
         renamed_pairs = []
         for old_name, new_name in renames.items():
             if new_name in new_names:
-                parameters.pop(old_name)
+                # This would be a duplicate - mark for removal
                 duplicates.add(old_name)
             else:
                 new_names.add(new_name)
                 if new_name != old_name:
-                    parameters[new_name] = parameters.pop(old_name)
                     renamed_pairs.append((old_name, new_name))
 
         return duplicates, renamed_pairs
