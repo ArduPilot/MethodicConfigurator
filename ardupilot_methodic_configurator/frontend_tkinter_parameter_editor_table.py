@@ -341,7 +341,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         new_value_str = combobox_widget.get_selected_key() or ""
         try:
             # Pass the string to the domain model; it will validate and raise on error
-            new_value = param.set_new_value(new_value_str)
+            param.set_new_value(new_value_str)
         except ParameterUnchangedError:
             # valid but no change; just refresh style
             pass
@@ -350,10 +350,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             logging_exception(msg, exc)
             messagebox.showerror(_("Error"), str(exc))
         else:
-            # Success: mark edited and update the stored file parameter value
+            # Success: mark edited and sync the ArduPilotParameter back to filesystem
             show_tooltip(change_reason_widget, param.tooltip_change_reason)
             self.at_least_one_param_edited = True
-            self.configuration_manager.current_file_parameters[param.name].value = new_value
+            self.configuration_manager.sync_parameter_to_filesystem(param.name)
             value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
         combobox_widget.configure(
@@ -469,18 +469,17 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if hasattr(event, "type") and event.type == tk.EventType.KeyPress:  # KeyPress event (Return/Enter)
                 self._last_return_values[event.widget] = new_value
 
-            new_value_result = None
             valid = True
 
             try:
                 # first attempt: let the model validate the provided string
                 # (it will convert/validate as required)
-                new_value_result = param.set_new_value(new_value)
+                param.set_new_value(new_value)
             except ParameterOutOfRangeError as oor:  # user-visible warning from model
                 # Ask the user if they want to accept the out-of-range value
                 if messagebox.askyesno(_("Out-of-range value"), str(oor) + _(" Use out-of-range value?"), icon="warning"):
                     # Retry accepting the value while telling the model to ignore range checks
-                    new_value_result = param.set_new_value(new_value, ignore_out_of_range=True)
+                    param.set_new_value(new_value, ignore_out_of_range=True)
                 else:
                     valid = False
             except ParameterUnchangedError:
@@ -491,13 +490,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 messagebox.showerror(_("Invalid value"), str(exc))
                 valid = False
 
-            if valid and new_value_result is not None:
+            if valid:
                 logging_debug(_("Parameter %s changed, will later ask if change(s) should be saved to file."), param.name)
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
                 self.at_least_one_param_edited = True
-                # Update the corresponding file parameter with the model-returned value
-                # (model returns the canonical numeric/string representation)
-                self.configuration_manager.current_file_parameters[param.name].value = new_value_result
+                # Sync the ArduPilotParameter back to filesystem
+                self.configuration_manager.sync_parameter_to_filesystem(param.name)
                 value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update the displayed value in the Entry or Combobox
@@ -547,18 +545,15 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 )
                 return
 
-            new_value_result = None
             valid = True
             # Update the parameter value and entry text
             try:
-                new_value_result = param.set_new_value(BitmaskHelper.get_value_from_keys(checked_keys))
+                param.set_new_value(BitmaskHelper.get_value_from_keys(checked_keys))
             except ParameterOutOfRangeError as oor:  # user-visible warning from model
                 # Ask the user if they want to accept the out-of-range value
                 if messagebox.askyesno(_("Unknown bit set"), str(oor) + _(" Use out-of-range value?"), icon="warning"):
                     # Retry accepting the value while telling the model to ignore range checks
-                    new_value_result = param.set_new_value(
-                        BitmaskHelper.get_value_from_keys(checked_keys), ignore_out_of_range=True
-                    )
+                    param.set_new_value(BitmaskHelper.get_value_from_keys(checked_keys), ignore_out_of_range=True)
                 else:
                     valid = False
             except ParameterUnchangedError:
@@ -569,11 +564,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 messagebox.showerror(_("Error"), str(exc))
                 valid = False
 
-            if valid and new_value_result is not None:
+            if valid:
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
                 self.at_least_one_param_edited = True
-                # Update the corresponding file parameter
-                self.configuration_manager.current_file_parameters[param.name].value = new_value_result
+                # Sync the ArduPilotParameter back to filesystem
+                self.configuration_manager.sync_parameter_to_filesystem(param.name)
                 value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update new_value_entry with the new decimal value
@@ -718,8 +713,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                         new_comment,
                     )
                     self.at_least_one_param_edited = True
-                    # Update the corresponding file parameter comment
-                    self.configuration_manager.current_file_parameters[param.name].comment = new_comment
+                    # Sync the ArduPilotParameter back to filesystem
+                    self.configuration_manager.sync_parameter_to_filesystem(param.name)
 
             change_reason_entry.bind("<FocusOut>", _on_change_reason_change)
             change_reason_entry.bind("<Return>", _on_change_reason_change)
@@ -804,16 +799,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         """Get the parameters selected for upload."""
         # Check if we should show upload column based on GUI complexity
         if not self._should_show_upload_column(gui_complexity):
-            # all parameters are selected for upload in simple mode
-            return self.configuration_manager.current_file_parameters
+            # All parameters are selected for upload in simple mode
+            return self.configuration_manager.get_parameters_as_par_dict()
 
-        return ParDict(
-            {
-                param_name: self.configuration_manager.current_file_parameters[param_name]
-                for param_name, checkbutton_state in self.upload_checkbutton_var.items()
-                if checkbutton_state.get()
-            }
-        )
+        # Get only selected parameters
+        selected_names = [name for name, checkbutton_state in self.upload_checkbutton_var.items() if checkbutton_state.get()]
+        return self.configuration_manager.get_parameters_as_par_dict(selected_names)
 
     def get_at_least_one_param_edited(self) -> bool:
         """Get whether at least one parameter has been edited."""

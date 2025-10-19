@@ -259,6 +259,10 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         """Return the change reason string for this parameter."""
         return self._change_reason
 
+    def get_new_value(self) -> float:
+        """Return the new value for this parameter (to be saved to file or uploaded to FC)."""
+        return self._new_value
+
     def get_selected_value_from_dict(self) -> Optional[str]:
         """Return the string representation from the values dictionary for the new value."""
         if self.is_in_values_dict:
