@@ -434,6 +434,50 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         self._change_reason = change_reason
         return True
 
+    def set_forced_or_derived_value(self, value: float) -> None:
+        """
+        Set the value for a forced or derived parameter.
+
+        This method bypasses normal validation and is intended for use only
+        when applying forced or derived parameter values after parameter creation.
+
+        Args:
+            value: The new value to set
+
+        Raises:
+            ValueError: If this parameter is not forced or derived
+
+        """
+        if not (self._is_forced or self._is_derived):
+            raise ValueError(_("This method is only for forced or derived parameters."))
+
+        if self.is_readonly:
+            raise ValueError(_("Readonly parameters cannot be forced or derived."))
+
+        self._new_value = value
+
+    def set_forced_or_derived_change_reason(self, change_reason: str) -> None:
+        """
+        Set the change reason for a forced or derived parameter.
+
+        This method bypasses normal validation and is intended for use only
+        when applying forced or derived parameter change reasons after parameter creation.
+
+        Args:
+            change_reason: The new change reason to set
+
+        Raises:
+            ValueError: If this parameter is not forced or derived
+
+        """
+        if not (self._is_forced or self._is_derived):
+            raise ValueError(_("This method is only for forced or derived parameters."))
+
+        if self.is_readonly:
+            raise ValueError(_("Readonly parameters cannot be forced or derived."))
+
+        self._change_reason = change_reason
+
 
 class BitmaskHelper:
     """Helper class for working with ArduPilot parameter bitmasks."""

@@ -61,8 +61,8 @@ def mock_local_filesystem() -> MagicMock:
         "01_first_step.param": {
             "PARAM_1": Par(1.0, "First parameter comment"),
             "PARAM_2": Par(2.5, "Second parameter comment"),
-            "FORCED_PARAM": Par(5.0, "This is forced"),
-            "DERIVED_PARAM": Par(800.0, "This is derived"),
+            "FORCED_PARAM": Par(5.0, "Forced value - cannot be changed"),
+            "DERIVED_PARAM": Par(800.0, "Derived from battery capacity"),
             "BATT_CAPACITY": Par(1000.0, "Battery capacity"),
             "RC1_MIN": Par(1000.0, "RC channel 1 minimum"),
             "RC1_MAX": Par(2000.0, "RC channel 1 maximum"),
@@ -251,9 +251,7 @@ class TestParameterAdditionAndDeletion:
         config_manager.repopulate_configuration_step_parameters()
 
         # Simulate that the file was just loaded (no unsaved changes yet)
-        # Clear any dirty flags that repopulate may have set
-        for param in config_manager.parameters.values():
-            param.mark_as_saved()
+        # Repopulate creates fresh parameters that are not dirty
 
         # Initially no changes
         assert not config_manager.has_unsaved_changes()

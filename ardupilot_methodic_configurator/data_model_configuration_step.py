@@ -47,7 +47,7 @@ class ConfigurationStepProcessor:
         # These variables are used by the forced_parameters and derived_parameters in configuration_steps_*.json files
         self.variables = self.local_filesystem.get_eval_variables()
 
-    def process_configuration_step(
+    def process_configuration_step(  # pylint: disable=too-many-locals
         self,
         selected_file: str,
         fc_parameters: dict[str, float],
