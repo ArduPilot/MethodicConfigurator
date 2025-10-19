@@ -156,8 +156,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def __init__(self, configuration_manager: ConfigurationManager) -> None:
         super().__init__()
         self.configuration_manager = configuration_manager
-        # Maintain backward compatibility with existing code
-        self.local_filesystem = configuration_manager.filesystem
 
         self.at_least_one_changed_parameter_written = False
         self.file_selection_combobox: AutoResizeCombobox
@@ -226,7 +224,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         directory_selection_frame = VehicleDirectorySelectionWidgets(
             self,
             config_subframe,
-            self.local_filesystem.vehicle_dir,
+            self.configuration_manager.get_vehicle_directory(),
             destroy_parent_on_open=False,
         )
         if self.gui_complexity != "simple":
@@ -245,7 +243,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Create Combobox for intermediate parameter file selection
         self.file_selection_combobox = AutoResizeCombobox(
             file_selection_frame,
-            list(self.local_filesystem.file_parameters.keys()),
+            self.configuration_manager.parameter_files(),
             self.configuration_manager.current_file,
             _(
                 "Select the intermediate parameter file from the list of available"
@@ -349,7 +347,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         annotate_params_checkbox = ttk.Checkbutton(
             checkboxes_frame,
             text=_("Annotate docs into .param files"),
-            state="normal" if self.local_filesystem.doc_dict else "disabled",
+            state="normal" if self.configuration_manager.parameter_documentation_available() else "disabled",
             variable=self.annotate_params_into_files,
             command=lambda: ProgramSettings.set_setting(
                 "annotate_docs_into_param_files", self.annotate_params_into_files.get()
@@ -414,7 +412,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             state=(
                 "normal"
                 if self.gui_complexity != "simple"
-                or self.configuration_manager.is_configuration_step_optional(self.configuration_manager.current_file)
+                or self.configuration_manager.is_configuration_step_optional()
                 or not self.configuration_manager.is_fc_connected
                 else "disabled"
             )
@@ -668,7 +666,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self._update_skip_button_state()
 
     def _update_progress_bar_from_file(self, selected_file: str) -> None:
-        if self.local_filesystem.configuration_phases:
+        if self.configuration_manager.configuration_phases():
             try:
                 step_nr = int(selected_file[:2])
                 self.stage_progress_bar.update_progress(step_nr)
@@ -771,7 +769,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
             self.configuration_manager.export_fc_params_missing_or_different()
 
-        self.local_filesystem.write_last_uploaded_filename(self.configuration_manager.current_file)
+        self.configuration_manager.write_current_file()
 
     def on_download_last_flight_log_click(self) -> None:
         """Handle the download last flight log button click."""
@@ -807,7 +805,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             skip_button_state = (
                 "normal"
                 if self.gui_complexity != "simple"
-                or self.configuration_manager.is_configuration_step_optional(self.configuration_manager.current_file)
+                or self.configuration_manager.is_configuration_step_optional()
                 or not self.configuration_manager.is_fc_connected
                 else "disabled"
             )
@@ -817,7 +815,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.write_changes_to_intermediate_parameter_file()
 
         # Use ConfigurationManager to get the next non-optional file
-        next_file = self.configuration_manager.get_next_non_optional_file(self.configuration_manager.current_file)
+        next_file = self.configuration_manager.get_next_non_optional_file()
 
         if next_file is None:
             # No more files to process, write summary and close
@@ -847,11 +845,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 current_filename=self.configuration_manager.current_file
             )
             if messagebox.askyesno(_("One or more parameters have been edited"), msg.format(**locals())):
-                self.local_filesystem.export_to_param(
-                    self.local_filesystem.file_parameters[self.configuration_manager.current_file],
-                    self.configuration_manager.current_file,
-                    annotate_doc=self.annotate_params_into_files.get(),
-                )
+                self.configuration_manager.export_current_file(annotate_doc=self.annotate_params_into_files.get())
         self.parameter_editor_table.set_at_least_one_param_edited(False)
         self.last_time_asked_to_save = time.time()
 

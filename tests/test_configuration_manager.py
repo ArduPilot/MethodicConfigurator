@@ -2129,3 +2129,184 @@ class TestResetAndReconnectWorkflow:
         # Verify no user interaction occurred
         ask_confirmation_mock.assert_not_called()
         show_error_mock.assert_not_called()
+
+
+class TestConfigurationManagerFrontendAPI:
+    """Test the frontend API methods that were refactored from parameter editor."""
+
+    def test_user_can_access_vehicle_directory_path(self, configuration_manager) -> None:
+        """
+        User can access the vehicle directory path through the configuration manager.
+
+        GIVEN: A configuration manager with a filesystem
+        WHEN: The user requests the vehicle directory
+        THEN: The correct directory path is returned
+        """
+        # Arrange: Set up expected directory path
+        expected_path = "/test/vehicle/dir"
+        configuration_manager.filesystem.vehicle_dir = expected_path
+
+        # Act: Get vehicle directory
+        result = configuration_manager.get_vehicle_directory()
+
+        # Assert: Correct path returned
+        assert result == expected_path
+
+    def test_user_can_get_list_of_available_parameter_files(self, configuration_manager) -> None:
+        """
+        User can get a list of all available parameter files.
+
+        GIVEN: A configuration manager with parameter files loaded
+        WHEN: The user requests the list of parameter files
+        THEN: A list of all parameter file names is returned
+        """
+        # Arrange: Set up parameter files in filesystem
+        expected_files = ["01_first.param", "02_second.param", "complete.param"]
+        configuration_manager.filesystem.file_parameters = {file: {} for file in expected_files}
+
+        # Act: Get parameter files
+        result = configuration_manager.parameter_files()
+
+        # Assert: All files returned
+        assert result == expected_files
+
+    def test_user_can_check_if_parameter_documentation_is_available(self, configuration_manager) -> None:
+        """
+        User can check if parameter documentation is available.
+
+        GIVEN: A configuration manager with documentation loaded
+        WHEN: The user checks if documentation is available
+        THEN: True is returned when documentation exists, False when it doesn't
+        """
+        # Test with documentation available
+        configuration_manager.filesystem.doc_dict = {"PARAM1": {"description": "Test param"}}
+        assert configuration_manager.parameter_documentation_available() is True
+
+        # Test without documentation
+        configuration_manager.filesystem.doc_dict = {}
+        assert configuration_manager.parameter_documentation_available() is False
+
+        # Test with None documentation
+        configuration_manager.filesystem.doc_dict = None
+        assert configuration_manager.parameter_documentation_available() is False
+
+    def test_user_can_access_configuration_phases(self, configuration_manager) -> None:
+        """
+        User can access the configuration phases information.
+
+        GIVEN: A configuration manager with configuration phases
+        WHEN: The user requests configuration phases
+        THEN: The phases dictionary is returned
+        """
+        # Arrange: Set up configuration phases
+        expected_phases = {"phase1": {"start": 1, "end": 10, "weight": 1.0}, "phase2": {"start": 11, "end": 20, "weight": 2.0}}
+        configuration_manager.filesystem.configuration_phases = expected_phases
+
+        # Act: Get configuration phases
+        result = configuration_manager.configuration_phases()
+
+        # Assert: Correct phases returned
+        assert result == expected_phases
+
+    def test_user_can_write_current_file_marker(self, configuration_manager) -> None:
+        """
+        User can write a marker indicating the current file being processed.
+
+        GIVEN: A configuration manager with a current file set
+        WHEN: The user writes the current file marker
+        THEN: The filesystem is instructed to write the last uploaded filename
+        """
+        # Arrange: Set current file
+        configuration_manager.current_file = "05_current.param"
+
+        # Act: Write current file marker
+        configuration_manager.write_current_file()
+
+        # Assert: Filesystem method called with correct file
+        configuration_manager.filesystem.write_last_uploaded_filename.assert_called_once_with("05_current.param")
+
+    def test_user_can_export_current_parameter_file(self, configuration_manager) -> None:
+        """
+        User can export the current parameter file with or without documentation.
+
+        GIVEN: A configuration manager with current file parameters
+        WHEN: The user exports the current file
+        THEN: The filesystem exports the parameters with the specified documentation setting
+        """
+        # Arrange: Set up current file and parameters
+        configuration_manager.current_file = "test_file.param"
+        test_params = {"PARAM1": Par(1.0), "PARAM2": Par(2.0)}
+        configuration_manager.filesystem.file_parameters = {"test_file.param": test_params}
+
+        # Act: Export current file with documentation
+        configuration_manager.export_current_file(annotate_doc=True)
+
+        # Assert: Filesystem export called correctly
+        configuration_manager.filesystem.export_to_param.assert_called_once_with(  # type: ignore[call-arg]
+            test_params,
+            "test_file.param",
+            True,  # noqa: FBT003
+        )
+
+    def test_user_can_get_documentation_text_and_url_for_current_file(self, configuration_manager) -> None:
+        """
+        User can get documentation text and URL for the current file.
+
+        GIVEN: A configuration manager with current file set
+        WHEN: The user requests documentation for a specific type
+        THEN: The documentation text and URL are returned from the filesystem
+        """
+        # Arrange: Set current file and mock filesystem response
+        configuration_manager.current_file = "current_file.param"
+        configuration_manager.filesystem.get_documentation_text_and_url.side_effect = None
+        configuration_manager.filesystem.get_documentation_text_and_url.return_value = (
+            "Test documentation",
+            "http://example.com/docs",
+        )
+
+        # Act: Get documentation
+        result = configuration_manager.get_documentation_text_and_url("blog")
+
+        # Assert: Correct documentation returned and filesystem called with current file
+        assert result == ("Test documentation", "http://example.com/docs")
+        configuration_manager.filesystem.get_documentation_text_and_url.assert_called_once_with("current_file.param", "blog")
+
+    def test_user_gets_empty_list_when_no_parameter_files_exist(self, configuration_manager) -> None:
+        """
+        User gets an empty list when no parameter files exist.
+
+        GIVEN: A configuration manager with no parameter files
+        WHEN: The user requests the list of parameter files
+        THEN: An empty list is returned
+        """
+        # Arrange: No parameter files
+        configuration_manager.filesystem.file_parameters = {}
+
+        # Act: Get parameter files
+        result = configuration_manager.parameter_files()
+
+        # Assert: Empty list returned
+        assert result == []
+
+    def test_user_can_export_current_file_without_documentation(self, configuration_manager) -> None:
+        """
+        User can export the current parameter file without documentation annotations.
+
+        GIVEN: A configuration manager with current file parameters
+        WHEN: The user exports the current file without documentation
+        THEN: The filesystem exports the parameters without documentation
+        """
+        # Arrange: Set up current file and parameters
+        configuration_manager.current_file = "test_file.param"
+        test_params = {"PARAM1": Par(1.0)}
+        configuration_manager.filesystem.file_parameters = {"test_file.param": test_params}
+
+        # Act: Export current file without documentation
+        configuration_manager.export_current_file(annotate_doc=False)
+
+        # Assert: Filesystem export called with annotate_doc=False
+        configuration_manager.filesystem.export_to_param.assert_called_once_with(  # type: ignore[call-arg]
+            test_params,
+            "test_file.param",
+            False,  # noqa: FBT003
+        )
