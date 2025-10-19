@@ -1089,13 +1089,27 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             self.config_step_processor.process_configuration_step(self.current_file, self.fc_parameters)
         )
 
-        # Apply derived parameters to domain model
+        # Apply derived parameters to domain model using specialized setters
         for param_name, derived_par in derived_params.items():
             if param_name in self.parameters:
-                # Update existing parameter with derived value
-                self.parameters[param_name].set_new_value(str(derived_par.value))
-                if derived_par.comment:
-                    self.parameters[param_name].set_change_reason(derived_par.comment)
+                # Update existing forced/derived parameter with new value using dedicated setter
+                # The setter methods will raise ValueError for invalid parameters (not forced/derived, readonly, etc.)
+                try:
+                    self.parameters[param_name].set_forced_or_derived_value(float(derived_par.value))
+                    if derived_par.comment:
+                        self.parameters[param_name].set_forced_or_derived_change_reason(derived_par.comment)
+                except (ValueError, TypeError) as e:
+                    logging_error(
+                        _("Failed to apply derived parameter %s: %s"),
+                        param_name,
+                        str(e),
+                    )
+            else:
+                # Parameter in derived_params but not in self.parameters - this is unexpected
+                logging_error(
+                    _("Derived parameter %s not found in current parameters, skipping"),
+                    param_name,
+                )
 
         # Apply rename operations to domain model using add/delete tracking
         for old_name in duplicates_to_remove:

@@ -89,12 +89,12 @@ class TestParameterEditorWindow:
         self, mock_exit: MagicMock, parameter_editor, mock_local_filesystem
     ) -> None:
         """Test that nothing happens when there is no auto_changed_by value."""
-        mock_local_filesystem.auto_changed_by.return_value = None
+        # Mock should_copy_fc_values_to_file to return False (no copy needed)
+        parameter_editor.configuration_manager.should_copy_fc_values_to_file = MagicMock(return_value=(False, None, None))
 
         parameter_editor._ParameterEditorWindow__should_copy_fc_values_to_file("test_file.param")  # pylint: disable=protected-access
 
-        mock_local_filesystem.auto_changed_by.assert_called_once_with("test_file.param")
-        mock_local_filesystem.copy_fc_values_to_file.assert_not_called()
+        parameter_editor.configuration_manager.should_copy_fc_values_to_file.assert_called_once_with("test_file.param")
         mock_exit.assert_not_called()
 
     @patch("tkinter.Toplevel")
@@ -114,7 +114,12 @@ class TestParameterEditorWindow:
         root,
     ) -> None:
         """Test handling 'Yes' response in the dialog."""
-        mock_local_filesystem.auto_changed_by.return_value = "External Tool"
+        # Mock should_copy_fc_values_to_file to return True with relevant params
+        relevant_fc_params = {"PARAM1": 1.0, "PARAM2": 2.0}
+        parameter_editor.configuration_manager.should_copy_fc_values_to_file = MagicMock(
+            return_value=(True, relevant_fc_params, "External Tool")
+        )
+        parameter_editor.configuration_manager.copy_fc_values_to_file = MagicMock(return_value=True)
 
         # Setup the mock toplevel to better simulate dialog behavior
         mock_dialog = MagicMock()
@@ -136,8 +141,8 @@ class TestParameterEditorWindow:
 
         parameter_editor._ParameterEditorWindow__should_copy_fc_values_to_file("test_file.param")  # pylint: disable=protected-access
 
-        mock_local_filesystem.auto_changed_by.assert_called_once_with("test_file.param")
-        mock_local_filesystem.copy_fc_values_to_file.assert_called_once()
+        parameter_editor.configuration_manager.should_copy_fc_values_to_file.assert_called_once_with("test_file.param")
+        parameter_editor.configuration_manager.copy_fc_values_to_file.assert_called_once()
         mock_exit.assert_not_called()
 
     @patch("tkinter.Toplevel")
@@ -157,7 +162,12 @@ class TestParameterEditorWindow:
         root,
     ) -> None:
         """Test handling 'No' response in the dialog."""
-        mock_local_filesystem.auto_changed_by.return_value = "External Tool"
+        # Mock should_copy_fc_values_to_file to return True with relevant params
+        relevant_fc_params = {"PARAM1": 1.0, "PARAM2": 2.0}
+        parameter_editor.configuration_manager.should_copy_fc_values_to_file = MagicMock(
+            return_value=(True, relevant_fc_params, "External Tool")
+        )
+        parameter_editor.configuration_manager.copy_fc_values_to_file = MagicMock(return_value=True)
 
         # Setup the mock toplevel to better simulate dialog behavior
         mock_dialog = MagicMock()
@@ -179,8 +189,8 @@ class TestParameterEditorWindow:
 
         parameter_editor._ParameterEditorWindow__should_copy_fc_values_to_file("test_file.param")  # pylint: disable=protected-access
 
-        mock_local_filesystem.auto_changed_by.assert_called_once_with("test_file.param")
-        mock_local_filesystem.copy_fc_values_to_file.assert_not_called()
+        parameter_editor.configuration_manager.should_copy_fc_values_to_file.assert_called_once_with("test_file.param")
+        parameter_editor.configuration_manager.copy_fc_values_to_file.assert_not_called()
         mock_exit.assert_not_called()
 
     @patch("tkinter.Toplevel")
@@ -200,7 +210,12 @@ class TestParameterEditorWindow:
         root,
     ) -> None:
         """Test handling 'Close' response in the dialog."""
-        mock_local_filesystem.auto_changed_by.return_value = "External Tool"
+        # Mock should_copy_fc_values_to_file to return True with relevant params
+        relevant_fc_params = {"PARAM1": 1.0, "PARAM2": 2.0}
+        parameter_editor.configuration_manager.should_copy_fc_values_to_file = MagicMock(
+            return_value=(True, relevant_fc_params, "External Tool")
+        )
+        parameter_editor.configuration_manager.copy_fc_values_to_file = MagicMock(return_value=True)
 
         # Setup the mock toplevel to better simulate dialog behavior
         mock_dialog = MagicMock()
@@ -222,8 +237,8 @@ class TestParameterEditorWindow:
 
         parameter_editor._ParameterEditorWindow__should_copy_fc_values_to_file("test_file.param")  # pylint: disable=protected-access
 
-        mock_local_filesystem.auto_changed_by.assert_called_once_with("test_file.param")
-        mock_local_filesystem.copy_fc_values_to_file.assert_not_called()
+        parameter_editor.configuration_manager.should_copy_fc_values_to_file.assert_called_once_with("test_file.param")
+        parameter_editor.configuration_manager.copy_fc_values_to_file.assert_not_called()
         mock_exit.assert_called_once_with(0)
 
     @patch("tkinter.Toplevel")
@@ -241,7 +256,11 @@ class TestParameterEditorWindow:
         root,
     ) -> None:
         """Test the creation of the dialog with its components."""
-        mock_local_filesystem.auto_changed_by.return_value = "External Tool"
+        # Mock should_copy_fc_values_to_file to return True with relevant params
+        relevant_fc_params = {"PARAM1": 1.0, "PARAM2": 2.0}
+        parameter_editor.configuration_manager.should_copy_fc_values_to_file = MagicMock(
+            return_value=(True, relevant_fc_params, "External Tool")
+        )
 
         # Setup the mock toplevel to better simulate dialog behavior
         mock_dialog = MagicMock()

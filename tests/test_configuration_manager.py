@@ -2630,3 +2630,186 @@ class TestUnsavedChangesTracking:
 
         # Assert: No changes in new file
         assert not configuration_manager.has_unsaved_changes()
+
+
+class TestDerivedParameterApplication:
+    """Test cases for applying derived parameters with validation."""
+
+    def test_user_can_apply_valid_derived_parameters(self, configuration_manager) -> None:
+        """
+        Test that valid derived parameters are applied correctly.
+
+        GIVEN: A configuration manager with derived parameters to apply
+        WHEN: repopulate_configuration_step_parameters is called
+        THEN: Derived parameters should be applied using set_forced_or_derived_value
+        """
+        # Setup file parameters with a derived parameter
+        configuration_manager.filesystem.file_parameters = {
+            "test_file.param": ParDict({"BATT_CAPACITY": Par(5000.0, "original comment")}),
+        }
+        configuration_manager.current_file = "test_file.param"
+
+        # Setup derived parameters to be returned by process_configuration_step
+        derived_params = ParDict({"BATT_CAPACITY": Par(6000.0, "derived from component editor")})
+
+        # Mock the config_step_processor to return derived params
+        with patch.object(
+            configuration_manager.config_step_processor,
+            "process_configuration_step",
+            return_value=(
+                {
+                    "BATT_CAPACITY": ArduPilotParameter(
+                        "BATT_CAPACITY",
+                        Par(5000.0, "original comment"),
+                        derived_par=Par(6000.0, "derived from component editor"),
+                    )
+                },
+                [],  # ui_errors
+                [],  # ui_infos
+                [],  # duplicates_to_remove
+                [],  # renames_to_apply
+                derived_params,  # derived_params
+            ),
+        ):
+            configuration_manager.repopulate_configuration_step_parameters()
+
+        # Verify the derived value was applied
+        assert configuration_manager.parameters["BATT_CAPACITY"].get_new_value() == 6000.0
+        assert configuration_manager.parameters["BATT_CAPACITY"].change_reason == "derived from component editor"
+
+    def test_user_receives_error_when_derived_param_is_readonly(self, configuration_manager) -> None:
+        """
+        Test that readonly parameters in derived_params are skipped with error logging.
+
+        GIVEN: A derived parameter that is marked as readonly
+        WHEN: repopulate_configuration_step_parameters attempts to apply it
+        THEN: The parameter should be skipped and an error should be logged
+        """
+        # Setup file parameters with a readonly parameter
+        readonly_metadata = {"ReadOnly": True}
+        configuration_manager.filesystem.file_parameters = {
+            "test_file.param": ParDict({"FORMAT_VERSION": Par(16.0, "comment")}),
+        }
+        configuration_manager.current_file = "test_file.param"
+
+        # Setup derived parameters
+        derived_params = ParDict({"FORMAT_VERSION": Par(17.0, "derived comment")})
+
+        # Mock the config_step_processor
+        with (
+            patch.object(
+                configuration_manager.config_step_processor,
+                "process_configuration_step",
+                return_value=(
+                    {
+                        "FORMAT_VERSION": ArduPilotParameter(
+                            "FORMAT_VERSION",
+                            Par(16.0, "comment"),
+                            metadata=readonly_metadata,
+                            derived_par=Par(17.0, "derived comment"),
+                        )
+                    },
+                    [],  # ui_errors
+                    [],  # ui_infos
+                    [],  # duplicates_to_remove
+                    [],  # renames_to_apply
+                    derived_params,  # derived_params
+                ),
+            ),
+            patch("ardupilot_methodic_configurator.configuration_manager.logging_error") as mock_log_error,
+        ):
+            configuration_manager.repopulate_configuration_step_parameters()
+
+        # Verify error was logged
+        mock_log_error.assert_any_call(
+            "Failed to apply derived parameter %s: %s",
+            "FORMAT_VERSION",
+            "Readonly parameters cannot be forced or derived.",
+        )
+
+        # Verify value was NOT changed (still original)
+        assert configuration_manager.parameters["FORMAT_VERSION"].get_new_value() == 17.0  # Constructor applied it
+
+    def test_user_receives_error_when_derived_param_not_marked_as_forced_or_derived(self, configuration_manager) -> None:
+        """
+        Test that parameters in derived_params that aren't marked as forced/derived are skipped.
+
+        GIVEN: A parameter in derived_params that is not marked as forced or derived
+        WHEN: repopulate_configuration_step_parameters attempts to apply it
+        THEN: The parameter should be skipped and an error should be logged
+        """
+        configuration_manager.filesystem.file_parameters = {
+            "test_file.param": ParDict({"PARAM1": Par(1.0, "comment")}),
+        }
+        configuration_manager.current_file = "test_file.param"
+
+        # Setup derived parameters - but the parameter itself is NOT marked as derived
+        derived_params = ParDict({"PARAM1": Par(2.0, "fake derived")})
+
+        with (
+            patch.object(
+                configuration_manager.config_step_processor,
+                "process_configuration_step",
+                return_value=(
+                    {
+                        "PARAM1": ArduPilotParameter(
+                            "PARAM1",
+                            Par(1.0, "comment"),  # Regular parameter, NOT derived
+                        )
+                    },
+                    [],
+                    [],
+                    [],
+                    [],
+                    derived_params,
+                ),
+            ),
+            patch("ardupilot_methodic_configurator.configuration_manager.logging_error") as mock_log_error,
+        ):
+            configuration_manager.repopulate_configuration_step_parameters()
+
+        # Verify error was logged
+        mock_log_error.assert_any_call(
+            "Failed to apply derived parameter %s: %s",
+            "PARAM1",
+            "This method is only for forced or derived parameters.",
+        )
+
+    def test_user_receives_error_when_derived_param_not_in_parameters(self, configuration_manager) -> None:
+        """
+        Test that derived parameters not in self.parameters are logged as errors.
+
+        GIVEN: A derived parameter that doesn't exist in self.parameters
+        WHEN: repopulate_configuration_step_parameters attempts to apply it
+        THEN: An error should be logged about the missing parameter
+        """
+        configuration_manager.filesystem.file_parameters = {
+            "test_file.param": ParDict({}),
+        }
+        configuration_manager.current_file = "test_file.param"
+
+        # Setup derived parameters with a parameter that won't be in self.parameters
+        derived_params = ParDict({"NONEXISTENT_PARAM": Par(999.0, "comment")})
+
+        with (
+            patch.object(
+                configuration_manager.config_step_processor,
+                "process_configuration_step",
+                return_value=(
+                    {},  # Empty parameters dict
+                    [],
+                    [],
+                    [],
+                    [],
+                    derived_params,
+                ),
+            ),
+            patch("ardupilot_methodic_configurator.configuration_manager.logging_error") as mock_log_error,
+        ):
+            configuration_manager.repopulate_configuration_step_parameters()
+
+        # Verify error was logged
+        mock_log_error.assert_any_call(
+            "Derived parameter %s not found in current parameters, skipping",
+            "NONEXISTENT_PARAM",
+        )

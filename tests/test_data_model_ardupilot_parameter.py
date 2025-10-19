@@ -59,10 +59,14 @@ def param_fixture() -> dict[str, Any]:  # pylint: disable=too-many-locals
     full_param = ArduPilotParameter(param_name, par_obj, metadata, default_par, fc_value)
 
     # Forced parameter
-    forced_param = ArduPilotParameter(param_name, par_obj, metadata, default_par, fc_value, forced_par=Par(16.0, ""))
+    forced_param = ArduPilotParameter(
+        param_name, par_obj, metadata, default_par, fc_value, forced_par=Par(param_value, param_comment)
+    )
 
     # Derived parameter
-    derived_param = ArduPilotParameter(param_name, par_obj, metadata, default_par, fc_value, derived_par=Par(17.0, ""))
+    derived_param = ArduPilotParameter(
+        param_name, par_obj, metadata, default_par, fc_value, derived_par=Par(param_value, param_comment)
+    )
 
     # Readonly parameter
     readonly_metadata = metadata.copy()
@@ -93,7 +97,14 @@ def param_fixture() -> dict[str, Any]:  # pylint: disable=too-many-locals
 
 
 def test_basic_properties(param_fixture) -> None:
-    """Test that basic properties are set correctly."""
+    """
+    Parameter stores and retrieves basic attributes correctly.
+
+    GIVEN: A parameter is created with name, value, comment, default, and FC value
+    WHEN: The parameter attributes are accessed
+    THEN: All attributes should match the provided values
+    """
+    # Assert: All basic properties are correctly stored
     assert param_fixture["full_param"].name == param_fixture["param_name"]
     assert param_fixture["full_param"]._new_value == param_fixture["param_value"]
     assert param_fixture["full_param"].change_reason == param_fixture["param_comment"]
@@ -104,26 +115,45 @@ def test_basic_properties(param_fixture) -> None:
 
 
 def test_parameter_type_properties(param_fixture) -> None:
-    """Test properties that identify parameter types."""
+    """
+    Parameter correctly identifies its type based on metadata.
+
+    GIVEN: Parameters are created with different metadata configurations
+    WHEN: Type properties are checked (readonly, calibration, bitmask)
+    THEN: Each parameter should correctly identify its type
+    """
+    # Assert: Readonly parameter is identified correctly
     assert param_fixture["readonly_param"].is_readonly
     assert not param_fixture["full_param"].is_readonly
 
+    # Assert: Calibration parameter is identified correctly
     assert param_fixture["calibration_param"].is_calibration
     assert not param_fixture["full_param"].is_calibration
 
+    # Assert: Bitmask parameter is identified correctly
     assert param_fixture["full_param"].is_bitmask
 
-    # Create a parameter without bitmask
+    # Arrange: Create a parameter without bitmask metadata
     no_bitmask_metadata = param_fixture["metadata"].copy()
     no_bitmask_metadata.pop("Bitmask")
     no_bitmask_param = ArduPilotParameter(param_fixture["param_name"], param_fixture["par_obj"], no_bitmask_metadata)
+
+    # Assert: Non-bitmask parameter is identified correctly
     assert not no_bitmask_param.is_bitmask
 
 
 def test_value_comparisons(param_fixture) -> None:
-    """Test comparison between values."""
-    # Test default value comparison
+    """
+    Parameter correctly compares values between file, default, and flight controller.
+
+    GIVEN: Parameters with different value configurations
+    WHEN: Value comparison properties are accessed
+    THEN: Comparisons should correctly identify matching or differing values
+    """
+    # Assert: Parameter with non-default value is identified correctly
     assert not param_fixture["full_param"].new_value_equals_default_value
+
+    # Arrange: Create parameter with value matching default
     default_value_param = ArduPilotParameter(
         param_fixture["param_name"],
         Par(param_fixture["default_value"], ""),
@@ -131,14 +161,18 @@ def test_value_comparisons(param_fixture) -> None:
         param_fixture["default_par"],
         param_fixture["fc_value"],
     )
+
+    # Assert: Parameter with default value is identified correctly
     assert default_value_param.new_value_equals_default_value
 
-    # Test FC value existence
+    # Assert: FC value presence is detected correctly
     assert param_fixture["full_param"].has_fc_value
     assert not param_fixture["basic_param"].has_fc_value
 
-    # Test difference from FC
+    # Assert: Difference from FC value is detected correctly
     assert param_fixture["full_param"].is_different_from_fc
+
+    # Arrange: Create parameter matching FC value
     same_as_fc_param = ArduPilotParameter(
         param_fixture["param_name"],
         Par(param_fixture["fc_value"], ""),
@@ -146,18 +180,27 @@ def test_value_comparisons(param_fixture) -> None:
         param_fixture["default_par"],
         param_fixture["fc_value"],
     )
+
+    # Assert: Parameter matching FC value is identified correctly
     assert not same_as_fc_param.is_different_from_fc
 
 
 def test_metadata_properties(param_fixture) -> None:
-    """Test metadata properties."""
+    """
+    Parameter exposes metadata documentation and constraints correctly.
+
+    GIVEN: Parameters with complete or missing metadata
+    WHEN: Metadata properties are accessed
+    THEN: Properties should return correct values or appropriate defaults
+    """
+    # Assert: Parameter with full metadata returns correct values
     assert param_fixture["full_param"].tooltip_new_value == param_fixture["metadata"]["doc_tooltip"]
     assert param_fixture["full_param"].unit == param_fixture["metadata"]["unit"]
     assert param_fixture["full_param"].tooltip_unit == param_fixture["metadata"]["unit_tooltip"]
     assert param_fixture["full_param"].min_value == float(param_fixture["metadata"]["min"])
     assert param_fixture["full_param"].max_value == float(param_fixture["metadata"]["max"])
 
-    # Test with missing metadata
+    # Assert: Parameter without metadata returns appropriate defaults
     assert param_fixture["basic_param"].tooltip_new_value == "No documentation available in apm.pdef.xml for this parameter"
     assert param_fixture["basic_param"].unit == ""
     assert param_fixture["basic_param"].tooltip_unit == "No documentation available in apm.pdef.xml for this parameter"
@@ -166,92 +209,374 @@ def test_metadata_properties(param_fixture) -> None:
 
 
 def test_string_representations(param_fixture) -> None:
-    """Test string representation of values."""
+    """
+    Parameter formats numeric values as strings correctly.
+
+    GIVEN: Parameters with various numeric values
+    WHEN: String representation properties are accessed
+    THEN: Values should be formatted correctly with trailing zeros removed
+    """
+    # Assert: Parameter value formatted correctly
     assert param_fixture["full_param"].value_as_string == "10"
     assert param_fixture["full_param"].fc_value_as_string == "15"
 
-    # Test with no FC value
+    # Assert: Missing FC value shows appropriate message
     assert param_fixture["basic_param"].fc_value_as_string == "N/A"
 
-    # Test with decimal places
+    # Arrange: Create parameter with decimal value
     decimal_param = ArduPilotParameter(param_fixture["param_name"], Par(10.5, ""))
+
+    # Assert: Decimal value formatted correctly
     assert decimal_param.value_as_string == "10.5"
 
 
 def test_value_dictionary_operations(param_fixture) -> None:
-    """Test operations involving the values dictionary."""
-    # Value in dictionary
+    """
+    Parameter looks up human-readable labels from values dictionary.
+
+    GIVEN: A parameter with a values dictionary mapping numbers to labels
+    WHEN: Value lookup operations are performed
+    THEN: Correct labels should be returned or None for missing values
+    """
+    # Assert: Value in dictionary is found and labeled correctly
     assert param_fixture["full_param"].is_in_values_dict
     assert param_fixture["full_param"].get_selected_value_from_dict() == "Ten"
 
-    # Value not in dictionary
+    # Arrange: Create parameter with value not in dictionary
     not_in_dict_param = ArduPilotParameter(param_fixture["param_name"], Par(11.0, ""), param_fixture["metadata"])
+
+    # Assert: Value not in dictionary returns None
     assert not not_in_dict_param.is_in_values_dict
     assert not_in_dict_param.get_selected_value_from_dict() is None
 
-    # No values dictionary
+    # Assert: Parameter without values dictionary returns None
     assert not param_fixture["basic_param"].is_in_values_dict
     assert param_fixture["basic_param"].get_selected_value_from_dict() is None
 
 
 def test_set_new_value(param_fixture) -> None:
-    """Test setting parameter values."""
-    # Regular parameter: use a non-bitmask parameter and provide string input
+    """
+    User can update parameter values with validation.
+
+    GIVEN: A regular, forced, or derived parameter
+    WHEN: User attempts to set a new value
+    THEN: Regular parameters accept changes, forced/derived parameters reject changes
+    AND: Setting the same value raises ParameterUnchangedError
+    """
+    # Arrange: Prepare new value for testing
     new_value = "12.0"
+
+    # Act: User changes value on regular parameter
     result = param_fixture["basic_param"].set_new_value(new_value)
+
+    # Assert: Value is updated correctly
     assert result == 12.0
     assert param_fixture["basic_param"]._new_value == 12.0
 
-    # Same value - should raise ParameterUnchangedError
+    # Act & Assert: User attempts to set same value again
     with pytest.raises(ParameterUnchangedError):
         param_fixture["basic_param"].set_new_value(new_value)
 
-    # Forced parameter - should raise ValueError and not change
+    # Arrange: Store original forced parameter value
     original_value = param_fixture["forced_param"]._new_value
+
+    # Act & Assert: User attempts to change forced parameter
     with pytest.raises(ValueError, match="forced or derived"):
         param_fixture["forced_param"].set_new_value(new_value)
+
+    # Assert: Forced parameter value unchanged
     assert param_fixture["forced_param"]._new_value == original_value
 
-    # Derived parameter - should raise ValueError and not change
+    # Arrange: Store original derived parameter value
     original_value = param_fixture["derived_param"]._new_value
+
+    # Act & Assert: User attempts to change derived parameter
     with pytest.raises(ValueError, match="forced or derived"):
         param_fixture["derived_param"].set_new_value(new_value)
+
+    # Assert: Derived parameter value unchanged
     assert param_fixture["derived_param"]._new_value == original_value
 
 
 def test_set_change_reason(param_fixture) -> None:
-    """Test setting parameter comments."""
-    # Regular parameter
+    """
+    User can update parameter change reasons with appropriate restrictions.
+
+    GIVEN: Regular, forced, and derived parameters
+    WHEN: User attempts to set a change reason
+    THEN: Regular parameters accept changes, forced/derived parameters reject changes
+    AND: Setting the same reason returns False
+    """
+    # Arrange: Prepare new comment
     new_comment = "New comment"
+
+    # Act: User sets change reason on regular parameter
     result = param_fixture["full_param"].set_change_reason(new_comment)
+
+    # Assert: Change reason is updated
     assert result
     assert param_fixture["full_param"].change_reason == new_comment
 
-    # Same comment - should return False for no change
+    # Act: User sets same comment again
     result = param_fixture["full_param"].set_change_reason(new_comment)
+
+    # Assert: No change detected
     assert not result
 
-    # Empty string when comment is None
+    # Arrange: Create parameter with None comment
     none_comment_param = ArduPilotParameter(param_fixture["param_name"], Par(10.0, None))
+
+    # Act: User sets empty string on parameter with None comment
     result = none_comment_param.set_change_reason("")
+
+    # Assert: Empty string equivalent to None, no change
     assert not result
 
-    # Forced parameter - should return False and not change
+    # Arrange: Store original forced parameter comment
     original_comment = param_fixture["forced_param"].change_reason
+
+    # Act: User attempts to change forced parameter comment
     result = param_fixture["forced_param"].set_change_reason(new_comment)
+
+    # Assert: Forced parameter comment unchanged
     assert not result
     assert param_fixture["forced_param"].change_reason == original_comment
 
-    # Derived parameter - should return False and not change
+    # Arrange: Store original derived parameter comment
     original_comment = param_fixture["derived_param"].change_reason
+
+    # Act: User attempts to change derived parameter comment
     result = param_fixture["derived_param"].set_change_reason(new_comment)
+
+    # Assert: Derived parameter comment unchanged
     assert not result
     assert param_fixture["derived_param"].change_reason == original_comment
 
 
 def test_is_editable(param_fixture) -> None:
-    """Test checking if a parameter is editable."""
+    """
+    Parameter correctly identifies whether user can edit it.
+
+    GIVEN: Regular, forced, derived, and readonly parameters
+    WHEN: Editability is checked
+    THEN: Only regular parameters should be editable
+    """
+    # Assert: Regular parameter is editable
     assert param_fixture["full_param"].is_editable
+
+    # Assert: Forced parameter is not editable
     assert not param_fixture["forced_param"].is_editable
+
+    # Assert: Derived parameter is not editable
     assert not param_fixture["derived_param"].is_editable
+
+    # Assert: Readonly parameter is not editable
     assert not param_fixture["readonly_param"].is_editable
+
+
+def test_is_dirty(param_fixture) -> None:
+    """
+    Parameter correctly detects unsaved changes for save workflow.
+
+    GIVEN: Parameters with various value and comment configurations
+    WHEN: The is_dirty property is checked
+    THEN: Only parameters with changes from file should be marked dirty
+    AND: Forced/derived parameters with different computed values should be dirty
+    """
+    # Arrange: Create parameter with value matching file
+    same_value_param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(param_fixture["param_value"], param_fixture["param_comment"]),
+        param_fixture["metadata"],
+        param_fixture["default_par"],
+        param_fixture["param_value"],
+    )
+
+    # Assert: Parameter with same value as file is not dirty
+    assert not same_value_param.is_dirty
+
+    # Arrange: Create parameter with different FC value but same file value
+    different_fc_value_param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(param_fixture["param_value"], param_fixture["param_comment"]),
+        param_fixture["metadata"],
+        param_fixture["default_par"],
+        param_fixture["fc_value"],
+    )
+
+    # Assert: FC value difference alone doesn't make parameter dirty
+    assert not different_fc_value_param.is_dirty
+
+    # Arrange: Create parameter and change its value
+    changed_value_param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(param_fixture["param_value"], param_fixture["param_comment"]),
+        param_fixture["metadata"],
+        param_fixture["default_par"],
+        param_fixture["param_value"],
+    )
+
+    # Act: User changes the value
+    changed_value_param.set_new_value(str(param_fixture["fc_value"]))
+
+    # Assert: Parameter with user-changed value is dirty
+    assert changed_value_param.is_dirty
+
+    # Arrange: Create derived parameter with different computed comment
+    derived_param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(param_fixture["param_value"], param_fixture["param_comment"]),
+        param_fixture["metadata"],
+        param_fixture["default_par"],
+        param_fixture["param_value"],
+        derived_par=Par(param_fixture["param_value"], "computed comment"),
+    )
+
+    # Assert: Derived parameter with different comment is dirty
+    assert derived_param.is_dirty
+
+    # Arrange: Create forced parameter with different computed comment
+    forced_param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(param_fixture["param_value"], param_fixture["param_comment"]),
+        param_fixture["metadata"],
+        param_fixture["default_par"],
+        param_fixture["param_value"],
+        forced_par=Par(param_fixture["param_value"], "forced comment"),
+    )
+
+    # Assert: Forced parameter with different comment is dirty
+    assert forced_param.is_dirty
+
+    # Assert: Fixture forced parameter with matching values is not dirty
+    assert not param_fixture["forced_param"].is_dirty
+
+    # Assert: Fixture derived parameter with matching values is not dirty
+    assert not param_fixture["derived_param"].is_dirty
+
+
+def test_set_forced_or_derived_value(param_fixture) -> None:
+    """
+    System can update forced/derived parameter values after creation.
+
+    GIVEN: Forced and derived parameters that need value updates
+    WHEN: set_forced_or_derived_value is called
+    THEN: Values should be updated for forced/derived parameters
+    AND: Regular parameters should raise ValueError
+    """
+    # Arrange: Get forced parameter and prepare new value
+    forced_param = param_fixture["forced_param"]
+    new_value = 999.0
+
+    # Act: System updates forced parameter value
+    forced_param.set_forced_or_derived_value(new_value)
+
+    # Assert: Forced parameter value is updated
+    assert forced_param.get_new_value() == new_value
+
+    # Arrange: Get derived parameter and prepare new value
+    derived_param = param_fixture["derived_param"]
+    new_value = 888.0
+
+    # Act: System updates derived parameter value
+    derived_param.set_forced_or_derived_value(new_value)
+
+    # Assert: Derived parameter value is updated
+    assert derived_param.get_new_value() == new_value
+
+    # Arrange: Create regular parameter
+    regular_param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(param_fixture["param_value"], param_fixture["param_comment"]),
+        param_fixture["metadata"],
+        param_fixture["default_par"],
+        param_fixture["fc_value"],
+    )
+
+    # Act & Assert: System attempting to use method on regular parameter fails
+    with pytest.raises(ValueError, match="This method is only for forced or derived parameters"):
+        regular_param.set_forced_or_derived_value(123.0)
+
+
+def test_set_forced_or_derived_change_reason(param_fixture) -> None:
+    """
+    System can update forced/derived parameter change reasons after creation.
+
+    GIVEN: Forced and derived parameters that need reason updates
+    WHEN: set_forced_or_derived_change_reason is called
+    THEN: Reasons should be updated for forced/derived parameters
+    AND: Regular parameters should raise ValueError
+    """
+    # Arrange: Get forced parameter and prepare new reason
+    forced_param = param_fixture["forced_param"]
+    new_reason = "New forced reason"
+
+    # Act: System updates forced parameter change reason
+    forced_param.set_forced_or_derived_change_reason(new_reason)
+
+    # Assert: Forced parameter change reason is updated
+    assert forced_param.change_reason == new_reason
+
+    # Arrange: Get derived parameter and prepare new reason
+    derived_param = param_fixture["derived_param"]
+    new_reason = "New derived reason"
+
+    # Act: System updates derived parameter change reason
+    derived_param.set_forced_or_derived_change_reason(new_reason)
+
+    # Assert: Derived parameter change reason is updated
+    assert derived_param.change_reason == new_reason
+
+    # Arrange: Create regular parameter
+    regular_param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(param_fixture["param_value"], param_fixture["param_comment"]),
+        param_fixture["metadata"],
+        param_fixture["default_par"],
+        param_fixture["fc_value"],
+    )
+
+    # Act & Assert: System attempting to use method on regular parameter fails
+    with pytest.raises(ValueError, match="This method is only for forced or derived parameters"):
+        regular_param.set_forced_or_derived_change_reason("Some reason")
+
+
+def test_forced_or_derived_setters_make_parameter_dirty(param_fixture) -> None:
+    """
+    Forced/derived setters correctly update dirty state for save detection.
+
+    GIVEN: A forced parameter with matching file values
+    WHEN: System updates the value or reason using dedicated setters
+    THEN: Parameter should be marked dirty when changed
+    AND: Should not be dirty when reset to original values
+    """
+    # Arrange: Create forced parameter with matching file value and comment
+    forced_param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(100.0, "original comment"),
+        param_fixture["metadata"],
+        param_fixture["default_par"],
+        param_fixture["fc_value"],
+        forced_par=Par(100.0, "original comment"),
+    )
+
+    # Assert: Parameter with matching values is not dirty initially
+    assert not forced_param.is_dirty
+
+    # Act: System changes value
+    forced_param.set_forced_or_derived_value(200.0)
+
+    # Assert: Parameter is now dirty due to value change
+    assert forced_param.is_dirty
+
+    # Act: System resets to original value
+    forced_param.set_forced_or_derived_value(100.0)
+
+    # Assert: Parameter is no longer dirty
+    assert not forced_param.is_dirty
+
+    # Act: System changes only the reason
+    forced_param.set_forced_or_derived_change_reason("new comment")
+
+    # Assert: Parameter is dirty due to comment change
+    assert forced_param.is_dirty
