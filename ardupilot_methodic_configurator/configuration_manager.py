@@ -783,18 +783,21 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         else:
             show_error(_("Error"), _("Failed to download flight log. Check the console for details."))
 
-    def is_configuration_step_optional(self, file_name: str, threshold_pct: int = 20) -> bool:
+    def is_configuration_step_optional(self, file_name: Optional[str] = None, threshold_pct: int = 20) -> bool:
         """
         Check if the configuration step for the given file is optional.
 
         Args:
-            file_name: Name of the configuration file to check.
+            file_name: Name of the configuration file to check, defaults to self.current_file.
             threshold_pct: Threshold percentage below which the step is considered optional.
 
         Returns:
             bool: True if the configuration step is optional, False if mandatory.
 
         """
+        if file_name is None:
+            file_name = self.current_file
+
         # Check if the configuration step for the given file is optional
         mandatory_text, _mandatory_url = self.filesystem.get_documentation_text_and_url(file_name, "mandatory")
         # Extract percentage from mandatory_text like "80% mandatory (20% optional)"
@@ -807,12 +810,12 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
 
         return percentage <= threshold_pct
 
-    def get_next_non_optional_file(self, current_file: str) -> Optional[str]:
+    def get_next_non_optional_file(self, current_file: Optional[str] = None) -> Optional[str]:
         """
         Get the next non-optional configuration file in sequence.
 
         Args:
-            current_file: The current parameter file being processed.
+            current_file: The current parameter file being processed, defaults to self.current_file.
 
         Returns:
             Optional[str]: Next non-optional file name, or None if at the end.
@@ -821,6 +824,9 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         files = list(self.filesystem.file_parameters.keys())
         if not files:
             return None
+
+        if current_file is None:
+            current_file = self.current_file
 
         try:
             next_file_index = files.index(current_file) + 1
@@ -1166,6 +1172,24 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
 
     def get_sorted_phases_with_end_and_weight(self, last_step_nr: int) -> dict[str, PhaseData]:
         return self.filesystem.get_sorted_phases_with_end_and_weight(last_step_nr)
+
+    def get_vehicle_directory(self) -> str:
+        return self.filesystem.vehicle_dir
+
+    def parameter_files(self) -> list[str]:
+        return list(self.filesystem.file_parameters.keys())
+
+    def parameter_documentation_available(self) -> bool:
+        return bool(self.filesystem.doc_dict)
+
+    def configuration_phases(self) -> dict[str, PhaseData]:
+        return self.filesystem.configuration_phases
+
+    def write_current_file(self) -> None:
+        self.filesystem.write_last_uploaded_filename(self.current_file)
+
+    def export_current_file(self, annotate_doc: bool) -> None:
+        self.filesystem.export_to_param(self.filesystem.file_parameters[self.current_file], self.current_file, annotate_doc)
 
     def open_documentation_in_browser(self, filename: str) -> None:
         _blog_text, blog_url = self.get_documentation_text_and_url("blog", filename)
