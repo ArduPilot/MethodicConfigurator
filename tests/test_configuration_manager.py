@@ -1018,7 +1018,7 @@ class TestFileCopyWorkflows:
         configuration_manager.current_step_parameters = {"PARAM1": param1, "PARAM3": param3}
 
         # Act: Check if should copy
-        should_copy, relevant_params, auto_changed_by = configuration_manager.should_copy_fc_values_to_file(selected_file)
+        should_copy, relevant_params, auto_changed_by = configuration_manager._should_copy_fc_values_to_file(selected_file)
 
         # Assert: Copy needed with relevant parameters
         assert should_copy is True
@@ -1038,7 +1038,7 @@ class TestFileCopyWorkflows:
         configuration_manager._local_filesystem.auto_changed_by.return_value = None
 
         # Act: Check if should copy
-        should_copy, relevant_params, auto_changed_by = configuration_manager.should_copy_fc_values_to_file(selected_file)
+        should_copy, relevant_params, auto_changed_by = configuration_manager._should_copy_fc_values_to_file(selected_file)
 
         # Assert: No copy needed
         assert should_copy is False
@@ -1059,7 +1059,7 @@ class TestFileCopyWorkflows:
         configuration_manager._local_filesystem.copy_fc_values_to_file.return_value = 2
 
         # Act: Copy values to file
-        result = configuration_manager.copy_fc_values_to_file(selected_file, relevant_params)
+        result = configuration_manager._copy_fc_values_to_file(selected_file, relevant_params)
 
         # Assert: Values were copied
         assert result is True
@@ -1079,7 +1079,7 @@ class TestFileCopyWorkflows:
         configuration_manager._local_filesystem.copy_fc_values_to_file.return_value = 0
 
         # Act: Attempt copy
-        result = configuration_manager.copy_fc_values_to_file(selected_file, relevant_params)
+        result = configuration_manager._copy_fc_values_to_file(selected_file, relevant_params)
 
         # Assert: Copy failed
         assert result is False
@@ -1102,7 +1102,7 @@ class TestFileNavigationWorkflows:  # pylint: disable=too-few-public-methods
         configuration_manager._local_filesystem.jump_possible.return_value = expected_options
 
         # Act: Get jump options
-        options = configuration_manager.get_file_jump_options(selected_file)
+        options = configuration_manager._get_file_jump_options(selected_file)
 
         # Assert: Jump options returned
         assert options == expected_options
@@ -2302,7 +2302,7 @@ class TestConfigurationManagerFrontendAPI:
         }
 
         # Act: Export current file with documentation
-        configuration_manager.export_current_file(annotate_doc=True)
+        configuration_manager._export_current_file(annotate_doc=True)
 
         # Assert: Filesystem export called correctly with right filename and annotate flag
         configuration_manager._local_filesystem.export_to_param.assert_called_once()  # type: ignore[call-arg]
@@ -2377,7 +2377,7 @@ class TestConfigurationManagerFrontendAPI:
         }
 
         # Act: Export current file without documentation
-        configuration_manager.export_current_file(annotate_doc=False)
+        configuration_manager._export_current_file(annotate_doc=False)
 
         # Assert: Filesystem export called correctly with right filename and annotate flag
         configuration_manager._local_filesystem.export_to_param.assert_called_once()  # type: ignore[call-arg]
@@ -2401,7 +2401,7 @@ class TestUnsavedChangesTracking:
 
         GIVEN: A user has loaded a parameter file with existing parameters
         WHEN: They change a parameter value in the domain model
-        THEN: has_unsaved_changes should return True
+        THEN: _has_unsaved_changes should return True
         AND: The user should be prompted to save before closing
         """
         # Arrange: Set up a parameter in the domain model
@@ -2411,13 +2411,13 @@ class TestUnsavedChangesTracking:
         configuration_manager.current_step_parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
 
         # Assert: Initially no changes
-        assert not configuration_manager.has_unsaved_changes()
+        assert not configuration_manager._has_unsaved_changes()
 
         # Act: User edits parameter value
         configuration_manager.current_step_parameters["PARAM1"].set_new_value("2.0")
 
         # Assert: Changes detected
-        assert configuration_manager.has_unsaved_changes()
+        assert configuration_manager._has_unsaved_changes()
 
     def test_user_receives_save_prompt_after_system_derives_parameters(self, configuration_manager) -> None:
         """
@@ -2425,7 +2425,7 @@ class TestUnsavedChangesTracking:
 
         GIVEN: A user processes a configuration step
         WHEN: The system derives parameters (forced/computed values) making them dirty
-        THEN: has_unsaved_changes should return True
+        THEN: _has_unsaved_changes should return True
         AND: The user should be prompted to save before closing
         """
         # Arrange: Set up configuration step processor
@@ -2443,7 +2443,7 @@ class TestUnsavedChangesTracking:
         assert not configuration_manager._deleted_parameters
 
         # Assert: Changes detected due to dirty parameter
-        assert configuration_manager.has_unsaved_changes()
+        assert configuration_manager._has_unsaved_changes()
 
     def test_user_receives_save_prompt_after_adding_parameter(self, configuration_manager) -> None:
         """
@@ -2451,7 +2451,7 @@ class TestUnsavedChangesTracking:
 
         GIVEN: A user has loaded a parameter file
         WHEN: They add a new parameter to the file
-        THEN: has_unsaved_changes should return True
+        THEN: _has_unsaved_changes should return True
         AND: The user should be prompted to save before closing
         """
         # Arrange: Set up initial state
@@ -2461,13 +2461,13 @@ class TestUnsavedChangesTracking:
         configuration_manager._flight_controller.fc_parameters = {"PARAM2": 2.0}
 
         # Assert: Initially no changes
-        assert not configuration_manager.has_unsaved_changes()
+        assert not configuration_manager._has_unsaved_changes()
 
         # Act: User adds a new parameter
         configuration_manager.add_parameter_to_current_file("PARAM2")
 
         # Assert: Changes detected
-        assert configuration_manager.has_unsaved_changes()
+        assert configuration_manager._has_unsaved_changes()
 
     def test_user_receives_save_prompt_after_deleting_parameter(self, configuration_manager) -> None:
         """
@@ -2475,7 +2475,7 @@ class TestUnsavedChangesTracking:
 
         GIVEN: A user has loaded a parameter file with parameters
         WHEN: They delete a parameter from the file
-        THEN: has_unsaved_changes should return True
+        THEN: _has_unsaved_changes should return True
         AND: The user should be prompted to save before closing
         """
         # Arrange: Set up initial state with parameters
@@ -2490,13 +2490,13 @@ class TestUnsavedChangesTracking:
         }
 
         # Assert: Initially no changes
-        assert not configuration_manager.has_unsaved_changes()
+        assert not configuration_manager._has_unsaved_changes()
 
         # Act: User deletes a parameter
         configuration_manager.delete_parameter_from_current_file("PARAM2")
 
         # Assert: Changes detected
-        assert configuration_manager.has_unsaved_changes()
+        assert configuration_manager._has_unsaved_changes()
 
     def test_user_not_prompted_when_adding_then_deleting_same_parameter(self, configuration_manager) -> None:
         """
@@ -2505,7 +2505,7 @@ class TestUnsavedChangesTracking:
         GIVEN: A user has loaded a parameter file
         WHEN: They add a new parameter
         AND: Then immediately delete that same parameter
-        THEN: has_unsaved_changes should return False (net change is zero)
+        THEN: _has_unsaved_changes should return False (net change is zero)
         AND: The user should NOT be prompted to save
         """
         # Arrange: Set up initial state
@@ -2516,19 +2516,19 @@ class TestUnsavedChangesTracking:
         configuration_manager._flight_controller.fc_parameters = {"PARAM2": 2.0}
 
         # Assert: Initially no changes
-        assert not configuration_manager.has_unsaved_changes()
+        assert not configuration_manager._has_unsaved_changes()
 
         # Act: User adds a new parameter
         configuration_manager.add_parameter_to_current_file("PARAM2")
 
         # Assert: Changes detected after add
-        assert configuration_manager.has_unsaved_changes()
+        assert configuration_manager._has_unsaved_changes()
 
         # Act: User deletes the same parameter they just added
         configuration_manager.delete_parameter_from_current_file("PARAM2")
 
         # Assert: No net change, so no unsaved changes
-        assert not configuration_manager.has_unsaved_changes()
+        assert not configuration_manager._has_unsaved_changes()
 
     def test_user_not_prompted_when_deleting_then_adding_back_same_parameter(self, configuration_manager) -> None:
         """
@@ -2537,7 +2537,7 @@ class TestUnsavedChangesTracking:
         GIVEN: A user has loaded a parameter file with existing parameters
         WHEN: They delete a parameter
         AND: Then immediately add it back
-        THEN: has_unsaved_changes should return False (net change is zero)
+        THEN: _has_unsaved_changes should return False (net change is zero)
         AND: The user should NOT be prompted to save
         """
         # Arrange: Set up initial state with parameter
@@ -2548,19 +2548,19 @@ class TestUnsavedChangesTracking:
         configuration_manager._flight_controller.fc_parameters = {"PARAM1": 1.0}
 
         # Assert: Initially no changes
-        assert not configuration_manager.has_unsaved_changes()
+        assert not configuration_manager._has_unsaved_changes()
 
         # Act: User deletes the parameter
         configuration_manager.delete_parameter_from_current_file("PARAM1")
 
         # Assert: Changes detected after delete
-        assert configuration_manager.has_unsaved_changes()
+        assert configuration_manager._has_unsaved_changes()
 
         # Act: User adds it back
         configuration_manager.add_parameter_to_current_file("PARAM1")
 
         # Assert: No net change (parameter is back), so no unsaved changes
-        assert not configuration_manager.has_unsaved_changes()
+        assert not configuration_manager._has_unsaved_changes()
 
     def test_user_receives_save_prompt_for_multiple_change_types_combined(self, configuration_manager) -> None:
         """
@@ -2570,7 +2570,7 @@ class TestUnsavedChangesTracking:
         WHEN: They edit a parameter value
         AND: Add a new parameter
         AND: Delete another parameter
-        THEN: has_unsaved_changes should return True
+        THEN: _has_unsaved_changes should return True
         AND: The user should be prompted to save all changes
         """
         # Arrange: Set up initial state with multiple parameters
@@ -2586,7 +2586,7 @@ class TestUnsavedChangesTracking:
         configuration_manager._flight_controller.fc_parameters = {"PARAM3": 3.0}
 
         # Assert: Initially no changes
-        assert not configuration_manager.has_unsaved_changes()
+        assert not configuration_manager._has_unsaved_changes()
 
         # Act: User makes multiple changes
         # 1. Edit existing parameter
@@ -2597,7 +2597,7 @@ class TestUnsavedChangesTracking:
         configuration_manager.delete_parameter_from_current_file("PARAM2")
 
         # Assert: Changes detected
-        assert configuration_manager.has_unsaved_changes()
+        assert configuration_manager._has_unsaved_changes()
 
     def test_user_receives_save_prompt_when_changing_file_with_unsaved_edits(self, configuration_manager) -> None:
         """
@@ -2605,7 +2605,7 @@ class TestUnsavedChangesTracking:
 
         GIVEN: A user has edited parameters in the current file
         WHEN: They attempt to navigate to a different parameter file
-        THEN: has_unsaved_changes should return True before navigation
+        THEN: _has_unsaved_changes should return True before navigation
         AND: The system should prompt them to save before changing files
         """
         # Arrange: Set up initial state with edits
@@ -2618,7 +2618,7 @@ class TestUnsavedChangesTracking:
         configuration_manager.current_step_parameters["PARAM1"].set_new_value("2.0")
 
         # Assert: Changes detected
-        assert configuration_manager.has_unsaved_changes()
+        assert configuration_manager._has_unsaved_changes()
 
         # This is where the UI would prompt before calling repopulate_configuration_step_parameters
         # The test validates that the check returns True so the UI knows to prompt
@@ -2630,7 +2630,7 @@ class TestUnsavedChangesTracking:
         GIVEN: A user has unsaved changes in the current file
         WHEN: They navigate to a different parameter file (after saving or discarding)
         THEN: The change tracking should reset for the new file
-        AND: has_unsaved_changes should return False for the new file initially
+        AND: _has_unsaved_changes should return False for the new file initially
         """
         # Arrange: Set up initial file with changes
 
@@ -2648,7 +2648,7 @@ class TestUnsavedChangesTracking:
         configuration_manager.add_parameter_to_current_file("PARAM_NEW")
 
         # Assert: Changes detected
-        assert configuration_manager.has_unsaved_changes()
+        assert configuration_manager._has_unsaved_changes()
 
         # Act: Navigate to new file (simulating what repopulate_configuration_step_parameters does)
         configuration_manager.current_file = "other_file.param"
@@ -2657,7 +2657,7 @@ class TestUnsavedChangesTracking:
         configuration_manager.current_step_parameters = {"PARAM2": ArduPilotParameter("PARAM2", Par(2.0, "comment"))}
 
         # Assert: No changes in new file
-        assert not configuration_manager.has_unsaved_changes()
+        assert not configuration_manager._has_unsaved_changes()
 
 
 class TestDerivedParameterApplication:

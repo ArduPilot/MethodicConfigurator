@@ -258,7 +258,7 @@ class TestUserParameterConfigurationWorkflows:
 
         # Verify initial state - should have parameters from the configuration file
         assert len(config_manager.current_step_parameters) > 0  # Should have some parameters populated
-        assert config_manager.has_unsaved_changes() is False  # Initially no changes
+        assert config_manager._has_unsaved_changes() is False  # Initially no changes
 
         # Find a parameter to modify (any parameter that exists)
         if config_manager.current_step_parameters:
@@ -274,7 +274,7 @@ class TestUserParameterConfigurationWorkflows:
             # Verify the change is recorded
             assert param.get_new_value() != original_value
             assert param.change_reason == "Modified for testing"
-            assert config_manager.has_unsaved_changes()
+            assert config_manager._has_unsaved_changes()
 
     def test_user_can_setup_vehicle_frame_and_motors(
         self, config_manager_with_params: ConfigurationManager, realistic_filesystem: MagicMock
@@ -545,7 +545,7 @@ class TestUIComplexityWorkflows:
         batt_param.set_change_reason("Upgraded to higher capacity battery")
 
         # Verify changes are tracked
-        assert config_manager.has_unsaved_changes()
+        assert config_manager._has_unsaved_changes()
 
         # Simulate saving (in real implementation, this would write to file)
         # For this test, we verify the changes are properly recorded
@@ -648,7 +648,7 @@ class TestCompleteParameterWorkflowIntegration:
         roll_p_param.set_change_reason("Increased for better wind resistance")
 
         # Verify changes are tracked
-        assert config_manager.has_unsaved_changes()
+        assert config_manager._has_unsaved_changes()
 
         # Step 5: Save configuration to file (simulated)
         # In real implementation, this would write to the parameter file
@@ -675,7 +675,7 @@ class TestCompleteParameterWorkflowIntegration:
 
         # AND: Configuration is marked as saved
         # In real implementation, unsaved changes would be cleared after successful upload
-        assert config_manager.has_unsaved_changes()  # Still true in test mock
+        assert config_manager._has_unsaved_changes()  # Still true in test mock
 
     def test_user_can_recover_from_configuration_errors_and_continue_workflow(
         self, config_manager_with_params: ConfigurationManager, flight_controller_with_params: MagicMock
@@ -807,7 +807,7 @@ class TestCompleteParameterWorkflowIntegration:
 
         # THEN: Operations complete successfully
         assert modified_count == 10
-        assert config_manager.has_unsaved_changes()
+        assert config_manager._has_unsaved_changes()
 
         # Verify specific parameter modifications
         param_01 = config_manager.current_step_parameters["01"]
@@ -848,7 +848,7 @@ class TestDataIntegrityAndConsistency:
 
         sysid_param.set_new_value("7.0")
         sysid_param.set_change_reason("Test data integrity")
-        assert config_manager.has_unsaved_changes()
+        assert config_manager._has_unsaved_changes()
 
         # WHEN: Simulate save operation (get current state)
         saved_state = config_manager.get_parameters_as_par_dict()

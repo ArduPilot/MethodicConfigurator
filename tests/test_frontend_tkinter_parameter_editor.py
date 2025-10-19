@@ -15,12 +15,11 @@ from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
 from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 
-# pylint: disable=redefined-outer-name, too-many-arguments, too-many-positional-arguments, unused-argument
+# pylint: disable=redefined-outer-name, too-many-arguments, too-many-positional-arguments, unused-argument, protected-access
 
 
 @pytest.fixture
@@ -89,156 +88,84 @@ class TestParameterEditorWindow:
         self, mock_exit: MagicMock, parameter_editor, mock_local_filesystem
     ) -> None:
         """Test that nothing happens when there is no auto_changed_by value."""
-        # Mock should_copy_fc_values_to_file to return False (no copy needed)
-        parameter_editor.configuration_manager.should_copy_fc_values_to_file = MagicMock(return_value=(False, None, None))
+        # Mock _should_copy_fc_values_to_file to return False (no copy needed)
+        parameter_editor.configuration_manager._should_copy_fc_values_to_file = MagicMock(return_value=(False, None, None))
 
         parameter_editor._ParameterEditorWindow__should_copy_fc_values_to_file("test_file.param")  # pylint: disable=protected-access
 
-        parameter_editor.configuration_manager.should_copy_fc_values_to_file.assert_called_once_with("test_file.param")
+        parameter_editor.configuration_manager._should_copy_fc_values_to_file.assert_called_once_with("test_file.param")
         mock_exit.assert_not_called()
 
-    @patch("tkinter.Toplevel")
-    @patch("tkinter.Label")
-    @patch("tkinter.Frame")
-    @patch("tkinter.Button")
     @patch("sys.exit")
-    def test_should_copy_fc_values_to_file_yes_response(
-        self,
-        mock_exit: MagicMock,
-        mock_button: MagicMock,
-        mock_frame: MagicMock,
-        mock_label: MagicMock,
-        mock_toplevel: MagicMock,
-        parameter_editor,
-        mock_local_filesystem,
-        root,
+    @patch.object(ConfigurationManager, "handle_copy_fc_values_workflow", return_value=True)
+    def test_user_can_successfully_copy_flight_controller_values_to_configuration_file(
+        self, mock_workflow: MagicMock, mock_exit: MagicMock, parameter_editor, mock_local_filesystem
     ) -> None:
-        """Test handling 'Yes' response in the dialog."""
-        # Mock should_copy_fc_values_to_file to return True with relevant params
-        relevant_fc_params = {"PARAM1": 1.0, "PARAM2": 2.0}
-        parameter_editor.configuration_manager.should_copy_fc_values_to_file = MagicMock(
-            return_value=(True, relevant_fc_params, "External Tool")
-        )
-        parameter_editor.configuration_manager.copy_fc_values_to_file = MagicMock(return_value=True)
+        """
+        User can successfully copy flight controller parameter values to a configuration file.
 
-        # Setup the mock toplevel to better simulate dialog behavior
-        mock_dialog = MagicMock()
-        mock_toplevel.return_value = mock_dialog
-        mock_dialog.result = [None]  # Initialize result list
-
-        # Create a fake dialog response mechanism - simulate "Yes" button click
-        def side_effect(*args, **kwargs) -> None:  # noqa: ARG001 # pylint: disable=unused-argument
-            # Find the "Yes" button callback and execute it
-            for call in mock_button.call_args_list:
-                _call_args, call_kwargs = call
-                if "text" in call_kwargs and call_kwargs["text"] == _("Yes"):
-                    # This is the "Yes" button - execute its command
-                    call_kwargs["command"]()
-                    break
-
-        # Set up the dialog behavior when wait_window is called
-        root.wait_window = MagicMock(side_effect=side_effect)
-
+        GIVEN: A user is prompted to copy FC values to a configuration file
+        WHEN: The user chooses 'Yes' to proceed with copying
+        THEN: The copy workflow is executed successfully
+        AND: The application continues running without exiting
+        """
         parameter_editor._ParameterEditorWindow__should_copy_fc_values_to_file("test_file.param")  # pylint: disable=protected-access
 
-        parameter_editor.configuration_manager.should_copy_fc_values_to_file.assert_called_once_with("test_file.param")
-        parameter_editor.configuration_manager.copy_fc_values_to_file.assert_called_once()
+        # Verify the workflow method was called with correct arguments
+        mock_workflow.assert_called_once()
+        args, _ = mock_workflow.call_args
+        assert args[0] == "test_file.param"  # selected_file
+        assert callable(args[1])  # ask_user_choice callback
+        assert callable(args[2])  # show_info callback
+
         mock_exit.assert_not_called()
 
-    @patch("tkinter.Toplevel")
-    @patch("tkinter.Label")
-    @patch("tkinter.Frame")
-    @patch("tkinter.Button")
     @patch("sys.exit")
-    def test_should_copy_fc_values_to_file_no_response(
-        self,
-        mock_exit: MagicMock,
-        mock_button: MagicMock,
-        mock_frame: MagicMock,
-        mock_label: MagicMock,
-        mock_toplevel: MagicMock,
-        parameter_editor,
-        mock_local_filesystem,
-        root,
+    @patch.object(ConfigurationManager, "handle_copy_fc_values_workflow", return_value=None)
+    def test_user_can_decline_copying_flight_controller_values_to_configuration_file(
+        self, mock_workflow: MagicMock, mock_exit: MagicMock, parameter_editor, mock_local_filesystem
     ) -> None:
-        """Test handling 'No' response in the dialog."""
-        # Mock should_copy_fc_values_to_file to return True with relevant params
-        relevant_fc_params = {"PARAM1": 1.0, "PARAM2": 2.0}
-        parameter_editor.configuration_manager.should_copy_fc_values_to_file = MagicMock(
-            return_value=(True, relevant_fc_params, "External Tool")
-        )
-        parameter_editor.configuration_manager.copy_fc_values_to_file = MagicMock(return_value=True)
+        """
+        User can decline to copy flight controller parameter values to a configuration file.
 
-        # Setup the mock toplevel to better simulate dialog behavior
-        mock_dialog = MagicMock()
-        mock_toplevel.return_value = mock_dialog
-        mock_dialog.result = [None]  # Initialize result list
-
-        # Create a fake dialog response mechanism - simulate "No" button click
-        def side_effect(*args, **kwargs) -> None:  # noqa: ARG001 # pylint: disable=unused-argument
-            # Find the "No" button callback and execute it
-            for call in mock_button.call_args_list:
-                _call_args, call_kwargs = call
-                if "text" in call_kwargs and call_kwargs["text"] == _("No"):
-                    # This is the "No" button - execute its command
-                    call_kwargs["command"]()
-                    break
-
-        # Set up the dialog behavior when wait_window is called
-        root.wait_window = MagicMock(side_effect=side_effect)
-
+        GIVEN: A user is prompted to copy FC values to a configuration file
+        WHEN: The user chooses 'No' to decline copying
+        THEN: The copy workflow is executed but no copying occurs
+        AND: The application continues running without exiting
+        """
         parameter_editor._ParameterEditorWindow__should_copy_fc_values_to_file("test_file.param")  # pylint: disable=protected-access
 
-        parameter_editor.configuration_manager.should_copy_fc_values_to_file.assert_called_once_with("test_file.param")
-        parameter_editor.configuration_manager.copy_fc_values_to_file.assert_not_called()
+        # Verify the workflow method was called with correct arguments
+        mock_workflow.assert_called_once()
+        args, _ = mock_workflow.call_args
+        assert args[0] == "test_file.param"  # selected_file
+        assert callable(args[1])  # ask_user_choice callback
+        assert callable(args[2])  # show_info callback
+
         mock_exit.assert_not_called()
 
-    @patch("tkinter.Toplevel")
-    @patch("tkinter.Label")
-    @patch("tkinter.Frame")
-    @patch("tkinter.Button")
     @patch("sys.exit")
-    def test_should_copy_fc_values_to_file_close_response(
-        self,
-        mock_exit: MagicMock,
-        mock_button: MagicMock,
-        mock_frame: MagicMock,
-        mock_label: MagicMock,
-        mock_toplevel: MagicMock,
-        parameter_editor,
-        mock_local_filesystem,
-        root,
+    @patch.object(ConfigurationManager, "handle_copy_fc_values_workflow", return_value="close")
+    def test_user_can_cancel_and_close_application_when_prompted_to_copy_flight_controller_values(
+        self, mock_workflow: MagicMock, mock_exit: MagicMock, parameter_editor, mock_local_filesystem
     ) -> None:
-        """Test handling 'Close' response in the dialog."""
-        # Mock should_copy_fc_values_to_file to return True with relevant params
-        relevant_fc_params = {"PARAM1": 1.0, "PARAM2": 2.0}
-        parameter_editor.configuration_manager.should_copy_fc_values_to_file = MagicMock(
-            return_value=(True, relevant_fc_params, "External Tool")
-        )
-        parameter_editor.configuration_manager.copy_fc_values_to_file = MagicMock(return_value=True)
+        """
+        User can cancel the copy operation and close the application when prompted.
 
-        # Setup the mock toplevel to better simulate dialog behavior
-        mock_dialog = MagicMock()
-        mock_toplevel.return_value = mock_dialog
-        mock_dialog.result = [None]  # Initialize result list
-
-        # Create a fake dialog response mechanism - simulate "Close" button click
-        def side_effect(*args, **kwargs) -> None:  # noqa: ARG001 # pylint: disable=unused-argument
-            # Find the "Close" button callback and execute it
-            for call in mock_button.call_args_list:
-                _call_args, call_kwargs = call
-                if "text" in call_kwargs and call_kwargs["text"] == _("Close"):
-                    # This is the "Close" button - execute its command
-                    call_kwargs["command"]()
-                    break
-
-        # Set up the dialog behavior when wait_window is called
-        root.wait_window = MagicMock(side_effect=side_effect)
-
+        GIVEN: A user is prompted to copy FC values to a configuration file
+        WHEN: The user chooses 'Close' to cancel and exit
+        THEN: The copy workflow is executed but cancelled
+        AND: The application exits gracefully
+        """
         parameter_editor._ParameterEditorWindow__should_copy_fc_values_to_file("test_file.param")  # pylint: disable=protected-access
 
-        parameter_editor.configuration_manager.should_copy_fc_values_to_file.assert_called_once_with("test_file.param")
-        parameter_editor.configuration_manager.copy_fc_values_to_file.assert_not_called()
+        # Verify the workflow method was called with correct arguments
+        mock_workflow.assert_called_once()
+        args, _ = mock_workflow.call_args
+        assert args[0] == "test_file.param"  # selected_file
+        assert callable(args[1])  # ask_user_choice callback
+        assert callable(args[2])  # show_info callback
+
         mock_exit.assert_called_once_with(0)
 
     @patch("tkinter.Toplevel")
@@ -256,9 +183,9 @@ class TestParameterEditorWindow:
         root,
     ) -> None:
         """Test the creation of the dialog with its components."""
-        # Mock should_copy_fc_values_to_file to return True with relevant params
+        # Mock _should_copy_fc_values_to_file to return True with relevant params
         relevant_fc_params = {"PARAM1": 1.0, "PARAM2": 2.0}
-        parameter_editor.configuration_manager.should_copy_fc_values_to_file = MagicMock(
+        parameter_editor.configuration_manager._should_copy_fc_values_to_file = MagicMock(
             return_value=(True, relevant_fc_params, "External Tool")
         )
 
