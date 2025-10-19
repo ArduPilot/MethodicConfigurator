@@ -16,7 +16,8 @@ from csv import writer as csv_writer
 from logging import error as logging_error
 from logging import info as logging_info
 from pathlib import Path
-from typing import Callable, Optional
+from time import time
+from typing import Callable, Literal, Optional
 from webbrowser import open as webbrowser_open  # to open the web documentation
 
 from ardupilot_methodic_configurator import _
@@ -36,6 +37,8 @@ ShowWarningCallback = Callable[[str, str], None]  # (title, message) -> None
 ShowErrorCallback = Callable[[str, str], None]  # (title, message) -> None
 ShowInfoCallback = Callable[[str, str], None]  # (title, message) -> None
 AskRetryCancelCallback = Callable[[str, str], bool]  # (title, message) -> bool
+ExperimentChoice = Literal["close", True, False]
+ExperimentChoiceCallback = Callable[[str, str, list[str]], ExperimentChoice]
 
 
 class OperationNotPossibleError(Exception):
@@ -75,6 +78,8 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
         self._deleted_parameters: set[str] = set()
 
         self._at_least_one_changed = False
+
+        self._last_time_asked_to_save: float = 0
 
     # frontend_tkinter_parameter_editor_table.py API start
     @property
@@ -183,7 +188,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             show_error(_("Fatal error reading parameter files"), f"{exp}")
             raise
 
-    def should_copy_fc_values_to_file(self, selected_file: str) -> tuple[bool, Optional[dict], Optional[str]]:
+    def _should_copy_fc_values_to_file(self, selected_file: str) -> tuple[bool, Optional[dict], Optional[str]]:
         """
         Check if flight controller values should be copied to the specified file.
 
@@ -207,7 +212,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             return True, relevant_fc_params, auto_changed_by
         return False, None, auto_changed_by
 
-    def copy_fc_values_to_file(self, selected_file: str, relevant_fc_params: dict) -> bool:
+    def _copy_fc_values_to_file(self, selected_file: str, relevant_fc_params: dict) -> bool:
         """
         Copy FC values to the specified file.
 
@@ -222,7 +227,75 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
         params_copied = self._local_filesystem.copy_fc_values_to_file(selected_file, relevant_fc_params)
         return bool(params_copied)
 
-    def get_file_jump_options(self, selected_file: str) -> dict[str, str]:
+    def handle_copy_fc_values_workflow(
+        self,
+        selected_file: str,
+        ask_user_choice: ExperimentChoiceCallback,
+        show_info: ShowInfoCallback,
+    ) -> ExperimentChoice:
+        """
+        Handle the complete workflow for copying FC values to file with user interaction.
+
+        Args:
+            selected_file: The configuration file to potentially update.
+            ask_user_choice: Callback to ask user for choice (Yes/No/Close).
+            show_info: Callback to show information messages.
+
+        Returns:
+            ExperimentChoice: "close" if user chose to close, True if copied, False if no copy.
+
+        """
+        should_copy, relevant_fc_params, auto_changed_by = self._should_copy_fc_values_to_file(selected_file)
+        if should_copy and relevant_fc_params and auto_changed_by:
+            msg = _(
+                "This configuration step requires external changes by: {auto_changed_by}\n\n"
+                "The external tool experiment procedure is described in the tuning guide.\n\n"
+                "Choose an option:\n"
+                "* CLOSE - Close the application and go perform the experiment\n"
+                "* YES - Copy current FC values to {selected_file} (if you've already completed the experiment)\n"
+                "* NO - Continue without copying values (if you haven't performed the experiment yet,"
+                " but know what you are doing)"
+            ).format(auto_changed_by=auto_changed_by, selected_file=selected_file)
+
+            user_choice = ask_user_choice(_("Update file with values from FC?"), msg, [_("Close"), _("Yes"), _("No")])
+
+            if user_choice is True:  # Yes option
+                params_copied = self._copy_fc_values_to_file(selected_file, relevant_fc_params)
+                if params_copied:
+                    show_info(
+                        _("Parameters copied"),
+                        _("FC values have been copied to {selected_file}").format(selected_file=selected_file),
+                    )
+            return user_choice
+        return False
+
+    def handle_file_jump_workflow(
+        self,
+        selected_file: str,
+        gui_complexity: str,
+        ask_user_confirmation: AskConfirmationCallback,
+    ) -> str:
+        """
+        Handle the complete workflow for file jumping with user interaction.
+
+        Args:
+            selected_file: The current configuration file.
+            gui_complexity: The GUI complexity setting ("simple" or other).
+            ask_user_confirmation: Callback to ask user for confirmation.
+
+        Returns:
+            str: The destination file to jump to, or the original file if no jump.
+
+        """
+        jump_options = self._get_file_jump_options(selected_file)
+        for dest_file, msg in jump_options.items():
+            if gui_complexity == "simple" or ask_user_confirmation(
+                _("Skip some steps?"), _(msg) if msg else _("Skip to {dest_file}?").format(dest_file=dest_file)
+            ):
+                return dest_file
+        return selected_file
+
+    def _get_file_jump_options(self, selected_file: str) -> dict[str, str]:
         """
         Get available file jump options for the selected file.
 
@@ -235,11 +308,43 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
         """
         return self._local_filesystem.jump_possible(selected_file)
 
+    def handle_write_changes_workflow(
+        self,
+        annotate_params_into_files: bool,
+        ask_user_confirmation: AskConfirmationCallback,
+    ) -> bool:
+        """
+        Handle the workflow for writing changes to intermediate parameter file.
+
+        Args:
+            at_least_one_param_edited: Whether any parameters have been edited.
+            annotate_params_into_files: Whether to annotate documentation into files.
+            ask_user_confirmation: Callback to ask user for confirmation.
+
+        Returns:
+            bool: True if changes were written, False otherwise.
+
+        """
+        elapsed_since_last_ask = time() - self._last_time_asked_to_save
+        # if annotate parameters into files is true, we always need to write to file, because
+        # the parameter metadata might have changed, or not be present in the file.
+        # In that situation, avoid asking multiple times to write the file, by checking the time last asked
+        # But only if annotate_params_into_files is True
+        if self._has_unsaved_changes() or (annotate_params_into_files and elapsed_since_last_ask > 1.0):
+            msg = _("Do you want to write the changes to the {current_filename} file?").format(
+                current_filename=self.current_file
+            )
+            if ask_user_confirmation(_("One or more parameters have been edited"), msg):
+                self._export_current_file(annotate_doc=annotate_params_into_files)
+                self._last_time_asked_to_save = time()
+                return True
+        return False
+
     def should_download_file_from_url_workflow(
         self,
         selected_file: str,
-        ask_confirmation: Callable[[str, str], bool],
-        show_error: Callable[[str, str], None],
+        ask_confirmation: AskConfirmationCallback,
+        show_error: ShowErrorCallback,
     ) -> bool:
         """
         Handle file download workflow with injected GUI callbacks.
@@ -1360,7 +1465,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             }
         )
 
-    def has_unsaved_changes(self) -> bool:
+    def _has_unsaved_changes(self) -> bool:
         """
         Check if any changes have been made that need to be saved.
 
@@ -1408,7 +1513,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
     def _write_current_file(self) -> None:
         self._local_filesystem.write_last_uploaded_filename(self.current_file)
 
-    def export_current_file(self, annotate_doc: bool) -> None:
+    def _export_current_file(self, annotate_doc: bool) -> None:
         # Convert domain model parameters to Par objects for export
         export_params = self.get_parameters_as_par_dict()
 

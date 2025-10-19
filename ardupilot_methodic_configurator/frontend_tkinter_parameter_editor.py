@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import sys
-import time
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 
@@ -21,7 +20,7 @@ from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
 from tkinter import filedialog, messagebox, ttk
-from typing import Literal, Optional, Union
+from typing import Optional, Union
 
 # from logging import critical as logging_critical
 from webbrowser import open as webbrowser_open  # to open the blog post documentation
@@ -31,7 +30,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
+from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager, ExperimentChoice
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     BaseWindow,
@@ -166,7 +165,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.tempcal_imu_progress_window: ProgressWindow
         self.file_upload_progress_window: ProgressWindow
         self.skip_button: ttk.Button
-        self.last_time_asked_to_save: float = 0
         self.gui_complexity = str(ProgramSettings.get_setting("gui_complexity"))
 
         self.root.title(
@@ -509,36 +507,24 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         finally:
             self.tempcal_imu_progress_window.destroy()
 
-    def __handle_dialog_choice(self, result: list, dialog: tk.Toplevel, choice: Optional[bool]) -> None:
+    def __handle_dialog_choice(self, result: list, dialog: tk.Toplevel, choice: ExperimentChoice) -> None:
         result.append(choice)
         dialog.destroy()
 
-    def __should_copy_fc_values_to_file(self, selected_file: str) -> None:  # pylint: disable=too-many-locals
-        should_copy, relevant_fc_params, auto_changed_by = self.configuration_manager.should_copy_fc_values_to_file(
-            selected_file
-        )
-        if should_copy and relevant_fc_params and auto_changed_by:
-            msg = _(
-                "This configuration step requires external changes by: {auto_changed_by}\n\n"
-                "The external tool experiment procedure is described in the tuning guide.\n\n"
-                "Choose an option:\n"
-                "* CLOSE - Close the application and go perform the experiment\n"
-                "* YES - Copy current FC values to {selected_file} (if you've already completed the experiment)\n"
-                "* NO - Continue without copying values (if you haven't performed the experiment yet,"
-                " but know what you are doing)"
-            ).format(auto_changed_by=auto_changed_by, selected_file=selected_file)
-
+    def __should_copy_fc_values_to_file(self, selected_file: str) -> None:
+        def ask_user_choice(title: str, message: str, options: list[str]) -> ExperimentChoice:  # pylint: disable=too-many-locals
+            """GUI callback for asking user choice with custom dialog."""
             # Create custom dialog with Close, Yes, No buttons
             dialog = tk.Toplevel(self.root)
             # Hide dialog initially to prevent flickering
             dialog.withdraw()
             dialog.transient(self.root)
-            dialog.title(_("Update file with values from FC?"))
+            dialog.title(title)
             dialog.resizable(width=False, height=False)
             dialog.protocol("WM_DELETE_WINDOW", dialog.destroy)
 
             # Message text
-            message_label = tk.Label(dialog, text=msg, justify=tk.LEFT, padx=20, pady=10)
+            message_label = tk.Label(dialog, text=message, justify=tk.LEFT, padx=20, pady=10)
             message_label.pack(padx=10, pady=10)
 
             # Clickable link to tuning guide
@@ -554,7 +540,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             link_label.bind("<Button-1>", lambda _e: self.configuration_manager.open_documentation_in_browser(selected_file))
 
             # Result variable
-            result: list[Optional[Literal[True, False]]] = [None]
+            result: list[ExperimentChoice] = []
 
             # Button frame
             button_frame = tk.Frame(dialog)
@@ -563,25 +549,31 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Close button (default)
             close_button = tk.Button(
                 button_frame,
-                text=_("Close"),
+                text=options[0],  # "Close"
                 width=10,
-                command=lambda: self.__handle_dialog_choice(result, dialog, choice=None),
+                command=lambda: self.__handle_dialog_choice(result, dialog, choice="close"),
             )
             close_button.pack(side=tk.LEFT, padx=5)
 
             # Yes button
             yes_button = tk.Button(
-                button_frame, text=_("Yes"), width=10, command=lambda: self.__handle_dialog_choice(result, dialog, choice=True)
+                button_frame,
+                text=options[1],
+                width=10,  # "Yes"
+                command=lambda: self.__handle_dialog_choice(result, dialog, choice=True),
             )
             yes_button.pack(side=tk.LEFT, padx=5)
 
             # No button
             no_button = tk.Button(
-                button_frame, text=_("No"), width=10, command=lambda: self.__handle_dialog_choice(result, dialog, choice=False)
+                button_frame,
+                text=options[2],
+                width=10,  # "No"
+                command=lambda: self.__handle_dialog_choice(result, dialog, choice=False),
             )
             no_button.pack(side=tk.LEFT, padx=5)
 
-            dialog.bind("<Return>", lambda _event: self.__handle_dialog_choice(result, dialog, None))
+            dialog.bind("<Return>", lambda _event: self.__handle_dialog_choice(result, dialog, choice="close"))
 
             # Center the dialog on the parent window
             dialog.deiconify()
@@ -604,23 +596,27 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
             # Wait until dialog is closed
             self.root.wait_window(dialog)
-            response = result[-1] if len(result) > 1 else None
+            return result[-1] if result else "close"
 
-            if response is True:  # Yes option
-                _params_copied = self.configuration_manager.copy_fc_values_to_file(selected_file, relevant_fc_params)
-            elif response is None:  # Close option
-                sys.exit(0)
-            # If response is False (No option), do nothing and continue
+        result = self.configuration_manager.handle_copy_fc_values_workflow(
+            selected_file,
+            ask_user_choice,
+            show_info_popup,
+        )
+
+        if result == "close":
+            # User chose to close the application
+            sys.exit(0)
 
     def __should_jump_to_file(self, selected_file: str) -> str:
-        jump_options = self.configuration_manager.get_file_jump_options(selected_file)
-        for dest_file, msg in jump_options.items():
-            if self.gui_complexity == "simple" or messagebox.askyesno(
-                _("Skip some steps?"), _(msg) if msg else _("Skip to {dest_file}?").format(**locals())
-            ):
-                self.file_selection_combobox.set(dest_file)
-                return dest_file
-        return selected_file
+        dest_file = self.configuration_manager.handle_file_jump_workflow(
+            selected_file,
+            self.gui_complexity,
+            ask_yesno_popup,
+        )
+        if dest_file != selected_file:
+            self.file_selection_combobox.set(dest_file)
+        return dest_file
 
     def __should_download_file_from_url(self, selected_file: str) -> None:
         self.configuration_manager.should_download_file_from_url_workflow(
@@ -699,7 +695,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def on_upload_selected_click(self) -> None:
         self.write_changes_to_intermediate_parameter_file()
-        selected_params = self.parameter_editor_table.get_upload_selected_params(str(self.gui_complexity))
+        selected_params = self.parameter_editor_table.get_upload_selected_params(self.gui_complexity)
         if selected_params:
             if self.configuration_manager.fc_parameters:
                 self.upload_selected_params(selected_params)
@@ -804,20 +800,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.on_param_file_combobox_change(None)
 
     def write_changes_to_intermediate_parameter_file(self) -> None:
-        elapsed_since_last_ask = time.time() - self.last_time_asked_to_save
-        # if annotate parameters into files is true, we always need to write to file, because
-        # the parameter metadata might have changed, or not be present in the file.
-        # In that situation, avoid asking multiple times to write the file, by checking the time last asked
-        # But only if self.annotate_params_into_files.get()
-        if self.configuration_manager.has_unsaved_changes() or (
-            self.annotate_params_into_files.get() and elapsed_since_last_ask > 1.0
-        ):
-            msg = _("Do you want to write the changes to the {current_filename} file?").format(
-                current_filename=self.configuration_manager.current_file
-            )
-            if messagebox.askyesno(_("One or more parameters have been edited"), msg.format(**locals())):
-                self.configuration_manager.export_current_file(annotate_doc=self.annotate_params_into_files.get())
-        self.last_time_asked_to_save = time.time()
+        self.configuration_manager.handle_write_changes_workflow(
+            self.annotate_params_into_files.get(),
+            ask_yesno_popup,
+        )
 
     def close_connection_and_quit(self) -> None:
         focused_widget = self.parameter_editor_table.view_port.focus_get()

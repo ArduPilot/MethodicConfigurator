@@ -143,8 +143,8 @@ def parameter_editor_table(
 
         mock_config_manager.delete_parameter_from_current_file = mock_delete_parameter
 
-        # Mock has_unsaved_changes to return False by default
-        mock_config_manager.has_unsaved_changes.return_value = False
+        # Mock _has_unsaved_changes to return False by default
+        mock_config_manager._has_unsaved_changes.return_value = False
 
         # Create the table instance
         table = ParameterEditorTable(mock_master, mock_config_manager, mock_parameter_editor)
@@ -190,7 +190,7 @@ def test_init_creates_instance_with_correct_attributes(
     # current_file is now managed by configuration_manager
     assert parameter_editor_table.configuration_manager.current_file == "test_file"
     assert isinstance(parameter_editor_table.upload_checkbutton_var, dict)
-    assert parameter_editor_table.configuration_manager.has_unsaved_changes() is False
+    assert parameter_editor_table.configuration_manager._has_unsaved_changes() is False
 
 
 def test_init_configures_style(parameter_editor_table: ParameterEditorTable) -> None:
@@ -622,10 +622,10 @@ class TestParameterChangeStateBehavior:
         AND: Users can proceed without worrying about lost changes
         """
         # Arrange: Configure no dirty parameters
-        parameter_editor_table.configuration_manager.has_unsaved_changes.return_value = False
+        parameter_editor_table.configuration_manager._has_unsaved_changes.return_value = False
 
         # Act: Check for unsaved changes
-        result = parameter_editor_table.configuration_manager.has_unsaved_changes()
+        result = parameter_editor_table.configuration_manager._has_unsaved_changes()
 
         # Assert: No unsaved changes detected
         assert result is False
@@ -640,10 +640,10 @@ class TestParameterChangeStateBehavior:
         AND: Users are warned about potential data loss
         """
         # Arrange: Configure dirty parameters
-        parameter_editor_table.configuration_manager.has_unsaved_changes.return_value = True
+        parameter_editor_table.configuration_manager._has_unsaved_changes.return_value = True
 
         # Act: Check for unsaved changes
-        result = parameter_editor_table.configuration_manager.has_unsaved_changes()
+        result = parameter_editor_table.configuration_manager._has_unsaved_changes()
 
         # Assert: Unsaved changes detected
         assert result is True
