@@ -498,7 +498,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         try:
             # Inject GUI callbacks into business logic workflow
-            success = self.configuration_manager.handle_imu_temperature_calibration_workflow(
+            _success = self.configuration_manager.handle_imu_temperature_calibration_workflow(
                 selected_file,
                 ask_user_confirmation=ask_yesno_popup,
                 select_file=select_file,
@@ -506,10 +506,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 show_error=show_error_popup,
                 progress_callback=self.tempcal_imu_progress_window.update_progress_bar_300_pct,
             )
-
-            if success:
-                # Force writing doc annotations to file
-                self.parameter_editor_table.set_at_least_one_param_edited(True)
 
         finally:
             self.tempcal_imu_progress_window.destroy()
@@ -600,9 +596,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             response = result[-1] if len(result) > 1 else None
 
             if response is True:  # Yes option
-                params_copied = self.configuration_manager.copy_fc_values_to_file(selected_file, relevant_fc_params)
-                if params_copied:
-                    self.parameter_editor_table.set_at_least_one_param_edited(True)
+                _params_copied = self.configuration_manager.copy_fc_values_to_file(selected_file, relevant_fc_params)
             elif response is None:  # Close option
                 sys.exit(0)
             # If response is False (No option), do nothing and continue
@@ -838,7 +832,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # the parameter metadata might have changed, or not be present in the file.
         # In that situation, avoid asking multiple times to write the file, by checking the time last asked
         # But only if self.annotate_params_into_files.get()
-        if self.parameter_editor_table.get_at_least_one_param_edited() or (
+        if self.configuration_manager.has_unsaved_changes() or (
             self.annotate_params_into_files.get() and elapsed_since_last_ask > 1.0
         ):
             msg = _("Do you want to write the changes to the {current_filename} file?").format(
@@ -846,7 +840,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
             if messagebox.askyesno(_("One or more parameters have been edited"), msg.format(**locals())):
                 self.configuration_manager.export_current_file(annotate_doc=self.annotate_params_into_files.get())
-        self.parameter_editor_table.set_at_least_one_param_edited(False)
         self.last_time_asked_to_save = time.time()
 
     def close_connection_and_quit(self) -> None:

@@ -15,6 +15,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
 # pylint: disable=redefined-outer-name, too-many-lines, protected-access
@@ -35,6 +36,8 @@ def mock_local_filesystem() -> MagicMock:
     mock_fs.file_parameters = {"test_file.param": {"PARAM1": Par(1.0), "PARAM2": Par(3.0)}}
     mock_fs.param_default_dict = ParDict()
     mock_fs.doc_dict = {}
+    mock_fs.forced_parameters = {}
+    mock_fs.derived_parameters = {}
     mock_fs.export_to_param = MagicMock()
 
     # Mock get_documentation_text_and_url method with realistic return values
@@ -879,10 +882,15 @@ class TestFlightControllerResetWorkflows:
         WHEN: They calculate reset time
         THEN: Time should be calculated from max boot delay
         """
-        # Arrange: Set up boot delay parameters
-        configuration_manager.filesystem.file_parameters = {
-            "00_default.param": {"BRD_BOOT_DELAY": Par(5000.0)}  # 5 seconds
-        }
+        # Arrange: Set up boot delay parameters in domain model
+        brd_boot_delay_param = ArduPilotParameter(
+            name="BRD_BOOT_DELAY",
+            par_obj=Par(5000.0, ""),  # 5 seconds
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=3000.0,  # 3 seconds
+        )
+        configuration_manager.parameters = {"BRD_BOOT_DELAY": brd_boot_delay_param}
         configuration_manager.flight_controller.fc_parameters = {"BRD_BOOT_DELAY": 3000}  # 3 seconds
 
         # Act: Calculate reset time
@@ -917,9 +925,16 @@ class TestFlightControllerResetWorkflows:
         WHEN: They reset and reconnect
         THEN: Reset should be performed with calculated time
         """
-        # Arrange: Set up successful reset
+        # Arrange: Set up successful reset with boot delay in domain model
         configuration_manager.flight_controller.reset_and_reconnect.return_value = None
-        configuration_manager.filesystem.file_parameters = {"00_default.param": {"BRD_BOOT_DELAY": Par(2000.0)}}
+        brd_boot_delay_param = ArduPilotParameter(
+            name="BRD_BOOT_DELAY",
+            par_obj=Par(2000.0, ""),  # 2 seconds
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=1000.0,  # 1 second
+        )
+        configuration_manager.parameters = {"BRD_BOOT_DELAY": brd_boot_delay_param}
         configuration_manager.flight_controller.fc_parameters = {"BRD_BOOT_DELAY": 1000}
 
         # Act: Reset and reconnect
@@ -980,11 +995,27 @@ class TestFileCopyWorkflows:
         WHEN: User checks if values should be copied
         THEN: Copy requirement and parameters should be returned
         """
-        # Arrange: Set up file with auto_changed_by
+        # Arrange: Set up file with auto_changed_by and populate domain model
         selected_file = "test_file.param"
         configuration_manager.filesystem.auto_changed_by.return_value = "Mission Planner"
         configuration_manager.flight_controller.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
-        configuration_manager.filesystem.file_parameters = {selected_file: {"PARAM1": Par(0.0), "PARAM3": Par(3.0)}}
+
+        # Populate domain model with parameters for this file
+        param1 = ArduPilotParameter(
+            name="PARAM1",
+            par_obj=Par(0.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=1.0,
+        )
+        param3 = ArduPilotParameter(
+            name="PARAM3",
+            par_obj=Par(3.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=None,
+        )
+        configuration_manager.parameters = {"PARAM1": param1, "PARAM3": param3}
 
         # Act: Check if should copy
         should_copy, relevant_params, auto_changed_by = configuration_manager.should_copy_fc_values_to_file(selected_file)
@@ -992,7 +1023,7 @@ class TestFileCopyWorkflows:
         # Assert: Copy needed with relevant parameters
         assert should_copy is True
         assert auto_changed_by == "Mission Planner"
-        assert relevant_params == {"PARAM1": 1.0}  # Only PARAM1 is in both FC and file
+        assert relevant_params == {"PARAM1": 1.0}  # Only PARAM1 is in both FC and domain model
 
     def test_user_handles_no_auto_changed_by_requirement(self, configuration_manager) -> None:
         """
@@ -2235,18 +2266,29 @@ class TestConfigurationManagerFrontendAPI:
         """
         # Arrange: Set up current file and parameters
         configuration_manager.current_file = "test_file.param"
-        test_params = {"PARAM1": Par(1.0), "PARAM2": Par(2.0)}
+        test_params = {"PARAM1": Par(1.0, ""), "PARAM2": Par(2.0, "")}
         configuration_manager.filesystem.file_parameters = {"test_file.param": test_params}
+
+        # Populate domain model (simulating what repopulate_configuration_step_parameters does)
+        configuration_manager.parameters = {
+            "PARAM1": ArduPilotParameter("PARAM1", test_params["PARAM1"], {}, {}),
+            "PARAM2": ArduPilotParameter("PARAM2", test_params["PARAM2"], {}, {}),
+        }
 
         # Act: Export current file with documentation
         configuration_manager.export_current_file(annotate_doc=True)
 
-        # Assert: Filesystem export called correctly
-        configuration_manager.filesystem.export_to_param.assert_called_once_with(  # type: ignore[call-arg]
-            test_params,
-            "test_file.param",
-            True,  # noqa: FBT003
-        )
+        # Assert: Filesystem export called correctly with right filename and annotate flag
+        configuration_manager.filesystem.export_to_param.assert_called_once()  # type: ignore[call-arg]
+        call_args = configuration_manager.filesystem.export_to_param.call_args  # type: ignore[attr-defined]
+        exported_params, filename, annotate = call_args[0]
+
+        assert filename == "test_file.param"
+        assert annotate is True
+        # Check that exported parameters have the same keys and values as original
+        assert set(exported_params.keys()) == set(test_params.keys())
+        for key, value in test_params.items():
+            assert exported_params[key] == value
 
     def test_user_can_get_documentation_text_and_url_for_current_file(self, configuration_manager) -> None:
         """
@@ -2298,15 +2340,293 @@ class TestConfigurationManagerFrontendAPI:
         """
         # Arrange: Set up current file and parameters
         configuration_manager.current_file = "test_file.param"
-        test_params = {"PARAM1": Par(1.0)}
+        test_params = {"PARAM1": Par(1.0, "")}
         configuration_manager.filesystem.file_parameters = {"test_file.param": test_params}
+
+        # Populate domain model (simulating what repopulate_configuration_step_parameters does)
+        configuration_manager.parameters = {
+            "PARAM1": ArduPilotParameter("PARAM1", test_params["PARAM1"], {}, {}),
+        }
 
         # Act: Export current file without documentation
         configuration_manager.export_current_file(annotate_doc=False)
 
-        # Assert: Filesystem export called with annotate_doc=False
-        configuration_manager.filesystem.export_to_param.assert_called_once_with(  # type: ignore[call-arg]
-            test_params,
-            "test_file.param",
-            False,  # noqa: FBT003
-        )
+        # Assert: Filesystem export called correctly with right filename and annotate flag
+        configuration_manager.filesystem.export_to_param.assert_called_once()  # type: ignore[call-arg]
+        call_args = configuration_manager.filesystem.export_to_param.call_args  # type: ignore[attr-defined]
+        exported_params, filename, annotate = call_args[0]
+
+        assert filename == "test_file.param"
+        assert annotate is False
+        # Check that exported parameters have the same keys and values as original
+        assert set(exported_params.keys()) == set(test_params.keys())
+        for key, value in test_params.items():
+            assert exported_params[key] == value
+
+
+class TestUnsavedChangesTracking:
+    """Test unsaved changes detection for all types of modifications."""
+
+    def test_user_receives_save_prompt_after_editing_parameter_value(self, configuration_manager) -> None:
+        """
+        User receives a save prompt when they edit a parameter value.
+
+        GIVEN: A user has loaded a parameter file with existing parameters
+        WHEN: They change a parameter value in the domain model
+        THEN: has_unsaved_changes should return True
+        AND: The user should be prompted to save before closing
+        """
+        # Arrange: Set up a parameter in the domain model
+
+        configuration_manager.current_file = "test_file.param"
+        configuration_manager.filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        configuration_manager.parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+
+        # Assert: Initially no changes
+        assert not configuration_manager.has_unsaved_changes()
+
+        # Act: User edits parameter value
+        configuration_manager.parameters["PARAM1"].set_new_value("2.0")
+
+        # Assert: Changes detected
+        assert configuration_manager.has_unsaved_changes()
+
+    def test_user_receives_save_prompt_after_system_derives_parameters(self, configuration_manager) -> None:
+        """
+        User receives a save prompt when the system derives parameters.
+
+        GIVEN: A user processes a configuration step
+        WHEN: The system derives parameters (forced/computed values) making them dirty
+        THEN: has_unsaved_changes should return True
+        AND: The user should be prompted to save before closing
+        """
+        # Arrange: Set up configuration step processor
+        configuration_manager.current_file = "test_file.param"
+        configuration_manager.filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+
+        # Create a parameter and mark it as dirty (simulating derived parameter change)
+        param = ArduPilotParameter("PARAM1", Par(1.0, "comment"))
+        param.set_new_value("2.0")
+        param.set_change_reason("Derived value")
+        configuration_manager.parameters = {"PARAM1": param}
+
+        # Assert: Initially no structural changes
+        assert not configuration_manager._added_parameters
+        assert not configuration_manager._deleted_parameters
+
+        # Assert: Changes detected due to dirty parameter
+        assert configuration_manager.has_unsaved_changes()
+
+    def test_user_receives_save_prompt_after_adding_parameter(self, configuration_manager) -> None:
+        """
+        User receives a save prompt when they add a new parameter.
+
+        GIVEN: A user has loaded a parameter file
+        WHEN: They add a new parameter to the file
+        THEN: has_unsaved_changes should return True
+        AND: The user should be prompted to save before closing
+        """
+        # Arrange: Set up initial state
+        configuration_manager.current_file = "test_file.param"
+        configuration_manager.filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        configuration_manager.parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+        configuration_manager.flight_controller.fc_parameters = {"PARAM2": 2.0}
+
+        # Assert: Initially no changes
+        assert not configuration_manager.has_unsaved_changes()
+
+        # Act: User adds a new parameter
+        configuration_manager.add_parameter_to_current_file("PARAM2")
+
+        # Assert: Changes detected
+        assert configuration_manager.has_unsaved_changes()
+
+    def test_user_receives_save_prompt_after_deleting_parameter(self, configuration_manager) -> None:
+        """
+        User receives a save prompt when they delete a parameter.
+
+        GIVEN: A user has loaded a parameter file with parameters
+        WHEN: They delete a parameter from the file
+        THEN: has_unsaved_changes should return True
+        AND: The user should be prompted to save before closing
+        """
+        # Arrange: Set up initial state with parameters
+
+        configuration_manager.current_file = "test_file.param"
+        configuration_manager.filesystem.file_parameters = {
+            "test_file.param": ParDict({"PARAM1": Par(1.0, "comment"), "PARAM2": Par(2.0, "comment")})
+        }
+        configuration_manager.parameters = {
+            "PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment")),
+            "PARAM2": ArduPilotParameter("PARAM2", Par(2.0, "comment")),
+        }
+
+        # Assert: Initially no changes
+        assert not configuration_manager.has_unsaved_changes()
+
+        # Act: User deletes a parameter
+        configuration_manager.delete_parameter_from_current_file("PARAM2")
+
+        # Assert: Changes detected
+        assert configuration_manager.has_unsaved_changes()
+
+    def test_user_not_prompted_when_adding_then_deleting_same_parameter(self, configuration_manager) -> None:
+        """
+        User is NOT prompted to save when they add then delete the same parameter.
+
+        GIVEN: A user has loaded a parameter file
+        WHEN: They add a new parameter
+        AND: Then immediately delete that same parameter
+        THEN: has_unsaved_changes should return False (net change is zero)
+        AND: The user should NOT be prompted to save
+        """
+        # Arrange: Set up initial state
+
+        configuration_manager.current_file = "test_file.param"
+        configuration_manager.filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        configuration_manager.parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+        configuration_manager.flight_controller.fc_parameters = {"PARAM2": 2.0}
+
+        # Assert: Initially no changes
+        assert not configuration_manager.has_unsaved_changes()
+
+        # Act: User adds a new parameter
+        configuration_manager.add_parameter_to_current_file("PARAM2")
+
+        # Assert: Changes detected after add
+        assert configuration_manager.has_unsaved_changes()
+
+        # Act: User deletes the same parameter they just added
+        configuration_manager.delete_parameter_from_current_file("PARAM2")
+
+        # Assert: No net change, so no unsaved changes
+        assert not configuration_manager.has_unsaved_changes()
+
+    def test_user_not_prompted_when_deleting_then_adding_back_same_parameter(self, configuration_manager) -> None:
+        """
+        User is NOT prompted to save when they delete then re-add the same parameter.
+
+        GIVEN: A user has loaded a parameter file with existing parameters
+        WHEN: They delete a parameter
+        AND: Then immediately add it back
+        THEN: has_unsaved_changes should return False (net change is zero)
+        AND: The user should NOT be prompted to save
+        """
+        # Arrange: Set up initial state with parameter
+
+        configuration_manager.current_file = "test_file.param"
+        configuration_manager.filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        configuration_manager.parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+        configuration_manager.flight_controller.fc_parameters = {"PARAM1": 1.0}
+
+        # Assert: Initially no changes
+        assert not configuration_manager.has_unsaved_changes()
+
+        # Act: User deletes the parameter
+        configuration_manager.delete_parameter_from_current_file("PARAM1")
+
+        # Assert: Changes detected after delete
+        assert configuration_manager.has_unsaved_changes()
+
+        # Act: User adds it back
+        configuration_manager.add_parameter_to_current_file("PARAM1")
+
+        # Assert: No net change (parameter is back), so no unsaved changes
+        assert not configuration_manager.has_unsaved_changes()
+
+    def test_user_receives_save_prompt_for_multiple_change_types_combined(self, configuration_manager) -> None:
+        """
+        User receives a save prompt when multiple types of changes occur.
+
+        GIVEN: A user has loaded a parameter file
+        WHEN: They edit a parameter value
+        AND: Add a new parameter
+        AND: Delete another parameter
+        THEN: has_unsaved_changes should return True
+        AND: The user should be prompted to save all changes
+        """
+        # Arrange: Set up initial state with multiple parameters
+
+        configuration_manager.current_file = "test_file.param"
+        configuration_manager.filesystem.file_parameters = {
+            "test_file.param": ParDict({"PARAM1": Par(1.0, "comment"), "PARAM2": Par(2.0, "comment")})
+        }
+        configuration_manager.parameters = {
+            "PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment")),
+            "PARAM2": ArduPilotParameter("PARAM2", Par(2.0, "comment")),
+        }
+        configuration_manager.flight_controller.fc_parameters = {"PARAM3": 3.0}
+
+        # Assert: Initially no changes
+        assert not configuration_manager.has_unsaved_changes()
+
+        # Act: User makes multiple changes
+        # 1. Edit existing parameter
+        configuration_manager.parameters["PARAM1"].set_new_value("99.0")
+        # 2. Add new parameter
+        configuration_manager.add_parameter_to_current_file("PARAM3")
+        # 3. Delete parameter
+        configuration_manager.delete_parameter_from_current_file("PARAM2")
+
+        # Assert: Changes detected
+        assert configuration_manager.has_unsaved_changes()
+
+    def test_user_receives_save_prompt_when_changing_file_with_unsaved_edits(self, configuration_manager) -> None:
+        """
+        User receives a save prompt when navigating away from a file with unsaved edits.
+
+        GIVEN: A user has edited parameters in the current file
+        WHEN: They attempt to navigate to a different parameter file
+        THEN: has_unsaved_changes should return True before navigation
+        AND: The system should prompt them to save before changing files
+        """
+        # Arrange: Set up initial state with edits
+
+        configuration_manager.current_file = "test_file.param"
+        configuration_manager.filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        configuration_manager.parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+
+        # Make changes
+        configuration_manager.parameters["PARAM1"].set_new_value("2.0")
+
+        # Assert: Changes detected
+        assert configuration_manager.has_unsaved_changes()
+
+        # This is where the UI would prompt before calling repopulate_configuration_step_parameters
+        # The test validates that the check returns True so the UI knows to prompt
+
+    def test_tracking_reset_when_navigating_to_new_file(self, configuration_manager) -> None:
+        """
+        Change tracking resets when user navigates to a new parameter file.
+
+        GIVEN: A user has unsaved changes in the current file
+        WHEN: They navigate to a different parameter file (after saving or discarding)
+        THEN: The change tracking should reset for the new file
+        AND: has_unsaved_changes should return False for the new file initially
+        """
+        # Arrange: Set up initial file with changes
+
+        configuration_manager.current_file = "test_file.param"
+        configuration_manager.filesystem.file_parameters = {
+            "test_file.param": ParDict({"PARAM1": Par(1.0, "comment")}),
+            "other_file.param": ParDict({"PARAM2": Par(2.0, "comment")}),
+        }
+        configuration_manager.parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+
+        # Set up fc_parameters so add_parameter_to_current_file works
+        configuration_manager.flight_controller.fc_parameters = {"PARAM_NEW": 5.0}
+
+        # Make changes
+        configuration_manager.add_parameter_to_current_file("PARAM_NEW")
+
+        # Assert: Changes detected
+        assert configuration_manager.has_unsaved_changes()
+
+        # Act: Navigate to new file (simulating what repopulate_configuration_step_parameters does)
+        configuration_manager.current_file = "other_file.param"
+        configuration_manager._added_parameters.clear()
+        configuration_manager._deleted_parameters.clear()
+        configuration_manager.parameters = {"PARAM2": ArduPilotParameter("PARAM2", Par(2.0, "comment"))}
+
+        # Assert: No changes in new file
+        assert not configuration_manager.has_unsaved_changes()

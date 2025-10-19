@@ -119,14 +119,14 @@ def parameter_editor_table(
         mock_config_manager.current_file = "test_file"
         mock_config_manager.is_fc_connected = True
 
-        # Set up current_file_parameters as a property that returns the right parameters
+        # Set up get_parameters_as_par_dict to return the right parameters
         def get_current_file_parameters() -> ParDict:
             return mock_local_filesystem.file_parameters.get(mock_config_manager.current_file, ParDict())
 
-        type(mock_config_manager).current_file_parameters = property(lambda _: get_current_file_parameters())
+        mock_config_manager.get_parameters_as_par_dict.return_value = get_current_file_parameters()
 
         # Mock the repopulate_configuration_step_parameters method to return the expected tuple
-        mock_config_manager.repopulate_configuration_step_parameters.return_value = (False, [], [])
+        mock_config_manager.repopulate_configuration_step_parameters.return_value = ([], [])
 
         # Mock the parameters attribute that gets populated during repopulate_configuration_step_parameters
         mock_config_manager.parameters = {}
@@ -141,6 +141,9 @@ def parameter_editor_table(
                 del mock_local_filesystem.file_parameters[current_file][param_name]
 
         mock_config_manager.delete_parameter_from_current_file = mock_delete_parameter
+
+        # Mock has_unsaved_changes to return False by default
+        mock_config_manager.has_unsaved_changes.return_value = False
 
         # Create the table instance
         table = ParameterEditorTable(mock_master, mock_config_manager, mock_parameter_editor)
@@ -174,7 +177,7 @@ def test_init_creates_instance_with_correct_attributes(
     # current_file is now managed by configuration_manager
     assert parameter_editor_table.configuration_manager.current_file == "test_file"
     assert isinstance(parameter_editor_table.upload_checkbutton_var, dict)
-    assert parameter_editor_table.at_least_one_param_edited is False
+    assert parameter_editor_table.configuration_manager.has_unsaved_changes() is False
 
 
 def test_init_configures_style(parameter_editor_table: ParameterEditorTable) -> None:
@@ -189,7 +192,7 @@ def test_init_configures_style(parameter_editor_table: ParameterEditorTable) -> 
         mock_config_manager = MagicMock(spec=ConfigurationManager)
         mock_config_manager.filesystem = parameter_editor_table.configuration_manager.filesystem
         mock_config_manager.current_file = "test_file"
-        mock_config_manager.current_file_parameters = (
+        mock_config_manager.get_parameters_as_par_dict.return_value = (
             parameter_editor_table.configuration_manager.filesystem.file_parameters.get("test_file", {})
         )
 
@@ -209,7 +212,7 @@ def test_init_with_style_lookup_failure(mock_master, mock_local_filesystem, mock
         mock_config_manager = MagicMock(spec=ConfigurationManager)
         mock_config_manager.filesystem = mock_local_filesystem
         mock_config_manager.current_file = "test_file"
-        mock_config_manager.current_file_parameters = {}
+        mock_config_manager.get_parameters_as_par_dict.return_value = {}
 
         table = ParameterEditorTable(mock_master, mock_config_manager, mock_parameter_editor)
 
@@ -351,9 +354,7 @@ def test_repopulate_uses_scroll_helper(parameter_editor_table: ParameterEditorTa
     """Ensure repopulate delegates scroll handling to helper and resets the flag."""
     parameter_editor_table._pending_scroll_to_bottom = pending_scroll
     parameter_editor_table.configuration_manager.filesystem.file_parameters = ParDict({"test_file": ParDict({})})
-    parameter_editor_table.configuration_manager.repopulate_configuration_step_parameters = MagicMock(
-        return_value=(False, [], [])
-    )
+    parameter_editor_table.configuration_manager.repopulate_configuration_step_parameters = MagicMock(return_value=([], []))
     parameter_editor_table._update_table = MagicMock()
     parameter_editor_table.view_port.winfo_children = MagicMock(return_value=[])
     parameter_editor_table._create_headers_and_tooltips = MagicMock(return_value=((), ()))
@@ -429,34 +430,23 @@ class TestUIComplexityBehavior:
 class TestParameterChangeStateBehavior:
     """Test behavior of parameter change state management."""
 
-    def test_get_at_least_one_param_edited_false(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test getting parameter edited state when false."""
-        parameter_editor_table.at_least_one_param_edited = False
+    def test_has_unsaved_changes_false(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """Test checking for unsaved changes when false (no dirty parameters)."""
+        # Configure the mock to return False (no dirty parameters)
+        parameter_editor_table.configuration_manager.has_unsaved_changes.return_value = False
 
-        result = parameter_editor_table.get_at_least_one_param_edited()
+        result = parameter_editor_table.configuration_manager.has_unsaved_changes()
 
         assert result is False
 
-    def test_get_at_least_one_param_edited_true(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test getting parameter edited state when true."""
-        parameter_editor_table.at_least_one_param_edited = True
+    def test_has_unsaved_changes_true(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """Test checking for unsaved changes when true (has dirty parameters)."""
+        # Configure the mock to return True (has dirty parameters)
+        parameter_editor_table.configuration_manager.has_unsaved_changes.return_value = True
 
-        result = parameter_editor_table.get_at_least_one_param_edited()
+        result = parameter_editor_table.configuration_manager.has_unsaved_changes()
 
         assert result is True
-
-    def test_set_at_least_one_param_edited_to_true(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test setting parameter edited state to true."""
-        parameter_editor_table.set_at_least_one_param_edited(True)
-
-        assert parameter_editor_table.at_least_one_param_edited is True
-
-    def test_set_at_least_one_param_edited_to_false(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """Test setting parameter edited state to false."""
-        parameter_editor_table.at_least_one_param_edited = True  # Start with true
-        parameter_editor_table.set_at_least_one_param_edited(False)
-
-        assert parameter_editor_table.at_least_one_param_edited is False
 
 
 class TestIntegrationBehavior:
@@ -601,7 +591,7 @@ class TestEventHandlerBehavior:
         parameter_editor_table.configuration_manager.filesystem.file_parameters = {
             "test_file": ParDict({"TEST_PARAM": Par(1.0, "comment")})
         }
-        # Do not assign to current_file_parameters; it is a read-only property
+        # get_parameters_as_par_dict returns the current parameters
         parameter_editor_table.parameter_editor.repopulate_parameter_table = MagicMock()
         parameter_editor_table.canvas = MagicMock()
         parameter_editor_table.canvas.yview.return_value = [0.5, 0.8]
@@ -610,7 +600,6 @@ class TestEventHandlerBehavior:
             parameter_editor_table._on_parameter_delete("TEST_PARAM")
 
             assert "TEST_PARAM" not in parameter_editor_table.configuration_manager.filesystem.file_parameters["test_file"]
-            assert parameter_editor_table.at_least_one_param_edited is True
             parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once_with()
 
     def test_on_parameter_delete_cancelled(self, parameter_editor_table: ParameterEditorTable) -> None:
@@ -624,23 +613,24 @@ class TestEventHandlerBehavior:
             parameter_editor_table._on_parameter_delete("TEST_PARAM")
 
             assert "TEST_PARAM" in parameter_editor_table.configuration_manager.filesystem.file_parameters["test_file"]
-            assert parameter_editor_table.at_least_one_param_edited is False
 
     def test_confirm_parameter_addition_valid_fc_param(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter addition with valid FC parameter."""
         parameter_editor_table.configuration_manager.current_file = "test_file"
         parameter_editor_table.configuration_manager.filesystem.file_parameters = {"test_file": ParDict({})}
-        # Do not assign to current_file_parameters; it is a read-only property
+        # get_parameters_as_par_dict returns the current parameters
         parameter_editor_table.parameter_editor.repopulate_parameter_table = MagicMock()
 
         # Mock the add_parameter_to_current_file method to return True (success)
-        parameter_editor_table.configuration_manager.add_parameter_to_current_file = MagicMock(return_value=True)
+        with patch.object(
+            parameter_editor_table.configuration_manager,
+            "add_parameter_to_current_file",
+            return_value=True,
+        ):
+            result = parameter_editor_table._confirm_parameter_addition("NEW_PARAM")
 
-        result = parameter_editor_table._confirm_parameter_addition("NEW_PARAM")
-
-        assert result is True
-        parameter_editor_table.configuration_manager.add_parameter_to_current_file.assert_called_once_with("NEW_PARAM")
-        assert parameter_editor_table.at_least_one_param_edited is True
+            assert result is True
+            parameter_editor_table.configuration_manager.add_parameter_to_current_file.assert_called_once_with("NEW_PARAM")
 
     def test_confirm_parameter_addition_empty_name(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter addition with empty name."""

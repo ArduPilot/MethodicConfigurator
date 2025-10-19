@@ -127,14 +127,11 @@ class TestConfigurationStepProcessorWorkflows:
         selected_file = "test_file.param"
 
         # Act: Process the configuration step
-        parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
-            selected_file, fc_parameters
-        )
+        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, fc_parameters)
 
         # Assert: Basic processing completed successfully
         assert isinstance(parameters, dict)
         assert len(parameters) > 0
-        assert not at_least_one_param_edited
         assert "SERIAL1_PROTOCOL" in parameters
         assert isinstance(parameters["SERIAL1_PROTOCOL"], ArduPilotParameter)
         assert ui_errors == []
@@ -149,7 +146,6 @@ class TestConfigurationStepProcessorWorkflows:
         GIVEN: A user has a configuration step with derived parameter calculations
         WHEN: They process the configuration step
         THEN: Derived parameters should be computed and merged
-        AND: The system should indicate parameters were edited
         """
         # Arrange: Set up configuration with derived parameters
         selected_file = "test_file.param"
@@ -157,17 +153,14 @@ class TestConfigurationStepProcessorWorkflows:
         processor.local_filesystem.merge_forced_or_derived_parameters.return_value = True
 
         # Act: Process configuration step with derived parameters
-        parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
+        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
-        )
-
-        # Assert: Derived parameters were processed
+        )  # Assert: Derived parameters were processed
         processor.local_filesystem.compute_parameters.assert_called_once()
-        processor.local_filesystem.merge_forced_or_derived_parameters.assert_called_once()
-        assert at_least_one_param_edited
+        # Note: merge_forced_or_derived_parameters is no longer called - derived params are returned instead
         assert isinstance(parameters, dict)
         assert ui_errors == []
-        # Should have info messages about parameter renaming since configuration includes rename_connection
+        # Should have info messages about parameter renaming
         assert len(ui_infos) > 0
 
     def test_user_receives_error_feedback_when_derived_parameter_computation_fails(
@@ -187,9 +180,9 @@ class TestConfigurationStepProcessorWorkflows:
         processor.local_filesystem.compute_parameters.return_value = "Computation error: Invalid expression"
 
         # Act: Process configuration step with failing computation
-        parameters, _edited, ui_errors, ui_infos = processor.process_configuration_step(selected_file, fc_parameters)
-
-        # Assert: Error feedback provided to UI layer
+        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
+            selected_file, fc_parameters
+        )  # Assert: Error feedback provided to UI layer
         assert len(ui_errors) == 1
         assert ui_errors[0][0] == "Error in derived parameters"  # Title
         assert "Computation error: Invalid expression" in ui_errors[0][1]  # Message
@@ -209,19 +202,15 @@ class TestConfigurationStepProcessorConnectionRenaming:
         WHEN: They process a configuration step with connection renaming
         THEN: Parameters should be renamed correctly
         AND: User should receive confirmation of the changes via UI messages
-        AND: The system should indicate parameters were edited
         """
         # Arrange: Set up connection renaming configuration
         selected_file = "test_file.param"
         processor.local_filesystem.configuration_steps = {selected_file: {"rename_connection": "selected_can"}}
 
         # Act: Process configuration step with connection renaming
-        parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
+        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
-        )
-
-        # Assert: Connection renaming completed successfully
-        assert at_least_one_param_edited
+        )  # Assert: Connection renaming completed successfully
         assert len(ui_infos) > 0  # Should have info messages about renaming
         assert ui_errors == []
         assert isinstance(parameters, dict)
@@ -241,16 +230,13 @@ class TestConfigurationStepProcessorConnectionRenaming:
         processor.local_filesystem.file_parameters[selected_file]["CAN_P2_DRIVER"] = Par(value=2.0, comment="Exists")
 
         # Act: Process configuration step with potential duplicates
-        with patch.object(processor, "_apply_connection_renames") as mock_apply:
+        with patch.object(processor, "_calculate_connection_rename_operations") as mock_apply:
             mock_apply.return_value = ({"CAN_P2_DRIVER"}, [("CAN_P1_DRIVER", "CAN_P2_DRIVER")])
-            _parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
+            _parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
                 selected_file, fc_parameters
-            )
-
-        # Assert: User informed about duplicate removal
-        assert at_least_one_param_edited
-        assert len(ui_infos) > 0  # Should have info about parameter removal
-        assert ui_errors == []
+            )  # Assert: User informed about duplicate removal
+            assert len(ui_infos) > 0  # Should have info about parameter removal
+            assert ui_errors == []
 
     def test_user_can_process_configuration_step_without_connection_renaming(self, processor, fc_parameters) -> None:
         """
@@ -273,13 +259,10 @@ class TestConfigurationStepProcessorConnectionRenaming:
         processor.local_filesystem.merge_forced_or_derived_parameters.return_value = True
 
         # Act: Process configuration step without connection renaming
-        parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
+        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
-        )
-
-        # Assert: Only derived parameters processed, no connection renaming
+        )  # Assert: Only derived parameters processed, no connection renaming
         processor.local_filesystem.compute_parameters.assert_called_once()
-        assert at_least_one_param_edited  # Due to derived parameters
         assert isinstance(parameters, dict)
         assert ui_errors == []
         assert ui_infos == []  # No connection renaming means no info messages
@@ -526,24 +509,29 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
 
     def test_apply_renames_without_duplicates(self, connection_params) -> None:
         """
-        Test applying renames without any duplicate parameters creates expected results.
+        Test calculating renames without any duplicate parameters creates expected operations.
 
         GIVEN: A user has parameters without naming conflicts
-        WHEN: They apply connection renaming
-        THEN: Parameters should be renamed correctly without any removals
-        AND: Original parameters should be replaced with renamed versions
+        WHEN: They calculate connection renaming operations
+        THEN: Rename operations should be returned correctly without any duplicates
+        AND: Original parameters dict should remain unchanged (immutable)
         """
-        # Arrange: Create a copy to avoid modifying the original
+        # Arrange: Create a copy to verify immutability
         params = connection_params["param_objects"].copy()
+        original_keys = set(params.keys())
 
-        # Act: Apply renames for CAN1 to CAN2
-        duplicated_names, renamed_pairs = ConfigurationStepProcessor._apply_connection_renames(params, "CAN2")
+        # Act: Calculate renames for CAN1 to CAN2 (does NOT mutate params)
+        duplicated_names, renamed_pairs = ConfigurationStepProcessor._calculate_connection_rename_operations(params, "CAN2")
 
-        # Assert: Parameters renamed correctly without duplicates
-        assert "CAN_P2_DRIVER" in params
-        assert "CAN_D2_PROTOCOL" in params
-        assert "CAN_P1_DRIVER" not in params
-        assert "CAN_D1_PROTOCOL" not in params
+        # Assert: Rename operations calculated correctly
+        assert not duplicated_names  # No duplicates expected
+        assert ("CAN_P1_DRIVER", "CAN_P2_DRIVER") in renamed_pairs
+        assert ("CAN_D1_PROTOCOL", "CAN_D2_PROTOCOL") in renamed_pairs
+
+        # Assert: Original params dict unchanged (immutable)
+        assert set(params.keys()) == original_keys
+        assert "CAN_P1_DRIVER" in params  # Original still present
+        assert "CAN_P2_DRIVER" not in params  # New name not added
 
         # Check that only CAN parameters were renamed
         assert "SERIAL1_PROTOCOL" in params
@@ -559,54 +547,63 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
 
     def test_apply_renames_with_duplicates(self, connection_params) -> None:
         """
-        Test applying renames handles duplicate parameters correctly.
+        Test calculating renames identifies duplicate conflicts correctly.
 
         GIVEN: A user has parameters that would create naming conflicts after renaming
-        WHEN: They apply connection renaming
-        THEN: Duplicate parameters should be automatically removed
-        AND: The system should track which parameters were removed
+        WHEN: They calculate connection renaming operations
+        THEN: Duplicate parameters should be identified for removal
+        AND: The system should track which parameters would conflict
+        AND: Original parameters dict remains unchanged (immutable)
         """
         # Arrange: Create params with potential duplicates
+        # Add CAN_P2_DRIVER which will conflict when we try to rename CAN_P1_DRIVER -> CAN_P2_DRIVER
         params = connection_params["param_objects"].copy()
         params["CAN_P2_DRIVER"] = Par(value=2.0, comment="Already exists")
+        original_keys = set(params.keys())
 
-        # Act: Apply renames for CAN1 to CAN2
-        duplicated_params, _renamed_pairs = ConfigurationStepProcessor._apply_connection_renames(params, "CAN2")
+        # Act: Calculate renames for CAN1 to CAN2
+        duplicated_params, _renamed_pairs = ConfigurationStepProcessor._calculate_connection_rename_operations(params, "CAN2")
 
-        # Assert: Duplicates handled correctly
-        assert "CAN_P1_DRIVER" not in params  # Original removed to avoid duplicates
-        assert "CAN_P2_DRIVER" not in params  # Pre-existing target also removed
+        # Assert: The ALREADY-EXISTING parameter is marked as duplicate (not the one being renamed)
+        # This is because CAN_P2_DRIVER already exists, so it would conflict with the rename
+        assert "CAN_P2_DRIVER" in duplicated_params
 
-        # Check that other CAN2 parameters are present (weren't duplicates)
-        assert "CAN_D2_PROTOCOL" in params
-        assert "CAN_P2_BITRATE" in params
+        # Assert: Original params dict unchanged (immutable)
+        assert set(params.keys()) == original_keys
+        assert "CAN_P1_DRIVER" in params  # Original rename source still present
+        assert "CAN_P2_DRIVER" in params  # Pre-existing conflict still there
 
         # Check duplicated parameters are tracked (the pre-existing target that was removed)
         assert "CAN_P2_DRIVER" in duplicated_params
 
     def test_apply_renames_with_variables(self, connection_params) -> None:
         """
-        Test applying renames with variable evaluation works correctly.
+        Test calculating renames with variable evaluation works correctly.
 
         GIVEN: A user has configuration with variable-based connection naming
-        WHEN: They apply connection renaming with variables
-        THEN: Variables should be evaluated and used for renaming
-        AND: Parameters should be renamed to the evaluated target
+        WHEN: They calculate connection renaming operations with variables
+        THEN: Variables should be evaluated and used for calculating renames
+        AND: Rename operations should use the evaluated target
+        AND: Original parameters dict remains unchanged (immutable)
         """
         # Arrange: Create variables dictionary
         variables: dict[str, Any] = {"selected_can": "CAN3"}
         params = connection_params["param_objects"].copy()
+        original_keys = set(params.keys())
 
-        # Act: Apply renames with variables
-        _duplicated_params, renamed_pairs = ConfigurationStepProcessor._apply_connection_renames(
+        # Act: Calculate renames with variables (does NOT mutate params)
+        _duplicated_params, renamed_pairs = ConfigurationStepProcessor._calculate_connection_rename_operations(
             params, "selected_can", variables
         )
 
-        # Assert: Parameters renamed using evaluated variable
-        assert "CAN_P3_DRIVER" in params
-        assert "CAN_D3_PROTOCOL" in params
-        assert "CAN_P1_DRIVER" not in params
-        assert "CAN_D1_PROTOCOL" not in params
+        # Assert: Rename operations calculated using evaluated variable
+        assert ("CAN_P1_DRIVER", "CAN_P3_DRIVER") in renamed_pairs
+        assert ("CAN_D1_PROTOCOL", "CAN_D3_PROTOCOL") in renamed_pairs
+
+        # Assert: Original params dict unchanged (immutable)
+        assert set(params.keys()) == original_keys
+        assert "CAN_P1_DRIVER" in params
+        assert "CAN_P3_DRIVER" not in params
 
         # Check renamed pairs
         renamed_dict = dict(renamed_pairs)
@@ -615,34 +612,39 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
 
     def test_apply_renames_with_mixed_connection_types(self, connection_params) -> None:
         """
-        User can rename parameters with mixed connection types in same operation.
+        User can calculate renames with mixed connection types in same operation.
 
         GIVEN: A user has both CAN and SERIAL parameters that need renaming
-        WHEN: They apply connection renaming for a specific type
-        THEN: Only the matching connection type should be renamed
-        AND: Other connection types should remain unchanged
+        WHEN: They calculate connection renaming operations for a specific type
+        THEN: Only the matching connection type should have rename operations
+        AND: Other connection types should not appear in rename operations
+        AND: Original parameters dict remains unchanged (immutable)
         """
         # Arrange: Create parameters with mixed connection types
         params = connection_params["param_objects"].copy()
+        original_keys = set(params.keys())
 
-        # Act: Apply renames for CAN2 (should only affect CAN parameters)
-        duplicated_params, renamed_pairs = ConfigurationStepProcessor._apply_connection_renames(params, "CAN2")
+        # Act: Calculate renames for CAN2 (should only calculate CAN operations)
+        duplicated_params, renamed_pairs = ConfigurationStepProcessor._calculate_connection_rename_operations(params, "CAN2")
 
-        # Assert: Only CAN parameters renamed, SERIAL parameters unchanged
-        assert "CAN_P2_DRIVER" in params
-        assert "CAN_D2_PROTOCOL" in params
-        assert "CAN_P1_DRIVER" not in params
-        assert "CAN_D1_PROTOCOL" not in params
-
-        # SERIAL parameters should remain unchanged
-        assert "SERIAL1_PROTOCOL" in params
-        assert "SERIAL1_BAUD" in params
-        assert "SERIAL2_PROTOCOL" in params
-        assert "SERIAL2_BAUD" in params
-
-        # Check no duplicates and correct renames
-        assert len(duplicated_params) == 0
+        # Assert: Only CAN parameters in rename operations
         renamed_dict = dict(renamed_pairs)
+        assert "CAN_P1_DRIVER" in renamed_dict
+        assert renamed_dict["CAN_P1_DRIVER"] == "CAN_P2_DRIVER"
+        assert "CAN_D1_PROTOCOL" in renamed_dict
+        assert renamed_dict["CAN_D1_PROTOCOL"] == "CAN_D2_PROTOCOL"
+
+        # SERIAL parameters should NOT be in rename operations
+        assert "SERIAL1_PROTOCOL" not in renamed_dict
+        assert "SERIAL1_BAUD" not in renamed_dict
+
+        # Assert: Original params dict unchanged (immutable)
+        assert set(params.keys()) == original_keys
+        assert "CAN_P1_DRIVER" in params
+        assert "SERIAL1_PROTOCOL" in params
+
+        # Check no duplicates
+        assert len(duplicated_params) == 0
         assert "CAN_P1_DRIVER" in renamed_dict
         assert "SERIAL1_PROTOCOL" not in renamed_dict
 
@@ -665,13 +667,10 @@ class TestConfigurationStepProcessorErrorHandling:
         processor.local_filesystem.file_parameters[selected_file] = {}  # Add empty file entry
 
         # Act: Process configuration step
-        parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
-            selected_file, fc_parameters
-        )
+        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, fc_parameters)
 
         # Assert: Processing completed without errors
         assert isinstance(parameters, dict)
-        assert not at_least_one_param_edited
         assert ui_errors == []
         assert ui_infos == []
         processor.local_filesystem.compute_parameters.assert_not_called()
@@ -690,14 +689,11 @@ class TestConfigurationStepProcessorErrorHandling:
         processor.local_filesystem.file_parameters[selected_file] = {}
 
         # Act: Process configuration step
-        parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
-            selected_file, fc_parameters
-        )
+        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, fc_parameters)
 
         # Assert: Empty file handled gracefully
         assert isinstance(parameters, dict)
         assert len(parameters) == 0
-        assert not at_least_one_param_edited
         assert ui_errors == []
         assert ui_infos == []
 
@@ -749,16 +745,14 @@ class TestConfigurationStepProcessorErrorHandling:
         processor.local_filesystem.configuration_steps = {selected_file: {"rename_connection": "selected_can"}}
 
         # Act: Process complex connection renaming
-        parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
+        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
-        )
-
-        # Assert: Complex scenarios handled correctly
+        )  # Assert: Complex scenarios handled correctly
         assert isinstance(parameters, dict)
         assert ui_errors == []
 
         # Should have info messages about renaming (if any CAN parameters were renamed)
-        if at_least_one_param_edited:
+        if ui_infos:
             assert len(ui_infos) > 0
 
     def test_processor_handles_empty_variables_dictionary(self, processor, fc_parameters) -> None:
@@ -773,13 +767,10 @@ class TestConfigurationStepProcessorErrorHandling:
         selected_file = "test_file.param"
 
         # Act: Process with empty variables
-        parameters, at_least_one_param_edited, ui_errors, ui_infos = processor.process_configuration_step(
+        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
-        )
-
-        # Assert: Processing completed successfully
+        )  # Assert: Processing completed successfully
         assert isinstance(parameters, dict)
-        assert isinstance(at_least_one_param_edited, bool)
         assert isinstance(ui_errors, list)
         assert isinstance(ui_infos, list)
 
@@ -805,7 +796,7 @@ class TestConfigurationStepProcessorErrorHandling:
         test_fc_params["FLTMODE_CH"] = 5
 
         # Act: Process configuration step
-        _, _, ui_errors, ui_infos = processor.process_configuration_step(selected_file, test_fc_params)
+        _, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, test_fc_params)
 
         # Assert: ExpressLRS warning is present
         assert len(ui_infos) == 1
@@ -836,7 +827,7 @@ class TestConfigurationStepProcessorErrorHandling:
         test_fc_params["FLTMODE_CH"] = 6
 
         # Act: Process configuration step
-        _, _, ui_errors, ui_infos = processor.process_configuration_step(selected_file, test_fc_params)
+        _, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, test_fc_params)
 
         # Assert: No ExpressLRS warning
         assert ui_infos == []
@@ -862,7 +853,7 @@ class TestConfigurationStepProcessorErrorHandling:
         test_fc_params["FLTMODE_CH"] = 5
 
         # Act: Process configuration step
-        _, _, ui_errors, ui_infos = processor.process_configuration_step(selected_file, test_fc_params)
+        _, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, test_fc_params)
 
         # Assert: No ExpressLRS warning
         assert ui_infos == []
@@ -888,7 +879,7 @@ class TestConfigurationStepProcessorErrorHandling:
         test_fc_params["FLTMODE_CH"] = 5
 
         # Act: Process configuration step
-        _, _, ui_errors, ui_infos = processor.process_configuration_step(selected_file, test_fc_params)
+        _, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, test_fc_params)
 
         # Assert: ExpressLRS warning is present
         assert len(ui_infos) == 1

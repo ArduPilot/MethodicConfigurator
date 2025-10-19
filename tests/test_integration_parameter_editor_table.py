@@ -223,8 +223,8 @@ class TestParameterAdditionAndDeletion:
         result = config_manager.add_parameter_to_current_file("NEW_PARAM")
 
         assert result is True
-        assert "NEW_PARAM" in config_manager.current_file_parameters
-        assert config_manager.current_file_parameters["NEW_PARAM"].value == 42.0
+        assert "NEW_PARAM" in config_manager.get_parameters_as_par_dict()
+        assert config_manager.get_parameters_as_par_dict()["NEW_PARAM"].value == 42.0
 
     def test_parameter_addition_validation_workflow(self, parameter_editor_table: ParameterEditorTable) -> None:
         """Test parameter addition validation workflow."""
@@ -236,8 +236,8 @@ class TestParameterAdditionAndDeletion:
             config_manager.add_parameter_to_current_file("")
 
         # Test existing parameter name
-        # Add PARAM_1 first
-        config_manager.current_file_parameters["PARAM_1"] = Par(1.0, "First parameter comment")
+        # PARAM_1 already exists in the file from fixture
+        # Try to add it again - should fail
         with pytest.raises(InvalidParameterNameError):
             config_manager.add_parameter_to_current_file("PARAM_1")
 
@@ -247,29 +247,90 @@ class TestParameterAdditionAndDeletion:
         config_manager.current_file = "01_first_step.param"
         parameter_editor_table.canvas.yview.return_value = [0.5, 0.8]
 
-        # Add PARAM_1 for deletion test
-        config_manager.current_file_parameters["PARAM_1"] = Par(1.0, "First parameter comment")
+        # Populate the domain model from file parameters
+        config_manager.repopulate_configuration_step_parameters()
 
-        # Test confirmed deletion
+        # Simulate that the file was just loaded (no unsaved changes yet)
+        # Clear any dirty flags that repopulate may have set
+        for param in config_manager.parameters.values():
+            param.mark_as_saved()
+
+        # Initially no changes
+        assert not config_manager.has_unsaved_changes()
+
+        # Test confirmed deletion - PARAM_1 already exists in file from fixture
         with patch("tkinter.messagebox.askyesno", return_value=True):
             parameter_editor_table._on_parameter_delete("PARAM_1")
 
-            assert "PARAM_1" not in config_manager.current_file_parameters
-            assert parameter_editor_table.at_least_one_param_edited is True
+            assert "PARAM_1" not in config_manager.get_parameters_as_par_dict()
+            # Deletion should mark file as having changes
+            assert config_manager.has_unsaved_changes()
             parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once_with()
 
-        # Reset for next test
-        config_manager.current_file_parameters["PARAM_2"] = Par(2.5, "Second parameter comment")
-        parameter_editor_table.at_least_one_param_edited = False
+        # Reset for next test - PARAM_2 also already exists in file from fixture
         parameter_editor_table.parameter_editor.repopulate_parameter_table.reset_mock()
 
         # Test cancelled deletion
         with patch("tkinter.messagebox.askyesno", return_value=False):
             parameter_editor_table._on_parameter_delete("PARAM_2")
 
-            assert "PARAM_2" in config_manager.current_file_parameters
-            assert parameter_editor_table.at_least_one_param_edited is False
+            assert "PARAM_2" in config_manager.get_parameters_as_par_dict()
             parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_not_called()
+
+    def test_parameter_addition_marks_as_changed(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """Test that adding a parameter marks the file as having changes."""
+        config_manager = parameter_editor_table.configuration_manager
+
+        # Clear the flag manually to start fresh (simulating a just-loaded file)
+        config_manager._file_has_changes = False  # pylint: disable=protected-access
+
+        # Verify initially no changes
+        if not any(param.is_dirty for param in config_manager.parameters.values()):
+            assert not config_manager.has_unsaved_changes()
+
+        # Add a new parameter from flight controller
+        fc_params = config_manager.fc_parameters
+        if fc_params:
+            # Find a parameter that exists in FC but not in current file
+            for test_param in fc_params:
+                if test_param not in config_manager.get_parameters_as_par_dict():
+                    config_manager.add_parameter_to_current_file(test_param)
+                    # Adding should mark file as having changes
+                    assert config_manager.has_unsaved_changes()
+                    break
+
+    def test_add_then_delete_same_parameter_has_no_changes(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """Test that adding and then deleting the same parameter results in no net changes."""
+        config_manager = parameter_editor_table.configuration_manager
+        config_manager.current_file = "02_second_step.param"
+
+        # Repopulate to get clean state
+        config_manager.repopulate_configuration_step_parameters()
+
+        # Verify initially no changes (or save initial state)
+        initial_has_changes = config_manager.has_unsaved_changes()
+
+        # Find a parameter to add from FC
+        fc_params = config_manager.fc_parameters
+        if fc_params:
+            # Find a parameter that exists in FC but not in current file
+            test_param = None
+            for param_name in fc_params:
+                if param_name not in config_manager.get_parameters_as_par_dict():
+                    test_param = param_name
+                    break
+
+            if test_param:
+                # Add the parameter
+                config_manager.add_parameter_to_current_file(test_param)
+                # Should have changes now
+                assert config_manager.has_unsaved_changes()
+
+                # Delete the same parameter
+                config_manager.delete_parameter_from_current_file(test_param)
+
+                # Should be back to initial state (no net changes)
+                assert config_manager.has_unsaved_changes() == initial_has_changes
 
 
 class TestWidgetCreationIntegration:

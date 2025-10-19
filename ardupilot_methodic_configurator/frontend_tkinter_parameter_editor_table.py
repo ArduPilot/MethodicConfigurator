@@ -60,7 +60,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.configuration_manager = configuration_manager
         self.parameter_editor = parameter_editor  # the parent window that contains this table
         self.upload_checkbutton_var: dict[str, tk.BooleanVar] = {}
-        self.at_least_one_param_edited = False
 
         # Track last return values to prevent duplicate event processing
         self._last_return_values: dict[tk.Misc, str] = {}
@@ -151,9 +150,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.upload_checkbutton_var = {}
 
         # Process configuration step and create domain model parameters
-        (config_step_edited, ui_errors, ui_infos) = self.configuration_manager.repopulate_configuration_step_parameters()
-        if config_step_edited:
-            self.at_least_one_param_edited = True
+        (ui_errors, ui_infos) = self.configuration_manager.repopulate_configuration_step_parameters()
 
         for title, msg in ui_errors:
             messagebox.showerror(title, msg)
@@ -352,8 +349,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         else:
             # Success: mark edited and sync the ArduPilotParameter back to filesystem
             show_tooltip(change_reason_widget, param.tooltip_change_reason)
-            self.at_least_one_param_edited = True
-            self.configuration_manager.sync_parameter_to_filesystem(param.name)
             value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
         combobox_widget.configure(
@@ -493,9 +488,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if valid:
                 logging_debug(_("Parameter %s changed, will later ask if change(s) should be saved to file."), param.name)
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
-                self.at_least_one_param_edited = True
-                # Sync the ArduPilotParameter back to filesystem
-                self.configuration_manager.sync_parameter_to_filesystem(param.name)
                 value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update the displayed value in the Entry or Combobox
@@ -566,9 +558,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
             if valid:
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
-                self.at_least_one_param_edited = True
-                # Sync the ArduPilotParameter back to filesystem
-                self.configuration_manager.sync_parameter_to_filesystem(param.name)
                 value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update new_value_entry with the new decimal value
@@ -712,9 +701,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                         param.change_reason,
                         new_comment,
                     )
-                    self.at_least_one_param_edited = True
-                    # Sync the ArduPilotParameter back to filesystem
-                    self.configuration_manager.sync_parameter_to_filesystem(param.name)
 
             change_reason_entry.bind("<FocusOut>", _on_change_reason_change)
             change_reason_entry.bind("<Return>", _on_change_reason_change)
@@ -732,7 +718,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
             # Delete the parameter
             self.configuration_manager.delete_parameter_from_current_file(param_name)
-            self.at_least_one_param_edited = True
             self.parameter_editor.repopulate_parameter_table()
 
             # Restore the scroll position
@@ -783,7 +768,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         """Confirm and process parameter addition using ConfigurationManager."""
         try:
             if self.configuration_manager.add_parameter_to_current_file(param_name):
-                self.at_least_one_param_edited = True
                 self._pending_scroll_to_bottom = True
                 self.parameter_editor.repopulate_parameter_table()
                 return True
@@ -805,11 +789,3 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         # Get only selected parameters
         selected_names = [name for name, checkbutton_state in self.upload_checkbutton_var.items() if checkbutton_state.get()]
         return self.configuration_manager.get_parameters_as_par_dict(selected_names)
-
-    def get_at_least_one_param_edited(self) -> bool:
-        """Get whether at least one parameter has been edited."""
-        return self.at_least_one_param_edited
-
-    def set_at_least_one_param_edited(self, value: bool) -> None:
-        """Set whether at least one parameter has been edited."""
-        self.at_least_one_param_edited = value
