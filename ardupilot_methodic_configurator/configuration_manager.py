@@ -1245,7 +1245,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             percentage = int("".join([c for c in text[:3] if c.isdigit()]))
             if 0 <= percentage <= 100:
                 tooltip = _("This configuration step ({current_file} intermediate parameter file) is {percentage}% mandatory")
-                return percentage, tooltip.format(current_file=current_file)
+                return percentage, tooltip.format(current_file=current_file, percentage=percentage)
             raise ValueError
         except ValueError:
             tooltip = _("Mandatory level not available for this configuration step ({current_file})")
