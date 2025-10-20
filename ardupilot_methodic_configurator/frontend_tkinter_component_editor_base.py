@@ -294,6 +294,10 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
     def _display_component_editor_usage_instructions(self, parent: tk.Tk) -> None:
         """Display usage instructions for the component editor."""
+        # Check if parent window still exists before showing popup
+        if not parent.winfo_exists():
+            return
+
         # pylint: disable=duplicate-code
         usage_popup_window = BaseWindow(parent)
         style = ttk.Style()

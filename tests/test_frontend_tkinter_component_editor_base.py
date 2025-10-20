@@ -1742,6 +1742,7 @@ class TestUsageInstructionsWorkflows:
 
         # Create a mock Tk parent for testing
         mock_parent = MagicMock()
+        mock_parent.winfo_exists.return_value = True
 
         # Act: Display usage instructions
         editor_for_usage_tests._display_component_editor_usage_instructions(mock_parent)
