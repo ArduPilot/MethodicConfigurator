@@ -276,6 +276,19 @@ In our setup, the battery voltage is measured directly at the flight controller 
 
 Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `08_batt1.param` file
 
+### When using an analog voltage and current monitor
+
+To calibrate the `BATT_VOLT_MULT` voltage multiplier parameter, note the reported voltage from the flight controller and
+measure the actual battery voltage with a multimeter.
+`New BATT_VOLT_MULT` = (`old BATT_VOLT_MULT` x `Multimeter reading`) / `Reported voltage`
+
+To set the `BATT_AMP_PERVLT` parameter value, fly a fully charged battery and from the flight log note the consumed mAh.
+Then re-charge the battery and note the charged mAh (you need to have a battery charger that displays this information).
+Then calculate a new `BATT_AMP_PERVLT` value by:
+`New BATT_AMP_PERVLT` = (`old BATT_AMP_PERVLT` x `charged mAh`) / `Flight logged mAh`
+
+Your vehicle is not ready to fly yet so you might need to come back to this step later and adjust the `BATT_AMP_PERVLT` parameter.
+
 ## 6.6 Configure the redundant (secondary) battery monitor (optional)
 
 To be on the safe side we used a Holybro PM02 as a redundant secondary voltage and current monitor.
