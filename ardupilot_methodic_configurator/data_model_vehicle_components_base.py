@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 # from logging import debug as logging_debug
+from copy import deepcopy
 from logging import error as logging_error
 from logging import warning as logging_warning
 from typing import Any, Optional, Union
@@ -34,7 +35,7 @@ class ComponentDataModelBase:
     def __init__(
         self, initial_data: ComponentData, component_datatypes: dict[str, Any], schema: VehicleComponentsJsonSchema
     ) -> None:
-        self._data: ComponentData = initial_data if initial_data else {"Components": {}, "Format version": 1}
+        self._data: ComponentData = deepcopy(initial_data) if initial_data else {"Components": {}, "Format version": 1}
         self._battery_chemistry: str = ""
         self._possible_choices: dict[ComponentPath, tuple[str, ...]] = {}
         self._mot_pwm_types: tuple[str, ...] = ()
