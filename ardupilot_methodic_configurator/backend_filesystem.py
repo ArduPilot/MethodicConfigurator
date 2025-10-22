@@ -575,7 +575,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 dest = os_path.join(new_vehicle_dir, item)
                 if blank_change_reason and item.endswith(".param"):
                     # Blank the change reason in the template files, strip the comments that start with #
-                    with open(source, encoding="utf-8") as file:
+                    with open(source, encoding="utf-8-sig") as file:
                         lines = file.readlines()
                     with open(dest, "w", encoding="utf-8") as file:
                         file.writelines(line.split("#")[0].strip() + "\n" for line in lines)

@@ -189,7 +189,7 @@ class ProgramSettings:
 
         """
         try:
-            with open(settings_path, encoding="utf-8") as settings_file:
+            with open(settings_path, encoding="utf-8-sig") as settings_file:
                 loaded_settings: dict[str, Any] = json_load(settings_file)
                 return loaded_settings
         except FileNotFoundError:

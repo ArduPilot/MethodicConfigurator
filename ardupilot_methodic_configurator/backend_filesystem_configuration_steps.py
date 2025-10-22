@@ -76,7 +76,7 @@ class ConfigurationSteps:
         json_content = {}
         for i, directory in enumerate(search_directories):
             try:
-                with open(os_path.join(directory, self.configuration_steps_filename), encoding="utf-8") as file:
+                with open(os_path.join(directory, self.configuration_steps_filename), encoding="utf-8-sig") as file:
                     json_content = json_load(file)
                     file_found = True
                     if self.log_loaded_file:

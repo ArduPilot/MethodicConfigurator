@@ -113,43 +113,47 @@ def load_param_file_with_content(param_file: str) -> tuple[ParDict, list[str]]:
     """
     parameter_dict = ParDict()
     content = []
-    with open(param_file, encoding="utf-8") as f_handle:
-        for n, f_line in enumerate(f_handle, start=1):
-            line = f_line.strip()
-            content.append(line)
-            comment = None
-            if not line or line.startswith("#"):
-                continue
-            if "#" in line:
-                line, comment = line.split("#", 1)
-                comment = comment.strip()
-            if "," in line:
-                parameter, value = line.split(",", 1)
-            elif " " in line:
-                parameter, value = line.split(" ", 1)
-            elif "\t" in line:
-                parameter, value = line.split("\t", 1)
-            else:
-                msg = f"Missing parameter-value separator: {line} in {param_file} line {n}"
-                raise SystemExit(msg)
-            # Strip whitespace from both parameter name and value immediately after splitting
-            parameter = parameter.strip()
-            value = value.strip()
-            if len(parameter) > PARAM_NAME_MAX_LEN:
-                msg = f"Too long parameter name: {parameter} in {param_file} line {n}"
-                raise SystemExit(msg)
-            if not re.match(PARAM_NAME_REGEX, parameter):
-                msg = f"Invalid characters in parameter name {parameter} in {param_file} line {n}"
-                raise SystemExit(msg)
-            try:
-                fvalue = float(value)
-            except ValueError as exc:
-                msg = f"Invalid parameter value {value} in {param_file} line {n}"
-                raise SystemExit(msg) from exc
-            if parameter in parameter_dict:
-                msg = f"Duplicated parameter {parameter} in {param_file} line {n}"
-                raise SystemExit(msg)
-            parameter_dict[parameter] = Par(fvalue, comment)
+    try:
+        with open(param_file, encoding="utf-8-sig") as f_handle:
+            for n, f_line in enumerate(f_handle, start=1):
+                line = f_line.strip()
+                content.append(line)
+                comment = None
+                if not line or line.startswith("#"):
+                    continue
+                if "#" in line:
+                    line, comment = line.split("#", 1)
+                    comment = comment.strip()
+                if "," in line:
+                    parameter, value = line.split(",", 1)
+                elif " " in line:
+                    parameter, value = line.split(" ", 1)
+                elif "\t" in line:
+                    parameter, value = line.split("\t", 1)
+                else:
+                    msg = f"Missing parameter-value separator: {line} in {param_file} line {n}"
+                    raise SystemExit(msg)
+                # Strip whitespace from both parameter name and value immediately after splitting
+                parameter = parameter.strip()
+                value = value.strip()
+                if len(parameter) > PARAM_NAME_MAX_LEN:
+                    msg = f"Too long parameter name: {parameter} in {param_file} line {n}"
+                    raise SystemExit(msg)
+                if not re.match(PARAM_NAME_REGEX, parameter):
+                    msg = f"Invalid characters in parameter name {parameter} in {param_file} line {n}"
+                    raise SystemExit(msg)
+                try:
+                    fvalue = float(value)
+                except ValueError as exc:
+                    msg = f"Invalid parameter value {value} in {param_file} line {n}"
+                    raise SystemExit(msg) from exc
+                if parameter in parameter_dict:
+                    msg = f"Duplicated parameter {parameter} in {param_file} line {n}"
+                    raise SystemExit(msg)
+                parameter_dict[parameter] = Par(fvalue, comment)
+    except UnicodeDecodeError as exp:
+        msg = f"Fatal error reading {param_file}, file must be UTF-8 encoded: {exp}"
+        raise SystemExit(msg) from exp
     return parameter_dict, content
 
 
