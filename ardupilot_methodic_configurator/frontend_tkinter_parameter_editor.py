@@ -19,7 +19,6 @@ from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
-from logging import info as logging_info
 from logging import warning as logging_warning
 from tkinter import filedialog, messagebox, ttk
 from typing import Literal, Optional, Union
@@ -36,6 +35,7 @@ from ardupilot_methodic_configurator.configuration_manager import ConfigurationM
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     BaseWindow,
+    ask_retry_cancel_popup,
     ask_yesno_popup,
     show_error_popup,
     show_info_popup,
@@ -157,7 +157,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         super().__init__()
         self.configuration_manager = configuration_manager
 
-        self.at_least_one_changed_parameter_written = False
         self.file_selection_combobox: AutoResizeCombobox
         self.show_only_differences: tk.BooleanVar
         self.annotate_params_into_files: tk.BooleanVar
@@ -653,7 +652,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
             # current_file might have been changed by jump, so update again
             self.configuration_manager.current_file = selected_file
-            self.at_least_one_changed_parameter_written = False
             self.documentation_frame.refresh_documentation_labels()
             self.documentation_frame.update_why_why_now_tooltip()
             self.repopulate_parameter_table()
@@ -687,29 +685,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def on_show_only_changed_checkbox_change(self) -> None:
         self.repopulate_parameter_table()
 
-    def upload_params_that_require_reset(self, selected_params: dict) -> None:
-        """
-        Write only the selected parameters to the flight controller that require a reset.
-
-        After the reset, the other parameters that do not require a reset must still be written to the flight controller.
-        """
-        self.reset_progress_window = ProgressWindow(
-            self.root,
-            _("Resetting Flight Controller"),
-            _("Waiting for {} of {} seconds"),
-            only_show_when_update_progress_called=True,
-        )
-
-        if self.configuration_manager.upload_parameters_that_require_reset_workflow(
-            selected_params,
-            ask_confirmation=ask_yesno_popup,
-            show_error=show_error_popup,
-            progress_callback=self.reset_progress_window.update_progress_bar,
-        ):
-            self.at_least_one_changed_parameter_written = True
-
-        self.reset_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
-
     def on_upload_selected_click(self) -> None:
         self.write_changes_to_intermediate_parameter_file()
         selected_params = self.parameter_editor_table.get_upload_selected_params(str(self.gui_complexity))
@@ -729,41 +704,31 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     # This function can recurse multiple times if there is an upload error
     def upload_selected_params(self, selected_params: dict) -> None:
-        logging_info(
-            _("Uploading %d selected %s parameters to flight controller..."),
-            len(selected_params),
-            self.configuration_manager.current_file,
+        # Create progress windows
+        self.reset_progress_window = ProgressWindow(
+            self.root,
+            _("Resetting Flight Controller"),
+            _("Waiting for {} of {} seconds"),
+            only_show_when_update_progress_called=True,
+        )
+        self.param_download_progress_window = ProgressWindow(
+            self.root,
+            _("Re-downloading FC parameters"),
+            _("Downloaded {} of {} parameters"),
         )
 
-        self.upload_params_that_require_reset(selected_params)
-
-        # Use ConfigurationManager to handle the business logic
-        nr_changed = self.configuration_manager.upload_selected_parameters_workflow(
-            selected_params, show_error=show_error_popup
-        )
-
-        # Update GUI state if any parameters were changed
-        if nr_changed > 0:
-            self.at_least_one_changed_parameter_written = True
-
-        if self.at_least_one_changed_parameter_written:
-            # Re-download all parameters, in case one of them changed, and validate that all uploads were successful
-            self.download_flight_controller_parameters(redownload=True)
-            param_upload_error = self.configuration_manager.validate_uploaded_parameters(selected_params)
-
-            if param_upload_error:
-                if messagebox.askretrycancel(
-                    _("Parameter upload error"),
-                    _("Failed to upload the following parameters to the flight controller:\n")
-                    + f"{(', ').join(param_upload_error)}",
-                ):
-                    self.upload_selected_params(selected_params)
-            else:
-                logging_info(_("All parameters uploaded to the flight controller successfully"))
-
-            self.configuration_manager.export_fc_params_missing_or_different()
-
-        self.configuration_manager.write_current_file()
+        try:
+            self.configuration_manager.upload_selected_params_workflow(
+                selected_params,
+                ask_confirmation=ask_yesno_popup,
+                ask_retry_cancel=ask_retry_cancel_popup,
+                show_error=show_error_popup,
+                progress_callback_for_reset=self.reset_progress_window.update_progress_bar,
+                progress_callback_for_download=self.param_download_progress_window.update_progress_bar,
+            )
+        finally:
+            self.reset_progress_window.destroy()
+            self.param_download_progress_window.destroy()
 
     def on_download_last_flight_log_click(self) -> None:
         """Handle the download last flight log button click."""

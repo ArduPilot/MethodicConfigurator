@@ -35,6 +35,7 @@ SelectFileCallback = Callable[[str, list[str]], Optional[str]]  # (title, filety
 ShowWarningCallback = Callable[[str, str], None]  # (title, message) -> None
 ShowErrorCallback = Callable[[str, str], None]  # (title, message) -> None
 ShowInfoCallback = Callable[[str, str], None]  # (title, message) -> None
+AskRetryCancelCallback = Callable[[str, str], bool]  # (title, message) -> bool
 
 
 class OperationNotPossibleError(Exception):
@@ -48,7 +49,7 @@ class InvalidParameterNameError(Exception):
 # pylint: disable=too-many-lines
 
 
-class ConfigurationManager:  # pylint: disable=too-many-public-methods
+class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many-instance-attributes
     """
     Manages configuration state, including flight controller and filesystem access.
 
@@ -72,6 +73,8 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
 
         # Track parameters deleted by user (were in original file) or renamed by the system in the current configuration step
         self._deleted_parameters: set[str] = set()
+
+        self._at_least_one_changed = False
 
     # frontend_tkinter_parameter_editor_table.py API start
     @property
@@ -502,7 +505,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
 
         return True  # No reset needed
 
-    def upload_selected_parameters_workflow(self, selected_params: dict, show_error: Callable[[str, str], None]) -> int:
+    def _upload_parameters_to_fc(self, selected_params: dict, show_error: Callable[[str, str], None]) -> int:
         """
         Upload selected parameters to flight controller.
 
@@ -624,10 +627,80 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
                     row.append(value)
                 writer.writerow(row)
 
+    def upload_selected_params_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        selected_params: dict,
+        ask_confirmation: AskConfirmationCallback,
+        ask_retry_cancel: AskRetryCancelCallback,
+        show_error: ShowErrorCallback,
+        progress_callback_for_reset: Optional[Callable] = None,
+        progress_callback_for_download: Optional[Callable] = None,
+    ) -> None:
+        """
+        Complete workflow for uploading selected parameters, including reset, upload, validation, and retry.
+
+        Args:
+            selected_params: Dictionary of parameters to upload.
+            ask_confirmation: Callback to ask user for confirmation.
+            ask_retry_cancel: Callback to ask user to retry or cancel on upload error.
+            show_error: Callback to show error messages.
+            progress_callback_for_reset: Optional callback for reset progress.
+            progress_callback_for_download: Optional callback for download progress.
+
+        """
+        logging_info(
+            _("Uploading %d selected %s parameters to flight controller..."),
+            len(selected_params),
+            self.current_file,
+        )
+
+        # Upload parameters that require reset
+        reset_happened = self.upload_parameters_that_require_reset_workflow(
+            selected_params,
+            ask_confirmation,
+            show_error,
+            progress_callback_for_reset,
+        )
+
+        # Upload the selected parameters
+        nr_changed = self._upload_parameters_to_fc(selected_params, show_error)
+
+        if reset_happened or nr_changed > 0:
+            self._at_least_one_changed = True
+
+        if self._at_least_one_changed:
+            # Re-download all parameters to validate
+            self.download_flight_controller_parameters(progress_callback_for_download)
+            param_upload_error = self._validate_uploaded_parameters(selected_params)
+
+            if param_upload_error:
+                if ask_retry_cancel(
+                    _("Parameter upload error"),
+                    _("Failed to upload the following parameters to the flight controller:\n")
+                    + f"{(', ').join(param_upload_error)}",
+                ):
+                    # Retry the entire workflow
+                    self.upload_selected_params_workflow(
+                        selected_params,
+                        ask_confirmation,
+                        ask_retry_cancel,
+                        show_error,
+                        progress_callback_for_reset,
+                        progress_callback_for_download,
+                    )
+                # If not retrying, continue without success message
+            else:
+                logging_info(_("All parameters uploaded to the flight controller successfully"))
+
+            self._export_fc_params_missing_or_different()
+
+        self._write_current_file()
+        self._at_least_one_changed = False
+
     # frontend_tkinter_parameter_editor_table.py API end
 
     # frontend_tkinter_parameter_editor.py API start
-    def validate_uploaded_parameters(self, selected_params: dict) -> list[str]:
+    def _validate_uploaded_parameters(self, selected_params: dict) -> list[str]:
         logging_info(_("Re-downloaded all parameters from the flight controller"))
 
         # Validate that the read parameters are the same as the ones in the current_file
@@ -746,7 +819,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         else:
             logging_info(_("No FC parameters are missing or different from AMC parameter files"))
 
-    def export_fc_params_missing_or_different(self) -> None:
+    def _export_fc_params_missing_or_different(self) -> None:
         non_default_non_read_only_fc_params = self._get_non_default_non_read_only_fc_params()
 
         last_config_step_filename = list(self._local_filesystem.file_parameters.keys())[-1]
@@ -1332,7 +1405,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
     def configuration_phases(self) -> dict[str, PhaseData]:
         return self._local_filesystem.configuration_phases
 
-    def write_current_file(self) -> None:
+    def _write_current_file(self) -> None:
         self._local_filesystem.write_last_uploaded_filename(self.current_file)
 
     def export_current_file(self, annotate_doc: bool) -> None:

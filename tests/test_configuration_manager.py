@@ -1425,7 +1425,7 @@ class TestParameterUploadNewWorkflows:
         show_error = MagicMock()
 
         # Act: Upload parameters
-        nr_changed = configuration_manager.upload_selected_parameters_workflow(selected_params, show_error)
+        nr_changed = configuration_manager._upload_parameters_to_fc(selected_params, show_error)
 
         # Assert: Parameters uploaded successfully
         assert nr_changed == 2
@@ -1456,7 +1456,7 @@ class TestParameterUploadNewWorkflows:
         # Mock is_within_tolerance to return True (values are the same)
         with patch("ardupilot_methodic_configurator.configuration_manager.is_within_tolerance", return_value=True):
             # Act: Upload parameters
-            nr_changed = configuration_manager.upload_selected_parameters_workflow(selected_params, show_error)
+            nr_changed = configuration_manager._upload_parameters_to_fc(selected_params, show_error)
 
         # Assert: No parameters changed
         assert nr_changed == 0
@@ -1488,7 +1488,7 @@ class TestParameterUploadNewWorkflows:
         show_error = MagicMock()
 
         # Act: Upload parameters
-        nr_changed = configuration_manager.upload_selected_parameters_workflow(selected_params, show_error)
+        nr_changed = configuration_manager._upload_parameters_to_fc(selected_params, show_error)
 
         # Assert: One success, one error
         assert nr_changed == 1
@@ -1516,7 +1516,7 @@ class TestParameterUploadNewWorkflows:
         show_error = MagicMock()
 
         # Act: Upload parameters
-        nr_changed = configuration_manager.upload_selected_parameters_workflow(selected_params, show_error)
+        nr_changed = configuration_manager._upload_parameters_to_fc(selected_params, show_error)
 
         # Assert: New parameter counted as changed
         assert nr_changed == 1
@@ -2277,7 +2277,7 @@ class TestConfigurationManagerFrontendAPI:
         configuration_manager.current_file = "05_current.param"
 
         # Act: Write current file marker
-        configuration_manager.write_current_file()
+        configuration_manager._write_current_file()
 
         # Assert: Filesystem method called with correct file
         configuration_manager._local_filesystem.write_last_uploaded_filename.assert_called_once_with("05_current.param")
