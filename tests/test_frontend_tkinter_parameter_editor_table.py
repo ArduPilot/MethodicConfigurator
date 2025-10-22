@@ -129,7 +129,7 @@ def parameter_editor_table(
         mock_config_manager.repopulate_configuration_step_parameters.return_value = ([], [])
 
         # Mock the parameters attribute that gets populated during repopulate_configuration_step_parameters
-        mock_config_manager.parameters = {}
+        mock_config_manager.current_step_parameters = {}
 
         # Mock the delete method to actually delete from the filesystem parameters
         def mock_delete_parameter(param_name: str) -> None:
@@ -1762,7 +1762,7 @@ class TestUserParameterEditingWorkflows:
         }
 
         # Mock the configuration manager
-        parameter_editor_table.configuration_manager.parameters = params
+        parameter_editor_table.configuration_manager.current_step_parameters = params
         parameter_editor_table.configuration_manager.get_parameters_as_par_dict.return_value = {
             "PARAM1": Par(1.0, "test"),
             "PARAM2": Par(2.0, "test"),

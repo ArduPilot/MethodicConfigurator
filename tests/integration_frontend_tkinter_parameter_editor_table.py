@@ -161,15 +161,15 @@ def config_manager_with_params(
 
     # Manually populate parameters dict with ArduPilotParameter objects
     # This avoids the complex repopulate logic that requires more detailed mocks
-    config_manager.parameters = {}
+    config_manager.current_step_parameters = {}
     # Populate parameters from all configuration steps for comprehensive testing
     for file_params in realistic_filesystem.file_parameters.values():
         for param_name, par_obj in file_params.items():
-            if param_name not in config_manager.parameters:  # Don't overwrite if already exists
+            if param_name not in config_manager.current_step_parameters:  # Don't overwrite if already exists
                 metadata = realistic_filesystem.doc_dict.get(param_name, {})
                 fc_value = flight_controller_with_params.fc_parameters.get(param_name)
                 param = ArduPilotParameter(name=param_name, par_obj=par_obj, metadata=metadata, fc_value=fc_value)
-                config_manager.parameters[param_name] = param
+                config_manager.current_step_parameters[param_name] = param
 
     return config_manager
 
@@ -214,17 +214,17 @@ def integrated_parameter_table(
         current_file="01_initial_setup.param", flight_controller=flight_controller_with_params, filesystem=realistic_filesystem
     )
 
-    # Manually populate parameters dict with ArduPilotParameter objects
+    # Manually populate current_step_parameters dict with ArduPilotParameter objects
     # This avoids the complex repopulate logic that requires more detailed mocks
-    config_manager.parameters = {}
+    config_manager.current_step_parameters = {}
     # Populate parameters from all configuration steps for comprehensive testing
     for file_params in realistic_filesystem.file_parameters.values():
         for param_name, par_obj in file_params.items():
-            if param_name not in config_manager.parameters:  # Don't overwrite if already exists
+            if param_name not in config_manager.current_step_parameters:  # Don't overwrite if already exists
                 metadata = realistic_filesystem.doc_dict.get(param_name, {})
                 fc_value = flight_controller_with_params.fc_parameters.get(param_name)
                 param = ArduPilotParameter(name=param_name, par_obj=par_obj, metadata=metadata, fc_value=fc_value)
-                config_manager.parameters[param_name] = param
+                config_manager.current_step_parameters[param_name] = param
 
     # Create the parameter table
     with patch("tkinter.ttk.Style") as mock_style:
@@ -257,13 +257,13 @@ class TestUserParameterConfigurationWorkflows:
         config_manager = config_manager_with_params
 
         # Verify initial state - should have parameters from the configuration file
-        assert len(config_manager.parameters) > 0  # Should have some parameters populated
+        assert len(config_manager.current_step_parameters) > 0  # Should have some parameters populated
         assert config_manager.has_unsaved_changes() is False  # Initially no changes
 
         # Find a parameter to modify (any parameter that exists)
-        if config_manager.parameters:
-            param_name = next(iter(config_manager.parameters.keys()))
-            param = config_manager.parameters[param_name]
+        if config_manager.current_step_parameters:
+            param_name = next(iter(config_manager.current_step_parameters.keys()))
+            param = config_manager.current_step_parameters[param_name]
 
             original_value = param.get_new_value()
 
@@ -306,7 +306,7 @@ class TestUserParameterConfigurationWorkflows:
 
         # User can configure motor spin parameters (simulating parameter editing)
         # In real usage, this would be done through the UI
-        motor_spin_param = config_manager.parameters.get("MOT_SPIN_ARM")
+        motor_spin_param = config_manager.current_step_parameters.get("MOT_SPIN_ARM")
         if motor_spin_param:
             motor_spin_param.set_new_value("0.15")  # 15% minimum throttle when armed
             motor_spin_param.set_change_reason("Increased for better motor response and stability")
@@ -340,7 +340,7 @@ class TestUserParameterConfigurationWorkflows:
         assert "ATC_RAT_YAW_P" in pid_params
 
         # User tunes roll axis for better responsiveness (simulating parameter editing)
-        roll_p_param = config_manager.parameters.get("ATC_RAT_RLL_P")
+        roll_p_param = config_manager.current_step_parameters.get("ATC_RAT_RLL_P")
         if roll_p_param:
             original_roll_p = roll_p_param.get_new_value()
             roll_p_param.set_new_value("0.15")  # Slightly more aggressive
@@ -374,7 +374,7 @@ class TestUserParameterConfigurationWorkflows:
         assert battery_params["BATT_CAPACITY"].value == 3300.0  # 3300mAh battery
 
         # User configures low voltage threshold (simulating parameter editing)
-        low_volt_param = config_manager.parameters.get("BATT_LOW_VOLT")
+        low_volt_param = config_manager.current_step_parameters.get("BATT_LOW_VOLT")
         if low_volt_param:
             low_volt_param.set_new_value("32.0")  # 3.2V per cell for 10S battery
             low_volt_param.set_change_reason("Set for 10S LiPo battery low voltage warning")
@@ -401,7 +401,7 @@ class TestParameterValidationWorkflows:
 
         # Find a parameter with range constraints
         param_with_range = None
-        for param in config_manager.parameters.values():
+        for param in config_manager.current_step_parameters.values():
             if param.min_value is not None or param.max_value is not None:
                 param_with_range = param
                 break
@@ -536,11 +536,11 @@ class TestUIComplexityWorkflows:
         config_manager = config_manager_with_params
 
         # User makes multiple parameter changes
-        sysid_param = config_manager.parameters["SYSID_THISMAV"]
+        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
         sysid_param.set_new_value("10.0")
         sysid_param.set_change_reason("Updated for fleet identification")
 
-        batt_param = config_manager.parameters["BATT_CAPACITY"]
+        batt_param = config_manager.current_step_parameters["BATT_CAPACITY"]
         batt_param.set_new_value("4000.0")
         batt_param.set_change_reason("Upgraded to higher capacity battery")
 
@@ -570,7 +570,7 @@ class TestUIComplexityWorkflows:
         config_manager = config_manager_with_params
 
         # Check parameters that exist in both config and FC
-        sysid_param = config_manager.parameters["SYSID_THISMAV"]
+        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
         assert sysid_param._fc_value == 1.0  # Same value in FC
         assert sysid_param.get_new_value() == 1.0  # Same value in config
 
@@ -590,8 +590,8 @@ class TestUIComplexityWorkflows:
         config_manager = config_manager_with_params
 
         # Check that parameters have documentation
-        sysid_param = config_manager.parameters["SYSID_THISMAV"]
-        batt_param = config_manager.parameters["BATT_CAPACITY"]
+        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
+        batt_param = config_manager.current_step_parameters["BATT_CAPACITY"]
 
         # Verify documentation is available
         assert sysid_param._metadata is not None
@@ -628,22 +628,22 @@ class TestCompleteParameterWorkflowIntegration:
 
         # WHEN: User modifies multiple parameters for a complete vehicle setup
         # Step 1: Configure system identity
-        sysid_param = config_manager.parameters["SYSID_THISMAV"]
+        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
         sysid_param.set_new_value("5.0")
         sysid_param.set_change_reason("Unique ID for fleet management")
 
         # Step 2: Configure battery settings
-        batt_capacity_param = config_manager.parameters["BATT_CAPACITY"]
+        batt_capacity_param = config_manager.current_step_parameters["BATT_CAPACITY"]
         batt_capacity_param.set_new_value("5200.0")
         batt_capacity_param.set_change_reason("Upgraded to 5200mAh LiPo battery")
 
         # Step 3: Configure motor settings
-        motor_spin_param = config_manager.parameters["MOT_SPIN_ARM"]
+        motor_spin_param = config_manager.current_step_parameters["MOT_SPIN_ARM"]
         motor_spin_param.set_new_value("0.12")
         motor_spin_param.set_change_reason("12% minimum throttle for better motor response")
 
         # Step 4: Configure PID settings for stable flight
-        roll_p_param = config_manager.parameters["ATC_RAT_RLL_P"]
+        roll_p_param = config_manager.current_step_parameters["ATC_RAT_RLL_P"]
         roll_p_param.set_new_value("0.18")
         roll_p_param.set_change_reason("Increased for better wind resistance")
 
@@ -697,7 +697,7 @@ class TestCompleteParameterWorkflowIntegration:
         assert len(initial_params) > 0
 
         # WHEN: User attempts invalid configuration
-        sysid_param = config_manager.parameters["SYSID_THISMAV"]
+        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
 
         # Try to set invalid value (out of range)
         with contextlib.suppress(ParameterOutOfRangeError, ValueError):
@@ -739,7 +739,7 @@ class TestCompleteParameterWorkflowIntegration:
         assert sysid_param.get_new_value() == 10.0
         assert sysid_param.change_reason == "Corrected system ID"
 
-    def test_user_can_work_with_large_parameter_sets_without_performance_degradation(  # pylint: disable=too-many-locals
+    def test_user_can_use_large_parameter_sets_without_perf_degradation(  # pylint: disable=too-many-locals
         self,
         realistic_filesystem: MagicMock,  # pylint: disable=unused-argument
         flight_controller_with_params: MagicMock,
@@ -786,21 +786,21 @@ class TestCompleteParameterWorkflowIntegration:
         )
 
         # Manually populate with large parameter set
-        config_manager.parameters = {}
+        config_manager.current_step_parameters = {}
         for param_name, par_obj in large_param_set.items():
             metadata = large_filesystem.doc_dict.get(param_name, {})
             fc_value = flight_controller_with_params.fc_parameters.get(param_name)
             param = ArduPilotParameter(name=param_name, par_obj=par_obj, metadata=metadata, fc_value=fc_value)
-            config_manager.parameters[param_name] = param
+            config_manager.current_step_parameters[param_name] = param
 
         # WHEN: User performs operations on large dataset
         # Search for specific parameters
-        found_params = [name for name in config_manager.parameters if "50" in name]
+        found_params = [name for name in config_manager.current_step_parameters if "50" in name]
         assert len(found_params) > 0  # Should find parameter "50"
 
         # Modify multiple parameters
         modified_count = 0
-        for _param_name, param in list(config_manager.parameters.items())[:10]:  # First 10
+        for _param_name, param in list(config_manager.current_step_parameters.items())[:10]:  # First 10
             param.set_new_value(str(param.get_new_value() + 1.0))
             param.set_change_reason("Bulk modification test")
             modified_count += 1
@@ -810,15 +810,15 @@ class TestCompleteParameterWorkflowIntegration:
         assert config_manager.has_unsaved_changes()
 
         # Verify specific parameter modifications
-        param_01 = config_manager.parameters["01"]
+        param_01 = config_manager.current_step_parameters["01"]
         assert param_01.get_new_value() == 2.0  # Original 1.0 + 1.0
 
         # AND: Dataset integrity is maintained
-        total_params = len(config_manager.parameters)
+        total_params = len(config_manager.current_step_parameters)
         assert total_params == 100  # All parameters still present
 
         # Verify no parameters were corrupted during operations
-        for param in config_manager.parameters.values():
+        for param in config_manager.current_step_parameters.values():
             assert param.get_new_value() is not None
             assert isinstance(param.get_new_value(), (int, float))
 
@@ -844,7 +844,7 @@ class TestDataIntegrityAndConsistency:
         config_manager = config_manager_with_params
 
         # GIVEN: Modified configuration
-        sysid_param = config_manager.parameters["SYSID_THISMAV"]
+        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
 
         sysid_param.set_new_value("7.0")
         sysid_param.set_change_reason("Test data integrity")
@@ -859,15 +859,15 @@ class TestDataIntegrityAndConsistency:
         )
 
         # Manually populate loaded config with saved data
-        loaded_config_manager.parameters = {}
+        loaded_config_manager.current_step_parameters = {}
         for param_name, par_obj in saved_state.items():
             metadata = realistic_filesystem.doc_dict.get(param_name, {})
             fc_value = flight_controller_with_params.fc_parameters.get(param_name)
             param = ArduPilotParameter(name=param_name, par_obj=par_obj, metadata=metadata, fc_value=fc_value)
-            loaded_config_manager.parameters[param_name] = param
+            loaded_config_manager.current_step_parameters[param_name] = param
 
         # THEN: Data integrity is maintained
-        loaded_sysid = loaded_config_manager.parameters["SYSID_THISMAV"]
+        loaded_sysid = loaded_config_manager.current_step_parameters["SYSID_THISMAV"]
         assert loaded_sysid.get_new_value() == 7.0
         assert loaded_sysid.change_reason == "Test data integrity"
 
@@ -884,15 +884,15 @@ class TestDataIntegrityAndConsistency:
                 current_file="01_initial_setup.param", flight_controller=MagicMock(), filesystem=realistic_filesystem
             )
 
-            cycle_loaded_config.parameters = {}
+            cycle_loaded_config.current_step_parameters = {}
             for param_name, par_obj in cycle_saved_state.items():
                 metadata = realistic_filesystem.doc_dict.get(param_name, {})
                 fc_value = flight_controller_with_params.fc_parameters.get(param_name)
                 param = ArduPilotParameter(name=param_name, par_obj=par_obj, metadata=metadata, fc_value=fc_value)
-                cycle_loaded_config.parameters[param_name] = param
+                cycle_loaded_config.current_step_parameters[param_name] = param
 
             # Verify integrity after each cycle
-            cycle_loaded_sysid = cycle_loaded_config.parameters["SYSID_THISMAV"]
+            cycle_loaded_sysid = cycle_loaded_config.current_step_parameters["SYSID_THISMAV"]
             assert cycle_loaded_sysid.get_new_value() == 8 + cycle
             assert cycle_loaded_sysid.change_reason == f"Cycle {cycle + 1} integrity test"
 
@@ -911,8 +911,8 @@ class TestDataIntegrityAndConsistency:
         config_manager = config_manager_with_params
 
         # GIVEN: Parameters with known constraints
-        sysid_param = config_manager.parameters["SYSID_THISMAV"]
-        batt_param = config_manager.parameters["BATT_CAPACITY"]
+        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
+        batt_param = config_manager.current_step_parameters["BATT_CAPACITY"]
 
         # Establish baseline valid state
         # (Variables removed as they were unused)
@@ -927,7 +927,7 @@ class TestDataIntegrityAndConsistency:
         ]
 
         for param_name, invalid_value in invalid_values:
-            param = config_manager.parameters[param_name]
+            param = config_manager.current_step_parameters[param_name]
             original_value = param.get_new_value()
 
             # Attempt to set invalid value
@@ -948,8 +948,8 @@ class TestDataIntegrityAndConsistency:
         assert batt_param.get_new_value() == 4500.0
 
         # AND: System state remains consistent
-        assert len(config_manager.parameters) > 0
-        assert not any(param.get_new_value() is None for param in config_manager.parameters.values())
+        assert len(config_manager.current_step_parameters) > 0
+        assert not any(param.get_new_value() is None for param in config_manager.current_step_parameters.values())
 
 
 class TestUserExperienceAndFeedback:
@@ -1026,8 +1026,8 @@ class TestUserExperienceAndFeedback:
         """
         # GIVEN: Configuration with potential issues
         # Set some parameters that might indicate problems
-        batt_capacity = config_manager_with_params.parameters["BATT_CAPACITY"]
-        batt_low_volt = config_manager_with_params.parameters["BATT_LOW_VOLT"]
+        batt_capacity = config_manager_with_params.current_step_parameters["BATT_CAPACITY"]
+        batt_low_volt = config_manager_with_params.current_step_parameters["BATT_LOW_VOLT"]
 
         # Configure potentially problematic values
         batt_capacity.set_new_value("100.0")  # Very small battery
@@ -1038,8 +1038,8 @@ class TestUserExperienceAndFeedback:
             """Mock health check that identifies issues."""
             issues = []
 
-            capacity = config_manager.parameters["BATT_CAPACITY"].get_new_value()
-            low_volt = config_manager.parameters["BATT_LOW_VOLT"].get_new_value()
+            capacity = config_manager.current_step_parameters["BATT_CAPACITY"].get_new_value()
+            low_volt = config_manager.current_step_parameters["BATT_LOW_VOLT"].get_new_value()
 
             if capacity < 500:
                 issues.append(
