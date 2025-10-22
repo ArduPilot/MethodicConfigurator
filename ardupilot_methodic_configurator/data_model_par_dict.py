@@ -104,7 +104,7 @@ class ParDict(dict[str, Par]):
         """
         parameter_dict = ParDict()
         try:
-            with open(param_file, encoding="utf-8") as f_handle:
+            with open(param_file, encoding="utf-8-sig") as f_handle:
                 for i, f_line in enumerate(f_handle, start=1):
                     original_line = f_line
                     line = f_line.strip()
@@ -132,7 +132,7 @@ class ParDict(dict[str, Par]):
                     value = value.strip()
                     ParDict._validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value)
         except UnicodeDecodeError as exp:
-            msg = f"Fatal error reading {param_file}: {exp}"
+            msg = f"Fatal error reading {param_file}, file must be UTF-8 encoded: {exp}"
             raise SystemExit(msg) from exp
         return parameter_dict
 

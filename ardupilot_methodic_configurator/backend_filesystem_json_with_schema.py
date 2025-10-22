@@ -46,7 +46,7 @@ class FilesystemJSONWithSchema:
         schema_path = os_path.join(os_path.dirname(__file__), self.schema_filename)
 
         try:
-            with open(schema_path, encoding="utf-8") as file:
+            with open(schema_path, encoding="utf-8-sig") as file:
                 loaded_schema: dict[Any, Any] = json_load(file)
 
                 # Validate the schema itself against the JSON Schema meta-schema
@@ -90,7 +90,7 @@ class FilesystemJSONWithSchema:
         data: dict[Any, Any] = {}
         filepath = os_path.join(data_dir, self.json_filename)
         try:
-            with open(filepath, encoding="utf-8") as file:
+            with open(filepath, encoding="utf-8-sig") as file:
                 data = json_load(file)
 
             # Validate the loaded data against the schema

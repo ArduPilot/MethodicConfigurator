@@ -327,7 +327,7 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
 
         # Verify the correct path was used
         expected_path = os.path.join("/app/path", "system_vehicle_components_template.json")
-        mock_file.assert_called_once_with(expected_path, encoding="utf-8")
+        mock_file.assert_called_once_with(expected_path, encoding="utf-8-sig")
         mock_json_load.assert_called_once()
 
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
@@ -347,7 +347,7 @@ class TestVehicleComponents(unittest.TestCase):  # pylint: disable=too-many-publ
 
         # Verify the file was opened from the correct location
         expected_path = os.path.join("/user/templates", "user_vehicle_components_template.json")
-        mock_file.assert_called_once_with(expected_path, encoding="utf-8")
+        mock_file.assert_called_once_with(expected_path, encoding="utf-8-sig")
         mock_json_load.assert_called_once()
 
     @patch.object(VehicleComponents, "_load_system_templates")

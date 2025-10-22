@@ -99,7 +99,7 @@ class VehicleComponents:
 
         templates = {}
         try:
-            with open(filepath, encoding="utf-8") as file:
+            with open(filepath, encoding="utf-8-sig") as file:
                 templates = json_load(file)
         except FileNotFoundError:
             logging_debug(_("System component templates file '%s' not found."), filepath)
@@ -119,7 +119,7 @@ class VehicleComponents:
 
         templates = {}
         try:
-            with open(filepath, encoding="utf-8") as file:
+            with open(filepath, encoding="utf-8-sig") as file:
                 templates = json_load(file)
         except FileNotFoundError:
             logging_debug(_("User component templates file '%s' not found."), filepath)

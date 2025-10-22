@@ -43,7 +43,7 @@ class TestConfigurationSteps(unittest.TestCase):
         assert self.config_steps.configuration_steps
         mock_open2.assert_has_calls(
             [
-                unittest.mock.call("vehicle_dir/configuration_steps_vehicle_type.json", encoding="utf-8"),
+                unittest.mock.call("vehicle_dir/configuration_steps_vehicle_type.json", encoding="utf-8-sig"),
                 unittest.mock.call("dir_name/configuration_steps_schema.json", encoding="utf-8"),
             ],
             any_order=True,
