@@ -100,9 +100,9 @@ class TestParameterFilteringWorkflows:
             "PARAM_WRITABLE": {"ReadOnly": False},
         }
 
-        configuration_manager.flight_controller.fc_parameters = fc_params
-        configuration_manager.filesystem.param_default_dict = default_params
-        configuration_manager.filesystem.doc_dict = doc_dict
+        configuration_manager._flight_controller.fc_parameters = fc_params
+        configuration_manager._local_filesystem.param_default_dict = default_params
+        configuration_manager._local_filesystem.doc_dict = doc_dict
 
         # Act: Filter the parameters
         result = configuration_manager._get_non_default_non_read_only_fc_params()
@@ -123,7 +123,7 @@ class TestParameterFilteringWorkflows:
         THEN: An empty ParDict should be returned
         """
         # Arrange: No FC parameters available
-        configuration_manager.flight_controller.fc_parameters = {}
+        configuration_manager._flight_controller.fc_parameters = {}
 
         # Act: Attempt to filter empty parameters
         result = configuration_manager._get_non_default_non_read_only_fc_params()
@@ -151,9 +151,9 @@ class TestParameterFilteringWorkflows:
             # PARAM_NO_DOCS intentionally missing
         }
 
-        configuration_manager.flight_controller.fc_parameters = fc_params
-        configuration_manager.filesystem.param_default_dict = ParDict()
-        configuration_manager.filesystem.doc_dict = doc_dict
+        configuration_manager._flight_controller.fc_parameters = fc_params
+        configuration_manager._local_filesystem.param_default_dict = ParDict()
+        configuration_manager._local_filesystem.doc_dict = doc_dict
 
         # Act: Filter parameters with incomplete documentation
         result = configuration_manager._get_non_default_non_read_only_fc_params()
@@ -198,16 +198,16 @@ class TestParameterExportWorkflows:
             ),
         }
 
-        configuration_manager.flight_controller.fc_parameters = {"test": "data"}
-        configuration_manager.filesystem.file_parameters = amc_file_params
+        configuration_manager._flight_controller.fc_parameters = {"test": "data"}
+        configuration_manager._local_filesystem.file_parameters = amc_file_params
 
         # Act: Export missing/different parameters
         configuration_manager._export_fc_params_missing_or_different_in_amc_files(fc_params, "01_setup.param")
 
         # Assert: Export called with correct filename and parameters
         expected_filename = "fc_params_missing_or_different_in_the_amc_param_files_01_setup_to_01_setup.param"
-        configuration_manager.filesystem.export_to_param.assert_called_once()
-        args, kwargs = configuration_manager.filesystem.export_to_param.call_args
+        configuration_manager._local_filesystem.export_to_param.assert_called_once()
+        args, kwargs = configuration_manager._local_filesystem.export_to_param.call_args
 
         assert args[1] == expected_filename
         assert kwargs["annotate_doc"] is False
@@ -239,15 +239,15 @@ class TestParameterExportWorkflows:
             ),
         }
 
-        configuration_manager.flight_controller.fc_parameters = {"test": "data"}
-        configuration_manager.filesystem.file_parameters = amc_file_params
+        configuration_manager._flight_controller.fc_parameters = {"test": "data"}
+        configuration_manager._local_filesystem.file_parameters = amc_file_params
 
         with patch("ardupilot_methodic_configurator.configuration_manager.logging_info") as mock_log:
             # Act: Attempt to export when parameters match
             configuration_manager._export_fc_params_missing_or_different_in_amc_files(matching_params, "01_setup.param")
 
             # Assert: No export occurred and appropriate message logged
-            configuration_manager.filesystem.export_to_param.assert_not_called()
+            configuration_manager._local_filesystem.export_to_param.assert_not_called()
             mock_log.assert_called_with("No FC parameters are missing or different from AMC parameter files")
 
     def test_user_handles_early_exit_when_no_fc_parameters(self, configuration_manager) -> None:
@@ -259,13 +259,13 @@ class TestParameterExportWorkflows:
         THEN: The function should exit early without processing
         """
         # Arrange: No FC parameters available
-        configuration_manager.flight_controller.fc_parameters = None
+        configuration_manager._flight_controller.fc_parameters = None
 
         # Act: Attempt export with no FC parameters
         configuration_manager._export_fc_params_missing_or_different_in_amc_files(ParDict(), "01_setup.param")
 
         # Assert: No processing occurred
-        configuration_manager.filesystem.export_to_param.assert_not_called()
+        configuration_manager._local_filesystem.export_to_param.assert_not_called()
 
     def test_user_can_export_with_multi_file_range(self, configuration_manager) -> None:
         """
@@ -289,16 +289,16 @@ class TestParameterExportWorkflows:
             "00_default.param": ParDict({"DEFAULT": Par(0.0, "Default")}),
         }
 
-        configuration_manager.flight_controller.fc_parameters = {"test": "data"}
-        configuration_manager.filesystem.file_parameters = amc_file_params
+        configuration_manager._flight_controller.fc_parameters = {"test": "data"}
+        configuration_manager._local_filesystem.file_parameters = amc_file_params
 
         # Act: Export parameters with multi-file range
         configuration_manager._export_fc_params_missing_or_different_in_amc_files(fc_params, "03_final.param")
 
         # Assert: Filename reflects correct range
         expected_filename = "fc_params_missing_or_different_in_the_amc_param_files_01_basic_to_03_final.param"
-        configuration_manager.filesystem.export_to_param.assert_called_once()
-        args, _ = configuration_manager.filesystem.export_to_param.call_args
+        configuration_manager._local_filesystem.export_to_param.assert_called_once()
+        args, _ = configuration_manager._local_filesystem.export_to_param.call_args
         assert args[1] == expected_filename
 
     def test_user_handles_unknown_first_filename_gracefully(self, configuration_manager) -> None:
@@ -320,16 +320,16 @@ class TestParameterExportWorkflows:
             "00_default.param": ParDict({"DEFAULT": Par(0.0, "Default")}),
         }
 
-        configuration_manager.flight_controller.fc_parameters = {"test": "data"}
-        configuration_manager.filesystem.file_parameters = amc_file_params
+        configuration_manager._flight_controller.fc_parameters = {"test": "data"}
+        configuration_manager._local_filesystem.file_parameters = amc_file_params
 
         # Act: Export with no valid first config file
         configuration_manager._export_fc_params_missing_or_different_in_amc_files(fc_params, "00_default.param")
 
         # Assert: Uses 'unknown' for missing first filename
         expected_filename = "fc_params_missing_or_different_in_the_amc_param_files_unknown_to_00_default.param"
-        configuration_manager.filesystem.export_to_param.assert_called_once()
-        args, _ = configuration_manager.filesystem.export_to_param.call_args
+        configuration_manager._local_filesystem.export_to_param.assert_called_once()
+        args, _ = configuration_manager._local_filesystem.export_to_param.call_args
         assert args[1] == expected_filename
 
 
@@ -429,8 +429,8 @@ class TestConfigurationManagerIntegration:
         config_manager = ConfigurationManager("00_default.param", mock_flight_controller, mock_local_filesystem)
 
         # Assert: Dependencies are properly stored
-        assert config_manager.flight_controller is mock_flight_controller
-        assert config_manager.filesystem is mock_local_filesystem
+        assert config_manager._flight_controller is mock_flight_controller
+        assert config_manager._local_filesystem is mock_local_filesystem
 
     def test_user_accesses_flight_controller_through_configuration_manager(self, configuration_manager) -> None:
         """
@@ -443,7 +443,7 @@ class TestConfigurationManagerIntegration:
         # Arrange: ConfigurationManager is provided by fixture
 
         # Act: Access flight controller through manager
-        fc_params = configuration_manager.flight_controller.fc_parameters
+        fc_params = configuration_manager._flight_controller.fc_parameters
 
         # Assert: Flight controller is accessible
         assert fc_params is not None
@@ -460,7 +460,7 @@ class TestConfigurationManagerIntegration:
         # Arrange: ConfigurationManager is provided by fixture
 
         # Act: Access filesystem through manager
-        file_params = configuration_manager.filesystem.file_parameters
+        file_params = configuration_manager._local_filesystem.file_parameters
 
         # Assert: Filesystem is accessible
         assert file_params is not None
@@ -484,8 +484,8 @@ class TestParameterUploadWorkflows:
             "PARAM_TYPE": Par(2.0, "Type parameter"),
         }
 
-        configuration_manager.flight_controller.fc_parameters = {}
-        configuration_manager.filesystem.doc_dict = {
+        configuration_manager._flight_controller.fc_parameters = {}
+        configuration_manager._local_filesystem.doc_dict = {
             "PARAM_RESET_REQ": {"RebootRequired": True},
             "PARAM_TYPE": {"RebootRequired": False},
         }
@@ -516,9 +516,9 @@ class TestParameterUploadWorkflows:
         """
         # Arrange: Mock set_param to raise ValueError and ensure parameter will be set
         selected_params = {"INVALID_PARAM": Par(1.0, "Invalid value")}
-        configuration_manager.flight_controller.fc_parameters = {}  # Parameter not in FC, so it will try to set
-        configuration_manager.filesystem.doc_dict = {"INVALID_PARAM": {"RebootRequired": True}}
-        configuration_manager.flight_controller.set_param.side_effect = ValueError("Invalid parameter value")
+        configuration_manager._flight_controller.fc_parameters = {}  # Parameter not in FC, so it will try to set
+        configuration_manager._local_filesystem.doc_dict = {"INVALID_PARAM": {"RebootRequired": True}}
+        configuration_manager._flight_controller.set_param.side_effect = ValueError("Invalid parameter value")
 
         # Mock the callbacks
         mock_ask_confirmation = MagicMock(return_value=True)
@@ -552,8 +552,8 @@ class TestFileDownloadUrlWorkflows:
         url = "https://example.com/test.bin"
         local_filename = "test.bin"
 
-        configuration_manager.filesystem.get_download_url_and_local_filename.return_value = (url, local_filename)
-        configuration_manager.filesystem.vehicle_configuration_file_exists.return_value = False
+        configuration_manager._local_filesystem.get_download_url_and_local_filename.return_value = (url, local_filename)
+        configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = False
 
         ask_confirmation_mock = MagicMock(return_value=True)
         show_error_mock = MagicMock()
@@ -585,8 +585,8 @@ class TestFileDownloadUrlWorkflows:
         url = "https://example.com/test.bin"
         local_filename = "test.bin"
 
-        configuration_manager.filesystem.get_download_url_and_local_filename.return_value = (url, local_filename)
-        configuration_manager.filesystem.vehicle_configuration_file_exists.return_value = False
+        configuration_manager._local_filesystem.get_download_url_and_local_filename.return_value = (url, local_filename)
+        configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = False
 
         ask_confirmation_mock = MagicMock(return_value=True)
         show_error_mock = MagicMock()
@@ -618,8 +618,8 @@ class TestFileDownloadUrlWorkflows:
         url = "https://example.com/test.bin"
         local_filename = "test.bin"
 
-        configuration_manager.filesystem.get_download_url_and_local_filename.return_value = (url, local_filename)
-        configuration_manager.filesystem.vehicle_configuration_file_exists.return_value = False
+        configuration_manager._local_filesystem.get_download_url_and_local_filename.return_value = (url, local_filename)
+        configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = False
 
         ask_confirmation_mock = MagicMock(return_value=False)
         show_error_mock = MagicMock()
@@ -649,7 +649,7 @@ class TestSummaryFileWritingWorkflows:
         THEN: All summary files should be written and zip created with user interaction
         """
         # Arrange: Set up flight controller parameters
-        configuration_manager.flight_controller.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
+        configuration_manager._flight_controller.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
 
         # Set up parameter summary generation
         parameter_summary = {
@@ -660,9 +660,9 @@ class TestSummaryFileWritingWorkflows:
         }
 
         # Set up filesystem mocks for file writing
-        configuration_manager.filesystem.vehicle_configuration_file_exists.return_value = False
-        configuration_manager.filesystem.zip_file_exists.return_value = False
-        configuration_manager.filesystem.zip_file_path.return_value = "/path/to/vehicle.zip"
+        configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = False
+        configuration_manager._local_filesystem.zip_file_exists.return_value = False
+        configuration_manager._local_filesystem.zip_file_path.return_value = "/path/to/vehicle.zip"
 
         # Set up mock callbacks
         show_info_mock = MagicMock()
@@ -685,8 +685,8 @@ class TestSummaryFileWritingWorkflows:
         show_info_mock.assert_any_call("Last parameter file processed", "Summary message")
 
         # Verify files were written
-        configuration_manager.filesystem.export_to_param.assert_called()
-        configuration_manager.filesystem.zip_files.assert_called_once()
+        configuration_manager._local_filesystem.export_to_param.assert_called()
+        configuration_manager._local_filesystem.zip_files.assert_called_once()
 
     def test_user_handles_no_fc_parameters_in_workflow(self, configuration_manager) -> None:
         """
@@ -697,7 +697,7 @@ class TestSummaryFileWritingWorkflows:
         THEN: Workflow should return False without any file operations
         """
         # Arrange: No flight controller parameters
-        configuration_manager.flight_controller.fc_parameters = None
+        configuration_manager._flight_controller.fc_parameters = None
 
         # Set up mock callbacks
         show_info_mock = MagicMock()
@@ -725,7 +725,7 @@ class TestSummaryFileWritingWorkflows:
         THEN: Files should not be written but zip creation should still be attempted
         """
         # Arrange: Set up flight controller parameters
-        configuration_manager.flight_controller.fc_parameters = {"PARAM1": 1.0}
+        configuration_manager._flight_controller.fc_parameters = {"PARAM1": 1.0}
 
         # Set up parameter summary generation
         parameter_summary = {
@@ -736,8 +736,8 @@ class TestSummaryFileWritingWorkflows:
         }
 
         # Set up filesystem mocks - files exist
-        configuration_manager.filesystem.vehicle_configuration_file_exists.return_value = True
-        configuration_manager.filesystem.zip_file_exists.return_value = False
+        configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = True
+        configuration_manager._local_filesystem.zip_file_exists.return_value = False
 
         # Set up mock callbacks - user declines overwrite
         show_info_mock = MagicMock()
@@ -763,7 +763,7 @@ class TestSummaryFileWritingWorkflows:
         ask_confirmation_mock.assert_called()
 
         # Verify no files were exported (user declined)
-        configuration_manager.filesystem.export_to_param.assert_not_called()
+        configuration_manager._local_filesystem.export_to_param.assert_not_called()
 
     def test_user_can_write_zip_file_with_confirmation_workflow(self, configuration_manager) -> None:
         """
@@ -778,8 +778,8 @@ class TestSummaryFileWritingWorkflows:
         zip_file_path = "/path/to/vehicle.zip"
 
         # Set up filesystem mocks
-        configuration_manager.filesystem.zip_file_exists.return_value = False
-        configuration_manager.filesystem.zip_file_path.return_value = zip_file_path
+        configuration_manager._local_filesystem.zip_file_exists.return_value = False
+        configuration_manager._local_filesystem.zip_file_path.return_value = zip_file_path
 
         # Set up mock callbacks
         show_info_mock = MagicMock()
@@ -792,7 +792,7 @@ class TestSummaryFileWritingWorkflows:
         assert result is True
 
         # Verify zip files was called
-        configuration_manager.filesystem.zip_files.assert_called_once_with(files_to_zip)
+        configuration_manager._local_filesystem.zip_files.assert_called_once_with(files_to_zip)
 
         # Verify user was notified about zip creation
         show_info_mock.assert_called_with(
@@ -817,17 +817,17 @@ class TestFlightControllerDownloadWorkflows:
         # Arrange: Set up mock flight controller download
         expected_fc_params = {"PARAM1": 1.0, "PARAM2": 2.0}
         expected_defaults = {"PARAM1": 0.0, "PARAM2": 0.0}
-        configuration_manager.flight_controller.download_params.return_value = (expected_fc_params, expected_defaults)
+        configuration_manager._flight_controller.download_params.return_value = (expected_fc_params, expected_defaults)
 
         # Act: Download parameters
         fc_params, defaults = configuration_manager.download_flight_controller_parameters()
 
         # Assert: Parameters were downloaded and stored
-        configuration_manager.flight_controller.download_params.assert_called_once()
+        configuration_manager._flight_controller.download_params.assert_called_once()
         assert fc_params == expected_fc_params
         assert defaults == expected_defaults
-        assert configuration_manager.flight_controller.fc_parameters == expected_fc_params
-        configuration_manager.filesystem.write_param_default_values_to_file.assert_called_once_with(expected_defaults)
+        assert configuration_manager._flight_controller.fc_parameters == expected_fc_params
+        configuration_manager._local_filesystem.write_param_default_values_to_file.assert_called_once_with(expected_defaults)
 
     def test_user_can_download_parameters_with_progress_callback(self, configuration_manager) -> None:
         """
@@ -841,13 +841,13 @@ class TestFlightControllerDownloadWorkflows:
         progress_callback = MagicMock()
         expected_fc_params = {"PARAM1": 1.0}
         expected_defaults = {"PARAM1": 0.0}
-        configuration_manager.flight_controller.download_params.return_value = (expected_fc_params, expected_defaults)
+        configuration_manager._flight_controller.download_params.return_value = (expected_fc_params, expected_defaults)
 
         # Act: Download with progress callback
         configuration_manager.download_flight_controller_parameters(progress_callback)
 
         # Assert: Callback was passed to download
-        args, _kwargs = configuration_manager.flight_controller.download_params.call_args
+        args, _kwargs = configuration_manager._flight_controller.download_params.call_args
         assert args[0] == progress_callback
 
     def test_user_handles_download_without_default_values(self, configuration_manager) -> None:
@@ -860,7 +860,7 @@ class TestFlightControllerDownloadWorkflows:
         """
         # Arrange: Set up download with no defaults
         expected_fc_params = {"PARAM1": 1.0}
-        configuration_manager.flight_controller.download_params.return_value = (expected_fc_params, None)
+        configuration_manager._flight_controller.download_params.return_value = (expected_fc_params, None)
 
         # Act: Download parameters
         fc_params, defaults = configuration_manager.download_flight_controller_parameters()
@@ -868,7 +868,7 @@ class TestFlightControllerDownloadWorkflows:
         # Assert: Parameters downloaded but no defaults written
         assert fc_params == expected_fc_params
         assert defaults is None
-        configuration_manager.filesystem.write_param_default_values_to_file.assert_not_called()
+        configuration_manager._local_filesystem.write_param_default_values_to_file.assert_not_called()
 
 
 class TestFlightControllerResetWorkflows:
@@ -890,8 +890,8 @@ class TestFlightControllerResetWorkflows:
             default_par=Par(0.0, ""),
             fc_value=3000.0,  # 3 seconds
         )
-        configuration_manager.parameters = {"BRD_BOOT_DELAY": brd_boot_delay_param}
-        configuration_manager.flight_controller.fc_parameters = {"BRD_BOOT_DELAY": 3000}  # 3 seconds
+        configuration_manager.current_step_parameters = {"BRD_BOOT_DELAY": brd_boot_delay_param}
+        configuration_manager._flight_controller.fc_parameters = {"BRD_BOOT_DELAY": 3000}  # 3 seconds
 
         # Act: Calculate reset time
         reset_time = configuration_manager._calculate_reset_time()
@@ -908,8 +908,8 @@ class TestFlightControllerResetWorkflows:
         THEN: Default minimal time should be used
         """
         # Arrange: Set up empty parameters
-        configuration_manager.filesystem.file_parameters = {"00_default.param": {}}
-        configuration_manager.flight_controller.fc_parameters = {}
+        configuration_manager._local_filesystem.file_parameters = {"00_default.param": {}}
+        configuration_manager._flight_controller.fc_parameters = {}
 
         # Act: Calculate reset time
         reset_time = configuration_manager._calculate_reset_time()
@@ -926,7 +926,7 @@ class TestFlightControllerResetWorkflows:
         THEN: Reset should be performed with calculated time
         """
         # Arrange: Set up successful reset with boot delay in domain model
-        configuration_manager.flight_controller.reset_and_reconnect.return_value = None
+        configuration_manager._flight_controller.reset_and_reconnect.return_value = None
         brd_boot_delay_param = ArduPilotParameter(
             name="BRD_BOOT_DELAY",
             par_obj=Par(2000.0, ""),  # 2 seconds
@@ -934,16 +934,16 @@ class TestFlightControllerResetWorkflows:
             default_par=Par(0.0, ""),
             fc_value=1000.0,  # 1 second
         )
-        configuration_manager.parameters = {"BRD_BOOT_DELAY": brd_boot_delay_param}
-        configuration_manager.flight_controller.fc_parameters = {"BRD_BOOT_DELAY": 1000}
+        configuration_manager.current_step_parameters = {"BRD_BOOT_DELAY": brd_boot_delay_param}
+        configuration_manager._flight_controller.fc_parameters = {"BRD_BOOT_DELAY": 1000}
 
         # Act: Reset and reconnect
         result = configuration_manager._reset_and_reconnect_flight_controller()
 
         # Assert: Reset was successful
         assert result is None
-        configuration_manager.flight_controller.reset_and_reconnect.assert_called_once()
-        args = configuration_manager.flight_controller.reset_and_reconnect.call_args[0]
+        configuration_manager._flight_controller.reset_and_reconnect.assert_called_once()
+        args = configuration_manager._flight_controller.reset_and_reconnect.call_args[0]
         assert args[2] == 3  # Calculated sleep time
 
     def test_user_can_reset_with_custom_sleep_time(self, configuration_manager) -> None:
@@ -955,14 +955,14 @@ class TestFlightControllerResetWorkflows:
         THEN: Custom time should be used instead of calculated
         """
         # Arrange: Set up reset with custom time
-        configuration_manager.flight_controller.reset_and_reconnect.return_value = None
+        configuration_manager._flight_controller.reset_and_reconnect.return_value = None
         custom_sleep_time = 10
 
         # Act: Reset with custom time
         configuration_manager._reset_and_reconnect_flight_controller(sleep_time=custom_sleep_time)
 
         # Assert: Custom time was used
-        args = configuration_manager.flight_controller.reset_and_reconnect.call_args[0]
+        args = configuration_manager._flight_controller.reset_and_reconnect.call_args[0]
         assert args[2] == custom_sleep_time
 
     def test_user_handles_reset_failure(self, configuration_manager) -> None:
@@ -975,7 +975,7 @@ class TestFlightControllerResetWorkflows:
         """
         # Arrange: Set up failed reset
         error_message = "Reset failed due to connection error"
-        configuration_manager.flight_controller.reset_and_reconnect.return_value = error_message
+        configuration_manager._flight_controller.reset_and_reconnect.return_value = error_message
 
         # Act: Attempt reset
         result = configuration_manager._reset_and_reconnect_flight_controller()
@@ -997,8 +997,8 @@ class TestFileCopyWorkflows:
         """
         # Arrange: Set up file with auto_changed_by and populate domain model
         selected_file = "test_file.param"
-        configuration_manager.filesystem.auto_changed_by.return_value = "Mission Planner"
-        configuration_manager.flight_controller.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
+        configuration_manager._local_filesystem.auto_changed_by.return_value = "Mission Planner"
+        configuration_manager._flight_controller.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
 
         # Populate domain model with parameters for this file
         param1 = ArduPilotParameter(
@@ -1015,7 +1015,7 @@ class TestFileCopyWorkflows:
             default_par=Par(0.0, ""),
             fc_value=None,
         )
-        configuration_manager.parameters = {"PARAM1": param1, "PARAM3": param3}
+        configuration_manager.current_step_parameters = {"PARAM1": param1, "PARAM3": param3}
 
         # Act: Check if should copy
         should_copy, relevant_params, auto_changed_by = configuration_manager.should_copy_fc_values_to_file(selected_file)
@@ -1035,7 +1035,7 @@ class TestFileCopyWorkflows:
         """
         # Arrange: Set up file without auto_changed_by
         selected_file = "test_file.param"
-        configuration_manager.filesystem.auto_changed_by.return_value = None
+        configuration_manager._local_filesystem.auto_changed_by.return_value = None
 
         # Act: Check if should copy
         should_copy, relevant_params, auto_changed_by = configuration_manager.should_copy_fc_values_to_file(selected_file)
@@ -1056,14 +1056,14 @@ class TestFileCopyWorkflows:
         # Arrange: Set up copy operation
         selected_file = "test_file.param"
         relevant_params = {"PARAM1": 1.0, "PARAM2": 2.0}
-        configuration_manager.filesystem.copy_fc_values_to_file.return_value = 2
+        configuration_manager._local_filesystem.copy_fc_values_to_file.return_value = 2
 
         # Act: Copy values to file
         result = configuration_manager.copy_fc_values_to_file(selected_file, relevant_params)
 
         # Assert: Values were copied
         assert result is True
-        configuration_manager.filesystem.copy_fc_values_to_file.assert_called_once_with(selected_file, relevant_params)
+        configuration_manager._local_filesystem.copy_fc_values_to_file.assert_called_once_with(selected_file, relevant_params)
 
     def test_user_handles_failed_copy_operation(self, configuration_manager) -> None:
         """
@@ -1076,7 +1076,7 @@ class TestFileCopyWorkflows:
         # Arrange: Set up failed copy
         selected_file = "test_file.param"
         relevant_params = {"PARAM1": 1.0}
-        configuration_manager.filesystem.copy_fc_values_to_file.return_value = 0
+        configuration_manager._local_filesystem.copy_fc_values_to_file.return_value = 0
 
         # Act: Attempt copy
         result = configuration_manager.copy_fc_values_to_file(selected_file, relevant_params)
@@ -1099,14 +1099,14 @@ class TestFileNavigationWorkflows:  # pylint: disable=too-few-public-methods
         # Arrange: Set up jump options
         selected_file = "01_setup.param"
         expected_options = {"02_advanced.param": "Next step", "00_default.param": "Go back"}
-        configuration_manager.filesystem.jump_possible.return_value = expected_options
+        configuration_manager._local_filesystem.jump_possible.return_value = expected_options
 
         # Act: Get jump options
         options = configuration_manager.get_file_jump_options(selected_file)
 
         # Assert: Jump options returned
         assert options == expected_options
-        configuration_manager.filesystem.jump_possible.assert_called_once_with(selected_file)
+        configuration_manager._local_filesystem.jump_possible.assert_called_once_with(selected_file)
 
 
 class TestFileDownloadWorkflows:  # pylint: disable=too-few-public-methods
@@ -1123,11 +1123,11 @@ class TestFileDownloadWorkflows:  # pylint: disable=too-few-public-methods
         """
         # Arrange: Set up download scenario
         selected_file = "firmware.bin"
-        configuration_manager.filesystem.get_download_url_and_local_filename.return_value = (
+        configuration_manager._local_filesystem.get_download_url_and_local_filename.return_value = (
             "https://example.com/firmware.bin",
             "firmware.bin",
         )
-        configuration_manager.filesystem.vehicle_configuration_file_exists.return_value = False
+        configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = False
         mock_download.return_value = True  # Successful download
 
         # Mock callbacks
@@ -1161,10 +1161,13 @@ class TestFileUploadWorkflows:
         local_filename = "config.param"
         remote_filename = "config.param"
 
-        configuration_manager.filesystem.get_upload_local_and_remote_filenames.return_value = (local_filename, remote_filename)
-        configuration_manager.filesystem.vehicle_configuration_file_exists.return_value = True
-        configuration_manager.flight_controller.master = True  # FC connected
-        configuration_manager.flight_controller.upload_file.return_value = True
+        configuration_manager._local_filesystem.get_upload_local_and_remote_filenames.return_value = (
+            local_filename,
+            remote_filename,
+        )
+        configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = True
+        configuration_manager._flight_controller.master = True  # FC connected
+        configuration_manager._flight_controller.upload_file.return_value = True
 
         ask_confirmation = MagicMock(return_value=True)
         show_error = MagicMock()
@@ -1179,7 +1182,7 @@ class TestFileUploadWorkflows:
         # Assert: Upload successful
         assert result is True
         ask_confirmation.assert_called_once()
-        configuration_manager.flight_controller.upload_file.assert_called_once_with(
+        configuration_manager._flight_controller.upload_file.assert_called_once_with(
             local_filename, remote_filename, progress_callback
         )
         show_error.assert_not_called()
@@ -1198,9 +1201,12 @@ class TestFileUploadWorkflows:
         local_filename = "config.param"
         remote_filename = "config.param"
 
-        configuration_manager.filesystem.get_upload_local_and_remote_filenames.return_value = (local_filename, remote_filename)
-        configuration_manager.filesystem.vehicle_configuration_file_exists.return_value = True
-        configuration_manager.flight_controller.master = True  # FC connected
+        configuration_manager._local_filesystem.get_upload_local_and_remote_filenames.return_value = (
+            local_filename,
+            remote_filename,
+        )
+        configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = True
+        configuration_manager._flight_controller.master = True  # FC connected
 
         ask_confirmation = MagicMock(return_value=False)
         show_error = MagicMock()
@@ -1214,7 +1220,7 @@ class TestFileUploadWorkflows:
         # Assert: Workflow succeeds but no upload
         assert result is True
         ask_confirmation.assert_called_once()
-        configuration_manager.flight_controller.upload_file.assert_not_called()
+        configuration_manager._flight_controller.upload_file.assert_not_called()
         show_error.assert_not_called()
         show_warning.assert_not_called()
 
@@ -1231,10 +1237,13 @@ class TestFileUploadWorkflows:
         local_filename = "config.param"
         remote_filename = "config.param"
 
-        configuration_manager.filesystem.get_upload_local_and_remote_filenames.return_value = (local_filename, remote_filename)
-        configuration_manager.filesystem.vehicle_configuration_file_exists.return_value = True
-        configuration_manager.flight_controller.master = True  # FC connected
-        configuration_manager.flight_controller.upload_file.return_value = False
+        configuration_manager._local_filesystem.get_upload_local_and_remote_filenames.return_value = (
+            local_filename,
+            remote_filename,
+        )
+        configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = True
+        configuration_manager._flight_controller.master = True  # FC connected
+        configuration_manager._flight_controller.upload_file.return_value = False
 
         ask_confirmation = MagicMock(return_value=True)
         show_error = MagicMock()
@@ -1248,7 +1257,7 @@ class TestFileUploadWorkflows:
         # Assert: Workflow fails and error shown
         assert result is False
         ask_confirmation.assert_called_once()
-        configuration_manager.flight_controller.upload_file.assert_called_once()
+        configuration_manager._flight_controller.upload_file.assert_called_once()
         show_error.assert_called_once()
         show_warning.assert_not_called()
 
@@ -1265,9 +1274,12 @@ class TestFileUploadWorkflows:
         local_filename = "config.param"
         remote_filename = "config.param"
 
-        configuration_manager.filesystem.get_upload_local_and_remote_filenames.return_value = (local_filename, remote_filename)
-        configuration_manager.filesystem.vehicle_configuration_file_exists.return_value = True
-        configuration_manager.flight_controller.master = None  # No FC connection
+        configuration_manager._local_filesystem.get_upload_local_and_remote_filenames.return_value = (
+            local_filename,
+            remote_filename,
+        )
+        configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = True
+        configuration_manager._flight_controller.master = None  # No FC connection
 
         ask_confirmation = MagicMock()
         show_error = MagicMock()
@@ -1281,7 +1293,7 @@ class TestFileUploadWorkflows:
         # Assert: Workflow fails and warning shown
         assert result is False
         ask_confirmation.assert_not_called()
-        configuration_manager.flight_controller.upload_file.assert_not_called()
+        configuration_manager._flight_controller.upload_file.assert_not_called()
         show_error.assert_not_called()
         show_warning.assert_called_once()
 
@@ -1298,9 +1310,12 @@ class TestFileUploadWorkflows:
         local_filename = "config.param"
         remote_filename = "config.param"
 
-        configuration_manager.filesystem.get_upload_local_and_remote_filenames.return_value = (local_filename, remote_filename)
-        configuration_manager.filesystem.vehicle_configuration_file_exists.return_value = False
-        configuration_manager.flight_controller.master = None  # No FC connection (but file missing is checked first)
+        configuration_manager._local_filesystem.get_upload_local_and_remote_filenames.return_value = (
+            local_filename,
+            remote_filename,
+        )
+        configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = False
+        configuration_manager._flight_controller.master = None  # No FC connection (but file missing is checked first)
 
         ask_confirmation = MagicMock()
         show_error = MagicMock()
@@ -1314,7 +1329,7 @@ class TestFileUploadWorkflows:
         # Assert: Workflow fails and error shown
         assert result is False
         ask_confirmation.assert_not_called()
-        configuration_manager.flight_controller.upload_file.assert_not_called()
+        configuration_manager._flight_controller.upload_file.assert_not_called()
         show_error.assert_called_once()
         show_warning.assert_not_called()
 
@@ -1329,7 +1344,7 @@ class TestFileUploadWorkflows:
         # Arrange: Set up no upload needed scenario
         selected_file = "config.param"
 
-        configuration_manager.filesystem.get_upload_local_and_remote_filenames.return_value = (None, None)
+        configuration_manager._local_filesystem.get_upload_local_and_remote_filenames.return_value = (None, None)
 
         ask_confirmation = MagicMock()
         show_error = MagicMock()
@@ -1343,7 +1358,7 @@ class TestFileUploadWorkflows:
         # Assert: Workflow succeeds without any actions
         assert result is True
         ask_confirmation.assert_not_called()
-        configuration_manager.flight_controller.upload_file.assert_not_called()
+        configuration_manager._flight_controller.upload_file.assert_not_called()
         show_error.assert_not_called()
         show_warning.assert_not_called()
 
@@ -1360,8 +1375,11 @@ class TestFileUploadWorkflows:
         local_filename = "config.param"
         remote_filename = "config.param"
 
-        configuration_manager.filesystem.get_upload_local_and_remote_filenames.return_value = (local_filename, remote_filename)
-        configuration_manager.filesystem.vehicle_configuration_file_exists.return_value = False
+        configuration_manager._local_filesystem.get_upload_local_and_remote_filenames.return_value = (
+            local_filename,
+            remote_filename,
+        )
+        configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = False
 
         ask_confirmation = MagicMock(return_value=True)
         show_error = MagicMock()
@@ -1401,8 +1419,8 @@ class TestParameterUploadNewWorkflows:
             "PARAM1": Par(1.5),
             "PARAM2": Par(2.5),
         }
-        configuration_manager.flight_controller.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
-        configuration_manager.filesystem.vehicle_dir = "."
+        configuration_manager._flight_controller.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
+        configuration_manager._local_filesystem.vehicle_dir = "."
 
         show_error = MagicMock()
 
@@ -1416,7 +1434,7 @@ class TestParameterUploadNewWorkflows:
         show_error.assert_not_called()
 
         # Verify set_param was called for each parameter
-        assert configuration_manager.flight_controller.set_param.call_count == 2
+        assert configuration_manager._flight_controller.set_param.call_count == 2
 
     def test_user_handles_unchanged_parameters_during_upload(self, configuration_manager) -> None:
         """
@@ -1431,8 +1449,8 @@ class TestParameterUploadNewWorkflows:
             "PARAM1": Par(1.0),  # Same as FC value
             "PARAM2": Par(2.0),  # Same as FC value
         }
-        configuration_manager.flight_controller.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
-        configuration_manager.filesystem.vehicle_dir = "."
+        configuration_manager._flight_controller.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
+        configuration_manager._local_filesystem.vehicle_dir = "."
         show_error = MagicMock()
 
         # Mock is_within_tolerance to return True (values are the same)
@@ -1464,9 +1482,9 @@ class TestParameterUploadNewWorkflows:
                 error_msg = "Invalid parameter value"
                 raise ValueError(error_msg)
 
-        configuration_manager.flight_controller.set_param.side_effect = mock_set_param
-        configuration_manager.flight_controller.fc_parameters = {"PARAM1": 1.0}
-        configuration_manager.filesystem.vehicle_dir = "."
+        configuration_manager._flight_controller.set_param.side_effect = mock_set_param
+        configuration_manager._flight_controller.fc_parameters = {"PARAM1": 1.0}
+        configuration_manager._local_filesystem.vehicle_dir = "."
         show_error = MagicMock()
 
         # Act: Upload parameters
@@ -1493,8 +1511,8 @@ class TestParameterUploadNewWorkflows:
         selected_params = {
             "NEW_PARAM": Par(5.0),
         }
-        configuration_manager.flight_controller.fc_parameters = {}  # No existing parameters
-        configuration_manager.filesystem.vehicle_dir = "."
+        configuration_manager._flight_controller.fc_parameters = {}  # No existing parameters
+        configuration_manager._local_filesystem.vehicle_dir = "."
         show_error = MagicMock()
 
         # Act: Upload parameters
@@ -1521,12 +1539,12 @@ class TestIMUTemperatureCalibrationMethods:
         THEN: Calibration should be performed successfully
         """
         # Arrange: Set up filesystem mocks
-        configuration_manager.filesystem.tempcal_imu_result_param_tuple.return_value = (
+        configuration_manager._local_filesystem.tempcal_imu_result_param_tuple.return_value = (
             "25_imu_temperature_calibration.param",
             "/path/to/25_imu_temperature_calibration.param",
         )
-        configuration_manager.filesystem.vehicle_dir = "/vehicle/dir"
-        configuration_manager.filesystem.read_params_from_files.return_value = {"new": "params"}
+        configuration_manager._local_filesystem.vehicle_dir = "/vehicle/dir"
+        configuration_manager._local_filesystem.read_params_from_files.return_value = {"new": "params"}
 
         # Set up mock callbacks
         ask_confirmation_mock = MagicMock(return_value=True)
@@ -1561,7 +1579,7 @@ class TestIMUTemperatureCalibrationMethods:
             figpath="/vehicle/dir",
             progress_callback=progress_callback_mock,
         )
-        configuration_manager.filesystem.read_params_from_files.assert_called_once()
+        configuration_manager._local_filesystem.read_params_from_files.assert_called_once()
 
     def test_handle_imu_temperature_calibration_workflow_user_declines_confirmation(self, configuration_manager) -> None:
         """
@@ -1572,7 +1590,7 @@ class TestIMUTemperatureCalibrationMethods:
         THEN: Workflow should exit early without performing calibration
         """
         # Arrange: Set up filesystem mock
-        configuration_manager.filesystem.tempcal_imu_result_param_tuple.return_value = (
+        configuration_manager._local_filesystem.tempcal_imu_result_param_tuple.return_value = (
             "25_imu_temperature_calibration.param",
             "/path/to/25_imu_temperature_calibration.param",
         )
@@ -1608,7 +1626,7 @@ class TestIMUTemperatureCalibrationMethods:
         THEN: Workflow should exit without performing calibration
         """
         # Arrange: Set up filesystem mock
-        configuration_manager.filesystem.tempcal_imu_result_param_tuple.return_value = (
+        configuration_manager._local_filesystem.tempcal_imu_result_param_tuple.return_value = (
             "25_imu_temperature_calibration.param",
             "/path/to/25_imu_temperature_calibration.param",
         )
@@ -1645,11 +1663,11 @@ class TestIMUTemperatureCalibrationMethods:
         THEN: Error callback should be called and workflow should return False
         """
         # Arrange: Set up filesystem mocks for failure scenario
-        configuration_manager.filesystem.tempcal_imu_result_param_tuple.return_value = (
+        configuration_manager._local_filesystem.tempcal_imu_result_param_tuple.return_value = (
             "25_imu_temperature_calibration.param",
             "/path/to/25_imu_temperature_calibration.param",
         )
-        configuration_manager.filesystem.vehicle_dir = "/vehicle/dir"
+        configuration_manager._local_filesystem.vehicle_dir = "/vehicle/dir"
         mock_imufit.return_value = None  # Simulate calibration failure (no result)
 
         # Set up mock callbacks
@@ -1684,7 +1702,7 @@ class TestIMUTemperatureCalibrationMethods:
         THEN: Workflow should exit early without any user interaction
         """
         # Arrange: Set up filesystem mock for non-matching file
-        configuration_manager.filesystem.tempcal_imu_result_param_tuple.return_value = (
+        configuration_manager._local_filesystem.tempcal_imu_result_param_tuple.return_value = (
             "25_imu_temperature_calibration.param",
             "/path/to/25_imu_temperature_calibration.param",
         )
@@ -1724,7 +1742,7 @@ class TestParameterSummaryMethods:
         THEN: Summary should contain all categorized parameter groups
         """
         # Arrange: Set up FC with parameters
-        configuration_manager.flight_controller.fc_parameters = {
+        configuration_manager._flight_controller.fc_parameters = {
             "PARAM1": 1.0,
             "PARAM2": 2.0,
             "PARAM3": 3.0,
@@ -1732,12 +1750,16 @@ class TestParameterSummaryMethods:
 
         # Mock the filesystem methods
         annotated_params = {"PARAM1": Par(1.0), "PARAM2": Par(2.0), "PARAM3": Par(3.0)}
-        configuration_manager.filesystem.annotate_intermediate_comments_to_param_dict.return_value = annotated_params
+        configuration_manager._local_filesystem.annotate_intermediate_comments_to_param_dict.return_value = annotated_params
 
         read_only = {"PARAM1": Par(1.0)}
         calibrations = {"PARAM2": Par(2.0)}
         non_calibrations = {"PARAM3": Par(3.0)}
-        configuration_manager.filesystem.categorize_parameters.return_value = (read_only, calibrations, non_calibrations)
+        configuration_manager._local_filesystem.categorize_parameters.return_value = (
+            read_only,
+            calibrations,
+            non_calibrations,
+        )
 
         # Act: Generate parameter summary
         result = configuration_manager._generate_parameter_summary()
@@ -1762,7 +1784,7 @@ class TestParameterSummaryMethods:
         THEN: Summary should return empty dictionary
         """
         # Arrange: Set up FC with no parameters
-        configuration_manager.flight_controller.fc_parameters = None
+        configuration_manager._flight_controller.fc_parameters = None
 
         # Act: Generate parameter summary
         result = configuration_manager._generate_parameter_summary()
@@ -1779,7 +1801,7 @@ class TestParameterSummaryMethods:
         THEN: Summary should return empty dictionary
         """
         # Arrange: Set up FC with empty parameters
-        configuration_manager.flight_controller.fc_parameters = {}
+        configuration_manager._flight_controller.fc_parameters = {}
 
         # Act: Generate parameter summary
         result = configuration_manager._generate_parameter_summary()
@@ -1796,7 +1818,7 @@ class TestParameterSummaryMethods:
         THEN: Message should contain formatted summary text with correct counts
         """
         # Arrange: Set up FC with parameters for summary generation
-        configuration_manager.flight_controller.fc_parameters = {
+        configuration_manager._flight_controller.fc_parameters = {
             "PARAM1": 1.0,
             "PARAM2": 2.0,
             "PARAM3": 3.0,
@@ -1810,12 +1832,16 @@ class TestParameterSummaryMethods:
             "PARAM3": Par(3.0),
             "PARAM4": Par(4.0),
         }
-        configuration_manager.filesystem.annotate_intermediate_comments_to_param_dict.return_value = annotated_params
+        configuration_manager._local_filesystem.annotate_intermediate_comments_to_param_dict.return_value = annotated_params
 
         read_only = {"PARAM1": Par(1.0)}
         calibrations = {"PARAM2": Par(2.0), "PARAM3": Par(3.0)}
         non_calibrations = {"PARAM4": Par(4.0)}
-        configuration_manager.filesystem.categorize_parameters.return_value = (read_only, calibrations, non_calibrations)
+        configuration_manager._local_filesystem.categorize_parameters.return_value = (
+            read_only,
+            calibrations,
+            non_calibrations,
+        )
 
         # Act: Get parameter summary message
         summary = configuration_manager._generate_parameter_summary()
@@ -1838,7 +1864,7 @@ class TestParameterSummaryMethods:
         THEN: Message should indicate no parameters available
         """
         # Arrange: Set up FC with no parameters
-        configuration_manager.flight_controller.fc_parameters = None
+        configuration_manager._flight_controller.fc_parameters = None
 
         # Act: Get parameter summary message
         summary = configuration_manager._generate_parameter_summary()
@@ -1861,7 +1887,7 @@ class TestFileNavigationMethods:
         THEN: Method should skip optional files and return next mandatory file
         """
         # Arrange: Set up file parameters with mixed optional/mandatory files
-        configuration_manager.filesystem.file_parameters = {
+        configuration_manager._local_filesystem.file_parameters = {
             "01_first.param": {"PARAM1": Par(1.0)},
             "02_optional.param": {"PARAM2": Par(2.0)},
             "03_mandatory.param": {"PARAM3": Par(3.0)},
@@ -1887,7 +1913,7 @@ class TestFileNavigationMethods:
         THEN: Method should return None
         """
         # Arrange: Set up file parameters without the current file
-        configuration_manager.filesystem.file_parameters = {
+        configuration_manager._local_filesystem.file_parameters = {
             "01_first.param": {"PARAM1": Par(1.0)},
             "02_second.param": {"PARAM2": Par(2.0)},
         }
@@ -1907,7 +1933,7 @@ class TestFileNavigationMethods:
         THEN: Method should return None indicating end of sequence
         """
         # Arrange: Set up file parameters with current file as last
-        configuration_manager.filesystem.file_parameters = {
+        configuration_manager._local_filesystem.file_parameters = {
             "01_first.param": {"PARAM1": Par(1.0)},
             "02_second.param": {"PARAM2": Par(2.0)},
             "03_last.param": {"PARAM3": Par(3.0)},
@@ -1931,7 +1957,7 @@ class TestFileNavigationMethods:
         THEN: Method should return None as no mandatory files remain
         """
         # Arrange: Set up file parameters with remaining files all optional
-        configuration_manager.filesystem.file_parameters = {
+        configuration_manager._local_filesystem.file_parameters = {
             "01_first.param": {"PARAM1": Par(1.0)},
             "02_optional1.param": {"PARAM2": Par(2.0)},
             "03_optional2.param": {"PARAM3": Par(3.0)},
@@ -1957,7 +1983,7 @@ class TestFileNavigationMethods:
         THEN: Method should return None
         """
         # Arrange: Set up empty file parameters
-        configuration_manager.filesystem.file_parameters = {}
+        configuration_manager._local_filesystem.file_parameters = {}
 
         # Act: Get next non-optional file
         result = configuration_manager.get_next_non_optional_file("any_file.param")
@@ -2175,7 +2201,7 @@ class TestConfigurationManagerFrontendAPI:
         """
         # Arrange: Set up expected directory path
         expected_path = "/test/vehicle/dir"
-        configuration_manager.filesystem.vehicle_dir = expected_path
+        configuration_manager._local_filesystem.vehicle_dir = expected_path
 
         # Act: Get vehicle directory
         result = configuration_manager.get_vehicle_directory()
@@ -2193,7 +2219,7 @@ class TestConfigurationManagerFrontendAPI:
         """
         # Arrange: Set up parameter files in filesystem
         expected_files = ["01_first.param", "02_second.param", "complete.param"]
-        configuration_manager.filesystem.file_parameters = {file: {} for file in expected_files}
+        configuration_manager._local_filesystem.file_parameters = {file: {} for file in expected_files}
 
         # Act: Get parameter files
         result = configuration_manager.parameter_files()
@@ -2210,15 +2236,15 @@ class TestConfigurationManagerFrontendAPI:
         THEN: True is returned when documentation exists, False when it doesn't
         """
         # Test with documentation available
-        configuration_manager.filesystem.doc_dict = {"PARAM1": {"description": "Test param"}}
+        configuration_manager._local_filesystem.doc_dict = {"PARAM1": {"description": "Test param"}}
         assert configuration_manager.parameter_documentation_available() is True
 
         # Test without documentation
-        configuration_manager.filesystem.doc_dict = {}
+        configuration_manager._local_filesystem.doc_dict = {}
         assert configuration_manager.parameter_documentation_available() is False
 
         # Test with None documentation
-        configuration_manager.filesystem.doc_dict = None
+        configuration_manager._local_filesystem.doc_dict = None
         assert configuration_manager.parameter_documentation_available() is False
 
     def test_user_can_access_configuration_phases(self, configuration_manager) -> None:
@@ -2231,7 +2257,7 @@ class TestConfigurationManagerFrontendAPI:
         """
         # Arrange: Set up configuration phases
         expected_phases = {"phase1": {"start": 1, "end": 10, "weight": 1.0}, "phase2": {"start": 11, "end": 20, "weight": 2.0}}
-        configuration_manager.filesystem.configuration_phases = expected_phases
+        configuration_manager._local_filesystem.configuration_phases = expected_phases
 
         # Act: Get configuration phases
         result = configuration_manager.configuration_phases()
@@ -2254,7 +2280,7 @@ class TestConfigurationManagerFrontendAPI:
         configuration_manager.write_current_file()
 
         # Assert: Filesystem method called with correct file
-        configuration_manager.filesystem.write_last_uploaded_filename.assert_called_once_with("05_current.param")
+        configuration_manager._local_filesystem.write_last_uploaded_filename.assert_called_once_with("05_current.param")
 
     def test_user_can_export_current_parameter_file(self, configuration_manager) -> None:
         """
@@ -2267,10 +2293,10 @@ class TestConfigurationManagerFrontendAPI:
         # Arrange: Set up current file and parameters
         configuration_manager.current_file = "test_file.param"
         test_params = {"PARAM1": Par(1.0, ""), "PARAM2": Par(2.0, "")}
-        configuration_manager.filesystem.file_parameters = {"test_file.param": test_params}
+        configuration_manager._local_filesystem.file_parameters = {"test_file.param": test_params}
 
         # Populate domain model (simulating what repopulate_configuration_step_parameters does)
-        configuration_manager.parameters = {
+        configuration_manager.current_step_parameters = {
             "PARAM1": ArduPilotParameter("PARAM1", test_params["PARAM1"], {}, {}),
             "PARAM2": ArduPilotParameter("PARAM2", test_params["PARAM2"], {}, {}),
         }
@@ -2279,8 +2305,8 @@ class TestConfigurationManagerFrontendAPI:
         configuration_manager.export_current_file(annotate_doc=True)
 
         # Assert: Filesystem export called correctly with right filename and annotate flag
-        configuration_manager.filesystem.export_to_param.assert_called_once()  # type: ignore[call-arg]
-        call_args = configuration_manager.filesystem.export_to_param.call_args  # type: ignore[attr-defined]
+        configuration_manager._local_filesystem.export_to_param.assert_called_once()  # type: ignore[call-arg]
+        call_args = configuration_manager._local_filesystem.export_to_param.call_args  # type: ignore[attr-defined]
         exported_params, filename, annotate = call_args[0]
 
         assert filename == "test_file.param"
@@ -2300,8 +2326,8 @@ class TestConfigurationManagerFrontendAPI:
         """
         # Arrange: Set current file and mock filesystem response
         configuration_manager.current_file = "current_file.param"
-        configuration_manager.filesystem.get_documentation_text_and_url.side_effect = None
-        configuration_manager.filesystem.get_documentation_text_and_url.return_value = (
+        configuration_manager._local_filesystem.get_documentation_text_and_url.side_effect = None
+        configuration_manager._local_filesystem.get_documentation_text_and_url.return_value = (
             "Test documentation",
             "http://example.com/docs",
         )
@@ -2311,7 +2337,9 @@ class TestConfigurationManagerFrontendAPI:
 
         # Assert: Correct documentation returned and filesystem called with current file
         assert result == ("Test documentation", "http://example.com/docs")
-        configuration_manager.filesystem.get_documentation_text_and_url.assert_called_once_with("current_file.param", "blog")
+        configuration_manager._local_filesystem.get_documentation_text_and_url.assert_called_once_with(
+            "current_file.param", "blog"
+        )
 
     def test_user_gets_empty_list_when_no_parameter_files_exist(self, configuration_manager) -> None:
         """
@@ -2322,7 +2350,7 @@ class TestConfigurationManagerFrontendAPI:
         THEN: An empty list is returned
         """
         # Arrange: No parameter files
-        configuration_manager.filesystem.file_parameters = {}
+        configuration_manager._local_filesystem.file_parameters = {}
 
         # Act: Get parameter files
         result = configuration_manager.parameter_files()
@@ -2341,10 +2369,10 @@ class TestConfigurationManagerFrontendAPI:
         # Arrange: Set up current file and parameters
         configuration_manager.current_file = "test_file.param"
         test_params = {"PARAM1": Par(1.0, "")}
-        configuration_manager.filesystem.file_parameters = {"test_file.param": test_params}
+        configuration_manager._local_filesystem.file_parameters = {"test_file.param": test_params}
 
         # Populate domain model (simulating what repopulate_configuration_step_parameters does)
-        configuration_manager.parameters = {
+        configuration_manager.current_step_parameters = {
             "PARAM1": ArduPilotParameter("PARAM1", test_params["PARAM1"], {}, {}),
         }
 
@@ -2352,8 +2380,8 @@ class TestConfigurationManagerFrontendAPI:
         configuration_manager.export_current_file(annotate_doc=False)
 
         # Assert: Filesystem export called correctly with right filename and annotate flag
-        configuration_manager.filesystem.export_to_param.assert_called_once()  # type: ignore[call-arg]
-        call_args = configuration_manager.filesystem.export_to_param.call_args  # type: ignore[attr-defined]
+        configuration_manager._local_filesystem.export_to_param.assert_called_once()  # type: ignore[call-arg]
+        call_args = configuration_manager._local_filesystem.export_to_param.call_args  # type: ignore[attr-defined]
         exported_params, filename, annotate = call_args[0]
 
         assert filename == "test_file.param"
@@ -2379,14 +2407,14 @@ class TestUnsavedChangesTracking:
         # Arrange: Set up a parameter in the domain model
 
         configuration_manager.current_file = "test_file.param"
-        configuration_manager.filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
-        configuration_manager.parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+        configuration_manager._local_filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        configuration_manager.current_step_parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
 
         # Assert: Initially no changes
         assert not configuration_manager.has_unsaved_changes()
 
         # Act: User edits parameter value
-        configuration_manager.parameters["PARAM1"].set_new_value("2.0")
+        configuration_manager.current_step_parameters["PARAM1"].set_new_value("2.0")
 
         # Assert: Changes detected
         assert configuration_manager.has_unsaved_changes()
@@ -2402,13 +2430,13 @@ class TestUnsavedChangesTracking:
         """
         # Arrange: Set up configuration step processor
         configuration_manager.current_file = "test_file.param"
-        configuration_manager.filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        configuration_manager._local_filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
 
         # Create a parameter and mark it as dirty (simulating derived parameter change)
         param = ArduPilotParameter("PARAM1", Par(1.0, "comment"))
         param.set_new_value("2.0")
         param.set_change_reason("Derived value")
-        configuration_manager.parameters = {"PARAM1": param}
+        configuration_manager.current_step_parameters = {"PARAM1": param}
 
         # Assert: Initially no structural changes
         assert not configuration_manager._added_parameters
@@ -2428,9 +2456,9 @@ class TestUnsavedChangesTracking:
         """
         # Arrange: Set up initial state
         configuration_manager.current_file = "test_file.param"
-        configuration_manager.filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
-        configuration_manager.parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
-        configuration_manager.flight_controller.fc_parameters = {"PARAM2": 2.0}
+        configuration_manager._local_filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        configuration_manager.current_step_parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+        configuration_manager._flight_controller.fc_parameters = {"PARAM2": 2.0}
 
         # Assert: Initially no changes
         assert not configuration_manager.has_unsaved_changes()
@@ -2453,10 +2481,10 @@ class TestUnsavedChangesTracking:
         # Arrange: Set up initial state with parameters
 
         configuration_manager.current_file = "test_file.param"
-        configuration_manager.filesystem.file_parameters = {
+        configuration_manager._local_filesystem.file_parameters = {
             "test_file.param": ParDict({"PARAM1": Par(1.0, "comment"), "PARAM2": Par(2.0, "comment")})
         }
-        configuration_manager.parameters = {
+        configuration_manager.current_step_parameters = {
             "PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment")),
             "PARAM2": ArduPilotParameter("PARAM2", Par(2.0, "comment")),
         }
@@ -2483,9 +2511,9 @@ class TestUnsavedChangesTracking:
         # Arrange: Set up initial state
 
         configuration_manager.current_file = "test_file.param"
-        configuration_manager.filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
-        configuration_manager.parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
-        configuration_manager.flight_controller.fc_parameters = {"PARAM2": 2.0}
+        configuration_manager._local_filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        configuration_manager.current_step_parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+        configuration_manager._flight_controller.fc_parameters = {"PARAM2": 2.0}
 
         # Assert: Initially no changes
         assert not configuration_manager.has_unsaved_changes()
@@ -2515,9 +2543,9 @@ class TestUnsavedChangesTracking:
         # Arrange: Set up initial state with parameter
 
         configuration_manager.current_file = "test_file.param"
-        configuration_manager.filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
-        configuration_manager.parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
-        configuration_manager.flight_controller.fc_parameters = {"PARAM1": 1.0}
+        configuration_manager._local_filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        configuration_manager.current_step_parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+        configuration_manager._flight_controller.fc_parameters = {"PARAM1": 1.0}
 
         # Assert: Initially no changes
         assert not configuration_manager.has_unsaved_changes()
@@ -2548,21 +2576,21 @@ class TestUnsavedChangesTracking:
         # Arrange: Set up initial state with multiple parameters
 
         configuration_manager.current_file = "test_file.param"
-        configuration_manager.filesystem.file_parameters = {
+        configuration_manager._local_filesystem.file_parameters = {
             "test_file.param": ParDict({"PARAM1": Par(1.0, "comment"), "PARAM2": Par(2.0, "comment")})
         }
-        configuration_manager.parameters = {
+        configuration_manager.current_step_parameters = {
             "PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment")),
             "PARAM2": ArduPilotParameter("PARAM2", Par(2.0, "comment")),
         }
-        configuration_manager.flight_controller.fc_parameters = {"PARAM3": 3.0}
+        configuration_manager._flight_controller.fc_parameters = {"PARAM3": 3.0}
 
         # Assert: Initially no changes
         assert not configuration_manager.has_unsaved_changes()
 
         # Act: User makes multiple changes
         # 1. Edit existing parameter
-        configuration_manager.parameters["PARAM1"].set_new_value("99.0")
+        configuration_manager.current_step_parameters["PARAM1"].set_new_value("99.0")
         # 2. Add new parameter
         configuration_manager.add_parameter_to_current_file("PARAM3")
         # 3. Delete parameter
@@ -2583,11 +2611,11 @@ class TestUnsavedChangesTracking:
         # Arrange: Set up initial state with edits
 
         configuration_manager.current_file = "test_file.param"
-        configuration_manager.filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
-        configuration_manager.parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+        configuration_manager._local_filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        configuration_manager.current_step_parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
 
         # Make changes
-        configuration_manager.parameters["PARAM1"].set_new_value("2.0")
+        configuration_manager.current_step_parameters["PARAM1"].set_new_value("2.0")
 
         # Assert: Changes detected
         assert configuration_manager.has_unsaved_changes()
@@ -2607,14 +2635,14 @@ class TestUnsavedChangesTracking:
         # Arrange: Set up initial file with changes
 
         configuration_manager.current_file = "test_file.param"
-        configuration_manager.filesystem.file_parameters = {
+        configuration_manager._local_filesystem.file_parameters = {
             "test_file.param": ParDict({"PARAM1": Par(1.0, "comment")}),
             "other_file.param": ParDict({"PARAM2": Par(2.0, "comment")}),
         }
-        configuration_manager.parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+        configuration_manager.current_step_parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
 
         # Set up fc_parameters so add_parameter_to_current_file works
-        configuration_manager.flight_controller.fc_parameters = {"PARAM_NEW": 5.0}
+        configuration_manager._flight_controller.fc_parameters = {"PARAM_NEW": 5.0}
 
         # Make changes
         configuration_manager.add_parameter_to_current_file("PARAM_NEW")
@@ -2626,7 +2654,7 @@ class TestUnsavedChangesTracking:
         configuration_manager.current_file = "other_file.param"
         configuration_manager._added_parameters.clear()
         configuration_manager._deleted_parameters.clear()
-        configuration_manager.parameters = {"PARAM2": ArduPilotParameter("PARAM2", Par(2.0, "comment"))}
+        configuration_manager.current_step_parameters = {"PARAM2": ArduPilotParameter("PARAM2", Par(2.0, "comment"))}
 
         # Assert: No changes in new file
         assert not configuration_manager.has_unsaved_changes()
@@ -2644,7 +2672,7 @@ class TestDerivedParameterApplication:
         THEN: Derived parameters should be applied using set_forced_or_derived_value
         """
         # Setup file parameters with a derived parameter
-        configuration_manager.filesystem.file_parameters = {
+        configuration_manager._local_filesystem.file_parameters = {
             "test_file.param": ParDict({"BATT_CAPACITY": Par(5000.0, "original comment")}),
         }
         configuration_manager.current_file = "test_file.param"
@@ -2652,9 +2680,9 @@ class TestDerivedParameterApplication:
         # Setup derived parameters to be returned by process_configuration_step
         derived_params = ParDict({"BATT_CAPACITY": Par(6000.0, "derived from component editor")})
 
-        # Mock the config_step_processor to return derived params
+        # Mock the _config_step_processor to return derived params
         with patch.object(
-            configuration_manager.config_step_processor,
+            configuration_manager._config_step_processor,
             "process_configuration_step",
             return_value=(
                 {
@@ -2674,8 +2702,8 @@ class TestDerivedParameterApplication:
             configuration_manager.repopulate_configuration_step_parameters()
 
         # Verify the derived value was applied
-        assert configuration_manager.parameters["BATT_CAPACITY"].get_new_value() == 6000.0
-        assert configuration_manager.parameters["BATT_CAPACITY"].change_reason == "derived from component editor"
+        assert configuration_manager.current_step_parameters["BATT_CAPACITY"].get_new_value() == 6000.0
+        assert configuration_manager.current_step_parameters["BATT_CAPACITY"].change_reason == "derived from component editor"
 
     def test_user_receives_error_when_derived_param_is_readonly(self, configuration_manager) -> None:
         """
@@ -2687,7 +2715,7 @@ class TestDerivedParameterApplication:
         """
         # Setup file parameters with a readonly parameter
         readonly_metadata = {"ReadOnly": True}
-        configuration_manager.filesystem.file_parameters = {
+        configuration_manager._local_filesystem.file_parameters = {
             "test_file.param": ParDict({"FORMAT_VERSION": Par(16.0, "comment")}),
         }
         configuration_manager.current_file = "test_file.param"
@@ -2695,10 +2723,10 @@ class TestDerivedParameterApplication:
         # Setup derived parameters
         derived_params = ParDict({"FORMAT_VERSION": Par(17.0, "derived comment")})
 
-        # Mock the config_step_processor
+        # Mock the _config_step_processor
         with (
             patch.object(
-                configuration_manager.config_step_processor,
+                configuration_manager._config_step_processor,
                 "process_configuration_step",
                 return_value=(
                     {
@@ -2728,7 +2756,9 @@ class TestDerivedParameterApplication:
         )
 
         # Verify value was NOT changed (still original)
-        assert configuration_manager.parameters["FORMAT_VERSION"].get_new_value() == 17.0  # Constructor applied it
+        assert (
+            configuration_manager.current_step_parameters["FORMAT_VERSION"].get_new_value() == 17.0
+        )  # Constructor applied it
 
     def test_user_receives_error_when_derived_param_not_marked_as_forced_or_derived(self, configuration_manager) -> None:
         """
@@ -2738,7 +2768,7 @@ class TestDerivedParameterApplication:
         WHEN: repopulate_configuration_step_parameters attempts to apply it
         THEN: The parameter should be skipped and an error should be logged
         """
-        configuration_manager.filesystem.file_parameters = {
+        configuration_manager._local_filesystem.file_parameters = {
             "test_file.param": ParDict({"PARAM1": Par(1.0, "comment")}),
         }
         configuration_manager.current_file = "test_file.param"
@@ -2748,7 +2778,7 @@ class TestDerivedParameterApplication:
 
         with (
             patch.object(
-                configuration_manager.config_step_processor,
+                configuration_manager._config_step_processor,
                 "process_configuration_step",
                 return_value=(
                     {
@@ -2777,23 +2807,23 @@ class TestDerivedParameterApplication:
 
     def test_user_receives_error_when_derived_param_not_in_parameters(self, configuration_manager) -> None:
         """
-        Test that derived parameters not in self.parameters are logged as errors.
+        Test that derived parameters not in self.current_step_parameters are logged as errors.
 
-        GIVEN: A derived parameter that doesn't exist in self.parameters
+        GIVEN: A derived parameter that doesn't exist in self.current_step_parameters
         WHEN: repopulate_configuration_step_parameters attempts to apply it
         THEN: An error should be logged about the missing parameter
         """
-        configuration_manager.filesystem.file_parameters = {
+        configuration_manager._local_filesystem.file_parameters = {
             "test_file.param": ParDict({}),
         }
         configuration_manager.current_file = "test_file.param"
 
-        # Setup derived parameters with a parameter that won't be in self.parameters
+        # Setup derived parameters with a parameter that won't be in self.current_step_parameters
         derived_params = ParDict({"NONEXISTENT_PARAM": Par(999.0, "comment")})
 
         with (
             patch.object(
-                configuration_manager.config_step_processor,
+                configuration_manager._config_step_processor,
                 "process_configuration_step",
                 return_value=(
                     {},  # Empty parameters dict

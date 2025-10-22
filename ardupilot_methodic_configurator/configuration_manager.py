@@ -53,52 +53,52 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
     Manages configuration state, including flight controller and filesystem access.
 
     This class aggregates the flight controller and filesystem access to provide a unified interface
-    for managing configuration state. It holds references to the flight controller and filesystem,
+    for managing configuration state. It holds protected references to the flight controller and filesystem,
     and provides methods to interact with them.
     """
 
     def __init__(self, current_file: str, flight_controller: FlightController, filesystem: LocalFilesystem) -> None:
         self.current_file = current_file
-        self.flight_controller = flight_controller
-        self.filesystem = filesystem
-        self.config_step_processor = ConfigurationStepProcessor(self.filesystem)
+        self._flight_controller = flight_controller
+        self._local_filesystem = filesystem
+        self._config_step_processor = ConfigurationStepProcessor(self._local_filesystem)
 
-        # self.parameters is rebuilt on every repopulate(...) call and only contains the ArduPilotParameter
+        # self.current_step_parameters is rebuilt on every repopulate(...) call and only contains the ArduPilotParameter
         # objects needed for the current table view.
-        self.parameters: dict[str, ArduPilotParameter] = {}
+        self.current_step_parameters: dict[str, ArduPilotParameter] = {}
 
-        # Track parameters added by user (not in original file) or renamed by the system
+        # Track parameters added by user (not in original file) or renamed by the system in the current configuration step
         self._added_parameters: set[str] = set()
 
-        # Track parameters deleted by user (were in original file) or renamed by the system
+        # Track parameters deleted by user (were in original file) or renamed by the system in the current configuration step
         self._deleted_parameters: set[str] = set()
 
     # frontend_tkinter_parameter_editor_table.py API start
     @property
     def connected_vehicle_type(self) -> str:
         return (
-            getattr(self.flight_controller.info, "vehicle_type", "")
-            if hasattr(self.flight_controller, "info") and self.flight_controller.info is not None
+            getattr(self._flight_controller.info, "vehicle_type", "")
+            if hasattr(self._flight_controller, "info") and self._flight_controller.info is not None
             else ""
         )
 
     @property
     def is_fc_connected(self) -> bool:
-        return self.flight_controller.master is not None
+        return self._flight_controller.master is not None
 
     @property
     def fc_parameters(self) -> dict[str, float]:
         return (
-            self.flight_controller.fc_parameters
-            if hasattr(self.flight_controller, "fc_parameters") and self.flight_controller.fc_parameters is not None
+            self._flight_controller.fc_parameters
+            if hasattr(self._flight_controller, "fc_parameters") and self._flight_controller.fc_parameters is not None
             else {}
         )
 
     @property
     def is_mavftp_supported(self) -> bool:
         return (
-            getattr(self.flight_controller.info, "is_mavftp_supported", False)
-            if hasattr(self.flight_controller, "info") and self.flight_controller.info is not None
+            getattr(self._flight_controller.info, "is_mavftp_supported", False)
+            if hasattr(self._flight_controller, "info") and self._flight_controller.info is not None
             else False
         )
 
@@ -131,7 +131,9 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
 
         """
         # Check if IMU temperature calibration should be offered for this file
-        tempcal_imu_result_param_filename, tempcal_imu_result_param_fullpath = self.filesystem.tempcal_imu_result_param_tuple()
+        tempcal_imu_result_param_filename, tempcal_imu_result_param_fullpath = (
+            self._local_filesystem.tempcal_imu_result_param_tuple()
+        )
         if selected_file != tempcal_imu_result_param_filename:
             return False
 
@@ -166,13 +168,13 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             log_parm=False,
             online=False,
             tclr=False,
-            figpath=self.filesystem.vehicle_dir,
+            figpath=self._local_filesystem.vehicle_dir,
             progress_callback=progress_callback,
         )
 
         try:
             # Reload parameter files after calibration
-            self.filesystem.file_parameters = self.filesystem.read_params_from_files()
+            self._local_filesystem.file_parameters = self._local_filesystem.read_params_from_files()
             return True
         except SystemExit as exp:
             show_error(_("Fatal error reading parameter files"), f"{exp}")
@@ -191,11 +193,13 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
                    auto_changed_by contains the tool name that requires external changes.
 
         """
-        auto_changed_by = self.filesystem.auto_changed_by(selected_file)
-        if auto_changed_by and self.flight_controller.fc_parameters:
+        auto_changed_by = self._local_filesystem.auto_changed_by(selected_file)
+        if auto_changed_by and self._flight_controller.fc_parameters:
             # Filter relevant FC parameters for this file
             relevant_fc_params = {
-                key: value for key, value in self.flight_controller.fc_parameters.items() if key in self.parameters
+                key: value
+                for key, value in self._flight_controller.fc_parameters.items()
+                if key in self.current_step_parameters
             }
             return True, relevant_fc_params, auto_changed_by
         return False, None, auto_changed_by
@@ -212,7 +216,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             bool: True if parameters were copied successfully.
 
         """
-        params_copied = self.filesystem.copy_fc_values_to_file(selected_file, relevant_fc_params)
+        params_copied = self._local_filesystem.copy_fc_values_to_file(selected_file, relevant_fc_params)
         return bool(params_copied)
 
     def get_file_jump_options(self, selected_file: str) -> dict[str, str]:
@@ -226,7 +230,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             dict: Dictionary mapping destination files to their messages.
 
         """
-        return self.filesystem.jump_possible(selected_file)
+        return self._local_filesystem.jump_possible(selected_file)
 
     def should_download_file_from_url_workflow(
         self,
@@ -249,11 +253,11 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             bool: True if download was successful or not needed, False if download failed.
 
         """
-        url, local_filename = self.filesystem.get_download_url_and_local_filename(selected_file)
+        url, local_filename = self._local_filesystem.get_download_url_and_local_filename(selected_file)
         if not url or not local_filename:
             return True  # No download required
 
-        if self.filesystem.vehicle_configuration_file_exists(local_filename):
+        if self._local_filesystem.vehicle_configuration_file_exists(local_filename):
             return True  # File already exists in the vehicle directory, no need to download it
 
         # Ask user for confirmation
@@ -294,16 +298,16 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             bool: True if upload was successful or not needed, False if upload failed.
 
         """
-        local_filename, remote_filename = self.filesystem.get_upload_local_and_remote_filenames(selected_file)
+        local_filename, remote_filename = self._local_filesystem.get_upload_local_and_remote_filenames(selected_file)
         if not local_filename or not remote_filename:
             return True  # No upload required
 
-        if not self.filesystem.vehicle_configuration_file_exists(local_filename):
+        if not self._local_filesystem.vehicle_configuration_file_exists(local_filename):
             error_msg = _("Local file {local_filename} does not exist")
             show_error(_("Will not upload any file"), error_msg.format(local_filename=local_filename))
             return False
 
-        if self.flight_controller.master is None:
+        if self._flight_controller.master is None:
             show_warning(_("Will not upload any file"), _("No flight controller connection"))
             return False
 
@@ -315,7 +319,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             return True  # User declined upload
 
         # Attempt upload
-        if not self.flight_controller.upload_file(local_filename, remote_filename, progress_callback):
+        if not self._flight_controller.upload_file(local_filename, remote_filename, progress_callback):
             error_msg = _("Failed to upload {local_filename} to {remote_filename}, please upload it manually")
             show_error(_("Upload failed"), error_msg.format(local_filename=local_filename, remote_filename=remote_filename))
             return False
@@ -334,18 +338,18 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
 
         """
         # Download all parameters from the flight controller
-        fc_parameters, param_default_values = self.flight_controller.download_params(
+        fc_parameters, param_default_values = self._flight_controller.download_params(
             progress_callback,
-            Path(self.filesystem.vehicle_dir) / "complete.param",
-            Path(self.filesystem.vehicle_dir) / "00_default.param",
+            Path(self._local_filesystem.vehicle_dir) / "complete.param",
+            Path(self._local_filesystem.vehicle_dir) / "00_default.param",
         )
 
         # Update the flight controller parameters
-        self.flight_controller.fc_parameters = fc_parameters
+        self._flight_controller.fc_parameters = fc_parameters
 
         # Write default values to file if available
         if param_default_values:
-            self.filesystem.write_param_default_values_to_file(param_default_values)
+            self._local_filesystem.write_param_default_values_to_file(param_default_values)
 
         return fc_parameters, param_default_values
 
@@ -376,17 +380,17 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         # Write each selected parameter to the flight controller
         for param_name, param in selected_params.items():
             try:
-                if param_name not in self.flight_controller.fc_parameters or not is_within_tolerance(
-                    self.flight_controller.fc_parameters[param_name], param.value
+                if param_name not in self._flight_controller.fc_parameters or not is_within_tolerance(
+                    self._flight_controller.fc_parameters[param_name], param.value
                 ):
-                    param_metadata = self.filesystem.doc_dict.get(param_name, None)
+                    param_metadata = self._local_filesystem.doc_dict.get(param_name, None)
                     if param_metadata and param_metadata.get("RebootRequired", False):
-                        self.flight_controller.set_param(param_name, float(param.value))
-                        if param_name in self.flight_controller.fc_parameters:
+                        self._flight_controller.set_param(param_name, float(param.value))
+                        if param_name in self._flight_controller.fc_parameters:
                             logging_info(
                                 _("Parameter %s changed from %f to %f, reset required"),
                                 param_name,
-                                self.flight_controller.fc_parameters[param_name],
+                                self._flight_controller.fc_parameters[param_name],
                                 param.value,
                             )
                         else:
@@ -394,12 +398,12 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
                         reset_required = True
                     # Check if any of the selected parameters have a _TYPE, _EN, or _ENABLE suffix
                     elif param_name.endswith(("_TYPE", "_EN", "_ENABLE", "SID_AXIS")):
-                        self.flight_controller.set_param(param_name, float(param.value))
-                        if param_name in self.flight_controller.fc_parameters:
+                        self._flight_controller.set_param(param_name, float(param.value))
+                        if param_name in self._flight_controller.fc_parameters:
                             logging_info(
                                 _("Parameter %s changed from %f to %f, possible reset required"),
                                 param_name,
-                                self.flight_controller.fc_parameters[param_name],
+                                self._flight_controller.fc_parameters[param_name],
                                 param.value,
                             )
                         else:
@@ -426,8 +430,12 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             int: Extra sleep time in seconds.
 
         """
-        param_boot_delay = self.parameters["BRD_BOOT_DELAY"].get_new_value() if "BRD_BOOT_DELAY" in self.parameters else 0.0
-        flightcontroller_boot_delay = self.flight_controller.fc_parameters.get("BRD_BOOT_DELAY", 0)
+        param_boot_delay = (
+            self.current_step_parameters["BRD_BOOT_DELAY"].get_new_value()
+            if "BRD_BOOT_DELAY" in self.current_step_parameters
+            else 0.0
+        )
+        flightcontroller_boot_delay = self._flight_controller.fc_parameters.get("BRD_BOOT_DELAY", 0)
         return int(max(param_boot_delay, flightcontroller_boot_delay) // 1000 + 1)  # round up
 
     def _reset_and_reconnect_flight_controller(
@@ -448,7 +456,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             sleep_time = self._calculate_reset_time()
 
         # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
-        return self.flight_controller.reset_and_reconnect(progress_callback, None, int(sleep_time))
+        return self._flight_controller.reset_and_reconnect(progress_callback, None, int(sleep_time))
 
     def reset_and_reconnect_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
@@ -512,15 +520,15 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
 
         for param_name, param in selected_params.items():
             try:
-                self.flight_controller.set_param(param_name, param.value)
-                if param_name not in self.flight_controller.fc_parameters or not is_within_tolerance(
-                    self.flight_controller.fc_parameters[param_name], param.value
+                self._flight_controller.set_param(param_name, param.value)
+                if param_name not in self._flight_controller.fc_parameters or not is_within_tolerance(
+                    self._flight_controller.fc_parameters[param_name], param.value
                 ):
-                    if param_name in self.flight_controller.fc_parameters:
+                    if param_name in self._flight_controller.fc_parameters:
                         logging_info(
                             _("Parameter %s changed from %f to %f"),
                             param_name,
-                            self.flight_controller.fc_parameters[param_name],
+                            self._flight_controller.fc_parameters[param_name],
                             param.value,
                         )
                     else:
@@ -595,7 +603,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             "39_autotune_roll_pitch_results.param",
         ]
 
-        report_file_path = Path(getattr(self.filesystem, "vehicle_dir", ".")) / "tuning_report.csv"
+        report_file_path = Path(getattr(self._local_filesystem, "vehicle_dir", ".")) / "tuning_report.csv"
 
         # Write a CSV with a header ("param", <list of files>) and one row per parameter.
         with open(report_file_path, "w", newline="", encoding="utf-8") as file:
@@ -607,9 +615,9 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
                 for param_file in report_files:
                     try:
                         if param_file == "00_default.param":
-                            value = str(self.filesystem.param_default_dict[param_name].value)
+                            value = str(self._local_filesystem.param_default_dict[param_name].value)
                         else:
-                            value = str(self.filesystem.file_parameters[param_file][param_name].value)
+                            value = str(self._local_filesystem.file_parameters[param_file][param_name].value)
                     except (KeyError, ValueError):
                         # On any unexpected structure, leave the value empty (don't crash)
                         value = ""
@@ -626,18 +634,18 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         param_upload_error = []
         for param_name, param in selected_params.items():
             if (
-                param_name in self.flight_controller.fc_parameters
+                param_name in self._flight_controller.fc_parameters
                 and param is not None
-                and not is_within_tolerance(self.flight_controller.fc_parameters[param_name], float(param.value))
+                and not is_within_tolerance(self._flight_controller.fc_parameters[param_name], float(param.value))
             ):
                 logging_error(
                     _("Parameter %s upload to the flight controller failed. Expected: %f, Actual: %f"),
                     param_name,
                     param.value,
-                    self.flight_controller.fc_parameters[param_name],
+                    self._flight_controller.fc_parameters[param_name],
                 )
                 param_upload_error.append(param_name)
-            if param_name not in self.flight_controller.fc_parameters:
+            if param_name not in self._flight_controller.fc_parameters:
                 logging_error(
                     _("Parameter %s upload to the flight controller failed. Expected: %f, Actual: N/A"),
                     param_name,
@@ -655,18 +663,20 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
 
         """
         # Create FC parameters dictionary
-        fc_parameters = ParDict.from_fc_parameters(self.flight_controller.fc_parameters)
+        fc_parameters = ParDict.from_fc_parameters(self._flight_controller.fc_parameters)
 
         # Early exit if no FC parameters available
         if len(fc_parameters) == 0:
             return fc_parameters
 
         # Remove default parameters from FC parameters if default file exists
-        fc_parameters.remove_if_value_is_similar(self.filesystem.param_default_dict, is_within_tolerance)
+        fc_parameters.remove_if_value_is_similar(self._local_filesystem.param_default_dict, is_within_tolerance)
 
         # Filter out read-only parameters efficiently - only check params that exist in fc_parameters
         readonly_params_to_remove = [
-            param_name for param_name in fc_parameters if self.filesystem.doc_dict.get(param_name, {}).get("ReadOnly", False)
+            param_name
+            for param_name in fc_parameters
+            if self._local_filesystem.doc_dict.get(param_name, {}).get("ReadOnly", False)
         ]
         for param_name in readonly_params_to_remove:
             del fc_parameters[param_name]
@@ -686,13 +696,13 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             last_filename: Last configuration file to process (inclusive).
 
         """
-        if not self.flight_controller.fc_parameters:
+        if not self._flight_controller.fc_parameters:
             return
 
         # Create the compounded state of all parameters stored in the AMC .param files
         compound = ParDict()
         first_config_step_filename = None
-        for file_name, file_params in self.filesystem.file_parameters.items():
+        for file_name, file_params in self._local_filesystem.file_parameters.items():
             if file_name != "00_default.param":
                 if first_config_step_filename is None:
                     first_config_step_filename = file_name
@@ -727,7 +737,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             first_name_without_ext = first_config_step_filename.rsplit(".", 1)[0] if first_config_step_filename else "unknown"
             # the last filename already has the .param extension
             filename = f"fc_params_missing_or_different_in_the_amc_param_files_{first_name_without_ext}_to_{last_filename}"
-            self.filesystem.export_to_param(params_missing_in_the_amc_param_files, filename, annotate_doc=False)
+            self._local_filesystem.export_to_param(params_missing_in_the_amc_param_files, filename, annotate_doc=False)
             logging_info(
                 _("Exported %d FC parameters missing or different in AMC files to %s"),
                 len(params_missing_in_the_amc_param_files),
@@ -739,7 +749,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
     def export_fc_params_missing_or_different(self) -> None:
         non_default_non_read_only_fc_params = self._get_non_default_non_read_only_fc_params()
 
-        last_config_step_filename = list(self.filesystem.file_parameters.keys())[-1]
+        last_config_step_filename = list(self._local_filesystem.file_parameters.keys())[-1]
         # Export FC parameters that are missing or different from AMC parameter files
         self._export_fc_params_missing_or_different_in_amc_files(non_default_non_read_only_fc_params, self.current_file)
         self._export_fc_params_missing_or_different_in_amc_files(
@@ -764,7 +774,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             run_in_thread: Callback to run the download in a thread (optional).
 
         """
-        if self.flight_controller.master is None:
+        if self._flight_controller.master is None:
             show_error(_("Error"), _("No flight controller connected"))
             return
 
@@ -776,7 +786,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         if not filename:
             return
 
-        success = self.flight_controller.download_last_flight_log(filename, progress_callback)
+        success = self._flight_controller.download_last_flight_log(filename, progress_callback)
         if success:
             show_info(_("Success"), _("Flight log downloaded successfully to:\n%s") % filename)
         else:
@@ -798,7 +808,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             file_name = self.current_file
 
         # Check if the configuration step for the given file is optional
-        mandatory_text, _mandatory_url = self.filesystem.get_documentation_text_and_url(file_name, "mandatory")
+        mandatory_text, _mandatory_url = self._local_filesystem.get_documentation_text_and_url(file_name, "mandatory")
         # Extract percentage from mandatory_text like "80% mandatory (20% optional)"
         percentage = 0
         if mandatory_text:
@@ -820,7 +830,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             Optional[str]: Next non-optional file name, or None if at the end.
 
         """
-        files = list(self.filesystem.file_parameters.keys())
+        files = list(self._local_filesystem.file_parameters.keys())
         if not files:
             return None
 
@@ -854,14 +864,14 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
 
         """
         # Get annotated FC parameters
-        annotated_fc_parameters = self.filesystem.annotate_intermediate_comments_to_param_dict(
-            self.flight_controller.fc_parameters
+        annotated_fc_parameters = self._local_filesystem.annotate_intermediate_comments_to_param_dict(
+            self._flight_controller.fc_parameters
         )
         if not annotated_fc_parameters:
             return {}
 
         # Categorize parameters using filesystem logic
-        categorized = self.filesystem.categorize_parameters(annotated_fc_parameters)
+        categorized = self._local_filesystem.categorize_parameters(annotated_fc_parameters)
         if not categorized or len(categorized) != 3:
             # Return empty dict if categorization fails or returns empty tuple
             return {}
@@ -1020,13 +1030,13 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             return False
 
         # If file exists, ask user for confirmation
-        if self.filesystem.vehicle_configuration_file_exists(filename):
+        if self._local_filesystem.vehicle_configuration_file_exists(filename):
             msg = _("{} file already exists.\nDo you want to overwrite it?")
             should_write_file = ask_confirmation(_("Overwrite existing file"), msg.format(filename))
 
         # Write the file using if confirmed and has parameters
         if should_write_file:
-            self.filesystem.export_to_param(param_dict, filename, annotate_doc)
+            self._local_filesystem.export_to_param(param_dict, filename, annotate_doc)
             logging_info(_("Summary file %s written"), filename)
 
         return should_write_file
@@ -1053,14 +1063,14 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         should_write_file = True  # Default to writing new files
 
         # If file exists, ask user for confirmation
-        if self.filesystem.zip_file_exists():
-            zip_file_path = self.filesystem.zip_file_path()
+        if self._local_filesystem.zip_file_exists():
+            zip_file_path = self._local_filesystem.zip_file_path()
             msg = _("{} file already exists.\nDo you want to overwrite it?")
             should_write_file = ask_confirmation(_("Overwrite existing file"), msg.format(zip_file_path))
 
         if should_write_file:
-            self.filesystem.zip_files(files_to_zip)
-            zip_file_path = self.filesystem.zip_file_path()
+            self._local_filesystem.zip_files(files_to_zip)
+            zip_file_path = self._local_filesystem.zip_file_path()
             msg = _(
                 "All relevant files have been zipped into the \n"
                 "{zip_file_path} file.\n\nYou can now upload this file to the ArduPilot Methodic\n"
@@ -1085,19 +1095,19 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         self._deleted_parameters.clear()
 
         # Process configuration step and get operations to apply
-        self.parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params = (
-            self.config_step_processor.process_configuration_step(self.current_file, self.fc_parameters)
+        self.current_step_parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params = (
+            self._config_step_processor.process_configuration_step(self.current_file, self.fc_parameters)
         )
 
         # Apply derived parameters to domain model using specialized setters
         for param_name, derived_par in derived_params.items():
-            if param_name in self.parameters:
+            if param_name in self.current_step_parameters:
                 # Update existing forced/derived parameter with new value using dedicated setter
                 # The setter methods will raise ValueError for invalid parameters (not forced/derived, readonly, etc.)
                 try:
-                    self.parameters[param_name].set_forced_or_derived_value(float(derived_par.value))
+                    self.current_step_parameters[param_name].set_forced_or_derived_value(float(derived_par.value))
                     if derived_par.comment:
-                        self.parameters[param_name].set_forced_or_derived_change_reason(derived_par.comment)
+                        self.current_step_parameters[param_name].set_forced_or_derived_change_reason(derived_par.comment)
                 except (ValueError, TypeError) as e:
                     logging_error(
                         _("Failed to apply derived parameter %s: %s"),
@@ -1114,22 +1124,22 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
         # Apply rename operations to domain model using add/delete tracking
         for old_name in duplicates_to_remove:
             # Mark duplicate as deleted
-            if old_name in self.filesystem.file_parameters.get(self.current_file, ParDict()):
+            if old_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
                 self._deleted_parameters.add(old_name)
             # Remove from domain model
-            if old_name in self.parameters:
-                del self.parameters[old_name]
+            if old_name in self.current_step_parameters:
+                del self.current_step_parameters[old_name]
 
         for old_name, new_name in renames_to_apply:
             # Get the parameter value from the original file
-            original_params = self.filesystem.file_parameters.get(self.current_file, ParDict())
+            original_params = self._local_filesystem.file_parameters.get(self.current_file, ParDict())
             if old_name in original_params:
                 # Mark old parameter as deleted
                 self._deleted_parameters.add(old_name)
 
                 # Create new parameter with renamed name
                 old_par = original_params[old_name]
-                self.parameters[new_name] = self.config_step_processor.create_ardupilot_parameter(
+                self.current_step_parameters[new_name] = self._config_step_processor.create_ardupilot_parameter(
                     new_name, old_par, self.current_file, self.fc_parameters
                 )
 
@@ -1137,8 +1147,8 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
                 self._added_parameters.add(new_name)
 
                 # Remove old parameter from domain model
-                if old_name in self.parameters:
-                    del self.parameters[old_name]
+                if old_name in self.current_step_parameters:
+                    del self.current_step_parameters[old_name]
 
         return ui_errors, ui_infos
 
@@ -1150,7 +1160,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             Dictionary of parameters that are different from FC
 
         """
-        return self.config_step_processor.filter_different_parameters(self.parameters)
+        return self._config_step_processor.filter_different_parameters(self.current_step_parameters)
 
     def delete_parameter_from_current_file(self, param_name: str) -> None:
         """
@@ -1161,26 +1171,26 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
 
         """
         # If parameter was in original file, mark as deleted
-        if param_name in self.filesystem.file_parameters.get(self.current_file, ParDict()):
+        if param_name in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
             self._deleted_parameters.add(param_name)
 
         # If it was previously added in this session, remove from added set
         self._added_parameters.discard(param_name)
 
         # Remove from runtime state
-        if param_name in self.parameters:
-            del self.parameters[param_name]
+        if param_name in self.current_step_parameters:
+            del self.current_step_parameters[param_name]
 
     def get_possible_add_param_names(self) -> list[str]:
         """Return a sorted list of possible parameter names to add, or raise OperationNotPossibleError if not possible."""
-        param_dict = self.filesystem.doc_dict or self.fc_parameters
+        param_dict = self._local_filesystem.doc_dict or self.fc_parameters
         if not param_dict:
             raise OperationNotPossibleError(
                 _("No apm.pdef.xml file and no FC connected. Not possible autocomplete parameter names.")
             )
 
         # Build set of currently active parameters from domain model
-        active_params = set(self.parameters.keys())
+        active_params = set(self.current_step_parameters.keys())
 
         # Find parameters that aren't currently active
         possible_add_param_names = [param_name for param_name in param_dict if param_name not in active_params]
@@ -1200,7 +1210,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             raise InvalidParameterNameError(_("Parameter name can not be empty."))
 
         # Check if parameter already exists (in original file, added, or not deleted)
-        original_file_params = self.filesystem.file_parameters.get(self.current_file, ParDict())
+        original_file_params = self._local_filesystem.file_parameters.get(self.current_file, ParDict())
         is_in_original = param_name in original_file_params
         is_already_added = param_name in self._added_parameters
         is_deleted = param_name in self._deleted_parameters
@@ -1213,7 +1223,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             if param_name in fc_parameters:
                 # Create the parameter in domain model
                 par = Par(fc_parameters[param_name], "")
-                self.parameters[param_name] = self.config_step_processor.create_ardupilot_parameter(
+                self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
                     param_name, par, self.current_file, fc_parameters
                 )
 
@@ -1226,11 +1236,11 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
                 return True
             raise InvalidParameterNameError(_("Parameter name not found in the flight controller."))
 
-        if self.filesystem.doc_dict:
-            if param_name in self.filesystem.doc_dict:
+        if self._local_filesystem.doc_dict:
+            if param_name in self._local_filesystem.doc_dict:
                 # Create the parameter in domain model
-                par = Par(self.filesystem.param_default_dict.get(param_name, Par(0, "")).value, "")
-                self.parameters[param_name] = self.config_step_processor.create_ardupilot_parameter(
+                par = Par(self._local_filesystem.param_default_dict.get(param_name, Par(0, "")).value, "")
+                self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
                     param_name, par, self.current_file, fc_parameters
                 )
 
@@ -1245,7 +1255,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
                 _("'{param_name}' not found in the apm.pdef.xml file.").format(param_name=param_name)
             )
 
-        if not fc_parameters and not self.filesystem.doc_dict:
+        if not fc_parameters and not self._local_filesystem.doc_dict:
             raise OperationNotPossibleError(
                 _("Can not add parameter when no FC is connected and no apm.pdef.xml file exists.")
             )
@@ -1267,13 +1277,13 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
 
         """
         if param_names is None:
-            param_names = list(self.parameters.keys())
+            param_names = list(self.current_step_parameters.keys())
 
         return ParDict(
             {
-                name: Par(self.parameters[name].get_new_value(), self.parameters[name].change_reason)
+                name: Par(self.current_step_parameters[name].get_new_value(), self.current_step_parameters[name].change_reason)
                 for name in param_names
-                if name in self.parameters
+                if name in self.current_step_parameters
             }
         )
 
@@ -1298,42 +1308,42 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
             return True
 
         # Check individual parameter edits (value or comment changes)
-        return any(param.is_dirty for param in self.parameters.values())
+        return any(param.is_dirty for param in self.current_step_parameters.values())
 
     def get_last_configuration_step_number(self) -> Optional[int]:
-        if self.filesystem.configuration_phases:
+        if self._local_filesystem.configuration_phases:
             # Get the first two characters of the last configuration step filename
-            last_step_filename = next(reversed(self.filesystem.file_parameters.keys()))
+            last_step_filename = next(reversed(self._local_filesystem.file_parameters.keys()))
             return int(last_step_filename[:2]) + 1 if len(last_step_filename) >= 2 else 1
         return None
 
     def get_sorted_phases_with_end_and_weight(self, last_step_nr: int) -> dict[str, PhaseData]:
-        return self.filesystem.get_sorted_phases_with_end_and_weight(last_step_nr)
+        return self._local_filesystem.get_sorted_phases_with_end_and_weight(last_step_nr)
 
     def get_vehicle_directory(self) -> str:
-        return self.filesystem.vehicle_dir
+        return self._local_filesystem.vehicle_dir
 
     def parameter_files(self) -> list[str]:
-        return list(self.filesystem.file_parameters.keys())
+        return list(self._local_filesystem.file_parameters.keys())
 
     def parameter_documentation_available(self) -> bool:
-        return bool(self.filesystem.doc_dict)
+        return bool(self._local_filesystem.doc_dict)
 
     def configuration_phases(self) -> dict[str, PhaseData]:
-        return self.filesystem.configuration_phases
+        return self._local_filesystem.configuration_phases
 
     def write_current_file(self) -> None:
-        self.filesystem.write_last_uploaded_filename(self.current_file)
+        self._local_filesystem.write_last_uploaded_filename(self.current_file)
 
     def export_current_file(self, annotate_doc: bool) -> None:
         # Convert domain model parameters to Par objects for export
         export_params = self.get_parameters_as_par_dict()
 
         # Export to file
-        self.filesystem.export_to_param(export_params, self.current_file, annotate_doc)
+        self._local_filesystem.export_to_param(export_params, self.current_file, annotate_doc)
 
         # Update the filesystem's file_parameters to match what was saved
-        self.filesystem.file_parameters[self.current_file] = export_params
+        self._local_filesystem.file_parameters[self.current_file] = export_params
 
         # Note: We don't need to clear tracking sets or dirty flags on domain model parameters
         # because after export, the user always navigates to a different file, which triggers
@@ -1357,11 +1367,11 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods
     def get_documentation_text_and_url(self, key: str, filename: Optional[str] = None) -> tuple[str, str]:
         if filename is None:
             filename = self.current_file
-        return self.filesystem.get_documentation_text_and_url(filename, key)
+        return self._local_filesystem.get_documentation_text_and_url(filename, key)
 
     def get_why_why_now_tooltip(self) -> str:
-        why_tooltip_text = self.filesystem.get_seq_tooltip_text(self.current_file, "why")
-        why_now_tooltip_text = self.filesystem.get_seq_tooltip_text(self.current_file, "why_now")
+        why_tooltip_text = self._local_filesystem.get_seq_tooltip_text(self.current_file, "why")
+        why_now_tooltip_text = self._local_filesystem.get_seq_tooltip_text(self.current_file, "why_now")
         tooltip_text = ""
         if why_tooltip_text:
             tooltip_text += _("Why: ") + _(why_tooltip_text) + "\n"

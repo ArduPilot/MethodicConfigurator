@@ -170,7 +170,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 self.parameter_editor.on_skip_click()
                 return
         else:
-            self._update_table(self.configuration_manager.parameters, self.parameter_editor.gui_complexity)
+            self._update_table(self.configuration_manager.current_step_parameters, self.parameter_editor.gui_complexity)
         self._apply_scroll_position(scroll_to_bottom)
 
     def _apply_scroll_position(self, scroll_to_bottom: bool) -> None:
