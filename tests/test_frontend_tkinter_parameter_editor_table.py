@@ -26,6 +26,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import
     setup_combobox_mousewheel_handling,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
+from tests.conftest import PARAMETER_EDITOR_TABLE_HEADERS_ADVANCED, PARAMETER_EDITOR_TABLE_HEADERS_SIMPLE
 
 # pylint: disable=protected-access, redefined-outer-name, too-few-public-methods, too-many-lines
 
@@ -1027,17 +1028,7 @@ class TestHeaderCreationBehavior:
         headers, tooltips = parameter_editor_table._create_headers_and_tooltips(show_upload_column=False)
 
         # Assert: Headers match expected simple mode structure
-        expected_headers = (
-            "-/+",
-            "Parameter",
-            "Current Value",
-            " ",
-            "New Value",
-            "Unit",
-            "Why are you changing this parameter?",
-        )
-
-        assert headers == expected_headers
+        assert headers == PARAMETER_EDITOR_TABLE_HEADERS_SIMPLE
         assert len(tooltips) == len(headers)
         assert len(tooltips) == 7  # No upload column tooltip
 
@@ -1053,18 +1044,7 @@ class TestHeaderCreationBehavior:
         headers, tooltips = parameter_editor_table._create_headers_and_tooltips(show_upload_column=True)
 
         # Assert: Headers match expected advanced mode structure
-        expected_headers = (
-            "-/+",
-            "Parameter",
-            "Current Value",
-            " ",
-            "New Value",
-            "Unit",
-            "Upload",
-            "Why are you changing this parameter?",
-        )
-
-        assert headers == expected_headers
+        assert headers == PARAMETER_EDITOR_TABLE_HEADERS_ADVANCED
         assert len(tooltips) == len(headers)
         assert len(tooltips) == 8  # With upload column tooltip
 

@@ -67,6 +67,7 @@ dev = [
     "mypy==1.18.2",
     "pre-commit==4.3.0",
     "pylint==3.3.9",
+    "pyautogui==0.9.54",
     "pyright==1.1.406",
     "pytest==8.4.2",
     "pytest-cov==7.0.0",
@@ -75,6 +76,10 @@ dev = [
     "python-gettext==5.0",
     "ruff==0.14.1",
     "types-requests==2.32.4.20250913",
+]
+
+ci_headless_tests = [
+    "pytest-xvfb==3.1.1",
 ]
 
 scripts = [
@@ -277,3 +282,4 @@ exclude = [".venv"]
 pythonVersion = "3.9"
 venvPath = "."
 venv = ".venv"
+

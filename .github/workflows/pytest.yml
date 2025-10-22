@@ -47,10 +47,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
           activate-environment: true
 
+      - name: Install system dependencies for GUI testing
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk scrot xdotool x11-utils gnome-screenshot
+
       - name: Install dependencies and application
         # without --editable the coverage report is not generated correctly
         run: |
-          uv pip install --editable .[dev]
+          uv pip install --editable .[dev,ci_headless_tests]
 
       - name: Test with pytest
         id: pytest
@@ -58,7 +63,12 @@ jobs:
         run: |
           export LIBGL_ALWAYS_SOFTWARE=1
           export DISPLAY=:99
-          Xvfb :99 -screen 0 1024x768x16 &
+          # disable X authentication
+          export XAUTHORITY=/dev/null
+          # disable access control restrictions
+          Xvfb :99 -screen 0 1024x768x16 -ac &
+          # ensure Xvfb is fully started before running tests
+          sleep 2
           uv run pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md --junit-xml=tests/results-junit.xml
 
       - name: Fix coverage paths
