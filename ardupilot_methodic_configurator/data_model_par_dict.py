@@ -125,14 +125,18 @@ class ParDict(dict[str, Par]):
                     elif "\t" in line:
                         parameter, value = line.split("\t", 1)
                     else:
-                        msg = f"Missing parameter-value separator: {line} in {param_file} line {i}"
+                        msg = _("Missing parameter-value separator: {line} in {param_file} line {i}").format(
+                            line=line, param_file=param_file, i=i
+                        )
                         raise SystemExit(msg)
                     # Strip whitespace from both parameter name and value immediately after splitting
                     parameter = parameter.strip()
                     value = value.strip()
                     ParDict._validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value)
         except UnicodeDecodeError as exp:
-            msg = f"Fatal error reading {param_file}, file must be UTF-8 encoded: {exp}"
+            msg = _("Fatal error reading {param_file}, file must be UTF-8 encoded: {exp}").format(
+                param_file=param_file, exp=exp
+            )
             raise SystemExit(msg) from exp
         return parameter_dict
 
@@ -147,26 +151,34 @@ class ParDict(dict[str, Par]):
         value: str,
     ) -> None:
         if len(parameter_name) > PARAM_NAME_MAX_LEN:
-            msg = f"Too long parameter name: {parameter_name} in {param_file} line {i}"
+            msg = _("Too long parameter name: {parameter_name} in {param_file} line {i}").format(
+                parameter_name=parameter_name, param_file=param_file, i=i
+            )
             raise SystemExit(msg)
         if not re.match(PARAM_NAME_REGEX, parameter_name):
-            msg = f"Invalid characters in parameter name {parameter_name} in {param_file} line {i}"
+            msg = _("Invalid characters in parameter name {parameter_name} in {param_file} line {i}").format(
+                parameter_name=parameter_name, param_file=param_file, i=i
+            )
             raise SystemExit(msg)
         if parameter_name in parameter_dict:
-            msg = f"Duplicated parameter {parameter_name} in {param_file} line {i}"
+            msg = _("Duplicated parameter {parameter_name} in {param_file} line {i}").format(
+                parameter_name=parameter_name, param_file=param_file, i=i
+            )
             raise SystemExit(msg)
         try:
             fvalue = float(value)
             parameter_dict[parameter_name] = Par(fvalue, comment)
         except ValueError as exc:
-            msg = f"Invalid parameter value {value} in {param_file} line {i}"
+            msg = _("Invalid parameter value {value} in {param_file} line {i}").format(value=value, param_file=param_file, i=i)
             raise SystemExit(msg) from exc
         except OSError as exc:
             _exc_type, exc_value, exc_traceback = sys_exc_info()
             if isinstance(exc_traceback, TracebackType):
                 fname = os_path.split(exc_traceback.tb_frame.f_code.co_filename)[1]
                 logging.critical("in line %s of file %s: %s", exc_traceback.tb_lineno, fname, exc_value)
-                msg = f"Caused by line {i} of file {param_file}: {original_line}"
+                msg = _("Caused by line {i} of file {param_file}: {original_line}").format(
+                    i=i, param_file=param_file, original_line=original_line
+                )
                 raise SystemExit(msg) from exc
 
     @staticmethod
@@ -205,7 +217,7 @@ class ParDict(dict[str, Par]):
         elif file_format == "mavproxy":
             sorted_dict = ParDict(dict(sorted(self.items())))
         else:
-            msg = f"ERROR: Unsupported file format {file_format}"
+            msg = _("ERROR: Unsupported file format {file_format}").format(file_format=file_format)
             raise SystemExit(msg)
 
         if file_format == "missionplanner":
@@ -277,10 +289,12 @@ class ParDict(dict[str, Par]):
         rows = int(rows_str) - 2  # -2 for the next print and the input line
 
         # Convert rows
-        print(f"\n{name} has {len(formatted_params)} parameters:")  # noqa: T201
+        print(  # noqa: T201
+            _("\n{name} has {len_formatted_params} parameters:").format(name=name, len_formatted_params=len(formatted_params))
+        )
         for i, line in enumerate(formatted_params):
             if i % rows == 0 and __name__ == "__main__":
-                input(f"\n{name} list is long hit enter to continue")
+                input(_("\n{name} list is long hit enter to continue").format(name=name))
                 rows_str, _columns = os_popen("stty size", "r").read().split()  # noqa: S605, S607
                 rows = int(rows_str) - 2  # -2 for the next print and the input line
             print(line)  # noqa: T201
