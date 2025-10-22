@@ -709,16 +709,16 @@ class TestCompleteParameterWorkflowIntegration:
         sysid_param.set_change_reason("Corrected system ID")
 
         # WHEN: Save operation fails (simulated network/filesystem error)
-        # Mock a save failure by making write_current_file raise an exception
+        # Mock a save failure by making _write_current_file raise an exception
         with (
-            patch.object(config_manager, "write_current_file", side_effect=Exception("Save failed")),
+            patch.object(config_manager, "_write_current_file", side_effect=Exception("Save failed")),
             pytest.raises(Exception, match="Save failed"),
         ):
-            config_manager.write_current_file()
+            config_manager._write_current_file()
 
         # THEN: User can retry or recover
         # User retries save (no exception this time)
-        config_manager.write_current_file()  # Should succeed
+        config_manager._write_current_file()  # Should succeed
 
         # WHEN: Upload fails due to flight controller disconnection
         flight_controller.upload_parameters = MagicMock(return_value=False)

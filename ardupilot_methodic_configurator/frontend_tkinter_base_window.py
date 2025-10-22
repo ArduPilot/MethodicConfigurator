@@ -421,3 +421,7 @@ def show_error_popup(title: str, message: str) -> None:
 
 def ask_yesno_popup(title: str, message: str) -> bool:
     return messagebox.askyesno(title, message)
+
+
+def ask_retry_cancel_popup(title: str, message: str) -> bool:
+    return messagebox.askretrycancel(title, message)
