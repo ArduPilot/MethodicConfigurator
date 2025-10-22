@@ -210,10 +210,14 @@ def test_integration_behavior(self, mock_api) -> None:
 
 ### Test Organization
 
+Test files follow specific naming conventions to clearly indicate their purpose and scope:
+
 ```text
 tests/
-├── test_frontend_tkinter_component.py      # UI component tests
-├── test_backend_logic.py                   # Business logic tests
+├── test_frontend_tkinter_component.py      # UI component unit tests
+├── test_backend_logic.py                   # Business logic unit tests
+├── gui_*.py                                # GUI-focused tests (prefixed with gui_)
+├── integration_*.py                        # Integration tests (prefixed with integration_)
 ├── test_integration_workflows.py           # End-to-end scenarios
 └── conftest.py                             # Shared fixtures
 ```

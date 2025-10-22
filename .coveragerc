@@ -1,5 +1,6 @@
 [run]
 source = ardupilot_methodic_configurator
+branch = True
 
 [report]
 include = ardupilot_methodic_configurator/*
