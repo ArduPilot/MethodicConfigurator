@@ -542,14 +542,14 @@ jobs:
             $tagList = $tags | ConvertFrom-Json
             if ($tagList -and $tagList.Count -gt 0) {
               Write-Host "Found stable tags: $($tagList -join ', ')"
-              "has_stable_tag=true" >> "$GITHUB_OUTPUT"
+              "has_stable_tag=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
             } else {
               Write-Host "No stable tags found on this commit"
-              "has_stable_tag=false" >> "$GITHUB_OUTPUT"
+              "has_stable_tag=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
             }
           } catch {
             Write-Host "Error checking tags: $($_.Exception.Message)"
-            "has_stable_tag=false" >> "$GITHUB_OUTPUT"
+            "has_stable_tag=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           }
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
