@@ -17,15 +17,19 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager, InvalidParameterNameError
-from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter, ParameterUnchangedError
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (
     PairTupleCombobox,
     setup_combobox_mousewheel_handling,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import (
+    NEW_VALUE_WIDGET_WIDTH,
+    ParameterEditorTable,
+)
 from tests.conftest import PARAMETER_EDITOR_TABLE_HEADERS_ADVANCED, PARAMETER_EDITOR_TABLE_HEADERS_SIMPLE
 
 # pylint: disable=protected-access, redefined-outer-name, too-few-public-methods, too-many-lines
@@ -45,6 +49,7 @@ def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-argu
     is_multiple_choice: bool = False,
 ) -> ArduPilotParameter:
     """Create a mock ArduPilotParameter for testing."""
+    # pylint: disable=duplicate-code
     metadata = metadata or {}
 
     if is_calibration:
@@ -55,6 +60,7 @@ def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-argu
         metadata["Bitmask"] = {0: "Bit 0", 1: "Bit 1", 2: "Bit 2"}
     if is_multiple_choice:
         metadata["values"] = {"0": "Option 0", "1": "Option 1"}
+    # pylint: enable=duplicate-code
 
     metadata.setdefault("unit", "")
     metadata.setdefault("doc_tooltip", "Test tooltip")
@@ -681,46 +687,189 @@ class TestIntegrationBehavior:
         assert column_index_advanced == 7  # With upload column
 
 
+class TestParameterValueUpdateHandling:
+    """Test the centralized parameter value update error handling."""
+
+    def test_handle_parameter_value_update_success(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """
+        User successfully updates parameter with valid value.
+
+        GIVEN: A user enters a valid new parameter value
+        WHEN: The parameter value update is processed
+        THEN: The update succeeds and returns True
+        AND: The parameter value is changed
+        """
+        # Arrange: Create parameter and set up filesystem
+        param = create_mock_data_model_ardupilot_parameter(name="TEST_PARAM", value=1.0)
+        parameter_editor_table.configuration_manager.filesystem.file_parameters = {
+            "test_file": ParDict({"TEST_PARAM": Par(1.0, "test")})
+        }
+        parameter_editor_table.configuration_manager.current_file = "test_file"
+
+        # Act: Update parameter value
+        result = parameter_editor_table._handle_parameter_value_update(param, "2.5")
+
+        # Assert: Update succeeded
+        assert result is True
+        assert param._new_value == 2.5  # pylint: disable=protected-access
+
+    def test_handle_parameter_value_update_unchanged(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """
+        User enters same value as current parameter value.
+
+        GIVEN: A user enters a value that matches the current parameter value
+        WHEN: The parameter value update is processed
+        THEN: The update returns False (no change)
+        AND: No error is shown to the user
+        """
+        # Arrange: Create parameter with existing value
+        param = create_mock_data_model_ardupilot_parameter(name="TEST_PARAM", value=1.5)
+        parameter_editor_table.configuration_manager.filesystem.file_parameters = {
+            "test_file": ParDict({"TEST_PARAM": Par(1.5, "test")})
+        }
+        parameter_editor_table.configuration_manager.current_file = "test_file"
+
+        # Act: Update with same value
+        result = parameter_editor_table._handle_parameter_value_update(param, "1.5")
+
+        # Assert: No change detected
+        assert result is False
+        assert param._new_value == 1.5  # pylint: disable=protected-access
+
+    def test_handle_parameter_value_update_out_of_range_accepted(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """
+        User accepts out-of-range parameter value after confirmation.
+
+        GIVEN: A user enters a value outside the parameter's valid range
+        WHEN: They are prompted and accept the out-of-range value
+        THEN: The update succeeds with the out-of-range value
+        AND: The parameter value is set despite being out of range
+        """
+        # Arrange: Create parameter with range limits
+        param = create_mock_data_model_ardupilot_parameter(
+            name="TEST_PARAM", value=5.0, metadata={"min": 0.0, "max": 10.0, "unit": ""}
+        )
+        parameter_editor_table.configuration_manager.filesystem.file_parameters = {
+            "test_file": ParDict({"TEST_PARAM": Par(5.0, "test")})
+        }
+        parameter_editor_table.configuration_manager.current_file = "test_file"
+
+        # Act: Try to set value above max, user accepts
+        with patch("tkinter.messagebox.askyesno", return_value=True):
+            result = parameter_editor_table._handle_parameter_value_update(param, "15.0")
+
+        # Assert: Update succeeded despite being out of range
+        assert result is True
+        assert param._new_value == 15.0  # pylint: disable=protected-access
+
+    def test_handle_parameter_value_update_out_of_range_rejected(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """
+        User rejects out-of-range parameter value after prompt.
+
+        GIVEN: A user enters a value outside the parameter's valid range
+        WHEN: They are prompted and reject the out-of-range value
+        THEN: The update fails and returns False
+        AND: The parameter value remains unchanged
+        """
+        # Arrange: Create parameter with range limits
+        param = create_mock_data_model_ardupilot_parameter(
+            name="TEST_PARAM", value=5.0, metadata={"min": 0.0, "max": 10.0, "unit": ""}
+        )
+        parameter_editor_table.configuration_manager.filesystem.file_parameters = {
+            "test_file": ParDict({"TEST_PARAM": Par(5.0, "test")})
+        }
+        parameter_editor_table.configuration_manager.current_file = "test_file"
+
+        # Act: Try to set value above max, user rejects
+        with patch("tkinter.messagebox.askyesno", return_value=False):
+            result = parameter_editor_table._handle_parameter_value_update(param, "15.0")
+
+        # Assert: Update failed, value unchanged
+        assert result is False
+        assert param._new_value == 5.0  # pylint: disable=protected-access
+
+    def test_handle_parameter_value_update_out_of_range_no_prompt(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """
+        Out-of-range value without user confirmation shows error.
+
+        GIVEN: A parameter value update with range checking disabled
+        WHEN: An out-of-range value is provided
+        THEN: The update fails without prompting the user
+        AND: An error message is shown
+        """
+        # Arrange: Create parameter with range limits
+        param = create_mock_data_model_ardupilot_parameter(
+            name="TEST_PARAM", value=5.0, metadata={"min": 0.0, "max": 10.0, "unit": ""}
+        )
+        parameter_editor_table.configuration_manager.filesystem.file_parameters = {
+            "test_file": ParDict({"TEST_PARAM": Par(5.0, "test")})
+        }
+        parameter_editor_table.configuration_manager.current_file = "test_file"
+
+        # Act: Try to set out-of-range value with range checking disabled
+        with patch("tkinter.messagebox.askyesno") as mock_askyesno, patch("tkinter.messagebox.showerror") as mock_showerror:
+            result = parameter_editor_table._handle_parameter_value_update(param, "15.0", include_range_check=False)
+
+            # Assert: Update failed without prompting
+            assert result is False
+            mock_askyesno.assert_not_called()
+            mock_showerror.assert_called_once()
+
+    def test_handle_parameter_value_update_invalid_value(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """
+        User enters invalid parameter value format.
+
+        GIVEN: A user enters a value that cannot be parsed (e.g., text for numeric parameter)
+        WHEN: The parameter value update is processed
+        THEN: The update fails and returns False
+        AND: An error dialog is shown to the user
+        """
+        # Arrange: Create numeric parameter
+        param = create_mock_data_model_ardupilot_parameter(name="TEST_PARAM", value=1.0)
+        parameter_editor_table.configuration_manager.filesystem.file_parameters = {
+            "test_file": ParDict({"TEST_PARAM": Par(1.0, "test")})
+        }
+        parameter_editor_table.configuration_manager.current_file = "test_file"
+
+        # Act: Try to set invalid string value
+        with patch("tkinter.messagebox.showerror") as mock_showerror:
+            result = parameter_editor_table._handle_parameter_value_update(param, "not_a_number")
+
+        # Assert: Update failed with error shown
+        assert result is False
+        mock_showerror.assert_called_once()
+        assert param._new_value == 1.0  # Value unchanged  # pylint: disable=protected-access
+
+    def test_handle_parameter_value_update_type_error(self, parameter_editor_table: ParameterEditorTable) -> None:
+        """
+        Parameter value update handles type errors gracefully.
+
+        GIVEN: A parameter value update that triggers a TypeError
+        WHEN: The type error occurs during value setting
+        THEN: The update fails gracefully with error message
+        AND: The original parameter value is preserved
+        """
+        # Arrange: Create parameter
+        param = create_mock_data_model_ardupilot_parameter(name="TEST_PARAM", value=1.0)
+        parameter_editor_table.configuration_manager.filesystem.file_parameters = {
+            "test_file": ParDict({"TEST_PARAM": Par(1.0, "test")})
+        }
+        parameter_editor_table.configuration_manager.current_file = "test_file"
+
+        # Mock set_new_value to raise TypeError
+        with (
+            patch.object(param, "set_new_value", side_effect=TypeError("Type conversion failed")),
+            patch("tkinter.messagebox.showerror") as mock_showerror,
+        ):
+            result = parameter_editor_table._handle_parameter_value_update(param, "some_value")
+
+        # Assert: Error handled gracefully
+        assert result is False
+        mock_showerror.assert_called_once()
+
+
 class TestWidgetCreationBehavior:
-    """Test the behavior of widget creation methods."""
-
-    def test_create_delete_button(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface creates delete button with proper configuration.
-
-        GIVEN: A parameter editor table is initialized
-        WHEN: A delete button is created for a parameter
-        THEN: The button has correct text and tooltip functionality
-        """
-        # Arrange: Set up tooltip mocking
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip:
-            # Act: Create delete button
-            button = parameter_editor_table._create_delete_button("TEST_PARAM")
-
-            # Assert: Button properties are correct
-            assert isinstance(button, ttk.Button)
-            assert button.cget("text") == "Del"
-            mock_tooltip.assert_called_once()
-
-    def test_create_parameter_name_normal(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface displays parameter names with tooltips for normal parameters.
-
-        GIVEN: A parameter editor table is initialized
-        WHEN: A parameter name label is created for a normal parameter
-        THEN: The label displays the parameter name and has tooltip functionality
-        """
-        # Arrange: Create mock parameter
-        param = create_mock_data_model_ardupilot_parameter()
-
-        # Act: Create parameter name label with tooltip mocking
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip:
-            label = parameter_editor_table._create_parameter_name(param)
-
-            # Assert: Label properties are correct
-            assert isinstance(label, ttk.Label)
-            assert "TEST_PARAM" in label.cget("text")
-            mock_tooltip.assert_called_once()
+    """Test the behavior of widget creation methods for visual indicators."""
 
     def test_create_parameter_name_calibration(self, parameter_editor_table: ParameterEditorTable) -> None:
         """
@@ -757,139 +906,6 @@ class TestWidgetCreationBehavior:
         # Assert: Label has purple background for readonly
         assert isinstance(label, ttk.Label)
         assert str(label.cget("background")) == "purple1"
-
-    def test_create_flightcontroller_value_exists(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface displays flight controller parameter values when available.
-
-        GIVEN: A parameter exists in the flight controller
-        WHEN: A flight controller value label is created
-        THEN: The label displays the parameter value
-        """
-        # Arrange: Create parameter with FC value
-        param = create_mock_data_model_ardupilot_parameter(fc_value=1.234567)
-
-        # Act: Create flight controller value label
-        label = parameter_editor_table._create_flightcontroller_value(param)
-
-        # Assert: Label displays the FC value
-        assert isinstance(label, ttk.Label)
-        assert label.cget("text") == "1.234567"
-
-    def test_create_flightcontroller_value_missing(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface shows 'N/A' when flight controller parameter is missing.
-
-        GIVEN: A parameter does not exist in the flight controller
-        WHEN: A flight controller value label is created
-        THEN: The label displays 'N/A' to indicate missing value
-        """
-        # Arrange: Create parameter without FC value
-        param = create_mock_data_model_ardupilot_parameter(fc_value=None)
-
-        # Act: Create flight controller value label
-        label = parameter_editor_table._create_flightcontroller_value(param)
-
-        # Assert: Label shows 'N/A' for missing value
-        assert isinstance(label, ttk.Label)
-        assert label.cget("text") == "N/A"
-
-    def test_create_unit_label(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface displays parameter units with tooltips.
-
-        GIVEN: A parameter has unit information and tooltip metadata
-        WHEN: A unit label is created
-        THEN: The label displays the unit and has tooltip functionality
-        """
-        # Arrange: Create parameter with unit metadata
-        param = create_mock_data_model_ardupilot_parameter(metadata={"unit": "m/s", "unit_tooltip": "meters per second"})
-
-        # Act: Create unit label with tooltip mocking
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip:
-            label = parameter_editor_table._create_unit_label(param)
-
-            # Assert: Label displays unit and has tooltip
-            assert isinstance(label, ttk.Label)
-            assert label.cget("text") == "m/s"
-            mock_tooltip.assert_called_once()
-
-    def test_create_upload_checkbutton_connected(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface enables upload checkbuttons when flight controller is connected.
-
-        GIVEN: A flight controller is connected
-        WHEN: An upload checkbutton is created for a parameter
-        THEN: The checkbutton is enabled and checked by default with tooltip
-        """
-        # Act: Create upload checkbutton with tooltip mocking
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip:
-            checkbutton = parameter_editor_table._create_upload_checkbutton("TEST_PARAM")
-
-            # Assert: Checkbutton is properly configured for connected FC
-            assert isinstance(checkbutton, ttk.Checkbutton)
-            assert str(checkbutton.cget("state")) == "normal"
-            assert "TEST_PARAM" in parameter_editor_table.upload_checkbutton_var
-            assert parameter_editor_table.upload_checkbutton_var["TEST_PARAM"].get() is True
-            mock_tooltip.assert_called_once()
-
-    def test_create_upload_checkbutton_disconnected(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface disables upload checkbuttons when flight controller is disconnected.
-
-        GIVEN: A flight controller is disconnected
-        WHEN: An upload checkbutton is created for a parameter
-        THEN: The checkbutton is disabled and unchecked
-        """
-        # Arrange: Disconnect flight controller
-        parameter_editor_table.configuration_manager.is_fc_connected = False
-
-        # Act: Create upload checkbutton
-        checkbutton = parameter_editor_table._create_upload_checkbutton("TEST_PARAM")
-
-        # Assert: Checkbutton is disabled for disconnected FC
-        assert isinstance(checkbutton, ttk.Checkbutton)
-        assert str(checkbutton.cget("state")) == "disabled"
-        assert parameter_editor_table.upload_checkbutton_var["TEST_PARAM"].get() is False
-
-    def test_create_change_reason_entry_normal(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface creates editable change reason entries for normal parameters.
-
-        GIVEN: A normal parameter is being edited
-        WHEN: A change reason entry is created
-        THEN: The entry is editable and contains the parameter's comment with tooltip
-        """
-        # Arrange: Create normal parameter
-        param = create_mock_data_model_ardupilot_parameter()
-
-        # Act: Create change reason entry with tooltip mocking
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip:
-            entry = parameter_editor_table._create_change_reason_entry(param)
-
-            # Assert: Entry is properly configured for normal parameter
-            assert isinstance(entry, ttk.Entry)
-            assert entry.get() == "test comment"
-            mock_tooltip.assert_called_once()
-
-    def test_create_change_reason_entry_forced(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface creates disabled change reason entries for forced parameters.
-
-        GIVEN: A forced parameter is being displayed
-        WHEN: A change reason entry is created
-        THEN: The entry is disabled and contains the forced comment
-        """
-        # Arrange: Create forced parameter
-        param = create_mock_data_model_ardupilot_parameter(is_forced=True)
-
-        # Act: Create change reason entry
-        entry = parameter_editor_table._create_change_reason_entry(param)
-
-        # Assert: Entry is disabled for forced parameter
-        assert isinstance(entry, ttk.Entry)
-        assert entry.get() == "forced comment"
-        assert str(entry.cget("state")) == "disabled"
 
 
 class TestEventHandlerBehavior:
@@ -1066,257 +1082,6 @@ class TestHeaderCreationBehavior:
 
             # Assert: Translation function was called for each header
             assert mock_translate.call_count >= 6
-
-
-class TestColumnManagementBehavior:
-    """Test the behavior of column management methods."""
-
-    def test_create_column_widgets_normal_parameter(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface creates complete column widget set for normal parameters with upload column.
-
-        GIVEN: A normal parameter needs to be displayed with upload functionality enabled
-        WHEN: Column widgets are created for the parameter
-        THEN: All required widgets are created including upload checkbutton
-        """
-        # Arrange: Set up parameter and mock widget creation methods
-        param_name = "TEST_PARAM"
-        param = create_mock_data_model_ardupilot_parameter()
-        show_upload_column = True
-
-        # Mock individual widget creation methods using patch.object
-        with (
-            patch.object(parameter_editor_table, "_create_delete_button", return_value=MagicMock()) as mock_delete,
-            patch.object(parameter_editor_table, "_create_parameter_name", return_value=MagicMock()) as mock_name,
-            patch.object(parameter_editor_table, "_create_flightcontroller_value", return_value=MagicMock()) as mock_fc,
-            patch.object(parameter_editor_table, "_create_new_value_entry", return_value=MagicMock()) as mock_new,
-            patch.object(parameter_editor_table, "_create_unit_label", return_value=MagicMock()) as mock_unit,
-            patch.object(parameter_editor_table, "_create_upload_checkbutton", return_value=MagicMock()) as mock_upload,
-            patch.object(parameter_editor_table, "_create_change_reason_entry", return_value=MagicMock()) as mock_reason,
-        ):
-            # Act: Create column widgets
-            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
-
-            # Assert: All widgets are created for upload mode
-            assert len(column) == 8  # With upload column
-            mock_delete.assert_called_once()
-            mock_name.assert_called_once()
-            mock_fc.assert_called_once()
-            mock_new.assert_called_once()
-            mock_unit.assert_called_once()
-            mock_upload.assert_called_once()
-            mock_reason.assert_called_once()
-
-    def test_create_column_widgets_without_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface creates column widget set for parameters without upload column.
-
-        GIVEN: A parameter needs to be displayed without upload functionality
-        WHEN: Column widgets are created for the parameter
-        THEN: All required widgets are created excluding upload checkbutton
-        """
-        # Arrange: Set up parameter and mock widget creation methods
-        param_name = "TEST_PARAM"
-        param = create_mock_data_model_ardupilot_parameter()
-        show_upload_column = False
-
-        # Mock individual widget creation methods using patch.object
-        with (
-            patch.object(parameter_editor_table, "_create_delete_button", return_value=MagicMock()) as mock_delete,
-            patch.object(parameter_editor_table, "_create_parameter_name", return_value=MagicMock()) as mock_name,
-            patch.object(parameter_editor_table, "_create_flightcontroller_value", return_value=MagicMock()) as mock_fc,
-            patch.object(parameter_editor_table, "_create_new_value_entry", return_value=MagicMock()) as mock_new,
-            patch.object(parameter_editor_table, "_create_unit_label", return_value=MagicMock()) as mock_unit,
-            patch.object(parameter_editor_table, "_create_change_reason_entry", return_value=MagicMock()) as mock_reason,
-        ):
-            # Act: Create column widgets
-            column = parameter_editor_table._create_column_widgets(param_name, param, show_upload_column)
-
-            # Assert: All widgets are created except upload
-            assert len(column) == 7  # Without upload column
-            mock_delete.assert_called_once()
-            mock_name.assert_called_once()
-            mock_fc.assert_called_once()
-            mock_new.assert_called_once()
-            mock_unit.assert_called_once()
-            mock_reason.assert_called_once()
-
-    def test_grid_column_widgets_with_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface properly positions column widgets in grid layout with upload column.
-
-        GIVEN: A set of column widgets needs to be positioned in the table with upload column
-        WHEN: Widgets are gridded in the table
-        THEN: Each widget is placed in the correct column position
-        """
-        # Arrange: Create mock widgets and set up column index
-        mock_widgets = [MagicMock() for _ in range(8)]
-        parameter_editor_table._get_change_reason_column_index = MagicMock(return_value=7)
-
-        # Act: Grid column widgets
-        parameter_editor_table._grid_column_widgets(mock_widgets, row=1, show_upload_column=True)
-
-        # Assert: All widgets were gridded in correct positions
-        for i, widget in enumerate(mock_widgets):
-            widget.grid.assert_called_once()
-            call_args = widget.grid.call_args[1]  # Get keyword arguments
-            assert call_args["row"] == 1
-            if i < 7:  # Regular columns
-                assert call_args["column"] == i
-            else:  # Change reason column
-                assert call_args["column"] == 7
-
-    def test_grid_column_widgets_without_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface properly positions column widgets in grid layout without upload column.
-
-        GIVEN: A set of column widgets needs to be positioned in the table without upload column
-        WHEN: Widgets are gridded in the table
-        THEN: Each widget is placed in the correct column position excluding upload
-        """
-        # Arrange: Create mock widgets and set up column index
-        mock_widgets = [MagicMock() for _ in range(7)]
-        parameter_editor_table._get_change_reason_column_index = MagicMock(return_value=6)
-
-        # Act: Grid column widgets
-        parameter_editor_table._grid_column_widgets(mock_widgets, row=1, show_upload_column=False)
-
-        # Assert: All widgets were gridded in correct positions
-        for i, widget in enumerate(mock_widgets):
-            widget.grid.assert_called_once()
-            call_args = widget.grid.call_args[1]
-            assert call_args["row"] == 1
-            if i < 6:  # Regular columns
-                assert call_args["column"] == i
-            else:  # Change reason column
-                assert call_args["column"] == 6
-
-    def test_configure_table_columns_with_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface configures table column properties correctly with upload column.
-
-        GIVEN: The table needs column configuration with upload functionality enabled
-        WHEN: Table columns are configured
-        THEN: All columns including upload are properly configured
-        """
-        # Arrange: Set up column index and mock viewport
-        parameter_editor_table._get_change_reason_column_index = MagicMock(return_value=6)
-        parameter_editor_table.view_port = MagicMock()
-
-        # Act: Configure table columns
-        parameter_editor_table._configure_table_columns(show_upload_column=True)
-
-        # Assert: Columnconfigure was called for all columns
-        assert parameter_editor_table.view_port.columnconfigure.call_count == 8
-
-    def test_configure_table_columns_without_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface configures table column properties correctly without upload column.
-
-        GIVEN: The table needs column configuration without upload functionality
-        WHEN: Table columns are configured
-        THEN: All columns excluding upload are properly configured
-        """
-        # Arrange: Set up column index and mock viewport
-        parameter_editor_table._get_change_reason_column_index = MagicMock(return_value=5)
-        parameter_editor_table.view_port = MagicMock()
-
-        # Act: Configure table columns
-        parameter_editor_table._configure_table_columns(show_upload_column=False)
-
-        # Assert: Columnconfigure was called for all columns (6 without upload)
-        assert parameter_editor_table.view_port.columnconfigure.call_count == 7
-
-
-class TestUpdateMethodsBehavior:
-    """Test the behavior of update methods."""
-
-    def test_update_new_value_entry_text_normal_entry(self, parameter_editor_table: ParameterEditorTable) -> None:  # pylint: disable=unused-argument
-        """
-        User interface updates entry widget text when parameter value matches default.
-
-        GIVEN: A parameter with a value that matches its default value
-        WHEN: The entry widget text is updated
-        THEN: The widget displays the value and uses default styling
-        """
-        # Arrange: Create mock entry and parameter with matching default value
-        mock_entry = MagicMock(spec=ttk.Entry)
-
-        param = ArduPilotParameter(
-            name="TEST_PARAM",
-            par_obj=Par(1.5, "test comment"),
-            metadata={},
-            default_par=Par(1.5, "default comment"),  # Same value as par_obj to trigger default style
-            fc_value=None,
-        )
-
-        # Act: Update entry text
-        ParameterEditorTable._update_new_value_entry_text(mock_entry, param)
-
-        # Assert: Entry is updated with value and default styling
-        mock_entry.delete.assert_called_once_with(0, tk.END)
-        mock_entry.insert.assert_called_once_with(0, "1.5")
-        mock_entry.configure.assert_called_once_with(style="default_v.TEntry")
-
-    def test_update_new_value_entry_text_combobox(self, parameter_editor_table: ParameterEditorTable) -> None:  # pylint: disable=unused-argument
-        """
-        User interface skips updating combobox widget text during entry text updates.
-
-        GIVEN: A combobox widget is used for parameter value input
-        WHEN: The entry text update method is called
-        THEN: The combobox is not modified as it handles its own updates
-        """
-        # Arrange: Create mock combobox and parameter
-        mock_combobox = MagicMock(spec=PairTupleCombobox)
-        param = create_mock_data_model_ardupilot_parameter(value=1.5)
-
-        # Act: Attempt to update combobox text
-        ParameterEditorTable._update_new_value_entry_text(mock_combobox, param)
-
-        # Assert: Combobox methods are not called
-        mock_combobox.delete.assert_not_called()
-        mock_combobox.insert.assert_not_called()
-
-    def test_update_combobox_style_on_selection_valid(self, parameter_editor_table: ParameterEditorTable) -> None:
-        """
-        User interface updates combobox styling when valid value matches default.
-
-        GIVEN: A user selects a value in a combobox that matches the parameter's default
-        WHEN: The combobox style is updated based on the selection
-        THEN: The combobox uses default styling and triggers configuration updates
-        """
-        # Arrange: Set up mock combobox and related widgets
-        mock_combobox = MagicMock(spec=PairTupleCombobox)
-        mock_combobox.get_selected_key.return_value = "1.5"
-        mock_event = MagicMock()
-        mock_event.width = 9
-        mock_change_reason_widget = MagicMock(spec=ttk.Entry)
-        mock_value_is_different_widget = MagicMock(spec=ttk.Label)
-
-        # Create parameter where selected value matches default
-        param = ArduPilotParameter(
-            name="TEST_PARAM",
-            par_obj=Par(1.0, "test comment"),  # Initial value is different
-            metadata={},
-            default_par=Par(1.5, "default comment"),  # Default value matches what will be selected
-            fc_value=None,
-        )
-
-        # Mock filesystem for set_new_value
-        parameter_editor_table.configuration_manager.filesystem.file_parameters = {
-            "test_file": ParDict({"TEST_PARAM": Par(1.0, "test")})
-        }
-        parameter_editor_table.configuration_manager.current_file = "test_file"
-
-        # Act: Update combobox style with mocked tooltip
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"):
-            parameter_editor_table._update_combobox_style_on_selection(
-                mock_combobox, param, mock_event, mock_change_reason_widget, mock_value_is_different_widget
-            )
-
-        # Assert: Combobox uses default styling and triggers updates
-        mock_combobox.configure.assert_called_once_with(style="default_v.TCombobox")
-        mock_combobox.on_combo_configure.assert_called_once_with(mock_event)
 
 
 class TestBitmaskFunctionalityBehavior:
@@ -1853,3 +1618,535 @@ class TestUserParameterEditingWorkflows:
         # Assert: Tooltip information is available and UI element is created
         assert name_label is not None
         assert param._metadata.get("doc_tooltip") == "This parameter controls motor speed"
+
+
+class TestUIErrorInfoHandling:
+    """Test UI error and info message handling in repopulate method."""
+
+    def test_repopulate_displays_ui_errors_and_infos(self, parameter_editor_table) -> None:
+        """
+        User sees UI error and info messages when repopulating the parameter table.
+
+        GIVEN: A parameter editor table with UI errors and infos from configuration manager
+        WHEN: The table is repopulated
+        THEN: Error messages are displayed using messagebox.showerror
+        AND: Info messages are displayed using messagebox.showinfo
+        """
+        # Arrange: Set up mock to return UI errors and infos
+        ui_errors = [("Error Title", "Error message"), ("Another Error", "Another message")]
+        ui_infos = [("Info Title", "Info message"), ("Another Info", "Another message")]
+
+        parameter_editor_table.configuration_manager.repopulate_configuration_step_parameters.return_value = (
+            ui_errors,
+            ui_infos,
+        )
+        parameter_editor_table.configuration_manager.current_step_parameters = {}
+        parameter_editor_table.parameter_editor.gui_complexity = "simple"
+
+        with patch("tkinter.messagebox.showerror") as mock_showerror, patch("tkinter.messagebox.showinfo") as mock_showinfo:
+            # Act: Repopulate the table
+            parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple", regenerate_from_disk=True)
+
+            # Assert: Error and info messages are displayed
+            assert mock_showerror.call_count == len(ui_errors)
+            assert mock_showinfo.call_count == len(ui_infos)
+
+            # Verify specific calls
+            mock_showerror.assert_any_call("Error Title", "Error message")
+            mock_showerror.assert_any_call("Another Error", "Another message")
+            mock_showinfo.assert_any_call("Info Title", "Info message")
+            mock_showinfo.assert_any_call("Another Info", "Another message")
+
+    def test_repopulate_handles_no_different_parameters_found(self, parameter_editor_table) -> None:
+        """
+        User sees appropriate message when no different parameters are found in show_only_differences mode.
+
+        GIVEN: A parameter editor table in show_only_differences mode with no different parameters
+        WHEN: The table is repopulated
+        THEN: An info message is displayed about no different parameters
+        AND: The on_skip_click method is called
+        """
+        # Arrange: Set up mock to return no different parameters
+        parameter_editor_table.configuration_manager.repopulate_configuration_step_parameters.return_value = ([], [])
+        parameter_editor_table.configuration_manager.get_different_parameters.return_value = {}
+        parameter_editor_table.configuration_manager.current_file = "test_file.param"
+        parameter_editor_table.parameter_editor.gui_complexity = "simple"
+
+        with patch("tkinter.messagebox.showinfo") as mock_showinfo:
+            # Act: Repopulate with show_only_differences=True
+            parameter_editor_table.repopulate(show_only_differences=True, gui_complexity="simple", regenerate_from_disk=True)
+
+            # Assert: Info message is displayed and on_skip_click is called
+            mock_showinfo.assert_called_once()
+            call_args = mock_showinfo.call_args[0]
+            assert "No different parameters found" in call_args[1]
+            assert "test_file.param" in call_args[1]
+
+            # Verify on_skip_click was called
+            parameter_editor_table.parameter_editor.on_skip_click.assert_called_once()
+
+    def test_update_table_handles_keyerror_with_critical_logging_and_exit(self, parameter_editor_table) -> None:
+        """
+        System handles KeyError during table update with critical logging and system exit.
+
+        GIVEN: A parameter editor table with parameters that cause KeyError during processing
+        WHEN: The table is updated
+        THEN: A critical log message is written
+        AND: The system exits with code 1
+        """
+        # Arrange: Set up parameters that will cause KeyError
+        # We'll mock the _create_column_widgets to raise KeyError
+        faulty_param = create_mock_data_model_ardupilot_parameter(name="FAULTY_PARAM", value=1.0)
+        params = {"FAULTY_PARAM": faulty_param}
+
+        parameter_editor_table._create_column_widgets = MagicMock(side_effect=KeyError("Test KeyError"))
+        parameter_editor_table._configure_table_columns = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.logging_critical") as mock_critical,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.sys_exit") as mock_exit,
+        ):
+            # Act: Update table with faulty parameters
+            parameter_editor_table._update_table(params, "simple")
+
+            # Assert: Critical logging and system exit occur
+            mock_critical.assert_called_once()
+            call_args = mock_critical.call_args[0]
+            assert "FAULTY_PARAM" in call_args[1]  # Parameter name in message
+            assert "Test KeyError" in str(call_args[3])  # Exception in 4th argument
+
+            mock_exit.assert_called_once_with(1)
+
+    def test_update_table_creates_add_button_with_tooltip(self, parameter_editor_table) -> None:
+        """
+        Table update creates an Add button with appropriate tooltip when parameters exist.
+
+        GIVEN: A parameter editor table with parameters to display
+        WHEN: The table is updated
+        THEN: An Add button is created at the bottom of the table
+        AND: The button has the correct text, style, and tooltip
+        """
+        # Arrange: Set up parameters for the table
+        param = create_mock_data_model_ardupilot_parameter(name="TEST_PARAM", value=1.0)
+        params = {"TEST_PARAM": param}
+
+        parameter_editor_table.configuration_manager.current_file = "test_file.param"
+
+        # Mock the widget creation methods to avoid actual widget creation
+        with (
+            patch.object(parameter_editor_table, "_create_column_widgets") as mock_create_widgets,
+            patch("tkinter.ttk.Button") as mock_button,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip,
+        ):
+            mock_create_widgets.return_value = [MagicMock() for _ in range(7)]  # Mock 7 column widgets
+
+            # Act: Update the table
+            parameter_editor_table._update_table(params, "simple")
+
+            # Assert: Add button was created with correct parameters
+            mock_button.assert_called_once()
+            call_args, call_kwargs = mock_button.call_args
+            assert call_args[0] == parameter_editor_table.view_port  # parent widget
+            assert call_kwargs["text"] == _("Add")
+            assert call_kwargs["style"] == "narrow.TButton"
+            assert call_kwargs["command"] == parameter_editor_table._on_parameter_add
+
+            # Assert: Tooltip was set up
+            mock_tooltip.assert_called()
+            tooltip_call_args = mock_tooltip.call_args[0]
+            assert "Add a parameter to the test_file.param file" in tooltip_call_args[1]
+
+    def test_create_flightcontroller_value_sets_correct_background_colors(self, parameter_editor_table) -> None:  # pylint: disable=too-many-statements # noqa: PLR0915
+        """
+        Flight controller value labels display with appropriate background colors based on parameter state.
+
+        GIVEN: Parameters with different FC value states
+        WHEN: Flight controller value labels are created
+        THEN: Correct background colors are applied for each state
+        """
+        # Create mock parameters with the necessary attributes
+        param_default = MagicMock()
+        param_default.has_fc_value = True
+        param_default.fc_value_equals_default_value = True
+        param_default.fc_value_as_string = "1.0"
+        param_default.tooltip_fc_value = None
+
+        param_below = MagicMock()
+        param_below.has_fc_value = True
+        param_below.fc_value_equals_default_value = False
+        param_below.fc_value_is_below_limit.return_value = True
+        param_below.fc_value_as_string = "1.0"
+        param_below.tooltip_fc_value = None
+
+        param_above = MagicMock()
+        param_above.has_fc_value = True
+        param_above.fc_value_equals_default_value = False
+        param_above.fc_value_is_below_limit.return_value = False
+        param_above.fc_value_is_above_limit.return_value = True
+        param_above.fc_value_as_string = "10.0"
+        param_above.tooltip_fc_value = None
+
+        param_unknown = MagicMock()
+        param_unknown.has_fc_value = True
+        param_unknown.fc_value_equals_default_value = False
+        param_unknown.fc_value_is_below_limit.return_value = False
+        param_unknown.fc_value_is_above_limit.return_value = False
+        param_unknown.fc_value_has_unknown_bits_set.return_value = True
+        param_unknown.fc_value_as_string = "5.0"
+        param_unknown.tooltip_fc_value = None
+
+        param_no_fc = MagicMock()
+        param_no_fc.has_fc_value = False
+
+        param_normal = MagicMock()
+        param_normal.has_fc_value = True
+        param_normal.fc_value_equals_default_value = False
+        param_normal.fc_value_is_below_limit.return_value = False
+        param_normal.fc_value_is_above_limit.return_value = False
+        param_normal.fc_value_has_unknown_bits_set.return_value = False
+        param_normal.fc_value_as_string = "5.0"
+        param_normal.tooltip_fc_value = None
+
+        with (
+            patch("tkinter.ttk.Label") as mock_label,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"),
+        ):
+            # Act: Create labels for each parameter type
+            parameter_editor_table._create_flightcontroller_value(param_default)
+            parameter_editor_table._create_flightcontroller_value(param_below)
+            parameter_editor_table._create_flightcontroller_value(param_above)
+            parameter_editor_table._create_flightcontroller_value(param_unknown)
+            parameter_editor_table._create_flightcontroller_value(param_no_fc)
+            parameter_editor_table._create_flightcontroller_value(param_normal)
+
+            # Assert: Correct background colors were set
+            calls = mock_label.call_args_list
+            assert len(calls) == 6
+
+            # Check each call's background parameter
+            # Default value -> light blue
+            assert calls[0][1]["background"] == "light blue"
+            # Below limit -> orangered
+            assert calls[1][1]["background"] == "orangered"
+            # Above limit -> red3
+            assert calls[2][1]["background"] == "red3"
+            # Unknown bits -> red3
+            assert calls[3][1]["background"] == "red3"
+            # No FC value -> orange
+            assert calls[4][1]["background"] == "orange"
+            # Normal value -> no background specified (uses default)
+
+    def test_update_combobox_style_on_selection_handles_exceptions(self, parameter_editor_table) -> None:
+        """
+        Combobox selection handles different types of exceptions appropriately.
+
+        GIVEN: Parameters that raise different exceptions during set_new_value
+        WHEN: User selects values that cause exceptions
+        THEN: Appropriate handling occurs for each exception type
+        """
+        # Create mock widgets
+        combobox_widget = MagicMock()
+        combobox_widget.get_selected_key.return_value = "test_value"
+        combobox_widget.configure = MagicMock()
+        combobox_widget.on_combo_configure = MagicMock()
+
+        change_reason_widget = MagicMock()
+        value_is_different = MagicMock()
+        value_is_different.config = MagicMock()
+
+        event = MagicMock()
+        event.width = 0
+
+        # Test ParameterUnchangedError (no error shown, just style update)
+        param_unchanged = MagicMock()
+        param_unchanged.set_new_value.side_effect = ParameterUnchangedError("No change")
+        param_unchanged.new_value_equals_default_value = False
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.logging_exception") as mock_logging,
+            patch("tkinter.messagebox.showerror") as mock_error,
+        ):
+            parameter_editor_table._update_combobox_style_on_selection(
+                combobox_widget, param_unchanged, event, change_reason_widget, value_is_different
+            )
+
+            # Should not log or show error for unchanged parameter
+            mock_logging.assert_not_called()
+            mock_error.assert_not_called()
+            combobox_widget.configure.assert_called_with(style="readonly.TCombobox")
+
+        # Reset mocks
+        combobox_widget.reset_mock()
+        event.width = 0
+
+        # Test ValueError (shows error dialog)
+        param_error = MagicMock()
+        param_error.set_new_value.side_effect = ValueError("Invalid value")
+        param_error.new_value_equals_default_value = False
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.logging_exception") as mock_logging,
+            patch("tkinter.messagebox.showerror") as mock_error,
+        ):
+            parameter_editor_table._update_combobox_style_on_selection(
+                combobox_widget, param_error, event, change_reason_widget, value_is_different
+            )
+
+            # Should log and show error for invalid value
+            mock_logging.assert_called_once()
+            mock_error.assert_called_once_with(_("Invalid value"), "Invalid value")
+            combobox_widget.configure.assert_called_with(style="readonly.TCombobox")
+
+    def test_update_new_value_entry_text_sets_correct_styles(self, parameter_editor_table) -> None:
+        """
+        Entry widget styles are set correctly based on parameter validation state.
+
+        GIVEN: Parameters with different validation states
+        WHEN: Entry text is updated
+        THEN: Correct styles are applied for each state
+        """
+        # Create mock entry widget
+        mock_entry = MagicMock()
+
+        # Test default value style
+        param_default = MagicMock()
+        param_default.value_as_string = "1.0"
+        param_default.new_value_equals_default_value = True
+        param_default.is_below_limit.return_value = False
+        param_default.is_above_limit.return_value = False
+        param_default.has_unknown_bits_set.return_value = False
+
+        parameter_editor_table._update_new_value_entry_text(mock_entry, param_default)
+        mock_entry.configure.assert_called_with(style="default_v.TEntry")
+
+        # Reset mock
+        mock_entry.reset_mock()
+
+        # Test below limit style
+        param_below = MagicMock()
+        param_below.value_as_string = "0.5"
+        param_below.new_value_equals_default_value = False
+        param_below.is_below_limit.return_value = True
+        param_below.is_above_limit.return_value = False
+        param_below.has_unknown_bits_set.return_value = False
+
+        parameter_editor_table._update_new_value_entry_text(mock_entry, param_below)
+        mock_entry.configure.assert_called_with(style="below_limit.TEntry")
+
+        # Reset mock
+        mock_entry.reset_mock()
+
+        # Test above limit style
+        param_above = MagicMock()
+        param_above.value_as_string = "10.0"
+        param_above.new_value_equals_default_value = False
+        param_above.is_below_limit.return_value = False
+        param_above.is_above_limit.return_value = True
+        param_above.has_unknown_bits_set.return_value = False
+
+        parameter_editor_table._update_new_value_entry_text(mock_entry, param_above)
+        mock_entry.configure.assert_called_with(style="above_limit.TEntry")
+
+        # Reset mock
+        mock_entry.reset_mock()
+
+        # Test unknown bits style
+        param_unknown = MagicMock()
+        param_unknown.value_as_string = "5.0"
+        param_unknown.new_value_equals_default_value = False
+        param_unknown.is_below_limit.return_value = False
+        param_unknown.is_above_limit.return_value = False
+        param_unknown.has_unknown_bits_set.return_value = True
+
+        parameter_editor_table._update_new_value_entry_text(mock_entry, param_unknown)
+        mock_entry.configure.assert_called_with(style="above_limit.TEntry")
+
+        # Reset mock
+        mock_entry.reset_mock()
+
+        # Test normal style
+        param_normal = MagicMock()
+        param_normal.value_as_string = "5.0"
+        param_normal.new_value_equals_default_value = False
+        param_normal.is_below_limit.return_value = False
+        param_normal.is_above_limit.return_value = False
+        param_normal.has_unknown_bits_set.return_value = False
+
+        parameter_editor_table._update_new_value_entry_text(mock_entry, param_normal)
+        mock_entry.configure.assert_called_with(style="TEntry")
+
+    def test_create_new_value_entry_creates_combobox_for_multiple_choice(self, parameter_editor_table) -> None:
+        """
+        Multiple choice parameters create combobox widgets with proper configuration.
+
+        GIVEN: A parameter with multiple choice values
+        WHEN: Creating the new value entry widget
+        THEN: A PairTupleCombobox is created with correct configuration
+        AND: Event bindings and mouse wheel handling are set up
+        """
+        # Create mock parameter with multiple choices
+        param = MagicMock()
+        param.is_multiple_choice = True
+        param.choices_dict = {"Option1": "1", "Option2": "2", "Option3": "3"}
+        param.get_selected_value_from_dict.return_value = "Option2"
+        param.value_as_string = "Option2"  # This should be the key, not the value
+        param.name = "TEST_PARAM"
+        param.is_editable = True
+        param.new_value_equals_default_value = False
+
+        # Create mock widgets for change_reason and value_is_different
+        change_reason_widget = MagicMock()
+        value_is_different = MagicMock()
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.PairTupleCombobox"
+            ) as mock_combobox,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.get_widget_font_family_and_size"
+            ) as mock_font,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.platform_system") as mock_platform,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.setup_combobox_mousewheel_handling"
+            ) as mock_mousewheel,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"),
+        ):
+            mock_font.return_value = ("Arial", 10)
+            mock_platform.return_value = "Linux"
+            mock_instance = MagicMock()
+            mock_combobox.return_value = mock_instance
+
+            # Act: Create the entry widget
+            result = parameter_editor_table._create_new_value_entry(param, change_reason_widget, value_is_different)
+
+            # Assert: PairTupleCombobox was created with correct parameters
+            mock_combobox.assert_called_once()
+            call_args = mock_combobox.call_args
+            assert call_args[0][0] == parameter_editor_table.view_port  # parent
+            assert call_args[0][1] == list(param.choices_dict.items())  # choices
+            assert call_args[0][2] == param.value_as_string  # current value
+            assert call_args[0][3] == param.name  # parameter name
+            assert call_args[1]["style"] == "readonly.TCombobox"  # style for editable, non-default
+
+            # Assert: Selected value was set
+            mock_instance.set.assert_called_once_with("Option2")
+
+            # Assert: Font and config were set
+            mock_font.assert_called_once_with(mock_instance)
+            mock_instance.config.assert_called_once_with(
+                state="readonly",
+                width=NEW_VALUE_WIDGET_WIDTH,
+                font=("Arial", 11),  # 10 + 1 for Linux
+            )
+
+            # Assert: Event binding was set up for combobox selection
+            bind_calls = mock_instance.bind.call_args_list
+            combobox_selected_calls = [call for call in bind_calls if call[0][0] == "<<ComboboxSelected>>"]
+            assert len(combobox_selected_calls) == 1
+            assert combobox_selected_calls[0][0][0] == "<<ComboboxSelected>>"
+
+            # Assert: Mouse wheel handling was set up
+            mock_mousewheel.assert_called_once_with(mock_instance)
+
+            # Assert: Correct widget was returned
+            assert result == mock_instance
+
+    def test_create_new_value_entry_shows_error_for_non_editable_parameters(self, parameter_editor_table) -> None:
+        """
+        Non-editable parameters show appropriate error messages when clicked.
+
+        GIVEN: A non-editable parameter (forced or derived)
+        WHEN: Creating the new value entry widget
+        THEN: The widget is disabled and clicking shows error messages
+        """
+        # Test forced parameter
+        forced_param = MagicMock()
+        forced_param.is_multiple_choice = False
+        forced_param.is_editable = False
+        forced_param.is_forced = True
+        forced_param.is_derived = False
+        forced_param.value_as_string = "1.0"
+
+        # Test derived parameter
+        derived_param = MagicMock()
+        derived_param.is_multiple_choice = False
+        derived_param.is_editable = False
+        derived_param.is_forced = False
+        derived_param.is_derived = True
+        derived_param.value_as_string = "2.0"
+
+        # Create mock widgets
+        change_reason_widget = MagicMock()
+        value_is_different = MagicMock()
+
+        with (
+            patch("tkinter.ttk.Entry") as mock_entry,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"),
+            patch("tkinter.messagebox.showerror") as mock_error,
+        ):
+            mock_entry_instance = MagicMock()
+            mock_entry.return_value = mock_entry_instance
+
+            # Test forced parameter
+            forced_entry = parameter_editor_table._create_new_value_entry(
+                forced_param, change_reason_widget, value_is_different
+            )
+
+            # Should be configured as disabled
+            mock_entry_instance.config.assert_called_with(state="disabled", background="light grey")
+
+            # Should have button bindings for error display
+            button1_calls = [call for call in mock_entry_instance.bind.call_args_list if call[0][0] == "<Button-1>"]
+            button3_calls = [call for call in mock_entry_instance.bind.call_args_list if call[0][0] == "<Button-3>"]
+            assert len(button1_calls) == 1
+            assert len(button3_calls) == 1
+
+            # Simulate click event
+            mock_event = MagicMock()
+            mock_event.widget = forced_entry
+
+            # Call the bound function
+            button1_calls[0][0][1](mock_event)
+
+            # Should show forced parameter error
+            mock_error.assert_called_with(_("Forced Parameter"), mock_error.call_args[0][1])
+            assert "correct value" in mock_error.call_args[0][1]
+
+        # Reset mocks
+        mock_error.reset_mock()
+        mock_entry.reset_mock()
+
+        with (
+            patch("tkinter.ttk.Entry") as mock_entry,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"),
+            patch("tkinter.messagebox.showerror") as mock_error,
+        ):
+            mock_entry_instance = MagicMock()
+            mock_entry.return_value = mock_entry_instance
+
+            # Test derived parameter
+            derived_entry = parameter_editor_table._create_new_value_entry(
+                derived_param, change_reason_widget, value_is_different
+            )
+
+            # Should be configured as disabled
+            mock_entry_instance.config.assert_called_with(state="disabled", background="light grey")
+
+            # Should have button bindings for error display
+            button1_calls = [call for call in mock_entry_instance.bind.call_args_list if call[0][0] == "<Button-1>"]
+            button3_calls = [call for call in mock_entry_instance.bind.call_args_list if call[0][0] == "<Button-3>"]
+            assert len(button1_calls) == 1
+            assert len(button3_calls) == 1
+
+            # Simulate click event
+            mock_event = MagicMock()
+            mock_event.widget = derived_entry
+
+            # Call the bound function
+            button1_calls[0][0][1](mock_event)
+
+            # Should show derived parameter error
+            mock_error.assert_called_with(_("Derived Parameter"), mock_error.call_args[0][1])
+            assert "derived from information" in mock_error.call_args[0][1]
