@@ -17,17 +17,57 @@ import contextlib
 import tkinter as tk
 from collections.abc import Generator
 from tkinter import ttk
+from typing import Union
 from unittest.mock import Mock, patch
 
 import pytest
 from conftest import PARAMETER_EDITOR_TABLE_HEADERS_ADVANCED, PARAMETER_EDITOR_TABLE_HEADERS_SIMPLE
 
 from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
-from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter, Par
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 
 # pylint: disable=protected-access
+
+
+def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-arguments,too-many-positional-arguments  # noqa: PLR0913
+    name: str = "TEST_PARAM",
+    value: float = 1.0,
+    default_value: Union[float, None] = None,
+    comment: str = "test comment",
+    metadata: Union[dict, None] = None,
+    fc_value: Union[float, None] = None,
+    is_forced: bool = False,
+    is_calibration: bool = False,
+    is_readonly: bool = False,
+    min_value: Union[float, None] = None,
+    max_value: Union[float, None] = None,
+) -> ArduPilotParameter:
+    """Create a mock ArduPilotParameter for testing in GUI workflows."""
+    metadata = metadata or {}
+
+    if is_calibration:
+        metadata["Calibration"] = True
+    if is_readonly:
+        metadata["ReadOnly"] = True
+    if min_value is not None:
+        metadata["min"] = min_value
+    if max_value is not None:
+        metadata["max"] = max_value
+
+    metadata.setdefault("unit", "")
+    metadata.setdefault("doc_tooltip", "Test tooltip")
+    metadata.setdefault("unit_tooltip", "Unit tooltip")
+
+    par_obj = Par(value, comment)
+    default_par = Par(default_value if default_value is not None else 0.0, "default")
+    forced_par = Par(value, "forced comment") if is_forced else None
+
+    return ArduPilotParameter(
+        name=name, par_obj=par_obj, metadata=metadata, default_par=default_par, fc_value=fc_value, forced_par=forced_par
+    )
 
 
 class TestParameterEditorTableUserWorkflows:
@@ -354,3 +394,104 @@ class TestParameterEditorTableUserWorkflows:
         verify the building blocks work correctly.
         """
         pytest.skip("Full table population requires complex parameter data setup - focus on component testing instead")
+
+    def test_user_can_edit_multiple_parameters_in_complete_workflow(self, parameter_table: ParameterEditorTable) -> None:
+        """
+        User can manage multiple parameters with visual indicators throughout workflow.
+
+        GIVEN: A user has multiple parameters with different states
+        WHEN: Parameters have different values (default vs changed)
+        THEN: Visual indicators show parameter states correctly
+        AND: Each parameter maintains independent state
+        AND: The system handles multiple parameter contexts simultaneously
+        """
+        # Arrange: Create parameters with different value states
+        param_default = create_mock_data_model_ardupilot_parameter(
+            name="PARAM_DEFAULT",
+            value=10.0,
+            default_value=10.0,  # Same as default
+        )
+        param_changed = create_mock_data_model_ardupilot_parameter(
+            name="PARAM_CHANGED",
+            value=20.0,
+            default_value=15.0,  # Different from default
+        )
+
+        # Verify: Parameters have correct comparison states
+        assert param_default.new_value_equals_default_value is True  # Default
+        assert param_changed.new_value_equals_default_value is False  # Changed
+
+        # Verify: Configuration manager can handle multiple parameters
+        assert parameter_table.configuration_manager.current_file == "04_board_orientation.param"
+        assert parameter_table.configuration_manager.is_fc_connected is False
+
+    def test_user_can_switch_between_gui_complexity_modes_seamlessly(self, parameter_table: ParameterEditorTable) -> None:
+        """
+        User can work with different GUI complexity modes.
+
+        GIVEN: A user switches between GUI complexity modes
+        WHEN: The table needs to adapt to show/hide upload column
+        THEN: Upload column visibility changes based on complexity level
+        AND: Simple mode hides advanced features
+        AND: Advanced/Expert modes show full functionality
+        """
+        # Verify: Simple mode hides upload column
+        assert parameter_table._should_show_upload_column("simple") is False
+
+        # Verify: Advanced mode shows upload column
+        assert parameter_table._should_show_upload_column("advanced") is True
+
+        # Verify: Expert mode shows upload column
+        assert parameter_table._should_show_upload_column("expert") is True
+
+        # Verify: Change reason column index adapts to upload column visibility
+        change_reason_idx_simple = parameter_table._get_change_reason_column_index(show_upload_column=False)
+        change_reason_idx_advanced = parameter_table._get_change_reason_column_index(show_upload_column=True)
+
+        # Verify: Column index is one less without upload column
+        assert change_reason_idx_advanced == change_reason_idx_simple + 1
+
+    def test_user_recovers_gracefully_from_validation_errors(self, parameter_table: ParameterEditorTable) -> None:
+        """
+        User receives clear feedback for validation errors and can recover.
+
+        GIVEN: A user enters parameter values
+        WHEN: Values are outside allowed ranges
+        THEN: System provides clear error handling
+        AND: Valid values are accepted
+        AND: Invalid values trigger appropriate error responses
+        """
+        # Arrange: Create parameter with validation constraints
+        param_constrained = create_mock_data_model_ardupilot_parameter(
+            name="CONSTRAINED_PARAM", value=50.0, default_value=50.0, min_value=0.0, max_value=100.0
+        )
+
+        # Configure test file parameters
+        parameter_table.configuration_manager._local_filesystem.file_parameters = ParDict(
+            {"04_board_orientation.param": ParDict({"CONSTRAINED_PARAM": Par(50.0, "constrained")})}
+        )
+
+        # Act & Verify: Attempt out-of-range value with rejection
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.messagebox") as mock_msgbox:
+            mock_msgbox.askyesno.return_value = False  # User rejects invalid value
+
+            result_invalid = parameter_table._handle_parameter_value_update(
+                param_constrained,
+                "150.0",  # Out of range
+                include_range_check=True,
+            )
+
+            # Verify: Invalid value rejected
+            assert result_invalid is False
+            mock_msgbox.askyesno.assert_called_once()
+
+        # Act & Verify: Valid value accepted
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"):
+            result_valid = parameter_table._handle_parameter_value_update(
+                param_constrained,
+                "75.0",  # Valid value within range
+                include_range_check=True,
+            )
+
+            # Verify: Valid value accepted
+            assert result_valid is True

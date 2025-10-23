@@ -327,6 +327,58 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         """Create a label indicating if the new value is different from current FC value."""
         return ttk.Label(self.view_port, text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
+    def _handle_parameter_value_update(  # pylint: disable=too-many-return-statements # noqa: PLR0911
+        self, param: ArduPilotParameter, new_value: str, include_range_check: bool = True
+    ) -> bool:
+        """
+        Handle parameter value updates with consistent error handling.
+
+        This method centralizes the error handling logic for parameter value updates,
+        including user confirmation for out-of-range values.
+
+        Args:
+            param: The ArduPilotParameter to update
+            new_value: The new value to set (as string)
+            include_range_check: Whether to perform range checking and ask user for confirmation
+
+        Returns:
+            True if the value was successfully updated, False otherwise
+
+        """
+        try:
+            # Attempt to set the new value; the model will validate it
+            param.set_new_value(new_value)
+            return True
+        except ParameterUnchangedError:
+            # Valid but no change — just refresh the UI and do not mark edited
+            return False
+        except ParameterOutOfRangeError as oor:
+            # User-visible warning from model about out-of-range value
+            if not include_range_check:
+                # Caller doesn't want range checking, treat as error
+                logging_exception(_("Parameter %s out of range: %s"), param.name, oor)
+                messagebox.showerror(_("Out-of-range value"), str(oor))
+                return False
+
+            # Ask the user if they want to accept the out-of-range value
+            msg = str(oor) + _(" Use out-of-range value?")
+            if messagebox.askyesno(_("Out-of-range value"), msg, icon="warning"):
+                # Retry accepting the value while telling the model to ignore range checks
+                try:
+                    param.set_new_value(new_value, ignore_out_of_range=True)
+                    return True
+                except (ValueError, TypeError) as exc:
+                    # Even with ignore_out_of_range, the value might be invalid
+                    logging_exception(_("Could not set parameter %s to %s: %s"), param.name, new_value, exc)
+                    messagebox.showerror(_("Invalid value"), str(exc))
+                    return False
+            return False
+        except (ValueError, TypeError) as exc:
+            # Invalid input according to model
+            logging_exception(_("Invalid value for %s: %s"), param.name, exc)
+            messagebox.showerror(_("Invalid value"), str(exc))
+            return False
+
     def _update_combobox_style_on_selection(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         combobox_widget: PairTupleCombobox,
@@ -337,17 +389,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     ) -> None:
         """Update the combobox style based on selection."""
         new_value_str = combobox_widget.get_selected_key() or ""
-        try:
-            # Pass the string to the domain model; it will validate and raise on error
-            param.set_new_value(new_value_str)
-        except ParameterUnchangedError:
-            # valid but no change; just refresh style
-            pass
-        except (ValueError, TypeError) as exc:  # user provided invalid input
-            msg = _("Could not apply the selected value: {new_value_str}").format(new_value_str=new_value_str)
-            logging_exception(msg, exc)
-            messagebox.showerror(_("Error"), str(exc))
-        else:
+
+        # Use centralized error handling for parameter value updates
+        if self._handle_parameter_value_update(param, new_value_str, include_range_check=False):
             # Success: mark edited and sync the ArduPilotParameter back to filesystem
             show_tooltip(change_reason_widget, param.tooltip_change_reason)
             value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
@@ -465,26 +509,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if hasattr(event, "type") and event.type == tk.EventType.KeyPress:  # KeyPress event (Return/Enter)
                 self._last_return_values[event.widget] = new_value
 
-            valid = True
-
-            try:
-                # first attempt: let the model validate the provided string
-                # (it will convert/validate as required)
-                param.set_new_value(new_value)
-            except ParameterOutOfRangeError as oor:  # user-visible warning from model
-                # Ask the user if they want to accept the out-of-range value
-                if messagebox.askyesno(_("Out-of-range value"), str(oor) + _(" Use out-of-range value?"), icon="warning"):
-                    # Retry accepting the value while telling the model to ignore range checks
-                    param.set_new_value(new_value, ignore_out_of_range=True)
-                else:
-                    valid = False
-            except ParameterUnchangedError:
-                # Valid but no change — just refresh the UI and do not mark edited
-                valid = False
-            except (ValueError, TypeError) as exc:  # invalid input according to model
-                logging_exception(_("Invalid value for %s: %s"), param.name, exc)
-                messagebox.showerror(_("Invalid value"), str(exc))
-                valid = False
+            # Use centralized error handling for parameter value updates
+            valid = self._handle_parameter_value_update(param, new_value, include_range_check=True)
 
             if valid:
                 logging_debug(_("Parameter %s changed, will later ask if change(s) should be saved to file."), param.name)
@@ -538,24 +564,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 )
                 return
 
-            valid = True
-            # Update the parameter value and entry text
-            try:
-                param.set_new_value(BitmaskHelper.get_value_from_keys(checked_keys))
-            except ParameterOutOfRangeError as oor:  # user-visible warning from model
-                # Ask the user if they want to accept the out-of-range value
-                if messagebox.askyesno(_("Unknown bit set"), str(oor) + _(" Use out-of-range value?"), icon="warning"):
-                    # Retry accepting the value while telling the model to ignore range checks
-                    param.set_new_value(BitmaskHelper.get_value_from_keys(checked_keys), ignore_out_of_range=True)
-                else:
-                    valid = False
-            except ParameterUnchangedError:
-                # Valid but no change — just refresh the UI and do not mark edited
-                valid = False
-            except (ValueError, TypeError) as exc:  # invalid input according to model
-                logging_exception(_("Could not set bitmask value for %s: %s"), param.name, exc)
-                messagebox.showerror(_("Error"), str(exc))
-                valid = False
+            # Use centralized error handling for parameter value updates
+            bitmask_value = BitmaskHelper.get_value_from_keys(checked_keys)
+            valid = self._handle_parameter_value_update(param, str(bitmask_value), include_range_check=True)
 
             if valid:
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
