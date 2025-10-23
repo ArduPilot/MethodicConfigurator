@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import tkinter as tk
 from unittest.mock import Mock, patch
 
 import pytest
@@ -907,15 +908,15 @@ class TestFlightControllerParameterWorkflow:
             for name in expected_defaults:
                 assert name in result
 
-    def test_user_receives_none_when_no_parameters_downloaded(
+    def test_user_receives_empty_parameter_defaults_when_no_parameters_downloaded(
         self, mock_tkinter_context, configured_flight_controller: Mock
     ) -> None:
         """
-        User receives None when no parameters have been downloaded.
+        User receives empty parameter defaults when no parameters have been downloaded.
 
         GIVEN: A window that has not completed parameter download
         WHEN: The user requests parameter default values
-        THEN: The method should return None
+        THEN: An empty but valid parameter dictionary is returned
         AND: No errors should occur
         """
         # Given
@@ -935,61 +936,6 @@ class TestFlightControllerParameterWorkflow:
             assert result is not None
             assert isinstance(result, ParDict)
             assert len(result) == 0
-
-    def test_user_sees_accurate_progress_tracking_during_parameter_download(
-        self, mock_tkinter_context, configured_flight_controller: Mock
-    ) -> None:
-        """
-        User sees accurate progress tracking during parameter download.
-
-        GIVEN: A flight controller with a known number of parameters
-        WHEN: The user starts parameter download
-        THEN: Progress should start at 0%
-        AND: Progress should increment accurately with each parameter
-        AND: Progress should reach 100% upon completion
-        """
-        # Given
-        stack, patches = mock_tkinter_context()
-        total_parameters = 10
-        progress_history = []
-
-        def mock_tracked_download(callback) -> ParDict:
-            for current in range(1, total_parameters + 1):
-                if callback:
-                    callback(current, total_parameters)
-                    progress_history.append((current, total_parameters))
-            # Return a ParDict with test parameters
-            result = ParDict()
-            for i in range(total_parameters):
-                result[f"PARAM_{i}"] = Par(float(i), f"Test param {i}")
-            return result
-
-        with stack:
-            for patch_obj in patches:
-                stack.enter_context(patch_obj)
-
-            window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-            window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
-            window.presenter.download_parameters = Mock(side_effect=mock_tracked_download)
-            window.root = Mock()
-            window.progress_bar = Mock()
-            window.progress_label = Mock()
-            window.progress_frame = Mock()
-
-            # Mock the update_progress_bar method to track calls
-            progress_calls = []
-            window.update_progress_bar = Mock(side_effect=lambda c, m: progress_calls.append((c, m)))
-
-            # When
-            window._download_flight_controller_parameters()
-
-            # Then - The download method was called
-            window.presenter.download_parameters.assert_called_once()
-
-            # And progress tracking would be accurate if callback was used
-            # (This tests the structure is in place for progress reporting)
-            assert hasattr(window, "update_progress_bar")
-            assert callable(window.update_progress_bar)
 
 
 class TestFlightControllerErrorHandling:
@@ -1075,3 +1021,205 @@ class TestFlightControllerErrorHandling:
 
                 # And no information rows are created for empty info
                 assert mock_entry.call_count == 0
+
+
+class TestFlightControllerInfoWindowInitialization:  # pylint: disable=too-few-public-methods
+    """Test window initialization and setup behavior in BDD style."""
+
+    def test_user_experiences_proper_window_initialization_and_setup(
+        self, mock_tkinter_context, configured_flight_controller: Mock
+    ) -> None:
+        """
+        Test that users experience proper window initialization and setup.
+
+        GIVEN: A flight controller is available and UI environment is ready
+        WHEN: A user creates a FlightControllerInfoWindow
+        THEN: The window is properly initialized with correct title, geometry, and components
+        AND: Flight controller information is logged
+        AND: Parameter download is scheduled
+        """
+        # Given
+        stack, patches = mock_tkinter_context()
+
+        with stack:
+            # Start all patches for UI isolation
+            for patch_obj in patches:
+                stack.enter_context(patch_obj)
+
+            mock_root = Mock()
+            mock_mainloop = Mock()
+
+            with (
+                patch("tkinter.ttk.Frame"),
+                patch("tkinter.ttk.Progressbar"),
+                patch("tkinter.ttk.Label"),
+                patch.object(FlightControllerInfoWindow, "_create_info_display") as mock_create_display,
+                patch.object(FlightControllerInfoWindow, "_download_flight_controller_parameters") as mock_download,
+                patch("tkinter.Tk", return_value=mock_root) as mock_tk,
+                patch.object(mock_root, "mainloop", mock_mainloop),
+                patch.object(mock_root, "after") as mock_after,
+            ):
+                # When
+                window = FlightControllerInfoWindow(configured_flight_controller)
+
+                # Then - Window is properly initialized
+                mock_tk.assert_called_once()
+                assert window.root == mock_root
+                assert isinstance(window.presenter, FlightControllerInfoPresenter)
+                assert window.presenter.flight_controller == configured_flight_controller
+
+                # And window properties are set correctly
+                mock_root.title.assert_called_once()
+                mock_root.geometry.assert_called_once_with("500x420")
+
+                # And UI components are created
+                mock_create_display.assert_called_once()
+
+                # And flight controller info is logged
+                configured_flight_controller.info.log_flight_controller_info.assert_called_once()
+
+                # And parameter download is scheduled
+                mock_after.assert_called_once_with(50, mock_download)
+
+                # And mainloop is called to start the UI
+                mock_mainloop.assert_called_once()
+
+
+class TestFlightControllerInfoProgressBarErrorHandling:
+    """Test progress bar error handling in BDD style."""
+
+    def test_user_sees_graceful_handling_when_progress_bar_widgets_are_destroyed(
+        self, mock_tkinter_context, configured_flight_controller: Mock
+    ) -> None:
+        """
+        Test that users see graceful handling when progress bar widgets are destroyed.
+
+        GIVEN: A flight controller info window with progress bar widgets that get destroyed
+        WHEN: The system attempts to update progress
+        THEN: The update is safely skipped without errors
+        """
+        # Given
+        stack, patches = mock_tkinter_context()
+
+        with stack:
+            # Start all patches for UI isolation
+            for patch_obj in patches:
+                stack.enter_context(patch_obj)
+
+            with (
+                patch("tkinter.ttk.Frame"),
+                patch("tkinter.ttk.Progressbar"),
+                patch("tkinter.ttk.Label"),
+                patch.object(FlightControllerInfoWindow, "_create_info_display"),
+                patch.object(FlightControllerInfoWindow, "_download_flight_controller_parameters"),
+                patch("tkinter.Tk.mainloop"),
+            ):
+                window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+
+                # Simulate progress bar widget being destroyed
+                window.progress_bar = None
+
+                # When
+                window.update_progress_bar(5, 10)
+
+                # Then - No errors occur, method returns early safely
+
+    def test_user_sees_graceful_handling_when_window_lift_fails_due_to_tcl_error(
+        self, mock_tkinter_context, configured_flight_controller: Mock
+    ) -> None:
+        """
+        Test that users see graceful handling when window lift fails due to TclError.
+
+        GIVEN: A flight controller info window where tkinter operations may fail
+        WHEN: The system attempts to update progress but window lift fails
+        THEN: The error is logged and progress update continues safely
+        """
+        # Given
+        stack, patches = mock_tkinter_context()
+
+        with stack:
+            # Start all patches for UI isolation
+            for patch_obj in patches:
+                stack.enter_context(patch_obj)
+
+            with (
+                patch("tkinter.ttk.Frame"),
+                patch("tkinter.ttk.Progressbar"),
+                patch("tkinter.ttk.Label"),
+                patch.object(FlightControllerInfoWindow, "_create_info_display"),
+                patch.object(FlightControllerInfoWindow, "_download_flight_controller_parameters"),
+                patch("tkinter.Tk.mainloop"),
+            ):
+                window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+
+                # Set up mock widgets
+                mock_progress_bar = Mock()
+                mock_progress_bar.__setitem__ = Mock()
+                mock_progress_label = Mock()
+                mock_root = Mock()
+                mock_root.lift.side_effect = tk.TclError("window not found")
+
+                window.progress_bar = mock_progress_bar
+                window.progress_label = mock_progress_label
+                window.root = mock_root
+                window.progress_frame = Mock()
+
+                # When
+                with patch("logging.error") as mock_log_error:
+                    window.update_progress_bar(5, 10)
+
+                # Then - Error is logged
+                mock_log_error.assert_called_once()
+                assert "Lifting window:" in mock_log_error.call_args[0][0]
+
+                # And progress update does NOT continue due to the return statement in the except block
+                mock_progress_bar.__setitem__.assert_not_called()
+
+    def test_user_sees_progress_bar_hidden_when_download_completes(
+        self, mock_tkinter_context, configured_flight_controller: Mock
+    ) -> None:
+        """
+        Test that users see progress bar hidden when download completes.
+
+        GIVEN: A flight controller info window with active progress tracking
+        WHEN: The parameter download completes (current == max)
+        THEN: The progress bar is automatically hidden
+        """
+        # Given
+        stack, patches = mock_tkinter_context()
+
+        with stack:
+            # Start all patches for UI isolation
+            for patch_obj in patches:
+                stack.enter_context(patch_obj)
+
+            with (
+                patch("tkinter.ttk.Frame"),
+                patch("tkinter.ttk.Progressbar"),
+                patch("tkinter.ttk.Label"),
+                patch.object(FlightControllerInfoWindow, "_create_info_display"),
+                patch.object(FlightControllerInfoWindow, "_download_flight_controller_parameters"),
+                patch("tkinter.Tk.mainloop"),
+            ):
+                window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+
+                # Set up mock widgets
+                mock_progress_bar = Mock()
+                mock_progress_bar.__setitem__ = Mock()
+                mock_progress_label = Mock()
+                mock_progress_frame = Mock()
+                mock_root = Mock()
+
+                window.progress_bar = mock_progress_bar
+                window.progress_label = mock_progress_label
+                window.progress_frame = mock_progress_frame
+                window.root = mock_root
+
+                # When - Download completes
+                window.update_progress_bar(10, 10)
+
+                # Then - Progress bar is hidden
+                mock_progress_frame.pack_forget.assert_called_once()

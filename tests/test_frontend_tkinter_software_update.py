@@ -344,11 +344,11 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
 
         # Test empty status
         dialog.update_progress(50, "")
-        dialog.status_label.__setitem__.assert_not_called()  # pylint: disable=no-member
+        dialog.status_label.__setitem__.assert_not_called()
 
         # Test with status message
         dialog.update_progress(75, "Processing...")
-        dialog.status_label.__setitem__.assert_called_with("text", "Processing...")  # pylint: disable=no-member
+        dialog.status_label.__setitem__.assert_called_with("text", "Processing...")
 
     def test_progress_value_bounds(self) -> None:
         """Test progress bar value bounds."""
@@ -357,15 +357,15 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
 
         # Test minimum value
         dialog.update_progress(0)
-        dialog.progress.__setitem__.assert_called_with("value", 0)  # pylint: disable=no-member
+        dialog.progress.__setitem__.assert_called_with("value", 0)
 
         # Test maximum value
         dialog.update_progress(100)
-        dialog.progress.__setitem__.assert_called_with("value", 100)  # pylint: disable=no-member
+        dialog.progress.__setitem__.assert_called_with("value", 100)
 
         # Test value between bounds
         dialog.update_progress(50)
-        dialog.progress.__setitem__.assert_called_with("value", 50)  # pylint: disable=no-member
+        dialog.progress.__setitem__.assert_called_with("value", 50)
 
     def test_version_info_display(self) -> None:
         """Test version info display in dialog."""
