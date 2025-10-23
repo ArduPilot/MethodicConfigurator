@@ -16,15 +16,15 @@ import os
 import tkinter as tk
 from collections.abc import Callable, Generator
 from typing import Any, NamedTuple, Optional
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-import pyautogui
 import pytest
 from test_data_model_vehicle_components_common import SAMPLE_DOC_DICT, ComponentDataModelFixtures
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 
 # ==================== SHARED TKINTER TESTING CONFIGURATION ====================
@@ -181,6 +181,9 @@ PARAMETER_EDITOR_TABLE_HEADERS_ADVANCED = (
 @pytest.fixture
 def gui_test_environment() -> None:
     """Set up GUI test environment with screen validation."""
+    # Only import pyautogui within the fixture to avoid slowing down non-GUI tests
+    import pyautogui  # pylint: disable=import-outside-toplevel # noqa: PLC0415
+
     # Verify screen environment is available
     screen_width, screen_height = pyautogui.size()
     assert screen_width > 0
@@ -239,3 +242,111 @@ def test_config_manager(tmp_path) -> ConfigurationManager:
 
     # Create ConfigurationManager
     return ConfigurationManager("04_board_orientation.param", fc, filesystem)
+
+
+# ==================== CONFIGURATION MANAGER TEST FIXTURES ====================
+
+
+@pytest.fixture
+def mock_flight_controller() -> MagicMock:
+    """Fixture providing a mock flight controller with realistic test data."""
+    mock_fc = MagicMock()
+    mock_fc.fc_parameters = {"PARAM1": 1.0, "PARAM2": 3.0}
+    mock_fc.master = MagicMock()  # Mock the master connection
+    mock_fc.download_params = MagicMock(return_value=({"PARAM1": 1.0, "PARAM2": 3.0}, {}))
+    mock_fc.upload_file = MagicMock(return_value=True)
+    return mock_fc
+
+
+@pytest.fixture
+def mock_local_filesystem() -> MagicMock:
+    """Fixture providing a mock local filesystem with realistic test data."""
+    mock_fs = MagicMock()
+    mock_fs.file_parameters = {"test_file.param": {"PARAM1": Par(1.0), "PARAM2": Par(3.0)}}
+    mock_fs.param_default_dict = ParDict()
+    mock_fs.doc_dict = SAMPLE_DOC_DICT  # Use sample doc dict for documentation availability
+    mock_fs.forced_parameters = {}
+    mock_fs.derived_parameters = {}
+    mock_fs.export_to_param = MagicMock()
+    mock_fs.vehicle_dir = "/mock/vehicle/dir"
+    mock_fs.configuration_phases = {"Phase 1": {}, "Phase 2": {}, "Phase 3": {}}
+    mock_fs.write_last_uploaded_filename = MagicMock()
+
+    # Mock get_parameter_file_list to return expected files
+    mock_fs.get_parameter_file_list.return_value = ["01_setup.param", "02_config.param", "complete.param"]
+
+    # Mock get_documentation_text_and_url method with realistic return values
+    mock_fs.get_documentation_text_and_url.side_effect = mock_get_documentation_text_and_url_basic
+    return mock_fs
+
+
+@pytest.fixture
+def configuration_manager(mock_flight_controller, mock_local_filesystem) -> ConfigurationManager:  # pylint: disable=redefined-outer-name
+    """Fixture providing a properly configured ConfigurationManager for behavior testing."""
+    return ConfigurationManager("00_default.param", mock_flight_controller, mock_local_filesystem)
+
+
+# ==================== SHARED TEST UTILITIES ====================
+
+
+def mock_get_documentation_text_and_url_basic(file_name: str, _doc_type: str) -> tuple[str, str]:
+    """Mock implementation that returns realistic documentation text based on file patterns."""
+    if file_name.startswith(("01_", "02_", "1.", "10_", "123_", "99_")):
+        # Numbered files are typically mandatory (high percentage)
+        return ("80% mandatory (20% optional)", f"docs/{file_name}.html")
+    if file_name in (
+        "optional_step.param",
+        "advanced_config.param",
+        "complete.param",
+        "00_default.param",  # Default file should be optional
+        "",  # Empty filename
+        "0_invalid_number.param",
+    ):
+        # Special files are typically optional (low percentage)
+        return ("10% mandatory (90% optional)", f"docs/{file_name}.html")
+    # Default case for other files
+    return ("50% mandatory (50% optional)", f"docs/{file_name}.html")
+
+
+def assert_download_workflow_result(
+    configuration_manager,  # pylint: disable=redefined-outer-name
+    selected_file: str,
+    download_result: bool,
+    confirmation_result: bool = True,
+    expect_error_shown: bool = False,
+) -> None:
+    """
+    Helper function to test download workflow results.
+
+    Args:
+        configuration_manager: The configuration manager instance
+        selected_file: The file to test download for
+        download_result: Expected result of the download function
+        confirmation_result: Whether user confirms download (default True)
+        expect_error_shown: Whether error should be shown (default False)
+
+    """
+    url = "https://example.com/test.bin"
+    local_filename = "test.bin"
+
+    configuration_manager._local_filesystem.get_download_url_and_local_filename.return_value = (url, local_filename)  # pylint: disable=protected-access
+    configuration_manager._local_filesystem.vehicle_configuration_file_exists.return_value = False  # pylint: disable=protected-access
+
+    ask_confirmation_mock = MagicMock(return_value=confirmation_result)
+    show_error_mock = MagicMock()
+
+    with patch("ardupilot_methodic_configurator.configuration_manager.download_file_from_url", return_value=download_result):
+        # Act: Execute download workflow
+        result = configuration_manager.should_download_file_from_url_workflow(
+            selected_file,
+            ask_confirmation=ask_confirmation_mock,
+            show_error=show_error_mock,
+        )
+
+    # Assert: Check result and mock calls
+    assert result is (download_result if confirmation_result else True)
+    ask_confirmation_mock.assert_called_once()
+    if expect_error_shown:
+        show_error_mock.assert_called_once()
+    else:
+        show_error_mock.assert_not_called()
