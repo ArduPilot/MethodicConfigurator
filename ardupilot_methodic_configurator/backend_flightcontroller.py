@@ -234,7 +234,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
                 except OSError:
                     pass  # Not a soft link, proceed with the original device path
             err = self._register_and_try_connect(
-                comport=autodetect_serial[0],
+                comport=autodetect_serial[-1],
                 progress_callback=progress_callback,
                 baudrate=connection_baudrate,
                 log_errors=False,
@@ -1157,12 +1157,12 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
     def __auto_detect_serial(self) -> list[mavutil.SerialPort]:
         preferred_ports = [
             "*FTDI*",
-            "*Arduino_Mega_2560*",
             "*3D*",
             "*USB_to_UART*",
             "*Ardu*",
             "*PX4*",
             "*Hex_*",
+            "*ProfiCNC*",
             "*Holybro_*",
             "*mRo*",
             "*FMU*",
