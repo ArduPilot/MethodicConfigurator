@@ -38,6 +38,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import (
     PARAM_DEFINITION_XML_FILE,
     format_columns,
+    get_fallback_xml_url,
     get_xml_dir,
     get_xml_url,
     load_default_param_file,
@@ -122,8 +123,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         # Read ArduPilot parameter documentation
         xml_url = get_xml_url(vehicle_type, self.fw_version)
+        fallback_xml_url = get_fallback_xml_url(vehicle_type, self.fw_version)
         xml_dir = get_xml_dir(vehicle_dir)
-        self.doc_dict = parse_parameter_metadata(xml_url, xml_dir, PARAM_DEFINITION_XML_FILE, vehicle_type, TOOLTIP_MAX_LENGTH)
+        self.doc_dict = parse_parameter_metadata(
+            xml_url, xml_dir, PARAM_DEFINITION_XML_FILE, vehicle_type, TOOLTIP_MAX_LENGTH, fallback_xml_url
+        )
         self.param_default_dict = load_default_param_file(vehicle_dir)
 
         # Extend parameter documentation metadata if <parameter_file>.pdef.xml exists

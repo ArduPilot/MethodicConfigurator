@@ -133,7 +133,9 @@ def parse_arguments() -> argparse.Namespace:
     return args
 
 
-def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str) -> ET.Element:  # pylint: disable=too-many-locals
+def get_xml_data(  # pylint: disable=too-many-locals, too-many-statements # noqa: PLR0915
+    base_url: str, directory: str, filename: str, vehicle_type: str, fallback_xml_url: Optional[str] = None
+) -> ET.Element:
     """
     Fetches XML data from a local file or a URL.
 
@@ -142,6 +144,7 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
         directory (str): The directory where the XML file is expected.
         filename (str): The name of the XML file.
         vehicle_type (str): The type of the vehicle.
+        fallback_xml_url (Optional[str]): Fallback URL if the main URL fails.
 
     Returns:
         ET.Element: The root element of the parsed XML data.
@@ -183,19 +186,32 @@ def get_xml_data(base_url: str, directory: str, filename: str, vehicle_type: str
             logging.warning("Unable to fetch XML data: %s", e)
             # Send a GET request to the URL to the fallback (DEV) URL
             try:
-                url = BASE_URL + vehicle_type + "/" + PARAM_DEFINITION_XML_FILE
-                logging.warning("Falling back to the DEV XML file: %s", url)
+                if fallback_xml_url is None:
+                    msg = "No fallback XML URL provided."
+                    raise ValueError(msg) from e
+                url = fallback_xml_url
+                logging.warning("Falling back to the latest stable release XML file: %s", url)
                 response = requests_get(url, timeout=5, proxies=proxies)
                 if response.status_code != 200:
-                    logging.critical("Remote URL: %s", url)
+                    logging.warning("Remote URL: %s", url)
                     msg = f"HTTP status code {response.status_code}"
                     raise requests_exceptions.RequestException(msg)
-            except requests_exceptions.RequestException as exp:
-                logging.critical("Unable to fetch XML data: %s", exp)
-                msg = "Unable to fetch online XML documentation."
-                msg += f"\nDownload it manually from {url} and"
-                msg += f"\nplace it in the {directory} directory"
-                raise SystemExit(msg) from exp
+            except (ValueError, requests_exceptions.RequestException) as ex:
+                logging.warning("Unable to fetch XML data: %s", ex)
+                try:
+                    url = BASE_URL + vehicle_type + "/" + PARAM_DEFINITION_XML_FILE
+                    logging.warning("Falling back to the DEV XML file: %s", url)
+                    response = requests_get(url, timeout=5, proxies=proxies)
+                    if response.status_code != 200:
+                        logging.critical("Remote URL: %s", url)
+                        msg = f"HTTP status code {response.status_code}"
+                        raise requests_exceptions.RequestException(msg)
+                except requests_exceptions.RequestException as exp:
+                    logging.critical("Unable to fetch XML data: %s", exp)
+                    msg = "Unable to fetch online XML documentation."
+                    msg += f"\nDownload it manually from {url} and"
+                    msg += f"\nplace it in the {directory} directory"
+                    raise SystemExit(msg) from exp
         # Get the text content of the response
         xml_data = response.text
         try:
@@ -599,10 +615,29 @@ def get_xml_url(vehicle_type: str, firmware_version: str) -> str:
     return xml_url
 
 
-def parse_parameter_metadata(
-    xml_url: str, xml_dir: str, xml_file: str, vehicle_type: str, max_line_length: int
+def get_fallback_xml_url(vehicle_type: str, firmware_version: str) -> str:
+    vehicle_parm_subdir = {
+        "ArduCopter": "Copter-",
+        "ArduPlane": "Plane-",
+        "Rover": "Rover-",
+        "ArduSub": "Sub-",
+    }
+    try:
+        vehicle_subdir = vehicle_parm_subdir[vehicle_type] + firmware_version[0:3]
+    except KeyError as e:
+        msg = f"Vehicle type '{vehicle_type}' is not supported."
+        raise ValueError(msg) from e
+
+    xml_url = "https://raw.githubusercontent.com/ArduPilot/ParameterRepository/refs/heads/main/"
+    xml_url += vehicle_subdir if firmware_version else vehicle_type
+    xml_url += "/" + PARAM_DEFINITION_XML_FILE
+    return xml_url
+
+
+def parse_parameter_metadata(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    xml_url: str, xml_dir: str, xml_file: str, vehicle_type: str, max_line_length: int, fallback_xml_url: Optional[str] = None
 ) -> dict[str, Any]:
-    xml_root = get_xml_data(xml_url, xml_dir, xml_file, vehicle_type)
+    xml_root = get_xml_data(xml_url, xml_dir, xml_file, vehicle_type, fallback_xml_url)
     return create_doc_dict(xml_root, vehicle_type, max_line_length)
 
 
