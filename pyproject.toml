@@ -282,4 +282,3 @@ exclude = [".venv"]
 pythonVersion = "3.9"
 venvPath = "."
 venv = ".venv"
-
