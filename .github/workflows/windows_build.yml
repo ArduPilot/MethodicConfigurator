@@ -565,6 +565,12 @@ jobs:
           Write-Host "github.ref == 'refs/heads/master' && steps.check_tags.outputs.has_stable_tag == 'false':"
           if (("${{ github.ref }}" -eq $formatted) -and ("${{ steps.check_tags.outputs.has_stable_tag }}" -eq 'false')) { Write-Host 'true' } else { Write-Host 'false' }
 
+      - name: Delete previous Pre Release
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.check_tags.outputs.has_stable_tag == 'false'
+        run: gh release delete latest-development-build --cleanup-tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Pre Release
         uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
         if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.check_tags.outputs.has_stable_tag == 'false'
