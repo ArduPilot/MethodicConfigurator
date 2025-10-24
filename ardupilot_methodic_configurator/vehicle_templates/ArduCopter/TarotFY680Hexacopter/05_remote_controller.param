@@ -6,7 +6,7 @@ RC10_OPTION,0
 RC2_REVERSED,1  # "1" To reverse (and standardize) the Pitch Axis.
 RC5_OPTION,0  # Can change to ArmorDisarm but I'll leaveit to avoid another MagFit Crash.
 RC6_OPTION,0  # I use this for the flight mode selection at FLTMODE_CH.
-RC7_OPTION,301  #  SCRIPTING2 to do quicktune without MAVLink connection
+RC7_OPTION,301  # SCRIPTING2 to do quicktune without MAVLink connection
 RC8_OPTION,18  # 18, LAND Mode
 RC9_OPTION,300  # SCRIPTING1 to do MagFit without MAVLink connection
 RSSI_TYPE,0  # radio without RSSI
