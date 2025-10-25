@@ -408,7 +408,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
             logging_error(error_msg)
             return False, error_msg
 
-    def __create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals, too-many-branches
         self,
         progress_callback: Union[None, Callable[[int, int], None]],
         retries: int = 3,
@@ -452,29 +452,45 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
                 retries=retries,
                 progress_callback=progress_callback,
             )
-            logging_debug(_("Waiting for MAVLink heartbeat"))
+            logging_debug(_("Waiting for MAVLink heartbeats..."))
             if not self.master:
                 msg = f"Failed to create mavlink connect to {self.comport.device}"
                 raise ConnectionError(msg)
-            m = self.master.wait_heartbeat(timeout=timeout)
-            if m is None:
+            # --- NEW: collect all vehicles detected within timeout ---
+            start_time = time_time()
+            detected_vehicles = {}  # (sysid, compid) -> last HEARTBEAT
+
+            while time_time() - start_time < timeout:
+                m = self.master.recv_match(type="HEARTBEAT", blocking=False)
+                if m is None:
+                    time_sleep(0.1)
+                    continue
+                sysid = m.get_srcSystem()
+                compid = m.get_srcComponent()
+                detected_vehicles[(sysid, compid)] = m
+                logging_debug(_("Detected vehicle %u:%u (autopilot=%u, type=%u)"), sysid, compid, m.autopilot, m.type)
+
+            if not detected_vehicles:
                 return _("No MAVLink heartbeat received, connection failed.")
-            self.info.set_system_id_and_component_id(m.get_srcSystem(), m.get_srcComponent())
-            logging_debug(
-                _("Connection established with systemID %d, componentID %d."), self.info.system_id, self.info.component_id
-            )
 
-            self.info.set_autopilot(m.autopilot)
-            if self.info.is_supported:
-                msg = _("Autopilot type {self.info.autopilot}")
-                logging_info(msg.format(**locals()))
-            else:
+            for (sysid, compid), m in detected_vehicles.items():
+                self.info.set_system_id_and_component_id(sysid, compid)
+                logging_debug(
+                    _("Connection established with systemID %d, componentID %d."), self.info.system_id, self.info.component_id
+                )
+                self.info.set_autopilot(m.autopilot)
+                if self.info.is_supported:
+                    msg = _("Autopilot type {self.info.autopilot}")
+                    logging_info(msg.format(**locals()))
+                    self.info.set_type(m.type)
+                    msg = _("Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware")
+                    logging_info(msg.format(**locals()))
+                    break
                 msg = _("Unsupported autopilot type {self.info.autopilot}")
-                return msg.format(**locals())
+                logging_info(msg.format(**locals()))
 
-            self.info.set_type(m.type)
-            msg = _("Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware")
-            logging_info(msg.format(**locals()))
+            if not self.info.is_supported:
+                return _("No supported autopilots found")
 
             self.__request_banner()
             banner_msgs = self.__receive_banner_text()
@@ -482,6 +498,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
             self.__request_message(mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION)
             m = self.master.recv_match(type="AUTOPILOT_VERSION", blocking=True, timeout=timeout)
             return self.__process_autopilot_version(m, banner_msgs)
+
         except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
             if log_errors:
                 logging_warning(_("Connection failed: %s"), e)
