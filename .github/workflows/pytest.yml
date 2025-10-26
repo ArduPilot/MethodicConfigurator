@@ -7,12 +7,14 @@ on:
     paths:
       - '**/*.py'        # Watch for changes in any Python files
       - 'pyproject.toml'  # Watch for changes in the pyproject.toml file
+      - '.github/workflows/pytest.yml'
   push:
     branches:
       - master           # Only run on push to master branch
     paths:
       - '**/*.py'        # Watch for changes in any Python files
       - 'pyproject.toml'  # Watch for changes in the pyproject.toml file
+      - '.github/workflows/pytest.yml'
   workflow_dispatch:
   release:
     types: [published]
@@ -29,7 +31,7 @@ jobs:
         # os: [ubuntu-latest, macos-latest, windows-latest]
         # python-version: ["3.9", "3.10", "3.11", "3.12", "pypy3.9", "pypy3.10"]
         os: [ubuntu-latest]
-        python-version: ["3.9", "3.13"]
+        python-version: ["3.9", "3.14"]
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -41,7 +43,7 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       # https://docs.astral.sh/uv/guides/integration/github/
-      - name: Install uv and set the python version
+      - name: Install uv and set the Python version
         uses: astral-sh/setup-uv@2ddd2b9cb38ad8efd50337e8ab201519a34c9f24 # v7.1.1
         with:
           python-version: ${{ matrix.python-version }}
@@ -53,7 +55,7 @@ jobs:
           sudo apt-get install -y python3-tk scrot xdotool x11-utils gnome-screenshot
 
       - name: Install dependencies and application
-        # without --editable the coverage report is not generated correctly
+        # without --editable, the coverage report is not generated correctly
         run: |
           uv pip install --editable .[dev,ci_headless_tests]
 
@@ -78,7 +80,7 @@ jobs:
           sed -i 's|filename="|filename="ardupilot_methodic_configurator/|g' tests/coverage.xml
         shell: bash
 
-      - name: Display test results as github job summary
+      - name: Display test results as GitHub job summary
         run: cat tests/results-${{ matrix.python-version }}.md >> $GITHUB_STEP_SUMMARY
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
@@ -149,7 +151,7 @@ jobs:
           name: coverage-3.9
 
       # https://docs.astral.sh/uv/guides/integration/github/
-      - name: Install uv and set the python version
+      - name: Install uv and set the Python version
         uses: astral-sh/setup-uv@2ddd2b9cb38ad8efd50337e8ab201519a34c9f24 # v7.1.1
         with:
           python-version: '3.9'  # Match with the coverage report Python version
