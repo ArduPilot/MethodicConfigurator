@@ -95,8 +95,8 @@ You need to create and activate a new virtual environment before you can run the
 sudo apt install python3-tk
 python -m venv .ardupilot_methodic_configurator_venv
 source .ardupilot_methodic_configurator_venv/bin/activate
-python -m pip install --upgrade pip
-pip install ardupilot_methodic_configurator
+python -m pip install uv
+uv pip install ardupilot_methodic_configurator
 ```
 
 To run it, execute the command line:

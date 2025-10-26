@@ -1,5 +1,7 @@
 #!/bin/bash
 #
+# Configure a Linux or macOS developer PC for ArduPilot Methodic Configurator development.
+#
 # SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
@@ -21,10 +23,18 @@ ORIGINAL_DIR=$(pwd)
 # Change to the directory where the script resides
 cd "$(dirname "$0")" || exit
 
-# Create a local virtual environment if it doesn't exist
-if [ ! -d ".venv" ]; then
-    echo "Creating Python virtual environment..."
-    python3 -m venv .venv
+# Install macOS dependencies early if on macOS
+if command -v brew &> /dev/null; then
+    echo "Installing macOS dependencies with Homebrew..."
+    brew install uv python-tk@3.9
+    echo "Creating Python virtual environment with uv..."
+    uv venv --python 3.9
+else
+    # Create a local virtual environment if it doesn't exist
+    if [ ! -d ".venv" ]; then
+        echo "Creating Python virtual environment..."
+        python3 -m venv .venv
+    fi
 fi
 
 # Activate the virtual environment
@@ -38,18 +48,22 @@ InstallDependencies() {
         sudo apt-get update
         # Install Python3 PIL.ImageTk for GUI support
         echo "Installing Python3 PIL.ImageTk..."
-        sudo apt-get install -y python3-pil.imagetk
+        sudo apt-get install -y python3-pil.imagetk gettext
+        python3 -m pip install uv
+    elif command -v brew &> /dev/null; then
+        echo "macOS dependencies already installed."
     else
-        echo "apt-get not found. Skipping system package updates."
+        echo "Neither apt-get nor brew found. Please install dependencies manually."
     fi
 
+    # No need to uninstall serial and pyserial anymore as the virtual environment is isolated
     # Uninstall serial and pyserial to avoid conflicts
-    echo "Uninstalling serial and pyserial..."
-    sudo python3 -m pip uninstall -y serial pyserial
+    # echo "Uninstalling serial and pyserial..."
+    # uv pip uninstall -y serial pyserial
 
     # Install the project dependencies
     echo "Installing project dependencies..."
-    python3 -m pip install -e .[dev]
+    uv pip install -e .[dev]
 }
 
 ConfigureGit() {
@@ -74,7 +88,6 @@ ConfigureGit() {
     git config --local alias.pom "push origin master"
     git config --local alias.aa "add --all"
     git config --local alias.df diff
-    git config --local alias.su "submodule update --init --recursive"
     git config --local credential.helper manager
     git config --local pull.rebase true
     git config --local push.autoSetupRemote
@@ -120,6 +133,24 @@ ConfigureVSCode() {
             exit 1
         fi
 
+        echo "Installing code spellcheker extension..."
+        if ! code --install-extension streetsidesoftware.code-spell-checker; then
+            echo "Failed to install code spellcheker extension."
+            exit 1
+        fi
+
+        echo "Installing the Python VSCode extension..."
+        if ! code --install-extension ms-python.python; then
+            echo "Failed to install Python VSCode extension."
+            exit 1
+        fi
+
+        echo "Installing ruff extension..."
+        if ! code --install-extension charliermarsh.ruff; then
+            echo "Failed to install ruff extension."
+            exit 1
+        fi
+
     fi
 }
 
@@ -138,6 +169,15 @@ pre-commit run -a
 
 # Change back to the original directory
 cd "$ORIGINAL_DIR" || exit
+
+echo ""
+echo "To run the ArduPilot methodic configurator GUI, execute the following commands:"
+echo ""
+echo "source .venv/bin/activate"
+echo "python3 -m ardupilot_methodic_configurator"
+echo ""
+echo "For more detailed usage instructions, please refer to the USERMANUAL.md file."
+echo ""
 
 echo "Script completed successfully."
 exit 0

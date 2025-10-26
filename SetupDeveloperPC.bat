@@ -1,6 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
+:: Configure a Microsoft Windows developer PC for ArduPilot Methodic Configurator development.
+
 :: Store the original directory
 set "ORIGINAL_DIR=%CD%"
 
@@ -48,17 +50,44 @@ if "!found!"=="0" (
 
 :checkDone
 
+:: Create a local virtual environment if it doesn't exist
+if not exist ".venv" (
+    echo Creating Python virtual environment...
+    python -m venv .venv
+)
 
+:: Activate the virtual environment
+echo Activating virtual environment...
+call .venv\Scripts\activate.bat
+
+call :InstallDependencies
 call :ConfigureArgComplete
 call :ConfigureGit
 call :ConfigureVSCode
 call :ConfigurePreCommit
+call :InstallMsgfmt
 
 echo running pre-commit checks on all Files
 pre-commit run -a
 
 :: Change back to the original directory
 cd /d %ORIGINAL_DIR%
+
+echo.
+echo To run the ArduPilot methodic configurator GUI, execute the following commands:
+echo.
+echo .venv\Scripts\activate.ps1
+echo python3 -m ardupilot_methodic_configurator
+echo.
+echo If you encounter issues with auto-connecting to the wrong device on MS Windows,
+echo you can explicitly set the device with the --device command line option:
+echo.
+echo python3 -m ardupilot_methodic_configurator --device COMX
+echo.
+echo Replace COMX with the correct COM port for your device.
+echo.
+echo For more detailed usage instructions, please refer to the USERMANUAL.md file.
+echo.
 
 echo Script completed successfully.
 exit /b
@@ -85,7 +114,6 @@ git config --local alias.cm "commit -m"
 git config --local alias.pom "push origin master"
 git config --local alias.aa "add --all"
 git config --local alias.df diff
-git config --local alias.su "submodule update --init --recursive"
 git config --local credential.helper manager
 git config --local pull.rebase true
 git config --local push.autoSetupRemote
@@ -207,4 +235,15 @@ if !ERRORLEVEL! equ 0 (
     exit /b 1
 )
 
+goto :eof
+
+:InstallMsgfmt
+echo Installing GNU gettext tools (msgfmt)...
+call install_msgfmt.bat
+goto :eof
+
+:InstallDependencies
+echo Installing project dependencies...
+python -m pip install uv
+uv pip install -e .[dev]
 goto :eof
