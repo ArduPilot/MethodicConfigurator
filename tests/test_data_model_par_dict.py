@@ -1028,6 +1028,7 @@ class TestParameterParsingEdgeCases:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
             f.write(tab_content)
             f.flush()
+            f.close()
 
             try:
                 # Act: Load parameter file with tabs
@@ -1055,6 +1056,7 @@ class TestParameterParsingEdgeCases:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
             f.write(malformed_content)
             f.flush()
+            f.close()
 
             try:
                 # Act & Assert: Clear error for missing separator
@@ -1078,6 +1080,7 @@ class TestParameterParsingEdgeCases:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
             f.write(long_param_content)
             f.flush()
+            f.close()
 
             try:
                 # Act & Assert: Error for too long parameter name
@@ -1100,6 +1103,7 @@ class TestParameterParsingEdgeCases:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
             f.write(invalid_content)
             f.flush()
+            f.close()
 
             try:
                 # Act & Assert: Error for invalid characters
@@ -1122,6 +1126,7 @@ class TestParameterParsingEdgeCases:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
             f.write(duplicate_content)
             f.flush()
+            f.close()
 
             try:
                 # Act & Assert: Error for duplicate parameters
@@ -1146,6 +1151,7 @@ class TestParameterParsingEdgeCases:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
             f.write(whitespace_content)
             f.flush()
+            f.close()
 
             try:
                 # Act: Load parameter file with whitespace
@@ -1175,6 +1181,7 @@ class TestParameterParsingEdgeCases:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
             f.write(mixed_content)
             f.flush()
+            f.close()
 
             try:
                 # Act: Load parameter file with mixed separators
@@ -1209,6 +1216,7 @@ class TestParameterParsingEdgeCases:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
             f.write(extreme_content)
             f.flush()
+            f.close()
 
             try:
                 # Act: Load parameter file with extreme whitespace

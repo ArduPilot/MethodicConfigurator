@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 # from sys import exit as sys_exit
+import contextlib
 import glob
 from importlib.resources import files as importlib_files
 from json import dump as json_dump
@@ -152,8 +153,11 @@ class ProgramSettings:
     @staticmethod
     def _user_config_dir() -> str:
         user_config_directory = user_config_dir(
-            ".ardupilot_methodic_configurator", appauthor=False, roaming=True, ensure_exists=True
+            ".ardupilot_methodic_configurator", appauthor=False, roaming=True, ensure_exists=False
         )
+
+        if not os_path.exists(user_config_directory):
+            os_makedirs(user_config_directory, exist_ok=True)
 
         if not os_path.exists(user_config_directory):
             error_msg = _("The user configuration directory '{user_config_directory}' does not exist.")
@@ -167,8 +171,12 @@ class ProgramSettings:
     @staticmethod
     def _site_config_dir() -> str:
         site_config_directory = site_config_dir(
-            ".ardupilot_methodic_configurator", appauthor=False, version=None, multipath=False, ensure_exists=True
+            ".ardupilot_methodic_configurator", appauthor=False, version=None, multipath=False, ensure_exists=False
         )
+
+        if not os_path.exists(site_config_directory):
+            with contextlib.suppress(OSError):
+                os_makedirs(site_config_directory, exist_ok=True)
 
         if not os_path.exists(site_config_directory):
             error_msg = _("The site configuration directory '{site_config_directory}' does not exist.")
