@@ -111,6 +111,12 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         setup_combobox_mousewheel_handling(self)
 
     def set_entries_tuple(self, list_pair_tuple: list[tuple[str, str]], selected_element: Union[None, str]) -> None:
+        # Clear existing entries before setting new ones
+        self.list_keys.clear()
+        self.list_shows.clear()
+        self.append_entries_tuple(list_pair_tuple, selected_element)
+
+    def append_entries_tuple(self, list_pair_tuple: list[tuple[str, str]], selected_element: Union[None, str]) -> None:
         if isinstance(list_pair_tuple, list):
             for tpl in list_pair_tuple:
                 self.list_keys.append(tpl[0])
