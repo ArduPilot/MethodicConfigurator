@@ -114,30 +114,27 @@ class ConfigurationStepProcessor:
             )
             ui_infos.extend(rename_ui_infos)
 
-            # Check for ExpressLRS and add FLTMODE_CH warning
-            if (
-                self.local_filesystem.file_parameters[selected_file].get("RC_OPTIONS") is not None
-                or self.local_filesystem.file_parameters[selected_file].get("FLTMODE_CH") is not None
-            ):
-                rc_options = int(fc_parameters.get("RC_OPTIONS", 32))
-                if (rc_options & (1 << self.ELRS_RC_OPTIONS_BITS[0])) or (rc_options & (1 << self.ELRS_RC_OPTIONS_BITS[1])):
-                    fltmode_ch = fc_parameters.get("FLTMODE_CH", 5)
-                    if fltmode_ch == 5:
-                        ui_infos.append(
-                            (
-                                _("ExpressLRS Configuration Warning"),
-                                _(
-                                    "FLTMODE_CH must be set to a channel other than 5 (currently set to 5).\n"
-                                    "Please change FLTMODE_CH to a different channel (e.g., 6, 7, 8, etc.)\n"
-                                    "to avoid conflicts with the required RC5 arming channel."
-                                ),
-                            )
-                        )
-
         # Create domain model parameters
-        parameters = self._create_domain_model_parameters(selected_file, fc_parameters)
+        current_step_parameters = self._create_domain_model_parameters(selected_file, fc_parameters)
 
-        return parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params_to_apply
+        # Check for ExpressLRS and add FLTMODE_CH warning
+        if current_step_parameters.get("RC_OPTIONS") is not None or current_step_parameters.get("FLTMODE_CH") is not None:
+            rc_options = int(fc_parameters.get("RC_OPTIONS", 32))
+            if (rc_options & (1 << self.ELRS_RC_OPTIONS_BITS[0])) or (rc_options & (1 << self.ELRS_RC_OPTIONS_BITS[1])):
+                fltmode_ch = fc_parameters.get("FLTMODE_CH", 5)
+                if fltmode_ch == 5:
+                    ui_infos.append(
+                        (
+                            _("ExpressLRS Configuration Warning"),
+                            _(
+                                "FLTMODE_CH must be set to a channel other than 5 (currently set to 5).\n"
+                                "Please change FLTMODE_CH to a different channel (e.g., 6, 7, 8, etc.)\n"
+                                "to avoid conflicts with the required RC5 arming channel."
+                            ),
+                        )
+                    )
+
+        return current_step_parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params_to_apply
 
     def _handle_connection_renaming(
         self, selected_file: str, variables: dict
@@ -275,7 +272,7 @@ class ConfigurationStepProcessor:
 
     @staticmethod
     def _calculate_connection_rename_operations(
-        parameters: dict[str, Any], new_connection_prefix: str, variables: Optional[dict[str, Any]] = None
+        parameters: ParDict, new_connection_prefix: str, variables: Optional[dict[str, Any]] = None
     ) -> tuple[set[str], list[tuple[str, str]]]:
         """
         Calculate connection prefix rename operations without mutating the parameters dictionary.
