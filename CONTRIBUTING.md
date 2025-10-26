@@ -25,37 +25,38 @@ and also:
 
 ## Setting up developer environment
 
-The instructions below assume that you have already installed git and forked the [MethodicConfigurator](https://github.com/ArduPilot/MethodicConfigurator.git) github repository.
+1. [Install git](https://git-scm.com/install/) on your computer.
+2. Create a free [personal github account](https://docs.github.com/en/get-started/start-your-journey/creating-an-account-on-github)
+3. [Log in to your github account](https://github.com/login) using a browser
+4. [Fork the ArduPilot/MethodicConfigurator github repository](https://github.com/ArduPilot/MethodicConfigurator/fork).
+5. Clone your fork and navigate into it:
 
-Clone your fork and navigate into it:
+    ```bash
+    git clone https://github.com/YOUR_USER_NAME/MethodicConfigurator.git
+    cd MethodicConfigurator
+    ```
 
-```bash
-git clone https://github.com/YOUR_USER_NAME/MethodicConfigurator.git
-cd MethodicConfigurator
-```
+6. Run the following helper scripts:
 
-Run the following helper scripts:
+    On Windows:
 
-On Windows:
+    ```powershell
+    .\SetupDeveloperPC.bat
+    ```
 
-```cmd
-.\SetupDeveloperPC.bat
-.\install_msgfmt.bat
-.\install_wsl.bat
-```
+    On Linux and macOS:
 
-On Linux and MacOS:
-
-```bash
-./SetupDeveloperPC.sh
-```
+    ```bash
+    ./SetupDeveloperPC.sh
+    ```
 
 The above scripts will:
 
 * Configure Git and useful aliases
-* Install dependencies
+* Create a Python virtual environment and install project dependencies
 * Install recommended VSCode extensions
 * Set up pre-commit hooks for linting and formatting
+* Install GNU gettext tools for internationalization support
 
 ## Executing the code
 
@@ -66,15 +67,15 @@ To run it locally (from your cloned repository):
 
 On Windows:
 
-```cmd
+```powershell
+.venv\Scripts\activate.ps1
 python3 -m ardupilot_methodic_configurator
 ```
 
-On MacOS & Linux:
+On macOS & Linux:
 
 ```bash
-source venv/bin/activate
-
+source .venv/bin/activate
 python3 -m ardupilot_methodic_configurator
 ```
 
@@ -82,16 +83,16 @@ More detailed usage instructions can be found in our [user manual](https://ardup
 
 ## Submitting patches
 
-We encourage you to follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) style for your commit messages, as used in this repository.
+Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) style for your git commit messages.
 
 Each commit should be signed off using the `--signoff` option in `git commit`.
 By signing off your commit, you certify that you agree to the terms of the [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
 
-You can sign your commit by:
+You can sign by either your commit by pressing the *sign-off* button on `git gui` or by using the command line:
 
 ```bash
 # Sign off a commit as you're making it
-git commit --signoff -m"commit message"
+git commit --signoff -m "commit message"
 
 # Add a signoff to the last commit you made
 git commit --amend --signoff
@@ -100,7 +101,7 @@ git commit --amend --signoff
 git rebase --signoff master
 ```
 
-Once your changes are ready, submit a [Pull Request (PR)](https://github.com/ArduPilot/MethodicConfigurator/pulls) on GitHub.
+Once your changes are ready, submit a [GitHub Pull Request (PR)](https://github.com/ArduPilot/MethodicConfigurator/pulls).
 
 ## Development Team
 
