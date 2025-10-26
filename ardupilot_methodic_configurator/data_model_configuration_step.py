@@ -300,13 +300,14 @@ class ConfigurationStepProcessor:
         renames = ConfigurationStepProcessor._generate_connection_renames(list(parameters.keys()), new_connection_prefix)
 
         # Track unique new names and actual renames to perform
-        new_names = set()
-        duplicates = set()
+        # Initialize with all existing parameter names to prevent conflicts
+        new_names = set(parameters.keys())
+        duplicates: set[str] = set()
         renamed_pairs = []
         for old_name, new_name in renames.items():
             if new_name in new_names:
-                # This would be a duplicate - mark for removal
-                duplicates.add(old_name)
+                # Do not perform rename due to conflict, let the user handle it
+                pass
             else:
                 new_names.add(new_name)
                 if new_name != old_name:

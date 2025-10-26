@@ -547,12 +547,12 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
 
     def test_apply_renames_with_duplicates(self, connection_params) -> None:
         """
-        Test calculating renames identifies duplicate conflicts correctly.
+        Test calculating renames skips individual operations when they would create conflicts.
 
-        GIVEN: A user has parameters that would create naming conflicts after renaming
+        GIVEN: A user has parameters that would create naming conflicts for some renames
         WHEN: They calculate connection renaming operations
-        THEN: Duplicate parameters should be identified for removal
-        AND: The system should track which parameters would conflict
+        THEN: Conflicting renames are skipped but non-conflicting renames proceed
+        AND: No parameters are marked as duplicates for removal
         AND: Original parameters dict remains unchanged (immutable)
         """
         # Arrange: Create params with potential duplicates
@@ -562,19 +562,24 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         original_keys = set(params.keys())
 
         # Act: Calculate renames for CAN1 to CAN2
-        duplicated_params, _renamed_pairs = ConfigurationStepProcessor._calculate_connection_rename_operations(params, "CAN2")
+        duplicated_params, renamed_pairs = ConfigurationStepProcessor._calculate_connection_rename_operations(params, "CAN2")
 
-        # Assert: The ALREADY-EXISTING parameter is marked as duplicate (not the one being renamed)
-        # This is because CAN_P2_DRIVER already exists, so it would conflict with the rename
-        assert "CAN_P2_DRIVER" in duplicated_params
+        # Assert: No duplicates are marked when individual conflicts occur
+        assert len(duplicated_params) == 0
+
+        # Assert: Non-conflicting renames proceed (CAN_P1_DRIVER conflicts, others don't)
+        expected_renames = [
+            ("CAN_P1_BITRATE", "CAN_P2_BITRATE"),
+            ("CAN_D1_PROTOCOL", "CAN_D2_PROTOCOL"),
+            ("CAN_D1_UC_NODE", "CAN_D2_UC_NODE"),
+            ("CAN_D1_UC_OPTION", "CAN_D2_UC_OPTION"),
+        ]
+        assert renamed_pairs == expected_renames
 
         # Assert: Original params dict unchanged (immutable)
         assert set(params.keys()) == original_keys
-        assert "CAN_P1_DRIVER" in params  # Original rename source still present
-        assert "CAN_P2_DRIVER" in params  # Pre-existing conflict still there
-
-        # Check duplicated parameters are tracked (the pre-existing target that was removed)
-        assert "CAN_P2_DRIVER" in duplicated_params
+        assert "CAN_P1_DRIVER" in params  # Original parameter still present
+        assert "CAN_P2_DRIVER" in params  # Conflicting parameter still there
 
     def test_apply_renames_with_variables(self, connection_params) -> None:
         """
