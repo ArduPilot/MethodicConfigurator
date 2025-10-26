@@ -127,7 +127,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         return tuple(base_headers), tuple(base_tooltips)
 
     def repopulate(  # pylint: disable=too-many-locals
-        self, show_only_differences: bool, gui_complexity: str
+        self, show_only_differences: bool, gui_complexity: str, regenerate_from_disk: bool
     ) -> None:
         for widget in self.view_port.winfo_children():
             widget.destroy()
@@ -150,12 +150,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.upload_checkbutton_var = {}
 
         # Process configuration step and create domain model parameters
-        (ui_errors, ui_infos) = self.configuration_manager.repopulate_configuration_step_parameters()
+        if regenerate_from_disk:
+            (ui_errors, ui_infos) = self.configuration_manager.repopulate_configuration_step_parameters()
 
-        for title, msg in ui_errors:
-            messagebox.showerror(title, msg)
-        for title, msg in ui_infos:
-            messagebox.showinfo(title, msg)
+            for title, msg in ui_errors:
+                messagebox.showerror(title, msg)
+            for title, msg in ui_infos:
+                messagebox.showinfo(title, msg)
 
         if show_only_differences:
             # Filter to show only different parameters
@@ -718,7 +719,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
             # Delete the parameter
             self.configuration_manager.delete_parameter_from_current_file(param_name)
-            self.parameter_editor.repopulate_parameter_table()
+            self.parameter_editor.repopulate_parameter_table(regenerate_from_disk=False)
 
             # Restore the scroll position
             self.canvas.yview_moveto(current_scroll_position)
@@ -769,7 +770,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         try:
             if self.configuration_manager.add_parameter_to_current_file(param_name):
                 self._pending_scroll_to_bottom = True
-                self.parameter_editor.repopulate_parameter_table()
+                self.parameter_editor.repopulate_parameter_table(regenerate_from_disk=False)
                 return True
         except InvalidParameterNameError as exc:
             messagebox.showerror(_("Invalid parameter name."), str(exc))

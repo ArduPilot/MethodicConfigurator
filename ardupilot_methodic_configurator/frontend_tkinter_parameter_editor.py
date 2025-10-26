@@ -318,7 +318,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # Create a Scrollable parameter editor table
         self.parameter_editor_table = ParameterEditorTable(self.main_frame, self.configuration_manager, self)
-        self.repopulate_parameter_table()
+        self.repopulate_parameter_table(regenerate_from_disk=True)
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 
         # Create a frame for the buttons
@@ -654,7 +654,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.configuration_manager.current_file = selected_file
             self.documentation_frame.refresh_documentation_labels()
             self.documentation_frame.update_why_why_now_tooltip()
-            self.repopulate_parameter_table()
+            self.repopulate_parameter_table(regenerate_from_disk=True)
             self._update_skip_button_state()
 
     def _update_progress_bar_from_file(self, selected_file: str) -> None:
@@ -676,14 +676,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if not redownload:
             self.on_param_file_combobox_change(None, forced=True)  # the initial param read will trigger a table update
 
-    def repopulate_parameter_table(self) -> None:
+    def repopulate_parameter_table(self, regenerate_from_disk: bool) -> None:
         if not self.configuration_manager.current_file:
             return  # no file was yet selected, so skip it
         # Re-populate the table with the new parameters
-        self.parameter_editor_table.repopulate(self.show_only_differences.get(), self.gui_complexity)
+        self.parameter_editor_table.repopulate(self.show_only_differences.get(), self.gui_complexity, regenerate_from_disk)
 
     def on_show_only_changed_checkbox_change(self) -> None:
-        self.repopulate_parameter_table()
+        self.repopulate_parameter_table(regenerate_from_disk=False)
 
     def on_upload_selected_click(self) -> None:
         self.write_changes_to_intermediate_parameter_file()

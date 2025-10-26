@@ -1418,10 +1418,11 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
         # Update the filesystem's file_parameters to match what was saved
         self._local_filesystem.file_parameters[self.current_file] = export_params
 
-        # Note: We don't need to clear tracking sets or dirty flags on domain model parameters
-        # because after export, the user always navigates to a different file, which triggers
-        # repopulate_configuration_step_parameters() that clears tracking sets and rebuilds
-        # self.parameters fresh.
+        self._added_parameters.clear()
+        self._deleted_parameters.clear()
+        # copy parameters new values to their _values_on_file
+        for param in self.current_step_parameters.values():
+            param.copy_new_value_to_file()
 
     def open_documentation_in_browser(self, filename: str) -> None:
         _blog_text, blog_url = self.get_documentation_text_and_url("blog", filename)
