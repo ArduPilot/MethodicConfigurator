@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from argparse import ArgumentParser
+from platform import system as platform_system
 from tkinter import ttk
 from typing import Union, get_args, get_origin
 from unittest.mock import MagicMock, patch
@@ -1038,7 +1039,8 @@ class TestUIInitializationWorkflows:
 
         # Assert: All necessary styles should be configured
         assert mock_style.configure.call_count >= 7  # At least 7 style configurations
-        mock_style.configure.assert_any_call("bigger.TLabel", font=("TkDefaultFont", -18))
+        expected_font_size = 13 if platform_system() == "Windows" else -18
+        mock_style.configure.assert_any_call("bigger.TLabel", font=("TkDefaultFont", expected_font_size))
         mock_style.configure.assert_any_call("comb_input_invalid.TCombobox", fieldbackground="red")
         mock_style.configure.assert_any_call("comb_input_valid.TCombobox", fieldbackground="white")
 
