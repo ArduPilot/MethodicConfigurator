@@ -478,6 +478,11 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
 
         self._change_reason = change_reason
 
+    def copy_new_value_to_file(self) -> None:
+        """Copy the new value to the value on file, marking it as saved, resetting the is_dirty property."""
+        self._value_on_file = self._new_value
+        self._change_reason_on_file = self._change_reason
+
 
 class BitmaskHelper:
     """Helper class for working with ArduPilot parameter bitmasks."""

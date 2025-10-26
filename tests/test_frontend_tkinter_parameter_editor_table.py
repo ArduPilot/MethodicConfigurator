@@ -270,7 +270,7 @@ def test_repopulate_empty_parameters(parameter_editor_table: ParameterEditorTabl
     parameter_editor_table.configuration_manager.filesystem.file_parameters = ParDict({test_file: ParDict({})})
 
     # Act: Repopulate the table
-    parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
+    parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False)
 
     # Assert: No parameter rows were added
     parameter_editor_table.add_parameter_row.assert_not_called()
@@ -296,7 +296,7 @@ def test_repopulate_clears_existing_content(parameter_editor_table: ParameterEdi
     parameter_editor_table.configuration_manager.filesystem.param_default_dict = ParDict({"PARAM1": Par(0.0, "default")})
 
     # Act: Repopulate the table
-    parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
+    parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False)
 
     # Assert: Existing content was cleared
     assert not dummy_widget.winfo_exists()
@@ -318,7 +318,7 @@ def test_repopulate_handles_none_current_file(parameter_editor_table: ParameterE
     parameter_editor_table.configuration_manager.filesystem.param_default_dict = ParDict({})
 
     # Act: Attempt to repopulate with no current file
-    parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
+    parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False)
 
     # Assert: No parameter rows were added
     parameter_editor_table.add_parameter_row.assert_not_called()
@@ -344,7 +344,7 @@ def test_repopulate_single_parameter(parameter_editor_table: ParameterEditorTabl
 
     # Act: Repopulate with single parameter
     with patch.object(parameter_editor_table, "grid_slaves", return_value=[]):
-        parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
+        parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False)
 
     # Assert: Parameter row was added (implicitly tested through repopulate call)
 
@@ -387,7 +387,7 @@ def test_repopulate_multiple_parameters(parameter_editor_table: ParameterEditorT
 
     # Act: Repopulate with multiple parameters
     with patch.object(parameter_editor_table, "grid_slaves", return_value=[]):
-        parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
+        parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False)
 
     # Assert: All parameters were processed (implicitly tested through repopulate call)
 
@@ -418,7 +418,7 @@ def test_repopulate_preserves_checkbutton_states(parameter_editor_table: Paramet
     )
 
     # Act: Repopulate the table
-    parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
+    parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False)
 
     # Assert: Checkbutton states were preserved (implicitly tested through repopulate call)
 
@@ -459,7 +459,7 @@ def test_repopulate_show_only_differences(parameter_editor_table: ParameterEdito
     )
 
     # Act: Repopulate showing only differences
-    parameter_editor_table.repopulate(show_only_differences=True, gui_complexity="simple")
+    parameter_editor_table.repopulate(show_only_differences=True, gui_complexity="simple", regenerate_from_disk=False)
 
     # Assert: Only differing parameters were processed (implicitly tested through repopulate call)
 
@@ -485,7 +485,7 @@ def test_repopulate_uses_scroll_helper(parameter_editor_table: ParameterEditorTa
 
     # Act: Repopulate and check scroll behavior
     with patch.object(parameter_editor_table, "_apply_scroll_position") as mock_scroll:
-        parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple")
+        parameter_editor_table.repopulate(show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False)
 
     # Assert: Scroll position was applied correctly
     mock_scroll.assert_called_once_with(pending_scroll)
@@ -918,7 +918,9 @@ class TestEventHandlerBehavior:
 
             # Assert: Parameter is deleted and table repopulated
             assert "TEST_PARAM" not in parameter_editor_table.configuration_manager.filesystem.file_parameters["test_file"]
-            parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once_with()
+            parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once_with(
+                regenerate_from_disk=False
+            )
 
     def test_on_parameter_delete_cancelled(self, parameter_editor_table: ParameterEditorTable) -> None:
         """
@@ -1650,7 +1652,7 @@ class TestUserParameterEditingWorkflows:
         # Assert: Parameter addition was successful
         assert result is True
         parameter_editor_table.configuration_manager.add_parameter_to_current_file.assert_called_once_with("NEW_PARAM")
-        parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once()
+        parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once_with(regenerate_from_disk=False)
 
     def test_user_can_delete_parameter_from_configuration_file(self, parameter_editor_table: ParameterEditorTable) -> None:
         """
@@ -1674,7 +1676,9 @@ class TestUserParameterEditingWorkflows:
             parameter_editor_table.configuration_manager.delete_parameter_from_current_file.assert_called_once_with(
                 "TEST_PARAM"
             )
-            parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once()
+            parameter_editor_table.parameter_editor.repopulate_parameter_table.assert_called_once_with(
+                regenerate_from_disk=False
+            )
 
     def test_user_cannot_delete_parameter_when_cancelled(self, parameter_editor_table: ParameterEditorTable) -> None:
         """
