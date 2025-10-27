@@ -70,7 +70,7 @@ dev = [
     "pre-commit==4.3.0",
     "pylint==3.3.9",
     "pyautogui==0.9.54",
-    "pyright==1.1.406",
+    "pyright==1.1.407",
     "pytest==8.4.2",
     "pytest-cov==7.0.0",
     "pytest-md==0.2.0",
