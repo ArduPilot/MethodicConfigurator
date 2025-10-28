@@ -497,6 +497,9 @@ def main() -> None:
     """
     args = create_argument_parser().parse_args()
 
+    # Create desktop icon if needed (only on first run in venv)
+    ProgramSettings.create_desktop_icon_if_needed()
+
     state = ApplicationState(args)
 
     setup_logging(state)

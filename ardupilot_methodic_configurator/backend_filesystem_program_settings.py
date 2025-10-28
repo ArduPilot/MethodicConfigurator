@@ -9,14 +9,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 # from sys import exit as sys_exit
-import contextlib
-import glob
+import subprocess
+from contextlib import suppress as contextlib_suppress
+from glob import glob as glob_glob
 from importlib.resources import files as importlib_files
 from json import dump as json_dump
 from json import load as json_load
 from logging import debug as logging_debug
 from logging import error as logging_error
+from os import chmod as os_chmod
+from os import environ as os_environ
 from os import makedirs as os_makedirs
+from os import name as os_name
 from os import path as os_path
 from os import sep as os_sep
 from pathlib import Path
@@ -24,6 +28,8 @@ from platform import system as platform_system
 from re import escape as re_escape
 from re import match as re_match
 from re import sub as re_sub
+from shutil import which as shutil_which
+from sys import platform as sys_platform
 from typing import Any, Optional, Union
 
 from platformdirs import site_config_dir, user_config_dir
@@ -109,8 +115,18 @@ class ProgramSettings:
 
     @staticmethod
     def application_icon_filepath() -> str:
-        package_path = importlib_files("ardupilot_methodic_configurator")
-        return str(package_path / "images" / "ArduPilot_icon.png")
+        """Get the application icon path, with fallback options."""
+        try:
+            package_path = importlib_files("ardupilot_methodic_configurator")
+        except (ImportError, FileNotFoundError):
+            # Fallback: try to find icon relative to the script
+            package_path = Path(os_path.dirname(os_path.abspath(__file__)))
+
+        icon_path = str(package_path / "images" / "ArduPilot_icon.png")
+        if os_path.exists(icon_path):
+            return icon_path
+        # If no icon found, return empty string (GUI will handle the error)
+        return ""
 
     @staticmethod
     def application_logo_filepath() -> str:
@@ -175,7 +191,7 @@ class ProgramSettings:
         )
 
         if not os_path.exists(site_config_directory):
-            with contextlib.suppress(OSError):
+            with contextlib_suppress(OSError):
                 os_makedirs(site_config_directory, exist_ok=True)
 
         if not os_path.exists(site_config_directory):
@@ -373,7 +389,7 @@ class ProgramSettings:
         filename = f"m_{frame_class:02d}_{frame_type:02d}_*.png"
 
         # Search for matching PNG file (since exact naming varies)
-        matching_files = glob.glob(str(images_dir / filename))
+        matching_files = glob_glob(str(images_dir / filename))
 
         err_msg = (
             ""
@@ -406,3 +422,116 @@ class ProgramSettings:
         """
         filepath, _error_msg = ProgramSettings.motor_diagram_filepath(frame_class, frame_type)
         return filepath != "" and os_path.exists(filepath)
+
+    @staticmethod
+    def _is_linux_system() -> bool:
+        """Check if running on a Linux system."""
+        return os_name == "posix" and sys_platform.startswith("linux")
+
+    @staticmethod
+    def _get_desktop_file_path() -> str:
+        """Get the path where the desktop file should be created."""
+        return os_path.expanduser("~/.local/share/applications/ardupilot_methodic_configurator.desktop")
+
+    @staticmethod
+    def _desktop_icon_exists(desktop_file_path: str) -> bool:
+        """Check if the desktop icon already exists."""
+        return os_path.exists(desktop_file_path)
+
+    @staticmethod
+    def _get_virtual_env_path() -> Optional[str]:
+        """Get the virtual environment path from environment variables."""
+        return os_environ.get("VIRTUAL_ENV")
+
+    @staticmethod
+    def _create_desktop_entry_content(venv_path: str, icon_path: str) -> str:
+        """Create the desktop entry file content."""
+        # Try to use python executable directly for better compatibility
+        python_exe = os_path.join(venv_path, "bin", "python")
+        if os_path.exists(python_exe):
+            # Use python executable directly
+            exec_cmd = f"{python_exe} -m ardupilot_methodic_configurator"
+        else:
+            # Fallback to bash -c method
+            bash_path = shutil_which("bash") or "/bin/bash"
+            activate_cmd = f"source {venv_path}/bin/activate && ardupilot_methodic_configurator"
+            exec_cmd = f'{bash_path} -c "{activate_cmd}"'
+
+        return f"""[Desktop Entry]
+Version=1.0
+Name=ArduPilot Methodic Configurator
+Comment=A clear ArduPilot configuration sequence
+Exec={exec_cmd}
+Icon={icon_path}
+Terminal=true
+Type=Application
+Categories=Development;
+Keywords=ardupilot;arducopter;drone;parameters;configuration;scm
+"""
+
+    @staticmethod
+    def _ensure_applications_dir_exists(desktop_file_path: str) -> str:
+        """Ensure the applications directory exists and return it."""
+        apps_dir = os_path.dirname(desktop_file_path)
+        os_makedirs(apps_dir, exist_ok=True)
+        return apps_dir
+
+    @staticmethod
+    def _write_desktop_file(desktop_file_path: str, content: str) -> None:
+        """Write the desktop file content to disk."""
+        with open(desktop_file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+    @staticmethod
+    def _set_desktop_file_permissions(desktop_file_path: str) -> None:
+        """Set appropriate permissions on the desktop file."""
+        os_chmod(desktop_file_path, 0o644)
+
+    @staticmethod
+    def _update_desktop_database(apps_dir: str) -> None:
+        """Update the desktop database if the command is available."""
+        update_desktop_db_cmd = shutil_which("update-desktop-database")
+        if update_desktop_db_cmd:
+            subprocess.run([update_desktop_db_cmd, apps_dir], check=False, capture_output=True)  # noqa: S603
+
+    @staticmethod
+    def create_desktop_icon_if_needed() -> None:
+        """
+        Create a desktop icon for the application if running in a virtual environment and icon doesn't exist.
+
+        This function detects if we're running in a virtual environment and creates a desktop
+        entry that activates the venv and runs the application with the correct icon.
+        """
+        # Only create desktop icon on Linux systems
+        if not ProgramSettings._is_linux_system():
+            return
+
+        # Check if desktop icon already exists
+        desktop_file_path = ProgramSettings._get_desktop_file_path()
+        if ProgramSettings._desktop_icon_exists(desktop_file_path):
+            return
+
+        # Check if we're in a virtual environment
+        venv_path = ProgramSettings._get_virtual_env_path()
+        if not venv_path:
+            return
+
+        # Find the icon path
+        icon_path = ProgramSettings.application_icon_filepath()
+        if not icon_path:
+            return
+
+        # Create the desktop entry content
+        desktop_entry = ProgramSettings._create_desktop_entry_content(venv_path, icon_path)
+
+        # Ensure the applications directory exists
+        apps_dir = ProgramSettings._ensure_applications_dir_exists(desktop_file_path)
+
+        # Write the desktop file
+        try:
+            ProgramSettings._write_desktop_file(desktop_file_path, desktop_entry)
+            ProgramSettings._set_desktop_file_permissions(desktop_file_path)
+            ProgramSettings._update_desktop_database(apps_dir)
+
+        except (OSError, subprocess.SubprocessError):
+            logging_error("Failed to create application launch desktop icon")

@@ -41,36 +41,6 @@ InstallDependencies() {
     python3 -m pip install -e .[dev]
 }
 
-CreateDesktopEntry() {
-    # Get the directory of the script
-    prog_dir=$(realpath "$(dirname "$0")")/ardupilot_methodic_configurator
-
-    # Check if the system is Debian-based
-    if [ -f /etc/debian_version ] || [ -f /etc/os-release ] && grep -q 'ID_LIKE=.*debian.*' /etc/os-release; then
-        echo "Creating ardupilot_methodic_configurator.desktop for Debian-based systems..."
-        # Define the desktop entry content
-        desktop_entry="[Desktop Entry]\nName=ArduPilot Methodic Configurator\nComment=A clear ArduPilot configuration sequence\nExec=bash -c 'cd $prog_dir && python3 -m ardupilot_methodic_configurator'\nIcon=$prog_dir/images/ArduPilot_icon.png\nTerminal=true\nType=Application\nCategories=Development;\nKeywords=ardupilot;arducopter;drone;copter;scm"
-        # Create the .desktop file in the appropriate directory
-        echo -e "$desktop_entry" > "/home/$USER/.local/share/applications/ardupilot_methodic_configurator.desktop"
-        echo "ardupilot_methodic_configurator.desktop created successfully."
-
-        # Check if the ~/Desktop directory exists
-        if [ -d "$HOME/Desktop" ]; then
-            # Copy the .desktop file to the ~/Desktop directory
-            cp "/home/$USER/.local/share/applications/ardupilot_methodic_configurator.desktop" "$HOME/Desktop/"
-            # Mark it as trusted
-            chmod 755 "$HOME/Desktop/ardupilot_methodic_configurator.desktop"
-            echo "ardupilot_methodic_configurator.desktop copied to ~/Desktop."
-        else
-            echo "$HOME/Desktop directory does not exist. Skipping copy to Desktop."
-        fi
-
-        update-desktop-database ~/.local/share/applications/
-    else
-        echo "This system is not Debian-based. Skipping .desktop file creation."
-    fi
-}
-
 ConfigureGit() {
     echo "Configuring Git settings..."
     git config --local commit.gpgsign false
@@ -144,7 +114,6 @@ ConfigureVSCode() {
 
 # Call configuration functions
 InstallDependencies
-CreateDesktopEntry
 ConfigureGit
 ConfigureVSCode
 
