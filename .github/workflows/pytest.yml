@@ -60,6 +60,53 @@ jobs:
         run: |
           uv pip install --editable .[dev,ci_headless_tests]
 
+      - name: Download ArduCopter SITL (if available)
+        run: |
+          # Create cache key based on current quarter (YYYY-Q)
+          CURRENT_YEAR=$(date +%Y)
+          CURRENT_MONTH=$(date +%m)
+          QUARTER=$(( (CURRENT_MONTH-1)/3 + 1 ))
+          CACHE_KEY="${CURRENT_YEAR}-Q${QUARTER}"
+
+          echo "Cache key: ${CACHE_KEY}"
+
+          # Check if we have cached SITL files for this quarter
+          if [ -d "sitl-cache/${CACHE_KEY}" ] && [ -f "sitl-cache/${CACHE_KEY}/arducopter" ]; then
+            echo "Using cached SITL files from ${CACHE_KEY}"
+            mkdir -p sitl/
+            cp sitl-cache/${CACHE_KEY}/* sitl/
+          else
+            echo "Downloading fresh SITL files for ${CACHE_KEY}"
+            mkdir -p sitl/ sitl-cache/${CACHE_KEY}/
+
+            # Download latest ArduCopter SITL from official firmware server
+            curl -L -o sitl/arducopter https://firmware.ardupilot.org/Copter/latest/SITL_x86_64_linux_gnu/arducopter
+            curl -L -o sitl/firmware-version.txt https://firmware.ardupilot.org/Copter/latest/SITL_x86_64_linux_gnu/firmware-version.txt
+            curl -L -o sitl/git-version.txt https://firmware.ardupilot.org/Copter/latest/SITL_x86_64_linux_gnu/git-version.txt
+
+            # Cache the downloaded files
+            cp sitl/* sitl-cache/${CACHE_KEY}/
+          fi
+
+          # Make executable and verify
+          chmod +x sitl/arducopter
+          ls -la sitl/
+
+          # Set environment variables
+          echo "SITL_BINARY=$(pwd)/sitl/arducopter" >> $GITHUB_ENV
+          echo "SITL_AVAILABLE=true" >> $GITHUB_ENV
+          echo "SITL version: $(cat sitl/git-version.txt)"
+          echo "Firmware version: $(cat sitl/firmware-version.txt)"
+        continue-on-error: true
+
+      - name: Cache SITL files
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: sitl-cache/
+          key: sitl-cache-${{ github.run_id }}
+          restore-keys: |
+            sitl-cache-
+
       - name: Test with pytest
         id: pytest
         continue-on-error: false
@@ -72,7 +119,13 @@ jobs:
           Xvfb :99 -screen 0 1024x768x16 -ac &
           # ensure Xvfb is fully started before running tests
           sleep 2
-          uv run pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md --junit-xml=tests/results-junit.xml
+          if [ "$SITL_AVAILABLE" = "true" ]; then
+            echo "Running tests with SITL support"
+            uv run pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md --junit-xml=tests/results-junit.xml -m "sitl or not sitl"
+          else
+            echo "Running tests without SITL (mocked tests only)"
+            uv run pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md --junit-xml=tests/results-junit.xml -m "not sitl"
+          fi
 
       - name: Fix coverage paths
         run: |

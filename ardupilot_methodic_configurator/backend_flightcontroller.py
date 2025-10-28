@@ -572,6 +572,11 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
             firmware_type_banner_substrings = banner_msgs[os_custom_version_index + 1].split(" ")
             if len(firmware_type_banner_substrings) >= 3:
                 firmware_type = firmware_type_banner_substrings[0]
+        elif banner_msgs and not firmware_type:
+            # For SITL or systems without ChibiOS version, try to parse from first banner message
+            firmware_type_banner_substrings = banner_msgs[0].split(" ")
+            if len(firmware_type_banner_substrings) >= 1:
+                firmware_type = firmware_type_banner_substrings[0]
         if firmware_type and firmware_type != self.info.firmware_type:
             logging_debug(
                 _("FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"), firmware_type, self.info.firmware_type

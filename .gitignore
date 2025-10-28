@@ -14,3 +14,7 @@ venv/
 .venv/
 test.txt
 test.xml
+
+sitl/arducopter
+sitl/firmware-version.txt
+sitl/git-version.txt
