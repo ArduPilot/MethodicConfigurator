@@ -19,6 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import argparse
+import os
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -519,6 +520,26 @@ def main() -> None:
     # Handle vehicle directory selection if no vehicle configuration files are present in the current working directory
     if not files:
         vehicle_directory_selection(state)
+
+    if (
+        state.flight_controller.fc_parameters
+        and state.flight_controller.info.flight_sw_version.startswith("4.6.")
+        and state.local_filesystem.doc_dict
+        and "FSTRATE_ENABLE" in state.local_filesystem.doc_dict
+    ):
+        show_error_message(
+            _("Incompatible parameter definition file detected"),
+            _(
+                "The parameter definition file 'apm.pdef.xml' is incompatible with ArduPilot 4.6.x firmware. "
+                "It appears to be from the master branch. The file will be deleted. "
+                "Please restart the ArduPilot Methodic Configurator."
+            ),
+        )
+        # delete apm.pdef.xml file as it is from master and not from 4.6.x
+        file_path = os.path.join(state.local_filesystem.vehicle_dir, "apm.pdef.xml")
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        sys_exit(1)
 
     # Run component editor workflow
     component_editor(state)
