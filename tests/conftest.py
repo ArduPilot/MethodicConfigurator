@@ -12,9 +12,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import contextlib
 import json
+import logging
 import os
+import signal
+import subprocess
+import time
 import tkinter as tk
 from collections.abc import Callable, Generator
+from pathlib import Path
 from typing import Any, NamedTuple, Optional
 from unittest.mock import patch
 
@@ -239,3 +244,147 @@ def test_config_manager(tmp_path) -> ConfigurationManager:
 
     # Create ConfigurationManager
     return ConfigurationManager("04_board_orientation.param", fc, filesystem)
+
+
+# ==================== SITL TESTING FIXTURES ====================
+
+
+class SITLManager:
+    """Manages ArduCopter SITL process lifecycle."""
+
+    def __init__(self, sitl_binary: Optional[str] = None) -> None:
+        self.sitl_binary = sitl_binary or os.environ.get("SITL_BINARY")
+        self.process: Optional[subprocess.Popen] = None
+        self.connection_string = "tcp:127.0.0.1:5760"
+
+    def is_available(self) -> bool:
+        """Check if SITL binary is available."""
+        return self.sitl_binary is not None and Path(self.sitl_binary).exists()
+
+    def start(self) -> bool:  # pylint: disable=too-many-return-statements # noqa: PLR0911
+        """Start SITL process."""
+        if not self.is_available():
+            return False
+
+        # Kill any existing SITL processes
+        self.stop()
+
+        if self.sitl_binary is None:
+            return False
+
+        # Validate SITL binary path for security
+        sitl_path = Path(self.sitl_binary)
+        if not sitl_path.exists():
+            logging.error("SITL binary does not exist: %s", self.sitl_binary)
+            return False
+        if not sitl_path.is_file():
+            logging.error("SITL binary is not a file: %s", self.sitl_binary)
+            return False
+        # Ensure the binary name looks reasonable (contains 'arducopter' or 'sitl')
+        if not any(keyword in sitl_path.name.lower() for keyword in ["arducopter", "sitl", "copter"]):
+            logging.warning("SITL binary name looks suspicious: %s", sitl_path.name)
+
+        cmd = [
+            self.sitl_binary,
+            "--model",
+            "quad",
+            "--home",
+            "40.071374,-105.229930,1440,0",  # Random location
+            "--defaults",
+            f"{Path(self.sitl_binary).parent}/copter.parm",
+            "--sysid",
+            "1",
+            "--speedup",
+            "10",  # Speed up simulation for testing
+        ]
+
+        try:
+            # pylint: disable=consider-using-with
+            self.process = subprocess.Popen(  # noqa: S603
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                start_new_session=True,  # Create new process group
+            )
+            # pylint: enable=consider-using-with
+
+            # Wait for SITL to initialize (just check if process is still running)
+            timeout = 10  # Reduced timeout since we don't need to wait for MAVLink
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                if self.process.poll() is not None:
+                    # Process died
+                    _, stderr = self.process.communicate()
+                    if stderr:
+                        logging.error("SITL process died: %s", stderr.decode())
+                    pytest.fail("SITL process died")
+                    return False
+                time.sleep(1)
+
+            # Don't test MAVLink connection here - let the test do that
+            return True
+
+        except (OSError, subprocess.SubprocessError, FileNotFoundError, PermissionError) as e:
+            logging.error("Failed to start SITL: %s", e)
+            pytest.fail(f"Failed to start SITL: {e}")
+            return False
+
+    def stop(self) -> None:
+        """Stop SITL process."""
+        if self.process:
+            try:
+                # Kill the entire process group
+                os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
+
+                # Wait for process to terminate
+                try:
+                    self.process.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    # Force kill if it doesn't terminate gracefully
+                    os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
+                    self.process.wait(timeout=5)
+
+            except (ProcessLookupError, OSError):
+                # Process already dead
+                pass
+            finally:
+                self.process = None
+
+
+@pytest.fixture(scope="session")
+def sitl_manager() -> Generator[SITLManager, None, None]:
+    """Provide SITL manager for the test session."""
+    manager = SITLManager()
+
+    if not manager.is_available():
+        pytest.skip("ArduCopter SITL binary not available")
+
+    yield manager
+
+    # Cleanup
+    manager.stop()
+
+
+@pytest.fixture
+def sitl_flight_controller(sitl_manager: SITLManager) -> Generator[FlightController, None, None]:  # pylint: disable=redefined-outer-name
+    """FlightController connected to SITL instance."""
+    # Start SITL for this test
+    if not sitl_manager.start():
+        pytest.fail("Could not start SITL")
+
+    # Give SITL more time to initialize
+    time.sleep(5)
+
+    # Create and connect flight controller
+    fc = FlightController(reboot_time=2, baudrate=115200)
+    result = fc.connect(device=sitl_manager.connection_string)
+
+    if result:  # Connection failed
+        sitl_manager.stop()
+        pytest.fail(f"Could not connect to SITL: {result}")
+
+    yield fc
+
+    # Cleanup
+    fc.disconnect()
+    sitl_manager.stop()
