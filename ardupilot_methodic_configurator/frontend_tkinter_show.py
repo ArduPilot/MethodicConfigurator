@@ -19,7 +19,7 @@ from ardupilot_methodic_configurator import _
 
 
 def show_error_message(title: str, message: str) -> None:
-    root = tk.Tk()
+    root = tk.Tk(className="ArduPilotMethodicConfigurator")
     # Set the theme to 'alt'
     style = ttk.Style()
     style.theme_use("alt")
@@ -29,7 +29,7 @@ def show_error_message(title: str, message: str) -> None:
 
 
 def show_warning_message(title: str, message: str) -> None:
-    root = tk.Tk()
+    root = tk.Tk(className="ArduPilotMethodicConfigurator")
     # Set the theme to 'alt'
     style = ttk.Style()
     style.theme_use("alt")

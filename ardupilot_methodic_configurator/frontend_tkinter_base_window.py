@@ -101,7 +101,7 @@ class BaseWindow:
         if root_tk:
             self.root = tk.Toplevel(root_tk)
         else:
-            self.root = tk.Tk()
+            self.root = tk.Tk(className="ArduPilotMethodicConfigurator")
             # Only set icon for main windows, and only outside test environments
             self._setup_application_icon()
 
