@@ -541,6 +541,17 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             message_label = tk.Label(dialog, text=msg, justify=tk.LEFT, padx=20, pady=10)
             message_label.pack(padx=10, pady=10)
 
+            # Clickable link to tuning guide
+            link_label = tk.Label(
+                dialog,
+                text=_("Open Tuning Guide relevant Section"),
+                fg="blue",
+                cursor="hand2",
+                font=("TkDefaultFont", 9, "underline"),
+            )
+            link_label.pack(pady=(0, 10))
+            link_label.bind("<Button-1>", lambda _e: self.configuration_manager.open_documentation_in_browser(selected_file))
+
             # Result variable
             result: list[Optional[Literal[True, False]]] = [None]
 
