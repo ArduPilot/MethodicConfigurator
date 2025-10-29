@@ -27,6 +27,7 @@ from webbrowser import open as webbrowser_open  # to open the blog post document
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeDesktop
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
@@ -207,6 +208,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # this one should be on top of the previous one hence the longer time
         if UsagePopupWindow.should_display("parameter_editor"):
             self.root.after(100, self.__display_usage_popup_window(self.root))  # type: ignore[arg-type]
+
+        # Set up startup notification for the main application window
+        FreeDesktop.setup_startup_notification(self.root)  # type: ignore[arg-type]
+
         self.root.mainloop()
 
     def __create_conf_widgets(self, version: str) -> None:

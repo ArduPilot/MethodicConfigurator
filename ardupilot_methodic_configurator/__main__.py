@@ -33,6 +33,7 @@ import argcomplete
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeDesktop
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import verify_and_open_url
@@ -136,10 +137,13 @@ def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[Flight
     flight_controller = FlightController(reboot_time=args.reboot_time, baudrate=args.baudrate)
 
     error_str = flight_controller.connect(args.device, log_errors=False)
+
     if error_str:
         if args.device and _("No serial ports found") not in error_str:
             logging_error(error_str)
         conn_sel_window = ConnectionSelectionWindow(flight_controller, error_str, default_baudrate=args.baudrate)
+        # Set up startup notification for the connection selection window
+        FreeDesktop.setup_startup_notification(conn_sel_window.root)  # type: ignore[arg-type]
         conn_sel_window.root.mainloop()
 
     vehicle_type = args.vehicle_type
@@ -210,6 +214,8 @@ def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleProject
             )
         )
     vehicle_dir_window = VehicleProjectOpenerWindow(state.vehicle_project_manager)
+    # Set up startup notification for the vehicle directory selection window
+    FreeDesktop.setup_startup_notification(vehicle_dir_window.root)  # type: ignore[arg-type]
     vehicle_dir_window.root.mainloop()
 
     if state.vehicle_project_manager.reset_fc_parameters_to_their_defaults:
@@ -342,6 +348,9 @@ def component_editor(state: ApplicationState) -> None:
         component_editor_window.root.after(10, component_editor_window.root.destroy)
     elif should_open_firmware_documentation(state.flight_controller):
         open_firmware_documentation(state.flight_controller.info.firmware_type)
+
+        # Set up startup notification for the component editor window
+        FreeDesktop.setup_startup_notification(component_editor_window.root)  # type: ignore[arg-type]
 
     # Run the GUI
     component_editor_window.root.mainloop()
@@ -499,7 +508,7 @@ def main() -> None:
     args = create_argument_parser().parse_args()
 
     # Create desktop icon if needed (only on first run in venv)
-    ProgramSettings.create_desktop_icon_if_needed()
+    FreeDesktop.create_desktop_icon_if_needed()
 
     state = ApplicationState(args)
 
