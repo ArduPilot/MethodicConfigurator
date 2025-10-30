@@ -63,3 +63,12 @@ ArduPilot Methodic Configurator adheres to multiple compliance standards and bes
 - Uses [gitleaks](https://github.com/gitleaks/gitleaks) pre-commit hook to ensure no secrets are leaked
 - Implements secure coding practices, runs [anti-virus in CI](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/gitavscan.yml)
 - Maintains [security policy and vulnerability reporting process](https://github.com/ArduPilot/MethodicConfigurator/blob/master/SECURITY.md)
+
+<!-- Gurubase Widget -->
+<script async src="https://widget.gurubase.io/widget.latest.min.js"
+    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
+    data-text="Ask AI"
+    data-margins='{"bottom": "1rem", "right": "1rem"}'
+    data-light-mode="true"
+    id="guru-widget-id">
+</script>
