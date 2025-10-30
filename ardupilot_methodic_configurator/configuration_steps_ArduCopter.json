@@ -214,7 +214,7 @@
             "wiki_text": "Follow the blog instructions and use Mission Planner instead of this tool to configure the mandatory hardware parameters.",
             "wiki_url": "",
             "external_tool_text": "Mission Planner",
-            "external_tool_url": "https://github.com/ArduPilot/MethodicConfigurator/blob/latest/TUNING_GUIDE_ArduCopter.md#212-configure-mandatory-hardware-parameters-17",
+            "external_tool_url": "https://ardupilot.org/copter/docs/configuring-hardware.html",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "Mission Planner. If you have not done this step in Mission Planner yet, close this application and use Mission Planner",
             "old_filenames": ["11_mp_setup_mandatory_hardware.param"]

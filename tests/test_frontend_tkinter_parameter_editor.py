@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 
@@ -245,7 +245,7 @@ class TestParameterEditorWindow:
     @patch("tkinter.Label")
     @patch("tkinter.Frame")
     @patch("tkinter.Button")
-    def test_dialog_creation(
+    def test_dialog_creation(  # pylint: disable=too-many-locals
         self,
         mock_button: MagicMock,
         mock_frame: MagicMock,
@@ -281,5 +281,42 @@ class TestParameterEditorWindow:
         mock_toplevel.assert_called_once()
 
         # Check for label, buttons, and frame creation
-        mock_label.assert_called_once()
+        assert mock_label.call_count == 2  # message label and link label
+        assert mock_button.call_count == 3  # Close, Yes, No buttons
         mock_frame.assert_called_once()
+
+        # Verify message label creation
+        message_label_call = mock_label.call_args_list[0]
+        assert message_label_call[1]["text"].startswith("This configuration step requires external changes by: External Tool")
+        assert message_label_call[1]["justify"] == "left"
+        assert message_label_call[1]["padx"] == 20
+        assert message_label_call[1]["pady"] == 10
+
+        # Verify link label creation
+        link_label_call = mock_label.call_args_list[1]
+        assert link_label_call[1]["text"] == "Click here to open the Tuning Guide relevant Section"
+        assert link_label_call[1]["fg"] == "blue"
+        assert link_label_call[1]["cursor"] == "hand2"
+        # Font should be a tuple with underline
+        font_arg = link_label_call[1]["font"]
+        assert isinstance(font_arg, tuple)
+        assert len(font_arg) == 3
+        assert font_arg[2] == "underline"
+
+        # Verify link label is packed and bound correctly
+        link_label_mock = mock_label.return_value
+        # Both labels call pack, so check that the link label's pack call was made
+        assert link_label_mock.pack.call_count == 2
+        link_label_mock.pack.assert_any_call(pady=(0, 10))  # link label pack call
+        link_label_mock.pack.assert_any_call(padx=10, pady=10)  # message label pack call
+        link_label_mock.bind.assert_called_once_with("<Button-1>", ANY)  # lambda function, so use ANY
+
+        # Verify buttons are created with correct text
+        button_calls = mock_button.call_args_list
+        assert button_calls[0][1]["text"] == "Close"
+        assert button_calls[1][1]["text"] == "Yes"
+        assert button_calls[2][1]["text"] == "No"
+
+        # Verify button frame is packed correctly
+        frame_mock = mock_frame.return_value
+        frame_mock.pack.assert_called_once_with(pady=10)
