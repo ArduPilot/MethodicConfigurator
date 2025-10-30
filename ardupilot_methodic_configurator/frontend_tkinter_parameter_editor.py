@@ -542,12 +542,13 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             message_label.pack(padx=10, pady=10)
 
             # Clickable link to tuning guide
+            safe_font_config = get_safe_font_config()
             link_label = tk.Label(
                 dialog,
-                text=_("Open Tuning Guide relevant Section"),
+                text=_("Click here to open the Tuning Guide relevant Section"),
                 fg="blue",
                 cursor="hand2",
-                font=("TkDefaultFont", 9, "underline"),
+                font=(str(safe_font_config["family"]), int(safe_font_config["size"]), "underline"),
             )
             link_label.pack(pady=(0, 10))
             link_label.bind("<Button-1>", lambda _e: self.configuration_manager.open_documentation_in_browser(selected_file))
