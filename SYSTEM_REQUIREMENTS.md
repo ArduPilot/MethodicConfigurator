@@ -149,3 +149,12 @@ To semi-automate the steps and processes on that guide the following *system des
     - These get updated and overwritten when a new SW version is installed
   - The user can extend that using his own locally saved component templates
     - These do not get overwritten when a new SW version is installed
+
+<!-- Gurubase Widget -->
+<script async src="https://widget.gurubase.io/widget.latest.min.js"
+    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
+    data-text="Ask AI"
+    data-margins='{"bottom": "1rem", "right": "1rem"}'
+    data-light-mode="true"
+    id="guru-widget-id">
+</script>
