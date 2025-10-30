@@ -577,6 +577,7 @@ jobs:
           } else {
             Write-Host "Release not found or failed to delete, continuing..."
           }
+          $LASTEXITCODE = 0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
