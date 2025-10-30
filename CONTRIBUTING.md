@@ -14,25 +14,93 @@ Possible ways you can help:
 * Reviewing [existing pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls), and notifying the maintainer if it passes your code review.
 * Finding and fixing [security issues](SECURITY.md)
 
-Get the code with:
+## Learning the Code
 
-```bash
-git clone https://github.com/ArduPilot/MethodicConfigurator.git
-cd MethodicConfigurator
-```
-
-and read [our architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html) to get a better understanding of the project.
+Read [our architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html) to get a better understanding of the project.
 
 and also:
 
 * [System requirements](https://ardupilot.github.io/MethodicConfigurator/SYSTEM_REQUIREMENTS.html)
 * [Compliance](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE.html)
 
+## Setting up developer environment
+
+The instructions below assume that you have already installed git and forked the [MethodicConfigurator](https://github.com/ArduPilot/MethodicConfigurator.git) github repository.
+
+Clone your fork and navigate into it:
+
+```bash
+git clone https://github.com/YOUR_USER_NAME/MethodicConfigurator.git
+cd MethodicConfigurator
+```
+
+Run the following helper scripts:
+
+On Windows:
+
+```cmd
+.\SetupDeveloperPC.bat
+.\install_msgfmt.bat
+.\install_wsl.bat
+```
+
+On Linux and MacOS:
+
+```bash
+./SetupDeveloperPC.sh
+```
+
+The above scripts will:
+
+* Configure Git and useful aliases
+* Install dependencies
+* Install recommended VSCode extensions
+* Set up pre-commit hooks for linting and formatting
+
+## Executing the code
+
+You can either install the Methodic Configurator as a package or run it locally from your development codebase.
+Installing the package will fetch the latest stable release version — see the [installation guide](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html) for details.
+
+To run it locally (from your cloned repository):
+
+On Windows:
+
+```cmd
+python3 -m ardupilot_methodic_configurator
+```
+
+On MacOS & Linux:
+
+```bash
+source venv/bin/activate
+
+python3 -m ardupilot_methodic_configurator
+```
+
+More detailed usage instructions can be found in our [user manual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL)
+
 ## Submitting patches
 
-Please see our [wiki article](https://ardupilot.org/dev/docs/submitting-patches-back-to-master.html).
+We encourage you to follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) style for your commit messages, as used in this repository.
 
-To contribute, you can send a [pull request on GitHub](https://github.com/ArduPilot/MethodicConfigurator/pulls).
+Each commit should be signed off using the `--signoff` option in `git commit`.
+By signing off your commit, you certify that you agree to the terms of the [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
+
+You can sign your commit by:
+
+```bash
+# Sign off a commit as you're making it
+git commit --signoff -m"commit message"
+
+# Add a signoff to the last commit you made
+git commit --amend --signoff
+
+# Rebase your branch against master and sign off every commit in your branch
+git rebase --signoff master
+```
+
+Once your changes are ready, submit a [Pull Request (PR)](https://github.com/ArduPilot/MethodicConfigurator/pulls) on GitHub.
 
 ## Development Team
 
