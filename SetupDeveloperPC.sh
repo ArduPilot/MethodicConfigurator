@@ -21,6 +21,17 @@ ORIGINAL_DIR=$(pwd)
 # Change to the directory where the script resides
 cd "$(dirname "$0")" || exit
 
+# Create a local virtual environment if it doesn't exist
+if [ ! -d ".venv" ]; then
+    echo "Creating Python virtual environment..."
+    python3 -m venv .venv
+fi
+
+# Activate the virtual environment
+echo "Activating virtual environment..."
+# shellcheck disable=SC1091
+source .venv/bin/activate
+
 InstallDependencies() {
     echo "Updating package lists..."
     if command -v apt-get &> /dev/null; then

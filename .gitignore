@@ -11,5 +11,6 @@ git_hash.txt
 
 /.coverage
 venv/
+.venv/
 test.txt
 test.xml
