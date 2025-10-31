@@ -20,7 +20,7 @@ Read [our architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITE
 and also:
 
 * [System requirements](https://ardupilot.github.io/MethodicConfigurator/SYSTEM_REQUIREMENTS.html)
-* [Compliance](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE.html)
+* [Compliance](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE.html), including our [Coding Standards](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE.html#coding-standards)
 
 ## Setting up developer environment
 

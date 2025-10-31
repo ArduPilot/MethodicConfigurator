@@ -48,7 +48,10 @@ We adhere to industry standards and best practices as documented in our
 
 - Secure coding practices
 - License compliance verification
-- Regular security audits
+- Regular security audits through [Snyk](https://snyk.io/), [Codacy](https://www.codacy.com/),
+  [Black Duck](https://www.blackduck.com/) and other tools
+- Uses [gitleaks](https://github.com/gitleaks/gitleaks) pre-commit hook to ensure no secrets are leaked
+- Implements [automated security scanning and vulnerability checks](https://app.snyk.io/org/amilcarlucas/project/c8fd6e29-715b-4949-b828-64eff84f5fe1)
 - Open-source security guidelines
 
 ### What Users Can Expect
