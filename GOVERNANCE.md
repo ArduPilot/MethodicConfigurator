@@ -14,12 +14,12 @@ regarding the project's direction, code changes, and dispute resolution.
 **Responsibilities**:
 
 - Make final decisions on all project aspects including code changes, feature priorities,
-  release schedules, and community policies
-- Review and merge pull requests
+  [release schedules](https://ardupilot.github.io/MethodicConfigurator/ROADMAP), and [community policies](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CODE_OF_CONDUCT.md)
+- Review and merge [pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls)
 - Maintain project infrastructure and security
 - Resolve disputes and conflicts within the project
-- Set project vision and roadmap
-- Ensure compliance with licensing and legal requirements
+- Set [project vision and roadmap](https://ardupilot.github.io/MethodicConfigurator/ROADMAP)
+- Ensure [compliance](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE) with licensing and legal requirements
 - Represent the project in external communications
 
 ### Contributors
@@ -32,7 +32,7 @@ regarding the project's direction, code changes, and dispute resolution.
 - Submit well-tested and documented code changes via [GitHub pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls)
 - Participate in code reviews when requested
 - Respect [community guidelines](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CODE_OF_CONDUCT.md) and maintain professional conduct
-- Keep contributions aligned with project goals and [standards](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE)
+- Keep contributions aligned with [project goals](https://ardupilot.github.io/MethodicConfigurator/ROADMAP) and [standards](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE)
 - Respond to feedback on their contributions
 
 ### Community Members
