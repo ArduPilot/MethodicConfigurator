@@ -9,7 +9,8 @@ ArduPilot Methodic Configurator adheres to multiple compliance standards and bes
 - Relevant documentation opens automatically in a browser window
 - Uses *What you see is what gets changed* paradigm. No parameters are changed without the users's knowledge
 - Translated into multiple languages
-- No visible menus, no hidden menus.
+- No visible menus, no hidden menus
+- Keyboard-only navigation possible
 
 ## Coding Standards
 

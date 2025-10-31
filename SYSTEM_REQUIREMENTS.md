@@ -128,7 +128,7 @@ To semi-automate the steps and processes on that guide the following *system des
   - [Test-driven development](https://en.wikipedia.org/wiki/Test-driven_development) (TDD)
   - [DevOps](https://en.wikipedia.org/wiki/DevOps)
   - [CI/CD automation](https://en.wikipedia.org/wiki/CI/CD)
-  - git pre-commit hooks for code linting and other code quality checks
+  - [git pre-commit hooks](https://github.com/ArduPilot/MethodicConfigurator/blob/master/.pre-commit-config.yaml) for code linting and other code quality checks
   - create command-line autocompletion for bash, zsh and powershell [PR #134](https://github.com/ArduPilot/MethodicConfigurator/pull/134)
 
 ## 9. Vehicle components and connections
