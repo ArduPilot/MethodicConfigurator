@@ -91,3 +91,4 @@ These books helped shape this software:
 - [Clean Architecture by Robert C. Martin](https://www.oreilly.com/library/view/clean-architecture/9780134494272/)
 - [Modern Software Engineering by David Farley](https://www.oreilly.com/library/view/modern-software-engineering/9780137314942/)
 - [The DevOps Handbook by Gene Kim, Patrick Debois, John Willis, and Jez Humble](https://www.oreilly.com/library/view/the-devsecops-handbook/9781098182281/)
+- [Fundamentals of Software Architecture by Mark Richards, Neal Ford](https://www.oreilly.com/library/view/fundamentals-of-software/9781492043447/)

@@ -54,7 +54,7 @@ We need contributors to help realize this roadmap! Here's how you can get involv
 
 ### Getting Started
 
-1. Review our [Contributing Guide](CONTRIBUTING.md)
+1. Review our [Contributing Guide](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md)
 2. Check existing [GitHub Issues](https://github.com/ArduPilot/MethodicConfigurator/issues)
    for related tasks
 3. Submit [Pull Requests](https://github.com/ArduPilot/MethodicConfigurator/pulls)
