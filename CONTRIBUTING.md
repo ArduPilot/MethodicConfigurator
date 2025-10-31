@@ -2,7 +2,6 @@
 
 <!-- markdownlint-disable MD025 -->
 
-If you are reading this page, you are possibly interested in contributing to our project.
 We have a very active (and friendly) developer group and would love to have the help!
 Possible ways you can help:
 
