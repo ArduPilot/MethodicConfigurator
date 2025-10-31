@@ -102,11 +102,84 @@ git rebase --signoff master
 
 Once your changes are ready, submit a [GitHub Pull Request (PR)](https://github.com/ArduPilot/MethodicConfigurator/pulls).
 
+## Code review process
+
+Once your pull request is submitted, a thorough code review process will begin.
+We evaluate contributions based on multiple criteria to ensure quality, security, and maintainability.
+The review includes both automated checks and manual inspection.
+
+### Review Process
+
+1. **Initial Automated Review**: CI checks must pass before manual review begins
+2. **Peer Review**: At least one maintainer reviews the code, adding comments and suggestion to the github pull request webpage
+3. **Feedback & Iteration**: Contributors address review comments and update the PR
+4. **Final Approval**: Maintainers approve and merge the changes
+5. **Post-Merge**: Automated deployment and monitoring ensure stability
+
+### Automated Checks
+
+* **CI/CD Workflows**: All changes are automatically tested against our
+  [code quality guidelines](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE.html#coding-standards)
+  and [security requirements](https://ardupilot.github.io/MethodicConfigurator/SECURITY)
+* **Linting and Formatting**: Code must pass [Ruff](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/ruff.yml),
+  [Pylint](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pylint.yml), and other quality checks
+* **Type Checking**: [MyPy](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/mypy.yml) and
+  [Pyright](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pyright.yml) validation
+* **Security Scanning**: Automated vulnerability detection via [CodeQL](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/codeql.yml) and dependency reviews
+* **Testing**: Comprehensive test suite execution with [pytest](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pytest.yml)
+
+### Manual Review Criteria
+
+We manually verify the following aspects:
+
+#### Code Quality & Standards
+
+* Does the code follow our [coding standards](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE#coding-standards)
+  and [PEP 8](https://peps.python.org/pep-0008/) guidelines?
+* Is the code well-documented with appropriate docstrings and comments?
+* Does it include comprehensive error handling and logging?
+* Are there any code smells, technical debt, or maintainability issues?
+* Do the [git commit messages follow conventional commit standards](https://www.conventionalcommits.org/en/v1.0.0/)?
+* Is at least the last commit in the pull request branch [signed off](https://developercertificate.org/) by the contributor?
+* Does the pull request have a clear description of the changes and their rationale?
+* Is the pull request branch free of merge commits?
+
+#### Architecture & Design
+
+* Does the change follow our [architecture guidelines](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ARCHITECTURE.md)?
+* Is there proper separation of concerns (backend, business logic, frontend/GUI)?
+* Is the code modular, testable, and maintainable?
+* Does it follow object-oriented design principles and [clean code practices](https://www.oreilly.com/library/view/clean-code/9780136083238/)?
+
+#### Functionality & Testing
+
+* Is it generic enough to be useful for multiple use cases?
+* Does the change include appropriate unit tests and integration tests?
+* Are edge cases and error conditions properly tested?
+* Does it maintain or improve [test coverage](https://coveralls.io/github/ArduPilot/MethodicConfigurator)?
+* Have manual testing scenarios been considered?
+
+#### Security & Compliance
+
+* Does the change follow [secure coding practices](https://ardupilot.github.io/MethodicConfigurator/SECURITY)?
+* Does it comply with our [license requirements](https://github.com/ArduPilot/MethodicConfigurator/blob/master/LICENSE.md) and [REUSE specification](https://reuse.software/spec-3.3/)?
+
+#### User Experience & Documentation
+
+* Does the change maintain or improve usability?
+* Is user-facing documentation updated (including translations)?
+* Are there any breaking changes that need documentation?
+* New strings must be properly internationalized with `_( ... )`
+
+#### Community & Process
+
+* Does the change violate our [code of conduct](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CODE_OF_CONDUCT.md)?
+
 ## Development Team
 
 The ArduPilot Methodic Configurator project is open-source and maintained by a team of volunteers.
 
-New developers are recommended to join the `#general` channel on
+New developers are recommended to join the `#general` and `#methodic_configurator` channels on
 [Discord](https://ardupilot.org/discord).
 
 You can also join the
@@ -114,12 +187,3 @@ You can also join the
 
 Note that these are NOT for user tech support, and are moderated
 for new users to prevent off-topic discussion.
-
-<!-- Gurubase Widget -->
-<script async src="https://widget.gurubase.io/widget.latest.min.js"
-    data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
-    data-text="Ask AI"
-    data-margins='{"bottom": "1rem", "right": "1rem"}'
-    data-light-mode="true"
-    id="guru-widget-id">
-</script>
