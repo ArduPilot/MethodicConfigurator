@@ -114,21 +114,22 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             if isinstance(protocol_combobox, PairTupleCombobox):
                 # Rebuild the (key, display) pairs for PairTupleCombobox
                 protocol_tuples = [(p, p) for p in protocols]
-                # Update the combobox entries using set_entries_tuple
+                # Get current selection and validate it against new protocols
                 current_selection = protocol_combobox.get_selected_key()
-                protocol_combobox.set_entries_tuple(protocol_tuples, current_selection)
-
-                # Validate the current selection
-                selected_protocol = protocol_combobox.get_selected_key() or ""
-                if selected_protocol and selected_protocol not in protocol_combobox.list_keys:
-                    # Clear the selection when current key is no longer allowed
-                    protocol_combobox.set_entries_tuple(protocol_tuples, None)
-                    _component: str = " > ".join(protocol_path)
+                if current_selection and current_selection not in protocols:
+                    # Current selection is not valid for new protocols, clear it
+                    invalid_selection = current_selection
+                    current_selection = None
+                    component: str = " > ".join(protocol_path)
                     err_msg = _(
-                        "On {_component} the selected\nprotocol '{selected_protocol}' "
+                        "On {component} the selected\nprotocol '{invalid_selection}' "
                         "is not available for the selected connection Type."
                     )
-                    err_msg = err_msg.format(**locals())
+                    err_msg = err_msg.format(component=component, invalid_selection=invalid_selection)
+
+                # Update the combobox entries using set_entries_tuple with validated selection
+                protocol_combobox.set_entries_tuple(protocol_tuples, current_selection)
+
                 if err_msg:
                     show_error_message(_("Error"), err_msg)
                     protocol_combobox.configure(style="comb_input_invalid.TCombobox")

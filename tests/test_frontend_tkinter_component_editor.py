@@ -209,7 +209,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         # Should update values and not show error
         expected_tuples = [(p, p) for p in protocols]
         mock_combobox.set_entries_tuple.assert_called_once_with(expected_tuples, "PWM")
-        assert mock_combobox.get_selected_key.call_count == 2  # Called once to get current, once to validate
+        assert mock_combobox.get_selected_key.call_count == 1  # Called once to get current selection for validation
         assert result == ""
 
     def test_update_protocol_combobox_entries_invalid_selection(self, editor_with_mocked_root: ComponentEditorWindow) -> None:
@@ -226,12 +226,10 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         with patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor.show_error_message") as mock_error:
             result = editor_with_mocked_root.update_protocol_combobox_entries(protocols, protocol_path)
 
-            # Should set empty string and show error
+            # Should set None (cleared selection) and show error
             expected_tuples = [(p, p) for p in protocols]
-            # First call with current selection, second call with None to clear invalid selection
-            assert mock_combobox.set_entries_tuple.call_count == 2
-            mock_combobox.set_entries_tuple.assert_any_call(expected_tuples, "INVALID_PROTOCOL")
-            mock_combobox.set_entries_tuple.assert_any_call(expected_tuples, None)
+            # Only one call with None to clear invalid selection
+            mock_combobox.set_entries_tuple.assert_called_once_with(expected_tuples, None)
             mock_combobox.configure.assert_called_once_with(style="comb_input_invalid.TCombobox")
             mock_error.assert_called_once()
             assert "not available" in result
@@ -251,9 +249,8 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
             result = editor_with_mocked_root.update_protocol_combobox_entries(protocols, protocol_path)
 
             # Should set empty protocol and show error
-            assert mock_combobox.set_entries_tuple.call_count == 2
-            mock_combobox.set_entries_tuple.assert_any_call([], "PWM")
-            mock_combobox.set_entries_tuple.assert_any_call([], None)
+            # Only one call with None to clear invalid selection
+            mock_combobox.set_entries_tuple.assert_called_once_with([], None)
             mock_error.assert_called_once()
             assert "not available" in result
 
@@ -685,8 +682,8 @@ class TestConnectionTypeProtocolChanges:
 
             # THEN: Protocol combobox is updated with new options
             mock_protocol_combobox.set_entries_tuple.assert_called()
-            # First call preserves current selection, second call clears invalid selection
-            assert mock_protocol_combobox.set_entries_tuple.call_count == 2
+            # Only one call with None to clear invalid selection
+            assert mock_protocol_combobox.set_entries_tuple.call_count == 1
 
             # AND: Error message is shown for invalid protocol
             mock_show_error.assert_called_once()
