@@ -1,0 +1,60 @@
+640:Warten auf MAVLink-Heartbeats...
+645:Erkanntes Fahrzeug %u:%u (autopilot=%u, type=%u)
+676:Keine unterstützten Autopiloten gefunden
+1292:Parameter kopiert
+1297:FC-Werte wurden in {selected_file} kopiert
+1636:Fehler beim Anwenden des abgeleiteten Parameters %s: %s
+1641:Abgeleiteter Parameter %s nicht in aktuellen Parametern gefunden, überspringen
+2957:ExpressLRS erfordert FLTMODE_CH != 5
+2961:ExpressLRS erfordert RC5 für das Scharfstellen (Arm/Disarm-Funktion)
+3142:Verwende acc und gyro Batch-Logging auf F4-Prozessoren oder großen Propellern, gyro raw-Logging auf anderen
+3156:Verwende pre und post Filter acc und gyro Batch-Logging auf F4-Prozessoren oder großen Propellern, pre-post gyro raw-Logging auf anderen
+3444:Diese Methode ist nur für erzwungene oder abgeleitete Parameter.
+3449:Schreibgeschützte Parameter können nicht erzwungen oder abgeleitet werden.
+3458:ExpressLRS-Konfigurationswarnung
+3465:FLTMODE_CH muss auf einen anderen Kanal als 5 gesetzt werden (aktuell auf 5 gesetzt).\nBitte ändern Sie FLTMODE_CH auf einen anderen Kanal (z.B. 6, 7, 8, etc.)\num Konflikte mit dem erforderlichen RC5-Scharfstellkanal zu vermeiden.
+3878:Fehlender Parameter-Wert-Trennzeichen: {line} in {param_file} Zeile {i}
+3883:Fataler Fehler beim Lesen von {param_file}, Datei muss UTF-8-kodiert sein: {exp}
+3888:Parametername zu lang: {parameter_name} in {param_file} Zeile {i}
+3895:Ungültige Zeichen im Parameternamen {parameter_name} in {param_file} Zeile {i}
+3900:Duplizierter Parameter {parameter_name} in {param_file} Zeile {i}
+3905:Ungültiger Parameterwert {value} in {param_file} Zeile {i}
+3910:Verursacht durch Zeile {i} der Datei {param_file}: {original_line}
+3915:FEHLER: Nicht unterstütztes Dateiformat {file_format}
+3922:\n{name} hat {len_formatted_params} Parameter:
+3929:\n{name}-Liste ist lang, Enter drücken um fortzufahren
+5158:Frame-Konfiguration konnte nicht vom Flugcontroller aktualisiert werden, verwende Standardeinstellungen
+5162:Sicherheitswarnungen
+5166:PROPELLER MÜSSEN ENTFERNT WERDEN bevor fortgefahren wird!
+5170:Stellen Sie sicher, dass das Fahrzeug ordnungsgemäß gesichert ist und sich nicht bewegen kann.
+5174:1. Frame-Konfiguration
+5178:Frame-Typ:
+5183:Diagramm wird geladen...
+5187:2. Motor-Reihenfolge/Richtungs-Konfiguration
+5191:Gas:
+5195:Dauer:
+5199:Alle testen
+5203:In Reihenfolge testen
+5207:Alle Motoren stoppen
+5211:3. Scharfstellen und Min-Gas-Konfiguration
+5216:Motor-Drehzahl Scharfstellen setzen
+5221:Motor-Drehzahl Min setzen
+5226:Motor %(label)s testen
+5231:Motor %(num)d %(dir)s
+5235:Erkannt:
+5243:Bereit
+5247:Motor-Raster-Frame konnte nicht gefunden werden
+5251:Test-Frame konnte nicht gefunden werden
+5256:PNG-Diagramm gefunden bei: %(path)s
+5261:Fehler beim Laden des Diagramms
+5265:Bild erfolgreich geladen und angezeigt
+5269:Diagramm nicht gefunden
+5274:Fehler beim Laden des PNG-Diagramms: %(error)s
+5279:Diagramm-Pfad-Typ: %(type)s, Wert: %(path)s
+5284:Diagramm: %(path)s
+5288:Motor-Diagramm nicht verfügbar.
+5292:Kein Frame-Typ ausgewählt
+5297:Frame-Typ geändert: %(code)s (%(name)s)
+5315:Wiederverbindung zum Flugcontroller
+5319:Parameter-Aktualisierungsfehler
+5324:_on_throttle_change aufgerufen mit Wert: %(val)s

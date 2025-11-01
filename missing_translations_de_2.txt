@@ -1,0 +1,38 @@
+5329:Gas gesetzt auf %(pct)d%%
+5334:ValueError in _on_throttle_change: %(error)s
+5339:Gas-Wert-Fehler
+5344:Ungültiger Gas-Wert eingegeben, zurückgesetzt auf %(pct)d%%
+5349:ValidationError/ParameterError in _on_throttle_change: %(error)s
+5354:Gas-Validierung fehlgeschlagen: %(error)s
+5359:_on_duration_change aufgerufen mit Wert: %(val)s
+5364:Dauer gesetzt auf %(dur)g Sekunden
+5369:ValueError in _on_duration_change: %(error)s
+5374:Dauer-Wert-Fehler
+5379:Ungültiger Dauer-Wert eingegeben, zurückgesetzt auf %(dur)g Sekunden
+5384:ValidationError/ParameterError in _on_duration_change: %(error)s
+5389:Dauer-Validierung fehlgeschlagen: %(error)s
+5393:Neuen Wert für MOT_SPIN_ARM mit 0.02 Spielraum eingeben:
+5399:Neuen Wert für MOT_SPIN_MIN eingeben, muss mindestens 0.02 höher als MOT_SPIN_ARM sein:
+5404:Motor %(seq)s wird an Motor-Ausgang %(num)d getestet
+5410:Sicherheitsbestätigung
+5416:Befehl gesendet
+5420:Batteriespannungs-Warnung
+5427:Sicherheitsprüfung fehlgeschlagen
+5433:Parameter-Validierungsfehler
+5437:Ungültige Parameter
+5441:Test fehlgeschlagen
+5448:Unerwarteter Fehler
+5452:Alle Motoren werden getestet
+5456:Motoren werden in Reihenfolge getestet
+5460:Alle Motoren werden gestoppt
+5464:Stopp gesendet
+5468:ArduPilot Motor-Test
+5474:Motor-Stopp-Befehl während des Herunterfahrens fehlgeschlagen - dies ist normal für einige Frame-Typen
+5479:Unerwarteter Fehler beim Motor-Stopp während des Herunterfahrens: %(error)s
+5485:Diese main ist nur für Tests und Entwicklung. Normalerweise wird MotorTestView von einem anderen Skript aufgerufen
+5491:Diese main ist nur für Tests und Entwicklung, normalerweise wird MotorTestView von einem anderen Skript aufgerufen
+5892:Klicken Sie hier, um den relevanten Abschnitt des Tuning-Leitfadens zu öffnen
+6122:Parameter zur Datei {self.configuration_manager.current_file} hinzufügen
+6133:{param_name} aus der Datei {self.configuration_manager.current_file} löschen
+7108:Inkompatible Parameter-Definitionsdatei erkannt
+7115:Die Parameter-Definitionsdatei 'apm.pdef.xml' ist inkompatibel mit ArduPilot 4.6.x Firmware. Sie scheint vom master-Branch zu stammen. Die Datei wird gelöscht. Bitte starten Sie den ArduPilot Methodic Configurator neu.

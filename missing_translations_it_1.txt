@@ -1,0 +1,60 @@
+640:In attesa di heartbeat MAVLink...
+645:Veicolo rilevato %u:%u (autopilot=%u, type=%u)
+675:Nessun autopilota supportato trovato
+1301:Parametri copiati
+1306:I valori FC sono stati copiati in {selected_file}
+1641:Impossibile applicare il parametro derivato %s: %s
+1646:Parametro derivato %s non trovato nei parametri attuali, saltando
+2968:ExpressLRS richiede FLTMODE_CH != 5
+2972:ExpressLRS richiede RC5 per essere utilizzato per l'armamento (funzione Arm/Disarm)
+3156:Usa registrazione batch acc e gyro sui processori F4 o eliche grandi, registrazione gyro raw sugli altri
+3170:Usa filtri pre e post registrazione batch acc e gyro sui processori F4 o eliche grandi, registrazione pre-post gyro raw sugli altri
+3460:Questo metodo è solo per parametri forzati o derivati.
+3465:I parametri di sola lettura non possono essere forzati o derivati.
+3474:Avviso Configurazione ExpressLRS
+3481:FLTMODE_CH deve essere impostato su un canale diverso da 5 (attualmente impostato su 5).\nSi prega di cambiare FLTMODE_CH su un canale diverso (ad es. 6, 7, 8, ecc.)\nper evitare conflitti con il canale di armamento RC5 richiesto.
+3914:Separatore valore parametro mancante: {line} in {param_file} riga {i}
+3919:Errore fatale leggendo {param_file}, il file deve essere codificato UTF-8: {exp}
+3924:Nome parametro troppo lungo: {parameter_name} in {param_file} riga {i}
+3931:Caratteri non validi nel nome parametro {parameter_name} in {param_file} riga {i}
+3936:Parametro duplicato {parameter_name} in {param_file} riga {i}
+3941:Valore parametro non valido {value} in {param_file} riga {i}
+3946:Causato dalla riga {i} del file {param_file}: {original_line}
+3951:ERRORE: Formato file non supportato {file_format}
+3958:\n{name} ha {len_formatted_params} parametri:
+3965:\nLista {name} è lunga premi invio per continuare
+5186:Impossibile aggiornare la configurazione frame dal controllore di volo, usando valori predefiniti
+5190:Avvisi di Sicurezza
+5194:LE ELICHE DEVONO ESSERE RIMOSSE prima di procedere!
+5198:Assicurati che il veicolo sia adeguatamente fissato e non possa muoversi.
+5202:1. Configurazione Frame
+5206:Tipo Frame:
+5211:Caricamento diagramma...
+5215:2. Configurazione Ordine/Direzione Motori
+5219:Acceleratore:
+5223:Durata:
+5227:Testa Tutto
+5231:Testa in Sequenza
+5235:Ferma Tutti i Motori
+5239:3. Configurazione Arm e Acceleratore Min
+5244:Imposta Rotazione Arm Motore
+5249:Imposta Rotazione Min Motore
+5254:Testa Motore %(label)s
+5259:Motore %(num)d %(dir)s
+5263:Rilevato:
+5271:Pronto
+5275:Impossibile trovare frame griglia motori
+5279:Impossibile trovare frame di test
+5284:Trovato diagramma PNG a: %(path)s
+5289:Errore caricamento diagramma
+5293:Immagine caricata e visualizzata con successo
+5297:Diagramma non trovato
+5302:Errore caricamento diagramma PNG: %(error)s
+5307:Tipo percorso diagramma: %(type)s, valore: %(path)s
+5312:Diagramma: %(path)s
+5316:Diagramma motore non disponibile.
+5320:Nessun tipo frame selezionato
+5325:Tipo frame cambiato: %(code)s (%(name)s)
+5343:Ri-Connessione al Controllore di Volo
+5347:Errore Aggiornamento Parametro
+5352:_on_throttle_change chiamato con valore: %(val)s

@@ -1,0 +1,38 @@
+4918:油门设置为 %(pct)d%%
+4923:_on_throttle_change 中 ValueError: %(error)s
+4928:油门值错误
+4933:输入无效油门值，重置为 %(pct)d%%
+4938:_on_throttle_change 中 ValidationError/ParameterError: %(error)s
+4943:油门验证失败: %(error)s
+4948:_on_duration_change 以值调用: %(val)s
+4953:持续时间设置为 %(dur)g 秒
+4958:_on_duration_change 中 ValueError: %(error)s
+4963:持续时间值错误
+4968:输入无效持续时间值，重置为 %(dur)g 秒
+4973:_on_duration_change 中 ValidationError/ParameterError: %(error)s
+4978:持续时间验证失败: %(error)s
+4982:输入MOT_SPIN_ARM的新值，0.02边距:
+4988:输入MOT_SPIN_MIN的新值，必须至少比MOT_SPIN_ARM高0.02:
+4993:正在测试电机 %(seq)s 在电机输出 %(num)d
+4999:安全确认
+5005:命令已发送
+5009:电池电压警告
+5016:安全检查失败
+5022:参数验证错误
+5026:无效参数
+5030:测试失败
+5037:意外错误
+5041:正在测试所有电机
+5045:正在顺序测试电机
+5049:正在停止所有电机
+5053:停止已发送
+5057:ArduPilot电机测试
+5063:关机期间电机停止命令失败 - 这对某些框架类型是正常的
+5068:关机期间电机停止意外错误: %(error)s
+5074:此main仅用于测试和开发。通常，MotorTestView从另一个脚本调用
+5080:此main仅用于测试和开发，通常MotorTestView从另一个脚本调用
+5465:点击此处打开调谐指南相关章节
+5679:向 {self.configuration_manager.current_file} 文件添加参数
+5690:从 {self.configuration_manager.current_file} 文件删除 {param_name}
+6614:检测到不兼容的参数定义文件
+6621:参数定义文件 'apm.pdef.xml' 与 ArduPilot 4.6.x 固件不兼容。它似乎来自master分支。该文件将被删除。请重新启动 ArduPilot Methodic Configurator。

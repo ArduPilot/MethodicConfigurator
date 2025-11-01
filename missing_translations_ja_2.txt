@@ -1,0 +1,38 @@
+5151:スロットルを %(pct)d%% に設定
+5156:_on_throttle_change で ValueError: %(error)s
+5161:スロットル値エラー
+5166:無効なスロットル値が入力されました、%(pct)d%% にリセット
+5171:_on_throttle_change で ValidationError/ParameterError: %(error)s
+5176:スロットル検証失敗: %(error)s
+5181:_on_duration_change が値で呼び出されました: %(val)s
+5186:持続時間を %(dur)g 秒に設定
+5191:_on_duration_change で ValueError: %(error)s
+5196:持続時間値エラー
+5201:無効な持続時間値が入力されました、%(dur)g 秒にリセット
+5206:_on_duration_change で ValidationError/ParameterError: %(error)s
+5211:持続時間検証失敗: %(error)s
+5215:MOT_SPIN_ARM の新しい値を0.02マージンで入力:
+5221:MOT_SPIN_MIN の新しい値を入力、MOT_SPIN_ARM より少なくとも0.02高くする必要があります:
+5226:モータ %(seq)s をモータ出力 %(num)d でテスト中
+5232:安全確認
+5238:コマンド送信済み
+5242:バッテリー電圧警告
+5249:安全チェック失敗
+5255:パラメータ検証エラー
+5259:無効なパラメータ
+5263:テスト失敗
+5270:予期しないエラー
+5274:すべてのモータをテスト中
+5278:モータを順次テスト中
+5282:すべてのモータを停止中
+5286:停止送信済み
+5290:ArduPilot モータテスト
+5296:シャットダウン中のモータ停止コマンドが失敗 - これは一部のフレームタイプで正常です
+5301:シャットダウン中のモータ停止で予期しないエラー: %(error)s
+5307:このmainはテストと開発専用です。通常、MotorTestViewは別のスクリプトから呼び出されます
+5313:このmainはテストと開発専用です、通常MotorTestViewは別のスクリプトから呼び出されます
+5706:チューニングガイドの関連セクションを開くにはここをクリック
+5927:{self.configuration_manager.current_file} ファイルにパラメータを追加
+5938:{self.configuration_manager.current_file} ファイルから {param_name} を削除
+6885:互換性のないパラメータ定義ファイルが検出されました
+6892:パラメータ定義ファイル 'apm.pdef.xml' は ArduPilot 4.6.x ファームウェアと互換性がありません。masterブランチからのようです。ファイルは削除されます。ArduPilot Methodic Configurator を再起動してください。

@@ -1,0 +1,38 @@
+5309:Acelerador definido para %(pct)d%%
+5314:ValueError em _on_throttle_change: %(error)s
+5319:Erro de valor do acelerador
+5324:Valor de acelerador inválido introduzido, reposto para %(pct)d%%
+5329:ValidationError/ParameterError em _on_throttle_change: %(error)s
+5334:Validação do acelerador falhou: %(error)s
+5339:_on_duration_change chamado com valor: %(val)s
+5344:Duração definida para %(dur)g segundos
+5349:ValueError em _on_duration_change: %(error)s
+5354:Erro de valor da duração
+5359:Valor de duração inválido introduzido, reposto para %(dur)g segundos
+5364:ValidationError/ParameterError em _on_duration_change: %(error)s
+5369:Validação da duração falhou: %(error)s
+5373:Introduza novo valor para MOT_SPIN_ARM com margem 0.02:
+5379:Introduza novo valor para MOT_SPIN_MIN, deve ser pelo menos 0.02 superior a MOT_SPIN_ARM:
+5384:A testar motor %(seq)s na saída de motor %(num)d
+5390:Confirmação de Segurança
+5396:Comando enviado
+5400:Aviso de Tensão da Bateria
+5407:Verificação de Segurança Falhou
+5413:Erro de Validação de Parâmetro
+5417:Parâmetros Inválidos
+5421:Teste Falhou
+5428:Erro Inesperado
+5432:A testar todos os motores
+5436:A testar motores em sequência
+5440:A parar todos os motores
+5444:Paragem enviada
+5448:Teste de Motor ArduPilot
+5454:Comando de paragem de motor falhou durante encerramento - isto é normal para alguns tipos de frame
+5459:Erro inesperado durante paragem de motor no encerramento: %(error)s
+5465:Este main é apenas para teste e desenvolvimento. Normalmente, o MotorTestView é chamado de outro script
+5471:Este main é apenas para teste e desenvolvimento, normalmente o MotorTestView é chamado de outro script
+5867:Clique aqui para abrir a Secção relevante do Guia de Afinação
+6092:Adicionar um parâmetro ao ficheiro {self.configuration_manager.current_file}
+6103:Eliminar {param_name} do ficheiro {self.configuration_manager.current_file}
+7076:Ficheiro de definição de parâmetro incompatível detetado
+7083:O ficheiro de definição de parâmetro 'apm.pdef.xml' é incompatível com firmware ArduPilot 4.6.x. Parece ser do ramo master. O ficheiro será eliminado. Por favor reinicie o ArduPilot Methodic Configurator.

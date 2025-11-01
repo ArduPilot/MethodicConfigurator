@@ -1,0 +1,38 @@
+5357:Acceleratore impostato al %(pct)d%%
+5362:ValueError in _on_throttle_change: %(error)s
+5367:Errore valore acceleratore
+5372:Valore acceleratore non valido inserito, ripristinato al %(pct)d%%
+5377:ValidationError/ParameterError in _on_throttle_change: %(error)s
+5382:Validazione acceleratore fallita: %(error)s
+5387:_on_duration_change chiamato con valore: %(val)s
+5392:Durata impostata a %(dur)g secondi
+5397:ValueError in _on_duration_change: %(error)s
+5402:Errore valore durata
+5407:Valore durata non valido inserito, ripristinato a %(dur)g secondi
+5412:ValidationError/ParameterError in _on_duration_change: %(error)s
+5417:Validazione durata fallita: %(error)s
+5421:Inserisci nuovo valore per MOT_SPIN_ARM con margine 0.02:
+5427:Inserisci nuovo valore per MOT_SPIN_MIN, deve essere almeno 0.02 superiore a MOT_SPIN_ARM:
+5432:Testando motore %(seq)s all'uscita motore %(num)d
+5438:Conferma Sicurezza
+5444:Comando inviato
+5448:Avviso Tensione Batteria
+5455:Controllo Sicurezza Fallito
+5461:Errore Validazione Parametro
+5465:Parametri Non Validi
+5469:Test Fallito
+5476:Errore Inaspettato
+5480:Testando tutti i motori
+5484:Testando motori in sequenza
+5488:Fermando tutti i motori
+5492:Ferma inviato
+5496:Test Motore ArduPilot
+5502:Comando fermata motore fallito durante lo spegnimento - questo è normale per alcuni tipi di frame
+5507:Errore inaspettato durante fermata motore allo spegnimento: %(error)s
+5513:Questo main è solo per test e sviluppo. Di solito, MotorTestView viene chiamato da un altro script
+5519:Questo main è solo per test e sviluppo, di solito MotorTestView viene chiamato da un altro script
+5920:Clicca qui per aprire la Sezione rilevante della Guida di Regolazione
+6147:Aggiungi un parametro al file {self.configuration_manager.current_file}
+6158:Elimina {param_name} dal file {self.configuration_manager.current_file}
+7136:Rilevato file definizione parametro incompatibile
+7143:Il file definizione parametro 'apm.pdef.xml' è incompatibile con firmware ArduPilot 4.6.x. Sembra provenire dal ramo master. Il file verrà eliminato. Si prega di riavviare ArduPilot Methodic Configurator.
