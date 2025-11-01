@@ -45,14 +45,14 @@ def extract_strings(directory: str, output_dir: str) -> None:
 
     # Construct the command
     output_pot = os.path.join(output_dir, "ardupilot_methodic_configurator.pot")
-    cmd = ["pygettext3", "--keyword=_", f"--output={output_pot}"]
+    cmd = ["xgettext", "--language=Python", "--keyword=_", f"--output={output_pot}"]
     cmd += file_paths
 
     try:
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
         print(result.stdout)  # noqa: T201
     except subprocess.CalledProcessError as e:
-        msg = f"An error occurred while running pygettext3:\n{e}"
+        msg = f"An error occurred while running xgettext:\n{e}"
         logging.error(msg)
         raise
 
