@@ -4,17 +4,6 @@
 
 This document provides step-by-step instructions for AI-assisted update of existing ArduPilot Methodic Configurator GUI translations.
 
-## Prerequisites
-
-1. **Local git repository**: Working in a local git checkout (files are under version control - no backup needed)
-1. **Development dependencies**: Install all required translation tools:
-
-```bash
-uv pip install .[dev]
-```
-
-1. **Translation Tool (optional)**: [Poedit](https://poedit.net/download) v3.5.2+ for visual editing of `.po` files
-
 ## Overview
 
 The ArduPilot Methodic Configurator uses GNU gettext for internationalization.
