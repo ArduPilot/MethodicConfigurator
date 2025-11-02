@@ -202,6 +202,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.__create_parameter_area_widgets()
 
+        # Resize window height to ensure all widgets, including the skip button, are fully visible
+        # as some Linux Window managers like KDE, like to change font sizes and padding.
+        # So we need to dynamically accommodate for that after placing the widgets
+        self.root.update_idletasks()
+        req_height = self.root.winfo_reqheight()
+        self.root.geometry(f"990x{req_height}")
         # trigger a table update to ask the user what to do in the case this file needs special actions
         self.root.after(10, lambda: self.on_param_file_combobox_change(None, forced=True))
 

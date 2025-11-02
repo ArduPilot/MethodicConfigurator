@@ -52,7 +52,7 @@ class PopupWindow:
         """Set up the basic window properties and add the instructions text."""
         popup_window.root.title(title)
         popup_window.root.geometry(geometry)
-        instructions_text.config(borderwidth=0, relief="flat")
+        instructions_text.config(borderwidth=0, relief="flat", highlightthickness=0)
         instructions_text.pack(padx=6, pady=10)
 
     @staticmethod
@@ -79,6 +79,14 @@ class PopupWindow:
     @staticmethod
     def finalize_window_setup(popup_window: BaseWindow, parent: tk.Tk, close_callback: Callable[[], None]) -> None:
         """Finalize window setup: center, make topmost, disable parent, set close handler."""
+        # Resize window height to ensure all widgets are fully visible
+        # as some Linux Window managers like KDE, like to change font sizes and padding.
+        # So we need to dynamically accommodate for that after placing the widgets
+        popup_window.root.update_idletasks()
+        req_height = popup_window.root.winfo_reqheight()
+        req_width = popup_window.root.winfo_reqwidth()
+        popup_window.root.geometry(f"{req_width}x{req_height}")
+
         BaseWindow.center_window(popup_window.root, parent)
         popup_window.root.deiconify()  # Show the window now that it's positioned
         popup_window.root.attributes("-topmost", True)  # noqa: FBT003

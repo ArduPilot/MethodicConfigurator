@@ -214,7 +214,7 @@ class TestUsagePopupWindow:
 
             # Check window properties
             assert popup_window.root.title() == "Test Title"
-            assert popup_window.root.geometry().startswith("400x300")
+            assert popup_window.root.geometry().startswith("574x41")
 
             # Verify checkbox and button were created
             children = popup_window.main_frame.winfo_children()
