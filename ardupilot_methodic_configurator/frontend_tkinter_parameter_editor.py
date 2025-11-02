@@ -208,15 +208,16 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.root.update_idletasks()
         req_height = self.root.winfo_reqheight()
         self.root.geometry(f"990x{req_height}")
+
+        # Set up startup notification for the main application window
+        FreeDesktop.setup_startup_notification(self.root)  # type: ignore[arg-type]
+
         # trigger a table update to ask the user what to do in the case this file needs special actions
         self.root.after(10, lambda: self.on_param_file_combobox_change(None, forced=True))
 
         # this one should be on top of the previous one hence the longer time
-        if UsagePopupWindow.should_display("parameter_editor"):
-            self.root.after(100, self.__display_usage_popup_window(self.root))  # type: ignore[arg-type]
-
-        # Set up startup notification for the main application window
-        FreeDesktop.setup_startup_notification(self.root)  # type: ignore[arg-type]
+        if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("parameter_editor"):
+            self.root.after(100, lambda: self.__display_usage_popup_window(self.root))  # type: ignore[arg-type]
 
         self.root.mainloop()
 
@@ -436,6 +437,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     @staticmethod
     def __display_usage_popup_window(parent: tk.Tk) -> None:
+        if not parent.winfo_exists():
+            return
+
         usage_popup_window = BaseWindow(parent)
         style = ttk.Style()
 
