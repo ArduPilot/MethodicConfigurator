@@ -451,9 +451,13 @@ class FlightControllerConnection:
         if self.master is not None:
             # Note: Don't wait for ACK here as this is used internally for autopilot version requests
             # and the response comes as the requested message itself
+            # Convert system_id and component_id from string to int for MAVLink
+            system_id = int(self.info.system_id) if self.info.system_id else 0
+            component_id = int(self.info.component_id) if self.info.component_id else 0
+
             self.master.mav.command_long_send(
-                self.info.system_id,
-                self.info.component_id,
+                system_id,
+                component_id,
                 mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
                 0,  # confirmation
                 message_id,

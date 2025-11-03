@@ -14,7 +14,7 @@ The SITL testing setup consists of:
 1. **Direct Download**: Tests download pre-built ArduCopter SITL binaries directly from the official ArduPilot firmware server (`firmware.ardupilot.org`)
 2. **Pytest Fixtures**: Session-scoped SITLManager class manages SITL process lifecycle
 3. **TCP Connection**: SITL runs on TCP port 5760 with MAVLink protocol
-4. **Parameter Configuration**: SITL uses `sitl/copter.param` with battery monitoring enabled
+4. **Parameter Configuration**: SITL uses `sitl/copter.parm` with battery monitoring enabled
 
 ## Prerequisites
 
@@ -120,7 +120,7 @@ SITL tests cover:
 SITL runs with the following command line parameters:
 
 ```bash
-arducopter --model quad --home "40.071374,-105.229930,1440,0" --defaults ./sitl/copter.param --sysid 1 --speedup 10
+arducopter --model quad --home "40.071374,-105.229930,1440,0" --defaults sitl/copter.parm --sysid 1 --speedup 10
 ```
 
 ### Connection Details
@@ -133,7 +133,7 @@ arducopter --model quad --home "40.071374,-105.229930,1440,0" --defaults ./sitl/
 
 ### Parameter Requirements
 
-Some tests require specific parameters to be set in `sitl/copter.param`:
+Some tests require specific parameters to be set in `sitl/copter.parm`:
 
 - `BATT_MONITOR = 4` (Analog voltage and current)
 - `BATT_VOLT_PIN = 1`

@@ -14,7 +14,7 @@ from logging import warning as logging_warning
 from os import path as os_path
 from pathlib import Path
 from time import sleep as time_sleep
-from typing import Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union, cast
 
 import serial.tools.list_ports_common
 from pymavlink import mavutil
@@ -39,11 +39,12 @@ from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
+if TYPE_CHECKING:
+    from pymavlink.dialects.v20.ardupilotmega import MAVLink_autopilot_version_message
+
 DEFAULT_REBOOT_TIME: int = 7
 
 # Re-export constants for backwards compatibility
-# DEFAULT_BAUDRATE and SUPPORTED_BAUDRATES are from connection module
-# DEFAULT_REBOOT_TIME is defined in this module
 __all__ = [
     "DEFAULT_BAUDRATE",
     "DEFAULT_REBOOT_TIME",
@@ -139,9 +140,13 @@ class FlightController:  # pylint: disable=too-many-public-methods
             fc_parameters=None,  # Let params_manager create its own fc_parameters dict
         )
 
-        self._commands_manager: FlightControllerCommandsProtocol = commands_manager or FlightControllerCommands(
-            params_manager=self._params_manager,
-            connection_manager=self._connection_manager,
+        self._commands_manager: FlightControllerCommandsProtocol = cast(
+            "FlightControllerCommandsProtocol",
+            commands_manager
+            or FlightControllerCommands(
+                params_manager=self._params_manager,
+                connection_manager=self._connection_manager,
+            ),
         )
 
         self._files_manager: FlightControllerFilesProtocol = files_manager or FlightControllerFiles(
@@ -207,6 +212,26 @@ class FlightController:  # pylint: disable=too-many-public-methods
     def baudrate(self) -> int:
         """Get the baudrate setting."""
         return self._baudrate
+
+    @property
+    def PARAM_FETCH_POLL_DELAY(self) -> float:  # noqa: N802 # pylint: disable=invalid-name
+        """Get parameter fetch poll delay - delegates to params manager."""
+        return self._params_manager.PARAM_FETCH_POLL_DELAY
+
+    @property
+    def BATTERY_STATUS_CACHE_TIME(self) -> float:  # noqa: N802 # pylint: disable=invalid-name
+        """Get battery status cache time - delegates to commands manager."""
+        return self._commands_manager.BATTERY_STATUS_CACHE_TIME
+
+    @property
+    def BATTERY_STATUS_TIMEOUT(self) -> float:  # noqa: N802 # pylint: disable=invalid-name
+        """Get battery status timeout - delegates to commands manager."""
+        return self._commands_manager.BATTERY_STATUS_TIMEOUT
+
+    @property
+    def COMMAND_ACK_TIMEOUT(self) -> float:  # noqa: N802 # pylint: disable=invalid-name
+        """Get command acknowledgment timeout - delegates to commands manager."""
+        return self._commands_manager.COMMAND_ACK_TIMEOUT
 
     @property
     def fc_parameters(self) -> dict[str, float]:
@@ -280,6 +305,33 @@ class FlightController:  # pylint: disable=too-many-public-methods
     def add_connection(self, connection_string: str) -> bool:
         """Add a new connection to the list of available connections - delegates to connection manager."""
         return self._connection_manager.add_connection(connection_string)
+
+    # Testing-only methods (protected methods exposed for SITL integration tests)
+    def _detect_vehicles_from_heartbeats(self, timeout: int) -> dict[tuple[int, int], Any]:
+        """Detect vehicles from heartbeats - delegates to connection manager (testing only)."""
+        return self._connection_manager._detect_vehicles_from_heartbeats(timeout)  # noqa: SLF001 # pylint: disable=protected-access
+
+    def _extract_firmware_type_from_banner(self, banner_msgs: list[str], os_custom_version_index: Optional[int]) -> str:
+        """Extract firmware type from banner - delegates to connection manager (testing only)."""
+        return self._connection_manager._extract_firmware_type_from_banner(  # noqa: SLF001 # pylint: disable=protected-access
+            banner_msgs, os_custom_version_index
+        )
+
+    def _extract_chibios_version_from_banner(self, banner_msgs: list[str]) -> tuple[str, Optional[int]]:
+        """Extract ChibiOS version from banner - delegates to connection manager (testing only)."""
+        return self._connection_manager._extract_chibios_version_from_banner(banner_msgs)  # noqa: SLF001 # pylint: disable=protected-access
+
+    def _select_supported_autopilot(self, detected_vehicles: dict[tuple[int, int], Any]) -> str:
+        """Select supported autopilot from detected vehicles - delegates to connection manager (testing only)."""
+        return self._connection_manager._select_supported_autopilot(detected_vehicles)  # noqa: SLF001 # pylint: disable=protected-access
+
+    def _populate_flight_controller_info(self, m: "MAVLink_autopilot_version_message") -> None:
+        """Populate flight controller info from autopilot version - delegates to connection manager (testing only)."""
+        self._connection_manager._populate_flight_controller_info(m)  # noqa: SLF001 # pylint: disable=protected-access
+
+    def _retrieve_autopilot_version_and_banner(self, timeout: int) -> str:
+        """Retrieve autopilot version and banner - delegates to connection manager (testing only)."""
+        return self._connection_manager._retrieve_autopilot_version_and_banner(timeout)  # noqa: SLF001 # pylint: disable=protected-access
 
     def register_and_try_connect(
         self,
