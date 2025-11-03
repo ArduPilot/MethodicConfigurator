@@ -25,7 +25,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Optional, Protocol, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Protocol, Union
 
 import serial.tools.list_ports_common
 
@@ -38,6 +38,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 if TYPE_CHECKING:
     # During type checking, import the actual mavutil module for better type hints
     from pymavlink import mavutil
+    from pymavlink.dialects.v20.ardupilotmega import MAVLink_autopilot_version_message
 
     # Use a union of known connection types for better type safety
     # Note: mavutil.mavlink_connection() returns different types based on the connection string
@@ -145,6 +146,18 @@ class FlightControllerConnectionProtocol(Protocol):
 
         """
 
+    def _detect_vehicles_from_heartbeats(self, timeout: int) -> dict[tuple[int, int], Any]: ...
+
+    def _extract_firmware_type_from_banner(self, banner_msgs: list[str], os_custom_version_index: Optional[int]) -> str: ...
+
+    def _extract_chibios_version_from_banner(self, banner_msgs: list[str]) -> tuple[str, Optional[int]]: ...
+
+    def _select_supported_autopilot(self, detected_vehicles: dict[tuple[int, int], Any]) -> str: ...
+
+    def _populate_flight_controller_info(self, m: "MAVLink_autopilot_version_message") -> None: ...
+
+    def _retrieve_autopilot_version_and_banner(self, timeout: int) -> str: ...
+
 
 class FlightControllerParamsProtocol(Protocol):
     """
@@ -156,6 +169,9 @@ class FlightControllerParamsProtocol(Protocol):
         Optional at construction:
             - fc_parameters: dict[str, float] (shared parameter dictionary, created if not provided)
     """
+
+    # Class constant exposed as property for backward compatibility
+    PARAM_FETCH_POLL_DELAY: float
 
     @property
     def fc_parameters(self) -> dict[str, float]:
@@ -193,6 +209,11 @@ class FlightControllerCommandsProtocol(Protocol):
             - params_manager: FlightControllerParamsProtocol (to query parameter values)
             - connection_manager: FlightControllerConnectionProtocol (to access master)
     """
+
+    # Class constants exposed for testing
+    COMMAND_ACK_TIMEOUT: float
+    BATTERY_STATUS_CACHE_TIME: float
+    BATTERY_STATUS_TIMEOUT: float
 
     def send_command_and_wait_ack(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
