@@ -48,6 +48,50 @@ from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info impo
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message
+from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
+from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+
+
+def register_plugins() -> None:
+    """
+    Register all available plugins with the factory.
+
+    This function explicitly imports and registers plugins, avoiding
+    side-effect imports and potential race conditions.
+    """
+    # Import and register motor test plugin
+    # pylint: disable=import-outside-toplevel, cyclic-import
+    from ardupilot_methodic_configurator.frontend_tkinter_motor_test import register_motor_test_plugin  # noqa: PLC0415
+    # pylint: enable=import-outside-toplevel, cyclic-import
+
+    register_motor_test_plugin()
+
+    # Add more plugin registrations here in the future
+
+
+def validate_plugin_registry(local_filesystem: LocalFilesystem) -> None:
+    """
+    Validate that all plugins configured in configuration steps are registered.
+
+    Args:
+        local_filesystem: The filesystem interface to access configuration steps
+
+    """
+    # Get all configured plugins
+    configured_plugins = set()
+    # configuration_steps is a dict, not an object with configuration_steps attribute
+    for file_info in local_filesystem.configuration_steps.values():
+        plugin = file_info.get("plugin")
+        if plugin and plugin.get("name"):
+            configured_plugins.add(plugin["name"])
+
+    # Verify each configured plugin is registered
+    for plugin_name in configured_plugins:
+        if not plugin_factory.is_registered(plugin_name):
+            logging_error(
+                _("Plugin '%(plugin_name)s' is configured but not registered. Available plugins: %(available)s"),
+                {"plugin_name": plugin_name, "available": PLUGIN_MOTOR_TEST},
+            )
 
 
 class ApplicationState:  # pylint: disable=too-few-public-methods
@@ -507,6 +551,9 @@ def main() -> None:
     """
     args = create_argument_parser().parse_args()
 
+    # Register plugins early, before any UI creation
+    register_plugins()
+
     # Create desktop icon if needed (only on first run in venv)
     FreeDesktop.create_desktop_icon_if_needed()
 
@@ -517,6 +564,10 @@ def main() -> None:
     # Check for software updates
     if check_updates(state):
         sys_exit(0)  # user asked to update, exit the old version
+
+    # Validate that all configured plugins are registered
+    if state.local_filesystem:
+        validate_plugin_registry(state.local_filesystem)
 
     if bool(ProgramSettings.get_setting("auto_open_doc_in_browser")):
         display_first_use_documentation()

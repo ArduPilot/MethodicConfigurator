@@ -17,6 +17,7 @@ import pytest
 from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
 
 # pylint: disable=redefined-outer-name, too-many-lines, protected-access
 
@@ -2843,3 +2844,57 @@ class TestDerivedParameterApplication:
             "Derived parameter %s not found in current parameters, skipping",
             "NONEXISTENT_PARAM",
         )
+
+    def test_create_plugin_data_model_returns_motor_test_data_model_when_fc_connected(self, configuration_manager) -> None:
+        """
+        Test that create_plugin_data_model returns MotorTestDataModel when FC is connected.
+
+        GIVEN: Flight controller is connected
+        WHEN: create_plugin_data_model is called with "motor_test"
+        THEN: A MotorTestDataModel instance is returned
+        """
+        # Mock FC connection by setting master to a mock object
+        configuration_manager._flight_controller.master = MagicMock()
+
+        with patch("ardupilot_methodic_configurator.configuration_manager.MotorTestDataModel") as mock_motor_test_model:
+            result = configuration_manager.create_plugin_data_model(PLUGIN_MOTOR_TEST)
+
+            mock_motor_test_model.assert_called_once_with(
+                configuration_manager._flight_controller, configuration_manager._local_filesystem
+            )
+            assert result == mock_motor_test_model.return_value
+
+    def test_create_plugin_data_model_returns_none_when_motor_test_but_no_fc_connection(self, configuration_manager) -> None:
+        """
+        Test that create_plugin_data_model returns None when motor_test is requested but FC is not connected.
+
+        GIVEN: Flight controller is not connected
+        WHEN: create_plugin_data_model is called with "motor_test"
+        THEN: None is returned
+        """
+        # Mock FC disconnection by setting master to None
+        configuration_manager._flight_controller.master = None
+
+        with patch("ardupilot_methodic_configurator.configuration_manager.MotorTestDataModel") as mock_motor_test_model:
+            result = configuration_manager.create_plugin_data_model(PLUGIN_MOTOR_TEST)
+
+            # MotorTestDataModel should not be instantiated
+            mock_motor_test_model.assert_not_called()
+            assert result is None
+
+    def test_create_plugin_data_model_returns_none_for_unknown_plugin(self, configuration_manager) -> None:
+        """
+        Test that create_plugin_data_model returns None for unknown plugin names.
+
+        GIVEN: Any flight controller connection state
+        WHEN: create_plugin_data_model is called with an unknown plugin name
+        THEN: None is returned
+        """
+        result = configuration_manager.create_plugin_data_model("unknown_plugin")
+        assert result is None
+
+        result = configuration_manager.create_plugin_data_model("")
+        assert result is None
+
+        result = configuration_manager.create_plugin_data_model(None)
+        assert result is None

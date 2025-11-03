@@ -14,7 +14,7 @@ from logging import error as logging_error
 from logging import info as logging_info
 from logging import warning as logging_warning
 from os import path as os_path
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 # from sys import exit as sys_exit
 # from logging import debug as logging_debug
@@ -293,3 +293,18 @@ class ConfigurationSteps:
             sorted_phases[phase_name]["weight"] = max(2, phase_end - phase_start)
 
         return sorted_phases
+
+    def get_plugin(self, selected_file: str) -> Optional[dict]:
+        """
+        Get the plugin configuration for the selected file.
+
+        Args:
+            selected_file: The filename to get plugin info for
+
+        Returns:
+            The plugin dict with 'name' and 'placement' if exists, None otherwise
+
+        """
+        if selected_file in self.configuration_steps:
+            return self.configuration_steps[selected_file].get("plugin")
+        return None

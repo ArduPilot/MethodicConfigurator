@@ -58,6 +58,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
+from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
+from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 
 class DelayedProgressCallback:  # pylint: disable=too-few-public-methods
@@ -756,6 +758,42 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         # Focus root window to ensure it can capture key events
         self.root_window.focus_set()
 
+    def on_activate(self) -> None:
+        """
+        Called when the plugin becomes active (visible).
+
+        Refreshes the frame configuration from the flight controller
+        to ensure the display is up-to-date.
+        """
+        # Refresh frame configuration when becoming active
+        if not self.model.refresh_from_flight_controller():
+            logging_warning(_("Could not refresh frame configuration from flight controller"))
+        self._update_view()
+
+    def on_deactivate(self) -> None:
+        """
+        Called when the plugin becomes inactive (hidden).
+
+        Stops all running motor tests for safety when switching away from this plugin.
+        """
+        # Critical safety requirement: stop all motors when user navigates away
+        # to prevent motors running unattended in the background
+        try:
+            self.model.stop_all_motors()
+            self._reset_all_motor_status()
+        except (MotorTestExecutionError, ParameterError) as e:
+            # Motor stop failed - this could indicate a communication issue or unsupported frame type.
+            # We log as warning (not debug) because failed motor stop is a safety concern
+            # that operators should be aware of, even if it's expected for some configurations.
+            logging_warning(
+                _("Motor stop failed during deactivation: %(error)s. Please verify motors are stopped."), {"error": str(e)}
+            )
+        except Exception as e:
+            # Unexpected errors during motor stop are critical safety issues.
+            # We log as error and re-raise to prevent silently continuing with motors potentially running.
+            logging_error(_("Critical error during motor stop at deactivation: %(error)s"), {"error": str(e)})
+            raise
+
 
 class MotorTestWindow(BaseWindow):
     """
@@ -847,6 +885,37 @@ def main() -> None:
     finally:
         if state.flight_controller:
             state.flight_controller.disconnect()  # Disconnect from the flight controller
+
+
+# Register this plugin with the factory for dependency injection
+def _create_motor_test_view(
+    parent: Union[tk.Frame, ttk.Frame],
+    model: object,
+    base_window: object,
+) -> MotorTestView:
+    """
+    Factory function to create MotorTestView instances.
+
+    This function trusts that the caller provides the correct types
+    as per the plugin protocol (duck typing approach).
+
+    Args:
+        parent: The parent frame
+        model: The MotorTestDataModel instance (passed as object for protocol compliance)
+        base_window: The BaseWindow instance (passed as object for protocol compliance)
+
+    Returns:
+        A new MotorTestView instance
+
+    """
+    # Trust the caller to provide correct types (protocol-based duck typing)
+    # Type checker will verify this at static analysis time
+    return MotorTestView(parent, model, base_window)  # type: ignore[arg-type]
+
+
+def register_motor_test_plugin() -> None:
+    """Register the motor test plugin with the factory."""
+    plugin_factory.register(PLUGIN_MOTOR_TEST, _create_motor_test_view)
 
 
 if __name__ == "__main__":

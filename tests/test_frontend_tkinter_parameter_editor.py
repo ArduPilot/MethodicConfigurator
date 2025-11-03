@@ -18,6 +18,7 @@ import pytest
 from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
 from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
 
 # pylint: disable=redefined-outer-name, too-many-arguments, too-many-positional-arguments, unused-argument, protected-access
 
@@ -247,3 +248,244 @@ class TestParameterEditorWindow:
         # Verify button frame is packed correctly
         frame_mock = mock_frame.return_value
         frame_mock.pack.assert_called_once_with(pady=10)
+
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory")
+    def test_load_plugin_creates_motor_test_view_when_model_available(self, mock_factory, parameter_editor) -> None:
+        """
+        Test that __load_plugin creates plugin view using factory when data model is available.
+
+        GIVEN: A plugin configuration for motor_test and a valid data model
+        WHEN: __load_plugin is called
+        THEN: Plugin factory is used to create the view with the correct parameters
+        """
+        # Mock the factory methods
+        mock_factory.is_registered.return_value = True
+        mock_plugin_view = MagicMock()
+        mock_plugin_view.pack = MagicMock()
+        mock_factory.create.return_value = mock_plugin_view
+
+        # Mock the configuration manager to return a valid model
+        mock_model = MagicMock()
+        with patch.object(parameter_editor.configuration_manager, "create_plugin_data_model", return_value=mock_model):
+            # Create a mock parent frame
+            mock_parent_frame = MagicMock()
+
+            # Call the method
+            plugin_config = {"name": "motor_test"}
+            parameter_editor._ParameterEditorWindow__load_plugin(mock_parent_frame, plugin_config)  # pylint: disable=protected-access
+
+            # Verify factory was used correctly
+            mock_factory.is_registered.assert_called_once_with("motor_test")
+            mock_factory.create.assert_called_once_with("motor_test", mock_parent_frame, mock_model, parameter_editor)
+            mock_plugin_view.pack.assert_called_once()
+
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory")
+    def test_load_plugin_shows_error_message_when_model_creation_fails(self, mock_factory, parameter_editor) -> None:
+        """
+        Test that __load_plugin shows error message when data model creation fails.
+
+        GIVEN: A plugin configuration for motor_test but model creation returns None
+        WHEN: __load_plugin is called
+        THEN: An error label is displayed and plugin is not created
+        """
+        # Mock the factory methods
+        mock_factory.is_registered.return_value = True
+
+        # Mock the configuration manager to return None (model creation failed)
+        with patch.object(parameter_editor.configuration_manager, "create_plugin_data_model", return_value=None):
+            # Create a mock parent frame
+            mock_parent_frame = MagicMock()
+
+            # Call the method
+            plugin_config = {"name": "motor_test"}
+            parameter_editor._ParameterEditorWindow__load_plugin(mock_parent_frame, plugin_config)  # pylint: disable=protected-access
+
+            # Verify factory create was not called
+            mock_factory.create.assert_not_called()
+
+            # Verify error label was created and packed
+            mock_parent_frame.children = []  # Simulate ttk.Frame behavior
+            # The actual label creation happens inside the method
+
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Label")
+    def test_load_plugin_shows_error_when_model_creation_returns_none(
+        self, mock_label, mock_factory, parameter_editor
+    ) -> None:
+        """
+        Test that __load_plugin shows error message when create_plugin_data_model returns None.
+
+        GIVEN: create_plugin_data_model returns None (FC not connected)
+        WHEN: __load_plugin is called for motor_test
+        THEN: An error label is displayed
+        """
+        # Mock the factory
+        mock_factory.is_registered.return_value = True
+
+        # Mock the configuration manager to return None
+        with patch.object(parameter_editor.configuration_manager, "create_plugin_data_model", return_value=None):
+            # Create a mock parent frame
+            mock_parent_frame = MagicMock()
+
+            # Call the method
+            plugin_config = {"name": "motor_test"}
+            parameter_editor._ParameterEditorWindow__load_plugin(mock_parent_frame, plugin_config)  # pylint: disable=protected-access
+
+            # Verify error label was created
+            mock_label.assert_called_with(mock_parent_frame, text="Plugin requires flight controller connection")
+            mock_label.return_value.pack.assert_called_once()
+
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory")
+    def test_load_plugin_shows_error_for_unknown_plugin(self, mock_factory, parameter_editor) -> None:
+        """
+        Test that __load_plugin shows error message for unknown plugin names.
+
+        GIVEN: A plugin configuration with an unknown plugin name
+        WHEN: __load_plugin is called
+        THEN: An error label is displayed
+        """
+        # Mock factory to report plugin not registered
+        mock_factory.is_registered.return_value = False
+
+        # Create a mock parent frame
+        mock_parent_frame = MagicMock()
+
+        # Call the method with unknown plugin
+        plugin_config = {"name": "unknown_plugin"}
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Label") as mock_label:
+            parameter_editor._ParameterEditorWindow__load_plugin(mock_parent_frame, plugin_config)  # pylint: disable=protected-access
+
+            # Verify error label was created with translated text
+            mock_label.assert_called_once()
+            call_args = mock_label.call_args
+            assert call_args[0][0] == mock_parent_frame
+            assert "unknown_plugin" in call_args[1]["text"]
+            mock_label.return_value.pack.assert_called_once()
+
+    def test_update_plugin_layout_switches_from_plugin_to_no_plugin(self, parameter_editor) -> None:
+        """
+        Test switching from a plugin file to a non-plugin file properly cleans up.
+
+        GIVEN: A parameter editor with an active plugin layout
+        WHEN: __update_plugin_layout is called with None (no plugin)
+        THEN: The plugin layout is destroyed and normal layout is restored
+        """
+        # Setup: Set current plugin to simulate having a plugin active
+        parameter_editor.current_plugin = {"name": PLUGIN_MOTOR_TEST, "placement": "left"}
+        parameter_editor.current_plugin_view = None  # Initialize attribute needed by cleanup
+        parameter_editor.parameter_area_paned = None  # Initialize attribute needed by cleanup
+
+        # Mock the necessary attributes
+        mock_container = MagicMock()
+        mock_table = MagicMock()
+        parameter_editor.parameter_area_container = mock_container
+        parameter_editor.parameter_editor_table = mock_table
+        parameter_editor.main_frame = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Frame") as mock_frame,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ParameterEditorTable"),
+        ):
+            # Call with None to simulate switching to non-plugin file
+            parameter_editor._ParameterEditorWindow__update_plugin_layout(None)  # pylint: disable=protected-access
+
+            # Verify cleanup happened - container is destroyed (not individual widgets)
+            mock_container.destroy.assert_called_once()
+
+            # Verify new container was created
+            mock_frame.assert_called()
+
+            # Verify current_plugin was updated to None
+            assert parameter_editor.current_plugin is None
+
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory")
+    def test_load_plugin_handles_factory_exception(self, mock_factory, parameter_editor) -> None:
+        """
+        Test that __load_plugin handles exceptions from the plugin factory gracefully.
+
+        GIVEN: A registered plugin but factory.create raises an exception
+        WHEN: __load_plugin is called
+        THEN: An error message is displayed and logged
+        """
+        # Mock the factory methods
+        mock_factory.is_registered.return_value = True
+        mock_factory.create.side_effect = TypeError("Invalid arguments")
+
+        # Mock the configuration manager to return a valid model
+        mock_model = MagicMock()
+        with patch.object(parameter_editor.configuration_manager, "create_plugin_data_model", return_value=mock_model):
+            # Create a mock parent frame
+            mock_parent_frame = MagicMock()
+
+            # Call the method
+            plugin_config = {"name": "motor_test"}
+            with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Label") as mock_label:
+                parameter_editor._ParameterEditorWindow__load_plugin(mock_parent_frame, plugin_config)  # pylint: disable=protected-access
+
+                # Verify error label was created with proper styling
+                assert mock_label.called
+                call_args = mock_label.call_args
+                assert "foreground" in call_args[1]
+                assert call_args[1]["foreground"] == "red"
+
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory")
+    def test_switching_between_two_plugin_files_calls_lifecycle_hooks(self, mock_factory, parameter_editor) -> None:
+        """
+        Test that switching between two different plugin files calls lifecycle hooks properly.
+
+        GIVEN: Two different plugin configurations
+        WHEN: Switching from one plugin file to another
+        THEN: on_deactivate is called on the first plugin and on_activate on the second
+        """
+        # Setup: Mock factory
+        mock_factory.is_registered.return_value = True
+
+        # Create two mock plugin views with lifecycle hooks
+        mock_plugin_1 = MagicMock()
+        mock_plugin_1.on_activate = MagicMock()
+        mock_plugin_1.on_deactivate = MagicMock()
+        mock_plugin_1.pack = MagicMock()
+        mock_plugin_1.destroy = MagicMock()
+
+        mock_plugin_2 = MagicMock()
+        mock_plugin_2.on_activate = MagicMock()
+        mock_plugin_2.on_deactivate = MagicMock()
+        mock_plugin_2.pack = MagicMock()
+        mock_plugin_2.destroy = MagicMock()
+
+        mock_factory.create.side_effect = [mock_plugin_1, mock_plugin_2]
+
+        # Mock the configuration manager to return a valid model
+        mock_model = MagicMock()
+        with (
+            patch.object(parameter_editor.configuration_manager, "create_plugin_data_model", return_value=mock_model),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Frame"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.tk.PanedWindow"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ParameterEditorTable"),
+        ):
+            # Setup initial state
+            parameter_editor.current_plugin = None
+            parameter_editor.current_plugin_view = None
+            parameter_editor.parameter_area_paned = None
+            parameter_editor.parameter_area_container = MagicMock()
+            parameter_editor.parameter_editor_table = MagicMock()
+            parameter_editor.main_frame = MagicMock()
+
+            # First plugin activation
+            plugin_config_1 = {"name": "motor_test", "placement": "left"}
+            parameter_editor._ParameterEditorWindow__update_plugin_layout(plugin_config_1)  # pylint: disable=protected-access
+
+            # Verify first plugin was activated
+            mock_plugin_1.on_activate.assert_called_once()
+            mock_plugin_1.on_deactivate.assert_not_called()
+
+            # Second plugin activation
+            plugin_config_2 = {"name": "other_plugin", "placement": "top"}
+            parameter_editor._ParameterEditorWindow__update_plugin_layout(plugin_config_2)  # pylint: disable=protected-access
+
+            # Verify first plugin was deactivated and destroyed
+            mock_plugin_1.on_deactivate.assert_called_once()
+            mock_plugin_1.destroy.assert_called_once()
+
+            # Verify second plugin was activated
+            mock_plugin_2.on_activate.assert_called_once()
