@@ -269,7 +269,11 @@
             "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/ThrustExpo/",
             "mandatory_text": "40% mandatory (60% optional)",
             "auto_changed_by": "",
-            "old_filenames": ["14_motor.param"]
+            "old_filenames": ["14_motor.param"],
+            "plugin": {
+                "name": "motor_test",
+                "placement": "left"
+            }
         },
         "16_pid_adjustment.param": {
             "why": "With very large or very small vehicles the default PID values are not suitable for the first flight",

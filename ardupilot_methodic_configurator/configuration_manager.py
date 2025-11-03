@@ -27,7 +27,9 @@ from ardupilot_methodic_configurator.backend_flightcontroller import FlightContr
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
+from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
+from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
 # Type aliases for callback functions used in workflow methods
@@ -1593,3 +1595,28 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             return 0, tooltip.format(current_file=current_file)
 
     # frontend_tkinter_parameter_editor_documentation_frame.py API end
+
+    # plugin API begin
+
+    def get_plugin(self, filename: str) -> Optional[dict]:
+        return self._local_filesystem.get_plugin(filename)
+
+    def create_plugin_data_model(self, plugin_name: str) -> Optional[object]:
+        """
+        Create and return a data model for the specified plugin.
+
+        Args:
+            plugin_name: The name of the plugin to create a data model for
+
+        Returns:
+            The data model instance, or None if plugin not supported or requirements not met
+
+        """
+        if plugin_name == PLUGIN_MOTOR_TEST:
+            if not self.is_fc_connected:
+                return None
+            return MotorTestDataModel(self._flight_controller, self._local_filesystem)
+        # Add more plugins here in the future
+        return None
+
+    # plugin API end

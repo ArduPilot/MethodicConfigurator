@@ -10,6 +10,9 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from __future__ import annotations
+
+import contextlib
 import sys
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
@@ -17,6 +20,7 @@ from argparse import ArgumentParser, Namespace
 # from logging import debug as logging_debug
 from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
+from logging import exception as logging_exception
 from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
 from tkinter import filedialog, messagebox, ttk
@@ -49,6 +53,9 @@ from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText,
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
+from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+
+# pylint: disable=too-many-lines
 
 
 class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
@@ -73,6 +80,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.file_upload_progress_window: ProgressWindow
         self.skip_button: ttk.Button
         self.gui_complexity = str(ProgramSettings.get_setting("gui_complexity"))
+        self.parameter_area_container: ttk.Frame
+        self.current_plugin: dict | None = None
+        self.current_plugin_view: object | None = None  # Plugin view instance (implements PluginView protocol)
+        self.parameter_area_paned: tk.PanedWindow | None = None
+        self.parameter_container: ttk.Frame
 
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
@@ -232,8 +244,18 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             value=bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
         )
 
-        # Create a Scrollable parameter editor table
-        self.parameter_editor_table = ParameterEditorTable(self.main_frame, self.configuration_manager, self)
+        # Container allows hot-swapping between plugin and non-plugin layouts
+        # without destroying the parent main_frame structure. This enables dynamic
+        # UI reconfiguration when switching between parameter files with different plugin requirements.
+        self.parameter_area_container = ttk.Frame(self.main_frame)
+        self.parameter_area_container.pack(side="top", fill="both", expand=True)
+
+        # Track current plugin state to enable efficient layout switching and lifecycle management
+        self.current_plugin = None
+        self.parameter_container = self.parameter_area_container
+
+        # Create the scrollable parameter editor table in the container
+        self.parameter_editor_table = ParameterEditorTable(self.parameter_container, self.configuration_manager, self)
         self.repopulate_parameter_table(regenerate_from_disk=True)
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 
@@ -341,6 +363,265 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             ),
         )
 
+    def __cleanup_plugin_views(self) -> None:
+        """Clean up existing plugin views and UI elements."""
+        # Call deactivation hook on current plugin before cleanup
+        if self.current_plugin_view is not None and hasattr(self.current_plugin_view, "on_deactivate"):
+            try:
+                self.current_plugin_view.on_deactivate()  # pyright: ignore[reportAttributeAccessIssue]
+            except (AttributeError, TypeError) as e:
+                logging_warning(_("Error deactivating plugin: %s"), e)
+
+        # Clean up existing plugin view
+        if self.current_plugin_view is not None:
+            try:
+                self.current_plugin_view.destroy()  # type: ignore[attr-defined]
+            except (AttributeError, tk.TclError) as e:
+                logging_warning(_("Error destroying plugin view: %s"), e)
+            finally:
+                self.current_plugin_view = None
+
+        # Note: parameter_editor_table doesn't need explicit destroy()
+        # It will be automatically destroyed when its parent container is destroyed
+
+        # Clean up existing paned window
+        if self.parameter_area_paned is not None:
+            try:
+                self.parameter_area_paned.destroy()
+            except (AttributeError, tk.TclError) as e:
+                logging_warning(_("Error destroying paned window: %s"), e)
+            finally:
+                self.parameter_area_paned = None
+
+    def __update_plugin_layout(self, plugin: Optional[dict]) -> None:  # noqa: UP045
+        """
+        Update the plugin layout based on the current plugin configuration.
+
+        This method handles the complete lifecycle of plugin views:
+        - Calls deactivation hook on current plugin
+        - Destroys existing plugin views and UI elements
+        - Creates new layout based on plugin placement
+        - Instantiates new plugin view
+        - Calls activation hook on new plugin
+        - Recreates parameter table
+
+        Args:
+            plugin: Plugin configuration dict with 'name' and 'placement' keys, or None
+
+        """
+        # If plugin configuration hasn't changed at all, do nothing
+        if self.current_plugin == plugin:
+            return
+
+        # Determine old and new placements
+        old_placement = self.current_plugin.get("placement") if self.current_plugin else None
+        new_placement = plugin.get("placement") if plugin else None
+
+        # Optimization: If both old and new are None (no plugin), avoid any widget destruction
+        if old_placement is None and new_placement is None:
+            self.current_plugin = plugin
+            return
+
+        # If layout structure is the same, just swap the plugin content without rebuilding
+        if old_placement == new_placement and old_placement is not None and plugin is not None:
+            # Same layout structure, just swap plugin
+            self.__swap_plugin_in_place(plugin)
+            return
+
+        # Layout structure is different - need full rebuild
+        self.__rebuild_plugin_layout(plugin)
+
+    def __swap_plugin_in_place(self, plugin: dict) -> None:  # pylint: disable=too-many-branches
+        """
+        Swap plugin content without rebuilding the entire layout.
+
+        This is an optimization for when the layout structure (left/top) doesn't change,
+        only the plugin itself changes.
+
+        Args:
+            plugin: New plugin configuration dict
+
+        """
+        # Deactivate and destroy old plugin
+        if self.current_plugin_view is not None:
+            if hasattr(self.current_plugin_view, "on_deactivate"):
+                try:
+                    self.current_plugin_view.on_deactivate()  # pyright: ignore[reportAttributeAccessIssue]
+                except (AttributeError, TypeError) as e:
+                    logging_warning(_("Error deactivating plugin: %s"), e)
+
+            try:
+                self.current_plugin_view.destroy()  # type: ignore[attr-defined]
+            except (AttributeError, tk.TclError) as e:
+                logging_warning(_("Error destroying plugin view: %s"), e)
+            finally:
+                self.current_plugin_view = None
+
+        # Locate the existing plugin parent frame based on placement strategy.
+        # This avoids full layout rebuild when only the plugin content needs updating.
+        placement = plugin.get("placement")
+        plugin_parent: ttk.Frame | None = None
+
+        if placement == "left" and self.parameter_area_paned is not None:
+            # Left placement uses a PanedWindow with plugin in the first (left) pane
+            panes: tuple[str, ...] = self.parameter_area_paned.panes()  # type: ignore[no-untyped-call]
+            if panes:
+                # Convert Tcl pane path to widget reference
+                plugin_parent = self.parameter_area_paned.nametowidget(panes[0])
+        elif placement == "top":
+            # Top placement uses a vertical stack with plugin frame at the top
+            # Navigate the widget tree to find the plugin container
+            for child in self.parameter_area_container.winfo_children():
+                if isinstance(child, ttk.Frame):
+                    # Located the top_container frame
+                    children = child.winfo_children()
+                    if children and isinstance(children[0], ttk.Frame):
+                        plugin_parent = children[0]
+                    break
+
+        if plugin_parent:
+            # Clear the plugin parent frame
+            for widget in plugin_parent.winfo_children():
+                widget.destroy()
+
+            # Load new plugin into existing frame
+            self.__load_plugin(plugin_parent, plugin)
+
+        self.current_plugin = plugin
+
+    def __rebuild_plugin_layout(self, plugin: dict | None) -> None:
+        """
+        Completely rebuild the plugin layout structure.
+
+        This is only called when the layout structure actually changes
+        (e.g., from no plugin to left plugin, or from left to top).
+
+        Args:
+            plugin: New plugin configuration dict or None
+
+        """
+        # Clean up existing views
+        self.__cleanup_plugin_views()
+
+        # Complete rebuild: destroy old layout and create new structure from scratch
+        self.parameter_area_container.destroy()
+
+        # Recreate container to hold the new layout configuration
+        self.parameter_area_container = ttk.Frame(self.main_frame)
+        self.parameter_area_container.pack(side="top", fill="both", expand=True)
+
+        self.current_plugin = plugin
+
+        if plugin and plugin.get("placement") == "left":
+            # Left placement: Create horizontal split with plugin on left, parameters on right
+            # This gives the plugin persistent visibility while working with parameters
+            self.parameter_area_paned = tk.PanedWindow(self.parameter_area_container, orient=tk.HORIZONTAL)
+            self.parameter_area_paned.pack(side="top", fill="both", expand=True)
+
+            # Create left pane for plugin with minimum width to ensure visibility
+            left_frame = ttk.Frame(self.parameter_area_paned)
+            self.parameter_area_paned.add(left_frame, minsize=500)
+
+            # Instantiate and display the plugin in the left frame
+            self.__load_plugin(left_frame, plugin)
+
+            # Create right pane for parameter table (gets remaining space)
+            right_frame = ttk.Frame(self.parameter_area_paned)
+            self.parameter_area_paned.add(right_frame)
+
+            self.parameter_container = right_frame
+        elif plugin and plugin.get("placement") == "top":
+            # Top placement: Create vertical stack with plugin above parameters
+            # This gives plugin full horizontal width, useful for wide controls
+            top_container = ttk.Frame(self.parameter_area_container)
+            top_container.pack(side="top", fill="both", expand=True)
+
+            # Create top frame for plugin (fixed height, expands horizontally only)
+            top_plugin_frame = ttk.Frame(top_container)
+            top_plugin_frame.pack(side="top", fill="x", expand=False)
+            self.__load_plugin(top_plugin_frame, plugin)
+
+            # Visual separator between plugin and parameter table
+            ttk.Separator(top_container, orient="horizontal").pack(side="top", fill="x", pady=2)
+
+            # Create bottom frame for parameter table (takes remaining vertical space)
+            bottom_frame = ttk.Frame(top_container)
+            bottom_frame.pack(side="top", fill="both", expand=True)
+
+            self.parameter_container = bottom_frame
+        else:
+            # No plugin configured: use simple single-frame layout
+            # Parameter table directly fills the entire container
+            self.parameter_container = self.parameter_area_container
+
+        # Recreate the parameter editor table in the appropriate container.
+        # The container varies based on plugin placement (left pane, below plugin, or full area).
+        self.parameter_editor_table = ParameterEditorTable(self.parameter_container, self.configuration_manager, self)
+        self.parameter_editor_table.pack(side="top", fill="both", expand=True)
+
+    def __load_plugin(self, parent_frame: ttk.Frame, plugin: dict) -> None:
+        """
+        Load a plugin into the given frame using the plugin factory.
+
+        This method uses dependency injection to avoid circular imports.
+        Plugins are registered with the factory and instantiated dynamically.
+
+        Args:
+            parent_frame: The frame to load the plugin into
+            plugin: Plugin configuration dict with 'name' key
+
+        """
+        plugin_name = plugin.get("name")
+        if not plugin_name:
+            ttk.Label(parent_frame, text=_("Plugin configuration missing name")).pack()
+            return
+
+        # Check if plugin is registered
+        if not plugin_factory.is_registered(plugin_name):
+            error_msg = _("Unknown plugin: {plugin_name}").format(plugin_name=plugin_name)
+            ttk.Label(parent_frame, text=error_msg, foreground="red").pack()
+            logging_error(error_msg)
+            return
+
+        # Get the data model for the plugin
+        model = self.configuration_manager.create_plugin_data_model(plugin_name)
+        if model is None:
+            error_msg = _("Plugin requires flight controller connection")
+            ttk.Label(parent_frame, text=error_msg).pack()
+            logging_warning(error_msg)
+            return
+
+        # Create plugin using factory with error handling
+        try:
+            plugin_view = plugin_factory.create(plugin_name, parent_frame, model, self)
+            if plugin_view is None:
+                msg = _("Failed to create plugin: {plugin_name}").format(plugin_name=plugin_name)
+                logging_error(msg)
+                ttk.Label(parent_frame, text=msg, foreground="red").pack()
+                return
+
+            # Pack the plugin view
+            plugin_view.pack(fill="both", expand=True)  # type: ignore[attr-defined]
+
+            # Call activation hook if available
+            if hasattr(plugin_view, "on_activate"):
+                try:
+                    plugin_view.on_activate()  # pyright: ignore[reportAttributeAccessIssue]
+                except (AttributeError, TypeError) as e:
+                    logging_warning(_("Error activating plugin: %s"), e)
+                    # Failed to activate - clean up and abort
+                    with contextlib.suppress(AttributeError, tk.TclError):
+                        plugin_view.destroy()  # type: ignore[attr-defined]
+                    return
+
+            # Only store reference after successful activation
+            self.current_plugin_view = plugin_view
+
+        except (ImportError, AttributeError, TypeError, ValueError) as e:
+            msg = _("Error loading plugin {plugin_name}: {error}").format(plugin_name=plugin_name, error=str(e))
+            logging_exception(msg)  # Log full traceback
+            ttk.Label(parent_frame, text=msg, foreground="red").pack()
+
     @staticmethod
     def __display_usage_popup_window(parent: tk.Tk) -> None:
         if not parent.winfo_exists():
@@ -402,7 +683,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         the business logic workflow method, achieving proper separation of concerns.
         """
 
-        def select_file(title: str, filetypes: list[str]) -> Optional[str]:
+        def select_file(title: str, filetypes: list[str]) -> Optional[str]:  # noqa: UP045
             """GUI callback for file selection dialog."""
             return filedialog.askopenfilename(title=title, filetypes=[(_("ArduPilot binary log files"), filetypes)])
 
@@ -562,7 +843,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         finally:
             self.file_upload_progress_window.destroy()
 
-    def on_param_file_combobox_change(self, _event: Union[None, tk.Event], forced: bool = False) -> None:
+    def on_param_file_combobox_change(self, _event: Union[None, tk.Event], forced: bool = False) -> None:  # noqa: UP007
         if not self.file_selection_combobox["values"]:
             return
         selected_file = self.file_selection_combobox.get()
@@ -583,6 +864,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.configuration_manager.current_file = selected_file
             self.documentation_frame.refresh_documentation_labels()
             self.documentation_frame.update_why_why_now_tooltip()
+
+            # Update plugin layout if needed
+            plugin = self.configuration_manager.get_plugin(selected_file)
+            self.__update_plugin_layout(plugin)
+
             self.repopulate_parameter_table(regenerate_from_disk=True)
             self._update_skip_button_state()
 
@@ -699,7 +985,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
             self.skip_button.configure(state=skip_button_state)
 
-    def on_skip_click(self, _event: Union[None, tk.Event] = None) -> None:
+    def on_skip_click(self, _event: Union[None, tk.Event] = None) -> None:  # noqa: UP007
         self.write_changes_to_intermediate_parameter_file()
 
         # Use ConfigurationManager to get the next non-optional file

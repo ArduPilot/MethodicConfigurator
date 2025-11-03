@@ -145,6 +145,22 @@
                   "pattern": "^/APM/"
                 }
               }
+            },
+            "plugin": {
+              "type": "object",
+              "required": ["name", "placement"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "enum": ["motor_test"],
+                  "description": "The name of the plugin to load"
+                },
+                "placement": {
+                  "type": "string",
+                  "enum": ["left", "top"],
+                  "description": "Where to place the plugin: 'left' for left of scrollable frame, 'top' for above contents"
+                }
+              }
             }
           }
         }
