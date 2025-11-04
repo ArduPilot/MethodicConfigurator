@@ -19,7 +19,8 @@ from tkinter import ttk
 import pytest
 
 from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
-from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow, show_about_window
+from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import show_about_window
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 
 
 class TestParameterEditorWindow:
@@ -111,7 +112,7 @@ class TestParameterEditorWindow:
 
         try:
             # Mock webbrowser.open to avoid actually opening URLs
-            mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.webbrowser_open")
+            mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_about_popup_window.webbrowser_open")
 
             # Call the function
             show_about_window(root, "1.0.0")
