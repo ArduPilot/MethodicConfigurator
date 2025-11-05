@@ -326,18 +326,21 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
 
         """
         elapsed_since_last_ask = time() - self._last_time_asked_to_save
-        # if annotate parameters into files is true, we always need to write to file, because
+        # Avoid asking the user multiple times in quick succession (e.g., during file transitions)
+        # Always check elapsed time to prevent duplicate prompts within 1 second
+        # If annotate parameters into files is true, we always need to write to file, because
         # the parameter metadata might have changed, or not be present in the file.
-        # In that situation, avoid asking multiple times to write the file, by checking the time last asked
-        # But only if annotate_params_into_files is True
-        if self._has_unsaved_changes() or (annotate_params_into_files and elapsed_since_last_ask > 1.0):
+        if (self._has_unsaved_changes() or annotate_params_into_files) and elapsed_since_last_ask > 1.0:
             msg = _("Do you want to write the changes to the {current_filename} file?").format(
                 current_filename=self.current_file
             )
-            if ask_user_confirmation(_("One or more parameters have been edited"), msg):
+            should_save = ask_user_confirmation(_("One or more parameters have been edited"), msg)
+            if should_save:
                 self._export_current_file(annotate_doc=annotate_params_into_files)
-                self._last_time_asked_to_save = time()
-                return True
+
+            # Update timestamp regardless of user's answer to prevent duplicate prompts
+            self._last_time_asked_to_save = time()
+            return should_save
         return False
 
     def should_download_file_from_url_workflow(
