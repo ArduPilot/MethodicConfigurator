@@ -280,7 +280,20 @@ warn_unused_configs = true
 files = ["ardupilot_methodic_configurator/*.py"]
 
 [tool.pyright]
-exclude = [".venv"]
+include = [
+    "ardupilot_methodic_configurator/*.py",
+    "*.py",
+]
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "__target__",
+    "dist",
+]
+typeCheckingMode = "standard"
 pythonVersion = "3.9"
+pythonPlatform = "All"
+deprecateTypingAliases = true
 venvPath = "."
 venv = ".venv"
