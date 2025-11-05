@@ -48,8 +48,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info impo
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
-from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugin_factory_ui import plugin_factory_ui
+from ardupilot_methodic_configurator.plugin_factory_workflow import plugin_factory_workflow
 
 
 def register_plugins() -> None:
@@ -62,9 +62,12 @@ def register_plugins() -> None:
     # Import and register motor test plugin
     # pylint: disable=import-outside-toplevel, cyclic-import
     from ardupilot_methodic_configurator.frontend_tkinter_motor_test import register_motor_test_plugin  # noqa: PLC0415
+    from ardupilot_methodic_configurator.frontend_tkinter_tempcal_imu import register_tempcal_imu_plugin  # noqa: PLC0415
+
     # pylint: enable=import-outside-toplevel, cyclic-import
 
     register_motor_test_plugin()
+    register_tempcal_imu_plugin()
 
     # Add more plugin registrations here in the future
 
@@ -85,12 +88,25 @@ def validate_plugin_registry(local_filesystem: LocalFilesystem) -> None:
         if plugin and plugin.get("name"):
             configured_plugins.add(plugin["name"])
 
-    # Verify each configured plugin is registered
+    # Verify each configured plugin is registered (check both UI and workflow factories)
     for plugin_name in configured_plugins:
-        if not plugin_factory.is_registered(plugin_name):
+        is_ui_plugin = plugin_factory_ui.is_registered(plugin_name)
+        is_workflow_plugin = plugin_factory_workflow.is_registered(plugin_name)
+
+        if not is_ui_plugin and not is_workflow_plugin:
+            available_ui = ", ".join(plugin_factory_ui.get_registered_plugins())
+            available_workflow = ", ".join(plugin_factory_workflow.get_registered_plugins())
             logging_error(
-                _("Plugin '%(plugin_name)s' is configured but not registered. Available plugins: %(available)s"),
-                {"plugin_name": plugin_name, "available": PLUGIN_MOTOR_TEST},
+                _(
+                    "Plugin '%(plugin_name)s' is configured but not registered. "
+                    "Available UI plugins: %(ui_plugins)s. "
+                    "Available workflow plugins: %(workflow_plugins)s"
+                ),
+                {
+                    "plugin_name": plugin_name,
+                    "ui_plugins": available_ui or _("none"),
+                    "workflow_plugins": available_workflow or _("none"),
+                },
             )
 
 
