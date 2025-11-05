@@ -360,5 +360,7 @@ def configuration_steps_descriptions() -> None:
     _config_steps_descriptions = _("URL to blog documentation")
     _config_steps_descriptions = _("URL to external tool")
     _config_steps_descriptions = _("URL to wiki documentation")
-    _config_steps_descriptions = _("Where to place the plugin: 'left' for left of scrollable frame, 'top' for above contents, 'workflow' for triggered workflow actions")
+    _config_steps_descriptions = _(
+        "Where to place the plugin: 'left' for left of scrollable frame, 'top' for above contents, 'workflow' for triggered workflow actions"
+    )
     _config_steps_descriptions = _("Whether this phase is optional")
