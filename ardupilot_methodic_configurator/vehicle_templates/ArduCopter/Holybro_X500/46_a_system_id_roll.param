@@ -1,0 +1,23 @@
+ANGLE_MAX,3000  # limit the angle to limit the speed at SID-chirp low-frequencies
+ARMING_CHECK,30174  # disable Parameter check because we need to set ATC_RAT_RLL_I out-of-range (was 1)
+ATC_ANG_PIT_P,24.629694
+ATC_ANG_RLL_P,18.379057
+ATC_ANG_YAW_P,7.636879
+ATC_RAT_PIT_I,0.180513
+ATC_RAT_RLL_I,0.155054
+ATC_RAT_YAW_I,0.099616
+ATC_RATE_FF_ENAB,1  # normal operation
+FLTMODE6,25  # Activate sysid instead of loiter
+LOG_BITMASK,145119  # attitude sample rate at 400Hz rate
+LOG_DISARMED,0  # was only needed for wind speed estimation
+LOG_REPLAY,0  # was only needed for wind speed estimation
+SID_AXIS,1  # Inject chip on the input roll signal
+SID_F_START_HZ,0.05
+SID_F_STOP_HZ,11
+SID_MAGNITUDE,5
+SID_T_FADE_IN,5
+SID_T_FADE_OUT,1
+SID_T_REC,130
+TUNE,0  # System identification magnitude
+TUNE_MAX,0.3  # System identification max magnitude
+TUNE_MIN,0.05  # System identification min magnitude
