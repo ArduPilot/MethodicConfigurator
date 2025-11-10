@@ -37,7 +37,7 @@ repos:
           - tomli
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.2
+    rev: v0.14.4
     hooks:
       - id: ruff-check
         args: [ --fix ]
@@ -89,12 +89,12 @@ repos:
         stages: [pre-push]
 
   - repo: https://github.com/fsfe/reuse-tool
-    rev: v5.1.1
+    rev: v6.2.0
     hooks:
       - id: reuse-lint-file
 
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.28.0
+    rev: v8.29.0
     hooks:
       - id: gitleaks
 
