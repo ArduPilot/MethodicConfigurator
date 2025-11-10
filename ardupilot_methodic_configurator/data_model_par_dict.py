@@ -255,7 +255,7 @@ class ParDict(dict[str, Par]):
 
         """
         formatted_params = self._format_params(file_format)
-        with open(filename_out, "w", encoding="utf-8") as output_file:
+        with open(filename_out, "w", encoding="utf-8", newline="\n") as output_file:  # use Linux line endings even on windows
             if content_header:
                 output_file.write("\n".join(content_header) + "\n")
             output_file.writelines(line + "\n" for line in formatted_params)

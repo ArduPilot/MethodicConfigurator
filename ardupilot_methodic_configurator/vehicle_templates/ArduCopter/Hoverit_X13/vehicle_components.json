@@ -5,8 +5,8 @@
             "Product": {
                 "Manufacturer": "Hex/ProfiCNC,CubePilot",
                 "Model": "CubeOrangePlus",
-                "URL": "https://docs.cubepilot.org/user-guides/autopilot/the-cube-module-overview",
-                "Version": "1.0"
+                "Version": "1.0",
+                "URL": "https://docs.cubepilot.org/user-guides/autopilot/the-cube-module-overview"
             },
             "Firmware": {
                 "Type": "ArduCopter",
@@ -21,8 +21,8 @@
             "Product": {
                 "Manufacturer": "HOVERIT",
                 "Model": "BAAZ v2",
-                "URL": "https://hoverit.in/baaz-1",
-                "Version": "v2"
+                "Version": "v2",
+                "URL": "https://hoverit.in/baaz-1"
             },
             "Specifications": {
                 "TOW min Kg": 56,
@@ -30,72 +30,12 @@
             },
             "Notes": "z50 eft frame"
         },
-        "RC Controller": {
-            "Product": {
-                "Manufacturer": "SIYI",
-                "Model": "mk32 RADIO",
-                "URL": "https://shop.siyi.biz/products/siyi-mk32",
-                "Version": "1"
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "Notes": "mk32 COMBO"
-        },
-        "RC Transmitter": {
-            "Product": {
-                "Manufacturer": "SIYI",
-                "Model": "mk32 RADIO",
-                "URL": "https://shop.siyi.biz/products/siyi-mk32",
-                "Version": "1"
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "Notes": "mk32 COMBO"
-        },
-        "RC Receiver": {
-            "Product": {
-                "Manufacturer": "SIYI",
-                "Model": "mk32 RADIO",
-                "URL": "https://shop.siyi.biz/products/siyi-mk32",
-                "Version": "1"
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "FC Connection": {
-                "Type": "RCin/SBUS",
-                "Protocol": "SBUS"
-            },
-            "Notes": "MK32 RADIO COMBO"
-        },
-        "Telemetry": {
-            "Product": {
-                "Manufacturer": "SIYI",
-                "Model": "mk32 RADIO",
-                "URL": "https://shop.siyi.biz/products/siyi-mk32",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "FC Connection": {
-                "Type": "SERIAL1",
-                "Protocol": "MAVLink2"
-            },
-            "Notes": "mk32 COMBO RADIO"
-        },
         "Battery Monitor": {
             "Product": {
                 "Manufacturer": "HOBBYWING",
                 "Model": "XRotor X13-14S",
-                "URL": "https://www.hobbywing.com/en/products/xrotorx13",
-                "Version": ""
+                "Version": "",
+                "URL": "https://www.hobbywing.com/en/products/xrotorx13"
             },
             "Firmware": {
                 "Type": "https://www.hobbywing.com/en/products/datalinkv2273",
@@ -111,8 +51,8 @@
             "Product": {
                 "Manufacturer": "HOVERIT",
                 "Model": "160Ah",
-                "URL": "https://hoverit.in/home",
-                "Version": "160ah baaz"
+                "Version": "160ah baaz",
+                "URL": "https://hoverit.in/home"
             },
             "Specifications": {
                 "Chemistry": "LiIonSS",
@@ -128,8 +68,8 @@
             "Product": {
                 "Manufacturer": "HOBBYWING",
                 "Model": "XRotor X13-14S",
-                "URL": "https://www.hobbywing.com/en/products/xrotorx13",
-                "Version": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm"
+                "Version": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm",
+                "URL": "https://www.hobbywing.com/en/products/xrotorx13"
             },
             "Firmware": {
                 "Type": "",
@@ -145,8 +85,8 @@
             "Product": {
                 "Manufacturer": "HOBBYWING",
                 "Model": "XRotor X13-14S",
-                "URL": "https://www.hobbywing.com/en/products/xrotorx13",
-                "Version": ""
+                "Version": "",
+                "URL": "https://www.hobbywing.com/en/products/xrotorx13"
             },
             "Specifications": {
                 "Poles": 14
@@ -157,8 +97,8 @@
             "Product": {
                 "Manufacturer": "HOBBYWING",
                 "Model": "56*20''",
-                "URL": "https://www.amazon.com/HAWEWE-Hobbywing-Plastics-Propeller-Agricultural/dp/B0CH7WLPCG",
-                "Version": ""
+                "Version": "",
+                "URL": "https://www.amazon.com/HAWEWE-Hobbywing-Plastics-Propeller-Agricultural/dp/B0CH7WLPCG"
             },
             "Specifications": {
                 "Diameter_inches": 56
@@ -169,8 +109,8 @@
             "Product": {
                 "Manufacturer": "CubePilot HEX",
                 "Model": "com.cubepilot.here4",
-                "URL": "https://docs.cubepilot.org/user-guides/here-4/here-4-manual",
-                "Version": "1.12"
+                "Version": "1.12",
+                "URL": "https://docs.cubepilot.org/user-guides/here-4/here-4-manual"
             },
             "Firmware": {
                 "Type": "",
@@ -181,6 +121,66 @@
                 "Protocol": "DroneCAN"
             },
             "Notes": "RTK GNSS receiver HERE 4"
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "SIYI",
+                "Model": "mk32 RADIO",
+                "Version": "1",
+                "URL": "https://shop.siyi.biz/products/siyi-mk32"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": "mk32 COMBO"
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "SIYI",
+                "Model": "mk32 RADIO",
+                "Version": "1",
+                "URL": "https://shop.siyi.biz/products/siyi-mk32"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": "mk32 COMBO"
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "SIYI",
+                "Model": "mk32 RADIO",
+                "Version": "1",
+                "URL": "https://shop.siyi.biz/products/siyi-mk32"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "RCin/SBUS",
+                "Protocol": "SBUS"
+            },
+            "Notes": "MK32 RADIO COMBO"
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "SIYI",
+                "Model": "mk32 RADIO",
+                "Version": "",
+                "URL": "https://shop.siyi.biz/products/siyi-mk32"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": "mk32 COMBO RADIO"
         }
     },
     "Program version": "2.0.1",

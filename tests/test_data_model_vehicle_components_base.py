@@ -1045,3 +1045,264 @@ class TestComponentDataModelEdgeCases:
 
         result = model_with_datatypes._process_value(numeric_path, None)
         assert result == ""
+
+
+class TestComponentReordering:
+    """Test component reordering functionality in ComponentDataModelBase."""
+
+    @pytest.fixture
+    def model_instance(self) -> ComponentDataModelBase:
+        """Create a ComponentDataModelBase instance for testing reordering."""
+        schema = VehicleComponentsJsonSchema({})
+        return ComponentDataModelBase({}, {}, schema)
+
+    def test_user_sees_components_reordered_to_logical_sequence(self, model_instance) -> None:
+        """
+        User sees vehicle components displayed in a logical, workflow-oriented order.
+
+        GIVEN: A vehicle configuration with components in random order
+        WHEN: The system processes the component data
+        THEN: Components are reordered to follow the expected workflow sequence
+        AND: Known components appear before unknown/custom components
+        """
+        # Arrange: Create components in random order
+        existing_components = {
+            "RC Controller": {"Product": {"Manufacturer": "FrSky", "Model": "Taranis"}},
+            "GNSS Receiver": {"Product": {"Manufacturer": "u-blox", "Model": "NEO-M8N"}},
+            "Battery": {"Product": {"Manufacturer": "Tattu", "Model": "25C"}},
+            "Flight Controller": {"Product": {"Manufacturer": "Pixhawk", "Model": "6C"}},
+            "Custom Sensor": {"Product": {"Manufacturer": "Custom", "Model": "Sensor1"}},  # Unknown component
+        }
+
+        # Act: Reorder components
+        result = model_instance._reorder_components(existing_components)
+
+        # Assert: Components are in the expected order
+        component_order = list(result.keys())
+        expected_known_order = ["Flight Controller", "Battery", "GNSS Receiver", "RC Controller"]
+
+        # Check that known components appear in the expected relative order
+        for _i, component in enumerate(expected_known_order):
+            if component in component_order:
+                assert component_order.index(component) < component_order.index("Custom Sensor"), (
+                    f"Known component {component} should appear before unknown components"
+                )
+
+        # Custom/unknown components should be at the end
+        assert component_order[-1] == "Custom Sensor"
+
+    def test_user_sees_product_fields_ordered_consistently(self, model_instance) -> None:
+        """
+        User sees product information fields displayed in a consistent, logical order.
+
+        GIVEN: A component with product fields in random order
+        WHEN: The system processes the component data
+        THEN: Product fields are reordered with Version appearing before URL
+        AND: All existing field values are preserved
+        """
+        # Arrange: Create component with Product fields in wrong order
+        existing_components = {
+            "Flight Controller": {
+                "Product": {"Manufacturer": "Pixhawk", "URL": "https://pixhawk.org", "Model": "6C", "Version": "1.0"},
+                "Firmware": {"Type": "ArduCopter", "Version": "4.5.x"},
+            }
+        }
+
+        # Act: Reorder components
+        result = model_instance._reorder_components(existing_components)
+
+        # Assert: Product fields are reordered correctly
+        product_fields = list(result["Flight Controller"]["Product"].keys())
+        version_index = product_fields.index("Version")
+        url_index = product_fields.index("URL")
+
+        assert version_index < url_index, "Version should appear before URL in Product fields"
+
+        # Verify all original values are preserved
+        assert result["Flight Controller"]["Product"]["Manufacturer"] == "Pixhawk"
+        assert result["Flight Controller"]["Product"]["Model"] == "6C"
+        assert result["Flight Controller"]["Product"]["Version"] == "1.0"
+        assert result["Flight Controller"]["Product"]["URL"] == "https://pixhawk.org"
+
+    def test_user_sees_unknown_components_preserved_at_end(self, model_instance) -> None:
+        """
+        User sees custom or unknown components preserved and displayed at the end of the list.
+
+        GIVEN: A vehicle configuration with both known and unknown components
+        WHEN: The system processes the component data
+        THEN: Unknown components are preserved and appear at the end
+        AND: Their data remains unchanged
+        """
+        # Arrange: Mix of known and unknown components
+        existing_components = {
+            "Flight Controller": {"Product": {"Manufacturer": "Pixhawk"}},
+            "Custom IMU": {"Product": {"Manufacturer": "Custom IMU Corp", "Model": "IMU-X1"}},  # Unknown
+            "Battery": {"Product": {"Manufacturer": "Tattu"}},
+            "Proprietary Sensor": {"Product": {"Manufacturer": "Proprietary Inc", "Model": "Sensor-Z"}},  # Unknown
+            "GNSS Receiver": {"Product": {"Manufacturer": "u-blox"}},
+        }
+
+        # Act: Reorder components
+        result = model_instance._reorder_components(existing_components)
+
+        # Assert: Unknown components appear at the end
+        component_order = list(result.keys())
+
+        # Known components should come first in some logical order
+        known_components = ["Flight Controller", "Battery", "GNSS Receiver"]
+        unknown_components = ["Custom IMU", "Proprietary Sensor"]
+
+        # Find positions of known vs unknown components
+        known_positions = [component_order.index(comp) for comp in known_components if comp in component_order]
+        unknown_positions = [component_order.index(comp) for comp in unknown_components if comp in component_order]
+
+        # All unknown components should be at the end
+        if unknown_positions:
+            min_unknown_pos = min(unknown_positions)
+            max_known_pos = max(known_positions) if known_positions else -1
+            assert min_unknown_pos > max_known_pos, "Unknown components should appear after known components"
+
+        # Verify unknown component data is preserved
+        assert result["Custom IMU"]["Product"]["Manufacturer"] == "Custom IMU Corp"
+        assert result["Custom IMU"]["Product"]["Model"] == "IMU-X1"
+        assert result["Proprietary Sensor"]["Product"]["Manufacturer"] == "Proprietary Inc"
+        assert result["Proprietary Sensor"]["Product"]["Model"] == "Sensor-Z"
+
+    def test_user_sees_components_without_product_sections_unchanged(self, model_instance) -> None:
+        """
+        User sees components without Product sections remain completely unchanged.
+
+        GIVEN: Components with various section types but no Product section
+        WHEN: The system processes the component data
+        THEN: Components without Product sections are unchanged
+        AND: Their structure and values are preserved exactly
+        """
+        # Arrange: Components without Product sections
+        existing_components = {
+            "Flight Controller": {
+                "Firmware": {"Type": "ArduCopter", "Version": "4.5.x"},
+                "Specifications": {"MCU Series": "STM32H7"},
+            },
+            "Battery": {"Specifications": {"Chemistry": "Lipo", "Capacity mAh": 5000}},
+        }
+
+        # Act: Reorder components
+        result = model_instance._reorder_components(existing_components)
+
+        # Assert: Components without Product sections are unchanged
+        assert result["Flight Controller"]["Firmware"]["Type"] == "ArduCopter"
+        assert result["Flight Controller"]["Firmware"]["Version"] == "4.5.x"
+        assert result["Flight Controller"]["Specifications"]["MCU Series"] == "STM32H7"
+
+        assert result["Battery"]["Specifications"]["Chemistry"] == "Lipo"
+        assert result["Battery"]["Specifications"]["Capacity mAh"] == 5000
+
+    def test_user_sees_product_sections_with_missing_fields_handled_gracefully(self, model_instance) -> None:
+        """
+        User sees product sections with missing Version or URL fields handled gracefully.
+
+        GIVEN: Components with Product sections missing Version or URL fields
+        WHEN: The system processes the component data
+        THEN: Product sections without both Version and URL fields are unchanged
+        AND: No reordering occurs when required fields are missing
+        """
+        # Arrange: Product sections with incomplete field sets
+        existing_components = {
+            "Flight Controller": {
+                "Product": {
+                    "Manufacturer": "Pixhawk",
+                    "Model": "6C",
+                    # Missing Version and URL
+                }
+            },
+            "GNSS Receiver": {
+                "Product": {
+                    "Manufacturer": "u-blox",
+                    "Version": "1.0",
+                    # Missing URL
+                }
+            },
+            "Telemetry": {
+                "Product": {
+                    "Manufacturer": "SiK",
+                    "URL": "https://sik.org",
+                    # Missing Version
+                }
+            },
+        }
+
+        # Act: Reorder components
+        result = model_instance._reorder_components(existing_components)
+
+        # Assert: Product sections with missing fields are unchanged
+        # Flight Controller: missing both Version and URL
+        fc_product = result["Flight Controller"]["Product"]
+        assert list(fc_product.keys()) == ["Manufacturer", "Model"]
+
+        # GNSS Receiver: missing URL
+        gnss_product = result["GNSS Receiver"]["Product"]
+        assert list(gnss_product.keys()) == ["Manufacturer", "Version"]
+
+        # Telemetry: missing Version
+        telemetry_product = result["Telemetry"]["Product"]
+        assert list(telemetry_product.keys()) == ["Manufacturer", "URL"]
+
+    def test_user_sees_complex_product_sections_with_extra_fields_preserved(self, model_instance) -> None:
+        """
+        User sees complex product sections with extra custom fields preserved correctly.
+
+        GIVEN: Components with Product sections containing extra custom fields
+        WHEN: The system processes the component data
+        THEN: Standard fields are reordered correctly
+        AND: Extra custom fields are preserved at the end
+        AND: All field values remain unchanged
+        """
+        # Arrange: Product sections with extra custom fields
+        existing_components = {
+            "Flight Controller": {
+                "Product": {
+                    "URL": "https://pixhawk.org",
+                    "Custom Field 1": "Custom Value 1",
+                    "Manufacturer": "Pixhawk",
+                    "Version": "1.0",
+                    "Custom Field 2": "Custom Value 2",
+                    "Model": "6C",
+                    "Custom Field 3": "Custom Value 3",
+                }
+            }
+        }
+
+        # Act: Reorder components
+        result = model_instance._reorder_components(existing_components)
+
+        # Assert: Standard fields are reordered, custom fields preserved
+        product_fields = list(result["Flight Controller"]["Product"].keys())
+
+        # Standard fields should be first in correct order
+        manufacturer_idx = product_fields.index("Manufacturer")
+        model_idx = product_fields.index("Model")
+        version_idx = product_fields.index("Version")
+        url_idx = product_fields.index("URL")
+
+        assert manufacturer_idx < model_idx < version_idx < url_idx, (
+            "Standard fields should be in correct order: Manufacturer, Model, Version, URL"
+        )
+
+        # Custom fields should appear after standard fields
+        custom1_idx = product_fields.index("Custom Field 1")
+        custom2_idx = product_fields.index("Custom Field 2")
+        custom3_idx = product_fields.index("Custom Field 3")
+
+        assert custom1_idx > url_idx, "Custom fields should appear after standard fields"
+        assert custom2_idx > url_idx, "Custom fields should appear after standard fields"
+        assert custom3_idx > url_idx, "Custom fields should appear after standard fields"
+
+        # Verify all values are preserved
+        product = result["Flight Controller"]["Product"]
+        assert product["Manufacturer"] == "Pixhawk"
+        assert product["Model"] == "6C"
+        assert product["Version"] == "1.0"
+        assert product["URL"] == "https://pixhawk.org"
+        assert product["Custom Field 1"] == "Custom Value 1"
+        assert product["Custom Field 2"] == "Custom Value 2"
+        assert product["Custom Field 3"] == "Custom Value 3"

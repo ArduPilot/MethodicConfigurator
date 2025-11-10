@@ -5,12 +5,12 @@
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Firmware": {
                 "Type": "ArduCopter",
-                "Version": "4.5.x"
+                "Version": "4.5.7"
             },
             "Specifications": {
                 "MCU Series": ""
@@ -21,8 +21,8 @@
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "TOW min Kg": 0.1,
@@ -30,72 +30,12 @@
             },
             "Notes": ""
         },
-        "RC Controller": {
-            "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "Notes": ""
-        },
-        "RC Transmitter": {
-            "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "Notes": ""
-        },
-        "RC Receiver": {
-            "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "FC Connection": {
-                "Type": "RCin/SBUS",
-                "Protocol": "All"
-            },
-            "Notes": ""
-        },
-        "Telemetry": {
-            "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "FC Connection": {
-                "Type": "SERIAL1",
-                "Protocol": "MAVLink2"
-            },
-            "Notes": ""
-        },
         "Battery Monitor": {
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Firmware": {
                 "Type": "",
@@ -111,8 +51,8 @@
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "Chemistry": "Lipo",
@@ -128,8 +68,8 @@
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Firmware": {
                 "Type": "",
@@ -145,8 +85,8 @@
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "Poles": 14
@@ -157,8 +97,8 @@
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "Diameter_inches": 0
@@ -169,8 +109,8 @@
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Firmware": {
                 "Type": "",
@@ -179,6 +119,66 @@
             "FC Connection": {
                 "Type": "SERIAL3",
                 "Protocol": "AUTO"
+            },
+            "Notes": ""
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "RCin/SBUS",
+                "Protocol": "All"
+            },
+            "Notes": ""
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
             },
             "Notes": ""
         }
