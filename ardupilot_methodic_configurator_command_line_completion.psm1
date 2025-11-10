@@ -15,7 +15,7 @@ function Register-ScriptBlock {
         [Parameter(Mandatory=$true)]
         [string]$CommandName
     )
-    
+
     $scriptBlock = [ScriptBlock]::Create(@"
         param(`$commandName, `$wordToComplete, `$cursorPosition)
         `$completion_file = New-TemporaryFile
@@ -27,7 +27,7 @@ function Register-ScriptBlock {
         `$env:_ARGCOMPLETE_SUPPRESS_SPACE = 0
         `$env:_ARGCOMPLETE_IFS = "`n"
         `$env:_ARGCOMPLETE_SHELL = "powershell"
-        
+
         $CommandName 2>&1 | Out-Null
 
         Get-Content `$completion_file | ForEach-Object {
@@ -35,7 +35,7 @@ function Register-ScriptBlock {
         }
         Remove-Item `$completion_file, Env:\_ARGCOMPLETE_STDOUT_FILENAME, Env:\ARGCOMPLETE_USE_TEMPFILES, Env:\COMP_LINE, Env:\COMP_POINT, Env:\_ARGCOMPLETE, Env:\_ARGCOMPLETE_SUPPRESS_SPACE, Env:\_ARGCOMPLETE_IFS, Env:\_ARGCOMPLETE_SHELL
 "@)
-    
+
     Register-ArgumentCompleter -Native -CommandName $CommandName -ScriptBlock $scriptBlock
 }
 
