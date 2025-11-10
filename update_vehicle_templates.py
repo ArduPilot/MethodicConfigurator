@@ -13,6 +13,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import json
 import logging
 import os
 import sys
@@ -21,7 +22,6 @@ from pathlib import Path
 # Add parent directory to path to import from ardupilot_methodic_configurator
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ardupilot_methodic_configurator import __version__  # pylint: disable=wrong-import-position
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem  # pylint: disable=wrong-import-position
 from ardupilot_methodic_configurator.data_model_vehicle_components import (  # pylint: disable=wrong-import-position
     ComponentDataModel,
@@ -62,11 +62,30 @@ def process_template_directory(template_dir: Path) -> None:
     logging.info("\nProcessing template: %s", template_dir)
 
     try:
-        # Initialize LocalFilesystem with the template directory
+        # Load vehicle components data first to extract firmware version
+        vehicle_components_file = template_dir / "vehicle_components.json"
+        if not vehicle_components_file.exists():
+            logging.error("vehicle_components.json not found in %s", template_dir)
+            return
+
+        with open(vehicle_components_file, encoding="utf-8") as f:
+            vehicle_components_data = json.load(f)
+
+        # Extract firmware version from Flight Controller component
+        fw_version = "4.6.3"  # default fallback
+        if isinstance(vehicle_components_data, dict) and "Components" in vehicle_components_data:
+            flight_controller = vehicle_components_data["Components"].get("Flight Controller", {})
+            firmware = flight_controller.get("Firmware", {})
+            if isinstance(firmware, dict) and "Version" in firmware:
+                fw_version = firmware["Version"]
+
+        logging.info("Using firmware version: %s", fw_version)
+
+        # Initialize LocalFilesystem with the correct firmware version
         local_fs = LocalFilesystem(
             vehicle_dir=str(template_dir),
             vehicle_type="",
-            fw_version=__version__,
+            fw_version=fw_version,
             allow_editing_template_files=True,
             save_component_to_system_templates=False,
         )

@@ -5,8 +5,8 @@
             "Product": {
                 "Manufacturer": "MicoAir",
                 "Model": "MicoAir743v2",
-                "URL": "https://micoair.com/flightcontroller_micoair743v2/",
-                "Version": ""
+                "Version": "",
+                "URL": "https://micoair.com/flightcontroller_micoair743v2/"
             },
             "Firmware": {
                 "Type": "ArduCopter",
@@ -21,8 +21,8 @@
             "Product": {
                 "Manufacturer": "Tarot",
                 "Model": "FY680",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "TOW min Kg": 1.6,
@@ -30,72 +30,12 @@
             },
             "Notes": "With or without 1 Gallon of water (for spraying my small garden/vineyard)"
         },
-        "RC Controller": {
-            "Product": {
-                "Manufacturer": "Radiomaster",
-                "Model": "Pocket",
-                "URL": "https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "EdgeTx",
-                "Version": "\"Centurion\" v2.10.6"
-            },
-            "Notes": "Yaapu telem installed, this is just the controller with the sticks. Some controllers do not include the RC transmitter, this one does."
-        },
-        "RC Transmitter": {
-            "Product": {
-                "Manufacturer": "Radiomaster",
-                "Model": "internal",
-                "URL": "https://www.radiomasterrc.com/products/boxer-radio-controller-m2",
-                "Version": "Pocket"
-            },
-            "Firmware": {
-                "Type": "ELRS (internal)",
-                "Version": "3.4.3"
-            },
-            "Notes": "Using the internal RF module"
-        },
-        "RC Receiver": {
-            "Product": {
-                "Manufacturer": "BetaFPV",
-                "Model": "SuperD ELRS Diversity 2.4GHz",
-                "URL": "",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "ExpressLRS",
-                "Version": "3.5.5"
-            },
-            "FC Connection": {
-                "Type": "SERIAL6",
-                "Protocol": "CRSF"
-            },
-            "Notes": "Diversity, ExpressLRS 2.4GHz to match my radio, ELRS may need to be updated via WiFi or FTDI to bind\\."
-        },
-        "Telemetry": {
-            "Product": {
-                "Manufacturer": "MicoAir",
-                "Model": "LR24Fmini",
-                "URL": "https://store.micoair.com/product/lr24-telemetry-radio/",
-                "Version": "24F mini"
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "FC Connection": {
-                "Type": "SERIAL1",
-                "Protocol": "MAVLink2"
-            },
-            "Notes": "UART1 For Telemetry Module. Bluetooth Telem is UART8."
-        },
         "Battery Monitor": {
             "Product": {
                 "Manufacturer": "MicoAir",
                 "Model": "4in1 ESC 60A",
-                "URL": "https://store.micoair.com/product/micoair743-v2/?attribute_type=Only+FC&attribute_pa_firmware_1=ardupilot",
-                "Version": ""
+                "Version": "",
+                "URL": "https://store.micoair.com/product/micoair743-v2/?attribute_type=Only+FC&attribute_pa_firmware_1=ardupilot"
             },
             "Firmware": {
                 "Type": "BlueJay",
@@ -111,8 +51,8 @@
             "Product": {
                 "Manufacturer": "Ovonic",
                 "Model": "Orange",
-                "URL": "",
-                "Version": "5500mAh 6S 75C"
+                "Version": "5500mAh 6S 75C",
+                "URL": ""
             },
             "Specifications": {
                 "Chemistry": "Lipo",
@@ -128,8 +68,8 @@
             "Product": {
                 "Manufacturer": "MicoAir",
                 "Model": "60A BlueJay",
-                "URL": "https://store.micoair.com/product/micoair743-v2/?attribute_type=Only+FC&attribute_pa_firmware_1=ardupilot",
-                "Version": "1"
+                "Version": "1",
+                "URL": "https://store.micoair.com/product/micoair743-v2/?attribute_type=Only+FC&attribute_pa_firmware_1=ardupilot"
             },
             "Firmware": {
                 "Type": "BlueJay",
@@ -145,8 +85,8 @@
             "Product": {
                 "Manufacturer": "Generic",
                 "Model": "3115-900KV",
-                "URL": "https://www.aliexpress.us/item/3256807108933595.html?spm=a2g0o.order_list.order_list_main.5.13841802tr0Uqr&gatewayAdapt=glo2usa",
-                "Version": ""
+                "Version": "",
+                "URL": "https://www.aliexpress.us/item/3256807108933595.html?spm=a2g0o.order_list.order_list_main.5.13841802tr0Uqr&gatewayAdapt=glo2usa"
             },
             "Specifications": {
                 "Poles": 14
@@ -157,8 +97,8 @@
             "Product": {
                 "Manufacturer": "HQPROP",
                 "Model": "10x5x3",
-                "URL": "https://holybro.com/collections/multicopter-kit/products/spare-parts-x500-v2-kit?variant=41591073669309",
-                "Version": ""
+                "Version": "",
+                "URL": "https://holybro.com/collections/multicopter-kit/products/spare-parts-x500-v2-kit?variant=41591073669309"
             },
             "Specifications": {
                 "Diameter_inches": 10.0
@@ -169,8 +109,8 @@
             "Product": {
                 "Manufacturer": "MicoAir",
                 "Model": "MG-A01",
-                "URL": "https://holybro.com/products/m10-gps?srsltid=AfmBOootSZi5Pc_2XhliqsKy-u3_8l8SKZ8tzd5wDuPMENtL-ZeLngUL",
-                "Version": "1"
+                "Version": "1",
+                "URL": "https://holybro.com/products/m10-gps?srsltid=AfmBOootSZi5Pc_2XhliqsKy-u3_8l8SKZ8tzd5wDuPMENtL-ZeLngUL"
             },
             "Firmware": {
                 "Type": "Ublox",
@@ -181,6 +121,66 @@
                 "Protocol": "uBlox"
             },
             "Notes": "uBlox M10 GNSS with compass running on the I2C bus"
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "Radiomaster",
+                "Model": "Pocket",
+                "Version": "",
+                "URL": "https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller"
+            },
+            "Firmware": {
+                "Type": "EdgeTx",
+                "Version": "\"Centurion\" v2.10.6"
+            },
+            "Notes": "Yaapu telem installed, this is just the controller with the sticks. Some controllers do not include the RC transmitter, this one does."
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "Radiomaster",
+                "Model": "internal",
+                "Version": "Pocket",
+                "URL": "https://www.radiomasterrc.com/products/boxer-radio-controller-m2"
+            },
+            "Firmware": {
+                "Type": "ELRS (internal)",
+                "Version": "3.4.3"
+            },
+            "Notes": "Using the internal RF module"
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "BetaFPV",
+                "Model": "SuperD ELRS Diversity 2.4GHz",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "ExpressLRS",
+                "Version": "3.5.5"
+            },
+            "FC Connection": {
+                "Type": "SERIAL6",
+                "Protocol": "CRSF"
+            },
+            "Notes": "Diversity, ExpressLRS 2.4GHz to match my radio, ELRS may need to be updated via WiFi or FTDI to bind\\."
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "MicoAir",
+                "Model": "LR24Fmini",
+                "Version": "24F mini",
+                "URL": "https://store.micoair.com/product/lr24-telemetry-radio/"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": "UART1 For Telemetry Module. Bluetooth Telem is UART8."
         }
     },
     "Program version": "2.3.0",

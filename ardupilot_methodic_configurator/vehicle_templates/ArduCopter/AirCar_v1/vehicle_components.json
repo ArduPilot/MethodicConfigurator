@@ -5,8 +5,8 @@
             "Product": {
                 "Manufacturer": "CubePilot",
                 "Model": "CubeOrange",
-                "URL": "https://www.robotshop.com/products/cubepilot-the-cube-orange-standard-set-ads-b-carrier-board",
-                "Version": "1.0"
+                "Version": "1.0",
+                "URL": "https://www.robotshop.com/products/cubepilot-the-cube-orange-standard-set-ads-b-carrier-board"
             },
             "Firmware": {
                 "Type": "ArduCopter",
@@ -21,8 +21,8 @@
             "Product": {
                 "Manufacturer": "Aircar Technology and Aviation ",
                 "Model": "prototype",
-                "URL": "https://www.aircar.aero/",
-                "Version": "v1"
+                "Version": "v1",
+                "URL": "https://www.aircar.aero/"
             },
             "Specifications": {
                 "TOW min Kg": 320,
@@ -30,72 +30,12 @@
             },
             "Notes": "Frame is custom, X type frame. Arm length is 2650mm."
         },
-        "RC Controller": {
-            "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "Notes": ""
-        },
-        "RC Transmitter": {
-            "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "Notes": "integrated in RC controller"
-        },
-        "RC Receiver": {
-            "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "FC Connection": {
-                "Type": "RCin/SBUS",
-                "Protocol": "All"
-            },
-            "Notes": "This receiver is on the vehicle and is connected to the flight controller"
-        },
-        "Telemetry": {
-            "Product": {
-                "Manufacturer": "",
-                "Model": "",
-                "URL": "",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "FC Connection": {
-                "Type": "SERIAL1",
-                "Protocol": "MAVLink2"
-            },
-            "Notes": ""
-        },
         "Battery Monitor": {
             "Product": {
                 "Manufacturer": "CubePilot",
                 "Model": "HX4-06008",
-                "URL": "https://docs.cubepilot.org/user-guides/autopilot/the-cube-user-manual#power-module-connection",
-                "Version": "PB01A21"
+                "Version": "PB01A21",
+                "URL": "https://docs.cubepilot.org/user-guides/autopilot/the-cube-user-manual#power-module-connection"
             },
             "Firmware": {
                 "Type": "",
@@ -111,8 +51,8 @@
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "Chemistry": "LipoHV",
@@ -128,8 +68,8 @@
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Firmware": {
                 "Type": "",
@@ -145,8 +85,8 @@
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "Poles": 14
@@ -157,8 +97,8 @@
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "Diameter_inches": 52
@@ -169,8 +109,8 @@
             "Product": {
                 "Manufacturer": "CubePilot",
                 "Model": "Here 3",
-                "URL": "https://docs.cubepilot.org/user-guides/here-3/here-3-manual",
-                "Version": "1"
+                "Version": "1",
+                "URL": "https://docs.cubepilot.org/user-guides/here-3/here-3-manual"
             },
             "Firmware": {
                 "Type": "UBlox",
@@ -181,6 +121,66 @@
                 "Protocol": "DroneCAN"
             },
             "Notes": "uBlox M8P GNSS with a patch antenna."
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": "integrated in RC controller"
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "RCin/SBUS",
+                "Protocol": "All"
+            },
+            "Notes": "This receiver is on the vehicle and is connected to the flight controller"
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": ""
         }
     },
     "Program version": "2.0.1"

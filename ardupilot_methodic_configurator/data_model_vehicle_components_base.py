@@ -263,6 +263,7 @@ class ComponentDataModelBase:
 
         # Merge existing data onto default structure (preserves existing values)
         self._data = self._deep_merge_dicts(default_structure, self._data)
+        self._data["Components"] = self._reorder_components(self._data.get("Components", {}))
         self._data["Program version"] = __version__
 
     def _deep_merge_dicts(self, default: dict[str, Any], existing: dict[str, Any]) -> dict[str, Any]:
@@ -291,6 +292,63 @@ class ComponentDataModelBase:
             # If key exists in result but isn't a dict, keep the existing value (no change needed)
 
         return result
+
+    def _reorder_components(self, existing_components: ComponentData) -> ComponentData:
+        """
+        Reorder components according to the desired structure while preserving existing data.
+
+        Args:
+            existing_components: The existing components dictionary
+
+        Returns:
+            A new dictionary with components reordered according to the desired structure
+
+        """
+        desired_component_order = [
+            "Flight Controller",
+            "Frame",
+            "Battery Monitor",
+            "Battery",
+            "ESC",
+            "Motors",
+            "Propellers",
+            "GNSS Receiver",
+            "RC Controller",
+            "RC Transmitter",
+            "RC Receiver",
+            "Telemetry",
+        ]
+
+        # Create reordered components dict
+        reordered_components = {}
+        remaining_components = existing_components.copy()
+
+        # First, add components in the desired order
+        for component_name in desired_component_order:
+            if component_name in remaining_components:
+                reordered_components[component_name] = remaining_components.pop(component_name)
+
+        # Then add any remaining unknown components at the end
+        reordered_components.update(remaining_components)
+
+        # Second step: for each component, ensure Product fields are in correct order (Version before URL)
+        for component_name, component_data in reordered_components.items():
+            if "Product" in component_data and isinstance(component_data["Product"], dict):
+                product = component_data["Product"]
+                if "Version" in product and "URL" in product:
+                    # Create new ordered product dict
+                    ordered_product = {}
+                    # Add fields in desired order
+                    for field in ["Manufacturer", "Model", "Version", "URL"]:
+                        if field in product:
+                            ordered_product[field] = product[field]
+                    # Add any remaining fields
+                    for field, value in product.items():
+                        if field not in ordered_product:
+                            ordered_product[field] = value
+                    reordered_components[component_name]["Product"] = ordered_product
+
+        return reordered_components
 
     def init_battery_chemistry(self) -> None:
         self._battery_chemistry = (

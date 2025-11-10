@@ -5,8 +5,8 @@
             "Product": {
                 "Manufacturer": "ArduPilot",
                 "Model": "SITL",
-                "URL": "-",
-                "Version": "-"
+                "Version": "-",
+                "URL": "-"
             },
             "Firmware": {
                 "Type": "ArduCopter",
@@ -21,8 +21,8 @@
             "Product": {
                 "Manufacturer": "Gazebo",
                 "Model": "iris_with_gimbal",
-                "URL": "-",
-                "Version": "-"
+                "Version": "-",
+                "URL": "-"
             },
             "Specifications": {
                 "TOW min Kg": 0.6,
@@ -30,72 +30,12 @@
             },
             "Notes": "TOW in this case a taken ideal, and not calculated including gimbal."
         },
-        "RC Controller": {
-            "Product": {
-                "Manufacturer": "-",
-                "Model": "-",
-                "URL": "-",
-                "Version": "-"
-            },
-            "Firmware": {
-                "Type": "-",
-                "Version": "-"
-            },
-            "Notes": ""
-        },
-        "RC Transmitter": {
-            "Product": {
-                "Manufacturer": "-",
-                "Model": "-",
-                "URL": "-",
-                "Version": "-"
-            },
-            "Firmware": {
-                "Type": "-",
-                "Version": "-"
-            },
-            "Notes": "-"
-        },
-        "RC Receiver": {
-            "Product": {
-                "Manufacturer": "-",
-                "Model": "-",
-                "URL": "-",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "-",
-                "Version": "-"
-            },
-            "FC Connection": {
-                "Type": "RCin/SBUS",
-                "Protocol": "All"
-            },
-            "Notes": ""
-        },
-        "Telemetry": {
-            "Product": {
-                "Manufacturer": "ArduPilot",
-                "Model": "SITL",
-                "URL": "",
-                "Version": "4.6.x"
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "FC Connection": {
-                "Type": "SERIAL1",
-                "Protocol": "MAVLink2"
-            },
-            "Notes": ""
-        },
         "Battery Monitor": {
             "Product": {
                 "Manufacturer": "ArduPilot",
                 "Model": "SITL",
-                "URL": "-",
-                "Version": "4.6.x"
+                "Version": "4.6.x",
+                "URL": "-"
             },
             "Firmware": {
                 "Type": "",
@@ -111,8 +51,8 @@
             "Product": {
                 "Manufacturer": "ArduPilot",
                 "Model": "SITL",
-                "URL": "-",
-                "Version": "4.6.x"
+                "Version": "4.6.x",
+                "URL": "-"
             },
             "Specifications": {
                 "Chemistry": "Lipo",
@@ -128,8 +68,8 @@
             "Product": {
                 "Manufacturer": "ArduPilot",
                 "Model": "SITL",
-                "URL": "-",
-                "Version": "4.6.x"
+                "Version": "4.6.x",
+                "URL": "-"
             },
             "Firmware": {
                 "Type": "-",
@@ -145,8 +85,8 @@
             "Product": {
                 "Manufacturer": "ArduPilot",
                 "Model": "gz-sim-apply-joint-force-system",
-                "URL": "-",
-                "Version": "-"
+                "Version": "-",
+                "URL": "-"
             },
             "Specifications": {
                 "Poles": 3
@@ -157,8 +97,8 @@
             "Product": {
                 "Manufacturer": "ArduPilot",
                 "Model": "gz-sim-apply-joint-force-system",
-                "URL": "-",
-                "Version": "-"
+                "Version": "-",
+                "URL": "-"
             },
             "Specifications": {
                 "Diameter_inches": 3
@@ -169,8 +109,8 @@
             "Product": {
                 "Manufacturer": "ArduPilot",
                 "Model": "SITL",
-                "URL": "-",
-                "Version": "4.6.x"
+                "Version": "4.6.x",
+                "URL": "-"
             },
             "Firmware": {
                 "Type": "",
@@ -181,6 +121,66 @@
                 "Protocol": "uBlox"
             },
             "Notes": "-"
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "-",
+                "Model": "-",
+                "Version": "-",
+                "URL": "-"
+            },
+            "Firmware": {
+                "Type": "-",
+                "Version": "-"
+            },
+            "Notes": ""
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "-",
+                "Model": "-",
+                "Version": "-",
+                "URL": "-"
+            },
+            "Firmware": {
+                "Type": "-",
+                "Version": "-"
+            },
+            "Notes": "-"
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "-",
+                "Model": "-",
+                "Version": "",
+                "URL": "-"
+            },
+            "Firmware": {
+                "Type": "-",
+                "Version": "-"
+            },
+            "FC Connection": {
+                "Type": "RCin/SBUS",
+                "Protocol": "All"
+            },
+            "Notes": ""
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "ArduPilot",
+                "Model": "SITL",
+                "Version": "4.6.x",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": ""
         }
     },
     "Program version": "2.0.1",

@@ -121,9 +121,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         if not self.file_parameters:
             return  # No files intermediate parameters files found, no need to continue, the rest needs them
 
+        fw_version = re_compile(r"[ _-]").split(self.fw_version, 1)[0]
         # Read ArduPilot parameter documentation
-        xml_url = get_xml_url(vehicle_type, self.fw_version)
-        fallback_xml_url = get_fallback_xml_url(vehicle_type, self.fw_version)
+        xml_url = get_xml_url(vehicle_type, fw_version)
+        fallback_xml_url = get_fallback_xml_url(vehicle_type, fw_version)
         xml_dir = get_xml_dir(vehicle_dir)
         self.doc_dict = parse_parameter_metadata(
             xml_url, xml_dir, PARAM_DEFINITION_XML_FILE, vehicle_type, TOOLTIP_MAX_LENGTH, fallback_xml_url

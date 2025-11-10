@@ -6,8 +6,8 @@
                 "Product": {
                     "Manufacturer": "Radiomaster",
                     "Model": "TX16S",
-                    "URL": "https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller",
-                    "Version": "MKI"
+                    "Version": "MKI",
+                    "URL": "https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller"
                 },
                 "Firmware": {
                     "Type": "EdgeTx",
@@ -22,8 +22,8 @@
                 "Product": {
                     "Manufacturer": "FlySky",
                     "Model": "FS-i6X",
-                    "URL": "https://www.flysky-cn.com/fsi6x",
-                    "Version": "1.0"
+                    "Version": "1.0",
+                    "URL": "https://www.flysky-cn.com/fsi6x"
                 },
                 "Firmware": {
                     "Type": "AFHDS 2A",
@@ -38,8 +38,8 @@
                 "Product": {
                     "Manufacturer": "MP",
                     "Model": "Joystick support",
-                    "URL": "https://ardupilot.org/copter/docs/common-joystick.html",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://ardupilot.org/copter/docs/common-joystick.html"
                 },
                 "Firmware": {
                     "Type": "",
@@ -54,8 +54,8 @@
                 "Product": {
                     "Manufacturer": "SIYI",
                     "Model": "mk32 RADIO",
-                    "URL": "https://shop.siyi.biz/products/siyi-mk32",
-                    "Version": "1"
+                    "Version": "1",
+                    "URL": "https://shop.siyi.biz/products/siyi-mk32"
                 },
                 "Firmware": {
                     "Type": "",
@@ -70,8 +70,8 @@
                 "Product": {
                     "Manufacturer": "FrSky",
                     "Model": "Taranis Q X7",
-                    "URL": "https://www.frsky-rc.com/product/taranis-q-x7-2/",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://www.frsky-rc.com/product/taranis-q-x7-2/"
                 },
                 "Firmware": {
                     "Type": "OpenTx",
@@ -86,8 +86,8 @@
                 "Product": {
                     "Manufacturer": "Skydroid",
                     "Model": "T12",
-                    "URL": "https://worldronemarket.com/product/skydroid-t12/",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://worldronemarket.com/product/skydroid-t12/"
                 },
                 "Firmware": {
                     "Type": "",
@@ -102,8 +102,8 @@
                 "Product": {
                     "Manufacturer": "Radiomaster",
                     "Model": "Boxer",
-                    "URL": "https://www.radiomasterrc.com/products/boxer-radio-controller-m2",
-                    "Version": "M2 ELRS LBT (EU)"
+                    "Version": "M2 ELRS LBT (EU)",
+                    "URL": "https://www.radiomasterrc.com/products/boxer-radio-controller-m2"
                 },
                 "Firmware": {
                     "Type": "EdgeTx",
@@ -118,8 +118,8 @@
                 "Product": {
                     "Manufacturer": "Radiolink",
                     "Model": "AT9S Pro",
-                    "URL": "https://www.amazon.com/Radiolink-Remote-Controller-Receiver-Helicopter/dp/B07VC3VJGM?th=1",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://www.amazon.com/Radiolink-Remote-Controller-Receiver-Helicopter/dp/B07VC3VJGM?th=1"
                 },
                 "Firmware": {
                     "Type": "AT9S",
@@ -136,8 +136,8 @@
                 "Product": {
                     "Manufacturer": "TBS",
                     "Model": "TRACER Micro TX",
-                    "URL": "https://www.team-blacksheep.com/products/prod:tbs_tracer_mtx",
-                    "Version": "2"
+                    "Version": "2",
+                    "URL": "https://www.team-blacksheep.com/products/prod:tbs_tracer_mtx"
                 },
                 "Firmware": {
                     "Type": "Crossfire TX",
@@ -152,8 +152,8 @@
                 "Product": {
                     "Manufacturer": "FlySky",
                     "Model": "FS-i6X",
-                    "URL": "ttps://www.flysky-cn.com/fsi6x",
-                    "Version": "1.0"
+                    "Version": "1.0",
+                    "URL": "ttps://www.flysky-cn.com/fsi6x"
                 },
                 "Firmware": {
                     "Type": "AFHDS 2A",
@@ -168,8 +168,8 @@
                 "Product": {
                     "Manufacturer": "Microsoft",
                     "Model": "X-box One controller",
-                    "URL": "https://www.microsoft.com/store/collections/xboxcontrollers",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://www.microsoft.com/store/collections/xboxcontrollers"
                 },
                 "Firmware": {
                     "Type": "",
@@ -184,8 +184,8 @@
                 "Product": {
                     "Manufacturer": "SIYI",
                     "Model": "mk32 RADIO",
-                    "URL": "https://shop.siyi.biz/products/siyi-mk32",
-                    "Version": "1"
+                    "Version": "1",
+                    "URL": "https://shop.siyi.biz/products/siyi-mk32"
                 },
                 "Firmware": {
                     "Type": "",
@@ -200,8 +200,8 @@
                 "Product": {
                     "Manufacturer": "Skydroid",
                     "Model": "T12",
-                    "URL": "https://worldronemarket.com/product/skydroid-t12/",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://worldronemarket.com/product/skydroid-t12/"
                 },
                 "Firmware": {
                     "Type": "",
@@ -216,8 +216,8 @@
                 "Product": {
                     "Manufacturer": "BetaFPV",
                     "Model": "ExpressLRS 1W",
-                    "URL": "",
-                    "Version": ""
+                    "Version": "",
+                    "URL": ""
                 },
                 "Firmware": {
                     "Type": "",
@@ -232,8 +232,8 @@
                 "Product": {
                     "Manufacturer": "Radiomaster",
                     "Model": "internal",
-                    "URL": "https://www.radiomasterrc.com/products/boxer-radio-controller-m2",
-                    "Version": "M2"
+                    "Version": "M2",
+                    "URL": "https://www.radiomasterrc.com/products/boxer-radio-controller-m2"
                 },
                 "Firmware": {
                     "Type": "ELRS (internal)",
@@ -250,8 +250,8 @@
                 "Product": {
                     "Manufacturer": "TBS",
                     "Model": "Tracer RX",
-                    "URL": "",
-                    "Version": ""
+                    "Version": "",
+                    "URL": ""
                 },
                 "Firmware": {
                     "Type": "Crossfire",
@@ -270,8 +270,8 @@
                 "Product": {
                     "Manufacturer": "TBS",
                     "Model": "Crossfire RX se",
-                    "URL": "https://www.team-blacksheep.com/products/prod:crossfire_nano_se",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://www.team-blacksheep.com/products/prod:crossfire_nano_se"
                 },
                 "Firmware": {
                     "Type": "Crossfire",
@@ -290,8 +290,8 @@
                 "Product": {
                     "Manufacturer": "FlySky",
                     "Model": "FS-IA6B",
-                    "URL": "https://www.flysky-cn.com/ia6b-canshu",
-                    "Version": "V1.0"
+                    "Version": "V1.0",
+                    "URL": "https://www.flysky-cn.com/ia6b-canshu"
                 },
                 "Firmware": {
                     "Type": "AFHDS 2A",
@@ -310,8 +310,8 @@
                 "Product": {
                     "Manufacturer": "CUAV",
                     "Model": "LTE-Link SE",
-                    "URL": "https://doc.cuav.net/link/lte-link/en/lte-link-se.html",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://doc.cuav.net/link/lte-link/en/lte-link-se.html"
                 },
                 "Firmware": {
                     "Type": "",
@@ -330,8 +330,8 @@
                 "Product": {
                     "Manufacturer": "SIYI",
                     "Model": "mk32 RADIO",
-                    "URL": "https://shop.siyi.biz/products/siyi-mk32",
-                    "Version": "1"
+                    "Version": "1",
+                    "URL": "https://shop.siyi.biz/products/siyi-mk32"
                 },
                 "Firmware": {
                     "Type": "",
@@ -350,8 +350,8 @@
                 "Product": {
                     "Manufacturer": "TBS",
                     "Model": "Tracer Nano RX",
-                    "URL": "https://www.team-blacksheep.com/products/prod:tracer_nanorx",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://www.team-blacksheep.com/products/prod:tracer_nanorx"
                 },
                 "Firmware": {
                     "Type": "",
@@ -370,8 +370,8 @@
                 "Product": {
                     "Manufacturer": "Skydroid",
                     "Model": "T12",
-                    "URL": "https://worldronemarket.com/product/skydroid-t12/",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://worldronemarket.com/product/skydroid-t12/"
                 },
                 "Firmware": {
                     "Type": "",
@@ -390,8 +390,8 @@
                 "Product": {
                     "Manufacturer": "Matek",
                     "Model": "ExpressLRS Diversity",
-                    "URL": "",
-                    "Version": ""
+                    "Version": "",
+                    "URL": ""
                 },
                 "Firmware": {
                     "Type": "",
@@ -410,8 +410,8 @@
                 "Product": {
                     "Manufacturer": "Radiomaster",
                     "Model": "RPTD4 ExpressLRS 2.4Ghz diversity receiver",
-                    "URL": "https://www.radiomasterrc.com/products/rp4td-expresslrs-2-4ghz-diversity-receiver",
-                    "Version": "EU LBT"
+                    "Version": "EU LBT",
+                    "URL": "https://www.radiomasterrc.com/products/rp4td-expresslrs-2-4ghz-diversity-receiver"
                 },
                 "Firmware": {
                     "Type": "ELRS",
@@ -430,8 +430,8 @@
                 "Product": {
                     "Manufacturer": "RadioLink",
                     "Model": "R9DS",
-                    "URL": "https://www.amazon.com/Radiolink-2-4GHz-Receiver-Spectrum-Compatible/dp/B01KX3IVOK",
-                    "Version": "V2.0"
+                    "Version": "V2.0",
+                    "URL": "https://www.amazon.com/Radiolink-2-4GHz-Receiver-Spectrum-Compatible/dp/B01KX3IVOK"
                 },
                 "Firmware": {
                     "Type": "",
@@ -452,8 +452,8 @@
                 "Product": {
                     "Manufacturer": "Espressif",
                     "Model": "ESP32 WROOM",
-                    "URL": "https://dronebridge.github.io/ESP32/",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://dronebridge.github.io/ESP32/"
                 },
                 "Firmware": {
                     "Type": "dronebridge",
@@ -472,8 +472,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "SiK Telemetry Radio",
-                    "URL": "https://holybro.com/products/sik-telemetry-radio-v3?variant=41562952270013",
-                    "Version": "V3.0"
+                    "Version": "V3.0",
+                    "URL": "https://holybro.com/products/sik-telemetry-radio-v3?variant=41562952270013"
                 },
                 "Firmware": {
                     "Type": "Open-source SIK firmware",
@@ -492,8 +492,8 @@
                 "Product": {
                     "Manufacturer": "CUAV",
                     "Model": "LTE-Link SE",
-                    "URL": "https://doc.cuav.net/link/lte-link/en/lte-link-se.html",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://doc.cuav.net/link/lte-link/en/lte-link-se.html"
                 },
                 "Firmware": {
                     "Type": "",
@@ -512,8 +512,8 @@
                 "Product": {
                     "Manufacturer": "mRo",
                     "Model": "SiK 915Mhz",
-                    "URL": "https://mrobotics.io/docs/mro-sik-telemetry-radio-v2/",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://mrobotics.io/docs/mro-sik-telemetry-radio-v2/"
                 },
                 "Firmware": {
                     "Type": "SiK",
@@ -532,8 +532,8 @@
                 "Product": {
                     "Manufacturer": "Espressif",
                     "Model": "Xiao ESP32C3",
-                    "URL": "",
-                    "Version": ""
+                    "Version": "",
+                    "URL": ""
                 },
                 "Firmware": {
                     "Type": "Serial Bridge Custom",
@@ -552,8 +552,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "Microhard Radio P840",
-                    "URL": "https://holybro.com/products/microhard-radio?variant=41473588265149",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://holybro.com/products/microhard-radio?variant=41473588265149"
                 },
                 "Firmware": {
                     "Type": "",
@@ -574,8 +574,8 @@
                 "Product": {
                     "Manufacturer": "Turnigy",
                     "Model": "Graphene Panther",
-                    "URL": "",
-                    "Version": "3000mAh 6S 75C"
+                    "Version": "3000mAh 6S 75C",
+                    "URL": ""
                 },
                 "Specifications": {
                     "Chemistry": "Lipo",
@@ -594,8 +594,8 @@
                 "Product": {
                     "Manufacturer": "SLS",
                     "Model": "X-Cube 1800mAh 4S1P 14,8V 40C/80C",
-                    "URL": "https://www.stefansliposhop.de/akkus/sls-x-cube/sls-x-cube-40c/sls-x-cube-1800mah-4s1p-14-8v-40c-80c::1568.html",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://www.stefansliposhop.de/akkus/sls-x-cube/sls-x-cube-40c/sls-x-cube-1800mah-4s1p-14-8v-40c-80c::1568.html"
                 },
                 "Specifications": {
                     "Chemistry": "Lipo",
@@ -614,8 +614,8 @@
                 "Product": {
                     "Manufacturer": "Gens Ace",
                     "Model": "4S1P 5000mAh",
-                    "URL": "https://www.rccorner.ae/gens-ace-5000mah-14-8v-45c-4s1p-lipo-battery",
-                    "Version": "B-45C-5000-4S1P"
+                    "Version": "B-45C-5000-4S1P",
+                    "URL": "https://www.rccorner.ae/gens-ace-5000mah-14-8v-45c-4s1p-lipo-battery"
                 },
                 "Specifications": {
                     "Chemistry": "Lipo",
@@ -634,8 +634,8 @@
                 "Product": {
                     "Manufacturer": "Gens Ace",
                     "Model": "Tattu 6S1P 11000mAh",
-                    "URL": "",
-                    "Version": ""
+                    "Version": "",
+                    "URL": ""
                 },
                 "Specifications": {
                     "Chemistry": "LipoHVSS",
@@ -654,8 +654,8 @@
                 "Product": {
                     "Manufacturer": "Zeee",
                     "Model": "6S 6500mAh LiHV",
-                    "URL": "",
-                    "Version": ""
+                    "Version": "",
+                    "URL": ""
                 },
                 "Specifications": {
                     "Chemistry": "LipoHV",
@@ -674,8 +674,8 @@
                 "Product": {
                     "Manufacturer": "Gens Ace",
                     "Model": "Tattu 6C 30000mAh",
-                    "URL": "https://genstattu.com/tattu-g-tech-30000mah-6s-22-2v-25c-lipo-battery-pack-with-as150u-f-plug/",
-                    "Version": "AS150U-F"
+                    "Version": "AS150U-F",
+                    "URL": "https://genstattu.com/tattu-g-tech-30000mah-6s-22-2v-25c-lipo-battery-pack-with-as150u-f-plug/"
                 },
                 "Specifications": {
                     "Chemistry": "LipoHV",
@@ -696,8 +696,8 @@
                 "Product": {
                     "Manufacturer": "T-Motor",
                     "Model": "F55A Pro II",
-                    "URL": "https://shop.tmotor.com/products/fpv-drones-esc-f55a-proii-6s-4in1",
-                    "Version": "32bit 4in1-6S"
+                    "Version": "32bit 4in1-6S",
+                    "URL": "https://shop.tmotor.com/products/fpv-drones-esc-f55a-proii-6s-4in1"
                 },
                 "Firmware": {
                     "Type": "BLHeli32",
@@ -716,8 +716,8 @@
                 "Product": {
                     "Manufacturer": "Mamba System",
                     "Model": "F45_128k 4in1 ESC",
-                    "URL": "https://www.diatone.us/products/mb-f45_128k-bl32-esc",
-                    "Version": "1"
+                    "Version": "1",
+                    "URL": "https://www.diatone.us/products/mb-f45_128k-bl32-esc"
                 },
                 "Firmware": {
                     "Type": "BLHeli32",
@@ -736,8 +736,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "X500 V2-BLHeli S 20A",
-                    "URL": "https://www.mybotshop.de/Holybro-X500-V2-BLHeli-S-20A-ESC_1",
-                    "Version": "1"
+                    "Version": "1",
+                    "URL": "https://www.mybotshop.de/Holybro-X500-V2-BLHeli-S-20A-ESC_1"
                 },
                 "Firmware": {
                     "Type": "",
@@ -756,8 +756,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "Tekko32 F4-45A",
-                    "URL": "https://holybro.com/products/tekko32-f4-45a-esc",
-                    "Version": "AM32"
+                    "Version": "AM32",
+                    "URL": "https://holybro.com/products/tekko32-f4-45a-esc"
                 },
                 "Firmware": {
                     "Type": "AM32",
@@ -776,8 +776,8 @@
                 "Product": {
                     "Manufacturer": "HOBBYWING",
                     "Model": "X11 Plus",
-                    "URL": "https://www.hobbywing.com/en/products/xrotor-x11-plus270.html",
-                    "Version": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm"
+                    "Version": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm",
+                    "URL": "https://www.hobbywing.com/en/products/xrotor-x11-plus270.html"
                 },
                 "Firmware": {
                     "Type": "",
@@ -796,8 +796,8 @@
                 "Product": {
                     "Manufacturer": "FETtec",
                     "Model": "4in1 ESC 65A",
-                    "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-65a",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-65a"
                 },
                 "Firmware": {
                     "Type": "FETtec",
@@ -816,8 +816,8 @@
                 "Product": {
                     "Manufacturer": "FETtec",
                     "Model": "4in1 ESC 35A",
-                    "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-35a-v1.1",
-                    "Version": "1.1"
+                    "Version": "1.1",
+                    "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-35a-v1.1"
                 },
                 "Firmware": {
                     "Type": "FETtec",
@@ -836,8 +836,8 @@
                 "Product": {
                     "Manufacturer": "FETtec",
                     "Model": "4in1 ESC 45A",
-                    "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-45a",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-45a"
                 },
                 "Firmware": {
                     "Type": "FETtec",
@@ -856,8 +856,8 @@
                 "Product": {
                     "Manufacturer": "FETtec",
                     "Model": "SFOC 4in1 ESC 50A",
-                    "URL": "https://fettec.net/en/shop/electronics/esc/sfoc-4in1-esc-50a",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://fettec.net/en/shop/electronics/esc/sfoc-4in1-esc-50a"
                 },
                 "Firmware": {
                     "Type": "FETtec",
@@ -876,8 +876,8 @@
                 "Product": {
                     "Manufacturer": "Spedix",
                     "Model": "ES30HV",
-                    "URL": "https://aerokartindia.in/product/spedix-es30-hv-3-6s-blheli_s-30a-esc/",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://aerokartindia.in/product/spedix-es30-hv-3-6s-blheli_s-30a-esc/"
                 },
                 "Firmware": {
                     "Type": "BLHeLi_S",
@@ -896,8 +896,8 @@
                 "Product": {
                     "Manufacturer": "iFlight",
                     "Model": "Blitz 4-in-1 80A",
-                    "URL": "https://shop.iflight.com/BLITZ-E80-4-IN1-Pro-ESC-G2-Pro1770",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://shop.iflight.com/BLITZ-E80-4-IN1-Pro-ESC-G2-Pro1770"
                 },
                 "Firmware": {
                     "Type": "BLHeli32",
@@ -916,8 +916,8 @@
                 "Product": {
                     "Manufacturer": "T-Motor",
                     "Model": "STAR 50 iESC",
-                    "URL": "https://iha-race.com/de/producto/dron-t-motor-m1000/",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://iha-race.com/de/producto/dron-t-motor-m1000/"
                 },
                 "Firmware": {
                     "Type": "T-Motor",
@@ -938,8 +938,8 @@
                 "Product": {
                     "Manufacturer": "iFlight",
                     "Model": "XING 2806.5",
-                    "URL": "https://shop.iflight.com/xing-x2806-5-fpv-nextgen-motor-pro1001",
-                    "Version": "1300KV"
+                    "Version": "1300KV",
+                    "URL": "https://shop.iflight.com/xing-x2806-5-fpv-nextgen-motor-pro1001"
                 },
                 "Specifications": {
                     "Poles": 14
@@ -953,8 +953,8 @@
                 "Product": {
                     "Manufacturer": "T-Motor",
                     "Model": "F15507",
-                    "URL": "https://www.fpv24.com/de/t-motor/t-motor-f-serie-f1507-cinematic-3800kv-3s-4s",
-                    "Version": "3800kv"
+                    "Version": "3800kv",
+                    "URL": "https://www.fpv24.com/de/t-motor/t-motor-f-serie-f1507-cinematic-3800kv-3s-4s"
                 },
                 "Specifications": {
                     "Poles": 14
@@ -968,8 +968,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "2216-920KV",
-                    "URL": "https://nl.aliexpress.com/item/1005003954474597.html?gatewayAdapt=glo2nld",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://nl.aliexpress.com/item/1005003954474597.html?gatewayAdapt=glo2nld"
                 },
                 "Specifications": {
                     "Poles": 14
@@ -983,8 +983,8 @@
                 "Product": {
                     "Manufacturer": "T-Motor",
                     "Model": "MN4014",
-                    "URL": "https://store.tmotor.com/product/mn4014-kv330-motor-navigator-type.html",
-                    "Version": "KV3330"
+                    "Version": "KV3330",
+                    "URL": "https://store.tmotor.com/product/mn4014-kv330-motor-navigator-type.html"
                 },
                 "Specifications": {
                     "Poles": 14
@@ -998,8 +998,8 @@
                 "Product": {
                     "Manufacturer": "HOBBYWING",
                     "Model": "X11 Plus 1118-85KV",
-                    "URL": "https://www.hobbywing.com/en/products/xrotor-x11-plus270.html",
-                    "Version": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm"
+                    "Version": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm",
+                    "URL": "https://www.hobbywing.com/en/products/xrotor-x11-plus270.html"
                 },
                 "Specifications": {
                     "Poles": 14
@@ -1013,8 +1013,8 @@
                 "Product": {
                     "Manufacturer": "T-Motor",
                     "Model": "F1507",
-                    "URL": "https://shop.tmotor.com/products/cinewhoop-drones-fpv-brushless-motor-f1507",
-                    "Version": "3800kv"
+                    "Version": "3800kv",
+                    "URL": "https://shop.tmotor.com/products/cinewhoop-drones-fpv-brushless-motor-f1507"
                 },
                 "Specifications": {
                     "Poles": 14
@@ -1028,8 +1028,8 @@
                 "Product": {
                     "Manufacturer": "T-Motor",
                     "Model": "F80",
-                    "URL": "https://shop.tmotor.com/products/fpv-drones-brushless-motor-f80-pro",
-                    "Version": "1900KV"
+                    "Version": "1900KV",
+                    "URL": "https://shop.tmotor.com/products/fpv-drones-brushless-motor-f80-pro"
                 },
                 "Specifications": {
                     "Poles": 14
@@ -1043,8 +1043,8 @@
                 "Product": {
                     "Manufacturer": "T-Motor",
                     "Model": "MN5008",
-                    "URL": "https://robu.in/product/t-motor-antigravity-mn5008-kv170/",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://robu.in/product/t-motor-antigravity-mn5008-kv170/"
                 },
                 "Specifications": {
                     "Poles": 28
@@ -1058,8 +1058,8 @@
                 "Product": {
                     "Manufacturer": "iFlight",
                     "Model": "Xing 4214",
-                    "URL": "https://shop.iflight.com/xing-x4214-2-8s-x-class-fpv-nextgen-motor-pro802",
-                    "Version": "660KV"
+                    "Version": "660KV",
+                    "URL": "https://shop.iflight.com/xing-x4214-2-8s-x-class-fpv-nextgen-motor-pro802"
                 },
                 "Specifications": {
                     "Poles": 14
@@ -1073,8 +1073,8 @@
                 "Product": {
                     "Manufacturer": "T-Motor",
                     "Model": "T-Motor MN7005(7206) 230KV",
-                    "URL": "https://store.tmotor.com/product/mn7005-kv230-motor-antigravity-type.html",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://store.tmotor.com/product/mn7005-kv230-motor-antigravity-type.html"
                 },
                 "Specifications": {
                     "Poles": 28
@@ -1088,8 +1088,8 @@
                 "Product": {
                     "Manufacturer": "HOBBYWING",
                     "Model": "X11  Plus 1118-85KV",
-                    "URL": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm"
                 },
                 "Specifications": {
                     "Poles": 14
@@ -1105,8 +1105,8 @@
                 "Product": {
                     "Manufacturer": "Gemfan",
                     "Model": "7040 7x4.2",
-                    "URL": "https://www.gfprops.com/products/gemfan-flash-7042-2.html",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://www.gfprops.com/products/gemfan-flash-7042-2.html"
                 },
                 "Specifications": {
                     "Diameter_inches": 7
@@ -1120,8 +1120,8 @@
                 "Product": {
                     "Manufacturer": "HQProp",
                     "Model": "CineWhoop 3\", 8-Blade",
-                    "URL": "https://shop.rc-hangar15.de/HQProp-76mm-CineWhoop-3-8-Blatt-Propeller-grau",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://shop.rc-hangar15.de/HQProp-76mm-CineWhoop-3-8-Blatt-Propeller-grau"
                 },
                 "Specifications": {
                     "Diameter_inches": 3
@@ -1135,8 +1135,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "Propeller 1045",
-                    "URL": "https://holybro.com/collections/multicopter-kit/products/spare-parts-x500-v2-kit?variant=41591073669309",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://holybro.com/collections/multicopter-kit/products/spare-parts-x500-v2-kit?variant=41591073669309"
                 },
                 "Specifications": {
                     "Diameter_inches": 10
@@ -1150,8 +1150,8 @@
                 "Product": {
                     "Manufacturer": "GEMFAN",
                     "Model": "1555 carbon fiber",
-                    "URL": "",
-                    "Version": ""
+                    "Version": "",
+                    "URL": ""
                 },
                 "Specifications": {
                     "Diameter_inches": 15.5
@@ -1165,8 +1165,8 @@
                 "Product": {
                     "Manufacturer": "HOBBYWING",
                     "Model": "43\"",
-                    "URL": "https://www.amazon.com/HAWEWE-Hobbywing-Plastics-Propeller-Agricultural/dp/B0CH7WLPCG",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://www.amazon.com/HAWEWE-Hobbywing-Plastics-Propeller-Agricultural/dp/B0CH7WLPCG"
                 },
                 "Specifications": {
                     "Diameter_inches": 43
@@ -1180,8 +1180,8 @@
                 "Product": {
                     "Manufacturer": "HQProp",
                     "Model": "5043 5X4.3X3",
-                    "URL": "https://www.hqprop.com/",
-                    "Version": "V2S"
+                    "Version": "V2S",
+                    "URL": "https://www.hqprop.com/"
                 },
                 "Specifications": {
                     "Diameter_inches": 5
@@ -1195,8 +1195,8 @@
                 "Product": {
                     "Manufacturer": "T-Motor",
                     "Model": "24x7.8",
-                    "URL": "https://www.uavmarketplace.in/products/t-motor-g24x7-8-propeller-2pcs-pair/895789000012622470",
-                    "Version": "V2S"
+                    "Version": "V2S",
+                    "URL": "https://www.uavmarketplace.in/products/t-motor-g24x7-8-propeller-2pcs-pair/895789000012622470"
                 },
                 "Specifications": {
                     "Diameter_inches": 24
@@ -1210,8 +1210,8 @@
                 "Product": {
                     "Manufacturer": "Master Airscrew",
                     "Model": "11x3, 10 pitch",
-                    "URL": "",
-                    "Version": ""
+                    "Version": "",
+                    "URL": ""
                 },
                 "Specifications": {
                     "Diameter_inches": 11
@@ -1225,8 +1225,8 @@
                 "Product": {
                     "Manufacturer": "Mejzlik",
                     "Model": "24 x 8.1",
-                    "URL": "https://www.mejzlik.eu",
-                    "Version": "LAF"
+                    "Version": "LAF",
+                    "URL": "https://www.mejzlik.eu"
                 },
                 "Specifications": {
                     "Diameter_inches": 24
@@ -1242,8 +1242,8 @@
                 "Product": {
                     "Manufacturer": "iFlight",
                     "Model": "Titan Chimera7",
-                    "URL": "https://shop.iflight.com/Chimera7-Pro-V2-6S-HD-Pro1881",
-                    "Version": "LR"
+                    "Version": "LR",
+                    "URL": "https://shop.iflight.com/Chimera7-Pro-V2-6S-HD-Pro1881"
                 },
                 "Specifications": {
                     "TOW min Kg": 0.9,
@@ -1258,8 +1258,8 @@
                 "Product": {
                     "Manufacturer": "Diatone",
                     "Model": "Taycan MX-C",
-                    "URL": "https://www.diatone.us/products/diatone-mxc-taycan-duct-3-inch-cinewhoop-fpv-drone",
-                    "Version": "2022"
+                    "Version": "2022",
+                    "URL": "https://www.diatone.us/products/diatone-mxc-taycan-duct-3-inch-cinewhoop-fpv-drone"
                 },
                 "Specifications": {
                     "TOW min Kg": 0.6,
@@ -1274,8 +1274,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "X500 V2",
-                    "URL": "https://holybro.com/products/x500-v2-kits?srsltid=AfmBOor9p_QpA5CNDhM99OCZ4DMVM1eUJ8H_dLW4FpDZgz0VR01YJ_M8",
-                    "Version": "Payload: 1500g (without Battery, 70% Throttle)"
+                    "Version": "Payload: 1500g (without Battery, 70% Throttle)",
+                    "URL": "https://holybro.com/products/x500-v2-kits?srsltid=AfmBOor9p_QpA5CNDhM99OCZ4DMVM1eUJ8H_dLW4FpDZgz0VR01YJ_M8"
                 },
                 "Specifications": {
                     "TOW min Kg": 1.09,
@@ -1290,8 +1290,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "X650 V2",
-                    "URL": "https://holybro.com/products/x500-v2-kits?srsltid=AfmBOor9p_QpA5CNDhM99OCZ4DMVM1eUJ8H_dLW4FpDZgz0VR01YJ_M8",
-                    "Version": "Payload: 1500g (without Battery, 70% Throttle)"
+                    "Version": "Payload: 1500g (without Battery, 70% Throttle)",
+                    "URL": "https://holybro.com/products/x500-v2-kits?srsltid=AfmBOor9p_QpA5CNDhM99OCZ4DMVM1eUJ8H_dLW4FpDZgz0VR01YJ_M8"
                 },
                 "Specifications": {
                     "TOW min Kg": 5.6,
@@ -1306,8 +1306,8 @@
                 "Product": {
                     "Manufacturer": "HOVERIT",
                     "Model": "BAAZ",
-                    "URL": "https://hoverit.in/baaz-1",
-                    "Version": "v2"
+                    "Version": "v2",
+                    "URL": "https://hoverit.in/baaz-1"
                 },
                 "Specifications": {
                     "TOW min Kg": 35,
@@ -1322,8 +1322,8 @@
                 "Product": {
                     "Manufacturer": "Armattan",
                     "Model": "Marmotte",
-                    "URL": "",
-                    "Version": "5v2"
+                    "Version": "5v2",
+                    "URL": ""
                 },
                 "Specifications": {
                     "TOW min Kg": 0.7,
@@ -1338,8 +1338,8 @@
                 "Product": {
                     "Manufacturer": "ReadyToSky",
                     "Model": "ZD550",
-                    "URL": "",
-                    "Version": ""
+                    "Version": "",
+                    "URL": ""
                 },
                 "Specifications": {
                     "TOW min Kg": 2.884,
@@ -1354,8 +1354,8 @@
                 "Product": {
                     "Manufacturer": "Tarot",
                     "Model": "X4",
-                    "URL": "http://www.tarotrc.com/Product/Detail.aspx?Lang=en&Id=3c47ef4b-df8a-40f1-b43e-64b6364e9882",
-                    "Version": "Custom"
+                    "Version": "Custom",
+                    "URL": "http://www.tarotrc.com/Product/Detail.aspx?Lang=en&Id=3c47ef4b-df8a-40f1-b43e-64b6364e9882"
                 },
                 "Specifications": {
                     "TOW min Kg": 5,
@@ -1372,8 +1372,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "PM02 Power Module (12S)",
-                    "URL": "https://holybro.com/collections/power-modules-pdbs/products/pm02-v3-12s-power-module",
-                    "Version": "V3"
+                    "Version": "V3",
+                    "URL": "https://holybro.com/collections/power-modules-pdbs/products/pm02-v3-12s-power-module"
                 },
                 "Firmware": {
                     "Type": "",
@@ -1392,8 +1392,8 @@
                 "Product": {
                     "Manufacturer": "HOBBYWING",
                     "Model": "X11 Plus",
-                    "URL": "https://www.hobbywing.com/en/products/xrotor-x11-plus270.html",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://www.hobbywing.com/en/products/xrotor-x11-plus270.html"
                 },
                 "Firmware": {
                     "Type": "",
@@ -1412,8 +1412,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "PM02D HV Power Module",
-                    "URL": "https://holybro.com/collections/power-modules-pdbs/products/pm02d-power-module",
-                    "Version": "HV"
+                    "Version": "HV",
+                    "URL": "https://holybro.com/collections/power-modules-pdbs/products/pm02d-power-module"
                 },
                 "Firmware": {
                     "Type": "HolyBro",
@@ -1432,8 +1432,8 @@
                 "Product": {
                     "Manufacturer": "FETtec",
                     "Model": "4in1 ESC 65A",
-                    "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-65a",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-65a"
                 },
                 "Firmware": {
                     "Type": "FETtec",
@@ -1452,8 +1452,8 @@
                 "Product": {
                     "Manufacturer": "FETtec",
                     "Model": "4in1 ESC 35A",
-                    "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-35a-v1.1",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-35a-v1.1"
                 },
                 "Firmware": {
                     "Type": "FETtec",
@@ -1472,8 +1472,8 @@
                 "Product": {
                     "Manufacturer": "FETtec",
                     "Model": "4in1 ESC 45A",
-                    "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-45a",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://fettec.net/en/shop/electronics/esc/fettec-4in1-esc-45a"
                 },
                 "Firmware": {
                     "Type": "FETtec",
@@ -1492,8 +1492,8 @@
                 "Product": {
                     "Manufacturer": "FETtec",
                     "Model": "SFOC 4in1 ESC 50A",
-                    "URL": "https://fettec.net/en/shop/electronics/esc/sfoc-4in1-esc-50a",
-                    "Version": ""
+                    "Version": "",
+                    "URL": "https://fettec.net/en/shop/electronics/esc/sfoc-4in1-esc-50a"
                 },
                 "Firmware": {
                     "Type": "FETtec",
@@ -1514,8 +1514,8 @@
                 "Product": {
                     "Manufacturer": "CubePilot",
                     "Model": "Here2",
-                    "URL": "https://docs.cubepilot.org/user-guides/here-2/updating-here-2-firmware",
-                    "Version": "2.1"
+                    "Version": "2.1",
+                    "URL": "https://docs.cubepilot.org/user-guides/here-2/updating-here-2-firmware"
                 },
                 "Firmware": {
                     "Type": "uBlox",
@@ -1534,8 +1534,8 @@
                 "Product": {
                     "Manufacturer": "CubePilot",
                     "Model": "Here2",
-                    "URL": "https://docs.cubepilot.org/user-guides/here-2/updating-here-2-firmware",
-                    "Version": "2.1"
+                    "Version": "2.1",
+                    "URL": "https://docs.cubepilot.org/user-guides/here-2/updating-here-2-firmware"
                 },
                 "Firmware": {
                     "Type": "DroneCAN",
@@ -1554,8 +1554,8 @@
                 "Product": {
                     "Manufacturer": "CubePilot",
                     "Model": "Here3/Here3+",
-                    "URL": "https://docs.cubepilot.org/user-guides/here-3/here-3-manual",
-                    "Version": "3.0"
+                    "Version": "3.0",
+                    "URL": "https://docs.cubepilot.org/user-guides/here-3/here-3-manual"
                 },
                 "Firmware": {
                     "Type": "uBlox",
@@ -1574,8 +1574,8 @@
                 "Product": {
                     "Manufacturer": "CubePilot",
                     "Model": "Here3/Here3+",
-                    "URL": "https://docs.cubepilot.org/user-guides/here-3/here-3-manual",
-                    "Version": "3.0"
+                    "Version": "3.0",
+                    "URL": "https://docs.cubepilot.org/user-guides/here-3/here-3-manual"
                 },
                 "Firmware": {
                     "Type": "uBlox",
@@ -1594,8 +1594,8 @@
                 "Product": {
                     "Manufacturer": "CubePilot",
                     "Model": "Here4",
-                    "URL": "https://docs.cubepilot.org/user-guides/here-4/here-4-manual",
-                    "Version": "4.19"
+                    "Version": "4.19",
+                    "URL": "https://docs.cubepilot.org/user-guides/here-4/here-4-manual"
                 },
                 "Firmware": {
                     "Type": "DroneCAN",
@@ -1614,8 +1614,8 @@
                 "Product": {
                     "Manufacturer": "CubePilot",
                     "Model": "HerePro",
-                    "URL": "https://docs.cubepilot.org/user-guides/herepro/herepro-manual",
-                    "Version": "4.13"
+                    "Version": "4.13",
+                    "URL": "https://docs.cubepilot.org/user-guides/herepro/herepro-manual"
                 },
                 "Firmware": {
                     "Type": "DroneCAN",
@@ -1634,8 +1634,8 @@
                 "Product": {
                     "Manufacturer": "Matek",
                     "Model": "M8Q-5883",
-                    "URL": "https://www.mateksys.com/?portfolio=m8q-5883",
-                    "Version": "1"
+                    "Version": "1",
+                    "URL": "https://www.mateksys.com/?portfolio=m8q-5883"
                 },
                 "Firmware": {
                     "Type": "UBlox",
@@ -1654,8 +1654,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "H-RTK F9P Helical",
-                    "URL": "https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445",
-                    "Version": "1"
+                    "Version": "1",
+                    "URL": "https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445"
                 },
                 "Firmware": {
                     "Type": "UBlox",
@@ -1674,8 +1674,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "M10",
-                    "URL": "https://holybro.com/products/m10-gps?srsltid=AfmBOootSZi5Pc_2XhliqsKy-u3_8l8SKZ8tzd5wDuPMENtL-ZeLngUL",
-                    "Version": "1"
+                    "Version": "1",
+                    "URL": "https://holybro.com/products/m10-gps?srsltid=AfmBOootSZi5Pc_2XhliqsKy-u3_8l8SKZ8tzd5wDuPMENtL-ZeLngUL"
                 },
                 "Firmware": {
                     "Type": "Ublox",
@@ -1694,8 +1694,8 @@
                 "Product": {
                     "Manufacturer": "Holybro",
                     "Model": "M9N GPS",
-                    "URL": "https://holybro.com/products/m9n-gps",
-                    "Version": "Standard"
+                    "Version": "Standard",
+                    "URL": "https://holybro.com/products/m9n-gps"
                 },
                 "Firmware": {
                     "Type": "ublox",

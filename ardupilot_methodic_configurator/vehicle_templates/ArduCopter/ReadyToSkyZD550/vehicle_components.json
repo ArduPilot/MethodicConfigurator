@@ -5,8 +5,8 @@
             "Product": {
                 "Manufacturer": "CubePilot",
                 "Model": "CubeOrange",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Firmware": {
                 "Type": "ArduCopter",
@@ -21,8 +21,8 @@
             "Product": {
                 "Manufacturer": "ReadyToSky",
                 "Model": "ZD550",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "TOW min Kg": 2.884,
@@ -30,72 +30,12 @@
             },
             "Notes": "10-14\" Props"
         },
-        "RC Controller": {
-            "Product": {
-                "Manufacturer": "Radiomaster",
-                "Model": "TX16S",
-                "URL": "https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller",
-                "Version": "MKI"
-            },
-            "Firmware": {
-                "Type": "EdgeTx",
-                "Version": "2.9.2-providence"
-            },
-            "Notes": ""
-        },
-        "RC Transmitter": {
-            "Product": {
-                "Manufacturer": "BetaFPV",
-                "Model": "ExpressLRS 1W",
-                "URL": "",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "Notes": ""
-        },
-        "RC Receiver": {
-            "Product": {
-                "Manufacturer": "Matek",
-                "Model": "ExpressLRS Diversity",
-                "URL": "",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "FC Connection": {
-                "Type": "SERIAL5",
-                "Protocol": "CRSF"
-            },
-            "Notes": "ExpressLRS"
-        },
-        "Telemetry": {
-            "Product": {
-                "Manufacturer": "mRo",
-                "Model": "SiK 915Mhz",
-                "URL": "https://mrobotics.io/docs/mro-sik-telemetry-radio-v2/",
-                "Version": ""
-            },
-            "Firmware": {
-                "Type": "SiK",
-                "Version": ""
-            },
-            "FC Connection": {
-                "Type": "SERIAL1",
-                "Protocol": "MAVLink High Latency"
-            },
-            "Notes": ""
-        },
         "Battery Monitor": {
             "Product": {
                 "Manufacturer": "Cube",
                 "Model": "Orange",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Firmware": {
                 "Type": "ArduCopter",
@@ -111,8 +51,8 @@
             "Product": {
                 "Manufacturer": "Zeee",
                 "Model": "6S 6500mAh LiHV",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "Chemistry": "LipoHV",
@@ -128,8 +68,8 @@
             "Product": {
                 "Manufacturer": "iFlight",
                 "Model": "Blitz 4-in-1 80A",
-                "URL": "https://shop.iflight.com/BLITZ-E80-4-IN1-Pro-ESC-G2-Pro1770",
-                "Version": ""
+                "Version": "",
+                "URL": "https://shop.iflight.com/BLITZ-E80-4-IN1-Pro-ESC-G2-Pro1770"
             },
             "Firmware": {
                 "Type": "BLHeli32",
@@ -145,8 +85,8 @@
             "Product": {
                 "Manufacturer": "iFlight",
                 "Model": "Xing 4214",
-                "URL": "https://shop.iflight.com/xing-x4214-2-8s-x-class-fpv-nextgen-motor-pro802",
-                "Version": "660KV"
+                "Version": "660KV",
+                "URL": "https://shop.iflight.com/xing-x4214-2-8s-x-class-fpv-nextgen-motor-pro802"
             },
             "Specifications": {
                 "Poles": 14
@@ -157,8 +97,8 @@
             "Product": {
                 "Manufacturer": "Master Airscrew",
                 "Model": "11x3, 10 pitch",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "Diameter_inches": 11
@@ -169,8 +109,8 @@
             "Product": {
                 "Manufacturer": "Cube",
                 "Model": "Here3",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Firmware": {
                 "Type": "DroneCAN/uBlox",
@@ -179,6 +119,66 @@
             "FC Connection": {
                 "Type": "CAN1",
                 "Protocol": "DroneCAN"
+            },
+            "Notes": ""
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "Radiomaster",
+                "Model": "TX16S",
+                "Version": "MKI",
+                "URL": "https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller"
+            },
+            "Firmware": {
+                "Type": "EdgeTx",
+                "Version": "2.9.2-providence"
+            },
+            "Notes": ""
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "BetaFPV",
+                "Model": "ExpressLRS 1W",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "Matek",
+                "Model": "ExpressLRS Diversity",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL5",
+                "Protocol": "CRSF"
+            },
+            "Notes": "ExpressLRS"
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "mRo",
+                "Model": "SiK 915Mhz",
+                "Version": "",
+                "URL": "https://mrobotics.io/docs/mro-sik-telemetry-radio-v2/"
+            },
+            "Firmware": {
+                "Type": "SiK",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink High Latency"
             },
             "Notes": ""
         }

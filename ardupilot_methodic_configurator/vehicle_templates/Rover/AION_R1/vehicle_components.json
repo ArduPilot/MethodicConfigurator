@@ -5,8 +5,8 @@
             "Product": {
                 "Manufacturer": "CubePilot",
                 "Model": "CubeOrange",
-                "URL": "https://docs.cubepilot.org/user-guides/autopilot/the-cube-module-overview",
-                "Version": "2"
+                "Version": "2",
+                "URL": "https://docs.cubepilot.org/user-guides/autopilot/the-cube-module-overview"
             },
             "Firmware": {
                 "Type": "Rover",
@@ -21,8 +21,8 @@
             "Product": {
                 "Manufacturer": "AION robotics",
                 "Model": "R1",
-                "URL": "https://www.aionrobotics.com/",
-                "Version": ""
+                "Version": "",
+                "URL": "https://www.aionrobotics.com/"
             },
             "Specifications": {
                 "TOW min Kg": 0.6,
@@ -30,72 +30,12 @@
             },
             "Notes": ""
         },
-        "RC Controller": {
-            "Product": {
-                "Manufacturer": "CubePilot",
-                "Model": "Herelink controller",
-                "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview",
-                "Version": "1.1"
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "Notes": ""
-        },
-        "RC Transmitter": {
-            "Product": {
-                "Manufacturer": "CubePilot",
-                "Model": "Herelink controller",
-                "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview",
-                "Version": "1.1"
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "Notes": "This RC transmitter is integrated inside the Herelink above"
-        },
-        "RC Receiver": {
-            "Product": {
-                "Manufacturer": "CubePilot",
-                "Model": "Herelink airunit",
-                "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview",
-                "Version": "1.1"
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "FC Connection": {
-                "Type": "RCin/SBUS",
-                "Protocol": "All"
-            },
-            "Notes": "This receiver is on the vehicle and is connected to the flight controller"
-        },
-        "Telemetry": {
-            "Product": {
-                "Manufacturer": "CubePilot",
-                "Model": "Herelink",
-                "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview",
-                "Version": "1.1"
-            },
-            "Firmware": {
-                "Type": "",
-                "Version": ""
-            },
-            "FC Connection": {
-                "Type": "SERIAL1",
-                "Protocol": "MAVLink2"
-            },
-            "Notes": "Integrated in the herelink controller and airunit"
-        },
         "Battery Monitor": {
             "Product": {
                 "Manufacturer": "3DR robotics",
                 "Model": "Solo battery",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Firmware": {
                 "Type": "",
@@ -111,8 +51,8 @@
             "Product": {
                 "Manufacturer": "3DR robotics",
                 "Model": "Solo battery",
-                "URL": "https://www.ebay.com/p/2303831811",
-                "Version": ""
+                "Version": "",
+                "URL": "https://www.ebay.com/p/2303831811"
             },
             "Specifications": {
                 "Chemistry": "Lipo",
@@ -128,8 +68,8 @@
             "Product": {
                 "Manufacturer": "AION robotics",
                 "Model": "Unknown",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Firmware": {
                 "Type": "",
@@ -145,8 +85,8 @@
             "Product": {
                 "Manufacturer": "AION robotics",
                 "Model": "Unknown",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "Poles": 3
@@ -157,8 +97,8 @@
             "Product": {
                 "Manufacturer": "",
                 "Model": "",
-                "URL": "",
-                "Version": ""
+                "Version": "",
+                "URL": ""
             },
             "Specifications": {
                 "Diameter_inches": 1
@@ -169,8 +109,8 @@
             "Product": {
                 "Manufacturer": "CubePilot",
                 "Model": "Here4",
-                "URL": "https://docs.cubepilot.org/user-guides/here-4/here-4-manual",
-                "Version": ""
+                "Version": "",
+                "URL": "https://docs.cubepilot.org/user-guides/here-4/here-4-manual"
             },
             "Firmware": {
                 "Type": "UBlox",
@@ -181,6 +121,66 @@
                 "Protocol": "DroneCAN"
             },
             "Notes": "A very good receiver"
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "CubePilot",
+                "Model": "Herelink controller",
+                "Version": "1.1",
+                "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "CubePilot",
+                "Model": "Herelink controller",
+                "Version": "1.1",
+                "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": "This RC transmitter is integrated inside the Herelink above"
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "CubePilot",
+                "Model": "Herelink airunit",
+                "Version": "1.1",
+                "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "RCin/SBUS",
+                "Protocol": "All"
+            },
+            "Notes": "This receiver is on the vehicle and is connected to the flight controller"
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "CubePilot",
+                "Model": "Herelink",
+                "Version": "1.1",
+                "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview"
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": "Integrated in the herelink controller and airunit"
         }
     },
     "Program version": "2.0.1"
