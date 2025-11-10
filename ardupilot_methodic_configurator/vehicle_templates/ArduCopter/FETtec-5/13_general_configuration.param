@@ -1,4 +1,5 @@
 ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+ARMING_MAGTHRESH,250  # Desk compass calibration produces poor results, increase threshold to allow arming
 BRD_RTC_TZ_MIN,60  # UTC Time Zone
 FENCE_TYPE,7  # cylinder and max altitude, to obey local regulations and safety measures
 INS_ACCEL_FILTER,10  # the default is 20 and that lets too much noise in

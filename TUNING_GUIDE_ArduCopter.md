@@ -351,6 +351,18 @@ And we will do in-flight MagFit later
 
 If you have a large vehicle you might want to use [large vehicle MagCal](https://ardupilot.org/copter/docs/common-compass-calibration-in-mission-planner.html#large-vehicle-magcal) instead.
 
+### [Motor+Compass Test](https://ardupilot.org/copter/docs/common-compass-setup-advanced.html#onboard-calibration)
+
+After the initial compass calibration, perform a Motor+Compass test to improve compass calibration quality before the MagFit step.
+This test helps identify and compensate for magnetic interference from the motors and ESCs.
+
+1. Go to `SETUP >> Optional Hardware >> Motor Test`
+2. Run each motor individually at various throttle levels while the compass calibration is active
+3. This provides better compass calibration data by capturing motor-induced magnetic interference
+
+Note: Desk-based compass calibration often produces poor results due to metal objects and electromagnetic interference in the environment.
+The Motor+Compass test significantly improves calibration quality, especially for the later in-flight MagFit procedure.
+
 ### [Radio Calibration](https://ardupilot.org/copter/docs/common-radio-control-calibration.html)
 
 Follow the [ArduPilot wiki instructions](https://ardupilot.org/copter/docs/common-radio-control-calibration.html) and calibrate the Remote Control.
