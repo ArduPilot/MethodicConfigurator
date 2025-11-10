@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from logging import error as logging_error
 from tkinter import ttk
 from typing import Callable, Optional, Union
 
@@ -23,7 +22,7 @@ from typing import Callable, Optional, Union
 PluginCreator = Callable[[Union[tk.Frame, ttk.Frame], object, object], object]
 
 
-class PluginFactory:
+class PluginFactoryUI:
     """
     Factory for creating plugin instances.
 
@@ -41,13 +40,18 @@ class PluginFactory:
         Register a plugin creator function.
 
         Args:
-            plugin_name: Unique identifier for the plugin
+            plugin_name: Unique identifier for the plugin (e.g., "motor_test")
             creator_func: Function that creates a plugin instance.
-                         Should accept (parent, model, base_window) and return PluginView
+                         Should accept (parent_frame, data_model, parameter_editor_window)
+                         and return a plugin view object.
+
+        Raises:
+            ValueError: If a plugin with the same name is already registered
 
         """
         if plugin_name in self._creators:
-            logging_error("Plugin '%s' is already registered, overwriting", plugin_name)
+            msg = f"Plugin '{plugin_name}' is already registered"
+            raise ValueError(msg)
         self._creators[plugin_name] = creator_func
 
     def create(
@@ -88,6 +92,16 @@ class PluginFactory:
         """
         return plugin_name in self._creators
 
+    def get_registered_plugins(self) -> list[str]:
+        """
+        Get list of all registered plugin names.
+
+        Returns:
+            list[str]: List of registered plugin names
+
+        """
+        return list(self._creators.keys())
+
 
 # Global factory instance
-plugin_factory = PluginFactory()
+plugin_factory_ui = PluginFactoryUI()
