@@ -32,7 +32,7 @@ class TestPluginFactory:
         factory = PluginFactory()
 
         # Assert: Factory is initialized with empty registry
-        assert factory._creators == {}
+        assert not factory._creators
         assert isinstance(factory._creators, dict)
 
     def test_user_can_register_plugin_creator_function(self) -> None:
