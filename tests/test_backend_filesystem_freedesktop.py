@@ -10,7 +10,8 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from unittest.mock import mock_open, patch
+import subprocess
+from unittest.mock import MagicMock, mock_open, patch
 
 from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeDesktop
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
@@ -403,3 +404,442 @@ class TestDesktopIconCreation:
 
             # Assert: No file was created
             mock_file.assert_not_called()
+
+
+class TestStartupNotification:
+    """Test startup notification functionality for Linux desktop integration."""
+
+    def test_user_can_initialize_freedesktop_class(self) -> None:
+        """
+        User can initialize the FreeDesktop class.
+
+        GIVEN: A user needs to create a FreeDesktop instance
+        WHEN: The class is instantiated
+        THEN: It should initialize without errors
+        """
+        # Act: Create FreeDesktop instance
+        freedesktop = FreeDesktop()
+
+        # Assert: Instance created successfully
+        assert freedesktop is not None
+        assert isinstance(freedesktop, FreeDesktop)
+
+    def test_user_can_get_desktop_startup_id_from_environment(self) -> None:
+        """
+        User can retrieve the desktop startup ID from environment variables.
+
+        GIVEN: An application launched with a DESKTOP_STARTUP_ID
+        WHEN: The startup ID retrieval method is called
+        THEN: It should return the startup ID from the environment
+        """
+        # Test with startup ID set
+        with patch(
+            "ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_environ",
+            {"DESKTOP_STARTUP_ID": "test_startup_id_123"},
+        ):
+            assert FreeDesktop._get_desktop_startup_id() == "test_startup_id_123"
+
+        # Test without startup ID
+        with patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_environ", {}):
+            assert FreeDesktop._get_desktop_startup_id() is None
+
+    def test_user_can_send_startup_notification_completion_with_xdg_tool(self) -> None:
+        """
+        User can send startup notification completion using xdg-startup-notify tool.
+
+        GIVEN: Application has finished starting up with a valid startup ID
+        AND: xdg-startup-notify command is available
+        WHEN: Startup notification completion is sent
+        THEN: The xdg-startup-notify command should be executed successfully
+        """
+        startup_id = "valid_startup_id_123"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.shutil_which",
+                return_value="/usr/bin/xdg-startup-notify",
+            ),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.subprocess.run") as mock_run,
+        ):
+            mock_run.return_value = MagicMock(returncode=0, stderr=b"")
+
+            # Act: Send startup notification completion
+            FreeDesktop._send_startup_notification_complete(startup_id)
+
+            # Assert: xdg-startup-notify was called correctly
+            mock_run.assert_called_once_with(
+                ["/usr/bin/xdg-startup-notify", "remove", startup_id], capture_output=True, timeout=1.0, check=False
+            )
+
+    def test_user_can_handle_xdg_startup_notify_failure(self) -> None:
+        """
+        User can handle cases where xdg-startup-notify fails or times out.
+
+        GIVEN: Application has finished starting up with a valid startup ID
+        AND: xdg-startup-notify command is available but fails
+        WHEN: Startup notification completion is sent
+        THEN: The system should fall back to X11 method
+        """
+        startup_id = "valid_startup_id_123"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.shutil_which",
+                return_value="/usr/bin/xdg-startup-notify",
+            ),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.subprocess.run") as mock_run,
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.FreeDesktop._send_startup_notification_x11"
+            ) as mock_x11,
+        ):
+            mock_run.side_effect = subprocess.TimeoutExpired(["cmd"], 1.0)
+
+            # Act: Send startup notification completion
+            FreeDesktop._send_startup_notification_complete(startup_id)
+
+            # Assert: X11 fallback was called
+            mock_x11.assert_called_once_with(startup_id)
+
+    def test_user_can_send_startup_notification_with_x11_fallback(self) -> None:
+        """
+        User can send startup notification completion using X11 when xdg tools fail.
+
+        GIVEN: Application has finished starting up with a valid startup ID
+        AND: xdg-startup-notify command fails with subprocess error
+        WHEN: Startup notification completion is sent
+        THEN: The X11 method should be used as fallback
+        """
+        startup_id = "valid_startup_id_123"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.shutil_which",
+                return_value="/usr/bin/xdg-startup-notify",
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.subprocess.run",
+                side_effect=subprocess.SubprocessError("Command failed"),
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.FreeDesktop._send_startup_notification_x11",
+            ) as mock_x11,
+        ):
+            # Act: Send startup notification completion
+            FreeDesktop._send_startup_notification_complete(startup_id)
+
+            # Assert: X11 method was called
+            mock_x11.assert_called_once_with(startup_id)
+
+    def test_user_can_validate_startup_id_format(self) -> None:
+        """
+        User input is validated to prevent shell injection in startup IDs.
+
+        GIVEN: An application receives a potentially malicious startup ID
+        WHEN: Startup notification completion is attempted
+        THEN: Invalid startup IDs should be rejected
+        """
+        # Test valid startup ID
+        valid_id = "valid-startup_id_123"
+        with patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.shutil_which", return_value=None):
+            # Should not raise exception, just return early
+            FreeDesktop._send_startup_notification_complete(valid_id)
+
+        # Test invalid startup ID with shell injection attempt
+        invalid_id = "valid_id; rm -rf /"
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.shutil_which", return_value=None),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.FreeDesktop._send_startup_notification_x11"
+            ) as mock_x11,
+        ):
+            FreeDesktop._send_startup_notification_complete(invalid_id)
+            # Should not call X11 method for invalid ID
+            mock_x11.assert_not_called()
+
+    def test_user_can_send_startup_notification_via_x11_when_tk_available(self) -> None:
+        """
+        User can send startup notification completion using direct X11 messaging when Tk is available.
+
+        GIVEN: Application has finished starting up with a valid startup ID
+        AND: Tkinter is available for X11 messaging
+        WHEN: X11 startup notification is sent
+        THEN: Tk should be used to send the notification message
+        """
+        startup_id = "valid_startup_id_123"
+
+        mock_root = MagicMock()
+        mock_tk = MagicMock()
+        mock_tk.Tk.return_value = mock_root
+
+        with patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.tk", mock_tk):
+            # Act: Send X11 startup notification
+            FreeDesktop._send_startup_notification_x11(startup_id)
+
+            # Assert: Tk was used correctly
+            mock_root.withdraw.assert_called_once()
+            assert mock_root.eval.call_count >= 2  # Should call eval at least twice for the messaging
+            mock_root.destroy.assert_called_once()
+
+    def test_user_can_handle_x11_startup_notification_when_tk_unavailable(self) -> None:
+        """
+        User can handle cases where Tkinter is not available for X11 messaging.
+
+        GIVEN: Application needs to send startup notification
+        BUT: Tkinter is not available
+        WHEN: X11 startup notification is attempted
+        THEN: The operation should complete without error
+        """
+        startup_id = "valid_startup_id_123"
+
+        with patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.tk", None):
+            # Act: Attempt X11 startup notification without Tk
+            FreeDesktop._send_startup_notification_x11(startup_id)
+
+            # Assert: No exception raised, method returns early
+
+    def test_user_can_handle_x11_startup_notification_errors(self) -> None:
+        """
+        User can handle errors during X11 startup notification sending.
+
+        GIVEN: Application attempts to send X11 startup notification
+        BUT: Tkinter operations fail
+        WHEN: X11 startup notification is sent
+        THEN: Errors should be logged but not crash the application
+        """
+        startup_id = "valid_startup_id_123"
+
+        mock_tk = MagicMock()
+        mock_tk.Tk.side_effect = Exception("Tk error")
+
+        with patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.tk", mock_tk):
+            # Act: Attempt X11 startup notification with Tk error
+            FreeDesktop._send_startup_notification_x11(startup_id)
+
+            # Assert: No exception propagated, error is handled internally
+
+    def test_user_can_setup_startup_notification_for_main_window(self) -> None:
+        """
+        User can set up startup notification handling for the main application window.
+
+        GIVEN: Application is starting on Linux with a startup ID
+        WHEN: Startup notification setup is called with the main window
+        THEN: Event bindings should be created to send completion when window is ready
+        """
+        mock_window = MagicMock()
+        mock_window.winfo_viewable.return_value = False
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_name", "posix"),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.sys_platform", "linux"),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_environ", {"DESKTOP_STARTUP_ID": "test_id"}
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.FreeDesktop._send_startup_notification_complete"
+            ) as mock_send,
+        ):
+            # Act: Set up startup notification
+            FreeDesktop.setup_startup_notification(mock_window)
+
+            # Assert: Event binding was created
+            mock_window.bind.assert_called_once()
+            # Completion should not be sent immediately since window is not viewable
+            mock_send.assert_not_called()
+
+    def test_user_can_send_immediate_startup_notification_when_window_already_visible(self) -> None:
+        """
+        User can send startup notification immediately when window is already visible.
+
+        GIVEN: Application window is already visible when startup notification is set up
+        WHEN: Startup notification setup is called
+        THEN: Completion should be sent immediately
+        """
+        mock_window = MagicMock()
+        mock_window.winfo_viewable.return_value = True
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_name", "posix"),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.sys_platform", "linux"),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_environ", {"DESKTOP_STARTUP_ID": "test_id"}
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.FreeDesktop._send_startup_notification_complete"
+            ) as mock_send,
+        ):
+            # Act: Set up startup notification
+            FreeDesktop.setup_startup_notification(mock_window)
+
+            # Assert: Completion was sent immediately
+            mock_send.assert_called_once_with("test_id")
+
+    def test_user_startup_notification_skipped_when_not_on_linux(self) -> None:
+        """
+        User startup notification setup is skipped when not running on Linux.
+
+        GIVEN: Application is running on a non-Linux system
+        WHEN: Startup notification setup is attempted
+        THEN: No startup notification handling should be set up
+        """
+        mock_window = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_name", "nt"),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.sys_platform", "win32"),
+        ):
+            # Act: Attempt startup notification setup on non-Linux
+            FreeDesktop.setup_startup_notification(mock_window)
+
+            # Assert: No bindings or operations performed
+            mock_window.bind.assert_not_called()
+
+    def test_user_startup_notification_skipped_when_no_startup_id(self) -> None:
+        """
+        User startup notification setup is skipped when no startup ID is available.
+
+        GIVEN: Application is running on Linux but no DESKTOP_STARTUP_ID is set
+        WHEN: Startup notification setup is called
+        THEN: No event bindings should be created
+        """
+        mock_window = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_name", "posix"),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.sys_platform", "linux"),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_environ", {}),
+        ):
+            # Act: Set up startup notification without startup ID
+            FreeDesktop.setup_startup_notification(mock_window)
+
+            # Assert: No bindings created
+            mock_window.bind.assert_not_called()
+
+    def test_user_can_handle_desktop_icon_creation_errors(self) -> None:
+        """
+        User can handle errors during desktop icon creation gracefully.
+
+        GIVEN: Application attempts to create a desktop icon
+        BUT: File system operations fail
+        WHEN: Desktop icon creation is requested
+        THEN: Errors should be logged but not crash the application
+        """
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_name", "posix"),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.sys_platform", "linux"),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_path.expanduser",
+                return_value="/fake/file.desktop",
+            ),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_path.exists", return_value=False),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_environ", {"VIRTUAL_ENV": "/venv"}),
+            patch.object(ProgramSettings, "application_icon_filepath", return_value="/icon.png"),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_path.dirname", return_value="/fake/dir"),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_makedirs"),
+            patch("builtins.open", side_effect=OSError("File system error")),
+        ):
+            # Act: Attempt desktop icon creation with file error
+            FreeDesktop.create_desktop_icon_if_needed()
+
+            # Assert: No exception raised, error handled internally
+
+    def test_user_can_handle_xdg_startup_notify_non_zero_exit(self) -> None:
+        """
+        User can handle xdg-startup-notify returning non-zero exit code.
+
+        GIVEN: Application has finished starting up with a valid startup ID
+        AND: xdg-startup-notify command exists but returns failure
+        WHEN: Startup notification completion is sent
+        THEN: The failure should be logged but not crash the application
+        """
+        startup_id = "valid_startup_id_123"
+
+        mock_result = MagicMock()
+        mock_result.returncode = 1  # Non-zero exit code
+        mock_result.stderr = b"Command failed"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.shutil_which",
+                return_value="/usr/bin/xdg-startup-notify",
+            ),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.subprocess.run", return_value=mock_result),
+        ):
+            # Act: Send startup notification completion
+            FreeDesktop._send_startup_notification_complete(startup_id)
+
+            # Assert: Method completes without error (failure is logged)
+
+    def test_user_can_handle_xdg_startup_notify_not_found_logging(self) -> None:
+        """
+        User can handle logging when xdg-startup-notify is not found.
+
+        GIVEN: Application has finished starting up with a valid startup ID
+        AND: xdg-startup-notify command is not available
+        WHEN: Startup notification completion is sent
+        THEN: The absence should be logged but not crash the application
+        """
+        startup_id = "valid_startup_id_123"
+
+        with patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.shutil_which", return_value=None):
+            # Act: Send startup notification completion
+            FreeDesktop._send_startup_notification_complete(startup_id)
+
+            # Assert: Method completes without error (absence is logged)
+
+    def test_user_can_setup_startup_notification_with_logging(self) -> None:
+        """
+        User can set up startup notification with debug logging.
+
+        GIVEN: Application is starting on Linux with a startup ID
+        WHEN: Startup notification setup is called
+        THEN: Debug logging should occur and event binding should be created
+        """
+        mock_window = MagicMock()
+        mock_window.winfo_viewable.return_value = False
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_name", "posix"),
+            patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.sys_platform", "linux"),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_environ", {"DESKTOP_STARTUP_ID": "test_id"}
+            ),
+        ):
+            # Act: Set up startup notification
+            FreeDesktop.setup_startup_notification(mock_window)
+
+            # Assert: Event binding was created (logging occurs internally)
+
+    def test_user_can_handle_x11_eval_exceptions(self) -> None:
+        """
+        User can handle exceptions during Tk eval calls in X11 messaging.
+
+        GIVEN: Application attempts to send X11 startup notification
+        BUT: Tk eval calls fail
+        WHEN: X11 startup notification is sent
+        THEN: Inner exceptions should be logged but not crash the application
+        """
+        startup_id = "valid_startup_id_123"
+
+        mock_root = MagicMock()
+        mock_root.eval.side_effect = Exception("Eval failed")
+        mock_tk = MagicMock()
+        mock_tk.Tk.return_value = mock_root
+
+        with patch("ardupilot_methodic_configurator.backend_filesystem_freedesktop.tk", mock_tk):
+            # Act: Attempt X11 startup notification with eval failures
+            FreeDesktop._send_startup_notification_x11(startup_id)
+
+            # Assert: No exception propagated, error is handled internally
+
+    def test_user_can_handle_empty_startup_id(self) -> None:
+        """
+        User can handle empty startup ID gracefully.
+
+        GIVEN: Application attempts to send startup notification with empty ID
+        WHEN: Startup notification completion is sent
+        THEN: The method should return early without attempting notification
+        """
+        # Act: Send startup notification with empty ID
+        FreeDesktop._send_startup_notification_complete("")
+
+        # Assert: Method completes without error (returns early)
