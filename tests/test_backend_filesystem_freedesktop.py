@@ -635,7 +635,8 @@ class TestStartupNotification:
                 "ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_environ", {"DESKTOP_STARTUP_ID": "test_id"}
             ),
             patch(
-                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.FreeDesktop._send_startup_notification_complete"
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop"
+                ".FreeDesktop._send_startup_notification_complete"
             ) as mock_send,
         ):
             # Act: Set up startup notification
@@ -664,7 +665,8 @@ class TestStartupNotification:
                 "ardupilot_methodic_configurator.backend_filesystem_freedesktop.os_environ", {"DESKTOP_STARTUP_ID": "test_id"}
             ),
             patch(
-                "ardupilot_methodic_configurator.backend_filesystem_freedesktop.FreeDesktop._send_startup_notification_complete"
+                "ardupilot_methodic_configurator.backend_filesystem_freedesktop"
+                ".FreeDesktop._send_startup_notification_complete"
             ) as mock_send,
         ):
             # Act: Set up startup notification
