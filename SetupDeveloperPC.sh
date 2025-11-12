@@ -154,10 +154,42 @@ ConfigureVSCode() {
     fi
 }
 
+SetupSITL() {
+    echo ""
+    read -r -p "Do you want to download ArduCopter SITL for integration testing? (y/N) " response
+    response=${response,,}
+
+    if [[ $response =~ ^y(es)?$ ]]; then
+        echo "Downloading ArduCopter SITL from official firmware server..."
+
+        # Use the run_sitl_tests.sh script if available
+        if [ -f "scripts/run_sitl_tests.sh" ]; then
+            bash scripts/run_sitl_tests.sh download
+        else
+            # Fallback to direct download if script not found
+            mkdir -p sitl
+            curl -L -o sitl/arducopter https://firmware.ardupilot.org/Copter/latest/SITL_x86_64_linux_gnu/arducopter
+            curl -L -o sitl/firmware-version.txt https://firmware.ardupilot.org/Copter/latest/SITL_x86_64_linux_gnu/firmware-version.txt
+            curl -L -o sitl/git-version.txt https://firmware.ardupilot.org/Copter/latest/SITL_x86_64_linux_gnu/git-version.txt
+            curl -L -o sitl/copter.parm https://raw.githubusercontent.com/ArduPilot/ardupilot/master/Tools/autotest/default_params/copter.parm
+            chmod +x sitl/arducopter
+            echo "✓ ArduCopter SITL downloaded successfully"
+        fi
+
+        # Set environment variable in shell profile
+        echo ""
+        echo "To enable SITL tests permanently, add this to your ~/.bashrc or ~/.zshrc:"
+        echo "  export SITL_BINARY=$(pwd)/sitl/arducopter"
+    else
+        echo "Skipping SITL download. You can download it later with: ./scripts/run_sitl_tests.sh download"
+    fi
+}
+
 # Call configuration functions
 InstallDependencies
 ConfigureGit
 ConfigureVSCode
+SetupSITL
 
 activate-global-python-argcomplete
 
@@ -175,6 +207,11 @@ echo "To run the ArduPilot methodic configurator GUI, execute the following comm
 echo ""
 echo "source .venv/bin/activate"
 echo "python3 -m ardupilot_methodic_configurator"
+echo ""
+echo "To run SITL integration tests (if SITL was downloaded):"
+echo ""
+echo "export SITL_BINARY=\$(pwd)/sitl/arducopter"
+echo "pytest -m sitl -v"
 echo ""
 echo "For more detailed usage instructions, please refer to the USERMANUAL.md file."
 echo ""
