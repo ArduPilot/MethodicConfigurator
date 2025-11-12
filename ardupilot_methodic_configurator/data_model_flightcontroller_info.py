@@ -25,7 +25,7 @@ from ardupilot_methodic_configurator.data_model_fc_ids import (
 )
 
 
-class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attributes
+class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
     """
     Handle flight controller information.
 
@@ -34,29 +34,57 @@ class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attribut
     """
 
     def __init__(self) -> None:
-        self.system_id: str = ""
-        self.component_id: str = ""
-        self.autopilot: str = ""
-        self.vehicle_type: str = ""
-        self.firmware_type: str = ""
-        self.mav_type: str = ""
-        self.flight_sw_version: str = ""
-        self.flight_sw_version_and_type: str = ""
-        self.board_version: str = ""
-        self.apj_board_id: str = ""
-        self.flight_custom_version: str = ""
-        self.os_custom_version: str = ""
-        self.vendor: str = ""
-        self.vendor_id: str = ""
-        self.vendor_and_vendor_id: str = ""
-        self.product: str = ""
-        self.product_id: str = ""
-        self.product_and_product_id: str = ""
-        self.mcu_series: str = ""
-        self.capabilities: dict[str, str] = {}
+        self.system_id = ""
+        self.component_id = ""
+        self.autopilot = ""
+        self.vehicle_type = ""
+        self.firmware_type = ""
+        self.mav_type = ""
+        self.flight_sw_version = ""
+        self.flight_sw_version_and_type = ""
+        self.board_version = ""
+        self.apj_board_id = ""
+        self.flight_custom_version = ""
+        self.os_custom_version = ""
+        self.vendor = ""
+        self.vendor_id = ""
+        self.vendor_and_vendor_id = ""
+        self.product = ""
+        self.product_id = ""
+        self.product_and_product_id = ""
+        self.mcu_series = ""
 
         self.is_supported = False
         self.is_mavftp_supported = False
+
+        self.capabilities: dict[str, str] = {}
+
+    def reset(self) -> None:
+        """Reset all cached flight controller metadata."""
+        self.system_id = ""
+        self.component_id = ""
+        self.autopilot = ""
+        self.vehicle_type = ""
+        self.firmware_type = ""
+        self.mav_type = ""
+        self.flight_sw_version = ""
+        self.flight_sw_version_and_type = ""
+        self.board_version = ""
+        self.apj_board_id = ""
+        self.flight_custom_version = ""
+        self.os_custom_version = ""
+        self.vendor = ""
+        self.vendor_id = ""
+        self.vendor_and_vendor_id = ""
+        self.product = ""
+        self.product_id = ""
+        self.product_and_product_id = ""
+        self.mcu_series = ""
+
+        self.is_supported = False
+        self.is_mavftp_supported = False
+
+        self.capabilities.clear()
 
     def get_info(self) -> dict[str, Union[str, dict[str, str]]]:
         return {

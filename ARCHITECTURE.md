@@ -76,7 +76,13 @@ Each sub-application has detailed architecture documentation covering requiremen
 2. **[Flight Controller Communication](ARCHITECTURE_2_flight_controller_communication.md)** - Establishes FC connection, downloads parameters and metadata
    - [`frontend_tkinter_connection_selection.py`](ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py)
      - [`frontend_tkinter_flightcontroller_info.py`](ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py)
-     - [`backend_flightcontroller.py`](ardupilot_methodic_configurator/backend_flightcontroller.py)
+     - [`backend_flightcontroller.py`](ardupilot_methodic_configurator/backend_flightcontroller.py) - Main facade class using delegation pattern
+       - [`backend_flightcontroller_connection.py`](ardupilot_methodic_configurator/backend_flightcontroller_connection.py) - Connection management
+       - [`backend_flightcontroller_params.py`](ardupilot_methodic_configurator/backend_flightcontroller_params.py) - Parameter operations
+       - [`backend_flightcontroller_commands.py`](ardupilot_methodic_configurator/backend_flightcontroller_commands.py) - Command execution
+       - [`backend_flightcontroller_files.py`](ardupilot_methodic_configurator/backend_flightcontroller_files.py) - File operations
+       - [`data_model_flightcontroller_info.py`](ardupilot_methodic_configurator/data_model_flightcontroller_info.py) - FC information
+       - [`backend_flightcontroller_protocols.py`](ardupilot_methodic_configurator/backend_flightcontroller_protocols.py) - Protocol definitions
      - [`backend_mavftp.py`](ardupilot_methodic_configurator/backend_mavftp.py)
 
 3. **[Directory and Project Selection](ARCHITECTURE_3_directory_selection.md)** - Creates new projects or opens existing ones
@@ -154,9 +160,63 @@ All applications use one or more of the following shared libraries:
    4. [`backend_filesystem_program_settings.py`](ardupilot_methodic_configurator/backend_filesystem_program_settings.py)
 1. the internet backend communicates with the internet
    1. [`backend_internet.py`](ardupilot_methodic_configurator/backend_internet.py)
-1. the flight controller backend communicates with the flight controller
-   1. [`backend_flightcontroller.py`](ardupilot_methodic_configurator/backend_flightcontroller.py)
-   2. [`backend_mavftp.py`](ardupilot_methodic_configurator/backend_mavftp.py)
+1. the flight controller backend communicates with the flight controller using a **delegation pattern** with specialized managers:
+   1. [`backend_flightcontroller.py`](ardupilot_methodic_configurator/backend_flightcontroller.py) -
+     Main facade class that delegates to specialized managers
+   2. [`backend_flightcontroller_connection.py`](ardupilot_methodic_configurator/backend_flightcontroller_connection.py) -
+     Handles connection establishment, port discovery, and heartbeat detection
+   3. [`backend_flightcontroller_params.py`](ardupilot_methodic_configurator/backend_flightcontroller_params.py) -
+     Manages parameter download, upload, and querying
+   4. [`backend_flightcontroller_commands.py`](ardupilot_methodic_configurator/backend_flightcontroller_commands.py) -
+     Executes MAVLink commands (motor tests, battery status, etc.)
+   5. [`backend_flightcontroller_files.py`](ardupilot_methodic_configurator/backend_flightcontroller_files.py) -
+     Handles file upload/download via MAVFTP
+   6. [`data_model_flightcontroller_info.py`](ardupilot_methodic_configurator/data_model_flightcontroller_info.py) -
+     Stores flight controller metadata and capabilities
+   7. [`backend_flightcontroller_protocols.py`](ardupilot_methodic_configurator/backend_flightcontroller_protocols.py) -
+     Protocol definitions for dependency injection and testing
+   8. [`backend_mavftp.py`](ardupilot_methodic_configurator/backend_mavftp.py) - MAVFTP protocol implementation
+
+   **Flight Controller Backend Architecture:**
+   - The `FlightController` class acts as a facade, delegating operations to specialized managers
+   - Each manager handles a specific concern (connection, parameters, commands, files)
+   - Managers can reference each other (e.g., params manager holds reference to connection manager)
+   - Protocol definitions enable dependency injection for testing
+   - Connection manager is the source of truth for connection state (`master`, `comport`, `info`)
+   - Other managers query connection manager for current state rather than caching it
+
+   **Error Handling Standards:**
+
+   To maintain consistency across the flight controller backend, the following error handling patterns are used:
+
+   1. **Connection and I/O Operations** - Return `str` (empty string on success, error message on failure):
+      - `connect()`, `disconnect()`, `register_and_try_connect()`
+      - Rationale: Allows user-friendly error messages to be displayed directly
+
+   2. **Command Operations** - Return `tuple[bool, str]` (success flag, error message):
+      - `test_motor()`, `test_all_motors()`, `reset_all_parameters_to_default()`
+      - Rationale: Separates success/failure from error details for better control flow
+
+   3. **Query Operations** - Return `Optional[T]` or raise exceptions:
+      - `fetch_param()` - raises `TimeoutError` on timeout
+      - `get_battery_status()` - returns `tuple[Optional[tuple[float, float]], str]`
+      - Rationale: Distinguishes between "not found" (None) and "error" (exception)
+
+   4. **Bulk Operations** - Return data structures or tuples:
+      - `download_params()` - returns `tuple[dict[str, float], ParDict]`
+      - Rationale: Success implied by returned data, errors logged but not returned
+
+   **Testing Hacks and Violations:**
+
+   The following methods exist for testing purposes only and violate architectural principles:
+
+   - `FlightController.set_master_for_testing()` - Directly mutates connection manager's internal state,
+     violating the principle that connection manager should be the sole mutator of connection state.
+     **Never use in production code.**
+
+   - Test parameter loading via `device="test"` in `backend_flightcontroller_params.py` - Bypasses normal
+     parameter download flow to load from local file. **Marked with FIXME for future removal.**
+
 1. the tkinter frontend, which is the GUI the user interacts with
    1. [`frontend_tkinter_autoresize_combobox.py`](ardupilot_methodic_configurator/frontend_tkinter_autoresize_combobox.py)
    1. [`frontend_tkinter_base_window.py`](ardupilot_methodic_configurator/frontend_tkinter_base_window.py)

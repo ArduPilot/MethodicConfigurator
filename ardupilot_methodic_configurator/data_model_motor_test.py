@@ -447,7 +447,11 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                     )
 
             # Set parameter and verify it was set correctly
-            self.flight_controller.set_param(param_name, value)
+            success, error_msg = self.flight_controller.set_param(param_name, value)
+            if not success:
+                raise ParameterError(
+                    _("Failed to set parameter %(param)s: %(error)s") % {"param": param_name, "error": error_msg}
+                )
             # Read back the parameter to verify it was set correctly
             actual_value = self.flight_controller.fetch_param(param_name)
             if actual_value is not None and abs(actual_value - value) < 0.001:  # Allow small floating-point tolerance
