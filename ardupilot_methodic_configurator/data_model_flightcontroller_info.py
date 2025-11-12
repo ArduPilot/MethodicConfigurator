@@ -25,7 +25,7 @@ from ardupilot_methodic_configurator.data_model_fc_ids import (
 )
 
 
-class BackendFlightcontrollerInfo:  # pylint: disable=too-many-instance-attributes
+class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
     """
     Handle flight controller information.
 

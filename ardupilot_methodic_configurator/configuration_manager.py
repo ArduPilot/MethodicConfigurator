@@ -457,8 +457,8 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             Path(self._local_filesystem.vehicle_dir) / "00_default.param",
         )
 
-        # Update the flight controller parameters
-        self._flight_controller.fc_parameters = fc_parameters
+        # Note: fc_parameters are already updated internally in the flight controller
+        # via params_manager.download_params()
 
         # Write default values to file if available
         if param_default_values:
@@ -498,7 +498,10 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
                 ):
                     param_metadata = self._local_filesystem.doc_dict.get(param_name, None)
                     if param_metadata and param_metadata.get("RebootRequired", False):
-                        self._flight_controller.set_param(param_name, float(param.value))
+                        success, error_msg = self._flight_controller.set_param(param_name, float(param.value))
+                        if not success:
+                            logging_error(_("Failed to set parameter %s: %s"), param_name, error_msg)
+                            continue
                         if param_name in self._flight_controller.fc_parameters:
                             logging_info(
                                 _("Parameter %s changed from %f to %f, reset required"),
@@ -511,7 +514,10 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
                         reset_required = True
                     # Check if any of the selected parameters have a _TYPE, _EN, or _ENABLE suffix
                     elif param_name.endswith(("_TYPE", "_EN", "_ENABLE", "SID_AXIS")):
-                        self._flight_controller.set_param(param_name, float(param.value))
+                        success, error_msg = self._flight_controller.set_param(param_name, float(param.value))
+                        if not success:
+                            logging_error(_("Failed to set parameter %s: %s"), param_name, error_msg)
+                            continue
                         if param_name in self._flight_controller.fc_parameters:
                             logging_info(
                                 _("Parameter %s changed from %f to %f, possible reset required"),
@@ -522,7 +528,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
                         else:
                             logging_info(_("Parameter %s changed to %f, possible reset required"), param_name, param.value)
                         reset_unsure_params.append(param_name)
-            except ValueError as e:  # noqa: PERF203
+            except ValueError as e:
                 error_msg = _("Failed to set parameter {param_name}: {e}").format(param_name=param_name, e=e)
                 logging_error(error_msg)
                 error_messages.append(error_msg)
@@ -633,7 +639,12 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
 
         for param_name, param in selected_params.items():
             try:
-                self._flight_controller.set_param(param_name, param.value)
+                success, error_msg = self._flight_controller.set_param(param_name, param.value)
+                if not success:
+                    error_messages.append(
+                        _("Failed to set parameter %(name)s: %(error)s") % {"name": param_name, "error": error_msg}
+                    )
+                    continue
                 if param_name not in self._flight_controller.fc_parameters or not is_within_tolerance(
                     self._flight_controller.fc_parameters[param_name], param.value
                 ):
@@ -654,7 +665,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
                 else:
                     logging_info(_("Parameter %s unchanged from %f"), param_name, param.value)
                     nr_unchanged += 1
-            except ValueError as _e:  # noqa: PERF203
+            except ValueError as _e:
                 error_msg = _("Failed to set parameter {param_name}: {_e}").format(**locals())
                 logging_error(error_msg)
                 error_messages.append(error_msg)
