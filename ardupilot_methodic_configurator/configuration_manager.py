@@ -1494,10 +1494,32 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
         return any(param.is_dirty for param in self.current_step_parameters.values())
 
     def get_last_configuration_step_number(self) -> Optional[int]:
-        if self._local_filesystem.configuration_phases:
-            # Get the first two characters of the last configuration step filename
-            last_step_filename = next(reversed(self._local_filesystem.file_parameters.keys()))
-            return int(last_step_filename[:2]) + 1 if len(last_step_filename) >= 2 else 1
+        """
+        Get the last configuration step number by scanning actual .param files on disk.
+
+        This method gets the highest step number from all .param files in the vehicle directory to
+        ensure that if users have manually added or deleted files, the progress bar reflects the actual
+        configuration files available on disk, not a possibly outdated and/or incomplete JSON configuration.
+
+        Returns:
+            The highest step number found in the .param files, plus 1 (for consistency
+            with how the progress bar uses this value), or None if no files found.
+
+        """
+        # Always rely on actual files on disk, not configuration_phases which might be outdated
+        if self._local_filesystem.configuration_phases and self._local_filesystem.file_parameters:
+            # Get all filenames and extract their step numbers
+            max_step_nr = 0
+            for filename in self._local_filesystem.file_parameters:
+                # Extract the first two characters as the step number
+                if len(filename) >= 2 and filename[:2].isdigit():
+                    step_nr = int(filename[:2])
+                    max_step_nr = max(max_step_nr, step_nr)
+
+            # Return max_step_nr + 1 for consistency with progress bar expectations
+            if max_step_nr > 0:
+                return max_step_nr + 1
+
         return None
 
     def get_sorted_phases_with_end_and_weight(self, last_step_nr: int) -> dict[str, PhaseData]:

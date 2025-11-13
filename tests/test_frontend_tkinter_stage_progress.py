@@ -213,6 +213,20 @@ class TestErrorHandling:
 
         assert "Out of expected range" in caplog.text
 
+    def test_user_can_update_progress_at_final_step_number(self, progress_bar, caplog) -> None:
+        """
+        User can update progress when current file equals total files (final step).
+
+        GIVEN: A progress bar is configured with total_files=30
+        WHEN: Progress is updated to step 30 (total_files)
+        THEN: No error should be logged
+        AND: Progress should update normally
+        """
+        with caplog.at_level("ERROR"):
+            progress_bar.update_progress(30)  # Final step - should be valid
+
+        assert "Out of expected range" not in caplog.text
+
 
 class TestWindowResizing:
     """Test progress bar behavior during window resizing."""
