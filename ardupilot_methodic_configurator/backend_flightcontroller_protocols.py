@@ -89,6 +89,11 @@ class FlightControllerConnectionProtocol(Protocol):
     @property
     def comport_device(self) -> str: ...
 
+    @property
+    def baudrate(self) -> int:
+        """Get the default baud rate for serial connections."""
+        ...  # pylint: disable=unnecessary-ellipsis
+
     def discover_connections(self) -> None: ...
 
     def disconnect(self) -> None: ...

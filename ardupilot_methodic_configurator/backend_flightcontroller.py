@@ -123,7 +123,6 @@ class FlightController:  # pylint: disable=too-many-public-methods
             logging_warning(_("You should uninstall ModemManager as it conflicts with ArduPilot"))
 
         self._reboot_time = reboot_time
-        self._baudrate = baudrate
         self._network_ports = network_ports if network_ports is not None else FlightControllerConnection.DEFAULT_NETWORK_PORTS
 
         # Component managers (delegation pattern with dependency injection support)
@@ -132,7 +131,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         # Share the same FlightControllerInfo instance across all managers
         _info = info or FlightControllerInfo()
         self._connection_manager: FlightControllerConnectionProtocol = connection_manager or FlightControllerConnection(
-            info=_info, baudrate=self._baudrate, network_ports=self._network_ports
+            info=_info, baudrate=baudrate, network_ports=self._network_ports
         )
 
         self._params_manager: FlightControllerParamsProtocol = params_manager or FlightControllerParams(
@@ -210,8 +209,8 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     @property
     def baudrate(self) -> int:
-        """Get the baudrate setting."""
-        return self._baudrate
+        """Get the baudrate setting - delegates to connection manager."""
+        return self._connection_manager.baudrate
 
     @property
     def PARAM_FETCH_POLL_DELAY(self) -> float:  # noqa: N802 # pylint: disable=invalid-name
@@ -290,7 +289,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
             reset_progress_callback(current_step, sleep_time)
 
         # Reconnect to the flight controller
-        return self.create_connection_with_retry(connection_progress_callback, baudrate=self._baudrate)
+        return self.create_connection_with_retry(connection_progress_callback, baudrate=self.baudrate)
 
     def discover_connections(self) -> None:
         """Discover available connections - delegates to connection manager."""

@@ -940,6 +940,11 @@ class FlightControllerConnection:
             return ""
         return str(self.comport.device)
 
+    @property
+    def baudrate(self) -> int:
+        """Get the default baud rate for serial connections."""
+        return self._baudrate
+
     def set_master_for_testing(
         self,
         master: Optional[mavutil.mavlink_connection],  # pyright: ignore[reportGeneralTypeIssues]
