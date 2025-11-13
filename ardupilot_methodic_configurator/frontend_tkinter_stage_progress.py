@@ -174,9 +174,9 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
         - Show progress between start-end otherwise
 
         """
-        if not 0 < current_file < self.total_files:
-            msg = _("Out of expected range [0 .. {self.total_files}] current file number: {current_file}")
-            msg = msg.format(self=self, current_file=current_file)
+        if not 0 < current_file <= self.total_files:
+            msg = _("Out of expected range [1 .. {total_files}] current file number: {current_file}")
+            msg = msg.format(total_files=self.total_files, current_file=current_file)
             logging_error(msg)
             return
 
