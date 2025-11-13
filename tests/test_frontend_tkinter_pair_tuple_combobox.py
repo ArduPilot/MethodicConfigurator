@@ -326,7 +326,7 @@ class TestPairTupleCombobox(unittest.TestCase):
 
     @patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.sys_exit")
     @patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.logging_critical")
-    def test_set_entries_tuple_with_invalid_selection(self, mock_critical, mock_exit) -> None:
+    def test_set_entries_tuple_with_invalid_selection(self, mock_critical: MagicMock, mock_exit: MagicMock) -> None:
         """Test setting entries with an invalid selection."""
         # Call the method that should trigger the exception
         self.combobox.set_entries_tuple(self.test_data, "invalid_key")
@@ -334,6 +334,23 @@ class TestPairTupleCombobox(unittest.TestCase):
         # Verify the expected logging and exit calls were made
         mock_critical.assert_called_once()
         mock_exit.assert_called_once_with(1)
+
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.logging_warning")
+    def test_set_entries_tuple_with_display_value_as_selection(self, mock_warning: MagicMock) -> None:
+        """Test setting entries with a display value (list_show) as selection instead of key."""
+        # Call the method with a display value "Value 1" instead of key "key1"
+        # This should trigger a warning but not crash
+        self.combobox.set_entries_tuple(self.test_data, "Value 1")
+
+        # Verify warning was logged for the fallback behavior
+        mock_warning.assert_called_once()
+        warning_call_args = mock_warning.call_args
+        assert warning_call_args is not None
+        # Check that the warning mentions "display value" and "list_show"
+        assert "display value" in str(warning_call_args).lower() or "list_show" in str(warning_call_args)
+
+        # And the combobox should still work correctly with the corresponding key
+        assert self.combobox.get_selected_key() == "key1"
 
 
 # ================================================================================================

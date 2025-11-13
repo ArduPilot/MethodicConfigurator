@@ -479,7 +479,15 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
     def get_component_data_from_gui(self, component_name: str) -> ComponentData:
         """Extract component data from GUI elements."""
         # Get all entry widget values as a dictionary
-        entry_values = {path: entry.get() for path, entry in self.entry_widgets.items()}
+        # For PairTupleCombobox, get the selected key; for ttk.Entry, get the text
+        entry_values = {}
+        for path, entry in self.entry_widgets.items():
+            if isinstance(entry, PairTupleCombobox):
+                # Get the internal key value for PairTupleCombobox
+                entry_values[path] = entry.get_selected_key() or ""
+            elif isinstance(entry, ttk.Entry) or (hasattr(entry, "get") and callable(entry.get)):
+                # Get the text value for Entry widgets or any object with a get() method (including mocks)
+                entry_values[path] = entry.get()
 
         # Use the data model to extract and process the component data
         return self.data_model.extract_component_data_from_entries(component_name, entry_values)
