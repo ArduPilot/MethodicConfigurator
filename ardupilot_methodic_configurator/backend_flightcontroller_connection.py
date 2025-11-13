@@ -18,7 +18,7 @@ from os import path as os_path
 from os import readlink as os_readlink
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import Any, Callable, ClassVar, NoReturn, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, NoReturn, Optional, Union
 
 import serial.tools.list_ports
 import serial.tools.list_ports_common
@@ -28,6 +28,9 @@ from serial.serialutil import SerialException
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
+
+if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.backend_flightcontroller_protocols import MavlinkConnection
 
 
 class FakeSerialForTests:
@@ -121,7 +124,7 @@ class FlightControllerConnection:
 
         """
         self.info = info
-        self.master: Optional[mavutil.mavlink_connection] = None
+        self.master: Optional[MavlinkConnection] = None
         self.comport: Union[mavutil.SerialPort, serial.tools.list_ports_common.ListPortInfo, None] = None
         self._baudrate = baudrate
         self._network_ports = network_ports or self.DEFAULT_NETWORK_PORTS
@@ -148,7 +151,7 @@ class FlightControllerConnection:
         """Close the connection to the flight controller."""
         if self.master is not None:
             with contextlib.suppress(Exception):
-                self.master.close()
+                self.master.close()  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
             self.master = None
 
     def add_connection(self, connection_string: str) -> bool:
@@ -294,7 +297,7 @@ class FlightControllerConnection:
         timeout: int = 5,
         retries: int = 3,
         progress_callback: Union[None, Callable[[int, int], None]] = None,
-    ) -> mavutil.mavlink_connection:
+    ) -> mavutil.mavlink_connection:  # pyright: ignore[reportGeneralTypeIssues]
         """
         Factory method for creating MAVLink connections.
 
@@ -334,7 +337,13 @@ class FlightControllerConnection:
         detected_vehicles: dict[tuple[int, int], Any] = {}
 
         while time_time() - start_time < timeout:
-            m = self.master.recv_match(type="HEARTBEAT", blocking=False) if self.master else None
+            m = (
+                self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                    type="HEARTBEAT", blocking=False
+                )
+                if self.master
+                else None
+            )
             if m is None:
                 time_sleep(self.HEARTBEAT_POLL_DELAY)
                 continue
@@ -394,7 +403,13 @@ class FlightControllerConnection:
 
         # Request AUTOPILOT_VERSION message
         self._request_message(mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION)
-        m = self.master.recv_match(type="AUTOPILOT_VERSION", blocking=True, timeout=timeout) if self.master else None
+        m = (
+            self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                type="AUTOPILOT_VERSION", blocking=True, timeout=timeout
+            )
+            if self.master
+            else None
+        )
 
         return self._process_autopilot_version(m, banner_msgs)
 
@@ -404,9 +419,9 @@ class FlightControllerConnection:
         if self.master is not None:
             # Note: Don't wait for ACK here as banner requests are fire-and-forget
             # and we handle the response via STATUS_TEXT messages
-            self.master.mav.command_long_send(
-                self.master.target_system,
-                self.master.target_component,
+            self.master.mav.command_long_send(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_system,  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_component,  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
                 mavutil.mavlink.MAV_CMD_DO_SEND_BANNER,
                 0,
                 0,
@@ -429,7 +444,9 @@ class FlightControllerConnection:
         start_time = time_time()
         banner_msgs: list[str] = []
         while self.master:
-            msg = self.master.recv_match(type="STATUSTEXT", blocking=False)
+            msg = self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                type="STATUSTEXT", blocking=False
+            )
             if msg:
                 if banner_msgs:
                     banner_msgs.append(msg.text)
@@ -455,7 +472,7 @@ class FlightControllerConnection:
             system_id = int(self.info.system_id) if self.info.system_id else 0
             component_id = int(self.info.component_id) if self.info.component_id else 0
 
-            self.master.mav.command_long_send(
+            self.master.mav.command_long_send(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
                 system_id,
                 component_id,
                 mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
@@ -627,14 +644,16 @@ class FlightControllerConnection:
 
         return firmware_type
 
-    def _populate_flight_controller_info(self, m: MAVLink_autopilot_version_message) -> None:
+    def _populate_flight_controller_info(self, m: Optional[MAVLink_autopilot_version_message]) -> None:
         """
         Populate flight controller info from AUTOPILOT_VERSION message.
 
         Args:
-            m: The AUTOPILOT_VERSION MAVLink message
+            m: The AUTOPILOT_VERSION MAVLink message, or None
 
         """
+        if m is None:
+            return
         self.info.set_capabilities(m.capabilities)
         self.info.set_flight_sw_version(m.flight_sw_version)
         self.info.set_usb_vendor_and_product_ids(m.vendor_id, m.product_id)  # must be done before set_board_version()
@@ -642,12 +661,12 @@ class FlightControllerConnection:
         self.info.set_flight_custom_version(m.flight_custom_version)
         self.info.set_os_custom_version(m.os_custom_version)
 
-    def _process_autopilot_version(self, m: MAVLink_autopilot_version_message, banner_msgs: list[str]) -> str:
+    def _process_autopilot_version(self, m: Optional[MAVLink_autopilot_version_message], banner_msgs: list[str]) -> str:
         """
         Process AUTOPILOT_VERSION message and banner messages to extract flight controller info.
 
         Args:
-            m: The AUTOPILOT_VERSION MAVLink message
+            m: The AUTOPILOT_VERSION MAVLink message, or None if not received
             banner_msgs: List of banner messages received from flight controller
 
         Returns:
@@ -921,7 +940,10 @@ class FlightControllerConnection:
             return ""
         return str(self.comport.device)
 
-    def set_master_for_testing(self, master: Optional[mavutil.mavlink_connection]) -> None:
+    def set_master_for_testing(
+        self,
+        master: Optional[mavutil.mavlink_connection],  # pyright: ignore[reportGeneralTypeIssues]
+    ) -> None:
         """
         Set the MAVLink connection for testing purposes.
 

@@ -68,7 +68,7 @@ class FlightControllerParams:
         self.fc_parameters: dict[str, float] = fc_parameters if fc_parameters is not None else {}
 
     @property
-    def master(self) -> Optional[mavutil.mavlink_connection]:
+    def master(self) -> Optional[mavutil.mavlink_connection]:  # pyright: ignore[reportGeneralTypeIssues]
         """Get master connection."""
         return self._connection_manager.master
 

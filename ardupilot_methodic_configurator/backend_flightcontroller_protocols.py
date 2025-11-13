@@ -78,8 +78,9 @@ class FlightControllerConnectionProtocol(Protocol):
         """Get the current MAVLink connection object."""
 
     @property
-    def info(self) -> FlightControllerInfo:
+    def info(self) -> FlightControllerInfo:  # pyright: ignore[reportInvalidTypeForm]
         """Get flight controller information (connection manager is sole mutator)."""
+        ...  # pylint: disable=unnecessary-ellipsis
 
     @property
     def comport(self) -> Union[mavutil.SerialPort, serial.tools.list_ports_common.ListPortInfo, None]:
@@ -121,9 +122,11 @@ class FlightControllerConnectionProtocol(Protocol):
 
     def get_serial_ports(self) -> list[serial.tools.list_ports_common.ListPortInfo]:
         """Get all available serial ports."""
+        ...  # pylint: disable=unnecessary-ellipsis
 
     def get_network_ports(self) -> list[str]:
         """Get all available network ports."""
+        ...  # pylint: disable=unnecessary-ellipsis
 
     def auto_detect_serial(self) -> list[mavutil.SerialPort]: ...
 
@@ -149,7 +152,7 @@ class FlightControllerConnectionProtocol(Protocol):
 
     def _select_supported_autopilot(self, detected_vehicles: dict[tuple[int, int], Any]) -> str: ...
 
-    def _populate_flight_controller_info(self, m: "MAVLink_autopilot_version_message") -> None: ...
+    def _populate_flight_controller_info(self, m: Optional["MAVLink_autopilot_version_message"]) -> None: ...
 
     def _retrieve_autopilot_version_and_banner(self, timeout: int) -> str: ...
 
@@ -171,6 +174,7 @@ class FlightControllerParamsProtocol(Protocol):
     @property
     def fc_parameters(self) -> dict[str, float]:
         """Get the parameter dictionary."""
+        ...  # pylint: disable=unnecessary-ellipsis
 
     @fc_parameters.setter
     def fc_parameters(self, value: dict[str, float]) -> None:

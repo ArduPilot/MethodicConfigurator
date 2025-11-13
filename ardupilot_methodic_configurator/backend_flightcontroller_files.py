@@ -66,7 +66,7 @@ class FlightControllerFiles:
         self._connection_manager: FlightControllerConnectionProtocol = connection_manager
 
     @property
-    def master(self) -> Optional[mavutil.mavlink_connection]:
+    def master(self) -> Optional[mavutil.mavlink_connection]:  # pyright: ignore[reportGeneralTypeIssues]
         """Get master connection."""
         return self._connection_manager.master
 
@@ -168,7 +168,7 @@ class FlightControllerFiles:
             logging_error(_("Error during flight log download: %(error)s"), {"error": str(e)})
             return False
 
-    def _get_last_log_number(self, mavftp_instance: "MAVFTP") -> Union[int, None]:
+    def _get_last_log_number(self, mavftp_instance: "MAVFTP") -> Optional[int]:  # pyright: ignore[reportInvalidTypeForm]
         """
         Get the last log number using multiple fallback methods.
 
@@ -176,7 +176,7 @@ class FlightControllerFiles:
             mavftp_instance: MAVFTP object for file operations
 
         Returns:
-            int: Last log number, or None if not found
+            Optional[int]: Last log number, or None if not found
 
         """
         # Method 1: Try to get LASTLOG.TXT
@@ -197,7 +197,10 @@ class FlightControllerFiles:
         logging_error(_("Could not determine the last log number using any method"))
         return None
 
-    def _get_log_number_from_lastlog_txt(self, mavftp_instance: "MAVFTP") -> Union[int, None]:
+    def _get_log_number_from_lastlog_txt(
+        self,
+        mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
+    ) -> Optional[int]:
         """
         Try to get the log number from LASTLOG.TXT file.
 
@@ -205,7 +208,7 @@ class FlightControllerFiles:
             mavftp_instance: MAVFTP object for file operations
 
         Returns:
-            int: Log number from LASTLOG.TXT, or None if not available
+            Optional[int]: Log number from LASTLOG.TXT, or None if not available
 
         """
         logging_info(_("Trying to get log number from LASTLOG.TXT"))
@@ -222,7 +225,10 @@ class FlightControllerFiles:
             logging_warning(_("Failed to get log number from LASTLOG.TXT: %(error)s"), {"error": str(e)})
             return None
 
-    def _get_log_number_from_directory_listing(self, mavftp_instance: "MAVFTP") -> Union[int, None]:
+    def _get_log_number_from_directory_listing(
+        self,
+        mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
+    ) -> Optional[int]:
         """
         Try to get the highest log number by listing the logs directory using MAVFTP.
 
@@ -257,7 +263,10 @@ class FlightControllerFiles:
             logging_warning(_("Failed to get log number from directory listing: %(error)s"), {"error": str(e)})
             return None
 
-    def _get_log_number_by_scanning(self, mavftp_instance: "MAVFTP") -> Union[int, None]:
+    def _get_log_number_by_scanning(
+        self,
+        mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
+    ) -> Optional[int]:
         """
         Try to find the last log using binary search for efficiency.
 
@@ -265,7 +274,7 @@ class FlightControllerFiles:
             mavftp_instance: MAVFTP object for file operations
 
         Returns:
-            int: Last log number found using binary search, or None if not found
+            Optional[int]: Highest log number found, or None if not found
 
         """
         logging_info(_("Trying to find log number using binary search"))
@@ -311,7 +320,11 @@ class FlightControllerFiles:
             return None
 
     def _download_log_file(
-        self, mavftp_instance: "MAVFTP", remote_filenumber: int, local_filename: str, get_progress_callback: Callable
+        self,
+        mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
+        remote_filenumber: int,
+        local_filename: str,
+        get_progress_callback: Callable,
     ) -> bool:
         """
         Download the actual log file from the flight controller.
@@ -344,15 +357,15 @@ class FlightControllerFiles:
             logging_error(_("Failed to download log file: %(error)s"), {"error": str(e)})
             return False
 
-    def _extract_log_number_from_file(self, temp_lastlog_file: str) -> Union[int, None]:
+    def _extract_log_number_from_file(self, temp_lastlog_file: str) -> Optional[int]:
         """
         Extract log number from LASTLOG.TXT file and clean up the temporary file.
 
         Args:
-            temp_lastlog_file: Path to temporary LASTLOG.TXT file
+            temp_lastlog_file: Path to the file containing the log number
 
         Returns:
-            int: Log number extracted from file, or None if extraction failed
+            Optional[int]: Log number from the file, or None if not found or parsing failed
 
         """
         try:
