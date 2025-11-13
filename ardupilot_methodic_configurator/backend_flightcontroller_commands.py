@@ -30,6 +30,9 @@ if TYPE_CHECKING:
         FlightControllerConnectionProtocol,
         FlightControllerParamsProtocol,
     )
+    from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
+        MavlinkConnection as MavlinkConnectionType,
+    )
 
 
 class FlightControllerCommands:
@@ -78,7 +81,7 @@ class FlightControllerCommands:
         self._last_battery_message_time: float = 0.0
 
     @property
-    def master(self) -> Optional[mavutil.mavlink_connection]:
+    def master(self) -> "Optional[MavlinkConnectionType]":
         """Get master connection - delegates to connection manager."""
         return self._connection_manager.master
 
@@ -120,9 +123,9 @@ class FlightControllerCommands:
 
         try:
             # Send the command
-            self.master.mav.command_long_send(
-                self.master.target_system,
-                self.master.target_component,
+            self.master.mav.command_long_send(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_system,  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_component,  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
                 command,
                 0,  # confirmation
                 param1,
@@ -137,7 +140,9 @@ class FlightControllerCommands:
             # Wait for acknowledgment
             start_time = time_time()
             while time_time() - start_time < timeout:
-                msg = self.master.recv_match(type="COMMAND_ACK", blocking=False)
+                msg = self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                    type="COMMAND_ACK", blocking=False
+                )
                 if msg and msg.command == command:
                     # Map result codes to error messages
                     result_messages = {
@@ -301,9 +306,9 @@ class FlightControllerCommands:
 
         for i in range(nr_of_motors):
             # MAV_CMD_DO_MOTOR_TEST command for all motors
-            self.master.mav.command_long_send(
-                self.master.target_system,
-                self.master.target_component,
+            self.master.mav.command_long_send(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_system,  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_component,  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
                 mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
                 0,  # confirmation
                 param1=i + 1,  # motor number (1-based)
@@ -463,7 +468,9 @@ class FlightControllerCommands:
 
         try:
             # Try to get real telemetry data
-            battery_status = self.master.recv_match(type="BATTERY_STATUS", blocking=False, timeout=self.BATTERY_STATUS_TIMEOUT)
+            battery_status = self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                type="BATTERY_STATUS", blocking=False, timeout=self.BATTERY_STATUS_TIMEOUT
+            )
             if battery_status:
                 # Convert from millivolts to volts, and centiamps to amps using pure business logic
                 voltage, current = convert_battery_telemetry_units(
