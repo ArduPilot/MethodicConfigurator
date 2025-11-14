@@ -324,33 +324,35 @@ class TestPairTupleCombobox(unittest.TestCase):
         mock_critical.assert_called_once()
         mock_exit.assert_called_once_with(1)
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.sys_exit")
     @patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.logging_critical")
-    def test_set_entries_tuple_with_invalid_selection(self, mock_critical: MagicMock, mock_exit: MagicMock) -> None:
+    def test_set_entries_tuple_with_invalid_selection(self, mock_critical: MagicMock) -> None:
         """Test setting entries with an invalid selection."""
+        # Store the initial selection before calling set_entries_tuple with invalid key
+        initial_selection = self.combobox.get_selected_key()
+
         # Call the method that should trigger the exception
         self.combobox.set_entries_tuple(self.test_data, "invalid_key")
 
-        # Verify the expected logging and exit calls were made
+        # Verify critical logging was called for the invalid selection
         mock_critical.assert_called_once()
-        mock_exit.assert_called_once_with(1)
+        # Implementation returns None instead of exiting
+        # When the selection is invalid, the combobox retains its previous selection
+        assert self.combobox.get_selected_key() == initial_selection
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.logging_warning")
-    def test_set_entries_tuple_with_display_value_as_selection(self, mock_warning: MagicMock) -> None:
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox.logging_critical")
+    def test_set_entries_tuple_with_display_value_as_selection(self, mock_critical: MagicMock) -> None:
         """Test setting entries with a display value (list_show) as selection instead of key."""
+        # Store the initial selection before calling set_entries_tuple with display value
+        initial_selection = self.combobox.get_selected_key()
+
         # Call the method with a display value "Value 1" instead of key "key1"
-        # This should trigger a warning but not crash
+        # This should trigger a CRITICAL log (not warning) because the key is not found
         self.combobox.set_entries_tuple(self.test_data, "Value 1")
 
-        # Verify warning was logged for the fallback behavior
-        mock_warning.assert_called_once()
-        warning_call_args = mock_warning.call_args
-        assert warning_call_args is not None
-        # Check that the warning mentions "display value" and "list_show"
-        assert "display value" in str(warning_call_args).lower() or "list_show" in str(warning_call_args)
-
-        # And the combobox should still work correctly with the corresponding key
-        assert self.combobox.get_selected_key() == "key1"
+        # Verify critical logging was called when the display value is used as a key
+        mock_critical.assert_called_once()
+        # When the selection is invalid (display value used as key), the combobox retains its previous selection
+        assert self.combobox.get_selected_key() == initial_selection
 
 
 # ================================================================================================
@@ -556,7 +558,7 @@ class TestPairTupleComboboxBehavior:
         GIVEN: A combobox with valid data but no initial selection
         WHEN: No selection is made (current() returns -1)
         THEN: The combobox should handle it gracefully
-        AND: Return the last available key as fallback behavior
+        AND: Return None as the selection is invalid
         """
         # Arrange: Create combobox with no initial selection
         test_data = [("key1", "Value 1"), ("key2", "Value 2")]
@@ -566,9 +568,9 @@ class TestPairTupleComboboxBehavior:
         with patch.object(combobox, "current", return_value=-1):
             result = combobox.get_selected_key()
 
-        # Assert: Should handle gracefully by returning the last key as fallback
+        # Assert: Should handle gracefully by returning None when no selection is made
         # This is the actual behavior of the implementation
-        assert result == "key2"
+        assert result is None
 
 
 class TestPairTupleComboboxTooltipWorkflow:

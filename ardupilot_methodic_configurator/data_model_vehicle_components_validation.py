@@ -52,6 +52,9 @@ SERIAL_BUS_LABELS: dict[str, str] = {
     "SERIAL8": "SERIAL8",
 }
 
+# Reverse mapping for efficient lookup: display label -> key (e.g., "GPS1 (SERIAL3)" -> "SERIAL3")
+SERIAL_DISPLAY_TO_KEY: dict[str, str] = {display: key for key, display in SERIAL_BUS_LABELS.items()}
+
 
 def get_connection_type_tuples_with_labels(connection_types: tuple[str, ...]) -> list[tuple[str, str]]:
     """
@@ -610,3 +613,35 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                     continue
 
         return len(errors) == 0, errors
+
+    def correct_display_values_in_loaded_data(self) -> None:
+        """
+        Correct display values that may have been stored in JSON instead of key values.
+
+        After loading data from JSON, some fields may have display values (e.g., "SERIAL1 (GPS1)")
+        instead of key values (e.g., "SERIAL1"). This method corrects such values using the
+        display-to-key mapping built during initialization.
+
+        This ensures data integrity without requiring pre-save synchronization in the GUI.
+        """
+        for path in self._data["Components"]:
+            self._correct_values_recursive(self._data["Components"][path], path)
+
+    def _correct_values_recursive(self, data: dict[str, Any], path: ComponentPath) -> None:
+        """
+        Recursively correct display values in nested component data.
+
+        Args:
+            data: Component data dictionary to correct
+            path: Current path in the component hierarchy
+
+        """
+        for key, value in data.items():
+            current_path: ComponentPath = (*path, key)
+
+            if isinstance(value, dict):
+                # Recurse into nested dictionaries
+                self._correct_values_recursive(value, current_path)
+            elif isinstance(value, str) and value in SERIAL_DISPLAY_TO_KEY:
+                # This is a display label, use the pre-computed reverse mapping for O(1) lookup
+                data[key] = SERIAL_DISPLAY_TO_KEY[value]
