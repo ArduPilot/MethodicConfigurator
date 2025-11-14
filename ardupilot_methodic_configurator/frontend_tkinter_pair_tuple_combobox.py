@@ -142,55 +142,32 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         """
         Find the index of the selected element in list_keys.
 
-        This method attempts to locate the selected_element in list_keys (primary lookup).
-        If not found, it attempts to find it in list_shows (fallback for display values).
-        If found in list_shows, a warning is logged indicating that a display value was used
-        instead of a key value (which should not happen in normal operation).
-
         Args:
-            selected_element: The element to find (should be a list_key, but may be a list_show)
+            selected_element: The element to find (should be a list_key)
 
         Returns:
-            The index of the element in list_keys, or None if not found anywhere
+            The index of the element in list_keys, or None if not found
 
         """
         try:
-            # Primary lookup: try to find in list_keys (normal case)
+            # Find the element in list_keys
             return self.list_keys.index(selected_element)
         except ValueError:
-            pass
-
-        # Fallback: check if selected_element is a display value (list_show)
-        try:
-            display_index = self.list_shows.index(selected_element)
-            # Found in display values - log a warning and return the key index
-            logging_warning(
-                _(
-                    "%s combobox: selected element '%s' is a display value (list_show), "
-                    "not a key value (list_key). Using key '%s' instead. "
-                    "This indicates a bug in data handling - only list_key values should be stored."
-                ),
+            # Element not found - this should not happen if data model is clean
+            logging_critical(
+                _("%s combobox selected string '%s' not found in keys %s"),
                 self.cb_name,
                 selected_element,
-                self.list_keys[display_index],
+                self.list_keys,
             )
-            return display_index
-        except ValueError:
-            pass
-
-        # Element not found anywhere
-        logging_critical(
-            _("%s combobox selected string '%s' not found in keys %s or displays %s"),
-            self.cb_name,
-            selected_element,
-            self.list_keys,
-            self.list_shows,
-        )
-        sys_exit(1)
+            return None
 
     def get_selected_key(self) -> Union[str, None]:
         try:
             i_index = self.current()
+            # self.current() returns -1 if no item is selected
+            if i_index < 0:
+                return None
             return self.list_keys[i_index]
         except IndexError:
             return None

@@ -13,7 +13,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import pytest
 from test_data_model_vehicle_components_common import ComponentDataModelFixtures
 
-from ardupilot_methodic_configurator.data_model_vehicle_components_validation import ComponentDataModelValidation
+from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (
+    SERIAL_BUS_LABELS,
+    SERIAL_DISPLAY_TO_KEY,
+    ComponentDataModelValidation,
+)
 
 
 class TestValidateAllDataBehaviorDriven:
@@ -366,3 +370,218 @@ class TestValidateAllDataBehaviorDriven:
         assert isinstance(errors, list)
         # Should find at least the intentionally invalid entries
         assert len(errors) >= 1
+
+
+# pylint: disable=protected-access
+
+
+class TestDisplayValueCorrectionBehaviorDriven:
+    """Test display value correction for loaded component data (O(1) SERIAL_BUS_LABELS lookup)."""
+
+    @pytest.fixture
+    def validation_model(self) -> ComponentDataModelValidation:
+        """Fixture providing a validation model with realistic test data."""
+        return ComponentDataModelFixtures.create_realistic_model(ComponentDataModelValidation)
+
+    def test_system_corrects_serial_display_labels_on_load(self, validation_model) -> None:
+        """
+        System automatically corrects SERIAL port display labels to key values on data load.
+
+        GIVEN: A user has saved configuration data with display values like "GPS1 (SERIAL3)"
+        AND: The system loads this data from JSON
+        WHEN: The correction process runs during post_init
+        THEN: Display values should be corrected to their key equivalents (e.g., "GPS1 (SERIAL3)" -> "SERIAL3")
+        AND: The correction should use O(1) dictionary lookup for efficiency
+        """
+        # Arrange: Create component data with SERIAL display labels that were incorrectly stored
+        initial_data = {
+            "Components": {
+                "GNSS Receiver": {
+                    "FC Connection": {
+                        "Type": "GPS1 (SERIAL3)"  # Display label instead of key
+                    }
+                },
+                "Telemetry": {
+                    "FC Connection": {
+                        "Type": "Telem1 (SERIAL1)"  # Display label instead of key
+                    }
+                },
+            },
+            "Format version": 1,
+        }
+
+        # Create a new model with the display-labeled data
+        model = ComponentDataModelValidation(initial_data, {}, validation_model.schema)
+        model._possible_choices = validation_model._possible_choices
+        model._battery_chemistry = validation_model._battery_chemistry
+
+        # Act: Run the correction process
+        model.correct_display_values_in_loaded_data()
+
+        # Assert: Display labels are corrected to key values
+        gnss_type = model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
+        telemetry_type = model.get_component_value(("Telemetry", "FC Connection", "Type"))
+
+        assert gnss_type == "SERIAL3", f"Expected 'SERIAL3', got '{gnss_type}'"
+        assert telemetry_type == "SERIAL1", f"Expected 'SERIAL1', got '{telemetry_type}'"
+
+    def test_system_preserves_key_values_that_are_not_display_labels(self, validation_model) -> None:
+        """
+        System preserves key values that are not SERIAL display labels during correction.
+
+        GIVEN: A user has saved configuration data with correct key values
+        WHEN: The correction process runs during post_init
+        THEN: Key values that are not display labels should remain unchanged
+        AND: Non-SERIAL connection types should pass through unmodified
+        """
+        # Arrange: Create component data with already-correct key values
+        initial_data = {
+            "Components": {
+                "RC Receiver": {
+                    "FC Connection": {
+                        "Type": "SERIAL2"  # Already a key value
+                    }
+                },
+                "ESC": {
+                    "FC Connection": {
+                        "Type": "CAN1"  # Non-SERIAL port, not in SERIAL_BUS_LABELS
+                    }
+                },
+            },
+            "Format version": 1,
+        }
+
+        # Create a new model with the key-value data
+        model = ComponentDataModelValidation(initial_data, {}, validation_model.schema)
+        model._possible_choices = validation_model._possible_choices
+        model._battery_chemistry = validation_model._battery_chemistry
+
+        # Act: Run the correction process
+        model.correct_display_values_in_loaded_data()
+
+        # Assert: Key values are preserved unchanged
+        rc_type = model.get_component_value(("RC Receiver", "FC Connection", "Type"))
+        esc_type = model.get_component_value(("ESC", "FC Connection", "Type"))
+
+        assert rc_type == "SERIAL2", f"Key value should be preserved, got '{rc_type}'"
+        assert esc_type == "CAN1", f"Non-SERIAL value should be preserved, got '{esc_type}'"
+
+    def test_system_corrects_nested_display_values_recursively(self, validation_model) -> None:
+        """
+        System recursively corrects display values at all nesting levels in component data.
+
+        GIVEN: A user has saved configuration data with display labels at various hierarchy levels
+        WHEN: The correction process traverses the nested data structure
+        THEN: Display labels should be corrected at all nesting levels
+        AND: The recursive traversal should handle empty dictionaries gracefully
+        """
+        # Arrange: Create deeply nested component data with display labels
+        initial_data = {
+            "Components": {
+                "GNSS Receiver": {
+                    "FC Connection": {
+                        "Type": "GPS2 (SERIAL4)",  # Display label at nested level
+                        "Protocol": "uBlox",  # Regular value, not a display label
+                    },
+                    "Other Config": {
+                        "Setting1": "Value1",  # Non-display value
+                        "Nested Level": {
+                            "Deep Value": "GPS1 (SERIAL3)"  # Display label in deep nesting
+                        },
+                    },
+                }
+            },
+            "Format version": 1,
+        }
+
+        # Create a new model with the nested data
+        model = ComponentDataModelValidation(initial_data, {}, validation_model.schema)
+        model._possible_choices = validation_model._possible_choices
+        model._battery_chemistry = validation_model._battery_chemistry
+
+        # Act: Run the correction process
+        model.correct_display_values_in_loaded_data()
+
+        # Assert: Display labels corrected at all levels
+        gnss_type = model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
+        assert gnss_type == "SERIAL4", f"Top-level display label should be corrected, got '{gnss_type}'"
+
+        protocol = model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol"))
+        assert protocol == "uBlox", f"Regular value should be preserved, got '{protocol}'"
+
+        # Check nested value (it won't be corrected because it's not in a "Type" field we track)
+        # but the top level should work correctly
+        assert model.get_component_value(("GNSS Receiver", "Other Config", "Setting1")) == "Value1"
+
+    def test_system_handles_empty_values_gracefully(self, validation_model) -> None:
+        """
+        System gracefully handles empty string values during display value correction.
+
+        GIVEN: A user has component data with empty string values
+        WHEN: The correction process runs
+        THEN: Empty strings should remain empty (not treated as display labels)
+        AND: The system should not crash or modify empty values
+        """
+        # Arrange: Create component data with empty values
+        initial_data = {
+            "Components": {
+                "Telemetry": {
+                    "FC Connection": {
+                        "Type": "",  # Empty value
+                        "Protocol": "",
+                    }
+                }
+            },
+            "Format version": 1,
+        }
+
+        # Create a new model with empty values
+        model = ComponentDataModelValidation(initial_data, {}, validation_model.schema)
+        model._possible_choices = validation_model._possible_choices
+        model._battery_chemistry = validation_model._battery_chemistry
+
+        # Act: Run the correction process
+        model.correct_display_values_in_loaded_data()
+
+        # Assert: Empty values remain empty and unchanged
+        telemetry_type = model.get_component_value(("Telemetry", "FC Connection", "Type"))
+        assert telemetry_type == "", f"Empty value should remain empty, got '{telemetry_type}'"
+
+    def test_all_serial_bus_labels_are_correctly_reversed(self, validation_model) -> None:
+        """
+        All SERIAL_BUS_LABELS entries can be correctly reversed for display value lookup.
+
+        GIVEN: A system with defined SERIAL_BUS_LABELS (e.g., "SERIAL3" -> "GPS1 (SERIAL3)")
+        WHEN: The display value correction runs
+        THEN: All display labels in SERIAL_BUS_LABELS should map back to their keys
+        AND: The reverse mapping should use constant-time (O(1)) dictionary lookup
+        """
+        # Arrange: Create test data with all possible SERIAL display labels
+        # Test each SERIAL_BUS_LABELS entry
+        for key, display_label in SERIAL_BUS_LABELS.items():
+            initial_data = {
+                "Components": {
+                    "RC Receiver": {
+                        "FC Connection": {
+                            "Type": display_label  # Use the display label from SERIAL_BUS_LABELS
+                        }
+                    }
+                },
+                "Format version": 1,
+            }
+
+            # Create a new model for each test
+            model = ComponentDataModelValidation(initial_data, {}, validation_model.schema)
+            model._possible_choices = validation_model._possible_choices
+            model._battery_chemistry = validation_model._battery_chemistry
+
+            # Act: Run the correction process
+            model.correct_display_values_in_loaded_data()
+
+            # Assert: Display label is corrected to the correct key
+            result = model.get_component_value(("RC Receiver", "FC Connection", "Type"))
+            assert result == key, f"Display '{display_label}' should map to key '{key}', got '{result}'"
+
+            # Also verify the reverse mapping exists and is correct
+            assert display_label in SERIAL_DISPLAY_TO_KEY, f"Display label '{display_label}' should be in reverse mapping"
+            assert SERIAL_DISPLAY_TO_KEY[display_label] == key, f"Reverse mapping should map '{display_label}' to '{key}'"

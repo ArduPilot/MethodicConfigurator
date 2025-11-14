@@ -204,6 +204,7 @@ class ComponentDataModelBase:
 
         self.init_possible_choices(doc_dict)
         self.init_battery_chemistry()
+        self.correct_display_values_in_loaded_data()
 
     def update_json_structure(self) -> None:
         """
@@ -360,6 +361,10 @@ class ComponentDataModelBase:
 
     def init_possible_choices(self, doc_dict: dict[str, Any]) -> None:
         """Initialize possible choices for validation rules."""
+        # this method should be implemented in the ComponentDataModelValidation mixedin
+
+    def correct_display_values_in_loaded_data(self) -> None:
+        """Correct display values stored in JSON during model initialization."""
         # this method should be implemented in the ComponentDataModelValidation mixedin
 
     def get_combobox_values_for_path(self, path: ComponentPath) -> tuple[str, ...]:
