@@ -264,7 +264,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         # Type ignore needed because MavlinkConnection is a Union including object fallback
         self.master.reboot_autopilot()  # type: ignore[union-attr]
         logging_info(_("Reset command sent to ArduPilot."))
-        time_sleep(0.1)  # Short delay for command to be sent
+        time_sleep(0.3)  # Short delay for command to be sent
 
         self.disconnect()
 
@@ -331,27 +331,6 @@ class FlightController:  # pylint: disable=too-many-public-methods
     def _retrieve_autopilot_version_and_banner(self, timeout: int) -> str:
         """Retrieve autopilot version and banner - delegates to connection manager (testing only)."""
         return self._connection_manager._retrieve_autopilot_version_and_banner(timeout)  # noqa: SLF001 # pylint: disable=protected-access
-
-    def register_and_try_connect(
-        self,
-        comport: Union[mavutil.SerialPort, serial.tools.list_ports_common.ListPortInfo],
-        progress_callback: Union[None, Callable[[int, int], None]],
-        baudrate: int,
-        log_errors: bool,
-    ) -> str:
-        """
-        Register a device in the connection list (if missing) and attempt connection - delegates to connection manager.
-
-        Returns:
-            str: empty string on success, or error message.
-
-        """
-        return self._connection_manager.register_and_try_connect(
-            comport=comport,
-            progress_callback=progress_callback,
-            baudrate=baudrate,
-            log_errors=log_errors,
-        )
 
     def connect(
         self,
@@ -422,10 +401,6 @@ class FlightController:  # pylint: disable=too-many-public-methods
     def get_network_ports(self) -> list[str]:
         """Get all available network ports - delegates to connection manager."""
         return self._connection_manager.get_network_ports()
-
-    def auto_detect_serial(self) -> list[mavutil.SerialPort]:
-        """Auto-detect serial ports - delegates to connection manager."""
-        return self._connection_manager.auto_detect_serial()
 
     def get_connection_tuples(self) -> list[tuple[str, str]]:
         """Get all available connections - delegates to connection manager."""
@@ -532,8 +507,9 @@ class FlightController:  # pylint: disable=too-many-public-methods
             default="",
             help=_(
                 "MAVLink connection string to the flight controller. "
-                'If set to "none" no connection is made.'
-                " Default is autodetection"
+                'If set to "none" no connection is made. '
+                'If set to "file" the file params.param is used. '
+                "Default is autodetection"
             ),
         ).completer = lambda **_: FlightController.get_serial_ports()  # pyright: ignore[reportAttributeAccessIssue]
         parser.add_argument(

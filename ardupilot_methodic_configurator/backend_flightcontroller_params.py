@@ -12,6 +12,7 @@ from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from logging import warning as logging_warning
+from math import nan
 from pathlib import Path
 from time import sleep as time_sleep
 from time import time as time_time
@@ -102,7 +103,7 @@ class FlightControllerParams:
                 default_parameters is a ParDict of default parameter values
 
         """
-        if self.master is None and self.comport_device == "test":
+        if self.master is None and self.comport_device == "file":
             filename = "params.param"
             logging_warning(_("Testing active, will load all parameters from the %s file"), filename)
             par_dict_with_comments = ParDict.from_file(filename)
@@ -252,7 +253,7 @@ class FlightControllerParams:
         self.fc_parameters[param_name] = param_value
         return True, ""
 
-    def get_param(self, param_name: str, default: float = 0.0) -> float:
+    def get_param(self, param_name: str, default: float = nan) -> float:
         """
         Get a parameter value from the local cache.
 

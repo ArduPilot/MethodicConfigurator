@@ -155,13 +155,6 @@ class FlightControllerFiles:
             if remote_filenumber is None:
                 return False
 
-            # Note: We download the current log number, not previous one
-            # If you want the previous log, uncomment:
-            # remote_filenumber -= 1
-            # if remote_filenumber < 1:
-            #     logging_error(_("No previous flight log available"))
-            #     return False
-
             return self._download_log_file(mavftp_instance, remote_filenumber, local_filename, get_progress_callback)
 
         except Exception as e:  # pylint: disable=broad-exception-caught

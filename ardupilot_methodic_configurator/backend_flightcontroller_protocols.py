@@ -108,14 +108,6 @@ class FlightControllerConnectionProtocol(Protocol):
         baudrate: Optional[int],
     ) -> str: ...
 
-    def register_and_try_connect(
-        self,
-        comport: Union[mavutil.SerialPort, serial.tools.list_ports_common.ListPortInfo],
-        progress_callback: Union[None, Callable[[int, int], None]],
-        baudrate: int,
-        log_errors: bool,
-    ) -> str: ...
-
     def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         progress_callback: Union[None, Callable[[int, int], None]],
@@ -132,8 +124,6 @@ class FlightControllerConnectionProtocol(Protocol):
     def get_network_ports(self) -> list[str]:
         """Get all available network ports."""
         ...  # pylint: disable=unnecessary-ellipsis
-
-    def auto_detect_serial(self) -> list[mavutil.SerialPort]: ...
 
     def get_connection_tuples(self) -> list[tuple[str, str]]: ...
 
@@ -157,7 +147,7 @@ class FlightControllerConnectionProtocol(Protocol):
 
     def _select_supported_autopilot(self, detected_vehicles: dict[tuple[int, int], Any]) -> str: ...
 
-    def _populate_flight_controller_info(self, m: Optional["MAVLink_autopilot_version_message"]) -> None: ...
+    def _populate_flight_controller_info(self, m: "MAVLink_autopilot_version_message") -> None: ...
 
     def _retrieve_autopilot_version_and_banner(self, timeout: int) -> str: ...
 

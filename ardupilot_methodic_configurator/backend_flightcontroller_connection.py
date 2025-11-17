@@ -202,7 +202,7 @@ class FlightControllerConnection:
         if self.comport and self.comport.device not in [t[0] for t in self._connection_tuples]:
             self._connection_tuples.insert(-1, (self.comport.device, getattr(self.comport, "description", "")))
         # Try to connect
-        return self._create_connection_with_retry(
+        return self.create_connection_with_retry(
             progress_callback=progress_callback,
             baudrate=baudrate,
             log_errors=log_errors,
@@ -245,12 +245,12 @@ class FlightControllerConnection:
                 return ""
             self.add_connection(device)
             self.comport = mavutil.SerialPort(device=device, description=device)
-            return self._create_connection_with_retry(
+            return self.create_connection_with_retry(
                 progress_callback=progress_callback, baudrate=connection_baudrate, log_errors=log_errors
             )
 
         # Try to autodetect serial ports
-        autodetect_serial = self.auto_detect_serial()
+        autodetect_serial = self._auto_detect_serial()
         if autodetect_serial:
             # Resolve the soft link if it's a Linux system
             if os_name == "posix":
@@ -265,7 +265,7 @@ class FlightControllerConnection:
                     logging_debug(_("Resolved soft link %s to %s"), dev, resolved_path)
                 except OSError:
                     pass  # Not a soft link, proceed with the original device path
-            err = self.register_and_try_connect(
+            err = self._register_and_try_connect(
                 comport=autodetect_serial[-1],
                 progress_callback=progress_callback,
                 baudrate=connection_baudrate,
@@ -279,7 +279,7 @@ class FlightControllerConnection:
         for port in netports:
             # try to connect to each "standard" ArduPilot UDP and TCP ports
             logging_debug(_("Trying network port %s"), port)
-            err = self.register_and_try_connect(
+            err = self._register_and_try_connect(
                 comport=mavutil.SerialPort(device=port, description=port),
                 progress_callback=progress_callback,
                 baudrate=self._baudrate,
@@ -486,77 +486,6 @@ class FlightControllerConnection:
                 0,
             )
 
-    def _create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-        self,
-        progress_callback: Union[None, Callable[[int, int], None]],
-        retries: int = 3,
-        timeout: int = 5,
-        baudrate: int = DEFAULT_BAUDRATE,
-        log_errors: bool = True,
-    ) -> str:
-        """
-        Attempts to create a connection to the flight controller with retries.
-
-        This method attempts to establish a connection to the flight controller using the
-        provided device connection string. It will retry the connection attempt up to the
-        specified number of retries if the initial attempt fails. The method also supports
-        a progress callback to report the progress of the connection attempt.
-
-        Args:
-            progress_callback (callable, optional): A callback function to report the progress
-                                                    of the connection attempt. Default is None.
-            retries (int, optional): The number of retries before giving up. Default is 3.
-            timeout (int, optional): The timeout in seconds for each connection attempt. Default is 5.
-            baudrate (int, optional): The baud rate for the connection. Default is DEFAULT_BAUDRATE.
-            log_errors (bool): log errors.
-
-        Returns:
-            str: An error message if the connection fails after all retries, otherwise an empty string
-                indicating a successful connection.
-
-        """
-        if self.comport is None or self.comport.device == "file":
-            # will read parameters from a params.param file instead of a from a flight controller
-            return ""
-        if self.comport.device.startswith("udp") or self.comport.device.startswith("tcp"):
-            logging_info(_("Will connect to %s"), self.comport.device)
-        else:
-            logging_info(_("Will connect to %s @ %u baud"), self.comport.device, baudrate)
-        try:
-            # Create the connection
-            self.master = self._create_mavlink_connection(
-                device=self.comport.device,
-                baudrate=baudrate,
-                timeout=timeout,
-                retries=retries,
-                progress_callback=progress_callback,
-            )
-            logging_debug(_("Waiting for MAVLink heartbeats..."))
-            if not self.master:
-                msg = f"Failed to create mavlink connect to {self.comport.device}"
-                raise ConnectionError(msg)
-
-            # Detect all vehicles from HEARTBEAT messages
-            detected_vehicles = self._detect_vehicles_from_heartbeats(timeout)
-
-            # Select a supported autopilot
-            error = self._select_supported_autopilot(detected_vehicles)
-            if error:
-                return error
-
-            # Retrieve autopilot version and banner information
-            return self._retrieve_autopilot_version_and_banner(timeout)
-
-        except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
-            if log_errors:
-                logging_warning(_("Connection failed: %s"), e)
-                logging_error(_("Failed to connect after %d attempts."), retries)
-            error_message = str(e)
-            guidance = self._get_connection_error_guidance(e, self.comport.device if self.comport else "")
-            if guidance:
-                error_message = f"{error_message}\n\n{guidance}"
-            return error_message
-
     def _get_connection_error_guidance(self, error: Exception, device: str) -> str:
         """
         Provides guidance based on the type of connection error.
@@ -644,16 +573,14 @@ class FlightControllerConnection:
 
         return firmware_type
 
-    def _populate_flight_controller_info(self, m: Optional[MAVLink_autopilot_version_message]) -> None:
+    def _populate_flight_controller_info(self, m: MAVLink_autopilot_version_message) -> None:
         """
         Populate flight controller info from AUTOPILOT_VERSION message.
 
         Args:
-            m: The AUTOPILOT_VERSION MAVLink message, or None
+            m: The AUTOPILOT_VERSION MAVLink message
 
         """
-        if m is None:
-            return
         self.info.set_capabilities(m.capabilities)
         self.info.set_flight_sw_version(m.flight_sw_version)
         self.info.set_usb_vendor_and_product_ids(m.vendor_id, m.product_id)  # must be done before set_board_version()
@@ -707,15 +634,7 @@ class FlightControllerConnection:
             list[serial.tools.list_ports_common.ListPortInfo]: List of available serial ports
 
         """
-        comports = serial.tools.list_ports.comports()
-        result = []
-        for port in comports:
-            if "Bluetooth" in port.device or "Bluetooth" in port.description:
-                continue
-            if os_name == "posix" and os_path.islink(port.device) and "Bluetooth" in str(os_readlink(port.device)):
-                continue
-            result.append(port)
-        return result
+        return list(serial.tools.list_ports.comports())
 
     def get_network_ports(self) -> list[str]:
         """
@@ -727,6 +646,7 @@ class FlightControllerConnection:
         """
         return self._network_ports
 
+    # pylint: disable=duplicate-code
     def _auto_detect_serial(self) -> list[mavutil.SerialPort]:
         """
         Auto-detect serial ports with connected flight controllers.
@@ -773,84 +693,7 @@ class FlightControllerConnection:
 
         return serial_list
 
-    def auto_detect_serial(self) -> list[mavutil.SerialPort]:
-        """
-        Auto-detect serial ports with connected flight controllers.
-
-        Returns:
-            list[mavutil.SerialPort]: List of detected serial ports
-
-        """
-        preferred_ports = [
-            "*FTDI*",
-            "*3D*",
-            "*USB_to_UART*",
-            "*Ardu*",
-            "*PX4*",
-            "*Hex_*",
-            "*ProfiCNC*",
-            "*Holybro_*",
-            "*mRo*",
-            "*FMU*",
-            "*Swift-Flyer*",
-            "*Serial*",
-            "*CubePilot*",
-            "*Qiotek*",
-        ]
-        serial_list: list[mavutil.SerialPort] = [
-            mavutil.SerialPort(device=connection[0], description=connection[1])
-            for connection in self._connection_tuples
-            if connection[1] and "mavlink" in connection[1].lower()
-        ]
-        if len(serial_list) == 1:
-            # selected automatically if unique
-            return serial_list
-
-        serial_list = mavutil.auto_detect_serial(preferred_list=preferred_ports)
-        serial_list.sort(key=lambda x: x.device)
-
-        # remove OTG2 ports for dual CDC
-        if (
-            len(serial_list) == 2
-            and serial_list[0].device.startswith("/dev/serial/by-id")
-            and serial_list[0].device[:-1] == serial_list[1].device[0:-1]
-        ):
-            serial_list.pop(1)
-
-        return serial_list
-
-    def register_and_try_connect(
-        self,
-        comport: Union[mavutil.SerialPort, serial.tools.list_ports_common.ListPortInfo],
-        progress_callback: Union[None, Callable[[int, int], None]],
-        baudrate: int,
-        log_errors: bool,
-    ) -> str:
-        """
-        Register a device in the connection list (if missing) and attempt connection.
-
-        Args:
-            comport: Serial port object to register and connect to
-            progress_callback: Optional callback for progress updates
-            baudrate: Baud rate for serial connections
-            log_errors: Whether to log errors
-
-        Returns:
-            str: empty string on success, or error message
-
-        """
-        # set comport for subsequent calls
-        self.comport = comport
-        # Add the detected port to the list of available connections if it is not there
-        if self.comport and self.comport.device not in [t[0] for t in self._connection_tuples]:
-            self._connection_tuples.insert(-1, (self.comport.device, getattr(self.comport, "description", "")))
-        # Try to connect
-        return self.create_connection_with_retry(
-            progress_callback=progress_callback,
-            baudrate=baudrate,
-            log_errors=log_errors,
-            timeout=self.CONNECTION_RETRY_TIMEOUT,
-        )
+    # pylint: enable=duplicate-code
 
     def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
@@ -938,7 +781,7 @@ class FlightControllerConnection:
         """Get the device string of the current comport."""
         if self.comport is None:
             return ""
-        return str(self.comport.device)
+        return str(getattr(self.comport, "device", ""))
 
     @property
     def baudrate(self) -> int:
