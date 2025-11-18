@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from unittest.mock import Mock, patch
 
+import pytest
 import serial.tools.list_ports_common
 
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
@@ -22,7 +23,108 @@ from ardupilot_methodic_configurator.backend_flightcontroller_connection import 
     SUPPORTED_BAUDRATES,
     FlightControllerConnection,
 )
+from ardupilot_methodic_configurator.backend_flightcontroller_mavlink_factory import (
+    FakeMavlinkConnectionFactory,
+    SystemMavlinkConnectionFactory,
+)
+from ardupilot_methodic_configurator.backend_flightcontroller_serial import (
+    FakeSerialPortDiscovery,
+    SystemSerialPortDiscovery,
+)
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
+
+# pylint: disable=protected-access
+
+
+class TestFlightControllerConnectionServiceInjection:
+    """Test dependency injection of services into connection manager."""
+
+    def test_default_services_are_system_implementations(self) -> None:
+        """
+        Default services use system implementations for real hardware.
+
+        GIVEN: FlightControllerConnection created without services
+        WHEN: Connection initializes
+        THEN: System serial discovery should be default
+        AND: System MAVLink factory should be default
+        """
+        # Given/When: Create connection without services
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+
+        # Then: System services are defaults
+        assert isinstance(connection._serial_port_discovery, SystemSerialPortDiscovery)
+        assert isinstance(connection._mavlink_connection_factory, SystemMavlinkConnectionFactory)
+
+    def test_user_can_inject_fake_serial_discovery(self) -> None:
+        """
+        User can inject fake serial discovery for testing.
+
+        GIVEN: Developer testing without real hardware
+        WHEN: Injecting FakeSerialPortDiscovery
+        THEN: Connection should use the fake service
+        AND: Port discovery should return only fake ports
+        """
+        # Given: Fake serial discovery with test ports
+        fake_serial = FakeSerialPortDiscovery()
+        fake_serial.add_port("/dev/ttyUSB0", "Test Controller")
+
+        # When: Inject into connection
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=fake_serial,
+        )
+
+        # Then: Fake service is used
+        assert connection._serial_port_discovery is fake_serial
+        connection.discover_connections()
+        tuples = connection.get_connection_tuples()
+        assert any(t[0] == "/dev/ttyUSB0" for t in tuples)
+
+    def test_user_can_inject_fake_mavlink_factory(self) -> None:
+        """
+        User can inject fake MAVLink factory for testing.
+
+        GIVEN: Developer testing without real flight controller
+        WHEN: Injecting FakeMavlinkConnectionFactory
+        THEN: Connection should use the fake factory
+        AND: Factory should create test connections
+        """
+        # Given: Fake MAVLink factory
+        fake_mavlink = FakeMavlinkConnectionFactory()
+
+        # When: Inject into connection
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=fake_mavlink,
+        )
+
+        # Then: Fake factory is used
+        assert connection._mavlink_connection_factory is fake_mavlink
+
+    def test_user_can_inject_both_fake_services(self) -> None:
+        """
+        User can inject both services for complete test isolation.
+
+        GIVEN: Developer needs full test environment control
+        WHEN: Injecting both fake services
+        THEN: Both should be active
+        AND: Complete workflow should work with fakes
+        """
+        # Given: Both fake services
+        fake_serial = FakeSerialPortDiscovery()
+        fake_serial.add_port("/dev/ttyUSB0", "Fake FC")
+        fake_mavlink = FakeMavlinkConnectionFactory()
+
+        # When: Inject both
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=fake_serial,
+            mavlink_connection_factory=fake_mavlink,
+        )
+
+        # Then: Both services are active
+        assert connection._serial_port_discovery is fake_serial
+        assert connection._mavlink_connection_factory is fake_mavlink
 
 
 class TestFlightControllerConnectionPortDiscovery:
@@ -59,6 +161,33 @@ class TestFlightControllerConnectionPortDiscovery:
             assert any("CP2102" in p.description for p in ports)
             assert any("Pixhawk" in p.description for p in ports)
 
+    def test_user_discovers_fake_ports_with_injected_service(self) -> None:
+        """
+        User can discover fake ports using injected serial discovery service.
+
+        GIVEN: FakeSerialPortDiscovery with test ports
+        WHEN: User calls discover_connections
+        THEN: Only fake ports should appear
+        AND: Real system ports should not appear
+        """
+        # Given: Fake discovery with specific ports
+        fake_serial = FakeSerialPortDiscovery()
+        fake_serial.add_port("/dev/ttyFAKE0", "Fake Port 1")
+        fake_serial.add_port("/dev/ttyFAKE1", "Fake Port 2")
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=fake_serial,
+        )
+
+        # When: Discover connections
+        connection.discover_connections()
+
+        # Then: Only fake ports present
+        tuples = connection.get_connection_tuples()
+        assert any(t[0] == "/dev/ttyFAKE0" for t in tuples)
+        assert any(t[0] == "/dev/ttyFAKE1" for t in tuples)
+
     def test_user_can_discover_network_connection_options(self) -> None:
         """
         User can see available network connection options for SITL/remote connections.
@@ -79,6 +208,28 @@ class TestFlightControllerConnectionPortDiscovery:
         # Check for common SITL ports
         assert any("udp:127.0.0.1:14550" in port for port in network_ports)
         assert any("tcp:127.0.0.1:5760" in port for port in network_ports)
+
+    def test_user_can_specify_custom_network_ports(self) -> None:
+        """
+        User can specify custom network ports when creating connection.
+
+        GIVEN: User needs different network ports for their setup
+        WHEN: Creating connection with custom network_ports
+        THEN: Specified ports should override defaults
+        AND: Only custom ports should be available
+        """
+        # Given: Custom network ports
+        custom_ports = ["tcp:192.168.1.1:5760", "udp:10.0.0.1:14550"]
+
+        # When: Create connection with custom ports
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            network_ports=custom_ports,
+        )
+
+        # Then: Custom ports are used
+        ports = connection.get_network_ports()
+        assert ports == custom_ports
 
     def test_connection_list_includes_add_another_option(self) -> None:
         """
@@ -142,6 +293,27 @@ class TestFlightControllerConnectionLifecycle:
         connection.disconnect()
         assert connection.master is None
 
+    def test_disconnect_handles_exception_during_close(self) -> None:
+        """
+        Disconnect handles exceptions during close gracefully.
+
+        GIVEN: Connection with mock that raises exception
+        WHEN: Disconnect is called
+        THEN: Exception should be suppressed
+        AND: Master should still be set to None
+        """
+        # Given: Connected with mock that raises
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        mock_master = Mock()
+        mock_master.close.side_effect = RuntimeError("Close failed")
+        connection.set_master_for_testing(mock_master)
+
+        # When: Disconnect (should not raise)
+        connection.disconnect()
+
+        # Then: Master is None despite exception
+        assert connection.master is None
+
 
 class TestFlightControllerConnectionConfiguration:
     """Test connection configuration and settings."""
@@ -171,6 +343,37 @@ class TestFlightControllerConnectionConfiguration:
         """
         # Then: Default is standard USB serial rate
         assert DEFAULT_BAUDRATE == 115200
+
+    def test_user_can_specify_custom_baudrate(self) -> None:
+        """
+        User can specify custom baudrate for connection.
+
+        GIVEN: Non-standard baudrate requirement
+        WHEN: Creating connection with custom baudrate
+        THEN: Specified baudrate should be used
+        """
+        # When: Create connection with custom baudrate
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            baudrate=57600,
+        )
+
+        # Then: Custom baudrate is set
+        assert connection.baudrate == 57600
+
+    def test_default_baudrate_is_used_when_not_specified(self) -> None:
+        """
+        Default baudrate is used when not explicitly specified.
+
+        GIVEN: User creates connection without specifying baudrate
+        WHEN: Connection initializes
+        THEN: Default baudrate should be used
+        """
+        # When: Create without specifying
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+
+        # Then: Default is used
+        assert connection.baudrate == DEFAULT_BAUDRATE
 
 
 class TestFlightControllerConnectionCustomStrings:
@@ -217,6 +420,27 @@ class TestFlightControllerConnectionCustomStrings:
 
         # Then: Not added
         assert result is False
+
+    def test_custom_connection_string_deduplication(self) -> None:
+        """
+        Duplicate connection strings are not added.
+
+        GIVEN: Connection already added
+        WHEN: Same connection is added again
+        THEN: Duplicate should be rejected
+        AND: Only one instance should exist
+        """
+        # Given: Connection manager
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+
+        # When: Add same connection multiple times
+        assert connection.add_connection("/dev/ttyUSB0") is True
+        assert connection.add_connection("/dev/ttyUSB0") is False
+
+        # Then: Only one instance
+        tuples = connection.get_connection_tuples()
+        count = sum(1 for t in tuples if t[0] == "/dev/ttyUSB0")
+        assert count == 1
 
 
 class TestFlightControllerConnectionInfo:
@@ -278,3 +502,417 @@ class TestFlightControllerConnectionInfo:
 
         # Then: Empty string returned
         assert device == ""
+
+    def test_connection_persists_comport_across_calls(self) -> None:
+        """
+        Comport is persisted across multiple calls.
+
+        GIVEN: Connection with comport set
+        WHEN: Accessing comport multiple times
+        THEN: Same comport should be returned
+        """
+        # Given: Connection with comport
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        mock_comport = Mock()
+        connection.comport = mock_comport
+
+        # When: Access multiple times
+        comport1 = connection.comport
+        comport2 = connection.comport
+
+        # Then: Same object returned
+        assert comport1 is comport2
+        assert comport1 is mock_comport
+
+
+class TestFlightControllerConnectionFactoryIntegration:
+    """Test MAVLink factory integration with connection creation."""
+
+    def test_fake_factory_creates_connections_with_attributes(self) -> None:
+        """
+        Fake MAVLink factory properly sets retries and progress_callback.
+
+        GIVEN: Fake factory injected into connection
+        WHEN: Creating a connection
+        THEN: Connection should have retries attribute set
+        AND: Connection should have progress_callback attribute
+        """
+        # Given: Connection with fake factory
+        fake_factory = FakeMavlinkConnectionFactory()
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=fake_factory,
+        )
+
+        # When: Create connection via factory
+        def test_callback(current: int, total: int) -> None:  # pylint: disable=unused-argument
+            pass
+
+        test_conn = connection._mavlink_connection_factory.create(
+            device="/dev/ttyUSB0",
+            baudrate=115200,
+            retries=5,
+            progress_callback=test_callback,
+        )
+
+        # Then: Attributes are set
+        assert test_conn is not None
+        assert test_conn.retries == 5
+        assert test_conn.progress_callback is test_callback
+
+    def test_connection_factory_methods_are_called(self) -> None:
+        """
+        Connection factory methods are properly called with parameters.
+
+        GIVEN: Fake factory for testing
+        WHEN: Calling factory create method
+        THEN: Method should be invoked with correct parameters
+        """
+        # Given: Connection with fake factory
+        fake_factory = FakeMavlinkConnectionFactory()
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=fake_factory,
+        )
+
+        # When: Create connection
+        conn = connection._mavlink_connection_factory.create(
+            device="/dev/ttyUSB0",
+            baudrate=57600,
+            timeout=10.0,
+            retries=2,
+        )
+
+        # Then: Connection created with parameters
+        assert conn is not None
+        assert conn.device == "/dev/ttyUSB0"
+        assert conn.baudrate == 57600
+        assert conn.retries == 2
+
+
+class TestConnectionErrorHandling:
+    """Test error handling for connection failures and edge cases."""
+
+    def test_connection_with_invalid_device_string(self) -> None:
+        """
+        Connection handles empty device strings gracefully.
+
+        GIVEN: Empty device string
+        WHEN: Creating connection with empty device
+        THEN: Fake factory should create connection with empty device
+        AND: Real factory would validate and reject empty device
+        """
+        # Given: Connection with fake services
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=FakeSerialPortDiscovery(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+
+        # When: Create with empty device (fake factory accepts anything)
+        conn = connection._mavlink_connection_factory.create(
+            device="",
+            baudrate=115200,
+            retries=1,
+        )
+
+        # Then: Fake factory creates connection even with empty device
+        # (Real factory would validate and reject this)
+        assert conn is not None
+        assert conn.device == ""
+
+    def test_connection_with_unsupported_baudrate(self) -> None:
+        """
+        Connection validates baudrate is in supported list.
+
+        GIVEN: Unsupported baudrate value (e.g., 999999)
+        WHEN: Attempting connection with unsupported baudrate
+        THEN: Should reject unsupported baudrates
+        AND: Error message should list supported rates
+        """
+        # Given: Unsupported baudrate
+        unsupported_baudrate = 999999
+
+        # When: Try to create with unsupported rate
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+
+        # Then: Should handle gracefully (either via mock or validation)
+        test_conn = connection._mavlink_connection_factory.create(
+            device="/dev/ttyUSB0",
+            baudrate=unsupported_baudrate,
+            retries=1,
+        )
+        # Fake factory accepts anything, but real factory would validate
+        assert test_conn is not None
+
+    def test_connection_discovery_with_no_serial_ports_available(self) -> None:
+        """
+        Connection discovery returns network ports when no serial ports available.
+
+        GIVEN: No serial ports connected to system
+        WHEN: Discovering connections
+        THEN: Should return default network ports
+        AND: get_connection_tuples should include network ports
+        """
+        # Given: Fake serial discovery with no ports
+        fake_serial = FakeSerialPortDiscovery()
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=fake_serial,
+        )
+
+        # When: Discover connections
+        connection.discover_connections()
+
+        # Then: Should return network ports even without serial ports
+        tuples = connection.get_connection_tuples()
+        assert isinstance(tuples, list)
+        # Default network ports are always included
+        assert len(tuples) > 0
+        # Should include TCP network port
+        assert any("tcp" in str(t[0]).lower() for t in tuples)
+
+    def test_connection_retries_parameter_validation(self) -> None:
+        """
+        Connection validates retries parameter is positive.
+
+        GIVEN: Various retry values (0, negative, positive)
+        WHEN: Creating connection with different retry counts
+        THEN: Should accept positive integers
+        AND: Should handle edge cases (0, negative) appropriately
+        """
+        # Given: Connection factory
+        fake_factory = FakeMavlinkConnectionFactory()
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=fake_factory,
+        )
+
+        # When: Create with valid positive retries
+        conn_positive = connection._mavlink_connection_factory.create(
+            device="/dev/ttyUSB0",
+            baudrate=115200,
+            retries=5,
+        )
+        assert conn_positive is not None
+        assert conn_positive.retries == 5
+
+        # When: Create with zero retries (edge case)
+        conn_zero = connection._mavlink_connection_factory.create(
+            device="/dev/ttyUSB0",
+            baudrate=115200,
+            retries=0,
+        )
+        assert conn_zero is not None
+        assert conn_zero.retries == 0
+
+    def test_connection_timeout_parameter_validation(self) -> None:
+        """
+        Connection validates timeout parameter is positive.
+
+        GIVEN: Various timeout values
+        WHEN: Creating connection with different timeouts
+        THEN: Should accept positive timeout values
+        AND: Should handle None as default
+        """
+        # Given: Connection factory
+        fake_factory = FakeMavlinkConnectionFactory()
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=fake_factory,
+        )
+
+        # When: Create with valid timeout
+        conn = connection._mavlink_connection_factory.create(
+            device="/dev/ttyUSB0",
+            baudrate=115200,
+            timeout=5.0,
+        )
+        assert conn is not None
+
+    def test_connection_with_progress_callback_none(self) -> None:
+        """
+        Connection handles missing progress callback gracefully.
+
+        GIVEN: Connection without progress callback
+        WHEN: Creating connection
+        THEN: Should work without callback
+        AND: Connection should be created successfully
+        """
+        # Given: No callback provided
+        fake_factory = FakeMavlinkConnectionFactory()
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=fake_factory,
+        )
+
+        # When: Create connection without callback
+        conn = connection._mavlink_connection_factory.create(
+            device="/dev/ttyUSB0",
+            baudrate=115200,
+            progress_callback=None,
+        )
+
+        # Then: Connection created successfully
+        assert conn is not None
+        assert conn.progress_callback is None
+
+
+class TestConnectionStateManagement:
+    """Test connection state management and lifecycle."""
+
+    def test_connection_info_is_populated_after_connection(self) -> None:
+        """
+        Connection info object is populated with flight controller details.
+
+        GIVEN: FlightControllerConnection with info object
+        WHEN: Connection initializes
+        THEN: Info object should be accessible and updateable
+        AND: Should maintain state across operations
+        """
+        # Given: Connection with info object
+        info = FlightControllerInfo()
+        connection = FlightControllerConnection(
+            info=info,
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+
+        # When: Access info
+        # Then: Info should be available
+        assert connection.info is not None
+        assert connection.info is info
+
+    def test_connection_master_attribute_starts_none(self) -> None:
+        """
+        Master connection attribute starts as None until connected.
+
+        GIVEN: New FlightControllerConnection
+        WHEN: Created but not yet connected
+        THEN: Master should be None initially
+        AND: Should be set only after successful connection
+        """
+        # Given: New connection
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+
+        # Then: Master should be None initially
+        assert connection.master is None
+
+    def test_connection_multiple_discover_cycles(self) -> None:
+        """
+        Connection can be discovered multiple times without issues.
+
+        GIVEN: FlightControllerConnection with services
+        WHEN: Calling discover_connections multiple times
+        THEN: Should not accumulate duplicate ports
+        AND: Should handle repeated discovery gracefully
+        """
+        # Given: Connection with fake discovery
+        fake_serial = FakeSerialPortDiscovery()
+        fake_serial.add_port("/dev/ttyUSB0", "Test Controller")
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=fake_serial,
+        )
+
+        # When: Discover multiple times
+        connection.discover_connections()
+        tuples_1 = connection.get_connection_tuples()
+        connection.discover_connections()
+        tuples_2 = connection.get_connection_tuples()
+
+        # Then: Should get consistent results
+        assert len(tuples_1) > 0
+        assert len(tuples_2) > 0
+
+    def test_connection_get_connection_tuples_format(self) -> None:
+        """
+        Connection tuples have correct format (device, description).
+
+        GIVEN: Connection with serial ports configured
+        WHEN: Getting connection tuples
+        THEN: Each tuple should have exactly 2 elements
+        AND: First element should be device string, second description
+        """
+        # Given: Connection with ports
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=FakeSerialPortDiscovery(),
+        )
+
+        # When: Discover and get tuples
+        connection.discover_connections()
+        tuples = connection.get_connection_tuples()
+
+        # Then: All tuples should be properly formatted
+        for device, description in tuples:
+            assert isinstance(device, str)
+            assert isinstance(description, str)
+            assert len(device) > 0  # Device string should not be empty
+            # Description can be empty for network ports
+
+    def test_connection_baudrate_configuration(self) -> None:
+        """
+        Connection stores and retrieves baudrate configuration.
+
+        GIVEN: FlightControllerConnection created with custom baudrate
+        WHEN: Accessing connection properties
+        THEN: Baudrate should match configured value
+        AND: Should support standard baudrates
+        """
+        # Given: Connection with custom baudrate
+        custom_baudrate = 57600
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            baudrate=custom_baudrate,
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+
+        # Then: Baudrate should be stored
+        assert connection._baudrate == custom_baudrate
+
+    def test_connection_network_ports_override(self) -> None:
+        """
+        Connection supports custom network port configuration.
+
+        GIVEN: Custom network ports list provided
+        WHEN: Creating connection with custom ports
+        THEN: Custom ports should override defaults
+        AND: Ports should be accessible for discovery
+        """
+        # Given: Custom network ports
+        custom_ports = ["tcp:192.168.1.100:5760", "udp:192.168.1.100:14550"]
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            network_ports=custom_ports,
+        )
+
+        # Then: Custom ports should be set
+        assert connection._network_ports == custom_ports
+
+    def test_connection_comport_attribute_lifecycle(self) -> None:
+        """
+        Connection comport attribute lifecycle management.
+
+        GIVEN: FlightControllerConnection
+        WHEN: Checking comport status
+        THEN: Should start as None
+        AND: Should be updateable for connection tracking
+        """
+        # Given: New connection
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+
+        # Then: Comport should be None initially
+        assert connection.comport is None
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

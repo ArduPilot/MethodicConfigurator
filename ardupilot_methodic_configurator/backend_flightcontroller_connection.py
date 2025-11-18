@@ -27,6 +27,14 @@ from pymavlink.dialects.v20.ardupilotmega import MAVLink_autopilot_version_messa
 from serial.serialutil import SerialException
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_flightcontroller_mavlink_factory import (
+    MavlinkConnectionFactory,
+    SystemMavlinkConnectionFactory,
+)
+from ardupilot_methodic_configurator.backend_flightcontroller_serial import (
+    SerialPortDiscovery,
+    SystemSerialPortDiscovery,
+)
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 if TYPE_CHECKING:
@@ -83,7 +91,7 @@ SUPPORTED_BAUDRATES: list[str] = [
 ]
 
 
-class FlightControllerConnection:
+class FlightControllerConnection:  # pylint: disable=too-many-instance-attributes
     """
     Manages flight controller connection establishment and lifecycle.
 
@@ -108,11 +116,13 @@ class FlightControllerConnection:
         "udp:127.0.0.1:14550",
     ]
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         info: FlightControllerInfo,
         baudrate: int = DEFAULT_BAUDRATE,
         network_ports: Optional[list[str]] = None,
+        serial_port_discovery: Optional[SerialPortDiscovery] = None,
+        mavlink_connection_factory: Optional[MavlinkConnectionFactory] = None,
     ) -> None:
         """
         Initialize the connection manager.
@@ -121,6 +131,8 @@ class FlightControllerConnection:
             info: Flight controller information object to populate
             baudrate: Default baud rate for serial connections
             network_ports: Optional list of network ports to try (overrides defaults)
+            serial_port_discovery: Optional serial port discovery service
+            mavlink_connection_factory: Optional MAVLink connection factory service
 
         """
         self.info = info
@@ -129,6 +141,10 @@ class FlightControllerConnection:
         self._baudrate = baudrate
         self._network_ports = network_ports or self.DEFAULT_NETWORK_PORTS
         self._connection_tuples: list[tuple[str, str]] = []
+        self._serial_port_discovery: SerialPortDiscovery = serial_port_discovery or SystemSerialPortDiscovery()
+        self._mavlink_connection_factory: MavlinkConnectionFactory = (
+            mavlink_connection_factory or SystemMavlinkConnectionFactory()
+        )
 
     def discover_connections(self) -> None:
         """
@@ -137,7 +153,7 @@ class FlightControllerConnection:
         Populates the list of available serial ports and network ports
         that can be used to connect to a flight controller.
         """
-        comports = self.get_serial_ports()
+        comports = self._serial_port_discovery.get_available_ports()
         netports = self.get_network_ports()
         # list of tuples with the first element being the port name and the second element being the port description
         self._connection_tuples = [(port.device, port.description) for port in comports] + [(port, port) for port in netports]
@@ -314,9 +330,9 @@ class FlightControllerConnection:
             mavutil.mavlink_connection: The MAVLink connection object
 
         """
-        return mavutil.mavlink_connection(
+        return self._mavlink_connection_factory.create(
             device=device,
-            baud=baudrate,
+            baudrate=baudrate,
             timeout=timeout,
             retries=retries,
             progress_callback=progress_callback,

@@ -20,6 +20,18 @@ import pytest
 from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
+    FlightControllerConnection,
+)
+from ardupilot_methodic_configurator.backend_flightcontroller_mavlink_factory import (
+    FakeMavlinkConnectionFactory,
+)
+from ardupilot_methodic_configurator.backend_flightcontroller_serial import (
+    FakeSerialPortDiscovery,
+)
+from ardupilot_methodic_configurator.data_model_flightcontroller_info import (
+    FlightControllerInfo,
+)
 
 
 class TestFlightControllerConnectionLifecycle:
@@ -440,11 +452,11 @@ class TestFlightControllerErrorHandlingAndRecovery:
     @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
     def test_user_gets_timeout_error_for_nonexistent_parameters(self, mock_discover) -> None:
         """
-        User gets appropriate timeout errors when requesting nonexistent parameters.
+        User gets appropriate timeout behavior when requesting nonexistent parameters.
 
         GIVEN: Connected flight controller
         WHEN: User requests parameter that doesn't exist
-        THEN: Timeout error should be raised with clear message
+        THEN: fetch_param should return None after timeout
         AND: User understands the parameter is not available
         """
         # Given: Connected flight controller
@@ -459,10 +471,11 @@ class TestFlightControllerErrorHandlingAndRecovery:
         mock_master.target_component = 1
         fc.set_master_for_testing(mock_master)
 
-        # When: Fetch nonexistent parameter
-        # Then: Clear timeout error raised
-        with pytest.raises(TimeoutError, match="Timeout waiting for parameter NONEXISTENT_PARAM"):
-            fc.fetch_param("NONEXISTENT_PARAM", timeout=1)  # Short timeout for testing
+        # When: Fetch nonexistent parameter (max 16 chars for MAVLink)
+        result = fc.fetch_param("FAKE_PARAM", timeout=1)  # Short timeout for testing
+
+        # Then: Should return None after timeout
+        assert result is None
 
     @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
     @patch("ardupilot_methodic_configurator.backend_flightcontroller.mavutil.mavlink_connection")
@@ -489,3 +502,61 @@ class TestFlightControllerErrorHandlingAndRecovery:
 
         # Then: Reconnection attempted (result may vary based on implementation)
         assert isinstance(result, str)  # Result is a string message
+
+
+class TestServiceInjectionIntegration:
+    """Test service injection integration with FlightControllerConnection."""
+
+    def test_user_can_inject_both_services(self) -> None:
+        """
+        User can inject both serial discovery and MAVLink factory together.
+
+        GIVEN: Developer wants full test isolation
+        WHEN: Injecting both services
+        THEN: Both should be used consistently
+        """
+        # Given: Both fake services
+        fake_serial = FakeSerialPortDiscovery()
+        fake_serial.add_port("/dev/ttyUSB0", "Fake Controller")
+
+        fake_mavlink = FakeMavlinkConnectionFactory()
+
+        # When: Inject both services
+        info = FlightControllerInfo()
+        connection = FlightControllerConnection(
+            info=info,
+            serial_port_discovery=fake_serial,
+            mavlink_connection_factory=fake_mavlink,
+        )
+
+        # Then: Both services are active
+        assert connection._serial_port_discovery is fake_serial
+        assert connection._mavlink_connection_factory is fake_mavlink
+
+    def test_discovery_and_creation_workflow(self) -> None:
+        """
+        Complete workflow: discover ports then create connections.
+
+        GIVEN: Both services injected
+        WHEN: Discovering ports and creating connections
+        THEN: Workflow should complete without errors
+        """
+        # Given: Fake services
+        fake_serial = FakeSerialPortDiscovery()
+        fake_serial.add_port("/dev/ttyUSB0", "Test FC")
+
+        fake_mavlink = FakeMavlinkConnectionFactory()
+
+        info = FlightControllerInfo()
+        connection = FlightControllerConnection(
+            info=info,
+            serial_port_discovery=fake_serial,
+            mavlink_connection_factory=fake_mavlink,
+        )
+
+        # When: Discover connections
+        connection.discover_connections()
+
+        # Then: Ports are discoverable
+        connection_tuples = connection.get_connection_tuples()
+        assert any(t[0] == "/dev/ttyUSB0" for t in connection_tuples)

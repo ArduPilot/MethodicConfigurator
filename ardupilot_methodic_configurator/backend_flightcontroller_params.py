@@ -23,7 +23,7 @@ from pymavlink import mavutil
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_mavftp_utils import create_mavftp
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
-from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict, validate_param_name
 
 # Type hint for connection manager to avoid circular imports
 if TYPE_CHECKING:
@@ -242,11 +242,23 @@ class FlightControllerParams:
 
         Returns:
             tuple[bool, str]: (True, "") if command sent successfully,
-                             (False, error_message) if no connection available
+                             (False, error_message) if no connection available or invalid parameters
 
         """
         if self.master is None:
             return False, _("No flight controller connection available")
+
+        # Validate parameter name using ArduPilot standards
+        is_valid_name, name_error = validate_param_name(param_name)
+        if not is_valid_name:
+            logging_error(name_error)
+            return False, name_error
+
+        # Validate parameter value
+        if not isinstance(param_value, (int, float)):
+            error_msg = _("Invalid parameter value type: %s (expected numeric)") % type(param_value).__name__
+            logging_error(error_msg)
+            return False, error_msg
 
         self.master.param_set_send(param_name, param_value)
         # Update local cache optimistically
@@ -276,11 +288,17 @@ class FlightControllerParams:
             timeout: Timeout in seconds to wait for the response. Default is 5
 
         Returns:
-            float: The value of the parameter, or None if not found or timeout occurred
+            float: The value of the parameter
 
         """
         if self.master is None:
             return None
+
+        # Validate parameter name using ArduPilot standards
+        is_valid_name, name_error = validate_param_name(param_name)
+        if not is_valid_name:
+            logging_error(name_error)
+            raise ValueError(name_error)
 
         # Send PARAM_REQUEST_READ message
         self.master.mav.param_request_read_send(

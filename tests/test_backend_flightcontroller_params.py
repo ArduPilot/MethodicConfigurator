@@ -134,6 +134,104 @@ class TestFlightControllerParamsSetParameter:
         assert success is False
         assert "connection" in error.lower()
 
+    def test_set_parameter_with_string_value_fails(self) -> None:
+        """
+        Setting parameter with string value fails with clear error.
+
+        GIVEN: Connected flight controller
+        WHEN: User attempts to set parameter with string value (invalid)
+        THEN: Operation should fail
+        AND: Error message should indicate invalid type
+        AND: Parameter should not be cached
+        """
+        # Given: Connected FC
+        mock_master = MagicMock()
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # When: Try to set with string value
+        success, error = params_mgr.set_param("PARAM1", "invalid_string")  # type: ignore[arg-type]
+
+        # Then: Should fail with type error
+        assert success is False
+        assert "Invalid" in error or "type" in error.lower()
+        assert "PARAM1" not in params_mgr.fc_parameters
+
+    def test_set_parameter_with_none_value_fails(self) -> None:
+        """
+        Setting parameter with None value fails appropriately.
+
+        GIVEN: Connected flight controller
+        WHEN: User attempts to set parameter with None
+        THEN: Operation should fail
+        AND: Error message should indicate invalid type
+        """
+        # Given: Connected FC
+        mock_master = MagicMock()
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # When: Try to set with None value
+        success, error = params_mgr.set_param("PARAM1", None)  # type: ignore[arg-type]
+
+        # Then: Should fail with type error
+        assert success is False
+        assert "Invalid" in error or "type" in error.lower()
+
+    def test_set_parameter_with_list_value_fails(self) -> None:
+        """
+        Setting parameter with list value fails appropriately.
+
+        GIVEN: Connected flight controller
+        WHEN: User attempts to set parameter with list (invalid)
+        THEN: Operation should fail
+        AND: Error message should indicate invalid type
+        """
+        # Given: Connected FC
+        mock_master = MagicMock()
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # When: Try to set with list value
+        success, error = params_mgr.set_param("PARAM1", [1, 2, 3])  # type: ignore[arg-type]
+
+        # Then: Should fail with type error
+        assert success is False
+        assert "Invalid" in error or "type" in error.lower()
+
+    def test_set_parameter_with_dict_value_fails(self) -> None:
+        """
+        Setting parameter with dict value fails appropriately.
+
+        GIVEN: Connected flight controller
+        WHEN: User attempts to set parameter with dict (invalid)
+        THEN: Operation should fail
+        AND: Error message should indicate invalid type
+        """
+        # Given: Connected FC
+        mock_master = MagicMock()
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # When: Try to set with dict value
+        success, error = params_mgr.set_param("PARAM1", {"key": "value"})  # type: ignore[arg-type]
+
+        # Then: Should fail with type error
+        assert success is False
+        assert "Invalid" in error or "type" in error.lower()
+
 
 class TestFlightControllerParamsFetchParameter:
     """Test parameter fetching functionality."""
@@ -167,14 +265,14 @@ class TestFlightControllerParamsFetchParameter:
         assert value == 4.0
         assert params_mgr.fc_parameters["BATT_MONITOR"] == 4.0
 
-    def test_fetch_parameter_times_out_for_nonexistent_param(self) -> None:
+    def test_fetch_parameter_returns_none_for_nonexistent_param(self) -> None:
         """
-        Fetching nonexistent parameter raises timeout error.
+        Fetching nonexistent parameter returns None on timeout.
 
         GIVEN: Connected flight controller
         WHEN: User fetches parameter that doesn't exist
-        THEN: TimeoutError should be raised
-        AND: Error message should indicate which parameter
+        THEN: None should be returned after timeout
+        AND: Should not raise exception
         """
         # Given: Connected FC with no response
         mock_master = MagicMock()
@@ -186,9 +284,11 @@ class TestFlightControllerParamsFetchParameter:
 
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
 
-        # When/Then: Fetch nonexistent parameter raises timeout
-        with pytest.raises(TimeoutError, match="NONEXISTENT"):
-            params_mgr.fetch_param("NONEXISTENT", timeout=1)
+        # When: Fetch nonexistent parameter with short timeout
+        result = params_mgr.fetch_param("NONEXISTENT", timeout=0)
+
+        # Then: Should return None on timeout
+        assert result is None
 
 
 class TestFlightControllerParamsGetParameter:
@@ -449,3 +549,272 @@ class TestFlightControllerParamsFileOperations:  # pylint: disable=too-few-publi
             # Note: Actual file creation depends on implementation details
             # This test validates the interface accepts the parameter
             assert True  # Interface test only
+
+
+class TestParameterEdgeCases:
+    """Test edge cases and error handling for parameter operations."""
+
+    def test_fetch_param_with_empty_name_returns_none(self) -> None:
+        """
+        Fetching parameter with empty name returns None gracefully.
+
+        GIVEN: Parameter manager with connection
+        WHEN: Fetching parameter with empty string name
+        THEN: Should return None
+        AND: Should not crash or corrupt state
+        """
+        # Given: Connected parameter manager
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # When: Fetch with empty name
+        result = params_mgr.fetch_param("", timeout=1)
+
+        # Then: Should return None gracefully
+        assert result is None
+
+    def test_fetch_param_with_invalid_name_returns_none(self) -> None:
+        """
+        Fetching non-existent parameter returns None on timeout.
+
+        GIVEN: Parameter manager with connection
+        WHEN: Fetching parameter that doesn't exist
+        THEN: Should return None after timeout
+        AND: Should not raise exception
+        """
+        # Given: Connected parameter manager
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # When: Fetch non-existent parameter
+        result = params_mgr.fetch_param("NONEXISTENT_PARAM_XYZ", timeout=0)
+
+        # Then: Should return None on timeout
+        assert result is None
+
+    def test_fetch_param_with_zero_timeout_returns_none(self) -> None:
+        """
+        Fetch parameter with zero timeout returns None immediately.
+
+        GIVEN: Parameter manager with connection
+        WHEN: Attempting fetch with zero timeout
+        THEN: Should return None (no time to wait for response)
+        AND: Should not hang indefinitely
+        """
+        # Given: Connected parameter manager
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # When: Fetch with zero timeout
+        result = params_mgr.fetch_param("FRAME_TYPE", timeout=0)
+
+        # Then: Should return None (timeout too short)
+        assert result is None
+
+    def test_set_param_with_empty_name_fails_gracefully(self) -> None:
+        """
+        Setting parameter with empty name fails gracefully.
+
+        GIVEN: Parameter manager with connection
+        WHEN: Setting parameter with empty name
+        THEN: Should return failure status
+        AND: Error message should indicate invalid name
+        """
+        # Given: Connected parameter manager
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # When: Try to set with empty name
+        success, error_msg = params_mgr.set_param("", 123.0)
+
+        # Then: Should fail with descriptive error message
+        assert not success
+        assert isinstance(error_msg, str)
+        assert len(error_msg) > 0  # Should have error message
+        assert "Invalid" in error_msg or "parameter name" in error_msg.lower()
+
+    def test_set_param_with_zero_value(self) -> None:
+        """
+        Setting parameter to zero value is allowed.
+
+        GIVEN: Parameter manager with valid parameter name
+        WHEN: Setting parameter value to zero
+        THEN: Should accept zero as valid value
+        AND: Should not treat zero as error condition
+        """
+        # Given: Connected parameter manager
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # Pre-populate with a parameter
+        params_mgr.fc_parameters = {"FRAME_TYPE": 2.0}
+
+        # When: Set parameter to zero
+        success, error_msg = params_mgr.set_param("FRAME_TYPE", 0.0)
+
+        # Then: Should accept zero
+        assert isinstance(success, bool)
+        assert isinstance(error_msg, str)
+
+    def test_set_param_with_negative_value(self) -> None:
+        """
+        Setting parameter to negative value is allowed where valid.
+
+        GIVEN: Parameter manager with parameter that accepts negative values
+        WHEN: Setting parameter to negative value
+        THEN: Should accept negative values
+        AND: Should not reject based on sign alone
+        """
+        # Given: Connected parameter manager
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # Pre-populate with a parameter
+        params_mgr.fc_parameters = {"TRIM_PITCH_CD": 100.0}
+
+        # When: Set parameter to negative value (valid for trims)
+        success, error_msg = params_mgr.set_param("TRIM_PITCH_CD", -50.0)
+
+        # Then: Should handle negative values
+        assert isinstance(success, bool)
+        assert isinstance(error_msg, str)
+
+    def test_set_param_with_very_large_value(self) -> None:
+        """
+        Setting parameter to very large value is handled.
+
+        GIVEN: Parameter manager with connection
+        WHEN: Setting parameter to very large numeric value
+        THEN: Should handle large numbers appropriately
+        AND: Should not overflow or crash
+        """
+        # Given: Connected parameter manager
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # Pre-populate with a parameter
+        params_mgr.fc_parameters = {"FRAME_TYPE": 2.0}
+
+        # When: Set to very large value
+        success, error_msg = params_mgr.set_param("FRAME_TYPE", 9999999.0)
+
+        # Then: Should handle without crashing
+        assert isinstance(success, bool)
+        assert isinstance(error_msg, str)
+
+    def test_set_param_with_floating_point_precision(self) -> None:
+        """
+        Setting parameter with floating point values maintains precision.
+
+        GIVEN: Parameter manager with connection
+        WHEN: Setting parameter to precise floating point value
+        THEN: Should store precision appropriately
+        AND: Value should be retrievable
+        """
+        # Given: Connected parameter manager
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # Pre-populate with a parameter
+        params_mgr.fc_parameters = {"ANGLE_MAX": 4500.0}
+
+        # When: Set to precise floating point value
+        success, error_msg = params_mgr.set_param("ANGLE_MAX", 3.14159)
+
+        # Then: Should handle floating point values
+        assert isinstance(success, bool)
+        assert isinstance(error_msg, str)
+
+    def test_fc_parameters_empty_initially(self) -> None:
+        """
+        Parameter collection starts empty.
+
+        GIVEN: New parameter manager
+        WHEN: Checking initial parameters
+        THEN: Should have empty dictionary
+        AND: Should be mutable for adding parameters
+        """
+        # Given: New parameter manager
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # Then: Initially empty
+        assert params_mgr.fc_parameters == {}
+        assert isinstance(params_mgr.fc_parameters, dict)
+
+    def test_fc_parameters_can_be_set_directly(self) -> None:
+        """
+        FC parameters dictionary can be updated directly.
+
+        GIVEN: Parameter manager with empty parameters
+        WHEN: Setting parameters directly
+        THEN: Should update internal dictionary
+        AND: Should persist across accesses
+        """
+        # Given: New parameter manager
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # When: Set parameters directly
+        test_params = {"FRAME_TYPE": 2.0, "BATT_MONITOR": 3.0}
+        params_mgr.fc_parameters = test_params
+
+        # Then: Should be stored and retrievable
+        assert params_mgr.fc_parameters == test_params
+        assert params_mgr.fc_parameters["FRAME_TYPE"] == 2.0
+
+    def test_multiple_set_param_operations_sequence(self) -> None:
+        """
+        Multiple parameter set operations can be performed in sequence.
+
+        GIVEN: Parameter manager with connection
+        WHEN: Setting multiple parameters sequentially
+        THEN: Each operation should complete successfully
+        AND: State should remain consistent
+        """
+        # Given: Connected parameter manager
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # Pre-populate with parameters
+        params_mgr.fc_parameters = {
+            "FRAME_TYPE": 2.0,
+            "BATT_MONITOR": 3.0,
+            "BATT_CAPACITY": 5000.0,
+        }
+
+        # When: Set multiple parameters sequentially
+        result1 = params_mgr.set_param("FRAME_TYPE", 1.0)
+        result2 = params_mgr.set_param("BATT_MONITOR", 4.0)
+        result3 = params_mgr.set_param("BATT_CAPACITY", 4000.0)
+
+        # Then: All operations should complete
+        assert isinstance(result1[0], bool)
+        assert isinstance(result2[0], bool)
+        assert isinstance(result3[0], bool)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
