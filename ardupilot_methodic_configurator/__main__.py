@@ -62,6 +62,7 @@ def register_plugins() -> None:
     # Import and register motor test plugin
     # pylint: disable=import-outside-toplevel, cyclic-import
     from ardupilot_methodic_configurator.frontend_tkinter_motor_test import register_motor_test_plugin  # noqa: PLC0415
+
     # pylint: enable=import-outside-toplevel, cyclic-import
 
     register_motor_test_plugin()
@@ -539,7 +540,8 @@ def parameter_editor_and_uploader(state: ApplicationState) -> None:
 
     # Call the GUI function with the starting intermediate parameter file
     configuration_manager = ConfigurationManager(start_file, state.flight_controller, state.local_filesystem)
-    ParameterEditorWindow(configuration_manager)
+    window = ParameterEditorWindow(configuration_manager)
+    window.run()
 
 
 def main() -> None:
