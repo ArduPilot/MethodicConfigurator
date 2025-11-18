@@ -840,12 +840,13 @@ class TestFlightControllerDownloadWorkflows:
         """
         # Arrange: Set up mock callback and download
         progress_callback = MagicMock()
+        get_progress_callback = MagicMock(return_value=progress_callback)
         expected_fc_params = {"PARAM1": 1.0}
         expected_defaults = {"PARAM1": 0.0}
         configuration_manager._flight_controller.download_params.return_value = (expected_fc_params, expected_defaults)
 
         # Act: Download with progress callback
-        configuration_manager.download_flight_controller_parameters(progress_callback)
+        configuration_manager.download_flight_controller_parameters(get_progress_callback)
 
         # Assert: Callback was passed to download
         args, _kwargs = configuration_manager._flight_controller.download_params.call_args
@@ -1174,10 +1175,11 @@ class TestFileUploadWorkflows:
         show_error = MagicMock()
         show_warning = MagicMock()
         progress_callback = MagicMock()
+        get_progress_callback = MagicMock(return_value=progress_callback)
 
         # Act: Run upload workflow
         result = configuration_manager.should_upload_file_to_fc_workflow(
-            selected_file, ask_confirmation, show_error, show_warning, progress_callback
+            selected_file, ask_confirmation, show_error, show_warning, get_progress_callback
         )
 
         # Assert: Upload successful
@@ -1212,10 +1214,11 @@ class TestFileUploadWorkflows:
         ask_confirmation = MagicMock(return_value=False)
         show_error = MagicMock()
         show_warning = MagicMock()
+        get_progress_callback = MagicMock(return_value=MagicMock())
 
         # Act: Run upload workflow with user declining
         result = configuration_manager.should_upload_file_to_fc_workflow(
-            selected_file, ask_confirmation, show_error, show_warning
+            selected_file, ask_confirmation, show_error, show_warning, get_progress_callback
         )
 
         # Assert: Workflow succeeds but no upload
@@ -1249,10 +1252,11 @@ class TestFileUploadWorkflows:
         ask_confirmation = MagicMock(return_value=True)
         show_error = MagicMock()
         show_warning = MagicMock()
+        get_progress_callback = MagicMock(return_value=MagicMock())
 
         # Act: Run upload workflow with upload failure
         result = configuration_manager.should_upload_file_to_fc_workflow(
-            selected_file, ask_confirmation, show_error, show_warning
+            selected_file, ask_confirmation, show_error, show_warning, get_progress_callback
         )
 
         # Assert: Workflow fails and error shown
@@ -1285,10 +1289,11 @@ class TestFileUploadWorkflows:
         ask_confirmation = MagicMock()
         show_error = MagicMock()
         show_warning = MagicMock()
+        get_progress_callback = MagicMock(return_value=MagicMock())
 
         # Act: Run upload workflow without FC connection
         result = configuration_manager.should_upload_file_to_fc_workflow(
-            selected_file, ask_confirmation, show_error, show_warning
+            selected_file, ask_confirmation, show_error, show_warning, get_progress_callback
         )
 
         # Assert: Workflow fails and warning shown
@@ -1321,10 +1326,11 @@ class TestFileUploadWorkflows:
         ask_confirmation = MagicMock()
         show_error = MagicMock()
         show_warning = MagicMock()
+        get_progress_callback = MagicMock(return_value=MagicMock())
 
         # Act: Run upload workflow with missing file
         result = configuration_manager.should_upload_file_to_fc_workflow(
-            selected_file, ask_confirmation, show_error, show_warning
+            selected_file, ask_confirmation, show_error, show_warning, get_progress_callback
         )
 
         # Assert: Workflow fails and error shown
@@ -1350,10 +1356,11 @@ class TestFileUploadWorkflows:
         ask_confirmation = MagicMock()
         show_error = MagicMock()
         show_warning = MagicMock()
+        get_progress_callback = MagicMock(return_value=MagicMock())
 
         # Act: Run upload workflow when no upload needed
         result = configuration_manager.should_upload_file_to_fc_workflow(
-            selected_file, ask_confirmation, show_error, show_warning
+            selected_file, ask_confirmation, show_error, show_warning, get_progress_callback
         )
 
         # Assert: Workflow succeeds without any actions
@@ -1385,10 +1392,15 @@ class TestFileUploadWorkflows:
         ask_confirmation = MagicMock(return_value=True)
         show_error = MagicMock()
         show_warning = MagicMock()
+        get_progress_callback = MagicMock(return_value=MagicMock())
 
         # Act: Execute workflow
         result = configuration_manager.should_upload_file_to_fc_workflow(
-            selected_file, ask_confirmation=ask_confirmation, show_error=show_error, show_warning=show_warning
+            selected_file,
+            ask_confirmation=ask_confirmation,
+            show_error=show_error,
+            show_warning=show_warning,
+            get_progress_callback=get_progress_callback,
         )
 
         # Assert: Workflow returns False and shows error with local filename
@@ -1553,6 +1565,7 @@ class TestIMUTemperatureCalibrationMethods:
         show_warning_mock = MagicMock()
         show_error_mock = MagicMock()
         progress_callback_mock = MagicMock()
+        get_progress_callback_mock = MagicMock(return_value=progress_callback_mock)
 
         # Act: Run the workflow
         result = configuration_manager.handle_imu_temperature_calibration_workflow(
@@ -1561,7 +1574,7 @@ class TestIMUTemperatureCalibrationMethods:
             select_file=select_file_mock,
             show_warning=show_warning_mock,
             show_error=show_error_mock,
-            progress_callback=progress_callback_mock,
+            get_progress_callback=get_progress_callback_mock,
         )
 
         # Assert: Workflow should succeed

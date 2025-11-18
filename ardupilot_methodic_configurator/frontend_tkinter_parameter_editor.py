@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import contextlib
-import sys
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 
@@ -23,8 +22,12 @@ from logging import error as logging_error
 from logging import exception as logging_exception
 from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
+from sys import exit as sys_exit
 from tkinter import filedialog, messagebox, ttk
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # from logging import critical as logging_critical
 from ardupilot_methodic_configurator import _, __version__
@@ -66,7 +69,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     operate on drone parameters.
     """
 
-    def __init__(self, configuration_manager: ConfigurationManager) -> None:
+    def __init__(
+        self,
+        configuration_manager: ConfigurationManager,
+    ) -> None:
         super().__init__()
         self.configuration_manager = configuration_manager
 
@@ -74,10 +80,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.show_only_differences: tk.BooleanVar
         self.annotate_params_into_files: tk.BooleanVar
         self.parameter_editor_table: ParameterEditorTable
-        self.reset_progress_window: ProgressWindow
-        self.param_download_progress_window: ProgressWindow
-        self.tempcal_imu_progress_window: ProgressWindow
-        self.file_upload_progress_window: ProgressWindow
         self.skip_button: ttk.Button
         self.gui_complexity = str(ProgramSettings.get_setting("gui_complexity"))
         self.parameter_area_container: ttk.Frame
@@ -105,7 +107,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         style.configure("below_limit.TEntry", fieldbackground="orangered")
         style.configure("above_limit.TEntry", fieldbackground="red3")
 
-        self.__create_conf_widgets(__version__)
+        self._create_conf_widgets(__version__)
 
         last_step_nr = self.configuration_manager.get_last_configuration_step_number()
         if last_step_nr is not None:
@@ -118,7 +120,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.documentation_frame = DocumentationFrame(self.main_frame, self.configuration_manager)
         self.documentation_frame.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
 
-        self.__create_parameter_area_widgets()
+        self._create_parameter_area_widgets()
 
         # Resize window height to ensure all widgets, including the skip button, are fully visible
         # as some Linux Window managers like KDE, like to change font sizes and padding.
@@ -135,11 +137,18 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # this one should be on top of the previous one hence the longer time
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("parameter_editor"):
-            self.root.after(100, lambda: self.__display_usage_popup_window(self.root))  # type: ignore[arg-type]
+            self.root.after(100, lambda: self._display_usage_popup_window(self.root))  # type: ignore[arg-type]
 
+    def run(self) -> None:
+        """
+        Start the GUI main event loop.
+
+        This method should be called after instantiation to start the GUI.
+        Separated from __init__ to allow for testing and more flexible initialization.
+        """
         self.root.mainloop()
 
-    def __create_conf_widgets(self, version: str) -> None:
+    def _create_conf_widgets(self, version: str) -> None:
         config_frame = ttk.Frame(self.main_frame)
         config_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(4, 0))  # Pack the frame at the top of the window
 
@@ -238,7 +247,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         toohigh_label.pack(side=tk.TOP, anchor=tk.NW)
         legend_frame.pack(side=tk.LEFT, fill="x", expand=False, padx=(2, 2))
 
-    def __create_parameter_area_widgets(self) -> None:
+    def _create_parameter_area_widgets(self) -> None:
         self.show_only_differences = tk.BooleanVar(value=False)
         self.annotate_params_into_files = tk.BooleanVar(
             value=bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
@@ -363,7 +372,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             ),
         )
 
-    def __cleanup_plugin_views(self) -> None:
+    def _cleanup_plugin_views(self) -> None:
         """Clean up existing plugin views and UI elements."""
         # Call deactivation hook on current plugin before cleanup
         if self.current_plugin_view is not None and hasattr(self.current_plugin_view, "on_deactivate"):
@@ -393,7 +402,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             finally:
                 self.parameter_area_paned = None
 
-    def __update_plugin_layout(self, plugin: Optional[dict]) -> None:  # noqa: UP045
+    def _update_plugin_layout(self, plugin: Optional[dict]) -> None:  # noqa: UP045
         """
         Update the plugin layout based on the current plugin configuration.
 
@@ -425,13 +434,13 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # If layout structure is the same, just swap the plugin content without rebuilding
         if old_placement == new_placement and old_placement is not None and plugin is not None:
             # Same layout structure, just swap plugin
-            self.__swap_plugin_in_place(plugin)
+            self._swap_plugin_in_place(plugin)
             return
 
         # Layout structure is different - need full rebuild
-        self.__rebuild_plugin_layout(plugin)
+        self._rebuild_plugin_layout(plugin)
 
-    def __swap_plugin_in_place(self, plugin: dict) -> None:  # pylint: disable=too-many-branches
+    def _swap_plugin_in_place(self, plugin: dict) -> None:  # pylint: disable=too-many-branches
         """
         Swap plugin content without rebuilding the entire layout.
 
@@ -485,11 +494,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 widget.destroy()
 
             # Load new plugin into existing frame
-            self.__load_plugin(plugin_parent, plugin)
+            self._load_plugin(plugin_parent, plugin)
 
         self.current_plugin = plugin
 
-    def __rebuild_plugin_layout(self, plugin: dict | None) -> None:
+    def _rebuild_plugin_layout(self, plugin: dict | None) -> None:
         """
         Completely rebuild the plugin layout structure.
 
@@ -501,7 +510,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         """
         # Clean up existing views
-        self.__cleanup_plugin_views()
+        self._cleanup_plugin_views()
 
         # Complete rebuild: destroy old layout and create new structure from scratch
         self.parameter_area_container.destroy()
@@ -523,7 +532,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.parameter_area_paned.add(left_frame, minsize=500)
 
             # Instantiate and display the plugin in the left frame
-            self.__load_plugin(left_frame, plugin)
+            self._load_plugin(left_frame, plugin)
 
             # Create right pane for parameter table (gets remaining space)
             right_frame = ttk.Frame(self.parameter_area_paned)
@@ -539,7 +548,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Create top frame for plugin (fixed height, expands horizontally only)
             top_plugin_frame = ttk.Frame(top_container)
             top_plugin_frame.pack(side="top", fill="x", expand=False)
-            self.__load_plugin(top_plugin_frame, plugin)
+            self._load_plugin(top_plugin_frame, plugin)
 
             # Visual separator between plugin and parameter table
             ttk.Separator(top_container, orient="horizontal").pack(side="top", fill="x", pady=2)
@@ -559,7 +568,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.parameter_editor_table = ParameterEditorTable(self.parameter_container, self.configuration_manager, self)
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 
-    def __load_plugin(self, parent_frame: ttk.Frame, plugin: dict) -> None:
+    def _load_plugin(self, parent_frame: ttk.Frame, plugin: dict) -> None:
         """
         Load a plugin into the given frame using the plugin factory.
 
@@ -623,7 +632,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             ttk.Label(parent_frame, text=msg, foreground="red").pack()
 
     @staticmethod
-    def __display_usage_popup_window(parent: tk.Tk) -> None:
+    def _display_usage_popup_window(parent: tk.Tk) -> None:
         if not parent.winfo_exists():
             return
 
@@ -675,7 +684,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             instructions_text,
         )
 
-    def __do_tempcal_imu(self, selected_file: str) -> None:
+    def _do_tempcal_imu(self, selected_file: str) -> None:
         """
         Handle IMU temperature calibration using the new callback-based workflow.
 
@@ -687,13 +696,17 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             """GUI callback for file selection dialog."""
             return filedialog.askopenfilename(title=title, filetypes=[(_("ArduPilot binary log files"), filetypes)])
 
-        # Create progress window for the calibration
-        self.tempcal_imu_progress_window = ProgressWindow(
-            self.root,
-            _("Reading IMU calibration messages"),
-            _("Please wait, this can take a long time"),
-            only_show_when_update_progress_called=True,
-        )
+        def get_progress_callback() -> Callable | None:
+            """Create and return progress window callback only when calibration will actually happen."""
+            tempcal_imu_progress_window = ProgressWindow(
+                self.root,
+                _("Reading IMU calibration messages"),
+                _("Please wait, this can take a long time"),
+                only_show_when_update_progress_called=True,
+            )
+            # Store reference for cleanup
+            self._tempcal_imu_progress_window = tempcal_imu_progress_window
+            return tempcal_imu_progress_window.update_progress_bar_300_pct
 
         try:
             # Inject GUI callbacks into business logic workflow
@@ -703,17 +716,19 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 select_file=select_file,
                 show_warning=show_warning_popup,
                 show_error=show_error_popup,
-                progress_callback=self.tempcal_imu_progress_window.update_progress_bar_300_pct,
+                get_progress_callback=get_progress_callback,
             )
 
         finally:
-            self.tempcal_imu_progress_window.destroy()
+            # Clean up progress window if it was created
+            if hasattr(self, "_tempcal_imu_progress_window"):
+                self._tempcal_imu_progress_window.destroy()
 
-    def __handle_dialog_choice(self, result: list, dialog: tk.Toplevel, choice: ExperimentChoice) -> None:
+    def _handle_dialog_choice(self, result: list, dialog: tk.Toplevel, choice: ExperimentChoice) -> None:
         result.append(choice)
         dialog.destroy()
 
-    def __should_copy_fc_values_to_file(self, selected_file: str) -> None:
+    def _should_copy_fc_values_to_file(self, selected_file: str) -> ExperimentChoice:
         def ask_user_choice(title: str, message: str, options: list[str]) -> ExperimentChoice:  # pylint: disable=too-many-locals
             """GUI callback for asking user choice with custom dialog."""
             # Create custom dialog with Close, Yes, No buttons
@@ -753,7 +768,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 button_frame,
                 text=options[0],  # "Close"
                 width=10,
-                command=lambda: self.__handle_dialog_choice(result, dialog, choice="close"),
+                command=lambda: self._handle_dialog_choice(result, dialog, choice="close"),
             )
             close_button.pack(side=tk.LEFT, padx=5)
 
@@ -762,7 +777,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 button_frame,
                 text=options[1],
                 width=10,  # "Yes"
-                command=lambda: self.__handle_dialog_choice(result, dialog, choice=True),
+                command=lambda: self._handle_dialog_choice(result, dialog, choice=True),
             )
             yes_button.pack(side=tk.LEFT, padx=5)
 
@@ -771,11 +786,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 button_frame,
                 text=options[2],
                 width=10,  # "No"
-                command=lambda: self.__handle_dialog_choice(result, dialog, choice=False),
+                command=lambda: self._handle_dialog_choice(result, dialog, choice=False),
             )
             no_button.pack(side=tk.LEFT, padx=5)
 
-            dialog.bind("<Return>", lambda _event: self.__handle_dialog_choice(result, dialog, choice="close"))
+            dialog.bind("<Return>", lambda _event: self._handle_dialog_choice(result, dialog, choice="close"))
 
             # Center the dialog on the parent window
             dialog.deiconify()
@@ -800,37 +815,33 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.root.wait_window(dialog)
             return result[-1] if result else "close"
 
-        result = self.configuration_manager.handle_copy_fc_values_workflow(
+        return self.configuration_manager.handle_copy_fc_values_workflow(
             selected_file,
             ask_user_choice,
             show_info_popup,
         )
 
-        if result == "close":
-            # User chose to close the application
-            sys.exit(0)
-
-    def __should_jump_to_file(self, selected_file: str) -> str:
-        dest_file = self.configuration_manager.handle_file_jump_workflow(
+    def _should_jump_to_file(self, selected_file: str) -> str:
+        return self.configuration_manager.handle_file_jump_workflow(
             selected_file,
             self.gui_complexity,
             ask_yesno_popup,
         )
-        if dest_file != selected_file:
-            self.file_selection_combobox.set(dest_file)
-        return dest_file
 
-    def __should_download_file_from_url(self, selected_file: str) -> None:
+    def _should_download_file_from_url(self, selected_file: str) -> None:
         self.configuration_manager.should_download_file_from_url_workflow(
             selected_file,
             ask_confirmation=ask_yesno_popup,
             show_error=show_error_popup,
         )
 
-    def __should_upload_file_to_fc(self, selected_file: str) -> None:
-        self.file_upload_progress_window = ProgressWindow(
-            self.root, _("Uploading file"), _("Uploaded {} of {} %"), only_show_when_update_progress_called=True
-        )
+    def _should_upload_file_to_fc(self, selected_file: str) -> None:
+        def get_progress_callback() -> Callable | None:
+            """Create and return progress window callback only when upload will actually happen."""
+            self.file_upload_progress_window = ProgressWindow(
+                self.root, _("Uploading file"), _("Uploaded {} of {} %"), only_show_when_update_progress_called=True
+            )
+            return self.file_upload_progress_window.update_progress_bar
 
         try:
             self.configuration_manager.should_upload_file_to_fc_workflow(
@@ -838,37 +849,55 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 ask_confirmation=ask_yesno_popup,
                 show_error=show_error_popup,
                 show_warning=show_warning_popup,
-                progress_callback=self.file_upload_progress_window.update_progress_bar,
+                get_progress_callback=get_progress_callback,
             )
         finally:
-            self.file_upload_progress_window.destroy()
+            # Clean up progress window if it was created
+            if hasattr(self, "file_upload_progress_window"):
+                self.file_upload_progress_window.destroy()
 
     def on_param_file_combobox_change(self, _event: Union[None, tk.Event], forced: bool = False) -> None:  # noqa: UP007
         if not self.file_selection_combobox["values"]:
             return
         selected_file = self.file_selection_combobox.get()
         self._update_progress_bar_from_file(selected_file)
-        if self.configuration_manager.current_file != selected_file or forced:
-            self.write_changes_to_intermediate_parameter_file()
-            self.__do_tempcal_imu(selected_file)
-            # open the documentation of the next step in the browser,
-            # before giving the user the option to close the SW in the __should_copy_fc_values_to_file method
-            if self.documentation_frame.get_auto_open_documentation_in_browser() or self.gui_complexity == "simple":
-                self.configuration_manager.open_documentation_in_browser(selected_file)
-            self.__should_copy_fc_values_to_file(selected_file)
-            selected_file = self.__should_jump_to_file(selected_file)
-            self.__should_download_file_from_url(selected_file)
-            self.__should_upload_file_to_fc(selected_file)
 
-            # current_file might have been changed by jump, so update again
-            self.configuration_manager.current_file = selected_file
+        # Only proceed if file changed or forced
+        if self.configuration_manager.current_file != selected_file or forced:
+            # Write any pending changes before switching files
+            self.write_changes_to_intermediate_parameter_file()
+
+            # Handle the parameter file change workflow
+            final_file, should_continue = self.configuration_manager.handle_param_file_change_workflow(
+                selected_file,
+                forced,
+                self.gui_complexity,
+                self.documentation_frame.get_auto_open_documentation_in_browser(),
+                handle_imu_temp_cal=self._do_tempcal_imu,
+                handle_copy_fc_values=self._should_copy_fc_values_to_file,
+                handle_file_jump=self._should_jump_to_file,
+                handle_download_file=self._should_download_file_from_url,
+                handle_upload_file=self._should_upload_file_to_fc,
+            )
+
+            # If user chose to close, exit
+            if not should_continue:
+                self.root.quit()
+                sys_exit(0)
+
+            # Update the combobox if file changed due to jump
+            if final_file != selected_file:
+                self.file_selection_combobox.set(final_file)
+
+            # Update GUI state
             self.documentation_frame.refresh_documentation_labels()
             self.documentation_frame.update_why_why_now_tooltip()
 
             # Update plugin layout if needed
-            plugin = self.configuration_manager.get_plugin(selected_file)
-            self.__update_plugin_layout(plugin)
+            plugin = self.configuration_manager.get_plugin(final_file)
+            self._update_plugin_layout(plugin)
 
+            # Repopulate parameter table with new file
             self.repopulate_parameter_table(regenerate_from_disk=True)
             self._update_skip_button_state()
 
@@ -883,11 +912,22 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def download_flight_controller_parameters(self, redownload: bool = False) -> None:
         operation_string = _("Re-downloading FC parameters") if redownload else _("Downloading FC parameters")
-        self.param_download_progress_window = ProgressWindow(self.root, operation_string, _("Downloaded {} of {} parameters"))
-        self.configuration_manager.download_flight_controller_parameters(
-            self.param_download_progress_window.update_progress_bar
-        )
-        self.param_download_progress_window.destroy()  # for the case that '--device test' and there is no real FC connected
+
+        def get_progress_callback() -> Callable | None:
+            """Create and return progress window callback for parameter download."""
+            param_download_progress_window = ProgressWindow(self.root, operation_string, _("Downloaded {} of {} parameters"))
+            # Store reference for cleanup
+            self._param_download_progress_window = param_download_progress_window
+            return param_download_progress_window.update_progress_bar
+
+        # Download parameters using the lazy factory callback
+        self.configuration_manager.download_flight_controller_parameters(get_progress_callback)
+
+        # Clean up progress window if it was created
+        if hasattr(self, "_param_download_progress_window"):
+            # for the case that '--device test' and there is no real FC connected
+            self._param_download_progress_window.destroy()
+
         if not redownload:
             self.on_param_file_combobox_change(None, forced=True)  # the initial param read will trigger a table update
 
@@ -919,18 +959,28 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     # This function can recurse multiple times if there is an upload error
     def upload_selected_params(self, selected_params: dict) -> None:
-        # Create progress windows
-        self.reset_progress_window = ProgressWindow(
-            self.root,
-            _("Resetting Flight Controller"),
-            _("Waiting for {} of {} seconds"),
-            only_show_when_update_progress_called=True,
-        )
-        self.param_download_progress_window = ProgressWindow(
-            self.root,
-            _("Re-downloading FC parameters"),
-            _("Downloaded {} of {} parameters"),
-        )
+        def get_reset_progress_callback() -> Callable | None:
+            """Create and return progress window callback for FC reset only when needed."""
+            reset_progress_window = ProgressWindow(
+                self.root,
+                _("Resetting Flight Controller"),
+                _("Waiting for {} of {} seconds"),
+                only_show_when_update_progress_called=True,
+            )
+            # Store reference for cleanup
+            self._reset_progress_window = reset_progress_window
+            return reset_progress_window.update_progress_bar
+
+        def get_download_progress_callback() -> Callable | None:
+            """Create and return progress window callback for parameter download only when needed."""
+            param_download_progress_window = ProgressWindow(
+                self.root,
+                _("Re-downloading FC parameters"),
+                _("Downloaded {} of {} parameters"),
+            )
+            # Store reference for cleanup
+            self._param_download_progress_window_upload = param_download_progress_window
+            return param_download_progress_window.update_progress_bar
 
         try:
             self.configuration_manager.upload_selected_params_workflow(
@@ -938,12 +988,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 ask_confirmation=ask_yesno_popup,
                 ask_retry_cancel=ask_retry_cancel_popup,
                 show_error=show_error_popup,
-                progress_callback_for_reset=self.reset_progress_window.update_progress_bar,
-                progress_callback_for_download=self.param_download_progress_window.update_progress_bar,
+                get_reset_progress_callback=get_reset_progress_callback,
+                get_download_progress_callback=get_download_progress_callback,
             )
         finally:
-            self.reset_progress_window.destroy()
-            self.param_download_progress_window.destroy()
+            # Clean up progress windows if they were created
+            if hasattr(self, "_reset_progress_window"):
+                self._reset_progress_window.destroy()
+            if hasattr(self, "_param_download_progress_window_upload"):
+                self._param_download_progress_window_upload.destroy()
 
     def on_download_last_flight_log_click(self) -> None:
         """Handle the download last flight log button click."""
@@ -1055,4 +1108,5 @@ if __name__ == "__main__":
     filesystem = LocalFilesystem(
         args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates
     )
-    ParameterEditorWindow(ConfigurationManager("04_board_orientation.param", fc, filesystem))
+    window = ParameterEditorWindow(ConfigurationManager("04_board_orientation.param", fc, filesystem))
+    window.run()
