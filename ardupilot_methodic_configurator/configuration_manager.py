@@ -119,7 +119,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
         select_file: SelectFileCallback,
         show_warning: ShowWarningCallback,
         show_error: ShowErrorCallback,
-        progress_callback: Optional[Callable] = None,
+        get_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
     ) -> bool:
         """
         Complete IMU temperature calibration workflow with user interaction via callbacks.
@@ -134,7 +134,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             select_file: Callback function for file selection dialog.
             show_warning: Callback function for showing warning messages.
             show_error: Callback function for showing error messages.
-            progress_callback: Optional callback function for progress updates.
+            get_progress_callback: Optional factory function that creates and returns a progress callback.
 
         Returns:
             bool: True if calibration was performed successfully, False otherwise.
@@ -169,6 +169,9 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             _("IMU temperature calibration"),
             _("Please wait, this can take a really long time and\nthe GUI will be unresponsive until it finishes."),
         )
+
+        # Get progress callback from factory if provided
+        progress_callback = get_progress_callback() if get_progress_callback else None
 
         # Perform the actual IMU temperature calibration
         IMUfit(
@@ -345,6 +348,78 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             return should_save
         return False
 
+    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        selected_file: str,
+        forced: bool,
+        gui_complexity: str,
+        auto_open_documentation: bool,
+        handle_imu_temp_cal: Callable[[str], None],
+        handle_copy_fc_values: Callable[[str], ExperimentChoice],
+        handle_file_jump: Callable[[str], str],
+        handle_download_file: Callable[[str], None],
+        handle_upload_file: Callable[[str], None],
+    ) -> tuple[str, bool]:
+        """
+        Handle the complete workflow when parameter file selection changes.
+
+        This method orchestrates all the steps that need to happen when switching
+        to a different parameter file, including:
+        - IMU temperature calibration check
+        - Documentation opening
+        - FC values copy check
+        - File jumping
+        - File download/upload
+
+        Args:
+            selected_file: The newly selected parameter file.
+            forced: Whether to force the workflow even if file hasn't changed.
+            gui_complexity: The GUI complexity setting ("simple" or other).
+            auto_open_documentation: Whether to automatically open documentation.
+            handle_imu_temp_cal: Callback to handle IMU temperature calibration.
+            handle_copy_fc_values: Callback to handle copying FC values to file.
+            handle_file_jump: Callback to handle file jumping.
+            handle_download_file: Callback to handle file download.
+            handle_upload_file: Callback to handle file upload.
+
+        Returns:
+            tuple: (final_selected_file, should_continue) - The final file after any jumps,
+                   and whether to continue with the workflow (False means user wants to close).
+
+        """
+        # If file hasn't changed and not forced, skip the workflow
+        if self.current_file == selected_file and not forced:
+            return selected_file, True
+
+        # Handle IMU temperature calibration workflow
+        handle_imu_temp_cal(selected_file)
+
+        # Open documentation if configured
+        if auto_open_documentation or gui_complexity == "simple":
+            self.open_documentation_in_browser(selected_file)
+
+        # Handle copying FC values to file
+        result = handle_copy_fc_values(selected_file)
+        if result == "close":
+            # User wants to close application
+            if self.is_fc_connected:
+                self._flight_controller.disconnect()
+            return selected_file, False
+
+        # Handle file jumping
+        selected_file = handle_file_jump(selected_file)
+
+        # Handle file download from URL
+        handle_download_file(selected_file)
+
+        # Handle file upload to FC
+        handle_upload_file(selected_file)
+
+        # Update current file
+        self.current_file = selected_file
+
+        return selected_file, True
+
     def should_download_file_from_url_workflow(
         self,
         selected_file: str,
@@ -392,7 +467,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
         ask_confirmation: Callable[[str, str], bool],
         show_error: Callable[[str, str], None],
         show_warning: Callable[[str, str], None],
-        progress_callback: Optional[Callable] = None,
+        get_progress_callback: Callable[[], Optional[Callable]],
     ) -> bool:
         """
         Handle file upload workflow with injected GUI callbacks.
@@ -405,7 +480,8 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             ask_confirmation: Callback to ask user if they want to upload the file.
             show_error: Callback to show error messages to the user.
             show_warning: Callback to show warning messages to the user.
-            progress_callback: Optional callback for progress updates.
+            get_progress_callback: Factory callback that creates and returns a progress callback
+                                   only when actually needed (after all checks pass).
 
         Returns:
             bool: True if upload was successful or not needed, False if upload failed.
@@ -431,6 +507,9 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
         ):
             return True  # User declined upload
 
+        # Get progress callback only after all checks passed
+        progress_callback = get_progress_callback()
+
         # Attempt upload
         if not self._flight_controller.upload_file(local_filename, remote_filename, progress_callback):
             error_msg = _("Failed to upload {local_filename} to {remote_filename}, please upload it manually")
@@ -439,17 +518,22 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
 
         return True
 
-    def download_flight_controller_parameters(self, progress_callback: Optional[Callable] = None) -> tuple[dict, dict]:
+    def download_flight_controller_parameters(
+        self, get_progress_callback: Optional[Callable[[], Optional[Callable]]] = None
+    ) -> tuple[dict, dict]:
         """
         Download parameters from the flight controller.
 
         Args:
-            progress_callback: Optional callback function for progress updates.
+            get_progress_callback: Optional factory function that creates and returns a progress callback.
 
         Returns:
             tuple: (fc_parameters, param_default_values) downloaded from the flight controller.
 
         """
+        # Get progress callback from factory if provided
+        progress_callback = get_progress_callback() if get_progress_callback else None
+
         # Download all parameters from the flight controller
         fc_parameters, param_default_values = self._flight_controller.download_params(
             progress_callback,
@@ -754,8 +838,8 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
         ask_confirmation: AskConfirmationCallback,
         ask_retry_cancel: AskRetryCancelCallback,
         show_error: ShowErrorCallback,
-        progress_callback_for_reset: Optional[Callable] = None,
-        progress_callback_for_download: Optional[Callable] = None,
+        get_reset_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
+        get_download_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
     ) -> None:
         """
         Complete workflow for uploading selected parameters, including reset, upload, validation, and retry.
@@ -765,8 +849,8 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             ask_confirmation: Callback to ask user for confirmation.
             ask_retry_cancel: Callback to ask user to retry or cancel on upload error.
             show_error: Callback to show error messages.
-            progress_callback_for_reset: Optional callback for reset progress.
-            progress_callback_for_download: Optional callback for download progress.
+            get_reset_progress_callback: Optional factory function that creates and returns a reset progress callback.
+            get_download_progress_callback: Optional factory function that creates and returns a download progress callback.
 
         """
         logging_info(
@@ -774,6 +858,10 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             len(selected_params),
             self.current_file,
         )
+
+        # Get progress callbacks from factories if provided
+        progress_callback_for_reset = get_reset_progress_callback() if get_reset_progress_callback else None
+        progress_callback_for_download = get_download_progress_callback() if get_download_progress_callback else None
 
         # Upload parameters that require reset
         reset_happened = self.upload_parameters_that_require_reset_workflow(
@@ -791,7 +879,8 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
 
         if self._at_least_one_changed:
             # Re-download all parameters to validate
-            self.download_flight_controller_parameters(progress_callback_for_download)
+            # Note: Passing the callback directly, not the factory, since we already got it
+            self.download_flight_controller_parameters(lambda: progress_callback_for_download)
             param_upload_error = self._validate_uploaded_parameters(selected_params)
 
             if param_upload_error:
@@ -800,14 +889,14 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
                     _("Failed to upload the following parameters to the flight controller:\n")
                     + f"{(', ').join(param_upload_error)}",
                 ):
-                    # Retry the entire workflow
+                    # Retry the entire workflow - pass the factories again, not the callbacks
                     self.upload_selected_params_workflow(
                         selected_params,
                         ask_confirmation,
                         ask_retry_cancel,
                         show_error,
-                        progress_callback_for_reset,
-                        progress_callback_for_download,
+                        get_reset_progress_callback,
+                        get_download_progress_callback,
                     )
                 # If not retrying, continue without success message
             else:
