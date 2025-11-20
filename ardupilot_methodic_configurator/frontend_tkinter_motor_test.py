@@ -46,6 +46,7 @@ from ardupilot_methodic_configurator.data_model_motor_test import (
     THROTTLE_PCT_MAX,
     THROTTLE_PCT_MIN,
     FrameConfigurationError,
+    MotorStatusEvent,
     MotorTestDataModel,
     MotorTestExecutionError,
     MotorTestSafetyError,
@@ -116,11 +117,11 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self.batt_current_label: ttk.Label
         # Store image reference (PNG or other format)
         self._current_diagram_image: Optional[tk.PhotoImage] = None
-        self._first_motor_test = True  # Track if this is the first motor test
         self._frame_options_loaded = False  # Track if frame options have been loaded
         self._diagrams_path = ""  # Cache diagram path for performance
         self._diagram_needs_update = True  # Track if diagram needs to be updated
         self._content_frame: Optional[ttk.Frame] = None  # Store reference to content frame for widget searches
+        self._motor_grid_frame: Optional[ttk.Frame] = None  # Direct handle for motor grid frame
 
         self._create_widgets()
 
@@ -211,6 +212,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
         motor_grid = ttk.Frame(testing_frame)
         motor_grid.pack(pady=10)
+        self._motor_grid_frame = motor_grid
         self._create_motor_buttons(motor_grid)
 
         # --- Test Controls ---
@@ -315,55 +317,25 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def _update_motor_buttons_layout(self) -> None:
         """Re-create motor buttons if motor count changes."""
+        motor_grid = self._motor_grid_frame
+        if motor_grid is None:
+            logging_error(_("Could not find motor grid frame"))
+            return
+
         current_count = len(self.motor_buttons)
         required_count = self.model.motor_count
 
-        if current_count != required_count:
-            # Clear existing widgets
-            for button in self.motor_buttons:
-                button.master.destroy()
-            for combo in self.detected_comboboxes:
-                combo.master.destroy()
-            self.motor_buttons.clear()
-            self.motor_status_labels.clear()
-            self.detected_comboboxes.clear()
+        if current_count == required_count:
+            return
 
-            # Find the motor grid frame by searching for it
-            # This is more robust than hardcoded casting
-            def find_motor_grid(parent: Union[Frame, ttk.Frame]) -> Optional[Union[Frame, ttk.Frame]]:
-                """Find a suitable motor grid frame."""
-                for child in parent.winfo_children():
-                    if isinstance(child, (Frame, ttk.Frame)):
-                        # Check if this looks like our motor grid
-                        grid_children = child.winfo_children()
-                        if len(grid_children) == 0:  # Empty frame ready for motor buttons
-                            return child
-                        # Recursively search
-                        result = find_motor_grid(child)
-                        if result:
-                            return result
-                return None
+        for child in motor_grid.winfo_children():
+            child.destroy()
 
-            # Find the testing frame and create new motor grid
-            testing_frame = None
-            if self._content_frame:
-                for child in self._content_frame.winfo_children():
-                    try:
-                        if hasattr(child, "cget") and "Motor Order/Direction Configuration" in str(child.cget("text")):
-                            testing_frame = child
-                            break
-                    except tk.TclError:
-                        # Widget doesn't have a "text" option, skip it
-                        continue
+        self.motor_buttons.clear()
+        self.motor_status_labels.clear()
+        self.detected_comboboxes.clear()
 
-            if testing_frame and isinstance(testing_frame, (Frame, ttk.Frame)):
-                motor_grid = find_motor_grid(testing_frame)
-                if motor_grid:
-                    self._create_motor_buttons(motor_grid)
-                else:
-                    logging_error(_("Could not find motor grid frame"))
-            else:
-                logging_error(_("Could not find testing frame"))
+        self._create_motor_buttons(motor_grid)
 
     def _load_png_diagram(self, diagram_path: str) -> None:
         """Load and display a PNG motor diagram using BaseWindow.put_image_in_label()."""
@@ -452,14 +424,6 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             logging_warning(_("No frame type selected"))
             return
 
-        # Convert the selected key to the format expected by the data model
-        # The data model expects the display text (type name), not the code
-        current_frame_types = self.model.get_current_frame_class_types()
-        selected_type_code = int(selected_key)
-        selected_text = current_frame_types.get(selected_type_code, f"Type {selected_type_code}")
-
-        logging_info(_("Frame type changed: %(code)s (%(name)s)"), {"code": selected_key, "name": selected_text})
-
         try:
             # Create delayed progress windows that only show if operation takes more than 1 second
             reset_progress_window = ProgressWindow(
@@ -479,8 +443,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             reset_callback = DelayedProgressCallback(reset_progress_window.update_progress_bar, 1.0)
             connection_callback = DelayedProgressCallback(connection_progress_window.update_progress_bar, 1.0)
 
-            self.model.update_frame_type_from_selection(
-                selected_text,
+            self.model.update_frame_type_by_key(
+                selected_key,
                 reset_callback,
                 connection_callback,
                 extra_sleep_time=2,
@@ -560,7 +524,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
                 reset_progress_window = ProgressWindow(
                     self.root_window, _("Resetting Flight Controller"), _("Waiting for {} of {} seconds")
                 )
-                self.model.set_parameter("MOT_SPIN_ARM", new_val, reset_progress_window.update_progress_bar)
+                self.model.set_motor_spin_arm_value(new_val, reset_progress_window.update_progress_bar)
                 reset_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
             except (ParameterError, ValidationError) as e:
                 showerror(_("Error"), str(e))
@@ -577,7 +541,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         )
         if new_val is not None:
             try:
-                self.model.set_parameter("MOT_SPIN_MIN", new_val)
+                self.model.set_motor_spin_min_value(new_val)
             except (ParameterError, ValidationError) as e:
                 showerror(_("Error"), str(e))
 
@@ -588,27 +552,11 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             {"seq": self.model.motor_labels[test_sequence_nr], "num": motor_output_nr},
         )
 
-        # First-time safety confirmation
-        if self._first_motor_test and self.model.should_show_first_test_warning():
-            if not askyesno(_("Safety Confirmation"), self.model.get_safety_warning_message()):
-                return
-            self._first_motor_test = False
+        if not self._ensure_first_test_confirmation():
+            return
 
         try:
-            # Check if motor test is safe (includes voltage checks)
-            self.model.is_motor_test_safe()
-
-            # Validate test parameters
-            throttle_pct = self.model.get_test_throttle_pct()
-            duration = int(self.model.get_test_duration_s())
-
-            # Execute motor test
-            self.model.test_motor(test_sequence_nr, motor_output_nr, throttle_pct, duration)
-
-            self._update_motor_status(motor_output_nr, _("Command sent"), "green")
-
-            # Reset status after a short delay
-            self.root_window.after(2000, partial(self._update_motor_status, motor_output_nr, _("Ready"), "blue"))
+            self.model.run_single_motor_test(test_sequence_nr, motor_output_nr, self._handle_status_event)
 
         except MotorTestSafetyError as e:
             # Check if it's a voltage issue and provide specific guidance
@@ -631,31 +579,11 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         """Execute a test for all motors simultaneously."""
         logging_debug(_("Testing all motors"))
 
-        # First-time safety confirmation
-        if self._first_motor_test and self.model.should_show_first_test_warning():
-            if not askyesno(_("Safety Confirmation"), self.model.get_safety_warning_message()):
-                return
-            self._first_motor_test = False
+        if not self._ensure_first_test_confirmation():
+            return
 
         try:
-            # Check if motor test is safe
-            self.model.is_motor_test_safe()
-
-            # Validate test parameters
-            throttle_pct = self.model.get_test_throttle_pct()
-            duration = int(self.model.get_test_duration_s())
-
-            # Execute all motors test
-            self.model.test_all_motors(throttle_pct, duration)
-
-            for motor_number in range(1, self.model.motor_count + 1):
-                self._update_motor_status(motor_number, _("Command sent"), "green")
-
-                # Reset status after a short delay
-                self.root_window.after(
-                    2000,
-                    partial(self._update_motor_status, motor_number, _("Ready"), "blue"),
-                )
+            self.model.run_all_motors_test(self._handle_status_event)
 
         except MotorTestSafetyError as e:
             showwarning(_("Safety Check Failed"), str(e))
@@ -670,31 +598,11 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         """Execute a test for all motors in sequence."""
         logging_debug(_("Testing motors in sequence"))
 
-        # First-time safety confirmation
-        if self._first_motor_test and self.model.should_show_first_test_warning():
-            if not askyesno(_("Safety Confirmation"), self.model.get_safety_warning_message()):
-                return
-            self._first_motor_test = False
+        if not self._ensure_first_test_confirmation():
+            return
 
         try:
-            # Check if motor test is safe
-            self.model.is_motor_test_safe()
-
-            # Validate test parameters
-            throttle_pct = self.model.get_test_throttle_pct()
-            duration = int(self.model.get_test_duration_s())
-
-            # Execute sequential test
-            self.model.test_motors_in_sequence(throttle_pct, duration)
-
-            for motor_number in range(1, self.model.motor_count + 1):
-                self._update_motor_status(motor_number, _("Command sent"), "green")
-
-                # Reset status after a short delay
-                self.root_window.after(
-                    2000,
-                    partial(self._update_motor_status, motor_number, _("Ready"), "blue"),
-                )
+            self.model.run_sequential_motor_test(self._handle_status_event)
 
         except MotorTestSafetyError as e:
             showwarning(_("Safety Check Failed"), str(e))
@@ -710,10 +618,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         logging_info(_("Stopping all motors"))
 
         try:
-            self.model.stop_all_motors()
-            for motor_number in range(1, self.model.motor_count + 1):
-                self._update_motor_status(motor_number, _("Stop sent"), "red")
-            self.root_window.after(2000, self._reset_all_motor_status)
+            self.model.emergency_stop_motors(self._handle_status_event)
         except MotorTestExecutionError as e:
             showerror(_("Error"), str(e))
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -722,6 +627,29 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
     def _emergency_stop(self) -> None:
         """Emergency stop - alias for _stop_all_motors for test compatibility."""
         self._stop_all_motors()
+
+    def _ensure_first_test_confirmation(self) -> bool:
+        """Guard that the user acknowledged the first-time warning."""
+        if self.model.should_show_first_test_warning():
+            if not askyesno(_("Safety Confirmation"), self.model.get_safety_warning_message()):
+                return False
+            self.model.acknowledge_first_test_warning()
+        return True
+
+    def _handle_status_event(self, motor_number: int, event: MotorStatusEvent) -> None:
+        """Translate model status events into user-facing label updates."""
+        if event is MotorStatusEvent.COMMAND_SENT:
+            self._update_motor_status(motor_number, _("Command sent"), "green")
+        elif event is MotorStatusEvent.STOP_SENT:
+            self._update_motor_status(motor_number, _("Stop sent"), "red")
+        self._schedule_ready_reset(motor_number)
+
+    def _schedule_ready_reset(self, motor_number: int, delay_ms: int = 2000) -> None:
+        """Return a motor label to the Ready state after a delay."""
+        self.root_window.after(
+            delay_ms,
+            partial(self._update_motor_status, motor_number, _("Ready"), "blue"),
+        )
 
     def _update_motor_status(self, motor_number: int, status: str, color: str = "black") -> None:
         """
