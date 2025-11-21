@@ -48,9 +48,13 @@ class FlightControllerInfoPresenter:
         Returns:
             Dictionary of parameter default values
 
+        Note:
+            The flight controller's fc_parameters are updated internally by download_params().
+            We only need to store the default values for this window's use.
+
         """
-        fc_parameters, param_default_values = self.flight_controller.download_params(progress_callback)
-        self.flight_controller.fc_parameters = fc_parameters
+        _fc_parameters, param_default_values = self.flight_controller.download_params(progress_callback)
+        # Note: fc_parameters are already updated in the backend, no need to reassign
         self.param_default_values = param_default_values
         return param_default_values
 

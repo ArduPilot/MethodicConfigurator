@@ -16,7 +16,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-from ardupilot_methodic_configurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
+from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import (
     FlightControllerInfoPresenter,
@@ -32,7 +32,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info impo
 def configured_flight_controller() -> Mock:
     """Create a realistic mock flight controller with proper behavior for user testing."""
     mock_fc = Mock(spec=FlightController)
-    mock_fc.info = Mock(spec=BackendFlightcontrollerInfo)
+    mock_fc.info = Mock(spec=FlightControllerInfo)
 
     # Realistic flight controller information that users would see
     mock_fc.info.get_info.return_value = {

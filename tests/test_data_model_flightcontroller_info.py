@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for the backend_flightcontroller_info.py file.
+Tests for the data_model_flightcontroller_info.py file.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 from pymavlink import mavutil
 
-from ardupilot_methodic_configurator.backend_flightcontroller_info import BackendFlightcontrollerInfo
+from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 # pylint: disable=too-many-lines,protected-access
 
@@ -32,17 +32,17 @@ def mock_mavlink_enums(self, enums_dict=None) -> None:
         yield
 
 
-class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-methods
-    """Test class for BackendFlightcontrollerInfo."""
+class TestFlightcontrollerInfo:  # pylint: disable=too-many-public-methods
+    """Test class for FlightControllerInfo."""
 
     @pytest.fixture
-    def fc_info(self) -> BackendFlightcontrollerInfo:
-        """Fixture providing a BackendFlightcontrollerInfo instance."""
-        return BackendFlightcontrollerInfo()
+    def fc_info(self) -> FlightControllerInfo:
+        """Fixture providing a FlightControllerInfo instance."""
+        return FlightControllerInfo()
 
     @pytest.fixture
-    def fc_info_with_basic_data(self, fc_info) -> BackendFlightcontrollerInfo:
-        """Fixture providing a BackendFlightcontrollerInfo with basic data populated."""
+    def fc_info_with_basic_data(self, fc_info) -> FlightControllerInfo:
+        """Fixture providing a FlightControllerInfo with basic data populated."""
         fc_info.system_id = "1"
         fc_info.component_id = "2"
         fc_info.autopilot = "ArduPilot"
@@ -51,8 +51,8 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         return fc_info
 
     @pytest.fixture
-    def fc_info_with_complete_data(self, fc_info_with_basic_data) -> BackendFlightcontrollerInfo:
-        """Fixture providing a BackendFlightcontrollerInfo with complete data populated."""
+    def fc_info_with_complete_data(self, fc_info_with_basic_data) -> FlightControllerInfo:
+        """Fixture providing a FlightControllerInfo with complete data populated."""
         fc_info = fc_info_with_basic_data
         fc_info.firmware_type = "PX4-FMUv5"
         fc_info.flight_sw_version = "4.3.2"
@@ -102,7 +102,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         }
 
     def test_init(self, fc_info) -> None:
-        """Test the initial state of BackendFlightcontrollerInfo."""
+        """Test the initial state of FlightControllerInfo."""
         assert fc_info.system_id == ""
         assert fc_info.component_id == ""
         assert fc_info.is_supported is False
@@ -118,7 +118,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
 
     def test_set_autopilot(self, fc_info) -> None:
         """Test setting autopilot type."""
-        with patch.object(fc_info, "_BackendFlightcontrollerInfo__decode_mav_autopilot", return_value="ArduPilot"):
+        with patch.object(fc_info, "_FlightControllerInfo__decode_mav_autopilot", return_value="ArduPilot"):
             fc_info.set_autopilot(mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA)
             assert fc_info.autopilot == "ArduPilot"
             assert fc_info.is_supported is True
@@ -129,8 +129,8 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
     def test_set_type(self, fc_info) -> None:
         """Test setting vehicle type."""
         with (
-            patch.object(fc_info, "_BackendFlightcontrollerInfo__classify_vehicle_type", return_value="ArduCopter"),
-            patch.object(fc_info, "_BackendFlightcontrollerInfo__decode_mav_type", return_value="Quadrotor"),
+            patch.object(fc_info, "_FlightControllerInfo__classify_vehicle_type", return_value="ArduCopter"),
+            patch.object(fc_info, "_FlightControllerInfo__decode_mav_type", return_value="Quadrotor"),
         ):
             fc_info.set_type(mavutil.mavlink.MAV_TYPE_QUADROTOR)
             assert fc_info.vehicle_type == "ArduCopter"
@@ -138,7 +138,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
 
     def test_set_flight_sw_version(self, fc_info) -> None:
         """Test setting flight software version."""
-        with patch.object(fc_info, "_BackendFlightcontrollerInfo__decode_flight_sw_version", return_value=(4, 3, 2, "beta")):
+        with patch.object(fc_info, "_FlightControllerInfo__decode_flight_sw_version", return_value=(4, 3, 2, "beta")):
             fc_info.set_flight_sw_version(0)
             assert fc_info.flight_sw_version == "4.3.2"
             assert fc_info.flight_sw_version_and_type == "4.3.2 beta"
@@ -158,7 +158,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         self, version_code, expected_major, expected_minor, expected_patch, expected_type
     ) -> None:
         """Test decoding flight software version with parameterized values."""
-        major, minor, patch, fw_type = BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__decode_flight_sw_version(  # pylint: disable=redefined-outer-name
+        major, minor, patch, fw_type = FlightControllerInfo._FlightControllerInfo__decode_flight_sw_version(  # pylint: disable=redefined-outer-name
             version_code
         )
         assert major == expected_major
@@ -174,13 +174,13 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         mock_mcu_dict = {1: ["STM32"]}
 
         monkeypatch.setattr(
-            "ardupilot_methodic_configurator.backend_flightcontroller_info.APJ_BOARD_ID_NAME_DICT", mock_name_dict
+            "ardupilot_methodic_configurator.data_model_flightcontroller_info.APJ_BOARD_ID_NAME_DICT", mock_name_dict
         )
         monkeypatch.setattr(
-            "ardupilot_methodic_configurator.backend_flightcontroller_info.APJ_BOARD_ID_VENDOR_DICT", mock_vendor_dict
+            "ardupilot_methodic_configurator.data_model_flightcontroller_info.APJ_BOARD_ID_VENDOR_DICT", mock_vendor_dict
         )
         monkeypatch.setattr(
-            "ardupilot_methodic_configurator.backend_flightcontroller_info.APJ_BOARD_ID_MCU_SERIES_DICT", mock_mcu_dict
+            "ardupilot_methodic_configurator.data_model_flightcontroller_info.APJ_BOARD_ID_MCU_SERIES_DICT", mock_mcu_dict
         )
 
         # Test with known board ID
@@ -232,9 +232,11 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         mock_vendor_dict = {0x1234: ["Test Vendor"]}
         mock_product_dict = {(0x1234, 0x5678): ["Test Product"]}
 
-        monkeypatch.setattr("ardupilot_methodic_configurator.backend_flightcontroller_info.VID_VENDOR_DICT", mock_vendor_dict)
         monkeypatch.setattr(
-            "ardupilot_methodic_configurator.backend_flightcontroller_info.VID_PID_PRODUCT_DICT", mock_product_dict
+            "ardupilot_methodic_configurator.data_model_flightcontroller_info.VID_VENDOR_DICT", mock_vendor_dict
+        )
+        monkeypatch.setattr(
+            "ardupilot_methodic_configurator.data_model_flightcontroller_info.VID_PID_PRODUCT_DICT", mock_product_dict
         )
 
         # Test with known IDs
@@ -263,7 +265,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
     def test_set_capabilities(self, fc_info) -> None:
         """Test setting capabilities."""
         with patch.object(
-            fc_info, "_BackendFlightcontrollerInfo__decode_flight_capabilities", return_value={"FTP": "File Transfer Protocol"}
+            fc_info, "_FlightControllerInfo__decode_flight_capabilities", return_value={"FTP": "File Transfer Protocol"}
         ):
             # Test with FTP capability enabled
             ftp_cap = mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_FTP
@@ -286,7 +288,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         mock_enums = {"MAV_PROTOCOL_CAPABILITY": {1: mock_capability}}
 
         with patch.object(mavutil.mavlink, "enums", mock_enums):
-            result = BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__decode_flight_capabilities(1)
+            result = FlightControllerInfo._FlightControllerInfo__decode_flight_capabilities(1)
             assert "FTP" in result
             assert result["FTP"] == "File Transfer Protocol"
 
@@ -300,35 +302,30 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
             patch.object(mavutil.mavlink, "enums", {"MAV_TYPE": {2: mock_entry}}),
             patch.object(mavutil.mavlink, "EnumEntry", return_value=mock_entry),
         ):
-            result = BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__decode_mav_type(2)
+            result = FlightControllerInfo._FlightControllerInfo__decode_mav_type(2)
             assert result == "Quadcopter"
 
             # Test with unknown type
-            result = BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__decode_mav_type(99)
+            result = FlightControllerInfo._FlightControllerInfo__decode_mav_type(99)
             assert result == "Quadcopter"  # Should be "Unknown type" but our mock returns "Quadcopter"
 
     def test_classify_vehicle_type(self) -> None:
         """Test classifying vehicle type from MAV type."""
         # Test known types
         assert (
-            BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__classify_vehicle_type(mavutil.mavlink.MAV_TYPE_QUADROTOR)
+            FlightControllerInfo._FlightControllerInfo__classify_vehicle_type(mavutil.mavlink.MAV_TYPE_QUADROTOR)
             == "ArduCopter"
         )
         assert (
-            BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__classify_vehicle_type(
-                mavutil.mavlink.MAV_TYPE_FIXED_WING
-            )
+            FlightControllerInfo._FlightControllerInfo__classify_vehicle_type(mavutil.mavlink.MAV_TYPE_FIXED_WING)
             == "ArduPlane"
         )
         assert (
-            BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__classify_vehicle_type(
-                mavutil.mavlink.MAV_TYPE_GROUND_ROVER
-            )
-            == "Rover"
+            FlightControllerInfo._FlightControllerInfo__classify_vehicle_type(mavutil.mavlink.MAV_TYPE_GROUND_ROVER) == "Rover"
         )
 
         # Test unknown type
-        assert BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__classify_vehicle_type(999) == ""
+        assert FlightControllerInfo._FlightControllerInfo__classify_vehicle_type(999) == ""
 
     def test_get_info(self, fc_info) -> None:
         """Test getting all flight controller information."""
@@ -360,7 +357,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
 
         with patch.object(mavutil.mavlink, "enums", mock_enums):
             # Test with both capabilities enabled (bits 0 and 1 set, value = 3)
-            result = BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__decode_flight_capabilities(3)
+            result = FlightControllerInfo._FlightControllerInfo__decode_flight_capabilities(3)
             assert len(result) == 2
             assert "FTP" in result
             assert "SET_ATTITUDE_TARGET" in result
@@ -384,7 +381,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         mock_enums = {"MAV_PROTOCOL_CAPABILITY": {1: mock_cap}}
 
         with patch.object(mavutil.mavlink, "enums", mock_enums):
-            result = BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__decode_flight_capabilities(1)
+            result = FlightControllerInfo._FlightControllerInfo__decode_flight_capabilities(1)
             assert "BIT0" in result
             assert result["BIT0"] == mock_cap
 
@@ -400,7 +397,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         mock_enums = {"MAV_PROTOCOL_CAPABILITY": {high_bit_value: mock_cap}}
 
         with patch.object(mavutil.mavlink, "enums", mock_enums):
-            result = BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__decode_flight_capabilities(high_bit_value)
+            result = FlightControllerInfo._FlightControllerInfo__decode_flight_capabilities(high_bit_value)
             assert "HIGH_BIT" in result
             assert result["HIGH_BIT"] == "High bit capability"
 
@@ -409,8 +406,8 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         # Use actual decode implementation rather than mocking
         with patch.object(
             fc_info,
-            "_BackendFlightcontrollerInfo__decode_mav_autopilot",
-            side_effect=BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__decode_mav_autopilot,
+            "_FlightControllerInfo__decode_mav_autopilot",
+            side_effect=FlightControllerInfo._FlightControllerInfo__decode_mav_autopilot,
         ):
             # Test with ArduPilot
             fc_info.set_autopilot(mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA)
@@ -448,7 +445,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
             (mavutil.mavlink.MAV_TYPE_VTOL_DUOROTOR, "ArduPlane"),
             (mavutil.mavlink.MAV_TYPE_VTOL_QUADROTOR, "ArduPlane"),
         ]:
-            vehicle_type = BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__classify_vehicle_type(mav_type)
+            vehicle_type = FlightControllerInfo._FlightControllerInfo__classify_vehicle_type(mav_type)
             assert vehicle_type == expected_vehicle, (
                 f"Failed for MAV_TYPE {mav_type}, expected {expected_vehicle}, got {vehicle_type}"
             )
@@ -539,18 +536,18 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
     )
     def test_decode_mav_autopilot_with_valid_values(self, autopilot_id, expected_text) -> None:
         """Test decoding various valid MAV_AUTOPILOT values."""
-        result = BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__decode_mav_autopilot(autopilot_id)
+        result = FlightControllerInfo._FlightControllerInfo__decode_mav_autopilot(autopilot_id)
         assert expected_text in result.lower(), f"Failed for autopilot ID {autopilot_id}"
 
     def test_decode_flight_capabilities_empty(self) -> None:
         """Test decoding with no capabilities set (0)."""
-        result = BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__decode_flight_capabilities(0)
+        result = FlightControllerInfo._FlightControllerInfo__decode_flight_capabilities(0)
         assert result == {}
 
     def test_set_capabilities_invalid_bit(self, fc_info) -> None:
         """Test setting capabilities with invalid bit patterns."""
         # Set an invalid bit pattern that doesn't match any known capability
-        with patch.object(fc_info, "_BackendFlightcontrollerInfo__decode_flight_capabilities", return_value={}):
+        with patch.object(fc_info, "_FlightControllerInfo__decode_flight_capabilities", return_value={}):
             fc_info.set_capabilities(1 << 50)  # Way beyond 32 bits
             assert fc_info.capabilities == {}
             assert fc_info.is_mavftp_supported is False
@@ -561,7 +558,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
 
         with patch.object(mavutil.mavlink, "EnumEntry", mock_enum_entry):
             # When the dictionary lookup fails, it should use the EnumEntry fallback
-            result = BackendFlightcontrollerInfo._BackendFlightcontrollerInfo__decode_mav_type(999)
+            result = FlightControllerInfo._FlightControllerInfo__decode_mav_type(999)
             assert "Unknown" in result
             # Verify EnumEntry was called with the expected fallback values
             mock_enum_entry.assert_called_once_with("None", "Unknown type")
@@ -576,7 +573,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         """Test vendor derivation from board ID when current vendor is Unknown."""
         mock_vendor_dict = {42: ["CubePilot"]}
         monkeypatch.setattr(
-            "ardupilot_methodic_configurator.backend_flightcontroller_info.APJ_BOARD_ID_VENDOR_DICT", mock_vendor_dict
+            "ardupilot_methodic_configurator.data_model_flightcontroller_info.APJ_BOARD_ID_VENDOR_DICT", mock_vendor_dict
         )
 
         # Set vendor to Unknown first
@@ -603,7 +600,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
     )
     def test_set_capabilities_ftp_detection(self, fc_info, input_capabilities, expected_mavftp) -> None:
         """Test FTP capability detection."""
-        with patch.object(fc_info, "_BackendFlightcontrollerInfo__decode_flight_capabilities", return_value={}):
+        with patch.object(fc_info, "_FlightControllerInfo__decode_flight_capabilities", return_value={}):
             fc_info.set_capabilities(input_capabilities)
             assert fc_info.is_mavftp_supported is expected_mavftp
 
@@ -616,7 +613,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         Then: All flight controller attributes are logged at INFO level
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
         backend_info.flight_sw_version_and_type = "4.5.6 official"
         backend_info.flight_custom_version = "abc12345"
         backend_info.os_custom_version = "def67890"
@@ -627,7 +624,7 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
         backend_info.product = "Test FC"
 
         # When
-        with patch("ardupilot_methodic_configurator.backend_flightcontroller_info.logging_info") as mock_logging_info:
+        with patch("ardupilot_methodic_configurator.data_model_flightcontroller_info.logging_info") as mock_logging_info:
             backend_info.log_flight_controller_info()
 
         # Then - verify all expected log calls were made
@@ -647,20 +644,20 @@ class TestBackendFlightcontrollerInfo:  # pylint: disable=too-many-public-method
 # ==================== BACKEND FORMATTING TESTS ====================
 
 
-class TestBackendFlightcontrollerInfoFormatting:
+class TestFlightcontrollerInfoFormatting:
     """
-    Test the display formatting logic in BackendFlightcontrollerInfo.
+    Test the display formatting logic in FlightControllerInfo.
 
     Tests focus on ensuring different data types are correctly
     formatted for display in the user interface.
     """
 
     @pytest.fixture
-    def flight_controller_info(self) -> BackendFlightcontrollerInfo:
+    def flight_controller_info(self) -> FlightControllerInfo:
         """Create a flight controller info instance for testing."""
-        return BackendFlightcontrollerInfo()
+        return FlightControllerInfo()
 
-    def test_user_sees_string_values_formatted_correctly(self, flight_controller_info: BackendFlightcontrollerInfo) -> None:
+    def test_user_sees_string_values_formatted_correctly(self, flight_controller_info: FlightControllerInfo) -> None:
         """
         Test that string values are displayed as-is.
 
@@ -677,9 +674,7 @@ class TestBackendFlightcontrollerInfoFormatting:
         # Then
         assert result == "Test String Value"
 
-    def test_user_sees_dictionary_values_as_comma_separated_keys(
-        self, flight_controller_info: BackendFlightcontrollerInfo
-    ) -> None:
+    def test_user_sees_dictionary_values_as_comma_separated_keys(self, flight_controller_info: FlightControllerInfo) -> None:
         """
         Test that dictionary values are displayed as comma-separated keys.
 
@@ -698,7 +693,7 @@ class TestBackendFlightcontrollerInfoFormatting:
 
     @pytest.mark.parametrize("empty_value", [None, "", {}])
     def test_user_sees_na_for_empty_values(
-        self, flight_controller_info: BackendFlightcontrollerInfo, empty_value: Union[None, str, dict]
+        self, flight_controller_info: FlightControllerInfo, empty_value: Union[None, str, dict]
     ) -> None:
         """
         Test that empty values are displayed as "N/A".
@@ -713,9 +708,7 @@ class TestBackendFlightcontrollerInfoFormatting:
         # Then
         assert "N/A" in result  # Should return translated "N/A"
 
-    def test_user_sees_single_key_dictionary_formatted_correctly(
-        self, flight_controller_info: BackendFlightcontrollerInfo
-    ) -> None:
+    def test_user_sees_single_key_dictionary_formatted_correctly(self, flight_controller_info: FlightControllerInfo) -> None:
         """
         Test that single-key dictionaries are handled correctly.
 
@@ -736,9 +729,9 @@ class TestBackendFlightcontrollerInfoFormatting:
 # ==================== BACKEND SETTER METHODS TESTS ====================
 
 
-class TestBackendFlightcontrollerInfoSetters:
+class TestFlightcontrollerInfoSetters:
     """
-    Test the setter methods in BackendFlightcontrollerInfo.
+    Test the setter methods in FlightControllerInfo.
 
     Tests focus on ensuring the various set_* methods correctly
     process and store flight controller information.
@@ -753,7 +746,7 @@ class TestBackendFlightcontrollerInfoSetters:
         Then: Values are stored correctly
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
 
         # When
         backend_info.set_system_id_and_component_id("1", "1")
@@ -771,7 +764,7 @@ class TestBackendFlightcontrollerInfoSetters:
         Then: The supported flag is set to True
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
 
         # When
         backend_info.set_autopilot(mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA)
@@ -789,7 +782,7 @@ class TestBackendFlightcontrollerInfoSetters:
         Then: The supported flag is set to False
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
 
         # When
         backend_info.set_autopilot(mavutil.mavlink.MAV_AUTOPILOT_PX4)
@@ -806,7 +799,7 @@ class TestBackendFlightcontrollerInfoSetters:
         Then: The vehicle type is correctly classified
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
 
         # When
         backend_info.set_type(mavutil.mavlink.MAV_TYPE_QUADROTOR)
@@ -824,7 +817,7 @@ class TestBackendFlightcontrollerInfoSetters:
         Then: The version is correctly formatted as major.minor.patch
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
         # Version encoding: major=4, minor=4, patch=4, fw_type=12 (undefined)
         # This creates a version like 4.4.4
         version_int = (4 << 24) | (4 << 16) | (4 << 8) | 12
@@ -845,7 +838,7 @@ class TestBackendFlightcontrollerInfoSetters:
         Then: Board version and APJ board ID are correctly extracted
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
         # Board version with APJ board ID = 1000, board version = 0x1234
         board_version_int = (1000 << 16) | 0x1234
 
@@ -865,7 +858,7 @@ class TestBackendFlightcontrollerInfoSetters:
         Then: The Git hash is correctly formatted and stored
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
         git_hash = [0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38]  # ASCII for "12345678"
 
         # When
@@ -883,7 +876,7 @@ class TestBackendFlightcontrollerInfoSetters:
         Then: The OS Git hash is correctly formatted and stored
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
         os_git_hash = [0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68]  # ASCII for "abcdefgh"
 
         # When
@@ -901,7 +894,7 @@ class TestBackendFlightcontrollerInfoSetters:
         Then: Vendor and product information are correctly set
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
         vendor_id = 0x26AC  # ArduPilot vendor ID
         product_id = 0x0001
 
@@ -923,7 +916,7 @@ class TestBackendFlightcontrollerInfoSetters:
         Then: Capabilities are correctly decoded and stored
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
         # Set some known capability bits
         capabilities = mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_PARAM_FLOAT
 
@@ -938,7 +931,7 @@ class TestBackendFlightcontrollerInfoSetters:
 # ==================== BACKEND STATIC DECODER TESTS ====================
 
 
-class TestBackendFlightcontrollerInfoDecoders:
+class TestFlightcontrollerInfoDecoders:
     """
     Test the behavior of backend methods that use static decoders.
 
@@ -955,7 +948,7 @@ class TestBackendFlightcontrollerInfoDecoders:
         Then: The version is correctly decoded and formatted
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
         # Version encoding that should result in a recognizable version
         version_int = (4 << 24) | (5 << 16) | (6 << 8) | 255  # 4.5.6 official
 
@@ -975,7 +968,7 @@ class TestBackendFlightcontrollerInfoDecoders:
         Then: The type is correctly decoded and classified
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
 
         # When
         backend_info.set_type(mavutil.mavlink.MAV_TYPE_QUADROTOR)
@@ -993,7 +986,7 @@ class TestBackendFlightcontrollerInfoDecoders:
         Then: The autopilot is correctly decoded
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
 
         # When
         backend_info.set_autopilot(mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA)
@@ -1011,7 +1004,7 @@ class TestBackendFlightcontrollerInfoDecoders:
         Then: The capabilities are correctly decoded into a dictionary
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
         capabilities = mavutil.mavlink.MAV_PROTOCOL_CAPABILITY_PARAM_FLOAT
 
         # When
@@ -1032,7 +1025,7 @@ class TestBackendFlightcontrollerInfoDecoders:
         Then: They are correctly classified to expected vehicle types
         """
         # Given
-        backend_info = BackendFlightcontrollerInfo()
+        backend_info = FlightControllerInfo()
         test_cases = [
             (mavutil.mavlink.MAV_TYPE_QUADROTOR, "ArduCopter"),
             (mavutil.mavlink.MAV_TYPE_FIXED_WING, "ArduPlane"),

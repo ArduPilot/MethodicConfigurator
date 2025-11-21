@@ -4,3 +4,4 @@
                 "Version": "LAF"
              datas= [],
                ardupilot_methodic_configuratorAny.datas,
+    critical_param_prefixes = ["FRAME", "BATT", "COMPASS", "SERVO", "MOT"]
