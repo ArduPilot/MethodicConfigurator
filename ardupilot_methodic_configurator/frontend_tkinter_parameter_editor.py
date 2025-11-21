@@ -53,7 +53,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText,
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
-from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugin_factory_ui import plugin_factory_ui
+from ardupilot_methodic_configurator.plugin_factory_workflow import plugin_factory_workflow
 
 # pylint: disable=too-many-lines
 
@@ -577,7 +578,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return
 
         # Check if plugin is registered
-        if not plugin_factory.is_registered(plugin_name):
+        if not plugin_factory_ui.is_registered(plugin_name):
             error_msg = _("Unknown plugin: {plugin_name}").format(plugin_name=plugin_name)
             ttk.Label(parent_frame, text=error_msg, foreground="red").pack()
             logging_error(error_msg)
@@ -593,7 +594,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # Create plugin using factory with error handling
         try:
-            plugin_view = plugin_factory.create(plugin_name, parent_frame, model, self)
+            plugin_view = plugin_factory_ui.create(plugin_name, parent_frame, model, self)
             if plugin_view is None:
                 msg = _("Failed to create plugin: {plugin_name}").format(plugin_name=plugin_name)
                 logging_error(msg)
@@ -675,39 +676,92 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             instructions_text,
         )
 
-    def __do_tempcal_imu(self, selected_file: str) -> None:
+    def __run_workflow_plugin(self, selected_file: str, plugin: dict) -> None:
         """
-        Handle IMU temperature calibration using the new callback-based workflow.
+        Execute a workflow plugin for the selected file.
 
-        This method creates GUI-specific callback functions and injects them into
-        the business logic workflow method, achieving proper separation of concerns.
+        Workflow plugins are triggered actions that run when a specific file is selected.
+        Unlike UI plugins (which create persistent views), workflow plugins:
+        1. Create a data model (business logic)
+        2. Create a workflow coordinator (UI logic)
+        3. Execute the workflow once and complete
+
+        Args:
+            selected_file: The currently selected parameter file
+            plugin: Plugin configuration dict with 'name' and 'placement' keys
+
         """
+        plugin_name = plugin.get("name")
+        if not plugin_name:
+            logging_warning(_("Workflow plugin configuration missing name"))
+            return
 
-        def select_file(title: str, filetypes: list[str]) -> Optional[str]:  # noqa: UP045
-            """GUI callback for file selection dialog."""
-            return filedialog.askopenfilename(title=title, filetypes=[(_("ArduPilot binary log files"), filetypes)])
+        # Check if plugin is registered
+        if not plugin_factory_workflow.is_registered(plugin_name):
+            error_msg = _("Unknown workflow plugin: {plugin_name}").format(plugin_name=plugin_name)
+            logging_warning(error_msg)
+            return
 
-        # Create progress window for the calibration
-        self.tempcal_imu_progress_window = ProgressWindow(
+        # File open window for tempcal_imu workflow must passed to the data model to make testing code simpler
+        def select_file_callback(title: str, filetypes: list[tuple[str, list[str]]]) -> str | None:
+            """Wrapper for filedialog.askopenfilename matching expected signature."""
+            return filedialog.askopenfilename(title=title, filetypes=filetypes)
+
+        # Progress window for tempcal_imu workflow must passed to the data model to make testing code simpler
+        progress_win = ProgressWindow(
             self.root,
             _("Reading IMU calibration messages"),
             _("Please wait, this can take a long time"),
             only_show_when_update_progress_called=True,
         )
 
-        try:
-            # Inject GUI callbacks into business logic workflow
-            _success = self.configuration_manager.handle_imu_temperature_calibration_workflow(
-                selected_file,
-                ask_user_confirmation=ask_yesno_popup,
-                select_file=select_file,
-                show_warning=show_warning_popup,
-                show_error=show_error_popup,
-                progress_callback=self.tempcal_imu_progress_window.update_progress_bar_300_pct,
-            )
+        def cleanup_progress() -> None:
+            """Cleanup callback to destroy progress window."""
+            progress_win.destroy()
 
-        finally:
-            self.tempcal_imu_progress_window.destroy()
+        # Step 1: Create the data model (business logic layer)
+        # Pass GUI callbacks for dependency injection
+        model = self.configuration_manager.create_plugin_data_model(
+            plugin_name,
+            step_filename=selected_file,
+            ask_confirmation=ask_yesno_popup,
+            select_file=select_file_callback,
+            show_warning=show_warning_popup,
+            show_error=show_error_popup,
+            progress_callback=progress_win.update_progress_bar_300_pct,
+            cleanup_callback=cleanup_progress,
+        )
+        if model is None:
+            cleanup_progress()
+            logging_warning(_("Failed to create data model for workflow plugin: %s"), plugin_name)
+            return
+
+        # Step 2: Create the workflow coordinator (UI coordination layer)
+        # The factory creates a coordinator that knows how to orchestrate the workflow
+        workflow_coordinator = plugin_factory_workflow.create(plugin_name, self.root, model)
+        if workflow_coordinator is None:
+            cleanup_progress()
+            logging_warning(_("Failed to create workflow coordinator for plugin: %s"), plugin_name)
+            return
+
+        # Step 3: Execute the workflow
+        # The coordinator handles all user interaction and workflow execution
+        # Note: cleanup is handled by the data model's finally block in run_calibration()
+        try:
+            if hasattr(workflow_coordinator, "run_workflow"):
+                workflow_coordinator.run_workflow()  # pyright: ignore[reportAttributeAccessIssue]
+            else:
+                logging_warning(_("Workflow coordinator for %s does not have a run_workflow() method"), plugin_name)
+                show_error_popup(
+                    _("Plugin Error"),
+                    _("Workflow plugin {plugin_name} is misconfigured").format(plugin_name=plugin_name),
+                )
+        except Exception as e:  # pylint: disable=broad-except
+            if isinstance(e, SystemExit):
+                raise  # Allow SystemExit to propagate
+            logging_error(_("Error executing workflow plugin %s: %s"), plugin_name, str(e))
+            error_message = _("Failed to execute {plugin_name}: {error}").format(plugin_name=plugin_name, error=str(e))
+            show_error_popup(_("Workflow Failed"), error_message)
 
     def __handle_dialog_choice(self, result: list, dialog: tk.Toplevel, choice: ExperimentChoice) -> None:
         result.append(choice)
@@ -850,7 +904,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._update_progress_bar_from_file(selected_file)
         if self.configuration_manager.current_file != selected_file or forced:
             self.write_changes_to_intermediate_parameter_file()
-            self.__do_tempcal_imu(selected_file)
+
+            # Check if this file has a workflow plugin
+            plugin = self.configuration_manager.get_plugin(selected_file)
+            if plugin and plugin.get("placement") == "workflow":
+                self.__run_workflow_plugin(selected_file, plugin)
+
             # open the documentation of the next step in the browser,
             # before giving the user the option to close the SW in the __should_copy_fc_values_to_file method
             if self.documentation_frame.get_auto_open_documentation_in_browser() or self.gui_complexity == "simple":
@@ -865,9 +924,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.documentation_frame.refresh_documentation_labels()
             self.documentation_frame.update_why_why_now_tooltip()
 
-            # Update plugin layout if needed
-            plugin = self.configuration_manager.get_plugin(selected_file)
-            self.__update_plugin_layout(plugin)
+            # Update plugin layout (handles None to clear plugins, and skips workflow plugins)
+            if not plugin or plugin.get("placement") != "workflow":
+                self.__update_plugin_layout(plugin)
 
             self.repopulate_parameter_table(regenerate_from_disk=True)
             self._update_skip_button_state()

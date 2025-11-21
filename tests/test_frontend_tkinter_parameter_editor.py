@@ -249,7 +249,7 @@ class TestParameterEditorWindow:
         frame_mock = mock_frame.return_value
         frame_mock.pack.assert_called_once_with(pady=10)
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory_ui")
     def test_load_plugin_creates_motor_test_view_when_model_available(self, mock_factory, parameter_editor) -> None:
         """
         Test that __load_plugin creates plugin view using factory when data model is available.
@@ -279,7 +279,7 @@ class TestParameterEditorWindow:
             mock_factory.create.assert_called_once_with("motor_test", mock_parent_frame, mock_model, parameter_editor)
             mock_plugin_view.pack.assert_called_once()
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory_ui")
     def test_load_plugin_shows_error_message_when_model_creation_fails(self, mock_factory, parameter_editor) -> None:
         """
         Test that __load_plugin shows error message when data model creation fails.
@@ -307,7 +307,7 @@ class TestParameterEditorWindow:
             mock_parent_frame.children = []  # Simulate ttk.Frame behavior
             # The actual label creation happens inside the method
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory_ui")
     @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Label")
     def test_load_plugin_shows_error_when_model_creation_returns_none(
         self, mock_label, mock_factory, parameter_editor
@@ -335,7 +335,7 @@ class TestParameterEditorWindow:
             mock_label.assert_called_with(mock_parent_frame, text="Plugin requires flight controller connection")
             mock_label.return_value.pack.assert_called_once()
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory_ui")
     def test_load_plugin_shows_error_for_unknown_plugin(self, mock_factory, parameter_editor) -> None:
         """
         Test that __load_plugin shows error message for unknown plugin names.
@@ -398,7 +398,7 @@ class TestParameterEditorWindow:
             # Verify current_plugin was updated to None
             assert parameter_editor.current_plugin is None
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory_ui")
     def test_load_plugin_handles_factory_exception(self, mock_factory, parameter_editor) -> None:
         """
         Test that __load_plugin handles exceptions from the plugin factory gracefully.
@@ -428,7 +428,7 @@ class TestParameterEditorWindow:
                 assert "foreground" in call_args[1]
                 assert call_args[1]["foreground"] == "red"
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory_ui")
     def test_switching_between_two_plugin_files_calls_lifecycle_hooks(self, mock_factory, parameter_editor) -> None:
         """
         Test that switching between two different plugin files calls lifecycle hooks properly.
