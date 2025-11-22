@@ -451,6 +451,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
                 timeout=timeout,
                 retries=retries,
                 progress_callback=progress_callback,
+                autoreconnect=True,
             )
             logging_debug(_("Waiting for MAVLink heartbeats..."))
             if not self.master:
