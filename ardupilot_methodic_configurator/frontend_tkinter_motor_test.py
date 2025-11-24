@@ -137,7 +137,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
     def _create_widgets(self) -> None:  # pylint: disable=too-many-statements # noqa: PLR0915
         """Create and place widgets in the frame."""
         # Main frame
-        main_frame = ScrollFrame(self.parent)
+        main_frame = ScrollFrame(self)
         main_frame.pack(fill="both", expand=True)
         content_frame = main_frame.view_port
         self._content_frame = content_frame  # Store reference for later use
@@ -187,7 +187,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
         ttk.Label(controls_frame, text=_("Throttle:")).pack(side="left", padx=4)
         self.throttle_spinbox = ttk.Spinbox(
-            controls_frame, from_=THROTTLE_PCT_MIN, to=THROTTLE_PCT_MAX, increment=1, width=3, command=self._on_throttle_change
+            controls_frame, from_=THROTTLE_PCT_MIN, to=THROTTLE_PCT_MAX, increment=1, width=2, command=self._on_throttle_change
         )
         self.throttle_spinbox.pack(side="left", padx=2)
         # Bind events to capture manual text entry completion
@@ -197,7 +197,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
         ttk.Label(controls_frame, text=_("Duration:")).pack(side="left", padx=4)
         self.duration_spinbox = ttk.Spinbox(
-            controls_frame, from_=DURATION_S_MIN, to=DURATION_S_MAX, increment=0.5, width=4, command=self._on_duration_change
+            controls_frame, from_=DURATION_S_MIN, to=DURATION_S_MAX, increment=0.5, width=3, command=self._on_duration_change
         )
         self.duration_spinbox.pack(side="left", padx=2)
         # Bind events to capture manual text entry completion
@@ -290,7 +290,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self._update_motor_buttons_layout()
         self._update_battery_status()
         self._update_spinbox_values()
-        self.parent.after(1000, self._update_view)  # Schedule periodic update
+        self.after(1000, self._update_view)  # Schedule periodic update
 
     def _update_spinbox_values(self) -> None:
         """Update spinbox values from the data model only if not currently being edited."""
