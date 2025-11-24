@@ -61,9 +61,9 @@ def mock_flight_controller() -> MagicMock:
     fc.stop_all_motors.return_value = (True, "")
 
     # Configure set_param to update fc_parameters and return success
-    def set_param_side_effect(param_name: str, value: float) -> bool:
+    def set_param_side_effect(param_name: str, value: float) -> tuple[bool, str]:
         fc.fc_parameters[param_name] = value
-        return True
+        return (True, "")
 
     fc.set_param.side_effect = set_param_side_effect
 

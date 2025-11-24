@@ -14,6 +14,8 @@ import contextlib
 import json
 import logging
 import os
+import platform
+import select
 import signal
 import subprocess
 import time
@@ -256,18 +258,35 @@ class SITLManager:
         self.sitl_binary = sitl_binary or os.environ.get("SITL_BINARY")
         self.process: Optional[subprocess.Popen] = None
         self.connection_string = "tcp:127.0.0.1:5760"
+        self._ready = False
 
     def is_available(self) -> bool:
         """Check if SITL binary is available."""
         return self.sitl_binary is not None and Path(self.sitl_binary).exists()
 
-    def start(self) -> bool:  # pylint: disable=too-many-return-statements # noqa: PLR0911
+    def is_running(self) -> bool:
+        """Check if SITL process is currently running."""
+        return self.process is not None and self.process.poll() is None
+
+    def ensure_running(self) -> bool:
+        """Ensure the SITL process is running, starting it if necessary."""
+        if self.is_running() and self._ready:
+            return True
+        return self.start()
+
+    def start(self) -> bool:  # pylint: disable=too-many-return-statements, too-many-branches, too-many-statements, too-many-locals # noqa: PLR0911, PLR0915
         """Start SITL process."""
+        if self.is_running():
+            logging.info("SITL already running, reusing existing instance")
+            return True
+
         if not self.is_available():
             return False
 
         # Kill any existing SITL processes
         self.stop()
+
+        self._ready = False
 
         if self.sitl_binary is None:
             return False
@@ -284,71 +303,157 @@ class SITLManager:
         if not any(keyword in sitl_path.name.lower() for keyword in ["arducopter", "sitl", "copter"]):
             logging.warning("SITL binary name looks suspicious: %s", sitl_path.name)
 
-        cmd = [
-            self.sitl_binary,
+        # Build SITL command
+        sitl_args = [
             "--model",
             "quad",
             "--home",
             "40.071374,-105.229930,1440,0",  # Random location
             "--defaults",
-            f"{Path(self.sitl_binary).parent}/copter.parm",
+            "copter.parm",  # Relative to SITL binary directory
             "--sysid",
             "1",
             "--speedup",
-            "10",  # Speed up simulation for testing
+            "1",  # Real-time for better connection stability on Windows/WSL
         ]
 
-        try:
+        # On Windows, run SITL through WSL
+        if platform.system() == "Windows":
+            # Convert Windows path to WSL path
+            wsl_sitl_path = str(sitl_path).replace("\\", "/").replace("C:", "/mnt/c")
+            wsl_cwd = str(sitl_path.parent).replace("\\", "/").replace("C:", "/mnt/c")
+
+            # Run SITL in WSL - simpler command that keeps process alive
+            cmd = ["wsl", "cd", wsl_cwd, "&&", wsl_sitl_path, *sitl_args]
+        else:
+            cmd = [self.sitl_binary, *sitl_args]
+
+        # Set environment to force unbuffered output
+        env = os.environ.copy()
+        env["PYTHONUNBUFFERED"] = "1"
+
+        sitl_ready = False
+
+        try:  # pylint: disable=too-many-nested-blocks
+            # Change to SITL binary directory so it finds copter.parm
+            cwd = str(sitl_path.parent)
+
             # pylint: disable=consider-using-with
             self.process = subprocess.Popen(  # noqa: S603
                 cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stderr=subprocess.STDOUT,  # Merge stderr into stdout
                 start_new_session=True,  # Create new process group
+                bufsize=0,  # Unbuffered for real-time output
+                universal_newlines=True,
+                env=env,
+                cwd=cwd,
             )
             # pylint: enable=consider-using-with
 
-            # Wait for SITL to initialize (just check if process is still running)
-            timeout = 10  # Reduced timeout since we don't need to wait for MAVLink
+            # Wait for SITL to initialize and print startup messages
+            timeout = 20  # Increased timeout for slower systems
             start_time = time.time()
+            startup_output = []
+
             while time.time() - start_time < timeout:
                 if self.process.poll() is not None:
                     # Process died
-                    _, stderr = self.process.communicate()
-                    if stderr:
-                        logging.error("SITL process died: %s", stderr.decode())
-                    pytest.fail("SITL process died")
+                    stdout, _ = self.process.communicate()
+                    error_msg = f"SITL process died with exit code {self.process.returncode}."
+                    if stdout:
+                        error_msg += f" Output: {stdout[:500]}"  # First 500 chars
+                    logging.error(error_msg)
+                    pytest.fail(error_msg)
                     return False
-                time.sleep(1)
 
-            # Don't test MAVLink connection here - let the test do that
-            return True
+                # Check for ready indicator in output
+                if self.process.stdout:
+                    # Check if there's data to read (non-blocking)
+                    if platform.system() != "Windows":
+                        ready, _, _ = select.select([self.process.stdout], [], [], 0.1)
+                        if ready:
+                            line = self.process.stdout.readline()
+                            if line:
+                                startup_output.append(line.strip())
+                                logging.info("SITL: %s", line.strip())  # Changed to info for visibility
+                                # Look for signs SITL is ready - be more specific
+                                if "bind port 5760" in line.lower() or "waiting for connection" in line.lower():
+                                    logging.info("SITL is ready and waiting for connections")
+                                    sitl_ready = True
+                                    # Don't return yet, consume a bit more output
+                                    time.sleep(1)  # Let SITL stabilize
+                                    return True
+                    else:
+                        # On Windows, just wait
+                        time.sleep(1)
+                else:
+                    time.sleep(0.5)
+
+            # If we got here, check if we saw the ready message
+            if sitl_ready:
+                logging.info("SITL is ready")
+                return True
+
+            # If process is still running, assume it's ready
+            if self.process.poll() is None:
+                logging.warning("SITL startup timeout reached but process still running, assuming SITL is ready")
+                return True
+
+            logging.error("SITL failed to start within timeout")
+            return False
 
         except (OSError, subprocess.SubprocessError, FileNotFoundError, PermissionError) as e:
             logging.error("Failed to start SITL: %s", e)
             pytest.fail(f"Failed to start SITL: {e}")
             return False
+        finally:
+            if sitl_ready:
+                self._ready = True
+            elif self.is_running():
+                # Even if we hit timeout but process is running, assume ready to allow reuse
+                self._ready = True
 
     def stop(self) -> None:
         """Stop SITL process."""
         if self.process:
             try:
-                # Kill the entire process group
-                os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
+                self._ready = False
+                if platform.system() == "Windows":
+                    # On Windows, kill the WSL bash process and any child processes
+                    # First try graceful termination
+                    subprocess.run(["wsl", "pkill", "-f", "arducopter"], check=False, capture_output=True)  # noqa: S607
+                    self.process.terminate()
+                    try:
+                        self.process.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        # Force kill
+                        subprocess.run(
+                            ["wsl", "pkill", "-9", "-f", "arducopter"],  # noqa: S607
+                            check=False,
+                            capture_output=True,
+                        )
+                        self.process.kill()
+                        self.process.wait(timeout=5)
+                else:
+                    # Kill the entire process group on Linux
+                    os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
 
-                # Wait for process to terminate
-                try:
-                    self.process.wait(timeout=10)
-                except subprocess.TimeoutExpired:
-                    # Force kill if it doesn't terminate gracefully
-                    os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
-                    self.process.wait(timeout=5)
+                    # Wait for process to terminate
+                    try:
+                        self.process.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        # Force kill if it doesn't terminate gracefully
+                        os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
+                        self.process.wait(timeout=5)
 
             except (ProcessLookupError, OSError):
                 # Process already dead
                 pass
             finally:
                 self.process = None
+        else:
+            self._ready = False
 
 
 @pytest.fixture(scope="session")
@@ -359,6 +464,9 @@ def sitl_manager() -> Generator[SITLManager, None, None]:
     if not manager.is_available():
         pytest.skip("ArduCopter SITL binary not available")
 
+    if not manager.start():
+        pytest.skip("Failed to start ArduCopter SITL")
+
     yield manager
 
     # Cleanup
@@ -368,23 +476,24 @@ def sitl_manager() -> Generator[SITLManager, None, None]:
 @pytest.fixture
 def sitl_flight_controller(sitl_manager: SITLManager) -> Generator[FlightController, None, None]:  # pylint: disable=redefined-outer-name
     """FlightController connected to SITL instance."""
-    # Start SITL for this test
-    if not sitl_manager.start():
+    if not sitl_manager.ensure_running():
         pytest.fail("Could not start SITL")
 
-    # Give SITL more time to initialize
-    time.sleep(5)
+    # Allow brief stabilization if SITL was just started
+    time.sleep(2)
 
-    # Create and connect flight controller
     fc = FlightController(reboot_time=2, baudrate=115200)
-    result = fc.connect(device=sitl_manager.connection_string)
 
-    if result:  # Connection failed
-        sitl_manager.stop()
-        pytest.fail(f"Could not connect to SITL: {result}")
+    # Attempt to connect, retrying once if SITL is still warming up
+    connection_error = fc.connect(device=sitl_manager.connection_string)
+    if connection_error:
+        time.sleep(3)
+        connection_error = fc.connect(device=sitl_manager.connection_string)
+
+    if connection_error:
+        pytest.fail(f"Could not connect to SITL: {connection_error}")
 
     yield fc
 
-    # Cleanup
+    # Cleanup connection but keep SITL running for subsequent tests
     fc.disconnect()
-    sitl_manager.stop()

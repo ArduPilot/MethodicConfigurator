@@ -27,6 +27,8 @@ def mock_flight_controller() -> MagicMock:
     """Fixture providing a mock flight controller with realistic test data."""
     mock_fc = MagicMock()
     mock_fc.fc_parameters = {"PARAM1": 1.0, "PARAM2": 3.0}
+    # Configure set_param to return a tuple (success, error_message)
+    mock_fc.set_param.return_value = (True, "")
     return mock_fc
 
 
@@ -818,7 +820,17 @@ class TestFlightControllerDownloadWorkflows:
         # Arrange: Set up mock flight controller download
         expected_fc_params = {"PARAM1": 1.0, "PARAM2": 2.0}
         expected_defaults = {"PARAM1": 0.0, "PARAM2": 0.0}
-        configuration_manager._flight_controller.download_params.return_value = (expected_fc_params, expected_defaults)
+
+        # Mock download_params to return the expected parameters AND update fc_parameters
+        def mock_download_params_side_effect(
+            _progress_callback,
+            _complete_param_path,
+            _default_param_path,
+        ) -> tuple[dict, dict]:
+            configuration_manager._flight_controller.fc_parameters = expected_fc_params.copy()
+            return (expected_fc_params, expected_defaults)
+
+        configuration_manager._flight_controller.download_params.side_effect = mock_download_params_side_effect
 
         # Act: Download parameters
         fc_params, defaults = configuration_manager.download_flight_controller_parameters()
@@ -1478,10 +1490,11 @@ class TestParameterUploadNewWorkflows:
         }
 
         # Mock set_param to raise ValueError for PARAM2
-        def mock_set_param(param_name: str, _value: float) -> None:
+        def mock_set_param(param_name: str, _value: float) -> tuple[bool, str]:
             if param_name == "PARAM2":
                 error_msg = "Invalid parameter value"
                 raise ValueError(error_msg)
+            return True, ""
 
         configuration_manager._flight_controller.set_param.side_effect = mock_set_param
         configuration_manager._flight_controller.fc_parameters = {"PARAM1": 1.0}
