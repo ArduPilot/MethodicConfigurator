@@ -24,6 +24,36 @@ PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
 PARAM_NAME_MAX_LEN = 16
 
 
+def validate_param_name(param_name: str) -> tuple[bool, str]:
+    """
+    Validate parameter name according to ArduPilot standards.
+
+    Args:
+        param_name: The parameter name to validate
+
+    Returns:
+        tuple[bool, str]: (is_valid, error_message)
+            is_valid: True if valid, False otherwise
+            error_message: Description of validation error, empty if valid
+
+    """
+    # Check if parameter name is provided and is a string
+    if not param_name or not isinstance(param_name, str):
+        return False, _("Parameter name cannot be empty")
+
+    # Check if parameter name exceeds maximum length
+    if len(param_name) > PARAM_NAME_MAX_LEN:
+        msg = _("Parameter name too long (max %d characters): %s") % (PARAM_NAME_MAX_LEN, param_name)
+        return False, msg
+
+    # Check if parameter name matches the required format
+    if not re.match(PARAM_NAME_REGEX, param_name):
+        msg = _("Invalid parameter name format (must start with capital letter, contain only A-Z, 0-9, _): %s") % param_name
+        return False, msg
+
+    return True, ""
+
+
 def is_within_tolerance(x: float, y: float, atol: float = 1e-08, rtol: float = 1e-04) -> bool:
     """
     Determines if the absolute difference between two numbers is within a specified tolerance.
@@ -213,14 +243,8 @@ class ParDict(dict[str, Par]):
 
         """
         if file_format == "missionplanner":
-            sorted_dict = ParDict(dict(sorted(self.items(), key=lambda x: ParDict.missionplanner_sort(x[0]))))
-        elif file_format == "mavproxy":
-            sorted_dict = ParDict(dict(sorted(self.items())))
-        else:
-            msg = _("ERROR: Unsupported file format {file_format}").format(file_format=file_format)
-            raise SystemExit(msg)
-
-        if file_format == "missionplanner":
+            sorted_items = dict(sorted(self.items(), key=lambda x: ParDict.missionplanner_sort(x[0])))
+            sorted_dict = ParDict(sorted_items)
             formatted_params = [
                 (
                     f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}  # {parameter.comment}"
@@ -230,6 +254,7 @@ class ParDict(dict[str, Par]):
                 for key, parameter in sorted_dict.items()
             ]
         elif file_format == "mavproxy":
+            sorted_dict = ParDict(dict(sorted(self.items())))
             formatted_params = [
                 (
                     f"{key:<16} {parameter.value:<8.6f}  # {parameter.comment}"
@@ -239,7 +264,8 @@ class ParDict(dict[str, Par]):
                 for key, parameter in sorted_dict.items()
             ]
         else:
-            formatted_params = []
+            msg = _("ERROR: Unsupported file format {file_format}").format(file_format=file_format)
+            raise SystemExit(msg)
         return formatted_params
 
     def export_to_param(
