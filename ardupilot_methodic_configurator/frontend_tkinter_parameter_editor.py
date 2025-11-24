@@ -529,14 +529,16 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
             # Create left pane for plugin with minimum width to ensure visibility
             left_frame = ttk.Frame(self.parameter_area_paned)
-            self.parameter_area_paned.add(left_frame, minsize=500)
+            self.parameter_area_paned.add(left_frame, minsize=500, stretch="always")
+            self.parameter_area_paned.paneconfigure(left_frame, sticky="nsew")
 
             # Instantiate and display the plugin in the left frame
             self._load_plugin(left_frame, plugin)
 
             # Create right pane for parameter table (gets remaining space)
             right_frame = ttk.Frame(self.parameter_area_paned)
-            self.parameter_area_paned.add(right_frame)
+            self.parameter_area_paned.add(right_frame, stretch="always")
+            self.parameter_area_paned.paneconfigure(right_frame, sticky="nsew")
 
             self.parameter_container = right_frame
         elif plugin and plugin.get("placement") == "top":
@@ -547,7 +549,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
             # Create top frame for plugin (fixed height, expands horizontally only)
             top_plugin_frame = ttk.Frame(top_container)
-            top_plugin_frame.pack(side="top", fill="x", expand=False)
+            top_plugin_frame.pack(side="top", fill="both", expand=True)
             self._load_plugin(top_plugin_frame, plugin)
 
             # Visual separator between plugin and parameter table
