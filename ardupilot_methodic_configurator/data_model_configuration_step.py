@@ -46,6 +46,9 @@ class ConfigurationStepProcessor:
         # A dictionary that maps variable names to their values
         # These variables are used by the forced_parameters and derived_parameters in configuration_steps_*.json files
         self.variables = self.local_filesystem.get_eval_variables()
+        # Ensure transient helper variables are not persisted across steps
+        self.variables.pop("fc_parameters", None)
+        self.variables.pop("new_connection_prefix", None)
 
     def process_configuration_step(  # pylint: disable=too-many-locals
         self,
@@ -84,7 +87,7 @@ class ConfigurationStepProcessor:
 
         # Process configuration step operations if configuration steps exist
         if self.local_filesystem.configuration_steps and selected_file in self.local_filesystem.configuration_steps:
-            variables = self.variables
+            variables = self.variables.copy()
             variables["fc_parameters"] = fc_parameters
 
             # Compute derived parameters (does NOT mutate filesystem.file_parameters)
@@ -102,11 +105,13 @@ class ConfigurationStepProcessor:
                     if not fc_param_names or param_name in fc_param_names:
                         derived_params_to_apply[param_name] = param
 
-            # Populate new_connection_prefix from rename_connection configuration step
+            # Populate new_connection_prefix from rename_connection configuration step (per-step scope)
             if "rename_connection" in self.local_filesystem.configuration_steps.get(selected_file, {}):
                 variables["new_connection_prefix"] = self.local_filesystem.configuration_steps[selected_file][
                     "rename_connection"
                 ]
+            else:
+                variables.pop("new_connection_prefix", None)
 
             # Calculate connection rename operations (does NOT mutate filesystem.file_parameters)
             rename_ui_infos, duplicates_to_remove, renames_to_apply = self._handle_connection_renaming(
