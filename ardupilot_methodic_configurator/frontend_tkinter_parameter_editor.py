@@ -87,6 +87,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.current_plugin_view: object | None = None  # Plugin view instance (implements PluginView protocol)
         self.parameter_area_paned: tk.PanedWindow | None = None
         self.parameter_container: ttk.Frame
+        self._tempcal_imu_progress_window: ProgressWindow | None = None
+        self.file_upload_progress_window: ProgressWindow | None = None
+        self._param_download_progress_window: ProgressWindow | None = None
+        self._param_download_progress_window_upload: ProgressWindow | None = None
+        self._reset_progress_window: ProgressWindow | None = None
 
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
@@ -723,8 +728,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         finally:
             # Clean up progress window if it was created
-            if hasattr(self, "_tempcal_imu_progress_window"):
+            if self._tempcal_imu_progress_window is not None:
                 self._tempcal_imu_progress_window.destroy()
+                self._tempcal_imu_progress_window = None
 
     def _handle_dialog_choice(self, result: list, dialog: tk.Toplevel, choice: ExperimentChoice) -> None:
         result.append(choice)
@@ -855,8 +861,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
         finally:
             # Clean up progress window if it was created
-            if hasattr(self, "file_upload_progress_window"):
+            if self.file_upload_progress_window is not None:
                 self.file_upload_progress_window.destroy()
+                self.file_upload_progress_window = None
 
     def on_param_file_combobox_change(self, _event: Union[None, tk.Event], forced: bool = False) -> None:  # noqa: UP007
         if not self.file_selection_combobox["values"]:
@@ -926,9 +933,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.configuration_manager.download_flight_controller_parameters(get_progress_callback)
 
         # Clean up progress window if it was created
-        if hasattr(self, "_param_download_progress_window"):
+        if self._param_download_progress_window is not None:
             # for the case that '--device test' and there is no real FC connected
             self._param_download_progress_window.destroy()
+            self._param_download_progress_window = None
 
         if not redownload:
             self.on_param_file_combobox_change(None, forced=True)  # the initial param read will trigger a table update
@@ -995,10 +1003,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
         finally:
             # Clean up progress windows if they were created
-            if hasattr(self, "_reset_progress_window"):
+            if self._reset_progress_window is not None:
                 self._reset_progress_window.destroy()
-            if hasattr(self, "_param_download_progress_window_upload"):
+                self._reset_progress_window = None
+            if self._param_download_progress_window_upload is not None:
                 self._param_download_progress_window_upload.destroy()
+                self._param_download_progress_window_upload = None
 
     def on_download_last_flight_log_click(self) -> None:
         """Handle the download last flight log button click."""
