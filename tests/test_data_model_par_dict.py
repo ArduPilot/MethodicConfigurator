@@ -14,11 +14,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import os
 import tempfile
 from collections.abc import Generator
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
+import ardupilot_methodic_configurator.data_model_par_dict as par_dict_module
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance, validate_param_name
 
 # pylint: disable=redefined-outer-name, too-many-lines
 
@@ -154,6 +155,33 @@ class TestParTolerance:
         # Test with custom tolerances
         assert is_within_tolerance(100, 102, atol=3)  # 2% difference but within atol=3
         assert is_within_tolerance(100, 110, rtol=0.1)  # 10% difference but within rtol=0.1
+
+
+class TestParameterNameValidation:  # pylint: disable=too-few-public-methods
+    """Test user-facing validation of parameter names."""
+
+    def test_user_receives_clear_feedback_when_validating_parameter_names(self) -> None:
+        """
+        User gets actionable guidance when checking parameter names.
+
+        GIVEN: A user verifies both valid and invalid parameter name candidates
+        WHEN: They call validate_param_name
+        THEN: Valid names pass silently and invalid names return descriptive errors
+        """
+        # Act & Assert: Valid name succeeds without message
+        assert validate_param_name("ACRO_YAW_P") == (True, "")
+
+        # Assert: Invalid names report the specific issue
+        invalid_cases = {
+            "": "cannot be empty",
+            "A" * 20: "too long",
+            "lowercase": "Invalid parameter name format",
+            "1INVALID": "Invalid parameter name format",
+        }
+        for candidate, expected_snippet in invalid_cases.items():
+            is_valid, error_message = validate_param_name(candidate)
+            assert not is_valid
+            assert expected_snippet in error_message
 
 
 class TestParClassBehavior:
@@ -387,6 +415,102 @@ ACRO_YAW_P,6.0  # Duplicate parameter"""
 
         os.unlink(f.name)
 
+    def test_user_receives_guidance_when_parameter_file_is_not_utf8(self) -> None:
+        """
+        User gets clear UTF-8 guidance when loading non-compliant files.
+
+        GIVEN: A user tries to load a parameter file saved with legacy encoding
+        WHEN: They read it through load_param_file_into_dict
+        THEN: A SystemExit with UTF-8 instructions should be raised
+        """
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".param", delete=False) as f:
+            f.write(b"\xff\xfe\xfa")  # Invalid UTF-8 byte sequence
+            f.flush()
+            bad_file = f.name
+
+        try:
+            with pytest.raises(SystemExit, match="UTF-8"):
+                ParDict.load_param_file_into_dict(bad_file)
+        finally:
+            os.unlink(bad_file)
+
+    def test_user_receives_traceback_hint_when_parameter_assignment_fails(self) -> None:
+        """
+        User gets actionable context when the filesystem rejects parameter writes.
+
+        GIVEN: A user loads a valid line but the underlying write fails (e.g., disk full)
+        WHEN: _validate_parameter handles the assignment
+        THEN: A SystemExit should include the offending line information
+        """
+        parameter_dict = ParDict()
+        original_line = "ACRO_YAW_P,4.5"
+        with (
+            patch.object(ParDict, "__setitem__", side_effect=OSError("disk full"), autospec=True),
+            pytest.raises(SystemExit, match="Caused by line 1"),
+        ):
+            ParDict._validate_parameter(  # pylint: disable=protected-access
+                "test.param",
+                parameter_dict,
+                1,
+                original_line,
+                None,
+                "ACRO_YAW_P",
+                "4.5",
+            )
+
+    def test_user_can_ignore_blank_and_comment_only_lines_when_loading(self) -> None:
+        """
+        User can safely ignore blank and comment-only lines in parameter files.
+
+        GIVEN: A parameter file that mixes comments, blank lines, and valid entries
+        WHEN: They load it with load_param_file_into_dict
+        THEN: Only the valid parameters should appear in the resulting dictionary
+        """
+        content = """# Initial comment
+
+ACRO_YAW_P,4.5
+
+# Another comment line
+PILOT_SPEED_UP,250.0
+"""
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
+            f.write(content)
+            f.flush()
+            file_path = f.name
+
+        try:
+            param_dict = ParDict.load_param_file_into_dict(file_path)
+        finally:
+            os.unlink(file_path)
+
+        assert len(param_dict) == 2
+        assert param_dict["ACRO_YAW_P"].value == 4.5
+        assert param_dict["PILOT_SPEED_UP"].value == 250.0
+
+    def test_user_continues_when_traceback_information_is_missing(self, monkeypatch) -> None:
+        """
+        User still completes validation even if traceback information is unavailable.
+
+        GIVEN: A filesystem write fails but sys_exc_info cannot provide traceback details
+        WHEN: _validate_parameter handles the failure
+        THEN: The method should suppress the error without raising SystemExit
+        """
+        parameter_dict = ParDict()
+        monkeypatch.setattr(par_dict_module, "sys_exc_info", lambda: (None, None, None))
+        with patch.object(ParDict, "__setitem__", side_effect=OSError("disk full"), autospec=True):
+            ParDict._validate_parameter(  # pylint: disable=protected-access
+                "test.param",
+                parameter_dict,
+                1,
+                "ACRO_YAW_P,4.5",
+                None,
+                "ACRO_YAW_P",
+                "4.5",
+            )
+
+        assert "ACRO_YAW_P" not in parameter_dict
+
 
 class TestParameterFileExporting:
     """Test parameter file exporting workflows."""
@@ -597,6 +721,17 @@ class TestParameterComparisonWorkflows:
         assert "GPS_TYPE" in differences  # Missing in alternate
         assert "ACRO_YAW_P" in differences  # Different value (4.5 vs 6.0)
         assert "COMPASS_ENABLE" not in differences  # Same value in both
+
+    def test_user_receives_error_when_requesting_differences_with_invalid_type(self, parameter_dict) -> None:
+        """
+        User receives clear feedback when requesting differences with invalid data types.
+
+        GIVEN: A user attempts to compare against a plain dictionary
+        WHEN: They call get_missing_or_different
+        THEN: A TypeError should explain that only ParDict instances are supported
+        """
+        with pytest.raises(TypeError, match="Can only compare with another ParDict instance"):
+            parameter_dict.get_missing_or_different({"PARAM": Par(1.0)})
 
 
 class TestParameterCreationFromDifferentSources:
@@ -865,6 +1000,42 @@ class TestParameterUtilities:
 
         # Assert: Print called with pagination info
         mock_print.assert_any_call("\nTest Parameters has 50 parameters:")
+
+    def test_user_skips_printing_when_parameter_list_is_empty(self) -> None:
+        """
+        User skips any output when no parameters exist to print.
+
+        GIVEN: A user requests to print an empty parameter list
+        WHEN: They call print_out
+        THEN: No print statements should be executed
+        """
+        with patch("builtins.print") as mock_print:
+            ParDict.print_out([], "Empty Params")
+
+        mock_print.assert_not_called()
+
+    def test_user_gets_cli_pagination_when_running_as_main(self, monkeypatch) -> None:
+        """
+        User sees CLI pagination prompts when running the module as a script.
+
+        GIVEN: A user invokes print_out while the module behaves as __main__
+        WHEN: The parameter list exceeds one terminal page
+        THEN: The user should be prompted to continue and terminal size should refresh
+        """
+        terminal_result = MagicMock()
+        terminal_result.read.return_value = "5 80"  # Terminal with 5 rows for this test
+        mock_popen = MagicMock(return_value=terminal_result)
+        monkeypatch.setattr(par_dict_module, "os_popen", mock_popen)
+        monkeypatch.setattr(par_dict_module, "__name__", "__main__")
+        mock_input = MagicMock(return_value="")
+        monkeypatch.setattr("builtins.input", mock_input)
+
+        with patch("builtins.print") as mock_print:
+            ParDict.print_out([f"PARAM_{i},1.0" for i in range(6)], "CLI Parameters")
+
+        assert mock_input.call_count >= 1
+        assert mock_popen.call_count >= 2  # Initial size read and refresh after pagination pause
+        mock_print.assert_any_call("\nCLI Parameters has 6 parameters:")
 
 
 class TestParameterCategorization:
