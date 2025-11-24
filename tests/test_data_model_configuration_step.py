@@ -267,6 +267,48 @@ class TestConfigurationStepProcessorConnectionRenaming:
         assert ui_errors == []
         assert ui_infos == []  # No connection renaming means no info messages
 
+    def test_connection_renaming_state_does_not_leak_between_steps(self, processor, fc_parameters) -> None:  # pylint: disable=too-many-locals
+        """
+        Connection renaming helper variables must not leak into later steps.
+
+        GIVEN: A configuration step that performs connection renaming
+        WHEN: A later step without renaming is processed
+        THEN: No renaming operations should be triggered for the later step
+        """
+        rename_step = "test_file.param"
+        later_step = "13_general_configuration.param"
+        processor.local_filesystem.file_parameters[later_step] = {
+            "SERIAL2_PROTOCOL": Par(value=10.0, comment="Telemetry protocol"),
+            "SERIAL2_BAUD": Par(value=57.0, comment="Telemetry baud rate"),
+        }
+        processor.local_filesystem.configuration_steps = {
+            rename_step: {"rename_connection": "selected_serial"},
+            later_step: {},
+        }
+
+        # First step performs renaming to ensure helper variable is set
+        (
+            _params_first,
+            _errors_first,
+            _infos_first,
+            _duplicates_first,
+            renames_first,
+            _derived_first,
+        ) = processor.process_configuration_step(rename_step, fc_parameters)
+        assert renames_first  # Sanity check that renaming took place
+
+        # Later step must not inherit previous rename configuration
+        (
+            _params_second,
+            _errors_second,
+            ui_infos_second,
+            _duplicates_second,
+            renames_second,
+            _derived_second,
+        ) = processor.process_configuration_step(later_step, fc_parameters)
+        assert renames_second == []
+        assert ui_infos_second == []
+
 
 class TestConfigurationStepProcessorDomainModel:
     """Test domain model creation and parameter filtering."""
