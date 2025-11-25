@@ -167,6 +167,41 @@ class TestParameterFilteringWorkflows:
         assert "PARAM_NO_DOCS" in result
 
 
+class TestUploadPreconditions:
+    """Test validation logic before uploading parameters."""
+
+    def test_user_is_warned_when_no_parameters_selected(self, configuration_manager: ConfigurationManager) -> None:
+        """User receives warning if attempting to upload without selecting parameters."""
+        show_warning = MagicMock()
+
+        result = configuration_manager.ensure_upload_preconditions({}, show_warning)
+
+        assert result is False
+        show_warning.assert_called_once()
+
+    def test_user_is_warned_when_no_fc_parameters_available(self, configuration_manager: ConfigurationManager) -> None:
+        """User receives warning when FC parameters were never downloaded."""
+        configuration_manager._flight_controller.fc_parameters = {}  # pylint: disable=protected-access
+        show_warning = MagicMock()
+        selected_params = {"ROLL_P": 0.2}
+
+        result = configuration_manager.ensure_upload_preconditions(selected_params, show_warning)
+
+        assert result is False
+        show_warning.assert_called_once()
+
+    def test_user_can_continue_when_preconditions_are_met(self, configuration_manager: ConfigurationManager) -> None:
+        """Workflow proceeds when parameters are selected and FC data is available."""
+        configuration_manager._flight_controller.fc_parameters = {"ROLL_P": 0.1}  # pylint: disable=protected-access
+        show_warning = MagicMock()
+        selected_params = {"ROLL_P": 0.2}
+
+        result = configuration_manager.ensure_upload_preconditions(selected_params, show_warning)
+
+        assert result is True
+        show_warning.assert_not_called()
+
+
 class TestParameterExportWorkflows:
     """Test parameter export business logic workflows."""
 

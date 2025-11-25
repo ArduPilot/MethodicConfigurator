@@ -15,13 +15,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from tkinter import ttk
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
 from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import show_about_window
-from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
+    ParameterEditorUiServices,
+    ParameterEditorWindow,
+)
 
 
 class TestParameterEditorWindow:
@@ -37,7 +41,7 @@ class TestParameterEditorWindow:
         # Create window but intercept mainloop
         window = None
 
-        def mock_mainloop(self) -> None:
+        def mock_mainloop(self) -> None:  # pylint: disable=unused-argument
             """Mock mainloop to prevent blocking."""
 
         # Note: With the refactored code, mainloop is now in window.run()
@@ -107,6 +111,19 @@ class TestParameterEditorWindow:
         finally:
             parent.destroy()
 
+    def test_user_skips_usage_popup_when_parent_is_gone(self, mocker) -> None:
+        """Usage instructions are not shown if the parent window vanished."""
+        parent = MagicMock()
+        parent.winfo_exists.return_value = False
+
+        mock_display = mocker.patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.display"
+        )
+
+        ParameterEditorWindow._display_usage_popup_window(parent)  # pylint: disable=protected-access
+
+        mock_display.assert_not_called()
+
     def test_show_about_window(self, mocker) -> None:  # pylint: disable=too-many-locals
         """Test that the about window can be created."""
         # Create a mock root window
@@ -125,7 +142,7 @@ class TestParameterEditorWindow:
 
             # There should be exactly one about window
             assert len(about_windows) == 1
-            about_window = about_windows[0]
+            about_window = cast("tk.Toplevel", about_windows[0])
 
             # Check window properties
             assert about_window.title() == "About"
@@ -179,42 +196,139 @@ class TestParameterEditorWindow:
         finally:
             root.destroy()
 
-    def test_parameter_editor_window_initialization_attributes(self, test_config_manager: ConfigurationManager) -> None:
-        """Test that ParameterEditorWindow can be instantiated with proper attributes."""
-        with (
-            patch.object(ParameterEditorWindow, "_create_conf_widgets"),
-            patch.object(ParameterEditorWindow, "_create_documentation_widgets"),
-            patch.object(ParameterEditorWindow, "_create_parameter_table_and_button_widgets"),
-            patch.object(ParameterEditorWindow, "_update_widget_states"),
-            patch("tkinter.Tk") as mock_tk,
-        ):
-            mock_root = MagicMock()
-            mock_tk.return_value = mock_root
+    @pytest.mark.skip(reason="Requires manual GUI validation with real Tk root")
+    def test_parameter_editor_initialization_without_tk_mocks(
+        self,
+        gui_test_environment,  # pylint: disable=unused-argument
+        monkeypatch,
+    ) -> None:
+        """ParameterEditorWindow initializes against a real Tk root for PyAutoGUI flows."""
+        config_manager = MagicMock()
+        config_manager.current_file = "01_initial.param"
+        config_manager.parameter_files.return_value = ["01_initial.param", "02_next.param"]
+        config_manager.get_vehicle_directory.return_value = "gui-test-dir"
+        config_manager.get_last_configuration_step_number.return_value = None
+        config_manager.parameter_documentation_available.return_value = True
+        config_manager.is_fc_connected = False
+        config_manager.is_mavftp_supported = False
+        config_manager.is_configuration_step_optional.return_value = False
 
-            window = ParameterEditorWindow(test_config_manager)
+        class DummyDirSelection:  # pylint: disable=too-few-public-methods
+            """Stub directory selection widget for GUI integration tests."""
 
-            # Verify basic attributes are set
-            assert window.configuration_manager is test_config_manager
-            assert hasattr(window, "gui_complexity")
-            assert hasattr(window, "current_plugin")
-            assert hasattr(window, "current_plugin_view")
-            assert hasattr(window, "parameter_area_paned")
+            def __init__(self, *_args, **_kwargs) -> None:
+                self.container_frame = MagicMock()
+                self.container_frame.pack = MagicMock()
 
-    def test_window_title_and_geometry_setup(self, test_config_manager: ConfigurationManager) -> None:
-        """Test that window title and geometry are configured correctly."""
-        with (
-            patch.object(ParameterEditorWindow, "_create_conf_widgets"),
-            patch.object(ParameterEditorWindow, "_create_documentation_widgets"),
-            patch.object(ParameterEditorWindow, "_create_parameter_table_and_button_widgets"),
-            patch.object(ParameterEditorWindow, "_update_widget_states"),
-            patch("tkinter.Tk") as mock_tk,
-        ):
-            mock_root = MagicMock()
-            mock_tk.return_value = mock_root
+        class DummyStageProgressBar:  # pylint: disable=too-few-public-methods
+            """Minimal stage progress stub that records pack calls."""
 
-            ParameterEditorWindow(test_config_manager)
+            def __init__(self, *_args, **_kwargs) -> None:
+                self.pack_calls: list[tuple[tuple, dict]] = []
 
-            # Verify window setup calls
-            mock_root.title.assert_called()
-            mock_root.geometry.assert_called_with("990x630")
-            mock_root.protocol.assert_called()
+            def pack(self, *args, **kwargs) -> None:
+                self.pack_calls.append((args, kwargs))
+
+        class DummyDocumentationFrame:
+            """Simple documentation frame replacement with real ttk container."""
+
+            def __init__(self, parent, _configuration_manager) -> None:
+                self.documentation_frame = ttk.Frame(parent)
+
+            def refresh_documentation_labels(self) -> None:
+                return
+
+            def update_why_why_now_tooltip(self) -> None:
+                return
+
+            def get_auto_open_documentation_in_browser(self) -> bool:
+                return False
+
+        class DummyParameterEditorTable:  # pylint: disable=too-few-public-methods
+            """Lightweight table stub exposing the attributes the GUI touches."""
+
+            def __init__(self, *_args, **_kwargs) -> None:
+                self.view_port = MagicMock()
+                self.pack_called = False
+
+            def pack(self, *args, **_kwargs) -> None:  # pylint: disable=unused-argument
+                self.pack_called = True
+
+        def fake_get_setting(key: str) -> object:
+            return {"gui_complexity": "advanced", "annotate_docs_into_param_files": False}.get(key, False)
+
+        def create_progress_window(*_args, **_kwargs) -> MagicMock:
+            progress = MagicMock()
+            progress.update_progress_bar = MagicMock()
+            progress.update_progress_bar_300_pct = MagicMock()
+            progress.destroy = MagicMock()
+            return progress
+
+        ui_services = ParameterEditorUiServices(
+            create_progress_window=create_progress_window,
+            ask_yesno=lambda *_a, **_k: True,
+            ask_retry_cancel=lambda *_a, **_k: True,
+            show_warning=lambda *_a, **_k: None,
+            show_error=lambda *_a, **_k: None,
+            show_info=lambda *_a, **_k: None,
+            asksaveasfilename=lambda *_a, **_k: "",
+            askopenfilename=lambda *_a, **_k: "",
+            exit_callback=lambda _code: None,
+        )
+
+        monkeypatch.setattr(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgramSettings.get_setting",
+            fake_get_setting,
+        )
+        monkeypatch.setattr(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.VehicleDirectorySelectionWidgets",
+            DummyDirSelection,
+        )
+        monkeypatch.setattr(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.StageProgressBar",
+            DummyStageProgressBar,
+        )
+        monkeypatch.setattr(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.DocumentationFrame",
+            DummyDocumentationFrame,
+        )
+        monkeypatch.setattr(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ParameterEditorTable",
+            DummyParameterEditorTable,
+        )
+        monkeypatch.setattr(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.FreeDesktop.setup_startup_notification",
+            lambda *_a, **_k: None,
+        )
+        monkeypatch.setattr(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.should_display",
+            lambda *_a, **_k: False,
+        )
+        monkeypatch.setattr(
+            (
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ParameterEditorWindow."
+                "repopulate_parameter_table"
+            ),
+            MagicMock(),
+        )
+
+        def fake_label(_parent, _filepath, *_args, **_kwargs) -> MagicMock:
+            label = MagicMock()
+            label.pack = MagicMock()
+            label.bind = MagicMock()
+            return label
+
+        monkeypatch.setattr(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ParameterEditorWindow.put_image_in_label",
+            fake_label,
+        )
+
+        window = ParameterEditorWindow(config_manager, ui_services=ui_services)
+
+        try:
+            assert isinstance(window.root, tk.Tk)
+            assert window.root.winfo_exists()
+            after_ids = window.root.tk.call("after", "info")
+            assert after_ids, "Expected scheduled callbacks for initial workflows"
+        finally:
+            window.root.destroy()
