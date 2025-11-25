@@ -17,7 +17,7 @@ import contextlib
 import tkinter as tk
 from collections.abc import Generator
 from tkinter import ttk
-from typing import Union
+from typing import Union, cast
 from unittest.mock import Mock, patch
 
 import pytest
@@ -27,7 +27,10 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduP
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
-from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import (
+    ParameterEditorTable,
+    ParameterEditorTableDialogs,
+)
 
 # pylint: disable=protected-access
 
@@ -89,8 +92,14 @@ class TestParameterEditorTableUserWorkflows:
         root = tk.Tk()
         root.withdraw()  # Hide the root window
 
+        dialog_mocks = ParameterEditorTableDialogs(
+            show_error=Mock(),
+            show_info=Mock(),
+            ask_yes_no=Mock(return_value=True),
+        )
+
         # Create the table
-        table = ParameterEditorTable(root, test_param_editor, mock_parameter_editor)
+        table = ParameterEditorTable(root, test_param_editor, mock_parameter_editor, dialogs=dialog_mocks)
 
         yield table
 
@@ -467,23 +476,29 @@ class TestParameterEditorTableUserWorkflows:
         )
 
         # Configure test file parameters
-        parameter_table.parameter_editor._local_filesystem.file_parameters = ParDict(
-            {"04_board_orientation.param": ParDict({"CONSTRAINED_PARAM": Par(50.0, "constrained")})}
-        )
+        parameter_table.parameter_editor._local_filesystem.file_parameters = {
+            "04_board_orientation.param": ParDict({"CONSTRAINED_PARAM": Par(50.0, "constrained")})
+        }
+        parameter_table.parameter_editor.current_step_parameters = {
+            param_constrained.name: param_constrained,
+        }
 
         # Act & Verify: Attempt out-of-range value with rejection
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.messagebox") as mock_msgbox:
-            mock_msgbox.askyesno.return_value = False  # User rejects invalid value
+        ask_dialog = cast("Mock", parameter_table._dialogs.ask_yes_no)
+        ask_dialog.return_value = False  # User rejects invalid value
 
-            result_invalid = parameter_table._handle_parameter_value_update(
-                param_constrained,
-                "150.0",  # Out of range
-                include_range_check=True,
-            )
+        result_invalid = parameter_table._handle_parameter_value_update(
+            param_constrained,
+            "150.0",  # Out of range
+            include_range_check=True,
+        )
 
-            # Verify: Invalid value rejected
-            assert result_invalid is False
-            mock_msgbox.askyesno.assert_called_once()
+        # Verify: Invalid value rejected
+        assert result_invalid is False
+        ask_dialog.assert_called_once()
+
+        ask_dialog.reset_mock()
+        ask_dialog.return_value = True
 
         # Act & Verify: Valid value accepted
         with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"):

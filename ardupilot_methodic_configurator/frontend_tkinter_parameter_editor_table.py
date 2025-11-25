@@ -9,29 +9,32 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from dataclasses import dataclass
 from logging import critical as logging_critical
 from logging import debug as logging_debug
 from logging import exception as logging_exception
 from logging import info as logging_info
 from platform import system as platform_system
 from sys import exit as sys_exit
-from tkinter import messagebox, ttk
-from typing import Union
+from tkinter import ttk
+from typing import TYPE_CHECKING, Callable, Optional, Union
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
-    ArduPilotParameter,
-    BitmaskHelper,
-    ParameterOutOfRangeError,
-    ParameterUnchangedError,
-)
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter, BitmaskHelper
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import (
     InvalidParameterNameError,
     OperationNotPossibleError,
     ParameterEditor,
+    ParameterValueUpdateResult,
+    ParameterValueUpdateStatus,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
+    BaseWindow,
+    ask_yesno_popup,
+    show_error_popup,
+    show_info_popup,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (
     PairTupleCombobox,
@@ -41,8 +44,20 @@ from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widge
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
+if TYPE_CHECKING:  # pragma: no cover - import for type checking only
+    from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
+
 NEW_VALUE_WIDGET_WIDTH = 9
 NEW_VALUE_DIFFERENT_STR = "\u2260" if platform_system() == "Windows" else "!="
+
+
+@dataclass
+class ParameterEditorTableDialogs:
+    """Bundle of dialog callbacks so tests can stub them easily."""
+
+    show_error: Callable[[str, str], None] = show_error_popup
+    show_info: Callable[[str, str], None] = show_info_popup
+    ask_yes_no: Callable[[str, str], bool] = ask_yesno_popup
 
 
 class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
@@ -54,12 +69,19 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     It uses the ArduPilotParameter domain model to handle parameter operations.
     """
 
-    def __init__(self, master, parameter_editor: ParameterEditor, parameter_editor_window) -> None:  # noqa: ANN001
+    def __init__(
+        self,
+        master: tk.Misc,
+        parameter_editor: ParameterEditor,
+        parameter_editor_window: "ParameterEditorWindow",
+        dialogs: Optional[ParameterEditorTableDialogs] = None,
+    ) -> None:
         super().__init__(master)
         self.main_frame = master
         self.parameter_editor = parameter_editor
         self.parameter_editor_window = parameter_editor_window  # the parent window that contains this table
         self.upload_checkbutton_var: dict[str, tk.BooleanVar] = {}
+        self._dialogs = dialogs or ParameterEditorTableDialogs()
 
         # Track last return values to prevent duplicate event processing
         self._last_return_values: dict[tk.Misc, str] = {}
@@ -67,6 +89,26 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         style = ttk.Style()
         style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
+
+    def _get_parent_root(self) -> Optional[tk.Tk]:
+        """Return the closest tk.Tk ancestor if available."""
+        widget: Optional[tk.Misc] = self.main_frame
+        while widget is not None and not isinstance(widget, tk.Tk):
+            widget = widget.master
+        return widget if isinstance(widget, tk.Tk) else None
+
+    def _get_parent_toplevel(self) -> Union[tk.Tk, tk.Toplevel]:
+        """Return the closest Tk or Toplevel ancestor for centering dialogs."""
+        widget: Optional[tk.Misc] = self.main_frame
+        while widget is not None and not isinstance(widget, (tk.Tk, tk.Toplevel)):
+            widget = widget.master
+        if isinstance(widget, (tk.Tk, tk.Toplevel)):
+            return widget
+        ancestor = self.main_frame.winfo_toplevel()
+        if isinstance(ancestor, (tk.Tk, tk.Toplevel)):
+            return ancestor
+        msg = "Could not resolve parent toplevel window"
+        raise RuntimeError(msg)
 
     def _should_show_upload_column(self, gui_complexity: Union[str, None] = None) -> bool:
         """
@@ -126,7 +168,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         return tuple(base_headers), tuple(base_tooltips)
 
-    def repopulate(  # pylint: disable=too-many-locals
+    def repopulate_table(  # pylint: disable=too-many-locals
         self, show_only_differences: bool, gui_complexity: str, regenerate_from_disk: bool
     ) -> None:
         for widget in self.view_port.winfo_children():
@@ -154,9 +196,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             (ui_errors, ui_infos) = self.parameter_editor.repopulate_configuration_step_parameters()
 
             for title, msg in ui_errors:
-                messagebox.showerror(title, msg)
+                self._dialogs.show_error(title, msg)
             for title, msg in ui_infos:
-                messagebox.showinfo(title, msg)
+                self._dialogs.show_info(title, msg)
 
         if show_only_differences:
             # Filter to show only different parameters
@@ -167,7 +209,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                     selected_file=self.parameter_editor.current_file
                 )
                 logging_info(info_msg)
-                messagebox.showinfo(_("ArduPilot methodic configurator"), info_msg)
+                self._dialogs.show_info(_("ArduPilot methodic configurator"), info_msg)
                 self.parameter_editor_window.on_skip_click()
                 return
         else:
@@ -189,8 +231,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             for i, (param_name, param) in enumerate(params.items(), 1):
                 current_param_name = param_name
 
-                column: list[tk.Widget] = self._create_column_widgets(param_name, param, show_upload_column)
-                self._grid_column_widgets(column, i, show_upload_column)
+                row_widgets: list[tk.Widget] = self._create_column_widgets(param_name, param, show_upload_column)
+                self._grid_column_widgets(row_widgets, i, show_upload_column)
 
             # Add the "Add" button at the bottom of the table
             add_button = ttk.Button(self.view_port, text=_("Add"), style="narrow.TButton", command=self._on_parameter_add)
@@ -212,38 +254,38 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def _create_column_widgets(self, param_name: str, param: ArduPilotParameter, show_upload_column: bool) -> list[tk.Widget]:
         """Create all column widgets for a parameter row."""
-        column: list[tk.Widget] = []
+        row_widgets: list[tk.Widget] = []
         change_reason_widget = self._create_change_reason_entry(param)
-        value_is_different_widget = self._create_value_different_label(param)
-        column.append(self._create_delete_button(param_name))
-        column.append(self._create_parameter_name(param))
-        column.append(self._create_flightcontroller_value(param))
-        column.append(value_is_different_widget)
+        value_is_different_label = self._create_value_different_label(param)
+        row_widgets.append(self._create_delete_button(param_name))
+        row_widgets.append(self._create_parameter_name(param))
+        row_widgets.append(self._create_flightcontroller_value(param))
+        row_widgets.append(value_is_different_label)
         # update the change reason tooltip when the new value changes
-        column.append(self._create_new_value_entry(param, change_reason_widget, value_is_different_widget))
-        column.append(self._create_unit_label(param))
+        row_widgets.append(self._create_new_value_entry(param, change_reason_widget, value_is_different_label))
+        row_widgets.append(self._create_unit_label(param))
 
         if show_upload_column:
-            column.append(self._create_upload_checkbutton(param_name))
+            row_widgets.append(self._create_upload_checkbutton(param_name))
 
-        column.append(change_reason_widget)
+        row_widgets.append(change_reason_widget)
 
-        return column
+        return row_widgets
 
-    def _grid_column_widgets(self, column: list[tk.Widget], row: int, show_upload_column: bool) -> None:
+    def _grid_column_widgets(self, row_widgets: list[tk.Widget], row: int, show_upload_column: bool) -> None:
         """Grid all column widgets for a parameter row."""
-        column[0].grid(row=row, column=0, sticky="w", padx=0)
-        column[1].grid(row=row, column=1, sticky="w", padx=0)
-        column[2].grid(row=row, column=2, sticky="e", padx=0)
-        column[3].grid(row=row, column=3, sticky="e", padx=0)
-        column[4].grid(row=row, column=4, sticky="e", padx=0)
-        column[5].grid(row=row, column=5, sticky="e", padx=0)
+        row_widgets[0].grid(row=row, column=0, sticky="w", padx=0)
+        row_widgets[1].grid(row=row, column=1, sticky="w", padx=0)
+        row_widgets[2].grid(row=row, column=2, sticky="e", padx=0)
+        row_widgets[3].grid(row=row, column=3, sticky="e", padx=0)
+        row_widgets[4].grid(row=row, column=4, sticky="e", padx=0)
+        row_widgets[5].grid(row=row, column=5, sticky="e", padx=0)
 
         if show_upload_column:
-            column[6].grid(row=row, column=6, sticky="e", padx=0)
+            row_widgets[6].grid(row=row, column=6, sticky="e", padx=0)
 
         change_reason_column = self._get_change_reason_column_index(show_upload_column)
-        column[change_reason_column].grid(row=row, column=change_reason_column, sticky="ew", padx=(0, 5))
+        row_widgets[change_reason_column].grid(row=row, column=change_reason_column, sticky="ew", padx=(0, 5))
 
     def _get_change_reason_column_index(self, show_upload_column: bool) -> int:
         """
@@ -327,57 +369,39 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         """Create a label indicating if the new value is different from current FC value."""
         return ttk.Label(self.view_port, text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
-    def _handle_parameter_value_update(  # pylint: disable=too-many-return-statements # noqa: PLR0911
+    def _handle_parameter_value_update(
         self, param: ArduPilotParameter, new_value: str, include_range_check: bool = True
     ) -> bool:
-        """
-        Handle parameter value updates with consistent error handling.
+        """Delegate parameter updates to the presenter and translate the result for the UI."""
+        result = self.parameter_editor.update_parameter_value(
+            param.name,
+            new_value,
+            include_range_check=include_range_check,
+        )
+        return self._handle_parameter_value_update_result(result, param, new_value)
 
-        This method centralizes the error handling logic for parameter value updates,
-        including user confirmation for out-of-range values.
-
-        Args:
-            param: The ArduPilotParameter to update
-            new_value: The new value to set (as string)
-            include_range_check: Whether to perform range checking and ask user for confirmation
-
-        Returns:
-            True if the value was successfully updated, False otherwise
-
-        """
-        try:
-            # Attempt to set the new value; the model will validate it
-            param.set_new_value(new_value)
+    def _handle_parameter_value_update_result(
+        self, result: ParameterValueUpdateResult, param: ArduPilotParameter, new_value: str
+    ) -> bool:
+        """Convert presenter update results into concrete UI actions."""
+        if result.status is ParameterValueUpdateStatus.UPDATED:
             return True
-        except ParameterUnchangedError:
-            # Valid but no change — just refresh the UI and do not mark edited
+        if result.status is ParameterValueUpdateStatus.UNCHANGED:
             return False
-        except ParameterOutOfRangeError as oor:
-            # User-visible warning from model about out-of-range value
-            if not include_range_check:
-                # Caller doesn't want range checking, treat as error
-                logging_exception(_("Parameter %s out of range: %s"), param.name, oor)
-                messagebox.showerror(_("Out-of-range value"), str(oor))
-                return False
-
-            # Ask the user if they want to accept the out-of-range value
-            msg = str(oor) + _(" Use out-of-range value?")
-            if messagebox.askyesno(_("Out-of-range value"), msg, icon="warning"):
-                # Retry accepting the value while telling the model to ignore range checks
-                try:
-                    param.set_new_value(new_value, ignore_out_of_range=True)
-                    return True
-                except (ValueError, TypeError) as exc:
-                    # Even with ignore_out_of_range, the value might be invalid
-                    logging_exception(_("Could not set parameter %s to %s: %s"), param.name, new_value, exc)
-                    messagebox.showerror(_("Invalid value"), str(exc))
-                    return False
+        if result.status is ParameterValueUpdateStatus.ERROR:
+            self._dialogs.show_error(result.title or _("Error"), result.message or _("Unknown error."))
             return False
-        except (ValueError, TypeError) as exc:
-            # Invalid input according to model
-            logging_exception(_("Invalid value for %s: %s"), param.name, exc)
-            messagebox.showerror(_("Invalid value"), str(exc))
+        if result.status is ParameterValueUpdateStatus.CONFIRM_OUT_OF_RANGE:
+            prompt = (result.message or "") + _(" Use out-of-range value?")
+            if self._dialogs.ask_yes_no(result.title or _("Out-of-range value"), prompt):
+                forced_result = self.parameter_editor.update_parameter_value(
+                    param.name,
+                    new_value,
+                    include_range_check=False,
+                )
+                return self._handle_parameter_value_update_result(forced_result, param, new_value)
             return False
+        return False
 
     def _update_combobox_style_on_selection(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
@@ -385,7 +409,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         param: ArduPilotParameter,
         event: tk.Event,
         change_reason_widget: ttk.Entry,
-        value_is_different: ttk.Label,
+        value_is_different_label: ttk.Label,
     ) -> None:
         """Update the combobox style based on selection."""
         new_value_str = combobox_widget.get_selected_key() or ""
@@ -394,7 +418,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         if self._handle_parameter_value_update(param, new_value_str, include_range_check=False):
             # Success: mark edited and sync the ArduPilotParameter back to filesystem
             show_tooltip(change_reason_widget, param.tooltip_change_reason)
-            value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
+            value_is_different_label.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
         combobox_widget.configure(
             style="default_v.TCombobox" if param.new_value_equals_default_value else "readonly.TCombobox"
@@ -421,7 +445,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         new_value_entry.configure(style=style)
 
     def _create_new_value_entry(  # pylint: disable=too-many-statements # noqa: PLR0915
-        self, param: ArduPilotParameter, change_reason_widget: ttk.Entry, value_is_different: ttk.Label
+        self, param: ArduPilotParameter, change_reason_widget: ttk.Entry, value_is_different_label: ttk.Label
     ) -> Union[PairTupleCombobox, ttk.Entry]:
         """Create an entry widget for editing the parameter value."""
         new_value_entry: Union[PairTupleCombobox, ttk.Entry]
@@ -447,7 +471,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             new_value_entry.bind(  # type: ignore[call-overload] # workaround a mypy issue
                 "<<ComboboxSelected>>",
                 lambda event: self._update_combobox_style_on_selection(
-                    new_value_entry, param, event, change_reason_widget, value_is_different
+                    new_value_entry, param, event, change_reason_widget, value_is_different_label
                 ),
                 "+",
             )
@@ -472,9 +496,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         # Function to show the appropriate error message
         def show_parameter_error(event: tk.Event) -> None:  # pylint: disable=unused-argument # noqa: ARG001
             if param.is_forced:
-                messagebox.showerror(_("Forced Parameter"), forced_error_msg)
+                self._dialogs.show_error(_("Forced Parameter"), forced_error_msg)
             elif param.is_derived:
-                messagebox.showerror(_("Derived Parameter"), derived_error_msg)
+                self._dialogs.show_error(_("Derived Parameter"), derived_error_msg)
 
         def _on_parameter_value_change(event: tk.Event) -> None:
             """Handle changes to parameter values."""
@@ -515,7 +539,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if valid:
                 logging_debug(_("Parameter %s changed, will later ask if change(s) should be saved to file."), param.name)
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
-                value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
+                value_is_different_label.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update the displayed value in the Entry or Combobox
             if isinstance(
@@ -524,7 +548,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 self._update_new_value_entry_text(event.widget, param)  # type: ignore[arg-type] # workaround a mypy bug
             elif isinstance(event.widget, PairTupleCombobox):
                 # For PairTupleCombobox, update the style based on whether it matches default value
-                self._update_combobox_style_on_selection(event.widget, param, event, change_reason_widget, value_is_different)
+                self._update_combobox_style_on_selection(
+                    event.widget,
+                    param,
+                    event,
+                    change_reason_widget,
+                    value_is_different_label,
+                )
 
         if not param.is_editable:
             new_value_entry.config(state="disabled", background="light grey")
@@ -534,7 +564,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         elif param.is_bitmask:
             new_value_entry.bind(
                 "<Double-Button-1>",
-                lambda event: self._open_bitmask_selection_window(event, param, change_reason_widget, value_is_different),
+                lambda event: self._open_bitmask_selection_window(
+                    event,
+                    param,
+                    change_reason_widget,
+                    value_is_different_label,
+                ),
             )
             new_value_entry.bind("<FocusOut>", _on_parameter_value_change)
             new_value_entry.bind("<Return>", _on_parameter_value_change)
@@ -547,10 +582,18 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         tooltip_new_value = param.tooltip_new_value
         if tooltip_new_value:
             show_tooltip(new_value_entry, tooltip_new_value)
+
+        # Expose handlers for tests so they can be triggered without tkinter events
+        new_value_entry.testing_on_parameter_value_change = _on_parameter_value_change  # type: ignore[attr-defined]
+        new_value_entry.testing_show_parameter_error = show_parameter_error  # type: ignore[attr-defined]
         return new_value_entry
 
     def _open_bitmask_selection_window(  # pylint: disable=too-many-locals, too-many-statements # noqa: PLR0915
-        self, event: tk.Event, param: ArduPilotParameter, change_reason_widget: ttk.Entry, value_is_different: ttk.Label
+        self,
+        event: tk.Event,
+        param: ArduPilotParameter,
+        change_reason_widget: ttk.Entry,
+        value_is_different_label: ttk.Label,
     ) -> None:
         """Open a window to select bitmask options."""
 
@@ -559,7 +602,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 checked_keys = {int(key) for key, var in checkbox_vars.items() if var.get()}
             except (ValueError, TypeError) as e:
                 logging_exception(_("Error getting {param_name} checked keys: %s").format(param_name=param.name), e)
-                messagebox.showerror(
+                self._dialogs.show_error(
                     _("Error"), _("Could not get {param_name} checked keys. Please try again.").format(param_name=param.name)
                 )
                 return
@@ -570,7 +613,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
             if valid:
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
-                value_is_different.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
+                value_is_different_label.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update new_value_entry with the new decimal value
             # For bitmask windows, event.widget should always be ttk.Entry (not PairTupleCombobox)
@@ -587,7 +630,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             # Re-bind the FocusIn event to new_value_entry
             event.widget.bind(
                 "<Double-Button-1>",
-                lambda event: self._open_bitmask_selection_window(event, param, change_reason_widget, value_is_different),
+                lambda event: self._open_bitmask_selection_window(
+                    event,
+                    param,
+                    change_reason_widget,
+                    value_is_different_label,
+                ),
             )
 
         def is_widget_visible(widget: Union[tk.Misc, None]) -> bool:
@@ -627,7 +675,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         try:
             new_value = int(new_value_str)
         except (ValueError, TypeError):
-            messagebox.showerror(
+            self._dialogs.show_error(
                 _("Invalid Bitmask Value"),
                 _("The new value '{new_value_str}' is not a valid integer for the {param.name} bitmask.").format(**locals()),
             )
@@ -654,7 +702,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         window.deiconify()
 
         # Center the window on the parent window using the utility function
-        BaseWindow.center_window(window, self.main_frame.master)
+        BaseWindow.center_window(window, self._get_parent_toplevel())
 
         window.grab_set()  # Make the window modal, disable the parent window
 
@@ -719,12 +767,16 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             change_reason_entry.bind("<KP_Enter>", _on_change_reason_change)
 
         show_tooltip(change_reason_entry, param.tooltip_change_reason)
+
+        # Expose handler for tests to call without user events
+        if param.is_editable:
+            change_reason_entry.testing_on_change_reason_change = _on_change_reason_change  # type: ignore[attr-defined]
         return change_reason_entry
 
     def _on_parameter_delete(self, param_name: str) -> None:
         """Handle parameter deletion."""
         msg = _("Are you sure you want to delete the {param_name} parameter?")
-        if messagebox.askyesno(f"{self.parameter_editor.current_file}", msg.format(**locals())):
+        if self._dialogs.ask_yes_no(f"{self.parameter_editor.current_file}", msg.format(**locals())):
             # Capture current vertical scroll position
             current_scroll_position = self.canvas.yview()[0]
 
@@ -737,7 +789,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def _on_parameter_add(self) -> None:
         """Handle parameter addition."""
-        add_parameter_window = BaseWindow(self.main_frame.master)
+        add_parameter_window = BaseWindow(self._get_parent_root())
         add_parameter_window.root.title(_("Add Parameter to ") + self.parameter_editor.current_file)
         add_parameter_window.root.geometry("450x300")
 
@@ -748,7 +800,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         try:
             possible_add_param_names = self.parameter_editor.get_possible_add_param_names()
         except OperationNotPossibleError as e:
-            messagebox.showerror(_("Operation not possible"), str(e))
+            self._dialogs.show_error(_("Operation not possible"), str(e))
             return
 
         # Prompt the user for a parameter name
@@ -761,7 +813,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             width=28,
         )
         parameter_name_combobox.pack(padx=5, pady=5)
-        BaseWindow.center_window(add_parameter_window.root, self.main_frame.master)
+        BaseWindow.center_window(add_parameter_window.root, self._get_parent_toplevel())
         parameter_name_combobox.focus()
 
         def custom_selection_handler(event: tk.Event) -> None:
@@ -784,10 +836,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 self.parameter_editor_window.repopulate_parameter_table(regenerate_from_disk=False)
                 return True
         except InvalidParameterNameError as exc:
-            messagebox.showerror(_("Invalid parameter name."), str(exc))
+            self._dialogs.show_error(_("Invalid parameter name."), str(exc))
             return False
         except OperationNotPossibleError as exc:
-            messagebox.showerror(_("Operation not possible"), str(exc))
+            self._dialogs.show_error(_("Operation not possible"), str(exc))
             return False
         return False
 

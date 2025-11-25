@@ -16,7 +16,7 @@ import pytest
 
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
-from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
+from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor, ParameterValueUpdateStatus
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
 
 # pylint: disable=redefined-outer-name, too-many-lines, protected-access
@@ -2446,6 +2446,67 @@ class TestParameterEditorFrontendAPI:
         assert set(exported_params.keys()) == set(test_params.keys())
         for key, value in test_params.items():
             assert exported_params[key] == value
+
+
+class TestParameterValueUpdatePresenter:
+    """Verify the presenter-style results returned by update_parameter_value."""
+
+    def test_missing_parameter_returns_error(self, parameter_editor) -> None:
+        result = parameter_editor.update_parameter_value("MISSING", "1.0")
+
+        assert result.status is ParameterValueUpdateStatus.ERROR
+        assert result.title == "Parameter not found"
+        assert "MISSING" in (result.message or "")
+
+    def test_successful_update_returns_updated_status(self, parameter_editor) -> None:
+        parameter_editor.current_step_parameters = {"ANGLE_MAX": ArduPilotParameter("ANGLE_MAX", Par(10.0, "comment"))}
+
+        result = parameter_editor.update_parameter_value("ANGLE_MAX", "20.5")
+
+        assert result.status is ParameterValueUpdateStatus.UPDATED
+        assert parameter_editor.current_step_parameters["ANGLE_MAX"].get_new_value() == pytest.approx(20.5)
+
+    def test_same_value_returns_unchanged_status(self, parameter_editor) -> None:
+        parameter_editor.current_step_parameters = {"ANGLE_MAX": ArduPilotParameter("ANGLE_MAX", Par(10.0, "comment"))}
+
+        result = parameter_editor.update_parameter_value("ANGLE_MAX", "10.0")
+
+        assert result.status is ParameterValueUpdateStatus.UNCHANGED
+
+    def test_out_of_range_requests_confirmation(self, parameter_editor) -> None:
+        parameter_editor.current_step_parameters = {
+            "ANGLE_MAX": ArduPilotParameter(
+                "ANGLE_MAX",
+                Par(5.0, "comment"),
+                metadata={"min": 0.0, "max": 10.0},
+            )
+        }
+
+        result = parameter_editor.update_parameter_value("ANGLE_MAX", "15.0")
+
+        assert result.status is ParameterValueUpdateStatus.CONFIRM_OUT_OF_RANGE
+        assert "should be smaller" in (result.message or "")
+
+    def test_out_of_range_accepts_when_confirmation_skipped(self, parameter_editor) -> None:
+        parameter = ArduPilotParameter(
+            "ANGLE_MAX",
+            Par(5.0, "comment"),
+            metadata={"min": 0.0, "max": 10.0},
+        )
+        parameter_editor.current_step_parameters = {"ANGLE_MAX": parameter}
+
+        result = parameter_editor.update_parameter_value("ANGLE_MAX", "15.0", include_range_check=False)
+
+        assert result.status is ParameterValueUpdateStatus.UPDATED
+        assert parameter.get_new_value() == pytest.approx(15.0)
+
+    def test_invalid_value_returns_error(self, parameter_editor) -> None:
+        parameter_editor.current_step_parameters = {"ANGLE_MAX": ArduPilotParameter("ANGLE_MAX", Par(5.0, "comment"))}
+
+        result = parameter_editor.update_parameter_value("ANGLE_MAX", "not-a-number")
+
+        assert result.status is ParameterValueUpdateStatus.ERROR
+        assert "must be a number" in (result.message or "")
 
 
 class TestUnsavedChangesTracking:

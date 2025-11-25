@@ -1433,7 +1433,7 @@ class TestTableRefresh:
         editor.repopulate_parameter_table(regenerate_from_disk=regenerate_flag)
 
         show_only_flag = editor.show_only_differences.get()
-        editor.parameter_editor_table.repopulate.assert_called_once_with(
+        editor.parameter_editor_table.repopulate_table.assert_called_once_with(
             show_only_flag,
             editor.gui_complexity,
             regenerate_flag,
