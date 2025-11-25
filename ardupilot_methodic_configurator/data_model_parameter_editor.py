@@ -55,7 +55,7 @@ class InvalidParameterNameError(Exception):
 # pylint: disable=too-many-lines
 
 
-class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many-instance-attributes
+class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-instance-attributes
     """
     Manages configuration state, including flight controller and filesystem access.
 
@@ -84,7 +84,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
 
         self._last_time_asked_to_save: float = 0
 
-    # frontend_tkinter_parameter_editor_table.py API start
+    # frontend_tkinter_parameter_editor.py API start
     @property
     def connected_vehicle_type(self) -> str:
         return (
@@ -926,9 +926,6 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
         self._write_current_file()
         self._at_least_one_changed = False
 
-    # frontend_tkinter_parameter_editor_table.py API end
-
-    # frontend_tkinter_parameter_editor.py API start
     def _validate_uploaded_parameters(self, selected_params: dict) -> list[str]:
         logging_info(_("Re-downloaded all parameters from the flight controller"))
 
@@ -1382,6 +1379,10 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
 
         return should_write_file
 
+    # frontend_tkinter_parameter_editor.py API end
+
+    # frontend_tkinter_parameter_editor_table.py API start
+
     def repopulate_configuration_step_parameters(
         self,
     ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
@@ -1686,7 +1687,7 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
         if blog_url:
             webbrowser_open(url=blog_url, new=0, autoraise=True)
 
-    # frontend_tkinter_parameter_editor.py API end
+    # frontend_tkinter_parameter_editor_table.py API end
 
     # frontend_tkinter_parameter_editor_documentation_frame.py API start
     def get_documentation_text_and_url(self, key: str, filename: Optional[str] = None) -> tuple[str, str]:

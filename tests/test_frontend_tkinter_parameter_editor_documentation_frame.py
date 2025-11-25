@@ -26,8 +26,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documenta
 
 
 @pytest.fixture
-def mock_configuration_manager() -> MagicMock:
-    """Fixture providing a mock configuration manager with realistic test data."""
+def mock_parameter_editor() -> MagicMock:
+    """Fixture providing a mock parameter editor data model with realistic test data."""
     manager = MagicMock()
 
     # Set up current file
@@ -51,10 +51,10 @@ def mock_configuration_manager() -> MagicMock:
 
 
 @pytest.fixture
-def documentation_frame(mock_configuration_manager) -> Generator[DocumentationFrame, None, None]:
+def documentation_frame(mock_parameter_editor) -> Generator[DocumentationFrame, None, None]:
     """Fixture providing a properly initialized DocumentationFrame for testing."""
     root = tk.Tk()
-    frame = DocumentationFrame(root, mock_configuration_manager)
+    frame = DocumentationFrame(root, mock_parameter_editor)
     yield frame
     root.destroy()
 
@@ -62,7 +62,7 @@ def documentation_frame(mock_configuration_manager) -> Generator[DocumentationFr
 class TestDocumentationFrameInitialization:
     """Test the initial setup and creation of the documentation frame."""
 
-    def test_user_sees_documentation_frame_with_proper_title(self, documentation_frame, mock_configuration_manager) -> None:
+    def test_user_sees_documentation_frame_with_proper_title(self, documentation_frame, mock_parameter_editor) -> None:
         """
         User sees a documentation frame with the current file's title.
 
@@ -113,7 +113,7 @@ class TestDocumentationDisplayBehavior:
         assert str(blog_label.cget("cursor")) == "hand2"
 
     def test_user_sees_mandatory_level_progress_bar_with_correct_value(
-        self, documentation_frame, mock_configuration_manager
+        self, documentation_frame, mock_parameter_editor
     ) -> None:
         """
         User sees mandatory level displayed as a progress bar.
@@ -189,7 +189,7 @@ class TestDocumentationInteractionBehavior:
 class TestDocumentationUpdateBehavior:
     """Test how documentation updates when configuration changes."""
 
-    def test_user_sees_updated_documentation_when_file_changes(self, documentation_frame, mock_configuration_manager) -> None:
+    def test_user_sees_updated_documentation_when_file_changes(self, documentation_frame, mock_parameter_editor) -> None:
         """
         User sees updated documentation when switching to different parameter file.
 
@@ -198,8 +198,8 @@ class TestDocumentationUpdateBehavior:
         THEN: The frame title and content should update accordingly
         """
         # Change the current file
-        mock_configuration_manager.current_file = "02_frame_setup.param"
-        mock_configuration_manager.get_documentation_frame_title.return_value = "02_frame_setup.param Documentation"
+        mock_parameter_editor.current_file = "02_frame_setup.param"
+        mock_parameter_editor.get_documentation_frame_title.return_value = "02_frame_setup.param Documentation"
 
         documentation_frame.refresh_documentation_labels()
 
@@ -227,7 +227,7 @@ class TestDocumentationEdgeCases:
     """Test edge cases and error handling in documentation display."""
 
     def test_user_sees_fallback_when_no_documentation_links_available(
-        self, documentation_frame, mock_configuration_manager
+        self, documentation_frame, mock_parameter_editor
     ) -> None:
         """
         User sees appropriate fallback when documentation links are unavailable.
@@ -237,7 +237,7 @@ class TestDocumentationEdgeCases:
         THEN: Non-clickable text should be displayed appropriately
         """
         # Mock no URLs available
-        mock_configuration_manager.get_documentation_text_and_url.side_effect = lambda key: {
+        mock_parameter_editor.get_documentation_text_and_url.side_effect = lambda key: {
             "blog": ("Forum Discussion", None),
             "wiki": ("Wiki Page", None),
             "external_tool": ("Tool Link", None),
@@ -253,7 +253,7 @@ class TestDocumentationEdgeCases:
 
     @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame.show_tooltip")
     def test_user_sees_no_tooltip_when_why_why_now_not_available(
-        self, mock_show_tooltip, documentation_frame, mock_configuration_manager
+        self, mock_show_tooltip, documentation_frame, mock_parameter_editor
     ) -> None:
         """
         User sees no tooltip when why/why now explanation is not available.
@@ -262,13 +262,13 @@ class TestDocumentationEdgeCases:
         WHEN: The tooltip is updated
         THEN: No tooltip should be shown
         """
-        mock_configuration_manager.get_why_why_now_tooltip.return_value = ""
+        mock_parameter_editor.get_why_why_now_tooltip.return_value = ""
 
         documentation_frame.update_why_why_now_tooltip()
 
         mock_show_tooltip.assert_not_called()
 
-    def test_user_sees_zero_mandatory_level_for_optional_steps(self, documentation_frame, mock_configuration_manager) -> None:
+    def test_user_sees_zero_mandatory_level_for_optional_steps(self, documentation_frame, mock_parameter_editor) -> None:
         """
         User sees zero mandatory level for optional configuration steps.
 
@@ -276,7 +276,7 @@ class TestDocumentationEdgeCases:
         WHEN: The documentation is displayed
         THEN: The progress bar should show 0%
         """
-        mock_configuration_manager.parse_mandatory_level_percentage.return_value = (0, "This step is optional")
+        mock_parameter_editor.parse_mandatory_level_percentage.return_value = (0, "This step is optional")
 
         documentation_frame._refresh_mandatory_level("0%")  # pylint: disable=protected-access
 

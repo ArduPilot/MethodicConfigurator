@@ -31,7 +31,7 @@ from test_data_model_vehicle_components_common import SAMPLE_DOC_DICT, Component
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
+from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 
 # ==================== SHARED TKINTER TESTING CONFIGURATION ====================
@@ -201,8 +201,8 @@ def gui_test_environment() -> None:
 
 
 @pytest.fixture
-def test_config_manager(tmp_path) -> ConfigurationManager:
-    """Create a test ConfigurationManager with minimal setup for GUI tests."""
+def test_param_editor(tmp_path) -> ParameterEditor:
+    """Create a test ParameterEditor with minimal setup for GUI tests."""
     # Create a temporary directory structure
     vehicle_dir = tmp_path / "test_vehicle"
     vehicle_dir.mkdir()
@@ -244,8 +244,8 @@ def test_config_manager(tmp_path) -> ConfigurationManager:
         str(vehicle_dir), "ArduCopter", "", allow_editing_template_files=False, save_component_to_system_templates=False
     )
 
-    # Create ConfigurationManager
-    return ConfigurationManager("04_board_orientation.param", fc, filesystem)
+    # Create ParameterEditor
+    return ParameterEditor("04_board_orientation.param", fc, filesystem)
 
 
 # ==================== SITL TESTING FIXTURES ====================

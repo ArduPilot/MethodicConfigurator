@@ -20,7 +20,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
+from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import show_about_window
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
     ParameterEditorUiServices,
@@ -36,7 +36,7 @@ class TestParameterEditorWindow:
         # The gui_test_environment fixture handles all the assertions
 
     @pytest.mark.skip(reason="Test blocks during execution - needs further investigation")
-    def test_basic_gui_creation(self, test_config_manager: ConfigurationManager) -> None:
+    def test_basic_gui_creation(self, test_param_editor: ParameterEditor) -> None:
         """Test basic GUI creation without running mainloop."""
         # Create window but intercept mainloop
         window = None
@@ -54,12 +54,12 @@ class TestParameterEditorWindow:
                 patch.object(ParameterEditorWindow, "put_image_in_label", return_value=MagicMock()),
             ):
                 # Create the window (this no longer calls mainloop automatically)
-                window = ParameterEditorWindow(test_config_manager)
+                window = ParameterEditorWindow(test_param_editor)
 
             # Basic checks
             assert window.root is not None
-            assert hasattr(window, "configuration_manager")
-            assert window.configuration_manager is test_config_manager
+            assert hasattr(window, "parameter_editor")
+            assert window.parameter_editor is test_param_editor
 
             # Don't call window.run() in tests to avoid blocking
 
@@ -69,7 +69,7 @@ class TestParameterEditorWindow:
                 window.root.destroy()
 
     @pytest.mark.skip(reason="GUI test requires display - run manually in GUI environment")
-    def test_full_gui_with_pyautogui(self, test_config_manager: ConfigurationManager) -> None:  # pylint: disable=unused-argument
+    def test_full_gui_with_pyautogui(self, test_param_editor: ParameterEditor) -> None:  # pylint: disable=unused-argument
         """Full GUI test with PyAutoGUI - requires display."""
         # This test would run the full GUI and use PyAutoGUI to interact with it
         # For now, it's skipped as it requires a display environment
@@ -203,15 +203,15 @@ class TestParameterEditorWindow:
         monkeypatch,
     ) -> None:
         """ParameterEditorWindow initializes against a real Tk root for PyAutoGUI flows."""
-        config_manager = MagicMock()
-        config_manager.current_file = "01_initial.param"
-        config_manager.parameter_files.return_value = ["01_initial.param", "02_next.param"]
-        config_manager.get_vehicle_directory.return_value = "gui-test-dir"
-        config_manager.get_last_configuration_step_number.return_value = None
-        config_manager.parameter_documentation_available.return_value = True
-        config_manager.is_fc_connected = False
-        config_manager.is_mavftp_supported = False
-        config_manager.is_configuration_step_optional.return_value = False
+        param_editor = MagicMock()
+        param_editor.current_file = "01_initial.param"
+        param_editor.parameter_files.return_value = ["01_initial.param", "02_next.param"]
+        param_editor.get_vehicle_directory.return_value = "gui-test-dir"
+        param_editor.get_last_configuration_step_number.return_value = None
+        param_editor.parameter_documentation_available.return_value = True
+        param_editor.is_fc_connected = False
+        param_editor.is_mavftp_supported = False
+        param_editor.is_configuration_step_optional.return_value = False
 
         class DummyDirSelection:  # pylint: disable=too-few-public-methods
             """Stub directory selection widget for GUI integration tests."""
@@ -232,7 +232,7 @@ class TestParameterEditorWindow:
         class DummyDocumentationFrame:
             """Simple documentation frame replacement with real ttk container."""
 
-            def __init__(self, parent, _configuration_manager) -> None:
+            def __init__(self, parent, _parameter_editor) -> None:
                 self.documentation_frame = ttk.Frame(parent)
 
             def refresh_documentation_labels(self) -> None:
@@ -323,7 +323,7 @@ class TestParameterEditorWindow:
             fake_label,
         )
 
-        window = ParameterEditorWindow(config_manager, ui_services=ui_services)
+        window = ParameterEditorWindow(param_editor, ui_services=ui_services)
 
         try:
             assert isinstance(window.root, tk.Tk)

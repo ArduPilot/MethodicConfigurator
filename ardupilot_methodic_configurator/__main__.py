@@ -38,8 +38,8 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import verify_and_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.data_model_software_updates import UpdateManager, check_for_software_updates
 from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
@@ -539,8 +539,8 @@ def parameter_editor_and_uploader(state: ApplicationState) -> None:
             )
 
     # Call the GUI function with the starting intermediate parameter file
-    configuration_manager = ConfigurationManager(start_file, state.flight_controller, state.local_filesystem)
-    window = ParameterEditorWindow(configuration_manager)
+    parameter_editor = ParameterEditor(start_file, state.flight_controller, state.local_filesystem)
+    window = ParameterEditorWindow(parameter_editor)
     window.run()
 
 

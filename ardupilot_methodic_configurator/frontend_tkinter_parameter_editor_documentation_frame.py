@@ -15,7 +15,7 @@ from webbrowser import open as webbrowser_open  # to open the web documentation
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
-from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
+from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
@@ -49,9 +49,9 @@ class DocumentationFrame:
         ),
     )
 
-    def __init__(self, root: tk.Widget, configuration_manager: ConfigurationManager) -> None:
+    def __init__(self, root: tk.Widget, parameter_editor: ParameterEditor) -> None:
         self.root = root
-        self.configuration_manager = configuration_manager
+        self.parameter_editor = parameter_editor
         self.documentation_frame: ttk.LabelFrame
         self.documentation_labels: dict[str, ttk.Label] = {}
         self.mandatory_level: ttk.Progressbar
@@ -112,7 +112,7 @@ class DocumentationFrame:
         auto_open_checkbox.pack(side=tk.LEFT, expand=False)
 
     def update_why_why_now_tooltip(self) -> None:
-        tooltip_text = self.configuration_manager.get_why_why_now_tooltip()
+        tooltip_text = self.parameter_editor.get_why_why_now_tooltip()
         if tooltip_text:
             show_tooltip(self.documentation_frame, tooltip_text, position_below=False)
 
@@ -120,18 +120,18 @@ class DocumentationFrame:
         return self.auto_open_var.get()
 
     def refresh_documentation_labels(self) -> None:
-        frame_title = self.configuration_manager.get_documentation_frame_title()
+        frame_title = self.parameter_editor.get_documentation_frame_title()
         self.documentation_frame.config(text=frame_title)
 
-        blog_text, blog_url = self.configuration_manager.get_documentation_text_and_url("blog")
+        blog_text, blog_url = self.parameter_editor.get_documentation_text_and_url("blog")
         self._refresh_documentation_label(self.BLOG_LABEL, _(blog_text) if blog_text else "", blog_url)
-        wiki_text, wiki_url = self.configuration_manager.get_documentation_text_and_url("wiki")
+        wiki_text, wiki_url = self.parameter_editor.get_documentation_text_and_url("wiki")
         self._refresh_documentation_label(self.WIKI_LABEL, _(wiki_text) if wiki_text else "", wiki_url)
-        external_tool_text, external_tool_url = self.configuration_manager.get_documentation_text_and_url("external_tool")
+        external_tool_text, external_tool_url = self.parameter_editor.get_documentation_text_and_url("external_tool")
         self._refresh_documentation_label(
             self.EXTERNAL_TOOL_LABEL, _(external_tool_text) if external_tool_text else "", external_tool_url
         )
-        mandatory_text, _mandatory_url = self.configuration_manager.get_documentation_text_and_url("mandatory")
+        mandatory_text, _mandatory_url = self.parameter_editor.get_documentation_text_and_url("mandatory")
         self._refresh_mandatory_level(mandatory_text)
 
     def _refresh_documentation_label(self, label_key: str, text: str, url: str, url_expected: bool = True) -> None:
@@ -152,6 +152,6 @@ class DocumentationFrame:
                 show_tooltip(label, _("Documentation URL not available"))
 
     def _refresh_mandatory_level(self, text: str) -> None:
-        percentage, tooltip = self.configuration_manager.parse_mandatory_level_percentage(text)
+        percentage, tooltip = self.parameter_editor.parse_mandatory_level_percentage(text)
         self.mandatory_level.config(value=percentage)
         show_tooltip(self.mandatory_level, tooltip)

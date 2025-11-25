@@ -22,9 +22,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter, ParameterOutOfRangeError
 from ardupilot_methodic_configurator.data_model_par_dict import Par
+from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 
 # pylint: disable=redefined-outer-name, protected-access, too-many-lines
@@ -151,27 +151,25 @@ def realistic_filesystem() -> MagicMock:
 
 
 @pytest.fixture
-def config_manager_with_params(
-    realistic_filesystem: MagicMock, flight_controller_with_params: MagicMock
-) -> ConfigurationManager:
-    """Create a configuration manager with populated parameters for focused testing."""
-    config_manager = ConfigurationManager(
+def param_editor_with_params(realistic_filesystem: MagicMock, flight_controller_with_params: MagicMock) -> ParameterEditor:
+    """Create a parameter editor data model with populated parameters for focused testing."""
+    param_editor = ParameterEditor(
         current_file="01_initial_setup.param", flight_controller=flight_controller_with_params, filesystem=realistic_filesystem
     )
 
     # Manually populate parameters dict with ArduPilotParameter objects
     # This avoids the complex repopulate logic that requires more detailed mocks
-    config_manager.current_step_parameters = {}
+    param_editor.current_step_parameters = {}
     # Populate parameters from all configuration steps for comprehensive testing
     for file_params in realistic_filesystem.file_parameters.values():
         for param_name, par_obj in file_params.items():
-            if param_name not in config_manager.current_step_parameters:  # Don't overwrite if already exists
+            if param_name not in param_editor.current_step_parameters:  # Don't overwrite if already exists
                 metadata = realistic_filesystem.doc_dict.get(param_name, {})
                 fc_value = flight_controller_with_params.fc_parameters.get(param_name)
                 param = ArduPilotParameter(name=param_name, par_obj=par_obj, metadata=metadata, fc_value=fc_value)
-                config_manager.current_step_parameters[param_name] = param
+                param_editor.current_step_parameters[param_name] = param
 
-    return config_manager
+    return param_editor
 
 
 @pytest.fixture
@@ -209,29 +207,29 @@ def integrated_parameter_table(
     parameter_editor.gui_complexity = "advanced"
     parameter_editor.repopulate_parameter_table = MagicMock()
 
-    # Create configuration manager
-    config_manager = ConfigurationManager(
+    # Create parameter editor data model
+    param_editor = ParameterEditor(
         current_file="01_initial_setup.param", flight_controller=flight_controller_with_params, filesystem=realistic_filesystem
     )
 
     # Manually populate current_step_parameters dict with ArduPilotParameter objects
     # This avoids the complex repopulate logic that requires more detailed mocks
-    config_manager.current_step_parameters = {}
+    param_editor.current_step_parameters = {}
     # Populate parameters from all configuration steps for comprehensive testing
     for file_params in realistic_filesystem.file_parameters.values():
         for param_name, par_obj in file_params.items():
-            if param_name not in config_manager.current_step_parameters:  # Don't overwrite if already exists
+            if param_name not in param_editor.current_step_parameters:  # Don't overwrite if already exists
                 metadata = realistic_filesystem.doc_dict.get(param_name, {})
                 fc_value = flight_controller_with_params.fc_parameters.get(param_name)
                 param = ArduPilotParameter(name=param_name, par_obj=par_obj, metadata=metadata, fc_value=fc_value)
-                config_manager.current_step_parameters[param_name] = param
+                param_editor.current_step_parameters[param_name] = param
 
     # Create the parameter table
     with patch("tkinter.ttk.Style") as mock_style:
         style_instance = mock_style.return_value
         style_instance.lookup.return_value = "#ffffff"
 
-        table = ParameterEditorTable(tk_root, config_manager, parameter_editor)
+        table = ParameterEditorTable(tk_root, param_editor, parameter_editor)
 
         # Set up real widgets for integration testing
         table.view_port = ttk.Frame(tk_root)
@@ -243,9 +241,7 @@ def integrated_parameter_table(
 class TestUserParameterConfigurationWorkflows:
     """Test complete user workflows for configuring ArduPilot parameters."""
 
-    def test_user_can_configure_initial_flight_controller_setup(
-        self, config_manager_with_params: ConfigurationManager
-    ) -> None:
+    def test_user_can_configure_initial_flight_controller_setup(self, param_editor_with_params: ParameterEditor) -> None:
         """
         User can configure initial flight controller setup parameters.
 
@@ -254,16 +250,16 @@ class TestUserParameterConfigurationWorkflows:
         THEN: The parameters are properly set and the configuration is ready for next steps
         AND: The system is configured with appropriate defaults for safe operation
         """
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
 
         # Verify initial state - should have parameters from the configuration file
-        assert len(config_manager.current_step_parameters) > 0  # Should have some parameters populated
-        assert config_manager._has_unsaved_changes() is False  # Initially no changes
+        assert len(param_editor.current_step_parameters) > 0  # Should have some parameters populated
+        assert param_editor._has_unsaved_changes() is False  # Initially no changes
 
         # Find a parameter to modify (any parameter that exists)
-        if config_manager.current_step_parameters:
-            param_name = next(iter(config_manager.current_step_parameters.keys()))
-            param = config_manager.current_step_parameters[param_name]
+        if param_editor.current_step_parameters:
+            param_name = next(iter(param_editor.current_step_parameters.keys()))
+            param = param_editor.current_step_parameters[param_name]
 
             original_value = param.get_new_value()
 
@@ -274,10 +270,10 @@ class TestUserParameterConfigurationWorkflows:
             # Verify the change is recorded
             assert param.get_new_value() != original_value
             assert param.change_reason == "Modified for testing"
-            assert config_manager._has_unsaved_changes()
+            assert param_editor._has_unsaved_changes()
 
     def test_user_can_setup_vehicle_frame_and_motors(
-        self, config_manager_with_params: ConfigurationManager, realistic_filesystem: MagicMock
+        self, param_editor_with_params: ParameterEditor, realistic_filesystem: MagicMock
     ) -> None:
         """
         User can configure vehicle frame type and motor parameters.
@@ -288,10 +284,10 @@ class TestUserParameterConfigurationWorkflows:
         AND: Motor parameters are available for configuration
         AND: The system provides appropriate parameters for frame setup
         """
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
 
         # User switches to frame setup configuration step (simulating UI action)
-        config_manager.current_file = "02_frame_setup.param"
+        param_editor.current_file = "02_frame_setup.param"
         # In a real UI, this would trigger repopulation, but for testing we manually check
         # that the parameters would be available
 
@@ -306,7 +302,7 @@ class TestUserParameterConfigurationWorkflows:
 
         # User can configure motor spin parameters (simulating parameter editing)
         # In real usage, this would be done through the UI
-        motor_spin_param = config_manager.current_step_parameters.get("MOT_SPIN_ARM")
+        motor_spin_param = param_editor.current_step_parameters.get("MOT_SPIN_ARM")
         if motor_spin_param:
             motor_spin_param.set_new_value("0.15")  # 15% minimum throttle when armed
             motor_spin_param.set_change_reason("Increased for better motor response and stability")
@@ -316,7 +312,7 @@ class TestUserParameterConfigurationWorkflows:
             assert motor_spin_param.change_reason == "Increased for better motor response and stability"
 
     def test_user_can_tune_pid_controllers_for_stable_flight(
-        self, config_manager_with_params: ConfigurationManager, realistic_filesystem: MagicMock
+        self, param_editor_with_params: ParameterEditor, realistic_filesystem: MagicMock
     ) -> None:
         """
         User can tune PID controllers for stable and responsive flight.
@@ -326,10 +322,10 @@ class TestUserParameterConfigurationWorkflows:
         THEN: PID controller parameters are available for adjustment
         AND: The system provides appropriate parameters for flight control tuning
         """
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
 
         # User switches to PID tuning configuration step (simulating UI action)
-        config_manager.current_file = "03_pid_tuning.param"
+        param_editor.current_file = "03_pid_tuning.param"
 
         # Verify that PID parameters exist in the filesystem
         pid_params = realistic_filesystem.file_parameters.get("03_pid_tuning.param", {})
@@ -340,7 +336,7 @@ class TestUserParameterConfigurationWorkflows:
         assert "ATC_RAT_YAW_P" in pid_params
 
         # User tunes roll axis for better responsiveness (simulating parameter editing)
-        roll_p_param = config_manager.current_step_parameters.get("ATC_RAT_RLL_P")
+        roll_p_param = param_editor.current_step_parameters.get("ATC_RAT_RLL_P")
         if roll_p_param:
             original_roll_p = roll_p_param.get_new_value()
             roll_p_param.set_new_value("0.15")  # Slightly more aggressive
@@ -351,7 +347,7 @@ class TestUserParameterConfigurationWorkflows:
             assert roll_p_param.get_new_value() > original_roll_p  # More aggressive than default
 
     def test_user_can_configure_battery_monitoring_and_failsafes(
-        self, config_manager_with_params: ConfigurationManager, realistic_filesystem: MagicMock
+        self, param_editor_with_params: ParameterEditor, realistic_filesystem: MagicMock
     ) -> None:
         """
         User can configure battery monitoring and failsafe parameters.
@@ -361,10 +357,10 @@ class TestUserParameterConfigurationWorkflows:
         THEN: Battery monitoring parameters are available for configuration
         AND: The system provides appropriate parameters for battery management
         """
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
 
         # User switches to battery setup configuration step (simulating UI action)
-        config_manager.current_file = "04_battery_setup.param"
+        param_editor.current_file = "04_battery_setup.param"
 
         # Verify that battery parameters exist in the filesystem
         battery_params = realistic_filesystem.file_parameters.get("04_battery_setup.param", {})
@@ -374,7 +370,7 @@ class TestUserParameterConfigurationWorkflows:
         assert battery_params["BATT_CAPACITY"].value == 3300.0  # 3300mAh battery
 
         # User configures low voltage threshold (simulating parameter editing)
-        low_volt_param = config_manager.current_step_parameters.get("BATT_LOW_VOLT")
+        low_volt_param = param_editor.current_step_parameters.get("BATT_LOW_VOLT")
         if low_volt_param:
             low_volt_param.set_new_value("32.0")  # 3.2V per cell for 10S battery
             low_volt_param.set_change_reason("Set for 10S LiPo battery low voltage warning")
@@ -386,9 +382,7 @@ class TestUserParameterConfigurationWorkflows:
 class TestParameterValidationWorkflows:
     """Test parameter validation and error handling workflows."""
 
-    def test_user_receives_validation_feedback_for_invalid_values(
-        self, config_manager_with_params: ConfigurationManager
-    ) -> None:
+    def test_user_receives_validation_feedback_for_invalid_values(self, param_editor_with_params: ParameterEditor) -> None:
         """
         User receives immediate validation feedback for invalid parameter values.
 
@@ -397,11 +391,11 @@ class TestParameterValidationWorkflows:
         THEN: The system rejects invalid values and provides helpful feedback
         AND: Users understand why their input was rejected
         """
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
 
         # Find a parameter with range constraints
         param_with_range = None
-        for param in config_manager.current_step_parameters.values():
+        for param in param_editor.current_step_parameters.values():
             if param.min_value is not None or param.max_value is not None:
                 param_with_range = param
                 break
@@ -452,7 +446,7 @@ class TestParameterValidationWorkflows:
             # Should not reach here due to earlier assertion
             pytest.fail("Parameter should have min or max constraint")
 
-    def test_user_can_remove_unwanted_parameters(self, config_manager_with_params: ConfigurationManager) -> None:
+    def test_user_can_remove_unwanted_parameters(self, param_editor_with_params: ParameterEditor) -> None:
         """
         User can remove unwanted or unnecessary parameters from configuration.
 
@@ -461,17 +455,17 @@ class TestParameterValidationWorkflows:
         THEN: The parameters are removed from the configuration
         AND: The configuration remains valid and functional
         """
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
 
         # Verify parameter exists initially
-        initial_params = config_manager.get_parameters_as_par_dict()
+        initial_params = param_editor.get_parameters_as_par_dict()
         assert "MOT_SPIN_ARM" in initial_params
 
         # User removes the parameter
-        config_manager.delete_parameter_from_current_file("MOT_SPIN_ARM")
+        param_editor.delete_parameter_from_current_file("MOT_SPIN_ARM")
 
         # Verify parameter was removed
-        updated_params = config_manager.get_parameters_as_par_dict()
+        updated_params = param_editor.get_parameters_as_par_dict()
         assert "MOT_SPIN_ARM" not in updated_params
 
         # Configuration should still be valid
@@ -522,7 +516,7 @@ class TestUIComplexityWorkflows:
 
     def test_user_can_make_bulk_parameter_changes(
         self,
-        config_manager_with_params: ConfigurationManager,
+        param_editor_with_params: ParameterEditor,
         mock_parameter_editor: MagicMock,  # pylint: disable=unused-argument
     ) -> None:
         """
@@ -533,19 +527,19 @@ class TestUIComplexityWorkflows:
         THEN: All changes are applied consistently
         AND: Change tracking works correctly for all modified parameters
         """
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
 
         # User makes multiple parameter changes
-        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
+        sysid_param = param_editor.current_step_parameters["SYSID_THISMAV"]
         sysid_param.set_new_value("10.0")
         sysid_param.set_change_reason("Updated for fleet identification")
 
-        batt_param = config_manager.current_step_parameters["BATT_CAPACITY"]
+        batt_param = param_editor.current_step_parameters["BATT_CAPACITY"]
         batt_param.set_new_value("4000.0")
         batt_param.set_change_reason("Upgraded to higher capacity battery")
 
         # Verify changes are tracked
-        assert config_manager._has_unsaved_changes()
+        assert param_editor._has_unsaved_changes()
 
         # Simulate saving (in real implementation, this would write to file)
         # For this test, we verify the changes are properly recorded
@@ -556,7 +550,7 @@ class TestUIComplexityWorkflows:
 
     def test_user_can_monitor_flight_controller_parameter_sync(
         self,
-        config_manager_with_params: ConfigurationManager,
+        param_editor_with_params: ParameterEditor,
         flight_controller_with_params: MagicMock,  # pylint: disable=unused-argument
     ) -> None:
         """
@@ -567,10 +561,10 @@ class TestUIComplexityWorkflows:
         THEN: They can see which parameters match FC values and which differ
         AND: They understand what needs to be uploaded to the flight controller
         """
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
 
         # Check parameters that exist in both config and FC
-        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
+        sysid_param = param_editor.current_step_parameters["SYSID_THISMAV"]
         assert sysid_param._fc_value == 1.0  # Same value in FC
         assert sysid_param.get_new_value() == 1.0  # Same value in config
 
@@ -585,13 +579,13 @@ class TestUIComplexityWorkflows:
         # (In real UI, this would show visual indicators)
         assert sysid_param.get_new_value() != sysid_param._fc_value
 
-    def test_user_receives_guidance_for_parameter_changes(self, config_manager_with_params: ConfigurationManager) -> None:
+    def test_user_receives_guidance_for_parameter_changes(self, param_editor_with_params: ParameterEditor) -> None:
         """User receives helpful guidance and documentation for parameter changes."""
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
 
         # Check that parameters have documentation
-        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
-        batt_param = config_manager.current_step_parameters["BATT_CAPACITY"]
+        sysid_param = param_editor.current_step_parameters["SYSID_THISMAV"]
+        batt_param = param_editor.current_step_parameters["BATT_CAPACITY"]
 
         # Verify documentation is available
         assert sysid_param._metadata is not None
@@ -608,7 +602,7 @@ class TestCompleteParameterWorkflowIntegration:
     """Test complete end-to-end parameter configuration workflows from start to finish."""
 
     def test_user_can_complete_full_parameter_configuration_and_upload_cycle(
-        self, config_manager_with_params: ConfigurationManager, flight_controller_with_params: MagicMock
+        self, param_editor_with_params: ParameterEditor, flight_controller_with_params: MagicMock
     ) -> None:
         """
         User can complete a full parameter configuration cycle: load, modify, save, and upload.
@@ -619,40 +613,40 @@ class TestCompleteParameterWorkflowIntegration:
         AND: The system maintains data integrity throughout the process
         AND: User receives appropriate feedback at each step
         """
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
         flight_controller = flight_controller_with_params
 
         # GIVEN: Initial state with loaded parameters
-        initial_params = config_manager.get_parameters_as_par_dict()
+        initial_params = param_editor.get_parameters_as_par_dict()
         assert len(initial_params) > 0
 
         # WHEN: User modifies multiple parameters for a complete vehicle setup
         # Step 1: Configure system identity
-        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
+        sysid_param = param_editor.current_step_parameters["SYSID_THISMAV"]
         sysid_param.set_new_value("5.0")
         sysid_param.set_change_reason("Unique ID for fleet management")
 
         # Step 2: Configure battery settings
-        batt_capacity_param = config_manager.current_step_parameters["BATT_CAPACITY"]
+        batt_capacity_param = param_editor.current_step_parameters["BATT_CAPACITY"]
         batt_capacity_param.set_new_value("5200.0")
         batt_capacity_param.set_change_reason("Upgraded to 5200mAh LiPo battery")
 
         # Step 3: Configure motor settings
-        motor_spin_param = config_manager.current_step_parameters["MOT_SPIN_ARM"]
+        motor_spin_param = param_editor.current_step_parameters["MOT_SPIN_ARM"]
         motor_spin_param.set_new_value("0.12")
         motor_spin_param.set_change_reason("12% minimum throttle for better motor response")
 
         # Step 4: Configure PID settings for stable flight
-        roll_p_param = config_manager.current_step_parameters["ATC_RAT_RLL_P"]
+        roll_p_param = param_editor.current_step_parameters["ATC_RAT_RLL_P"]
         roll_p_param.set_new_value("0.18")
         roll_p_param.set_change_reason("Increased for better wind resistance")
 
         # Verify changes are tracked
-        assert config_manager._has_unsaved_changes()
+        assert param_editor._has_unsaved_changes()
 
         # Step 5: Save configuration to file (simulated)
         # In real implementation, this would write to the parameter file
-        saved_params = config_manager.get_parameters_as_par_dict()
+        saved_params = param_editor.get_parameters_as_par_dict()
         assert saved_params["SYSID_THISMAV"].value == 5.0
         assert saved_params["BATT_CAPACITY"].value == 5200.0
         assert saved_params["MOT_SPIN_ARM"].value == 0.12
@@ -675,10 +669,10 @@ class TestCompleteParameterWorkflowIntegration:
 
         # AND: Configuration is marked as saved
         # In real implementation, unsaved changes would be cleared after successful upload
-        assert config_manager._has_unsaved_changes()  # Still true in test mock
+        assert param_editor._has_unsaved_changes()  # Still true in test mock
 
     def test_user_can_recover_from_configuration_errors_and_continue_workflow(
-        self, config_manager_with_params: ConfigurationManager, flight_controller_with_params: MagicMock
+        self, param_editor_with_params: ParameterEditor, flight_controller_with_params: MagicMock
     ) -> None:
         """
         User can recover from configuration errors and continue their workflow.
@@ -689,15 +683,15 @@ class TestCompleteParameterWorkflowIntegration:
         AND: User can correct issues and complete their workflow
         AND: No data is lost during error recovery
         """
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
         flight_controller = flight_controller_with_params
 
         # GIVEN: Initial valid configuration
-        initial_params = config_manager.get_parameters_as_par_dict()
+        initial_params = param_editor.get_parameters_as_par_dict()
         assert len(initial_params) > 0
 
         # WHEN: User attempts invalid configuration
-        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
+        sysid_param = param_editor.current_step_parameters["SYSID_THISMAV"]
 
         # Try to set invalid value (out of range)
         with contextlib.suppress(ParameterOutOfRangeError, ValueError):
@@ -711,14 +705,14 @@ class TestCompleteParameterWorkflowIntegration:
         # WHEN: Save operation fails (simulated network/filesystem error)
         # Mock a save failure by making _write_current_file raise an exception
         with (
-            patch.object(config_manager, "_write_current_file", side_effect=Exception("Save failed")),
+            patch.object(param_editor, "_write_current_file", side_effect=Exception("Save failed")),
             pytest.raises(Exception, match="Save failed"),
         ):
-            config_manager._write_current_file()
+            param_editor._write_current_file()
 
         # THEN: User can retry or recover
         # User retries save (no exception this time)
-        config_manager._write_current_file()  # Should succeed
+        param_editor._write_current_file()  # Should succeed
 
         # WHEN: Upload fails due to flight controller disconnection
         flight_controller.upload_parameters = MagicMock(return_value=False)
@@ -732,7 +726,7 @@ class TestCompleteParameterWorkflowIntegration:
         flight_controller.is_connected = True
         flight_controller.upload_parameters = MagicMock(return_value=True)
 
-        retry_upload_result = flight_controller.upload_parameters(config_manager.get_parameters_as_par_dict())
+        retry_upload_result = flight_controller.upload_parameters(param_editor.get_parameters_as_par_dict())
         assert retry_upload_result is True
 
         # AND: All user changes are preserved throughout error recovery
@@ -780,45 +774,45 @@ class TestCompleteParameterWorkflowIntegration:
         large_filesystem.derived_parameters = {}
         large_filesystem.compute_parameters = MagicMock(return_value=None)
 
-        # Create configuration manager with large dataset
-        config_manager = ConfigurationManager(
+        # Create parameter editor data model with large dataset
+        param_editor = ParameterEditor(
             current_file="large_config.param", flight_controller=flight_controller_with_params, filesystem=large_filesystem
         )
 
         # Manually populate with large parameter set
-        config_manager.current_step_parameters = {}
+        param_editor.current_step_parameters = {}
         for param_name, par_obj in large_param_set.items():
             metadata = large_filesystem.doc_dict.get(param_name, {})
             fc_value = flight_controller_with_params.fc_parameters.get(param_name)
             param = ArduPilotParameter(name=param_name, par_obj=par_obj, metadata=metadata, fc_value=fc_value)
-            config_manager.current_step_parameters[param_name] = param
+            param_editor.current_step_parameters[param_name] = param
 
         # WHEN: User performs operations on large dataset
         # Search for specific parameters
-        found_params = [name for name in config_manager.current_step_parameters if "50" in name]
+        found_params = [name for name in param_editor.current_step_parameters if "50" in name]
         assert len(found_params) > 0  # Should find parameter "50"
 
         # Modify multiple parameters
         modified_count = 0
-        for _param_name, param in list(config_manager.current_step_parameters.items())[:10]:  # First 10
+        for _param_name, param in list(param_editor.current_step_parameters.items())[:10]:  # First 10
             param.set_new_value(str(param.get_new_value() + 1.0))
             param.set_change_reason("Bulk modification test")
             modified_count += 1
 
         # THEN: Operations complete successfully
         assert modified_count == 10
-        assert config_manager._has_unsaved_changes()
+        assert param_editor._has_unsaved_changes()
 
         # Verify specific parameter modifications
-        param_01 = config_manager.current_step_parameters["01"]
+        param_01 = param_editor.current_step_parameters["01"]
         assert param_01.get_new_value() == 2.0  # Original 1.0 + 1.0
 
         # AND: Dataset integrity is maintained
-        total_params = len(config_manager.current_step_parameters)
+        total_params = len(param_editor.current_step_parameters)
         assert total_params == 100  # All parameters still present
 
         # Verify no parameters were corrupted during operations
-        for param in config_manager.current_step_parameters.values():
+        for param in param_editor.current_step_parameters.values():
             assert param.get_new_value() is not None
             assert isinstance(param.get_new_value(), (int, float))
 
@@ -828,7 +822,7 @@ class TestDataIntegrityAndConsistency:
 
     def test_parameter_data_remains_consistent_across_save_load_cycles(  # pylint: disable=too-many-locals
         self,
-        config_manager_with_params: ConfigurationManager,
+        param_editor_with_params: ParameterEditor,
         realistic_filesystem: MagicMock,
         flight_controller_with_params: MagicMock,
     ) -> None:
@@ -841,33 +835,33 @@ class TestDataIntegrityAndConsistency:
         AND: No data corruption occurs during serialization/deserialization
         AND: Change tracking works correctly across cycles
         """
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
 
         # GIVEN: Modified configuration
-        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
+        sysid_param = param_editor.current_step_parameters["SYSID_THISMAV"]
 
         sysid_param.set_new_value("7.0")
         sysid_param.set_change_reason("Test data integrity")
-        assert config_manager._has_unsaved_changes()
+        assert param_editor._has_unsaved_changes()
 
         # WHEN: Simulate save operation (get current state)
-        saved_state = config_manager.get_parameters_as_par_dict()
+        saved_state = param_editor.get_parameters_as_par_dict()
 
-        # Simulate load operation (create new config manager with saved data)
-        loaded_config_manager = ConfigurationManager(
+        # Simulate load operation (create new parameter editor data model with saved data)
+        loaded_param_editor = ParameterEditor(
             current_file="01_initial_setup.param", flight_controller=MagicMock(), filesystem=realistic_filesystem
         )
 
         # Manually populate loaded config with saved data
-        loaded_config_manager.current_step_parameters = {}
+        loaded_param_editor.current_step_parameters = {}
         for param_name, par_obj in saved_state.items():
             metadata = realistic_filesystem.doc_dict.get(param_name, {})
             fc_value = flight_controller_with_params.fc_parameters.get(param_name)
             param = ArduPilotParameter(name=param_name, par_obj=par_obj, metadata=metadata, fc_value=fc_value)
-            loaded_config_manager.current_step_parameters[param_name] = param
+            loaded_param_editor.current_step_parameters[param_name] = param
 
         # THEN: Data integrity is maintained
-        loaded_sysid = loaded_config_manager.current_step_parameters["SYSID_THISMAV"]
+        loaded_sysid = loaded_param_editor.current_step_parameters["SYSID_THISMAV"]
         assert loaded_sysid.get_new_value() == 7.0
         assert loaded_sysid.change_reason == "Test data integrity"
 
@@ -878,9 +872,9 @@ class TestDataIntegrityAndConsistency:
             loaded_sysid.set_change_reason(f"Cycle {cycle + 1} integrity test")
 
             # Save and reload
-            cycle_saved_state = loaded_config_manager.get_parameters_as_par_dict()
+            cycle_saved_state = loaded_param_editor.get_parameters_as_par_dict()
 
-            cycle_loaded_config = ConfigurationManager(
+            cycle_loaded_config = ParameterEditor(
                 current_file="01_initial_setup.param", flight_controller=MagicMock(), filesystem=realistic_filesystem
             )
 
@@ -897,7 +891,7 @@ class TestDataIntegrityAndConsistency:
             assert cycle_loaded_sysid.change_reason == f"Cycle {cycle + 1} integrity test"
 
     def test_parameter_validation_maintains_data_integrity_under_edge_conditions(
-        self, config_manager_with_params: ConfigurationManager
+        self, param_editor_with_params: ParameterEditor
     ) -> None:
         """
         Parameter validation maintains data integrity even under edge conditions.
@@ -908,11 +902,11 @@ class TestDataIntegrityAndConsistency:
         AND: Validation provides clear feedback about what values are acceptable
         AND: No existing valid parameters are corrupted during validation attempts
         """
-        config_manager = config_manager_with_params
+        param_editor = param_editor_with_params
 
         # GIVEN: Parameters with known constraints
-        sysid_param = config_manager.current_step_parameters["SYSID_THISMAV"]
-        batt_param = config_manager.current_step_parameters["BATT_CAPACITY"]
+        sysid_param = param_editor.current_step_parameters["SYSID_THISMAV"]
+        batt_param = param_editor.current_step_parameters["BATT_CAPACITY"]
 
         # Establish baseline valid state
         # (Variables removed as they were unused)
@@ -927,7 +921,7 @@ class TestDataIntegrityAndConsistency:
         ]
 
         for param_name, invalid_value in invalid_values:
-            param = config_manager.current_step_parameters[param_name]
+            param = param_editor.current_step_parameters[param_name]
             original_value = param.get_new_value()
 
             # Attempt to set invalid value
@@ -948,8 +942,8 @@ class TestDataIntegrityAndConsistency:
         assert batt_param.get_new_value() == 4500.0
 
         # AND: System state remains consistent
-        assert len(config_manager.current_step_parameters) > 0
-        assert not any(param.get_new_value() is None for param in config_manager.current_step_parameters.values())
+        assert len(param_editor.current_step_parameters) > 0
+        assert not any(param.get_new_value() is None for param in param_editor.current_step_parameters.values())
 
 
 class TestUserExperienceAndFeedback:
@@ -957,7 +951,7 @@ class TestUserExperienceAndFeedback:
 
     def test_user_receives_progress_feedback_during_long_running_operations(
         self,
-        config_manager_with_params: ConfigurationManager,  # pylint: disable=unused-argument
+        param_editor_with_params: ParameterEditor,  # pylint: disable=unused-argument
         flight_controller_with_params: MagicMock,
     ) -> None:
         """
@@ -1012,7 +1006,7 @@ class TestUserExperienceAndFeedback:
 
     def test_user_can_monitor_configuration_health_and_receive_recommendations(
         self,
-        config_manager_with_params: ConfigurationManager,
+        param_editor_with_params: ParameterEditor,
         flight_controller_with_params: MagicMock,  # pylint: disable=unused-argument
     ) -> None:
         """
@@ -1026,20 +1020,20 @@ class TestUserExperienceAndFeedback:
         """
         # GIVEN: Configuration with potential issues
         # Set some parameters that might indicate problems
-        batt_capacity = config_manager_with_params.current_step_parameters["BATT_CAPACITY"]
-        batt_low_volt = config_manager_with_params.current_step_parameters["BATT_LOW_VOLT"]
+        batt_capacity = param_editor_with_params.current_step_parameters["BATT_CAPACITY"]
+        batt_low_volt = param_editor_with_params.current_step_parameters["BATT_LOW_VOLT"]
 
         # Configure potentially problematic values
         batt_capacity.set_new_value("100.0")  # Very small battery
         batt_low_volt.set_new_value("25.0")  # Low voltage threshold too low
 
         # Mock health check function
-        def check_configuration_health(config_manager) -> list:
+        def check_configuration_health(param_editor) -> list:
             """Mock health check that identifies issues."""
             issues = []
 
-            capacity = config_manager.current_step_parameters["BATT_CAPACITY"].get_new_value()
-            low_volt = config_manager.current_step_parameters["BATT_LOW_VOLT"].get_new_value()
+            capacity = param_editor.current_step_parameters["BATT_CAPACITY"].get_new_value()
+            low_volt = param_editor.current_step_parameters["BATT_LOW_VOLT"].get_new_value()
 
             if capacity < 500:
                 issues.append(
@@ -1062,7 +1056,7 @@ class TestUserExperienceAndFeedback:
             return issues
 
         # WHEN: Health check is performed
-        health_issues = check_configuration_health(config_manager_with_params)
+        health_issues = check_configuration_health(param_editor_with_params)
 
         # THEN: Issues are identified and recommendations provided
         assert len(health_issues) >= 2  # Should find both issues
