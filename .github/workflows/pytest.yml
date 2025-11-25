@@ -53,7 +53,12 @@ jobs:
       - name: Install system dependencies for GUI testing
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-tk scrot xdotool x11-utils gnome-screenshot
+          sudo apt-get install -y python3-tk scrot xdotool x11-utils gnome-screenshot tcl8.6 tk8.6 libtcl8.6 libtk8.6
+
+      - name: Ensure Tcl/Tk search paths
+        run: |
+          echo "TCL_LIBRARY=/usr/share/tcltk/tcl8.6" >> $GITHUB_ENV
+          echo "TK_LIBRARY=/usr/share/tcltk/tk8.6" >> $GITHUB_ENV
 
       - name: Install dependencies and application
         # without --editable, the coverage report is not generated correctly
