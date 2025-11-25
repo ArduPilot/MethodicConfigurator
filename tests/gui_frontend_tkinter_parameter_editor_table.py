@@ -23,9 +23,9 @@ from unittest.mock import Mock, patch
 import pytest
 from conftest import PARAMETER_EDITOR_TABLE_HEADERS_ADVANCED, PARAMETER_EDITOR_TABLE_HEADERS_SIMPLE
 
-from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter, Par
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 
@@ -82,7 +82,7 @@ class TestParameterEditorTableUserWorkflows:
 
     @pytest.fixture
     def parameter_table(
-        self, test_config_manager: ConfigurationManager, mock_parameter_editor: Mock
+        self, test_param_editor: ParameterEditor, mock_parameter_editor: Mock
     ) -> Generator[ParameterEditorTable, None, None]:
         """Create a ParameterEditorTable instance for testing."""
         # Create a root window for the table
@@ -90,7 +90,7 @@ class TestParameterEditorTableUserWorkflows:
         root.withdraw()  # Hide the root window
 
         # Create the table
-        table = ParameterEditorTable(root, test_config_manager, mock_parameter_editor)
+        table = ParameterEditorTable(root, test_param_editor, mock_parameter_editor)
 
         yield table
 
@@ -421,9 +421,9 @@ class TestParameterEditorTableUserWorkflows:
         assert param_default.new_value_equals_default_value is True  # Default
         assert param_changed.new_value_equals_default_value is False  # Changed
 
-        # Verify: Configuration manager can handle multiple parameters
-        assert parameter_table.configuration_manager.current_file == "04_board_orientation.param"
-        assert parameter_table.configuration_manager.is_fc_connected is False
+        # Verify: parameter editor data model can handle multiple parameters
+        assert parameter_table.parameter_editor.current_file == "04_board_orientation.param"
+        assert parameter_table.parameter_editor.is_fc_connected is False
 
     def test_user_can_switch_between_gui_complexity_modes_seamlessly(self, parameter_table: ParameterEditorTable) -> None:
         """
@@ -467,7 +467,7 @@ class TestParameterEditorTableUserWorkflows:
         )
 
         # Configure test file parameters
-        parameter_table.configuration_manager._local_filesystem.file_parameters = ParDict(
+        parameter_table.parameter_editor._local_filesystem.file_parameters = ParDict(
             {"04_board_orientation.param": ParDict({"CONSTRAINED_PARAM": Par(50.0, "constrained")})}
         )
 

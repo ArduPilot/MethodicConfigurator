@@ -33,7 +33,7 @@ from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeD
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.configuration_manager import ConfigurationManager, ExperimentChoice
+from ardupilot_methodic_configurator.data_model_parameter_editor import ExperimentChoice, ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import show_about_window
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
@@ -127,11 +127,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def __init__(
         self,
-        configuration_manager: ConfigurationManager,
+        parameter_editor: ParameterEditor,
         ui_services: ParameterEditorUiServices | None = None,
     ) -> None:
         super().__init__()
-        self.configuration_manager = configuration_manager
+        self.parameter_editor = parameter_editor
         self.ui = ui_services or ParameterEditorUiServices.default()
 
         self.file_selection_combobox: AutoResizeCombobox
@@ -172,15 +172,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self._create_conf_widgets(__version__)
 
-        last_step_nr = self.configuration_manager.get_last_configuration_step_number()
+        last_step_nr = self.parameter_editor.get_last_configuration_step_number()
         if last_step_nr is not None:
-            phases = self.configuration_manager.get_sorted_phases_with_end_and_weight(last_step_nr)
+            phases = self.parameter_editor.get_sorted_phases_with_end_and_weight(last_step_nr)
 
             self.stage_progress_bar = StageProgressBar(self.main_frame, phases, last_step_nr, self.gui_complexity)
             self.stage_progress_bar.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
 
         # Create a DocumentationFrame object for the Documentation Content
-        self.documentation_frame = DocumentationFrame(self.main_frame, self.configuration_manager)
+        self.documentation_frame = DocumentationFrame(self.main_frame, self.parameter_editor)
         self.documentation_frame.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
 
         self._create_parameter_area_widgets()
@@ -223,7 +223,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         directory_selection_frame = VehicleDirectorySelectionWidgets(
             self,
             config_subframe,
-            self.configuration_manager.get_vehicle_directory(),
+            self.parameter_editor.get_vehicle_directory(),
             destroy_parent_on_open=False,
         )
         if self.gui_complexity != "simple":
@@ -242,8 +242,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Create Combobox for intermediate parameter file selection
         self.file_selection_combobox = AutoResizeCombobox(
             file_selection_frame,
-            self.configuration_manager.parameter_files(),
-            self.configuration_manager.current_file,
+            self.parameter_editor.parameter_files(),
+            self.parameter_editor.current_file,
             _(
                 "Select the intermediate parameter file from the list of available"
                 " files in the selected vehicle directory\nIt will automatically "
@@ -327,7 +327,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.parameter_container = self.parameter_area_container
 
         # Create the scrollable parameter editor table in the container
-        self.parameter_editor_table = ParameterEditorTable(self.parameter_container, self.configuration_manager, self)
+        self.parameter_editor_table = ParameterEditorTable(self.parameter_container, self.parameter_editor, self)
         self.repopulate_parameter_table(regenerate_from_disk=True)
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 
@@ -356,7 +356,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         annotate_params_checkbox = ttk.Checkbutton(
             checkboxes_frame,
             text=_("Annotate docs into .param files"),
-            state="normal" if self.configuration_manager.parameter_documentation_available() else "disabled",
+            state="normal" if self.parameter_editor.parameter_documentation_available() else "disabled",
             variable=self.annotate_params_into_files,
             command=lambda: ProgramSettings.set_setting(
                 "annotate_docs_into_param_files", self.annotate_params_into_files.get()
@@ -378,7 +378,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             text=_("Upload selected params to FC, and advance to next param file"),
             command=self.on_upload_selected_click,
         )
-        upload_selected_button.configure(state="normal" if self.configuration_manager.is_fc_connected else "disabled")
+        upload_selected_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
         upload_selected_button.pack(side=tk.LEFT, padx=(8, 8))  # Add padding on both sides of the upload selected button
         show_tooltip(
             upload_selected_button,
@@ -387,7 +387,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 "intermediate parameter file\nIf changes have been made to the current file it will ask if you want "
                 "to save them\nIt will reset the FC if necessary, re-download all parameters and validate their value"
             )
-            if self.configuration_manager.is_fc_connected
+            if self.parameter_editor.is_fc_connected
             else _("No flight controller connected, upload not available"),
         )
 
@@ -400,7 +400,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         download_log_button.configure(
             state=(
                 "normal"
-                if (self.configuration_manager.is_fc_connected and self.configuration_manager.is_mavftp_supported)
+                if (self.parameter_editor.is_fc_connected and self.parameter_editor.is_mavftp_supported)
                 else "disabled"
             )
         )
@@ -411,7 +411,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 "Download the last flight log from the flight controller\n"
                 "This will save the previous flight log to a file on your computer for analysis"
             )
-            if (self.configuration_manager.is_fc_connected and self.configuration_manager.is_mavftp_supported)
+            if (self.parameter_editor.is_fc_connected and self.parameter_editor.is_mavftp_supported)
             else _("No flight controller connected or MAVFTP not supported"),
         )
 
@@ -421,8 +421,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             state=(
                 "normal"
                 if self.gui_complexity != "simple"
-                or self.configuration_manager.is_configuration_step_optional()
-                or not self.configuration_manager.is_fc_connected
+                or self.parameter_editor.is_configuration_step_optional()
+                or not self.parameter_editor.is_fc_connected
                 else "disabled"
             )
         )
@@ -630,7 +630,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # Recreate the parameter editor table in the appropriate container.
         # The container varies based on plugin placement (left pane, below plugin, or full area).
-        self.parameter_editor_table = ParameterEditorTable(self.parameter_container, self.configuration_manager, self)
+        self.parameter_editor_table = ParameterEditorTable(self.parameter_container, self.parameter_editor, self)
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 
     @staticmethod
@@ -664,7 +664,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return
 
         # Get the data model for the plugin
-        model = self.configuration_manager.create_plugin_data_model(plugin_name)
+        model = self.parameter_editor.create_plugin_data_model(plugin_name)
         if model is None:
             error_msg = _("Plugin requires flight controller connection")
             ttk.Label(parent_frame, text=error_msg).pack()
@@ -782,7 +782,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         try:
             # Inject GUI callbacks into business logic workflow
-            _success = self.configuration_manager.handle_imu_temperature_calibration_workflow(
+            _success = self.parameter_editor.handle_imu_temperature_calibration_workflow(
                 selected_file,
                 ask_user_confirmation=self.ui.ask_yesno,
                 select_file=select_file,
@@ -827,7 +827,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 font=(str(safe_font_config["family"]), int(safe_font_config["size"]), "underline"),
             )
             link_label.pack(pady=(0, 10))
-            link_label.bind("<Button-1>", lambda _e: self.configuration_manager.open_documentation_in_browser(selected_file))
+            link_label.bind("<Button-1>", lambda _e: self.parameter_editor.open_documentation_in_browser(selected_file))
 
             # Result variable
             result: list[ExperimentChoice] = []
@@ -888,21 +888,21 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.root.wait_window(dialog)
             return result[-1] if result else "close"
 
-        return self.configuration_manager.handle_copy_fc_values_workflow(
+        return self.parameter_editor.handle_copy_fc_values_workflow(
             selected_file,
             ask_user_choice,
             self.ui.show_info,
         )
 
     def _should_jump_to_file(self, selected_file: str) -> str:
-        return self.configuration_manager.handle_file_jump_workflow(
+        return self.parameter_editor.handle_file_jump_workflow(
             selected_file,
             self.gui_complexity,
             self.ui.ask_yesno,
         )
 
     def _should_download_file_from_url(self, selected_file: str) -> None:
-        self.configuration_manager.should_download_file_from_url_workflow(
+        self.parameter_editor.should_download_file_from_url_workflow(
             selected_file,
             ask_confirmation=self.ui.ask_yesno,
             show_error=self.ui.show_error,
@@ -921,7 +921,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return self.file_upload_progress_window.update_progress_bar
 
         try:
-            self.configuration_manager.should_upload_file_to_fc_workflow(
+            self.parameter_editor.should_upload_file_to_fc_workflow(
                 selected_file,
                 ask_confirmation=self.ui.ask_yesno,
                 show_error=self.ui.show_error,
@@ -941,12 +941,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._update_progress_bar_from_file(selected_file)
 
         # Only proceed if file changed or forced
-        if self.configuration_manager.current_file != selected_file or forced:
+        if self.parameter_editor.current_file != selected_file or forced:
             # Write any pending changes before switching files
             self.write_changes_to_intermediate_parameter_file()
 
             # Handle the parameter file change workflow
-            final_file, should_continue = self.configuration_manager.handle_param_file_change_workflow(
+            final_file, should_continue = self.parameter_editor.handle_param_file_change_workflow(
                 selected_file,
                 forced,
                 self.gui_complexity,
@@ -972,7 +972,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.documentation_frame.update_why_why_now_tooltip()
 
             # Update plugin layout if needed
-            plugin = self.configuration_manager.get_plugin(final_file)
+            plugin = self.parameter_editor.get_plugin(final_file)
             self._update_plugin_layout(plugin)
 
             # Repopulate parameter table with new file
@@ -980,7 +980,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self._update_skip_button_state()
 
     def _update_progress_bar_from_file(self, selected_file: str) -> None:
-        if self.configuration_manager.configuration_phases():
+        if self.parameter_editor.configuration_phases():
             try:
                 step_nr = int(selected_file[:2])
                 self.stage_progress_bar.update_progress(step_nr)
@@ -1005,7 +1005,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return param_download_progress_window.update_progress_bar
 
         # Download parameters using the lazy factory callback
-        self.configuration_manager.download_flight_controller_parameters(get_progress_callback)
+        self.parameter_editor.download_flight_controller_parameters(get_progress_callback)
 
         # Clean up progress window if it was created
         if self._param_download_progress_window is not None:
@@ -1017,7 +1017,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.on_param_file_combobox_change(None, forced=True)  # the initial param read will trigger a table update
 
     def repopulate_parameter_table(self, regenerate_from_disk: bool) -> None:
-        if not self.configuration_manager.current_file:
+        if not self.parameter_editor.current_file:
             return  # no file was yet selected, so skip it
         # Re-populate the table with the new parameters
         self.parameter_editor_table.repopulate(self.show_only_differences.get(), self.gui_complexity, regenerate_from_disk)
@@ -1029,7 +1029,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.write_changes_to_intermediate_parameter_file()
         selected_params: ParDict = self.parameter_editor_table.get_upload_selected_params(self.gui_complexity)
         precondition_payload: dict[str, object] = dict(selected_params)
-        if not self.configuration_manager.ensure_upload_preconditions(precondition_payload, self.ui.show_warning):
+        if not self.parameter_editor.ensure_upload_preconditions(precondition_payload, self.ui.show_warning):
             self.on_skip_click()
             return
 
@@ -1066,7 +1066,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return param_download_progress_window.update_progress_bar
 
         try:
-            self.configuration_manager.upload_selected_params_workflow(
+            self.parameter_editor.upload_selected_params_workflow(
                 selected_params,
                 ask_confirmation=self.ui.ask_yesno,
                 ask_retry_cancel=self.ui.ask_retry_cancel,
@@ -1104,7 +1104,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 ],
             )
 
-        self.configuration_manager.download_last_flight_log_workflow(
+        self.parameter_editor.download_last_flight_log_workflow(
             ask_saveas_filename=ask_saveas_filename,
             show_error=self.ui.show_error,
             show_info=self.ui.show_info,
@@ -1118,8 +1118,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             skip_button_state = (
                 "normal"
                 if self.gui_complexity != "simple"
-                or self.configuration_manager.is_configuration_step_optional()
-                or not self.configuration_manager.is_fc_connected
+                or self.parameter_editor.is_configuration_step_optional()
+                or not self.parameter_editor.is_fc_connected
                 else "disabled"
             )
             self.skip_button.configure(state=skip_button_state)
@@ -1127,12 +1127,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def on_skip_click(self, _event: Union[None, tk.Event] = None) -> None:  # noqa: UP007
         self.write_changes_to_intermediate_parameter_file()
 
-        # Use ConfigurationManager to get the next non-optional file
-        next_file = self.configuration_manager.get_next_non_optional_file()
+        # Use ParameterEditor to get the next non-optional file
+        next_file = self.parameter_editor.get_next_non_optional_file()
 
         if next_file is None:
             # No more files to process, write summary and close
-            self.configuration_manager.write_summary_files_workflow(
+            self.parameter_editor.write_summary_files_workflow(
                 show_info=self.ui.show_info,
                 ask_confirmation=self.ui.ask_yesno,
             )
@@ -1146,7 +1146,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.on_param_file_combobox_change(None)
 
     def write_changes_to_intermediate_parameter_file(self) -> None:
-        self.configuration_manager.handle_write_changes_workflow(
+        self.parameter_editor.handle_write_changes_workflow(
             self.annotate_params_into_files.get(),
             self.ui.ask_yesno,
         )
@@ -1194,5 +1194,5 @@ if __name__ == "__main__":
     filesystem = LocalFilesystem(
         args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates
     )
-    window = ParameterEditorWindow(ConfigurationManager("04_board_orientation.param", fc, filesystem))
+    window = ParameterEditorWindow(ParameterEditor("04_board_orientation.param", fc, filesystem))
     window.run()

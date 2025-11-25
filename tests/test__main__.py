@@ -884,15 +884,15 @@ class TestParameterEditorStartup:
         with (
             patch("ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting", return_value="advanced"),
             patch("ardupilot_methodic_configurator.__main__.ParameterEditorWindow") as mock_editor,
-            patch("ardupilot_methodic_configurator.__main__.ConfigurationManager") as mock_config_manager,
+            patch("ardupilot_methodic_configurator.__main__.ParameterEditor") as mock_param_editor,
         ):
             # Act: Start parameter editor
             parameter_editor_and_uploader(application_state)
 
             # Assert: Advanced mode with IMU calibration considered
             mock_fs.get_start_file.assert_called_once_with(0, True)  # noqa: FBT003 IMU tcal available and not simple GUI
-            mock_config_manager.assert_called_once_with("05_imu_temperature_calibration.param", mock_fc, mock_fs)
-            mock_editor.assert_called_once_with(mock_config_manager.return_value)
+            mock_param_editor.assert_called_once_with("05_imu_temperature_calibration.param", mock_fc, mock_fs)
+            mock_editor.assert_called_once_with(mock_param_editor.return_value)
 
     def test_user_gets_simplified_workflow_in_simple_mode(self, application_state: ApplicationState) -> None:
         """
@@ -914,14 +914,14 @@ class TestParameterEditorStartup:
         with (
             patch("ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting", return_value="simple"),
             patch("ardupilot_methodic_configurator.__main__.ParameterEditorWindow") as mock_editor,
-            patch("ardupilot_methodic_configurator.__main__.ConfigurationManager") as mock_config_manager,
+            patch("ardupilot_methodic_configurator.__main__.ParameterEditor") as mock_param_editor,
         ):
             # Act: Start in simple mode
             parameter_editor_and_uploader(application_state)
 
             # Assert: IMU calibration disabled in simple mode
             mock_fs.get_start_file.assert_called_once_with(0, False)  # noqa: FBT003 Simple GUI disables IMU tcal
-            mock_editor.assert_called_once_with(mock_config_manager.return_value)
+            mock_editor.assert_called_once_with(mock_param_editor.return_value)
 
 
 # ====== Component Editor Helper Function Tests ======
