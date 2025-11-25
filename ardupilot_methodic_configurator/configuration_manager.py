@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from csv import writer as csv_writer
 from logging import error as logging_error
 from logging import info as logging_info
+from logging import warning as logging_warning
 from pathlib import Path
 from time import time
 from typing import Callable, Literal, Optional
@@ -514,6 +515,24 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
         if not self._flight_controller.upload_file(local_filename, remote_filename, progress_callback):
             error_msg = _("Failed to upload {local_filename} to {remote_filename}, please upload it manually")
             show_error(_("Upload failed"), error_msg.format(local_filename=local_filename, remote_filename=remote_filename))
+            return False
+
+        return True
+
+    def ensure_upload_preconditions(
+        self,
+        selected_params: dict[str, object],
+        show_warning: ShowWarningCallback,
+    ) -> bool:
+        """Validate prerequisites before attempting to upload selected parameters."""
+        if not selected_params:
+            logging_warning(_("No parameter was selected for upload, will not upload any parameter"))
+            show_warning(_("Will not upload any parameter"), _("No parameter was selected for upload"))
+            return False
+
+        if not self.fc_parameters:
+            logging_warning(_("No parameters were yet downloaded from the flight controller, will not upload any parameter"))
+            show_warning(_("Will not upload any parameter"), _("No flight controller connection"))
             return False
 
         return True
