@@ -640,9 +640,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def getcwd() -> str:
         return os_getcwd()
 
-    def tempcal_imu_result_param_tuple(self) -> tuple[str, str]:
-        tempcal_imu_result_param_filename = "03_imu_temperature_calibration_results.param"
-        return tempcal_imu_result_param_filename, os_path.join(self.vehicle_dir, tempcal_imu_result_param_filename)
+    def get_configuration_file_fullpath(self, filename: str) -> str:
+        return os_path.join(self.vehicle_dir, filename)
 
     def copy_fc_values_to_file(self, selected_file: str, params: dict[str, float]) -> int:
         ret = 0

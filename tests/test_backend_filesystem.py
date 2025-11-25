@@ -405,19 +405,6 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             assert result == "vehicle_dir/vehicle.jpg"
             mock_join.assert_called_once_with("vehicle_dir", "vehicle.jpg")
 
-    def test_tempcal_imu_result_param_tuple(self) -> None:
-        lfs = LocalFilesystem(
-            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
-        )
-        with patch("os.path.join") as mock_join:
-            mock_join.return_value = "vehicle_dir/03_imu_temperature_calibration_results.param"
-            result = lfs.tempcal_imu_result_param_tuple()
-            assert result == (
-                "03_imu_temperature_calibration_results.param",
-                "vehicle_dir/03_imu_temperature_calibration_results.param",
-            )
-            mock_join.assert_called_once_with("vehicle_dir", "03_imu_temperature_calibration_results.param")
-
     def test_zip_file_path(self) -> None:
         lfs = LocalFilesystem(
             "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False

@@ -152,13 +152,13 @@
               "properties": {
                 "name": {
                   "type": "string",
-                  "enum": ["motor_test"],
+                  "enum": ["motor_test", "tempcal_imu"],
                   "description": "The name of the plugin to load"
                 },
                 "placement": {
                   "type": "string",
-                  "enum": ["left", "top"],
-                  "description": "Where to place the plugin: 'left' for left of scrollable frame, 'top' for above contents"
+                  "enum": ["left", "top", "workflow"],
+                  "description": "Where to place the plugin: 'left' for left of scrollable frame, 'top' for above contents, 'workflow' for triggered workflow actions"
                 }
               }
             }

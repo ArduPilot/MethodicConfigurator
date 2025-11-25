@@ -25,12 +25,12 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
+from ardupilot_methodic_configurator.business_logic_tempcal_imu import TempCalIMUDataModel
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
 from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
-from ardupilot_methodic_configurator.tempcal_imu import IMUfit
+from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST, PLUGIN_TEMPCAL_IMU
 
 # Type aliases for callback functions used in workflow methods
 AskConfirmationCallback = Callable[[str, str], bool]  # (title, message) -> bool
@@ -111,84 +111,6 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             if hasattr(self._flight_controller, "info") and self._flight_controller.info is not None
             else False
         )
-
-    def handle_imu_temperature_calibration_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-        self,
-        selected_file: str,
-        ask_user_confirmation: AskConfirmationCallback,
-        select_file: SelectFileCallback,
-        show_warning: ShowWarningCallback,
-        show_error: ShowErrorCallback,
-        progress_callback: Optional[Callable] = None,
-    ) -> bool:
-        """
-        Complete IMU temperature calibration workflow with user interaction via callbacks.
-
-        This method orchestrates the entire IMU calibration workflow including user confirmation,
-        file selection, warnings, error handling, and the actual calibration through injected
-        callback functions. This allows the business logic to be separated from GUI implementation details.
-
-        Args:
-            selected_file: The current parameter file being processed.
-            ask_user_confirmation: Callback function for asking yes/no questions.
-            select_file: Callback function for file selection dialog.
-            show_warning: Callback function for showing warning messages.
-            show_error: Callback function for showing error messages.
-            progress_callback: Optional callback function for progress updates.
-
-        Returns:
-            bool: True if calibration was performed successfully, False otherwise.
-
-        """
-        # Check if IMU temperature calibration should be offered for this file
-        tempcal_imu_result_param_filename, tempcal_imu_result_param_fullpath = (
-            self._local_filesystem.tempcal_imu_result_param_tuple()
-        )
-        if selected_file != tempcal_imu_result_param_filename:
-            return False
-
-        # Ask user for confirmation using injected callback
-        confirmation_msg = _(
-            "If you proceed the {tempcal_imu_result_param_filename}\n"
-            "will be overwritten with the new calibration results.\n"
-            "Do you want to provide a .bin log file and\n"
-            "run the IMU temperature calibration using it?"
-        ).format(tempcal_imu_result_param_filename=tempcal_imu_result_param_filename)
-
-        if not ask_user_confirmation(_("IMU temperature calibration"), confirmation_msg):
-            return False
-
-        # Select log file using injected callback
-        log_file = select_file(_("Select ArduPilot binary log file"), ["*.bin", "*.BIN"])
-
-        if not log_file:
-            return False  # User cancelled file selection
-
-        # Show warning using injected callback
-        show_warning(
-            _("IMU temperature calibration"),
-            _("Please wait, this can take a really long time and\nthe GUI will be unresponsive until it finishes."),
-        )
-
-        # Perform the actual IMU temperature calibration
-        IMUfit(
-            logfile=log_file,
-            outfile=tempcal_imu_result_param_fullpath,
-            no_graph=False,
-            log_parm=False,
-            online=False,
-            tclr=False,
-            figpath=self._local_filesystem.vehicle_dir,
-            progress_callback=progress_callback,
-        )
-
-        try:
-            # Reload parameter files after calibration
-            self._local_filesystem.file_parameters = self._local_filesystem.read_params_from_files()
-            return True
-        except SystemExit as exp:
-            show_error(_("Fatal error reading parameter files"), f"{exp}")
-            raise
 
     def _should_copy_fc_values_to_file(self, selected_file: str) -> tuple[bool, Optional[dict], Optional[str]]:
         """
@@ -1629,17 +1551,18 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
 
     # frontend_tkinter_parameter_editor_documentation_frame.py API end
 
-    # plugin API begin
+    # UI plugin API begin
 
     def get_plugin(self, filename: str) -> Optional[dict]:
         return self._local_filesystem.get_plugin(filename)
 
-    def create_plugin_data_model(self, plugin_name: str) -> Optional[object]:
+    def create_plugin_data_model(self, plugin_name: str, **kwargs) -> Optional[object]:
         """
         Create and return a data model for the specified plugin.
 
         Args:
             plugin_name: The name of the plugin to create a data model for
+            **kwargs: Additional plugin-specific arguments (e.g., step_filename for tempcal_imu)
 
         Returns:
             The data model instance, or None if plugin not supported or requirements not met
@@ -1649,7 +1572,54 @@ class ConfigurationManager:  # pylint: disable=too-many-public-methods, too-many
             if not self.is_fc_connected:
                 return None
             return MotorTestDataModel(self._flight_controller, self._local_filesystem)
+        if plugin_name == PLUGIN_TEMPCAL_IMU:
+            step_filename = kwargs.get("step_filename")
+            if not step_filename:
+                return None
+            # Callbacks must be provided by the caller (GUI layer)
+            ask_confirmation = kwargs.get("ask_confirmation")
+            select_file = kwargs.get("select_file")
+            show_warning = kwargs.get("show_warning")
+            show_error = kwargs.get("show_error")
+            progress_callback = kwargs.get("progress_callback")
+            cleanup_callback = kwargs.get("cleanup_callback")
+            if not all([ask_confirmation, select_file, show_warning, show_error, progress_callback, cleanup_callback]):
+                return None
+            return TempCalIMUDataModel(
+                self,
+                step_filename,
+                ask_confirmation,  # type: ignore[arg-type]
+                select_file,  # type: ignore[arg-type]
+                show_warning,  # type: ignore[arg-type]
+                show_error,  # type: ignore[arg-type]
+                progress_callback,
+                cleanup_callback,
+            )
         # Add more plugins here in the future
         return None
 
-    # plugin API end
+    # UI plugin API end
+
+    # workflow plugin API start
+
+    @property
+    def vehicle_dir(self) -> str:
+        """Get the vehicle configuration directory path."""
+        return self._local_filesystem.vehicle_dir
+
+    def get_configuration_file_fullpath(self, filename: str) -> str:
+        """Get the full path for a configuration file in the vehicle directory."""
+        return self._local_filesystem.get_configuration_file_fullpath(filename)
+
+    def reload_parameter_files(self) -> dict[str, ParDict]:
+        """
+        Reload all parameter files from disk.
+
+        Raises:
+            SystemExit: If there's a fatal error reading parameter files
+
+        """
+        self._local_filesystem.file_parameters = self._local_filesystem.read_params_from_files()
+        return self._local_filesystem.file_parameters
+
+    # Workflow plugin API end

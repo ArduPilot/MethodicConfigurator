@@ -35,7 +35,11 @@
             "external_tool_url": "",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "",
-            "old_filenames": []
+            "old_filenames": [],
+            "plugin": {
+                "name": "tempcal_imu",
+                "placement": "workflow"
+            }
         },
         "04_board_orientation.param": {
             "why": "Correct orientation ensures that the flight controller accurately interprets the vehicle's movements and orientation, which is fundamental for stable flight and navigation.",

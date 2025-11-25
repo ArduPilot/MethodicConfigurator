@@ -13,3 +13,4 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Plugin name constants
 PLUGIN_MOTOR_TEST = "motor_test"
+PLUGIN_TEMPCAL_IMU = "tempcal_imu"

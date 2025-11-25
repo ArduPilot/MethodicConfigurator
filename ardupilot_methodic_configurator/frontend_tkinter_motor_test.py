@@ -60,7 +60,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
-from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugin_factory_ui import plugin_factory_ui
 
 
 class DelayedProgressCallback:  # pylint: disable=too-few-public-methods
@@ -843,7 +843,7 @@ def _create_motor_test_view(
 
 def register_motor_test_plugin() -> None:
     """Register the motor test plugin with the factory."""
-    plugin_factory.register(PLUGIN_MOTOR_TEST, _create_motor_test_view)
+    plugin_factory_ui.register(PLUGIN_MOTOR_TEST, _create_motor_test_view)
 
 
 if __name__ == "__main__":
